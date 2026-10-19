@@ -2,10 +2,10 @@
 title: TRE-REQ-001 Layer Surface Window
 aliases: [TRE-REQ-001, LayerWindow Request, Layer Surface Request]
 type: engine-request
-status: draft
+status: review
 owner: phil
 created: 2026-10-18
-updated: 2026-10-18
+updated: 2026-10-19
 tags: [engine-request, spec/surface, integration/wayland, needs-verification]
 related: ["[[ADR-0001 Shell Surface Strategy]]", "[[Prior Art - Linux Shell Surfaces]]", "[[80 Engine Requests]]"]
 depends_on: []
@@ -19,7 +19,29 @@ depends_on: []
 > [!danger] Blocks the shell
 > No bar, panel, dock, OSD or wallpaper can ship without this. Every note under `40 Specifications/Surfaces/` carries `> [!warning] Blocked by [[TRE-REQ-001 Layer Surface Window]]` until tre ships it. Decision record: [[ADR-0001 Shell Surface Strategy]] (Option A, `proposed`).
 
-This note is for the maintainer to carry to the tre project ([[AGENTS#6. Engine requests (tre / Tesserae)]]). Nothing here is filed upstream.
+This note is carried to the tre project by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]).
+
+## Upstream status
+
+Read from the tre issue tracker on 2026-10-19 with `gh`. The spike write-up lives on a local tre branch that is not pushed, so it has not been read; the figures below are from the issue comment that summarises it.
+
+| Item | State |
+|---|---|
+| Request | [tre #195](https://github.com/mindderivative/tre/issues/195), open, backlog. It records absences checked against the tre source (no layer-shell, `xdg_popup`, `smithay` or `wayland-client` in `crates/`; backend `winit` 0.30.13). |
+| Spike (phase 1) | [tre #196](https://github.com/mindderivative/tre/issues/196), done, held at review. Verdict: go on I2, a layer surface on a second event queue of the `wl_display` that `winit` owns. |
+| Proposed phases | 1 spike, 2 `LayerWindow` core and mock backend, 3 outputs API, 4 `input_region`, 5 margin animation and `drag_margin`, 6 `PopupWindow` |
+| Effort and risk (tre's estimate) | XL overall, spike M. Risk high: two input sources in one loop. |
+
+Spike results that bear on this request:
+
+- tre's own wgpu pipeline drew a real scene (container, rounded rect, text) on a layer surface. The renderer is already window-agnostic; only `GpuState::new` and `recreate_surface` assume a `winit` window.
+- A `winit` window and a layer surface on one `wl_display` showed no deadlock and no lost events. Both seats deliver every surface's events, so each side must filter by surface.
+- Pointer, scroll and keyboard reached `Tree::dispatch`. Keyboard modes none, on_demand and exclusive behaved per protocol.
+- On KWin: the exclusive zone shortened a maximised window by 32 px; negative margins are accepted and honoured; a 1 px reserver with an empty input region keeps its zone; a full-output `-1` painter disturbed nothing; `wl_output` v4 gives output names. The compositor's own output choice varies, so bind outputs explicitly.
+- Idle: 1 frame in 10 s and 0.0% CPU. Clock-driven animation (`tick_all(now)`) needs no frame callbacks, but the loop's wake-up must not depend on them.
+- Fractional-scale and viewporter objects work on a layer surface (1x only).
+
+Not shown by the spike: frame callbacks under a fullscreen window, output removal, 1.5x scale, touch, key repeat, cursor shape, IME, AccessKit, and on-screen confirmation (evidence is a protocol trace, a first-frame readback, the shortened maximised window and pointer events).
 
 ## Shell need
 
@@ -52,7 +74,7 @@ Source: [Python API](https://mindderivative.github.io/tre/api/python/), [Custom 
 | Transparency and input | `transparent`, `blur_behind`, `click_through` | Input regions per area |
 | Undocumented keys | `window.set(...)` accepts `x`, `y`, `always_on_top`, `skip_taskbar` but the property tables do not describe them | Whether they work on Wayland |
 | Backend | `engine-platform` owns the `winit` loop, input translation and the AccessKit adapter | Surface creation details; `wgpu` and raw-window-handle use |
-| Shapes | `corner_radius` (number or 4-tuple), path nodes (`data`, `view_box`, fill, stroke), canvas `Painter` (`fill_circle`, `stroke_path`), `clip_children` to the rounded box, `shader`, `shadows`. Canvas hit-testing can follow a circle or path (`set_hit_test_circle`, `set_hit_test_path`). | Concave corners, `clip_path`, masks, blend modes. Whether box hit-testing respects rounded corners. Non-rectangular windows. |
+| Shapes | `corner_radius` (number or 4-tuple), path nodes (`data`, `view_box`, fill, stroke), canvas `Painter` (`fill_circle`, `stroke_path`), `clip_children` to the rounded box, `shader`, `shadows`. Canvas hit-testing can follow a circle or path (`set_hit_test_circle`, `set_hit_test_path`). | Concave corners, blend modes (#needs-verification). Whether box hit-testing respects rounded corners. Non-rectangular windows. Masks shipped in tre 0.5.6 ([tre #164](https://github.com/mindderivative/tre/issues/164)); the API page read for this note predates them. |
 | Animation | `node.animate(property, to, duration_ms, easing, on_complete)`; easing `"linear"`, cubic bezier or spring; paint properties and, since 0.5.6, layout properties; `animation_end` event; `window.advance(ms)` for tests | Animating window-level properties. What drives the frame clock. Behaviour when frames stop. |
 | Drag | `window_region="drag"` calls winit `drag_window()`; `resize_border` calls `drag_resize_window()` | Anything for surfaces the compositor places |
 
@@ -240,7 +262,7 @@ A frame around the screen edge needs one painter and up to four reservers. Corne
 - #needs-verification on KWin 6.7: that a full-screen `-1` surface does not disturb the reservers' zones; that a 1 px reserver with an empty input region maps and keeps its zone; and that damage tracking keeps the mostly-transparent painter cheap at idle.
 
 > [!question] Shape gaps for a later request
-> Concave `corner_radius`, `clip_path`, masks, blend modes and box hit-testing that follows rounded corners are not in the tre docs reviewed. The frame works without them because paths cover the geometry. They matter for clipping a subtree to a non-rectangular shape or cutting a hole with a blend mode. Candidate: `TRE-REQ-003`, after a frame prototype shows what is missing. `TRE-REQ-002` stays reserved for ADR-0001 Option B.
+> Correction, 2026-10-19: tre 0.5.6 added masks ([tre #164](https://github.com/mindderivative/tre/issues/164), closed), so clipping a subtree to a non-rectangular shape exists; the property was not read for this note. Still unconfirmed: concave `corner_radius`, blend modes, and box hit-testing that follows rounded corners or a mask. The frame works without them because paths cover the geometry. Re-check the 0.5.7 docs before deciding whether `TRE-REQ-003` is needed. `TRE-REQ-002` stays reserved for ADR-0001 Option B.
 
 ## Required behaviour (non-API)
 
@@ -263,10 +285,10 @@ tre's backend is `winit` in `engine-platform`. `winit` has no layer-shell role. 
 | | Approach | For | Against |
 |---|---|---|---|
 | I1 | Separate Wayland backend in `engine-platform` for `LayerWindow`, built on `smithay-client-toolkit` and driven from the same loop beside `winit`. The `wgpu` surface comes from the raw Wayland handles. | Contained. Ordinary windows are untouched. | Two input and event sources in one loop. Input, text input, clipboard and AccessKit are reimplemented for this path. |
-| I2 | Same as I1, but share one `wl_display` connection with `winit`. | One seat, one clipboard, one focus owner. | #needs-verification: `winit` may not expose its connection or event queue in a form that allows this. |
+| I2 | Same as I1, but share one `wl_display` connection with `winit`. | One seat, one clipboard, one focus owner. | Spike go ([tre #196](https://github.com/mindderivative/tre/issues/196)): a second event queue on `winit`'s `wl_display` ran beside a `winit` window with no deadlock or lost events. Each side must filter seat events by surface. |
 | I3 | Replace `winit` with a native Wayland backend on Linux. | One path, no duplication. | Large. Regresses X11 unless `winit` stays for it. |
 
-Recommendation: investigate I2 first; if the connection cannot be shared, take I1. Treat I3 as out of scope for this request.
+Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 stays out of scope. Remaining I2 risks: two readers on one socket and the second input path (seat, focus, clipboard, AccessKit).
 
 > [!danger] Two input sources
 > I1 puts seat, focus and clipboard handling in two places. A shell where bar clicks work but the clipboard or focus behaves differently from a tre dialog is a defect users will see. Record in [[Risk Register]] when that note exists.
@@ -311,17 +333,19 @@ Recommendation: investigate I2 first; if the connection cannot be shared, take I
 
 ## Open items
 
-- [ ] Confirm the absences listed under [What tre has today](#what-tre-has-today) in the tre source.
-- [ ] Choose the implementation path (I1, I2, I3) after checking whether `winit` can share its Wayland connection.
-- [ ] Check which of `wl_output` v4 and `xdg-output-unstable-v1` KWin 6.7 exposes for stable output names.
-- [ ] Check whether `window.set(x=, y=, always_on_top=, skip_taskbar=)` does anything on Wayland; it decides how useful the Option C prototype is.
+- [x] Confirm the absences listed under [What tre has today](#what-tre-has-today) in the tre source. Done in [tre #195](https://github.com/mindderivative/tre/issues/195).
+- [x] Choose the implementation path (I1, I2, I3). Spike recommends I2 ([tre #196](https://github.com/mindderivative/tre/issues/196)); the maintainer confirms.
+- [x] Check which of `wl_output` v4 and `xdg-output-unstable-v1` KWin exposes for stable output names. `wl_output` v4 gives names (spike).
+- [ ] Check whether `window.set(x=, y=, always_on_top=, skip_taskbar=)` does anything on Wayland. tre #195 reads the source: they call `set_outer_position` and `set_window_level`, which `winit` documents as unsupported on Wayland, and `skip_taskbar` is Windows only. So Option C cannot place or stack a bar under KWin. A test on a live session is still pending.
 - [ ] Decide keyboard focus for popups under a `"none"` parent.
 - [ ] Define "layer" in the Glossary in both senses (tre in-window overlay, protocol stacking layer) and decide whether `LayerWindow` should rename its `layer=` parameter.
 - [ ] Decide whether `LayerWindow.animate` covers only margins or also size and `exclusive_zone` (the request recommends margins only).
-- [ ] Check KWin for negative margins, frame-callback behaviour on layer surfaces, and its own map and unmap effects.
-- [ ] Find where tre reads `reduced_motion` on Plasma and whether it follows Plasma's animation speed.
-- [ ] Prototype the screen frame and the full-screen overlay popup alternative, then decide on `TRE-REQ-003` (shape gaps) and on `PopupWindow`.
-- [ ] Confirm that tre's loop is clock-driven and that `on_complete` fires when frames stop.
+- [x] Negative margins on KWin: accepted and honoured (spike).
+- [ ] Frame-callback behaviour for covered surfaces and KWin's own map and unmap effects on layer surfaces. The spike did not test frame callbacks under a fullscreen window.
+- [ ] Whether `reduced_motion` follows Plasma's animation speed. tre reads it from the settings portal (`org.freedesktop.appearance` `reduced-motion`); with Plasma 6.8 at speed factor 0.25 it reported 0, so it likely does not follow the factor. Unconfirmed.
+- [ ] Prototype the screen frame and the full-screen overlay popup alternative, then decide on `PopupWindow` and on `TRE-REQ-003`. The spike's `-1` painter and 1 px reserver results support the frame layout.
+- [x] tre's animation progress is clock-driven (`Tree::tick_all(now: Instant)`). What the loop does when frames stop is untested; requirement 2 still needs a test.
+- [ ] Check the 0.5.7 docs for the mask API, concave corners, blend modes and shape-aware box hit-testing.
 - [ ] Find the first KWin release exposing `zwlr_layer_shell_v1` (shared with ADR-0001).
 - [ ] Decide whether v1 targets wlroots-family compositors as well as KWin, which affects which compositors the acceptance tests cover.
 
