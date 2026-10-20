@@ -5,7 +5,7 @@ type: engine-request
 status: review
 owner: phil
 created: 2026-10-18
-updated: 2026-10-19
+updated: 2026-10-20
 tags: [engine-request, spec/surface, integration/wayland, needs-verification]
 related: ["[[ADR-0001 Shell Surface Strategy]]", "[[Prior Art - Linux Shell Surfaces]]", "[[80 Engine Requests]]"]
 depends_on: []
@@ -29,7 +29,9 @@ Read from the tre issue tracker on 2026-10-19 with `gh`. The spike findings note
 |---|---|
 | Request | [tre #195](https://github.com/mindderivative/tre/issues/195), open, backlog. It records absences checked against the tre source (no layer-shell, `xdg_popup`, `smithay` or `wayland-client` in `crates/`; backend `winit` 0.30.13). |
 | Spike (phase 1) | [tre #196](https://github.com/mindderivative/tre/issues/196), done, held at review. Verdict: go on I2, a layer surface on a second event queue of the `wl_display` that `winit` owns. |
-| Proposed phases | 1 spike, 2 `LayerWindow` core and mock backend, 3 outputs API, 4 `input_region`, 5 margin animation and `drag_margin`, 6 `PopupWindow` |
+| Phases | 1 spike ([#196](https://github.com/mindderivative/tre/issues/196)), 2 `LayerWindow` core and mock backend ([#198](https://github.com/mindderivative/tre/issues/198)), 3 outputs API ([#202](https://github.com/mindderivative/tre/issues/202)), 4 `input_region` ([#204](https://github.com/mindderivative/tre/issues/204)), 5 margin animation and `drag_margin` ([#205](https://github.com/mindderivative/tre/issues/205)), 6 popups ([#206](https://github.com/mindderivative/tre/issues/206)) |
+| Phases 2 to 4 | Done (read from tre on 2026-10-20). Phase 4 is on local branch `input-region-204`, not pushed. |
+| Phases 5 and 6 | Scoped, Backlog, awaiting the maintainer's approval and decisions. See [Phase 5 scope](#phase-5-scope) and [Phase 6 scope](#phase-6-scope). |
 | Effort and risk (tre's estimate) | XL overall, spike M. Risk high: two input sources in one loop. |
 
 Spike results that bear on this request:
@@ -40,6 +42,38 @@ Spike results that bear on this request:
 - On KWin: the exclusive zone shortened a maximised window by 32 px; negative margins are accepted and honoured; a 1 px reserver with an empty input region keeps its zone; a full-output `-1` painter disturbed nothing; `wl_output` v4 gives output names. The compositor's own output choice varies, so bind outputs explicitly.
 - Idle: 1 frame in 10 s and 0.0% CPU. Clock-driven animation (`tick_all(now)`) needs no frame callbacks, but the loop's wake-up must not depend on them.
 - Fractional-scale and viewporter objects work on a layer surface (1x only).
+
+### Phase 4 as built ([tre #204](https://github.com/mindderivative/tre/issues/204))
+
+Source: the issue and its comments, read 2026-10-20 with `gh`.
+
+- `input_region` takes `None`, `[]`, rectangles (tuples or lists, rounded outward, at most 256) or `"auto"`. The layer thread sets a `wl_region` and commits at once, so an idle surface needs no frame.
+- `click_through` is an alias of `[]` on a `LayerWindow`. Giving both with different meanings raises. Ordinary windows are unchanged.
+- `"auto"` is the union of drawn, hit-testable nodes (boxes, images, paths, svg, canvas, fields, selectable or linked text), recomputed after each layout. While anything animates it only grows, then snaps exact. Bands are at least 2 px; past 256 rectangles it coarsens, never below the drawn shape.
+- **Behaviour change for every window:** hit testing now follows `corner_radius` and `corner_radii`. Masks and `clip_children` are still ignored. tre #204 answers the open question on box hit-testing: it followed neither before, and it follows rounded corners now.
+- **Deviation from this note:** `"auto"` is its own commit right after layout, not the buffer's commit, so it can run up to one frame ahead of or behind the buffer. See [Input region](#input-region).
+- Live checks on headless sway 1.12 with a virtual pointer: `None`, `[]`, an explicit rectangle, `"auto"` with a circle and the four-bar screen frame all route clicks as specified. Not run: touch, KWin (needs `/dev/uinput`, which moves the real pointer), labwc.
+
+### Phase 5 scope
+
+[tre #205](https://github.com/mindderivative/tre/issues/205).
+
+Backlog, not approved. Two stages:
+
+- **5a, margin animation.** `LayerWindow.animate` for the four margin names only, as asked here. `set(margin=...)` while one runs would cancel it and snap (recommended). Completion fires once even if frames stall. `advance(ms)` runs it headless. One timestamp per loop turn is **not guaranteed today**: each window's frame pass reads the clock itself, so requirement 1 under [Animation](#requirements) needs engine work.
+- **5b, `drag_margin`.** Refused on ordinary windows; `"drag"` stays refused on a layer window. The surface moves under the pointer, so adding each local delta overshoots with one frame of lag. tre's recommendation is `zwp_relative_pointer_v1` with a fallback to an estimate from the last requested margins. This differs from the lag expectation written under [Margin drag](#margin-drag). Effort medium to large, risk medium.
+- Open decisions in tre: relative pointer versus estimate, `moved` on release only (recommended; matches this note), cancel-and-snap, four names only, and whether live drag tests may use KWin with `/dev/uinput` (recommended: sway only).
+- Not covered: frame callbacks under a fullscreen window, KWin map and unmap effects, `reduced_motion` on a `LayerWindow`.
+
+### Phase 6 scope
+
+[tre #206](https://github.com/mindderivative/tre/issues/206).
+
+Backlog, not approved. tre follows this note's advice and splits it:
+
+- **6a, prototype the overlay route first, no new API.** A transparent `overlay` `LayerWindow` on all four edges, `input_region="auto"`, menus through `show_layer`. `"auto"` already walks `show_layer` overlays, so opening a menu extends the region. Checks: idle draw count and memory per output, dismissal on outside click and Escape, `keyboard` switched to `on_demand` while open, edge flipping, submenus, tooltips. The result is a recorded verdict plus a gap list. One known gap: a click outside a menu falls through to the window below, so the shell must also dismiss on it.
+- **6b, `PopupWindow`, only if 6a falls short.** Large, risk medium to high: `xdg_wm_base` on the layer queue, `xdg_positioner`, `get_popup`, grab with the seat serial, a popup's fixed size at creation (growing content needs a reposition), nesting. `winit` has no popup support, so it would live on the layer thread.
+- Open decisions in tre: start with 6a (recommended), `Window` subclass with keyboard focus inherited from the layer (recommended), and the 6a pass bar for idle cost (for example no idle frames, a few tens of MB per 4K output).
 
 Not shown by the spike: frame callbacks under a fullscreen window, output removal, 1.5x scale, touch, key repeat, cursor shape, IME, AccessKit, and on-screen confirmation (evidence is a protocol trace, a first-frame readback, the shortened maximised window and pointer events).
 
@@ -213,7 +247,8 @@ This part is separable. If the layer surface lands first, ship popups as a secon
 | `[(x, y, w, h), ...]` | Explicit rectangles in surface-local logical pixels |
 
 - Wayland regions are rectangle lists. tre decomposes a non-rectangular shape into scanline rectangles and caps the count. #needs-verification: cost, and compositor limits on region size.
-- `"auto"` updates in the same commit as the buffer it matches.
+- `"auto"` updates right after layout in its own commit, so an idle surface still updates. It can lead or trail the buffer by up to one frame ([tre #204](https://github.com/mindderivative/tre/issues/204)). This replaces the earlier same-commit requirement.
+- tre caps regions at 256 rectangles in bands of at least 2 px, rounded outward, so the region is never smaller than the drawn shape.
 - While a node animation runs, `"auto"` uses the union of the start and end shapes, then snaps to the exact region at `animation_end`. Input never lands outside a visible control; a click just inside the old edge of a shrinking shape may still hit.
 - `click_through` stays as an alias for `input_region=[]`.
 
@@ -337,9 +372,9 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 - [ ] A transparent `LayerWindow` renders with a transparent background over the desktop.
 - [ ] Pasting text into a focused `LayerWindow` text field inserts the current clipboard contents.
 - [ ] `app.outputs()` lists every connected output with a stable `name`; hot-plug fires `output_added` and `output_removed`.
-- [ ] A transparent `LayerWindow` with `input_region=[]` passes pointer clicks through to the window below.
-- [ ] With `input_region="auto"` and a circular node, a click inside the circle reaches tre and a click in the bounding-box corner outside it reaches the window below.
-- [ ] Screen frame: a painter plus reservers (see [Use case: screen frame](#use-case-screen-frame)) keeps maximised windows inside the inner edge; a click on the ring reaches the shell and a click in the interior reaches the window below.
+- [x] A transparent `LayerWindow` with `input_region=[]` passes pointer clicks through to the window below. Met on headless sway (tre #204); KWin not run.
+- [x] With `input_region="auto"` and a circular node, a click inside the circle reaches tre and a click in the bounding-box corner outside it reaches the window below. Met on headless sway (tre #204); KWin not run.
+- [ ] Screen frame: a painter plus reservers (see [Use case: screen frame](#use-case-screen-frame)) keeps maximised windows inside the inner edge; a click on the ring reaches the shell and a click in the interior reaches the window below. The click routing on a four-bar ring is met on sway (tre #204); the maximised-window part and KWin remain.
 - [ ] `window_region="drag"` on a `LayerWindow` node raises when attached. `"drag_margin"` moves a corner-anchored widget, never past the output edge, and fires `moved` with the final margin on release.
 - [ ] `layer_window.animate("margin_top", to=-32, duration_ms=200)` runs with no Python callback until `on_complete`, commits once per frame, and `advance(200)` completes it with no compositor.
 - [ ] Two `LayerWindow`s animating on the same loop turn read the same timestamp.
@@ -366,7 +401,9 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 - [x] Negative margins on KWin: accepted and honoured (spike).
 - [ ] Frame-callback behaviour for covered surfaces and KWin's own map and unmap effects on layer surfaces. The spike did not test frame callbacks under a fullscreen window.
 - [ ] Whether `reduced_motion` follows Plasma's animation speed. tre reads it from the settings portal (`org.freedesktop.appearance` `reduced-motion`); with Plasma 6.8 at speed factor 0.25 it reported 0, so it likely does not follow the factor. Unconfirmed.
-- [ ] Prototype the screen frame and the full-screen overlay popup alternative, then decide on `PopupWindow` and on `TRE-REQ-003`. The spike's `-1` painter and 1 px reserver results support the frame layout.
+- [ ] Review tre's scoping of phase 5 ([#205](https://github.com/mindderivative/tre/issues/205)) and phase 6 ([#206](https://github.com/mindderivative/tre/issues/206)): the five and three decisions listed there are the maintainer's, and the relative-pointer drag changes the lag expectation under [Margin drag](#margin-drag).
+- [ ] Mask-aware hit testing: tre #204 made hit testing follow `corner_radius` only; masks and `clip_children` stay ignored. Decide whether the shell needs more before `TRE-REQ-003`.
+- [ ] Prototype the screen frame and the full-screen overlay popup alternative, then decide on `PopupWindow` and on `TRE-REQ-003`. tre phase 6a does the overlay half. The spike's `-1` painter and 1 px reserver results support the frame layout.
 - [x] tre's animation progress is clock-driven (`Tree::tick_all(now: Instant)`). What the loop does when frames stop is untested; requirement 2 still needs a test.
 - [ ] Check the 0.5.7 docs for the mask API, concave corners, blend modes and shape-aware box hit-testing.
 - [ ] Find the first KWin release exposing `zwlr_layer_shell_v1` (shared with ADR-0001).
