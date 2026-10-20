@@ -23,7 +23,7 @@ This note is carried to the tre project by the maintainer ([[AGENTS#6. Engine re
 
 ## Upstream status
 
-Read from the tre issue tracker on 2026-10-19 with `gh`. The spike write-up lives on a local tre branch that is not pushed, so it has not been read; the figures below are from the issue comment that summarises it.
+Read from the tre issue tracker on 2026-10-19 with `gh`. The spike findings note is in [tre PR #197](https://github.com/mindderivative/tre/pull/197) (`docs/design/layer-surface-spike.md`, open); it was read in full and the figures below come from it.
 
 | Item | State |
 |---|---|
@@ -42,6 +42,26 @@ Spike results that bear on this request:
 - Fractional-scale and viewporter objects work on a layer surface (1x only).
 
 Not shown by the spike: frame callbacks under a fullscreen window, output removal, 1.5x scale, touch, key repeat, cursor shape, IME, AccessKit, and on-screen confirmation (evidence is a protocol trace, a first-frame readback, the shortened maximised window and pointer events).
+
+### Coverage check against tre's plan
+
+Compared on 2026-10-19: this request and its acceptance criteria against the phase plan in [tre PR #197](https://github.com/mindderivative/tre/pull/197). The plan covers the core of the request. These needs are not assigned to a phase or were not tested:
+
+| Need | Why the shell needs it | State in tre's plan |
+|---|---|---|
+| Transparent rendering on a layer surface | Frame, rounded bars and OSDs need a transparent background | The surface reports alpha mode `PreMultiplied`, but a transparent scene was not drawn or checked. Add to phase 2. |
+| Accessibility | Screen-reader access to the bar | Needs `accesskit_unix` directly (tre uses `accesskit_winit` today). Untested and in no phase. |
+| Clipboard paste into a layer surface | Launcher search boxes | tre's clipboard goes through XWayland for every window. The spike did not test a paste, and a layer surface is not an X11 window. #needs-verification |
+| Text input and IME | Launcher input in non-Latin scripts | `zwp_text_input_v3` is advertised; untested. Plain keys gave UTF-8 text. |
+| Key repeat and cursor shape | Held keys in text fields, resize and pointer cursors | In phase 2, but tre needs its own repeat timer because `sctk` offers repeat only through `calloop`. |
+| Touch | Touch screens | The test seat had no touch capability; nothing tested. |
+| Output removal and hot-plug | Per-monitor bars | `closed` on removal was not tested. This is an acceptance criterion. |
+| Fractional scale at 1.5x | Crisp bars on scaled displays | Objects bind; the 1.5x output was not available. |
+| Other GPUs | Not only AMD RADV | The spike ran on one AMD GPU. Alpha and format support on other drivers is unchecked. #needs-verification |
+| Layer state across threads | The second queue runs on a helper thread while the loop thread draws | The spike put it all on one thread. The note says a design must decide who owns what; this needs a short design before phase 2. |
+| `PopupWindow` and the full-screen overlay alternative | Menus and flyouts | Phase 6, untouched. The spike expects the overlay route to be easier with a working layer surface. |
+
+One request change came out of the spike: the compositor's own output choice alternated between runs, so `output=None` now means that tre picks an output deterministically. The shell passes an explicit output for every per-monitor surface.
 
 ## Shell need
 
@@ -98,7 +118,7 @@ bar = LayerWindow(
     margin=(0, 0, 0, 0),              # top, right, bottom, left
     keyboard="none",                  # "none" | "on_demand" | "exclusive"
     input_region=None,                # None | "auto" | [] | [(x, y, w, h), ...]
-    output=None,                      # Output | None (compositor picks)
+    output=None,                      # Output | None (tre picks one deterministically)
 )
 app.add_window(bar)
 ```
@@ -313,6 +333,9 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 - [ ] Changing `exclusive_zone` or `anchor` through `set()` reaches the compositor in one commit with no intermediate configure at a wrong size.
 - [ ] A `(0, 32)` size without both left and right anchors raises a Python error naming `size` before any protocol request is sent.
 - [ ] A surface bound to output `DP-1` stays on `DP-1`. Unplugging it fires `closed` with reason `"output_removed"`, and the app continues without crashing.
+- [ ] A `LayerWindow` with `output=None` binds the same output on every run.
+- [ ] A transparent `LayerWindow` renders with a transparent background over the desktop.
+- [ ] Pasting text into a focused `LayerWindow` text field inserts the current clipboard contents.
 - [ ] `app.outputs()` lists every connected output with a stable `name`; hot-plug fires `output_added` and `output_removed`.
 - [ ] A transparent `LayerWindow` with `input_region=[]` passes pointer clicks through to the window below.
 - [ ] With `input_region="auto"` and a circular node, a click inside the circle reaches tre and a click in the bounding-box corner outside it reaches the window below.
