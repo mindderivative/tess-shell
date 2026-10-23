@@ -5,7 +5,7 @@ type: engine-request
 status: review
 owner: phil
 created: 2026-10-18
-updated: 2026-10-20
+updated: 2026-10-23
 tags: [engine-request, spec/surface, integration/wayland, needs-verification]
 related: ["[[ADR-0001 Shell Surface Strategy]]", "[[Prior Art - Linux Shell Surfaces]]", "[[80 Engine Requests]]"]
 depends_on: []
@@ -30,8 +30,8 @@ Read from the tre issue tracker on 2026-10-19 with `gh`. The spike findings note
 | Request | [tre #195](https://github.com/mindderivative/tre/issues/195), open, backlog. It records absences checked against the tre source (no layer-shell, `xdg_popup`, `smithay` or `wayland-client` in `crates/`; backend `winit` 0.30.13). |
 | Spike (phase 1) | [tre #196](https://github.com/mindderivative/tre/issues/196), done, held at review. Verdict: go on I2, a layer surface on a second event queue of the `wl_display` that `winit` owns. |
 | Phases | 1 spike ([#196](https://github.com/mindderivative/tre/issues/196)), 2 `LayerWindow` core and mock backend ([#198](https://github.com/mindderivative/tre/issues/198)), 3 outputs API ([#202](https://github.com/mindderivative/tre/issues/202)), 4 `input_region` ([#204](https://github.com/mindderivative/tre/issues/204)), 5 margin animation and `drag_margin` ([#205](https://github.com/mindderivative/tre/issues/205)), 6 popups ([#206](https://github.com/mindderivative/tre/issues/206)) |
-| Phases 2 to 4 | Done (read from tre on 2026-10-20). Phase 4 is on local branch `input-region-204`, not pushed. |
-| Phases 5 and 6 | Scoped, Backlog, awaiting the maintainer's approval and decisions. See [Phase 5 scope](#phase-5-scope) and [Phase 6 scope](#phase-6-scope). |
+| Phases 2 to 5 | Done (read from tre on 2026-10-23). Phases 4 and 5 are on local branches `input-region-204` and `margin-animation-205`, not pushed. See [Phase 5 as built](#phase-5-as-built-tre-205). |
+| Phase 6 | Scoped, Backlog, awaiting the maintainer's approval and decisions. See [Phase 6 scope](#phase-6-scope). |
 | Effort and risk (tre's estimate) | XL overall, spike M. Risk high: two input sources in one loop. |
 
 Spike results that bear on this request:
@@ -54,16 +54,17 @@ Source: the issue and its comments, read 2026-10-20 with `gh`.
 - **Deviation from this note:** `"auto"` is its own commit right after layout, not the buffer's commit, so it can run up to one frame ahead of or behind the buffer. See [Input region](#input-region).
 - Live checks on headless sway 1.12 with a virtual pointer: `None`, `[]`, an explicit rectangle, `"auto"` with a circle and the four-bar screen frame all route clicks as specified. Not run: touch, KWin (needs `/dev/uinput`, which moves the real pointer), labwc.
 
-### Phase 5 scope
+### Phase 5 as built ([tre #205](https://github.com/mindderivative/tre/issues/205))
 
-[tre #205](https://github.com/mindderivative/tre/issues/205).
+Source: the issue and its comments, read 2026-10-23 with `gh`. State: Done, approved by the maintainer. Built on local branch `margin-animation-205` (off `input-region-204`), not pushed; `tools/verify.sh --cross` passes. The five decisions were taken as recommended: relative pointer with a fallback, `moved` on release only, `set(margin=...)` cancels and snaps, four names only, live drag tests on sway only.
 
-Backlog, not approved. Two stages:
-
-- **5a, margin animation.** `LayerWindow.animate` for the four margin names only, as asked here. `set(margin=...)` while one runs would cancel it and snap (recommended). Completion fires once even if frames stall. `advance(ms)` runs it headless. One timestamp per loop turn is **not guaranteed today**: each window's frame pass reads the clock itself, so requirement 1 under [Animation](#requirements) needs engine work.
-- **5b, `drag_margin`.** Refused on ordinary windows; `"drag"` stays refused on a layer window. The surface moves under the pointer, so adding each local delta overshoots with one frame of lag. tre's recommendation is `zwp_relative_pointer_v1` with a fallback to an estimate from the last requested margins. This differs from the lag expectation written under [Margin drag](#margin-drag). Effort medium to large, risk medium.
-- Open decisions in tre: relative pointer versus estimate, `moved` on release only (recommended; matches this note), cancel-and-snap, four names only, and whether live drag tests may use KWin with `/dev/uinput` (recommended: sway only).
-- Not covered: frame callbacks under a fullscreen window, KWin map and unmap effects, `reduced_motion` on a `LayerWindow`.
+- **5a, margin animation.** `LayerWindow.animate("margin_top"|"margin_right"|"margin_bottom"|"margin_left", to, duration_ms, easing, on_complete)`. Four `Animated<f64>` margins tick in the window's frame pass. A changed rounded margin goes to the layer thread as a margin-only command: one commit, no other property re-sent. Linear, bezier and spring easing; retarget starts from the current value; `animation_end` (`property`, `finished`) fires on the root; `set(margin=...)` cancels and snaps with no `on_complete`; `advance(ms)` runs it headless; a bad property or value raises.
+- **One clock per loop turn.** Frame passes tick to `engine_platform::turn_instant`, the instant the loop turn began, so windows animating together read one time. This meets requirement 1 under [Animation](#requirements).
+- **Wake-up.** The loop's alarm fires every 8 ms while a margin moves, with no spinning and no buffer drawn. Progress does not wait for frame callbacks.
+- **5b, `window_region="drag_margin"`.** A primary press on such a node of a `LayerWindow` (same exclusions as `"drag"`) makes the layer thread follow the pointer using `zwp_relative_pointer_v1` deltas. Anchored edges' margins change, clamped to the output, one commit per input frame, no Python. On release `moved` fires once with `event.margin`. A running margin animation stops where it is. An axis anchored to both edges or to none does not move. `drag_margin` raises on an ordinary window; `"drag"` still raises on a layer window.
+- **Live results (headless sway, `grim` readback and a virtual pointer).** A 0 to 300 px slide in 800 ms is smooth (about 6 px per 16 ms), monotonic, and `on_complete` lands on time. A drag follows the pointer within 2 px and stops at both output edges (660, 1080 for a 200x60 widget on 1280x720; 0 at the near edge).
+- **Limits.** Wayland cannot commit two surfaces atomically, so surfaces animating together can differ by up to a frame on screen (documented in tre). Other surfaces' exclusive zones do not limit a drag.
+- **Not run:** the surface-local fallback for a compositor without the relative-pointer protocol (it can overshoot a little by design); KWin; `reduced_motion` on a `LayerWindow`; frame callbacks to a surface covered by a fullscreen window; KWin map and unmap effects.
 
 ### Phase 6 scope
 
@@ -258,9 +259,9 @@ Movable desktop widgets anchor to a corner and move by changing `margin`. Python
 
 - A node with `window_region="drag_margin"` starts a drag on primary press, unless the press lands on a focusable node, a node with a `click` listener, or a node holding pointer capture (the same exclusions as `"drag"`).
 - tre updates the margins of the anchored edges by the pointer delta from the press point, clamped to the output, with one double-buffered commit per input frame. An axis anchored to both opposite edges does not move.
-- The surface moves under the pointer, so surface-local deltas stay valid.
+- The surface moves under the pointer, so a surface-local delta shifts as the compositor applies each commit, and adding it per event overshoots. tre uses `zwp_relative_pointer_v1` deltas, which do not depend on the surface (exact on sway), and falls back to a surface-local estimate where the protocol is missing ([Phase 5 as built](#phase-5-as-built-tre-205)).
 - On release tre fires `moved` with the final `margin`. The shell persists it.
-- Expect one frame of lag between pointer and surface. #needs-verification on KWin.
+- Expect one frame of lag between pointer and surface. #needs-verification on KWin, including that KWin exposes the relative-pointer protocol.
 
 ## Animation
 
@@ -375,10 +376,10 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 - [x] A transparent `LayerWindow` with `input_region=[]` passes pointer clicks through to the window below. Met on headless sway (tre #204); KWin not run.
 - [x] With `input_region="auto"` and a circular node, a click inside the circle reaches tre and a click in the bounding-box corner outside it reaches the window below. Met on headless sway (tre #204); KWin not run.
 - [ ] Screen frame: a painter plus reservers (see [Use case: screen frame](#use-case-screen-frame)) keeps maximised windows inside the inner edge; a click on the ring reaches the shell and a click in the interior reaches the window below. The click routing on a four-bar ring is met on sway (tre #204); the maximised-window part and KWin remain.
-- [ ] `window_region="drag"` on a `LayerWindow` node raises when attached. `"drag_margin"` moves a corner-anchored widget, never past the output edge, and fires `moved` with the final margin on release.
-- [ ] `layer_window.animate("margin_top", to=-32, duration_ms=200)` runs with no Python callback until `on_complete`, commits once per frame, and `advance(200)` completes it with no compositor.
-- [ ] Two `LayerWindow`s animating on the same loop turn read the same timestamp.
-- [ ] With frame callbacks stopped for a surface, its animation still fires `animation_end` with `finished=True` after the duration.
+- [x] `window_region="drag"` on a `LayerWindow` node raises when attached. `"drag_margin"` moves a corner-anchored widget, never past the output edge, and fires `moved` with the final margin on release. Met on headless sway (tre #205); KWin and the no-relative-pointer fallback not run.
+- [x] `layer_window.animate("margin_top", to=-32, duration_ms=200)` runs with no Python callback until `on_complete`, commits once per frame, and `advance(200)` completes it with no compositor. Met (tre #205); the live check used a positive 0 to 300 px slide, and negative margins on KWin come from the spike.
+- [x] Two `LayerWindow`s animating on the same loop turn read the same timestamp. Met by `turn_instant` and a headless test (tre #205).
+- [ ] With frame callbacks stopped for a surface, its animation still fires `animation_end` with `finished=True` after the duration. Likely met by design (clock-driven, 8 ms alarm), but tre did not test a covered or occluded surface.
 - [ ] A fade-out close (cancel `close_requested`, animate `opacity` to 0, `close()` on `animation_end`) keeps the surface mapped until the animation ends.
 - [ ] With `reduced_motion` true, `LayerWindow.get("reduced_motion")` reports it and fires the `reduced_motion` event on change.
 - [ ] A `keyboard="on_demand"` surface receives key events when focused; a `"none"` surface never does.
@@ -401,7 +402,10 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 - [x] Negative margins on KWin: accepted and honoured (spike).
 - [ ] Frame-callback behaviour for covered surfaces and KWin's own map and unmap effects on layer surfaces. The spike did not test frame callbacks under a fullscreen window.
 - [ ] Whether `reduced_motion` follows Plasma's animation speed. tre reads it from the settings portal (`org.freedesktop.appearance` `reduced-motion`); with Plasma 6.8 at speed factor 0.25 it reported 0, so it likely does not follow the factor. Unconfirmed.
-- [ ] Review tre's scoping of phase 5 ([#205](https://github.com/mindderivative/tre/issues/205)) and phase 6 ([#206](https://github.com/mindderivative/tre/issues/206)): the five and three decisions listed there are the maintainer's, and the relative-pointer drag changes the lag expectation under [Margin drag](#margin-drag).
+- [x] Phase 5 ([#205](https://github.com/mindderivative/tre/issues/205)) reviewed against this note on 2026-10-23: met on sway, with the gaps listed under [Phase 5 as built](#phase-5-as-built-tre-205). [Margin drag](#margin-drag) is updated for the relative-pointer drag.
+- [ ] Review tre's scoping of phase 6 ([#206](https://github.com/mindderivative/tre/issues/206)): the three decisions listed there are the maintainer's.
+- [ ] Margin drag ignores other surfaces' exclusive zones, so a widget can be dragged over a bar. Decide whether the shell clamps in the `moved` handler, or asks tre for an optional clamp to the usable area.
+- [ ] `reduced_motion` on a `LayerWindow` was not checked in phase 5; the acceptance item above stays open.
 - [ ] Mask-aware hit testing: tre #204 made hit testing follow `corner_radius` only; masks and `clip_children` stay ignored. Decide whether the shell needs more before `TRE-REQ-003`.
 - [ ] Prototype the screen frame and the full-screen overlay popup alternative, then decide on `PopupWindow` and on `TRE-REQ-003`. tre phase 6a does the overlay half. The spike's `-1` painter and 1 px reserver results support the frame layout.
 - [x] tre's animation progress is clock-driven (`Tree::tick_all(now: Instant)`). What the loop does when frames stop is untested; requirement 2 still needs a test.
