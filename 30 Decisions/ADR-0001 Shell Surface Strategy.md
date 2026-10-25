@@ -20,7 +20,7 @@ depends_on: []
 > Without edge anchoring and exclusive zones there is no bar, panel or dock. Every note under `40 Specifications/Surfaces/` depends on this decision.
 
 > [!success] Option A is built in tre (2026-10-25)
-> tre closed [#195](https://github.com/mindderivative/tre/issues/195): `LayerWindow`, outputs, `input_region`, margin animation and drag, `exclusive_edge`, IME and AccessKit are on tre `main`, unreleased. Popups use an overlay `LayerWindow`, not `PopupWindow`. Costs and limits (KWin corner reservation, about 210 MB VRAM per window): [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]. Status stays `proposed` until the maintainer accepts.
+> tre closed [#195](https://github.com/mindderivative/tre/issues/195): `LayerWindow`, outputs, `input_region`, margin animation and drag, `exclusive_edge`, IME and AccessKit are on tre `main`, unreleased. Popups use an overlay `LayerWindow`, not `PopupWindow`. Costs and limits (KWin corner reservation, unresolved; about 210 MB VRAM per window): [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]. Status stays `proposed` until the maintainer accepts.
 
 ## Context
 

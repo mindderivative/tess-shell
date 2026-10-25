@@ -53,8 +53,8 @@ Source: [tre #195](https://github.com/mindderivative/tre/issues/195) closing com
 - `set(exclusive_edge=None)` raises on a surface that has an edge: the protocol cannot clear one.
 - Hit testing follows `corner_radius` for every window; masks and `clip_children` are still ignored.
 
-> [!danger] KWin 6.8.1 does not reserve space for a corner surface
-> KWin advertises layer-shell v5 and accepts `exclusive_edge`, but a maximised window keeps its size. Bars (one edge, or three) reserve correctly. A corner widget that must reserve space has to be bar-shaped on KDE, or the shell runs on a wlroots compositor. Worth reporting to KDE; the maintainer carries that. Record in [[Risk Register]] when it exists.
+> [!danger] Unresolved: KWin 6.8.1 shows no reservation for a corner surface
+> tre sends `set_exclusive_edge` after `set_exclusive_zone` on a v5 object with no protocol error ([tre #201](https://github.com/mindderivative/tre/issues/201), `WAYLAND_DEBUG=client`), and a maximised window keeps its size. Bars (one edge, or three) reserve correctly, and sway honours the corner edge. KWin master's [layershell_v1.cpp](https://invent.kde.org/plasma/kwin/-/raw/master/src/wayland/layershell_v1.cpp) stores an explicit exclusive edge and uses it for a corner with a positive zone, so the cause is not settled and may be tre's. Candidates: 6.8.1 differs from master, tre's request differs from layer-shell-qt's (order, commit, bound version), tre's test reads the window size before KWin updates the work area, or a real KWin gap. Needs a control client on the same KWin (a layer-shell-qt corner panel with `setExclusiveEdge`), a `WAYLAND_DEBUG` trace comparison, and a test that waits for the work area. The maintainer carries it to tre. #needs-verification. Record in [[Risk Register]] when it exists.
 
 > [!danger] About 210 MB of VRAM per tre window
 > Measured on one AMD RADV GPU: a fixed cost of about 210 MB per window plus about 16 bytes per pixel (212 MB for a full-screen overlay at 720p, 333 MB at 4K), released on close ([tre #207](https://github.com/mindderivative/tre/issues/207), open research). A bar per output, a screen frame (up to five surfaces per output) and on-demand overlays multiply this. The shell's surface count is a budget item for [[60 Quality]]. Record in [[Risk Register]] when it exists.
@@ -405,7 +405,7 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 
 ## Acceptance criteria
 
-- [x] On KWin 6.7 Wayland, `LayerWindow(layer="top", anchor=("top","left","right"), size=(0,32), exclusive_zone=32)` creates a bar; a maximised ordinary window does not overlap it. Met live on KWin 6.8.1 and sway (tre hand-off).
+- [x] On KWin 6.7 Wayland, `LayerWindow(layer="top", anchor=("top","left","right"), size=(0,32), exclusive_zone=32)` creates a bar; a maximised ordinary window does not overlap it. Met live on KWin 6.8.1 and sway (tre hand-off); bars only, corner reservation on KWin is unresolved.
 - [ ] Changing `exclusive_zone` or `anchor` through `set()` reaches the compositor in one commit with no intermediate configure at a wrong size. One commit by construction; the absence of a wrong-size configure was not measured.
 - [x] A `(0, 32)` size without both left and right anchors raises a Python error naming `size` before any protocol request is sent. Met headless.
 - [x] A surface bound to output `DP-1` stays on `DP-1`. Unplugging it fires `closed` with reason `"output_removed"`, and the app continues without crashing. Met on sway with a real unplug; KWin not run.
