@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-18
-updated: 2026-10-18
+updated: 2026-10-25
 tags: [moc]
 related: ["[[AGENTS]]"]
 depends_on: []
@@ -56,7 +56,7 @@ Operating rules for agents: [[AGENTS]].
 
 Research: [[Prior Art - Linux Shell Surfaces]]
 
-Engine requests: [[TRE-REQ-001 Layer Surface Window]] (draft, blocks all surface specs)
+Engine requests: [[TRE-REQ-001 Layer Surface Window]] (review; built in tre `main`, unreleased; blocks surface specs until a tre release)
 
 Planned, not yet written:
 - Relationship to Tesserae UI: depend on `tesserae-ui` or build directly on `tre`
@@ -74,6 +74,6 @@ Versions drift. If the live docs disagree with this table, the docs win; update 
 
 ## Current focus
 
-1. Review [[TRE-REQ-001 Layer Surface Window]] and accept or amend [[ADR-0001 Shell Surface Strategy]]: layer surfaces are the first blocker.
+1. Review tre's delivery of [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]] and accept or amend [[ADR-0001 Shell Surface Strategy]]: Option A is built, so the ADR is ready for a decision.
 2. Write `10 Vision` (goals, non-goals, v1 scope) so the architecture notes have a target.
 3. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.

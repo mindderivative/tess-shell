@@ -5,7 +5,7 @@ type: engine-request
 status: review
 owner: phil
 created: 2026-10-18
-updated: 2026-10-23
+updated: 2026-10-25
 tags: [engine-request, spec/surface, integration/wayland, needs-verification]
 related: ["[[ADR-0001 Shell Surface Strategy]]", "[[Prior Art - Linux Shell Surfaces]]", "[[80 Engine Requests]]"]
 depends_on: []
@@ -16,12 +16,52 @@ depends_on: []
 > [!summary]
 > Add a `LayerWindow` type to tre. It is a `Window` whose Wayland role is `zwlr_layer_shell_v1` instead of xdg-toplevel, so it can anchor to screen edges, reserve space, sit on a stacking layer, take a chosen keyboard mode and bind to one output. A companion `PopupWindow` type opens menus and flyouts parented to a layer surface. A small output API lets the shell place one surface per monitor. An `input_region`, margin animation and margin drag cover non-rectangular shells, slide and fade motion, and movable widgets.
 
-> [!danger] Blocks the shell
-> No bar, panel, dock, OSD or wallpaper can ship without this. Every note under `40 Specifications/Surfaces/` carries `> [!warning] Blocked by [[TRE-REQ-001 Layer Surface Window]]` until tre ships it. Decision record: [[ADR-0001 Shell Surface Strategy]] (Option A, `proposed`).
+> [!success] Built in tre, unreleased (2026-10-25)
+> [tre #195](https://github.com/mindderivative/tre/issues/195) is closed: all six phases and three follow-ups are merged to tre `main`, unreleased after 0.5.7. See [Delivered](#delivered-tre-195-closed). The request stays at `review` until the maintainer confirms it against the shell.
+
+> [!danger] Blocks the shell until a tre release exists
+> No bar, panel, dock, OSD or wallpaper can ship without this. Every note under `40 Specifications/Surfaces/` carries `> [!warning] Blocked by [[TRE-REQ-001 Layer Surface Window]]` until tre releases it. Decision record: [[ADR-0001 Shell Surface Strategy]] (Option A, `proposed`).
 
 This note is carried to the tre project by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]).
 
-## Upstream status
+## Delivered (tre #195 closed)
+
+Source: [tre #195](https://github.com/mindderivative/tre/issues/195) closing comment and `docs/design/layer-window-shell-handoff.md` in tre (PR #218), read 2026-10-25 with `gh`. Everything below is on tre `main` and unreleased; the next version number is not chosen.
+
+| Part | tre issue | PR |
+|---|---|---|
+| Spike | [#196](https://github.com/mindderivative/tre/issues/196) | #197 |
+| `LayerWindow` core | [#198](https://github.com/mindderivative/tre/issues/198) | #208 |
+| Outputs | [#202](https://github.com/mindderivative/tre/issues/202) | #209 |
+| Live checks (KWin, sway), deterministic `output=None` | [#203](https://github.com/mindderivative/tre/issues/203) | #210 |
+| `input_region`, hit testing follows `corner_radius` | [#204](https://github.com/mindderivative/tre/issues/204) | #211 |
+| Margin animation, `drag_margin` | [#205](https://github.com/mindderivative/tre/issues/205) | #212 |
+| Menus from a bar (overlay route) | [#206](https://github.com/mindderivative/tre/issues/206) | #213 |
+| KWin versions of the region, drag and menu tests | | #214 |
+| `exclusive_edge` (tre binds layer-shell v5 itself) | [#201](https://github.com/mindderivative/tre/issues/201) | #215 |
+| IME through `zwp_text_input_v3` | [#199](https://github.com/mindderivative/tre/issues/199) | #216 |
+| AccessKit through `accesskit_unix` | [#200](https://github.com/mindderivative/tre/issues/200) | #217 |
+| Hand-off note, live hot-plug test | | #218 |
+
+**Differences from this request**
+
+- No `PopupWindow`. Menus use the overlay route: a transparent full-screen `overlay` `LayerWindow` with `input_region="auto"` and `keyboard="exclusive"`, created when a menu opens and closed on dismiss. An outside click is consumed and dismisses; Escape dismisses; menus flip at the output edge; submenus and tooltips work. The engine does not know other panels' reserved areas.
+- `layer=` keeps its name (maintainer decision on #195). The shell uses `shell_layer=` on its own side if it needs a distinct name.
+- `output=None` is the output at (0, 0), else first by name. The shell still passes an explicit `Output` per monitor.
+- v1 targets KWin and wlroots-family compositors (maintainer decision on #195). Tested on KWin 6.8.1 and sway 1.12.
+- Unsupported platforms raise `UnsupportedPlatform`. `animate` covers the four margins only.
+- `set(exclusive_edge=None)` raises on a surface that has an edge: the protocol cannot clear one.
+- Hit testing follows `corner_radius` for every window; masks and `clip_children` are still ignored.
+
+> [!danger] KWin 6.8.1 does not reserve space for a corner surface
+> KWin advertises layer-shell v5 and accepts `exclusive_edge`, but a maximised window keeps its size. Bars (one edge, or three) reserve correctly. A corner widget that must reserve space has to be bar-shaped on KDE, or the shell runs on a wlroots compositor. Worth reporting to KDE; the maintainer carries that. Record in [[Risk Register]] when it exists.
+
+> [!danger] About 210 MB of VRAM per tre window
+> Measured on one AMD RADV GPU: a fixed cost of about 210 MB per window plus about 16 bytes per pixel (212 MB for a full-screen overlay at 720p, 333 MB at 4K), released on close ([tre #207](https://github.com/mindderivative/tre/issues/207), open research). A bar per output, a screen frame (up to five surfaces per output) and on-demand overlays multiply this. The shell's surface count is a budget item for [[60 Quality]]. Record in [[Risk Register]] when it exists.
+
+**Not tested anywhere:** touch; non-AMD GPUs; labwc and other wlroots compositors besides sway; GNOME (no layer shell); a real v4-only layer-shell compositor; a real input method (fcitx5, ibus); Orca; crispness at 1.5x; `reduced_motion` on a `LayerWindow`; frame callbacks under a fullscreen window; the four reservers plus painter together.
+
+## Upstream status (as of 2026-10-23, superseded by Delivered)
 
 Read from the tre issue tracker on 2026-10-19 with `gh`. The spike findings note is in [tre PR #197](https://github.com/mindderivative/tre/pull/197) (`docs/design/layer-surface-spike.md`, open); it was read in full and the figures below come from it.
 
@@ -365,30 +405,30 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 
 ## Acceptance criteria
 
-- [ ] On KWin 6.7 Wayland, `LayerWindow(layer="top", anchor=("top","left","right"), size=(0,32), exclusive_zone=32)` creates a bar; a maximised ordinary window does not overlap it.
-- [ ] Changing `exclusive_zone` or `anchor` through `set()` reaches the compositor in one commit with no intermediate configure at a wrong size.
-- [ ] A `(0, 32)` size without both left and right anchors raises a Python error naming `size` before any protocol request is sent.
-- [ ] A surface bound to output `DP-1` stays on `DP-1`. Unplugging it fires `closed` with reason `"output_removed"`, and the app continues without crashing.
-- [ ] A `LayerWindow` with `output=None` binds the same output on every run.
-- [ ] A transparent `LayerWindow` renders with a transparent background over the desktop.
-- [ ] Pasting text into a focused `LayerWindow` text field inserts the current clipboard contents.
-- [ ] `app.outputs()` lists every connected output with a stable `name`; hot-plug fires `output_added` and `output_removed`.
+- [x] On KWin 6.7 Wayland, `LayerWindow(layer="top", anchor=("top","left","right"), size=(0,32), exclusive_zone=32)` creates a bar; a maximised ordinary window does not overlap it. Met live on KWin 6.8.1 and sway (tre hand-off).
+- [ ] Changing `exclusive_zone` or `anchor` through `set()` reaches the compositor in one commit with no intermediate configure at a wrong size. One commit by construction; the absence of a wrong-size configure was not measured.
+- [x] A `(0, 32)` size without both left and right anchors raises a Python error naming `size` before any protocol request is sent. Met headless.
+- [x] A surface bound to output `DP-1` stays on `DP-1`. Unplugging it fires `closed` with reason `"output_removed"`, and the app continues without crashing. Met on sway with a real unplug; KWin not run.
+- [x] A `LayerWindow` with `output=None` binds the same output on every run. Met on KWin and sway.
+- [x] A transparent `LayerWindow` renders with a transparent background over the desktop. Met on sway (pixels read back); KWin not run.
+- [x] Pasting text into a focused `LayerWindow` text field inserts the current clipboard contents. Met on sway with no X server; KWin not run.
+- [x] `app.outputs()` lists every connected output with a stable `name`; hot-plug fires `output_added` and `output_removed`. Met on KWin and sway for `outputs()`; added, updated and removed fire on sway.
 - [x] A transparent `LayerWindow` with `input_region=[]` passes pointer clicks through to the window below. Met on headless sway (tre #204); KWin not run.
 - [x] With `input_region="auto"` and a circular node, a click inside the circle reaches tre and a click in the bounding-box corner outside it reaches the window below. Met on headless sway (tre #204); KWin not run.
-- [ ] Screen frame: a painter plus reservers (see [Use case: screen frame](#use-case-screen-frame)) keeps maximised windows inside the inner edge; a click on the ring reaches the shell and a click in the interior reaches the window below. The click routing on a four-bar ring is met on sway (tre #204); the maximised-window part and KWin remain.
+- [ ] Screen frame: a painter plus reservers (see [Use case: screen frame](#use-case-screen-frame)) keeps maximised windows inside the inner edge; a click on the ring reaches the shell and a click in the interior reaches the window below. The click routing on a four-bar ring is met on sway (tre #204); the maximised-window part and KWin remain. tre did not test the four reservers plus painter together.
 - [x] `window_region="drag"` on a `LayerWindow` node raises when attached. `"drag_margin"` moves a corner-anchored widget, never past the output edge, and fires `moved` with the final margin on release. Met on headless sway (tre #205); KWin and the no-relative-pointer fallback not run.
 - [x] `layer_window.animate("margin_top", to=-32, duration_ms=200)` runs with no Python callback until `on_complete`, commits once per frame, and `advance(200)` completes it with no compositor. Met (tre #205); the live check used a positive 0 to 300 px slide, and negative margins on KWin come from the spike.
 - [x] Two `LayerWindow`s animating on the same loop turn read the same timestamp. Met by `turn_instant` and a headless test (tre #205).
-- [ ] With frame callbacks stopped for a surface, its animation still fires `animation_end` with `finished=True` after the duration. Likely met by design (clock-driven, 8 ms alarm), but tre did not test a covered or occluded surface.
+- [ ] With frame callbacks stopped for a surface, its animation still fires `animation_end` with `finished=True` after the duration. Likely met by design (clock-driven, 8 ms alarm), but tre did not test a covered or occluded surface. Not tested by tre.
 - [ ] A fade-out close (cancel `close_requested`, animate `opacity` to 0, `close()` on `animation_end`) keeps the surface mapped until the animation ends.
 - [ ] With `reduced_motion` true, `LayerWindow.get("reduced_motion")` reports it and fires the `reduced_motion` event on change.
-- [ ] A `keyboard="on_demand"` surface receives key events when focused; a `"none"` surface never does.
-- [ ] A `PopupWindow` opens next to its `anchor_rect`, flips at a screen edge, and fires `closed` with reason `"dismissed"` on outside click and Escape.
-- [ ] A bar on a 1.0 scale output and a bar on a 1.5 scale output both render crisp text.
-- [ ] `tre.supports("layer_shell")` is `False` on a compositor without the protocol, and `LayerWindow(...)` raises `UnsupportedPlatform` there.
+- [x] A `keyboard="on_demand"` surface receives key events when focused; a `"none"` surface never does. Met on KWin with injected keys.
+- [x] A `PopupWindow` opens next to its `anchor_rect`, flips at a screen edge, and fires `closed` with reason `"dismissed"` on outside click and Escape. Replaced by the overlay route (see Delivered): dismissal on outside click and Escape met on KWin and sway; the flip at the bottom edge met on sway.
+- [ ] A bar on a 1.0 scale output and a bar on a 1.5 scale output both render crisp text. The surface follows 1.5x on sway; crispness was not inspected.
+- [x] `tre.supports("layer_shell")` is `False` on a compositor without the protocol, and `LayerWindow(...)` raises `UnsupportedPlatform` there. Met by the availability rule in headless tests; Mutter not run.
 - [ ] `simulate`, `advance` and `snapshot` work on a `LayerWindow` in a CI run with no display.
 - [ ] An idle bar draws zero frames and wakes the loop only for its own timers.
-- [ ] The AccessKit tree for a bar is visible to a screen reader.
+- [x] The AccessKit tree for a bar is visible to a screen reader. Verified through a private AT-SPI environment with `busctl` as the reader; Orca not run; the bar's window node has no accessible name yet.
 
 ## Open items
 
@@ -396,22 +436,22 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 - [x] Choose the implementation path (I1, I2, I3). Spike recommends I2 ([tre #196](https://github.com/mindderivative/tre/issues/196)); the maintainer confirms.
 - [x] Check which of `wl_output` v4 and `xdg-output-unstable-v1` KWin exposes for stable output names. `wl_output` v4 gives names (spike).
 - [ ] Check whether `window.set(x=, y=, always_on_top=, skip_taskbar=)` does anything on Wayland. tre #195 reads the source: they call `set_outer_position` and `set_window_level`, which `winit` documents as unsupported on Wayland, and `skip_taskbar` is Windows only. So Option C cannot place or stack a bar under KWin. A test on a live session is still pending.
-- [ ] Decide keyboard focus for popups under a `"none"` parent.
-- [ ] Define "layer" in the Glossary in both senses (tre in-window overlay, protocol stacking layer) and decide whether `LayerWindow` should rename its `layer=` parameter.
-- [ ] Decide whether `LayerWindow.animate` covers only margins or also size and `exclusive_zone` (the request recommends margins only).
+- [x] Decide keyboard focus for popups under a `"none"` parent. Overlay route uses `keyboard="exclusive"` while a menu is open.
+- [ ] Define "layer" in the Glossary in both senses (tre in-window overlay, protocol stacking layer) and decide whether `LayerWindow` should rename its `layer=` parameter. Rename declined: tre keeps `layer=`; the shell may use `shell_layer=`. The Glossary entry is still to write.
+- [x] Decide whether `LayerWindow.animate` covers only margins or also size and `exclusive_zone` (the request recommends margins only). Margins only, as built.
 - [x] Negative margins on KWin: accepted and honoured (spike).
 - [ ] Frame-callback behaviour for covered surfaces and KWin's own map and unmap effects on layer surfaces. The spike did not test frame callbacks under a fullscreen window.
 - [ ] Whether `reduced_motion` follows Plasma's animation speed. tre reads it from the settings portal (`org.freedesktop.appearance` `reduced-motion`); with Plasma 6.8 at speed factor 0.25 it reported 0, so it likely does not follow the factor. Unconfirmed.
 - [x] Phase 5 ([#205](https://github.com/mindderivative/tre/issues/205)) reviewed against this note on 2026-10-23: met on sway, with the gaps listed under [Phase 5 as built](#phase-5-as-built-tre-205). [Margin drag](#margin-drag) is updated for the relative-pointer drag.
-- [ ] Review tre's scoping of phase 6 ([#206](https://github.com/mindderivative/tre/issues/206)): the three decisions listed there are the maintainer's.
+- [x] Review tre's scoping of phase 6 ([#206](https://github.com/mindderivative/tre/issues/206)): the three decisions listed there are the maintainer's. Resolved: 6a done, 6b not needed yet ([tre #206](https://github.com/mindderivative/tre/issues/206)).
 - [ ] Margin drag ignores other surfaces' exclusive zones, so a widget can be dragged over a bar. Decide whether the shell clamps in the `moved` handler, or asks tre for an optional clamp to the usable area.
 - [ ] `reduced_motion` on a `LayerWindow` was not checked in phase 5; the acceptance item above stays open.
 - [ ] Mask-aware hit testing: tre #204 made hit testing follow `corner_radius` only; masks and `clip_children` stay ignored. Decide whether the shell needs more before `TRE-REQ-003`.
-- [ ] Prototype the screen frame and the full-screen overlay popup alternative, then decide on `PopupWindow` and on `TRE-REQ-003`. tre phase 6a does the overlay half. The spike's `-1` painter and 1 px reserver results support the frame layout.
+- [ ] Prototype the screen frame and the full-screen overlay popup alternative, then decide on `PopupWindow` and on `TRE-REQ-003`. tre phase 6a does the overlay half. The spike's `-1` painter and 1 px reserver results support the frame layout. tre did phase 6a; the shell-side frame prototype is still open, and `PopupWindow` is not needed yet.
 - [x] tre's animation progress is clock-driven (`Tree::tick_all(now: Instant)`). What the loop does when frames stop is untested; requirement 2 still needs a test.
-- [ ] Check the 0.5.7 docs for the mask API, concave corners, blend modes and shape-aware box hit-testing.
+- [x] Check the 0.5.7 docs for the mask API, concave corners, blend modes and shape-aware box hit-testing. Hit testing follows `corner_radius`, not masks (tre #204).
 - [ ] Find the first KWin release exposing `zwlr_layer_shell_v1` (shared with ADR-0001).
-- [ ] Decide whether v1 targets wlroots-family compositors as well as KWin, which affects which compositors the acceptance tests cover.
+- [x] Decide whether v1 targets wlroots-family compositors as well as KWin, which affects which compositors the acceptance tests cover. Both KWin and wlroots (maintainer, tre #195). Only sway and KWin tested.
 
 ## Links
 

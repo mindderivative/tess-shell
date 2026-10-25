@@ -5,7 +5,7 @@ type: adr
 status: proposed
 owner: phil
 created: 2026-10-18
-updated: 2026-10-18
+updated: 2026-10-25
 tags: [adr, spec/surface, integration/wayland, needs-verification]
 related: ["[[Layer Surfaces]]", "[[Open Questions]]", "[[Risk Register]]", "[[Prior Art - Linux Shell Surfaces]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: []
@@ -18,6 +18,9 @@ depends_on: []
 
 > [!danger] Blocks the design
 > Without edge anchoring and exclusive zones there is no bar, panel or dock. Every note under `40 Specifications/Surfaces/` depends on this decision.
+
+> [!success] Option A is built in tre (2026-10-25)
+> tre closed [#195](https://github.com/mindderivative/tre/issues/195): `LayerWindow`, outputs, `input_region`, margin animation and drag, `exclusive_edge`, IME and AccessKit are on tre `main`, unreleased. Popups use an overlay `LayerWindow`, not `PopupWindow`. Costs and limits (KWin corner reservation, about 210 MB VRAM per window): [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]. Status stays `proposed` until the maintainer accepts.
 
 ## Context
 
@@ -111,12 +114,12 @@ If Option A is accepted:
 
 ## Open items
 
-- [ ] Confirm tre has no layer-shell or external-surface API (Window reference, source).
+- [x] Confirm tre has no layer-shell or external-surface API (Window reference, source). Confirmed in tre #195, now superseded by the build.
 - [ ] Find the first KWin release exposing `zwlr_layer_shell_v1`; record the version.
 - [ ] Verify `org_kde_plasma_shell` status for third-party clients.
 - [ ] Decide whether non-layer-shell compositors (GNOME) are explicitly out of scope for v1.
 - [x] Specify popup behaviour (parenting, grabs, dismissal) in `TRE-REQ-001`. Drafted in [[TRE-REQ-001 Layer Surface Window#Popups]]; the maintainer still reviews it.
-- [ ] Choose the backend path for layer surfaces (sctk beside `winit`, shared connection, or replacement). See [[TRE-REQ-001 Layer Surface Window#Implementation candidates]].
+- [x] Choose the backend path for layer surfaces: I2 built, a second event queue on `winit`'s `wl_display`; tre binds layer-shell v5 itself. See [[TRE-REQ-001 Layer Surface Window#Implementation candidates]].
 - [ ] Read the gtk-layer-shell and Quickshell source to see how they attach a layer role to a toolkit surface; this informs Option B.
 
 ## Links
