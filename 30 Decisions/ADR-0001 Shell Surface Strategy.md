@@ -14,13 +14,13 @@ depends_on: []
 # ADR-0001: Shell surface strategy
 
 > [!summary]
-> A shell needs surfaces that anchor to screen edges, reserve space, sit on a stacking layer, and control keyboard focus. tre 0.5.x opens `winit` windows (xdg-toplevel on Wayland) and, as far as the docs reviewed show, has none of these. This ADR compares four ways to close the gap and recommends adding a layer-surface type to tre.
+> A shell needs surfaces that anchor to screen edges, reserve space, sit on a stacking layer, and control keyboard focus. tre up to 0.5.7 opened only `winit` windows (xdg-toplevel on Wayland) and had none of these; 0.5.8 adds them. This ADR compares four ways to close the gap and recommends adding a layer-surface type to tre.
 
 > [!danger] Blocks the design
 > Without edge anchoring and exclusive zones there is no bar, panel or dock. Every note under `40 Specifications/Surfaces/` depends on this decision.
 
-> [!success] Option A is built in tre (2026-10-25)
-> tre closed [#195](https://github.com/mindderivative/tre/issues/195): `LayerWindow`, outputs, `input_region`, margin animation and drag, `exclusive_edge`, IME and AccessKit are on tre `main`, unreleased. Popups use an overlay `LayerWindow`, not `PopupWindow`. Costs and limits (about 210 MB VRAM per window, fixes in tre's Backlog; `PopupWindow` approved as tre #223): [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]. Status stays `proposed` until the maintainer accepts.
+> [!success] Option A is released in tre 0.5.8 (2026-10-25)
+> tre closed [#195](https://github.com/mindderivative/tre/issues/195) and released it in 0.5.8 (`tesserae-engine==0.5.8`): `LayerWindow`, `PopupWindow`, outputs, `input_region`, margin animation and drag, `exclusive_edge`, IME and screen-reader support. Window GPU memory is much lower by default (a bar about 18 MiB, was 198; one shared device is still open as tre #220). Gaps and what was tested: [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]. Status stays `proposed` until the maintainer accepts.
 
 ## Context
 
@@ -33,9 +33,9 @@ depends_on: []
 | Reserved space | `exclusive_zone`: positive = pixels reserved, 0 = move out of the way, -1 = ignore others and extend to anchored edges |
 | Keyboard focus | `keyboard_interactivity`: `none` (default), `exclusive`, `on_demand` (since version 4) |
 | Per-output placement | The surface is created for a specific `wl_output` |
-| Popups | Menus, tray menus and flyouts must open relative to a shell surface. gtk-layer-shell routes GTK popups through the protocol; Quickshell positions its `PopupWindow` with `anchor.window` and `anchor.rect`. tre's documented API has no popup type. #needs-verification |
+| Popups | Menus, tray menus and flyouts must open relative to a shell surface. gtk-layer-shell routes GTK popups through the protocol; Quickshell positions its `PopupWindow` with `anchor.window` and `anchor.rect`. tre had no popup type before 0.5.8, which adds `PopupWindow` (an `xdg_popup` parented to a layer surface). |
 
-**What tre provides today.** The [custom windowing page](https://mindderivative.github.io/tre/design/custom-windowing/) documents `Window(width, height, title, decorations=False)`, runtime `decorations` toggling, drag, resize, `minimize/maximize/restore/close`, and `window.get("platform")`. It does not mention layer-shell, anchoring, exclusive zones, popups or raw Wayland handles. #needs-verification: confirm absence on the Window reference page and in the tre source before filing an engine request.
+**What tre provided before 0.5.8.** The [custom windowing page](https://mindderivative.github.io/tre/design/custom-windowing/) documents `Window(width, height, title, decorations=False)`, runtime `decorations` toggling, drag, resize, `minimize/maximize/restore/close`, and `window.get("platform")`. It does not mention layer-shell, anchoring, exclusive zones, popups or raw Wayland handles; tre #195 confirmed the absences in the source. 0.5.8 adds the layer-surface types: [LayerWindow reference](https://mindderivative.github.io/tre/reference/layer-window/).
 
 **What KWin provides.** The wayland.app registry lists KWin 6.7 with `zwlr_layer_shell_v1` version 5. It lists no earlier KWin releases. #needs-verification: find the first KWin version that exposes the protocol, and whether Plasma on the target distro ships it. GNOME's Mutter and Weston do not support the protocol, so a layer-shell design is KDE/wlroots-family only. This matches the Linux/Wayland-only scope in [[AGENTS]] §4.
 
@@ -60,7 +60,7 @@ A platform-neutral variant is also possible: a `PanelWindow`-style type whose la
 - **For:** matches the layering principle. One rendering path (tre owns every frame). Python only sets surface properties, as in Fabric. Every toolkit surveyed attaches the layer role at its own boundary. Other tre users benefit.
 - **Against:** implementation cost. `winit` has no layer-shell role of its own, so tre needs a platform-specific path beside it, and that path must reproduce input, text input, scale, clipboard and accessibility handling that `winit` supplies today. Scheduling is not a risk: tre and Tesserae Shell share a maintainer.
 - **If infeasible:** fall back to Option B.
-- **Needs:** [[TRE-REQ-001 Layer Surface Window]] (draft). It specifies the window type, outputs and popups, and records the implementation candidates.
+- **Status:** built and released in tre 0.5.8 ([[TRE-REQ-001 Layer Surface Window]], `review`). It specifies the window type, outputs and popups, and records the implementation candidates.
 
 ### Option B — Shell-created surface, tre renders into it
 

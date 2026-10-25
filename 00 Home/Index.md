@@ -56,7 +56,7 @@ Operating rules for agents: [[AGENTS]].
 
 Research: [[Prior Art - Linux Shell Surfaces]]
 
-Engine requests: [[TRE-REQ-001 Layer Surface Window]] (review; built in tre `main`, unreleased; blocks surface specs until a tre release)
+Engine requests: [[TRE-REQ-001 Layer Surface Window]] (review; released in tre 0.5.8)
 
 Planned, not yet written:
 - Relationship to Tesserae UI: depend on `tesserae-ui` or build directly on `tre`
@@ -67,13 +67,13 @@ Planned, not yet written:
 
 | Project | Role | Docs | Baseline |
 |---|---|---|---|
-| tre | Rendering engine (Rust, Python module `tre`) | [docs](https://mindderivative.github.io/tre/) | 0.5.7 |
+| tre | Rendering engine (Rust, Python module `tre`) | [docs](https://mindderivative.github.io/tre/) | 0.5.8 |
 | Tesserae | Declarative UI framework (`tesserae-ui`) | [docs](https://mindderivative.github.io/tesserae/) | 0.5.1 |
 
 Versions drift. If the live docs disagree with this table, the docs win; update the table.
 
 ## Current focus
 
-1. Review tre's delivery of [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]] and accept or amend [[ADR-0001 Shell Surface Strategy]]: Option A is built, so the ADR is ready for a decision.
+1. Review tre's delivery of [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]] and accept or amend [[ADR-0001 Shell Surface Strategy]]: Option A is released in tre 0.5.8, so the ADR is ready for a decision.
 2. Write `10 Vision` (goals, non-goals, v1 scope) so the architecture notes have a target.
 3. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.
