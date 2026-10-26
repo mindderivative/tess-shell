@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Decided module style, theme and stylesheet file names in [[ADR-0007 Shell UI Layer]] |
+| Last change | Recorded the maintainer's plain-suffix plus `type:` key proposal, with findings and a recommendation, in [[ADR-0007 Shell UI Layer#Open items]] |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0007 Shell UI Layer]] (6 accepted; ADR-0002 superseded) |
-| Waiting on you | Confirm my recommendations in [[ADR-0007 Shell UI Layer#Open items]]: how a module file is recognised (`type: module`), how a shared module differs per monitor, what separates a style file from a stylesheet. Other grammar points can wait for `41 YAML Reference` |
+| Waiting on you | Answer in [[ADR-0007 Shell UI Layer#Open items]]: the plain-suffix proposal (Tesserae already uses those suffixes), how a shared module differs per monitor, what separates a style file from a stylesheet. Other grammar points can wait for `41 YAML Reference` |
 | Next | Start `20 Architecture`, including the UI layer |
 | Blocked | Nothing |
 | Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
@@ -44,6 +44,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | Plain-suffix and `type:` key proposal recorded for review ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Module style, theme and stylesheet file names decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Module rules and unique-name keys decided ([[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]) |
 | 2026-10-25 | Maintainer's shell file example recorded in [[ADR-0007 Shell UI Layer]] |
@@ -51,7 +52,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | Shell file naming decided ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
 | 2026-10-25 | Accepted [[ADR-0007 Shell UI Layer]] (Option A) |
 | 2026-10-25 | Shell separated from Tesserae ([[ADR-0006 Shell Independent of Tesserae UI]]); proposed [[ADR-0007 Shell UI Layer]] |
-| 2026-10-25 | Wrote [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (since superseded) |
 
 ## Go to
 
