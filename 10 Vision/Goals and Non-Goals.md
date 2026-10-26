@@ -28,7 +28,7 @@ depends_on: []
 | G3 | Run beside Plasma without breaking it. | Starting and stopping the shell leaves the Plasma session usable; no shared D-Bus name is taken without an ADR. | [[AGENTS#4. Known constraints and gaps (seed list)]] |
 | G4 | Cost nothing when idle. | An idle bar draws no frames and wakes the loop only for its own timers. | tre spike: 1 frame in 10 s, 0.0% CPU ([[TRE-REQ-001 Layer Surface Window#Upstream status (as of 2026-10-23, superseded by Delivered; kept as history)]]) |
 | G5 | Stay small in memory. | Per-surface GPU memory budget set in [[60 Quality]]. Reference points from tre 0.5.8: a 1280 x 32 bar 18 MiB, a 200 x 100 window 31 MiB, a 4K full-screen overlay 177 MiB. | [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]] |
-| G6 | Work with several monitors. | One surface set per output; unplugging an output closes its surfaces and replugging restores them. | `App.outputs()`, `closed` reason `"output_removed"` |
+| G6 | Treat every monitor as an equal place for the shell, each configured on its own. | Any monitor can host the shell. Each monitor's surface set is configured separately inside the one configuration, and can be all of the surfaces, some of them, or none. Unplugging a monitor closes its surfaces and replugging restores them. | Maintainer requirement, 2026-10-25; `App.outputs()`, `closed` reason `"output_removed"` |
 | G7 | Be usable by everyone. | Keyboard operation, screen-reader names and roles, reduced motion, high contrast and light/dark follow the desktop. | [[60 Quality]] (to write) |
 
 ## Non-goals

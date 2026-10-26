@@ -14,7 +14,7 @@ depends_on: []
 # Personas and use cases
 
 > [!summary]
-> Three personas and ten use cases. Personas are roles, not named people. Each use case names the surface it needs, so the surface specs under `40 Specifications/Surfaces/` have a reason to exist and a place to be tested.
+> Three personas and eleven use cases. Personas are roles, not named people. Each use case names the surface it needs, so the surface specs under `40 Specifications/Surfaces/` have a reason to exist and a place to be tested.
 
 ## Personas
 
@@ -40,6 +40,7 @@ The maintainer is all three while the design is made. Separate personas keep the
 | UC8 | Edit a theme file and see the bar change at once. | P1, P2 | All surfaces | Tesserae hot reload |
 | UC9 | Add a module that reads the battery and shows it in the bar. | P3 | Module + bar | Python module contract (to write in `42 Python API`) |
 | UC10 | Unplug a monitor, replug it, and have the surfaces come back. | P1 | All per-output surfaces | `output_added`, `output_removed` events |
+| UC11 | Give each monitor its own surface set: the full shell on the main monitor, only a bar on the second, nothing on the third. | P1, P2 | All per-output surfaces | [[V1 Scope#Multi-monitor]] |
 
 ## Scenarios
 
@@ -50,6 +51,7 @@ The maintainer is all three while the design is made. Separate personas keep the
 ## Open questions
 
 - [ ] Is a notification centre a v1 use case? It depends on the notification-server coexistence decision, which is not made. Placed outside v1 in [[V1 Scope]].
+- [ ] What does a newly plugged monitor get when the configuration does not name it? Options in [[V1 Scope#Multi-monitor]].
 - [ ] Which persona writes the default shell? Proposed: P2, with the maintainer as the reviewer.
 
 ## Links

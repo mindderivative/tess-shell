@@ -19,7 +19,7 @@ Why Tesserae Shell exists, what it must do, who uses it, and what v1 contains.
 |---|---|---|
 | [[Problem Statement]] | The gap in today's shell tools and the constraints | draft |
 | [[Goals and Non-Goals]] | Seven goals with measures, eight non-goals | draft |
-| [[Personas and Use Cases]] | Three personas, ten use cases mapped to surfaces | draft |
+| [[Personas and Use Cases]] | Three personas, eleven use cases mapped to surfaces | draft |
 | [[V1 Scope]] | Target environment, surfaces, modules, decisions to take | draft |
 
 All four are recommendations for the maintainer to confirm. Only the maintainer moves a note to `stable`.
