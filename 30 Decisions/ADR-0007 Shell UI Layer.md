@@ -68,7 +68,8 @@ Decided by the maintainer in chat. The shell's files are named so nobody mistake
 - The shell does not use Tesserae's `_View.yaml` suffix, or any Tesserae file name, for its own views.
 - A shell is written either as **one `*.yaml` file** for the whole shell, or as a **`Main_Shell.yaml`** that imports several **`<Name>_Shell.yaml`** files and builds the shell from them. Both forms are valid.
 - A Tesserae file placed in a shell is refused with an error that names the file and says it is not a shell file (see Open items for how a shell file is recognised).
-- Python module files are `<Name>_Module.py` (see Modules below). Still open: the names of theme files and stylesheet files. They are set in `41 YAML Reference/`.
+- Python module files are `<Name>_Module.py` (see Modules below).
+- **Theme files are `<Name>_ShellTheme.yaml`. Stylesheet files are `<Name>_ShellStylesheet.yaml`** (decided 2026-10-25). The names resemble Tesserae's on purpose of function, but the `Shell` in each suffix keeps them apart: a Tesserae `_Theme.yaml` or `_Stylesheet.yaml` is not a shell file and is refused like any other non-shell file.
 
 ### Recognising a shell file and importing (2026-10-25)
 
@@ -145,6 +146,7 @@ What the example shows, and what is decided:
 Decided by the maintainer in chat:
 
 - **A module is a `<Name>_Module.yaml` file plus a matching `<Name>_Module.py`.** The shell framework expects the Python file and requires it. A module with no matching `.py` is a load error that names both files.
+- **A module may have a style.** Either an optional `<Name>_ModuleStyle.yaml` file, or a `style:` key with the values written inline in the module's entry.
 - **A module can be used many times.** `Clock_Module.yaml` may appear in several places, and all uses share the same data. One module is one source of data, however many views show it.
 
 Recommendations, not yet decided (see Open items): how a module file is told apart from other shell files, and how a module that must differ per monitor gets that difference.
@@ -171,13 +173,14 @@ Option A is accepted, so:
 - [ ] Decide how a module file is recognised: a required `type: module` key, or the `_Module.yaml` suffix alone. Recommendation: both, with `type: module` authoritative and the suffix a convention, so a renamed file cannot silently change what it is, and a mismatch between the suffix and the type is a load error. This matches `type: dock` on surfaces. Every module file also carries the required `shell:` key.
 - [ ] Decide how a shared module differs per use. One module shares its data across all uses; a workspace list may need to differ per monitor. Recommendation: one module instance per module file, shared by all uses; the module receives the use's context (the monitor, its unique name) when a view reads from it, and per-use options go in the use's own entry.
 - [ ] Decide where `<Name>_Module.py` lives (next to its `.yaml`, recommended), how the shell loads it, and the Python contract it must meet ([[42 Python API]], to write). The thread rule in [[AGENTS#3. Layering principle]] applies: a module's blocking work runs on its own thread and reaches the loop with `call_soon`.
-- [ ] Decide the style file type the example implies (`<Name>_ShellStyle.yaml`). This also answers the theme and stylesheet naming item below for style files.
+- [ ] Confirm the surface style file name `<Name>_ShellStyle.yaml` implied by the example (see the style item below).
 - [ ] Decide the list of surface `type` values (the example has `dock` and `corner_panel`) and how they map to `LayerWindow` settings ([[TRE-REQ-001 Layer Surface Window]]).
 - [ ] Decide what `monitor` accepts and how a file with no `monitor` behaves ([[V1 Scope#Multi-monitor]]: default section, shared definitions).
 - [ ] Decide `name` and UID rules: which names must be unique and in what scope, how a UID is made, and whether it is stable across reloads.
 - [ ] Decide how an import cycle, a missing file and a name clash are reported. Recommendation: each is a load error with `file:line:column`; a cycle prints the chain of files (`A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`); a path is relative to the importing file; a name defined twice names both places.
 - [x] Python module files: `<Name>_Module.py`, matching the module file (see Modules above).
-- [ ] Decide the names of theme files and stylesheet files so none reads as a Tesserae name (`_Theme.yaml`, `_Stylesheet.yaml`).
+- [x] Theme and stylesheet file names: `<Name>_ShellTheme.yaml` and `<Name>_ShellStylesheet.yaml`.
+- [ ] Decide what separates the style files and the stylesheet. Names in play: `<Name>_ShellStyle.yaml` (the example's surface style), `<Name>_ModuleStyle.yaml` (a module's style), `<Name>_ShellStylesheet.yaml`. Recommendation: a style file holds the values for one surface or module, the same as its inline `style:` key; a stylesheet holds shared rules that apply across the shell by type or class; a theme holds design tokens (colour, type, shape, motion). Then `_ShellStyle` and `_ModuleStyle` are two places a style can live, and the rest is as named.
 - [ ] Decide how a module's values reach a view (a ViewModel class, a plain dict, or a signal registry).
 
 ## Links
