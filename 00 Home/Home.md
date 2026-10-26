@@ -32,7 +32,7 @@ depends_on: []
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
 | Last change | Cross-file references resolve through the registry ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]) |
-| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0007 Shell UI Layer]] (6 accepted; ADR-0002 superseded) |
+| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0008 Tesserae Expression Language]] (7 accepted; ADR-0002 superseded) |
 | Waiting on you | Nothing blocking. Smaller items: TEL versioning ([[Expression Language Requirements#Open questions]]); Panel details (side, gap, follow) in the Panel spec; warning or error for a reference that no longer resolves ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]) |
 | Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
 | Next | Start `20 Architecture`, including the UI layer; then the module and runtime specs |
