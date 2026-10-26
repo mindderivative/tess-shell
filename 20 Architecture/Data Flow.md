@@ -65,7 +65,7 @@ sequenceDiagram
     else valid
         W->>L: call_soon(apply new model)
         L->>L: diff against current model
-        L->>T: set() live keys; reopen window for constructor-only keys
+        L->>T: set() live keys, reopen window for constructor-only keys
     end
 ```
 
