@@ -99,7 +99,7 @@ Read-only checks with `busctl` on the maintainer's machine on 2026-10-26: plasma
 
 - [x] The D-Bus names plasmashell holds on a live Plasma 6 session: observed above, for [[ADR-0004 Plasma Coexistence]]. Re-check on other distributions.
 - [ ] The access path for each service above; one `Integration` spec per service ([[40 Specifications]]).
-- [ ] Which D-Bus client library the shell and its modules use (see [[Process Model and Threading#Open questions]]).
+- [ ] Which D-Bus client library the shell and its modules use: surveyed in [[D-Bus Libraries for Python]]; recommendation `dbus-fast` (see [[Process Model and Threading#Open questions]]).
 
 ## Links
 

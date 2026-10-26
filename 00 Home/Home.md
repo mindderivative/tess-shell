@@ -31,10 +31,11 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Recorded the D-Bus names observed on this Plasma 6.8.1 session in [[System Context#Observed D-Bus names]]; updated ADR-0004 and ADR-0005 |
+| Last change | Decided: stay idle with no windows, events are the shell's (not TEL's), module Python reloads at runtime; surveyed D-Bus libraries ([[D-Bus Libraries for Python]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0008 Tesserae Expression Language]] (7 accepted; ADR-0002 superseded) |
-| Waiting on you | Review the draft [[20 Architecture]] notes and their open questions (module thread ownership, value store, no-windows policy, supervisor) |
+| Waiting on you | Choose the D-Bus library ([[D-Bus Libraries for Python]]; recommendation `dbus-fast`); review the draft [[20 Architecture]] notes |
 | Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
+| Waiting on others (2) | `tre` on keeping `run()` alive with no windows ([[Process Model and Threading#Lifecycle (proposed)]]); `tess-el` informed that TEL has no events ([[ADR-0008 Tesserae Expression Language]]) |
 | Next | Module specs (Clock first), `42 Python API`, `41 YAML Reference`, the Panel spec |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -46,6 +47,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | Stay idle, events are the shell's, module reload decided; D-Bus survey ([[D-Bus Libraries for Python]]); `tre` and `tess-el` messaged |
 | 2026-10-26 | D-Bus names observed on Plasma 6.8.1 recorded ([[System Context]]) |
 | 2026-10-25 | [[20 Architecture]] drafted (four notes) |
 | 2026-10-25 | TEL brief written and moved to `tess-el/docs` (not kept in the vault) |
@@ -53,7 +55,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | Unresolved reference: error at load, warning while running ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Cross-file references resolve through the registry ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Panel attached by name; UID write; TEL repository (tess-el, MIT); tre #236 recorded |
-| 2026-10-25 | `tre` answered the hit-testing question; path forward confirmed ([[Hit Testing for Concave Corners]]) |
 
 ## Go to
 
@@ -62,7 +63,7 @@ Newest first. Keep the last 8. One line each.
 | Project | [[Index]] · [[Roadmap]] · [[Glossary]] · [[AGENTS]] |
 | Unknowns and risk | [[Open Questions]] · [[Risk Register]] |
 | Decisions | [[30 Decisions]] |
-| Research | [[90 Research]]: [[Prior Art - Linux Shell Surfaces]], [[Shadows on Layer Surfaces]], [[Hit Testing for Concave Corners]], [[Logging with Loguru]], [[Expression Languages for YAML]] |
+| Research | [[90 Research]]: [[Prior Art - Linux Shell Surfaces]], [[Shadows on Layer Surfaces]], [[Hit Testing for Concave Corners]], [[D-Bus Libraries for Python]], [[Logging with Loguru]], [[Expression Languages for YAML]] |
 | Design areas | [[10 Vision]] · [[20 Architecture]] · [[40 Specifications]] · [[41 YAML Reference]] · [[42 Python API]] · [[50 Design System]] · [[60 Quality]] · [[70 Delivery]] · [[80 Engine Requests]] |
 
 ## Current

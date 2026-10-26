@@ -93,7 +93,7 @@ The store is this note's addition. The ADR says a module sends data to shell ent
 ## Open questions
 
 - [ ] Is the value store a component of its own, or part of the shell model?
-- [ ] How a widget event (a click) reaches a module: a handler in the shell file that calls a module method, or an event sent to the module. Needs the expression/handler design in TEL ([[Expression Language Requirements#Open questions]]).
+- [x] How a widget event (a click) reaches a module: the shell maps the event to a module method or a shell action; TEL only evaluates argument expressions ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). The key names are set in `41 YAML Reference/`.
 - [ ] Where theme changes (light/dark, high contrast, reduced motion following the desktop) are read and pushed ([[Goals and Non-Goals]] G7).
 - [ ] The global shortcut service: a runtime component or a module.
 

@@ -55,6 +55,7 @@ Details, decided by the maintainer in chat on 2026-10-25:
 - **A redesign, with `expr.py` as the starting point.** Tesserae's `expr.py` is the starting point, not the design. TEL is separated from it and made much more efficient.
 - **TEL owns structure and values.** It has everything it needs to run on its own, with no shell and no Tesserae UI. Anyone can adopt it in plain YAML by importing its parser in a Python script.
 - **Name.** The Tesserae Expression Language, written `tel` in code, as `tre` is for the engine. For PyPI the maintainer's preference is `tesserae-expression-language`, else `tel`, else `tess-el`. On 2026-10-25 `tel` is already a package on PyPI; no package named `tesserae-expression-language` or `tess-el` was found. #needs-verification: availability when registering.
+- **No events or statements (2026-10-26).** TEL is an expression library. It has no handlers, statements or event vocabulary; the shell owns events. Passed to the `tess-el` project over the mailbox on 2026-10-26.
 - **Kept separate from Tesserae.** The maintainer handles all contact with the Tesserae project, including `expr.py`. The shell side does not message the `tesserae` session about it.
 
 ## Consequences

@@ -37,11 +37,12 @@ TEL evaluates expressions written in shell YAML files (`{if condition, ...}`, va
 | T11 | **Python 3.14 or later**, no heavy dependencies. | [[ADR-0007 Shell UI Layer]] |
 | T12 | **Testable headless.** Parse and evaluate without a display. | [[AGENTS#12. Design completeness checklist]] |
 | T13 | **Standalone.** Anyone can use TEL in plain YAML by importing its parser in a Python script, with no shell and no Tesserae UI. | [[ADR-0008 Tesserae Expression Language]] |
+| T15 | **No events.** TEL is an expression library: no statements, no handlers, no event vocabulary. The shell maps an event to a module method or a shell action and may use TEL only to evaluate argument expressions at event time (maintainer, 2026-10-26). | [[ADR-0008 Tesserae Expression Language]] |
 | T14 | **Efficient.** Much more efficient than Tesserae's `expr.py`: parse once, cheap re-evaluation, nothing re-run unless an input changed. A target and a benchmark are set in the TEL project. | Maintainer, 2026-10-25 |
 
 ## What Tesserae's `expr.py` shows
 
-From the local clone (commit `0eda3fe`, read 2026-10-25). It already provides the sandbox by `ast` whitelist (T2), limits (T2), static against reactive expressions (T4, T5), a scope lookup (T5), and positions with a caret in errors (T6). It also parses handlers (short lists of statements). Its gaps for TEL: it imports `tesserae.reactive` (against T1), and nothing in the module header covers a Python front-end that builds the same tree (T7). TEL is a redesign that starts from `expr.py` (decided 2026-10-25).
+From the local clone (commit `0eda3fe`, read 2026-10-25). It already provides the sandbox by `ast` whitelist (T2), limits (T2), static against reactive expressions (T4, T5), a scope lookup (T5), and positions with a caret in errors (T6). It also parses handlers (short lists of statements); TEL will not (T15). Its gaps for TEL: it imports `tesserae.reactive` (against T1), and nothing in the module header covers a Python front-end that builds the same tree (T7). TEL is a redesign that starts from `expr.py` (decided 2026-10-25).
 
 ## Open questions
 
@@ -50,7 +51,7 @@ From the local clone (commit `0eda3fe`, read 2026-10-25). It already provides th
 - [x] Who owns structure: TEL owns structure and values.
 - [x] TEL's repository and licence: [mindderivative/tess-el](https://github.com/mindderivative/tess-el), MIT (2026-10-25). Local project `/home/phil/Projects/pyDev/projects/tess-el`.
 - [ ] TEL's versioning and release process (the maintainer's).
-- [x] Syntax, statements and form are worked out in the TEL project (maintainer, 2026-10-25). The shell's needs are T1 to T14 above.
+- [x] Statements: none. TEL is expressions and structure only; events belong to the shell (maintainer, 2026-10-26, T15). Syntax and form are worked out in the TEL project (2026-10-25). The shell's needs are T1 to T15 above.
 - [ ] How the shell and any other user share TEL's releases without blocking each other.
 
 ## Acceptance criteria

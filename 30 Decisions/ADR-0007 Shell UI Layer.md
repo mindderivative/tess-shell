@@ -188,6 +188,13 @@ Decided by the maintainer in chat. A root's `monitor` is matched by **connector 
 
 Decided by the maintainer in chat (option A). The shell imports `<Name>_Module.py`, finds the class that extends a shell `Module` base, creates it once and calls `start`, `stop` and an optional `reload`. It receives a context object with the module's YAML values, its name and UID, a logger and the entry point that sends data. The thread rule in [[AGENTS#3. Layering principle]] holds: the shell calls module code on the loop thread, blocking work runs on the module's own thread, and results reach the loop through the send entry point (`call_soon`). The contract is written in [[42 Python API]].
 
+### Events and module reload (2026-10-26)
+
+Decided by the maintainer in chat.
+
+- **Events belong to the shell, not to TEL.** TEL is an expression library ([[ADR-0008 Tesserae Expression Language]]). A shell file maps an event (a click, a key, a change) to a module method or a shell action; arguments may be TEL expressions evaluated when the event fires. The vocabulary (`handlers:` or `on_click:` keys, the actions the shell provides) is set in `41 YAML Reference/`.
+- **A module's Python can be reloaded at runtime.** When a module's files change, the shell reloads it without restarting the process. Proposed mechanics (not decided): import the new code first and check that it has the module class; only then call `stop` on the old instance, join its threads with a timeout, purge the module's own modules from `sys.modules`, create the new instance and call `start`. If the new code fails to import, the old instance keeps running and the error is logged with `file:line:column`. The `reload` hook is for a changed YAML configuration only, without a restart. #needs-verification: the interaction of `importlib` with a module's own threads, supporting files in `Modules/<module_name>/`, and state that survives (the value store keeps the last values until the new instance sends).
+
 ### Config directory and registry (2026-10-25)
 
 Decided by the maintainer in chat.

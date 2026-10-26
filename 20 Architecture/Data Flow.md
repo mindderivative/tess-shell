@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-26
 tags: [architecture, needs-verification]
 related: ["[[20 Architecture]]", "[[Layers and Components]]", "[[Process Model and Threading]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[Layers and Components]]"]
@@ -72,7 +72,7 @@ sequenceDiagram
 - tre's layer window takes `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard` and `input_region` live through `set()` in one commit. `namespace` and `output` are constructor-only, so changing them means closing and recreating the window ([[TRE-REQ-001 Layer Surface Window#Proposed API]]).
 - A bad file leaves the old state ([[Process Model and Threading#Lifecycle (proposed)]]).
 - The shell's own UID write must not trigger a reload loop ([[ADR-0007 Shell UI Layer#Open items]]).
-- A changed module `.py` is not reloaded by default: a module's `reload` hook is optional. Decide in [[42 Python API]]. #needs-verification
+- A changed module `.py` is reloaded at runtime (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). Proposed order: import the new code and check it has the module class; then `stop` the old instance and join its threads; purge the module's own modules from `sys.modules`; create the new instance and `start` it. A failed import keeps the old instance. The value store keeps the last values until the new instance sends. The `reload` hook handles a YAML-only change. #needs-verification
 
 ## Monitor hot-plug
 
@@ -96,21 +96,21 @@ sequenceDiagram
 - tre fires `output_added`, `output_removed` and `output_updated` with the `Output` ([Outputs](https://mindderivative.github.io/tre/reference/outputs/)). A removed output closes its layer windows with reason `"output_removed"`, and a dead window is never reused.
 - `output_updated` keeps the surfaces and re-evaluates only the match rules ([[V1 Scope#Multi-monitor]]).
 - A Popup is exclusive to the monitor of its caller ([[Surface Types#Open questions]]).
-- **No windows.** tre raises when none are registered ([[Process Model and Threading#Lifecycle (proposed)]]).
+- **No windows: stay idle** (decided 2026-10-26). The shell keeps running and waits for `output_added`; the tre mechanism is being asked ([[Process Model and Threading#Lifecycle (proposed)]]).
 
 ## User input
 
-A pointer or key event reaches a tre node on the loop thread. The node's handler is a TEL handler or a call into a module. What the handler vocabulary is belongs to the TEL project (statements or only expressions: [[Expression Language Requirements#Open questions]]). The shell's side:
+A pointer or key event reaches a tre node on the loop thread. **Events belong to the shell, not to TEL** (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). A shell file maps an event to a module method or a shell action. TEL only evaluates the argument expressions when the event fires (for example a value taken from the event). The vocabulary is set in `41 YAML Reference/`.
 
-- A handler may set a value in the shell's store (a local state) or call a module method.
 - A module method that does slow work hands it to the module's thread and returns at once.
 - Window actions (close, dismiss a popup) are shell-provided.
+- A handler may set a value in the shell's store (a local state) or call a module method.
 
 ## Open questions
 
 - [ ] Where the value store sits and how a module's last value is kept across a reload.
-- [ ] The handler vocabulary for input (TEL).
-- [ ] Whether a module's `.py` can be reloaded.
+- [ ] The handler vocabulary for input: the shell's, in `41 YAML Reference/` (not TEL's).
+- [x] A module's `.py` can be reloaded at runtime (maintainer, 2026-10-26). Mechanics are proposed above.
 - [ ] How the diff of a reload works: by UID, by name, or by position in the file.
 - [ ] What `output_updated` does to surfaces whose size depends on the output.
 

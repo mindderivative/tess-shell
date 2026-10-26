@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-26
 tags: [architecture, needs-verification]
 related: ["[[20 Architecture]]", "[[ADR-0003 Process Model]]", "[[Layers and Components]]", "[[Data Flow]]"]
 depends_on: ["[[ADR-0003 Process Model]]"]
@@ -91,7 +91,7 @@ stateDiagram-v2
 - **Running.** Modules start after the model is built, so a value that arrives before its surface exists is kept in the store.
 - **Reloading.** A watcher thread reads and parses a changed file; the loop applies it. A bad file leaves the old state and logs an error ([[Data Flow#Hot reload]]).
 - **Stopping.** Call each module's `stop`, join its threads with a timeout, close windows, write the registry. `App.run()` returns when the last window closes.
-- **No windows.** If every monitor is set to "none", or no output is present, tre has no window to run. The shell needs a policy: stay alive with the loop idle and wait for `output_added`, or exit. #needs-verification: whether tre can run with none ([[Data Flow#Monitor hot-plug]]).
+- **No windows: stay idle** (decided 2026-10-26). If every monitor is set to "none", or no output is present, the shell does not exit; it waits and reacts when an output is added ([[Data Flow#Monitor hot-plug]]). How, with tre: `App.run()` raises when no window is registered, so the engine side is asked: `tre` was asked over the mailbox on 2026-10-26 whether `run()` can stay alive with none, and what to do if not. Until it answers, the policy is decided and the mechanism is open. #needs-verification
 
 ## Failure and recovery
 
@@ -102,6 +102,7 @@ stateDiagram-v2
 | A module blocks the loop | Every surface freezes ([[ADR-0003 Process Model#Consequences]]) | Watchdog sees no ticks; logs the stall; with a supervisor, restart the process |
 | Wayland connection lost | tre windows close | Process exits; supervisor restarts it |
 | A bad shell file on reload | New state refused | Keep the old state; log an error with position |
+| A bad module `.py` on reload | New code refused | Keep the old instance running; log the error ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]) |
 
 The loop cannot interrupt itself, so detecting a blocked loop needs a separate watchdog thread that reads a counter the loop bumps from a timer (`window.every`). A supervisor outside the process is the only way to recover from a hard hang. Both are proposals; [[60 Quality]] owns the final design.
 
@@ -117,10 +118,10 @@ The loop cannot interrupt itself, so detecting a blocked loop needs a separate w
 ## Open questions
 
 - [ ] **Module threads: who owns them?** Options. **A.** Each module starts and owns its threads; the shell gives a helper that catches and logs thread exceptions (flexible, simple contract; recommended). **B.** The shell runs a shared `asyncio` thread for services and modules are coroutines (less thread code, forces async on module authors). **C.** A shell thread pool for module work. Recommendation A, with B available as an optional shared service thread for D-Bus.
-- [ ] **D-Bus client library.** Needs a survey; it decides whether B is attractive. #needs-verification
+- [ ] **D-Bus client library.** Surveyed: [[D-Bus Libraries for Python]]. Recommendation: `dbus-fast` on a shared asyncio service thread, with `jeepney` as the fallback. Needs the maintainer's choice. If accepted, the service thread is part of the thread inventory above and Option B is available as the shared service thread.
 - [ ] **Registry I/O and the UID write** on the loop or a single writer thread ([[ADR-0007 Shell UI Layer#Open items]]).
 - [ ] **Supervisor** in v1 or later.
-- [ ] **No windows** policy (above).
+- [x] **No windows** policy: stay idle (maintainer, 2026-10-26). Mechanism: awaiting `tre`.
 - [ ] **Where conversions run** (send or flush).
 
 ## Links
