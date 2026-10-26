@@ -36,6 +36,7 @@ depends_on: []
 | Waiting on you | Confirm in [[ADR-0007 Shell UI Layer#Open items]]: how a shared module differs per monitor, the exact `type:` values, what separates a style file from a stylesheet. Other grammar points can wait for `41 YAML Reference` |
 | Next | Start `20 Architecture`, including the UI layer |
 | Blocked | Nothing |
+| Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
 | Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
 
 ### Recent changes
@@ -44,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | Tesserae adding a matching version key, noted in [[ADR-0007 Shell UI Layer]] |
 | 2026-10-25 | Plain suffixes with `shell:` and `type:` keys decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Module style, theme and stylesheet file names decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Module rules and unique-name keys decided ([[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]) |
@@ -51,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | Shell file recognition (`shell:` key) and import syntax decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Shell file naming decided ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
 | 2026-10-25 | Accepted [[ADR-0007 Shell UI Layer]] (Option A) |
-| 2026-10-25 | Shell separated from Tesserae ([[ADR-0006 Shell Independent of Tesserae UI]]); proposed [[ADR-0007 Shell UI Layer]] |
 
 ## Go to
 
