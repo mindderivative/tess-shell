@@ -65,4 +65,4 @@ From the local clone (commit `0eda3fe`, read 2026-10-25). It already provides th
 
 ## Links
 
-- [[ADR-0008 Tesserae Expression Language]] · [[ADR-0007 Shell UI Layer]] · [[Expression Languages for YAML]] · [[40 Specifications]]
+- [[TEL Project Brief]] (the hand-off for the TEL project) · [[ADR-0008 Tesserae Expression Language]] · [[ADR-0007 Shell UI Layer]] · [[Expression Languages for YAML]] · [[40 Specifications]]
