@@ -14,7 +14,7 @@ depends_on: []
 # Logging with Loguru
 
 > [!summary]
-> The maintainer noted (2026-10-25) that Loguru is a great option for logging and for providing warnings and errors. This note records it as the leading candidate for the shell's logging, with what is known and what to check. It is not an accepted decision: no ADR chooses it.
+> The maintainer noted (2026-10-25) that Loguru is a great option for logging and for providing warnings and errors. This note records it as the leading candidate for the shell's logging, with what is known and what to check. The maintainer reports it is stable, actively supported and works on Python 3.14. It is not an accepted decision: no ADR chooses it.
 
 ## Why it fits
 
@@ -33,7 +33,7 @@ The maintainer's earlier Edge Shell design already lists `loguru` in its environ
 
 ## What to check
 
-- **Python 3.14.** PyPI lists `loguru` 0.7.3, uploaded 2024-12-06, with `requires_python` `>=3.5,<4.0`. Its classifiers stop at Python 3.9. The shell's minimum is Python 3.14 ([[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]]). #needs-verification: that it runs on 3.14 and that it is still maintained (the last release is about ten months old).
+- **Python 3.14 and maintenance (resolved).** The maintainer reports Loguru is in stable release mode, considered feature complete with consistent updates, actively supported, works on Python 3.14, and that its last official release is two years old while package maintainers keep building and signing updated package iterations (2026-10-25). Checked against the repository: the newest commit is dated 2026-10-25 19:46 UTC (documentation, about ten hours before the check); the newest release is 0.7.3, published 2024-12-06 (PyPI's latest too); and `pyproject.toml` on the main branch lists Python 3.10 to 3.15 classifiers and `requires-python >=3.5` ([GitHub](https://github.com/Delgan/loguru)). The PyPI release's own classifiers stop at 3.9, so 3.14 support is in the repository's main branch and the maintainer's report, not in a published release's metadata. The shell's minimum is Python 3.14 ([[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]]). Because the last published release is old, pin the version and check that 0.7.3 imports and runs on 3.14 in the first build. #needs-verification
 - **Variables in tracebacks.** The exception formatting shows variable values. The docs say it can be turned off with `backtrace=False` and `diagnose=False` on a sink. A configuration with module data could leak values into a log file. Decide the defaults. #needs-verification: exact option behaviour against the current docs.
 - **Libraries stay quiet.** TEL is a standalone library ([[ADR-0008 Tesserae Expression Language]]). A library should not configure a program's logging. Recommendation: TEL raises errors that carry file, line and column, or uses the standard `logging` module, and the shell turns them into Loguru messages. TEL does not depend on Loguru. #needs-verification: Loguru's guidance for libraries.
 - **Standard library records.** Output from other libraries that use `logging` needs routing into Loguru. The pages read do not describe it.
@@ -42,7 +42,7 @@ The maintainer's earlier Edge Shell design already lists `loguru` in its environ
 ## Open
 
 - [ ] Choose a logger in an ADR or the runtime spec (`40 Specifications/Runtime/`). Candidate: Loguru.
-- [ ] Verify Python 3.14 support and maintenance.
+- [x] Python 3.14 support and maintenance: confirmed by the maintainer and the repository (see above). Still to test: that the pinned release runs on 3.14.
 - [ ] Decide the log file location, rotation and retention.
 - [ ] Decide the defaults for variable display in tracebacks.
 - [ ] Decide how TEL reports problems without depending on the shell's logger.
