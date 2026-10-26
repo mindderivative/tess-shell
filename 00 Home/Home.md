@@ -31,10 +31,10 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Recorded `tre`'s hit-testing answer and the path forward in [[Hit Testing for Concave Corners]] |
+| Last change | Recorded Panel attachment by name, the UID write, TEL's repository and licence, tre issue #236 and the v1 workaround decision |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0007 Shell UI Layer]] (6 accepted; ADR-0002 superseded) |
-| Waiting on you | How a Panel's attachment to another surface is written (to explore, [[Surface Types#Open questions]]); how the shell writes the UID into a user's file ([[ADR-0007 Shell UI Layer#Open items]]); TEL's repository, licence and syntax ([[Expression Language Requirements#Open questions]]) |
-| Waiting on others | `tre` to deliver shape-aware hit testing for concave and convex corners ([[Hit Testing for Concave Corners]]); the Frame uses an explicit-rectangle workaround until then |
+| Waiting on you | Nothing blocking. Smaller items: TEL versioning ([[Expression Language Requirements#Open questions]]); Panel details (side, gap, follow) in the Panel spec |
+| Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
 | Next | Start `20 Architecture`, including the UI layer; then the module and runtime specs |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | Panel attached by name; UID write; TEL repository (tess-el, MIT); tre #236 recorded |
 | 2026-10-25 | `tre` answered the hit-testing question; path forward confirmed ([[Hit Testing for Concave Corners]]) |
 | 2026-10-25 | TEL details, Frame in v1, surface mapping, [[V1 Widgets]], [[Glossary]]; `tre` asked about hit testing |
 | 2026-10-25 | [[ADR-0008 Tesserae Expression Language]] accepted; requirements written ([[Expression Language Requirements]]) |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | Expression language, `monitor` matching, module Python contract, config directory and registry identity decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | `type:`/`kind:`, UID registry and module data hand-off decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Surface Types corrected; shadows research written ([[Shadows on Layer Surfaces]]) |
-| 2026-10-25 | [[Surface Types]] written; module, import, monitor, name and error rules decided ([[ADR-0007 Shell UI Layer]]) |
 
 ## Go to
 

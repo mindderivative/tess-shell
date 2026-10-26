@@ -36,6 +36,18 @@ The maintainer confirmed (2026-10-25) that tre will provide a way for unfilled p
 
 tre's estimate: medium effort in the engine core plus tests, risk low to medium. Ring bands with curved corners may need steps above 2 px to stay under 256 rectangles at 4K.
 
+## tre issue #236
+
+`tre` scoped the work as [tre #236](https://github.com/mindderivative/tre/issues/236), read 2026-10-25: OPEN, Backlog, not approved, nothing started. Three stages, each shippable:
+
+1. **True scanline spans in `bands()`**, so a region can have holes. No API change; pure engine tests.
+2. **`hit_shape` on a path node**: `"box"` (today, the default) or `"painted"` (the fill region united with the stroke outline), used by node events and by `input_region="auto"`.
+3. **A live test of the shell's frame** on headless sway and KWin, plus docs.
+
+Measured cost for a 3840 x 2160 ring, 48 px thick, outer radius 32, inner radius 24: 66 rectangles at 2 px bands (40 at 4 px, 22 at 8 px), under the 256 cap. A frame with ten fillet joins might reach the cap, where the existing fallback uses 4 or 8 px bands. Accuracy contract: a click up to about one band (2 px) inside the unfilled side of a curve may still be taken.
+
+Decisions in #236 for the maintainer (tre's, not the shell's): the default of `hit_shape` (recommended: opt-in), that `auto` follows it, what is out of scope (`svg` nodes, a fill-based canvas hit path), and the accuracy contract.
+
 ## Workaround that works today
 
 - `input_region` set to an explicit list of `(x, y, w, h)` rectangles built from the shell's own ring geometry. Up to 256 rectangles; live through `set()`.
@@ -50,8 +62,8 @@ tre `main` is already at 0.5.9 development: its latest commit says windows share
 ## Open
 
 - [ ] When tre ships shape-aware hit testing, update the Frame mapping in [[Surface Types]] to use it.
-- [ ] Whether the explicit-rectangle workaround is enough for v1 Frame, given the 256 cap and 4K.
-- [ ] The first tre release that includes it.
+- [x] The explicit-rectangle workaround is enough for v1 (maintainer, 2026-10-25). 4K is not a v1 concern: the maintainer does not use 4K, and tre should finish #236 before anyone with 4K uses the shell.
+- [ ] The first tre release that includes #236.
 
 ## Links
 

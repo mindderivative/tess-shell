@@ -48,9 +48,9 @@ From the local clone (commit `0eda3fe`, read 2026-10-25). It already provides th
 - [x] TEL's name: Tesserae Expression Language, `tel` in code. PyPI: `tesserae-expression-language`, else `tel` (taken on 2026-10-25), else `tess-el`.
 - [x] Redesign or extraction: a redesign starting from `expr.py`.
 - [x] Who owns structure: TEL owns structure and values.
-- [ ] TEL's repository, licence and versioning (the maintainer's).
-- [ ] Statements: expressions only, or short handler statements as in Tesserae?
-- [ ] Syntax: Python-like expressions, a call form (`if(cond, a, b)`), or both?
+- [x] TEL's repository and licence: [mindderivative/tess-el](https://github.com/mindderivative/tess-el), MIT (2026-10-25). Local project `/home/phil/Projects/pyDev/projects/tess-el`.
+- [ ] TEL's versioning and release process (the maintainer's).
+- [x] Syntax, statements and form are worked out in the TEL project (maintainer, 2026-10-25). The shell's needs are T1 to T14 above.
 - [ ] How the shell and any other user share TEL's releases without blocking each other.
 
 ## Acceptance criteria
