@@ -58,11 +58,11 @@ A style value with four sides (a border thickness, a corner radius, a margin, pa
 
 ```yaml
 border_thickness: 2                                   # all four sides
-border_thickness: [2, 2, 2, 2]                        # four values; order not yet confirmed
+border_thickness: [2, 2, 2, 2]                        # four values, clockwise from the top
 border_thickness: {left: 2, top: 2, right: 2, bottom: 2}   # named sides
 ```
 
-The order of a list of four is recommended clockwise from the top, as tre's `margin` and `corner_radius` are. The shell converts the shorthand to tre's tuples.
+The order of a list of four is clockwise from the top (top, right, bottom, left), confirmed by the maintainer on 2026-10-26, as tre's `margin` and `corner_radius` are. The shell converts the shorthand to tre's tuples.
 
 ## Where conversion runs
 
