@@ -91,14 +91,14 @@ root:
         import: TopBar_Shell.yaml
         child: 
             name: panel_dock # Unique per monitor
-            type: dock
+            type: bar
             style: Dock_Style.yaml
             modules: # Modules have to be imported as they may have differing rules
                 module: Audio_Module.yaml # with a connected python script
                 module: Network_Module.yaml
         child:
             name: panel_start_menu
-            type: corner_panel
+            type: panel
             style: CornerPanel_Style.yaml
             modules:
                 module: Applications_Module.yaml
@@ -115,13 +115,13 @@ root:
     children:
         import: TopBar_Shell.yaml
         panel_dock:                       # unique per monitor
-            type: dock
+            type: bar
             style: Dock_Style.yaml
             modules:
                 audio: Audio_Module.yaml      # unique name: the module file
                 network: Network_Module.yaml
         panel_start_menu:
-            type: corner_panel
+            type: panel
             style: CornerPanel_Style.yaml
             modules:
                 applications: Applications_Module.yaml
@@ -133,11 +133,11 @@ What the example shows, and what is decided:
 |---|---|---|
 | `shell: v1234` | The required top-level key carries a version value. | Key decided. The version format (`v1234`) is the example's; not decided. |
 | `root:` | A shell file has a root that owns the tree. | Implied. |
-| `root.name` | A name, unique but not required. Every YAML file also gets a UID automatically. | Implied. Scope of uniqueness not decided. |
-| `monitor: DP-1` | A root is bound to one monitor by connector name. | Fits [[V1 Scope#Multi-monitor]] (match by connector name). Whether `monitor` also takes a description match, a default or a shared reference is not decided. |
+| `root.name` | A name, unique but not required. Every YAML file also gets a UID automatically. | Decided 2026-10-25: see Monitors, names and errors. |
+| `monitor: DP-1` | A root is bound to one monitor. | Decided 2026-10-25: `monitor` accepts anything the shell gives it, and a root with no `monitor` is ignored (see Monitors, names and errors). |
 | `children:` with `import:` | `import:` pulls in a `<Name>_Shell.yaml`. | Decided. |
 | `<unique_name>:` entries | Children and modules are keyed by a unique name instead of a repeated `child:` or `module:` key. | **Decided 2026-10-25.** A child's name is unique per monitor. |
-| `type: dock` / `corner_panel` | A surface type. | The type list is not decided. |
+| `type: bar` / `panel` | A surface type. The example first said `dock` and `corner_panel`; a dock is a bar, and a corner panel is a panel. | Decided 2026-10-25: the types are Bar, Frame, Panel, Popup ([[Surface Types]]). |
 | `style: Dock_Style.yaml` | A style file per surface, `<Name>_Style.yaml`, with `shell:` and `type:`. | Decided 2026-10-25 (see File naming). |
 | `modules:` and `<name>: <Name>_Module.yaml` | Modules are imported by file. | Decided in outline: see Modules below. |
 
@@ -148,8 +148,30 @@ Decided by the maintainer in chat:
 - **A module is a `<Name>_Module.yaml` file plus a matching `<Name>_Module.py`.** The shell framework expects the Python file and requires it. A module with no matching `.py` is a load error that names both files.
 - **A module may have a style.** Either an optional `<Name>_Style.yaml` file whose `type:` is `Module`, or a `style:` key with the values written inline in the module's entry.
 - **A module can be used many times.** `Clock_Module.yaml` may appear in several places, and all uses share the same data. One module is one source of data, however many views show it.
+- **A module file is recognised by both its `_Module.yaml` name and a `type: module` key.** `type:` is authoritative; the suffix is the convention. A mismatch between them is a load error. Every module file also carries `shell:`.
+- **One module instance per module file, shared by all uses.** When uses must differ, the module keeps track of it. Example: `Label_Module.yaml` has text to display; its Python script decides which use shows which text, from a JSON file, a database, another YAML file, or anything else. The shell provides the entry and the rendering, not the data.
+- **`<Name>_Module.py` lives next to its `<Name>_Module.yaml`.** Modules go in a `Modules/<module_name>/` folder with all their supporting `.py`, configuration and other files.
+- **The binding is the name.** The module's Python calls its module YAML by file name, unique name or UID. That lets the Python read the rest of the file's keys and values, tokens and so on.
 
-Recommendations, not yet decided (see Open items): how a module file is told apart from other shell files, and how a module that must differ per monitor gets that difference.
+### Imports (2026-10-25)
+
+- **`import:` takes one file or a list of files.**
+
+### Surface types (2026-10-25)
+
+The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properties and how each maps to tre are in [[Surface Types]]. `type:` on a surface takes one of these (written `bar`, `frame`, `panel`, `popup` in the examples).
+
+### Monitors, names and errors (2026-10-25)
+
+- **`monitor` accepts anything the shell gives it.** A root with no `monitor` is ignored. A file imported by a root uses that root's monitor. How `monitor` is written for a name, a description or a default is set in `41 YAML Reference/`.
+- **`name` is unique per monitor.** It need not be unique shell-wide. Its scope is the YAML file it is in and the Python scripts attached to that file. It references something inside its own file or from its script.
+- **A UID is shell-wide** and reachable from the highest level to the lowest. Each YAML file gets one automatically.
+- **Load errors carry `file:line:column`:** an import cycle (it prints the chain of files, `A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`), a missing file, and a name defined twice (it names both places). An import path is relative to the importing file.
+- **Where `type:` would clash, use `kind:`.** Both appear as keys in the examples: a file's `type:` (`Module`, `Theme`) and a surface's `type:` (`bar`). The first clash found in `41 YAML Reference/` is resolved by using `kind:` for the file.
+
+### Theme, style and stylesheet (2026-10-25)
+
+A style file holds the values for one surface or module, the same as its inline `style:` key. A stylesheet holds shared rules that apply across the shell by type or class. A theme holds design tokens (colour, type, shape, motion). A module's style is a style file with `type: Module` or an inline `style:`.
 
 ## Consequences
 
@@ -164,26 +186,14 @@ Option A is accepted, so:
 
 ## Open items
 
-- [ ] Set the widget list for v1 and the limits of the view format (conditions, repeaters, imports).
-- [x] Decide whether view files keep Tesserae-style names. No: one `*.yaml` file, or `Main_Shell.yaml` importing `<Name>_Shell.yaml` files (see File naming above).
-- [x] Decide how a shell file is recognised. A required top-level `shell:` key with a version (see above).
-- [x] Decide the import syntax and whether imports nest. `import:` under `children:`; imports nest (see above).
-- [x] Decide how several children and modules are written. Each is keyed by its own unique name (see Modules above).
-- [ ] Decide how several imports are written, since `import:` is a single key in a mapping. Recommendation: `import:` takes one file name or a list of file names.
-- [ ] Decide how a module file is recognised: a required `type: module` key, or the `_Module.yaml` suffix alone. Recommendation: both, with `type: module` authoritative and the suffix a convention, so a renamed file cannot silently change what it is, and a mismatch between the suffix and the type is a load error. This matches `type: dock` on surfaces. Every module file also carries the required `shell:` key.
-- [ ] Decide how a shared module differs per use. One module shares its data across all uses; a workspace list may need to differ per monitor. Recommendation: one module instance per module file, shared by all uses; the module receives the use's context (the monitor, its unique name) when a view reads from it, and per-use options go in the use's own entry.
-- [ ] Decide where `<Name>_Module.py` lives (next to its `.yaml`, recommended), how the shell loads it, and the Python contract it must meet ([[42 Python API]], to write). The thread rule in [[AGENTS#3. Layering principle]] applies: a module's blocking work runs on its own thread and reaches the loop with `call_soon`.
-- [x] Surface style file name: `<Name>_Style.yaml` (see File naming).
-- [ ] Decide the list of surface `type` values (the example has `dock` and `corner_panel`) and how they map to `LayerWindow` settings ([[TRE-REQ-001 Layer Surface Window]]).
-- [ ] Decide what `monitor` accepts and how a file with no `monitor` behaves ([[V1 Scope#Multi-monitor]]: default section, shared definitions).
-- [ ] Decide `name` and UID rules: which names must be unique and in what scope, how a UID is made, and whether it is stable across reloads.
-- [ ] Decide how an import cycle, a missing file and a name clash are reported. Recommendation: each is a load error with `file:line:column`; a cycle prints the chain of files (`A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`); a path is relative to the importing file; a name defined twice names both places.
-- [x] Python module files: `<Name>_Module.py`, matching the module file (see Modules above).
-- [x] Theme, style and stylesheet file names: `<Name>_Theme.yaml`, `<Name>_Style.yaml`, `<Name>_Stylesheet.yaml`, each with `shell:` and a top-level `type:` (decided 2026-10-25).
-- [x] **Plain suffixes plus keys** (maintainer, 2026-10-25). Every shell file carries `shell:` and a top-level `type:` naming what it is: `Shell`, `Module`, `Theme`, `Style`, `Stylesheet`. A style for a module is `<Name>_Style.yaml` with `type: Module`, so the parser knows what it styles. Findings kept for the record: Tesserae already finds `_Theme.yaml`, `_Stylesheet.yaml` and `_Style.yaml` by suffix (`src/tesserae/project.py`, `KINDS`, local clone commit `0eda3fe`, read 2026-10-25); the `shell:` key protects the shell side; whether Tesserae refuses a shell file is Tesserae's business and was not checked.
-- [ ] Decide the exact `type:` values, in particular what a surface's style file says (`Style`, or a name for the surface kind) against a module's (`Module`). Also `type:` is used inside a surface (`type: dock`); a key such as `kind:` for the file would be easier to read. Recommendation: keep `type:` as the maintainer wrote it unless the grammar in `41 YAML Reference/` shows a clash.
-- [ ] Decide what separates a style file from a stylesheet. Recommendation: a style file holds the values for one surface or module, the same as its inline `style:` key; a stylesheet holds shared rules that apply across the shell by type or class; a theme holds design tokens (colour, type, shape, motion). A module's style is a style file with `type: Module` or an inline `style:`.
-- [ ] Decide how a module's values reach a view (a ViewModel class, a plain dict, or a signal registry).
+Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import:` and nesting; unique-name keys; module rules; plain `*_Theme.yaml`, `*_Style.yaml`, `*_Stylesheet.yaml` with `shell:` and `type:`; surface types; `monitor`; `name` and UID scope; load errors; the style, stylesheet and theme split.
+
+- [ ] Set the widget list for v1 and the limits of the view format (conditions, repeaters). The surface properties in [[Surface Types]] drive part of it.
+- [ ] Settle the case and spelling of `type:` values (`Module`, `Theme` as written for files, `bar`, `panel` for surfaces). Recommendation: match case-insensitively and write the canonical form in `41 YAML Reference/`.
+- [ ] Decide what `monitor` does for a name, a description match and a "default" for monitors no root names ([[V1 Scope#Multi-monitor]]), now that a root without `monitor` is ignored.
+- [ ] Decide how the shell loads a module's Python and the contract it must meet ([[42 Python API]], to write). The thread rule in [[AGENTS#3. Layering principle]] applies: blocking work runs on its own thread and reaches the loop with `call_soon`.
+- [ ] Decide how a UID is made and whether it stays stable across reloads.
+- [ ] Decide how a module's values reach a view (a ViewModel-like class, a plain dict, or a signal registry). The module keeps its own data (see Modules); this is about the hand-off to rendering.
 
 ## Links
 

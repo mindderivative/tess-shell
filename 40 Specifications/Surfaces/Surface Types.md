@@ -1,0 +1,133 @@
+---
+title: Surface Types
+aliases: [Surfaces, Bar Frame Panel Popup]
+type: spec
+status: draft
+owner: phil
+created: 2026-10-25
+updated: 2026-10-25
+tags: [spec/surface, needs-verification]
+related: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0001 Shell Surface Strategy]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[V1 Scope]]", "[[Personas and Use Cases]]"]
+depends_on: ["[[TRE-REQ-001 Layer Surface Window]]", "[[ADR-0007 Shell UI Layer]]"]
+---
+
+# Surface types
+
+> [!summary]
+> The shell has four surface types: **Bar**, **Frame**, **Panel** and **Popup**. A Bar attaches to an edge and reserves space. A Frame surrounds the screen and reserves space on every side. A Panel is the multi-purpose window: attached to a frame, a bar, another surface, or floating. A Popup anchors to a shell surface. Each is built from the tre 0.5.8 types `LayerWindow` and `PopupWindow`. Written from the maintainer's description of 2026-10-25.
+
+## Purpose and scope
+
+These are the values of `type:` on a surface in a shell file ([[ADR-0007 Shell UI Layer#Surface types (2026-10-25)]]). Names, files and the full YAML are in `41 YAML Reference/`. A dock, top bar or side bar is a Bar. An OSD, launcher or desktop widget is built as a Panel or a Popup ([[V1 Scope#Surfaces]]).
+
+## The four types
+
+| Type | Attaches to | Reserves space | Built on |
+|---|---|---|---|
+| Bar | One edge; may span edge to edge, touching three edges | Yes | `LayerWindow`, anchor to one edge or to one edge and both edges across it, positive `exclusive_zone` |
+| Frame | All four edges and corners | Yes, per side | One painter `LayerWindow` plus up to four reserver `LayerWindow`s |
+| Panel | A frame, a bar, another surface, or floating | Optional | `LayerWindow`; moved with `drag_margin` |
+| Popup | A shell surface | No | `PopupWindow` parented to a layer or popup window |
+
+### Bar
+
+Attached to an edge. It can span the whole edge, which makes it touch three edges (its own edge and the two edges across it). It reserves space so maximised windows stop short of it. It can be a dock, a top bar, a side bar or anything else anchored to an edge.
+
+Highly customisable: width, height, position, animation, hidden state, background, text, borders, rounded corners, shadows with elevation and colour, transparency and so on.
+
+### Frame
+
+Attached to all four edges and corners as a frame around the screen. It reserves space.
+
+- Thickness is uniform or differs by side.
+- Corners are rounded, convex and concave.
+- Borders, with background and border colours.
+- It can be visually melded into other surfaces, so they look as if they grow out of the frame, with rounded connections and borders.
+- Shadows with elevation and colour (this applies to every surface type).
+
+### Panel
+
+The multi-purpose window. It attaches to the frame, a bar, another surface type, or floats. It can be moved with the mouse, anchored, hidden and so on. Ideally it works almost anywhere, and it may be the baseline the other surface types build on. As with the Bar, it is highly customisable.
+
+### Popup
+
+Attaches to, or is anchored to, anything. Here "anything" means a shell surface: a tre popup needs a layer window or another popup as its parent (see Integration).
+
+## Behaviour
+
+States and transitions are common to every type; the specs that follow list the differences.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Configured: shell file loaded
+    Configured --> Open: monitor present
+    Open --> Hidden: hide / auto-hide
+    Hidden --> Open: show
+    Open --> Closed: monitor removed / popup dismissed
+    Closed --> Open: monitor added again
+    Closed --> [*]: removed from configuration
+```
+
+- A surface exists only for a monitor named by its root ([[ADR-0007 Shell UI Layer#Monitors, names and errors (2026-10-25)]]). On hot-plug the shell creates new windows; a closed layer window is dead ([[TRE-REQ-001 Layer Surface Window#Lifecycle and events]]).
+
+## Configuration
+
+Every type shares the style keys (size, position, background, text, border, corner radii, shadow, transparency, animation, hidden). The type adds its own: edge and span for a Bar, side thicknesses and corner shapes for a Frame, the attachment target and mobility for a Panel, the anchor rectangle and gravity for a Popup. The YAML keys are set in `41 YAML Reference/`. #needs-verification
+
+## Integration
+
+How each type maps to tre 0.5.8 ([[TRE-REQ-001 Layer Surface Window]]):
+
+| Type | Mapping | Notes |
+|---|---|---|
+| Bar | `LayerWindow(layer=..., anchor=<edge> or <edge + both across>, size=(0, N) or (N, 0), exclusive_zone=N, output=...)` | A positive zone counts only for one edge, or one edge plus both edges across it; any other anchor reserves nothing. |
+| Frame | A painter `LayerWindow` (all four anchors, `size=(0, 0)`, `exclusive_zone=-1`, `input_region="auto"`) plus reservers: one edge and both edges across it, 1 px on the short axis, `layer="bottom"`, the side's thickness as `exclusive_zone`, `input_region=[]` | The layout from [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]]. Different side thicknesses are different reserver zones. Rounded corners are filled paths in the painter. tre did not test the four reservers plus the painter together. |
+| Panel | `LayerWindow`, floating (a corner or no anchor, positioned by margin) | Movable with `window_region="drag_margin"`; the engine moves it and fires `moved` on release. Margin animation covers slide in and out. Other surfaces' zones do not limit a drag. |
+| Popup | `PopupWindow(parent, anchor_rect, anchor, gravity, constraint_adjustment, grab)` | Parent is a `LayerWindow` or `PopupWindow`. The compositor flips and slides it to stay on screen. Escape dismissal is untested in tre. |
+
+## Design
+
+Tokens and components come from the shell's own design system (`50 Design System/`, to write). Elevation shadows use tre's `shadows` property; their colour and elevation are tokens.
+
+## Accessibility
+
+Each surface is published to screen readers as one more window of the application. A bar's window node has no accessible name yet in tre, and a screen reader gets the tree but no screen position for a layer surface ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]). Names are set per surface in the shell file. Reduced motion and high contrast follow the desktop.
+
+## Performance budget
+
+Per-surface video memory from tre 0.5.8: a 1280 x 32 bar about 18 MiB, a small window about 31 MiB, a 4K full-screen surface about 177 MiB. A Frame needs a full-screen painter, so it carries the large cost on each monitor, plus the reservers. Budgets are set in `60 Quality/`.
+
+## Failure modes and recovery
+
+- Monitor removed: the surfaces on it close with reason `"output_removed"`; they are created again when it returns.
+- Unsupported compositor: `LayerWindow` raises `UnsupportedPlatform`.
+- A Popup whose parent is gone fails (tre reason `"failed"`).
+
+## Risks
+
+> [!danger] Melding surfaces and shadows are not free
+> - **Melding.** A Bar, Panel and Frame are separate Wayland surfaces. They cannot be committed together, so surfaces animating together can differ by up to a frame on screen ([[TRE-REQ-001 Layer Surface Window#Animation]]). A rounded join between a panel and the frame can show a seam while either moves. The join shape has to be drawn by the frame's painter, which then must know the other surface's position. #needs-verification
+> - **Shadows.** A surface cannot draw outside its own bounds. A shadow around a Bar needs the surface to be larger than the bar body, with the extra area transparent and the exclusive zone set to the body only; `input_region="auto"` keeps clicks from the transparent part. A larger transparent buffer costs memory. #needs-verification
+> - **Relative placement.** layer-shell has no way to place one surface relative to another. A Panel attached to a Bar is positioned by the shell with margins, and has to follow if the bar moves or animates, with up to a frame of skew. #needs-verification
+
+## Open questions
+
+- [ ] Which surface types are in v1. [[V1 Scope]] lists Frame as later; the maintainer described it in full, so confirm.
+- [ ] How a Panel's attachment to another surface is written, and what happens when the target hides.
+- [ ] Whether a Popup may be anchored to a surface of another monitor.
+- [ ] Which of OSD, launcher and desktop widget are a Panel and which a Popup ([[Personas and Use Cases]] UC3 to UC5). Recommendation: OSD and desktop widget are Panels (click-through for the OSD), the launcher is a Panel on the `overlay` layer with exclusive keyboard.
+- [ ] Concave corner and join drawing: confirm tre's path nodes cover them with the needed hit testing.
+
+## Acceptance criteria
+
+- [ ] A Bar anchored to one edge spanning the full length reserves its zone on KWin; a maximised window stops short of it.
+- [ ] A Frame with different side thicknesses reserves each side separately, and clicks on the ring reach the shell while clicks in the interior reach the window below.
+- [ ] A Panel can be dragged with the mouse, stays on its output, and reports its final margin on release.
+- [ ] A Popup opens beside its anchor rectangle, flips at the screen edge, and closes on an outside click.
+- [ ] A shadow around a Bar is fully visible and does not change the reserved space.
+- [ ] A rounded join between a Panel and the Frame shows no seam while idle, and the seam while moving is measured and recorded.
+
+## Links
+
+- [[ADR-0007 Shell UI Layer]] · [[ADR-0001 Shell Surface Strategy]] · [[TRE-REQ-001 Layer Surface Window]] · [[V1 Scope]]
+- [[Surfaces]] · [[40 Specifications]]

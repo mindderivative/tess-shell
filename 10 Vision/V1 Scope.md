@@ -27,16 +27,18 @@ depends_on: ["[[ADR-0001 Shell Surface Strategy]]"]
 
 ## Surfaces
 
+The shell has four surface types: Bar, Frame, Panel and Popup ([[Surface Types]], [[ADR-0007 Shell UI Layer#Surface types (2026-10-25)]]). The rows below are uses; recommended mapping to a type is in the Note column and is not decided.
+
 | Surface | In v1 | Use case | Note |
 |---|---|---|---|
-| Bar | Yes | UC1, UC11 | On each monitor that lists it; reserves an exclusive zone. |
-| Popup (menu, flyout) | Yes | UC2 | `PopupWindow`. Escape dismissal is untested in tre; the spec names it as a gap. |
-| OSD | Yes | UC3 | Click-through overlay, on its configured monitor. |
-| Launcher | Yes | UC4 | Shortcut through KDE's global-accel service ([[ADR-0005 Global Shortcuts]]); opens on its configured monitor. |
-| Desktop widget | Yes | UC5 | Movable, position saved from `moved`. |
-| Panel (slide-in) | Yes | UC6 | Margin animation. |
+| Bar | Yes | UC1, UC11 | Type Bar. On each monitor that lists it; reserves an exclusive zone. A dock or side bar is a Bar. |
+| Popup (menu, flyout) | Yes | UC2 | Type Popup. `PopupWindow`. Escape dismissal is untested in tre; the spec names it as a gap. |
+| OSD | Yes | UC3 | Recommended: a Panel, click-through, on its configured monitor. |
+| Launcher | Yes | UC4 | Recommended: a Panel on the `overlay` layer. Shortcut through KDE's global-accel service ([[ADR-0005 Global Shortcuts]]); opens on its configured monitor. |
+| Desktop widget | Yes | UC5 | Type Panel. Movable, position saved from `moved`. |
+| Panel (slide-in) | Yes | UC6 | Type Panel. Margin animation. |
 | Wallpaper | Later | none | `background` layer; no use case written. |
-| Screen frame | Later | UC7 | The four-reserver plus painter layout was not tested together by tre. |
+| Screen frame | Later | UC7 | Type Frame, described in full by the maintainer on 2026-10-25. Whether it is in v1 is an open question in [[Surface Types]]. The four-reserver plus painter layout was not tested together by tre. |
 
 ## Multi-monitor
 
