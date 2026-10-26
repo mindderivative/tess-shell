@@ -62,7 +62,7 @@ Vision: [[10 Vision]]
 
 Research: [[Prior Art - Linux Shell Surfaces]]
 
-Engine requests: [[TRE-REQ-001 Layer Surface Window]] (review; released in tre 0.5.8)
+Engine requests: [[TRE-REQ-001 Layer Surface Window]] (stable; released in tre 0.5.8)
 
 Planned, not yet written:
 - A Tesserae request: open `LayerWindow` and `PopupWindow` from a view ([[ADR-0002 Relationship to Tesserae UI#Consequences]])
@@ -78,6 +78,5 @@ Versions drift. If the live docs disagree with this table, the docs win; update 
 
 ## Current focus
 
-1. Confirm [[TRE-REQ-001 Layer Surface Window]] against the shell (status `review`); [[ADR-0001 Shell Surface Strategy]] is accepted (Option A).
-2. [[10 Vision]] is confirmed (`stable`); write the Tesserae request for layer and popup windows; start `20 Architecture`.
+1. [[10 Vision]] is confirmed (`stable`); write the Tesserae request for layer and popup windows; start `20 Architecture`.
 3. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.

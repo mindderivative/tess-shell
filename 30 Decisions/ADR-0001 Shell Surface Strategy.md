@@ -60,7 +60,7 @@ A platform-neutral variant is also possible: a `PanelWindow`-style type whose la
 - **For:** matches the layering principle. One rendering path (tre owns every frame). Python only sets surface properties, as in Fabric. Every toolkit surveyed attaches the layer role at its own boundary. Other tre users benefit.
 - **Against:** implementation cost. `winit` has no layer-shell role of its own, so tre needs a platform-specific path beside it, and that path must reproduce input, text input, scale, clipboard and accessibility handling that `winit` supplies today. Scheduling is not a risk: tre and Tesserae Shell share a maintainer.
 - **If infeasible:** fall back to Option B.
-- **Status:** built and released in tre 0.5.8 ([[TRE-REQ-001 Layer Surface Window]], `review`). It specifies the window type, outputs and popups, and records the implementation candidates.
+- **Status:** built and released in tre 0.5.8 ([[TRE-REQ-001 Layer Surface Window]], `stable`). It specifies the window type, outputs and popups, and records the implementation candidates.
 
 ### Option B — Shell-created surface, tre renders into it
 

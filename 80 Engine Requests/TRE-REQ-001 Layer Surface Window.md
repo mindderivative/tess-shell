@@ -2,7 +2,7 @@
 title: TRE-REQ-001 Layer Surface Window
 aliases: [TRE-REQ-001, LayerWindow Request, Layer Surface Request]
 type: engine-request
-status: review
+status: stable
 owner: phil
 created: 2026-10-18
 updated: 2026-10-25
@@ -17,7 +17,7 @@ depends_on: []
 > Add a `LayerWindow` type to tre. It is a `Window` whose Wayland role is `zwlr_layer_shell_v1` instead of xdg-toplevel, so it can anchor to screen edges, reserve space, sit on a stacking layer, take a chosen keyboard mode and bind to one output. A companion `PopupWindow` type opens menus and flyouts parented to a layer surface. A small output API lets the shell place one surface per monitor. An `input_region`, margin animation and margin drag cover non-rectangular shells, slide and fade motion, and movable widgets.
 
 > [!success] Released in tre 0.5.8 (2026-10-25)
-> [tre #195](https://github.com/mindderivative/tre/issues/195) is closed and everything in it shipped in tre 0.5.8 (`tesserae-engine==0.5.8` on PyPI; 0.5.7 had none of it), including `PopupWindow` ([tre #223](https://github.com/mindderivative/tre/issues/223)). See [Delivered](#delivered-tre-195-closed). The request stays at `review` until the maintainer confirms it against the shell.
+> [tre #195](https://github.com/mindderivative/tre/issues/195) is closed and everything in it shipped in tre 0.5.8 (`tesserae-engine==0.5.8` on PyPI; 0.5.7 had none of it), including `PopupWindow` ([tre #223](https://github.com/mindderivative/tre/issues/223)). See [Delivered](#delivered-tre-195-closed). Confirmed against the shell by the maintainer on 2026-10-25; the request is `stable`. The untested items listed under Delivered stay open for the testing phase.
 
 > [!info] Surface specs depend on this request
 > The engine blocker is gone: a tre release has `LayerWindow`. Every note under `40 Specifications/Surfaces/` links `[[TRE-REQ-001 Layer Surface Window]]` in `depends_on`. [[ADR-0001 Shell Surface Strategy]] is accepted (Option A, 2026-10-25), so a surface spec carries no `Blocked by` callout for this request; it names any untested gap below that affects it.
