@@ -38,7 +38,7 @@ From the tre reference ([painting guide](https://mindderivative.github.io/tre/gu
 |---|---|---|
 | Text, numbers, booleans, `None` | Plain Python values | Unchanged |
 | Lists and dicts | JSON-like data, nested; a list feeds a repeater (workspaces, tray items) | Unchanged; TEL reads it |
-| Colour | A `(r, g, b, a)` tuple; or `"#RRGGBB"` / `"#RRGGBBAA"`; or a theme token name | The tre tuple. HEX to RGBA is the maintainer's example of a conversion the shell does |
+| Colour | A `(r, g, b, a)` tuple; or `"#RRGGBB"` / `"#RRGGBBAA"`; or `RGBA(r, g, b, a)` with alpha 0.0 to 1.0 (the forms in the maintainer's style example); or a theme token name | The tre tuple (0 to 255 integers, so an alpha of 1.0 becomes 255). HEX to RGBA is the maintainer's example of a conversion the shell does |
 | Size | A number, `"auto"`, a percentage string | Unchanged (tre accepts them) |
 | Image | An image object with RGBA bytes and its size | The tre image properties; decoding files is the module's work, on its own thread ([[Process Model and Threading]]) |
 | Time and dates | A string the module formats, or a `datetime` | A formatted string for text; formatting is the module's choice |

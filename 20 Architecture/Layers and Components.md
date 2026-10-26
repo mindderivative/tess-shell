@@ -67,7 +67,7 @@ flowchart TB
 | Surface manager | Reads outputs, creates and closes a `LayerWindow` or `PopupWindow` per surface and monitor, handles hot-plug and `monitor:` matching | Loop |
 | Module host | Imports `<Name>_Module.py`, creates the module class once, calls `start`, `stop`, `reload`; gives it a context | Loop for calls; module work on module threads |
 | Value store | Holds the latest values modules sent, by module and key; the scope TEL reads names from; records which names an expression read | Written from the loop, via `call_soon` |
-| Modules | One class per module; own their data and threads | Module threads |
+| Modules | A module is a layout YAML (widgets, expressions, params), a style YAML and a Python class ([[ADR-0007 Shell UI Layer#What a module is (2026-10-26)]]); the class owns the module's data and threads | Module threads |
 
 The store is this note's addition. The ADR says a module sends data to shell entry points and the shell passes it to the renderer ([[ADR-0007 Shell UI Layer#Module data reaches the view through shell entry points (2026-10-25)]]); the store is where that data lives so that TEL can read it and re-evaluate what changed.
 

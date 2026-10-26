@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0009 D-Bus Client Library]]"]
 # Module contract
 
 > [!summary]
-> A module is a `<Name>_Module.yaml` file plus a `<Name>_Module.py` next to it, in a `Modules/<module_name>/` folder. The Python file holds one class that extends the shell's `Module` base. The shell creates it once, gives it a context, and calls `start`, `stop` and, for a changed configuration, `reload`. The module owns its data and its threads; it sends finished values to the shell, which renders them. **Decided** parts come from [[ADR-0007 Shell UI Layer]] and [[ADR-0009 D-Bus Client Library]]; names and signatures below are **proposed**. Short snippets are illustrations, not code to build.
+> A module has three parts: a layout YAML (`<Name>_Module.yaml`: widgets, expressions, `params:`), a style YAML, and a Python file (`<Name>_Module.py`) next to them, in a `Modules/<module_name>/` folder ([[ADR-0007 Shell UI Layer#What a module is (2026-10-26)]]). This note is about the Python part: the logic. The Python file holds one class that extends the shell's `Module` base. The shell creates it once, gives it a context, and calls `start`, `stop` and, for a changed configuration, `reload`. The module owns its data and its threads; it sends finished values to the shell, which renders them. **Decided** parts come from [[ADR-0007 Shell UI Layer]] and [[ADR-0009 D-Bus Client Library]]; names and signatures below are **proposed**. Short snippets are illustrations, not code to build.
 
 ## What is decided
 
@@ -87,7 +87,7 @@ Code reload ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], 
 ## Integration
 
 - **Threads.** Methods on the loop; module work on `ctx.thread`s; D-Bus callbacks on the shared service thread; values cross to the loop with `call_soon` through `ctx.send`.
-- **Names.** The module's `name:` (required) is how expressions refer to its values, for example `clock.time`. #needs-verification: which name an expression uses when one module file is bound under several entries (see Open questions).
+- **Names.** The expressions that place values into widgets are written in the module's own layout YAML, not in the surface. Which names they read (the use's `params`, the values the Python sends) is open ([[ADR-0007 Shell UI Layer#Open items]]). #needs-verification
 - **D-Bus.** `ctx.dbus` ([[Module Context]]).
 
 ## Failure modes and recovery

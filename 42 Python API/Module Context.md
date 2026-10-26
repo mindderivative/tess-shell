@@ -44,7 +44,7 @@ self.ctx.send("text", "Hello", use=self.ctx.uses["bar_label"])   # to one use
 - **Values** are plain Python values ([[Value Types and Conversion]]).
 - **Coalescing.** Sending the same key many times keeps only the latest value; the loop applies it once per turn ([[Process Model and Threading#Handing a value to the loop (proposed)]]).
 - **One call, one key, one value.** `ctx.send(key, value, use=None)` takes a single key and a single value. It is not a list of values for the uses: to give three uses three different values, call it three times, once per use.
-- **Per use.** One module instance serves every use. When uses must differ, as in the maintainer's `Label_Module` example, the module decides what each use shows and sends it with `use=`. A `use` is one of `ctx.uses`. Sending with no `use` reaches every use.
+- **Per use.** One module instance serves every use. When uses must differ, as in the maintainer's `Label_Module` example, the module decides what each use shows and sends it with `use=`. The values it receives from each use are its `params`. A `use` is one of `ctx.uses`. Sending with no `use` reaches every use.
 - **Order.** Values from one module keep their order per key; the flush applies the keys of one turn together.
 
 ## Uses
@@ -60,78 +60,75 @@ def use_removed(self, use): ...    # a surface went away (monitor unplugged, fil
 
 This lets a module follow monitors coming and going ([[Data Flow#Monitor hot-plug]]) without polling. #needs-verification: whether hooks or an event stream is the better shape.
 
-## Example: one module, three uses
+## Example: the Label module
 
-A module file is used in several places and the module decides what each place shows. Everything below is an illustration: the YAML grammar is set in `41 YAML Reference/`, the expression syntax is TEL's, and the Python names are proposals.
+The maintainer's example (2026-10-26), which replaced an earlier example of mine that treated a module as a data source for widgets in a bar. A module has three parts: a layout YAML, a style YAML and a Python file ([[ADR-0007 Shell UI Layer#What a module is (2026-10-26)]]). The files are reproduced as given. The maintainer notes it is only an example and may not work exactly like this.
 
-**`Modules/Label/Label_Module.yaml`**
+**`Modules/Label/Label_Module.yaml`**: the layout and the data positioning
 
 ```yaml
 shell: v1
 type: Module
 name: label
+style: Label_Style.yaml
+params:
+    text: {type: string}
+
+FlexBox:
+    name: Label_Module_FlexBox
+    alignment: horizontal
+    width: 120
+    height: 34
+    align_content: center
+    justify_content: middle
+    children:
+        Icon:
+            name: Monitor_Icon   # Optional
+            icon: monitor.svg
+        Text:
+            name: Label_Text
+            class: text_style
 ```
 
-**Two shell files use it three times** (two uses on `DP-1`, one on `HDMI-A-1`). Which files the shell loads from the config directory is set in `41 YAML Reference/`; here each is a shell file with one root.
-
-`DP1_Shell.yaml`:
+**`Modules/Label/Label_Style.yaml`** (named `Label_Style.py` in the message; its content is YAML): the look and feel
 
 ```yaml
 shell: v1
-type: Shell
+type: Style
 
-root:
-    name: dp1_root
-    monitor: DP-1
-    children:
-        top_bar:
-            kind: bar
-            modules:
-                top_label:                       # use 1: its entry sets a caption
-                    module: Label_Module.yaml
-                    caption: "Work"
-        side_bar:
-            kind: bar
-            modules:
-                side_label:                      # use 2: no caption, the module decides
-                    module: Label_Module.yaml
+classes:
+    text_style:
+        kind: Text
+        size: 16
+        weight: 500
+        foreground: "#ffffff" # or | "#fffffff0" | RGBA(255, 255, 255, 1.0)
+
+Icon:
+    foreground: "#ffffff" # or | "#fffffff0" | RGBA(255, 255, 255, 1.0)
+    fill: "#00000000" # or RGBA(255, 255, 255, 0.0)
+
+FlexBox:
+    background: "#000000" # or | "#000000f0" | RGBA(0, 0, 0, 1.0)
+    border: true
+    border_thickness: {2, 2, 2, 2}
+    border_color: "#ffffff"
+    corner_radius: {8, 8, 8, 8}
+
+Text:
+    font_family: {"Hack Nerd Font Mono", "JetBrains Mono"}
 ```
 
-`HDMI_Shell.yaml`:
-
-```yaml
-shell: v1
-type: Shell
-
-root:
-    name: hdmi_root
-    monitor: HDMI-A-1
-    children:
-        bottom_bar:
-            kind: bar
-            modules:
-                bottom_label:                    # use 3: on another monitor
-                    module: Label_Module.yaml
-```
-
-A use is written either as `name: File_Module.yaml` (just the file) or, as here, as a mapping with `module:` and the entry's own options. The mapping form is a proposal.
-
-A widget in each bar shows the module's value. The expression reads `label.text`, and each use sees the value sent to it (written `{{ label.text }}` here only as an illustration):
-
-```yaml
-        top_bar:
-            kind: bar
-            children:
-                caption:
-                    widget: Text
-                    text: "{{ label.text }}"
-```
-
-**`Modules/Label/Label_Module.py`**
+**`Modules/Label/Label_Module.py`**: the logic
 
 ```python
-import json
+import json, yaml
 from tesserae_shell import Module, action
+
+with open('Label_Module.yaml', 'r') as file:
+    data = yaml.safe_load(file)
+
+module_name = data.get("name")  # for reference or passing to shell
+text_name = data["FlexBox"][8]["Text"][0]["name"]
 
 class Label(Module):
     def start(self):
@@ -146,9 +143,10 @@ class Label(Module):
 
     def show(self, use):
         # Three places the text can come from, tried in order.
-        text = (use.options.get("caption")        # 1. the "caption:" written in this use's entry in the shell file
+        text = (use.options.get("top_label")      # 1. the "top_label:" written in this use's entry in the shell file
                 or self.saved().get(use.name)     # 2. the module's own file, keyed by the entry's unique name
                 or f"Screen {use.monitor}")       # 3. a default the module computes
+                or f"${text_name}"                # 4. get text widget param by name
         self.ctx.send("text", text, use=use)      # the key is always "text"; only this use gets this value
 
     @action
@@ -163,25 +161,50 @@ class Label(Module):
         return json.loads(path.read_text()) if path.exists() else {}
 ```
 
-Two different things are called "text" in this example and must not be confused:
+**`DP1_Shell.yaml`**: a surface places the module and passes params
 
-- **`caption: "Work"`** in a use's entry is an **input to the module**: the module reads it with `use.options.get("caption")`.
-- **`text: "{{ label.text }}"`** on the `widget: Text` is the **output**: where the value the module sent under the key `"text"` is displayed. The module never reads it.
+```yaml
+shell: v1
+type: Shell
 
-What happens:
+root:
+    name: dp1_root
+    monitor: DP-1
+    children:
+        top_bar:
+            kind: bar
+            modules:
+                top_label:
+                    module: Label_Module.yaml
+                    text: "Work"
+        side_bar:
+            kind: bar
+            modules:
+                side_label:
+                    module: Label_Module.yaml
+                    text: {{ "label.text" }}
+```
 
-| Use | Text it shows | Why |
-|---|---|---|
-| `top_label` on `DP-1` | `Work` | Source 1: its entry has `caption: "Work"` |
-| `side_label` on `DP-1` | `Screen DP-1` | Source 3: no caption, and `labels.json` has nothing for `side_label`, so the module computes a default. After a `rename("side_label", "Mail")` it would show `Mail` (source 2) |
-| `bottom_label` on `HDMI-A-1` | `Screen HDMI-A-1` | Source 3 again: the same instance, a different `use.monitor` |
+### How the pieces fit (my reading, for the maintainer to correct)
 
-- **One instance.** `Label` is created once. `ctx.uses` has three entries; `ctx.send(..., use=use)` gives each its own value for the same key `text`.
-- **Hot-plug.** Unplug `HDMI-A-1` and the shell calls `use_removed(bottom_label)`; plug it back and `use_added` fires again.
-- **Shared value.** `self.ctx.send("text", "Hi")` with no `use` would reach all three uses.
-- **Where the data lives.** The shell stores the values the module sends. What the module keeps (the saved texts in `labels.json`) is its own file in `ctx.state_dir`, written by the module's own code (here the `rename` action); the shell never reads it ([[Module Contract#Rules for the module author]]).
+1. A surface lists modules under `modules:`, each with a unique name (`top_label`, `side_label`) and the `params` it passes (`text: "Work"`).
+2. The shell loads the module YAML and checks the passed params against its `params:` declaration (`text` is a string).
+3. The shell builds the module's widgets (a `FlexBox` holding an `Icon` and a `Text`) inside the surface, and applies the style file named by `style:`. The `class: text_style` on the `Text` picks up the `text_style` class.
+4. The Python class is created once. For each use it gets a `use` record: the entry's name, its monitor and its params.
+5. The Python sends values (`ctx.send("text", ..., use=use)`). The module's expressions, written in its layout YAML, place those values into widgets.
 
-A module with a single shared value, such as the clock, needs none of this: `ctx.send("time", "14:05")` once a second reaches every use.
+### Points the example raises
+
+| Point | Note |
+|---|---|
+| Reading the module's YAML | The example opens `Label_Module.yaml` itself and indexes into it. `ctx.yaml()` ([[#Members]]) exists for this: the shell already knows the path and the parsed tree, so the Python needs neither `open` nor a working directory. The index `data["FlexBox"][8]...` is the example's shorthand for "find the widget named `Label_Text`" |
+| Options or params | `use.options.get("top_label")` is the entry's value for a param. With `params:` declared, the shell passes the typed value: `use.params["text"]` is the likely name, replacing `options` |
+| The fourth source | `f"${text_name}"` asks for the text widget's name, so the module can address a widget by `name:` |
+| The text in the widget | The `Text` widget has no `text:` expression in the example. How the sent value or the param reaches it is the first open item in [[ADR-0007 Shell UI Layer#Open items]] |
+| `text: {{ "label.text" }}` | In the `side_label` entry, a param bound to the module's own sent value. What `label.text` resolves to for that use is part of the same open item |
+| `children:` keys | `Icon:` and `Text:` are widget types used as keys; two `Text` widgets in one container cannot both be written that way |
+| Style syntax | `{2, 2, 2, 2}` and `{"Hack Nerd Font Mono", ...}` are not YAML mappings; lists (`[2, 2, 2, 2]`) are probably meant. The colour forms are in [[Value Types and Conversion]] |
+| Style file type | The style file here has `type: Style`; earlier notes said `type: Module` |
 
 ## D-Bus helper
 

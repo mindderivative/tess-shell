@@ -143,6 +143,24 @@ What the example shows, and what is decided:
 | `style: Dock_Style.yaml` | A style file per surface, `<Name>_Style.yaml`, with `shell:` and `type:`. | Decided 2026-10-25 (see File naming). |
 | `modules:` and `<name>: <Name>_Module.yaml` | Modules are imported by file. | Decided in outline: see Modules below. |
 
+### What a module is (2026-10-26)
+
+Corrected by the maintainer in chat on 2026-10-26. Earlier notes treated a module as a data source that surfaces read; that was a misreading. **A module is a self-contained piece of the shell with three parts:**
+
+| Part | File | Holds |
+|---|---|---|
+| Layout | `<Name>_Module.yaml` | The visual layout (widgets) and the data positioning (expressions), plus the module's `params:` |
+| Style | `<Name>_Style.yaml`, named by the module's `style:` key | The look and feel of the layout: classes, per-widget defaults |
+| Logic | `<Name>_Module.py` | What the module needs to do: reading sources, handling actions, deciding values |
+
+- **A surface places modules.** A surface lists the modules it shows, under `modules:`, and passes each its `params`. The surface is the container; the module brings its own widgets.
+- **Params.** A module declares typed params in its YAML (`params: text: {type: string}`). A use passes values for them in the shell file. The shell checks them against the declaration.
+- **The Python is the module's logic**, not its layout. It reaches its YAML by file name, unique name or UID and can read the rest of the file ([[ADR-0007 Shell UI Layer#Modules (2026-10-25)]], binding). It sends values to shell entry points, which feed the module's own widgets.
+- **Data positioning is in the module's YAML**, as expressions over the values the Python sends and the params it receives. Which names an expression reads is not settled (see Open items).
+- The earlier decisions below stand: one instance per module file, the matching `.py` is required, the module keeps its own data, the shell renders.
+
+The maintainer's example, with its simplifications, is in [[Module Context#Example: the Label module]].
+
 ### Modules (2026-10-25)
 
 Decided by the maintainer in chat:
@@ -246,6 +264,12 @@ Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import
 
 - [x] **Widget list for v1.** Decided 2026-10-25: take the list from the surfaces and modules in [[V1 Scope]], and add one only when a module needs it. The list is [[V1 Widgets]].
 - [x] **Build or adopt the expression engine.** Build: the Tesserae Expression Language, a separate library ([[ADR-0008 Tesserae Expression Language]], decided 2026-10-25). Survey kept as input: [[Expression Languages for YAML]].
+- [ ] **How a module's values reach its own widgets** (2026-10-26). The maintainer described the YAML as defining "data positioning (expressions)", so expressions in the module YAML would read names. Open: which names (a use's `params`, values the Python sends, both, and how a clash between a param `text` and a sent value `text` is avoided), and whether the Python may also address a widget directly by its `name:`. Recommendation: expressions read `params.<name>` and the values the Python sends under their own names; direct addressing by widget `name:` is optional.
+- [ ] **Widget keys in `children:`.** The example uses the widget type as the key (`Icon:`, `Text:`), which cannot repeat in a YAML mapping. Earlier decision: children are keyed by a unique name. Confirm how two `Text` widgets in one container are written.
+- [ ] **The module's style file type.** The example uses `type: Style` for the module's style file, named by `style:` in the module YAML; earlier notes said `type: Module`. Recommendation: `type: Style`, the reference making it the module's.
+- [ ] **Widget names.** The example uses `FlexBox` (with `alignment`) where [[V1 Widgets]] has Box, Row and Column.
+- [ ] **Colour forms in styles.** The example shows `"#RRGGBB"`, `"#RRGGBBAA"` and `RGBA(r, g, b, a)` with alpha 0.0 to 1.0 ([[Value Types and Conversion]]).
+
 - [ ] **Expression language design.** Its grammar, sandbox and errors are designed in the TEL project. The shell's requirements on it are in [[Expression Language Requirements]]. `41 YAML Reference/` records which TEL features a shell file may use and what names an expression can reference (module values, tokens, other entries).
 - [ ] **Python builder API.** The Python front-end that produces the same tree as the YAML, and the parity test. Written in `42 Python API/`.
 - [x] **Writing the UID into a user's file.** Decided 2026-10-25: once the file is found, the shell opens it and writes `UID:` below `shell:`. The points below are implementation defaults for that write, not open questions; the maintainer called the question obvious. Defaults — The shell edits a file the user owns. Needs: a YAML writer that keeps comments and layout; no reload loop when the watcher sees the shell's own write; behaviour for a read-only file or a file shared by two shells; and what happens when the user copies a file, so two files carry one UID. Recommendation: the writer keeps comments, writes are ignored by the watcher for that file, a read-only file is registered without injection and warned, and a duplicate UID is a load error naming both files.

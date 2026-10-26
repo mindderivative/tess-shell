@@ -18,6 +18,8 @@ depends_on: ["[[V1 Scope]]"]
 
 ## The list
 
+Widgets are used inside a module's layout YAML (a module brings its own widgets) and in a surface's own layout. The maintainer's Label example names a container `FlexBox` with an `alignment`, where this list has Box, Row and Column; see [[ADR-0007 Shell UI Layer#Open items]].
+
 | Widget | What it is | Needed by |
 |---|---|---|
 | Box | A styled container: background, border, corner radius, shadow, opacity | Every surface: Bar, Panel, Popup, widget groups |
