@@ -161,6 +161,23 @@ Corrected by the maintainer in chat on 2026-10-26. Earlier notes treated a modul
 
 The maintainer's example, with its simplifications, is in [[Module Context#Example: the Label module]].
 
+### Keys that say what a thing is (2026-10-26)
+
+Decided by the maintainer in chat, from the Label example.
+
+| Key | Names | Values |
+|---|---|---|
+| `type:` | The type of a file | `Shell`, `Module`, `Theme`, `Style`, `Stylesheet` |
+| `kind:` | The kind of a surface | `bar`, `frame`, `panel`, `popup` |
+| `widget:` | A widget | `Text`, `Icon`, `Box`, `FlexBox`, ... ([[V1 Widgets]]) |
+
+- **Surfaces do not nest.** A surface is never inside another surface; they are siblings and refer to each other by name ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]). The layout nests like this: a shell file holds surfaces, a surface places modules, a module holds widgets, and widgets nest inside container widgets.
+- **`widget: Text` and `Text` mean the same thing.** The type may be the key (`Text:`) or the value of `widget:`. Where two widgets of one type sit in one container, the unique-name form is used: a unique name as the key, with `widget: Text` inside it.
+- **Containers.** `Box` is a basic container with no auto-stacking; unstyled it is invisible, fully styled it is a panel of its own. `FlexBox` stacks its children automatically, with `alignment` vertical or horizontal. This replaces Row and Column in [[V1 Widgets]].
+- **Params.** A module's declared params are what a use passes; `use.params` is the name in Python ("params matches the YAML").
+- **Module values.** Expressions in the module's YAML read `params.<name>` and the values the Python sends, under their own names. Addressing a widget directly by its `name:` is optional.
+- **The module's style file** is `type: Style`, named by the module's `style:` key.
+
 ### Modules (2026-10-25)
 
 Decided by the maintainer in chat:
@@ -264,11 +281,13 @@ Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import
 
 - [x] **Widget list for v1.** Decided 2026-10-25: take the list from the surfaces and modules in [[V1 Scope]], and add one only when a module needs it. The list is [[V1 Widgets]].
 - [x] **Build or adopt the expression engine.** Build: the Tesserae Expression Language, a separate library ([[ADR-0008 Tesserae Expression Language]], decided 2026-10-25). Survey kept as input: [[Expression Languages for YAML]].
-- [ ] **How a module's values reach its own widgets** (2026-10-26). The maintainer described the YAML as defining "data positioning (expressions)", so expressions in the module YAML would read names. Open: which names (a use's `params`, values the Python sends, both, and how a clash between a param `text` and a sent value `text` is avoided), and whether the Python may also address a widget directly by its `name:`. Recommendation: expressions read `params.<name>` and the values the Python sends under their own names; direct addressing by widget `name:` is optional.
-- [ ] **Widget keys in `children:`.** The example uses the widget type as the key (`Icon:`, `Text:`), which cannot repeat in a YAML mapping. Earlier decision: children are keyed by a unique name. Confirm how two `Text` widgets in one container are written.
-- [ ] **The module's style file type.** The example uses `type: Style` for the module's style file, named by `style:` in the module YAML; earlier notes said `type: Module`. Recommendation: `type: Style`, the reference making it the module's.
-- [ ] **Widget names.** The example uses `FlexBox` (with `alignment`) where [[V1 Widgets]] has Box, Row and Column.
-- [ ] **Colour forms in styles.** The example shows `"#RRGGBB"`, `"#RRGGBBAA"` and `RGBA(r, g, b, a)` with alpha 0.0 to 1.0 ([[Value Types and Conversion]]).
+- [x] **How a module's values reach its widgets:** `params.<name>` plus sent values (maintainer, 2026-10-26).
+- [x] **Widget keys in `children:`:** `Text:` and `widget: Text` are the same; the unique-name form where a type repeats.
+- [x] **The module's style file type:** `type: Style`.
+- [x] **Container widgets:** `Box` and `FlexBox`.
+- [ ] **Four-sided shorthand.** The maintainer's idea: a value with four sides (a border thickness, a corner radius, a margin) can be one number, a list of four, or named sides, "normal for UI design". The examples are `{2, 2, 2, 2}`, `[2, 2, 2, 2]` and `{[left = 2, top = 2, right = 2, bottom = 2]}`. **Problem:** a standard YAML parser reads `{2, 2, 2, 2}` as the one-key mapping `{2: None}` and fails on `{[left = 2, ...]}` (checked with PyYAML on 2026-10-26), so as written they do not survive an ordinary YAML load. Options: **A.** square-bracket lists and named mappings that YAML already understands (`[2, 2, 2, 2]`, `{left: 2, top: 2}`), with one number for all sides (recommended); **B.** a string form (`"2 2 2 2"`) the shell parses; **C.** a custom YAML loader that reads braces as lists. Also open: the order of four values. tre's four-sided values are `margin` as (top, right, bottom, left) and `corner_radius` as (top_left, top_right, bottom_right, bottom_left), clockwise from the top. Recommendation: the same clockwise order, and named sides as the unambiguous form.
+- [ ] **Is "overlay" a kind?** The maintainer listed bars, panels and overlays as surface kinds. The kinds decided earlier are bar, frame, panel and popup, and `overlay` is a stacking layer (the launcher is a panel on the overlay layer). Recommendation: keep four kinds and treat overlay as a `layer:` value. Confirm.
+- [ ] **What `type:` on a "layer surface" means.** The maintainer wrote "layer surfaces (`type:`)". My reading: the shell file that defines them is `type: Shell`. Confirm.
 
 - [ ] **Expression language design.** Its grammar, sandbox and errors are designed in the TEL project. The shell's requirements on it are in [[Expression Language Requirements]]. `41 YAML Reference/` records which TEL features a shell file may use and what names an expression can reference (module values, tokens, other entries).
 - [ ] **Python builder API.** The Python front-end that produces the same tree as the YAML, and the parity test. Written in `42 Python API/`.

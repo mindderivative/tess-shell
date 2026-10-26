@@ -18,12 +18,12 @@ depends_on: ["[[V1 Scope]]"]
 
 ## The list
 
-Widgets are used inside a module's layout YAML (a module brings its own widgets) and in a surface's own layout. The maintainer's Label example names a container `FlexBox` with an `alignment`, where this list has Box, Row and Column; see [[ADR-0007 Shell UI Layer#Open items]].
+Widgets are used inside a module's layout YAML (a module brings its own widgets) and in a surface's own layout. Containers are `Box` (no auto-stacking) and `FlexBox` (auto-stacking, `alignment` vertical or horizontal), decided by the maintainer on 2026-10-26 ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]). A widget is written `Text:` or `widget: Text`.
 
 | Widget | What it is | Needed by |
 |---|---|---|
-| Box | A styled container: background, border, corner radius, shadow, opacity | Every surface: Bar, Panel, Popup, widget groups |
-| Row, Column | Lay children out along an axis, with gap, alignment and wrap | Every surface |
+| Box | A basic container with no auto-stacking: unstyled it is invisible, fully styled it has background, border, corner radius, shadow and opacity | Every surface: Bar, Panel, Popup, widget groups |
+| FlexBox | A container that stacks its children automatically, `alignment` vertical or horizontal, with gap and alignment | Every surface and module |
 | Spacer | Flexible empty space that pushes siblings apart | Bar layout (left, centre, right groups) |
 | Text | A line or block of text, with a typography token | Clock, Workspaces, Tasks, Battery, Network, Media, Applications |
 | Icon | A named or file icon, tinted by a colour token | Tray, Audio, Network, Battery, Media, Tasks, Applications |

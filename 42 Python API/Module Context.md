@@ -26,7 +26,7 @@ depends_on: ["[[Module Contract]]"]
 | `ctx.yaml(ref=None)` | A read-only view of a YAML file by file name, unique name or UID; default is the module's own. Lets the Python read the rest of the file's keys, tokens and so on | Decided ([[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]); shape proposed |
 | `ctx.log` | A logger bound with the module's name and UID | Decided that a logger is given; the library is open ([[Logging with Loguru]]) |
 | `ctx.send(key, value, use=None)` | Send a value to the shell. Thread-safe, coalesced, never blocks | Decided that an entry point exists; signature proposed |
-| `ctx.uses` | The places this module is used: each with the entry's unique name, monitor, UID and options | Proposed |
+| `ctx.uses` | The places this module is used: each with the entry's unique name, monitor, UID and `params` | Proposed |
 | `ctx.dbus` | A helper over the shared `dbus-fast` service thread | Decided that it exists ([[ADR-0009 D-Bus Client Library]]); shape proposed |
 | `ctx.thread(fn, ...)` | Start a thread that catches and logs its exceptions and is joined on `stop` | Proposed |
 | `ctx.every(seconds, fn)`, `ctx.after(seconds, fn)` | Timers that run `fn` on the loop thread | Proposed |
@@ -51,7 +51,7 @@ self.ctx.send("text", "Hello", use=self.ctx.uses["bar_label"])   # to one use
 
 A use is a place where the module is referenced in a shell file (an entry such as `top_label`). It is not a copy of the module: there is one module instance for all its uses.
 
-`ctx.uses` is a read-only mapping from each entry's unique name to a use record. A use record has the entry's `name`, its `uid`, the `monitor` it is on, and its options (the keys written in that entry). The shell calls optional hooks when uses change:
+`ctx.uses` is a read-only mapping from each entry's unique name to a use record. A use record has the entry's `name`, its `uid`, the `monitor` it is on, and its `params` (the values written in that entry for the module's declared `params:`). The shell calls optional hooks when uses change:
 
 ```python
 def use_added(self, use): ...      # a surface showing this module appeared
@@ -198,13 +198,13 @@ root:
 | Point | Note |
 |---|---|
 | Reading the module's YAML | The example opens `Label_Module.yaml` itself and indexes into it. `ctx.yaml()` ([[#Members]]) exists for this: the shell already knows the path and the parsed tree, so the Python needs neither `open` nor a working directory. The index `data["FlexBox"][8]...` is the example's shorthand for "find the widget named `Label_Text`" |
-| Options or params | `use.options.get("top_label")` is the entry's value for a param. With `params:` declared, the shell passes the typed value: `use.params["text"]` is the likely name, replacing `options` |
+| Options or params | **Decided:** `use.params` ("params matches the YAML"). The example's `use.options.get("top_label")` reads the entry's value for the param, which is `use.params["text"]` |
 | The fourth source | `f"${text_name}"` asks for the text widget's name, so the module can address a widget by `name:` |
 | The text in the widget | The `Text` widget has no `text:` expression in the example. How the sent value or the param reaches it is the first open item in [[ADR-0007 Shell UI Layer#Open items]] |
 | `text: {{ "label.text" }}` | In the `side_label` entry, a param bound to the module's own sent value. What `label.text` resolves to for that use is part of the same open item |
-| `children:` keys | `Icon:` and `Text:` are widget types used as keys; two `Text` widgets in one container cannot both be written that way |
-| Style syntax | `{2, 2, 2, 2}` and `{"Hack Nerd Font Mono", ...}` are not YAML mappings; lists (`[2, 2, 2, 2]`) are probably meant. The colour forms are in [[Value Types and Conversion]] |
-| Style file type | The style file here has `type: Style`; earlier notes said `type: Module` |
+| `children:` keys | **Decided:** `Text:` and `widget: Text` mean the same; where a type repeats, a unique-name key with `widget: Text` inside |
+| Style syntax | `{2, 2, 2, 2}` is the maintainer's list shorthand for four sides. A standard YAML parser reads it as `{2: None}`, so the shell needs a defined form ([[ADR-0007 Shell UI Layer#Open items]]). The colour forms are in [[Value Types and Conversion]] |
+| Style file type | **Decided:** `type: Style` |
 
 ## D-Bus helper
 
