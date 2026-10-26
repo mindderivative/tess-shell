@@ -61,6 +61,15 @@ Split Tesserae into a core (reactivity, theme, view language) and an app layer, 
 
 Accepted 2026-10-25 by the maintainer in chat: **Option A**, a small shell-owned layer on tre. It keeps the shell completely separate and dependent only on tre. The extra work is accepted. Tesserae and the shell may each ask tre for additions; a request from either can serve both, and tre is where they meet.
 
+### File naming (2026-10-25)
+
+Decided by the maintainer in chat. The shell's files are named so nobody mistakes them for Tesserae files: a Tesserae `<Name>_View.yaml` dropped into a shell must not appear to work.
+
+- The shell does not use Tesserae's `_View.yaml` suffix, or any Tesserae file name, for its own views.
+- A shell is written either as **one `*.yaml` file** for the whole shell, or as a **`Main_Shell.yaml`** that imports several **`<Name>_Shell.yaml`** files and builds the shell from them. Both forms are valid.
+- A Tesserae file placed in a shell is refused with an error that names the file and says it is not a shell file (see Open items for how a shell file is recognised).
+- Still open: the names of the Python module files, theme files and stylesheet files, and the exact import syntax. They are set in `41 YAML Reference/` and `42 Python API/`.
+
 ## Consequences
 
 Option A is accepted, so:
@@ -75,7 +84,10 @@ Option A is accepted, so:
 ## Open items
 
 - [ ] Set the widget list for v1 and the limits of the view format (conditions, repeaters, imports).
-- [ ] Decide whether view files keep Tesserae-style names (`<Name>_View.yaml`).
+- [x] Decide whether view files keep Tesserae-style names. No: one `*.yaml` file, or `Main_Shell.yaml` importing `<Name>_Shell.yaml` files (see File naming above).
+- [ ] Decide how a shell file is recognised. Recommendation: a required top-level key (for example `shell:` with a format version) in every shell file, so a Tesserae view with the wrong suffix or a one-file shell with any name fails with a clear error. Tesserae views have a `widget:` root, which a shell file does not.
+- [ ] Decide the import syntax of `Main_Shell.yaml`, whether imports nest, and how a name clash or a cycle is reported (`file:line:column`).
+- [ ] Decide the names of Python module files, theme files and stylesheet files so none reads as a Tesserae name (`_ViewModel.py`, `_Theme.yaml`, `_Stylesheet.yaml`).
 - [ ] Decide how a module's values reach a view (a ViewModel class, a plain dict, or a signal registry).
 
 ## Links
