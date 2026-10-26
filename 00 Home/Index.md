@@ -46,7 +46,7 @@ Operating rules for agents: [[AGENTS]].
 | `90 Research` | [[90 Research]] | Prior art, protocol notes, spikes |
 
 > [!warning] Folder indexes pending
-> Only `00 Home`, `10 Vision`, `30 Decisions`, `40 Specifications`, `50 Design System`, `80 Engine Requests` and `90 Research` have content so far. [[80 Engine Requests]], [[10 Vision]], [[30 Decisions]], [[40 Specifications]], [[50 Design System]] and [[90 Research]] have their folder index; the others do not exist yet, so their links are unresolved. Create each when its folder gets its first note.
+> Only `00 Home`, `10 Vision`, `20 Architecture`, `30 Decisions`, `40 Specifications`, `50 Design System`, `80 Engine Requests` and `90 Research` have content so far. [[80 Engine Requests]], [[10 Vision]], [[20 Architecture]], [[30 Decisions]], [[40 Specifications]], [[50 Design System]] and [[90 Research]] have their folder index; the others do not exist yet, so their links are unresolved. Create each when its folder gets its first note.
 
 ## Decisions
 
@@ -68,7 +68,7 @@ Research: [[Prior Art - Linux Shell Surfaces]]; [[Shadows on Layer Surfaces]]
 Engine requests: [[TRE-REQ-001 Layer Surface Window]] (stable; released in tre 0.5.8); [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (superseded; withdrawn)
 
 Planned, not yet written:
-- `20 Architecture`
+- `41 YAML Reference`, `42 Python API`, `60 Quality`, `70 Delivery`, the module and integration specs
 
 ## Upstream projects
 
@@ -81,5 +81,5 @@ Versions drift. If the live docs disagree with this table, the docs win; update 
 
 ## Current focus
 
-1. [[10 Vision]] is confirmed (`stable`); start `20 Architecture` (it now includes the shell's UI layer, [[ADR-0007 Shell UI Layer]]).
+1. [[10 Vision]] is confirmed (`stable`); confirm the draft [[20 Architecture]] notes, then module and integration specs.
 2. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.

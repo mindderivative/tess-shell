@@ -31,11 +31,11 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Moved the TEL brief out of the vault to `tess-el/docs`; the vault keeps the Shell's requirements in [[Expression Language Requirements]] |
+| Last change | Drafted [[20 Architecture]]: system context, layers and components, process model and threading, data flow |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0008 Tesserae Expression Language]] (7 accepted; ADR-0002 superseded) |
-| Waiting on you | Nothing blocking. Smaller items: TEL versioning; Panel details (side, gap, follow) in the Panel spec |
+| Waiting on you | Review the draft [[20 Architecture]] notes and their open questions (module thread ownership, value store, no-windows policy, supervisor) |
 | Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
-| Next | Start `20 Architecture`, including the UI layer; then the module and runtime specs |
+| Next | Module specs (Clock first), `42 Python API`, `41 YAML Reference`, the Panel spec |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
 | Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | [[20 Architecture]] drafted (four notes) |
 | 2026-10-25 | TEL brief written and moved to `tess-el/docs` (not kept in the vault) |
 | 2026-10-25 | Loguru noted as a logging option ([[Logging with Loguru]]) |
 | 2026-10-25 | Unresolved reference: error at load, warning while running ([[ADR-0007 Shell UI Layer]]) |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | Panel attached by name; UID write; TEL repository (tess-el, MIT); tre #236 recorded |
 | 2026-10-25 | `tre` answered the hit-testing question; path forward confirmed ([[Hit Testing for Concave Corners]]) |
 | 2026-10-25 | TEL details, Frame in v1, surface mapping, [[V1 Widgets]], [[Glossary]]; `tre` asked about hit testing |
-| 2026-10-25 | [[ADR-0008 Tesserae Expression Language]] accepted; requirements written ([[Expression Language Requirements]]) |
 
 ## Go to
 
