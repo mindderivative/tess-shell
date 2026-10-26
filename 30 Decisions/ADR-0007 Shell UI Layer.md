@@ -83,6 +83,7 @@ The maintainer's example, as given (2026-10-25). It is a basic example, **not ex
 
 ```yaml
 shell: v1234
+type: Shell
 
 root:
     name: shell_root # Unique but not required, each yaml file gets an assigned UID automatically
@@ -91,14 +92,14 @@ root:
         import: TopBar_Shell.yaml
         child: 
             name: panel_dock # Unique per monitor
-            type: bar
+            kind: bar
             style: Dock_Style.yaml
             modules: # Modules have to be imported as they may have differing rules
                 module: Audio_Module.yaml # with a connected python script
                 module: Network_Module.yaml
         child:
             name: panel_start_menu
-            type: panel
+            kind: panel
             style: CornerPanel_Style.yaml
             modules:
                 module: Applications_Module.yaml
@@ -108,6 +109,7 @@ Revised by the maintainer the same day: a child or module is keyed by its own un
 
 ```yaml
 shell: v1234
+type: Shell
 
 root:
     name: shell_root
@@ -115,13 +117,13 @@ root:
     children:
         import: TopBar_Shell.yaml
         panel_dock:                       # unique per monitor
-            type: bar
+            kind: bar
             style: Dock_Style.yaml
             modules:
                 audio: Audio_Module.yaml      # unique name: the module file
                 network: Network_Module.yaml
         panel_start_menu:
-            type: panel
+            kind: panel
             style: CornerPanel_Style.yaml
             modules:
                 applications: Applications_Module.yaml
@@ -137,7 +139,7 @@ What the example shows, and what is decided:
 | `monitor: DP-1` | A root is bound to one monitor. | Decided 2026-10-25: `monitor` accepts anything the shell gives it, and a root with no `monitor` is ignored (see Monitors, names and errors). |
 | `children:` with `import:` | `import:` pulls in a `<Name>_Shell.yaml`. | Decided. |
 | `<unique_name>:` entries | Children and modules are keyed by a unique name instead of a repeated `child:` or `module:` key. | **Decided 2026-10-25.** A child's name is unique per monitor. |
-| `type: bar` / `panel` | A surface type. The example first said `dock` and `corner_panel`; a dock is a bar, and a corner panel is a panel. | Decided 2026-10-25: the types are Bar, Frame, Panel, Popup ([[Surface Types]]). |
+| `kind: bar` / `panel` | A surface kind. The example first said `dock` and `corner_panel`; a dock is a bar, and a corner panel is a panel. | Decided 2026-10-25: the types are Bar, Frame, Panel, Popup ([[Surface Types]]). |
 | `style: Dock_Style.yaml` | A style file per surface, `<Name>_Style.yaml`, with `shell:` and `type:`. | Decided 2026-10-25 (see File naming). |
 | `modules:` and `<name>: <Name>_Module.yaml` | Modules are imported by file. | Decided in outline: see Modules below. |
 
@@ -159,7 +161,7 @@ Decided by the maintainer in chat:
 
 ### Surface types (2026-10-25)
 
-The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properties and how each maps to tre are in [[Surface Types]]. `type:` on a surface takes one of these (written `bar`, `frame`, `panel`, `popup` in the examples). Surfaces are siblings, not nested: a Panel or Popup names what it is attached or anchored to by reference, and is its own entry in the file. The tre parent that a popup needs at the protocol level is handled by the shell.
+The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properties and how each maps to tre are in [[Surface Types]]. `kind:` on a surface takes one of these (written `bar`, `frame`, `panel`, `popup` in the examples). Surfaces are siblings, not nested: a Panel or Popup names what it is attached or anchored to by reference, and is its own entry in the file. The tre parent that a popup needs at the protocol level is handled by the shell.
 
 ### Monitors, names and errors (2026-10-25)
 
@@ -167,7 +169,25 @@ The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properti
 - **`name` is unique per monitor.** It need not be unique shell-wide. Its scope is the YAML file it is in and the Python scripts attached to that file. It references something inside its own file or from its script.
 - **A UID is shell-wide** and reachable from the highest level to the lowest. Each YAML file gets one automatically.
 - **Load errors carry `file:line:column`:** an import cycle (it prints the chain of files, `A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`), a missing file, and a name defined twice (it names both places). An import path is relative to the importing file.
-- **Where `type:` would clash, use `kind:`.** Both appear as keys in the examples: a file's `type:` (`Module`, `Theme`) and a surface's `type:` (`bar`). The first clash found in `41 YAML Reference/` is resolved by using `kind:` for the file.
+- **`type:` names a file's type; `kind:` names a surface's kind.** `type:` is for file types such as `Module` and `Theme` (and `Shell`, `Style`, `Stylesheet`). `kind:` is for the kind of surface (`bar`, `frame`, `panel`, `popup`). Decided 2026-10-25, so the two never share a meaning.
+
+### UIDs and the registry (2026-10-25)
+
+Decided by the maintainer in chat.
+
+- **A UID is made with the built-in `uuid.uuid7()`**, a time-ordered, random-backed UUIDv7. It is shell-wide and survives reloads.
+- **A registry keeps them.** A file (JSON), not a database ("a DB might be a little much"). Each entry maps a UID to what is known about it for a quick lookup on reload: its type or kind, its state, and the file it comes from (the module file, a config file).
+- **A mismatch means the entry is new.** If the registry entry and the current file or entry do not agree, the shell treats the old one as removed and registers a new one.
+- Consequence to accept: `uuid.uuid7()` is in Python 3.14 and later (it ran on 3.14.8 here). tre's wheels cover CPython 3.12 and later ([tre README](https://github.com/mindderivative/tre)), so the shell's minimum is Python 3.14 unless it carries its own fallback. #needs-verification: the minimum Python version for the shell, and which release added `uuid.uuid7()`.
+- Not yet decided: where the registry file lives (for example the user's state directory), and exactly which fields make two entries "the same" across a reload (file path, `name`, kind).
+
+### Module data reaches the view through shell entry points (2026-10-25)
+
+Decided by the maintainer in chat.
+
+- **The shell provides entry points; a module sends data to them.** A `Clock_Module` sends the time to a shell-provided entry point, and the shell passes it to the renderer, which updates the clock. The module keeps its own data; the shell provides the entry and the rendering, not the data.
+- **Values match what tre already accepts.** Where a conversion is needed, such as a HEX colour to RGBA, the shell does it. The shell exists so a module developer can use tre without Rust, so it covers the conversions.
+- **A conversion the shell does not provide is the module's job.** The module converts to a type the shell accepts.
 
 ### Theme, style and stylesheet (2026-10-25)
 
@@ -186,14 +206,16 @@ Option A is accepted, so:
 
 ## Open items
 
-Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import:` and nesting; unique-name keys; module rules; plain `*_Theme.yaml`, `*_Style.yaml`, `*_Stylesheet.yaml` with `shell:` and `type:`; surface types; `monitor`; `name` and UID scope; load errors; the style, stylesheet and theme split.
+Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import:` and nesting; unique-name keys; module rules; plain `*_Theme.yaml`, `*_Style.yaml`, `*_Stylesheet.yaml`; `type:` for files and `kind:` for surfaces; surface kinds; `monitor` and `name` scope; load errors; UIDs and the registry; the module data hand-off; the style, stylesheet and theme split.
 
-- [ ] Set the widget list for v1 and the limits of the view format (conditions, repeaters). The surface properties in [[Surface Types]] drive part of it.
-- [ ] Settle the case and spelling of `type:` values (`Module`, `Theme` as written for files, `bar`, `panel` for surfaces). Recommendation: match case-insensitively and write the canonical form in `41 YAML Reference/`.
-- [ ] Decide what `monitor` does for a name, a description match and a "default" for monitors no root names ([[V1 Scope#Multi-monitor]]), now that a root without `monitor` is ignored.
-- [ ] Decide how the shell loads a module's Python and the contract it must meet ([[42 Python API]], to write). The thread rule in [[AGENTS#3. Layering principle]] applies: blocking work runs on its own thread and reaches the loop with `call_soon`.
-- [ ] Decide how a UID is made and whether it stays stable across reloads.
-- [ ] Decide how a module's values reach a view (a ViewModel-like class, a plain dict, or a signal registry). The module keeps its own data (see Modules); this is about the hand-off to rendering.
+Open, with what each is asking:
+
+- [ ] **Widget list for v1 and the limits of the view format.** Two questions. (1) *Widgets:* which building blocks can a view use? For example text, icon, image, button, row and column, slider, progress bar, list, menu item, tray icon. I would take the list from the surfaces and modules in [[V1 Scope]], and add one only when a module needs it. (2) *View format limits:* how much logic can a YAML file hold? *Conditions* are show-or-hide and choose-a-value rules (`visible: when the battery is low`). *Repeaters* make one entry per item of a list (one button per workspace, one icon per tray item). Options: **A.** none (static layout only; modules drive everything), **B.** conditions and repeaters in a small fixed set of forms (recommended: workspaces and tray need repeaters, battery and network need conditions), **C.** a full expression language. Recommendation B. This needs your steer on how much you want in YAML against in the modules' Python.
+- [ ] **Case of values.** `type:` values are `Module`, `Theme` and so on (capitalised); `kind:` values are `bar`, `panel` (lower case). Recommendation: match case-insensitively, and write the canonical form in `41 YAML Reference/`.
+- [ ] **What `monitor` accepts.** Three small questions, because a root with no `monitor` is ignored. (1) *Name:* connector name only (`DP-1`), as tre reports it. (2) *Description:* also match by the display's description (make, model, serial), so a profile follows a particular display when the port changes. (3) *Default:* what a monitor gets that no root names, such as one plugged in later. Options: **A.** nothing (unnamed monitors show no shell), **B.** a root with `monitor: default` that applies to every monitor no other root names (recommended), **C.** a wildcard that applies to all monitors. Recommendation: name plus description, and B.
+- [ ] **How the shell loads a module's Python, and the contract.** Options: **A.** *A class* (recommended): the shell imports `<Name>_Module.py`, finds one class that extends a shell `Module` base, creates it once, and calls `start`, `stop` and an optional `reload`. It receives a context object holding its YAML values, its name and UID, a logger, and the entry point that sends data. **B.** *Plain functions*: `start(ctx)` and `stop()` in the file; less structure, harder to keep state. **C.** *A decorator*: functions register themselves with the shell; flexible, more magic. Under every option the thread rule in [[AGENTS#3. Layering principle]] holds: the shell calls module code on the loop thread, blocking work runs on the module's own thread, and the send entry point moves results onto the loop with `call_soon`. The contract is written in [[42 Python API]].
+- [ ] **Registry details.** Where the registry file lives, and which fields make two entries "the same" across a reload.
+- [ ] **Minimum Python version** (see UIDs and the registry).
 
 ## Links
 
