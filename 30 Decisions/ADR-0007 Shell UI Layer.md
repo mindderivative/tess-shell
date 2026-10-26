@@ -75,26 +75,36 @@ Decided by the maintainer in chat. The shell's files are named so nobody mistake
 Decided by the maintainer in chat.
 
 - **Every shell file has a required top-level `shell:` key with a format version.** A file without it is not a shell file and is refused with an error naming the file. This also covers a one-file shell with any name.
-- **A shell file imports another with `import:` under `children:`**, naming a `<Name>_Shell.yaml` file. A single-file shell writes the same content inline, as key/values indented under `children:`. The two forms mean the same thing.
+- **A shell file imports another with `import:` under `children:`**, naming a `<Name>_Shell.yaml` file. `children:` is a mapping, not a list. A single-file shell writes the same content inline as keys and values indented under `children:`. The two forms mean the same thing.
 - **Imports nest.** An imported file can import further files. Reason: a small change then stays inside one small file and does not break the rest.
 
-Illustrative sketch only; the exact grammar (list entries or keys, how an import passes values) is set in `41 YAML Reference/`:
+The maintainer's sketch, as given. The exact grammar is set in `41 YAML Reference/`:
+
+```yaml
+children:
+    import: <name>_Shell.yaml
+    child:
+        name: Bar
+```
+
+Read with the required `shell:` key, a file looks like this (illustrative):
 
 ```yaml
 # Main_Shell.yaml
 shell: 1
 children:
-  - import: Bar_Shell.yaml
-  - import: Launcher_Shell.yaml
+    import: Bar_Shell.yaml
 ```
 
 ```yaml
-# one-file shell: the same content written inline under children
+# one-file shell: the content written inline under children
 shell: 1
 children:
-  - bar:
-      anchor: [top, left, right]
+    child:
+        name: Bar
 ```
+
+Because `children:` is a mapping, a key cannot repeat, so one `import:` cannot appear twice. See the open item on multiple imports.
 
 ## Consequences
 
@@ -113,6 +123,7 @@ Option A is accepted, so:
 - [x] Decide whether view files keep Tesserae-style names. No: one `*.yaml` file, or `Main_Shell.yaml` importing `<Name>_Shell.yaml` files (see File naming above).
 - [x] Decide how a shell file is recognised. A required top-level `shell:` key with a version (see above).
 - [x] Decide the import syntax and whether imports nest. `import:` under `children:`; imports nest (see above).
+- [ ] Decide how a file imports several files, and how several `child:` entries are written, since a mapping cannot repeat a key. Recommendation: `import:` takes one file name or a list of file names, and `child:` takes a name that is its own key (for example `bar:`) or a list. The maintainer's sketch shows one of each.
 - [ ] Decide how an import cycle, a missing file and a name clash are reported. Recommendation: each is a load error with `file:line:column`; a cycle prints the chain of files (`A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`); a path is relative to the importing file; a name defined twice names both places.
 - [ ] Decide the names of Python module files, theme files and stylesheet files so none reads as a Tesserae name (`_ViewModel.py`, `_Theme.yaml`, `_Stylesheet.yaml`).
 - [ ] Decide how a module's values reach a view (a ViewModel class, a plain dict, or a signal registry).
