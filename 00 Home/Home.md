@@ -30,8 +30,8 @@ depends_on: []
 | | |
 |---|---|
 | Phase | Design only. No code. |
-| Updated | 2026-10-25 |
-| Last change | Drafted [[20 Architecture]]: system context, layers and components, process model and threading, data flow |
+| Updated | 2026-10-26 |
+| Last change | Recorded the D-Bus names observed on this Plasma 6.8.1 session in [[System Context#Observed D-Bus names]]; updated ADR-0004 and ADR-0005 |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0008 Tesserae Expression Language]] (7 accepted; ADR-0002 superseded) |
 | Waiting on you | Review the draft [[20 Architecture]] notes and their open questions (module thread ownership, value store, no-windows policy, supervisor) |
 | Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | D-Bus names observed on Plasma 6.8.1 recorded ([[System Context]]) |
 | 2026-10-25 | [[20 Architecture]] drafted (four notes) |
 | 2026-10-25 | TEL brief written and moved to `tess-el/docs` (not kept in the vault) |
 | 2026-10-25 | Loguru noted as a logging option ([[Logging with Loguru]]) |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | Cross-file references resolve through the registry ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Panel attached by name; UID write; TEL repository (tess-el, MIT); tre #236 recorded |
 | 2026-10-25 | `tre` answered the hit-testing question; path forward confirmed ([[Hit Testing for Concave Corners]]) |
-| 2026-10-25 | TEL details, Frame in v1, surface mapping, [[V1 Widgets]], [[Glossary]]; `tre` asked about hit testing |
 
 ## Go to
 

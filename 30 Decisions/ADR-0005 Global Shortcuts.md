@@ -24,6 +24,7 @@ What the search found (2026-10-25, not tested):
 
 - KDE's `kglobalacceld` exposes the `org.kde.KGlobalAccel` D-Bus interface; its `doRegister` and `setShortcut` calls are described by KDE developers as public API. Each action needs an object name, and one component registers a shortcut ([KGlobalAccel source](https://lxr.kde.org/source/frameworks/kglobalaccel/src/kglobalaccel.cpp), [kglobalacceld.h](https://lxr.kde.org/source/plasma/kglobalacceld/src/kglobalacceld.h), [forum thread](https://forum.kde.org/viewtopic.php%3Ff=43&t=109524.html)).
 - The `org.freedesktop.portal.GlobalShortcuts` portal exists and KDE is reported to implement it. Since xdg-desktop-portal-kde 6.7.4, a shortcut is active only when the app calls `BindShortcuts` in the current session ([KDE bug 523063](https://bugs.kde.org/show_bug.cgi?id=523063), [1Password report](https://www.1password.community/developers-69/linux-kde-wayland-global-shortcut-ctrl-shift-space-does-not-work-after-1password-restarts-25707)).
+- Observed on the maintainer's session (2026-10-26): `org.kde.kglobalaccel` is held by the `kwin_wayland` process ([[System Context#Observed D-Bus names]]).
 - Not found: how `org.kde.KGlobalAccel` behaves for a non-KDE client on a Wayland session, and how a component is identified. #needs-verification
 
 ## Options
