@@ -46,13 +46,15 @@ Operating rules for agents: [[AGENTS]].
 | `90 Research` | [[90 Research]] | Prior art, protocol notes, spikes |
 
 > [!warning] Folder indexes pending
-> Only `00 Home`, `30 Decisions`, `80 Engine Requests` and `90 Research` have content so far. Only [[80 Engine Requests]] has its folder index; the others do not exist yet, so their links are unresolved. Create each when its folder gets its first note.
+> Only `00 Home`, `10 Vision`, `30 Decisions`, `80 Engine Requests` and `90 Research` have content so far. [[80 Engine Requests]] and [[10 Vision]] have their folder index; the others do not exist yet, so their links are unresolved. Create each when its folder gets its first note.
 
 ## Decisions
 
 | ADR | Status | Blocks |
 |---|---|---|
 | [[ADR-0001 Shell Surface Strategy]] | accepted (2026-10-25) | All surface specs |
+
+Vision: [[10 Vision]]
 
 Research: [[Prior Art - Linux Shell Surfaces]]
 
@@ -75,5 +77,5 @@ Versions drift. If the live docs disagree with this table, the docs win; update 
 ## Current focus
 
 1. Confirm [[TRE-REQ-001 Layer Surface Window]] against the shell (status `review`); [[ADR-0001 Shell Surface Strategy]] is accepted (Option A).
-2. Write `10 Vision` (goals, non-goals, v1 scope) so the architecture notes have a target.
+2. Confirm the draft [[10 Vision]] notes (goals, non-goals, personas, [[V1 Scope]]), then write the four ADRs listed under [[V1 Scope#Decisions to take]].
 3. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.
