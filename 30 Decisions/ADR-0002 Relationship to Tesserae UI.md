@@ -48,7 +48,7 @@ Accepted 2026-10-25 by the maintainer in chat ("as recommended"): **Option A**. 
 
 ## Consequences
 
-- Tesserae needs a way to open a `LayerWindow` and a `PopupWindow` from a view and bind them to an `Output`. This is a request to the Tesserae project, carried upstream by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]). **Not yet written**; the next engine-request note should cover it.
+- Tesserae needs a way to open a `LayerWindow` and a `PopupWindow` from a view and bind them to an `Output`. This is a request to the Tesserae project, carried upstream by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]). Written as [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (`draft`).
 - The Tesserae version is pinned together with the tre version ([[70 Delivery]], to write).
 - Shell-only file types (a shell layout, a module manifest) get their own suffix in `41 YAML Reference/` ([[AGENTS#9. Naming in the designed system]]).
 

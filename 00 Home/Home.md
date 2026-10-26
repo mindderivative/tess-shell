@@ -31,11 +31,11 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | [[TRE-REQ-001 Layer Surface Window]] confirmed and set to `stable` |
+| Last change | Wrote [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (`draft`) |
 | Decided | [[ADR-0001 Shell Surface Strategy]] to [[ADR-0005 Global Shortcuts]] (5 accepted) |
-| Waiting on you | Nothing |
-| Next | Write the Tesserae request for layer and popup windows ([[ADR-0002 Relationship to Tesserae UI#Consequences]]); start `20 Architecture` |
-| Blocked | Nothing in tre. Tesserae cannot yet open a layer window from a view. |
+| Waiting on you | Review [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (5 open questions); carry it to Tesserae when ready |
+| Next | Start `20 Architecture` |
+| Blocked | Tesserae cannot yet open a layer window from a view ([[TRE-REQ-004 Tesserae Layer and Popup Windows]]). Nothing in tre. |
 | Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
 
 ### Recent changes
@@ -44,6 +44,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | Wrote [[TRE-REQ-004 Tesserae Layer and Popup Windows]] |
 | 2026-10-25 | [[TRE-REQ-001 Layer Surface Window]] confirmed, `stable` |
 | 2026-10-25 | Mirrored outputs and `output_updated` accepted ([[V1 Scope#Multi-monitor]]) |
 | 2026-10-25 | [[10 Vision]] confirmed and set to `stable` |
@@ -68,7 +69,7 @@ Newest first. Keep the last 8. One line each.
 ![[Index#Current focus]]
 
 > [!warning] Critical path
-> tre 0.5.8 has layer surfaces ([[ADR-0001 Shell Surface Strategy]]). The open dependency is Tesserae: it must open a `LayerWindow` and `PopupWindow` from a view ([[ADR-0002 Relationship to Tesserae UI#Consequences]]).
+> tre 0.5.8 has layer surfaces ([[ADR-0001 Shell Surface Strategy]]). The open dependency is Tesserae: it must open a `LayerWindow` and `PopupWindow` from a view ([[TRE-REQ-004 Tesserae Layer and Popup Windows]]).
 
 ## Decisions
 
