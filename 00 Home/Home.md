@@ -31,11 +31,11 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Shell made independent of Tesserae: [[ADR-0006 Shell Independent of Tesserae UI]]; [[ADR-0002 Relationship to Tesserae UI]] and [[TRE-REQ-004 Tesserae Layer and Popup Windows]] superseded |
-| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0006 Shell Independent of Tesserae UI]] (5 accepted; ADR-0002 superseded) |
-| Waiting on you | Choose an option in [[ADR-0007 Shell UI Layer]] (the shell's own view layer) |
-| Next | Start `20 Architecture` |
-| Blocked | Nothing in tre. View, YAML and Python API specs wait on [[ADR-0007 Shell UI Layer]]. |
+| Last change | Accepted [[ADR-0007 Shell UI Layer]] (Option A: a small shell-owned layer on tre) |
+| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0007 Shell UI Layer]] (6 accepted; ADR-0002 superseded) |
+| Waiting on you | Nothing |
+| Next | Start `20 Architecture`, including the UI layer |
+| Blocked | Nothing |
 | Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
 
 ### Recent changes
@@ -44,6 +44,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | Accepted [[ADR-0007 Shell UI Layer]] (Option A) |
 | 2026-10-25 | Shell separated from Tesserae ([[ADR-0006 Shell Independent of Tesserae UI]]); proposed [[ADR-0007 Shell UI Layer]] |
 | 2026-10-25 | Wrote [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (since superseded) |
 | 2026-10-25 | [[TRE-REQ-001 Layer Surface Window]] confirmed, `stable` |
@@ -51,7 +52,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | [[10 Vision]] confirmed and set to `stable` |
 | 2026-10-25 | Added ADR-0002 to ADR-0005; multi-monitor decisions in [[V1 Scope]] |
 | 2026-10-25 | Multi-monitor requirement added to [[10 Vision]] |
-| 2026-10-25 | Wrote [[10 Vision]]: problem, goals, personas, v1 scope |
 
 ## Go to
 
@@ -68,7 +68,7 @@ Newest first. Keep the last 8. One line each.
 ![[Index#Current focus]]
 
 > [!warning] Critical path
-> tre 0.5.8 has layer surfaces ([[ADR-0001 Shell Surface Strategy]]). The open dependency is the shell's own view layer on tre ([[ADR-0007 Shell UI Layer]]).
+> tre 0.5.8 has layer surfaces ([[ADR-0001 Shell Surface Strategy]]). The shell's own view layer on tre is the largest piece to design ([[ADR-0007 Shell UI Layer]]).
 
 ## Decisions
 

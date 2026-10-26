@@ -21,4 +21,4 @@ depends_on: []
 | [[ADR-0004 Plasma Coexistence]] | Coexist by default, replace per service with an ADR | accepted 2026-10-25 |
 | [[ADR-0005 Global Shortcuts]] | KDE global-accel service | accepted 2026-10-25 |
 | [[ADR-0006 Shell Independent of Tesserae UI]] | Separate project on tre; no `tesserae-ui` dependency | accepted 2026-10-25 |
-| [[ADR-0007 Shell UI Layer]] | A small shell-owned view layer (recommended) | proposed |
+| [[ADR-0007 Shell UI Layer]] | A small shell-owned view layer on tre | accepted 2026-10-25 |

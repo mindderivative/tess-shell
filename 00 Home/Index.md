@@ -55,7 +55,7 @@ Operating rules for agents: [[AGENTS]].
 | [[ADR-0001 Shell Surface Strategy]] | accepted (2026-10-25) | All surface specs |
 | [[ADR-0002 Relationship to Tesserae UI]] | superseded by ADR-0006 | none |
 | [[ADR-0006 Shell Independent of Tesserae UI]] | accepted (2026-10-25) | Architecture, packaging |
-| [[ADR-0007 Shell UI Layer]] | proposed | View, YAML and Python API specs |
+| [[ADR-0007 Shell UI Layer]] | accepted (2026-10-25) | View, YAML and Python API specs |
 | [[ADR-0003 Process Model]] | accepted (2026-10-25) | Architecture, runtime, quality |
 | [[ADR-0004 Plasma Coexistence]] | accepted (2026-10-25) | Integration specs |
 | [[ADR-0005 Global Shortcuts]] | accepted (2026-10-25) | Launcher, integration specs |
@@ -80,5 +80,5 @@ Versions drift. If the live docs disagree with this table, the docs win; update 
 
 ## Current focus
 
-1. [[10 Vision]] is confirmed (`stable`); choose an option in [[ADR-0007 Shell UI Layer]]; start `20 Architecture`.
+1. [[10 Vision]] is confirmed (`stable`); start `20 Architecture` (it now includes the shell's UI layer, [[ADR-0007 Shell UI Layer]]).
 2. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.

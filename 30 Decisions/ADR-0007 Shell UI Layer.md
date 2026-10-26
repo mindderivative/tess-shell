@@ -2,7 +2,7 @@
 title: ADR-0007 Shell UI Layer
 aliases: [ADR-0007, Shell View Language]
 type: adr
-status: proposed
+status: accepted
 owner: phil
 created: 2026-10-25
 updated: 2026-10-25
@@ -16,8 +16,8 @@ depends_on: ["[[ADR-0006 Shell Independent of Tesserae UI]]"]
 > [!summary]
 > The shell builds on tre alone, so it must supply what tre leaves out: a way to describe views, reactive values, a theme and a small widget set. This ADR proposes a small layer owned by the shell, sized to the surfaces in [[V1 Scope]].
 
-> [!important] Proposed
-> The maintainer has not chosen. Only the maintainer moves this to `accepted` ([[AGENTS#2. Hard rules]], rule 5).
+> [!success] Accepted 2026-10-25
+> The maintainer chose Option A.
 
 ## Context
 
@@ -59,23 +59,24 @@ Split Tesserae into a core (reactivity, theme, view language) and an app layer, 
 
 ## Decision
 
-Blank until the maintainer chooses.
+Accepted 2026-10-25 by the maintainer in chat: **Option A**, a small shell-owned layer on tre. It keeps the shell completely separate and dependent only on tre. The extra work is accepted. Tesserae and the shell may each ask tre for additions; a request from either can serve both, and tre is where they meet.
 
 ## Consequences
 
-If Option A is accepted:
+Option A is accepted, so:
 - `41 YAML Reference/` defines the shell's view format, theme file and shell file types from scratch, and `42 Python API/` defines the reactive core and the module contract.
 - `50 Design System/` owns the tokens and widgets. It may reuse Material Design 3 ideas; that is a design choice, not a dependency.
 - `20 Architecture` gains a UI layer between tre and the shell runtime.
 - The widget list is fixed by [[V1 Scope]] surfaces and modules. Anything beyond it needs a reason.
 - Size and cost are estimated before the first spec is `stable`. #needs-verification
+- tre is the shared base. An engine need from the shell is a request to tre ([[AGENTS#6. Engine requests (tre / Tesserae)]]), and a request raised by Tesserae may already cover it, or the reverse. Before writing a request, check tre's open issues and ask the `tre` session through the mailbox ([[AGENTS#14. Peer-session mailbox]]) so one change serves both projects. The maintainer still files upstream.
+- The shell does not import Tesserae code. Ideas may be taken from Tesserae's design; the code is written again for the shell.
 
 ## Open items
 
-- [ ] Choose an option.
-- [ ] If A: set the widget list for v1 and the limits of the view format (conditions, repeaters, imports).
-- [ ] If A: decide whether view files keep Tesserae-style names (`<Name>_View.yaml`).
-- [ ] If A: decide how a module's values reach a view (a ViewModel class, a plain dict, or a signal registry).
+- [ ] Set the widget list for v1 and the limits of the view format (conditions, repeaters, imports).
+- [ ] Decide whether view files keep Tesserae-style names (`<Name>_View.yaml`).
+- [ ] Decide how a module's values reach a view (a ViewModel class, a plain dict, or a signal registry).
 
 ## Links
 
