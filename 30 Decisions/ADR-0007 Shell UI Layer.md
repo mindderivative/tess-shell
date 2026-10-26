@@ -86,7 +86,7 @@ shell: v1234
 type: Shell
 
 root:
-    name: shell_root # Unique but not required, each yaml file gets an assigned UID automatically
+    name: shell_root # Required, unique per monitor; each yaml file gets an assigned UID automatically
     monitor: DP-1
     children:
         import: TopBar_Shell.yaml
@@ -135,7 +135,7 @@ What the example shows, and what is decided:
 |---|---|---|
 | `shell: v1234` | The required top-level key carries a version value. | Key decided. The version format (`v1234`) is the example's; not decided. |
 | `root:` | A shell file has a root that owns the tree. | Implied. |
-| `root.name` | A name, unique but not required. Every YAML file also gets a UID automatically. | Decided 2026-10-25: see Monitors, names and errors. |
+| `root.name` | A name, required and unique per monitor. Every YAML file also gets a UID, written into the file (see Config directory and registry). | Decided 2026-10-25. |
 | `monitor: DP-1` | A root is bound to one monitor. | Decided 2026-10-25: `monitor` accepts anything the shell gives it, and a root with no `monitor` is ignored (see Monitors, names and errors). |
 | `children:` with `import:` | `import:` pulls in a `<Name>_Shell.yaml`. | Decided. |
 | `<unique_name>:` entries | Children and modules are keyed by a unique name instead of a repeated `child:` or `module:` key. | **Decided 2026-10-25.** A child's name is unique per monitor. |
@@ -171,6 +171,34 @@ The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properti
 - **Load errors carry `file:line:column`:** an import cycle (it prints the chain of files, `A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`), a missing file, and a name defined twice (it names both places). An import path is relative to the importing file.
 - **`type:` names a file's type; `kind:` names a surface's kind.** `type:` is for file types such as `Module` and `Theme` (and `Shell`, `Style`, `Stylesheet`). `kind:` is for the kind of surface (`bar`, `frame`, `panel`, `popup`). Decided 2026-10-25, so the two never share a meaning.
 
+### View format: a full expression language, and Python as an equal front-end (2026-10-25)
+
+Decided by the maintainer in chat (option C of the earlier open item).
+
+- **Python and YAML give the same result.** A shell can be written in Python as if the YAML were Python, or in YAML; someone may choose either. Both build the same thing.
+- **YAML has a full expression language**, such as `{if condition, do something, do something else}`. Conditions and repeaters are part of it. The syntax is set in `41 YAML Reference/`.
+- **Python is for what YAML should not do:** the major logic, heavy calculation, terminal access and system access. That is the module's job.
+- Consequences: (1) there is one model, the tree of surfaces and values, that both a Python builder and the YAML parser produce; (2) the expression language must be limited to evaluating values and structure, with no file, process or system access, because it runs from a configuration file; (3) a test must show that a shell written in Python and the same shell written in YAML produce the same tree. #needs-verification: size of the expression language against the "small layer" intent of Option A. See Risks below.
+
+### Monitors (2026-10-25)
+
+Decided by the maintainer in chat. A root's `monitor` is matched by **connector name**, then falls back to the display **description**. A root with `monitor: default` applies to every monitor no other root names. A root with no `monitor` is ignored.
+
+### Module Python (2026-10-25)
+
+Decided by the maintainer in chat (option A). The shell imports `<Name>_Module.py`, finds the class that extends a shell `Module` base, creates it once and calls `start`, `stop` and an optional `reload`. It receives a context object with the module's YAML values, its name and UID, a logger and the entry point that sends data. The thread rule in [[AGENTS#3. Layering principle]] holds: the shell calls module code on the loop thread, blocking work runs on the module's own thread, and results reach the loop through the send entry point (`call_soon`). The contract is written in [[42 Python API]].
+
+### Config directory and registry (2026-10-25)
+
+Decided by the maintainer in chat.
+
+- **Shell configuration lives in `$HOME/.config/tesserae-shell/`.** The registry is `registry.json` there. Subdirectories: `Styles`, `Themes`, `Stylesheets` and `Modules`.
+- **Search paths.** The shell can be given a list of directories to look in (`look-at`) for modules, styles, themes and stylesheets. The default for each is its subdirectory above, for example `$HOME/.config/tesserae-shell/Modules`.
+- **`name` is required** on an entry and is part of its identity.
+- **Identity.** The registry compares the entry's values other than its UUID, with `name` and `location`. The comparison shows whether the module is still there; the UUID written into the file is the confirmation.
+- **The registry writes the UID into the file.** When an entry is first registered, the shell injects `UID: <UUIDv7 value>` into the entry-point YAML, directly below `shell: <version>`.
+- Python 3.14 is the minimum, so `uuid.uuid7()` is available (accepted by the maintainer, 2026-10-25).
+
 ### UIDs and the registry (2026-10-25)
 
 Decided by the maintainer in chat.
@@ -178,8 +206,8 @@ Decided by the maintainer in chat.
 - **A UID is made with the built-in `uuid.uuid7()`**, a time-ordered, random-backed UUIDv7. It is shell-wide and survives reloads.
 - **A registry keeps them.** A file (JSON), not a database ("a DB might be a little much"). Each entry maps a UID to what is known about it for a quick lookup on reload: its type or kind, its state, and the file it comes from (the module file, a config file).
 - **A mismatch means the entry is new.** If the registry entry and the current file or entry do not agree, the shell treats the old one as removed and registers a new one.
-- Consequence to accept: `uuid.uuid7()` is in Python 3.14 and later (it ran on 3.14.8 here). tre's wheels cover CPython 3.12 and later ([tre README](https://github.com/mindderivative/tre)), so the shell's minimum is Python 3.14 unless it carries its own fallback. #needs-verification: the minimum Python version for the shell, and which release added `uuid.uuid7()`.
-- Not yet decided: where the registry file lives (for example the user's state directory), and exactly which fields make two entries "the same" across a reload (file path, `name`, kind).
+- Python 3.14 or later is the shell's minimum, accepted by the maintainer. `uuid.uuid7()` ran on 3.14.8 here; tre's wheels cover CPython 3.12 and later ([tre README](https://github.com/mindderivative/tre)). #needs-verification: that 3.14 is the first release with `uuid.uuid7()`.
+- Where the registry lives and how identity works: see Config directory and registry.
 
 ### Module data reaches the view through shell entry points (2026-10-25)
 
@@ -206,16 +234,21 @@ Option A is accepted, so:
 
 ## Open items
 
-Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import:` and nesting; unique-name keys; module rules; plain `*_Theme.yaml`, `*_Style.yaml`, `*_Stylesheet.yaml`; `type:` for files and `kind:` for surfaces; surface kinds; `monitor` and `name` scope; load errors; UIDs and the registry; the module data hand-off; the style, stylesheet and theme split.
+Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import:` and nesting; unique-name keys; module rules and Python contract; plain `*_Theme.yaml`, `*_Style.yaml`, `*_Stylesheet.yaml`; `type:` for files and `kind:` for surfaces (values as written: file types capitalised, surface kinds lower case); the expression language; `monitor`; `name` (required) and scope; load errors; UIDs; the config directory, search paths and registry identity; the module data hand-off; the style, stylesheet and theme split; Python 3.14 minimum.
 
-Open, with what each is asking:
+- [ ] **Widget list for v1.** Which building blocks a view can use (text, icon, image, button, row and column, slider, progress bar, list, menu item, tray icon). Recommendation: take the list from the surfaces and modules in [[V1 Scope]], and add one only when a module needs it. The limits of the format are settled (a full expression language).
+- [ ] **Expression language design.** Its syntax (the `{if ...}` form is the maintainer's example), what it can reference (module values, tokens, other entries), and its sandbox: values and structure only, no file, process or system access. Written in `41 YAML Reference/`.
+- [ ] **Python builder API.** The Python front-end that produces the same tree as the YAML, and the parity test. Written in `42 Python API/`.
+- [ ] **Writing the UID into a user's file.** The shell edits a file the user owns. Needs: a YAML writer that keeps comments and layout; no reload loop when the watcher sees the shell's own write; behaviour for a read-only file or a file shared by two shells; and what happens when the user copies a file, so two files carry one UID. Recommendation: the writer keeps comments, writes are ignored by the watcher for that file, a read-only file is registered without injection and warned, and a duplicate UID is a load error naming both files.
+- [ ] **Directory spelling.** `$HOME/.config` against `$XDG_CONFIG_HOME`. Recommendation: use `$XDG_CONFIG_HOME` when it is set, else `$HOME/.config`. The key for the search list (`look-at` as written) is spelled in `41 YAML Reference/`.
+- [ ] **What a registry mismatch changes.** The maintainer decided an entry with no match is treated as removed and a new one is registered; also decide whether a removed entry's saved state is dropped at once or kept for a while.
 
-- [ ] **Widget list for v1 and the limits of the view format.** Two questions. (1) *Widgets:* which building blocks can a view use? For example text, icon, image, button, row and column, slider, progress bar, list, menu item, tray icon. I would take the list from the surfaces and modules in [[V1 Scope]], and add one only when a module needs it. (2) *View format limits:* how much logic can a YAML file hold? *Conditions* are show-or-hide and choose-a-value rules (`visible: when the battery is low`). *Repeaters* make one entry per item of a list (one button per workspace, one icon per tray item). Options: **A.** none (static layout only; modules drive everything), **B.** conditions and repeaters in a small fixed set of forms (recommended: workspaces and tray need repeaters, battery and network need conditions), **C.** a full expression language. Recommendation B. This needs your steer on how much you want in YAML against in the modules' Python.
-- [ ] **Case of values.** `type:` values are `Module`, `Theme` and so on (capitalised); `kind:` values are `bar`, `panel` (lower case). Recommendation: match case-insensitively, and write the canonical form in `41 YAML Reference/`.
-- [ ] **What `monitor` accepts.** Three small questions, because a root with no `monitor` is ignored. (1) *Name:* connector name only (`DP-1`), as tre reports it. (2) *Description:* also match by the display's description (make, model, serial), so a profile follows a particular display when the port changes. (3) *Default:* what a monitor gets that no root names, such as one plugged in later. Options: **A.** nothing (unnamed monitors show no shell), **B.** a root with `monitor: default` that applies to every monitor no other root names (recommended), **C.** a wildcard that applies to all monitors. Recommendation: name plus description, and B.
-- [ ] **How the shell loads a module's Python, and the contract.** Options: **A.** *A class* (recommended): the shell imports `<Name>_Module.py`, finds one class that extends a shell `Module` base, creates it once, and calls `start`, `stop` and an optional `reload`. It receives a context object holding its YAML values, its name and UID, a logger, and the entry point that sends data. **B.** *Plain functions*: `start(ctx)` and `stop()` in the file; less structure, harder to keep state. **C.** *A decorator*: functions register themselves with the shell; flexible, more magic. Under every option the thread rule in [[AGENTS#3. Layering principle]] holds: the shell calls module code on the loop thread, blocking work runs on the module's own thread, and the send entry point moves results onto the loop with `call_soon`. The contract is written in [[42 Python API]].
-- [ ] **Registry details.** Where the registry file lives, and which fields make two entries "the same" across a reload.
-- [ ] **Minimum Python version** (see UIDs and the registry).
+## Risks
+
+> [!warning] Three to carry to the Risk Register
+> - **Expression language scope.** A full expression language is a small programming language. It can grow without limit and it runs from a configuration file. Keep it to values and structure, with a sandbox, and test parity with the Python front-end.
+> - **Two front-ends.** YAML and Python must give the same result. Every feature is built and tested twice.
+> - **The shell edits user files.** Injecting the UID changes a file the user wrote; a bug there can damage it. Keep a backup before the first write.
 
 ## Links
 

@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Decided `type:` for files and `kind:` for surfaces, UIDs with a registry, and the module data hand-off in [[ADR-0007 Shell UI Layer]] |
+| Last change | Decided the expression language, `monitor` matching, the module Python contract, the config directory and registry identity in [[ADR-0007 Shell UI Layer]] |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0007 Shell UI Layer]] (6 accepted; ADR-0002 superseded) |
-| Waiting on you | Your steer on four items in [[ADR-0007 Shell UI Layer#Open items]]: the widget list and view limits, `monitor` options, the module Python contract, and the Python minimum for `uuid7`. Also: Frame in v1, and which of OSD, launcher and widget are Panels or Popups ([[Surface Types#Open questions]]) |
+| Waiting on you | The v1 widget list ([[ADR-0007 Shell UI Layer#Open items]]); how the shell writes the UID into a user's file; Frame in v1; which of OSD, launcher and widget are Panels or Popups ([[Surface Types#Open questions]]) |
 | Next | Start `20 Architecture`, including the UI layer; then the module and runtime specs |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | Expression language, `monitor` matching, module Python contract, config directory and registry identity decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | `type:`/`kind:`, UID registry and module data hand-off decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Surface Types corrected; shadows research written ([[Shadows on Layer Surfaces]]) |
 | 2026-10-25 | [[Surface Types]] written; module, import, monitor, name and error rules decided ([[ADR-0007 Shell UI Layer]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | Plain suffixes with `shell:` and `type:` keys decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Module style, theme and stylesheet file names decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Module rules and unique-name keys decided ([[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]) |
-| 2026-10-25 | Maintainer's shell file example recorded in [[ADR-0007 Shell UI Layer]] |
 
 ## Go to
 

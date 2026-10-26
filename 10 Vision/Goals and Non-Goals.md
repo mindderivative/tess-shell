@@ -23,7 +23,7 @@ depends_on: []
 
 | ID | Goal | Measure (proposed) | Basis |
 |---|---|---|---|
-| G1 | Build a shell from YAML views and Python modules, with no Rust and no QML. The view format is the shell's own ([[ADR-0007 Shell UI Layer]]). | A bar with clock, workspaces and tray is defined in YAML plus Python only. | [[Problem Statement]] |
+| G1 | Build a shell from YAML views and Python modules, with no Rust and no QML. The view format is the shell's own ([[ADR-0007 Shell UI Layer]]), and a shell can be written in YAML or in Python with the same result. | A bar with clock, workspaces and tray is defined in YAML plus Python only, and the same shell written entirely in Python builds the same tree. | [[Problem Statement]] |
 | G2 | Change a running shell live. | Saving a view, theme or stylesheet updates the open surfaces without restarting the shell. | [[ADR-0007 Shell UI Layer]] (hot reload is part of the shell's own layer) |
 | G3 | Run beside Plasma without breaking it. | Starting and stopping the shell leaves the Plasma session usable; no shared D-Bus name is taken without an ADR. | [[AGENTS#4. Known constraints and gaps (seed list)]] |
 | G4 | Cost nothing when idle. | An idle bar draws no frames and wakes the loop only for its own timers. | tre spike: 1 frame in 10 s, 0.0% CPU ([[TRE-REQ-001 Layer Surface Window#Upstream status (as of 2026-10-23, superseded by Delivered; kept as history)]]) |
