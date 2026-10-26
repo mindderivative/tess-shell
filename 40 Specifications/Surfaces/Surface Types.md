@@ -49,9 +49,11 @@ Attached to all four edges and corners as a frame around the screen. It reserves
 
 The multi-purpose window. It attaches to the frame, a bar, another surface type, or floats. It can be moved with the mouse, anchored, hidden and so on. Ideally it works almost anywhere, and it may be the baseline the other surface types build on. As with the Bar, it is highly customisable.
 
+A Panel is not a child of the surface it attaches to. It may render on top of a bar or the frame, but each is its own surface and its own entry in the shell file; the attachment is a reference, not a parent/child relationship.
+
 ### Popup
 
-Attaches to, or is anchored to, anything. Here "anything" means a shell surface: a tre popup needs a layer window or another popup as its parent (see Integration).
+Anchored to anything, and rendered like an overlay. It is not a child in the shell file's tree: the file says what it is anchored to by reference, and the popup is its own entry. The parent that tre's `PopupWindow` needs ([[TRE-REQ-001 Layer Surface Window]]) is a Wayland protocol detail the shell handles, not a nesting the author writes. "Anything" is a shell surface: tre requires a layer window or another popup as the protocol parent (see Integration).
 
 ## Behaviour
 
@@ -87,7 +89,7 @@ How each type maps to tre 0.5.8 ([[TRE-REQ-001 Layer Surface Window]]):
 
 ## Design
 
-Tokens and components come from the shell's own design system (`50 Design System/`, to write). Elevation shadows use tre's `shadows` property; their colour and elevation are tokens.
+Tokens and components come from the shell's own design system (`50 Design System/`, to write). Every surface type can have a shadow with elevation and colour; those are tokens. How the shadow is drawn is open: see [[Shadows on Layer Surfaces]].
 
 ## Accessibility
 
@@ -105,10 +107,10 @@ Per-surface video memory from tre 0.5.8: a 1280 x 32 bar about 18 MiB, a small w
 
 ## Risks
 
-> [!danger] Melding surfaces and shadows are not free
-> - **Melding.** A Bar, Panel and Frame are separate Wayland surfaces. They cannot be committed together, so surfaces animating together can differ by up to a frame on screen ([[TRE-REQ-001 Layer Surface Window#Animation]]). A rounded join between a panel and the frame can show a seam while either moves. The join shape has to be drawn by the frame's painter, which then must know the other surface's position. #needs-verification
-> - **Shadows.** A surface cannot draw outside its own bounds. A shadow around a Bar needs the surface to be larger than the bar body, with the extra area transparent and the exclusive zone set to the body only; `input_region="auto"` keeps clicks from the transparent part. A larger transparent buffer costs memory. #needs-verification
-> - **Relative placement.** layer-shell has no way to place one surface relative to another. A Panel attached to a Bar is positioned by the shell with margins, and has to follow if the bar moves or animates, with up to a frame of skew. #needs-verification
+> [!warning] Three things to check, not blockers
+> - **Shadows.** Every surface can have one (maintainer, 2026-10-25). KDE has a protocol for compositor-drawn shadows, and the alternative is drawing inside a larger transparent surface. Which one works for layer surfaces on KWin is untested. Research and routes: [[Shadows on Layer Surfaces]]. #needs-verification
+> - **Visual melding of a Panel into the Frame.** The meld is visual, not structural. It is one colour, drawn rounded joins, and repainting the frame strip under the panel, as in the maintainer's earlier Edge Shell design ([[Shadows on Layer Surfaces#The maintainer's earlier work]]). The surfaces stay separate. Wayland cannot commit two surfaces together, so a seam can show for up to a frame while both move (tre's documented limit, [[TRE-REQ-001 Layer Surface Window#Animation]]). Measure it in the testing phase. #needs-verification
+> - **Placing a Panel against another surface.** layer-shell cannot place one surface relative to another. The shell computes the Panel's margins from the other surface's geometry and recomputes when it moves or animates. This is positioning, not nesting. #needs-verification
 
 ## Open questions
 
@@ -124,10 +126,10 @@ Per-surface video memory from tre 0.5.8: a 1280 x 32 bar about 18 MiB, a small w
 - [ ] A Frame with different side thicknesses reserves each side separately, and clicks on the ring reach the shell while clicks in the interior reach the window below.
 - [ ] A Panel can be dragged with the mouse, stays on its output, and reports its final margin on release.
 - [ ] A Popup opens beside its anchor rectangle, flips at the screen edge, and closes on an outside click.
-- [ ] A shadow around a Bar is fully visible and does not change the reserved space.
-- [ ] A rounded join between a Panel and the Frame shows no seam while idle, and the seam while moving is measured and recorded.
+- [ ] A shadow around a Bar is fully visible and does not change the reserved space, by the route chosen in [[Shadows on Layer Surfaces]].
+- [ ] A rounded join between a Panel and the Frame shows no seam while idle, and any seam while moving is measured and recorded.
 
 ## Links
 
 - [[ADR-0007 Shell UI Layer]] · [[ADR-0001 Shell Surface Strategy]] · [[TRE-REQ-001 Layer Surface Window]] · [[V1 Scope]]
-- [[Surfaces]] · [[40 Specifications]]
+- [[Shadows on Layer Surfaces]] · [[Surfaces]] · [[40 Specifications]]

@@ -159,7 +159,7 @@ Decided by the maintainer in chat:
 
 ### Surface types (2026-10-25)
 
-The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properties and how each maps to tre are in [[Surface Types]]. `type:` on a surface takes one of these (written `bar`, `frame`, `panel`, `popup` in the examples).
+The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properties and how each maps to tre are in [[Surface Types]]. `type:` on a surface takes one of these (written `bar`, `frame`, `panel`, `popup` in the examples). Surfaces are siblings, not nested: a Panel or Popup names what it is attached or anchored to by reference, and is its own entry in the file. The tre parent that a popup needs at the protocol level is handled by the shell.
 
 ### Monitors, names and errors (2026-10-25)
 

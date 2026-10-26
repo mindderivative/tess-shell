@@ -46,7 +46,7 @@ Operating rules for agents: [[AGENTS]].
 | `90 Research` | [[90 Research]] | Prior art, protocol notes, spikes |
 
 > [!warning] Folder indexes pending
-> Only `00 Home`, `10 Vision`, `30 Decisions`, `40 Specifications`, `80 Engine Requests` and `90 Research` have content so far. [[80 Engine Requests]], [[10 Vision]], [[30 Decisions]] and [[40 Specifications]] have their folder index; the others do not exist yet, so their links are unresolved. Create each when its folder gets its first note.
+> Only `00 Home`, `10 Vision`, `30 Decisions`, `40 Specifications`, `80 Engine Requests` and `90 Research` have content so far. [[80 Engine Requests]], [[10 Vision]], [[30 Decisions]], [[40 Specifications]] and [[90 Research]] have their folder index; the others do not exist yet, so their links are unresolved. Create each when its folder gets its first note.
 
 ## Decisions
 
@@ -62,7 +62,7 @@ Operating rules for agents: [[AGENTS]].
 
 Vision: [[10 Vision]]
 
-Research: [[Prior Art - Linux Shell Surfaces]]
+Research: [[Prior Art - Linux Shell Surfaces]]; [[Shadows on Layer Surfaces]]
 
 Engine requests: [[TRE-REQ-001 Layer Surface Window]] (stable; released in tre 0.5.8); [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (superseded; withdrawn)
 
