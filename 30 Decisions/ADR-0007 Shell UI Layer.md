@@ -68,7 +68,7 @@ Decided by the maintainer in chat. The shell's files are named so nobody mistake
 - The shell does not use Tesserae's `_View.yaml` suffix, or any Tesserae file name, for its own views.
 - A shell is written either as **one `*.yaml` file** for the whole shell, or as a **`Main_Shell.yaml`** that imports several **`<Name>_Shell.yaml`** files and builds the shell from them. Both forms are valid.
 - A Tesserae file placed in a shell is refused with an error that names the file and says it is not a shell file (see Open items for how a shell file is recognised).
-- Still open: the names of the Python module files, theme files and stylesheet files. They are set in `41 YAML Reference/` and `42 Python API/`.
+- Python module files are `<Name>_Module.py` (see Modules below). Still open: the names of theme files and stylesheet files. They are set in `41 YAML Reference/`.
 
 ### Recognising a shell file and importing (2026-10-25)
 
@@ -103,7 +103,30 @@ root:
                 module: Applications_Module.yaml
 ```
 
-What the example shows, and what is still only implied:
+Revised by the maintainer the same day: a child or module is keyed by its own unique name, not by a repeated `child:` or `module:` key. The example then reads (illustrative, not exact):
+
+```yaml
+shell: v1234
+
+root:
+    name: shell_root
+    monitor: DP-1
+    children:
+        import: TopBar_Shell.yaml
+        panel_dock:                       # unique per monitor
+            type: dock
+            style: Dock_ShellStyle.yaml
+            modules:
+                audio: Audio_Module.yaml      # unique name: the module file
+                network: Network_Module.yaml
+        panel_start_menu:
+            type: corner_panel
+            style: CornerPanel_ShellStyle.yaml
+            modules:
+                applications: Applications_Module.yaml
+```
+
+What the example shows, and what is decided:
 
 | Element | What it shows | Status |
 |---|---|---|
@@ -111,11 +134,20 @@ What the example shows, and what is still only implied:
 | `root:` | A shell file has a root that owns the tree. | Implied. |
 | `root.name` | A name, unique but not required. Every YAML file also gets a UID automatically. | Implied. Scope of uniqueness not decided. |
 | `monitor: DP-1` | A root is bound to one monitor by connector name. | Fits [[V1 Scope#Multi-monitor]] (match by connector name). Whether `monitor` also takes a description match, a default or a shared reference is not decided. |
-| `children:` with `import:` and `child:` | `import:` pulls in a `<Name>_Shell.yaml`; `child:` defines a surface inline. | Decided in outline above. The example repeats `child:` and `module:` keys, which a YAML mapping cannot do; see Open items. |
-| `child.name` | Unique per monitor. | Implied. |
-| `child.type` | A surface type: `dock`, `corner_panel`. | The type list is not decided. |
+| `children:` with `import:` | `import:` pulls in a `<Name>_Shell.yaml`. | Decided. |
+| `<unique_name>:` entries | Children and modules are keyed by a unique name instead of a repeated `child:` or `module:` key. | **Decided 2026-10-25.** A child's name is unique per monitor. |
+| `type: dock` / `corner_panel` | A surface type. | The type list is not decided. |
 | `style: Dock_ShellStyle.yaml` | A style file per surface, with a `_ShellStyle.yaml` suffix. | Implied name. Not decided. |
-| `modules:` and `module: Audio_Module.yaml` | Modules are imported by file, each with a connected Python script, because they may have differing rules. | Implied: a module file type `<Name>_Module.yaml`. Not decided. |
+| `modules:` and `<name>: <Name>_Module.yaml` | Modules are imported by file. | Decided in outline: see Modules below. |
+
+### Modules (2026-10-25)
+
+Decided by the maintainer in chat:
+
+- **A module is a `<Name>_Module.yaml` file plus a matching `<Name>_Module.py`.** The shell framework expects the Python file and requires it. A module with no matching `.py` is a load error that names both files.
+- **A module can be used many times.** `Clock_Module.yaml` may appear in several places, and all uses share the same data. One module is one source of data, however many views show it.
+
+Recommendations, not yet decided (see Open items): how a module file is told apart from other shell files, and how a module that must differ per monitor gets that difference.
 
 ## Consequences
 
@@ -134,13 +166,18 @@ Option A is accepted, so:
 - [x] Decide whether view files keep Tesserae-style names. No: one `*.yaml` file, or `Main_Shell.yaml` importing `<Name>_Shell.yaml` files (see File naming above).
 - [x] Decide how a shell file is recognised. A required top-level `shell:` key with a version (see above).
 - [x] Decide the import syntax and whether imports nest. `import:` under `children:`; imports nest (see above).
-- [ ] Decide how several `import:`, `child:` and `module:` entries are written. The example repeats these keys, and a YAML mapping cannot repeat a key (most parsers keep only the last). Recommendation: each takes a list, or `child` is keyed by its own name (`panel_dock:`), since a child's `name` is unique per monitor.
-- [ ] Decide the file types the example implies: style files (`<Name>_ShellStyle.yaml`) and module files (`<Name>_Module.yaml`), and how a module file names its Python script. This also answers the theme and stylesheet naming item below for style files.
+- [x] Decide how several children and modules are written. Each is keyed by its own unique name (see Modules above).
+- [ ] Decide how several imports are written, since `import:` is a single key in a mapping. Recommendation: `import:` takes one file name or a list of file names.
+- [ ] Decide how a module file is recognised: a required `type: module` key, or the `_Module.yaml` suffix alone. Recommendation: both, with `type: module` authoritative and the suffix a convention, so a renamed file cannot silently change what it is, and a mismatch between the suffix and the type is a load error. This matches `type: dock` on surfaces. Every module file also carries the required `shell:` key.
+- [ ] Decide how a shared module differs per use. One module shares its data across all uses; a workspace list may need to differ per monitor. Recommendation: one module instance per module file, shared by all uses; the module receives the use's context (the monitor, its unique name) when a view reads from it, and per-use options go in the use's own entry.
+- [ ] Decide where `<Name>_Module.py` lives (next to its `.yaml`, recommended), how the shell loads it, and the Python contract it must meet ([[42 Python API]], to write). The thread rule in [[AGENTS#3. Layering principle]] applies: a module's blocking work runs on its own thread and reaches the loop with `call_soon`.
+- [ ] Decide the style file type the example implies (`<Name>_ShellStyle.yaml`). This also answers the theme and stylesheet naming item below for style files.
 - [ ] Decide the list of surface `type` values (the example has `dock` and `corner_panel`) and how they map to `LayerWindow` settings ([[TRE-REQ-001 Layer Surface Window]]).
 - [ ] Decide what `monitor` accepts and how a file with no `monitor` behaves ([[V1 Scope#Multi-monitor]]: default section, shared definitions).
 - [ ] Decide `name` and UID rules: which names must be unique and in what scope, how a UID is made, and whether it is stable across reloads.
 - [ ] Decide how an import cycle, a missing file and a name clash are reported. Recommendation: each is a load error with `file:line:column`; a cycle prints the chain of files (`A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`); a path is relative to the importing file; a name defined twice names both places.
-- [ ] Decide the names of Python module files, theme files and stylesheet files so none reads as a Tesserae name (`_ViewModel.py`, `_Theme.yaml`, `_Stylesheet.yaml`).
+- [x] Python module files: `<Name>_Module.py`, matching the module file (see Modules above).
+- [ ] Decide the names of theme files and stylesheet files so none reads as a Tesserae name (`_Theme.yaml`, `_Stylesheet.yaml`).
 - [ ] Decide how a module's values reach a view (a ViewModel class, a plain dict, or a signal registry).
 
 ## Links
