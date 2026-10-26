@@ -17,3 +17,4 @@ depends_on: []
 |---|---|---|
 | [[Prior Art - Linux Shell Surfaces]] | How other shells create layer surfaces | draft |
 | [[Shadows on Layer Surfaces]] | Compositor-drawn and in-surface shadows; what to research | draft |
+| [[Expression Languages for YAML]] | Jinja2, jinjyaml and safe evaluators for the shell's expression language | draft |
