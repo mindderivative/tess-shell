@@ -105,6 +105,9 @@ The `tre` session answered over the mailbox on 2026-10-26, from the 0.5.8 source
 | A 1x1 ordinary window survives | An ordinary toplevel `Window(width=1, height=1)` survived unplugging its output, then the last output, then plugging a new one: output events and `call_soon` kept working with zero outputs. Cost: it is a visible 1x1 toplevel (a task-list entry, space on a tiling compositor). Hiding it (`Window.minimize()`) is untested; not tested on KWin |
 | Suggested engine addition | An opt-in keep-alive, for example `App.run(keep_alive=True)`: no error with zero windows, no exit when empty, output watch started at loop start. It needs a way to end the loop. A `LoopHandle` stop does not exist today; the loop ends only when every window closes. Rough size: about 60 to 100 lines plus tests and docs, low risk because it is opt-in |
 
+> [!warning] Blocked by [[TRE-REQ-005 Keep-Alive and Loop Stop]]
+> Option A was chosen by the maintainer on 2026-10-26: ask tre for the opt-in keep-alive and a `LoopHandle` stop. The request is written; the maintainer follows up with tre. Until it ships, the stopgap is B.
+
 Options for the shell:
 
 | Option | Description | Verdict |
@@ -144,7 +147,7 @@ The loop cannot interrupt itself, so detecting a blocked loop needs a separate w
 - [ ] **Registry I/O and the UID write** on the loop or a single writer thread ([[ADR-0007 Shell UI Layer#Open items]]).
 - [ ] **Supervisor** in v1 or later.
 - [x] **No windows** policy: stay idle (maintainer, 2026-10-26).
-- [ ] **No windows mechanism.** Choose A, B or C above. Recommendation A: ask tre for an opt-in keep-alive and a `LoopHandle` stop, with B as a stopgap. The maintainer files engine issues.
+- [x] **No windows mechanism.** Option A, chosen 2026-10-26: ask tre for an opt-in keep-alive and a `LoopHandle` stop ([[TRE-REQ-005 Keep-Alive and Loop Stop]]), with B as a stopgap. The maintainer follows up with tre and files the issue.
 - [ ] **Where conversions run** (send or flush).
 
 ## Links

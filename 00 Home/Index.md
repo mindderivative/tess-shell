@@ -66,7 +66,7 @@ Vision: [[10 Vision]]
 
 Research: [[Prior Art - Linux Shell Surfaces]]; [[Shadows on Layer Surfaces]]
 
-Engine requests: [[TRE-REQ-001 Layer Surface Window]] (stable; released in tre 0.5.8); [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (superseded; withdrawn)
+Engine requests: [[TRE-REQ-001 Layer Surface Window]] (stable; released in tre 0.5.8); [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (superseded; withdrawn); [[TRE-REQ-005 Keep-Alive and Loop Stop]] (draft; for tre)
 
 Planned, not yet written:
 - `41 YAML Reference`, `42 Python API`, `60 Quality`, `70 Delivery`, the module and integration specs

@@ -31,10 +31,11 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Settled: TEL is an expression language only; statements, handlers and events are the shell's ([[Expression Language Requirements]] T15) |
+| Last change | Wrote [[TRE-REQ-005 Keep-Alive and Loop Stop]] for tre (stay alive with no windows; loop stop); `tre` pointed to it |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Choose how the shell stays alive with no windows: ask `tre` for a keep-alive, or a stopgap ([[Process Model and Threading#No windows: what tre offers]]) |
+| Waiting on you | Follow up with `tre` on [[TRE-REQ-005 Keep-Alive and Loop Stop]] (you file the issue) |
 | Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
+| Waiting on others (2) | `tre` on [[TRE-REQ-005 Keep-Alive and Loop Stop]] (blocks staying idle with no windows; stopgap: a 1x1 window) |
 | Next | Module specs (Clock first), `42 Python API`, `41 YAML Reference`, the Panel spec |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -46,6 +47,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | [[TRE-REQ-005 Keep-Alive and Loop Stop]] written; `tre` pointed to it |
 | 2026-10-26 | TEL scope settled: expression language only; events are the shell's |
 | 2026-10-26 | ADR-0009 accepted; `tre` answered the no-windows question; `tess-el` reports a TEL scope conflict |
 | 2026-10-26 | Stay idle, events are the shell's, module reload decided; D-Bus survey ([[D-Bus Libraries for Python]]); `tre` and `tess-el` messaged |
@@ -53,7 +55,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | [[20 Architecture]] drafted (four notes) |
 | 2026-10-25 | TEL brief written and moved to `tess-el/docs` (not kept in the vault) |
 | 2026-10-25 | Loguru noted as a logging option ([[Logging with Loguru]]) |
-| 2026-10-25 | Unresolved reference: error at load, warning while running ([[ADR-0007 Shell UI Layer]]) |
 
 ## Go to
 
