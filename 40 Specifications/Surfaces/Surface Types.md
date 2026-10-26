@@ -114,11 +114,11 @@ Per-surface video memory from tre 0.5.8: a 1280 x 32 bar about 18 MiB, a small w
 
 ## Open questions
 
-- [ ] Which surface types are in v1. [[V1 Scope]] lists Frame as later; the maintainer described it in full, so confirm.
-- [ ] How a Panel's attachment to another surface is written, and what happens when the target hides.
-- [ ] Whether a Popup may be anchored to a surface of another monitor.
-- [ ] Which of OSD, launcher and desktop widget are a Panel and which a Popup ([[Personas and Use Cases]] UC3 to UC5). Recommendation: OSD and desktop widget are Panels (click-through for the OSD), the launcher is a Panel on the `overlay` layer with exclusive keyboard.
-- [ ] Concave corner and join drawing: confirm tre's path nodes cover them with the needed hit testing.
+- [x] Which surface types are in v1: Bar, Frame, Panel and Popup (decided 2026-10-25; Frame is in v1).
+- [x] Which uses are Panels: OSD and desktop widgets are Panels; the launcher is a Panel on the `overlay` layer with exclusive keyboard (decided 2026-10-25).
+- [x] A Popup is exclusive to the monitor it is called on. It opens only on the monitor of the surface that called it, and is never anchored to a surface on another monitor (decided 2026-10-25).
+- [ ] **How a Panel's attachment to another surface is written** needs exploring (maintainer, 2026-10-25). Questions to explore: how a Panel names its target (by `name` or UID, as a reference, not nesting); which side or corner it attaches to and with what gap; what happens when the target hides, moves or animates (follow, hide, stay); whether it can attach to the Frame and a Bar at once; how the join drawing is shared with the target (the Frame's painter or the Panel's own surface); and the one-frame skew between separate surfaces ([[TRE-REQ-001 Layer Surface Window#Animation]]). The reference [[Shadows on Layer Surfaces#The maintainer's earlier work]] shows how the maintainer's Edge Shell did it.
+- [ ] **Concave corners and join drawing: hit testing.** Asked of the `tre` session over the mailbox on 2026-10-25: whether `input_region="auto"` and node hit testing use a path node's real fill shape (so a concave notch passes clicks through), or only its box; and whether tre would consider shape-aware hit testing for path nodes. Awaiting the reply. Not an engine request unless tre says nothing exists. In 0.5.8 docs, a box is hit inside its rounded corners, hit testing ignores masks and `clip_children`, and only canvas nodes have `set_hit_test_circle` and `set_hit_test_path` ([Painter](https://mindderivative.github.io/tre/reference/painter/), [Nodes](https://mindderivative.github.io/tre/reference/node/)). #needs-verification
 
 ## Acceptance criteria
 

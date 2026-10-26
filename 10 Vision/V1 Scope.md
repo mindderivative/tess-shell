@@ -27,18 +27,18 @@ depends_on: ["[[ADR-0001 Shell Surface Strategy]]"]
 
 ## Surfaces
 
-The shell has four surface types: Bar, Frame, Panel and Popup ([[Surface Types]], [[ADR-0007 Shell UI Layer#Surface types (2026-10-25)]]). The rows below are uses; recommended mapping to a type is in the Note column and is not decided.
+The shell has four surface types: Bar, Frame, Panel and Popup ([[Surface Types]], [[ADR-0007 Shell UI Layer#Surface types (2026-10-25)]]). The rows below are uses; the surface type for each is in the Note column.
 
 | Surface | In v1 | Use case | Note |
 |---|---|---|---|
 | Bar | Yes | UC1, UC11 | Type Bar. On each monitor that lists it; reserves an exclusive zone. A dock or side bar is a Bar. |
 | Popup (menu, flyout) | Yes | UC2 | Type Popup. `PopupWindow`. Escape dismissal is untested in tre; the spec names it as a gap. |
-| OSD | Yes | UC3 | Recommended: a Panel, click-through, on its configured monitor. |
-| Launcher | Yes | UC4 | Recommended: a Panel on the `overlay` layer. Shortcut through KDE's global-accel service ([[ADR-0005 Global Shortcuts]]); opens on its configured monitor. |
-| Desktop widget | Yes | UC5 | Type Panel. Movable, position saved from `moved`. |
+| OSD (on-screen display: a small overlay that appears briefly to confirm an action, such as a volume bar when a volume key is pressed, then disappears) | Yes | UC3 | Type Panel (decided 2026-10-25), click-through, on its configured monitor. |
+| Launcher | Yes | UC4 | Panel on the `overlay` layer with exclusive keyboard (decided 2026-10-25). Shortcut through KDE's global-accel service ([[ADR-0005 Global Shortcuts]]); opens on its configured monitor. |
+| Desktop widget | Yes | UC5 | Type Panel (decided 2026-10-25). Movable, position saved from `moved`. |
 | Panel (slide-in) | Yes | UC6 | Type Panel. Margin animation. |
 | Wallpaper | Later | none | `background` layer; no use case written. |
-| Screen frame | Later | UC7 | Type Frame, described in full by the maintainer on 2026-10-25. Whether it is in v1 is an open question in [[Surface Types]]. The four-reserver plus painter layout was not tested together by tre. |
+| Screen frame | Yes | UC7 | Type Frame, in v1 (decided 2026-10-25). The four-reserver plus painter layout was not tested together by tre; concave corners and join hit testing are asked of tre ([[Surface Types#Open questions]]). |
 
 ## Multi-monitor
 

@@ -50,12 +50,19 @@ Accepted 2026-10-25 by the maintainer in chat: **Option A**.
 - The shell **uses TEL and drives it from its needs**. TEL does **not** depend on the shell.
 - Tesserae UI may use TEL later; TEL does not depend on Tesserae UI either.
 
+Details, decided by the maintainer in chat on 2026-10-25:
+
+- **A redesign, with `expr.py` as the starting point.** Tesserae's `expr.py` is the starting point, not the design. TEL is separated from it and made much more efficient.
+- **TEL owns structure and values.** It has everything it needs to run on its own, with no shell and no Tesserae UI. Anyone can adopt it in plain YAML by importing its parser in a Python script.
+- **Name.** The Tesserae Expression Language, written `tel` in code, as `tre` is for the engine. For PyPI the maintainer's preference is `tesserae-expression-language`, else `tel`, else `tess-el`. On 2026-10-25 `tel` is already a package on PyPI; no package named `tesserae-expression-language` or `tess-el` was found. #needs-verification: availability when registering.
+- **Kept separate from Tesserae.** The maintainer handles all contact with the Tesserae project, including `expr.py`. The shell side does not message the `tesserae` session about it.
+
 ## Consequences
 
 - The shell now depends on tre **and TEL**. [[ADR-0006 Shell Independent of Tesserae UI]] and [[ADR-0007 Shell UI Layer]] said "tre only"; TEL is a library, not Tesserae UI, so the independence from Tesserae UI stands.
 - The vault holds the shell's requirements on TEL ([[Expression Language Requirements]]). TEL's own design lives in the TEL project, not here. Do not copy its design into this vault; link it once it exists ([[AGENTS#2. Hard rules]], rule 4).
-- Tesserae's `expr.py` is an input: it shows what worked (sandbox by `ast` whitelist, static against reactive, limits, positions in errors). Whether TEL is a redesign or an extraction from it is open.
-- TEL needs its own repository, name on PyPI, versioning and licence, and a language version recorded in files. These are the maintainer's to decide; none is decided.
+- Tesserae's `expr.py` is the starting point: it shows what worked (sandbox by `ast` whitelist, static against reactive, limits, positions in errors). TEL is a redesign, not an extraction.
+- TEL needs its own repository, versioning and licence, and a language version recorded in files. The name is decided (above); the repository, versioning and licence are the maintainer's, not decided.
 - Risk: three projects (tre, TEL, the shell) must move together at first. Keep the TEL interface small and stable.
 
 > [!danger] Scope risk
