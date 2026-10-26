@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Cross-file references resolve through the registry ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]) |
+| Last change | Decided: a reference that never resolves is an error at load; a target that disappears while running is a warning ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0008 Tesserae Expression Language]] (7 accepted; ADR-0002 superseded) |
-| Waiting on you | Nothing blocking. Smaller items: TEL versioning ([[Expression Language Requirements#Open questions]]); Panel details (side, gap, follow) in the Panel spec; warning or error for a reference that no longer resolves ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]) |
+| Waiting on you | Nothing blocking. Smaller items: TEL versioning ([[Expression Language Requirements#Open questions]]); Panel details (side, gap, follow) in the Panel spec |
 | Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
 | Next | Start `20 Architecture`, including the UI layer; then the module and runtime specs |
 | Blocked | Nothing |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | Unresolved reference: error at load, warning while running ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Cross-file references resolve through the registry ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Panel attached by name; UID write; TEL repository (tess-el, MIT); tre #236 recorded |
 | 2026-10-25 | `tre` answered the hit-testing question; path forward confirmed ([[Hit Testing for Concave Corners]]) |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | [[ADR-0008 Tesserae Expression Language]] accepted; requirements written ([[Expression Language Requirements]]) |
 | 2026-10-25 | Expression engine survey written ([[Expression Languages for YAML]]) |
 | 2026-10-25 | Expression language, `monitor` matching, module Python contract, config directory and registry identity decided ([[ADR-0007 Shell UI Layer]]) |
-| 2026-10-25 | `type:`/`kind:`, UID registry and module data hand-off decided ([[ADR-0007 Shell UI Layer]]) |
 
 ## Go to
 
