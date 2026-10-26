@@ -115,9 +115,9 @@ Option A is accepted, so:
 ## Open items
 
 - [x] Confirm tre has no layer-shell or external-surface API (Window reference, source). Confirmed in tre #195, now superseded by the build.
-- [ ] Find the first KWin release exposing `zwlr_layer_shell_v1`; record the version.
-- [ ] Verify `org_kde_plasma_shell` status for third-party clients.
-- [ ] Decide whether non-layer-shell compositors (GNOME) are explicitly out of scope for v1.
+- [ ] Find the first KWin release exposing `zwlr_layer_shell_v1`; record the version. Deferred to the testing phase (maintainer, 2026-10-25): Tesserae Shell tests it once a build exists. The design assumes KWin 6.8.1, where tre tested.
+- [ ] Verify `org_kde_plasma_shell` status for third-party clients. Deferred to the testing phase (maintainer, 2026-10-25). Option D is not pursued, so nothing in the design depends on it.
+- [ ] Decide whether non-layer-shell compositors (GNOME) are explicitly out of scope for v1. Deferred to the testing phase (maintainer, 2026-10-25). Until then the design targets KWin and wlroots compositors; `LayerWindow` raises `UnsupportedPlatform` elsewhere.
 - [x] Specify popup behaviour (parenting, grabs, dismissal) in `TRE-REQ-001`. Built as `PopupWindow` in tre 0.5.8; see [[TRE-REQ-001 Layer Surface Window#Popups]].
 - [x] Choose the backend path for layer surfaces: I2 built, a second event queue on `winit`'s `wl_display`; tre binds layer-shell v5 itself. See [[TRE-REQ-001 Layer Surface Window#Implementation candidates]].
 - [ ] Read the gtk-layer-shell and Quickshell source to see how they attach a layer role to a toolkit surface; this informs Option B.
