@@ -33,7 +33,7 @@ The maintainer is all three while the design is made. Separate personas keep the
 | UC1 | Show a top bar on every monitor that reserves space, so maximised windows stop below it. | P1, P2 | Bar (`LayerWindow`, `exclusive_zone`) | [[TRE-REQ-001 Layer Surface Window]] |
 | UC2 | Click a tray icon or a bar button and get a menu or flyout that flips at the screen edge and closes on an outside click. | P1 | Popup (`PopupWindow`) | [[TRE-REQ-001 Layer Surface Window#Popups]] |
 | UC3 | Show a volume or brightness change as a brief on-screen display. | P1 | OSD (`overlay` layer, `input_region=[]`) | [[TRE-REQ-001 Layer Surface Window]] |
-| UC4 | Open a launcher with a keyboard shortcut and type into a search box. | P1 | Launcher (`overlay`, `keyboard="exclusive"`) | Global shortcut decision ([[AGENTS#4. Known constraints and gaps (seed list)]]) |
+| UC4 | Open a launcher with a keyboard shortcut and type into a search box. | P1 | Launcher (`overlay`, `keyboard="exclusive"`) [[ADR-0005 Global Shortcuts]] |
 | UC5 | Place a clock or system monitor on the desktop and drag it to a new place; the position is saved. | P1, P2 | Desktop widget (`bottom` layer, `drag_margin`, `moved`) | [[TRE-REQ-001 Layer Surface Window#Margin drag]] |
 | UC6 | Slide a panel in from the screen edge and slide it out again. | P2 | Panel (`animate("margin_*")`) | [[TRE-REQ-001 Layer Surface Window#Animation]] |
 | UC7 | Draw a rounded frame around the screen edge that lets clicks through to the interior. | P2 | Frame (painter plus reservers, `input_region="auto"`) | [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]] |
@@ -51,7 +51,7 @@ The maintainer is all three while the design is made. Separate personas keep the
 ## Open questions
 
 - [ ] Is a notification centre a v1 use case? It depends on the notification-server coexistence decision, which is not made. Placed outside v1 in [[V1 Scope]].
-- [ ] What does a newly plugged monitor get when the configuration does not name it? Options in [[V1 Scope#Multi-monitor]].
+- [x] What does a newly plugged monitor get when the configuration does not name it? A configurable default section ([[V1 Scope#Multi-monitor]]).
 - [ ] Which persona writes the default shell? Proposed: P2, with the maintainer as the reviewer.
 
 ## Links

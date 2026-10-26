@@ -46,13 +46,17 @@ Operating rules for agents: [[AGENTS]].
 | `90 Research` | [[90 Research]] | Prior art, protocol notes, spikes |
 
 > [!warning] Folder indexes pending
-> Only `00 Home`, `10 Vision`, `30 Decisions`, `80 Engine Requests` and `90 Research` have content so far. [[80 Engine Requests]] and [[10 Vision]] have their folder index; the others do not exist yet, so their links are unresolved. Create each when its folder gets its first note.
+> Only `00 Home`, `10 Vision`, `30 Decisions`, `80 Engine Requests` and `90 Research` have content so far. [[80 Engine Requests]], [[10 Vision]] and [[30 Decisions]] have their folder index; the others do not exist yet, so their links are unresolved. Create each when its folder gets its first note.
 
 ## Decisions
 
 | ADR | Status | Blocks |
 |---|---|---|
 | [[ADR-0001 Shell Surface Strategy]] | accepted (2026-10-25) | All surface specs |
+| [[ADR-0002 Relationship to Tesserae UI]] | accepted (2026-10-25) | View and ViewModel specs, YAML reference |
+| [[ADR-0003 Process Model]] | accepted (2026-10-25) | Architecture, runtime, quality |
+| [[ADR-0004 Plasma Coexistence]] | accepted (2026-10-25) | Integration specs |
+| [[ADR-0005 Global Shortcuts]] | accepted (2026-10-25) | Launcher, integration specs |
 
 Vision: [[10 Vision]]
 
@@ -61,9 +65,7 @@ Research: [[Prior Art - Linux Shell Surfaces]]
 Engine requests: [[TRE-REQ-001 Layer Surface Window]] (review; released in tre 0.5.8)
 
 Planned, not yet written:
-- Relationship to Tesserae UI: depend on `tesserae-ui` or build directly on `tre`
-- Coexistence with plasmashell (notifications server, StatusNotifierWatcher)
-- Process model: single process or per-surface
+- A Tesserae request: open `LayerWindow` and `PopupWindow` from a view ([[ADR-0002 Relationship to Tesserae UI#Consequences]])
 
 ## Upstream projects
 
@@ -77,5 +79,5 @@ Versions drift. If the live docs disagree with this table, the docs win; update 
 ## Current focus
 
 1. Confirm [[TRE-REQ-001 Layer Surface Window]] against the shell (status `review`); [[ADR-0001 Shell Surface Strategy]] is accepted (Option A).
-2. Confirm the draft [[10 Vision]] notes (goals, non-goals, personas, [[V1 Scope]]), then write the four ADRs listed under [[V1 Scope#Decisions to take]].
+2. Confirm the draft [[10 Vision]] notes (goals, non-goals, personas, [[V1 Scope]]); write the Tesserae request for layer and popup windows; start `20 Architecture`.
 3. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.

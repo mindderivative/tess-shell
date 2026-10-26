@@ -42,7 +42,7 @@ depends_on: []
 | N5 | Replicate every Plasma applet. | v1 builds the modules in [[V1 Scope]]. Others are later work. |
 | N6 | Ship a package, installer or release process during the design phase. | Delivery is designed in `70 Delivery`, not built. |
 | N7 | Sandbox user Python against a hostile author. | User modules run with the user's rights. The security model is written in [[60 Quality]]; this non-goal is a proposal until that note exists. |
-| N8 | Define a second view language. | The shell reuses the Tesserae view language and reactivity unless an ADR decides otherwise (decision pending, see [[V1 Scope#Decisions to take]]). |
+| N8 | Define a second view language. | The shell reuses the Tesserae view language and reactivity unless an ADR decides otherwise ([[ADR-0002 Relationship to Tesserae UI]], accepted). |
 
 ## Success criteria for the design phase
 

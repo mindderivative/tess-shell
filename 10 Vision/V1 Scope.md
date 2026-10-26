@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0001 Shell Surface Strategy]]"]
 # v1 scope
 
 > [!summary]
-> Recommendation: v1 is a working bar, popups, OSDs, a launcher and movable desktop widgets, on KDE Plasma 6 Wayland (KWin), with wlroots compositors best effort. Any monitor can host the shell, each configured separately in one configuration, with all, some or none of the surfaces ([[#Multi-monitor]]). It ships a default shell built from eight modules. Notification centre, screen frame and the Tesserae Shell package manager are after v1. Everything here is a recommendation until the maintainer accepts it.
+> Recommendation: v1 is a working bar, popups, OSDs, a launcher and movable desktop widgets, on KDE Plasma 6 Wayland (KWin), with wlroots compositors best effort. Any monitor can host the shell, each configured separately in one configuration, with all, some or none of the surfaces ([[#Multi-monitor]]). It ships a default shell built from eight modules. Notification centre, screen frame and the Tesserae Shell package manager are after v1. Everything here is a recommendation until the maintainer accepts it, except the multi-monitor rules and the four decisions, which the maintainer has taken.
 
 ## Target environment
 
@@ -31,8 +31,8 @@ depends_on: ["[[ADR-0001 Shell Surface Strategy]]"]
 |---|---|---|---|
 | Bar | Yes | UC1, UC11 | On each monitor that lists it; reserves an exclusive zone. |
 | Popup (menu, flyout) | Yes | UC2 | `PopupWindow`. Escape dismissal is untested in tre; the spec names it as a gap. |
-| OSD | Yes | UC3 | Click-through overlay. |
-| Launcher | Yes | UC4 | Needs the global shortcut decision. |
+| OSD | Yes | UC3 | Click-through overlay, on its configured monitor. |
+| Launcher | Yes | UC4 | Shortcut through KDE's global-accel service ([[ADR-0005 Global Shortcuts]]); opens on its configured monitor. |
 | Desktop widget | Yes | UC5 | Movable, position saved from `moved`. |
 | Panel (slide-in) | Yes | UC6 | Margin animation. |
 | Wallpaper | Later | none | `background` layer; no use case written. |
@@ -52,13 +52,16 @@ Maintainer requirement (2026-10-25): any monitor can host the shell, each monito
 
 Every `LayerWindow` is bound to an explicit `Output`, never `output=None` ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]).
 
-Open points for `20 Architecture` and `41 YAML Reference`; none is decided:
+Decided by the maintainer in chat, 2026-10-25:
 
-- [ ] How a configuration section names a monitor. Connector names can change between ports and docks. Recommended starting point: match by connector name, with an optional match on description, so one profile follows a particular display.
-- [ ] What a monitor gets when no section names it. Recommended: a configurable default section, which may itself be "none".
-- [ ] Whether surfaces can be shared across monitors in configuration (one definition, several monitors) to avoid repeating a bar. Recommended: yes, by reference, so the definition lives once ([[AGENTS#2. Hard rules]], rule 4).
-- [ ] Mirrored outputs and output scale changes (`output_updated`) and how the surface set follows them.
-- [ ] Which monitor holds a surface that needs one place only (launcher, OSD): the focused one, the pointer's, or a configured one.
+- [x] **Naming a monitor.** A configuration section matches a monitor by connector name, with an optional match on the display description, so one profile can follow a particular display. Connector names can change between ports and docks.
+- [x] **Unnamed monitors.** A monitor no section names gets a configurable default section, which may itself be "none".
+- [x] **Sharing.** A surface is defined once and referenced from several monitors, so the definition lives once ([[AGENTS#2. Hard rules]], rule 4).
+- [x] **Single-place surfaces (launcher, OSD).** Each names its monitor in its own configuration: a configured monitor, not the focused or pointer's one.
+
+Still open:
+
+- [ ] **Mirrored outputs and output changes (`output_updated`).** The maintainer asked for a recommendation. What is known: `output_updated` fires when a screen's position, size, scale or rotation changes, and tre follows the new scale itself ([Outputs](https://mindderivative.github.io/tre/reference/outputs/)). A surface stays bound to its output; a bar anchored to both edges is resized by the compositor. How the compositor presents mirrored screens to a client is not documented in tre's pages. #needs-verification. Recommendation: (1) treat every `Output` tre reports as one monitor, so mirrored screens that appear as two outputs are configured as two, and a mirror that appears as one output is one monitor; (2) on `output_updated`, keep the surfaces and re-evaluate only the match rules, recreating a surface set only when the match result changes (for example a description rule that no longer matches); (3) test mirroring on KWin in the testing phase and record what it reports.
 
 ## Modules in the default shell
 
@@ -87,16 +90,14 @@ Proposed eight. Every module is available on any monitor's surfaces. Each become
 
 ## Decisions to take
 
-These need an ADR before the matching spec is `stable`. Recommendation first.
+All four were taken by the maintainer on 2026-10-25 and are recorded as ADRs.
 
-| Decision | Recommendation | Alternative |
+| Decision | Outcome | ADR |
 |---|---|---|
-| Relationship to Tesserae UI | Depend on `tesserae-ui` for the view language, reactivity and themes. | A smaller layer directly on `tre` with a second YAML dialect. |
-| Process model | One process owning all surfaces and one event loop. | One process per surface. |
-| Plasma coexistence per service | Coexist by default; replace only after a per-service ADR. | Replace plasmashell services wholesale. |
-| Global shortcuts | KDE's global-accel service. | XDG portal. |
-
-None of these has an ADR yet. They are the next decisions after Vision.
+| Relationship to Tesserae UI | Depend on `tesserae-ui`. Tesserae must gain a way to open layer and popup windows. | [[ADR-0002 Relationship to Tesserae UI]] |
+| Process model | One process owning all surfaces and one event loop. | [[ADR-0003 Process Model]] |
+| Plasma coexistence per service | Coexist by default; replace only after a per-service ADR. | [[ADR-0004 Plasma Coexistence]] |
+| Global shortcuts | KDE's global-accel service. | [[ADR-0005 Global Shortcuts]] |
 
 ## Acceptance criteria
 
@@ -104,7 +105,7 @@ None of these has an ADR yet. They are the next decisions after Vision.
 - [ ] Multi-monitor rules and open points above are confirmed or amended.
 - [ ] Every surface in the table has a matching use case in [[Personas and Use Cases]].
 - [ ] Every module row has a decision recorded or a `#needs-verification` tag.
-- [ ] Each "Decisions to take" row has a `proposed` ADR.
+- [x] Each "Decisions to take" row has an ADR, accepted by the maintainer.
 
 ## Links
 
