@@ -34,7 +34,7 @@ From the [tre threading guide](https://mindderivative.github.io/tre/guide/thread
 | Loop (main) | tre `App.run()`; surface manager; shell model; TEL evaluation; module host calls (`start`, `stop`, `reload`); registry updates | Yes | n/a |
 | Module threads | A module's blocking work: D-Bus, sockets, polling, files, decoding | Never | The shell's send entry point, which uses `call_soon` |
 | Config watcher | Waiting for file changes; reading and parsing a changed file | Never | `call_soon` with a finished result |
-| Service thread (optional) | An event loop (for example `asyncio`) that several modules share for D-Bus | Never | The same send entry point |
+| Service thread | An `asyncio` event loop, shared by modules, holding the session and system bus connections (`dbus-fast`, [[ADR-0009 D-Bus Client Library]]) | Never | The same send entry point |
 | Watchdog | Checks that the loop is still ticking | Never | Logs, and asks the supervisor to restart if the loop is stuck |
 
 tre also runs its own threads internally (the layer surface connection, for example). They are tre's concern; the shell sees only the loop thread and its callbacks.
@@ -91,7 +91,29 @@ stateDiagram-v2
 - **Running.** Modules start after the model is built, so a value that arrives before its surface exists is kept in the store.
 - **Reloading.** A watcher thread reads and parses a changed file; the loop applies it. A bad file leaves the old state and logs an error ([[Data Flow#Hot reload]]).
 - **Stopping.** Call each module's `stop`, join its threads with a timeout, close windows, write the registry. `App.run()` returns when the last window closes.
-- **No windows: stay idle** (decided 2026-10-26). If every monitor is set to "none", or no output is present, the shell does not exit; it waits and reacts when an output is added ([[Data Flow#Monitor hot-plug]]). How, with tre: `App.run()` raises when no window is registered, so the engine side is asked: `tre` was asked over the mailbox on 2026-10-26 whether `run()` can stay alive with none, and what to do if not. Until it answers, the policy is decided and the mechanism is open. #needs-verification
+- **No windows: stay idle** (decided 2026-10-26). If every monitor is set to "none", or no output is present, the shell does not exit; it waits and reacts when an output is added ([[Data Flow#Monitor hot-plug]]). What tre can do is in [No windows: what tre offers](#no-windows-what-tre-offers).
+
+## No windows: what tre offers
+
+The `tre` session answered over the mailbox on 2026-10-26, from the 0.5.8 source and runs on a headless sway (information only; no issue filed). A peer's claim is a lead; the first two facts match tre's documentation that `run()` raises with zero windows.
+
+| Finding | Detail |
+|---|---|
+| No keep-alive mode | `App.run()` raises `RuntimeError` with zero registered windows, and the platform loop ends when no window and no layer surface is left |
+| Re-running works, but not asleep | Calling `run()` again after it returned works. Output events do not fire while `run()` is not active, and an output plugged in between runs is not reported as `output_added`; it is just the starting state. A restart-on-demand design must diff `App.outputs()` (works any time) against what it knew |
+| A hidden layer surface fails | A 1x1 `LayerWindow` (background layer, no anchor, input region `[]`, keyboard none) keeps the loop alive, but it is bound to an output. When that output is unplugged it closes with reason `output_removed` and the run ends in the same turn, even if a listener adds a new one. It fails exactly when the last or current output is removed |
+| A 1x1 ordinary window survives | An ordinary toplevel `Window(width=1, height=1)` survived unplugging its output, then the last output, then plugging a new one: output events and `call_soon` kept working with zero outputs. Cost: it is a visible 1x1 toplevel (a task-list entry, space on a tiling compositor). Hiding it (`Window.minimize()`) is untested; not tested on KWin |
+| Suggested engine addition | An opt-in keep-alive, for example `App.run(keep_alive=True)`: no error with zero windows, no exit when empty, output watch started at loop start. It needs a way to end the loop. A `LoopHandle` stop does not exist today; the loop ends only when every window closes. Rough size: about 60 to 100 lines plus tests and docs, low risk because it is opt-in |
+
+Options for the shell:
+
+| Option | Description | Verdict |
+|---|---|---|
+| A. Ask tre for the opt-in keep-alive and a `LoopHandle` stop | The clean answer; the stop is needed for shutdown anyway | **Recommended.** Small, opt-in, low risk |
+| B. A hidden 1x1 ordinary window as a stopgap | Works today (not on KWin) | Interim only: it shows in the task list and needs hiding |
+| C. Restart on demand, diffing `App.outputs()` | Cannot wake on a hot-plug | Not suitable for "react when an output is added" |
+
+The shell also needs a clean way to **end the loop** on quit. Today that means closing every window, which is not possible with zero windows. A `LoopHandle` stop would cover both ([[Process Model and Threading#Lifecycle (proposed)]]).
 
 ## Failure and recovery
 
@@ -118,10 +140,11 @@ The loop cannot interrupt itself, so detecting a blocked loop needs a separate w
 ## Open questions
 
 - [ ] **Module threads: who owns them?** Options. **A.** Each module starts and owns its threads; the shell gives a helper that catches and logs thread exceptions (flexible, simple contract; recommended). **B.** The shell runs a shared `asyncio` thread for services and modules are coroutines (less thread code, forces async on module authors). **C.** A shell thread pool for module work. Recommendation A, with B available as an optional shared service thread for D-Bus.
-- [ ] **D-Bus client library.** Surveyed: [[D-Bus Libraries for Python]]. Recommendation: `dbus-fast` on a shared asyncio service thread, with `jeepney` as the fallback. Needs the maintainer's choice. If accepted, the service thread is part of the thread inventory above and Option B is available as the shared service thread.
+- [x] **D-Bus client library.** `dbus-fast` on a shared asyncio service thread, `jeepney` as the fallback (maintainer, 2026-10-26, [[ADR-0009 D-Bus Client Library]]).
 - [ ] **Registry I/O and the UID write** on the loop or a single writer thread ([[ADR-0007 Shell UI Layer#Open items]]).
 - [ ] **Supervisor** in v1 or later.
-- [x] **No windows** policy: stay idle (maintainer, 2026-10-26). Mechanism: awaiting `tre`.
+- [x] **No windows** policy: stay idle (maintainer, 2026-10-26).
+- [ ] **No windows mechanism.** Choose A, B or C above. Recommendation A: ask tre for an opt-in keep-alive and a `LoopHandle` stop, with B as a stopgap. The maintainer files engine issues.
 - [ ] **Where conversions run** (send or flush).
 
 ## Links

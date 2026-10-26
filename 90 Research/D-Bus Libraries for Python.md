@@ -13,6 +13,9 @@ depends_on: []
 
 # D-Bus libraries for Python
 
+> [!success] Decided 2026-10-26
+> The maintainer accepted the recommendation: [[ADR-0009 D-Bus Client Library]].
+
 > [!summary]
 > The shell and its modules need a D-Bus client for UPower, NetworkManager, MPRIS, KWin, the tray and the global shortcut service ([[System Context]]). This survey compares the Python options. Recommendation: **`dbus-fast`**, run on one shared asyncio service thread that the shell provides, with **`jeepney`** as the fallback. The maintainer asked for the survey and a recommendation (2026-10-26); the choice is theirs. Release data comes from PyPI and GitHub on 2026-10-26; nothing was installed or run.
 
@@ -68,8 +71,8 @@ depends_on: []
 
 ## Open
 
-- [ ] The maintainer's choice of library.
-- [ ] Whether the shared service thread is part of v1.
+- [x] The maintainer's choice of library: `dbus-fast` on a shared asyncio service thread, `jeepney` as the fallback ([[ADR-0009 D-Bus Client Library]]).
+- [x] The shared service thread is part of the chosen design ([[ADR-0009 D-Bus Client Library]]).
 - [ ] The name and shape of the helper for modules ([[42 Python API]], to write).
 - [ ] PipeWire access path (D-Bus, `wpctl`, a library): a separate survey.
 

@@ -31,11 +31,11 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Decided: stay idle with no windows, events are the shell's (not TEL's), module Python reloads at runtime; surveyed D-Bus libraries ([[D-Bus Libraries for Python]]) |
-| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0008 Tesserae Expression Language]] (7 accepted; ADR-0002 superseded) |
-| Waiting on you | Choose the D-Bus library ([[D-Bus Libraries for Python]]; recommendation `dbus-fast`); review the draft [[20 Architecture]] notes |
+| Last change | Accepted [[ADR-0009 D-Bus Client Library]] (`dbus-fast`); recorded `tre`'s no-windows findings; flagged a TEL conflict from `tess-el` |
+| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
+| Waiting on you | (1) Confirm whether TEL has statements and `event` or not: `tess-el` reports a different instruction ([[Expression Language Requirements#Open questions]]). (2) Choose how the shell stays alive with no windows: ask `tre` for a keep-alive, or a stopgap ([[Process Model and Threading#No windows: what tre offers]]) |
 | Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
-| Waiting on others (2) | `tre` on keeping `run()` alive with no windows ([[Process Model and Threading#Lifecycle (proposed)]]); `tess-el` informed that TEL has no events ([[ADR-0008 Tesserae Expression Language]]) |
+| Waiting on others (2) | `tess-el` asked you to confirm the TEL scope (see above) |
 | Next | Module specs (Clock first), `42 Python API`, `41 YAML Reference`, the Panel spec |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -47,6 +47,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | ADR-0009 accepted; `tre` answered the no-windows question; `tess-el` reports a TEL scope conflict |
 | 2026-10-26 | Stay idle, events are the shell's, module reload decided; D-Bus survey ([[D-Bus Libraries for Python]]); `tre` and `tess-el` messaged |
 | 2026-10-26 | D-Bus names observed on Plasma 6.8.1 recorded ([[System Context]]) |
 | 2026-10-25 | [[20 Architecture]] drafted (four notes) |
@@ -54,7 +55,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | Loguru noted as a logging option ([[Logging with Loguru]]) |
 | 2026-10-25 | Unresolved reference: error at load, warning while running ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Cross-file references resolve through the registry ([[ADR-0007 Shell UI Layer]]) |
-| 2026-10-25 | Panel attached by name; UID write; TEL repository (tess-el, MIT); tre #236 recorded |
 
 ## Go to
 

@@ -37,7 +37,7 @@ TEL evaluates expressions written in shell YAML files (`{if condition, ...}`, va
 | T11 | **Python 3.14 or later**, no heavy dependencies. | [[ADR-0007 Shell UI Layer]] |
 | T12 | **Testable headless.** Parse and evaluate without a display. | [[AGENTS#12. Design completeness checklist]] |
 | T13 | **Standalone.** Anyone can use TEL in plain YAML by importing its parser in a Python script, with no shell and no Tesserae UI. | [[ADR-0008 Tesserae Expression Language]] |
-| T15 | **No events.** TEL is an expression library: no statements, no handlers, no event vocabulary. The shell maps an event to a module method or a shell action and may use TEL only to evaluate argument expressions at event time (maintainer, 2026-10-26). | [[ADR-0008 Tesserae Expression Language]] |
+| T15 | **No events (pending confirmation).** The Shell's position, from the maintainer's question on 2026-10-26 ("TEL is an expression library, why are we having it handle events?"): no statements, no handlers, no event vocabulary in TEL. The shell maps an event to a module method or a shell action and uses TEL only to evaluate argument expressions. **Contested:** `tess-el` reports the maintainer told it directly that statements are part of TEL and that `event` stays. Not settled; see Open questions. | [[ADR-0008 Tesserae Expression Language]] |
 | T14 | **Efficient.** Much more efficient than Tesserae's `expr.py`: parse once, cheap re-evaluation, nothing re-run unless an input changed. A target and a benchmark are set in the TEL project. | Maintainer, 2026-10-25 |
 
 ## What Tesserae's `expr.py` shows
@@ -51,7 +51,7 @@ From the local clone (commit `0eda3fe`, read 2026-10-25). It already provides th
 - [x] Who owns structure: TEL owns structure and values.
 - [x] TEL's repository and licence: [mindderivative/tess-el](https://github.com/mindderivative/tess-el), MIT (2026-10-25). Local project `/home/phil/Projects/pyDev/projects/tess-el`.
 - [ ] TEL's versioning and release process (the maintainer's).
-- [x] Statements: none. TEL is expressions and structure only; events belong to the shell (maintainer, 2026-10-26, T15). Syntax and form are worked out in the TEL project (2026-10-25). The shell's needs are T1 to T15 above.
+- [ ] **Statements and events: needs the maintainer's confirmation (2026-10-26).** The Shell side recorded "none" after the maintainer asked why TEL would handle events. `tess-el` reports the maintainer told it that statements are part of TEL and `event` stays (its `docs/decisions.md` D2 and D5). Possible reading: the `event` name stays available in expressions (reading `event.value`) while the shell owns event dispatch, but the two accounts may differ. Until confirmed, the Shell's requirement is that TEL works for the shell without statements; whether TEL also offers them is the TEL project's call. Syntax and form are worked out in the TEL project (2026-10-25).
 - [ ] How the shell and any other user share TEL's releases without blocking each other.
 
 ## Acceptance criteria

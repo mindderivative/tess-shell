@@ -57,6 +57,7 @@ Operating rules for agents: [[AGENTS]].
 | [[ADR-0006 Shell Independent of Tesserae UI]] | accepted (2026-10-25) | Architecture, packaging |
 | [[ADR-0007 Shell UI Layer]] | accepted (2026-10-25) | View, YAML and Python API specs |
 | [[ADR-0008 Tesserae Expression Language]] | accepted (2026-10-25) | Expression language, YAML reference |
+| [[ADR-0009 D-Bus Client Library]] | accepted (2026-10-26) | Module and integration specs |
 | [[ADR-0003 Process Model]] | accepted (2026-10-25) | Architecture, runtime, quality |
 | [[ADR-0004 Plasma Coexistence]] | accepted (2026-10-25) | Integration specs |
 | [[ADR-0005 Global Shortcuts]] | accepted (2026-10-25) | Launcher, integration specs |

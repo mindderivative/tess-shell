@@ -96,7 +96,7 @@ sequenceDiagram
 - tre fires `output_added`, `output_removed` and `output_updated` with the `Output` ([Outputs](https://mindderivative.github.io/tre/reference/outputs/)). A removed output closes its layer windows with reason `"output_removed"`, and a dead window is never reused.
 - `output_updated` keeps the surfaces and re-evaluates only the match rules ([[V1 Scope#Multi-monitor]]).
 - A Popup is exclusive to the monitor of its caller ([[Surface Types#Open questions]]).
-- **No windows: stay idle** (decided 2026-10-26). The shell keeps running and waits for `output_added`; the tre mechanism is being asked ([[Process Model and Threading#Lifecycle (proposed)]]).
+- **No windows: stay idle** (decided 2026-10-26). The shell keeps running and waits for `output_added`. tre has no keep-alive today; options are in [[Process Model and Threading#No windows: what tre offers]].
 
 ## User input
 
