@@ -2,7 +2,7 @@
 title: ADR-0001 Shell Surface Strategy
 aliases: [ADR-0001, Shell Surface Options, Layer Surface Strategy]
 type: adr
-status: proposed
+status: accepted
 owner: phil
 created: 2026-10-18
 updated: 2026-10-25
@@ -20,7 +20,7 @@ depends_on: []
 > Without edge anchoring and exclusive zones there is no bar, panel or dock. Every note under `40 Specifications/Surfaces/` depends on this decision.
 
 > [!success] Option A is released in tre 0.5.8 (2026-10-25)
-> tre closed [#195](https://github.com/mindderivative/tre/issues/195) and released it in 0.5.8 (`tesserae-engine==0.5.8`): `LayerWindow`, `PopupWindow`, outputs, `input_region`, margin animation and drag, `exclusive_edge`, IME and screen-reader support. Window GPU memory is much lower by default (a bar about 18 MiB, was 198; one shared device is still open as tre #220). Gaps and what was tested: [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]. Status stays `proposed` until the maintainer accepts.
+> tre closed [#195](https://github.com/mindderivative/tre/issues/195) and released it in 0.5.8 (`tesserae-engine==0.5.8`): `LayerWindow`, `PopupWindow`, outputs, `input_region`, margin animation and drag, `exclusive_edge`, IME and screen-reader support. Window GPU memory is much lower by default (a bar about 18 MiB, was 198; one shared device is still open as tre #220). Gaps and what was tested: [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]. Accepted by the maintainer on 2026-10-25.
 
 ## Context
 
@@ -103,14 +103,14 @@ Use KDE's own surface-role protocol (`org_kde_plasma_shell`) instead of `wlr-lay
 
 ## Decision
 
-<!-- Blank until the maintainer accepts. -->
+Accepted 2026-10-25 by the maintainer: **Option A**, layer surfaces in tre. The shell builds its bars, panels, docks, OSDs and popups on `LayerWindow` and `PopupWindow` from `tesserae-engine` 0.5.8 or later ([[TRE-REQ-001 Layer Surface Window]]). Options B, C and D are not pursued; `TRE-REQ-002` stays unwritten unless a later ADR supersedes this one.
 
 ## Consequences
 
-If Option A is accepted:
+Option A is accepted, so:
 - [[TRE-REQ-001 Layer Surface Window]] carries the API, alternatives and fallback.
-- Every surface spec carries `> [!warning] Blocked by [[TRE-REQ-001 Layer Surface Window]]` until tre ships it.
-- Prototype with Option C in `90 Research/` to unblock layout and design-system work, labelled throwaway.
+- tre 0.5.8 has shipped it, so surface specs list [[TRE-REQ-001 Layer Surface Window]] in `depends_on` but carry no `Blocked by` callout. A spec names any untested gap from the request that affects it (for example `PopupWindow` Escape dismissal, Orca, input methods).
+- The Option C prototype is no longer needed: layout and design-system work can run on `LayerWindow` directly.
 
 ## Open items
 
@@ -118,7 +118,7 @@ If Option A is accepted:
 - [ ] Find the first KWin release exposing `zwlr_layer_shell_v1`; record the version.
 - [ ] Verify `org_kde_plasma_shell` status for third-party clients.
 - [ ] Decide whether non-layer-shell compositors (GNOME) are explicitly out of scope for v1.
-- [x] Specify popup behaviour (parenting, grabs, dismissal) in `TRE-REQ-001`. Drafted in [[TRE-REQ-001 Layer Surface Window#Popups]]; the maintainer still reviews it.
+- [x] Specify popup behaviour (parenting, grabs, dismissal) in `TRE-REQ-001`. Built as `PopupWindow` in tre 0.5.8; see [[TRE-REQ-001 Layer Surface Window#Popups]].
 - [x] Choose the backend path for layer surfaces: I2 built, a second event queue on `winit`'s `wl_display`; tre binds layer-shell v5 itself. See [[TRE-REQ-001 Layer Surface Window#Implementation candidates]].
 - [ ] Read the gtk-layer-shell and Quickshell source to see how they attach a layer role to a toolkit surface; this informs Option B.
 

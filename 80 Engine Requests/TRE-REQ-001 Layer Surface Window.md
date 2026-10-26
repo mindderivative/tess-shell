@@ -19,8 +19,8 @@ depends_on: []
 > [!success] Released in tre 0.5.8 (2026-10-25)
 > [tre #195](https://github.com/mindderivative/tre/issues/195) is closed and everything in it shipped in tre 0.5.8 (`tesserae-engine==0.5.8` on PyPI; 0.5.7 had none of it), including `PopupWindow` ([tre #223](https://github.com/mindderivative/tre/issues/223)). See [Delivered](#delivered-tre-195-closed). The request stays at `review` until the maintainer confirms it against the shell.
 
-> [!warning] Surface specs still carry the dependency
-> The engine blocker is gone: a tre release has `LayerWindow`. Every note under `40 Specifications/Surfaces/` still links `[[TRE-REQ-001 Layer Surface Window]]` in `depends_on` and lists the gaps below that affect it. Remove a spec's `> [!warning] Blocked by` callout once the maintainer accepts [[ADR-0001 Shell Surface Strategy]] (Option A, `proposed`) and the spec's own acceptance items are met.
+> [!info] Surface specs depend on this request
+> The engine blocker is gone: a tre release has `LayerWindow`. Every note under `40 Specifications/Surfaces/` links `[[TRE-REQ-001 Layer Surface Window]]` in `depends_on`. [[ADR-0001 Shell Surface Strategy]] is accepted (Option A, 2026-10-25), so a surface spec carries no `Blocked by` callout for this request; it names any untested gap below that affects it.
 
 This note is carried to the tre project by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]).
 

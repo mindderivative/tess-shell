@@ -52,7 +52,7 @@ Operating rules for agents: [[AGENTS]].
 
 | ADR | Status | Blocks |
 |---|---|---|
-| [[ADR-0001 Shell Surface Strategy]] | proposed | All surface specs |
+| [[ADR-0001 Shell Surface Strategy]] | accepted (2026-10-25) | All surface specs |
 
 Research: [[Prior Art - Linux Shell Surfaces]]
 
@@ -74,6 +74,6 @@ Versions drift. If the live docs disagree with this table, the docs win; update 
 
 ## Current focus
 
-1. Review tre's delivery of [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]] and accept or amend [[ADR-0001 Shell Surface Strategy]]: Option A is released in tre 0.5.8, so the ADR is ready for a decision.
+1. Confirm [[TRE-REQ-001 Layer Surface Window]] against the shell (status `review`); [[ADR-0001 Shell Surface Strategy]] is accepted (Option A).
 2. Write `10 Vision` (goals, non-goals, v1 scope) so the architecture notes have a target.
 3. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.

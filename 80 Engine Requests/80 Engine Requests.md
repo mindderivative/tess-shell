@@ -17,6 +17,6 @@ Scoped requests for tre and Tesserae. Each is written here and carried upstream 
 
 | Request | Status | Blocks | Decision |
 |---|---|---|---|
-| [[TRE-REQ-001 Layer Surface Window]] | review. Released in tre 0.5.8 (tre #195 closed 2026-10-25) | Nothing in the engine; surface specs await [[ADR-0001 Shell Surface Strategy]] and their own acceptance items | [[ADR-0001 Shell Surface Strategy]] (Option A) |
+| [[TRE-REQ-001 Layer Surface Window]] | review. Released in tre 0.5.8 (tre #195 closed 2026-10-25) | Nothing in the engine; surface specs await [[ADR-0001 Shell Surface Strategy]] and their own acceptance items | [[ADR-0001 Shell Surface Strategy]] (Option A, accepted) |
 
 Not written: `TRE-REQ-002` (external-surface hand-off, ADR-0001 Option B). Write it only if TRE-REQ-001 proves infeasible.
