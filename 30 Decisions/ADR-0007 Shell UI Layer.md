@@ -65,11 +65,11 @@ Accepted 2026-10-25 by the maintainer in chat: **Option A**, a small shell-owned
 
 Decided by the maintainer in chat. The shell's files are named so nobody mistakes them for Tesserae files: a Tesserae `<Name>_View.yaml` dropped into a shell must not appear to work.
 
-- The shell does not use Tesserae's `_View.yaml` suffix, or any Tesserae file name, for its own views.
+- The shell does not use Tesserae's `_View.yaml`, `_ViewModel.py` or `_Component.yaml` names. For themes, styles and stylesheets it uses the plain suffixes `*_Theme.yaml`, `*_Style.yaml` and `*_Stylesheet.yaml` (decided 2026-10-25, below). The name alone does not say whose file it is; the required `shell:` key does.
 - A shell is written either as **one `*.yaml` file** for the whole shell, or as a **`Main_Shell.yaml`** that imports several **`<Name>_Shell.yaml`** files and builds the shell from them. Both forms are valid.
 - A Tesserae file placed in a shell is refused with an error that names the file and says it is not a shell file (see Open items for how a shell file is recognised).
 - Python module files are `<Name>_Module.py` (see Modules below).
-- **Theme files are `<Name>_ShellTheme.yaml`. Stylesheet files are `<Name>_ShellStylesheet.yaml`** (decided 2026-10-25). The names resemble Tesserae's on purpose of function, but the `Shell` in each suffix keeps them apart: a Tesserae `_Theme.yaml` or `_Stylesheet.yaml` is not a shell file and is refused like any other non-shell file.
+- **Theme, style and stylesheet files are `<Name>_Theme.yaml`, `<Name>_Style.yaml` and `<Name>_Stylesheet.yaml`** (decided 2026-10-25, replacing `_ShellTheme`, `_ShellStyle` and `_ShellStylesheet`). Tesserae uses the same suffixes, so a file is a shell file only if it carries the required `shell:` key (and a Tesserae file does not). The maintainer's reasoning: file names such as `_Style.yaml` are in wide use, so a shared suffix is not the problem; the version key is the discriminator. Suggestion for Tesserae, which is the maintainer's own project and not a request from this vault: give its files a matching `tesserae: <version>` key so each side can refuse the other's files. Nothing is asked of Tesserae here.
 
 ### Recognising a shell file and importing (2026-10-25)
 
@@ -92,14 +92,14 @@ root:
         child: 
             name: panel_dock # Unique per monitor
             type: dock
-            style: Dock_ShellStyle.yaml
+            style: Dock_Style.yaml
             modules: # Modules have to be imported as they may have differing rules
                 module: Audio_Module.yaml # with a connected python script
                 module: Network_Module.yaml
         child:
             name: panel_start_menu
             type: corner_panel
-            style: CornerPanel_ShellStyle.yaml
+            style: CornerPanel_Style.yaml
             modules:
                 module: Applications_Module.yaml
 ```
@@ -116,13 +116,13 @@ root:
         import: TopBar_Shell.yaml
         panel_dock:                       # unique per monitor
             type: dock
-            style: Dock_ShellStyle.yaml
+            style: Dock_Style.yaml
             modules:
                 audio: Audio_Module.yaml      # unique name: the module file
                 network: Network_Module.yaml
         panel_start_menu:
             type: corner_panel
-            style: CornerPanel_ShellStyle.yaml
+            style: CornerPanel_Style.yaml
             modules:
                 applications: Applications_Module.yaml
 ```
@@ -138,7 +138,7 @@ What the example shows, and what is decided:
 | `children:` with `import:` | `import:` pulls in a `<Name>_Shell.yaml`. | Decided. |
 | `<unique_name>:` entries | Children and modules are keyed by a unique name instead of a repeated `child:` or `module:` key. | **Decided 2026-10-25.** A child's name is unique per monitor. |
 | `type: dock` / `corner_panel` | A surface type. | The type list is not decided. |
-| `style: Dock_ShellStyle.yaml` | A style file per surface, with a `_ShellStyle.yaml` suffix. | Implied name. Not decided. |
+| `style: Dock_Style.yaml` | A style file per surface, `<Name>_Style.yaml`, with `shell:` and `type:`. | Decided 2026-10-25 (see File naming). |
 | `modules:` and `<name>: <Name>_Module.yaml` | Modules are imported by file. | Decided in outline: see Modules below. |
 
 ### Modules (2026-10-25)
@@ -146,7 +146,7 @@ What the example shows, and what is decided:
 Decided by the maintainer in chat:
 
 - **A module is a `<Name>_Module.yaml` file plus a matching `<Name>_Module.py`.** The shell framework expects the Python file and requires it. A module with no matching `.py` is a load error that names both files.
-- **A module may have a style.** Either an optional `<Name>_ModuleStyle.yaml` file, or a `style:` key with the values written inline in the module's entry.
+- **A module may have a style.** Either an optional `<Name>_Style.yaml` file whose `type:` is `Module`, or a `style:` key with the values written inline in the module's entry.
 - **A module can be used many times.** `Clock_Module.yaml` may appear in several places, and all uses share the same data. One module is one source of data, however many views show it.
 
 Recommendations, not yet decided (see Open items): how a module file is told apart from other shell files, and how a module that must differ per monitor gets that difference.
@@ -173,19 +173,16 @@ Option A is accepted, so:
 - [ ] Decide how a module file is recognised: a required `type: module` key, or the `_Module.yaml` suffix alone. Recommendation: both, with `type: module` authoritative and the suffix a convention, so a renamed file cannot silently change what it is, and a mismatch between the suffix and the type is a load error. This matches `type: dock` on surfaces. Every module file also carries the required `shell:` key.
 - [ ] Decide how a shared module differs per use. One module shares its data across all uses; a workspace list may need to differ per monitor. Recommendation: one module instance per module file, shared by all uses; the module receives the use's context (the monitor, its unique name) when a view reads from it, and per-use options go in the use's own entry.
 - [ ] Decide where `<Name>_Module.py` lives (next to its `.yaml`, recommended), how the shell loads it, and the Python contract it must meet ([[42 Python API]], to write). The thread rule in [[AGENTS#3. Layering principle]] applies: a module's blocking work runs on its own thread and reaches the loop with `call_soon`.
-- [ ] Confirm the surface style file name `<Name>_ShellStyle.yaml` implied by the example (see the style item below).
+- [x] Surface style file name: `<Name>_Style.yaml` (see File naming).
 - [ ] Decide the list of surface `type` values (the example has `dock` and `corner_panel`) and how they map to `LayerWindow` settings ([[TRE-REQ-001 Layer Surface Window]]).
 - [ ] Decide what `monitor` accepts and how a file with no `monitor` behaves ([[V1 Scope#Multi-monitor]]: default section, shared definitions).
 - [ ] Decide `name` and UID rules: which names must be unique and in what scope, how a UID is made, and whether it is stable across reloads.
 - [ ] Decide how an import cycle, a missing file and a name clash are reported. Recommendation: each is a load error with `file:line:column`; a cycle prints the chain of files (`A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`); a path is relative to the importing file; a name defined twice names both places.
 - [x] Python module files: `<Name>_Module.py`, matching the module file (see Modules above).
-- [x] Theme and stylesheet file names: `<Name>_ShellTheme.yaml` and `<Name>_ShellStylesheet.yaml`.
-- [ ] **Proposal under review (maintainer, 2026-10-25): plain suffixes plus keys.** Use `*_Style.yaml`, `*_Theme.yaml` and `*_Stylesheet.yaml`, each with the required `shell:` key and a top-level `type:` key naming what the file is (`Theme`, `Style`, `Stylesheet`, `Module`, and for the import files `Shell`). A module's style would be `<Name>_Style.yaml` with `type: Module`, so the parser knows what it styles. Not decided; the names above (`_ShellTheme`, `_ShellStylesheet`, `_ModuleStyle`) stay until it is. Findings:
-    - Tesserae already treats `_Theme.yaml`, `_Stylesheet.yaml` and `_Style.yaml` as its own file kinds and finds them by suffix in a project (`src/tesserae/project.py`, `KINDS`, local clone at commit `0eda3fe`, read 2026-10-25). The `shell:` key protects the shell: a Tesserae file without it is refused. It does not protect Tesserae: whether Tesserae refuses a shell file with an unknown top-level key was not checked. #needs-verification
-    - A plain suffix therefore reverses the earlier aim that a file should not be mistaken for a Tesserae file by name alone.
-    - The `type:` key is a good idea on its own: one place says what a file is, whatever its name. `type:` is also used inside a surface (`type: dock`). Different nesting makes it unambiguous to a parser but harder to read; a key such as `kind:` for the file would avoid it.
-    - Recommendation: take the `type:` idea and one style suffix, and keep `Shell` in the names: `<Name>_ShellTheme.yaml`, `<Name>_ShellStylesheet.yaml`, `<Name>_ShellStyle.yaml` (surface and module styles both, told apart by `type:`), and drop `_ModuleStyle.yaml`. That gives the parser its hint and keeps the names apart from Tesserae's.
-- [ ] Decide what separates the style files and the stylesheet. Names in play: `<Name>_ShellStyle.yaml` (the example's surface style), `<Name>_ModuleStyle.yaml` (a module's style), `<Name>_ShellStylesheet.yaml`. Recommendation: a style file holds the values for one surface or module, the same as its inline `style:` key; a stylesheet holds shared rules that apply across the shell by type or class; a theme holds design tokens (colour, type, shape, motion). Then `_ShellStyle` and `_ModuleStyle` are two places a style can live, and the rest is as named.
+- [x] Theme, style and stylesheet file names: `<Name>_Theme.yaml`, `<Name>_Style.yaml`, `<Name>_Stylesheet.yaml`, each with `shell:` and a top-level `type:` (decided 2026-10-25).
+- [x] **Plain suffixes plus keys** (maintainer, 2026-10-25). Every shell file carries `shell:` and a top-level `type:` naming what it is: `Shell`, `Module`, `Theme`, `Style`, `Stylesheet`. A style for a module is `<Name>_Style.yaml` with `type: Module`, so the parser knows what it styles. Findings kept for the record: Tesserae already finds `_Theme.yaml`, `_Stylesheet.yaml` and `_Style.yaml` by suffix (`src/tesserae/project.py`, `KINDS`, local clone commit `0eda3fe`, read 2026-10-25); the `shell:` key protects the shell side; whether Tesserae refuses a shell file is Tesserae's business and was not checked.
+- [ ] Decide the exact `type:` values, in particular what a surface's style file says (`Style`, or a name for the surface kind) against a module's (`Module`). Also `type:` is used inside a surface (`type: dock`); a key such as `kind:` for the file would be easier to read. Recommendation: keep `type:` as the maintainer wrote it unless the grammar in `41 YAML Reference/` shows a clash.
+- [ ] Decide what separates a style file from a stylesheet. Recommendation: a style file holds the values for one surface or module, the same as its inline `style:` key; a stylesheet holds shared rules that apply across the shell by type or class; a theme holds design tokens (colour, type, shape, motion). A module's style is a style file with `type: Module` or an inline `style:`.
 - [ ] Decide how a module's values reach a view (a ViewModel class, a plain dict, or a signal registry).
 
 ## Links
