@@ -37,7 +37,7 @@ The maintainer is all three while the design is made. Separate personas keep the
 | UC5 | Place a clock or system monitor on the desktop and drag it to a new place; the position is saved. | P1, P2 | Desktop widget (`bottom` layer, `drag_margin`, `moved`) | [[TRE-REQ-001 Layer Surface Window#Margin drag]] |
 | UC6 | Slide a panel in from the screen edge and slide it out again. | P2 | Panel (`animate("margin_*")`) | [[TRE-REQ-001 Layer Surface Window#Animation]] |
 | UC7 | Draw a rounded frame around the screen edge that lets clicks through to the interior. | P2 | Frame (painter plus reservers, `input_region="auto"`) | [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]] |
-| UC8 | Edit a theme file and see the bar change at once. | P1, P2 | All surfaces | Tesserae hot reload |
+| UC8 | Edit a theme file and see the bar change at once. | P1, P2 | All surfaces | Shell hot reload ([[ADR-0007 Shell UI Layer]]) |
 | UC9 | Add a module that reads the battery and shows it in the bar. | P3 | Module + bar | Python module contract (to write in `42 Python API`) |
 | UC10 | Unplug a monitor, replug it, and have the surfaces come back. | P1 | All per-output surfaces | `output_added`, `output_removed` events |
 | UC11 | Give each monitor its own surface set: the full shell on the main monitor, only a bar on the second, nothing on the third. | P1, P2 | All per-output surfaces | [[V1 Scope#Multi-monitor]] |

@@ -7,7 +7,7 @@ owner: phil
 created: 2026-10-25
 updated: 2026-10-25
 tags: [adr, architecture]
-related: ["[[V1 Scope]]", "[[ADR-0002 Relationship to Tesserae UI]]", "[[ADR-0001 Shell Surface Strategy]]"]
+related: ["[[V1 Scope]]", "[[ADR-0006 Shell Independent of Tesserae UI]]", "[[ADR-0001 Shell Surface Strategy]]"]
 depends_on: []
 ---
 
@@ -48,4 +48,4 @@ Accepted 2026-10-25 by the maintainer in chat: **Option A**, one process owning 
 
 ## Links
 
-- [[ADR-0002 Relationship to Tesserae UI]] · [[V1 Scope#Decisions to take]]
+- [[ADR-0006 Shell Independent of Tesserae UI]] · [[V1 Scope#Decisions to take]]

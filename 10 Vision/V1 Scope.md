@@ -88,11 +88,11 @@ The eight modules, confirmed. Every module is available on any monitor's surface
 
 ## Decisions to take
 
-All four were taken by the maintainer on 2026-10-25 and are recorded as ADRs.
+All four were taken by the maintainer on 2026-10-25 and are recorded as ADRs. One was reversed the same day: the Tesserae relationship. The shell's own view layer is `proposed` in [[ADR-0007 Shell UI Layer]].
 
 | Decision | Outcome | ADR |
 |---|---|---|
-| Relationship to Tesserae UI | Depend on `tesserae-ui`. Tesserae must gain a way to open layer and popup windows. | [[ADR-0002 Relationship to Tesserae UI]] |
+| Relationship to Tesserae UI | Separate project on tre; no `tesserae-ui` dependency. Replaces ADR-0002. | [[ADR-0006 Shell Independent of Tesserae UI]] |
 | Process model | One process owning all surfaces and one event loop. | [[ADR-0003 Process Model]] |
 | Plasma coexistence per service | Coexist by default; replace only after a per-service ADR. | [[ADR-0004 Plasma Coexistence]] |
 | Global shortcuts | KDE's global-accel service. | [[ADR-0005 Global Shortcuts]] |

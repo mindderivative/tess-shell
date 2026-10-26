@@ -31,11 +31,11 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Wrote [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (`draft`) |
-| Decided | [[ADR-0001 Shell Surface Strategy]] to [[ADR-0005 Global Shortcuts]] (5 accepted) |
-| Waiting on you | Review [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (5 open questions); carry it to Tesserae when ready |
+| Last change | Shell made independent of Tesserae: [[ADR-0006 Shell Independent of Tesserae UI]]; [[ADR-0002 Relationship to Tesserae UI]] and [[TRE-REQ-004 Tesserae Layer and Popup Windows]] superseded |
+| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0006 Shell Independent of Tesserae UI]] (5 accepted; ADR-0002 superseded) |
+| Waiting on you | Choose an option in [[ADR-0007 Shell UI Layer]] (the shell's own view layer) |
 | Next | Start `20 Architecture` |
-| Blocked | Tesserae cannot yet open a layer window from a view ([[TRE-REQ-004 Tesserae Layer and Popup Windows]]). Nothing in tre. |
+| Blocked | Nothing in tre. View, YAML and Python API specs wait on [[ADR-0007 Shell UI Layer]]. |
 | Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
 
 ### Recent changes
@@ -44,15 +44,14 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
-| 2026-10-25 | Wrote [[TRE-REQ-004 Tesserae Layer and Popup Windows]] |
+| 2026-10-25 | Shell separated from Tesserae ([[ADR-0006 Shell Independent of Tesserae UI]]); proposed [[ADR-0007 Shell UI Layer]] |
+| 2026-10-25 | Wrote [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (since superseded) |
 | 2026-10-25 | [[TRE-REQ-001 Layer Surface Window]] confirmed, `stable` |
 | 2026-10-25 | Mirrored outputs and `output_updated` accepted ([[V1 Scope#Multi-monitor]]) |
 | 2026-10-25 | [[10 Vision]] confirmed and set to `stable` |
 | 2026-10-25 | Added ADR-0002 to ADR-0005; multi-monitor decisions in [[V1 Scope]] |
 | 2026-10-25 | Multi-monitor requirement added to [[10 Vision]] |
 | 2026-10-25 | Wrote [[10 Vision]]: problem, goals, personas, v1 scope |
-| 2026-10-25 | Accepted [[ADR-0001 Shell Surface Strategy]]; deferred its three testing-phase checks |
-| 2026-10-25 | Matched the vault to tre 0.5.8 ([[TRE-REQ-001 Layer Surface Window]]) |
 
 ## Go to
 
@@ -69,7 +68,7 @@ Newest first. Keep the last 8. One line each.
 ![[Index#Current focus]]
 
 > [!warning] Critical path
-> tre 0.5.8 has layer surfaces ([[ADR-0001 Shell Surface Strategy]]). The open dependency is Tesserae: it must open a `LayerWindow` and `PopupWindow` from a view ([[TRE-REQ-004 Tesserae Layer and Popup Windows]]).
+> tre 0.5.8 has layer surfaces ([[ADR-0001 Shell Surface Strategy]]). The open dependency is the shell's own view layer on tre ([[ADR-0007 Shell UI Layer]]).
 
 ## Decisions
 

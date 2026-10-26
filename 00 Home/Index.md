@@ -53,7 +53,9 @@ Operating rules for agents: [[AGENTS]].
 | ADR | Status | Blocks |
 |---|---|---|
 | [[ADR-0001 Shell Surface Strategy]] | accepted (2026-10-25) | All surface specs |
-| [[ADR-0002 Relationship to Tesserae UI]] | accepted (2026-10-25) | View and ViewModel specs, YAML reference |
+| [[ADR-0002 Relationship to Tesserae UI]] | superseded by ADR-0006 | none |
+| [[ADR-0006 Shell Independent of Tesserae UI]] | accepted (2026-10-25) | Architecture, packaging |
+| [[ADR-0007 Shell UI Layer]] | proposed | View, YAML and Python API specs |
 | [[ADR-0003 Process Model]] | accepted (2026-10-25) | Architecture, runtime, quality |
 | [[ADR-0004 Plasma Coexistence]] | accepted (2026-10-25) | Integration specs |
 | [[ADR-0005 Global Shortcuts]] | accepted (2026-10-25) | Launcher, integration specs |
@@ -62,7 +64,7 @@ Vision: [[10 Vision]]
 
 Research: [[Prior Art - Linux Shell Surfaces]]
 
-Engine requests: [[TRE-REQ-001 Layer Surface Window]] (stable; released in tre 0.5.8); [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (draft; addressed to Tesserae)
+Engine requests: [[TRE-REQ-001 Layer Surface Window]] (stable; released in tre 0.5.8); [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (superseded; withdrawn)
 
 Planned, not yet written:
 - `20 Architecture`
@@ -72,11 +74,11 @@ Planned, not yet written:
 | Project | Role | Docs | Baseline |
 |---|---|---|---|
 | tre | Rendering engine (Rust, Python module `tre`) | [docs](https://mindderivative.github.io/tre/) | 0.5.8 |
-| Tesserae | Declarative UI framework (`tesserae-ui`) | [docs](https://mindderivative.github.io/tesserae/) | 0.5.1 |
+| Tesserae | Separate project: declarative app framework (`tesserae-ui`). Reference only, not a dependency ([[ADR-0006 Shell Independent of Tesserae UI]]). | [docs](https://mindderivative.github.io/tesserae/) | 0.5.1 |
 
 Versions drift. If the live docs disagree with this table, the docs win; update the table.
 
 ## Current focus
 
-1. [[10 Vision]] is confirmed (`stable`); review [[TRE-REQ-004 Tesserae Layer and Popup Windows]]; start `20 Architecture`.
+1. [[10 Vision]] is confirmed (`stable`); choose an option in [[ADR-0007 Shell UI Layer]]; start `20 Architecture`.
 2. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.

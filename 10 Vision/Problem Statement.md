@@ -32,12 +32,14 @@ depends_on: []
 
 ## The opportunity
 
-tre 0.5.8 can now create the surfaces a shell needs: `LayerWindow`, `PopupWindow` and an output API ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]). Tesserae (`tesserae-ui`) already provides a declarative YAML view language, Python ViewModels, reactive `Signal`/`Computed`/`Effect`, Material Design 3 components, themes and hot reload ([Tesserae overview](https://mindderivative.github.io/tesserae/)). A shell built from those two layers has these properties no surveyed shell combines:
+tre 0.5.8 can now create the surfaces a shell needs: `LayerWindow`, `PopupWindow` and an output API ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]). tre gives mechanism only: no widgets, no theme and no file formats ([[AGENTS#3. Layering principle]]). A shell that supplies those itself, as its own project on tre, has properties no surveyed shell combines:
 
 - One rendering path in Rust, with Python only in callbacks ([[AGENTS#3. Layering principle]]).
 - A declarative front-end that a non-programmer can read, edit and hot-reload.
 - Python for logic, so module authors do not need a second language.
-- A design system (MD3 tokens, light and dark, high contrast, reduced motion) shared with Tesserae apps.
+- A design system (tokens, light and dark, high contrast, reduced motion) made for surfaces.
+
+Tesserae, the maintainer's application framework on the same engine, is a separate project and not a dependency ([[ADR-0006 Shell Independent of Tesserae UI]]).
 
 ## What Tesserae Shell is for
 

@@ -2,7 +2,7 @@
 title: TRE-REQ-004 Tesserae Layer and Popup Windows
 aliases: [TRE-REQ-004, Tesserae Surface Windows Request, Tesserae Layer Window Request]
 type: engine-request
-status: draft
+status: superseded
 owner: phil
 created: 2026-10-25
 updated: 2026-10-25
@@ -13,11 +13,11 @@ depends_on: ["[[TRE-REQ-001 Layer Surface Window]]"]
 
 # TRE-REQ-004: Tesserae layer and popup windows
 
+> [!warning] Superseded by [[ADR-0006 Shell Independent of Tesserae UI]] (2026-10-25)
+> Withdrawn before it was carried to Tesserae. The shell no longer depends on `tesserae-ui`, so nothing is requested of Tesserae. The requirements (R1 to R9) and open questions move into the shell's own design: [[ADR-0007 Shell UI Layer]]. The note stays as a record of what Tesserae does today.
+
 > [!summary]
 > Let a Tesserae view be the content of a tre `LayerWindow` or `PopupWindow`, and let a Tesserae app run with no main window. Tesserae 0.5.1 opens only ordinary windows, so a shell built on `tesserae-ui` ([[ADR-0002 Relationship to Tesserae UI]]) cannot put a bar on screen from a YAML view. This request is addressed to the Tesserae project, not to tre: tre 0.5.8 already has the mechanism.
-
-> [!warning] Blocks the shell's surface specs
-> No surface spec under `40 Specifications/Surfaces/` can be written against a real API until this is accepted or worked around by an ADR. Mark each with `> [!warning] Blocked by [[TRE-REQ-004 Tesserae Layer and Popup Windows]]`.
 
 This note is carried to the Tesserae project by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]). It is not filed from this vault. Numbers 002 and 003 stay reserved (see [[80 Engine Requests]]).
 

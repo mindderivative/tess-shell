@@ -2,7 +2,7 @@
 title: ADR-0002 Relationship to Tesserae UI
 aliases: [ADR-0002, Tesserae UI Dependency]
 type: adr
-status: accepted
+status: superseded
 owner: phil
 created: 2026-10-25
 updated: 2026-10-25
@@ -12,6 +12,9 @@ depends_on: []
 ---
 
 # ADR-0002: Relationship to Tesserae UI
+
+> [!warning] Superseded by [[ADR-0006 Shell Independent of Tesserae UI]] (2026-10-25)
+> The maintainer decided Tesserae stays a separate project and the shell is built on tre alone. The record below is kept as written.
 
 > [!summary]
 > Tesserae Shell depends on `tesserae-ui` for its view language, reactivity, themes, stylesheets and hot reload, and does not define a second YAML dialect. Tesserae today opens only plain windows, so it must gain a way to open layer and popup windows. That work is a Tesserae request, not yet written.
@@ -44,7 +47,7 @@ Reuse the view language, `Signal`/`Computed`/`Effect`, MD3 components, themes, s
 
 ## Decision
 
-Accepted 2026-10-25 by the maintainer in chat ("as recommended"): **Option A**. Tesserae Shell depends on `tesserae-ui`.
+Accepted 2026-10-25 by the maintainer in chat ("as recommended"): **Option A**. Tesserae Shell depends on `tesserae-ui`. Superseded the same day by [[ADR-0006 Shell Independent of Tesserae UI]].
 
 ## Consequences
 
