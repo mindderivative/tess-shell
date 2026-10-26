@@ -87,13 +87,13 @@ root:
         top_bar:
             kind: bar
             modules:
-                top_label:                       # use 1: has its own text
+                top_label:                       # use 1: its entry sets a caption
                     module: Label_Module.yaml
-                    text: "Work"
+                    caption: "Work"
         side_bar:
             kind: bar
             modules:
-                side_label:                      # use 2: no text, the module decides
+                side_label:                      # use 2: no caption, the module decides
                     module: Label_Module.yaml
 ```
 
@@ -131,7 +131,7 @@ A widget in each bar shows the module's value. The expression reads `label.text`
 
 ```python
 import json
-from tesserae_shell import Module
+from tesserae_shell import Module, action
 
 class Label(Module):
     def start(self):
@@ -145,30 +145,41 @@ class Label(Module):
         pass
 
     def show(self, use):
-        # Where the text comes from is the module's business: the use's own option,
-        # a saved file, or something computed from the use itself.
-        text = (use.options.get("text")
-                or self.saved().get(use.name)
-                or f"Screen {use.monitor}")
-        self.ctx.send("text", text, use=use)      # only this use sees this value
+        # Three places the text can come from, tried in order.
+        text = (use.options.get("caption")        # 1. the "caption:" written in this use's entry in the shell file
+                or self.saved().get(use.name)     # 2. the module's own file, keyed by the entry's unique name
+                or f"Screen {use.monitor}")       # 3. a default the module computes
+        self.ctx.send("text", text, use=use)      # the key is always "text"; only this use gets this value
+
+    @action
+    def rename(self, use_name, text):             # a shell-file event can call this (key names: 41 YAML Reference)
+        saved = self.saved()
+        saved[use_name] = text                     # e.g. {"side_label": "Mail"}
+        (self.ctx.state_dir / "labels.json").write_text(json.dumps(saved))
+        self.show(self.ctx.uses[use_name])         # send the new text to that one use
 
     def saved(self):
         path = self.ctx.state_dir / "labels.json"
         return json.loads(path.read_text()) if path.exists() else {}
 ```
 
+Two different things are called "text" in this example and must not be confused:
+
+- **`caption: "Work"`** in a use's entry is an **input to the module**: the module reads it with `use.options.get("caption")`.
+- **`text: "{{ label.text }}"`** on the `widget: Text` is the **output**: where the value the module sent under the key `"text"` is displayed. The module never reads it.
+
 What happens:
 
 | Use | Text it shows | Why |
 |---|---|---|
-| `top_label` on `DP-1` | `Work` | The entry has `text: "Work"`, so `options["text"]` wins |
-| `side_label` on `DP-1` | `Screen DP-1` | No option and nothing saved, so the module falls back to the monitor name |
-| `bottom_label` on `HDMI-A-1` | `Screen HDMI-A-1` | The same instance, a different `use.monitor` |
+| `top_label` on `DP-1` | `Work` | Source 1: its entry has `caption: "Work"` |
+| `side_label` on `DP-1` | `Screen DP-1` | Source 3: no caption, and `labels.json` has nothing for `side_label`, so the module computes a default. After a `rename("side_label", "Mail")` it would show `Mail` (source 2) |
+| `bottom_label` on `HDMI-A-1` | `Screen HDMI-A-1` | Source 3 again: the same instance, a different `use.monitor` |
 
 - **One instance.** `Label` is created once. `ctx.uses` has three entries; `ctx.send(..., use=use)` gives each its own value for the same key `text`.
 - **Hot-plug.** Unplug `HDMI-A-1` and the shell calls `use_removed(bottom_label)`; plug it back and `use_added` fires again.
 - **Shared value.** `self.ctx.send("text", "Hi")` with no `use` would reach all three uses.
-- **Where the data lives.** The shell stores the values the module sends. What the module keeps (the saved texts) is its own file in `ctx.state_dir`; the shell never reads it ([[Module Contract#Rules for the module author]]).
+- **Where the data lives.** The shell stores the values the module sends. What the module keeps (the saved texts in `labels.json`) is its own file in `ctx.state_dir`, written by the module's own code (here the `rename` action); the shell never reads it ([[Module Contract#Rules for the module author]]).
 
 A module with a single shared value, such as the clock, needs none of this: `ctx.send("time", "14:05")` once a second reaches every use.
 
