@@ -78,33 +78,44 @@ Decided by the maintainer in chat.
 - **A shell file imports another with `import:` under `children:`**, naming a `<Name>_Shell.yaml` file. `children:` is a mapping, not a list. A single-file shell writes the same content inline as keys and values indented under `children:`. The two forms mean the same thing.
 - **Imports nest.** An imported file can import further files. Reason: a small change then stays inside one small file and does not break the rest.
 
-The maintainer's sketch, as given. The exact grammar is set in `41 YAML Reference/`:
+The maintainer's example, as given (2026-10-25). It is a basic example, **not exact implementation guidance**; the grammar is set in `41 YAML Reference/`:
 
 ```yaml
-children:
-    import: <name>_Shell.yaml
-    child:
-        name: Bar
+shell: v1234
+
+root:
+    name: shell_root # Unique but not required, each yaml file gets an assigned UID automatically
+    monitor: DP-1
+    children:
+        import: TopBar_Shell.yaml
+        child: 
+            name: panel_dock # Unique per monitor
+            type: dock
+            style: Dock_ShellStyle.yaml
+            modules: # Modules have to be imported as they may have differing rules
+                module: Audio_Module.yaml # with a connected python script
+                module: Network_Module.yaml
+        child:
+            name: panel_start_menu
+            type: corner_panel
+            style: CornerPanel_ShellStyle.yaml
+            modules:
+                module: Applications_Module.yaml
 ```
 
-Read with the required `shell:` key, a file looks like this (illustrative):
+What the example shows, and what is still only implied:
 
-```yaml
-# Main_Shell.yaml
-shell: 1
-children:
-    import: Bar_Shell.yaml
-```
-
-```yaml
-# one-file shell: the content written inline under children
-shell: 1
-children:
-    child:
-        name: Bar
-```
-
-Because `children:` is a mapping, a key cannot repeat, so one `import:` cannot appear twice. See the open item on multiple imports.
+| Element | What it shows | Status |
+|---|---|---|
+| `shell: v1234` | The required top-level key carries a version value. | Key decided. The version format (`v1234`) is the example's; not decided. |
+| `root:` | A shell file has a root that owns the tree. | Implied. |
+| `root.name` | A name, unique but not required. Every YAML file also gets a UID automatically. | Implied. Scope of uniqueness not decided. |
+| `monitor: DP-1` | A root is bound to one monitor by connector name. | Fits [[V1 Scope#Multi-monitor]] (match by connector name). Whether `monitor` also takes a description match, a default or a shared reference is not decided. |
+| `children:` with `import:` and `child:` | `import:` pulls in a `<Name>_Shell.yaml`; `child:` defines a surface inline. | Decided in outline above. The example repeats `child:` and `module:` keys, which a YAML mapping cannot do; see Open items. |
+| `child.name` | Unique per monitor. | Implied. |
+| `child.type` | A surface type: `dock`, `corner_panel`. | The type list is not decided. |
+| `style: Dock_ShellStyle.yaml` | A style file per surface, with a `_ShellStyle.yaml` suffix. | Implied name. Not decided. |
+| `modules:` and `module: Audio_Module.yaml` | Modules are imported by file, each with a connected Python script, because they may have differing rules. | Implied: a module file type `<Name>_Module.yaml`. Not decided. |
 
 ## Consequences
 
@@ -123,7 +134,11 @@ Option A is accepted, so:
 - [x] Decide whether view files keep Tesserae-style names. No: one `*.yaml` file, or `Main_Shell.yaml` importing `<Name>_Shell.yaml` files (see File naming above).
 - [x] Decide how a shell file is recognised. A required top-level `shell:` key with a version (see above).
 - [x] Decide the import syntax and whether imports nest. `import:` under `children:`; imports nest (see above).
-- [ ] Decide how a file imports several files, and how several `child:` entries are written, since a mapping cannot repeat a key. Recommendation: `import:` takes one file name or a list of file names, and `child:` takes a name that is its own key (for example `bar:`) or a list. The maintainer's sketch shows one of each.
+- [ ] Decide how several `import:`, `child:` and `module:` entries are written. The example repeats these keys, and a YAML mapping cannot repeat a key (most parsers keep only the last). Recommendation: each takes a list, or `child` is keyed by its own name (`panel_dock:`), since a child's `name` is unique per monitor.
+- [ ] Decide the file types the example implies: style files (`<Name>_ShellStyle.yaml`) and module files (`<Name>_Module.yaml`), and how a module file names its Python script. This also answers the theme and stylesheet naming item below for style files.
+- [ ] Decide the list of surface `type` values (the example has `dock` and `corner_panel`) and how they map to `LayerWindow` settings ([[TRE-REQ-001 Layer Surface Window]]).
+- [ ] Decide what `monitor` accepts and how a file with no `monitor` behaves ([[V1 Scope#Multi-monitor]]: default section, shared definitions).
+- [ ] Decide `name` and UID rules: which names must be unique and in what scope, how a UID is made, and whether it is stable across reloads.
 - [ ] Decide how an import cycle, a missing file and a name clash are reported. Recommendation: each is a load error with `file:line:column`; a cycle prints the chain of files (`A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`); a path is relative to the importing file; a name defined twice names both places.
 - [ ] Decide the names of Python module files, theme files and stylesheet files so none reads as a Tesserae name (`_ViewModel.py`, `_Theme.yaml`, `_Stylesheet.yaml`).
 - [ ] Decide how a module's values reach a view (a ViewModel class, a plain dict, or a signal registry).
