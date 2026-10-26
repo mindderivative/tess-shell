@@ -16,4 +16,3 @@ depends_on: []
 | Note | Purpose | Status |
 |---|---|---|
 | [[Expression Language Requirements]] | What the shell needs from the Tesserae Expression Language | draft |
-| [[TEL Project Brief]] | A hand-off document for the `tess-el` project: what TEL is, the plan, the needs, the starting point | draft |

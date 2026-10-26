@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Wrote [[TEL Project Brief]], a hand-off document for the `tess-el` project |
+| Last change | Moved the TEL brief out of the vault to `tess-el/docs`; the vault keeps the Shell's requirements in [[Expression Language Requirements]] |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0008 Tesserae Expression Language]] (7 accepted; ADR-0002 superseded) |
-| Waiting on you | Nothing blocking. Hand [[TEL Project Brief]] to `tess-el` when ready; smaller items: TEL versioning; Panel details (side, gap, follow) in the Panel spec |
+| Waiting on you | Nothing blocking. Smaller items: TEL versioning; Panel details (side, gap, follow) in the Panel spec |
 | Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
 | Next | Start `20 Architecture`, including the UI layer; then the module and runtime specs |
 | Blocked | Nothing |
@@ -46,7 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
-| 2026-10-25 | [[TEL Project Brief]] written for the `tess-el` project |
+| 2026-10-25 | TEL brief written and moved to `tess-el/docs` (not kept in the vault) |
 | 2026-10-25 | Loguru noted as a logging option ([[Logging with Loguru]]) |
 | 2026-10-25 | Unresolved reference: error at load, warning while running ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Cross-file references resolve through the registry ([[ADR-0007 Shell UI Layer]]) |
