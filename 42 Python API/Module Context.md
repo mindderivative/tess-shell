@@ -43,10 +43,13 @@ self.ctx.send("text", "Hello", use=self.ctx.uses["bar_label"])   # to one use
 - **Keys** are strings. A view reads them as `<module name>.<key>` in an expression ([[Module Contract#Integration]]).
 - **Values** are plain Python values ([[Value Types and Conversion]]).
 - **Coalescing.** Sending the same key many times keeps only the latest value; the loop applies it once per turn ([[Process Model and Threading#Handing a value to the loop (proposed)]]).
+- **One call, one key, one value.** `ctx.send(key, value, use=None)` takes a single key and a single value. It is not a list of values for the uses: to give three uses three different values, call it three times, once per use.
 - **Per use.** One module instance serves every use. When uses must differ, as in the maintainer's `Label_Module` example, the module decides what each use shows and sends it with `use=`. A `use` is one of `ctx.uses`. Sending with no `use` reaches every use.
 - **Order.** Values from one module keep their order per key; the flush applies the keys of one turn together.
 
 ## Uses
+
+A use is a place where the module is referenced in a shell file (an entry such as `top_label`). It is not a copy of the module: there is one module instance for all its uses.
 
 `ctx.uses` is a read-only mapping from each entry's unique name to a use record. A use record has the entry's `name`, its `uid`, the `monitor` it is on, and its options (the keys written in that entry). The shell calls optional hooks when uses change:
 
