@@ -105,7 +105,7 @@ stateDiagram-v2
 
 ## Configuration
 
-Every type shares the style keys (size, position, background, text, border, corner radii, shadow, transparency, animation, hidden). The type adds its own: edge and span for a Bar, side thicknesses and corner shapes for a Frame, the attachment target and mobility for a Panel, the anchor rectangle and gravity for a Popup. The YAML keys are set in `41 YAML Reference/`. #needs-verification
+Every type shares the style keys (size, position, background, text, border, corner radii, shadow, transparency, animation, hidden). The type adds its own: edge and span for a Bar, side thicknesses and corner shapes for a Frame, the attachment target and mobility for a Panel, the anchor rectangle and gravity for a Popup. The YAML keys are collected in [[Shell File#Surface keys]] (decided keys, and proposed names that mirror tre's). #needs-verification
 
 ## Integration
 

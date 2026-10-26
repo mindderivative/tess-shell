@@ -1,0 +1,88 @@
+---
+title: Common Keys and Conventions
+aliases: [YAML Conventions, Shell YAML Keys]
+type: yaml-ref
+status: draft
+owner: phil
+created: 2026-10-26
+updated: 2026-10-26
+tags: [yaml-ref, needs-verification]
+related: ["[[41 YAML Reference]]", "[[Shell File]]", "[[Module File]]", "[[Style, Theme and Stylesheet Files]]", "[[ADR-0007 Shell UI Layer]]"]
+depends_on: ["[[ADR-0007 Shell UI Layer]]"]
+---
+
+# Common keys and conventions
+
+> [!summary]
+> The keys and value forms every shell YAML file shares. The decisions live in [[ADR-0007 Shell UI Layer]]; this note collects them so a file author has one place to look, and says which parts are decided and which are proposed. Examples are illustrations. Expressions are TEL's ([[Expression Language Requirements]]); the `{{ }}` delimiter in examples is a placeholder until TEL's syntax is set.
+
+## Keys every file has
+
+| Key | Meaning | Rule | Status |
+|---|---|---|---|
+| `shell` | The shell format version (`v1`, `v1234` in the examples) | Required, top level, first. A file without it is not a shell file and is refused with an error naming it | Decided; version format not decided |
+| `type` | What the file is | Required, top level. `Shell`, `Module`, `Theme`, `Style`, `Stylesheet`. Must agree with the file suffix | Decided |
+| `UID` | The file's shell-wide identifier (UUIDv7) | Written by the shell, directly below `shell:`, when the entry is first registered. Authors do not write it | Decided |
+| `name` | A name for a root, surface, module or widget | Required on a root, surface and module. Unique per monitor; scope is its file and the Python attached to it | Decided |
+
+File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `<Name>_Theme.yaml`, `<Name>_Stylesheet.yaml`, plus a Python file `<Name>_Module.py` next to a module ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]). A shell is one `*.yaml` file or a `Main_Shell.yaml` importing `<Name>_Shell.yaml` files.
+
+## Keys that say what something is
+
+| Key | Names | Values | Status |
+|---|---|---|---|
+| `type:` | A file's type | `Shell`, `Module`, `Theme`, `Style`, `Stylesheet` | Decided |
+| `kind:` | A surface's kind | `bar`, `frame`, `panel`, `popup` | Decided |
+| `widget:` | A widget | `Text`, `Icon`, `Box`, `FlexBox`, ... ([[V1 Widgets]]) | Decided |
+
+- `Text:` and `widget: Text` mean the same. Use the unique-name form (a unique key, with `widget: Text` inside it) where a type repeats in one container.
+- **Case.** File types are capitalised (`Module`), surface kinds are lower case (`bar`). Recommendation: match case-insensitively and write the canonical form in files. Not decided.
+- **Conflict to settle.** The Label style example writes `kind: Text` inside a class to say which widget the class applies to. `kind:` is the surface kind everywhere else. Recommendation: `widget: Text` inside a class, so `kind:` is never used for a widget. See [[Style, Theme and Stylesheet Files#Classes]].
+
+## Structure keys
+
+| Key | Where | Meaning | Status |
+|---|---|---|---|
+| `root` | Shell file | The tree of one monitor's surfaces: `name`, `monitor`, `children` | Decided; multiple roots open ([[Shell File]]) |
+| `monitor` | A root | Connector name, then description; `default` for monitors no root names; no `monitor` means the root is ignored | Decided |
+| `children` | A root, a container widget | A mapping of unique names to entries; `import:` pulls in another file | Decided |
+| `import` | Inside `children` | One file name or a list of `<Name>_Shell.yaml` files; paths are relative to the importing file; imports nest | Decided |
+| `modules` | A surface | A mapping of unique names to module uses | Decided |
+| `module` | A module use | The module file, when the use has params | Proposed ([[Module File#Using a module]]) |
+| `params` | A module file declares them; a use passes them | Typed values | Decided that they exist; type names proposed |
+| `style` | A surface, a module | A style file name, or an inline mapping of style values | Decided |
+| `layer` | A surface | `background`, `bottom`, `top`, `overlay`; `overlay` is the highest | Decided (the key); values are the layer-shell layers |
+
+## Names and references
+
+- A `name` is unique per monitor and scoped to its own file and the Python attached to it.
+- A reference to a name in another file is resolved through the registry: a Panel attached to a Bar names the Bar. An unresolved reference is an error at load; a target that disappears while running is a warning and the Panel stays hidden until it returns ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]).
+- Surfaces do not nest. They are siblings and refer to each other by name.
+- A UID can also address a file; Python reaches a module's YAML by file name, unique name or UID.
+
+## Value forms
+
+| Kind | Forms | Notes |
+|---|---|---|
+| Colour | `"#RRGGBB"`, `"#RRGGBBAA"`, `RGBA(r, g, b, a)` with `a` from 0.0 to 1.0, a theme token name | The shell converts to tre's `(r, g, b, a)` with 0 to 255 integers ([[Value Types and Conversion]]) |
+| Four-sided values (borders, corner radii, margins, padding) | One number for all sides; a list of four clockwise from the top (top, right, bottom, left); named sides `{left: 2, top: 2, right: 2, bottom: 2}` | The brace-only forms `{2, 2, 2, 2}` are not used: a standard YAML load reads them as `{2: None}` |
+| Size | A number of pixels, `"auto"`, a percentage `"50%"`, a percentage plus pixels `"calc(100% - 16)"` | The forms tre accepts |
+| Text, numbers, booleans | Plain YAML | |
+| Lists, mappings | Plain YAML | A list feeds a repeater |
+| Expression | A string TEL evaluates; the delimiter is TEL's | Reads `params.<name>` and values the module sends |
+
+## Errors
+
+Every error carries `file:line:column` and says what is wrong and what to write ([[AGENTS#3. Layering principle]]). Errors that apply to every file: no `shell:` key; a `type:` that does not match the suffix; an unknown key; an unknown `kind:` or `widget:`; a name defined twice (both places named); an import cycle (the chain of files printed); a missing file; a param of the wrong type.
+
+## Open
+
+- [ ] The `shell:` version format and what a version change means.
+- [ ] Case rules for `type:` and `kind:` values.
+- [ ] Whether unknown keys are errors or warnings (recommendation: errors, for typos).
+- [ ] The expression delimiter and syntax (TEL).
+- [ ] Units beyond pixels (a scale-aware unit).
+
+## Links
+
+- [[41 YAML Reference]] · [[Shell File]] · [[Module File]] · [[Style, Theme and Stylesheet Files]] · [[ADR-0007 Shell UI Layer]]

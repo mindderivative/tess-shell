@@ -183,9 +183,9 @@ Decided by the maintainer in chat, from the Label example.
 Decided by the maintainer in chat:
 
 - **A module is a `<Name>_Module.yaml` file plus a matching `<Name>_Module.py`.** The shell framework expects the Python file and requires it. A module with no matching `.py` is a load error that names both files.
-- **A module may have a style.** Either an optional `<Name>_Style.yaml` file whose `type:` is `Module`, or a `style:` key with the values written inline in the module's entry.
+- **A module may have a style.** Either an optional `<Name>_Style.yaml` file, or a `style:` key with the values written inline. (Updated 2026-10-26: the style file is `type: Style`, named by the module's `style:` key; it was `type: Module` here.)
 - **A module can be used many times.** `Clock_Module.yaml` may appear in several places, and all uses share the same data. One module is one source of data, however many views show it.
-- **A module file is recognised by both its `_Module.yaml` name and a `type: module` key.** `type:` is authoritative; the suffix is the convention. A mismatch between them is a load error. Every module file also carries `shell:`.
+- **A module file is recognised by both its `_Module.yaml` name and a `type: Module` key** (written `module` in the first note; file types are capitalised). `type:` is authoritative; the suffix is the convention. A mismatch between them is a load error. Every module file also carries `shell:`.
 - **One module instance per module file, shared by all uses.** When uses must differ, the module keeps track of it. Example: `Label_Module.yaml` has text to display; its Python script decides which use shows which text, from a JSON file, a database, another YAML file, or anything else. The shell provides the entry and the rendering, not the data.
 - **`<Name>_Module.py` lives next to its `<Name>_Module.yaml`.** Modules go in a `Modules/<module_name>/` folder with all their supporting `.py`, configuration and other files.
 - **The binding is the name.** The module's Python calls its module YAML by file name, unique name or UID. That lets the Python read the rest of the file's keys and values, tokens and so on.
@@ -262,7 +262,7 @@ Decided by the maintainer in chat.
 
 ### Theme, style and stylesheet (2026-10-25)
 
-A style file holds the values for one surface or module, the same as its inline `style:` key. A stylesheet holds shared rules that apply across the shell by type or class. A theme holds design tokens (colour, type, shape, motion). A module's style is a style file with `type: Module` or an inline `style:`.
+A style file holds the values for one surface or module, the same as its inline `style:` key. A stylesheet holds shared rules that apply across the shell by type or class. A theme holds design tokens (colour, type, shape, motion). A module's style is a style file (`type: Style`, named by the module's `style:` key) or an inline `style:`.
 
 ## Consequences
 
@@ -292,6 +292,7 @@ Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import
 - [ ] **Expression language design.** Its grammar, sandbox and errors are designed in the TEL project. The shell's requirements on it are in [[Expression Language Requirements]]. `41 YAML Reference/` records which TEL features a shell file may use and what names an expression can reference (module values, tokens, other entries).
 - [ ] **Python builder API.** The Python front-end that produces the same tree as the YAML, and the parity test. Written in `42 Python API/`.
 - [x] **Writing the UID into a user's file.** Decided 2026-10-25: once the file is found, the shell opens it and writes `UID:` below `shell:`. The points below are implementation defaults for that write, not open questions; the maintainer called the question obvious. Defaults — The shell edits a file the user owns. Needs: a YAML writer that keeps comments and layout; no reload loop when the watcher sees the shell's own write; behaviour for a read-only file or a file shared by two shells; and what happens when the user copies a file, so two files carry one UID. Recommendation: the writer keeps comments, writes are ignored by the watcher for that file, a read-only file is registered without injection and warned, and a duplicate UID is a load error naming both files.
+- [ ] **`kind:` inside a class.** The Label style example writes `kind: Text` to say which widget a class applies to; `kind:` is the surface kind everywhere else. Recommendation: `widget: Text` inside a class ([[Style, Theme and Stylesheet Files#Classes]]).
 - [ ] **Directory spelling.** `$HOME/.config` against `$XDG_CONFIG_HOME`. Recommendation: use `$XDG_CONFIG_HOME` when it is set, else `$HOME/.config`. The key for the search list (`look-at` as written) is spelled in `41 YAML Reference/`.
 - [ ] **What a registry mismatch changes.** The maintainer decided an entry with no match is treated as removed and a new one is registered; also decide whether a removed entry's saved state is dropped at once or kept for a while.
 

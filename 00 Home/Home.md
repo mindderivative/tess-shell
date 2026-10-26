@@ -31,11 +31,11 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Confirmed `layer: overlay` and the clockwise order for four-value lists |
+| Last change | Drafted [[41 YAML Reference]]: common keys, shell file, module file, style/theme/stylesheet files |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Nothing blocking; review `tre`'s branches `keepalive-238` and `hit-shape-236` |
+| Waiting on you | Review [[41 YAML Reference]] and its proposed names; confirm `widget: Text` (not `kind: Text`) inside a style class; review `tre`'s branches |
 | Waiting on others | tre 0.5.9 release: `hit_shape="painted"` (#236, [[Hit Testing for Concave Corners]]) and `keep_alive`/`stop()` (#238, [[TRE-REQ-005 Keep-Alive and Loop Stop]]); built on local branches. The Frame uses the explicit-rectangle workaround, and the 1x1 window is the stopgap, until then |
-| Next | `41 YAML Reference`, the first module spec (Clock), the Panel spec |
+| Next | The Clock module spec, the Panel spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
 | Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | [[41 YAML Reference]] drafted (four notes) |
 | 2026-10-26 | `layer: overlay` and clockwise four-value order confirmed |
 | 2026-10-26 | Overlay settled: a Panel on the overlay layer ([[Surface Types#Overlay]]) |
 | 2026-10-26 | Four-sided shorthand decided; overlay question written up ([[Surface Types#Overlay]]) |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-26 | Module model corrected to layout YAML + style YAML + Python; Label example replaced ([[Module Context]]) |
 | 2026-10-26 | Python API decisions and module example; `tre` built #236 and #238 (for 0.5.9) |
 | 2026-10-26 | [[42 Python API]] drafted (four notes) |
-| 2026-10-26 | `tre` accepted TRE-REQ-005 (#238); four corrections recorded |
 
 ## Go to
 
