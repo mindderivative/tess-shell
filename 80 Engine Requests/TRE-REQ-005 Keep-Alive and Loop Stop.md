@@ -19,6 +19,9 @@ depends_on: []
 > [!success] Taken up by tre (2026-10-26)
 > The maintainer approved the work and `tre` is building it as [tre #238](https://github.com/mindderivative/tre/issues/238), with the corner pass-through as [#236](https://github.com/mindderivative/tre/issues/236). `tre` reviewed this request, found it accurate and added four points, recorded below.
 
+> [!success] Built, awaiting release (tre report, 2026-10-26)
+> `tre` reports #238 and #236 are built on local branches (`keepalive-238` at `d62858e`, `hit-shape-236` at `fdd8294`; nothing pushed), awaiting the maintainer's review, and would ship in tre 0.5.9. I read the branch documentation: `docs/reference/app.md`, section "Staying up with no window: `keep_alive` (0.5.9)", and `docs/reference/paint.md` for `hit_shape`. Not in a published wheel; PyPI's latest is 0.5.8. Behaviour as built, per `tre`: `App.run(keep_alive=True)` (a `run()` argument) and `LoopHandle.stop() -> bool` (a running loop only; `False` before or after a run; closes every window without `close_requested`; each hears `closed` with reason `"stopped"`, on ordinary windows too; then `run()` returns normally). Idle cost with zero windows: 0.01 s of CPU in 5 s and no tre thread wakes. `tre` also fixed two things the request needed: `call_soon` now runs with zero windows, and the empty loop no longer spins a core. Verified by `tre` on a headless sway and on KWin; I have not run it. A shipped recipe for quitting on a signal: `signal.set_wakeup_fd` on a socketpair plus a watcher thread calling `stop()`, with an example `examples/keep_alive.py` that ends cleanly on SIGTERM.
+
 > [!warning] Blocks one shell behaviour
 > [[Process Model and Threading#No windows: what tre offers]] depends on this request. The shell's decision is "stay idle with no windows" (maintainer, 2026-10-26). Option A there (this request) was chosen; the maintainer follows up with tre to confirm. A stopgap exists (see [If declined](#if-declined)).
 
@@ -108,7 +111,7 @@ Behaviour `tre` is building:
 - [x] What `stop()` does to open windows: closes them all unconditionally, each hears `closed`, then `run()` returns (`tre`).
 - [x] `keep_alive` is an argument of `run()`, not of `App` (`tre`).
 - [x] Non-Wayland: `keep_alive` works, with no output events and no error (`tre`).
-- [ ] The `closed` reason for a stop: `"app"` or a new `"stopped"` (tre's D3; recommended `"stopped"`).
+- [x] The `closed` reason for a stop: `"stopped"`, on ordinary windows too (as built, per `tre`).
 - [ ] Idle cost with zero windows: `tre` checks CPU ticks and wake-ups over 5 s ([[Process Model and Threading#Performance notes]]).
 - [ ] Whether KWin behaves the same as sway.
 

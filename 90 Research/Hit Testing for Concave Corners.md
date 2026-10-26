@@ -36,6 +36,10 @@ The maintainer confirmed (2026-10-25) that tre will provide a way for unfilled p
 
 tre's estimate: medium effort in the engine core plus tests, risk low to medium. Ring bands with curved corners may need steps above 2 px to stay under 256 rectangles at 4K.
 
+## Built by tre (2026-10-26, awaiting release)
+
+`tre` reports #236 is built on the local branch `hit-shape-236` (`fdd8294`; nothing pushed) and awaits the maintainer's review, for tre 0.5.9. From its branch documentation (`docs/reference/paint.md`): a path node takes `hit_shape="painted"` (the default stays `"box"`): the fill region plus the stroke, used by pointer events and by `input_region="auto"`, and the region builder now keeps holes and concave notches. `tre` live-tested it on a rounded frame on sway and KWin: outside a convex corner, the interior and a concave fillet pass clicks through, while the ring and the fillet body take them. I have not run it. Until 0.5.9 is released, keep the explicit-rectangle workaround.
+
 ## tre issue #236
 
 `tre` scoped the work as [tre #236](https://github.com/mindderivative/tre/issues/236), read 2026-10-25: OPEN, Backlog, not approved, nothing started. Three stages, each shippable:

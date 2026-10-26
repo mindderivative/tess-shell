@@ -43,7 +43,7 @@ From the tre reference ([painting guide](https://mindderivative.github.io/tre/gu
 | Image | An image object with RGBA bytes and its size | The tre image properties; decoding files is the module's work, on its own thread ([[Process Model and Threading]]) |
 | Time and dates | A string the module formats, or a `datetime` | A formatted string for text; formatting is the module's choice |
 
-Proposed conversions the shell provides, as a starting list:
+Conversions the shell provides in v1 (the starting list was accepted by the maintainer on 2026-10-26):
 
 1. HEX colour strings (3, 4, 6 or 8 digits) to `(r, g, b, a)`.
 2. Theme token names to colours (for example the primary colour) through the active theme.
@@ -66,7 +66,7 @@ Everything else a module converts itself.
 
 ## Open questions
 
-- [ ] The full conversion list and which are v1.
+- [x] The four conversions above are v1 (maintainer, 2026-10-26). Additions later.
 - [ ] Whether the shell warns when a key is sent but no view reads it (useful while building a shell).
 - [ ] Units (logical pixels only, or also percentages and a scale-aware unit).
 - [ ] How an image is sent and who owns the buffer (copy or hand over).

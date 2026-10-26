@@ -31,11 +31,10 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Drafted [[42 Python API]]: module contract, module context, value types and conversion, Python builder stub |
+| Last change | Python API: `@action` agreed, v1 conversions agreed, example of one module used three times added; recorded that `tre` has built #236 and #238 for 0.5.9 |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Review the draft [[42 Python API]] notes (action decorator, `ctx.uses`, conversion list); optional: confirm tre's D1 to D4 for #238 |
-| Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
-| Waiting on others (2) | `tre` #238, keep-alive and `LoopHandle.stop()` (approved, in build; [[TRE-REQ-005 Keep-Alive and Loop Stop]]); stopgap: a 1x1 window |
+| Waiting on you | Review the module example in [[Module Context#Example: one module, three uses]] (is `ctx.uses` the right shape?); review `tre`'s branches `keepalive-238` and `hit-shape-236` |
+| Waiting on others | tre 0.5.9 release: `hit_shape="painted"` (#236, [[Hit Testing for Concave Corners]]) and `keep_alive`/`stop()` (#238, [[TRE-REQ-005 Keep-Alive and Loop Stop]]); built on local branches. The Frame uses the explicit-rectangle workaround, and the 1x1 window is the stopgap, until then |
 | Next | `41 YAML Reference`, the first module spec (Clock), the Panel spec |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -47,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | Python API decisions and module example; `tre` built #236 and #238 (for 0.5.9) |
 | 2026-10-26 | [[42 Python API]] drafted (four notes) |
 | 2026-10-26 | `tre` accepted TRE-REQ-005 (#238); four corrections recorded |
 | 2026-10-26 | [[TRE-REQ-005 Keep-Alive and Loop Stop]] written; `tre` pointed to it |
@@ -54,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-26 | ADR-0009 accepted; `tre` answered the no-windows question; `tess-el` reports a TEL scope conflict |
 | 2026-10-26 | Stay idle, events are the shell's, module reload decided; D-Bus survey ([[D-Bus Libraries for Python]]); `tre` and `tess-el` messaged |
 | 2026-10-26 | D-Bus names observed on Plasma 6.8.1 recorded ([[System Context]]) |
-| 2026-10-25 | [[20 Architecture]] drafted (four notes) |
 
 ## Go to
 

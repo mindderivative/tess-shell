@@ -50,7 +50,7 @@ class Clock(Module):
 - **One class.** The file holds exactly one class extending `Module`. None or more than one is a load error naming the file ([[ADR-0007 Shell UI Layer#Monitors, names and errors (2026-10-25)]]).
 - **No constructor arguments.** The base class sets `self.ctx` before `start()` is called.
 - **Methods.** `start()`, `stop()`, and an optional `reload()`; the base class provides empty versions.
-- **Actions.** A shell file can call a module method from an event (the shell, not TEL, maps events: [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). Proposal: only methods marked with an `@action` decorator can be called from a shell file, and a shell file cannot call anything else. Slow work in an action goes to a thread and the method returns at once.
+- **Actions.** A shell file can call a module method from an event (the shell, not TEL, maps events: [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). Decided (maintainer, 2026-10-26): only methods marked with an `@action` decorator can be called from a shell file, and a shell file cannot call anything else. Slow work in an action goes to a thread and the method returns at once.
 
 ## Lifecycle
 
@@ -104,7 +104,8 @@ Code reload ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], 
 ## Open questions
 
 - [ ] Constructor versus `self.ctx` set by the base class (proposed above).
-- [ ] The decorator name for actions, and whether actions can return values.
+- [x] Only `@action`-marked methods are callable from a shell file (maintainer, 2026-10-26).
+- [ ] The decorator's final name, and whether actions can return values.
 - [ ] How a module file bound under several entries is named in expressions (the file's `name:` or the entry's key).
 - [ ] The shell's package name and import path.
 - [ ] Which timer helpers `ctx` offers (`every`, `after`) and which clock they use.

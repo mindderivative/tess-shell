@@ -57,6 +57,118 @@ def use_removed(self, use): ...    # a surface went away (monitor unplugged, fil
 
 This lets a module follow monitors coming and going ([[Data Flow#Monitor hot-plug]]) without polling. #needs-verification: whether hooks or an event stream is the better shape.
 
+## Example: one module, three uses
+
+A module file is used in several places and the module decides what each place shows. Everything below is an illustration: the YAML grammar is set in `41 YAML Reference/`, the expression syntax is TEL's, and the Python names are proposals.
+
+**`Modules/Label/Label_Module.yaml`**
+
+```yaml
+shell: v1
+type: Module
+name: label
+```
+
+**Two shell files use it three times** (two uses on `DP-1`, one on `HDMI-A-1`). Which files the shell loads from the config directory is set in `41 YAML Reference/`; here each is a shell file with one root.
+
+`DP1_Shell.yaml`:
+
+```yaml
+shell: v1
+type: Shell
+
+root:
+    name: dp1_root
+    monitor: DP-1
+    children:
+        top_bar:
+            kind: bar
+            modules:
+                top_label:                       # use 1: has its own text
+                    module: Label_Module.yaml
+                    text: "Work"
+        side_bar:
+            kind: bar
+            modules:
+                side_label:                      # use 2: no text, the module decides
+                    module: Label_Module.yaml
+```
+
+`HDMI_Shell.yaml`:
+
+```yaml
+shell: v1
+type: Shell
+
+root:
+    name: hdmi_root
+    monitor: HDMI-A-1
+    children:
+        bottom_bar:
+            kind: bar
+            modules:
+                bottom_label:                    # use 3: on another monitor
+                    module: Label_Module.yaml
+```
+
+A use is written either as `name: File_Module.yaml` (just the file) or, as here, as a mapping with `module:` and the entry's own options. The mapping form is a proposal.
+
+A widget in each bar shows the module's value. The expression reads `label.text`, and each use sees the value sent to it (written `{{ label.text }}` here only as an illustration):
+
+```yaml
+        top_bar:
+            kind: bar
+            children:
+                caption:
+                    widget: Text
+                    text: "{{ label.text }}"
+```
+
+**`Modules/Label/Label_Module.py`**
+
+```python
+import json
+from tesserae_shell import Module
+
+class Label(Module):
+    def start(self):
+        for use in self.ctx.uses.values():
+            self.show(use)
+
+    def use_added(self, use):          # a bar showing this module appeared
+        self.show(use)
+
+    def use_removed(self, use):        # a bar went away (monitor unplugged, file edited)
+        pass
+
+    def show(self, use):
+        # Where the text comes from is the module's business: the use's own option,
+        # a saved file, or something computed from the use itself.
+        text = (use.options.get("text")
+                or self.saved().get(use.name)
+                or f"Screen {use.monitor}")
+        self.ctx.send("text", text, use=use)      # only this use sees this value
+
+    def saved(self):
+        path = self.ctx.state_dir / "labels.json"
+        return json.loads(path.read_text()) if path.exists() else {}
+```
+
+What happens:
+
+| Use | Text it shows | Why |
+|---|---|---|
+| `top_label` on `DP-1` | `Work` | The entry has `text: "Work"`, so `options["text"]` wins |
+| `side_label` on `DP-1` | `Screen DP-1` | No option and nothing saved, so the module falls back to the monitor name |
+| `bottom_label` on `HDMI-A-1` | `Screen HDMI-A-1` | The same instance, a different `use.monitor` |
+
+- **One instance.** `Label` is created once. `ctx.uses` has three entries; `ctx.send(..., use=use)` gives each its own value for the same key `text`.
+- **Hot-plug.** Unplug `HDMI-A-1` and the shell calls `use_removed(bottom_label)`; plug it back and `use_added` fires again.
+- **Shared value.** `self.ctx.send("text", "Hi")` with no `use` would reach all three uses.
+- **Where the data lives.** The shell stores the values the module sends. What the module keeps (the saved texts) is its own file in `ctx.state_dir`; the shell never reads it ([[Module Contract#Rules for the module author]]).
+
+A module with a single shared value, such as the clock, needs none of this: `ctx.send("time", "14:05")` once a second reaches every use.
+
 ## D-Bus helper
 
 Over `dbus-fast` on the shared asyncio service thread ([[ADR-0009 D-Bus Client Library]]). Proposed shape:
@@ -88,7 +200,7 @@ level = proxy.get("Percentage")                  # may be awaited off the loop t
 ## Open questions
 
 - [ ] Whether `ctx.send` accepts a dict of several keys at once.
-- [ ] Whether `ctx.uses` is a mapping, a list or an event stream.
+- [ ] Whether `ctx.uses` is a mapping (as in the example), a list or an event stream. The example above is for the maintainer to judge the use cases (2026-10-26).
 - [ ] Whether a module can send to a specific monitor.
 - [ ] Whether `ctx.state_dir` is needed or `ctx.data_dir` is enough.
 - [ ] What `ctx.yaml()` returns for imported files and for values that are TEL expressions (the raw text or the evaluated value).

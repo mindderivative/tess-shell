@@ -91,7 +91,7 @@ stateDiagram-v2
 - **Loading.** Read the config directory, parse, validate, follow imports, check or write the registry, resolve references, read outputs, build the model. Errors stop here with `file:line:column`.
 - **Running.** Modules start after the model is built, so a value that arrives before its surface exists is kept in the store.
 - **Reloading.** A watcher thread reads and parses a changed file; the loop applies it. A bad file leaves the old state and logs an error ([[Data Flow#Hot reload]]).
-- **Stopping.** A quit signal reaches a watcher thread through `signal.set_wakeup_fd`, which calls `LoopHandle.stop()`. `stop()` closes every window without a veto and `run()` returns. The shell then calls each module's `stop`, joins its threads with a timeout, and writes the registry, on the main thread. Python signal handlers do not run on an idle loop, which is why the wakeup-fd path is used ([[TRE-REQ-005 Keep-Alive and Loop Stop]]). Until that ships, ending the loop means closing every window.
+- **Stopping.** A quit signal reaches a watcher thread through `signal.set_wakeup_fd`, which calls `LoopHandle.stop()`. `stop()` closes every window without a veto (each hears `closed` with reason `"stopped"`) and `run()` returns. The shell then calls each module's `stop`, joins its threads with a timeout, and writes the registry, on the main thread. Python signal handlers do not run on an idle loop, which is why the wakeup-fd path is used ([[TRE-REQ-005 Keep-Alive and Loop Stop]]). Until that ships, ending the loop means closing every window.
 - **No windows: stay idle** (decided 2026-10-26). If every monitor is set to "none", or no output is present, the shell does not exit; it waits and reacts when an output is added ([[Data Flow#Monitor hot-plug]]). What tre can do is in [No windows: what tre offers](#no-windows-what-tre-offers).
 
 ## No windows: what tre offers
@@ -107,7 +107,7 @@ The `tre` session answered over the mailbox on 2026-10-26, from the 0.5.8 source
 | Suggested engine addition | An opt-in keep-alive, for example `App.run(keep_alive=True)`: no error with zero windows, no exit when empty, output watch started at loop start. It needs a way to end the loop. A `LoopHandle` stop does not exist today; the loop ends only when every window closes. Rough size: about 60 to 100 lines plus tests and docs, low risk because it is opt-in |
 
 > [!warning] Blocked by [[TRE-REQ-005 Keep-Alive and Loop Stop]]
-> Option A was chosen by the maintainer on 2026-10-26: the opt-in keep-alive and a `LoopHandle` stop. The request is written and `tre` is building it as [tre #238](https://github.com/mindderivative/tre/issues/238) (`run(keep_alive=True)` and `LoopHandle.stop()`), with revised semantics and size recorded in the request. Until it ships, the stopgap is B.
+> Option A was chosen by the maintainer on 2026-10-26: the opt-in keep-alive and a `LoopHandle` stop. `tre` has built it as [tre #238](https://github.com/mindderivative/tre/issues/238) (`run(keep_alive=True)` and `LoopHandle.stop()`) on a local branch awaiting review, for tre 0.5.9 (unpublished); details in the request. Until 0.5.9 is released, the stopgap is B.
 
 Options for the shell:
 
@@ -138,7 +138,7 @@ The loop cannot interrupt itself, so detecting a blocked loop needs a separate w
 ## Performance notes
 
 - A frame at 60 Hz is about 16.7 ms. `call_soon` callbacks and TEL evaluations share that time with layout and paint. Budgets are set in [[60 Quality]].
-- tre 0.5.8 documents that an idle surface draws no frames and wakes the loop only for its own timers ([[TRE-REQ-001 Layer Surface Window]]). The shell must not add a timer that wakes the loop without a reason: a clock updates once a second, not every frame.
+- tre documents that an idle surface draws no frames and wakes the loop only for its own timers ([[TRE-REQ-001 Layer Surface Window]]). On the unreleased keep-alive branch, `tre` measured 0.01 s of CPU in 5 s with zero windows, and reports one wake source it does not control: the D-Bus library's worker, about 2 wake-ups a second, behind the OS-preference watcher every tre app has. The shell's own D-Bus service thread ([[ADR-0009 D-Bus Client Library]]) adds its own idle cost, so the idle goal ([[Goals and Non-Goals]] G4) should be measured with the service thread running. #needs-verification The shell must not add a timer that wakes the loop without a reason: a clock updates once a second, not every frame.
 - The shared GIL means a CPU-heavy module thread slows the loop. Heavy work belongs in a subprocess or native code; the module contract says so ([[42 Python API]], to write).
 
 ## Open questions
