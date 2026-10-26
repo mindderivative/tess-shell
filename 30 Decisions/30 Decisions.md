@@ -22,3 +22,4 @@ depends_on: []
 | [[ADR-0005 Global Shortcuts]] | KDE global-accel service | accepted 2026-10-25 |
 | [[ADR-0006 Shell Independent of Tesserae UI]] | Separate project on tre; no `tesserae-ui` dependency | accepted 2026-10-25 |
 | [[ADR-0007 Shell UI Layer]] | A small shell-owned view layer on tre | accepted 2026-10-25 |
+| [[ADR-0008 Tesserae Expression Language]] | A separate expression-language library (TEL) | accepted 2026-10-25 |

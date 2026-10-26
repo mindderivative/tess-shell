@@ -17,5 +17,5 @@ depends_on: []
 |---|---|---|
 | `Surfaces` | [[Surfaces]] | Bar, Frame, Panel, Popup |
 | `Modules` | not started | Clock, workspaces, tray, audio, network, battery, media, tasks |
-| `Runtime` | not started | Config loader, module lifecycle, IPC and CLI, hot reload, logging, errors |
+| `Runtime` | [[Runtime]] | Expression language requirements; config loader, module lifecycle, IPC and CLI, hot reload, logging, errors to follow |
 | `Integration` | not started | Wayland protocols, KWin, Plasma, D-Bus, PipeWire, portals |

@@ -13,6 +13,9 @@ depends_on: []
 
 # Expression languages for YAML
 
+> [!info] Outcome (2026-10-25)
+> The maintainer chose to design their own language, the Tesserae Expression Language ([[ADR-0008 Tesserae Expression Language]]). This survey is kept as input. Its requirement table became [[Expression Language Requirements]].
+
 > [!summary]
 > The maintainer decided the shell's view format has a full expression language (`{if condition, do something, do something else}`) and asked whether to adopt an existing one instead of building one ([[ADR-0007 Shell UI Layer]]). Jinja2 is the standard, probably too heavy; there are lighter safe evaluators. The deciding factor is not syntax. A shell's values change while it runs, so an expression must be re-evaluated when a value it reads changes. Recommendation: adopt a small safe evaluator behind a shell-owned interface, and test two candidates in a short spike. Nothing here is tested.
 

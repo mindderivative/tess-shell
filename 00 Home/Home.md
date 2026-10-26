@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Surveyed expression engines (Jinja2, jinjyaml, simpleeval, CEL) in [[Expression Languages for YAML]] |
+| Last change | Accepted [[ADR-0008 Tesserae Expression Language]] (TEL, a separate library); wrote [[Expression Language Requirements]] |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0007 Shell UI Layer]] (6 accepted; ADR-0002 superseded) |
-| Waiting on you | Build or adopt the expression engine ([[Expression Languages for YAML]]); the v1 widget list ([[ADR-0007 Shell UI Layer#Open items]]); how the shell writes the UID into a user's file; Frame in v1; which of OSD, launcher and widget are Panels or Popups ([[Surface Types#Open questions]]) |
+| Waiting on you | TEL questions in [[Expression Language Requirements#Open questions]] (name and repository, redesign or extract from Tesserae's `expr.py`, who owns structure); the v1 widget list ([[ADR-0007 Shell UI Layer#Open items]]); how the shell writes the UID into a user's file; Frame in v1; which of OSD, launcher and widget are Panels or Popups ([[Surface Types#Open questions]]) |
 | Next | Start `20 Architecture`, including the UI layer; then the module and runtime specs |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | [[ADR-0008 Tesserae Expression Language]] accepted; requirements written ([[Expression Language Requirements]]) |
 | 2026-10-25 | Expression engine survey written ([[Expression Languages for YAML]]) |
 | 2026-10-25 | Expression language, `monitor` matching, module Python contract, config directory and registry identity decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | `type:`/`kind:`, UID registry and module data hand-off decided ([[ADR-0007 Shell UI Layer]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | [[Surface Types]] written; module, import, monitor, name and error rules decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Tesserae adding a matching version key, noted in [[ADR-0007 Shell UI Layer]] |
 | 2026-10-25 | Plain suffixes with `shell:` and `type:` keys decided ([[ADR-0007 Shell UI Layer]]) |
-| 2026-10-25 | Module style, theme and stylesheet file names decided ([[ADR-0007 Shell UI Layer]]) |
 
 ## Go to
 
