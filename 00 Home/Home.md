@@ -31,7 +31,7 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Decided: a reference that never resolves is an error at load; a target that disappears while running is a warning ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]) |
+| Last change | Noted Loguru as the leading logging option in [[Logging with Loguru]] |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0008 Tesserae Expression Language]] (7 accepted; ADR-0002 superseded) |
 | Waiting on you | Nothing blocking. Smaller items: TEL versioning ([[Expression Language Requirements#Open questions]]); Panel details (side, gap, follow) in the Panel spec |
 | Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | Loguru noted as a logging option ([[Logging with Loguru]]) |
 | 2026-10-25 | Unresolved reference: error at load, warning while running ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Cross-file references resolve through the registry ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Panel attached by name; UID write; TEL repository (tess-el, MIT); tre #236 recorded |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | TEL details, Frame in v1, surface mapping, [[V1 Widgets]], [[Glossary]]; `tre` asked about hit testing |
 | 2026-10-25 | [[ADR-0008 Tesserae Expression Language]] accepted; requirements written ([[Expression Language Requirements]]) |
 | 2026-10-25 | Expression engine survey written ([[Expression Languages for YAML]]) |
-| 2026-10-25 | Expression language, `monitor` matching, module Python contract, config directory and registry identity decided ([[ADR-0007 Shell UI Layer]]) |
 
 ## Go to
 
@@ -62,7 +62,7 @@ Newest first. Keep the last 8. One line each.
 | Project | [[Index]] · [[Roadmap]] · [[Glossary]] · [[AGENTS]] |
 | Unknowns and risk | [[Open Questions]] · [[Risk Register]] |
 | Decisions | [[30 Decisions]] |
-| Research | [[90 Research]]: [[Prior Art - Linux Shell Surfaces]], [[Shadows on Layer Surfaces]], [[Hit Testing for Concave Corners]], [[Expression Languages for YAML]] |
+| Research | [[90 Research]]: [[Prior Art - Linux Shell Surfaces]], [[Shadows on Layer Surfaces]], [[Hit Testing for Concave Corners]], [[Logging with Loguru]], [[Expression Languages for YAML]] |
 | Design areas | [[10 Vision]] · [[20 Architecture]] · [[40 Specifications]] · [[41 YAML Reference]] · [[42 Python API]] · [[50 Design System]] · [[60 Quality]] · [[70 Delivery]] · [[80 Engine Requests]] |
 
 ## Current

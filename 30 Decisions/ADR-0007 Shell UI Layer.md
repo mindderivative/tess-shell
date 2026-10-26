@@ -168,7 +168,7 @@ The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properti
 - **`monitor` accepts anything the shell gives it.** A root with no `monitor` is ignored. A file imported by a root uses that root's monitor. How `monitor` is written for a name, a description or a default is set in `41 YAML Reference/`.
 - **`name` is unique per monitor.** It need not be unique shell-wide. Its scope is the YAML file it is in and the Python scripts attached to that file. It references something inside its own file or from its script.
 - **A UID is shell-wide** and reachable from the highest level to the lowest. Each YAML file gets one automatically.
-- **Load errors carry `file:line:column`:** an import cycle (it prints the chain of files, `A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`), a missing file, and a name defined twice (it names both places). An import path is relative to the importing file.
+- **Load errors carry `file:line:column`:** an import cycle (it prints the chain of files, `A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`), a missing file, and a name defined twice (it names both places). An import path is relative to the importing file. Logging candidate: Loguru ([[Logging with Loguru]]); not decided.
 - **`type:` names a file's type; `kind:` names a surface's kind.** `type:` is for file types such as `Module` and `Theme` (and `Shell`, `Style`, `Stylesheet`). `kind:` is for the kind of surface (`bar`, `frame`, `panel`, `popup`). Decided 2026-10-25, so the two never share a meaning.
 
 ### View format: a full expression language, and Python as an equal front-end (2026-10-25)
