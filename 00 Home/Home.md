@@ -31,10 +31,10 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Recorded TEL details; Frame in v1; OSD, widget and launcher as Panels; popups exclusive to a monitor; wrote [[V1 Widgets]] and [[Glossary]]; asked `tre` about hit testing |
+| Last change | Recorded `tre`'s hit-testing answer and the path forward in [[Hit Testing for Concave Corners]] |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0007 Shell UI Layer]] (6 accepted; ADR-0002 superseded) |
 | Waiting on you | How a Panel's attachment to another surface is written (to explore, [[Surface Types#Open questions]]); how the shell writes the UID into a user's file ([[ADR-0007 Shell UI Layer#Open items]]); TEL's repository, licence and syntax ([[Expression Language Requirements#Open questions]]) |
-| Waiting on others | A reply from `tre` on hit testing for concave corners and joins ([[Surface Types#Open questions]]) |
+| Waiting on others | `tre` to deliver shape-aware hit testing for concave and convex corners ([[Hit Testing for Concave Corners]]); the Frame uses an explicit-rectangle workaround until then |
 | Next | Start `20 Architecture`, including the UI layer; then the module and runtime specs |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | `tre` answered the hit-testing question; path forward confirmed ([[Hit Testing for Concave Corners]]) |
 | 2026-10-25 | TEL details, Frame in v1, surface mapping, [[V1 Widgets]], [[Glossary]]; `tre` asked about hit testing |
 | 2026-10-25 | [[ADR-0008 Tesserae Expression Language]] accepted; requirements written ([[Expression Language Requirements]]) |
 | 2026-10-25 | Expression engine survey written ([[Expression Languages for YAML]]) |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-25 | `type:`/`kind:`, UID registry and module data hand-off decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-25 | Surface Types corrected; shadows research written ([[Shadows on Layer Surfaces]]) |
 | 2026-10-25 | [[Surface Types]] written; module, import, monitor, name and error rules decided ([[ADR-0007 Shell UI Layer]]) |
-| 2026-10-25 | Tesserae adding a matching version key, noted in [[ADR-0007 Shell UI Layer]] |
 
 ## Go to
 
@@ -62,7 +62,7 @@ Newest first. Keep the last 8. One line each.
 | Project | [[Index]] · [[Roadmap]] · [[Glossary]] · [[AGENTS]] |
 | Unknowns and risk | [[Open Questions]] · [[Risk Register]] |
 | Decisions | [[30 Decisions]] |
-| Research | [[90 Research]]: [[Prior Art - Linux Shell Surfaces]], [[Shadows on Layer Surfaces]], [[Expression Languages for YAML]] |
+| Research | [[90 Research]]: [[Prior Art - Linux Shell Surfaces]], [[Shadows on Layer Surfaces]], [[Hit Testing for Concave Corners]], [[Expression Languages for YAML]] |
 | Design areas | [[10 Vision]] · [[20 Architecture]] · [[40 Specifications]] · [[41 YAML Reference]] · [[42 Python API]] · [[50 Design System]] · [[60 Quality]] · [[70 Delivery]] · [[80 Engine Requests]] |
 
 ## Current
