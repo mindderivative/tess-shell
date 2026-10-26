@@ -31,11 +31,11 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Wrote [[TRE-REQ-005 Keep-Alive and Loop Stop]] for tre (stay alive with no windows; loop stop); `tre` pointed to it |
+| Last change | `tre` reviewed [[TRE-REQ-005 Keep-Alive and Loop Stop]] and is building it as #238; recorded its four corrections and the quit-signal path |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Follow up with `tre` on [[TRE-REQ-005 Keep-Alive and Loop Stop]] (you file the issue) |
+| Waiting on you | Nothing blocking. Optional: confirm tre's D1 to D4 choices for #238 in the tre project |
 | Waiting on others | `tre` #236, shape-aware hit testing for concave and convex corners (Backlog, not approved; [[Hit Testing for Concave Corners]]). The Frame uses the explicit-rectangle workaround, enough for v1 |
-| Waiting on others (2) | `tre` on [[TRE-REQ-005 Keep-Alive and Loop Stop]] (blocks staying idle with no windows; stopgap: a 1x1 window) |
+| Waiting on others (2) | `tre` #238, keep-alive and `LoopHandle.stop()` (approved, in build; [[TRE-REQ-005 Keep-Alive and Loop Stop]]); stopgap: a 1x1 window |
 | Next | Module specs (Clock first), `42 Python API`, `41 YAML Reference`, the Panel spec |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -47,6 +47,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | `tre` accepted TRE-REQ-005 (#238); four corrections recorded |
 | 2026-10-26 | [[TRE-REQ-005 Keep-Alive and Loop Stop]] written; `tre` pointed to it |
 | 2026-10-26 | TEL scope settled: expression language only; events are the shell's |
 | 2026-10-26 | ADR-0009 accepted; `tre` answered the no-windows question; `tess-el` reports a TEL scope conflict |
@@ -54,7 +55,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-26 | D-Bus names observed on Plasma 6.8.1 recorded ([[System Context]]) |
 | 2026-10-25 | [[20 Architecture]] drafted (four notes) |
 | 2026-10-25 | TEL brief written and moved to `tess-el/docs` (not kept in the vault) |
-| 2026-10-25 | Loguru noted as a logging option ([[Logging with Loguru]]) |
 
 ## Go to
 

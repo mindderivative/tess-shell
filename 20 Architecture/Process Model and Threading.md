@@ -35,6 +35,7 @@ From the [tre threading guide](https://mindderivative.github.io/tre/guide/thread
 | Module threads | A module's blocking work: D-Bus, sockets, polling, files, decoding | Never | The shell's send entry point, which uses `call_soon` |
 | Config watcher | Waiting for file changes; reading and parsing a changed file | Never | `call_soon` with a finished result |
 | Service thread | An `asyncio` event loop, shared by modules, holding the session and system bus connections (`dbus-fast`, [[ADR-0009 D-Bus Client Library]]) | Never | The same send entry point |
+| Signal watcher | Reads a socketpair fed by `signal.set_wakeup_fd` and calls `handle.stop()` on SIGTERM or SIGINT | Never | `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]) |
 | Watchdog | Checks that the loop is still ticking | Never | Logs, and asks the supervisor to restart if the loop is stuck |
 
 tre also runs its own threads internally (the layer surface connection, for example). They are tre's concern; the shell sees only the loop thread and its callbacks.
@@ -90,7 +91,7 @@ stateDiagram-v2
 - **Loading.** Read the config directory, parse, validate, follow imports, check or write the registry, resolve references, read outputs, build the model. Errors stop here with `file:line:column`.
 - **Running.** Modules start after the model is built, so a value that arrives before its surface exists is kept in the store.
 - **Reloading.** A watcher thread reads and parses a changed file; the loop applies it. A bad file leaves the old state and logs an error ([[Data Flow#Hot reload]]).
-- **Stopping.** Call each module's `stop`, join its threads with a timeout, close windows, write the registry. `App.run()` returns when the last window closes.
+- **Stopping.** A quit signal reaches a watcher thread through `signal.set_wakeup_fd`, which calls `LoopHandle.stop()`. `stop()` closes every window without a veto and `run()` returns. The shell then calls each module's `stop`, joins its threads with a timeout, and writes the registry, on the main thread. Python signal handlers do not run on an idle loop, which is why the wakeup-fd path is used ([[TRE-REQ-005 Keep-Alive and Loop Stop]]). Until that ships, ending the loop means closing every window.
 - **No windows: stay idle** (decided 2026-10-26). If every monitor is set to "none", or no output is present, the shell does not exit; it waits and reacts when an output is added ([[Data Flow#Monitor hot-plug]]). What tre can do is in [No windows: what tre offers](#no-windows-what-tre-offers).
 
 ## No windows: what tre offers
@@ -106,7 +107,7 @@ The `tre` session answered over the mailbox on 2026-10-26, from the 0.5.8 source
 | Suggested engine addition | An opt-in keep-alive, for example `App.run(keep_alive=True)`: no error with zero windows, no exit when empty, output watch started at loop start. It needs a way to end the loop. A `LoopHandle` stop does not exist today; the loop ends only when every window closes. Rough size: about 60 to 100 lines plus tests and docs, low risk because it is opt-in |
 
 > [!warning] Blocked by [[TRE-REQ-005 Keep-Alive and Loop Stop]]
-> Option A was chosen by the maintainer on 2026-10-26: ask tre for the opt-in keep-alive and a `LoopHandle` stop. The request is written; the maintainer follows up with tre. Until it ships, the stopgap is B.
+> Option A was chosen by the maintainer on 2026-10-26: the opt-in keep-alive and a `LoopHandle` stop. The request is written and `tre` is building it as [tre #238](https://github.com/mindderivative/tre/issues/238) (`run(keep_alive=True)` and `LoopHandle.stop()`), with revised semantics and size recorded in the request. Until it ships, the stopgap is B.
 
 Options for the shell:
 

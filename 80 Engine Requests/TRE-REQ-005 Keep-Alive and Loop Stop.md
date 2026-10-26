@@ -2,7 +2,7 @@
 title: TRE-REQ-005 Keep-Alive and Loop Stop
 aliases: [TRE-REQ-005, tre Keep-Alive Request, LoopHandle stop]
 type: engine-request
-status: draft
+status: review
 owner: phil
 created: 2026-10-26
 updated: 2026-10-26
@@ -15,6 +15,9 @@ depends_on: []
 
 > [!summary]
 > Add to tre an opt-in keep-alive, so `App.run()` can stay alive with zero windows and keep delivering output events and `call_soon` callbacks, and a way to end the loop from outside: a `LoopHandle` stop. Today the loop ends only when every window has closed, and `run()` refuses to start with none. A desktop shell must stay up with no windows when every monitor is configured to show nothing or the last output is unplugged, and must shut down cleanly on quit.
+
+> [!success] Taken up by tre (2026-10-26)
+> The maintainer approved the work and `tre` is building it as [tre #238](https://github.com/mindderivative/tre/issues/238), with the corner pass-through as [#236](https://github.com/mindderivative/tre/issues/236). `tre` reviewed this request, found it accurate and added four points, recorded below.
 
 > [!warning] Blocks one shell behaviour
 > [[Process Model and Threading#No windows: what tre offers]] depends on this request. The shell's decision is "stay idle with no windows" (maintainer, 2026-10-26). Option A there (this request) was chosen; the maintainer follows up with tre to confirm. A stopgap exists (see [If declined](#if-declined)).
@@ -43,6 +46,9 @@ Findings from the `tre` session over the mailbox (2026-10-26, from the 0.5.8 sou
 | `App.run()` raises `RuntimeError` with zero registered windows | Yes: `engine-py/src/app.rs:1009` ("App.run() called with no windows -- call add_window() at least once first"); also in [App reference](https://mindderivative.github.io/tre/reference/app/) |
 | The platform loop ends when no window and no layer surface is left | Yes: `engine-platform/src/layer_loop.rs`, `exit_if_empty` (exits when `windows` and `layers` are empty) |
 | `LoopHandle` has only `call_soon` | Yes: `engine-py/src/thread_handle.rs` (one method in the `#[pymethods]` block) |
+| **`call_soon` does not run with zero windows** (correcting the earlier experiments, which all had a window) | From `tre`'s review: the queue is drained inside a window's frame callback and the `Wake` event only requests redraws of windows and layers, so a queued callback waits forever |
+| **Python signal handlers do not run on an idle loop** | Measured by `tre`: a `SIGUSR1` handler ran 2 s late, only when a `call_soon` gave the main thread Python work. Ctrl-C and SIGTERM cannot stop an idle shell today |
+| **The loop has eight exit points**, not one | Five `exit_if_empty` sites in `layer_loop.rs` and three more `event_loop.exit()` sites in `engine-platform/src/lib.rs` (close, close requested, `max_frames`) |
 | Calling `run()` again after it returned works | From `tre`'s test run; not checked by me |
 | Output events do not fire while `run()` is not active; an output plugged in between runs is not reported as `output_added` | From `tre`'s test run; the layer thread runs only inside the loop |
 | A hidden 1x1 `LayerWindow` keeps the loop alive but closes with reason `"output_removed"` when its output is unplugged, and the run ends in the same turn | From `tre`'s test run |
@@ -51,26 +57,36 @@ Findings from the `tre` session over the mailbox (2026-10-26, from the 0.5.8 sou
 ## Proposed API
 
 > [!danger] Proposal, not existing API
-> `tre` suggested the shape. Names are the tre project's to choose.
+> `tre` is building this as #238. The shape below is what `tre` described on 2026-10-26; the names are the tre project's.
 
 ```python
 app = App()
-app.add_window(...)             # optional: zero windows is allowed with keep_alive
-app.run(keep_alive=True)        # or App(keep_alive=True)
+app.run(keep_alive=True)        # an argument of run(), not of App
 
 handle = app.thread_handle()
-handle.stop()                   # any thread; asks the loop to end
+ok = handle.stop()              # any thread; returns False outside a running loop
 ```
 
-Behaviour:
+Behaviour `tre` is building:
 
-1. **`keep_alive`** is opt-in. With it set, `run()` does not raise with zero windows, and `exit_if_empty` does nothing, so the loop continues until stopped.
-2. **The output watch starts at loop start** (it already starts when output listeners exist) so `output_added`, `output_removed` and `output_updated` arrive with zero windows.
-3. **`call_soon`** callbacks run with zero windows.
-4. **`LoopHandle.stop()`** is safe from any thread and asks the loop to end. It works with or without `keep_alive`. What happens to open windows (closed with a `closed` reason, or `close_requested` first) is a tre design question.
-5. Without `keep_alive`, behaviour is unchanged.
+1. **`run(keep_alive=True)`** belongs to one run. With it set, `run()` does not raise with zero windows, and every exit point is a no-op, so the loop continues until stopped. Without it nothing changes.
+2. **`call_soon` and `stop()` are drained without a window.** The engine gets a window-less drain.
+3. **The output watch starts at loop start**, so `output_added`, `output_removed` and `output_updated` arrive with zero windows.
+4. **`LoopHandle.stop() -> bool`** is safe from any thread, with or without `keep_alive`, and applies to a **running loop only**. It returns `False` before or after a run, so a stop queued early cannot end the next run.
+5. **`stop()` closes every open window unconditionally**: `close_requested` is skipped, so a shutdown cannot be vetoed. Each window hears `closed` (reason `"app"` or a new `"stopped"`), then `run()` returns normally.
+6. **With `keep_alive`, closing the last window does not end the run**, including a bar closed with reason `"output_removed"`. The shell can add a `LayerWindow` from an `output_added` handler.
+7. **Non-Wayland sessions:** `keep_alive` works (an idle loop, `call_soon`, `stop()`); there are no output events and no error.
 
-`tre`'s rough size: about 60 to 100 lines in `engine-py` and `engine-platform`, plus tests and docs; low risk because it is opt-in. The one design question is how the loop is stopped.
+**Size.** About 100 to 150 lines of code in `engine-py` and `engine-platform` and about as many in tests, the stub and docs (revised up from 60 to 100 after the eight exit points and the window-less drain were found).
+
+**Open decisions in tre (D1 to D4, #238):** `run(keep_alive=)` against `App(keep_alive=)` (recommended: `run`); `stop()` closing unconditionally (recommended); the `closed` reason for a stop (`"app"` or a new `"stopped"`, recommended); whether to also check signals on `Wake` or leave them to the application's wakeup-fd recipe (recommended: the recipe for now).
+
+### How the shell uses it
+
+- **Quit path.** `signal.set_wakeup_fd` on a socketpair, plus a watcher thread that reads it and calls `handle.stop()`. `tre` tested the watcher: it saw SIGTERM at once on an idle loop. The shell's quit path is planned that way ([[Process Model and Threading#Lifecycle (proposed)]]). If `stop()` returns `False` (the loop is not running yet), the watcher retries until the loop is up or the quit flag is set.
+- **Order on quit.** `stop()` closes the windows and `run()` returns; then the shell stops modules, joins their threads and writes the registry, on the same main thread. `closed` with reason `"app"` or `"stopped"` during shutdown must not make the surface manager recreate a window.
+- **Hot-plug.** With `keep_alive`, an `output_added` handler adds windows, as in [[Data Flow#Monitor hot-plug]].
+- Nothing in these semantics breaks the shell (`tre` asked).
 
 ## Alternatives
 
@@ -89,19 +105,22 @@ Behaviour:
 
 ## Open questions
 
-- [ ] What `stop()` does to open windows (close them with a reason, or require none).
-- [ ] Whether `keep_alive` is an `App` option or a `run()` argument.
-- [ ] Whether the keep-alive loop wakes only for events and `call_soon` (idle cost): the shell requires zero idle frames and no timers ([[Process Model and Threading#Performance notes]]).
-- [ ] Behaviour on a non-Wayland session, where there are no outputs to watch.
+- [x] What `stop()` does to open windows: closes them all unconditionally, each hears `closed`, then `run()` returns (`tre`).
+- [x] `keep_alive` is an argument of `run()`, not of `App` (`tre`).
+- [x] Non-Wayland: `keep_alive` works, with no output events and no error (`tre`).
+- [ ] The `closed` reason for a stop: `"app"` or a new `"stopped"` (tre's D3; recommended `"stopped"`).
+- [ ] Idle cost with zero windows: `tre` checks CPU ticks and wake-ups over 5 s ([[Process Model and Threading#Performance notes]]).
 - [ ] Whether KWin behaves the same as sway.
 
 ## Acceptance criteria
 
 - [ ] `run(keep_alive=True)` with zero windows does not raise and does not return.
 - [ ] With zero windows, plugging and unplugging an output fires `output_added` and `output_removed`; unplugging the last output and plugging a new one still fires.
-- [ ] `call_soon` from another thread runs with zero windows.
-- [ ] `handle.stop()` from another thread ends `run()`, with and without windows open.
-- [ ] Idle cost with zero windows: no frames, no wake-ups beyond events.
+- [ ] `call_soon` from another thread runs with zero windows (it does not today).
+- [ ] A `LayerWindow` added from an `output_added` handler opens, with zero windows before it.
+- [ ] The wakeup-fd recipe ends an idle zero-window loop on SIGTERM (a test and a docs example).
+- [ ] `handle.stop()` from another thread ends `run()`, with and without windows open, and returns `False` outside a run.
+- [ ] Idle cost with zero windows: no frames and no wake-ups beyond events; CPU ticks over 5 s at 0 on sway and KWin.
 - [ ] Without `keep_alive`, `run()` still raises with zero windows and ends when the last window closes.
 - [ ] Tested on a headless sway and on KWin.
 
