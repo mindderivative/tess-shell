@@ -52,6 +52,18 @@ Conversions the shell provides in v1 (the starting list was accepted by the main
 
 Everything else a module converts itself.
 
+## Four-sided values
+
+A style value with four sides (a border thickness, a corner radius, a margin, padding) is written in forms plain YAML already understands (maintainer, 2026-10-26, option A in [[ADR-0007 Shell UI Layer#Open items]]): one number for all sides, a list of four, or named sides:
+
+```yaml
+border_thickness: 2                                   # all four sides
+border_thickness: [2, 2, 2, 2]                        # four values; order not yet confirmed
+border_thickness: {left: 2, top: 2, right: 2, bottom: 2}   # named sides
+```
+
+The order of a list of four is recommended clockwise from the top, as tre's `margin` and `corner_radius` are. The shell converts the shorthand to tre's tuples.
+
 ## Where conversion runs
 
 - **On send (module thread):** pure conversions that need no shell state (HEX to RGBA). Cheap, off the loop.

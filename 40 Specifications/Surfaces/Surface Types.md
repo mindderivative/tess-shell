@@ -55,6 +55,37 @@ A Panel is not a child of the surface it attaches to. It may render on top of a 
 
 Anchored to anything, and rendered like an overlay. It is not a child in the shell file's tree: the file says what it is anchored to by reference, and the popup is its own entry. The parent that tre's `PopupWindow` needs ([[TRE-REQ-001 Layer Surface Window]]) is a Wayland protocol detail the shell handles, not a nesting the author writes. "Anything" is a shell surface: tre requires a layer window or another popup as the protocol parent (see Integration).
 
+## Overlay
+
+The maintainer asked how an overlay is added in YAML and how modules are assigned to it (2026-10-26). In the layer-shell protocol, `overlay` is one of four stacking layers (`background`, `bottom`, `top`, `overlay`), and any layer surface sits on one of them. Today the four kinds each take a `layer:`, so an overlay is a surface on the overlay layer, not a fifth kind.
+
+**Option A, an overlay is a Panel (or other kind) on the overlay layer (recommended).** Nothing new is needed; the launcher is already specified this way ([[V1 Scope#Surfaces]]):
+
+```yaml
+launcher:
+    kind: panel
+    layer: overlay
+    keyboard: exclusive
+    modules:
+        apps: Applications_Module.yaml
+```
+
+Modules are assigned under `modules:` as for any surface. A panel can be anchored, floating, movable, hidden or full-screen, so one kind covers a launcher, an OSD and a full-screen overlay.
+
+**Option B, add `kind: overlay`.** A surface kind that is the size of the whole output, transparent, on the overlay layer, with its input region following what is drawn in it:
+
+```yaml
+screen_overlay:
+    kind: overlay
+    modules:
+        apps: Applications_Module.yaml
+```
+
+- For: one name for the "special" container the maintainer has in mind; it can host a launcher, OSD or dismissal layer without the author sizing a panel.
+- Against: an output-sized surface costs more video memory (tre measured 177 MiB for a 4K overlay against 18 MiB for a bar, before later changes; [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]), and tre's own advice is to build menus with `PopupWindow`, not an overlay. It duplicates what a full-screen panel can do.
+
+Not decided. The maintainer chooses ([[ADR-0007 Shell UI Layer#Open items]]).
+
 ## Behaviour
 
 States and transitions are common to every type; the specs that follow list the differences.

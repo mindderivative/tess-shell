@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Decided `type:` / `kind:` / `widget:`, Box and FlexBox, `params`, module value names; flagged the four-sided shorthand problem |
+| Last change | Decided the four-sided shorthand (option A) and what `type:` identifies; wrote up the overlay question ([[Surface Types#Overlay]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Three points in [[ADR-0007 Shell UI Layer#Open items]]: the four-sided shorthand (it does not survive a standard YAML load), whether overlay is a kind, what `type:` on a layer surface means; also review `tre`'s branches |
+| Waiting on you | Overlay: a panel on the overlay layer, or a new kind? ([[Surface Types#Overlay]]); confirm the order of a four-value list; review `tre`'s branches |
 | Waiting on others | tre 0.5.9 release: `hit_shape="painted"` (#236, [[Hit Testing for Concave Corners]]) and `keep_alive`/`stop()` (#238, [[TRE-REQ-005 Keep-Alive and Loop Stop]]); built on local branches. The Frame uses the explicit-rectangle workaround, and the 1x1 window is the stopgap, until then |
 | Next | `41 YAML Reference`, the first module spec (Clock), the Panel spec |
 | Blocked | Nothing |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | Four-sided shorthand decided; overlay question written up ([[Surface Types#Overlay]]) |
 | 2026-10-26 | `type:`/`kind:`/`widget:`, Box and FlexBox, params decided; shorthand problem flagged ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-26 | Module model corrected to layout YAML + style YAML + Python; Label example replaced ([[Module Context]]) |
 | 2026-10-26 | Python API decisions and module example; `tre` built #236 and #238 (for 0.5.9) |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-26 | `tre` accepted TRE-REQ-005 (#238); four corrections recorded |
 | 2026-10-26 | [[TRE-REQ-005 Keep-Alive and Loop Stop]] written; `tre` pointed to it |
 | 2026-10-26 | TEL scope settled: expression language only; events are the shell's |
-| 2026-10-26 | ADR-0009 accepted; `tre` answered the no-windows question; `tess-el` reports a TEL scope conflict |
 
 ## Go to
 
