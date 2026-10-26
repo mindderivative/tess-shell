@@ -2,7 +2,7 @@
 title: Goals and Non-Goals
 aliases: [Goals, Non-Goals]
 type: vision
-status: draft
+status: stable
 owner: phil
 created: 2026-10-25
 updated: 2026-10-25
@@ -14,10 +14,10 @@ depends_on: []
 # Goals and non-goals
 
 > [!summary]
-> Seven goals and eight non-goals. Each goal has a measure that a later spec turns into an acceptance criterion. Goals G1 to G7 and the non-goals are recommendations for the maintainer to confirm; none has been accepted yet.
+> Seven goals and eight non-goals. Each goal has a measure that a later spec turns into an acceptance criterion. Confirmed by the maintainer on 2026-10-25.
 
-> [!important] Proposed, not accepted
-> The maintainer decides scope ([[AGENTS#2. Hard rules]], rule 5). Targets marked "proposed" are starting values for [[60 Quality]], not commitments.
+> [!important] Confirmed 2026-10-25
+> The maintainer confirmed these goals and non-goals. Targets marked "proposed" are starting values for [[60 Quality]], not commitments.
 
 ## Goals
 

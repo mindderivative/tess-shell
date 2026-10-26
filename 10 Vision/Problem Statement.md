@@ -2,7 +2,7 @@
 title: Problem Statement
 aliases: [Why Tesserae Shell, Vision Problem]
 type: vision
-status: draft
+status: stable
 owner: phil
 created: 2026-10-25
 updated: 2026-10-25

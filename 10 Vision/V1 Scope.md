@@ -2,7 +2,7 @@
 title: V1 Scope
 aliases: [v1, Version 1 Scope, Scope of v1]
 type: vision
-status: draft
+status: stable
 owner: phil
 created: 2026-10-25
 updated: 2026-10-25
@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0001 Shell Surface Strategy]]"]
 # v1 scope
 
 > [!summary]
-> Recommendation: v1 is a working bar, popups, OSDs, a launcher and movable desktop widgets, on KDE Plasma 6 Wayland (KWin), with wlroots compositors best effort. Any monitor can host the shell, each configured separately in one configuration, with all, some or none of the surfaces ([[#Multi-monitor]]). It ships a default shell built from eight modules. Notification centre, screen frame and the Tesserae Shell package manager are after v1. Everything here is a recommendation until the maintainer accepts it, except the multi-monitor rules and the four decisions, which the maintainer has taken.
+> Recommendation: v1 is a working bar, popups, OSDs, a launcher and movable desktop widgets, on KDE Plasma 6 Wayland (KWin), with wlroots compositors best effort. Any monitor can host the shell, each configured separately in one configuration, with all, some or none of the surfaces ([[#Multi-monitor]]). It ships a default shell built from eight modules. Notification centre, screen frame and the Tesserae Shell package manager are after v1. Confirmed by the maintainer on 2026-10-25, except the mirrored-outputs recommendation, which is still open ([[#Multi-monitor]]).
 
 ## Target environment
 
@@ -65,7 +65,7 @@ Still open:
 
 ## Modules in the default shell
 
-Proposed eight. Every module is available on any monitor's surfaces. Each becomes a spec under `40 Specifications/Modules/`.
+The eight modules, confirmed. Every module is available on any monitor's surfaces. Each becomes a spec under `40 Specifications/Modules/`.
 
 | Module | Needs | Open decision |
 |---|---|---|
@@ -101,8 +101,8 @@ All four were taken by the maintainer on 2026-10-25 and are recorded as ADRs.
 
 ## Acceptance criteria
 
-- [ ] The maintainer confirms or amends the target environment, surface list, module list and after-v1 list.
-- [ ] Multi-monitor rules and open points above are confirmed or amended.
+- [x] The maintainer confirmed the target environment, surface list, module list and after-v1 list (2026-10-25).
+- [x] Multi-monitor rules confirmed. One point stays open: mirrored outputs and `output_updated`, to settle in `20 Architecture` once tested.
 - [ ] Every surface in the table has a matching use case in [[Personas and Use Cases]].
 - [ ] Every module row has a decision recorded or a `#needs-verification` tag.
 - [x] Each "Decisions to take" row has an ADR, accepted by the maintainer.

@@ -79,5 +79,5 @@ Versions drift. If the live docs disagree with this table, the docs win; update 
 ## Current focus
 
 1. Confirm [[TRE-REQ-001 Layer Surface Window]] against the shell (status `review`); [[ADR-0001 Shell Surface Strategy]] is accepted (Option A).
-2. Confirm the draft [[10 Vision]] notes (goals, non-goals, personas, [[V1 Scope]]); write the Tesserae request for layer and popup windows; start `20 Architecture`.
+2. [[10 Vision]] is confirmed (`stable`); write the Tesserae request for layer and popup windows; start `20 Architecture`.
 3. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.

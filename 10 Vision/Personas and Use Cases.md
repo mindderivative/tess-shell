@@ -2,7 +2,7 @@
 title: Personas and Use Cases
 aliases: [Personas, Use Cases]
 type: vision
-status: draft
+status: stable
 owner: phil
 created: 2026-10-25
 updated: 2026-10-25
@@ -52,7 +52,7 @@ The maintainer is all three while the design is made. Separate personas keep the
 
 - [ ] Is a notification centre a v1 use case? It depends on the notification-server coexistence decision, which is not made. Placed outside v1 in [[V1 Scope]].
 - [x] What does a newly plugged monitor get when the configuration does not name it? A configurable default section ([[V1 Scope#Multi-monitor]]).
-- [ ] Which persona writes the default shell? Proposed: P2, with the maintainer as the reviewer.
+- [x] Which persona writes the default shell? P2 (shell author), with the maintainer as the reviewer. Confirmed 2026-10-25 with the Vision.
 
 ## Links
 
