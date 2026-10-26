@@ -79,4 +79,4 @@ Versions drift. If the live docs disagree with this table, the docs win; update 
 ## Current focus
 
 1. [[10 Vision]] is confirmed (`stable`); write the Tesserae request for layer and popup windows; start `20 Architecture`.
-3. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.
+2. Seed [[Open Questions]] from the known gaps in [[AGENTS]] §4.
