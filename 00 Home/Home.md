@@ -31,12 +31,12 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-25 |
-| Last change | Maintainer confirmed [[10 Vision]]; its five notes are `stable` |
+| Last change | Mirrored outputs and `output_updated` accepted in [[V1 Scope#Multi-monitor]]; no open point left in [[10 Vision]] |
 | Decided | [[ADR-0001 Shell Surface Strategy]] to [[ADR-0005 Global Shortcuts]] (5 accepted) |
-| Waiting on you | Decide mirrored outputs and `output_updated` ([[V1 Scope#Multi-monitor]]); confirm [[TRE-REQ-001 Layer Surface Window]] against the shell |
+| Waiting on you | Confirm [[TRE-REQ-001 Layer Surface Window]] against the shell |
 | Next | Write the Tesserae request for layer and popup windows ([[ADR-0002 Relationship to Tesserae UI#Consequences]]); start `20 Architecture` |
 | Blocked | Nothing in tre. Tesserae cannot yet open a layer window from a view. |
-| Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]) |
+| Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
 
 ### Recent changes
 
@@ -44,6 +44,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-25 | Mirrored outputs and `output_updated` accepted ([[V1 Scope#Multi-monitor]]) |
 | 2026-10-25 | [[10 Vision]] confirmed and set to `stable` |
 | 2026-10-25 | Added ADR-0002 to ADR-0005; multi-monitor decisions in [[V1 Scope]] |
 | 2026-10-25 | Multi-monitor requirement added to [[10 Vision]] |

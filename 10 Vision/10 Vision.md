@@ -22,6 +22,6 @@ Why Tesserae Shell exists, what it must do, who uses it, and what v1 contains.
 | [[Personas and Use Cases]] | Three personas, eleven use cases mapped to surfaces | stable |
 | [[V1 Scope]] | Target environment, surfaces, modules, decisions taken | stable |
 
-Confirmed by the maintainer on 2026-10-25. One point is still open: how mirrored outputs and `output_updated` are handled ([[V1 Scope#Multi-monitor]]).
+Confirmed by the maintainer on 2026-10-25, including the multi-monitor rules ([[V1 Scope#Multi-monitor]]).
 
 Decisions that follow from this folder: [[V1 Scope#Decisions to take]].

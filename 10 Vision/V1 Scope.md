@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0001 Shell Surface Strategy]]"]
 # v1 scope
 
 > [!summary]
-> Recommendation: v1 is a working bar, popups, OSDs, a launcher and movable desktop widgets, on KDE Plasma 6 Wayland (KWin), with wlroots compositors best effort. Any monitor can host the shell, each configured separately in one configuration, with all, some or none of the surfaces ([[#Multi-monitor]]). It ships a default shell built from eight modules. Notification centre, screen frame and the Tesserae Shell package manager are after v1. Confirmed by the maintainer on 2026-10-25, except the mirrored-outputs recommendation, which is still open ([[#Multi-monitor]]).
+> Recommendation: v1 is a working bar, popups, OSDs, a launcher and movable desktop widgets, on KDE Plasma 6 Wayland (KWin), with wlroots compositors best effort. Any monitor can host the shell, each configured separately in one configuration, with all, some or none of the surfaces ([[#Multi-monitor]]). It ships a default shell built from eight modules. Notification centre, screen frame and the Tesserae Shell package manager are after v1. Confirmed by the maintainer on 2026-10-25, including the multi-monitor rules ([[#Multi-monitor]]).
 
 ## Target environment
 
@@ -59,9 +59,7 @@ Decided by the maintainer in chat, 2026-10-25:
 - [x] **Sharing.** A surface is defined once and referenced from several monitors, so the definition lives once ([[AGENTS#2. Hard rules]], rule 4).
 - [x] **Single-place surfaces (launcher, OSD).** Each names its monitor in its own configuration: a configured monitor, not the focused or pointer's one.
 
-Still open:
-
-- [ ] **Mirrored outputs and output changes (`output_updated`).** The maintainer asked for a recommendation. What is known: `output_updated` fires when a screen's position, size, scale or rotation changes, and tre follows the new scale itself ([Outputs](https://mindderivative.github.io/tre/reference/outputs/)). A surface stays bound to its output; a bar anchored to both edges is resized by the compositor. How the compositor presents mirrored screens to a client is not documented in tre's pages. #needs-verification. Recommendation: (1) treat every `Output` tre reports as one monitor, so mirrored screens that appear as two outputs are configured as two, and a mirror that appears as one output is one monitor; (2) on `output_updated`, keep the surfaces and re-evaluate only the match rules, recreating a surface set only when the match result changes (for example a description rule that no longer matches); (3) test mirroring on KWin in the testing phase and record what it reports.
+- [x] **Mirrored outputs and output changes (`output_updated`).** Accepted by the maintainer, 2026-10-25, as recommended: (1) treat every `Output` tre reports as one monitor, so mirrored screens that appear as two outputs are configured as two, and a mirror that appears as one output is one monitor; (2) on `output_updated`, keep the surfaces and re-evaluate only the match rules, recreating a surface set only when the match result changes (for example a description rule that no longer matches); (3) test mirroring on KWin in the testing phase and record what it reports. Basis: `output_updated` fires when a screen's position, size, scale or rotation changes, and tre follows the new scale itself ([Outputs](https://mindderivative.github.io/tre/reference/outputs/)). How the compositor presents mirrored screens to a client is not documented there. #needs-verification, deferred to the testing phase.
 
 ## Modules in the default shell
 
@@ -102,7 +100,7 @@ All four were taken by the maintainer on 2026-10-25 and are recorded as ADRs.
 ## Acceptance criteria
 
 - [x] The maintainer confirmed the target environment, surface list, module list and after-v1 list (2026-10-25).
-- [x] Multi-monitor rules confirmed. One point stays open: mirrored outputs and `output_updated`, to settle in `20 Architecture` once tested.
+- [x] Multi-monitor rules confirmed, including mirrored outputs and `output_updated`. How KWin presents a mirrored pair is checked in the testing phase.
 - [ ] Every surface in the table has a matching use case in [[Personas and Use Cases]].
 - [ ] Every module row has a decision recorded or a `#needs-verification` tag.
 - [x] Each "Decisions to take" row has an ADR, accepted by the maintainer.
