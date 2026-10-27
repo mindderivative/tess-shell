@@ -44,8 +44,8 @@ tre's estimate: medium effort in the engine core plus tests, risk low to medium.
 
 `tre` scoped the work as [tre #236](https://github.com/mindderivative/tre/issues/236), read 2026-10-25: OPEN, Backlog, not approved, nothing started. Three stages, each shippable:
 
-1. **True scanline spans in `bands()`**, so a region can have holes. No API change; pure engine tests.
-2. **`hit_shape` on a path node**: `"box"` (today, the default) or `"painted"` (the fill region united with the stroke outline), used by node events and by `input_region="auto"`.
+1. True scanline spans in `bands()`, so a region can have holes. No API change; pure engine tests.
+2. `hit_shape` on a path node: `"box"` (today, the default) or `"painted"` (the fill region united with the stroke outline), used by node events and by `input_region="auto"`.
 3. **A live test of the shell's frame** on headless sway and KWin, plus docs.
 
 Measured cost for a 3840 x 2160 ring, 48 px thick, outer radius 32, inner radius 24: 66 rectangles at 2 px bands (40 at 4 px, 22 at 8 px), under the 256 cap. A frame with ten fillet joins might reach the cap, where the existing fallback uses 4 or 8 px bands. Accuracy contract: a click up to about one band (2 px) inside the unfilled side of a curve may still be taken.

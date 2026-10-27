@@ -66,17 +66,17 @@ Accepted 2026-10-25 by the maintainer in chat: **Option A**, a small shell-owned
 Decided by the maintainer in chat. The shell's files are named so nobody mistakes them for Tesserae files: a Tesserae `<Name>_View.yaml` dropped into a shell must not appear to work.
 
 - The shell does not use Tesserae's `_View.yaml`, `_ViewModel.py` or `_Component.yaml` names. For themes, styles and stylesheets it uses the plain suffixes `*_Theme.yaml`, `*_Style.yaml` and `*_Stylesheet.yaml` (decided 2026-10-25, below). The name alone does not say whose file it is; the required `shell:` key does.
-- A shell is written either as **one `*.yaml` file** for the whole shell, or as a **`Main_Shell.yaml`** that imports several **`<Name>_Shell.yaml`** files and builds the shell from them. Both forms are valid.
+- A shell is written either as one `*.yaml` file for the whole shell, or as a `Main_Shell.yaml` that imports several `<Name>_Shell.yaml` files and builds the shell from them. Both forms are valid.
 - A Tesserae file placed in a shell is refused with an error that names the file and says it is not a shell file (see Open items for how a shell file is recognised).
 - Python module files are `<Name>_Module.py` (see Modules below).
-- **Theme, style and stylesheet files are `<Name>_Theme.yaml`, `<Name>_Style.yaml` and `<Name>_Stylesheet.yaml`** (decided 2026-10-25, replacing `_ShellTheme`, `_ShellStyle` and `_ShellStylesheet`). Tesserae uses the same suffixes, so a file is a shell file only if it carries the required `shell:` key (and a Tesserae file does not). The maintainer's reasoning: file names such as `_Style.yaml` are in wide use, so a shared suffix is not the problem; the version key is the discriminator. Tesserae side: the maintainer has told the Tesserae project to add a matching version key (`tesserae: <version>`) to all its `.yaml` files, so each side can refuse the other's files; Tesserae is working on it (maintainer report, 2026-10-25). Nothing is asked of Tesserae from this vault. #needs-verification: the key name and format, and the release that carries it, until Tesserae publishes them.
+- Theme, style and stylesheet files are `<Name>_Theme.yaml`, `<Name>_Style.yaml` and `<Name>_Stylesheet.yaml` (decided 2026-10-25, replacing `_ShellTheme`, `_ShellStyle` and `_ShellStylesheet`). Tesserae uses the same suffixes, so a file is a shell file only if it carries the required `shell:` key (and a Tesserae file does not). The maintainer's reasoning: file names such as `_Style.yaml` are in wide use, so a shared suffix is not the problem; the version key is the discriminator. Tesserae side: the maintainer has told the Tesserae project to add a matching version key (`tesserae: <version>`) to all its `.yaml` files, so each side can refuse the other's files; Tesserae is working on it (maintainer report, 2026-10-25). Nothing is asked of Tesserae from this vault. #needs-verification: the key name and format, and the release that carries it, until Tesserae publishes them.
 
 ### Recognising a shell file and importing (2026-10-25)
 
 Decided by the maintainer in chat.
 
-- **Every shell file has a required top-level `shell:` key with a format version.** A file without it is not a shell file and is refused with an error naming the file. This also covers a one-file shell with any name.
-- **A shell file imports another with `import:` under `children:`**, naming a `<Name>_Shell.yaml` file. `children:` is a mapping, not a list. A single-file shell writes the same content inline as keys and values indented under `children:`. The two forms mean the same thing.
+- Every shell file has a required top-level `shell:` key with a format version. A file without it is not a shell file and is refused with an error naming the file. This also covers a one-file shell with any name.
+- A shell file imports another with `import:` under `children:`, naming a `<Name>_Shell.yaml` file. `children:` is a mapping, not a list. A single-file shell writes the same content inline as keys and values indented under `children:`. The two forms mean the same thing.
 - **Imports nest.** An imported file can import further files. Reason: a small change then stays inside one small file and does not break the rest.
 
 The maintainer's example, as given (2026-10-25). It is a basic example, **not exact implementation guidance**; the grammar is set in `41 YAML Reference/`:
@@ -172,7 +172,7 @@ Decided by the maintainer in chat, from the Label example.
 | `widget:` | A widget | `Text`, `Icon`, `Box`, `FlexBox`, ... ([[V1 Widgets]]) |
 
 - **Surfaces do not nest.** A surface is never inside another surface; they are siblings and refer to each other by name ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]). The layout nests like this: a shell file holds surfaces, a surface places modules, a module holds widgets, and widgets nest inside container widgets.
-- **`widget: Text` and `Text` mean the same thing.** The type may be the key (`Text:`) or the value of `widget:`. Where two widgets of one type sit in one container, the unique-name form is used: a unique name as the key, with `widget: Text` inside it.
+- `widget: Text` and `Text` mean the same thing. The type may be the key (`Text:`) or the value of `widget:`. Where two widgets of one type sit in one container, the unique-name form is used: a unique name as the key, with `widget: Text` inside it.
 - **Containers.** `Box` is a basic container with no auto-stacking; unstyled it is invisible, fully styled it is a panel of its own. `FlexBox` stacks its children automatically, with `alignment` vertical or horizontal. This replaces Row and Column in [[V1 Widgets]].
 - **Params.** A module's declared params are what a use passes; `use.params` is the name in Python ("params matches the YAML").
 - **Module values.** Expressions in the module's YAML read `params.<name>` and the values the Python sends, under their own names. Addressing a widget directly by its `name:` is optional.
@@ -183,7 +183,7 @@ Decided by the maintainer in chat, from the Label example.
 Decided by the maintainer in chat, from the Popup/Panel and structure questions.
 
 - **A popup can be called by many modules, and it must know what called it,** so its data is relevant to the caller's context. The caller's record (the calling module, the use, its params, the anchor) is available to the popup's own modules and expressions.
-- **`children:` is the only holder.** A surface, a container and a popup hold their contents under `children:`. `modules:` goes away. How a module use is written inside `children:` waits for the widget/module decision below.
+- `children:` is the only holder. A surface, a container and a popup hold their contents under `children:`. `modules:` goes away. How a module use is written inside `children:` waits for the widget/module decision below.
 - **A container is a fundamental building block, not a widget,** so it gets its own key (name not decided; `container:` is the suggestion).
 - **Names.** Anything with a unique name gets a UID. A layer window (surface), container, module, widget or special case can have a name. **Names are unique across the shell, not per monitor** (this supersedes "unique per monitor" in the earlier sections). A name or UID is reachable from anywhere in the shell through the registry, nested or not. (See Open items for how repeated uses of one definition get unique names.)
 - **Popup focus is opt-in.** An open popup that is marked as taking focus takes the keyboard and mouse itself, with nothing passed at call time. Not every popup has selections, so the default is not to take focus.
@@ -193,17 +193,17 @@ Decided by the maintainer in chat, from the Popup/Panel and structure questions.
 
 Decided by the maintainer in chat:
 
-- **A module is a `<Name>_Module.yaml` file plus a matching `<Name>_Module.py`.** The shell framework expects the Python file and requires it. A module with no matching `.py` is a load error that names both files.
+- A module is a `<Name>_Module.yaml` file plus a matching `<Name>_Module.py`. The shell framework expects the Python file and requires it. A module with no matching `.py` is a load error that names both files.
 - **A module may have a style.** Either an optional `<Name>_Style.yaml` file, or a `style:` key with the values written inline. (Updated 2026-10-26: the style file is `type: Style`, named by the module's `style:` key; it was `type: Module` here.)
 - **A module can be used many times.** `Clock_Module.yaml` may appear in several places, and all uses share the same data. One module is one source of data, however many views show it.
-- **A module file is recognised by both its `_Module.yaml` name and a `type: Module` key** (written `module` in the first note; file types are capitalised). `type:` is authoritative; the suffix is the convention. A mismatch between them is a load error. Every module file also carries `shell:`.
+- A module file is recognised by both its `_Module.yaml` name and a `type: Module` key (written `module` in the first note; file types are capitalised). `type:` is authoritative; the suffix is the convention. A mismatch between them is a load error. Every module file also carries `shell:`.
 - **One module instance per module file, shared by all uses.** When uses must differ, the module keeps track of it. Example: `Label_Module.yaml` has text to display; its Python script decides which use shows which text, from a JSON file, a database, another YAML file, or anything else. The shell provides the entry and the rendering, not the data.
-- **`<Name>_Module.py` lives next to its `<Name>_Module.yaml`.** Modules go in a `Modules/<module_name>/` folder with all their supporting `.py`, configuration and other files.
+- `<Name>_Module.py` lives next to its `<Name>_Module.yaml`. Modules go in a `Modules/<module_name>/` folder with all their supporting `.py`, configuration and other files.
 - **The binding is the name.** The module's Python calls its module YAML by file name, unique name or UID. That lets the Python read the rest of the file's keys and values, tokens and so on.
 
 ### Imports (2026-10-25)
 
-- **`import:` takes one file or a list of files.**
+- `import:` takes one file or a list of files.
 
 ### Surface types (2026-10-25)
 
@@ -211,11 +211,11 @@ The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properti
 
 ### Monitors, names and errors (2026-10-25)
 
-- **`monitor` accepts anything the shell gives it.** A root with no `monitor` is ignored. A file imported by a root uses that root's monitor. How `monitor` is written for a name, a description or a default is set in `41 YAML Reference/`.
-- **`name` is unique per monitor.** It need not be unique shell-wide. Its scope is the YAML file it is in and the Python scripts attached to that file. It references something inside its own file or from its script.
+- `monitor` accepts anything the shell gives it. A root with no `monitor` is ignored. A file imported by a root uses that root's monitor. How `monitor` is written for a name, a description or a default is set in `41 YAML Reference/`.
+- `name` is unique per monitor. It need not be unique shell-wide. Its scope is the YAML file it is in and the Python scripts attached to that file. It references something inside its own file or from its script.
 - **A UID is shell-wide** and reachable from the highest level to the lowest. Each YAML file gets one automatically.
-- **Load errors carry `file:line:column`:** an import cycle (it prints the chain of files, `A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`), a missing file, and a name defined twice (it names both places). An import path is relative to the importing file. Logging candidate: Loguru ([[Logging with Loguru]]); not decided.
-- **`type:` names a file's type; `kind:` names a surface's kind.** `type:` is for file types such as `Module` and `Theme` (and `Shell`, `Style`, `Stylesheet`). `kind:` is for the kind of surface (`bar`, `frame`, `panel`, `popup`). Decided 2026-10-25, so the two never share a meaning.
+- Load errors carry `file:line:column`: an import cycle (it prints the chain of files, `A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`), a missing file, and a name defined twice (it names both places). An import path is relative to the importing file. Logging candidate: Loguru ([[Logging with Loguru]]); not decided.
+- `type:` names a file's type; `kind:` names a surface's kind. `type:` is for file types such as `Module` and `Theme` (and `Shell`, `Style`, `Stylesheet`). `kind:` is for the kind of surface (`bar`, `frame`, `panel`, `popup`). Decided 2026-10-25, so the two never share a meaning.
 
 ### View format: a full expression language, and Python as an equal front-end (2026-10-25)
 
@@ -245,9 +245,9 @@ Decided by the maintainer in chat.
 
 Decided by the maintainer in chat.
 
-- **Shell configuration lives in `$HOME/.config/tesserae-shell/`.** The registry is `registry.json` there. Subdirectories: `Styles`, `Themes`, `Stylesheets` and `Modules`.
+- Shell configuration lives in `$HOME/.config/tesserae-shell/`. The registry is `registry.json` there. Subdirectories: `Styles`, `Themes`, `Stylesheets` and `Modules`.
 - **Search paths.** The shell can be given a list of directories to look in (`look-at`) for modules, styles, themes and stylesheets. The default for each is its subdirectory above, for example `$HOME/.config/tesserae-shell/Modules`.
-- **`name` is required** on an entry and is part of its identity.
+- `name` is required on an entry and is part of its identity.
 - **The registry resolves references across files** (decided 2026-10-25). A `name` is unique per monitor and scoped to its own file, so a reference from another file, such as a Panel attached to a Bar, is looked up in the registry, which tracks names. If the referenced name no longer exists, the registry knows and the shell reports a warning or an error. Decided 2026-10-25 (the maintainer accepted the recommendation): **an error at load** when a reference never resolves, and **a warning while the shell runs** when a target disappears (for example after a hot reload), with the Panel kept hidden until the target returns. Both name the file and the missing name (`file:line:column`).
 - **Identity.** The registry compares the entry's values other than its UUID, with `name` and `location`. The comparison shows whether the module is still there; the UUID written into the file is the confirmation.
 - **The registry writes the UID into the file.** When an entry is first registered, the shell injects `UID: <UUIDv7 value>` into the entry-point YAML, directly below `shell: <version>`.
@@ -257,7 +257,7 @@ Decided by the maintainer in chat.
 
 Decided by the maintainer in chat.
 
-- **A UID is made with the built-in `uuid.uuid7()`**, a time-ordered, random-backed UUIDv7. It is shell-wide and survives reloads.
+- A UID is made with the built-in `uuid.uuid7()`, a time-ordered, random-backed UUIDv7. It is shell-wide and survives reloads.
 - **A registry keeps them.** A file (JSON), not a database ("a DB might be a little much"). Each entry maps a UID to what is known about it for a quick lookup on reload: its type or kind, its state, and the file it comes from (the module file, a config file).
 - **A mismatch means the entry is new.** If the registry entry and the current file or entry do not agree, the shell treats the old one as removed and registers a new one.
 - Python 3.14 or later is the shell's minimum, accepted by the maintainer. `uuid.uuid7()` ran on 3.14.8 here; tre's wheels cover CPython 3.12 and later ([tre README](https://github.com/mindderivative/tre)). #needs-verification: that 3.14 is the first release with `uuid.uuid7()`.
@@ -293,17 +293,17 @@ Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import
 - [x] **Widget list for v1.** Decided 2026-10-25: take the list from the surfaces and modules in [[V1 Scope]], and add one only when a module needs it. The list is [[V1 Widgets]].
 - [x] **Build or adopt the expression engine.** Build: the Tesserae Expression Language, a separate library ([[ADR-0008 Tesserae Expression Language]], decided 2026-10-25). Survey kept as input: [[Expression Languages for YAML]].
 - [x] **How a module's values reach its widgets:** `params.<name>` plus sent values (maintainer, 2026-10-26).
-- [x] **Widget keys in `children:`:** `Text:` and `widget: Text` are the same; the unique-name form where a type repeats.
+- [x] Widget keys in `children:`: `Text:` and `widget: Text` are the same; the unique-name form where a type repeats.
 - [x] **The module's style file type:** `type: Style`.
 - [x] **Container widgets:** `Box` and `FlexBox`.
 - [x] **Four-sided shorthand: option A** (maintainer, 2026-10-26): forms YAML already understands. One number for all sides (`border_thickness: 2`), a list of four (`[2, 2, 2, 2]`), or named sides (`{left: 2, top: 2, right: 2, bottom: 2}`). The maintainer's brace forms were written from experience of other UI tools; they do not survive a standard YAML load (PyYAML read `{2, 2, 2, 2}` as `{2: None}` on 2026-10-26). The order of a list of four is clockwise from the top (top, right, bottom, left), confirmed by the maintainer on 2026-10-26, as tre's `margin` is; named sides are the unambiguous form.
 - [x] **Is "overlay" a kind?** No (maintainer, 2026-10-26): the Overlay is the shell-wide layer that puts something on top of everything else, and a Panel with `layer: overlay` is an overlay popup panel. The kinds stay bar, frame, panel and popup. See [[Surface Types#Overlay]].
-- [x] **What `type:` means in "layer surfaces (`type:`)".** The file identifiers: `_Shell.yaml`, `_Module.yaml` and so on, with `type: Shell`, `type: Module` (maintainer, 2026-10-26). Nothing to do with rendering.
+- [x] What `type:` means in "layer surfaces (`type:`)". The file identifiers: `_Shell.yaml`, `_Module.yaml` and so on, with `type: Shell`, `type: Module` (maintainer, 2026-10-26). Nothing to do with rendering.
 
 - [ ] **Expression language design.** Its grammar, sandbox and errors are designed in the TEL project. The shell's requirements on it are in [[Expression Language Requirements]]. `41 YAML Reference/` records which TEL features a shell file may use and what names an expression can reference (module values, tokens, other entries).
 - [ ] **Python builder API.** The Python front-end that produces the same tree as the YAML, and the parity test. Written in `42 Python API/`.
 - [x] **Writing the UID into a user's file.** Decided 2026-10-25: once the file is found, the shell opens it and writes `UID:` below `shell:`. The points below are implementation defaults for that write, not open questions; the maintainer called the question obvious. Defaults — The shell edits a file the user owns. Needs: a YAML writer that keeps comments and layout; no reload loop when the watcher sees the shell's own write; behaviour for a read-only file or a file shared by two shells; and what happens when the user copies a file, so two files carry one UID. Recommendation: the writer keeps comments, writes are ignored by the watcher for that file, a read-only file is registered without injection and warned, and a duplicate UID is a load error naming both files.
-- [ ] **`kind:` inside a class.** The Label style example writes `kind: Text` to say which widget a class applies to; `kind:` is the surface kind everywhere else. Recommendation: `widget: Text` inside a class ([[Style, Theme and Stylesheet Files#Classes]]).
+- [ ] `kind:` inside a class. The Label style example writes `kind: Text` to say which widget a class applies to; `kind:` is the surface kind everywhere else. Recommendation: `widget: Text` inside a class ([[Style, Theme and Stylesheet Files#Classes]]).
 - [ ] **Widget, module and building blocks** (2026-10-26). The maintainer asked whether, following Tesserae's route, a widget and a module are the same thing, built from base building blocks, and whether one of the two words should go. Analysis and options: [[Shell Structure#Widgets, modules and building blocks]]. Blocks the `kind: Text` question and the key for a module use.
 - [ ] **Unique names across the shell with repeated uses.** A module (or an imported surface set) is used many times, and its internal names (`Label_Text`) repeat. A flat shell-wide unique name would clash. Proposal: names inside a definition are local; each use gets a path name (`top_label.Label_Text`), and the registry holds the path as the shell-wide unique name and a UID for the instance. A UID written into a file belongs to the file (the definition); an instance UID lives in the registry only. References can use the path, or a short name when it is unambiguous. Needs the maintainer's confirmation.
 - [ ] **Params and "bubble up".** The maintainer suggested a bubble-up policy for params. My reading and recommendation are in [[Module File#Params down the tree]].

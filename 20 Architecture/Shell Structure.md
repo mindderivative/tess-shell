@@ -70,15 +70,15 @@ Reading the arrows: a layer window holds modules directly, or containers; contai
 
 - **Layer 0 is for wallpapers only, for now** (maintainer, 2026-10-26). No kind uses `layer: background`. The maintainer can see it used later for window tiling, or as a base layer for a desktop dashboard.
 - **Frame is Top only.** Its strips move to `top` ([[Surface Types]]). Top suits the painter, which must be above windows to be seen; the strips are invisible so any layer works, and Top-layer reservation is the case known to work on KWin.
-- **The shell enforces `top` as the only layer that reserves space.** The protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion. Handling proposed: an `exclusive_zone` off `top` is a load error.
+- The shell enforces `top` as the only layer that reserves space. The protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion. Handling proposed: an `exclusive_zone` off `top` is a load error.
 - **KWin is "between Layer 1 and Layer 2",** as the protocol says.
 
 ## What does not match, or needs a decision
 
-1. ~~Popup: a kind or declared inside a module?~~ **Decided (maintainer, 2026-10-26): Popup stays as it is, a `kind: popup` entry in the shell file.** The diagram's edge is **"Calls"**: a module can *call* a popup, and the popup can hold modules and containers. It is not declared inside the module. The Special Cases group exists because the maintainer can see other surfaces that behave like a popup but need their own kind, such as a **Notification window**. Not v1 ([[V1 Scope#After v1]]); recorded in [[Surface Types#Special cases]].
+1. ~~Popup: a kind or declared inside a module?~~ Decided (maintainer, 2026-10-26): Popup stays as it is, a `kind: popup` entry in the shell file. The diagram's edge is **"Calls"**: a module can *call* a popup, and the popup can hold modules and containers. It is not declared inside the module. The Special Cases group exists because the maintainer can see other surfaces that behave like a popup but need their own kind, such as a **Notification window**. Not v1 ([[V1 Scope#After v1]]); recorded in [[Surface Types#Special cases]].
 2. **Widgets only through a module.** Open until the widget and module model is defined (the maintainer, 2026-10-26: it depends on what defines a widget; see below).
 3. **Containers and widgets share a key?** **Decided: a container is a fundamental building block, not a widget, so it has its own key** (name not decided).
-4. **How a surface holds modules and containers.** **Decided: `children:` only; `modules:` goes away** (maintainer, 2026-10-26). The way a module use is written inside `children:` waits for the widget and module decision.
+4. **How a surface holds modules and containers.** Decided: `children:` only; `modules:` goes away (maintainer, 2026-10-26). The way a module use is written inside `children:` waits for the widget and module decision.
 5. **Nested modules, names and UIDs.** **Decided: anything with a unique name gets a UID; names are unique across the shell and reachable from anywhere through the registry.** Open: how repeated uses of one definition get unique names (path names, proposed in [[ADR-0007 Shell UI Layer#Open items]]) and the params policy ([[Module File#Params down the tree]]).
 6. **Popup focus.** **Decided: opt-in.** An open popup marked as taking focus takes keyboard and mouse itself. See [[Surface Types#Special cases]].
 

@@ -60,10 +60,10 @@ root:
 | `kind` | `bar`, `frame`, `panel`, `popup` | All | Decided |
 | `layer` | `background`, `bottom`, `top`, `overlay` | All | Decided (the key) |
 | `style` | A style file or an inline mapping | All | Decided |
-| `children` | The surface's contents: containers and module uses. **`children:` is the only holder; `modules:` is gone** (maintainer, 2026-10-26). The syntax of a module use waits for the widget/module decision ([[Shell Structure#Widgets, modules and building blocks]]) | All | Decided (the key) |
+| `children` | The surface's contents: containers and module uses. `children:` is the only holder; `modules:` is gone (maintainer, 2026-10-26). The syntax of a module use waits for the widget/module decision ([[Shell Structure#Widgets, modules and building blocks]]) | All | Decided (the key) |
 | `anchor` | Edges to attach to: `top`, `bottom`, `left`, `right` (one or a list) | bar, panel | Proposed |
 | `size` | `[width, height]`; `0` stretches between two anchored edges | bar, panel, popup | Proposed |
-| `exclusive_zone` | Space reserved along the anchored edge, in pixels. **Only allowed on `layer: top`**; on any other layer it is a load error (maintainer, 2026-10-26; error handling proposed) | bar, panel, frame | Rule decided; key name proposed |
+| `exclusive_zone` | Space reserved along the anchored edge, in pixels. Only allowed on `layer: top`; on any other layer it is a load error (maintainer, 2026-10-26; error handling proposed) | bar, panel, frame | Rule decided; key name proposed |
 | `margin` | Four-sided offset from the anchored edges | bar, panel | Proposed |
 | `keyboard` | `none`, `on_demand`, `exclusive` | All | Proposed (`exclusive` used for the launcher) |
 | `input_region` | Where input lands: the whole surface, nothing, rectangles, or `auto` | All | Proposed |

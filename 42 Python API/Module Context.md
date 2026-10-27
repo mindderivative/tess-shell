@@ -64,7 +64,7 @@ This lets a module follow monitors coming and going ([[Data Flow#Monitor hot-plu
 
 The maintainer's example (2026-10-26), which replaced an earlier example of mine that treated a module as a data source for widgets in a bar. A module has three parts: a layout YAML, a style YAML and a Python file ([[ADR-0007 Shell UI Layer#What a module is (2026-10-26)]]). The files are reproduced as given. The maintainer notes it is only an example and may not work exactly like this.
 
-**`Modules/Label/Label_Module.yaml`**: the layout and the data positioning
+`Modules/Label/Label_Module.yaml`: the layout and the data positioning
 
 ```yaml
 shell: v1
@@ -90,7 +90,7 @@ FlexBox:
             class: text_style
 ```
 
-**`Modules/Label/Label_Style.yaml`** (named `Label_Style.py` in the message; its content is YAML): the look and feel
+`Modules/Label/Label_Style.yaml` (named `Label_Style.py` in the message; its content is YAML): the look and feel
 
 ```yaml
 shell: v1
@@ -118,7 +118,7 @@ Text:
     font_family: {"Hack Nerd Font Mono", "JetBrains Mono"}
 ```
 
-**`Modules/Label/Label_Module.py`**: the logic
+`Modules/Label/Label_Module.py`: the logic
 
 ```python
 import json, yaml
@@ -161,7 +161,7 @@ class Label(Module):
         return json.loads(path.read_text()) if path.exists() else {}
 ```
 
-**`DP1_Shell.yaml`**: a surface places the module and passes params
+`DP1_Shell.yaml`: a surface places the module and passes params
 
 ```yaml
 shell: v1
@@ -218,7 +218,7 @@ def open_menu(self, popup_name, anchor):
     self.ctx.popup(self, popup_name).open(anchor_rect=anchor)
 ```
 
-**A problem with `self` alone.** One module instance serves every use. `self` says *which module* called but not *which use* (which surface, which monitor, which params). The popup's parent is the surface that holds the calling use, and it must open on that monitor. So the caller also has to carry the use. Options:
+A problem with `self` alone. One module instance serves every use. `self` says *which module* called but not *which use* (which surface, which monitor, which params). The popup's parent is the surface that holds the calling use, and it must open on that monitor. So the caller also has to carry the use. Options:
 
 | Option | Shape | Notes |
 |---|---|---|

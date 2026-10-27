@@ -45,7 +45,7 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 |---|---|---|---|
 | `root` | Shell file | The tree of one monitor's surfaces: `name`, `monitor`, `children` | Decided; multiple roots open ([[Shell File]]) |
 | `monitor` | A root | Connector name, then description; `default` for monitors no root names; no `monitor` means the root is ignored | Decided |
-| `children` | A root, a surface, a container, a popup | A mapping of unique names to entries; `import:` pulls in another file. **The only holder of contents; `modules:` is gone** | Decided |
+| `children` | A root, a surface, a container, a popup | A mapping of unique names to entries; `import:` pulls in another file. The only holder of contents; `modules:` is gone | Decided |
 | `import` | Inside `children` | One file name or a list of `<Name>_Shell.yaml` files; paths are relative to the importing file; imports nest | Decided |
 | `container` | Inside `children` | A building block that holds children: `Box` or `FlexBox`. Its own key, not `widget:` (maintainer, 2026-10-26); the key name is a suggestion | Decided that it has its own key |
 | `module` | A module use | The module file, when the use has params | Proposed ([[Module File#Using a module]]) |

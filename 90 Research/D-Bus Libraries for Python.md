@@ -17,7 +17,7 @@ depends_on: []
 > The maintainer accepted the recommendation: [[ADR-0009 D-Bus Client Library]].
 
 > [!summary]
-> The shell and its modules need a D-Bus client for UPower, NetworkManager, MPRIS, KWin, the tray and the global shortcut service ([[System Context]]). This survey compares the Python options. Recommendation: **`dbus-fast`**, run on one shared asyncio service thread that the shell provides, with **`jeepney`** as the fallback. The maintainer asked for the survey and a recommendation (2026-10-26); the choice is theirs. Release data comes from PyPI and GitHub on 2026-10-26; nothing was installed or run.
+> The shell and its modules need a D-Bus client for UPower, NetworkManager, MPRIS, KWin, the tray and the global shortcut service ([[System Context]]). This survey compares the Python options. Recommendation: `dbus-fast`, run on one shared asyncio service thread that the shell provides, with `jeepney` as the fallback. The maintainer asked for the survey and a recommendation (2026-10-26); the choice is theirs. Release data comes from PyPI and GitHub on 2026-10-26; nothing was installed or run.
 
 ## What the shell needs
 
@@ -57,9 +57,9 @@ depends_on: []
 
 ## Recommendation
 
-1. **Use `dbus-fast`**, on a shell-provided shared asyncio service thread, for the shell's own D-Bus work and as the library modules use through `ctx.dbus`.
+1. Use `dbus-fast`, on a shell-provided shared asyncio service thread, for the shell's own D-Bus work and as the library modules use through `ctx.dbus`.
 2. **Do not forbid others.** A module is Python and may import whatever it needs; the shell recommends and helps with `dbus-fast`.
-3. **Keep `jeepney` as the fallback** if the Cython wheels or the asyncio helper cause packaging or threading trouble.
+3. Keep `jeepney` as the fallback if the Cython wheels or the asyncio helper cause packaging or threading trouble.
 4. **Test early** (a short spike): read UPower's battery percentage, watch a `PropertiesChanged` signal, and read KWin's `/VirtualDesktopManager`, from the service thread on Python 3.14, and measure the idle cost.
 
 ## Risks and checks

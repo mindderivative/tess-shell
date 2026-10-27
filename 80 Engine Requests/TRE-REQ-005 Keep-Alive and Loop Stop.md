@@ -49,7 +49,7 @@ Findings from the `tre` session over the mailbox (2026-10-26, from the 0.5.8 sou
 | `App.run()` raises `RuntimeError` with zero registered windows | Yes: `engine-py/src/app.rs:1009` ("App.run() called with no windows -- call add_window() at least once first"); also in [App reference](https://mindderivative.github.io/tre/reference/app/) |
 | The platform loop ends when no window and no layer surface is left | Yes: `engine-platform/src/layer_loop.rs`, `exit_if_empty` (exits when `windows` and `layers` are empty) |
 | `LoopHandle` has only `call_soon` | Yes: `engine-py/src/thread_handle.rs` (one method in the `#[pymethods]` block) |
-| **`call_soon` does not run with zero windows** (correcting the earlier experiments, which all had a window) | From `tre`'s review: the queue is drained inside a window's frame callback and the `Wake` event only requests redraws of windows and layers, so a queued callback waits forever |
+| `call_soon` does not run with zero windows (correcting the earlier experiments, which all had a window) | From `tre`'s review: the queue is drained inside a window's frame callback and the `Wake` event only requests redraws of windows and layers, so a queued callback waits forever |
 | **Python signal handlers do not run on an idle loop** | Measured by `tre`: a `SIGUSR1` handler ran 2 s late, only when a `call_soon` gave the main thread Python work. Ctrl-C and SIGTERM cannot stop an idle shell today |
 | **The loop has eight exit points**, not one | Five `exit_if_empty` sites in `layer_loop.rs` and three more `event_loop.exit()` sites in `engine-platform/src/lib.rs` (close, close requested, `max_frames`) |
 | Calling `run()` again after it returned works | From `tre`'s test run; not checked by me |
@@ -72,12 +72,12 @@ ok = handle.stop()              # any thread; returns False outside a running lo
 
 Behaviour `tre` is building:
 
-1. **`run(keep_alive=True)`** belongs to one run. With it set, `run()` does not raise with zero windows, and every exit point is a no-op, so the loop continues until stopped. Without it nothing changes.
-2. **`call_soon` and `stop()` are drained without a window.** The engine gets a window-less drain.
+1. `run(keep_alive=True)` belongs to one run. With it set, `run()` does not raise with zero windows, and every exit point is a no-op, so the loop continues until stopped. Without it nothing changes.
+2. `call_soon` and `stop()` are drained without a window. The engine gets a window-less drain.
 3. **The output watch starts at loop start**, so `output_added`, `output_removed` and `output_updated` arrive with zero windows.
-4. **`LoopHandle.stop() -> bool`** is safe from any thread, with or without `keep_alive`, and applies to a **running loop only**. It returns `False` before or after a run, so a stop queued early cannot end the next run.
-5. **`stop()` closes every open window unconditionally**: `close_requested` is skipped, so a shutdown cannot be vetoed. Each window hears `closed` (reason `"app"` or a new `"stopped"`), then `run()` returns normally.
-6. **With `keep_alive`, closing the last window does not end the run**, including a bar closed with reason `"output_removed"`. The shell can add a `LayerWindow` from an `output_added` handler.
+4. `LoopHandle.stop() -> bool` is safe from any thread, with or without `keep_alive`, and applies to a **running loop only**. It returns `False` before or after a run, so a stop queued early cannot end the next run.
+5. `stop()` closes every open window unconditionally: `close_requested` is skipped, so a shutdown cannot be vetoed. Each window hears `closed` (reason `"app"` or a new `"stopped"`), then `run()` returns normally.
+6. With `keep_alive`, closing the last window does not end the run, including a bar closed with reason `"output_removed"`. The shell can add a `LayerWindow` from an `output_added` handler.
 7. **Non-Wayland sessions:** `keep_alive` works (an idle loop, `call_soon`, `stop()`); there are no output events and no error.
 
 **Size.** About 100 to 150 lines of code in `engine-py` and `engine-platform` and about as many in tests, the stub and docs (revised up from 60 to 100 after the eight exit points and the window-less drain were found).

@@ -68,13 +68,13 @@ From the flow diagram ([[Shell Structure]], 2026-10-26). `layer:` takes the four
 
 `background` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no kind uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is in a Special Cases group: a module calls it, and it holds modules and containers ([[Shell Structure]]).
 
-**Reserved space is enforced to the `top` layer** (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). Proposed handling: an `exclusive_zone` on a surface not on `top` is a load error.
+Reserved space is enforced to the `top` layer (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). Proposed handling: an `exclusive_zone` on a surface not on `top` is a load error.
 
 ## Special cases
 
 The flow diagram ([[Shell Structure]]) groups the Popup under **Special Cases** (maintainer, 2026-10-26).
 
-- **A Popup stays a `kind: popup` entry in the shell file** and names the surface it hangs off, as before.
+- A Popup stays a `kind: popup` entry in the shell file and names the surface it hangs off, as before.
 - **A module calls it.** The diagram's edge is "Calls": a module's code (an `@action`, for example a click on a tray icon) asks the shell to open the popup. How the call is written is proposed in [[Module Context#Calling a popup]].
 - **It holds modules and containers,** like a layer window, and is drawn above its parent.
 - **It knows what called it** (maintainer, 2026-10-26): the caller's record (module, use, params, anchor) is available to the popup's own modules and expressions, so a tray menu shows the items of the tray icon that was clicked.
@@ -98,7 +98,7 @@ launcher:
 
 Modules are placed under `children:` as for any surface. A panel can be anchored, floating, movable, hidden or full-screen, so one kind covers a launcher, an OSD and a full-screen overlay.
 
-**Option B, add `kind: overlay`.** A surface kind that is the size of the whole output, transparent, on the overlay layer, with its input region following what is drawn in it:
+Option B, add `kind: overlay`. A surface kind that is the size of the whole output, transparent, on the overlay layer, with its input region following what is drawn in it:
 
 ```yaml
 screen_overlay:
@@ -110,7 +110,7 @@ screen_overlay:
 - For: one name for the "special" container the maintainer has in mind; it can host a launcher, OSD or dismissal layer without the author sizing a panel.
 - Against: an output-sized surface costs more video memory (tre measured 177 MiB for a 4K overlay against 18 MiB for a bar, before later changes; [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]), and tre's own advice is to build menus with `PopupWindow`, not an overlay. It duplicates what a full-screen panel can do.
 
-**Decided (maintainer, 2026-10-26): Option A, `layer: overlay`.** The `layer:` key works like layers in a graphics editor: the highest layer shows first, which is familiar. The maintainer's picture: the Overlay is the shell-wide layer that puts something on top of everything else, and a Panel added to it makes an overlay popup panel. In the files that is a Panel with `layer: overlay`; the overlay is a `layer:` value, not a fifth kind, and surfaces still do not nest. Not to be confused with the **Popup** kind, which is a menu or flyout anchored to a surface and placed by the compositor; an overlay panel is an ordinary panel that sits above the rest. If the maintainer meant a container that holds panels inside it, tell me: that would contradict "surfaces do not nest" ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]).
+Decided (maintainer, 2026-10-26): Option A, `layer: overlay`. The `layer:` key works like layers in a graphics editor: the highest layer shows first, which is familiar. The maintainer's picture: the Overlay is the shell-wide layer that puts something on top of everything else, and a Panel added to it makes an overlay popup panel. In the files that is a Panel with `layer: overlay`; the overlay is a `layer:` value, not a fifth kind, and surfaces still do not nest. Not to be confused with the **Popup** kind, which is a menu or flyout anchored to a surface and placed by the compositor; an overlay panel is an ordinary panel that sits above the rest. If the maintainer meant a container that holds panels inside it, tell me: that would contradict "surfaces do not nest" ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]).
 
 ## Behaviour
 
