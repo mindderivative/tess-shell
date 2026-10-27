@@ -375,7 +375,7 @@ children:
     - import: Custom_Module.yaml
 ```
 
-  `children:` is a mapping (each name once) or a list (repeats allowed); the two do not mix inside one `children:`. Proposed, to confirm: in a list each use has an optional `name:`, and without one the shell names it from its position (`Label_1`, `Label_2`), so the path name stays unique.
+  `children:` is a mapping (each name once) or a list (repeats allowed); the two do not mix inside one `children:`. Decided (maintainer, 2026-10-26): in a list each use has an optional `name:`, and without one the shell names it from its position (`Label_1`, `Label_2`), so the path name stays unique.
 - [x] **Names that exist as both a block and a module.** Resolved: the module `Text` was a mistake and is now TextBox. Image and Icon (modules) sit on Bitmap and SVG (blocks) under different names.
 - [x] **Modules the shell ships:** a stable registry-only UID; a user module of the same name overrides it.
 - [x] **Can the listed modules be made from the listed blocks?** The maintainer reports yes, tested on Tesserae (2026-10-26).

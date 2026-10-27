@@ -153,7 +153,7 @@ children:
     - import: Custom_Module.yaml
 ```
 
-`children:` is a mapping or a list, never a mix: a parser rejects a list item beside a mapping key, so `import:` is a list item here. An optional `name:` per item, or a name from its position, keeps each use's path name unique ([[ADR-0007 Shell UI Layer#Open items]]).
+`children:` is a mapping or a list, never a mix: a parser rejects a list item beside a mapping key, so `import:` is a list item here. An optional `name:` per item keeps each use's path name unique; without one the shell names it from its position (`Label_1`, `Label_2`), decided 2026-10-26 ([[ADR-0007 Shell UI Layer#Open items]]).
 
 ## Params down the tree
 
