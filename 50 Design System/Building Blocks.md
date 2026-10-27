@@ -37,9 +37,10 @@ Composed in YAML, called by name, optionally with Python. The standard set the m
 | Module | What it is | Built mainly from |
 |---|---|---|
 | Spacer | Flexible empty space | Box |
-| Label | A single line of text, no wrap | Text |
-| TextInput | A single-line text field (added 2026-10-26) | TextField |
-| TextBox | Multi-line text. It replaces the module first listed as Text (a mistake, 2026-10-26); whether it is editable is open | Text, or TextField multi-line variant |
+| Label | A single line of text, no wrap, not editable | Text |
+| TextBox | Multi-line text, not editable (clarified 2026-10-26) | Text |
+| TextInput | A single-line text field, editable | TextField |
+| TextEditor | A multi-line text field, editable (the multi-line TextField variant) | TextField, multi-line variant |
 | Button | A pressable control with states | Box, Text, Icon |
 | Icon | A named or file icon | SVG, Bitmap |
 | Image | An image from png, jpeg, gif or webp | Bitmap |
@@ -58,7 +59,7 @@ These ship with the shell as a standard set; the shell's own modules are open to
 
 ## Names
 
-The module `Text` was a mistake and is now TextBox, so no name is both a block and a module. Image and Icon (modules) sit on Bitmap and SVG (blocks). TextInput and TextBox are modules over the TextField block and its multi-line variant. A block is called with `block:`; a module by its name as the key ([[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]).
+The module `Text` was a mistake and is now TextBox, so no name is both a block and a module. Image and Icon (modules) sit on Bitmap and SVG (blocks). Label and TextBox are bodies of the Text block and are not editable; TextInput and TextEditor are modules over the TextField block and its multi-line variant and are editable. A block is called with `block:`; a module by its name as the key ([[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]).
 
 ## What tre offers
 

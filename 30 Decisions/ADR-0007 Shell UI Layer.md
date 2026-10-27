@@ -192,7 +192,7 @@ Building blocks are built in, and are called with `block:`. They need no name or
 | Shapes | Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path (a free-form path, added 2026-10-26) |
 | Other | Terminal, Canvas |
 
-Modules are composed in YAML from blocks and other modules. The maintainer's list: Spacer; Label (a single line, no wrap); TextInput (a single-line TextField); TextBox (multi-line text; it replaces the module first listed as Text, a mistake corrected on 2026-10-26); Button; Icon; Image (png, jpeg, gif, webp); List; Slider; ProgressBar; Menu and MenuItem; Revealer (a must have); Stack; Badge; Tooltip; Toggle; Marquee text. (TextInput and TextBox were added on 2026-10-26, after the first list.)
+Modules are composed in YAML from blocks and other modules. The maintainer's list: Spacer; Label (a single line, no wrap); TextBox (multi-line text, not editable); TextInput (a single-line TextField, editable); TextEditor (a multi-line TextField variant, editable); Button; Icon; Image (png, jpeg, gif, webp); List; Slider; ProgressBar; Menu and MenuItem; Revealer (a must have); Stack; Badge; Tooltip; Toggle; Marquee text. (TextInput and TextBox were added on 2026-10-26, after the first list.)
 
 Calling things:
 
@@ -231,7 +231,7 @@ children:
             size: 18
 ```
 
-- **Text (multi-line) was a mistake; it is TextBox.** The block `Text` stays a block. The module list has Label (a single line), TextInput and TextBox. The name `Text` is therefore no longer both a block and a module.
+- **Text (multi-line) was a mistake; it is TextBox.** The block `Text` stays a block, and the name `Text` is no longer both a block and a module. Clarified by the maintainer the same day: Label and TextBox are bodies of Text and are not editable (Label is one line, TextBox is multi-line); TextInput (single-line) and TextEditor (multi-line) are TextField variants and are editable.
 - **Shipped modules get a stable registry-only UID,** and a user module of the same name overrides one (the shell's own package cannot be written to).
 - `Path` is a block (a free-form path, for the Frame's concave corners and Panel joins).
 - **Feasibility.** The maintainer reports that Revealer, Marquee, Stack, Slider and Toggle can be built from the blocks and that this was tested on Tesserae. Not independently verified here.
@@ -364,12 +364,23 @@ Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import
 - [ ] `kind:` inside a class. The Label style example writes `kind: Text` to say which widget a class applies to; `kind:` is the surface kind everywhere else. Recommendation: `widget: Text` inside a class ([[Style, Theme and Stylesheet Files#Classes]]).
 - [x] **Widget, module and building blocks** (2026-10-26). Decided: blocks called with `block:`, modules called by name, `widget:` and `module:` dropped. See Blocks, modules and styling above and [[Building Blocks]].
 - [x] **The exact form of a module call:** the module's name as the key, params beneath it, `import:` embeds a file (maintainer, 2026-10-26; see Module call, shipped modules and Path).
-- [ ] **Two uses of one module in one container.** A YAML mapping cannot repeat the key `Label:`. The call form puts the module's name in the key, so two Labels side by side cannot both be written. Options: **A.** a list under the key means several uses, each with its own `name:`: `Label:` followed by `- {name: first, text: "A"}` and `- {name: second, text: "B"}`; a mapping means one use. **B.** a suffix on the key, `Label.first:` and `Label.second:`. **C.** wrap each in its own container. Recommendation A: it keeps the maintainer's syntax for the common single use. The path name of a use is the parent's path plus the key (plus the instance name in a list), for example `dp1_root.top_bar.Label`.
+- [x] **Two uses of one module in one container** (maintainer, 2026-10-26): `children:` may be a list, each item one entry, so a module can repeat and the order is explicit. The maintainer's sketch put `import:` as a mapping key beside the list items; a YAML parser rejects that (checked with PyYAML: a list and a mapping key cannot share a collection), so `import:` is a list item too:
+
+```yaml
+children:
+    - Label:
+        text: "label 1"
+    - Label:
+        text: "label 2"
+    - import: Custom_Module.yaml
+```
+
+  `children:` is a mapping (each name once) or a list (repeats allowed); the two do not mix inside one `children:`. Proposed, to confirm: in a list each use has an optional `name:`, and without one the shell names it from its position (`Label_1`, `Label_2`), so the path name stays unique.
 - [x] **Names that exist as both a block and a module.** Resolved: the module `Text` was a mistake and is now TextBox. Image and Icon (modules) sit on Bitmap and SVG (blocks) under different names.
 - [x] **Modules the shell ships:** a stable registry-only UID; a user module of the same name overrides it.
 - [x] **Can the listed modules be made from the listed blocks?** The maintainer reports yes, tested on Tesserae (2026-10-26).
 - [x] **A free-form shape block:** Path is added.
-- [ ] **Is TextBox editable?** TextBox replaced the multi-line "Text" module, which was display text, but also stands for the multi-line TextField (editable). Recommendation: one TextBox module with an `editable` param, built on the Text block when read-only and on the multi-line TextField when editable. Needs the maintainer's view.
+- [x] **Is TextBox editable?** No (maintainer, 2026-10-26). Label and TextBox are not editable; TextInput and TextEditor are.
 - [ ] **Case of block names.** The maintainer wrote `path` where the list has capitalised names. Recommendation: match case-insensitively and write the capitalised form in files.
 - [ ] **Two files of the same type that conflict.** Two stylesheets that set the same property: proposal, the later import wins.
 - [ ] `kind: Text` in a style class is settled by the new keys: a class names the block with `block: Text` (recommendation, to confirm).

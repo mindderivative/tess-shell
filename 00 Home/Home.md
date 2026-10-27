@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Decided the module call form, Text becomes TextBox, shipped module UIDs, the Path block; feasibility accepted |
+| Last change | Decided: TextBox and Label are not editable, TextInput and TextEditor are; a module repeats through a list under `children:` (with `import:` as a list item) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Two uses of one module in one container (a list under the key?); is TextBox editable?; update the flow diagram (Containers and Widgets become blocks); then path names for repeated uses, the params policy, popup caller and focus, `exclusive_zone` off `top` |
+| Waiting on you | Confirm optional `name:` per list item (else a position name); update the flow diagram (Containers and Widgets become blocks); then path names for repeated uses, the params policy, popup caller and focus, `exclusive_zone` off `top` |
 | Waiting on others | tre 0.5.9 release: `hit_shape="painted"` (#236, [[Hit Testing for Concave Corners]]) and `keep_alive`/`stop()` (#238, [[TRE-REQ-005 Keep-Alive and Loop Stop]]); built on local branches. The Frame uses the explicit-rectangle workaround, and the 1x1 window is the stopgap, until then |
 | Next | The Clock module spec, the Panel spec, then `60 Quality` |
 | Blocked | Nothing |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | TextBox/TextEditor split and the list form for repeated uses decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-26 | Module call form, TextBox, shipped module UIDs, Path block decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-26 | Modules TextInput and TextBox added ([[Building Blocks]]) |
 | 2026-10-26 | Blocks, standard modules, `block:` calls and styling rules decided ([[ADR-0007 Shell UI Layer]], [[Building Blocks]]) |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-26 | Structure answers recorded; Tesserae's widget model analysed; `modules:` replaced by `children:` |
 | 2026-10-26 | Popup stays a kind, called by a module; Special Cases group noted ([[Surface Types#Special cases]]) |
 | 2026-10-26 | Flow diagram v3: Layer 0 wallpapers only; Popup is a special case in a module ([[Shell Structure]]) |
-| 2026-10-26 | Reserved space enforced to the `top` layer ([[Surface Types#Layers per kind]]) |
 
 ## Go to
 

@@ -47,7 +47,7 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 |---|---|---|---|
 | `root` | Shell file | The tree of one monitor's surfaces: `name`, `monitor`, `children` | Decided; multiple roots open ([[Shell File]]) |
 | `monitor` | A root | Connector name, then description; `default` for monitors no root names; no `monitor` means the root is ignored | Decided |
-| `children` | A root, a surface, a container, a popup | A mapping of unique names to entries; `import:` pulls in another file. The only holder of contents; `modules:` is gone | Decided |
+| `children` | A root, a surface, a container, a popup | A mapping of unique names to entries, or a list of one-key entries when a module repeats or order matters (never both in one `children:`); `import:` pulls in another file, as a mapping key or a list item. The only holder of contents; `modules:` is gone | Decided |
 | `import` | Inside `children` | One file name or a list of `<Name>_Shell.yaml` files; paths are relative to the importing file; imports nest | Decided |
 | `import` | A shell file, a module file, an inline `style:` | Brings in another `_Shell.yaml`; embeds a module file at that position (`import: <Name>_Module.yaml`), which is how modules nest; inside `style:` it imports a style file | Decided |
 | `params` | A module file declares them; a use passes them | Typed values | Decided that they exist; type names proposed |

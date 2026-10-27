@@ -142,7 +142,18 @@ children:
         text: "Hello"
 ```
 
-A module file may be used many times; there is one Python instance for all uses, with a `use` record per call. Open: two uses of one module in one container, since a mapping cannot repeat `Label:` (option A, a list under the key, in [[ADR-0007 Shell UI Layer#Open items]]).
+A module file may be used many times; there is one Python instance for all uses, with a `use` record per call. Two uses of one module in one container use the list form (decided 2026-10-26):
+
+```yaml
+children:
+    - Label:
+        text: "label 1"
+    - Label:
+        text: "label 2"
+    - import: Custom_Module.yaml
+```
+
+`children:` is a mapping or a list, never a mix: a parser rejects a list item beside a mapping key, so `import:` is a list item here. An optional `name:` per item, or a name from its position, keeps each use's path name unique ([[ADR-0007 Shell UI Layer#Open items]]).
 
 ## Params down the tree
 
