@@ -68,7 +68,7 @@ From the flow diagram ([[Shell Structure]], 2026-10-26). `layer:` takes the four
 
 `background` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no kind uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is in a Special Cases group: a module calls it, and it holds modules and containers ([[Shell Structure]]).
 
-Reserved space is enforced to the `top` layer (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). Proposed handling: an `exclusive_zone` on a surface not on `top` is a load error.
+Reserved space is enforced to the `top` layer (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). An `exclusive_zone` on a surface not on `top` is a load error (decided, maintainer, 2026-10-26).
 
 ## Special cases
 
@@ -78,7 +78,7 @@ The flow diagram ([[Shell Structure]]) groups the Popup under **Special Cases** 
 - **A module calls it.** The diagram's edge is "Calls": a module's code (an `@action`, for example a click on a tray icon) asks the shell to open the popup. How the call is written is proposed in [[Module Context#Calling a popup]].
 - **It holds modules and containers,** like a layer window, and is drawn above its parent.
 - **It knows what called it** (maintainer, 2026-10-26): the caller's record (module, use, params, anchor) is available to the popup's own modules and expressions, so a tray menu shows the items of the tray icon that was clicked.
-- **Focus is opt-in.** A popup marked as taking focus takes the keyboard and mouse itself when it opens, with nothing passed at call time; a popup with no selections does not need it. tre's `PopupWindow` has a `grab` flag that gives pointer and keyboard and closes the popup on an outside click or Escape, one flag for both; the maintainer wants no separate settings unless there is a reason, and there is a conflict with the opt-in default (see [[ADR-0007 Shell UI Layer#Open items]]). #needs-verification against tre.
+- Focus is on by default (maintainer, 2026-10-26, replacing an earlier opt-in decision). An open popup takes the keyboard and mouse itself with nothing passed at call time, and closes on an outside click or Escape. Tooltip-like popups opt out and close when the pointer leaves. tre's `PopupWindow` has a `grab` flag that gives pointer and keyboard and closes the popup on an outside click or Escape, one flag for both; one flag, not two, as the maintainer chose. #needs-verification against tre.
 - **The group exists for kinds like it.** A **Notification window** behaves like a popup but differs enough to need its own `kind:`. Not in v1: the notification server is outside v1 ([[V1 Scope#After v1]], [[ADR-0004 Plasma Coexistence]]).
 
 ## Overlay
