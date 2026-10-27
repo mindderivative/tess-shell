@@ -47,6 +47,8 @@ Attached to all four edges and corners as a frame around the screen. It reserves
 
 ### Panel
 
+The full spec is [[Panel]].
+
 The multi-purpose window. It attaches to the frame, a bar, another surface type, or floats. It can be moved with the mouse, anchored, hidden and so on. Ideally it works almost anywhere, and it may be the baseline the other surface types build on. As with the Bar, it is highly customisable.
 
 A Panel is not a child of the surface it attaches to. It may render on top of a bar or the frame, but each is its own surface and its own entry in the shell file; the attachment is a reference, not a parent/child relationship.

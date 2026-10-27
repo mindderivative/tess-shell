@@ -16,3 +16,4 @@ depends_on: []
 | Note | Purpose | Status |
 |---|---|---|
 | [[Surface Types]] | Bar, Frame, Panel, Popup: what each is and how it maps to tre | draft |
+| [[Panel]] | The multi-purpose surface: position, attachment, layers, keyboard, the four uses | draft |
