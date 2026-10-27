@@ -118,17 +118,15 @@ An illustration of the shape, not tested code. What it shows:
 | `timezone` | string | empty | An IANA zone name such as `Europe/Berlin`; empty uses the local zone |
 | `tooltip_format` | string | `%A, %d %B %Y` | The text a tooltip shows |
 
-Placing it (the call form is decided in [[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]):
+Placing it. The call form is decided in [[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]. One clock in a container:
 
 ```yaml
 children:
     Clock:
         format: "%H:%M:%S"
-    Clock:
-        timezone: America/New_York
 ```
 
-The second line above is a repeat of one module in one container, so it must use the list form:
+Two clocks in one container repeat the module, so they use the list form (a mapping cannot hold the key `Clock` twice):
 
 ```yaml
 children:
