@@ -76,66 +76,26 @@ Reading the arrows: a layer window holds modules directly, or containers; contai
 ## What does not match, or needs a decision
 
 1. ~~Popup: a kind or declared inside a module?~~ Decided (maintainer, 2026-10-26): Popup stays as it is, a `kind: popup` entry in the shell file. The diagram's edge is **"Calls"**: a module can *call* a popup, and the popup can hold modules and containers. It is not declared inside the module. The Special Cases group exists because the maintainer can see other surfaces that behave like a popup but need their own kind, such as a **Notification window**. Not v1 ([[V1 Scope#After v1]]); recorded in [[Surface Types#Special cases]].
-2. **Widgets only through a module.** Open until the widget and module model is defined (the maintainer, 2026-10-26: it depends on what defines a widget; see below).
-3. **Containers and widgets share a key?** **Decided: a container is a fundamental building block, not a widget, so it has its own key** (name not decided).
+2. **Widgets only through a module.** Answered by the new model: a block can be placed wherever `children:` is allowed, in a surface, a module or a container. Nothing stops a block from sitting directly on a surface.
+3. **Containers and widgets share a key?** Decided: containers are building blocks, called with `block:` (Box, FlexBox, Grid). `widget:` no longer exists.
 4. **How a surface holds modules and containers.** Decided: `children:` only; `modules:` goes away (maintainer, 2026-10-26). The way a module use is written inside `children:` waits for the widget and module decision.
 5. **Nested modules, names and UIDs.** **Decided: anything with a unique name gets a UID; names are unique across the shell and reachable from anywhere through the registry.** Open: how repeated uses of one definition get unique names (path names, proposed in [[ADR-0007 Shell UI Layer#Open items]]) and the params policy ([[Module File#Params down the tree]]).
 6. **Popup focus.** **Decided: opt-in.** An open popup marked as taking focus takes keyboard and mouse itself. See [[Surface Types#Special cases]].
 
-## Widgets, modules and building blocks
+## Blocks and modules (decided 2026-10-26)
 
-The maintainer asked (2026-10-26) to look at how Tesserae builds widgets. If the shell follows that route, a widget and a module are the same thing, built from base building blocks in YAML, and one of the two words goes. A container is one of the building blocks.
+The maintainer looked at how Tesserae builds widgets and chose the shell's own **building blocks** ([[Building Blocks]]). The diagram's "Containers" and "Widgets" groups are therefore blocks now, and the "Module" boxes are composed units:
 
-**What Tesserae does** (design `yaml-language.md` section 3 and the guide `components.md`, local clone commit `0eda3fe`, read 2026-10-26):
+| In the diagram | Now |
+|---|---|
+| Containers: Box, FlexBox | Building blocks, called with `block:`; also Grid |
+| Widgets: Text, Button | Text is a block; Button is a module built from blocks |
+| Module | Composed in YAML from blocks and other modules; called by its unique `name:`; Python optional |
+| Special Cases: Popup | Unchanged; a module calls it |
 
-- "A widget is **built in** (Python, registered with its declarations) or a **view** (a file with `params:`). Both declare properties the same way."
-- Any view can be called with `widget: Name`; "there is no file path and no separate kind of embedded view". Params are keys on the call (`- {widget: Counter, name: counter, start: 5}`).
-- A called view has no ViewModel of its own: its expressions read its own state, its params, then the top view's names. It reads the caller's names only through params.
-- Its nodes have ids under the call (`root.counter.label`), "so a view can be called as often as you like".
-- A container is itself a built-in widget there (`widget: Container`).
+What Tesserae does, for reference (design `yaml-language.md` section 3 and guide `components.md`, local clone commit `0eda3fe`, read 2026-10-26): a widget is either built in (Python) or a view (a file with `params:`), both called the same way, and a called view has no ViewModel of its own. The shell kept the declared-properties idea and made two kinds, with different keys (`block:` for built-ins, a name for modules). The full decision, calling rules and styling rules are in [[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]].
 
-**Mapping to the shell**
-
-| Tesserae | Shell today | Notes |
-|---|---|---|
-| Built-in widget (Python) | Building block: Text, Icon, Image, Button, Slider, ... | Shell-provided; the user does not write it |
-| Container (`widget: Container`) | Container: Box, FlexBox | The maintainer wants it separate: its own key |
-| A view with `params:` | A module file with `params:` | Same idea: composed from blocks |
-| ViewModel | The module's Python | Differs: here one Python instance serves every use of a module file; in Tesserae each call is its own instance |
-| Called as `widget: Name` | `modules:` entries today; `children:` after the decision | One call syntax in Tesserae |
-
-**Options**
-
-| Option | What it means | Keys |
-|---|---|---|
-| 1. One callable concept, the Tesserae route (recommended) | Anything placed in `children:` is a **widget** call: a building block (shell-provided) or a **module** (a file that composes blocks, with params and an optional Python file). The word *module* stays as the file type; *widget* is anything you can call. Resolution is by name: built-ins first, then the module search paths. Params are keys on the call | `container:` for containers; `widget:` for blocks and modules; `children:` for contents |
-| 2. Keep "module", drop "widget" | Everything composed is a module; the leaf pieces are building blocks with their own key (`block:`) | `container:`, `block:`, and modules called by name |
-| 3. Keep both, with separate keys (the current diagram) | Widgets (leaf) and modules (composed) stay different things with different keys | `container:`, `widget:`, `module:` |
-
-A sketch of option 1, illustration only:
-
-```yaml
-children:
-    top_label:
-        widget: Label            # resolves to Label_Module.yaml
-        text: "Work"             # a param, as a key on the call
-    title:
-        widget: Text             # a building block
-        text: "Hello"
-    row:
-        container: FlexBox
-        alignment: horizontal
-        children:
-            icon: {widget: Icon, icon: monitor.svg}
-```
-
-Why option 1: it matches what the maintainer pointed at; it gives one call syntax, so `modules:` goes away cleanly; nothing in the files, registry or directories needs renaming (`_Module.yaml`, `_Module.py`, `Modules/`); and `kind: Text` in a style class can become `widget: Text` without a clash. Cost: a name can mean a block or a module, so the shell must report a clash between a block and a module of the same name.
-
-The one real difference to keep: in the shell, a module's Python is a single shared instance with a `use` record per call. In option 1 a module without Python is just a composed widget instantiated per call; one with Python gets the shared instance. That is consistent with the earlier decision ("one instance per module file, shared by all uses") and needs no change.
-
-Decided so far (maintainer, 2026-10-26): the shell has its own **building blocks**, geared for a shell and built on what tre allows, informed by how Tesserae does it ([[Building Blocks]]). What is left to choose is the key and the word: option 1 (`widget:` for both blocks and modules) or option 2 (`block:` for blocks, modules called by name).
-
-Needs the maintainer's choice between options 1 and 2.
+The diagram needs updating to match: the Containers and Widgets groups become a Building Blocks group, and Button and its relatives move to Modules.
 
 ## Open
 

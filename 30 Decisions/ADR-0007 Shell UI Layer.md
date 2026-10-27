@@ -178,6 +178,39 @@ Decided by the maintainer in chat, from the Label example.
 - **Module values.** Expressions in the module's YAML read `params.<name>` and the values the Python sends, under their own names. Addressing a widget directly by its `name:` is optional.
 - **The module's style file** is `type: Style`, named by the module's `style:` key.
 
+### Blocks, modules and styling (2026-10-26)
+
+Decided by the maintainer in chat. This supersedes the earlier `widget:` key, the separate container key, the `modules:` list and the `module:` key.
+
+Building blocks are built in, and are called with `block:`. They need no name or UID, because they are basic built-in functions: calling one from YAML makes the shell's Python build it.
+
+| Group | Blocks |
+|---|---|
+| Containers | Box, FlexBox, Grid |
+| Typography | Text, TextField, a multi-line variant of TextField |
+| Graphics | Bitmap (rasterized), SVG (vector) |
+| Shapes | Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring |
+| Other | Terminal, Canvas |
+
+Modules are composed in YAML from blocks and other modules. The maintainer's list: Spacer; Label (a single line, no wrap); Text (multi-line, wraps); Button; Icon; Image (png, jpeg, gif, webp); List; Slider; ProgressBar; Menu and MenuItem; Revealer (a must have); Stack; Badge; Tooltip; Toggle; Marquee text.
+
+Calling things:
+
+- `block: <name>` calls a building block.
+- A module is called by its unique `name:`, which is required for a module. The shell registers the module and gives it a UID, and the registry resolves the name.
+- `widget:` and `module:` are dropped. The word "module" survives only as `type: Module`.
+- `import: <Name>_Module.yaml` nests modules, to build a fully custom module out of others.
+- A module's params are keys on the call.
+
+Styling:
+
+- It applies to blocks and to everything else that can be styled. Three kinds of file and one inline form: `<Name>_Theme.yaml`, `<Name>_Stylesheet.yaml`, `<Name>_Style.yaml`, and inline `style:`.
+- Customising a block is referencing another stylesheet or style, or writing inline `style:`. A custom style is not a full replacement: it changes only what it names.
+- Priority, lowest to highest: theme, then stylesheet, then style, then inline `style:`. It applies to all styling.
+- Imports go downwards. A theme can import stylesheets and styles, or use inline styling. A stylesheet can import styles, or use inline styling, but not a theme. Inline `style:` can import a theme, a stylesheet or a style, and can use inline styling. Priority still follows the type of each file, not the path it was imported by.
+
+To confirm (my reading and the points it raises) are in the Open items.
+
 ### Structure answers (2026-10-26)
 
 Decided by the maintainer in chat, from the Popup/Panel and structure questions.
@@ -187,7 +220,7 @@ Decided by the maintainer in chat, from the Popup/Panel and structure questions.
 - **A container is a fundamental building block, not a widget,** so it gets its own key (name not decided; `container:` is the suggestion).
 - **Names.** Anything with a unique name gets a UID. A layer window (surface), container, module, widget or special case can have a name. **Names are unique across the shell, not per monitor** (this supersedes "unique per monitor" in the earlier sections). A name or UID is reachable from anywhere in the shell through the registry, nested or not. (See Open items for how repeated uses of one definition get unique names.)
 - **Popup focus is opt-in.** An open popup that is marked as taking focus takes the keyboard and mouse itself, with nothing passed at call time. Not every popup has selections, so the default is not to take focus.
-- **Open until the widget and module model is defined:** whether a widget and a module are the same thing (Tesserae's route), the `kind: Text` question in style classes, and the final keys. See [[Shell Structure#Widgets, modules and building blocks]].
+- Settled later the same day: the widget and module model, see Blocks, modules and styling above ([[Shell Structure#Blocks and modules (decided 2026-10-26)]]).
 
 ### Modules (2026-10-25)
 
@@ -304,7 +337,27 @@ Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import
 - [ ] **Python builder API.** The Python front-end that produces the same tree as the YAML, and the parity test. Written in `42 Python API/`.
 - [x] **Writing the UID into a user's file.** Decided 2026-10-25: once the file is found, the shell opens it and writes `UID:` below `shell:`. The points below are implementation defaults for that write, not open questions; the maintainer called the question obvious. Defaults — The shell edits a file the user owns. Needs: a YAML writer that keeps comments and layout; no reload loop when the watcher sees the shell's own write; behaviour for a read-only file or a file shared by two shells; and what happens when the user copies a file, so two files carry one UID. Recommendation: the writer keeps comments, writes are ignored by the watcher for that file, a read-only file is registered without injection and warned, and a duplicate UID is a load error naming both files.
 - [ ] `kind:` inside a class. The Label style example writes `kind: Text` to say which widget a class applies to; `kind:` is the surface kind everywhere else. Recommendation: `widget: Text` inside a class ([[Style, Theme and Stylesheet Files#Classes]]).
-- [ ] **Widget, module and building blocks** (2026-10-26). Decided: the shell has its own building blocks, geared for a shell ([[Building Blocks]]). Still open: the key (`widget:` for blocks and modules, or `block:` for blocks). The maintainer asked whether, following Tesserae's route, a widget and a module are the same thing, built from base building blocks, and whether one of the two words should go. Analysis and options: [[Shell Structure#Widgets, modules and building blocks]]. Blocks the `kind: Text` question and the key for a module use.
+- [x] **Widget, module and building blocks** (2026-10-26). Decided: blocks called with `block:`, modules called by name, `widget:` and `module:` dropped. See Blocks, modules and styling above and [[Building Blocks]].
+- [ ] **The exact form of a module call.** My reading: the key is the use's own unique name; the module is named with `import:` (a file or a registered name) and its params are keys beside it:
+
+```yaml
+children:
+    top_label:
+        import: Label_Module.yaml      # or the registered name, import: Label
+        text: "Work"                   # a param
+    title:
+        block: Text
+        text: "Hello"
+```
+
+  The maintainer said a module is "called by its unique name" and that `import:` nests modules, so I am not sure whether the call itself is an `import:`. Needs confirming.
+- [ ] **Names that exist as both a block and a module.** Text exists as a block and as a module (multi-line, wrapping); Image and Icon as modules sit on the Bitmap and SVG blocks. The key (`block:` or a module name) tells them apart, but the registry name `Text` is then taken by the module. Is that intended?
+- [ ] **Modules the shell ships.** The list above is a standard set. They would live in the shell's own package, which cannot be written to, so a UID cannot be injected into those files. Proposal: shipped modules get a stable registry-only UID, and a user can override one by a module of the same name earlier in the search path. Needs the maintainer's view.
+- [ ] **Can the listed modules be made from the listed blocks?** Probably, but each needs behaviour from the blocks: Revealer and Marquee need animated layout and translate properties (tre can animate both); Stack needs layered children (a box with absolutely positioned children); Slider, Toggle and Button need pointer and drag events, handled by the shell. #needs-verification block by block, in [[Building Blocks]].
+- [ ] **A free-form shape block.** The shapes are fixed (square, rectangle, triangle, hexagon, circle, ellipse, ring). The Frame's concave corners and Panel joins need free-form paths. SVG or Canvas could do it. Is a Path block wanted?
+- [ ] **Two files of the same type that conflict.** Two stylesheets that set the same property: proposal, the later import wins.
+- [ ] `kind: Text` in a style class is settled by the new keys: a class names the block with `block: Text` (recommendation, to confirm).
+
 - [ ] **Unique names across the shell with repeated uses.** A module (or an imported surface set) is used many times, and its internal names (`Label_Text`) repeat. A flat shell-wide unique name would clash. Proposal: names inside a definition are local; each use gets a path name (`top_label.Label_Text`), and the registry holds the path as the shell-wide unique name and a UID for the instance. A UID written into a file belongs to the file (the definition); an instance UID lives in the registry only. References can use the path, or a short name when it is unambiguous. Needs the maintainer's confirmation.
 - [ ] **Params and "bubble up".** The maintainer suggested a bubble-up policy for params. My reading and recommendation are in [[Module File#Params down the tree]].
 - [ ] **Popup call shape and caller context.** The maintainer proposed `self.ctx.popup(self, name).open(anchor_rect=...)`. Passing `self` identifies the module but not the use (one instance serves every use), so the caller record also needs the use. See [[Module Context#Calling a popup]].

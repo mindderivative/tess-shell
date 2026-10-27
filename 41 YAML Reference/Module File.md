@@ -53,13 +53,41 @@ FlexBox:
 
 A module file has one layout root. There is no `root:` key and no `kind:`: a module is not a surface.
 
-## Widgets in the layout
+## Blocks and modules in the layout
 
-- A widget is written `Text:` or `widget: Text`; they mean the same. Where a type repeats, use a unique key with `widget: Text` inside ([[Common Keys and Conventions#Keys that say what something is]]).
-- Every widget may have a `name:`, optional unless the Python or an expression refers to it; names are unique per monitor and scoped to the file.
-- A widget may have a `class:` that picks up a class from the style file ([[Style, Theme and Stylesheet Files#Classes]]).
-- Containers: `Box` (no auto-stacking; invisible if unstyled) and `FlexBox` (auto-stacking, `alignment: vertical` or `horizontal`). The v1 list is [[V1 Widgets]].
-- Widget properties not in the style (an icon file, a label's text, a size) are written on the widget, and may be expressions.
+A module's layout is made of building blocks and other modules ([[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]], decided 2026-10-26).
+
+- A block is called with `block:` (`block: FlexBox`, `block: Text`). Blocks need no name and no UID.
+- A module is called by its unique `name:`, which the registry resolves. A module nests another with `import: <Name>_Module.yaml`. Its params are keys on the call.
+- Entries in `children:` have their own unique keys.
+- A `name:` on a block is optional unless the Python or an expression refers to it.
+- A block or module may take `class:` to pick up a class from a style file, or `style:` for its own style ([[Style, Theme and Stylesheet Files]]).
+- The v1 blocks and standard modules are in [[V1 Widgets]] and [[Building Blocks]].
+
+### The Label example under the new keys
+
+An illustration only; the maintainer's original is in [[Module Context#Example: the Label module]].
+
+```yaml
+shell: v1
+type: Module
+name: label
+style: Label_Style.yaml
+params:
+    text: {type: string}
+
+block: FlexBox
+alignment: horizontal
+width: 120
+height: 34
+children:
+    monitor_icon:
+        import: Icon_Module.yaml        # a module, called by name; the Icon is itself built from the SVG block
+        icon: monitor.svg
+    label_text:
+        block: Text
+        class: text_style
+```
 
 ## Params
 
@@ -96,17 +124,19 @@ Text:
 
 ## Using a module
 
-A module is placed under `children:` (there is no `modules:` key since 2026-10-26), each with a unique name. The syntax below is pending the widget/module decision ([[Shell Structure#Widgets, modules and building blocks]]); under the recommended option a use is `widget: Label` with its params as keys.
+A module is placed under `children:` (there is no `modules:` key since 2026-10-26), each use with its own unique key. Decided: a module is called by its unique name, `widget:` and `module:` are gone, and params are keys on the call. The exact form of the call is open ([[ADR-0007 Shell UI Layer#Open items]]); the sketch below is my reading.
 
 ```yaml
 children:
-    audio: Audio_Module.yaml                   # just the file
-    top_label:                                 # the file plus params
-        module: Label_Module.yaml
-        text: "Work"
+    top_label:
+        import: Label_Module.yaml       # or the registered name, import: Label (to confirm)
+        text: "Work"                    # a param, as a key on the call
+    title:
+        block: Text                     # a building block
+        text: "Hello"
 ```
 
-The scalar form is the module file alone; the mapping form adds `module:` and the values for its `params`. The mapping form is a proposal. A module file may be used many times; there is one Python instance for all uses.
+A module file may be used many times; there is one Python instance for all uses, with a `use` record per call.
 
 ## Params down the tree
 

@@ -33,11 +33,13 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 |---|---|---|---|
 | `type:` | A file's type | `Shell`, `Module`, `Theme`, `Style`, `Stylesheet` | Decided |
 | `kind:` | A surface's kind | `bar`, `frame`, `panel`, `popup` | Decided |
-| `widget:` | A widget | `Text`, `Icon`, `Box`, `FlexBox`, ... ([[V1 Widgets]]) | Decided |
+| `block:` | A building block | Box, FlexBox, Grid, Text, TextField, Bitmap, SVG, Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Terminal, Canvas ([[Building Blocks]]) | Decided (2026-10-26; replaces `widget:`) |
+| A module's name | A module call | The unique `name:` of a module, resolved by the registry | Decided that a module is called by name; the exact form is open ([[ADR-0007 Shell UI Layer#Open items]]) |
 
-- `Text:` and `widget: Text` mean the same. Use the unique-name form (a unique key, with `widget: Text` inside it) where a type repeats in one container.
+- A block is `block: Text`. An entry in `children:` has its own unique key (`title:`) and says what it is with `block:` or by calling a module.
+- `widget:` and `module:` no longer exist as keys; "module" survives only as `type: Module`.
 - **Case.** File types are capitalised (`Module`), surface kinds are lower case (`bar`). Recommendation: match case-insensitively and write the canonical form in files. Not decided.
-- **Conflict to settle.** The Label style example writes `kind: Text` inside a class to say which widget the class applies to. `kind:` is the surface kind everywhere else. Recommendation: `widget: Text` inside a class, so `kind:` is never used for a widget. See [[Style, Theme and Stylesheet Files#Classes]].
+- The Label style example writes `kind: Text` inside a class to say which block it applies to. `kind:` is the surface kind everywhere else. Recommendation: `block: Text` inside a class. See [[Style, Theme and Stylesheet Files#Classes]].
 
 ## Structure keys
 
@@ -47,8 +49,7 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 | `monitor` | A root | Connector name, then description; `default` for monitors no root names; no `monitor` means the root is ignored | Decided |
 | `children` | A root, a surface, a container, a popup | A mapping of unique names to entries; `import:` pulls in another file. The only holder of contents; `modules:` is gone | Decided |
 | `import` | Inside `children` | One file name or a list of `<Name>_Shell.yaml` files; paths are relative to the importing file; imports nest | Decided |
-| `container` | Inside `children` | A building block that holds children: `Box` or `FlexBox`. Its own key, not `widget:` (maintainer, 2026-10-26); the key name is a suggestion | Decided that it has its own key |
-| `module` | A module use | The module file, when the use has params | Proposed ([[Module File#Using a module]]) |
+| `import` | A shell file, a module file | Brings in another `_Shell.yaml`, or nests another module (`import: <Name>_Module.yaml`) | Decided |
 | `params` | A module file declares them; a use passes them | Typed values | Decided that they exist; type names proposed |
 | `style` | A surface, a module | A style file name, or an inline mapping of style values | Decided |
 | `layer` | A surface | `background`, `bottom`, `top`, `overlay`, numbered 0 to 3 as in the protocol; `overlay` is the highest. A Bar or Panel may use `bottom`, `top` or `overlay`; a Frame only `top`; a Popup stacks above its parent | Decided (the key and the four values, flow diagram 2026-10-26). Only `top` surfaces may reserve space (`exclusive_zone`). `background` is for wallpapers only, for now: no kind uses it |

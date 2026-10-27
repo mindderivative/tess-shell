@@ -27,7 +27,8 @@ Each term is defined here in a line and linked to the note that owns it.
 | Layer (tre in-window) | A node drawn over a window's own content with `show_layer`; a different thing from the stacking layer | [[TRE-REQ-001 Layer Surface Window]] |
 | Exclusive zone | Screen space a surface reserves so maximised windows stop short of it | [[TRE-REQ-001 Layer Surface Window]] |
 | Output, monitor | A screen the compositor reports; matched by connector name (`DP-1`) | [[V1 Scope]] |
-| Module | A self-contained piece of the shell: a layout YAML (widgets and expressions, with `params:`), a style YAML, and a Python file for its logic. A surface places modules | [[ADR-0007 Shell UI Layer]] |
+| Module | A composed piece of the shell: a layout YAML (blocks, other modules and expressions, with `params:`), a style YAML, and optionally a Python file for its logic. Called by its unique name; the word survives as `type: Module` |
+| Building block | A built-in primitive the shell provides (Box, FlexBox, Grid, Text, TextField, Bitmap, SVG, shapes, Terminal, Canvas), called with `block:`; needs no name or UID |  [[ADR-0007 Shell UI Layer]] |
 | Shell file | A YAML file with the required `shell:` key and a `type:` | [[ADR-0007 Shell UI Layer]] |
 | UID | A shell-wide UUIDv7 written into an entry-point file and kept in the registry | [[ADR-0007 Shell UI Layer]] |
 | Registry | `registry.json` in the shell's config directory, mapping UIDs to entries | [[ADR-0007 Shell UI Layer]] |
