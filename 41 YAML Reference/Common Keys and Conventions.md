@@ -29,14 +29,15 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 
 ## Keys that say what something is
 
-| Key | Names | Values | Status |
-|---|---|---|---|
-| `type:` | A file's type | `Shell`, `Module`, `Theme`, `Style`, `Stylesheet` | Decided |
-| `kind:` | A surface's kind | `bar`, `frame`, `panel`, `popup` | Decided |
-| `block:` | A building block | Box, FlexBox, Grid, Text, TextField, Bitmap, SVG, Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path, Terminal, Canvas ([[Building Blocks]]) | Decided (2026-10-26; replaces `widget:`) |
-| A module's name as a key | A module call | The key is the module's unique `name:`, resolved by the registry; params and `style:` are keys beneath it | Decided (2026-10-26); repeats in one container are open |
+| Key                      | Names            | Values                                                                                                                                                      | Status                                                  |
+| ------------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `type:`                  | A file's type    | `Shell`, `Module`, `Theme`, `Style`, `Stylesheet`                                                                                                           | Decided                                                 |
+| `kind:`                  | A surface's kind | `bar`, `frame`, `panel`, `popup`                                                                                                                            | Decided                                                 |
+| `block:`                 | A building block | Box, FlexBox, Grid, Text, TextField, Bitmap, SVG, Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path, Terminal, Canvas ([[Building Blocks]]) | Decided (2026-10-26; replaces `widget:`)                |
+| A module's name as a key | A module call    | The key is the module's unique `name:`, resolved by the registry; params and `style:` are keys beneath it                                                   | Decided (2026-10-26); repeats in one container are open |
+|                          |                  |                                                                                                                                                             |                                                         |
 
-- A block is `block: Text`. An entry in `children:` has its own unique key (`title:`) and says what it is with `block:` or by calling a module.
+- A block is `block: Text`. An entry in `children:` has its own unique key (`title:`) and says what it is with `block:` or by calling a module. A block can be placed anywhere `children:` is allowed: on a surface, in a container, in a module or in a popup (decided 2026-10-27).
 - `widget:` and `module:` no longer exist as keys; "module" survives only as `type: Module`.
 - **Case.** File types are capitalised (`Module`), surface kinds are lower case (`bar`). Recommendation: match case-insensitively and write the canonical form in files. Not decided.
 - The Label style example writes `kind: Text` inside a class to say which block it applies to. `kind:` is the surface kind everywhere else. Recommendation: `block: Text` inside a class. See [[Style, Theme and Stylesheet Files#Classes]].

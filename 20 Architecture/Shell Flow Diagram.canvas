@@ -581,6 +581,17 @@
 			"width":260,
 			"height":60,
 			"color":"6"
+		},
+		{
+			"id":"1c2e3ce79e6d5dce",
+			"type":"text",
+			"text":"Container",
+			"styleAttributes":{"textAlign":"center"},
+			"x":-720,
+			"y":880,
+			"width":240,
+			"height":60,
+			"color":"3"
 		}
 	],
 	"edges":[
@@ -728,6 +739,16 @@
 			"toNode":"91f1dc2fd0fe85c5",
 			"toSide":"top",
 			"color":"6"
+		},
+		{
+			"id":"5fc0221b48f82d2a",
+			"styleAttributes":{},
+			"toFloating":false,
+			"fromNode":"725cd894c2a1c75f",
+			"fromSide":"bottom",
+			"toNode":"1c2e3ce79e6d5dce",
+			"toSide":"top",
+			"color":"1"
 		}
 	],
 	"metadata":{

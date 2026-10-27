@@ -42,11 +42,11 @@ flowchart TB
 |---|---|
 | Desktop Environment | The layer surface (Layer 0 Background, Layer 1 Bottom, Layer 2 Top, Layer 3 Overlay), KWin between Layer 1 and Layer 2, Wallpapers on Layer 0, Reserved Space on Layer 2 |
 | Layer Windows | Panel (Bottom, Top or Overlay), Bar (Bottom, Top or Overlay), Frame (Top) |
-| Special Cases | Popup, drawn above its parent. A module calls it, and it holds modules |
+| Special Cases | Popup, drawn above its parent. A module calls it, and it holds containers and modules |
 | Modules (Nestable) | Spacer, List, Toggle, Label, Slider, Marquee text, TextBox, ProgressBar, Checkbox, TextInput, Menu and MenuItem, TextEditor, Revealer, Button, Stack, Icon, Badge, Image, Tooltip |
 | Building Blocks | Containers (nestable): FlexBox, Box, Grid. Shapes: Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path. Graphics: Bitmap, SVG. Typography: Text, TextField, TextField (Multi-Line). Other: Terminal, Canvas |
 
-Reading the arrows: the Shell attaches to the layer surface; layer windows (Panel, Bar, Frame) hold modules and containers; a module holds containers and is made of building blocks; a module calls a popup, and a popup holds modules.
+Reading the arrows: the Shell attaches to the layer surface; layer windows (Panel, Bar, Frame) hold modules and containers; a module holds containers and is made of building blocks; a module calls a popup, and a popup holds containers and modules.
 
 ## Checked against the vault and the protocol
 
@@ -68,15 +68,17 @@ Reading the arrows: the Shell attaches to the layer surface; layer windows (Pane
 - Frame is Top only; its strips move to `top` ([[Surface Types]]). Top suits the painter, which must be above windows to be seen; the strips are invisible so any layer works, and Top-layer reservation is the case known to work on KWin.
 - The shell enforces `top` as the only layer that reserves space. The protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion. An `exclusive_zone` off `top` is a load error (decided, maintainer, 2026-10-26).
 - KWin is "between Layer 1 and Layer 2", as the protocol says.
-- A Popup stays a `kind: popup` entry in the shell file; a module calls it; it holds modules ([[Surface Types#Special cases]]). The Special Cases group exists for popup-like kinds, such as a Notification window (not v1).
+- A Popup stays a `kind: popup` entry in the shell file; a module calls it; it holds containers and modules ([[Surface Types#Special cases]]). The Special Cases group exists for popup-like kinds, such as a Notification window (not v1).
 - The building blocks and the modules are the lists in [[Building Blocks]], with the full decision in [[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]].
 - Popup focus is on by default with one flag; tooltip-like popups opt out.
 
 ## What does not match, or needs a decision
 
-1. **Checkbox is a new module.** The diagram has Checkbox beside Toggle; the notes had only Toggle (a switch). Taken as a 19th standard module, a check box; added to [[Building Blocks]] and [[V1 Widgets]] (not v1). Correct?
-2. **Where leaf blocks can sit.** The diagram connects layer windows to modules and containers, and modules to blocks. A leaf block (Text, Path, Bitmap) is reached only through a module. Can a leaf block sit directly on a surface or in a container (`block: Text` under a bar's `children:`)? The Frame and Panel joins need Path blocks on a surface, unless the Frame draws its own ring. Recommendation: allow it, since a module for every piece of text on a bar would be heavy; if not, say how the Frame draws the ring.
-3. **What a popup holds.** The diagram shows a popup holding modules. The notes also say containers. A container is how a popup lays out its modules, so it should be allowed. Correct?
+All three points were answered by the maintainer on 2026-10-27:
+
+1. Checkbox is a separate module from Toggle. Both give the same result (an on or off value), but a Toggle is a switch and a Checkbox is a check box.
+2. Blocks can be placed anywhere: directly on a surface, in a container or in a module. They are most commonly used inside a module. The diagram's arrow from Module to Block shows the common case, not a limit.
+3. A popup holds containers and modules. The maintainer added a container node under Special Cases to the diagram; it had been left out while rearranging.
 
 ## Blocks and modules (decided 2026-10-26)
 
@@ -86,7 +88,7 @@ What Tesserae does, for reference (design `yaml-language.md` section 3 and guide
 
 ## Open
 
-- [ ] The three points above.
+- [x] The three points above (2026-10-27). Nothing open in this note.
 
 ## Links
 

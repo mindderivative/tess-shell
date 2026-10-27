@@ -236,6 +236,14 @@ children:
 - `Path` is a block (a free-form path, for the Frame's concave corners and Panel joins).
 - **Feasibility.** The maintainer reports that Revealer, Marquee, Stack, Slider and Toggle can be built from the blocks and that this was tested on Tesserae. Not independently verified here.
 
+### Placement, Checkbox and popups (2026-10-27)
+
+Decided by the maintainer in chat, from the fifth flow diagram.
+
+- Checkbox is a separate module from Toggle. Both give the same result, but a Toggle is a switch and a Checkbox is a check box.
+- A building block can be placed anywhere: on a surface, in a container or in a module. Blocks are most commonly used inside a module; the diagram's arrow from Module to Block shows the common case, not a limit.
+- A popup holds containers and modules.
+
 ### Structure answers (2026-10-26)
 
 Decided by the maintainer in chat, from the Popup/Panel and structure questions.

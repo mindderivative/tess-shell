@@ -27,6 +27,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 | Other | Terminal, Canvas | `terminal`, `canvas` |
 
 - A block needs no name or UID. Calling one from YAML (`block: Text`) makes the shell's Python build it.
+- A block can be placed anywhere: on a surface, in a container or in a module. It is most commonly used inside a module (maintainer, 2026-10-27).
 - A container is a block (`block: FlexBox`), not a module and not a separate key. This replaces the earlier idea of a key of its own for containers.
 - Blocks are fixed by the shell. Whether a module author can add a block is open.
 
@@ -53,7 +54,7 @@ Composed in YAML, called by name, optionally with Python. The standard set the m
 | Badge | A count or dot on an icon | Circle, Text |
 | Tooltip | Hover text | Box, Text |
 | Toggle | A switch | Box, Circle |
-| Checkbox | A check box (new in the fifth flow diagram, 2026-10-26) | Box, Path |
+| Checkbox | A check box. Separate from Toggle: both give an on or off value, but a Toggle is a switch and a Checkbox is a check box (maintainer, 2026-10-27) | Box, Path |
 | Marquee text | Scrolling a long text in a small space | Text |
 
 These ship with the shell as a standard set; the shell's own modules are open to being overridden ([[ADR-0007 Shell UI Layer#Open items]]). Which are needed for v1 is in [[V1 Widgets]].

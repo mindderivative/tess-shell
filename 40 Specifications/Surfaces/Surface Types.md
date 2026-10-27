@@ -76,7 +76,7 @@ The flow diagram ([[Shell Structure]]) groups the Popup under **Special Cases** 
 
 - A Popup stays a `kind: popup` entry in the shell file and names the surface it hangs off, as before.
 - **A module calls it.** The diagram's edge is "Calls": a module's code (an `@action`, for example a click on a tray icon) asks the shell to open the popup. How the call is written is proposed in [[Module Context#Calling a popup]].
-- **It holds modules and containers,** like a layer window, and is drawn above its parent.
+- It holds modules, containers and blocks, like a layer window, and is drawn above its parent (confirmed on the flow diagram, 2026-10-27).
 - **It knows what called it** (maintainer, 2026-10-26): the caller's record (module, use, params, anchor) is available to the popup's own modules and expressions, so a tray menu shows the items of the tray icon that was clicked.
 - Focus is on by default (maintainer, 2026-10-26, replacing an earlier opt-in decision). An open popup takes the keyboard and mouse itself with nothing passed at call time, and closes on an outside click or Escape. Tooltip-like popups opt out and close when the pointer leaves. tre's `PopupWindow` has a `grab` flag that gives pointer and keyboard and closes the popup on an outside click or Escape, one flag for both; one flag, not two, as the maintainer chose. #needs-verification against tre.
 - **The group exists for kinds like it.** A **Notification window** behaves like a popup but differs enough to need its own `kind:`. Not in v1: the notification server is outside v1 ([[V1 Scope#After v1]], [[ADR-0004 Plasma Coexistence]]).
