@@ -31,11 +31,11 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Decided popup focus (on by default, one flag) and that an `exclusive_zone` off `top` is a load error; fixed the bold-on-code rendering in the Obsidianite theme |
+| Last change | Drafted the first module spec, [[Clock Module]] |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Update the flow diagram (Containers and Widgets become blocks, Button moves to Modules); check that bold around code now renders in Obsidian |
+| Waiting on you | Review [[Clock Module]] (does the module model hold up?); update the flow diagram (Containers and Widgets become blocks, Button moves to Modules) |
 | Waiting on others | tre 0.5.9 release: `hit_shape="painted"` (#236, [[Hit Testing for Concave Corners]]) and `keep_alive`/`stop()` (#238, [[TRE-REQ-005 Keep-Alive and Loop Stop]]); built on local branches. The Frame uses the explicit-rectangle workaround, and the 1x1 window is the stopgap, until then |
-| Next | The Clock module spec, the Panel spec, then `60 Quality` |
+| Next | More module specs (Workspaces, Audio), the Panel spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
 | Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | [[Clock Module]] drafted |
 | 2026-10-26 | Popup focus and the exclusive-zone rule decided; theme fix for bold around code |
 | 2026-10-26 | Path names, param inheritance and popup caller decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-26 | List-item naming decided: optional `name:`, else from the position |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-26 | Module call form, TextBox, shipped module UIDs, Path block decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-26 | Modules TextInput and TextBox added ([[Building Blocks]]) |
 | 2026-10-26 | Blocks, standard modules, `block:` calls and styling rules decided ([[ADR-0007 Shell UI Layer]], [[Building Blocks]]) |
-| 2026-10-26 | Building blocks decided; [[Building Blocks]] written |
 
 ## Go to
 
