@@ -42,7 +42,7 @@ depends_on: ["[[V1 Scope]]", "[[Building Blocks]]"]
 | Spacer | Bar layout (left, centre and right groups) |
 | Revealer | A must have (maintainer, 2026-10-26): hover-to-reveal and auto-hide |
 
-Also in the maintainer's standard set but not yet needed by a v1 module: TextBox (multi-line text, not editable), TextEditor (multi-line, editable), Stack, Badge, Tooltip, Toggle, Marquee text. Grid, the multi-line TextField, Terminal and Canvas are blocks with no v1 use yet.
+Also in the maintainer's standard set but not yet needed by a v1 module: TextBox (multi-line text, not editable), TextEditor (multi-line, editable), Checkbox, Stack, Badge, Tooltip, Toggle, Marquee text. Grid, the multi-line TextField, Terminal and Canvas are blocks with no v1 use yet.
 
 ## Notes
 

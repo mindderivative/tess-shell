@@ -53,6 +53,7 @@ Composed in YAML, called by name, optionally with Python. The standard set the m
 | Badge | A count or dot on an icon | Circle, Text |
 | Tooltip | Hover text | Box, Text |
 | Toggle | A switch | Box, Circle |
+| Checkbox | A check box (new in the fifth flow diagram, 2026-10-26) | Box, Path |
 | Marquee text | Scrolling a long text in a small space | Text |
 
 These ship with the shell as a standard set; the shell's own modules are open to being overridden ([[ADR-0007 Shell UI Layer#Open items]]). Which are needed for v1 is in [[V1 Widgets]].

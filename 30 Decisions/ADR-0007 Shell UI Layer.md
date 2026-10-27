@@ -192,7 +192,7 @@ Building blocks are built in, and are called with `block:`. They need no name or
 | Shapes | Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path (a free-form path, added 2026-10-26) |
 | Other | Terminal, Canvas |
 
-Modules are composed in YAML from blocks and other modules. The maintainer's list: Spacer; Label (a single line, no wrap); TextBox (multi-line text, not editable); TextInput (a single-line TextField, editable); TextEditor (a multi-line TextField variant, editable); Button; Icon; Image (png, jpeg, gif, webp); List; Slider; ProgressBar; Menu and MenuItem; Revealer (a must have); Stack; Badge; Tooltip; Toggle; Marquee text. (TextInput and TextBox were added on 2026-10-26, after the first list.)
+Modules are composed in YAML from blocks and other modules. The maintainer's list: Spacer; Label (a single line, no wrap); TextBox (multi-line text, not editable); TextInput (a single-line TextField, editable); TextEditor (a multi-line TextField variant, editable); Button; Icon; Image (png, jpeg, gif, webp); List; Slider; ProgressBar; Menu and MenuItem; Revealer (a must have); Stack; Badge; Tooltip; Toggle; Checkbox; Marquee text. (TextInput, TextBox, TextEditor and Checkbox were added on 2026-10-26, after the first list.)
 
 Calling things:
 
