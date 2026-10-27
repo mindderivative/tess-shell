@@ -233,7 +233,7 @@ children:
 
 - **Text (multi-line) was a mistake; it is TextBox.** The block `Text` stays a block. The module list has Label (a single line), TextInput and TextBox. The name `Text` is therefore no longer both a block and a module.
 - **Shipped modules get a stable registry-only UID,** and a user module of the same name overrides one (the shell's own package cannot be written to).
-- **`Path` is a block** (a free-form path, for the Frame's concave corners and Panel joins).
+- `Path` is a block (a free-form path, for the Frame's concave corners and Panel joins).
 - **Feasibility.** The maintainer reports that Revealer, Marquee, Stack, Slider and Toggle can be built from the blocks and that this was tested on Tesserae. Not independently verified here.
 
 ### Structure answers (2026-10-26)

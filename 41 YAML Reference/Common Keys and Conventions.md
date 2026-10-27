@@ -33,8 +33,8 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 |---|---|---|---|
 | `type:` | A file's type | `Shell`, `Module`, `Theme`, `Style`, `Stylesheet` | Decided |
 | `kind:` | A surface's kind | `bar`, `frame`, `panel`, `popup` | Decided |
-| `block:` | A building block | Box, FlexBox, Grid, Text, TextField, Bitmap, SVG, Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Terminal, Canvas ([[Building Blocks]]) | Decided (2026-10-26; replaces `widget:`) |
-| A module's name | A module call | The unique `name:` of a module, resolved by the registry | Decided that a module is called by name; the exact form is open ([[ADR-0007 Shell UI Layer#Open items]]) |
+| `block:` | A building block | Box, FlexBox, Grid, Text, TextField, Bitmap, SVG, Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path, Terminal, Canvas ([[Building Blocks]]) | Decided (2026-10-26; replaces `widget:`) |
+| A module's name as a key | A module call | The key is the module's unique `name:`, resolved by the registry; params and `style:` are keys beneath it | Decided (2026-10-26); repeats in one container are open |
 
 - A block is `block: Text`. An entry in `children:` has its own unique key (`title:`) and says what it is with `block:` or by calling a module.
 - `widget:` and `module:` no longer exist as keys; "module" survives only as `type: Module`.
@@ -49,7 +49,7 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 | `monitor` | A root | Connector name, then description; `default` for monitors no root names; no `monitor` means the root is ignored | Decided |
 | `children` | A root, a surface, a container, a popup | A mapping of unique names to entries; `import:` pulls in another file. The only holder of contents; `modules:` is gone | Decided |
 | `import` | Inside `children` | One file name or a list of `<Name>_Shell.yaml` files; paths are relative to the importing file; imports nest | Decided |
-| `import` | A shell file, a module file | Brings in another `_Shell.yaml`, or nests another module (`import: <Name>_Module.yaml`) | Decided |
+| `import` | A shell file, a module file, an inline `style:` | Brings in another `_Shell.yaml`; embeds a module file at that position (`import: <Name>_Module.yaml`), which is how modules nest; inside `style:` it imports a style file | Decided |
 | `params` | A module file declares them; a use passes them | Typed values | Decided that they exist; type names proposed |
 | `style` | A surface, a module | A style file name, or an inline mapping of style values | Decided |
 | `layer` | A surface | `background`, `bottom`, `top`, `overlay`, numbered 0 to 3 as in the protocol; `overlay` is the highest. A Bar or Panel may use `bottom`, `top` or `overlay`; a Frame only `top`; a Popup stacks above its parent | Decided (the key and the four values, flow diagram 2026-10-26). Only `top` surfaces may reserve space (`exclusive_zone`). `background` is for wallpapers only, for now: no kind uses it |

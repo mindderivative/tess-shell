@@ -23,7 +23,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 | Containers | Box, FlexBox, Grid | tre `box`; FlexBox with flex layout; Grid needs checking against tre's layout #needs-verification |
 | Typography | Text, TextField, a multi-line variant of TextField | `text`, `text_input` |
 | Graphics | Bitmap (a rasterized bitmap), SVG (a vector graphic) | `image`, `svg` |
-| Shapes | Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring | `path` and `box` with corner radius; hit shape per [[Hit Testing for Concave Corners]] |
+| Shapes | Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path | `path` and `box` with corner radius; Path is a free-form path, added 2026-10-26 for the Frame's concave corners and Panel joins; hit shape per [[Hit Testing for Concave Corners]] |
 | Other | Terminal, Canvas | `terminal`, `canvas` |
 
 - A block needs no name or UID. Calling one from YAML (`block: Text`) makes the shell's Python build it.
@@ -38,9 +38,8 @@ Composed in YAML, called by name, optionally with Python. The standard set the m
 |---|---|---|
 | Spacer | Flexible empty space | Box |
 | Label | A single line of text, no wrap | Text |
-| Text | Multi-line text that wraps | Text |
 | TextInput | A single-line text field (added 2026-10-26) | TextField |
-| TextBox | A multi-line text field (added 2026-10-26) | TextField, multi-line variant |
+| TextBox | Multi-line text. It replaces the module first listed as Text (a mistake, 2026-10-26); whether it is editable is open | Text, or TextField multi-line variant |
 | Button | A pressable control with states | Box, Text, Icon |
 | Icon | A named or file icon | SVG, Bitmap |
 | Image | An image from png, jpeg, gif or webp | Bitmap |
@@ -57,9 +56,9 @@ Composed in YAML, called by name, optionally with Python. The standard set the m
 
 These ship with the shell as a standard set; the shell's own modules are open to being overridden ([[ADR-0007 Shell UI Layer#Open items]]). Which are needed for v1 is in [[V1 Widgets]].
 
-## Names that appear in both lists
+## Names
 
-Text, and the pairs Image with Bitmap and Icon with SVG, appear as a block and as a module. TextInput and TextBox are modules over the TextField block and its multi-line variant. The key tells them apart: `block: Text` is the block; the module is called by its name. Both exist because the module adds behaviour (wrapping, a variant, a fallback). The registry holds the module name `Text`, so no other module can use it.
+The module `Text` was a mistake and is now TextBox, so no name is both a block and a module. Image and Icon (modules) sit on Bitmap and SVG (blocks). TextInput and TextBox are modules over the TextField block and its multi-line variant. A block is called with `block:`; a module by its name as the key ([[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]).
 
 ## What tre offers
 
@@ -95,8 +94,8 @@ Decided by the maintainer (2026-10-26); the full rules are in [[Style, Theme and
 ## Open
 
 - [ ] Whether a module author can add a block (in Python, shipped with a module), or blocks are fixed.
-- [ ] A free-form Path block, for the Frame's concave corners and Panel joins ([[ADR-0007 Shell UI Layer#Open items]]).
-- [ ] Whether the listed modules can be built from the listed blocks: Revealer and Marquee need animated layout and translate properties; Stack needs layered children; Slider, Toggle and Button need pointer and drag events from the blocks.
+- [x] A free-form Path block: added (2026-10-26).
+- [x] Whether the listed modules can be built from the listed blocks: the maintainer reports yes, tested on Tesserae (2026-10-26). Revealer and Marquee need animated layout and translate properties; Stack needs layered children; Slider, Toggle and Button need pointer and drag events from the blocks.
 - [ ] Grid: what it offers against tre's layout.
 - [ ] How icons are found (a theme icon set, files, both).
 - [ ] The state model: whether input blocks have properties the user edits (Tesserae's `model`) and how that reaches a module.

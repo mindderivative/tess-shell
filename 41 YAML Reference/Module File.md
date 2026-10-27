@@ -81,9 +81,8 @@ alignment: horizontal
 width: 120
 height: 34
 children:
-    monitor_icon:
-        import: Icon_Module.yaml        # a module, called by name; the Icon is itself built from the SVG block
-        icon: monitor.svg
+    Icon:                               # a module, called by its name
+        svg: monitor.svg
     label_text:
         block: Text
         class: text_style
@@ -124,19 +123,26 @@ Text:
 
 ## Using a module
 
-A module is placed under `children:` (there is no `modules:` key since 2026-10-26), each use with its own unique key. Decided: a module is called by its unique name, `widget:` and `module:` are gone, and params are keys on the call. The exact form of the call is open ([[ADR-0007 Shell UI Layer#Open items]]); the sketch below is my reading.
+A module is placed under `children:` (there is no `modules:` key since 2026-10-26), each use with its own unique key. Decided (maintainer, 2026-10-26): a module is called by its unique name as the key, `widget:` and `module:` are gone, params are keys beneath it, and `import:` embeds a module file at that position ([[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]). A block is called with `block:`, under a key of its own.
 
 ```yaml
 children:
-    top_label:
-        import: Label_Module.yaml       # or the registered name, import: Label (to confirm)
-        text: "Work"                    # a param, as a key on the call
+    import: Custom_Module.yaml          # embeds that module file at this position
+    Label:                              # a module, called by its unique name
+        text: "This is a title"         # a param, as a key on the call
+        style:
+            import: Custom_Style.yaml   # inline style can import a style file
+    Icon:
+        svg: home.svg                   # or a file path; wrap in quotes if needed
+        style:
+            foreground: "#ffffff"
+            size: 18
     title:
         block: Text                     # a building block
         text: "Hello"
 ```
 
-A module file may be used many times; there is one Python instance for all uses, with a `use` record per call.
+A module file may be used many times; there is one Python instance for all uses, with a `use` record per call. Open: two uses of one module in one container, since a mapping cannot repeat `Label:` (option A, a list under the key, in [[ADR-0007 Shell UI Layer#Open items]]).
 
 ## Params down the tree
 
