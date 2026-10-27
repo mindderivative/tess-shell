@@ -77,6 +77,8 @@ The flow diagram ([[Shell Structure]]) groups the Popup under **Special Cases** 
 - **A Popup stays a `kind: popup` entry in the shell file** and names the surface it hangs off, as before.
 - **A module calls it.** The diagram's edge is "Calls": a module's code (an `@action`, for example a click on a tray icon) asks the shell to open the popup. How the call is written is proposed in [[Module Context#Calling a popup]].
 - **It holds modules and containers,** like a layer window, and is drawn above its parent.
+- **It knows what called it** (maintainer, 2026-10-26): the caller's record (module, use, params, anchor) is available to the popup's own modules and expressions, so a tray menu shows the items of the tray icon that was clicked.
+- **Focus is opt-in.** A popup marked as taking focus takes the keyboard and mouse itself when it opens, with nothing passed at call time; a popup with no selections does not need it. tre's `PopupWindow` has a `grab` flag that gives pointer and keyboard and closes the popup on an outside click or Escape, one flag for both; the shell may need to separate taking focus from dismissing on an outside click. #needs-verification against tre.
 - **The group exists for kinds like it.** A **Notification window** behaves like a popup but differs enough to need its own `kind:`. Not in v1: the notification server is outside v1 ([[V1 Scope#After v1]], [[ADR-0004 Plasma Coexistence]]).
 
 ## Overlay
@@ -90,18 +92,18 @@ launcher:
     kind: panel
     layer: overlay
     keyboard: exclusive
-    modules:
+    children:
         apps: Applications_Module.yaml
 ```
 
-Modules are assigned under `modules:` as for any surface. A panel can be anchored, floating, movable, hidden or full-screen, so one kind covers a launcher, an OSD and a full-screen overlay.
+Modules are placed under `children:` as for any surface. A panel can be anchored, floating, movable, hidden or full-screen, so one kind covers a launcher, an OSD and a full-screen overlay.
 
 **Option B, add `kind: overlay`.** A surface kind that is the size of the whole output, transparent, on the overlay layer, with its input region following what is drawn in it:
 
 ```yaml
 screen_overlay:
     kind: overlay
-    modules:
+    children:
         apps: Applications_Module.yaml
 ```
 

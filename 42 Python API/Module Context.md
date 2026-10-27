@@ -208,18 +208,30 @@ root:
 
 ## Calling a popup
 
-A module can call a popup ("Calls" in the flow diagram, [[Shell Structure]]). The popup is a `kind: popup` entry in the shell file; the module asks the shell to open it. Proposed shape, to settle with the Panel and Popup specs:
+A module can call a popup ("Calls" in the flow diagram, [[Shell Structure]]). The popup is a `kind: popup` entry in the shell file; the module asks the shell to open it. Decided (2026-10-26): many modules can call one popup, and the popup must know what called it so its data fits the caller.
+
+The maintainer's suggested shape passes `self`:
 
 ```python
 @action
 def open_menu(self, popup_name, anchor):
-    self.ctx.popup(popup_name).open(anchor_rect=anchor)     # the shell places it beside the rectangle
+    self.ctx.popup(self, popup_name).open(anchor_rect=anchor)
 ```
 
-- The popup's parent is the surface that holds the calling module, so the popup opens on that monitor and nowhere else ([[Surface Types#Open questions]]).
+**A problem with `self` alone.** One module instance serves every use. `self` says *which module* called but not *which use* (which surface, which monitor, which params). The popup's parent is the surface that holds the calling use, and it must open on that monitor. So the caller also has to carry the use. Options:
+
+| Option | Shape | Notes |
+|---|---|---|
+| A. The shell supplies the use to the action | An action called from a widget receives the calling `use` (as `use` or on `self.ctx.caller`) automatically, because the shell knows which widget was clicked | The module writes `self.ctx.popup(popup_name)` and the shell fills in the caller. Least code in the module (recommended) |
+| B. The module passes the use | `self.ctx.popup(popup_name, caller=use)` | Explicit; the module must keep the `use` |
+| C. The maintainer's form | `self.ctx.popup(self, popup_name)` | Identifies the module only; works for a module with a single use |
+
+What the popup sees: a `caller` record: the calling module's name and UID, the use (name, monitor, params), the anchor rectangle, and an optional `data` mapping the module passes (for example which tray item). Expressions in the popup read `caller.<field>`; the popup's own modules receive it as params.
+
+- The popup's parent is the surface that holds the calling use, so it opens on that monitor only ([[Surface Types#Open questions]]).
 - The caller passes the anchor rectangle (the clicked icon), in its surface's coordinates.
-- The popup holds modules and containers, so a tray menu is itself built from modules.
-- Open: whether one popup entry can be called by many modules, and how a popup learns who called it (for example a tray icon's menu).
+- Focus is opt-in on the popup entry, not a call argument.
+- Open: option A, B or C; and whether the call is a method on the context or an action the shell file can declare directly.
 
 ## D-Bus helper
 

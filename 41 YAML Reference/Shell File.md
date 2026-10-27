@@ -30,14 +30,14 @@ root:
         top_bar:
             kind: bar
             style: Dock_Style.yaml
-            modules:
+            children:                            # modules and containers go under children; the syntax of a module use is pending
                 clock: Clock_Module.yaml
                 audio: Audio_Module.yaml
         launcher:
             kind: panel
             layer: overlay
             keyboard: exclusive
-            modules:
+            children:
                 apps: Applications_Module.yaml
 ```
 
@@ -49,7 +49,7 @@ root:
 
 | Key | Meaning | Status |
 |---|---|---|
-| `name` | Required; unique per monitor | Decided |
+| `name` | Required; unique across the shell (full path for repeated uses, see [[ADR-0007 Shell UI Layer#Open items]]) | Decided (the rule); path form proposed |
 | `monitor` | A connector name (`DP-1`); falls back to the display description; `default` applies to every monitor no other root names; absent means the root is ignored | Decided |
 | `children` | Surfaces and imports | Decided |
 
@@ -60,7 +60,7 @@ root:
 | `kind` | `bar`, `frame`, `panel`, `popup` | All | Decided |
 | `layer` | `background`, `bottom`, `top`, `overlay` | All | Decided (the key) |
 | `style` | A style file or an inline mapping | All | Decided |
-| `modules` | Module uses | All | Decided |
+| `children` | The surface's contents: containers and module uses. **`children:` is the only holder; `modules:` is gone** (maintainer, 2026-10-26). The syntax of a module use waits for the widget/module decision ([[Shell Structure#Widgets, modules and building blocks]]) | All | Decided (the key) |
 | `anchor` | Edges to attach to: `top`, `bottom`, `left`, `right` (one or a list) | bar, panel | Proposed |
 | `size` | `[width, height]`; `0` stretches between two anchored edges | bar, panel, popup | Proposed |
 | `exclusive_zone` | Space reserved along the anchored edge, in pixels. **Only allowed on `layer: top`**; on any other layer it is a load error (maintainer, 2026-10-26; error handling proposed) | bar, panel, frame | Rule decided; key name proposed |
@@ -84,7 +84,7 @@ Names follow tre's so the shell maps them directly. Per-kind keys (a Frame's sid
 
 - A root with no `name`, or two with the same name on one monitor: error, both places named.
 - A `kind:` that is not one of the four: error with the list.
-- A `modules:` entry whose module file is not found: error with the search paths tried.
+- A module use whose file is not found: error with the search paths tried.
 - An `attach_to` or `anchor_to` that never resolves: error at load; a target that disappears while running: warning, the surface stays hidden.
 - A module with no matching `.py`: error naming both files.
 

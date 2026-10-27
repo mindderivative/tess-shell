@@ -178,6 +178,17 @@ Decided by the maintainer in chat, from the Label example.
 - **Module values.** Expressions in the module's YAML read `params.<name>` and the values the Python sends, under their own names. Addressing a widget directly by its `name:` is optional.
 - **The module's style file** is `type: Style`, named by the module's `style:` key.
 
+### Structure answers (2026-10-26)
+
+Decided by the maintainer in chat, from the Popup/Panel and structure questions.
+
+- **A popup can be called by many modules, and it must know what called it,** so its data is relevant to the caller's context. The caller's record (the calling module, the use, its params, the anchor) is available to the popup's own modules and expressions.
+- **`children:` is the only holder.** A surface, a container and a popup hold their contents under `children:`. `modules:` goes away. How a module use is written inside `children:` waits for the widget/module decision below.
+- **A container is a fundamental building block, not a widget,** so it gets its own key (name not decided; `container:` is the suggestion).
+- **Names.** Anything with a unique name gets a UID. A layer window (surface), container, module, widget or special case can have a name. **Names are unique across the shell, not per monitor** (this supersedes "unique per monitor" in the earlier sections). A name or UID is reachable from anywhere in the shell through the registry, nested or not. (See Open items for how repeated uses of one definition get unique names.)
+- **Popup focus is opt-in.** An open popup that is marked as taking focus takes the keyboard and mouse itself, with nothing passed at call time. Not every popup has selections, so the default is not to take focus.
+- **Open until the widget and module model is defined:** whether a widget and a module are the same thing (Tesserae's route), the `kind: Text` question in style classes, and the final keys. See [[Shell Structure#Widgets, modules and building blocks]].
+
 ### Modules (2026-10-25)
 
 Decided by the maintainer in chat:
@@ -293,6 +304,11 @@ Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import
 - [ ] **Python builder API.** The Python front-end that produces the same tree as the YAML, and the parity test. Written in `42 Python API/`.
 - [x] **Writing the UID into a user's file.** Decided 2026-10-25: once the file is found, the shell opens it and writes `UID:` below `shell:`. The points below are implementation defaults for that write, not open questions; the maintainer called the question obvious. Defaults — The shell edits a file the user owns. Needs: a YAML writer that keeps comments and layout; no reload loop when the watcher sees the shell's own write; behaviour for a read-only file or a file shared by two shells; and what happens when the user copies a file, so two files carry one UID. Recommendation: the writer keeps comments, writes are ignored by the watcher for that file, a read-only file is registered without injection and warned, and a duplicate UID is a load error naming both files.
 - [ ] **`kind:` inside a class.** The Label style example writes `kind: Text` to say which widget a class applies to; `kind:` is the surface kind everywhere else. Recommendation: `widget: Text` inside a class ([[Style, Theme and Stylesheet Files#Classes]]).
+- [ ] **Widget, module and building blocks** (2026-10-26). The maintainer asked whether, following Tesserae's route, a widget and a module are the same thing, built from base building blocks, and whether one of the two words should go. Analysis and options: [[Shell Structure#Widgets, modules and building blocks]]. Blocks the `kind: Text` question and the key for a module use.
+- [ ] **Unique names across the shell with repeated uses.** A module (or an imported surface set) is used many times, and its internal names (`Label_Text`) repeat. A flat shell-wide unique name would clash. Proposal: names inside a definition are local; each use gets a path name (`top_label.Label_Text`), and the registry holds the path as the shell-wide unique name and a UID for the instance. A UID written into a file belongs to the file (the definition); an instance UID lives in the registry only. References can use the path, or a short name when it is unambiguous. Needs the maintainer's confirmation.
+- [ ] **Params and "bubble up".** The maintainer suggested a bubble-up policy for params. My reading and recommendation are in [[Module File#Params down the tree]].
+- [ ] **Popup call shape and caller context.** The maintainer proposed `self.ctx.popup(self, name).open(anchor_rect=...)`. Passing `self` identifies the module but not the use (one instance serves every use), so the caller record also needs the use. See [[Module Context#Calling a popup]].
+- [ ] **Popup focus and dismissal.** tre's `grab` flag gives the popup the pointer and keyboard and also closes it on an outside click or Escape; one flag covers both. The shell may need them separate: a popup with no selections that still closes on an outside click. #needs-verification against tre's `PopupWindow`.
 - [ ] **Directory spelling.** `$HOME/.config` against `$XDG_CONFIG_HOME`. Recommendation: use `$XDG_CONFIG_HOME` when it is set, else `$HOME/.config`. The key for the search list (`look-at` as written) is spelled in `41 YAML Reference/`.
 - [ ] **What a registry mismatch changes.** The maintainer decided an entry with no match is treated as removed and a new one is registered; also decide whether a removed entry's saved state is dropped at once or kept for a while.
 

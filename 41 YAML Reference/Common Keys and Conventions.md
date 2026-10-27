@@ -23,7 +23,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 | `shell` | The shell format version (`v1`, `v1234` in the examples) | Required, top level, first. A file without it is not a shell file and is refused with an error naming it | Decided; version format not decided |
 | `type` | What the file is | Required, top level. `Shell`, `Module`, `Theme`, `Style`, `Stylesheet`. Must agree with the file suffix | Decided |
 | `UID` | The file's shell-wide identifier (UUIDv7) | Written by the shell, directly below `shell:`, when the entry is first registered. Authors do not write it | Decided |
-| `name` | A name for a root, surface, module or widget | Required on a root, surface and module. Unique per monitor; scope is its file and the Python attached to it | Decided |
+| `name` | A name for a root, surface, container, module, widget or special case | Required on a root, surface and module. **Unique across the shell** (maintainer, 2026-10-26, replacing "per monitor"); reachable from anywhere through the registry. Anything with a unique name gets a UID. Repeated uses of one definition get path names (proposed) | Decided; path names proposed |
 
 File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `<Name>_Theme.yaml`, `<Name>_Stylesheet.yaml`, plus a Python file `<Name>_Module.py` next to a module ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]). A shell is one `*.yaml` file or a `Main_Shell.yaml` importing `<Name>_Shell.yaml` files.
 
@@ -45,9 +45,9 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 |---|---|---|---|
 | `root` | Shell file | The tree of one monitor's surfaces: `name`, `monitor`, `children` | Decided; multiple roots open ([[Shell File]]) |
 | `monitor` | A root | Connector name, then description; `default` for monitors no root names; no `monitor` means the root is ignored | Decided |
-| `children` | A root, a container widget | A mapping of unique names to entries; `import:` pulls in another file | Decided |
+| `children` | A root, a surface, a container, a popup | A mapping of unique names to entries; `import:` pulls in another file. **The only holder of contents; `modules:` is gone** | Decided |
 | `import` | Inside `children` | One file name or a list of `<Name>_Shell.yaml` files; paths are relative to the importing file; imports nest | Decided |
-| `modules` | A surface | A mapping of unique names to module uses | Decided |
+| `container` | Inside `children` | A building block that holds children: `Box` or `FlexBox`. Its own key, not `widget:` (maintainer, 2026-10-26); the key name is a suggestion | Decided that it has its own key |
 | `module` | A module use | The module file, when the use has params | Proposed ([[Module File#Using a module]]) |
 | `params` | A module file declares them; a use passes them | Typed values | Decided that they exist; type names proposed |
 | `style` | A surface, a module | A style file name, or an inline mapping of style values | Decided |
@@ -55,7 +55,7 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 
 ## Names and references
 
-- A `name` is unique per monitor and scoped to its own file and the Python attached to it.
+- A `name` is unique across the shell (maintainer, 2026-10-26) and reachable from anywhere through the registry, nested or not. Anything with a unique name gets a UID. A definition that is used many times (a module, an imported surface set) has local names inside it; each use gets a path name such as `top_label.Label_Text` (proposed, [[ADR-0007 Shell UI Layer#Open items]]).
 - A reference to a name in another file is resolved through the registry: a Panel attached to a Bar names the Bar. An unresolved reference is an error at load; a target that disappears while running is a warning and the Panel stays hidden until it returns ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]).
 - Surfaces do not nest. They are siblings and refer to each other by name.
 - A UID can also address a file; Python reaches a module's YAML by file name, unique name or UID.

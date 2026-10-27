@@ -96,10 +96,10 @@ Text:
 
 ## Using a module
 
-A surface lists modules under `modules:`, each with a unique name:
+A module is placed under `children:` (there is no `modules:` key since 2026-10-26), each with a unique name. The syntax below is pending the widget/module decision ([[Shell Structure#Widgets, modules and building blocks]]); under the recommended option a use is `widget: Label` with its params as keys.
 
 ```yaml
-modules:
+children:
     audio: Audio_Module.yaml                   # just the file
     top_label:                                 # the file plus params
         module: Label_Module.yaml
@@ -108,6 +108,16 @@ modules:
 
 The scalar form is the module file alone; the mapping form adds `module:` and the values for its `params`. The mapping form is a proposal. A module file may be used many times; there is one Python instance for all uses.
 
+## Params down the tree
+
+The maintainer suggested a "bubble up" policy for params (2026-10-26). My reading and thoughts:
+
+- **Reading:** a nested module or widget that needs a param it was not given looks *up* the tree to its ancestors until it finds one (so a deep `Text` can read the outer module's `text` without every level passing it). The other possible reading, values moving from a child to its parent, is better done with events and actions, and is not proposed.
+- **For:** less repetition when a value is needed several levels down (a colour, a monitor name).
+- **Against:** it makes dependencies invisible and a rename can silently change which ancestor supplies a value; a module used in two places may find different values.
+- **Recommendation:** explicit and opt-in. A param declares `inherit: true` to be looked up the ancestry when not passed; the nearest ancestor that has it wins; a required param found nowhere is an error naming the chain it searched. Everything else must be passed. Because names and UIDs are reachable shell-wide through the registry, a value can also be read by an explicit reference, so inheriting is a convenience and not a necessity.
+- Needs the maintainer's view.
+
 ## Errors specific to module files
 
 - `type: Module` without a matching `_Module.py`: error naming both files.
@@ -115,7 +125,7 @@ The scalar form is the module file alone; the mapping form adds `module:` and th
 - A param passed that is not declared, or of the wrong type: error naming the use and the param.
 - A param declared without a default and not passed: error at the use.
 - A `style:` file that is not found: error with the search paths.
-- A widget `name` defined twice in one file: error, both places named.
+- A `name` defined twice in one file: error, both places named.
 
 ## Open
 

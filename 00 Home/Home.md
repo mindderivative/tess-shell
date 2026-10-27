@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Popup stays a kind; a module calls it; the Special Cases group is for future popup-like kinds such as a Notification window ([[Surface Types#Special cases]]) |
+| Last change | Recorded: `children:` only, container has its own key, names unique across the shell, popup knows its caller, popup focus is opt-in; analysed Tesserae's widget model ([[Shell Structure#Widgets, modules and building blocks]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Five points in [[Shell Structure#What does not match, or needs a decision]] (widgets outside modules, container key, how a surface holds modules, nested modules, popup focus); the `kind: Text` conflict in style classes; confirm an `exclusive_zone` off `top` is a load error |
+| Waiting on you | Choose option 1, 2 or 3 for widget and module ([[Shell Structure#Widgets, modules and building blocks]]); confirm path names for repeated uses; params policy ([[Module File#Params down the tree]]); how the popup learns its caller ([[Module Context#Calling a popup]]); what you want for `exclusive_zone` off `top` |
 | Waiting on others | tre 0.5.9 release: `hit_shape="painted"` (#236, [[Hit Testing for Concave Corners]]) and `keep_alive`/`stop()` (#238, [[TRE-REQ-005 Keep-Alive and Loop Stop]]); built on local branches. The Frame uses the explicit-rectangle workaround, and the 1x1 window is the stopgap, until then |
 | Next | The Clock module spec, the Panel spec, then `60 Quality` |
 | Blocked | Nothing |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | Structure answers recorded; Tesserae's widget model analysed; `modules:` replaced by `children:` |
 | 2026-10-26 | Popup stays a kind, called by a module; Special Cases group noted ([[Surface Types#Special cases]]) |
 | 2026-10-26 | Flow diagram v3: Layer 0 wallpapers only; Popup is a special case in a module ([[Shell Structure]]) |
 | 2026-10-26 | Reserved space enforced to the `top` layer ([[Surface Types#Layers per kind]]) |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-26 | Flow diagram read; [[Shell Structure]] written |
 | 2026-10-26 | [[41 YAML Reference]] drafted (four notes) |
 | 2026-10-26 | `layer: overlay` and clockwise four-value order confirmed |
-| 2026-10-26 | Overlay settled: a Panel on the overlay layer ([[Surface Types#Overlay]]) |
 
 ## Go to
 
