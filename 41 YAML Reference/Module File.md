@@ -123,7 +123,7 @@ The scalar form is the module file alone; the mapping form adds `module:` and th
 - [ ] How the module's root is written when it is not a container (a single `Text`).
 - [ ] The widget property names (`foreground`, `fill`, `alignment`, `justify_content`, `align_content`, `width`, `height`) and which go in style or on the widget.
 - [ ] Whether a module can declare the keys its Python sends, so the shell checks a layout against them at load ([[Value Types and Conversion#Open questions]]).
-- [ ] Whether a module can contain other modules.
+- [x] Whether a module can contain other modules: the flow diagram says yes ("Can Nest"); the meaning for params, names and UIDs is open ([[Shell Structure]]).
 - [ ] How events are declared on a widget (`on_click:` and the like) and how they name `@action` methods ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]).
 
 ## Links

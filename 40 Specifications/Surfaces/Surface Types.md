@@ -55,6 +55,19 @@ A Panel is not a child of the surface it attaches to. It may render on top of a 
 
 Anchored to anything, and rendered like an overlay. It is not a child in the shell file's tree: the file says what it is anchored to by reference, and the popup is its own entry. The parent that tre's `PopupWindow` needs ([[TRE-REQ-001 Layer Surface Window]]) is a Wayland protocol detail the shell handles, not a nesting the author writes. "Anything" is a shell surface: tre requires a layer window or another popup as the protocol parent (see Integration).
 
+## Layers per kind
+
+From the flow diagram ([[Shell Structure]], 2026-10-26). `layer:` takes the four layer-shell values.
+
+| Kind | Layers it may use |
+|---|---|
+| Bar | `bottom`, `top`, `overlay` |
+| Panel | `bottom`, `top`, `overlay` |
+| Frame | `top` only |
+| Popup | `overlay` (it hangs off a layer surface and the compositor stacks it above its parent) |
+
+`background` is for wallpapers, which the shell does not draw in v1 ([[V1 Scope]]). Which layers reserve space is an open point in [[Shell Structure]].
+
 ## Overlay
 
 The maintainer asked how an overlay is added in YAML and how modules are assigned to it (2026-10-26). In the layer-shell protocol, `overlay` is one of four stacking layers (`background`, `bottom`, `top`, `overlay`), and any layer surface sits on one of them. Today the four kinds each take a `layer:`, so an overlay is a surface on the overlay layer, not a fifth kind.
@@ -114,7 +127,7 @@ How each type maps to tre 0.5.8 ([[TRE-REQ-001 Layer Surface Window]]):
 | Type | Mapping | Notes |
 |---|---|---|
 | Bar | `LayerWindow(layer=..., anchor=<edge> or <edge + both across>, size=(0, N) or (N, 0), exclusive_zone=N, output=...)` | A positive zone counts only for one edge, or one edge plus both edges across it; any other anchor reserves nothing. |
-| Frame | A painter `LayerWindow` (all four anchors, `size=(0, 0)`, `exclusive_zone=-1`, `input_region` as an explicit list of rectangles built from the ring geometry until tre 0.5.9 ships `hit_shape="painted"` on path nodes with `input_region="auto"`, see [[Hit Testing for Concave Corners]]) plus reservers: one edge and both edges across it, 1 px on the short axis, `layer="bottom"`, the side's thickness as `exclusive_zone`, `input_region=[]` | The layout from [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]]. Different side thicknesses are different reserver zones. Rounded corners are filled paths in the painter. tre did not test the four reservers plus the painter together. |
+| Frame | A painter `LayerWindow` (all four anchors, `size=(0, 0)`, `exclusive_zone=-1`, `input_region` as an explicit list of rectangles built from the ring geometry until tre 0.5.9 ships `hit_shape="painted"` on path nodes with `input_region="auto"`, see [[Hit Testing for Concave Corners]]) plus reservers: one edge and both edges across it, 1 px on the short axis, `layer="top"` (the Frame is Top only, [[Shell Structure]]), the side's thickness as `exclusive_zone`, `input_region=[]` | The layout from [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]]. Different side thicknesses are different reserver zones. Rounded corners are filled paths in the painter. tre did not test the four reservers plus the painter together. |
 | Panel | `LayerWindow`, floating (a corner or no anchor, positioned by margin) | Movable with `window_region="drag_margin"`; the engine moves it and fires `moved` on release. Margin animation covers slide in and out. Other surfaces' zones do not limit a drag. |
 | Popup | `PopupWindow(parent, anchor_rect, anchor, gravity, constraint_adjustment, grab)` | Parent is a `LayerWindow` or `PopupWindow`. The compositor flips and slides it to stay on screen. Escape dismissal is untested in tre. |
 

@@ -14,7 +14,7 @@ depends_on: []
 # Shell structure
 
 > [!summary]
-> The maintainer's flow diagram ([[Shell Flow Diagram.canvas]], read 2026-10-26) shows what a shell is made of, from the desktop environment down to widgets. This note puts it in words, checks it against the rest of the vault, and lists where the two disagree. The diagram is the maintainer's design; the differences below are questions for the maintainer, not corrections.
+> The maintainer's flow diagram ([[Shell Flow Diagram.canvas]], updated 2026-10-26) shows what a shell is made of, from the desktop environment down to widgets. This note puts it in words, checks it against the rest of the vault and the layer-shell protocol, and lists what does not yet match. The diagram is the maintainer's design; the points below are questions, not corrections.
 
 ![[Shell Flow Diagram.canvas]]
 
@@ -23,58 +23,62 @@ depends_on: []
 ```mermaid
 flowchart TB
     wall[Wallpapers] --> l0[Layer 0 Background]
-    l0 --> l1[Layer 1 Normal]
-    l1 --> l2[Layer 2 Overlay]
+    l0 --> l1[Layer 1 Bottom]
+    l1 --> l2[Layer 2 Top]
+    l2 --> l3[Layer 3 Overlay]
     l1 --> kwin[KWin]
+    res[Reserved Space] --> l2
     shell[Shell] --> layers[Layer surface]
-    layers --> lw[Layer windows: Panel, Bar, Frame]
+    layers --> lw[Layer windows]
+    lw --> mod1[Module]
     lw --> cont[Containers: Box, FlexBox]
     cont -->|can nest| cont2[Container]
-    cont --> mod1[Module]
+    cont --> mod1
     mod1 -->|can nest| mod2[Module]
-    mod1 --> widgets[Widgets: Text, Button]
-    mod2 --> widgets
-    mod1 --> c3[Container]
-    c3 --> mod2
+    mod2 --> widgets[Widgets: Text, Button]
+    mod2 --> cont
 ```
 
-| Group in the diagram | Contents | Relation |
+| Group | Contents | Relation |
 |---|---|---|
-| Desktop Environment | The layer surface (three layers), KWin, Wallpapers | The compositor owns the layers. Wallpapers go on Layer 0; KWin's windows live on Layer 1 |
-| Layer Surface | Layer 0: Background, Layer 1: Normal, Layer 2: Overlay | The Shell attaches to these |
-| Layer Windows | Panel, Bar, Frame | Placed on a layer |
-| Containers | Box, FlexBox | "Can nest": a container can hold containers |
-| Modules | Module | "Can nest": a module can hold modules; a module holds a container, which holds modules |
-| Widgets | Text, Button | Modules hold widgets |
+| Desktop Environment | The layer surface, KWin, Wallpapers | The compositor owns the four layers: Wallpapers on Layer 0, KWin on Layer 1, Reserved Space on Layer 2 |
+| Layer Surface | Layer 0 Background, Layer 1 Bottom, Layer 2 Top, Layer 3 Overlay | The Shell attaches to these |
+| Layer Windows | Panel (Bottom/Top/Overlay), Bar (Bottom/Top/Overlay), Frame (Top), Popup (Overlay) | Each kind with the layers it may use |
+| Containers | Box, FlexBox | "Can nest": a container holds containers |
+| Module | Module | "Can nest": a module holds modules |
+| Widgets | Text, Button | Reached from a module |
 
-Reading order: Shell, layer surface, layer windows, containers, modules, widgets.
+Reading the arrows: a layer window holds modules directly, or containers; containers hold modules; a module holds containers and, through its inner module, widgets.
 
-## How it matches the vault
+## Checked against the vault and the protocol
 
-| Diagram | Vault | Match |
+| Diagram | Check | Result |
 |---|---|---|
-| Layer windows: Panel, Bar, Frame | Surface kinds: bar, frame, panel, popup ([[Surface Types]]) | Three of four. **Popup is not in the diagram** |
-| Layer 2: Overlay is the top layer | `layer: overlay` ([[Surface Types#Overlay]]) | Yes |
-| Layer 0 Background, Layer 1 Normal, Layer 2 Overlay | Four layer-shell layers: `background`, `bottom`, `top`, `overlay` ([[Common Keys and Conventions]]) | **Three layers against four** |
-| Box and FlexBox are containers | Box and FlexBox are `widget:` values ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]) | Same things; the diagram separates containers from widgets |
-| A layer window holds containers, which hold modules | A surface lists modules under `modules:` ([[Shell File]]) | **The container level between surface and module is new** |
-| Modules can nest | "Whether a module can contain other modules" was open ([[Module File#Open]]) | The diagram says yes |
-| Containers can nest | Widgets nest inside container widgets | Yes |
-| Module holds widgets (Text, Button) | A module file holds a widget tree ([[Module File]]) | Yes |
-| Wallpapers on Layer 0, KWin on Layer 1 | The shell does not own wallpaper or windows ([[Goals and Non-Goals]] N1); wallpaper is later in [[V1 Scope]] | Consistent |
+| Four layers numbered 0 to 3: Background, Bottom, Top, Overlay | The layer-shell protocol's four layers, "ordered by z depth, bottom-most first" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)) | Matches exactly. `layer:` takes these four ([[Common Keys and Conventions]]) |
+| Panel, Bar, Frame, Popup | The four surface kinds ([[Surface Types]]) | Matches. Popup is back |
+| Overlay is the highest layer | `layer: overlay` ([[Surface Types#Overlay]]) | Yes |
+| A layer window holds modules directly | `modules:` on a surface ([[Shell File]]) | Yes |
+| A layer window holds containers | New | A surface can hold containers as well (see below) |
+| Modules nest | Was open ([[Module File#Open]]) | The diagram says yes |
+| Containers nest | Widgets nest inside container widgets | Yes |
+| Wallpapers on Layer 0, KWin on Layer 1 | The shell does not own wallpaper or windows ([[Goals and Non-Goals]] N1) | Consistent. The protocol puts ordinary windows between Bottom and Top |
 
-## Differences to settle
+## What does not match, or needs a decision
 
-1. **Layers.** The diagram has Background, Normal, Overlay. The layer-shell protocol has `background`, `bottom`, `top`, `overlay`, and windows sit between `bottom` and `top`. KWin's windows are on "Layer 1: Normal". A bar that reserves space sits above windows (`top`); a frame's space-reserving strips can sit below (`bottom`). Options: **A.** the YAML has the three names and the shell picks `bottom` or `top` from the kind and the zone; **B.** the YAML has the four protocol names. Recommendation A for simplicity if the shell can choose reliably; B if the author needs to say "above windows" or "below windows" explicitly. Needs the maintainer's choice.
-2. **Popup.** The diagram lists Panel, Bar and Frame. Earlier decisions have four kinds, with Popup for menus and flyouts the compositor places (tray menus flip at screen edges and close on an outside click). A panel on the overlay layer cannot do that placement. Is Popup dropped, folded into Panel, or just not drawn?
-3. **The container level.** In the diagram a surface holds containers and containers hold modules. In [[Shell File]] a surface holds `modules:` directly. Options: **A.** a surface is itself the outermost container, so its children are containers and modules (`children:` holding `FlexBox`, module uses and so on); **B.** keep `modules:` and put layout in a container inside the surface. Recommendation A, with `children:` for everything a surface holds.
-4. **Modules nest.** A module can hold modules. What it means for params, UIDs, names and the Python (one instance per file, but nested uses) needs spelling out.
-5. **Containers against widgets.** The diagram has Containers (Box, FlexBox) and Widgets (Text, Button) as separate groups. Are containers written `widget: FlexBox` / `FlexBox:` like leaf widgets (as in the Label example), or with their own key?
+1. **Frame is Top only.** The Frame design in [[Surface Types]] put the painter on `top` and the thin space-reserving strips on `bottom`, following [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]]. With Frame on Top only, the strips move to `top` too. No tre change is needed (a layer is a setting), but the strips were only tested on `top` in the tre spike and the exact layer for them was not recorded. #needs-verification on KWin. Updated in [[Surface Types]].
+2. **Reserved Space is drawn on Layer 2 only.** The protocol puts no restriction by layer on exclusive zones; it says the compositor's use is implementation-dependent. So a Bar on Bottom or Overlay may or may not reserve space, depending on the compositor. Is "Reserved Space" a rule you want (only Top-layer surfaces reserve) or a pointer to where it usually applies? If a rule, the shell ignores or rejects `exclusive_zone` on Bottom and Overlay surfaces.
+3. **Popup (Overlay).** A Popup is not its own layer surface. It is an `xdg_popup` parented to a layer surface, and the protocol does not say how it stacks against its parent; it refers to the xdg_popup rules. In practice a compositor draws it above its parent. Whether it also sits above fullscreen windows when its parent is on Bottom is not stated. The popup also inherits its parent's keyboard setting. So "Popup (Overlay)" is the intended behaviour, not a setting the author chooses. #needs-verification on KWin.
+4. **KWin on Layer 1.** The protocol says ordinary windows are rendered between Bottom and Top, and fullscreen windows typically at Top (so a fullscreen window can cover Top-layer surfaces and only Overlay stays above it, not stated by the page). Drawing KWin on Layer 1 is close enough; a note "between Bottom and Top" would be exact.
+5. **Widgets only through a module.** The Widgets group is reached only from a module; no arrow runs from Containers to Widgets. In the Label example a `FlexBox` holds an `Icon` and a `Text`. Can a container on a surface (outside any module) hold widgets directly? [[V1 Widgets]] says widgets are used in modules and in a surface's own layout.
+6. **Containers and widgets share a key?** The diagram keeps Containers and Widgets as separate groups. In the Label example `FlexBox:` is written like `Text:`. Same key (`widget: FlexBox` / `FlexBox:`) or its own?
+7. **Allowed layers per kind.** Panel and Bar may use Bottom, Top or Overlay; Frame only Top; Popup only Overlay. Background is for wallpapers and is not offered to any kind. Is `layer: background` forbidden on every kind?
+8. **How a surface holds modules and containers.** `modules:` is a key on a surface today; the diagram shows modules and containers both under a layer window. Option **A:** `children:` holds containers and module uses; **B:** keep `modules:` and add a container key. Recommendation A.
+9. **Nested modules.** What a nested module means for params, names, UIDs and the Python (one instance per file, nested uses) needs spelling out.
 
 ## Open
 
-- [ ] The five differences above.
-- [ ] Whether the diagram should be the single reference for the structure, with other notes linking to it.
+- [ ] The points above.
+- [ ] Whether the diagram is the single reference for the structure, with other notes linking to it.
 
 ## Links
 
