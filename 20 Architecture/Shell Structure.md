@@ -14,7 +14,7 @@ depends_on: []
 # Shell structure
 
 > [!summary]
-> The maintainer's flow diagram ([[Shell Flow Diagram.canvas]], updated 2026-10-26) shows what a shell is made of, from the desktop environment down to widgets. This note puts it in words, checks it against the rest of the vault and the layer-shell protocol, and lists what does not yet match. The diagram is the maintainer's design; the points below are questions, not corrections.
+> The maintainer's flow diagram ([[Shell Flow Diagram.canvas]], third version, 2026-10-26) shows what a shell is made of, from the desktop environment down to widgets. This note puts it in words, checks it against the rest of the vault and the layer-shell protocol, and lists what does not yet match. The diagram is the maintainer's design; the points below are questions, not corrections.
 
 ![[Shell Flow Diagram.canvas]]
 
@@ -26,10 +26,10 @@ flowchart TB
     l0 --> l1[Layer 1 Bottom]
     l1 --> l2[Layer 2 Top]
     l2 --> l3[Layer 3 Overlay]
-    l1 --> kwin[KWin]
     res[Reserved Space] --> l2
+    kwin[KWin between Layer 1 and Layer 2]
     shell[Shell] --> layers[Layer surface]
-    layers --> lw[Layer windows]
+    layers --> lw[Layer windows: Panel, Bar, Frame]
     lw --> mod1[Module]
     lw --> cont[Containers: Box, FlexBox]
     cont -->|can nest| cont2[Container]
@@ -37,43 +37,50 @@ flowchart TB
     mod1 -->|can nest| mod2[Module]
     mod2 --> widgets[Widgets: Text, Button]
     mod2 --> cont
+    mod2 --> pop[Special case: Popup, drawn above parent]
+    pop --> cont
+    pop --> mod2
 ```
 
 | Group | Contents | Relation |
 |---|---|---|
-| Desktop Environment | The layer surface, KWin, Wallpapers | The compositor owns the four layers: Wallpapers on Layer 0, KWin on Layer 1, Reserved Space on Layer 2 |
+| Desktop Environment | The layer surface, KWin, Wallpapers | The compositor owns the four layers. Wallpapers on Layer 0; KWin's windows between Layer 1 and Layer 2; Reserved Space on Layer 2 |
 | Layer Surface | Layer 0 Background, Layer 1 Bottom, Layer 2 Top, Layer 3 Overlay | The Shell attaches to these |
-| Layer Windows | Panel (Bottom/Top/Overlay), Bar (Bottom/Top/Overlay), Frame (Top), Popup (Overlay) | Each kind with the layers it may use |
+| Layer Windows | Panel (Bottom/Top/Overlay), Bar (Bottom/Top/Overlay), Frame (Top) | Each kind with the layers it may use |
 | Containers | Box, FlexBox | "Can nest": a container holds containers |
 | Module | Module | "Can nest": a module holds modules |
 | Widgets | Text, Button | Reached from a module |
+| Special Cases | Popup, "drawn above parent" | Reached from a module; holds containers and modules |
 
-Reading the arrows: a layer window holds modules directly, or containers; containers hold modules; a module holds containers and, through its inner module, widgets.
+Reading the arrows: a layer window holds modules directly, or containers; containers hold modules; a module holds containers, widgets (through its inner module) and, as a special case, a popup. A popup holds containers and modules and is drawn above its parent.
 
 ## Checked against the vault and the protocol
 
 | Diagram | Check | Result |
 |---|---|---|
-| Four layers numbered 0 to 3: Background, Bottom, Top, Overlay | The layer-shell protocol's four layers, "ordered by z depth, bottom-most first" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)) | Matches exactly. `layer:` takes these four ([[Common Keys and Conventions]]) |
-| Panel, Bar, Frame, Popup | The four surface kinds ([[Surface Types]]) | Matches. Popup is back |
-| Overlay is the highest layer | `layer: overlay` ([[Surface Types#Overlay]]) | Yes |
-| A layer window holds modules directly | `modules:` on a surface ([[Shell File]]) | Yes |
-| A layer window holds containers | New | A surface can hold containers as well (see below) |
-| Modules nest | Was open ([[Module File#Open]]) | The diagram says yes |
-| Containers nest | Widgets nest inside container widgets | Yes |
-| Wallpapers on Layer 0, KWin on Layer 1 | The shell does not own wallpaper or windows ([[Goals and Non-Goals]] N1) | Consistent. The protocol puts ordinary windows between Bottom and Top |
+| Four layers numbered 0 to 3 | The layer-shell protocol's four layers, "ordered by z depth, bottom-most first" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)) | Matches exactly ([[Common Keys and Conventions]]) |
+| KWin "between Layer 1 and Layer 2" | The protocol: ordinary windows are rendered between the bottom and top layers | Matches exactly |
+| Reserved Space on Layer 2 | Enforced by the shell as its own rule | Decided ([[Surface Types#Layers per kind]]) |
+| Panel, Bar, Frame as layer windows with the layers shown | [[Surface Types#Layers per kind]] | Matches |
+| Popup "drawn above parent" | `xdg_popup` parented to a layer surface: the compositor draws it above its parent | Matches the protocol's idea. The protocol page does not describe the stacking itself; it points to the xdg_popup rules |
+| Layer 0 wallpapers only | Wallpaper is later in [[V1 Scope]] | Consistent |
+| Modules nest, containers nest | Was open ([[Module File#Open]]) | Confirmed by the diagram |
+
+## Decided from the diagram
+
+- **Layer 0 is for wallpapers only, for now** (maintainer, 2026-10-26). No kind uses `layer: background`. The maintainer can see it used later for window tiling, or as a base layer for a desktop dashboard.
+- **Frame is Top only.** Its strips move to `top` ([[Surface Types]]). Top suits the painter, which must be above windows to be seen; the strips are invisible so any layer works, and Top-layer reservation is the case known to work on KWin.
+- **The shell enforces `top` as the only layer that reserves space.** The protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion. Handling proposed: an `exclusive_zone` off `top` is a load error.
+- **KWin is "between Layer 1 and Layer 2",** as the protocol says.
 
 ## What does not match, or needs a decision
 
-1. **Frame is Top only.** Fine, and a good choice. The Frame's visible ring is drawn by the painter, which must be above windows to appear as a frame. The thin space-reserving strips are transparent, so their layer makes no visual difference. Top also avoids relying on an untested case: the tested KWin case is a bar on Top reserving space, and no bottom-layer zone was found tested on KWin. [[Surface Types]] had the strips on `bottom` (following [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]]); they move to `top`. No tre change is needed, since a layer is a setting. #needs-verification on KWin for the strips on `top` beside the painter.
-2. **Reserved Space is drawn on Layer 2 only: a rule or a pointer?** It is not a protocol rule. The layer-shell protocol ties exclusive zones to no layer: it says only that a positive zone is meaningful when the surface is anchored to one edge or an edge and both perpendicular edges, and that the compositor's use of it is implementation-dependent ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1), read 2026-10-26). Layers decide what is drawn above what. A bar sits on Top because it should be seen above windows, not because reserving space needs Top. (My first draft of this note was loose on this and read like a rule.) A practical rule for v1 is still sensible, since only Top-layer reservation is known to work on KWin. If you adopt it as a rule, the shell ignores or rejects `exclusive_zone` on Bottom and Overlay surfaces; if not, it passes it through and leaves it to the compositor. **Decided (maintainer, 2026-10-26): the shell enforces Top as the reserved-space layer.** Only a surface on `layer: top` may reserve space; it reduces confusion. Handling (proposed, to confirm): an `exclusive_zone` on a surface that is not on `top` is a load error naming the file, the surface and the key, rather than being silently ignored. Recorded in [[Surface Types#Layers per kind]] and [[Shell File]].
-3. **Popup (Overlay).** A Popup is not its own layer surface. It is an `xdg_popup` parented to a layer surface, and the protocol does not say how it stacks against its parent; it refers to the xdg_popup rules. In practice a compositor draws it above its parent. Whether it also sits above fullscreen windows when its parent is on Bottom is not stated. The popup also inherits its parent's keyboard setting. So "Popup (Overlay)" is the intended behaviour, not a setting the author chooses. #needs-verification on KWin.
-4. **KWin on Layer 1.** The protocol says ordinary windows are rendered between Bottom and Top, and fullscreen windows typically at Top (so a fullscreen window can cover Top-layer surfaces and only Overlay stays above it, not stated by the page). Drawing KWin on Layer 1 is close enough; a note "between Bottom and Top" would be exact.
-5. **Widgets only through a module.** The Widgets group is reached only from a module; no arrow runs from Containers to Widgets. In the Label example a `FlexBox` holds an `Icon` and a `Text`. Can a container on a surface (outside any module) hold widgets directly? [[V1 Widgets]] says widgets are used in modules and in a surface's own layout.
-6. **Containers and widgets share a key?** The diagram keeps Containers and Widgets as separate groups. In the Label example `FlexBox:` is written like `Text:`. Same key (`widget: FlexBox` / `FlexBox:`) or its own?
-7. **Allowed layers per kind.** Panel and Bar may use Bottom, Top or Overlay; Frame only Top; Popup only Overlay. Background is for wallpapers and is not offered to any kind. Is `layer: background` forbidden on every kind?
-8. **How a surface holds modules and containers.** `modules:` is a key on a surface today; the diagram shows modules and containers both under a layer window. Option **A:** `children:` holds containers and module uses; **B:** keep `modules:` and add a container key. Recommendation A.
-9. **Nested modules.** What a nested module means for params, names, UIDs and the Python (one instance per file, nested uses) needs spelling out.
+1. **Popup is now a special case inside a module, not a layer window.** In the first diagram Popup sat in Layer Windows, next to Panel, Bar and Frame. Now it is a "Special Case" reached from a Module, "drawn above parent", holding containers and modules. The vault has Popup as a surface kind in its own entry that names the surface it hangs off ([[Surface Types]], [[Shell File]]). Which is meant? **A.** Popup stays a `kind: popup` entry in the shell file, as today. **B.** A popup is declared inside the module that opens it (for example a tray module with its menu), parented to the surface the module is in. B fits the diagram and needs no reference by name, because the parent is the surface holding the module. It also makes "popups are exclusive to the monitor they are called on" automatic. Recommendation B, if popups are only opened from modules; keep A as well if a surface itself (not a module) must open one.
+2. **Widgets only through a module.** The Widgets group is reached only from a module; no arrow runs from Containers to Widgets. In the Label example a `FlexBox` holds an `Icon` and a `Text`. Can a container on a surface, outside any module, hold widgets directly?
+3. **Containers and widgets share a key?** The diagram keeps Containers and Widgets as separate groups. In the Label example `FlexBox:` is written like `Text:`. Same key (`widget: FlexBox` / `FlexBox:`) or its own?
+4. **How a surface holds modules and containers.** `modules:` is a key on a surface today; the diagram shows modules and containers both under a layer window. Option **A:** `children:` holds containers and module uses; **B:** keep `modules:` and add a container key. Recommendation A.
+5. **Nested modules.** What a nested module means for params, names, UIDs and the Python (one instance per file, nested uses) needs spelling out.
+6. **Popup placement of keyboard focus.** A popup inherits its parent's keyboard setting ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)): a bar with `keyboard: none` cannot give a popup focus. Whether the module sets the parent to `on_demand` while a popup is open is for the module spec.
 
 ## Open
 

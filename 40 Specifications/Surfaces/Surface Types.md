@@ -66,7 +66,7 @@ From the flow diagram ([[Shell Structure]], 2026-10-26). `layer:` takes the four
 | Frame | `top` only | Yes (it is on `top`) |
 | Popup | `overlay` (it hangs off a layer surface and the compositor stacks it above its parent) | No |
 
-`background` is for wallpapers, which the shell does not draw in v1 ([[V1 Scope]]).
+`background` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no kind uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is a special case reached from a module, drawn above its parent ([[Shell Structure]]).
 
 **Reserved space is enforced to the `top` layer** (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). Proposed handling: an `exclusive_zone` on a surface not on `top` is a load error.
 

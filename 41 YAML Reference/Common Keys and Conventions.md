@@ -51,7 +51,7 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 | `module` | A module use | The module file, when the use has params | Proposed ([[Module File#Using a module]]) |
 | `params` | A module file declares them; a use passes them | Typed values | Decided that they exist; type names proposed |
 | `style` | A surface, a module | A style file name, or an inline mapping of style values | Decided |
-| `layer` | A surface | `background`, `bottom`, `top`, `overlay`, numbered 0 to 3 as in the protocol; `overlay` is the highest. A Bar or Panel may use `bottom`, `top` or `overlay`; a Frame only `top`; a Popup stacks above its parent | Decided (the key and the four values, flow diagram 2026-10-26). Only `top` surfaces may reserve space (`exclusive_zone`) |
+| `layer` | A surface | `background`, `bottom`, `top`, `overlay`, numbered 0 to 3 as in the protocol; `overlay` is the highest. A Bar or Panel may use `bottom`, `top` or `overlay`; a Frame only `top`; a Popup stacks above its parent | Decided (the key and the four values, flow diagram 2026-10-26). Only `top` surfaces may reserve space (`exclusive_zone`). `background` is for wallpapers only, for now: no kind uses it |
 
 ## Names and references
 
