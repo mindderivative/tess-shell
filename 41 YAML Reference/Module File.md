@@ -163,7 +163,7 @@ The maintainer suggested a "bubble up" policy for params (2026-10-26). My readin
 - **For:** less repetition when a value is needed several levels down (a colour, a monitor name).
 - **Against:** it makes dependencies invisible and a rename can silently change which ancestor supplies a value; a module used in two places may find different values.
 - **Recommendation:** explicit and opt-in. A param declares `inherit: true` to be looked up the ancestry when not passed; the nearest ancestor that has it wins; a required param found nowhere is an error naming the chain it searched. Everything else must be passed. Because names and UIDs are reachable shell-wide through the registry, a value can also be read by an explicit reference, so inheriting is a convenience and not a necessity.
-- Needs the maintainer's view.
+- Decided (maintainer, 2026-10-26): opt-in only, as recommended. A param declares `inherit: true`; the nearest ancestor wins; a required param found nowhere is an error naming the chain.
 
 ## Errors specific to module files
 

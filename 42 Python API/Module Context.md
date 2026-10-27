@@ -231,7 +231,7 @@ What the popup sees: a `caller` record: the calling module's name and UID, the u
 - The popup's parent is the surface that holds the calling use, so it opens on that monitor only ([[Surface Types#Open questions]]).
 - The caller passes the anchor rectangle (the clicked icon), in its surface's coordinates.
 - Focus is opt-in on the popup entry, not a call argument.
-- Open: option A, B or C; and whether the call is a method on the context or an action the shell file can declare directly.
+- Decided (maintainer, 2026-10-26): option A. The shell supplies the calling use to the action automatically, so the module writes `self.ctx.popup(popup_name)`. Open: whether the call is a method on the context or an action the shell file can declare directly.
 
 ## D-Bus helper
 
