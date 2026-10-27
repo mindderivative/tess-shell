@@ -39,6 +39,8 @@ Composed in YAML, called by name, optionally with Python. The standard set the m
 | Spacer | Flexible empty space | Box |
 | Label | A single line of text, no wrap | Text |
 | Text | Multi-line text that wraps | Text |
+| TextInput | A single-line text field (added 2026-10-26) | TextField |
+| TextBox | A multi-line text field (added 2026-10-26) | TextField, multi-line variant |
 | Button | A pressable control with states | Box, Text, Icon |
 | Icon | A named or file icon | SVG, Bitmap |
 | Image | An image from png, jpeg, gif or webp | Bitmap |
@@ -57,7 +59,7 @@ These ship with the shell as a standard set; the shell's own modules are open to
 
 ## Names that appear in both lists
 
-Text, and the pairs Image with Bitmap and Icon with SVG, appear as a block and as a module. The key tells them apart: `block: Text` is the block; the module is called by its name. Both exist because the module adds behaviour (wrapping, a variant, a fallback). The registry holds the module name `Text`, so no other module can use it.
+Text, and the pairs Image with Bitmap and Icon with SVG, appear as a block and as a module. TextInput and TextBox are modules over the TextField block and its multi-line variant. The key tells them apart: `block: Text` is the block; the module is called by its name. Both exist because the module adds behaviour (wrapping, a variant, a fallback). The registry holds the module name `Text`, so no other module can use it.
 
 ## What tre offers
 
