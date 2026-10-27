@@ -206,6 +206,21 @@ root:
 | Style syntax | `{2, 2, 2, 2}` is the maintainer's list shorthand for four sides. A standard YAML parser reads it as `{2: None}`, so the shell needs a defined form ([[ADR-0007 Shell UI Layer#Open items]]). The colour forms are in [[Value Types and Conversion]] |
 | Style file type | **Decided:** `type: Style` |
 
+## Calling a popup
+
+A module can call a popup ("Calls" in the flow diagram, [[Shell Structure]]). The popup is a `kind: popup` entry in the shell file; the module asks the shell to open it. Proposed shape, to settle with the Panel and Popup specs:
+
+```python
+@action
+def open_menu(self, popup_name, anchor):
+    self.ctx.popup(popup_name).open(anchor_rect=anchor)     # the shell places it beside the rectangle
+```
+
+- The popup's parent is the surface that holds the calling module, so the popup opens on that monitor and nowhere else ([[Surface Types#Open questions]]).
+- The caller passes the anchor rectangle (the clicked icon), in its surface's coordinates.
+- The popup holds modules and containers, so a tray menu is itself built from modules.
+- Open: whether one popup entry can be called by many modules, and how a popup learns who called it (for example a tray icon's menu).
+
 ## D-Bus helper
 
 Over `dbus-fast` on the shared asyncio service thread ([[ADR-0009 D-Bus Client Library]]). Proposed shape:

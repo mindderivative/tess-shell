@@ -66,9 +66,18 @@ From the flow diagram ([[Shell Structure]], 2026-10-26). `layer:` takes the four
 | Frame | `top` only | Yes (it is on `top`) |
 | Popup | `overlay` (it hangs off a layer surface and the compositor stacks it above its parent) | No |
 
-`background` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no kind uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is a special case reached from a module, drawn above its parent ([[Shell Structure]]).
+`background` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no kind uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is in a Special Cases group: a module calls it, and it holds modules and containers ([[Shell Structure]]).
 
 **Reserved space is enforced to the `top` layer** (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). Proposed handling: an `exclusive_zone` on a surface not on `top` is a load error.
+
+## Special cases
+
+The flow diagram ([[Shell Structure]]) groups the Popup under **Special Cases** (maintainer, 2026-10-26).
+
+- **A Popup stays a `kind: popup` entry in the shell file** and names the surface it hangs off, as before.
+- **A module calls it.** The diagram's edge is "Calls": a module's code (an `@action`, for example a click on a tray icon) asks the shell to open the popup. How the call is written is proposed in [[Module Context#Calling a popup]].
+- **It holds modules and containers,** like a layer window, and is drawn above its parent.
+- **The group exists for kinds like it.** A **Notification window** behaves like a popup but differs enough to need its own `kind:`. Not in v1: the notification server is outside v1 ([[V1 Scope#After v1]], [[ADR-0004 Plasma Coexistence]]).
 
 ## Overlay
 

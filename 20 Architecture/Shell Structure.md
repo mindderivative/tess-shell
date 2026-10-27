@@ -37,7 +37,7 @@ flowchart TB
     mod1 -->|can nest| mod2[Module]
     mod2 --> widgets[Widgets: Text, Button]
     mod2 --> cont
-    mod2 --> pop[Special case: Popup, drawn above parent]
+    mod2 -->|calls| pop[Special case: Popup, drawn above parent]
     pop --> cont
     pop --> mod2
 ```
@@ -50,9 +50,9 @@ flowchart TB
 | Containers | Box, FlexBox | "Can nest": a container holds containers |
 | Module | Module | "Can nest": a module holds modules |
 | Widgets | Text, Button | Reached from a module |
-| Special Cases | Popup, "drawn above parent" | Reached from a module; holds containers and modules |
+| Special Cases | Popup, "drawn above parent" | A module calls it (the "Calls" edge); it holds containers and modules. A place for future popup-like kinds, such as a Notification window |
 
-Reading the arrows: a layer window holds modules directly, or containers; containers hold modules; a module holds containers, widgets (through its inner module) and, as a special case, a popup. A popup holds containers and modules and is drawn above its parent.
+Reading the arrows: a layer window holds modules directly, or containers; containers hold modules; a module holds containers, widgets (through its inner module) and, as a special case, a popup. A module calls a popup, which holds containers and modules and is drawn above its parent.
 
 ## Checked against the vault and the protocol
 
@@ -75,7 +75,7 @@ Reading the arrows: a layer window holds modules directly, or containers; contai
 
 ## What does not match, or needs a decision
 
-1. **Popup is now a special case inside a module, not a layer window.** In the first diagram Popup sat in Layer Windows, next to Panel, Bar and Frame. Now it is a "Special Case" reached from a Module, "drawn above parent", holding containers and modules. The vault has Popup as a surface kind in its own entry that names the surface it hangs off ([[Surface Types]], [[Shell File]]). Which is meant? **A.** Popup stays a `kind: popup` entry in the shell file, as today. **B.** A popup is declared inside the module that opens it (for example a tray module with its menu), parented to the surface the module is in. B fits the diagram and needs no reference by name, because the parent is the surface holding the module. It also makes "popups are exclusive to the monitor they are called on" automatic. Recommendation B, if popups are only opened from modules; keep A as well if a surface itself (not a module) must open one.
+1. ~~Popup: a kind or declared inside a module?~~ **Decided (maintainer, 2026-10-26): Popup stays as it is, a `kind: popup` entry in the shell file.** The diagram's edge is **"Calls"**: a module can *call* a popup, and the popup can hold modules and containers. It is not declared inside the module. The Special Cases group exists because the maintainer can see other surfaces that behave like a popup but need their own kind, such as a **Notification window**. Not v1 ([[V1 Scope#After v1]]); recorded in [[Surface Types#Special cases]].
 2. **Widgets only through a module.** The Widgets group is reached only from a module; no arrow runs from Containers to Widgets. In the Label example a `FlexBox` holds an `Icon` and a `Text`. Can a container on a surface, outside any module, hold widgets directly?
 3. **Containers and widgets share a key?** The diagram keeps Containers and Widgets as separate groups. In the Label example `FlexBox:` is written like `Text:`. Same key (`widget: FlexBox` / `FlexBox:`) or its own?
 4. **How a surface holds modules and containers.** `modules:` is a key on a surface today; the diagram shows modules and containers both under a layer window. Option **A:** `children:` holds containers and module uses; **B:** keep `modules:` and add a container key. Recommendation A.
