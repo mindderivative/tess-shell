@@ -70,7 +70,7 @@ Reading the arrows: a layer window holds modules directly, or containers; contai
 
 - **Layer 0 is for wallpapers only, for now** (maintainer, 2026-10-26). No kind uses `layer: background`. The maintainer can see it used later for window tiling, or as a base layer for a desktop dashboard.
 - **Frame is Top only.** Its strips move to `top` ([[Surface Types]]). Top suits the painter, which must be above windows to be seen; the strips are invisible so any layer works, and Top-layer reservation is the case known to work on KWin.
-- The shell enforces `top` as the only layer that reserves space. The protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion. Handling proposed: an `exclusive_zone` off `top` is a load error.
+- The shell enforces `top` as the only layer that reserves space. The protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion. An `exclusive_zone` off `top` is a load error (decided, maintainer, 2026-10-26).
 - **KWin is "between Layer 1 and Layer 2",** as the protocol says.
 
 ## What does not match, or needs a decision
@@ -80,7 +80,7 @@ Reading the arrows: a layer window holds modules directly, or containers; contai
 3. **Containers and widgets share a key?** Decided: containers are building blocks, called with `block:` (Box, FlexBox, Grid). `widget:` no longer exists.
 4. **How a surface holds modules and containers.** Decided: `children:` only; `modules:` goes away (maintainer, 2026-10-26). The way a module use is written inside `children:` waits for the widget and module decision.
 5. **Nested modules, names and UIDs.** **Decided: anything with a unique name gets a UID; names are unique across the shell and reachable from anywhere through the registry.** Open: how repeated uses of one definition get unique names (path names, proposed in [[ADR-0007 Shell UI Layer#Open items]]) and the params policy ([[Module File#Params down the tree]]).
-6. **Popup focus.** **Decided: opt-in.** An open popup marked as taking focus takes keyboard and mouse itself. See [[Surface Types#Special cases]].
+6. Popup focus: decided (2026-10-26), on by default with one flag; tooltip-like popups opt out. See [[Surface Types#Special cases]].
 
 ## Blocks and modules (decided 2026-10-26)
 
