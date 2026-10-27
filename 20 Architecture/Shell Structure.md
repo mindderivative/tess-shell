@@ -133,7 +133,9 @@ Why option 1: it matches what the maintainer pointed at; it gives one call synta
 
 The one real difference to keep: in the shell, a module's Python is a single shared instance with a `use` record per call. In option 1 a module without Python is just a composed widget instantiated per call; one with Python gets the shared instance. That is consistent with the earlier decision ("one instance per module file, shared by all uses") and needs no change.
 
-Needs the maintainer's choice.
+Decided so far (maintainer, 2026-10-26): the shell has its own **building blocks**, geared for a shell and built on what tre allows, informed by how Tesserae does it ([[Building Blocks]]). What is left to choose is the key and the word: option 1 (`widget:` for both blocks and modules) or option 2 (`block:` for blocks, modules called by name).
+
+Needs the maintainer's choice between options 1 and 2.
 
 ## Open
 

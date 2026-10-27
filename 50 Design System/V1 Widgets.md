@@ -18,6 +18,9 @@ depends_on: ["[[V1 Scope]]"]
 
 ## The list
 
+> [!info] See also
+> [[Building Blocks]] holds the concept (the shell's own primitives), what tre offers, and the shell-geared candidates. This list is the v1 subset traced to modules.
+
 Widgets are used inside a module's layout YAML (a module brings its own widgets) and in a surface's own layout. Containers are `Box` (no auto-stacking) and `FlexBox` (auto-stacking, `alignment` vertical or horizontal), decided by the maintainer on 2026-10-26 ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]). A widget is written `Text:` or `widget: Text`.
 
 | Widget | What it is | Needed by |
