@@ -63,7 +63,7 @@ root:
 | `modules` | Module uses | All | Decided |
 | `anchor` | Edges to attach to: `top`, `bottom`, `left`, `right` (one or a list) | bar, panel | Proposed |
 | `size` | `[width, height]`; `0` stretches between two anchored edges | bar, panel, popup | Proposed |
-| `exclusive_zone` | Space reserved along the anchored edge, in pixels | bar, frame | Proposed |
+| `exclusive_zone` | Space reserved along the anchored edge, in pixels. **Only allowed on `layer: top`**; on any other layer it is a load error (maintainer, 2026-10-26; error handling proposed) | bar, panel, frame | Rule decided; key name proposed |
 | `margin` | Four-sided offset from the anchored edges | bar, panel | Proposed |
 | `keyboard` | `none`, `on_demand`, `exclusive` | All | Proposed (`exclusive` used for the launcher) |
 | `input_region` | Where input lands: the whole surface, nothing, rectangles, or `auto` | All | Proposed |

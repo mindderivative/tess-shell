@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-26 |
-| Last change | Re-read the updated flow diagram: four layers match the protocol, Popup is back; rewrote [[Shell Structure]] with nine remaining points |
+| Last change | Decided: the shell enforces `top` as the only layer that reserves space ([[Surface Types#Layers per kind]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Nine points in [[Shell Structure#What does not match, or needs a decision]] (Frame moves to Top only, which layers reserve space, Popup stacking, widgets outside modules, container key, how a surface holds modules); the `kind: Text` conflict in style classes |
+| Waiting on you | Seven points left in [[Shell Structure#What does not match, or needs a decision]] (Popup stacking, widgets outside modules, container key, how a surface holds modules, nested modules, KWin label, `background` for kinds); the `kind: Text` conflict in style classes; confirm an `exclusive_zone` off `top` is a load error |
 | Waiting on others | tre 0.5.9 release: `hit_shape="painted"` (#236, [[Hit Testing for Concave Corners]]) and `keep_alive`/`stop()` (#238, [[TRE-REQ-005 Keep-Alive and Loop Stop]]); built on local branches. The Frame uses the explicit-rectangle workaround, and the 1x1 window is the stopgap, until then |
 | Next | The Clock module spec, the Panel spec, then `60 Quality` |
 | Blocked | Nothing |
@@ -46,6 +46,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-26 | Reserved space enforced to the `top` layer ([[Surface Types#Layers per kind]]) |
 | 2026-10-26 | Updated flow diagram checked; [[Shell Structure]] rewritten |
 | 2026-10-26 | Flow diagram read; [[Shell Structure]] written |
 | 2026-10-26 | [[41 YAML Reference]] drafted (four notes) |
@@ -53,7 +54,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-26 | Overlay settled: a Panel on the overlay layer ([[Surface Types#Overlay]]) |
 | 2026-10-26 | Four-sided shorthand decided; overlay question written up ([[Surface Types#Overlay]]) |
 | 2026-10-26 | `type:`/`kind:`/`widget:`, Box and FlexBox, params decided; shorthand problem flagged ([[ADR-0007 Shell UI Layer]]) |
-| 2026-10-26 | Module model corrected to layout YAML + style YAML + Python; Label example replaced ([[Module Context]]) |
 
 ## Go to
 

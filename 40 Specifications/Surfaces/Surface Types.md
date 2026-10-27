@@ -59,14 +59,16 @@ Anchored to anything, and rendered like an overlay. It is not a child in the she
 
 From the flow diagram ([[Shell Structure]], 2026-10-26). `layer:` takes the four layer-shell values.
 
-| Kind | Layers it may use |
-|---|---|
-| Bar | `bottom`, `top`, `overlay` |
-| Panel | `bottom`, `top`, `overlay` |
-| Frame | `top` only |
-| Popup | `overlay` (it hangs off a layer surface and the compositor stacks it above its parent) |
+| Kind | Layers it may use | May reserve space |
+|---|---|---|
+| Bar | `bottom`, `top`, `overlay` | Only on `top` |
+| Panel | `bottom`, `top`, `overlay` | Only on `top` |
+| Frame | `top` only | Yes (it is on `top`) |
+| Popup | `overlay` (it hangs off a layer surface and the compositor stacks it above its parent) | No |
 
-`background` is for wallpapers, which the shell does not draw in v1 ([[V1 Scope]]). Which layers reserve space is an open point in [[Shell Structure]].
+`background` is for wallpapers, which the shell does not draw in v1 ([[V1 Scope]]).
+
+**Reserved space is enforced to the `top` layer** (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). Proposed handling: an `exclusive_zone` on a surface not on `top` is a load error.
 
 ## Overlay
 
