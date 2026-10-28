@@ -185,6 +185,10 @@ SORT file.name ASC
 
 ![[Hot Reload#Open questions]]
 
+### [[IPC and CLI]]
+
+![[IPC and CLI#Open questions]]
+
 ### [[Expression Language Requirements]]
 
 ![[Expression Language Requirements#Open questions]]

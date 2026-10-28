@@ -34,7 +34,7 @@ From the [tre threading guide](https://mindderivative.github.io/tre/guide/thread
 | Loop (main) | tre `App.run()`; surface manager; shell model; TEL evaluation; module host calls (`start`, `stop`, `reload`); registry updates | Yes | n/a |
 | Module threads | A module's blocking work: D-Bus, sockets, polling, files, decoding | Never | The shell's send entry point, which uses `call_soon` |
 | Config watcher | Waiting for file changes; reading and parsing a changed file | Never | `call_soon` with a finished result |
-| Service thread | An `asyncio` event loop, shared by modules, holding the session and system bus connections (`dbus-fast`, [[ADR-0009 D-Bus Client Library]]) | Never | The same send entry point |
+| Service thread | An `asyncio` event loop, shared by modules, holding the session and system bus connections (`dbus-fast`, [[ADR-0009 D-Bus Client Library]]); it also receives calls on the shell's own D-Bus interface ([[IPC and CLI#Threading]], if [[ADR-0013 Control Interface]] is accepted) | Never | The same send entry point |
 | Signal watcher | Reads a socketpair fed by `signal.set_wakeup_fd` and calls `handle.stop()` on SIGTERM or SIGINT | Never | `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]) |
 | Watchdog | Checks that the loop is still ticking | Never | Logs, and asks the supervisor to restart if the loop is stuck |
 

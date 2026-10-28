@@ -53,6 +53,10 @@ Accepted 2026-10-26 by the maintainer in chat ("as recommended"): **Option A**.
 - The PipeWire access path is a separate survey ([[D-Bus Libraries for Python#Open]]).
 - The helper's name and shape belong to `42 Python API/`.
 
+## Update 2026-10-28
+
+Exporting an object and requesting a bus name, listed above as later work, becomes v1 work if [[ADR-0013 Control Interface]] is accepted: the shell exports its own interface for the command line and the KWin script ([[IPC and CLI]]).
+
 ## Links
 
 - [[D-Bus Libraries for Python]] · [[Process Model and Threading]] · [[System Context]]

@@ -271,7 +271,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 - [x] The Frame hidden or shown at runtime: yes; the reservers go while hidden and return when shown (maintainer, 2026-10-27).
 - [x] Shadows are excluded from the hit shape, for all shadows (maintainer, 2026-10-27). Open: whether tre already does this. #needs-verification
 - [x] A gradient border's tiling: the shell repeats stops; a native repeat is [[TRE-REQ-006 Repeating Gradients]], kept for the future (maintainer, 2026-10-27).
-- [ ] Shadow tokens: `elevation`, `shadow` and `shadow_bleed` are accepted ([[Style Schema#Shadow keys]]); the Frame needs no bleed margin because the painter covers the output.
+- [x] Shadow tokens: `elevation`, `shadow` and `shadow_bleed` are accepted ([[Style Schema#Shadow keys]]); the Frame needs no bleed margin because the painter covers the output.
 
 ## Acceptance criteria
 

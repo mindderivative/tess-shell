@@ -167,7 +167,7 @@ All seven were answered on 2026-10-28.
 6. [x] **Ready notice:** the shell notifies systemd (`READY=1` and `STOPPING=1` on `NOTIFY_SOCKET`).
 7. [x] **Lock path:** `$XDG_RUNTIME_DIR/tesserae-shell/`, not the config directory.
 - [x] `XDG_RUNTIME_DIR` is required, with no fallback; the shell checks it in pre-flight and sets the sticky bit on its lock and socket (maintainer, 2026-10-28, as recommended).
-- [x] Whether any cleaner runs on the target session, and that the sticky bit is honoured on those files. #needs-verification
+- [ ] Whether any cleaner runs on the target session, and that the sticky bit is honoured on those files. #needs-verification
 
 ## Acceptance criteria
 
