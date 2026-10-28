@@ -111,7 +111,7 @@ A pointer or key event reaches a tre node on the loop thread. **Events belong to
 - [ ] Where the value store sits and how a module's last value is kept across a reload.
 - [ ] The handler vocabulary for input: the shell's, in `41 YAML Reference/` (not TEL's).
 - [x] A module's `.py` can be reloaded at runtime (maintainer, 2026-10-26). Mechanics are proposed above.
-- [ ] How the diff of a reload works: by UID, by name, or by position in the file.
+- [x] How the diff of a reload works: by identity (file UID), then name, then position (proposed in [[Hot Reload#The diff]]).
 - [ ] What `output_updated` does to surfaces whose size depends on the output.
 
 ## Links

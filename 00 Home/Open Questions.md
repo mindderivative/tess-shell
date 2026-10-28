@@ -166,6 +166,25 @@ SORT file.name ASC
 
 ![[Clock Module#Open questions]]
 
+### [[Shell Start and Stop]]
+
+![[Shell Start and Stop#Open questions]]
+
+
+### [[Config Discovery and Registry]]
+
+![[Config Discovery and Registry#Open questions]]
+
+
+### [[Validation and Errors]]
+
+![[Validation and Errors#Open questions]]
+
+
+### [[Hot Reload]]
+
+![[Hot Reload#Open questions]]
+
 ### [[Expression Language Requirements]]
 
 ![[Expression Language Requirements#Open questions]]

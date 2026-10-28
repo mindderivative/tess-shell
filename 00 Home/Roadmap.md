@@ -24,7 +24,7 @@ depends_on: []
 | Architecture | [[20 Architecture]]: [[System Context]], [[Layers and Components]], [[Process Model and Threading]], [[Data Flow]], [[Shell Structure]] | draft | A service layer note (shared D-Bus and time source) |
 | Surfaces | [[Surfaces]]: [[Surface Types]], [[Bar]], [[Frame]], [[Panel]], [[Popup]] | review (Surface Types and Popup draft) | The Special Cases kinds (a Notification window, after v1) |
 | Integration | None yet | not started | Wayland protocols, KWin (the fullscreen script, window rules), Plasma coexistence, the shared D-Bus service layer, portals, global shortcuts |
-| Runtime | [[Runtime]]: [[Expression Language Requirements]]; [[Settings File]], [[Shell File]], [[Module File]], [[Common Keys and Conventions]] (in `41`) | draft | Config discovery and layering, the registry, validation and error reporting, hot reload, shell start and stop, IPC and CLI, logging |
+| Runtime | [[Runtime]]: [[Shell Start and Stop]], [[Config Discovery and Registry]], [[Validation and Errors]], [[Hot Reload]], [[Expression Language Requirements]]; [[Settings File]], [[Shell File]], [[Module File]] (in `41`) | draft | IPC and CLI, logging |
 | Python API | [[42 Python API]]: [[Module Contract]], [[Module Context]], [[Value Types and Conversion]], [[Python Builder]] | draft | Service APIs, events, versioning and stability |
 | YAML reference | [[41 YAML Reference]]: [[Common Keys and Conventions]], [[Shell File]], [[Module File]], [[Style, Theme and Stylesheet Files]], [[Style Schema]], [[Settings File]], [[JSON Schema and Editor Support]] | draft (Style Schema review) | A per-block property reference; surface-kind keys in one place; event and action keys |
 | Design system | [[50 Design System]]: [[Building Blocks]], [[V1 Widgets]] | draft | Principles, tokens (colour, type, shape, space, elevation, motion), components, iconography, motion, light/dark, high contrast, reduced motion, following the desktop theme |
@@ -40,7 +40,7 @@ Recommendation: write the notes that other notes already point at first, then th
 | # | Note | Folder | Why now |
 |---|---|---|---|
 | 1 | Popup (written 2026-10-28, draft) | `40 Specifications/Surfaces/` | Completes Surfaces; Panel, Bar and the module contract already refer to it |
-| 2 | Shell Start and Stop (the runtime lifecycle), Config Discovery and Registry, Validation and Errors, Hot Reload | `40 Specifications/Runtime/` | The settings, schema and module notes depend on them |
+| 2 | Shell Start and Stop, Config Discovery and Registry, Validation and Errors, Hot Reload (written 2026-10-28, draft) | `40 Specifications/Runtime/` | The settings, schema and module notes depend on them |
 | 3 | IPC and CLI | `40 Specifications/Runtime/` | ADR-0011 and ADR-0012 name commands (`schema`, the rule install and remove) |
 | 4 | Logging | `40 Specifications/Runtime/` | Settings File sets the folder and file names; the research note is open |
 | 5 | Wayland Protocols, KWin Integration, Plasma Coexistence, D-Bus Service Layer, Portals, Global Shortcuts | `40 Specifications/Integration/` | The Integration row is empty; ADR-0004, ADR-0005, ADR-0009 and ADR-0012 feed it |

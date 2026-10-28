@@ -22,7 +22,7 @@ depends_on: ["[[ADR-0001 Shell Surface Strategy]]"]
 |---|---|---|
 | Desktop | KDE Plasma on Wayland | [[AGENTS#1. What Tesserae Shell is]] |
 | Compositor | KWin first. wlroots compositors (sway tested by tre) best effort, not a release gate. | tre tested KWin 6.8.1 and sway 1.12 ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]) |
-| Engine | `tesserae-engine` 0.5.8 or later | PyPI, 2026-10-25 |
+| Engine | `tesserae-engine` 0.5.9 or later (0.5.8 added layer surfaces; 0.5.9 added `keep_alive`, `stop()` and `hit_shape`) | PyPI, 2026-10-27 |
 | Not supported | X11, GNOME, Windows, macOS | `LayerWindow` raises `UnsupportedPlatform`; GNOME decision deferred to testing ([[ADR-0001 Shell Surface Strategy#Open items]]) |
 
 ## Surfaces
