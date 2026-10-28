@@ -31,7 +31,7 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Applied the answers to the four Runtime specs; they are in review ([[Runtime]]) |
+| Last change | `XDG_RUNTIME_DIR` is required with no fallback; the lock and socket get the sticky bit ([[Shell Start and Stop]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0012 Keeping the Shell Above Plasma Panels]] (11 accepted; ADR-0002 superseded) |
 | Waiting on you | Key names the specs mark proposed; the registry writer thread (not asked) |
 | Next | IPC and CLI, then Logging, then the Integration specs ([[Roadmap#Spec backlog (proposed order)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-28 | [[Shell Start and Stop]]: `XDG_RUNTIME_DIR` rule decided |
 | 2026-10-28 | Runtime specs: all questions answered, in review |
 | 2026-10-28 | [[Popup]] tooltip delays decided (500 and 200 ms) |
 | 2026-10-28 | Four Runtime specs written (start and stop, discovery and registry, validation and errors, hot reload) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-28 | [[Popup]] spec drafted |
 | 2026-10-27 | [[Open Questions]]: Dataview table of unverified claims and what to verify |
 | 2026-10-27 | [[Open Questions]]: Dataview list of unverified notes |
-| 2026-10-27 | [[Roadmap]], [[Open Questions]], [[Risk Register]] written |
 
 ## Go to
 
