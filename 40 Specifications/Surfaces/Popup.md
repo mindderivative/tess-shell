@@ -118,7 +118,7 @@ Clock:
 - **Opt-in for all modules, built-in and custom** (maintainer, 2026-10-28): the `tooltip:` key is available on every module use, provided by the shell, with no module code.
 - **Manual use** on a block, a surface or anything that is not a module works the same way as on a module, unless the author customises it (maintainer, 2026-10-28; this replaces my earlier note that a hand-written handler was needed). The author writes the same key where they want one.
 - The value forms: a file name (a shell file holding the Popup, found like any shell file), an inline Popup mapping, and, proposed, the unique name of a `kind: popup` entry resolved through the registry.
-- Defaults for the delays: a reasonable value the user can change; proposed starting values `enter_delay: 500` and `exit_delay: 200`, tuned in testing.
+- Defaults for the delays (decided 2026-10-28): `enter_delay: 500` and `exit_delay: 200` milliseconds. The user can change them; testing may tune them.
 - A tooltip is not focusable and takes no keyboard.
 
 ### Layers
@@ -144,9 +144,9 @@ The caller's record is available to the Popup's modules and expressions (decided
 | `focus` | Take the keyboard and pointer; default true | Decided (2026-10-26) |
 | `tooltip` (on a Popup) | `true` makes the Popup a tooltip: `focus: false`, `open_on_enter`, `close_on_exit`; default false | Decided (2026-10-28) |
 | `open_on_enter` | Open when the pointer enters the caller (a tooltip) | Key decided (2026-10-28) |
-| `enter_delay` | Milliseconds before it opens | Key decided; default value proposed (500) |
+| `enter_delay` | Milliseconds before it opens | Decided; default 500 (2026-10-28) |
 | `close_on_exit` | Close when the pointer leaves the caller and the popup | Key decided (2026-10-28) |
-| `exit_delay` | Milliseconds before it closes | Key decided; default value proposed (200) |
+| `exit_delay` | Milliseconds before it closes | Decided; default 200 (2026-10-28) |
 | `tooltip` (on a module use, or manually on a block or surface) | A Popup file or an inline Popup, opened as that thing's tooltip | Key and forms decided (2026-10-28); the unique-name form is proposed |
 | `animation` | Fade or none; no slide (the compositor places it) | Proposed |
 
@@ -227,12 +227,12 @@ All nine were answered on 2026-10-28.
 5. [x] **One open at a time,** except submenus (as recommended).
 6. [x] **Create on open, destroy on close** (as recommended).
 7. [x] **Clicks on other shell surfaces** close a focused Popup (as recommended).
-8. [x] **Tooltip behaviour:** keys `close_on_exit`, `exit_delay`, `enter_delay` and `open_on_enter`; the caller is the hovered module; a `tooltip` key is opt-in for every module, built-in and custom; the same key works by hand on blocks and surfaces (maintainer, 2026-10-28). The key names were settled the same day (below). Open: the default delays, and how the shell reads a module's rectangle.
+8. [x] **Tooltip behaviour:** keys `close_on_exit`, `exit_delay`, `enter_delay` and `open_on_enter`; the caller is the hovered module; a `tooltip` key is opt-in for every module, built-in and custom; the same key works by hand on blocks and surfaces (maintainer, 2026-10-28). The key names were settled the same day (below). Open: how the shell reads a module's rectangle.
 9. [x] **Shadows:** the visual shape (border plus body size) is what the compositor places; the transparent shadow margin is ignored and is not part of the popup's size. tre sets the geometry to the whole surface today, so this is a workaround now and [[TRE-REQ-007 Popup Body Geometry]] later (maintainer, 2026-10-28).
 - [x] Content larger than `max_size`: clamp and scroll (maintainer, 2026-10-28).
 - [x] The default `max_size`: `[300, 400]` (maintainer, 2026-10-28).
 - [x] The tooltip key: `tooltip: true | false` on a Popup; `tooltip: <file>` or an inline Popup on a module, and the same on a block or surface when written by hand (maintainer, 2026-10-28).
-- [ ] The default delays for `enter_delay` and `exit_delay` (500 and 200 proposed, tuned in testing).
+- [x] The default delays: `enter_delay` 500 ms and `exit_delay` 200 ms (maintainer, 2026-10-28).
 
 ## Acceptance criteria
 
