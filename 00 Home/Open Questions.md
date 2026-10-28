@@ -18,10 +18,13 @@ depends_on: []
 
 ## Unverified claims
 
-Every claim tagged `#needs-verification` in the vault, from Obsidian's own search:
+Every note that carries the `#needs-verification` tag, as a plain list (Dataview). Open a note and search it for the tag to find the claim.
 
-```query
-tag:#needs-verification
+```dataview
+LIST
+FROM #needs-verification AND -"copilot"
+WHERE file.name != "Open Questions" AND file.name != "AGENTS" AND status != "superseded"
+SORT file.name ASC
 ```
 
 ## Vision

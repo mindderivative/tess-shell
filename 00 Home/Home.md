@@ -31,7 +31,7 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Wrote [[Roadmap]], [[Open Questions]] and [[Risk Register]]; planned the remaining specs ([[Roadmap#Spec backlog (proposed order)]]) |
+| Last change | [[Open Questions]] lists the unverified notes with Dataview |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0012 Keeping the Shell Above Plasma Panels]] (11 accepted; ADR-0002 superseded) |
 | Waiting on you | Confirm or change the spec order in the [[Roadmap]]; key names the specs mark proposed; the registry rebuild rules |
 | Next | Finish the specs in the [[Roadmap#Spec backlog (proposed order)]]: the Popup spec first. Module specs wait |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-27 | [[Open Questions]]: Dataview list of unverified notes |
 | 2026-10-27 | [[Roadmap]], [[Open Questions]], [[Risk Register]] written |
 | 2026-10-27 | [[Settings File]] small open items closed; log files, XDG rule decided |
 | 2026-10-27 | ADR-0012 accepted; Frame `edges`; [[TRE-REQ-006 Repeating Gradients]] written; specs reviewed |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-27 | KWin layer order and window rules recorded in [[Surface Types]] |
 | 2026-10-27 | [[Bar]] margins restored: reserved, so it is still a Bar |
 | 2026-10-27 | Decisions applied to [[Bar]], [[Frame]], [[Panel]], [[Clock Module]], [[Surface Types]]; [[Style Schema]] accepted |
-| 2026-10-27 | [[Settings File]]: global settings list deferred to testing |
 
 ## Go to
 
