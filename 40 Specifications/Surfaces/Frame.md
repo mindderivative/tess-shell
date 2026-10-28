@@ -43,7 +43,26 @@ The layout from [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]], mov
 - `hit_shape="painted"` on the ring (tre 0.5.9) makes the ring take clicks only where it is painted: its fill region and its stroke. A click in the opening, or in the notch of a concave corner, passes to what is behind it. The same shape drives `input_region="auto"`, so the compositor and tre agree.
 - Limit from tre: a click up to about 2 px inside the unfilled side of a curve may still be taken; tests use points 3 px or more inside the unfilled area.
 - The ring must be a Path block. `hit_shape` does not cover `svg` and `canvas` nodes ([[Hit Testing for Concave Corners]]).
-- The Path block therefore exposes `hit_shape`; the shape blocks (Circle, Ring and the like) are proposed to default it to `painted` ([[Building Blocks]]).
+- The Path block therefore exposes `hit_shape`; the shape blocks (Circle, Ring and the like) default it to `painted` (decided 2026-10-27, [[Building Blocks]]).
+
+### The Frame's layer (to decide)
+
+The Frame is on `top` in the diagram. The maintainer is unsure (2026-10-27): if a melded Bar or Panel has to sit on top of the Frame, maybe the Frame should sit on Background and be the exception for reserved space. The facts:
+
+- **The protocol** orders the four layers and leaves the order of surfaces on one layer undefined ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)). Two surfaces on `top` can be drawn in either order.
+- **KWin** maps Background to its desktop layer, Bottom to its below layer, Top to its above layer and Overlay to its overlay layer (`LayerShellV1Window::belongsToLayer`, read 2026-10-27, [KWin source](https://invent.kde.org/plasma/kwin/-/raw/master/src/layershellv1window.cpp)). A layer-shell window reports a strut whenever its exclusive zone is above 0, and that file does not look at the layer. Whether KWin's work-area code filters struts by layer is outside that file and not checked. #needs-verification
+- **plasmashell's desktop** (the wallpaper) is also in KWin's desktop layer, which is where Background surfaces go. The stacking order between it and a Background Frame is KWin's, not ours. #needs-verification
+- **The reservers are invisible.** Where they sit changes nothing you see; only where the painter sits changes the look.
+
+| Option | Painter | Reservers | For | Against |
+|---|---|---|---|---|
+| 1. Top (the diagram) | `top` | `top` | The ring and strips are drawn above windows, like a bezel: a window dragged over the edge is tucked under it. Keeps "only Top reserves" and "Frame is Top only". Strips hosted in the painter are always visible | A standalone Bar melded to the Frame is on the same layer, so the draw order is undefined. A melded Panel works on `overlay`. A thick edge (a strip) replaces the melded Bar, so the problem is limited to Bars placed beside the Frame |
+| 2. Painter on `bottom`, reservers on `top` | `bottom` | `top` | Everything melded sits above the ring on a defined layer, Bars on `top`, Panels on `top` or `overlay`. Keeps "only Top reserves" (the reservers are the reserving surfaces, and they are on `top`). Above the wallpaper in KWin's order | The Frame is a composite over two layers. The ring and any strips it hosts sit below windows, so a window that overlaps the edge covers them, and a strip stops acting like a bar above windows |
+| 3. Painter on `background` (the maintainer's thought) | `background` | `top` | The same as option 2 | The same as option 2, plus it shares KWin's desktop layer with the wallpaper, so the ring could be drawn behind it; the layer name suggests it, and it is the layer kept for wallpapers ([[Surface Types#Layers per kind]]) |
+
+Recommendation: option 1 (keep `top`), because it matches the bezel look, keeps the rules as they are, and the melding problem only exists for standalone Bars: a thick edge covers the bar case, and Panels use `overlay`. Option 2 is the alternative if melded standalone Bars matter more than the strips being above windows. Option 3 adds an uncertainty (the wallpaper) without a benefit over option 2. The maintainer's Edge Shell used `top` for its frame ([[Shadows on Layer Surfaces#The maintainer's earlier work]]).
+
+A cheap check before deciding: a short test on this KWin with a painter on each of the three layers and a wallpaper behind, to see the draw order (not run yet).
 
 ### Thickness, radii, border, colours
 
@@ -173,7 +192,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 ## Open questions
 
 - [x] What a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars, all four edges or none (maintainer, 2026-10-27). Open: the key form (`sides`), and the painter hosting the strips (option A, recommended).
-- [ ] Which layer a melded Panel uses and how the join is drawn (who repaints the frame strip), and how wide the seam is while moving (to measure).
+- [ ] The Frame's layer (see The Frame's layer above), which sets which layer a melded Panel or Bar uses; how the join is drawn (who repaints the frame strip); and how wide the seam is while moving (to measure).
 - [ ] The four reservers plus the painter tested together on KWin (tre did not test them together), and a 4K frame with many joins.
 - [ ] Fractional scale: 1 px reservers and the ring edge at 1.5x.
 - [ ] A fullscreen window and the Frame: the protocol puts fullscreen windows typically at the top layer, so a fullscreen window may cover the Frame.

@@ -100,7 +100,7 @@ Decided by the maintainer (2026-10-26); the full rules are in [[Style, Theme and
 - [x] A free-form Path block: added (2026-10-26).
 - [x] Whether the listed modules can be built from the listed blocks: the maintainer reports yes, tested on Tesserae (2026-10-26). Revealer and Marquee need animated layout and translate properties; Stack needs layered children; Slider, Toggle and Button need pointer and drag events from the blocks.
 - [ ] Grid: what it offers against tre's layout.
-- [ ] The default hit shape of Path and the shape blocks. tre 0.5.9 has `hit_shape` `box` (default) or `painted`; the Frame needs `painted` on its ring. Proposal: the shape blocks default to `painted`. SVG and Canvas are not covered by `hit_shape` ([[Hit Testing for Concave Corners]]).
+- [x] The default hit shape of Path and the shape blocks: `painted` (maintainer, 2026-10-27): the reason to use a shape is for the look and for the hit box to be the painted shape. tre 0.5.9 has `hit_shape` `box` (its default) or `painted`; the shell's shape blocks set `painted`. SVG and Canvas are not covered by `hit_shape` ([[Hit Testing for Concave Corners]]).
 - [ ] How icons are found (a theme icon set, files, both).
 - [ ] The state model: whether input blocks have properties the user edits (Tesserae's `model`) and how that reaches a module.
 - [ ] Accessibility defaults for each block (roles, labels, keyboard operation) ([[Goals and Non-Goals]] G7).

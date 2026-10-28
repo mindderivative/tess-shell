@@ -61,14 +61,15 @@ A Bar belongs to a root, and so to one monitor ([[Shell File]]). A Bar defined o
 | `layer` | `bottom`, `top` or `overlay` | Decided |
 | `children` | Blocks, containers and modules | Decided |
 | `style` | A style file or inline values | Decided |
-| `edge` | `top`, `bottom`, `left` or `right`: the edge it attaches to | Proposed (a friendlier form of `anchor`) |
-| `span` | `full` (touches three edges) or a length | Proposed |
+| `edge` | `left`, `right`, `top` or `bottom`: the edge it attaches to | Decided (maintainer, 2026-10-27) |
+| `span` | `absolute` (a fixed length), `expanded` (stretches along the whole edge, touching three edges) or `auto` (sized to its content) | Decided (the three values); how an absolute length is given is open |
+| `length` | The fixed length for `span: absolute` | Proposed |
 | `align` | Where a shorter bar sits along the edge: `start`, `center`, `end`, or an offset | Proposed |
-| `thickness` | The size across the edge | Proposed |
+| `thickness` | The size across the edge | Decided (maintainer, 2026-10-27) |
 | `margin` | Four-sided gap, clockwise from the top | Proposed; order decided |
 | `reserve` | Reserve space: on or off. The shell computes `exclusive_zone` (thickness plus the margin on that edge) | Proposed; rule decided (only on `top`) |
 | `exclusive_zone` | The raw tre value, for an exact figure | Rule decided; key proposed |
-| `anchor`, `size` | The raw tre forms; `edge`, `span` and `thickness` are shorthand for them | Proposed |
+| `anchor`, `size` | The raw tre forms; `edge`, `span`, `length` and `thickness` map to them | Proposed |
 | `keyboard` | `none`, `on_demand` or `exclusive` | Proposed |
 | `input_region` | Whole, nothing, rectangles or `auto` | Proposed |
 | `hidden`, `auto_hide` | Start hidden; slide out after a time or on leaving | Proposed |
@@ -80,7 +81,7 @@ children:
         kind: bar
         layer: top
         edge: top
-        span: full
+        span: expanded
         thickness: 32
         reserve: true
         style: TopBar_Style.yaml
@@ -97,7 +98,8 @@ children:
         kind: bar
         layer: top
         edge: bottom
-        span: 560
+        span: absolute
+        length: 560
         thickness: 64
         margin: [0, 0, 8, 0]
         reserve: true
@@ -105,7 +107,7 @@ children:
             - Tasks:
 ```
 
-An illustration only. The module names (Workspaces, Tray, Tasks) are v1 modules whose specs are not written; `edge`, `span`, `thickness` and `reserve` are proposals.
+An illustration only. The module names (Workspaces, Tray, Tasks) are v1 modules whose specs are not written; `length` and `reserve` are proposals.
 
 ## Python contract
 
@@ -149,7 +151,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 
 ## Open questions
 
-- [ ] The friendlier keys (`edge`, `span`, `align`, `thickness`, `reserve`) against the raw tre forms; whether both are allowed.
+- [x] The keys `edge`, `span` (`absolute`, `expanded`, `auto`) and `thickness` (maintainer, 2026-10-27). Open: the key for an absolute length (`length` proposed), `align`, `reserve`, and whether the raw `anchor` and `size` are also allowed.
 - [ ] Whether a Bar can be movable (a floating dock the user drags) or that is a Panel.
 - [ ] Auto-hide details: the hover strip, the delay, a keyboard reveal.
 - [ ] How the shell orders its Bar against the Plasma panel on the same edge.

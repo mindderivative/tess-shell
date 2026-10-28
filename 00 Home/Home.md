@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Recorded what a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars ([[Frame]]) |
+| Last change | Decided: shape blocks default to a painted hit shape; Bar keys edge, span and thickness; wrote up the Frame's layer question ([[Frame#The Frame's layer (to decide)]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Confirm that the Frame's painter hosts the strips (option A in [[Frame]]) and the `sides` key; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
+| Waiting on you | The Frame's layer (option 1, 2 or 3 in [[Frame#The Frame's layer (to decide)]]); whether the painter hosts a Frame's strips; the elevation shadows route; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
 | Next | Module specs (Workspaces, Audio), the Popup spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-27 | Shape hit shape, Bar keys decided; Frame layer question written up ([[Frame]]) |
 | 2026-10-27 | Frame contents decided: ring, melded Bars and Panels, or thick-edge strips ([[Frame]]) |
 | 2026-10-27 | tre 0.5.9 released; [[TRE-REQ-005 Keep-Alive and Loop Stop]] and the hit-testing work shipped ([[Bar]] and [[Frame]] specs drafted) |
 | 2026-10-27 | [[Panel]] spec drafted |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-26 | Flow diagram updated (Building Blocks and Modules groups); [[Shell Structure]] rewritten |
 | 2026-10-26 | [[Clock Module]] drafted |
 | 2026-10-26 | Popup focus and the exclusive-zone rule decided; theme fix for bold around code |
-| 2026-10-26 | Path names, param inheritance and popup caller decided ([[ADR-0007 Shell UI Layer]]) |
 
 ## Go to
 
