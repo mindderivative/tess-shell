@@ -21,5 +21,6 @@ The keys and forms of every shell YAML file. Decisions are in [[ADR-0007 Shell U
 | [[Shell File]] | The shell file: root, monitor, surfaces and their keys | draft |
 | [[Module File]] | The module file: layout, params, data in the layout, using a module | draft |
 | [[Style, Theme and Stylesheet Files]] | Style format from the Label example; theme and stylesheet to design | draft |
+| [[Style Schema]] | Proposed shell-owned style keys, theme tokens, shadow keys and stylesheet selectors | draft |
 
-Expressions are TEL's ([[Expression Language Requirements]]); their grammar is worked out in the TEL project. Not started: a per-widget property reference, the surface-kind keys, the event and action keys, the Theme and Stylesheet shapes, and a JSON Schema for editor support.
+Expressions are TEL's ([[Expression Language Requirements]]); their grammar is worked out in the TEL project. Not started: a per-widget property reference, the surface-kind keys, the event and action keys, and a JSON Schema for editor support (the Theme and Stylesheet shapes are proposed in [[Style Schema]]).

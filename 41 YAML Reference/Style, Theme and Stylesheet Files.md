@@ -14,7 +14,7 @@ depends_on: ["[[Common Keys and Conventions]]"]
 # Style, theme and stylesheet files
 
 > [!summary]
-> Three files control how things look. A **style** file holds the values for one surface or module, like its inline `style:` key. A **stylesheet** holds shared rules that apply across the shell by widget type or class. A **theme** holds design tokens (colour, type, shape, motion) that the others refer to. The split is the maintainer's ([[ADR-0007 Shell UI Layer#Theme, style and stylesheet (2026-10-25)]]). The Style format below comes from the maintainer's Label example; Theme and Stylesheet are not yet designed.
+> Three files control how things look. A **style** file holds the values for one surface or module, like its inline `style:` key. A **stylesheet** holds shared rules that apply across the shell by widget type or class. A **theme** holds design tokens (colour, type, shape, motion) that the others refer to. The split is the maintainer's ([[ADR-0007 Shell UI Layer#Theme, style and stylesheet (2026-10-25)]]). The Style format below comes from the maintainer's Label example; Theme and Stylesheet are proposed in [[Style Schema]].
 
 All three are shell files: they carry `shell:` and `type:` (`Style`, `Theme`, `Stylesheet`). Their suffixes are `_Style.yaml`, `_Theme.yaml` and `_Stylesheet.yaml`, the same as Tesserae's; the `shell:` key tells them apart ([[Common Keys and Conventions]]).
 
