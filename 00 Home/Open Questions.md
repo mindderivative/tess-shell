@@ -18,7 +18,84 @@ depends_on: []
 
 ## Unverified claims
 
-Every note that carries the `#needs-verification` tag, as a plain list (Dataview). Open a note and search it for the tag to find the claim.
+Every claim tagged `#needs-verification`, grouped by folder. **Where** links to the section that holds the claim, **Claim** is the sentence the tag follows, and **To verify** is what the text after the tag says to check (empty when the tag stands alone). The table is built by Dataview from the notes themselves, so it never goes stale and holds no copy of a claim.
+
+> [!note] Needs JavaScript queries
+> The table uses a `dataviewjs` block. In Dataview's settings, turn on "Enable JavaScript Queries"; until then the block shows an error and the plain list below still works.
+
+```dataviewjs
+const TAG = "#needs-verification";
+const pages = dv.pages('#needs-verification AND -"copilot"')
+  .where(p => p.file.name != "Open Questions" && p.file.name != "AGENTS" && p.status != "superseded")
+  .sort(p => p.file.path, "asc");
+
+const clean = (s) => s
+  .replace(TAG, "")
+  .replace(/!?\[\[([^\]|]*)\|([^\]]*)\]\]/g, "$2")
+  .replace(/!?\[\[([^\]]*)\]\]/g, "$1")
+  .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+  .replace(/\*\*|__/g, "")
+  .replace(/^\s*(>\s*)*([-*]|\d+\.)\s+(\[.\]\s+)?/, "")
+  .replace(/^\s*>\s*/, "")
+  .replace(/\s+/g, " ")
+  .trim();
+
+const sentences = (t) => t.split(/(?<=[.!?])\s+(?=[A-Z(`*\[])/);
+const cut = (t, n) => t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t;
+
+// Returns [claim, toVerify]: the sentence the tag follows, and what the text after the tag asks to check.
+const describe = (line) => {
+  const raw = line.replace(/`[^`]*`/g, m => m.replace(/#/g, "\u0023"));
+  const at = raw.indexOf(TAG);
+  let before = raw.slice(0, at), after = raw.slice(at + TAG.length);
+  if (line.trim().startsWith("|")) {
+    const cells = line.trim().replace(/^\||\|$/g, "").split("|").map(c => clean(c)).filter(c => c.length);
+    return [cut(cells.join(" · "), 160), ""];
+  }
+  before = clean(before);
+  after = clean(after).replace(/^[:,;\s-]+/, "");
+  const parts = sentences(before);
+  let last = parts.pop() || before;
+  if (last.length < 45 && parts.length) last = parts.pop() + " " + last;
+  const tail = (sentences(after)[0] || "").replace(/[.]$/, "");
+  return [cut(last, 170), cut(tail, 110)];
+};
+
+const anchor = (h) => h.replace(/[#|^:%\[\]]/g, " ").replace(/\s+/g, " ").trim();
+
+const groups = new Map();
+let total = 0;
+for (const p of pages) {
+  const text = await dv.io.load(p.file.path);
+  if (!text) continue;
+  const body = text.replace(/^---\n[\s\S]*?\n---\n/, "");
+  let heading = null, fence = false;
+  for (const line of body.split("\n")) {
+    if (/^\s*```/.test(line)) { fence = !fence; continue; }
+    if (fence) continue;
+    const h = line.match(/^#{1,6}\s+(.*)$/);
+    if (h) { heading = h[1].trim(); continue; }
+    if (!line.replace(/`[^`]*`/g, "").includes(TAG)) continue;
+    const [claim, check] = describe(line);
+    const short = heading ? cut(heading.replace(/\s*\([^)]*\)\s*$/, ""), 42) : "";
+    const label = heading ? p.file.name + " › " + short : p.file.name;
+    const link = dv.fileLink(heading ? p.file.path + "#" + anchor(heading) : p.file.path, false, label);
+    const area = p.file.folder ? p.file.folder.split("/")[0] : "Vault";
+    if (!groups.has(area)) groups.set(area, []);
+    groups.get(area).push([link, claim, check]);
+    total++;
+  }
+}
+dv.paragraph("**" + total + " claims** in " + pages.length + " notes still need a source or a test.");
+for (const [area, rows] of [...groups.entries()].sort()) {
+  dv.header(3, `${area} (${rows.length})`);
+  dv.table(["Where", "Claim", "To verify"], rows);
+}
+```
+
+### Notes only
+
+The same notes as a plain list, with no JavaScript:
 
 ```dataview
 LIST
