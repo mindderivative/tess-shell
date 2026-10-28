@@ -2,7 +2,7 @@
 title: ADR-0011 JSON Schema for Shell Files
 aliases: [ADR-0011, Shell YAML Schema Decision]
 type: adr
-status: proposed
+status: accepted
 owner: phil
 created: 2026-10-27
 updated: 2026-10-27
@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 # ADR-0011: JSON Schema for shell files
 
 > [!summary]
-> Define the shell's YAML with JSON Schema files, generated from the block and module declarations. Editors use them for completion, hover and validation; the shell uses them to validate at load and on hot reload. Proposed on the maintainer's idea (2026-10-27).
+> Define the shell's YAML with JSON Schema files, generated from the block and module declarations. Editors use them for completion, hover and validation; the shell uses them to validate at load and on hot reload. Accepted 2026-10-27 on the maintainer's idea.
 
 ## Context
 
@@ -36,7 +36,7 @@ The shell has five YAML file types and many keys ([[Common Keys and Conventions]
 
 ## Decision
 
-Blank until the maintainer accepts.
+Option A (maintainer, 2026-10-27). The draft (draft-07 keywords or 2020-12), the location of the generated project schema, and the `jsonschema` dependency stay open in [[JSON Schema and Editor Support#Open]].
 
 ## Consequences
 
