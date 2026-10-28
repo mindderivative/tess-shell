@@ -69,18 +69,27 @@ logging:
     level: info
 ```
 
-- A value in `directories` is a path or a list of paths, searched in order. A relative path is an error: it would depend on the working directory. Whether `~` and environment variables are allowed is open.
-- A configured list replaces the default folder for that type; the user adds the default explicitly if they want both. This is a recommendation; the alternative is to search the default last.
-- A name found in two directories is an error naming both, as a duplicate unique name is ([[Common Keys and Conventions#Names and references]]).
-- Files found through a configured directory are registered like any other. Their editor modelines cannot always be relative to the config directory, so the shell writes an absolute path for them ([[JSON Schema and Editor Support#Where the schemas live]]).
+- A value in `directories` is a path or a list of paths, searched in order (decided 2026-10-27).
+- **Fallback to the default.** The default folder for the type, inside the config directory, is searched after the configured ones (decided 2026-10-27, read as "fallback to defaults"). A name found in a configured directory is used and the default is not consulted for it; a name found only in the default folder is used from there. When the same name exists in both, the configured one wins and the shell logs a notice at info level naming both files (proposed). Correct me if you meant that a configured list replaces the default completely.
+- **Paths.** `~` and environment variables are allowed (decided 2026-10-27). The shell expands them, and the result must be an absolute path. If a variable is unset or the path does not resolve, that is an error naming the key, the text written and what failed. There is no silent empty value. A path that resolves to a directory that does not exist is an error too. A relative path after expansion is an error: it would depend on the working directory.
+- A name found twice in the same tier (two configured directories) is an error naming both files, as a duplicate unique name is ([[Common Keys and Conventions#Names and references]]).
+- Files found through a configured directory are registered like any other. Their editor modelines cannot always be relative to the config directory, so the shell writes the expanded, absolute path for them (never `~` or a variable) ([[JSON Schema and Editor Support#Where the schemas live]]).
 
 ## Reload
 
-Proposed: `settings.yaml` is read at start and watched like any other file. A change to `logging` applies at once; a change to `directories` or `main_shell` takes effect on a shell restart, because it changes what is loaded. Open.
+Decided 2026-10-27: `settings.yaml` is read at start and watched like any other file. A change to `logging` applies at once; a change to `directories` or `main_shell` takes effect on a shell restart, because it changes what is loaded. A reload that produces an invalid `settings.yaml` keeps the running settings and reports the error; only a start stops.
+
+## A bad settings file stops the shell
+
+Decided 2026-10-27: if `settings.yaml` cannot be read or fails validation, the shell does not start. It prints the error to the console and writes it to the log file, with `file:line:column`. It does not fall back to defaults, because a shell that starts with other settings than the user wrote hides the mistake and looks like a bug.
+
+- The settings file configures logging, so a failure cannot use the file's own `logging` keys. The error goes to the console and to the default log location. The default location is not set yet ([[Logging with Loguru]] leaves it open). #needs-verification
+- A missing `settings.yaml` is not a failure: the defaults apply (see Acceptance criteria).
+- The same stop-and-report rule is proposed for every path or directory error below.
 
 ## Errors specific to this file
 
-- A directory that does not exist: error with the key and the path.
+- A directory that does not exist, or a path with an unset variable or one that does not resolve: error with the key, the text written and what failed.
 - A relative path in `directories`: error with the key.
 - A `main_shell` that is not in the shells directory: error naming the directories searched.
 - An unknown key: error with the closest names, as in every file ([[Common Keys and Conventions#Errors]]).
@@ -88,19 +97,21 @@ Proposed: `settings.yaml` is read at start and watched like any other file. A ch
 ## Open
 
 - [ ] The keys above (accept or change them), and which other global settings belong here.
-- [ ] A configured directory list replacing the default, or searched after it.
-- [ ] `~` and environment variables in paths.
-- [ ] Whether `settings.yaml` is read before the registry, and whether a bad file stops the shell or falls back to defaults.
-- [ ] Reload behaviour for each key.
+- [x] A configured directory list is searched first and the default folder is the fallback (decided 2026-10-27).
+- [x] `~` and environment variables are allowed; an unresolved path is an error (decided 2026-10-27).
+- [x] A bad `settings.yaml` stops the shell with an error on the console and in the log (decided 2026-10-27). Open: whether `settings.yaml` is read before the registry, and the default log location used when it fails.
+- [x] Reload: `logging` applies at once; `directories` and `main_shell` need a restart (accepted as proposed, 2026-10-27).
 - [ ] Per-monitor settings: they belong in the shell file's `root`, not here ([[Shell File]]).
 - [ ] The Settings entry in the schema set ([[JSON Schema and Editor Support#Files]]).
 
 ## Acceptance criteria
 
 - [ ] With no `settings.yaml`, the shell loads from the five folders and starts `Main_Shell.yaml`.
-- [ ] A `directories.modules` entry makes the shell load modules from that path and not from `Modules/`.
+- [ ] A `directories.modules` entry makes the shell load modules from that path first; a module not found there is loaded from `Modules/`.
+- [ ] `~/shell/Modules` and `$HOME/shell/Modules` resolve and load; an unset variable fails at start with the key and the text written.
+- [ ] A settings file with an error stops the shell: the error is on the console and in the log, and no surface opens.
 - [ ] A relative path in `directories` fails at load with `file:line:column`.
-- [ ] The same module name in two directories fails naming both files.
+- [ ] The same module name twice in the configured directories fails naming both files; the same name in a configured and the default folder uses the configured one and logs a notice.
 - [ ] A `settings.yaml` with an unknown key fails with the nearest key names.
 
 ## Links
