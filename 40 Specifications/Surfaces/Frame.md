@@ -2,7 +2,7 @@
 title: Frame
 aliases: [Frame Surface, kind frame, Screen Frame]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-27
 updated: 2026-10-27
@@ -89,7 +89,7 @@ The test of three layers against the wallpaper is no longer needed.
 
 **Thickness plus borders (decided 2026-10-27).** The border thickness adds to the Frame's overall thickness: a Frame with a thickness of 10 px and a 2 px border is 12 px in total, and the reserver's zone for that side is 12. With both an inner and an outer border the total is the thickness plus both. The same rule gives the strip's total thickness. The shell computes the zone and the painted bands; a stroke in tre is centred on its path ([paint reference](https://mindderivative.github.io/tre/reference/paint/)), so the shell offsets the contours by half a border.
 
-**Gradient borders and tiling (decided 2026-10-27 that a gradient is allowed and tiling is opt-in).** A border colour can be a gradient. What "tiling" repeats is not settled here: the likely meaning is that the gradient repeats along the ring instead of stretching once across it, with `border_tile` off by default (proposed key). tre's `Gradient` offers linear, radial and sweep, with positions relative to the box, and no spread or repeat option in its Python API ([tre Gradient](https://mindderivative.github.io/tre/reference/paint/)); only SVG gradients mention a spread method. So a tiled gradient is either built from repeated stops by the shell or needs an engine request. #needs-verification
+**Gradient borders and tiling (decided 2026-10-27 that a gradient is allowed and tiling is opt-in).** A border colour can be a gradient. What "tiling" repeats is not settled here: the likely meaning is that the gradient repeats along the ring instead of stretching once across it, with `border_tile` off by default (proposed key). tre's `Gradient` offers linear, radial and sweep, with positions relative to the box, and no spread or repeat option in its Python API ([tre Gradient](https://mindderivative.github.io/tre/reference/paint/)); only SVG gradients have a spread method. So a tiled gradient is built from repeated stops by the shell today, and a native repeat is written up as [[TRE-REQ-006 Repeating Gradients]] (draft, for the future, not filed).
 
 ### Melding
 
@@ -191,7 +191,7 @@ One Frame per monitor, independent: each is a complete ring with its own thickne
 | `hidden` | Hide the Frame at start; shown and hidden at runtime by a shell action | Decided that it can be hidden and shown; key proposed |
 | `style` | Background, border, shadow, opacity | Decided (the key); property names proposed |
 | `meld` | On a Bar or Panel entry that has `attach_to` the Frame: draw it inside the Frame's surface instead of in a window of its own | Proposed; the mechanism is decided (2026-10-27) |
-| `sides` | Per-side overrides: `top`, `right`, `bottom`, `left`, each with its own `thickness` and `children` (the strip) | Proposed; strips decided (2026-10-27), the key form is mine |
+| `edges` | Per-edge overrides: `top`, `right`, `bottom`, `left`, each with its own `thickness` and `children` (the strip). An edge is the edge of the screen, however thick it is, and it starts at that edge; it is not a "side" of the screen that reaches past the halfway point | Decided (maintainer, 2026-10-27: `edges`, not `sides`) |
 | `children` | Blocks, containers and modules on the Frame itself | Decided that a layer window has them; for a Frame the content goes in a side's strip |
 
 ```yaml
@@ -205,7 +205,7 @@ children:
         inner_border: {thickness: 1, color: "#ffffff22"}
         style:
             background: "#0b0c0d"
-        sides:                           # optional: a thicker side acts as a bar
+        edges:                           # optional: a thicker edge acts as a bar
             top:
                 thickness: 32
                 children:
@@ -214,7 +214,7 @@ children:
                     - Clock:
 ```
 
-An illustration only. `thickness`, `corner_radius`, `inner_radius` and `sides` are proposals. With no `sides`, the Frame is just the ring, and Bars and Panels can be melded to it.
+An illustration only. `thickness`, `corner_radius`, `inner_radius` and `edges` are proposals. With no `edges`, the Frame is just the ring, and Bars and Panels can be melded to it.
 
 ## Python contract
 
@@ -261,7 +261,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 
 ## Open questions
 
-- [x] What a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars, all four edges or none (maintainer, 2026-10-27). Open: the key form (`sides`), and the painter hosting the strips (option A, recommended).
+- [x] What a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars, all four edges or none (maintainer, 2026-10-27). The key is `edges` (maintainer, 2026-10-27). The painter hosting the strips (option A) is accepted with the strips (maintainer review, 2026-10-27).
 - [x] The Frame's layer: `top`, with melded Bars and Panels hosted in the Frame's surface (maintainer, 2026-10-27). Open: how the join is drawn in the painter, and the cost of a large tree and region in the painter (to measure).
 - [x] The four reservers plus the painter tested together on KWin, and a 4K frame with many joins: after the v1 build, in the testing phase (maintainer, 2026-10-27).
 - [x] Fractional scale: wanted (maintainer, 2026-10-27). tre's docs say layer windows lay out in logical pixels and follow fractional scaling, and round a node's offset to a whole device pixel ([layer window reference](https://mindderivative.github.io/tre/reference/layer-window/), [window reference](https://mindderivative.github.io/tre/reference/window/)). Open: how a 1 px reserver and the ring edge look at 1.5x, tested with the rest. #needs-verification
@@ -270,7 +270,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 - [x] A strip against a Bar attached to the Frame, and hiding a strip on its own: a strip and a Bar can share an edge, and a strip has all a Bar's abilities (maintainer, 2026-10-27). Open: the icon-to-Bar link.
 - [x] The Frame hidden or shown at runtime: yes; the reservers go while hidden and return when shown (maintainer, 2026-10-27).
 - [x] Shadows are excluded from the hit shape, for all shadows (maintainer, 2026-10-27). Open: whether tre already does this. #needs-verification
-- [ ] A gradient border's tiling: the mechanism (repeated stops, or an engine request).
+- [x] A gradient border's tiling: the shell repeats stops; a native repeat is [[TRE-REQ-006 Repeating Gradients]], kept for the future (maintainer, 2026-10-27).
 - [ ] Shadow tokens: `elevation`, `shadow` and `shadow_bleed` are accepted ([[Style Schema#Shadow keys]]); the Frame needs no bleed margin because the painter covers the output.
 
 ## Acceptance criteria

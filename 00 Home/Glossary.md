@@ -19,6 +19,7 @@ Each term is defined here in a line and linked to the note that owns it.
 |---|---|---|
 | Bar | A surface attached to an edge that reserves space (a dock, top bar or side bar) | [[Surface Types]] |
 | Frame | A surface around the whole screen that reserves space on every side | [[Surface Types]] |
+| Edge | An edge of the screen, however thick, starting at the screen edge; the Frame's `edges` key. Not a "side", which would suggest the half of the screen past the middle | [[Frame]] |
 | Panel | The multi-purpose surface: attached to a frame, a bar or another surface, or floating | [[Surface Types]] |
 | Popup | A surface anchored to a shell surface and rendered like an overlay; a menu or flyout | [[Surface Types]] |
 | OSD | On-screen display: a small overlay that appears briefly to confirm an action, such as a volume bar when a volume key is pressed, then disappears on its own. Built as a Panel | [[V1 Scope]] |

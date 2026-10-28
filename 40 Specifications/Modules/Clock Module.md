@@ -2,7 +2,7 @@
 title: Clock Module
 aliases: [Clock, Clock_Module]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-26
 updated: 2026-10-27

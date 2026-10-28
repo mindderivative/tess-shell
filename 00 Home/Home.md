@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Proposed [[ADR-0012 Keeping the Shell Above Plasma Panels]]: compares the five ways and recommends a combination |
-| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0011 JSON Schema for Shell Files]] (10 accepted; ADR-0012 proposed; ADR-0002 superseded) |
-| Waiting on you | Accept or change [[ADR-0012 Keeping the Shell Above Plasma Panels]] (proposed); review the updated [[Bar]], [[Frame]], [[Panel]] and [[Clock Module]]; the Frame's `sides` key and the painter hosting strips; gradient border tiling ([[Frame#Thickness, radii, border, colours]]); key names the specs mark proposed |
+| Last change | Accepted [[ADR-0012 Keeping the Shell Above Plasma Panels]]; reviewed Bar, Frame, Panel, Clock; Frame key is `edges`; wrote [[TRE-REQ-006 Repeating Gradients]] (draft, not filed) |
+| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0012 Keeping the Shell Above Plasma Panels]] (11 accepted; ADR-0002 superseded) |
+| Waiting on you | Key names the specs mark proposed; the registry rebuild rules; which Home items to review next |
 | Next | Module specs (Workspaces, Audio), the Popup spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -47,12 +47,12 @@ Newest first. Keep the last 8. One line each.
 |---|---|
 | 2026-10-27 | [[Settings File]] small open items closed; Loguru file test |
 | 2026-10-27 | [[Settings File]]: log files, empty registry, XDG directory rule decided |
+| 2026-10-27 | ADR-0012 accepted; Frame `edges`; [[TRE-REQ-006 Repeating Gradients]] written; specs reviewed |
 | 2026-10-27 | [[ADR-0012 Keeping the Shell Above Plasma Panels]] proposed |
 | 2026-10-27 | KWin layer order and window rules recorded in [[Surface Types]] |
 | 2026-10-27 | [[Bar]] margins restored: reserved, so it is still a Bar |
 | 2026-10-27 | Decisions applied to [[Bar]], [[Frame]], [[Panel]], [[Clock Module]], [[Surface Types]]; [[Style Schema]] accepted |
 | 2026-10-27 | [[Settings File]]: global settings list deferred to testing |
-| 2026-10-27 | [[Settings File]]: start order, movable registry, `logs/` |
 
 ## Go to
 

@@ -2,7 +2,7 @@
 title: ADR-0012 Keeping the Shell Above Plasma Panels
 aliases: [ADR-0012, Plasma Panel Stacking]
 type: adr
-status: proposed
+status: accepted
 owner: phil
 created: 2026-10-27
 updated: 2026-10-27
@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0004 Plasma Coexistence]]"]
 # ADR-0012: Keeping the shell above Plasma panels
 
 > [!summary]
-> The maintainer wants a Bar to win over a Plasma panel on the same edge, unless that panel is always on top or a window is fullscreen. A `top` layer-shell surface and a Plasma panel share KWin's Above layer, so layer order does not settle it. This ADR compares the five ways the maintainer named (2026-10-27) and recommends one combination. Status is `proposed`; the facts come from KWin's source and one check on this machine, with no live test of any option.
+> The maintainer wants a Bar to win over a Plasma panel on the same edge, unless that panel is always on top or a window is fullscreen. A `top` layer-shell surface and a Plasma panel share KWin's Above layer, so layer order does not settle it. This ADR compares the five ways the maintainer named (2026-10-27) and recommends one combination. Accepted 2026-10-27 as recommended; the facts come from KWin's source and one check on this machine, with no live test of any option.
 
 ## Context
 
@@ -56,7 +56,7 @@ This is the delivery of Option 1, not a different effect. Rules are INI groups; 
 
 ## Decision
 
-Blank until the maintainer accepts.
+The maintainer accepted the recommendation as written (2026-10-27): v1 does not rely on stacking; a KWin script reports fullscreen windows; KWin window rules (written to `kwinrulesrc`) are an opt-in step with consent and an undo; layers above Normal and PyGObject with KWindowSystem are rejected.
 
 ## Consequences
 

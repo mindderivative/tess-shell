@@ -2,7 +2,7 @@
 title: Panel
 aliases: [Panel Surface, kind panel]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-27
 updated: 2026-10-27

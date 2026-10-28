@@ -2,7 +2,7 @@
 title: Bar
 aliases: [Bar Surface, kind bar, Dock, Top Bar, Side Bar]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-27
 updated: 2026-10-27
