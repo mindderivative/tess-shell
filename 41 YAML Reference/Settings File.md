@@ -102,7 +102,7 @@ Decided 2026-10-27: if `settings.yaml` cannot be read or fails validation, the s
 
 ## Open
 
-- [ ] The keys above (accept or change them), and which other global settings belong here.
+- [x] The keys above are the starting set. Which other global settings belong here is deferred to building and testing the shell (maintainer, 2026-10-27); new keys are added to this note as they are found.
 - [x] A configured directory list is searched first and the default folder is the fallback (decided 2026-10-27).
 - [x] `~` and environment variables are allowed; an unresolved path is an error (decided 2026-10-27).
 - [x] A bad `settings.yaml` stops the shell with an error on the console and in the log, in `$HOME/.config/tesserae-shell/logs/` (decided 2026-10-27).
