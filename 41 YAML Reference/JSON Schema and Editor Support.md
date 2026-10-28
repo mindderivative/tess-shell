@@ -41,7 +41,7 @@ Draft decided 2026-10-27: draft-07 keywords (`definitions`, `if`/`then`/`else`, 
 Decided 2026-10-27 (replacing the project-root `.shell/schemas/` of earlier the same day): the shell's config directory, `$HOME/.config/tesserae-shell/schemas/` ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]). The generator writes every schema the shell uses into that folder: copies of the shipped ones (pinned to the shell version that wrote them) and the generated project schema. A modeline points at that folder.
 
 - **Ignored by version control** (decided 2026-10-27): the folder is generated, so the shell writes a `.gitignore` containing `*` inside it. A user who keeps the config directory in git then never commits the schemas.
-- **Modeline path.** The language server resolves a relative path from the file ([README](https://github.com/redhat-developer/yaml-language-server)). A file inside the config directory can use a relative path (`schemas/shell.schema.json`, or `../schemas/...` one level down). A file elsewhere, such as an imported module in another folder, needs an absolute path. Recommendation: relative where the file is under the config directory, absolute otherwise; the shell writes the form. An absolute path breaks if the config is copied to another machine or user; the shell rewrites the modeline when it next registers the file. #needs-verification that the extension resolves `~` (assume not).
+- **Modeline path.** The language server resolves a relative path from the file ([README](https://github.com/redhat-developer/yaml-language-server)). Modules, styles, themes and stylesheets always live under the config directory ([[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]]), so their modeline is always relative (`../../schemas/module.schema.json` from `Modules/<name>/`, `../schemas/style.schema.json` from `Styles/`) and survives copying the directory. A shell file may live elsewhere (its location is open in [[Shell File#Open]]); until that is settled, it takes an absolute path, which the shell rewrites when it next registers the file. #needs-verification that the extension resolves `~` (assume not).
 - The `yaml.schemas` glob route is unaffected: the setting points at the same folder.
 
 ## Files
@@ -90,7 +90,7 @@ A realistic shell is tens to a few hundred entries, so validation costs a few mi
 
 - **Lazy import.** `jsonschema` is imported on the first file that needs validation, not at start.
 - **Validation cache.** After a file validates, the shell stores its content hash and the schema version. At start it skips files whose hash and schema version are unchanged; hot reload validates only the changed file. A schema change (a shell upgrade, or a new module that changes the project schema) invalidates the entries that depend on it. With a warm cache and no changes, `jsonschema` is never imported.
-- Proposed (not decided): the cache lives at `$HOME/.cache/tesserae-shell/validation.json`, because it is disposable and the XDG cache folder is the place for that. Deleting it only costs one full validation. The cache holds hashes, not file contents.
+- The cache lives at `$HOME/.cache/tesserae-shell/validation.json` (decided 2026-10-27), because it is disposable and the XDG cache folder is the place for that. Deleting it only costs one full validation. The cache holds hashes, not file contents.
 - Validation stays on in normal runs; a switch to turn it off is not planned.
 
 These numbers are one machine and synthetic files. Re-measure with real shell files in the testing phase.
@@ -106,8 +106,8 @@ These numbers are one machine and synthetic files. Re-measure with real shell fi
 
 - [x] Accept [[ADR-0011 JSON Schema for Shell Files]] (2026-10-27).
 - [x] Draft: draft-07 keywords (decided 2026-10-27).
-- [x] Location: `$HOME/.config/tesserae-shell/schemas/`, ignored by version control (decided 2026-10-27). Open: the modeline path form for files outside the config directory.
-- [x] `jsonschema` cost: lazy import and a validation cache (decided 2026-10-27). Open: the cache location (proposed `$HOME/.cache/tesserae-shell/`), and `jsonschema`'s own dependencies on the target Python. #needs-verification
+- [x] Location: `$HOME/.config/tesserae-shell/schemas/`, ignored by version control (decided 2026-10-27). Modules, styles, themes and stylesheets are required to live in the config directory, so their modeline is relative; open: the path form for shell files.
+- [x] `jsonschema` cost: lazy import, a validation cache, and its location `$HOME/.cache/tesserae-shell/` (decided 2026-10-27). Open: `jsonschema`'s own dependencies on the target Python. #needs-verification
 - [ ] Whether `markdownDescription` and `defaultSnippets` are usable in the extension.
 - [ ] An Obsidian view of the schemas is out of scope; the maintainer's editor is the target.
 

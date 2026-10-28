@@ -60,7 +60,7 @@ flowchart TB
 
 | Component | Responsibility | Thread |
 |---|---|---|
-| Config loader and watcher | Finds shell files in the config directory and `look-at` paths, parses YAML, follows `import:`, reports errors with `file:line:column`, watches files | Watching on a worker; applying on the loop |
+| Config loader and watcher | Finds shell files in the config directory and its Modules, Styles, Themes and Stylesheets folders, parses YAML, follows `import:`, reports errors with `file:line:column`, watches files | Watching on a worker; applying on the loop |
 | Registry | `registry.json`: UIDs, names, kinds, locations; writes the `UID:` into files; resolves cross-file references | Loop (file I/O on a worker for large writes) #needs-verification |
 | Shell model | The tree built from a shell file: roots, surfaces, widgets, modules, with TEL expressions compiled | Loop |
 | Widgets, theme, styles | The widget set in [[V1 Widgets]], tokens from theme files, style files and stylesheets | Loop |

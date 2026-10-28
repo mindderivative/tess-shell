@@ -20,7 +20,7 @@ depends_on: ["[[Layers and Components]]"]
 
 ```mermaid
 flowchart TD
-    a[Find shell files in config directory and look-at paths] --> b[Parse YAML and check shell, type keys]
+    a[Find shell files in the config directory] --> b[Parse YAML and check shell, type keys]
     b --> c[Follow import: and nest]
     c --> d[Check or write registry and UID]
     d --> e[Resolve name references through registry]

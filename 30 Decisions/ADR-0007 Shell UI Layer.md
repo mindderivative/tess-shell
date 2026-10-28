@@ -312,12 +312,22 @@ Decided by the maintainer in chat.
 Decided by the maintainer in chat.
 
 - Shell configuration lives in `$HOME/.config/tesserae-shell/`. The registry is `registry.json` there. Subdirectories: `Styles`, `Themes`, `Stylesheets` and `Modules`.
-- **Search paths.** The shell can be given a list of directories to look in (`look-at`) for modules, styles, themes and stylesheets. The default for each is its subdirectory above, for example `$HOME/.config/tesserae-shell/Modules`.
+- **Search paths.** Superseded 2026-10-27 for these four file types by the next section: the shell no longer takes a `look-at` list for them. The original text: a list of directories (`look-at`) for modules, styles, themes and stylesheets, defaulting to the subdirectories above.
 - `name` is required on an entry and is part of its identity.
 - **The registry resolves references across files** (decided 2026-10-25). A `name` is unique per monitor and scoped to its own file, so a reference from another file, such as a Panel attached to a Bar, is looked up in the registry, which tracks names. If the referenced name no longer exists, the registry knows and the shell reports a warning or an error. Decided 2026-10-25 (the maintainer accepted the recommendation): **an error at load** when a reference never resolves, and **a warning while the shell runs** when a target disappears (for example after a hot reload), with the Panel kept hidden until the target returns. Both name the file and the missing name (`file:line:column`).
 - **Identity.** The registry compares the entry's values other than its UUID, with `name` and `location`. The comparison shows whether the module is still there; the UUID written into the file is the confirmation.
 - **The registry writes the UID into the file.** When an entry is first registered, the shell injects `UID: <UUIDv7 value>` into the entry-point YAML, directly below `shell: <version>`.
 - Python 3.14 is the minimum, so `uuid.uuid7()` is available (accepted by the maintainer, 2026-10-25).
+
+### Modules, styles, themes and stylesheets live in the config directory (2026-10-27)
+
+Decided by the maintainer in chat: the shell requires the config directory, as many applications with plugins or add-ons do.
+
+- Modules, Styles, Themes and Stylesheets live under `$HOME/.config/tesserae-shell/`, in `Modules/`, `Styles/`, `Themes/` and `Stylesheets/`. A module is a folder `Modules/<module_name>/` ([[AGENTS#9. Naming in the designed system]]).
+- The shell does not search other directories for these four types; the `look-at` list is dropped for them. Shipped modules stay in the package and are registry-only; a user module of the same name overrides one.
+- Generated files live there too: `schemas/` ([[ADR-0011 JSON Schema for Shell Files]]).
+- A shell file's location (`Main_Shell.yaml` and the `<Name>_Shell.yaml` files it imports) is not part of this decision; it stays open in [[Shell File#Open]].
+- Consequence: an editor modeline for a module, style, theme or stylesheet is always a path relative to the config directory, so it survives copying the directory to another machine.
 
 ### UIDs and the registry (2026-10-25)
 
