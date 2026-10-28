@@ -36,7 +36,7 @@ The shell has five YAML file types and many keys ([[Common Keys and Conventions]
 
 ## Decision
 
-Option A (maintainer, 2026-10-27). The draft (draft-07 keywords or 2020-12), the location of the generated project schema, and the `jsonschema` dependency stay open in [[JSON Schema and Editor Support#Open]].
+Option A (maintainer, 2026-10-27). Draft-07 keywords and the location (the project root, under `.shell/schemas/`) were decided the same day. The `jsonschema` dependency stays open in [[JSON Schema and Editor Support#Open]]: validation runs at start and on reload, not per frame.
 
 ## Consequences
 

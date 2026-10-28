@@ -34,7 +34,14 @@ The language server resolves a schema from, in priority order: a modeline commen
 | `yaml.schemas` with globs | The editor setting maps a schema to patterns | Yes, as the zero-edit route: the suffixes give clean globs (`*_Shell.yaml`, `*_Module.yaml`, `*_Style.yaml`, `*_Theme.yaml`, `*_Stylesheet.yaml`) |
 | `$schema` as a key | A top-level key | No. It would need the shell to ignore a key it otherwise rejects |
 
-Draft support is stated differently by two sources: the server lists draft-04, draft-07, 2019-09 and 2020-12, while the extension's page mentions Draft 7 ([vscode-yaml](https://github.com/redhat-developer/vscode-yaml)). Recommendation: write to the draft-07 keyword set (`definitions`, `if`/`then`/`else`, `enum`, `const`, `patternProperties`) so any editor version works, and have the shell validate with the same draft. #needs-verification in the installed extension.
+Draft decided 2026-10-27: draft-07 keywords (`definitions`, `if`/`then`/`else`, `enum`, `const`, `patternProperties`), so any editor version works; the shell validates with the same draft. The language server lists draft-04, draft-07, 2019-09 and 2020-12, while the extension's page mentions Draft 7 ([README](https://github.com/redhat-developer/yaml-language-server), [vscode-yaml](https://github.com/redhat-developer/vscode-yaml)). Not tested in an installed extension. #needs-verification
+
+## Where the schemas live
+
+Decided 2026-10-27: the project root directory, under `.shell/schemas/`. The generator writes every schema a project uses into that folder: copies of the shipped ones (pinned to the shell version that wrote them) and the generated project schema. A modeline then points at one folder, with a path relative to the file (`.shell/schemas/shell.schema.json` for a file at the root, `../.shell/schemas/module.schema.json` one level down); the shell writes the right relative path.
+
+- Recommendation: the generated folder is not committed to version control, because the shell regenerates it. Not decided.
+- To confirm: the project root is the directory that holds the top-level shell file. How it relates to the config directory and the registry (`$HOME/.config/tesserae-shell/`, [[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]) is not settled in [[Shell File]]. #needs-verification
 
 ## Files
 
@@ -67,6 +74,25 @@ A throwaway script in /tmp (not in the vault) validated a sample shell file with
 - Schemas are build artefacts. They ship in the package and regenerate for a config directory; nobody edits them by hand.
 - The shell and the editor read the same files, so a file that passes in the editor passes at load, except for the semantic checks above.
 
+## The `jsonschema` dependency: runtime, not only development
+
+Validation runs at runtime: at shell start and on every hot reload, because the shell validates files at load ([[#What the editor and the shell each get]]). It never runs per frame, and Python stays out of layout and paint ([[AGENTS#3. Layering principle]]). So the cost is start-up and reload latency, which is small. Measured on this machine (2026-10-27, Python 3.14.8, `jsonschema` 4.26.0, draft-07 validator, a throwaway script in /tmp):
+
+| Measure | Result |
+|---|---|
+| Import of `jsonschema` | about 43 ms cumulative, 29 ms of it in its format checks |
+| Compile one schema | 0.5 ms |
+| Validate 50, 500, 5000 entries | 2 ms, 21 ms, 208 ms (about 0.4 ms per entry) |
+| PyYAML `compose` of the same files (node tree for line numbers) | 9 ms, 93 ms, 1048 ms: about five times the validation |
+
+A realistic shell is tens to a few hundred entries, so validation costs a few milliseconds to about 25 ms; parsing is the larger part and is needed anyway. Recommendations, to keep the steady state free:
+
+- Import `jsonschema` lazily, on the first file that needs validation.
+- Cache a pass: after a file validates, store its content hash and the schema version in the state directory; at start, skip validation for files whose hash is unchanged. Hot reload validates only the changed file.
+- Keep validation on in normal runs. A switch to turn it off (a production flag) is possible but not recommended: the errors it catches are the ones an author most needs.
+
+These numbers are one machine and synthetic files. Re-measure with real shell files in the testing phase.
+
 ## Failure modes and recovery
 
 - Schema missing or stale: the shell regenerates it; if it cannot, it validates with the shipped schema and warns that module params are unchecked.
@@ -76,9 +102,9 @@ A throwaway script in /tmp (not in the vault) validated a sample shell file with
 ## Open
 
 - [x] Accept [[ADR-0011 JSON Schema for Shell Files]] (2026-10-27).
-- [ ] Draft: draft-07 keywords (recommended) or 2020-12.
-- [ ] Where the generated project schema lives and how the modeline points to it.
-- [ ] `jsonschema` as a dependency, and its cost: load time at hot reload, and its own dependencies on the target Python. #needs-verification
+- [x] Draft: draft-07 keywords (decided 2026-10-27).
+- [x] Location: the project root, under `.shell/schemas/` (decided 2026-10-27). Open: the project root against the config directory; committing the folder.
+- [ ] `jsonschema` as a dependency: runtime cost measured (see above); open are lazy import and the validation cache, and its own dependencies on the target Python. #needs-verification
 - [ ] Whether `markdownDescription` and `defaultSnippets` are usable in the extension.
 - [ ] An Obsidian view of the schemas is out of scope; the maintainer's editor is the target.
 
