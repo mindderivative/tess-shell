@@ -166,7 +166,7 @@ All seven were answered on 2026-10-28, as recommended.
 3. [x] **Retention of removed records:** 30 days.
 4. [x] **What a rebuilt record holds:** name, kind or type and file from the scan; saved state is lost.
 5. [x] **Named entries:** registry-only UIDs for entries inside a file.
-6. [x] **A `backups/` folder** under the config directory for the first UID write.
+6. [x] A `backups/` folder under the config directory for the first UID write.
 7. [x] **Unimported shell files:** a `_Shell.yaml` in `Shells/` that nothing imports is ignored with an info notice.
 - [ ] The registry writer: one thread, one write per 500 ms (proposed, not asked).
 

@@ -170,7 +170,7 @@ All seven were answered on 2026-10-28, as recommended.
 2. [x] **Rule slugs in logs, no numeric codes.**
 3. [x] **Stop at 50 errors.**
 4. [x] **A notification for a failed start or reload,** opt-out.
-5. [x] **A `check` command** (it needs the IPC and CLI note).
+5. [x] A `check` command (it needs the IPC and CLI note).
 6. [x] **A size limit of 1 MiB per YAML file.**
 7. [x] **Stage 5 only after every file passes stage 4.**
 
