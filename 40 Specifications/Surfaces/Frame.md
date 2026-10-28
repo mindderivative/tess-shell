@@ -45,7 +45,9 @@ The layout from [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]], mov
 - The ring must be a Path block. `hit_shape` does not cover `svg` and `canvas` nodes ([[Hit Testing for Concave Corners]]).
 - The Path block therefore exposes `hit_shape`; the shape blocks (Circle, Ring and the like) default it to `painted` (decided 2026-10-27, [[Building Blocks]]).
 
-### The Frame's layer (to decide)
+### The Frame's layer (decided 2026-10-27)
+
+Decided by the maintainer on 2026-10-27: the Frame stays on `top`, and melded Bars and Panels are hosted in the Frame's own surface (hosted melding), which removes the layer-order concern and keeps the Overlay layer free. The analysis that led there is kept below.
 
 The Frame is on `top` in the diagram. The maintainer is unsure (2026-10-27): if a melded Bar or Panel has to sit on top of the Frame, maybe the Frame should sit on Background and be the exception for reserved space. The facts:
 
@@ -71,7 +73,7 @@ Recommendation: option 1 (keep `top`) together with hosted melding (option 4) fo
 
 So the answer to "can we have a layer for melds" is: not as a fifth layer; use hosted melding on one surface (option 4) or the bottom/top split (option 2).
 
-A cheap check before deciding: a short test on this KWin with a painter on each of the three layers and a wallpaper behind, to see the draw order (not run yet).
+The test of three layers against the wallpaper is no longer needed.
 
 ### Thickness, radii, border, colours
 
@@ -135,7 +137,7 @@ A strip can grow, shrink or peek out from its edge, along the whole side (edge t
 - A peek reserves nothing and draws over windows, which works because the painter is on `top`. A peek that reaches into a window's area is a hover reveal, so a keyboard way to open it is needed.
 - Reduced motion: the states switch instantly ([[Goals and Non-Goals]] G7).
 
-### Hosted melding (proposed)
+### Hosted melding (decided 2026-10-27)
 
 The painter is a full-screen surface, so a Bar or Panel melded to the Frame can be drawn **inside the painter** instead of in a window of its own. The entry stays a sibling in the file and names its target (`attach_to`), as before; a flag such as `meld: true` tells the shell to host it in the Frame's surface.
 
@@ -151,7 +153,7 @@ The painter is a full-screen surface, so a Bar or Panel melded to the Frame can 
 
 It is the fallback the Edge Shell design named: four invisible reserving strips plus one click-through full-screen canvas per monitor that draws the frame, corners and panels in one path ([[Shadows on Layer Surfaces#The maintainer's earlier work]], design spec section 5.1). The same approach lets the Overlay layer stay free for real overlays (a launcher, a dimming layer) instead of being used for melds.
 
-Limits: a hosted entry cannot move to another monitor or be a free-floating, draggable window (it grows out of its target); a panel that must float can still be its own window. Not tested on tre. #needs-verification: the cost of a large tree and region in the painter, and the one-frame skew between the painter and the reservers.
+Limits: a hosted entry cannot move to another monitor or be a free-floating, draggable window (it grows out of its target); a panel that must float can still be its own window. Not tested on tre. #needs-verification: the cost of a large tree and region in the painter, and the one-frame skew between the painter and the reservers (the reservers are separate windows).
 
 ### Multi-monitor
 
@@ -167,6 +169,7 @@ One Frame per monitor, independent: each is a complete ring with its own thickne
 | `corner_radius` | Outer (convex) corners, four-sided | Proposed |
 | `inner_radius` | Inner (concave) corners, four-sided | Proposed |
 | `style` | Background, border, shadow, opacity | Decided (the key); property names proposed |
+| `meld` | On a Bar or Panel entry that has `attach_to` the Frame: draw it inside the Frame's surface instead of in a window of its own | Proposed; the mechanism is decided (2026-10-27) |
 | `sides` | Per-side overrides: `top`, `right`, `bottom`, `left`, each with its own `thickness` and `children` (the strip) | Proposed; strips decided (2026-10-27), the key form is mine |
 | `children` | Blocks, containers and modules on the Frame itself | Decided that a layer window has them; for a Frame the content goes in a side's strip |
 
@@ -239,7 +242,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 ## Open questions
 
 - [x] What a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars, all four edges or none (maintainer, 2026-10-27). Open: the key form (`sides`), and the painter hosting the strips (option A, recommended).
-- [ ] The Frame's layer (see The Frame's layer above), which sets which layer a melded Panel or Bar uses; how the join is drawn (who repaints the frame strip); and how wide the seam is while moving (to measure).
+- [x] The Frame's layer: `top`, with melded Bars and Panels hosted in the Frame's surface (maintainer, 2026-10-27). Open: how the join is drawn in the painter, and the cost of a large tree and region in the painter (to measure).
 - [ ] The four reservers plus the painter tested together on KWin (tre did not test them together), and a 4K frame with many joins.
 - [ ] Fractional scale: 1 px reservers and the ring edge at 1.5x.
 - [ ] A fullscreen window and the Frame: the protocol puts fullscreen windows typically at the top layer, so a fullscreen window may cover the Frame.

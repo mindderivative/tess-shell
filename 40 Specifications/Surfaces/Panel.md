@@ -84,6 +84,7 @@ Keys of a Panel entry. Decided keys are from [[Common Keys and Conventions]]; pr
 | `children` | Blocks, containers and modules | Decided |
 | `style` | A style file or inline values | Decided |
 | `attach_to` | The name of the surface to attach to | Decided that attachment is by name; key proposed |
+| `meld` | With `attach_to` a Frame: draw the Panel inside the Frame's surface, so it grows out of the frame with no seam | Proposed; the mechanism is decided ([[Frame#Hosted melding (decided 2026-10-27)]]) |
 | `anchor` | `top`, `bottom`, `left`, `right` (one or a list) | Proposed |
 | `size` | `[width, height]` | Proposed |
 | `margin` | Four-sided offset, clockwise from the top | Proposed; order decided |

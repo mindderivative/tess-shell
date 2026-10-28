@@ -71,6 +71,7 @@ Reading the arrows: the Shell attaches to the layer surface; layer windows (Pane
 - A Popup stays a `kind: popup` entry in the shell file; a module calls it; it holds containers and modules ([[Surface Types#Special cases]]). The Special Cases group exists for popup-like kinds, such as a Notification window (not v1).
 - The building blocks and the modules are the lists in [[Building Blocks]], with the full decision in [[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]].
 - Popup focus is on by default with one flag; tooltip-like popups opt out.
+- The Frame stays on `top`. Melded Bars and Panels are drawn inside the Frame's own surface (hosted melding, 2026-10-27), so melds need no layer of their own and Overlay stays free ([[Frame#Hosted melding (decided 2026-10-27)]]).
 
 ## What does not match, or needs a decision
 

@@ -72,6 +72,7 @@ A Bar belongs to a root, and so to one monitor ([[Shell File]]). A Bar defined o
 | `anchor`, `size` | The raw tre forms; `edge`, `span`, `length` and `thickness` map to them | Proposed |
 | `keyboard` | `none`, `on_demand` or `exclusive` | Proposed |
 | `input_region` | Whole, nothing, rectangles or `auto` | Proposed |
+| `attach_to`, `meld` | With `attach_to` a Frame: draw the Bar inside the Frame's surface, so it grows out of the frame; a thicker Frame edge (a strip) does the same job | Proposed; the mechanism is decided ([[Frame#Hosted melding (decided 2026-10-27)]]) |
 | `hidden`, `auto_hide` | Start hidden; slide out after a time or on leaving | Proposed |
 | `animation` | Slide or fade, with a duration | Proposed |
 
