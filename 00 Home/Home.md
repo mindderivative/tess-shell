@@ -33,7 +33,7 @@ depends_on: []
 | Updated | 2026-10-27 |
 | Last change | Decided: directory fallback to defaults, `~` and variables in paths, a bad settings file stops the shell ([[Settings File]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0011 JSON Schema for Shell Files]] (10 accepted; ADR-0002 superseded) |
-| Waiting on you | Confirm the directory fallback reading in [[Settings File]]; review the [[Style Schema]] proposal (keys, tokens, modes, selectors); the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
+| Waiting on you | Confirm the directory fallback reading in [[Settings File]]; confirm the registry rebuild from UIDs ([[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]]); review the [[Style Schema]] proposal (keys, tokens, modes, selectors); the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
 | Next | Module specs (Workspaces, Audio), the Popup spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-27 | [[Settings File]] small open items closed; Loguru file test |
 | 2026-10-27 | [[Settings File]]: log files, empty registry, XDG directory rule decided |
 | 2026-10-27 | [[Settings File]]: global settings list deferred to testing |
 | 2026-10-27 | [[Settings File]]: start order, movable registry, `logs/` |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-27 | [[Settings File]] and the Shells folder decided |
 | 2026-10-27 | Config directory required for modules, styles, themes, stylesheets ([[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]]) |
 | 2026-10-27 | JSON Schema: config-directory location, lazy import, validation cache ([[JSON Schema and Editor Support]]) |
-| 2026-10-27 | JSON Schema: draft-07, dependency cost measured ([[JSON Schema and Editor Support]]) |
 
 ## Go to
 

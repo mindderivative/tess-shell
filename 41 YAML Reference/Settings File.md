@@ -52,7 +52,7 @@ type: Settings
 | `directories` | Where to look for each file type | A mapping from `shells`, `modules`, `styles`, `themes`, `stylesheets` to an absolute directory or a list of them |
 | `main_shell` | The shell file the shell starts from | A file name in the shells directory; default `Main_Shell.yaml` |
 | `registry` | Where the registry file lives | An absolute path to a `registry.json` file; default `$HOME/.config/tesserae-shell/registry.json`. Same path rules as `directories` |
-| `logging` | Global log settings | `level`, and `directory` (default `$HOME/.config/tesserae-shell/logs/`, same path rules); naming, rotation and retention are in the next section |
+| `logging` | Global log settings | `level`, `directory` (default `logs/` in the config directory, same path rules) and `retention` (optional, days); naming and rotation are in [[#Log files]] |
 | `validation` | Schema validation settings | `enabled` (default true); the cache location is [[JSON Schema and Editor Support#The `jsonschema` dependency runtime, not only development]] |
 
 ```yaml
@@ -79,12 +79,12 @@ logging:
 
 ## Log files
 
-Decided 2026-10-27:
+Decided 2026-10-27; the details marked below were settled by adopting the recommendations the same day.
 
-- **Name.** `log_yyyy-mm-dd`, for example `log_2026-10-27`. Proposed: a `.log` extension, so `log_2026-10-27.log`.
-- **Rotation.** A new day is a new log file. Proposed: the day changes at local midnight, since Loguru's timestamps are local time ([Loguru API](https://loguru.readthedocs.io/en/stable/api/logger.html)); a shell that runs across midnight starts the next file then.
-- **Retention.** Up to the user: the shell deletes no log files. Proposed: an optional `logging.retention` key (a number of days) is left until the shell is built and tested, and no key means keep everything.
-- **How it is built.** Loguru's file sink accepts a `{time}` field in the path and a daily rotation time, but the docs do not show a custom date format in the path or state a default retention. The shell may need to compute the file name itself and open a new sink at midnight. #needs-verification
+- **Name.** `log_yyyy-mm-dd`, with a `.log` extension: `log_2026-10-27.log`. The extension lets editors and log tools recognise the file.
+- **Rotation.** A new day is a new log file. The day changes at local midnight (Loguru's timestamps are local time, [Loguru API](https://loguru.readthedocs.io/en/stable/api/logger.html)). A shell that runs across midnight writes the next file from then. A restart on the same day appends to that day's file.
+- **Retention.** Up to the user: by default the shell deletes nothing. An optional `logging.retention` key holds a number of days; when set, the shell deletes only files in the log directory that match `log_yyyy-mm-dd.log` and are older than that many days, checked at start and at each midnight. Any other file in the folder is left alone.
+- **How it is built.** The shell computes the file name from the local date and swaps the Loguru sink at midnight (add the new day's sink, then remove the old one). It does not use Loguru's own rotation. A test with Loguru 0.7.3 on this machine (2026-10-27) showed why: a path `log_{time:YYYY-MM-DD}.log` is accepted and gives `log_2026-10-27.log`, and a restart appends to it, but a rotation renames the finished file with a timestamp suffix (`log_2026-10-27.2026-10-27_20-50-15_081151.log`), so the files would not be named `log_yyyy-mm-dd` after a rotation. The swap keeps the names exact. Loguru's own retention option is not used either. A real midnight crossing was not tested. #needs-verification
 
 ## Start order
 
@@ -117,10 +117,10 @@ Decided 2026-10-27: if `settings.yaml` cannot be read or fails validation, the s
 - [x] A bad `settings.yaml` stops the shell with an error on the console and in the log, in `$HOME/.config/tesserae-shell/logs/` (decided 2026-10-27).
 - [x] `settings.yaml` is read before the registry, because it can move the registry (decided 2026-10-27).
 - [x] Reload: `logging` applies at once; `directories` and `main_shell` need a restart (accepted as proposed, 2026-10-27).
-- [x] Log file naming `log_yyyy-mm-dd`, rotation each new day, retention left to the user (decided 2026-10-27). Open: the `.log` extension, local midnight, an optional retention key, and how Loguru produces the name.
-- [x] If the configured registry path has no registry, the shell creates an empty one (decided 2026-10-27). Open: moving the file by hand.
-- [ ] Per-monitor settings: they belong in the shell file's `root`, not here ([[Shell File]]).
-- [ ] The Settings entry in the schema set ([[JSON Schema and Editor Support#Files]]).
+- [x] Log file naming `log_yyyy-mm-dd.log`, a new file each local day, no deletion unless `logging.retention` is set (decided 2026-10-27). Open: a real midnight crossing, tested at the testing phase.
+- [x] If the configured registry path has no registry, the shell creates an empty one (decided 2026-10-27). Moving the registry by hand: the user moves the file and sets `registry` in `settings.yaml`; the shell uses the file at the new path. If files already carry UIDs and the registry is new or empty, the shell logs a warning and rebuilds each entry's registry record from the UID in its file rather than issuing new UIDs (recommendation adopted 2026-10-27; the rebuild rules belong to [[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]] and are open there).
+- [x] Per-monitor settings belong in the shell file's `root`, not here ([[Shell File]]) (recommendation adopted 2026-10-27).
+- [x] The Settings entry in the schema set: `settings.schema.json` ([[JSON Schema and Editor Support#Files]]).
 
 ## Acceptance criteria
 
