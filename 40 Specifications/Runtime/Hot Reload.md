@@ -2,7 +2,7 @@
 title: Hot Reload
 aliases: [Reload, File Watching, Live Reload]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-28
 updated: 2026-10-28
@@ -27,13 +27,13 @@ depends_on: ["[[Validation and Errors]]", "[[Config Discovery and Registry]]"]
 
 - Every directory that can hold a shell file: the config directory's `Shells/`, `Modules/` (and the module folders in it), `Styles/`, `Themes/`, `Stylesheets/`, the directories `settings.yaml` names, and `settings.yaml` itself ([[Settings File]]). `schemas/`, `logs/` and `backups/` are not watched.
 - A change to an imported file is a change to every file that imports it: the shell keeps a map from each file to its importers and reloads the whole affected set together.
-- Watching is on by default. A key `hot_reload: false` in `settings.yaml` turns it off; a manual reload still works (proposed, [[Settings File]] keys are deferred to the build).
+- Watching is on by default. A key `hot_reload: false` in `settings.yaml` turns it off; a manual reload still works (the key is decided 2026-10-28; the rest of the settings list is deferred to the build, [[Settings File]]).
 
 ### How a change is noticed
 
-- **Library.** inotify, through `inotify_simple` (recommended). A spike on 2026-10-28 installed `inotify_simple` 2.0.1 (BSD-2-Clause, no dependencies, released 2025-08-25) and ran on Python 3.14.8. A plain write produced create, modify and close-write events. An editor's atomic save (write a temporary file, then rename it over the target) produced create, modify and close-write on the temporary file and then a moved-to event on the real name. So the watcher listens for close-write and moved-to on a directory, and ignores names that start with a dot or end in `~`, `.swp`, `.tmp` or `.bak`.
-- **Alternatives.** `watchfiles` 1.3.0 (MIT, 2026-09-21, Python 3.14 classifier; a Rust extension and one dependency) has debouncing built in; `watchdog` 6.0.0 was last released 2024-11-01 and has no 3.14 classifier; `pyinotify` was last released in 2015. The shell is Linux-only, so inotify's limits do not matter. Recommendation: `inotify_simple` with the shell's own debounce, for the smallest surface; `watchfiles` if a built-in debounce is preferred. #needs-verification on a target distribution.
-- **Debounce.** A change is acted on 200 ms after the last event for it (proposed), so an editor's burst of events, or a multi-file save, becomes one reload.
+- **Library.** inotify, through `inotify_simple` (decided 2026-10-28). A spike on 2026-10-28 installed `inotify_simple` 2.0.1 (BSD-2-Clause, no dependencies, released 2025-08-25) and ran on Python 3.14.8. A plain write produced create, modify and close-write events. An editor's atomic save (write a temporary file, then rename it over the target) produced create, modify and close-write on the temporary file and then a moved-to event on the real name. So the watcher listens for close-write and moved-to on a directory, and ignores names that start with a dot or end in `~`, `.swp`, `.tmp` or `.bak`.
+- **Alternatives.** `watchfiles` 1.3.0 (MIT, 2026-09-21, Python 3.14 classifier; a Rust extension and one dependency) has debouncing built in; `watchdog` 6.0.0 was last released 2024-11-01 and has no 3.14 classifier; `pyinotify` was last released in 2015. The shell is Linux-only, so inotify's limits do not matter. Decided 2026-10-28: `inotify_simple` with the shell's own debounce, for the smallest surface. #needs-verification on a target distribution.
+- **Debounce.** A change is acted on 200 ms after the last event for it (decided 2026-10-28), so an editor's burst of events, or a multi-file save, becomes one reload.
 - **inotify limits.** The number of watches is limited by `fs.inotify.max_user_watches`. Watches are per directory, a few dozen in all, so the limit is not close. If adding a watch fails, the shell logs a warning and runs without hot reload; a manual reload still works.
 - **Manual triggers.** `SIGHUP` and a `reload` command on the control socket reload everything (the IPC and CLI note, to write). Proposed.
 
@@ -61,13 +61,13 @@ sequenceDiagram
     end
 ```
 
-- Reading, parsing and validating run on the watcher thread. Only a finished model or a finished report crosses into the loop ([[Process Model and Threading#The rules]]). tre nodes belong to the loop thread, so the new nodes are built there. #needs-verification whether TEL compilation is safe on a worker thread; if not it runs on the loop.
+- Reading, parsing and validating run on the watcher thread. Only a finished model or a finished report crosses into the loop ([[Process Model and Threading#The rules]]). tre nodes belong to the loop thread, so the new nodes are built there. TEL compilation runs on the watcher thread: it does all its work and returns the compiled result, so nothing it holds is shared (maintainer, 2026-10-28; recorded as requirement T16 in [[Expression Language Requirements]]).
 - **Atomic.** The new model is built completely and validated before anything changes. A file that fails stages 1 to 7 changes nothing ([[Validation and Errors#The pipeline]]).
 - **A reload is one turn of the loop for the diff,** so a view never shows a half-applied change. Proposed budget: the apply step stays within a few frames on a normal shell; measured in testing.
 
 ### The diff
 
-The new model is compared with the current one to decide what to change. Recommendation: match by identity, then by name, then by position.
+The new model is compared with the current one to decide what to change. Decided 2026-10-28: match by identity, then by name, then by position.
 
 - **By identity.** A file by its UID; a named entry (a surface, a module use, a popup) by its unique name within its file ([[Config Discovery and Registry#Identity and UIDs]]).
 - **By position.** A list item without a `name:` is named from its position (`Label_1`) ([[ADR-0007 Shell UI Layer#Open items]]), so reordering unnamed items looks like changes. The note says so and suggests naming items that must survive a reorder. Open question 1.
@@ -102,7 +102,7 @@ The new model is compared with the current one to decide what to change. Recomme
 
 ## Configuration
 
-`settings.yaml`: `hot_reload` (default true), `reload_debounce` (milliseconds, default 200). Both proposed; the global settings list is built while the shell is built ([[Settings File]]).
+`settings.yaml`: `hot_reload` (default true), `reload_debounce` (milliseconds, default 200). Both keys decided 2026-10-28; the global settings list is built while the shell is built ([[Settings File]]).
 
 ## Python contract
 
@@ -116,7 +116,7 @@ The new model is compared with the current one to decide what to change. Recomme
 
 ## Design
 
-None. A reload can show a short, optional notice that it applied (proposed, off by default); the shell does not animate a reload.
+None. A reload can show a short, optional notice that it applied (off by default, decided 2026-10-28); the shell does not animate a reload.
 
 ## Accessibility
 
@@ -142,13 +142,15 @@ A reload that fails is announced by the notification as well as the log ([[Valid
 
 ## Open questions
 
-1. **The diff key:** by identity then name then position (recommended). Naming list items that must survive a reorder is the author's job.
-2. **Watcher library:** `inotify_simple` with a 200 ms debounce (recommended), or `watchfiles`.
-3. **Panel state across a reload:** shown, hidden and collapsed survive by name (recommended).
-4. **A failed apply:** try to restore the window, then close it and continue (recommended).
-5. **A notice when a reload applies:** off by default (recommended).
-6. **Settings keys.** `hot_reload` and `reload_debounce` (recommended; the settings list is deferred).
-7. **TEL compile on a worker thread:** whether TEL is safe off the loop.
+All seven were answered on 2026-10-28.
+
+1. [x] **The diff key:** by identity, then name, then position. Naming list items that must survive a reorder is the author's job.
+2. [x] **Watcher library:** `inotify_simple` with a 200 ms debounce.
+3. [x] **Panel state across a reload:** shown, hidden and collapsed survive by name.
+4. [x] **A failed apply:** try to restore the window, then close it and continue.
+5. [x] **A notice when a reload applies:** off by default.
+6. [x] **Settings keys:** `hot_reload` and `reload_debounce`.
+7. [x] **TEL compile on a worker thread:** yes; TEL does all the work and reports the answer (maintainer, 2026-10-28). Still to confirm in the TEL project: no shared mutable state.
 
 ## Acceptance criteria
 

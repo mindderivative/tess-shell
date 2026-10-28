@@ -145,7 +145,7 @@ The loop cannot interrupt itself, so detecting a blocked loop needs a separate w
 
 - [ ] **Module threads: who owns them?** Options. **A.** Each module starts and owns its threads; the shell gives a helper that catches and logs thread exceptions (flexible, simple contract; recommended). **B.** The shell runs a shared `asyncio` thread for services and modules are coroutines (less thread code, forces async on module authors). **C.** A shell thread pool for module work. Recommendation A, with B available as an optional shared service thread for D-Bus.
 - [x] **D-Bus client library.** `dbus-fast` on a shared asyncio service thread, `jeepney` as the fallback (maintainer, 2026-10-26, [[ADR-0009 D-Bus Client Library]]).
-- [ ] **Registry I/O and the UID write** on the loop or a single writer thread ([[ADR-0007 Shell UI Layer#Open items]]).
+- [ ] **Registry I/O and the UID write** on the loop or a single writer thread ([[ADR-0007 Shell UI Layer#Open items]]). Proposed in [[Config Discovery and Registry#The registry file]]: one writer thread, one write per 500 ms.
 - [ ] **Supervisor** in v1 or later.
 - [x] **No windows** policy: stay idle (maintainer, 2026-10-26).
 - [x] **No windows mechanism.** Option A, chosen 2026-10-26 and released in tre 0.5.9 on 2026-10-27: `App.run(keep_alive=True)` and `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]). The shell requires tre 0.5.9 or later.

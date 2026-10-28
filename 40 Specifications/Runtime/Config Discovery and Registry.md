@@ -2,7 +2,7 @@
 title: Config Discovery and Registry
 aliases: [Config Loader, Discovery, Registry, UID Write]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-28
 updated: 2026-10-28
@@ -39,9 +39,9 @@ flowchart TD
     f --> g[Resolve references]
 ```
 
-- **What is scanned.** Each directory is scanned recursively for files that end in a shell suffix (`_Shell.yaml`, `_Module.yaml`, `_Style.yaml`, `_Theme.yaml`, `_Stylesheet.yaml`). Dot files, `schemas/`, `logs/` and editor temporary files (names starting with a dot or ending in `~`, `.swp`, `.tmp` or `.bak`) are skipped. Recursive, not one level, so a user can sort Styles into folders; a module is still one folder `Modules/<module_name>/` ([[AGENTS#9. Naming in the designed system]]). Proposed.
+- **What is scanned.** Each directory is scanned recursively for files that end in a shell suffix (`_Shell.yaml`, `_Module.yaml`, `_Style.yaml`, `_Theme.yaml`, `_Stylesheet.yaml`). Dot files, `schemas/`, `logs/` and editor temporary files (names starting with a dot or ending in `~`, `.swp`, `.tmp` or `.bak`) are skipped. Recursive, not one level, so a user can sort Styles into folders; a module is still one folder `Modules/<module_name>/` ([[AGENTS#9. Naming in the designed system]]). Decided 2026-10-28.
 - **What is a shell file.** A file is recognised by its suffix and by a top-level `shell:` key, and its `type:` must agree with the suffix ([[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]], [[Common Keys and Conventions#Keys every file has]]). A file with a shell suffix and no `shell:` key is refused with an error naming it. A file with another name is ignored, and a note is logged at info level.
-- **What is loaded.** The top-level shell file is `main_shell` from `settings.yaml` (default `Main_Shell.yaml`) in the shells directory, and every file reachable through `import:` from it ([[Shell File]]). A `_Shell.yaml` in `Shells/` that nothing imports is not loaded and is logged at info level (proposed). Modules, styles, themes and stylesheets are all registered, whether used or not, so that a name used as a key resolves.
+- **What is loaded.** The top-level shell file is `main_shell` from `settings.yaml` (default `Main_Shell.yaml`) in the shells directory, and every file reachable through `import:` from it ([[Shell File]]). A `_Shell.yaml` in `Shells/` that nothing imports is not loaded and is logged at info level (decided 2026-10-28). Modules, styles, themes and stylesheets are all registered, whether used or not, so that a name used as a key resolves.
 - **Imports** are paths relative to the importing file and nest ([[Common Keys and Conventions#Structure keys]]). A cycle is an error naming the chain; a missing file is an error with the paths tried.
 - **Parsing** uses a loader that rejects duplicate mapping keys, because PyYAML keeps the last of two equal keys silently: a test on 2026-10-28 loaded two `Clock:` entries and got one. The error names both lines ([[Validation and Errors#Parsing]]).
 
@@ -54,10 +54,10 @@ flowchart TD
 ### Identity and UIDs
 
 - A UID is a `uuid.uuid7()` ([[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]]). A file carries its own UID in the file, as `UID:` directly below `shell:`; it travels with the file when the file is moved or renamed.
-- Named entries inside a file (a surface, a module use, a popup) get registry-only UIDs, keyed by the file's UID and the entry's name path. The files themselves are not edited for these. Proposed; the decided text says anything with a unique name gets a UID and the file holds its own.
+- Named entries inside a file (a surface, a module use, a popup) get registry-only UIDs, keyed by the file's UID and the entry's name path. The files themselves are not edited for these. Decided 2026-10-28; the earlier text says anything with a unique name gets a UID and the file holds its own.
 - Shipped modules have stable, registry-only UIDs (decided 2026-10-26).
 - **Identity** compares the entry's values other than the UID, with `name` and `location`. If they agree, the entry is the same; a mismatch means a new entry and the old one is treated as removed ([[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]]).
-- **A copied file.** Two files that carry the same UID is an error naming both: the user deleted the `UID:` line in neither copy. The shell does not choose one. Recommendation; the alternative is to give the later file a new UID, which can silently change which copy keeps state.
+- **A copied file.** Two files that carry the same UID is an error naming both: the user deleted the `UID:` line in neither copy. The shell does not choose one (decided 2026-10-28). Giving the later file a new UID was rejected because it can silently change which copy keeps state.
 
 ### The registry file
 
@@ -95,14 +95,14 @@ flowchart TD
 
 - **Reading.** At start, on the main thread before the loop runs ([[Shell Start and Stop]]). A file that is not valid JSON is an error and stops the shell; the shell does not overwrite it. A missing file is created empty (decided 2026-10-27).
 - **Writing.** A single writer thread collects changes and writes at most once every 500 ms, and once at stop. It writes to a temporary file in the same directory, flushes it, and replaces the registry atomically (`os.replace`), so a crash leaves the old file whole. Recommendation; this settles the open question about registry I/O on the loop ([[ADR-0007 Shell UI Layer#Open items]]).
-- **A moved or empty registry.** If the registry is new, empty or moved and the files already carry UIDs, the shell logs a warning and rebuilds each record from the UID in its file instead of issuing new ones (decided 2026-10-27, [[Settings File]]). What a rebuilt record holds is name, kind or type, and file, found by scanning; the saved `state` is lost. Open question 4.
-- **Removed entries.** When a file or entry is gone, its record is kept for 30 days and then dropped (proposed), so that renaming a file and back does not lose a Panel's position. Open question 3.
+- **A moved or empty registry.** If the registry is new, empty or moved and the files already carry UIDs, the shell logs a warning and rebuilds each record from the UID in its file instead of issuing new ones (decided 2026-10-27, [[Settings File]]). What a rebuilt record holds is name, kind or type, and file, found by scanning; the saved `state` is lost (decided 2026-10-28).
+- **Removed entries.** When a file or entry is gone, its record is kept for 30 days and then dropped (decided 2026-10-28), so that renaming a file and back does not lose a Panel's position.
 
 ### Writing the UID into a file
 
 The shell edits a file the user wrote, so it is careful (risk R-06 in the [[Risk Register]]).
 
-1. Before the first write to a file, copy it to a backups folder under the config directory (proposed `backups/`, ignored by version control like `schemas/`).
+1. Before the first write to a file, copy it to a backups folder under the config directory (`backups/`, ignored by version control like `schemas/`; decided 2026-10-28).
 2. Insert the line `UID: <uuid7>` directly below the `shell:` line by editing the text, not by loading and dumping YAML, so comments, order and quoting survive. Keep the file's line endings.
 3. Check that the file did not change since it was read (content hash); if it did, skip and retry on the next load.
 4. Write a temporary file in the same directory, then replace the original atomically; keep the file's permissions.
@@ -117,7 +117,7 @@ The shell edits a file the user wrote, so it is careful (risk R-06 in the [[Risk
 
 ## Configuration
 
-`settings.yaml` keys: `directories`, `registry`, `main_shell` ([[Settings File]]). Proposed addition: `registry_retention` (days an orphaned record is kept, default 30). No other key.
+`settings.yaml` keys: `directories`, `registry`, `main_shell` ([[Settings File]]). Proposed addition: `registry_retention` (days an orphaned record is kept, default 30; the 30 days are decided). No other key.
 
 ## Python contract
 
@@ -159,13 +159,16 @@ None directly. Error messages follow [[Validation and Errors]].
 
 ## Open questions
 
-1. **Scan depth:** recursive for all types (recommended), or one level.
-2. **A copied file with a duplicate UID:** an error naming both (recommended), or a new UID for the later file.
-3. **Retention of removed records:** 30 days (recommended), or drop at once.
-4. **What a rebuilt record holds:** name, kind or type and file from the scan; saved state is lost (recommended).
-5. **Named entries:** registry-only UIDs for entries inside a file (recommended), or UIDs written into the entries too.
-6. A `backups/` folder under the config directory for the first UID write (recommended), or no backup.
-7. **Unimported shell files.** A `_Shell.yaml` in `Shells/` that nothing imports: ignored with an info notice (recommended), or loaded as a second root source.
+All seven were answered on 2026-10-28, as recommended.
+
+1. [x] **Scan depth:** recursive for all types.
+2. [x] **A copied file with a duplicate UID:** an error naming both.
+3. [x] **Retention of removed records:** 30 days.
+4. [x] **What a rebuilt record holds:** name, kind or type and file from the scan; saved state is lost.
+5. [x] **Named entries:** registry-only UIDs for entries inside a file.
+6. [x] **A `backups/` folder** under the config directory for the first UID write.
+7. [x] **Unimported shell files:** a `_Shell.yaml` in `Shells/` that nothing imports is ignored with an info notice.
+- [ ] The registry writer: one thread, one write per 500 ms (proposed, not asked).
 
 ## Acceptance criteria
 

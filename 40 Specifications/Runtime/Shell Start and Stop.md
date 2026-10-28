@@ -2,7 +2,7 @@
 title: Shell Start and Stop
 aliases: [Shell Lifecycle, Startup, Shutdown, Start Order]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-28
 updated: 2026-10-28
@@ -26,7 +26,7 @@ depends_on: ["[[ADR-0003 Process Model]]", "[[Settings File]]", "[[TRE-REQ-005 K
 ### Process rules
 
 - **One process, one loop.** The shell is one Python process; tre's `App.run()` owns the main thread; everything that touches a window or node runs there ([[Process Model and Threading#The rules]]).
-- **One instance per session** (proposed). Two shells would fight over the registry, the D-Bus names the shell owns and the same surfaces. The shell takes a lock in `$XDG_RUNTIME_DIR/tesserae-shell/` on start. A second start finds the lock, prints that a shell is already running with its process id, and exits with code 4. The same socket carries the control commands of the IPC and CLI note. Recommendation; the alternative is to let a second start ask the first to reload. #needs-verification how `XDG_RUNTIME_DIR` is set on the target session.
+- **One instance per session** (decided 2026-10-28). Two shells would fight over the registry, the D-Bus names the shell owns and the same surfaces. The shell takes a lock in `$XDG_RUNTIME_DIR/tesserae-shell/` on start. A second start finds the lock, prints that a shell is already running with its process id, and exits with code 4. The same socket carries the control commands of the IPC and CLI note. Letting a second start ask the first to reload was rejected. #needs-verification how `XDG_RUNTIME_DIR` is set on the target session.
 - **Wayland only.** No Wayland compositor, or one without the layer shell, is an environment error: tre raises `UnsupportedPlatform` ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]) and the shell exits with code 2 naming it. X11 is not supported ([[V1 Scope#Target environment]]).
 
 ### Start sequence
@@ -50,7 +50,7 @@ flowchart TD
 | Step | What happens | Source | If it fails |
 |---|---|---|---|
 | 1. Pre-flight | Python 3.14 or later; tre 0.5.9 or later (the Frame needs `hit_shape`); a Wayland session | [[Frame#Failure modes and recovery]], [[Surface Types]] | Stop, code 2, a message naming the missing version or the environment |
-| 2. Config directory | `$XDG_CONFIG_HOME/tesserae-shell/` if set, non-empty and absolute, else `$HOME/.config/tesserae-shell/` | [[Settings File#The config directory]] | If it does not exist, create it with the default folders (proposed) |
+| 2. Config directory | `$XDG_CONFIG_HOME/tesserae-shell/` if set, non-empty and absolute, else `$HOME/.config/tesserae-shell/` | [[Settings File#The config directory]] | If it does not exist, create it with the default folders (decided 2026-10-28) |
 | 3. Settings | Read `settings.yaml`; expand `~` and variables; check paths | [[Settings File]] | Stop, code 1, error on the console and in the default log directory |
 | 4. Logging | Start Loguru with the `logging` keys, or the defaults | [[Settings File#Log files]] | Fall back to the console only and say so; do not stop |
 | 5. Lock | Take the instance lock | This note | Another shell runs: stop, code 4 |
@@ -71,15 +71,19 @@ flowchart TD
 - **No windows: stay idle** (decided 2026-10-26). If every monitor is set to none, or no output is present, the shell keeps running and waits for `output_added` ([[Data Flow#Monitor hot-plug]]).
 - Monitors come and go: windows close with `output_removed` and are created again when the output returns; a dead window is never reused.
 - An unhandled exception in a callback is logged by tre and does not stop the loop ([[Process Model and Threading#What tre guarantees]]).
-- The shell reports a ready state once step 12 finishes (a log line, and a `READY` notice on the control socket; whether it also notifies systemd is a delivery item).
+- The shell reports a ready state once step 12 finishes (a log line, a `READY` notice on the control socket, and a notice to systemd, below).
+
+### Telling systemd (decided 2026-10-28)
+
+The shell notifies systemd. When the environment variable `NOTIFY_SOCKET` is set, the shell sends one datagram with the text `READY=1` to that socket once step 12 finishes, and `STOPPING=1` when the stop sequence starts. systemd acts on them only when the unit uses `Type=notify` ([sd_notify](https://www.freedesktop.org/software/systemd/man/latest/sd_notify.html), read 2026-10-28). The protocol is a single datagram on a Unix socket, so the shell needs no library for it. With no `NOTIFY_SOCKET` set, the shell sends nothing. The unit file that sets `Type=notify` is a delivery item (`70 Delivery`, to write).
 
 ### Stop sequence
 
 Triggers: SIGTERM or SIGINT, a quit command on the control socket, the session ending. SIGHUP reloads (proposed, [[Hot Reload]]). Python signal handlers do not run on an idle loop, so a watcher thread reads a socketpair fed by `signal.set_wakeup_fd` and calls `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]], [[Process Model and Threading#Lifecycle (proposed)]]).
 
-1. Set the state to Stopping; ignore file changes and reload requests.
+1. Set the state to Stopping; send `STOPPING=1`; ignore file changes and reload requests.
 2. `LoopHandle.stop()`: every window closes without a veto (each hears `closed`, reason `"stopped"`), and `App.run()` returns.
-3. Stop modules in reverse start order: call `stop()`, join the module's threads. A module gets 3 seconds; the whole step gets 10 seconds (proposed values; measured in testing).
+3. Stop modules in reverse start order: call `stop()`, join the module's threads. A module gets 3 seconds; the whole step gets 10 seconds (decided 2026-10-28; tuned in testing).
 4. Stop the D-Bus service thread, the watcher and the watchdog.
 5. Write the registry once, atomically ([[Config Discovery and Registry#The registry file]]).
 6. Flush logs, release the instance lock, exit with code 0.
@@ -88,7 +92,7 @@ Triggers: SIGTERM or SIGINT, a quit command on the control socket, the session e
 - A step that overruns its timeout is logged by name (the module and the thread) and skipped; the process still exits.
 - Floating Panel positions are saved when the Panel's `moved` event fires, not only at stop, so a killed shell loses nothing ([[Panel#Position and attachment]]).
 
-### Exit codes (proposed)
+### Exit codes
 
 | Code | Meaning |
 |---|---|
@@ -99,7 +103,7 @@ Triggers: SIGTERM or SIGINT, a quit command on the control socket, the session e
 | 70 | An internal error: an unhandled exception outside a callback |
 | 130 | Forced stop by a second signal |
 
-Codes 3 and 5 to 69 are left free for later use.
+The codes are decided (2026-10-28). Codes 3 and 5 to 69 are left free for later use.
 
 ## Configuration
 
@@ -113,6 +117,7 @@ None. A module sees `start()` after the model exists and `stop()` at shutdown ([
 
 - tre: `App.run(keep_alive=True)`, `App.thread_handle()`, `LoopHandle.stop()` and `call_soon`, `App.outputs()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]). The shell requires 0.5.9 or later.
 - Signals: `signal.set_wakeup_fd` on a socketpair and a watcher thread ([[Process Model and Threading#Threads]]).
+- systemd: the `sd_notify` datagram on `NOTIFY_SOCKET` ([[#Telling systemd (decided 2026-10-28)]]).
 - Wayland and KWin: the session must provide `wlr-layer-shell`; the surface specs list what else is used ([[Surfaces]]).
 - A supervisor (restart on a hard hang) is a later item ([[Process Model and Threading#Failure and recovery]]); the exit codes let one tell a crash from a configuration error.
 
@@ -122,13 +127,13 @@ None. Start and stop have no visual design; a failed start prints to the console
 
 ## Accessibility
 
-A failure that stops the shell must also be readable without a console: the shell may be launched from a session with none. Recommendation: the same error is sent as a desktop notification through `org.freedesktop.Notifications` when one is available (the shell calls it as a client; it does not own the server, [[ADR-0004 Plasma Coexistence]]). Open question 3.
+A failure that stops the shell must also be readable without a console: the shell may be launched from a session with none. Decided 2026-10-28: the same error is sent as a desktop notification through `org.freedesktop.Notifications` when one is available (the shell calls it as a client; it does not own the server, [[ADR-0004 Plasma Coexistence]]). Open question 3.
 
 ## Performance budget
 
 - Start is dominated by file parsing, validation and window creation. With a warm validation cache `jsonschema` is never imported ([[JSON Schema and Editor Support#The `jsonschema` dependency runtime, not only development]]).
 - Budgets (time to first surface, time to ready, stop time) are set in `60 Quality/` and measured on this machine; none is measured yet.
-- Stop is bounded: 10 seconds in total (proposed).
+- Stop is bounded: 10 seconds in total (decided).
 
 ## Failure modes and recovery
 
@@ -139,18 +144,21 @@ A failure that stops the shell must also be readable without a console: the shel
 | A surface fails to open | Logged and skipped; the rest open |
 | The Wayland connection is lost | tre's windows close, the loop ends, the process exits; a supervisor restarts it |
 | The loop hangs | The watchdog logs the stall; only a supervisor can recover ([[Process Model and Threading#Failure and recovery]]) |
-| The process is killed | Nothing is written at stop; the lock is released by the kernel when the process dies if it is a file lock (proposed) |
-| A stale lock with no process | A file lock held by `flock` dies with the process, so there is none to clear (proposed) |
+| The process is killed | Nothing is written at stop; the lock is released by the kernel when the process dies, because it is a file lock (decided with the lock) |
+| A stale lock with no process | A file lock held by `flock` dies with the process, so there is none to clear (decided with the lock) |
 
 ## Open questions
 
-1. **One instance:** a lock and refuse a second start (recommended), or let a second start trigger a reload.
-2. **Exit codes:** the table above.
-3. **Failure notice:** also send a desktop notification when the shell stops at start or fails a reload (recommended, opt-out).
-4. **Config directory creation:** create it with the default folders when missing (recommended), or stop.
-5. **Timeouts:** 3 seconds per module and 10 seconds in total.
-6. **Ready notice:** whether the shell notifies systemd (delivery).
-7. **A hidden lock path:** the lock in `$XDG_RUNTIME_DIR` against the config directory.
+All seven were answered on 2026-10-28.
+
+1. [x] **One instance:** a lock; a second start is refused.
+2. [x] **Exit codes:** the table above.
+3. [x] **Failure notice:** a desktop notification when the shell stops at start or fails a reload, opt-out.
+4. [x] **Config directory creation:** create it with the default folders when missing.
+5. [x] **Timeouts:** 3 seconds per module and 10 seconds in total.
+6. [x] **Ready notice:** the shell notifies systemd (`READY=1` and `STOPPING=1` on `NOTIFY_SOCKET`).
+7. [x] **Lock path:** `$XDG_RUNTIME_DIR/tesserae-shell/`, not the config directory.
+- [ ] How `XDG_RUNTIME_DIR` is set on the target session. #needs-verification
 
 ## Acceptance criteria
 
@@ -163,6 +171,7 @@ A failure that stops the shell must also be readable without a console: the shel
 - [ ] A module whose `stop` hangs delays the stop by at most 3 seconds, is named in the log, and the shell still exits.
 - [ ] A second SIGINT during stop ends the process with code 130.
 - [ ] A module whose `start` raises does not prevent the others from starting.
+- [ ] With `NOTIFY_SOCKET` set, the shell sends `READY=1` after the last module starts and `STOPPING=1` when it begins to stop; with it unset, nothing is sent.
 
 ## Links
 

@@ -82,7 +82,7 @@ Every error carries `file:line:column` and says what is wrong and what to write 
 
 - [ ] The `shell:` version format and what a version change means.
 - [ ] Case rules for `type:` and `kind:` values.
-- [ ] Whether unknown keys are errors or warnings (recommendation: errors, for typos).
+- [x] Unknown keys are errors (decided 2026-10-28, [[Validation and Errors]]).
 - [ ] The expression delimiter and syntax (TEL).
 - [ ] Units beyond pixels (a scale-aware unit).
 

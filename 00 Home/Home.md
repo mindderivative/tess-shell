@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Popup tooltip delays decided: 500 ms to open, 200 ms to close ([[Popup]]) |
+| Last change | Applied the answers to the four Runtime specs; they are in review ([[Runtime]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0012 Keeping the Shell Above Plasma Panels]] (11 accepted; ADR-0002 superseded) |
-| Waiting on you | Answer the open questions in the four Runtime specs ([[Open Questions]]); key names the specs mark proposed |
+| Waiting on you | Key names the specs mark proposed; the registry writer thread (not asked) |
 | Next | IPC and CLI, then Logging, then the Integration specs ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-28 | Runtime specs: all questions answered, in review |
 | 2026-10-28 | [[Popup]] tooltip delays decided (500 and 200 ms) |
 | 2026-10-28 | Four Runtime specs written (start and stop, discovery and registry, validation and errors, hot reload) |
 | 2026-10-28 | [[Popup]] answers applied; [[TRE-REQ-007 Popup Body Geometry]] written |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-27 | [[Open Questions]]: Dataview table of unverified claims and what to verify |
 | 2026-10-27 | [[Open Questions]]: Dataview list of unverified notes |
 | 2026-10-27 | [[Roadmap]], [[Open Questions]], [[Risk Register]] written |
-| 2026-10-27 | [[Settings File]] small open items closed; log files, XDG rule decided |
 
 ## Go to
 

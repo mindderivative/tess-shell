@@ -38,6 +38,7 @@ TEL evaluates expressions written in shell YAML files (`{if condition, ...}`, va
 | T12 | **Testable headless.** Parse and evaluate without a display. | [[AGENTS#12. Design completeness checklist]] |
 | T13 | **Standalone.** Anyone can use TEL in plain YAML by importing its parser in a Python script, with no shell and no Tesserae UI. | [[ADR-0008 Tesserae Expression Language]] |
 | T15 | **Expression language only.** TEL has no statements, handlers or event handling; the shell does all of that and may use TEL to evaluate argument expressions at event time. If the shell puts an `event` name in the scope it supplies, TEL treats it as an ordinary name. Confirmed by the maintainer, 2026-10-26 (told to `tess-el`; `tess-el` records it as its D10, replacing D2 and D5). | [[ADR-0008 Tesserae Expression Language]] |
+| T16 | **Compile off the loop.** Compiling an expression is a self-contained computation: it takes its input and returns the compiled result, holding no state shared with other calls, so the shell can compile on a worker thread and hand the result to the loop. | Maintainer, 2026-10-28; [[Hot Reload]] |
 | T14 | **Efficient.** Much more efficient than Tesserae's `expr.py`: parse once, cheap re-evaluation, nothing re-run unless an input changed. A target and a benchmark are set in the TEL project. | Maintainer, 2026-10-25 |
 
 ## What Tesserae's `expr.py` shows

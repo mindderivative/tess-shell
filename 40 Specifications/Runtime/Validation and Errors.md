@@ -2,7 +2,7 @@
 title: Validation and Errors
 aliases: [Error Reporting, Validation Pipeline, file:line:column]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-28
 updated: 2026-10-28
@@ -47,7 +47,8 @@ flowchart LR
 | 7. Modules | The `.py` imports; it holds one `Module` class; `validate_use` accepts each use | Python | The traceback line for the `.py`; the use's node for a rejected param |
 | 8. Run time | An expression that fails to evaluate; a module callback that raises; a tre error | The shell | The node or module that ran |
 
-- **A file that fails stage 2 or 3 is not checked further,** because later stages need its data; other files continue. Stage 5 runs only when every file has passed stage 4, because it compares across files. Proposed.
+- Unknown keys are errors, not warnings, to catch typos (decided 2026-10-28).
+- **A file that fails stage 2 or 3 is not checked further,** because later stages need its data; other files continue. Stage 5 runs only when every file has passed stage 4, because it compares across files (decided 2026-10-28).
 - **Stages 1 to 7 run before anything is shown** at start, and before anything is applied on a reload ([[Hot Reload]]). Stage 8 happens while running.
 
 ### Parsing
@@ -84,7 +85,7 @@ Every finding has the same fields:
 | `file` | The path, relative to the config directory when inside it |
 | `line`, `column` | 1-based; `0` only for a problem with the whole file |
 | `severity` | `error`, `warning` or `info` |
-| `rule` | A short stable slug such as `unknown-key` or `name-duplicate`; used in logs and tests, not shown as a number (proposed) |
+| `rule` | A short stable slug such as `unknown-key` or `name-duplicate`; used in logs and tests, not shown as a number (decided 2026-10-28) |
 | `message` | What is wrong and what to write |
 | `hint` | Optional: the nearest valid names, an example, a link to a note |
 
@@ -103,7 +104,7 @@ Shells/Main_Shell.yaml:12:9: error: unknown style key 'colour' on bar 'top_bar'
 
 ### How many errors, and in what order
 
-- Every error from a stage is reported, sorted by file and line, not only the first, so a user fixes a file in one pass. A cap of 50 per run, then a line saying how many more were found (proposed).
+- Every error from a stage is reported, sorted by file and line, not only the first, so a user fixes a file in one pass. A cap of 50 per run, then a line saying how many more were found (decided 2026-10-28).
 - Errors from different files at the same stage are all reported. Stages after a failed stage are not run for the files they depend on.
 
 ### Where it goes
@@ -112,14 +113,14 @@ Shells/Main_Shell.yaml:12:9: error: unknown style key 'colour' on bar 'top_bar'
 |---|---|---|
 | Console (stderr) | The printed form, in colour when it is a terminal | Always |
 | The log file | One record per finding, with `file`, `line`, `column`, `rule`, `severity` as fields ([[Settings File#Log files]]) | Always |
-| A desktop notification | A short summary and the first error | A failure that stops the shell, or a failed reload; opt-out (proposed, [[Shell Start and Stop#Accessibility]]) |
+| A desktop notification | A short summary and the first error | A failure that stops the shell, or a failed reload; opt-out (decided 2026-10-28, [[Shell Start and Stop#Accessibility]]) |
 | The command `check` | The same output, no shell started, exit code 1 on any error | On demand (the IPC and CLI note, to write) |
 
 ### What a failure does
 
 | When | Error | Warning |
 |---|---|---|
-| Start | The shell stops with exit code 1 ([[Shell Start and Stop#Exit codes (proposed)]]) | Printed; the shell continues |
+| Start | The shell stops with exit code 1 ([[Shell Start and Stop#Exit codes]]) | Printed; the shell continues |
 | Reload | The old state is kept and the error is reported ([[Hot Reload]]) | Printed; the new state applies |
 | Stage 8, while running | Logged with the node or module; the node shows its fallback, the rest of the shell continues | Logged |
 
@@ -157,19 +158,21 @@ A plain-text error is readable by a screen reader in a terminal. An error that s
 | Failure | Result |
 |---|---|
 | The validator itself fails (a schema that does not compile) | A shell error naming the schema; the shell falls back to its own checks of required keys and types ([[JSON Schema and Editor Support#Failure modes and recovery]]) |
-| A file is huge or binary | Stage 1 error naming the size or the encoding; a size limit is proposed at 1 MiB per YAML file |
+| A file is huge or binary | Stage 1 error naming the size or the encoding; the size limit is 1 MiB per YAML file (decided 2026-10-28) |
 | An error cannot be mapped to a node | Reported at the nearest parent's line, with the path in the message |
 | Logging is not available | The console still gets the error |
 
 ## Open questions
 
-1. **Unknown keys are errors** (recommended, for typos) or warnings ([[Common Keys and Conventions#Open]]).
-2. **Rule slugs in logs, no numeric codes** (recommended), or numeric codes.
-3. **Stop at 50 errors** (recommended), or no cap.
-4. **A notification for a failed start or reload,** opt-out (recommended).
-5. A `check` command (recommended; it needs the IPC and CLI note).
-6. **A size limit of 1 MiB per YAML file** (recommended), or none.
-7. **Stage 5 only after every file passes stage 4** (recommended), or per file.
+All seven were answered on 2026-10-28, as recommended.
+
+1. [x] **Unknown keys are errors.**
+2. [x] **Rule slugs in logs, no numeric codes.**
+3. [x] **Stop at 50 errors.**
+4. [x] **A notification for a failed start or reload,** opt-out.
+5. [x] **A `check` command** (it needs the IPC and CLI note).
+6. [x] **A size limit of 1 MiB per YAML file.**
+7. [x] **Stage 5 only after every file passes stage 4.**
 
 ## Acceptance criteria
 
