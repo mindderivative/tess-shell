@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0011 JSON Schema for Shell Files]]"]
 # JSON Schema and editor support
 
 > [!summary]
-> The shell publishes JSON Schema files for its YAML. An editor with the Red Hat YAML extension (the YAML language server) uses them for auto-completion, hover descriptions and syntax validation; the shell uses the same files to validate at load and on hot reload. The schemas are generated from the block and module declarations, so the reference and the code cannot drift. Proposal from the maintainer's idea (2026-10-27); every detail below is proposed.
+> The shell publishes JSON Schema files for its YAML. An editor with the Red Hat YAML extension (the YAML language server) uses them for auto-completion, hover descriptions and syntax validation; the shell uses the same files to validate at load and on hot reload. The schemas are generated from the block and module declarations, so the reference and the code cannot drift. Decided in [[ADR-0011 JSON Schema for Shell Files]] (accepted 2026-10-27); the details below are proposed.
 
 ## What the editor and the shell each get
 
@@ -75,7 +75,7 @@ A throwaway script in /tmp (not in the vault) validated a sample shell file with
 
 ## Open
 
-- [ ] Accept [[ADR-0011 JSON Schema for Shell Files]].
+- [x] Accept [[ADR-0011 JSON Schema for Shell Files]] (2026-10-27).
 - [ ] Draft: draft-07 keywords (recommended) or 2020-12.
 - [ ] Where the generated project schema lives and how the modeline points to it.
 - [ ] `jsonschema` as a dependency, and its cost: load time at hot reload, and its own dependencies on the target Python. #needs-verification

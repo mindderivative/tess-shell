@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Proposed JSON Schema files for editor support and shell validation, with a spike ([[JSON Schema and Editor Support]], [[ADR-0011 JSON Schema for Shell Files]]) |
-| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0010 Surface Shadows]] (9 accepted; ADR-0002 superseded) |
-| Waiting on you | Accept or change [[ADR-0011 JSON Schema for Shell Files]] (proposed); review the [[Style Schema]] proposal (keys, tokens, modes, selectors); the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
+| Last change | Accepted [[ADR-0011 JSON Schema for Shell Files]] (Option A) |
+| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0011 JSON Schema for Shell Files]] (10 accepted; ADR-0002 superseded) |
+| Waiting on you | JSON Schema draft (draft-07 keywords or 2020-12, [[JSON Schema and Editor Support#Open]]); review the [[Style Schema]] proposal (keys, tokens, modes, selectors); the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
 | Next | Module specs (Workspaces, Audio), the Popup spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -45,7 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
-| 2026-10-27 | JSON Schema for editors and validation proposed ([[ADR-0011 JSON Schema for Shell Files]]) |
+| 2026-10-27 | [[ADR-0011 JSON Schema for Shell Files]] accepted (Option A) |
 | 2026-10-27 | [[Style Schema]] proposed: style keys, theme tokens, selectors |
 | 2026-10-27 | Shadows decided: in-surface, [[ADR-0010 Surface Shadows]] |
 | 2026-10-27 | Shadow performance test: routes A and B cost nothing measurable at Panel size ([[Shadows on Layer Surfaces]]) |
