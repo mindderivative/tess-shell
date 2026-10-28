@@ -60,7 +60,16 @@ The Frame is on `top` in the diagram. The maintainer is unsure (2026-10-27): if 
 | 2. Painter on `bottom`, reservers on `top` | `bottom` | `top` | Everything melded sits above the ring on a defined layer, Bars on `top`, Panels on `top` or `overlay`. Keeps "only Top reserves" (the reservers are the reserving surfaces, and they are on `top`). Above the wallpaper in KWin's order | The Frame is a composite over two layers. The ring and any strips it hosts sit below windows, so a window that overlaps the edge covers them, and a strip stops acting like a bar above windows |
 | 3. Painter on `background` (the maintainer's thought) | `background` | `top` | The same as option 2 | The same as option 2, plus it shares KWin's desktop layer with the wallpaper, so the ring could be drawn behind it; the layer name suggests it, and it is the layer kept for wallpapers ([[Surface Types#Layers per kind]]) |
 
-Recommendation: option 1 (keep `top`), because it matches the bezel look, keeps the rules as they are, and the melding problem only exists for standalone Bars: a thick edge covers the bar case, and Panels use `overlay`. Option 2 is the alternative if melded standalone Bars matter more than the strips being above windows. Option 3 adds an uncertainty (the wallpaper) without a benefit over option 2. The maintainer's Edge Shell used `top` for its frame ([[Shadows on Layer Surfaces#The maintainer's earlier work]]).
+Recommendation: option 1 (keep `top`) together with hosted melding (option 4) for melded Bars and Panels, because it matches the bezel look, keeps the rules as they are, and the melding problem only exists for standalone Bars: a thick edge covers the bar case, and Panels use `overlay`. Option 2 is the alternative if melded standalone Bars matter more than the strips being above windows. Option 3 adds an uncertainty (the wallpaper) without a benefit over option 2. The maintainer's Edge Shell used `top` for its frame ([[Shadows on Layer Surfaces#The maintainer's earlier work]]).
+
+**The maintainer's question (2026-10-27): five layers, where 4 is overlay and 3 is melds?** The layer-shell protocol has exactly four layers (`background`, `bottom`, `top`, `overlay`) and cannot take a fifth, so the shell cannot add one. What it can do is give "melds" a place without a layer:
+
+| Option | Mapping |
+|---|---|
+| 4. Host melds in the painter (see Hosted melding) | Layers 0 to 3 as in the diagram; melds are drawn inside the Frame's own surface on `top`; `overlay` is left for real overlays. Recommended |
+| 2 (above) | Layer 1 (`bottom`) is the Frame's ring, layer 2 (`top`) is the melds, bars and strips-as-bars, layer 3 (`overlay`) is real overlays. Gives melds their own layer, at the cost of the ring being under windows |
+
+So the answer to "can we have a layer for melds" is: not as a fifth layer; use hosted melding on one surface (option 4) or the bottom/top split (option 2).
 
 A cheap check before deciding: a short test on this KWin with a painter on each of the three layers and a wallpaper behind, to see the draw order (not run yet).
 
@@ -97,6 +106,11 @@ A Frame can be one of three things, and a single Frame can mix them:
 
 A strip is part of the Frame, not a separate Bar. Its thickness is the side's thickness, so it is reserved space like any side.
 
+Decided by the maintainer on 2026-10-27:
+
+- A Frame with a built-in strip can still have melded Bars and Panels, including on the strip.
+- A strip can expand, contract or peek, edge to edge, like a full-width bar. (See Strip: expand, contract, peek.)
+
 **How it is built on tre (proposed).** The painter, which is full-screen and already draws the ring, also hosts the strips' contents. Each strip is a container placed in its side's band, laid out inside the painter's surface. Why this and not separate Bar windows for the strips:
 
 | Option | Description | Verdict |
@@ -105,6 +119,39 @@ A strip is part of the Frame, not a separate Bar. Its thickness is the side's th
 | B. Each strip is its own window | The reserver for that side is sized to the strip and holds the content | A second surface on the same layer as the painter: undefined order, a possible seam, and more windows. It would be a Bar attached to the Frame, which is what Melding already covers |
 
 In option A the keyboard mode of the painter is `on_demand` if any strip holds a text input; otherwise `none`. The painter then takes pointer input over the strips and ring (by `auto`) and nothing in the opening.
+
+### Strip: expand, contract, peek
+
+A strip can grow, shrink or peek out from its edge, along the whole side (edge to edge). Space is reserved in steps, so the two things are separate (a reserver's zone changes in one step, a configure round trip, and tre does not animate it):
+
+| State | What you see | Reserved space |
+|---|---|---|
+| Contracted | The side at its base thickness (the ring) | The base thickness |
+| Expanded | The strip at full thickness | The full thickness |
+| Peek | The strip pushed out over the windows for a moment, as a hover reveal | The base thickness (it does not push windows) |
+
+- The visual extent is animated inside the painter, which is full-screen and can draw anywhere; that is a node animation, not a window resize.
+- To expand: set the reserver's zone first, then animate the strip out. To contract: animate it in, then set the zone. Windows reflow once, not on every frame. This is the auto-hide pattern from the tre request ([[TRE-REQ-001 Layer Surface Window#Shell patterns]]).
+- A peek reserves nothing and draws over windows, which works because the painter is on `top`. A peek that reaches into a window's area is a hover reveal, so a keyboard way to open it is needed.
+- Reduced motion: the states switch instantly ([[Goals and Non-Goals]] G7).
+
+### Hosted melding (proposed)
+
+The painter is a full-screen surface, so a Bar or Panel melded to the Frame can be drawn **inside the painter** instead of in a window of its own. The entry stays a sibling in the file and names its target (`attach_to`), as before; a flag such as `meld: true` tells the shell to host it in the Frame's surface.
+
+| | Separate window (melding as in Melding above) | Hosted in the painter |
+|---|---|---|
+| Layers used | Frame on `top`, the melded entry on a higher layer (`overlay`) | One surface, no extra layer |
+| Order against the Frame | Defined only across layers | Not an issue: one surface |
+| Seam while moving | Up to one frame of difference | None: one node tree |
+| Joins | Drawn in two surfaces with a shared colour | One path |
+| Content | Its own window | Nodes in the painter's tree |
+| Input | Its own input region | The painter's `auto` region follows what is drawn |
+| Cost | A window per melded entry | None, but the painter's tree and region grow |
+
+It is the fallback the Edge Shell design named: four invisible reserving strips plus one click-through full-screen canvas per monitor that draws the frame, corners and panels in one path ([[Shadows on Layer Surfaces#The maintainer's earlier work]], design spec section 5.1). The same approach lets the Overlay layer stay free for real overlays (a launcher, a dimming layer) instead of being used for melds.
+
+Limits: a hosted entry cannot move to another monitor or be a free-floating, draggable window (it grows out of its target); a panel that must float can still be its own window. Not tested on tre. #needs-verification: the cost of a large tree and region in the painter, and the one-frame skew between the painter and the reservers.
 
 ### Multi-monitor
 
