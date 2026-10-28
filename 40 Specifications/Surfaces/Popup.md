@@ -7,14 +7,14 @@ owner: phil
 created: 2026-10-28
 updated: 2026-10-28
 tags: [spec/surface, needs-verification]
-related: ["[[Surfaces]]", "[[Surface Types]]", "[[Bar]]", "[[Panel]]", "[[Module Context]]", "[[Shell File]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[ADR-0007 Shell UI Layer]]"]
+related: ["[[TRE-REQ-007 Popup Body Geometry]]", "[[Surfaces]]", "[[Surface Types]]", "[[Bar]]", "[[Panel]]", "[[Module Context]]", "[[Shell File]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Module Context]]"]
 ---
 
 # Popup
 
 > [!summary]
-> The Popup (`kind: popup`) is a menu, flyout or tooltip that hangs off a rectangle of another shell surface. A module calls it, usually from a click; the shell builds it, tre's `PopupWindow` shows it, and the compositor places it beside the rectangle and keeps it on screen. It holds containers, modules and blocks, knows what called it, takes the keyboard and pointer by default, and closes on an outside click or Escape. Decisions below are the maintainer's ([[Surface Types#Special cases]], [[ADR-0007 Shell UI Layer]]); everything else is a proposal with a recommendation. YAML is illustration.
+> The Popup (`kind: popup`) is a menu, flyout or tooltip that hangs off a rectangle of another shell surface. A module calls it, usually from a click; the shell builds it, tre's `PopupWindow` shows it, and the compositor places it beside the rectangle and keeps it on screen. It holds containers, modules and blocks, knows what called it, takes the keyboard and pointer by default, and closes on an outside click or Escape. Decisions below are the maintainer's ([[Surface Types#Special cases]], [[ADR-0007 Shell UI Layer]], and the answers of 2026-10-28); key names are proposed. YAML is illustration.
 
 ## Purpose and scope
 
@@ -37,8 +37,8 @@ stateDiagram-v2
     Building --> Closed: parent is gone (failed)
 ```
 
-- A Popup exists only while open. Each open builds the content and creates a new tre `PopupWindow`; each close destroys it. tre fixes a popup's size and settings at creation and a closed popup is dead ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)), so there is nothing to reuse. A module's own state lives in the module, not in the popup. Recommendation; measuring the open cost is open.
-- Only one Popup is open at a time, except a submenu with its parent (proposed). Opening another closes the first.
+- A Popup exists only while open (decided 2026-10-28). Each open builds the content and creates a new tre `PopupWindow`; each close destroys it. tre fixes a popup's size and settings at creation and a closed popup is dead ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)), so there is nothing to reuse. A module's own state lives in the module, not in the popup. Measuring the open cost is for the testing phase.
+- Only one Popup is open at a time, except a submenu with its parent (decided 2026-10-28). Opening another closes the first.
 - Calling an open Popup closes it (a toggle). With focus on, the click that closes it lands on the popup's grab, so the icon that opened it does not reopen it ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow): "the click is the popup's").
 
 ### Parent and anchor
@@ -46,11 +46,11 @@ stateDiagram-v2
 - The parent is the surface that holds the calling use (decided, [[Module Context#Calling a popup]]), so a Popup opens on that surface's monitor only and is never anchored across monitors ([[Surface Types#Open questions]]). tre requires the parent to be an open `LayerWindow` or `PopupWindow` ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)); a Popup called from a hosted Frame strip or a melded entry hangs off the Frame's painter window.
 - The caller passes the anchor rectangle: the clicked icon, in its surface's coordinates (decided, [[Module Context#Calling a popup]]).
 - A submenu is a Popup called from a module inside a Popup; its parent is that Popup. Closing the parent closes the submenus (tre).
-- `anchor_to` names a parent in the file. Recommendation: the caller decides the parent, so `anchor_to` is needed only for a Popup opened without a module caller, and is optional otherwise. Open question 1.
+- `anchor_to` names a parent in the file. Decided 2026-10-28: the caller decides the parent, so `anchor_to` is needed only for a Popup opened without a module caller, and is optional otherwise.
 
 ### Placement
 
-The compositor places the popup against the anchor rectangle and keeps it on screen. The shell offers the same words as a Panel's attachment ([[Panel#Attachment geometry (decided 2026-10-27)]]) and maps them to tre's arguments:
+The compositor places the popup against the anchor rectangle and keeps it on screen. The shell offers the same words as a Panel's attachment ([[Panel#Attachment geometry (decided 2026-10-27)]]), decided 2026-10-28, and maps them to tre's arguments:
 
 | `attach` and `align` | tre `anchor` | tre `gravity` |
 |---|---|---|
@@ -71,6 +71,7 @@ The compositor places the popup against the anchor rectangle and keeps it on scr
 - The default is `attach: bottom`, `align: start` (the first row, which is tre's own example), with tre's default adjustment `("flip_y", "slide_x")`: the compositor flips the popup above the anchor when there is no room below, and slides it sideways to stay on screen ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)). A popup under a bottom bar therefore opens upward with no setting.
 - The mapping follows the protocol's words: a corner anchor puts the anchor point at that corner, and a corner gravity places the popup towards that corner ([xdg-shell](https://wayland.app/protocols/xdg-shell)). #needs-verification against a running KWin 6.8.1.
 - `configure` reports where the compositor put it, so a flip is visible to the shell ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)); the content can react (an arrow on the other side).
+- **The visual shape is what is placed (decided 2026-10-28).** The shape the compositor uses for placement is the popup's border plus its body size. A transparent margin for a shadow is ignored and is not part of the popup's size, so `attach: bottom` with `gap: 4` leaves 4 px between the anchor and the body, margin or not. tre today sets the window geometry to the whole surface, margin included (`set_window_geometry(0, 0, width, height)`, `crates/engine-platform/src/layer.rs`, read 2026-10-28), so the compositor would place the margin. Until tre can name the body ([[TRE-REQ-007 Popup Body Geometry]], draft, not filed), the shell enlarges the popup by the margin and shifts `offset` by it; the compositor's flip and slide then use the larger rectangle, so a popup near a screen edge can flip up to one margin early. #needs-verification on KWin 6.8.1.
 
 ### Size (proposed)
 
@@ -84,9 +85,25 @@ Costs: the content is built twice per open. `size: auto` is the default; a fixed
 ### Focus and dismissal (decided)
 
 - **Focus is on by default** (maintainer, 2026-10-26): an open Popup takes the keyboard and pointer itself, with nothing passed at call time, and closes on an outside click or Escape. It maps to tre's `grab=True` ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)). One flag, `focus`.
-- **Tooltip-like Popups opt out** (`focus: false`) and close when the pointer leaves (decided 2026-10-26). They map to `grab=False`. How "pointer leaves" is detected and the delay are proposed ([[#Configuration]]).
-- **Clicks on other shell surfaces.** tre delivers a click on another window of the same application to that window, not as a dismissal, so a Popup that should close on it must listen and close ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)). The shell does this for every focused Popup: a click on any of its own surfaces closes it. Proposed.
-- **A grab needs a user action.** `xdg_popup.grab` "must be used in response to some sort of user action like a button press, key press, or touch down event", with that event's serial; a denied grab dismisses the popup at once ([xdg-shell](https://wayland.app/protocols/xdg-shell)). So a focused Popup opens in response to input on a shell surface. A global shortcut or IPC command has no such serial; whether tre can still open a grabbing popup then is unverified. Recommendation: a launcher or menu opened by shortcut is a Panel on the overlay layer with exclusive keyboard ([[Panel#Keyboard and focus]]), not a Popup. Open question 4. #needs-verification
+- **Tooltip-like Popups opt out** (`focus: false`) and close when the pointer leaves (decided 2026-10-26). They map to `grab=False`. See Tooltips below.
+- **Clicks on other shell surfaces** (decided 2026-10-28). tre delivers a click on another window of the same application to that window, not as a dismissal, so a Popup that should close on it must listen and close ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)). The shell does this for every focused Popup: a click on any of its own surfaces closes it.
+- **A grab needs a user action.** `xdg_popup.grab` "must be used in response to some sort of user action like a button press, key press, or touch down event", with that event's serial; a denied grab dismisses the popup at once ([xdg-shell](https://wayland.app/protocols/xdg-shell)). So a focused Popup opens in response to input on a shell surface (decided 2026-10-28). A global shortcut or IPC command has no such serial. tre passes the last input serial it saw to the grab (`popup.xdg_popup().grab(&seat, self.last_serial)`, `layer.rs`, read 2026-10-28), so an open without fresh input uses a stale serial and the compositor may deny it. A launcher or menu opened by shortcut is a Panel on the overlay layer with exclusive keyboard ([[Panel#Keyboard and focus]]), not a Popup. #needs-verification what KWin does with a stale serial.
+
+### Tooltips (decided 2026-10-28)
+
+A tooltip is a Popup with `focus: false` that opens when the pointer enters its caller and closes when it leaves. Four keys on the Popup entry:
+
+| Key | Meaning |
+|---|---|
+| `open_on_enter` | Open when the pointer enters the caller |
+| `enter_delay` | Milliseconds the pointer must stay before it opens |
+| `close_on_exit` | Close when the pointer leaves the caller and the popup |
+| `exit_delay` | Milliseconds to wait before closing, so the pointer can cross the gap |
+
+- **The caller is the thing hovered.** For a module use that is the module's rectangle; it is the Popup's anchor.
+- **Opt-in for all modules, built-in and custom** (maintainer, 2026-10-28). A module use gets a `tooltip:` key that names a Popup. The shell provides it, so a module needs no code for it. For a block, a surface or anything that is not a module, the author adds it by hand: an event handler that opens the Popup ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]).
+- Defaults: a reasonable value for each delay that the user can change. Proposed starting values `enter_delay: 500` and `exit_delay: 200`, tuned in testing.
+- A tooltip is not focusable and takes no keyboard.
 
 ### Layers
 
@@ -103,14 +120,17 @@ The caller's record is available to the Popup's modules and expressions (decided
 | `kind: popup` | The kind | Decided |
 | `children` | Containers, modules and blocks | Decided |
 | `style` | A style file or inline values | Decided |
-| `anchor_to` | A default parent by name; optional | Key proposed in [[Shell File]]; need open |
-| `attach`, `align`, `gap` | Placement against the anchor rectangle, as for a Panel | Proposed (reuse of decided Panel words) |
+| `anchor_to` | A default parent by name; optional | Key proposed in [[Shell File]]; optional, decided (2026-10-28) |
+| `attach`, `align`, `gap` | Placement against the anchor rectangle, as for a Panel | Decided (2026-10-28) |
 | `adjust` | What the compositor may do to keep it on screen: `flip_x`, `flip_y`, `slide_x`, `slide_y`, `resize_x`, `resize_y` | Proposed; default `[flip_y, slide_x]` (tre's default) |
-| `size` | `auto` or `[width, height]` | Proposed; default `auto` |
-| `max_size` | The largest `auto` may reach | Proposed |
+| `size` | `auto` or `[width, height]` | Decided (2026-10-28); default `auto` |
+| `max_size` | The largest `auto` may reach | Decided that it exists; the default is proposed |
 | `focus` | Take the keyboard and pointer; default true | Decided (2026-10-26) |
-| `close_on_leave` | Close when the pointer leaves; implied by `focus: false` | Proposed |
-| `leave_delay` | Milliseconds to wait before closing on leave | Proposed; a reasonable default the user can set |
+| `open_on_enter` | Open when the pointer enters the caller (a tooltip) | Key decided (2026-10-28) |
+| `enter_delay` | Milliseconds before it opens | Key decided; default value proposed (500) |
+| `close_on_exit` | Close when the pointer leaves the caller and the popup | Key decided (2026-10-28) |
+| `exit_delay` | Milliseconds before it closes | Key decided; default value proposed (200) |
+| `tooltip` (on a module use) | The name of a Popup to open as that module's tooltip; available on every module | Decided that it is opt-in for all modules (2026-10-28); key name proposed |
 | `animation` | Fade or none; no slide (the compositor places it) | Proposed |
 
 ```yaml
@@ -126,9 +146,12 @@ children:
     clock_tooltip:
         kind: popup
         focus: false
+        open_on_enter: true
+        enter_delay: 500
+        close_on_exit: true
+        exit_delay: 200
         attach: bottom
         align: center
-        leave_delay: 300
         children:
             - Label:
                 text: "{{ caller.data.text }}"
@@ -150,7 +173,7 @@ A Popup has no Python of its own. A module opens it from an action with `self.ct
 ## Design
 
 - The look is a style file, stylesheet or inline `style:` ([[Style, Theme and Stylesheet Files#Rules]]): background, border, radii, shadow. A Popup uses the same tokens and keys as the other surfaces ([[Style Schema]]), and elevation level 3 is a sensible default for a menu (proposed, token values in `50 Design System/`).
-- Shadows: a popup's surface cannot draw outside itself, so a shadow needs a transparent margin ([[ADR-0010 Surface Shadows]]). For a `PopupWindow` the compositor places the window geometry, so whether the margin is part of the geometry (and so shifts the placement) is not verified. #needs-verification: test a popup with a margin and a shadow on KWin 6.8.1.
+- Shadows: a popup's surface cannot draw outside itself, so a shadow needs a transparent margin ([[ADR-0010 Surface Shadows]]). The margin is ignored for placement (decided 2026-10-28, see Placement); the input region follows the body. Test a popup with a margin and a shadow on KWin 6.8.1.
 - The Menu module owns arrow-key navigation and item layout; the Popup provides focus and dismissal.
 
 ## Accessibility
@@ -172,7 +195,7 @@ A Popup has no Python of its own. A module opens it from an action with `self.ct
 |---|---|
 | The parent is gone or not open | tre closes the popup with reason `failed`; the shell logs the Popup name and the caller |
 | A Popup is called with a name that does not exist | Error at the call, naming the module and the name |
-| The compositor denies the grab (no valid user action) | The popup is dismissed at once; the shell logs it and, for a `focus: true` Popup, reports the cause |
+| The compositor denies the grab (no valid user action, or a stale serial) | The popup is dismissed at once; the shell logs it and, for a `focus: true` Popup, reports the cause |
 | The monitor is removed | The parent closes, so the Popup closes |
 | The content is larger than `max_size` | Clamped to `max_size`; the content scrolls or clips (open) |
 | A module's content expression fails | The Popup opens with the failing node empty and the error is logged, as in any view |
@@ -180,15 +203,19 @@ A Popup has no Python of its own. A module opens it from an action with `self.ct
 
 ## Open questions
 
-1. **Parent.** Recommendation: the caller's surface; `anchor_to` optional and needed only for openers that are not module calls. Alternative: always require `anchor_to` in the file.
-2. **Placement words.** Recommendation: reuse `attach`, `align`, `gap` as the Panel does, mapped to tre's `anchor` and `gravity`. Alternative: tre's own words.
-3. **Size.** Recommendation: `auto` by a headless measuring pass, a fixed `size` to skip it, and `max_size`; a content change while open closes and reopens. Alternative: a fixed size only.
-4. **Opening without input.** Recommendation: a Popup opens in response to input on a shell surface; a shortcut-opened menu or launcher is an overlay Panel. Alternative: allow `focus: false` popups from a shortcut.
-5. **One open at a time.** Recommendation: yes, except submenus.
-6. **Create on open, destroy on close.** Recommendation: yes; measure the open latency in testing.
-7. **Clicks on other shell surfaces.** Recommendation: they close a focused Popup.
-8. **Tooltip behaviour.** The keys `close_on_leave` and `leave_delay`, and who owns the hover delay before a tooltip opens (the Tooltip module).
-9. **Popup shadows.** How the transparent margin interacts with the compositor's placement.
+All nine were answered on 2026-10-28.
+
+1. [x] **Parent:** the caller's surface; `anchor_to` optional (maintainer, as recommended).
+2. [x] **Placement words:** `attach`, `align`, `gap`, as the Panel (as recommended).
+3. [x] **Size:** `auto` by a headless measuring pass, a fixed `size`, `max_size`; a content change while open closes and reopens (as recommended).
+4. [x] **Opening without input:** a Popup opens in response to input; a shortcut-opened menu is an overlay Panel (as recommended).
+5. [x] **One open at a time,** except submenus (as recommended).
+6. [x] **Create on open, destroy on close** (as recommended).
+7. [x] **Clicks on other shell surfaces** close a focused Popup (as recommended).
+8. [x] **Tooltip behaviour:** keys `close_on_exit`, `exit_delay`, `enter_delay` and `open_on_enter`; the caller is the hovered module; a `tooltip` key is opt-in for every module, built-in and custom; blocks, surfaces and anything else need a manual handler. Open: the default delays, the `tooltip` key's exact name, and how the shell tells a module's rectangle (maintainer, 2026-10-28).
+9. [x] **Shadows:** the visual shape (border plus body size) is what the compositor places; the transparent shadow margin is ignored and is not part of the popup's size. tre sets the geometry to the whole surface today, so this is a workaround now and [[TRE-REQ-007 Popup Body Geometry]] later (maintainer, 2026-10-28).
+- [ ] The content larger than `max_size`: clamp and scroll or clip.
+- [ ] The default `max_size`.
 
 ## Acceptance criteria
 
@@ -197,12 +224,13 @@ A Popup has no Python of its own. A module opens it from an action with `self.ct
 - [ ] A menu near the right edge slides left to stay on screen.
 - [ ] An outside click or Escape closes a focused Popup; the dismissing click does not also open it again.
 - [ ] A click on another shell surface closes a focused Popup.
-- [ ] A Popup with `focus: false` takes no keyboard and closes after `leave_delay` once the pointer leaves it and its anchor.
+- [ ] A Popup with `focus: false` takes no keyboard and closes after `exit_delay` once the pointer leaves it and its caller.
+- [ ] A module use with `tooltip: clock_tooltip` opens that Popup after `enter_delay` when the pointer enters the module, and closes it after `exit_delay` on leaving.
+- [ ] A Popup with a 12 px shadow margin and `gap: 4` has its visible body 4 px from the anchor, the same as one without a margin.
 - [ ] A submenu opens beside its item; closing the parent closes it.
 - [ ] A Popup called while another is open closes the first.
 - [ ] After removing the parent surface, the Popup closes and the shell logs a `failed` reason.
 - [ ] The Popup's size matches its content within 1 px with `size: auto`.
-- [ ] A Popup with a shadow is placed where the same Popup without one is placed.
 
 ## Links
 

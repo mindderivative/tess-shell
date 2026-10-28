@@ -21,5 +21,6 @@ Scoped requests for tre and Tesserae. Each is written here and carried upstream 
 | [[TRE-REQ-004 Tesserae Layer and Popup Windows]] | superseded 2026-10-25. Withdrawn, never carried to Tesserae | Nothing | [[ADR-0006 Shell Independent of Tesserae UI]] |
 | [[TRE-REQ-005 Keep-Alive and Loop Stop]] | stable. Released in tre 0.5.9 (2026-10-27) as #238 | Staying alive with no windows; a clean shutdown ([[Process Model and Threading#No windows: what tre offers]]) | [[ADR-0003 Process Model]] |
 | [[TRE-REQ-006 Repeating Gradients]] | draft. Written 2026-10-27 for the future; not filed | Nothing: the shell repeats stops itself if it is declined | [[Frame#Thickness, radii, border, colours]] |
+| [[TRE-REQ-007 Popup Body Geometry]] | draft. Written 2026-10-28 for the future; not filed | Nothing: the shell shifts `offset` by the shadow margin | [[Popup#Placement]] |
 
 Not written: `TRE-REQ-002` (external-surface hand-off, ADR-0001 Option B). Write it only if TRE-REQ-001 proves infeasible.

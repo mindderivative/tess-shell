@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Wrote the [[Popup]] spec (draft, nine open questions with recommendations) |
+| Last change | Applied the Popup answers; wrote [[TRE-REQ-007 Popup Body Geometry]] (draft, not filed) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0012 Keeping the Shell Above Plasma Panels]] (11 accepted; ADR-0002 superseded) |
-| Waiting on you | Answer the nine [[Popup#Open questions]]; key names the specs mark proposed; the registry rebuild rules |
+| Waiting on you | Key names the specs mark proposed; the registry rebuild rules; Popup delay defaults |
 | Next | Runtime specs: shell start and stop, config discovery and registry, validation and errors, hot reload ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-28 | [[Popup]] answers applied; [[TRE-REQ-007 Popup Body Geometry]] written |
 | 2026-10-28 | [[Popup]] spec drafted |
 | 2026-10-27 | [[Open Questions]]: Dataview table of unverified claims and what to verify |
 | 2026-10-27 | [[Open Questions]]: Dataview list of unverified notes |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-27 | [[Settings File]] small open items closed; log files, XDG rule decided |
 | 2026-10-27 | ADR-0012 accepted; Frame `edges`; [[TRE-REQ-006 Repeating Gradients]] written; specs reviewed |
 | 2026-10-27 | [[ADR-0012 Keeping the Shell Above Plasma Panels]] proposed |
-| 2026-10-27 | KWin layer order and window rules recorded in [[Surface Types]] |
 
 ## Go to
 

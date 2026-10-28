@@ -52,6 +52,7 @@ File suffixes: `<Name>_Shell.yaml`, `<Name>_Module.yaml`, `<Name>_Style.yaml`, `
 | `import` | Inside `children` | One file name or a list of `<Name>_Shell.yaml` files; paths are relative to the importing file; imports nest | Decided |
 | `import` | A shell file, a module file, an inline `style:` | Brings in another `_Shell.yaml`; embeds a module file at that position (`import: <Name>_Module.yaml`), which is how modules nest; inside `style:` it imports a style file | Decided |
 | `params` | A module file declares them; a use passes them | Typed values | Decided that they exist; type names proposed |
+| `tooltip` | A module use | The name of a Popup to open as the module's tooltip. Available on every module, built-in and custom, with no module code; for a block, a surface or anything else the author adds a handler ([[Popup#Tooltips (decided 2026-10-28)]]) | Decided that it is opt-in for all modules (2026-10-28); key name proposed |
 | `style` | A surface, a module | A style file name, or an inline mapping of style values | Decided |
 | `layer` | A surface | `background`, `bottom`, `top`, `overlay`, numbered 0 to 3 as in the protocol; `overlay` is the highest. A Bar or Panel may use `bottom`, `top` or `overlay`; a Frame only `top`; a Popup stacks above its parent | Decided (the key and the four values, flow diagram 2026-10-26). Only `top` surfaces may reserve space (`exclusive_zone`). `background` is for wallpapers only, for now: no kind uses it |
 
