@@ -164,7 +164,7 @@ None directly. Error messages follow [[Validation and Errors]].
 3. **Retention of removed records:** 30 days (recommended), or drop at once.
 4. **What a rebuilt record holds:** name, kind or type and file from the scan; saved state is lost (recommended).
 5. **Named entries:** registry-only UIDs for entries inside a file (recommended), or UIDs written into the entries too.
-6. **A `backups/` folder** under the config directory for the first UID write (recommended), or no backup.
+6. A `backups/` folder under the config directory for the first UID write (recommended), or no backup.
 7. **Unimported shell files.** A `_Shell.yaml` in `Shells/` that nothing imports: ignored with an info notice (recommended), or loaded as a second root source.
 
 ## Acceptance criteria

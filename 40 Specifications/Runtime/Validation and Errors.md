@@ -167,7 +167,7 @@ A plain-text error is readable by a screen reader in a terminal. An error that s
 2. **Rule slugs in logs, no numeric codes** (recommended), or numeric codes.
 3. **Stop at 50 errors** (recommended), or no cap.
 4. **A notification for a failed start or reload,** opt-out (recommended).
-5. **A `check` command** (recommended; it needs the IPC and CLI note).
+5. A `check` command (recommended; it needs the IPC and CLI note).
 6. **A size limit of 1 MiB per YAML file** (recommended), or none.
 7. **Stage 5 only after every file passes stage 4** (recommended), or per file.
 
