@@ -14,7 +14,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 # Bar
 
 > [!summary]
-> The Bar (`kind: bar`) is a surface attached to one screen edge that reserves space, so maximised windows stop short of it. It can span the whole edge, touching three edges (its own and the two across it), or be shorter and sit at a position along the edge. A dock, a top bar and a side bar are all Bars. A Bar is never floating: it touches its edge, and a surface that floats with a gap is a Panel (maintainer, 2026-10-27). It is highly customisable: size, position along the edge, animation, hidden state, background, borders, rounded corners, shadows with elevation and colour, and transparency. A Bar is a tre `LayerWindow` anchored to an edge. The decisions are the maintainer's ([[Surface Types]]); key names marked proposed mirror tre's settings. YAML is illustration.
+> The Bar (`kind: bar`) is a surface attached to one screen edge that reserves space, so maximised windows stop short of it. It can span the whole edge, touching three edges (its own and the two across it), or be shorter and sit at a position along the edge. A dock, a top bar and a side bar are all Bars. A Bar can have margins and then looks as if it floats, but it is still attached to its edge: the margin space is reserved, so it behaves as if the Bar were flush (maintainer, 2026-10-27). A surface that is not attached to an edge and reserves nothing is a Panel. It is highly customisable: size, position, margins, animation, hidden state, background, borders, rounded corners, shadows with elevation and colour, and transparency. A Bar is a tre `LayerWindow` anchored to an edge. The decisions are the maintainer's ([[Surface Types]]); key names marked proposed mirror tre's settings. YAML is illustration.
 
 ## Purpose and scope
 
@@ -29,10 +29,11 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 |---|---|---|
 | Full-span bar on one edge | `anchor` the edge and both perpendicular edges; `size` 0 along the edge and the thickness across it; `exclusive_zone` the thickness | A top bar across the screen: anchor top, left, right; size (0, 32); zone 32 |
 | A shorter bar, centred on its edge | `anchor` the edge only; `size` the length and the thickness | A dock: anchor bottom; size (560, 64); zone 64. With one edge anchored the compositor centres it along that edge |
-| A shorter bar at a position along the edge | `anchor` the edge and one perpendicular edge; `margin` along the edge only | A top bar starting 200 px in: anchor top, left; margin left 200 (an offset along the edge, not a gap from it) |
+| A shorter bar at a corner end | `anchor` the edge and one perpendicular edge; `margin` along the edge | A top bar starting 200 px in: anchor top, left; margin left 200 |
+| A bar that looks floating | The same, with a `margin` on its own edge | A top bar 8 px below the top: margin top 8; **the zone must include the margin**. It is still a Bar: the 8 px is reserved |
 
 - A positive `exclusive_zone` counts only for a surface anchored to one edge, or one edge plus both perpendicular edges; with any other anchor set the compositor treats it as 0, and a `warning` event says so ([[TRE-REQ-001 Layer Surface Window#Shell need]]).
-- **No gap from the edge.** A Bar touches its edge, so its reserved zone is its thickness. A surface with a gap from the edge is a Panel, which can reserve space itself ([[Panel]]). The protocol says the exclusive zone includes the margin on the anchored edge ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1), read 2026-10-27), which is why a Bar with a margin on its own edge is not offered. #needs-verification on KWin 6.8.1.
+- **A margin is part of the Bar (decided 2026-10-27).** A Bar with a margin looks as if it floats but stays attached to its edge, and the margin space is reserved, so windows stop where they would for a flush Bar. The protocol says the exclusive zone includes the margin: "The exclusive zone includes the margin" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1), read 2026-10-27). So a Bar with a margin of 8 and a thickness of 32 sets a zone of 40, or windows would overlap its gap. The shell computes the zone from `thickness` and `margin`. A Panel differs: it is not attached to an edge and does not have to reserve anything. #needs-verification on KWin 6.8.1.
 - **Layers and reserving space.** A Bar may use `bottom`, `top` or `overlay`. It may reserve space only on `top`; an `exclusive_zone` on another layer is a load error ([[Surface Types#Layers per kind]]). A Bar on `bottom` or `overlay` is therefore not reserving and is for effects (a decorative strip, a launcher dock that floats over windows).
 - **Corner anchors.** A bar anchored to an edge and one perpendicular edge reserves nothing unless `exclusive_edge` names the edge; tre binds layer-shell version 5 for this ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]). KWin 6.8.1 and sway were tested for corner reservation.
 
@@ -75,8 +76,8 @@ A Bar belongs to a root, and so to one monitor ([[Shell File]]). A Bar defined o
 | `length` | The fixed length for `span: absolute` | Proposed |
 | `align` | Where a shorter bar sits along the edge: `start`, `center`, `end`, or an offset | Proposed |
 | `thickness` | The size across the edge | Decided (maintainer, 2026-10-27) |
-| `margin` | An offset along the edge only, for a shorter bar; never a gap from the edge | Proposed; the gap form is removed (2026-10-27) |
-| `reserve` | Reserve space: on or off. The shell computes `exclusive_zone` (the thickness) | Proposed; rule decided (only on `top`) |
+| `margin` | Four-sided gap, clockwise from the top; the reserved zone includes it | Proposed; order decided; margins kept (maintainer, 2026-10-27) |
+| `reserve` | Reserve space: on or off. The shell computes `exclusive_zone` (thickness plus the margin on that edge) | Proposed; rule decided (only on `top`) |
 | `exclusive_zone` | The raw tre value, for an exact figure | Rule decided; key proposed |
 | `anchor`, `size` | The raw tre forms; `edge`, `span`, `length` and `thickness` map to them | Proposed |
 | `keyboard` | `none`, `on_demand` or `exclusive` | Proposed |
@@ -115,6 +116,7 @@ children:
         span: absolute
         length: 560
         thickness: 64
+        margin: [0, 0, 8, 0]
         reserve: true
         children:
             - Tasks:
@@ -159,7 +161,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 |---|---|
 | `exclusive_zone` on a layer other than `top` | Error at load naming the file, the Bar and the key |
 | A size of 0 on an axis without both opposite anchors | Error before any request to the compositor |
-| A margin on the Bar's own edge | Error at load: a Bar does not float; use a Panel |
+| The zone does not include the margin | Windows overlap the gap; the shell computes the zone from thickness and margin to avoid it |
 | A corner-anchored Bar with a zone and no `exclusive_edge` | Reserves nothing; a `warning` event says so |
 | The monitor is removed | The Bar closes (`output_removed`); recreated when the monitor returns |
 | Two reserving surfaces on one edge | The compositor decides the order |
@@ -167,7 +169,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 ## Open questions
 
 - [x] The keys `edge`, `span` (`absolute`, `expanded`, `auto`) and `thickness` (maintainer, 2026-10-27). Open: the key for an absolute length (`length` proposed), `align`, `reserve`, and whether the raw `anchor` and `size` are also allowed.
-- [x] Movable or floating: no. A floating surface is a Panel (maintainer, 2026-10-27).
+- [x] Movable: no, a Bar is anchored and a movable surface is a Panel. Floating: a Bar with margins looks floating but stays attached and its margin space is reserved (maintainer, 2026-10-27).
 - [x] Auto-hide: on by default with opt-out, a default delay the user can change, keyboard reveal none by default (maintainer, 2026-10-27). Open: the default delay value, the hover strip's thickness, and the reveal key's key name.
 - [x] The Plasma panel on the same edge: the Bar wins, unless the Plasma panel is always on top or a window is fullscreen (maintainer, 2026-10-27). Open: how, and how KWin orders two zones on one edge. #needs-verification
 - [x] A vertical Bar: a FlexBox with a vertical direction; text rotation is opt-in (maintainer, 2026-10-27). Open: the `text_rotation` values.
@@ -176,7 +178,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 ## Acceptance criteria
 
 - [ ] A full-span top Bar with a zone of 32 makes a maximised window stop 32 px below the top edge on KWin.
-- [ ] A dock on the bottom edge with a zone of 64 keeps maximised windows 64 px above the edge; a margin on its own edge is a load error.
+- [ ] A dock with an 8 px gap and a thickness of 64 sets a zone of 72 and keeps maximised windows 72 px above the edge, the same as a flush Bar of that total size.
 - [ ] A Bar on `bottom` or `overlay` with an `exclusive_zone` is a load error.
 - [ ] A Bar on each of two monitors appears on both, and unplugging one removes only its Bar.
 - [ ] Auto-hide is on with no key written; `auto_hide: false` keeps the Bar visible. The Bar slides out after the delay, then sets the zone to 0, and windows reflow once; the pointer at the edge brings it back.

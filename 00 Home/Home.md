@@ -31,7 +31,7 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Applied the maintainer's answers to [[Bar]], [[Frame]], [[Panel]] and [[Clock Module]]; accepted the [[Style Schema]]; confirmed the directory fallback and the registry rebuild |
+| Last change | [[Bar]] keeps its margins: a Bar with a margin looks floating but is attached and reserves the margin |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0011 JSON Schema for Shell Files]] (10 accepted; ADR-0002 superseded) |
 | Waiting on you | Review the updated [[Bar]], [[Frame]], [[Panel]] and [[Clock Module]]; the Frame's `sides` key and the painter hosting strips; gradient border tiling ([[Frame#Thickness, radii, border, colours]]); key names the specs mark proposed |
 | Next | Module specs (Workspaces, Audio), the Popup spec, then `60 Quality` |
@@ -47,12 +47,12 @@ Newest first. Keep the last 8. One line each.
 |---|---|
 | 2026-10-27 | [[Settings File]] small open items closed; Loguru file test |
 | 2026-10-27 | [[Settings File]]: log files, empty registry, XDG directory rule decided |
+| 2026-10-27 | [[Bar]] margins restored: reserved, so it is still a Bar |
 | 2026-10-27 | Decisions applied to [[Bar]], [[Frame]], [[Panel]], [[Clock Module]], [[Surface Types]]; [[Style Schema]] accepted |
 | 2026-10-27 | [[Settings File]]: global settings list deferred to testing |
 | 2026-10-27 | [[Settings File]]: start order, movable registry, `logs/` |
 | 2026-10-27 | [[Settings File]]: fallback, path expansion, stop on error decided |
 | 2026-10-27 | [[Settings File]] and the Shells folder decided |
-| 2026-10-27 | Config directory required for modules, styles, themes, stylesheets ([[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]]) |
 
 ## Go to
 
