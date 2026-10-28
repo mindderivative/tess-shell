@@ -23,7 +23,7 @@ depends_on: ["[[Style, Theme and Stylesheet Files]]"]
 3. **Pixels, not CSS units.** A number is logical pixels; the forms in [[Common Keys and Conventions#Value forms]] apply. No `px`, `em`, `rem` suffixes.
 4. **Flat first, groups where they pay.** The maintainer's Style example is flat (`border_thickness`, `border_color`); keep that. Groups appear only for repeated structures (a shadow list).
 5. **Tokens are referenced, never copied.** A theme defines a value once; styles and stylesheets name it.
-6. **The schema is generated from the blocks.** Each block and module declares its properties (type, default, choices, doc), parts and states in Python ([[Building Blocks#Properties, parts and states]]); the shell builds the key lists, the validation errors and a JSON Schema for editors from those declarations, so the YAML reference and the code cannot drift. The declaration form is proposed; Tesserae's mechanism is a model, not a dependency.
+6. **The schema is generated from the blocks.** Each block and module declares its properties (type, default, choices, doc), parts and states in Python ([[Building Blocks#Properties, parts and states]]); the shell builds the key lists, the validation errors and a JSON Schema for editors from those declarations, so the YAML reference and the code cannot drift ([[JSON Schema and Editor Support]], [[ADR-0011 JSON Schema for Shell Files]]). The declaration form is proposed; Tesserae's mechanism is a model, not a dependency.
 
 ## Style keys
 
@@ -135,7 +135,7 @@ Button:hovered:
 - [ ] The state, part and selector forms.
 - [ ] Which keys are style and which are block properties (layout).
 - [ ] Whether `elevation` stays a level number or becomes names.
-- [ ] The JSON Schema generation from block declarations (a tooling note in `70 Delivery` or `41 YAML Reference`).
+- [x] The JSON Schema generation from block declarations: proposed in [[JSON Schema and Editor Support]].
 
 ## Acceptance criteria
 

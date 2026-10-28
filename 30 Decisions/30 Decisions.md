@@ -25,3 +25,4 @@ depends_on: []
 | [[ADR-0008 Tesserae Expression Language]] | A separate expression-language library (TEL) | accepted 2026-10-25 |
 | [[ADR-0009 D-Bus Client Library]] | `dbus-fast` on a shared asyncio service thread | accepted 2026-10-26 |
 | [[ADR-0010 Surface Shadows]] | Shadows drawn inside the surface with a transparent margin | accepted 2026-10-27 |
+| [[ADR-0011 JSON Schema for Shell Files]] | JSON Schema generated from block and module declarations, for editors and the shell | proposed 2026-10-27 |
