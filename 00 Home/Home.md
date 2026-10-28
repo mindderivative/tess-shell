@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Decided: modules, styles, themes and stylesheets live in the config directory (no `look-at`); the validation cache location ([[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]]) |
+| Last change | Decided: shell files in `Shells/`, and `settings.yaml` for directories and global settings ([[Settings File]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0011 JSON Schema for Shell Files]] (10 accepted; ADR-0002 superseded) |
-| Waiting on you | Confirm that dropping `look-at` is intended, and where shell files live ([[Shell File#Open]]); review the [[Style Schema]] proposal (keys, tokens, modes, selectors); the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
+| Waiting on you | Review the [[Settings File]] keys; review the [[Style Schema]] proposal (keys, tokens, modes, selectors); the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
 | Next | Module specs (Workspaces, Audio), the Popup spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-27 | [[Settings File]] and the Shells folder decided |
 | 2026-10-27 | Config directory required for modules, styles, themes, stylesheets ([[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]]) |
 | 2026-10-27 | JSON Schema: config-directory location, lazy import, validation cache ([[JSON Schema and Editor Support]]) |
 | 2026-10-27 | JSON Schema: draft-07, dependency cost measured ([[JSON Schema and Editor Support]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-27 | [[Style Schema]] proposed: style keys, theme tokens, selectors |
 | 2026-10-27 | Shadows decided: in-surface, [[ADR-0010 Surface Shadows]] |
 | 2026-10-27 | Shadow performance test: routes A and B cost nothing measurable at Panel size ([[Shadows on Layer Surfaces]]) |
-| 2026-10-27 | Shadow test on KWin 6.8.1: compositor shadows work on top and overlay layer surfaces ([[Shadows on Layer Surfaces]]) |
 
 ## Go to
 

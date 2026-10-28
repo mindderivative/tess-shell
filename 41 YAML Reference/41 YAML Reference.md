@@ -21,6 +21,7 @@ The keys and forms of every shell YAML file. Decisions are in [[ADR-0007 Shell U
 | [[Shell File]] | The shell file: root, monitor, surfaces and their keys | draft |
 | [[Module File]] | The module file: layout, params, data in the layout, using a module | draft |
 | [[Style, Theme and Stylesheet Files]] | Style format from the Label example; theme and stylesheet to design | draft |
+| [[Settings File]] | The config directory layout and `settings.yaml`: directories, main shell, global settings (proposed keys) | draft |
 | [[JSON Schema and Editor Support]] | JSON Schema files for editor completion, hover and validation, and for the shell's own validation (proposed) | draft |
 | [[Style Schema]] | Proposed shell-owned style keys, theme tokens, shadow keys and stylesheet selectors | draft |
 

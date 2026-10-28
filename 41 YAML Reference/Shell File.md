@@ -91,7 +91,8 @@ Names follow tre's so the shell maps them directly. Per-kind keys (a Frame's sid
 ## Open
 
 - [ ] Several `root:` blocks in one file, or one file per monitor (the Label example used two files).
-- [ ] How the shell finds top-level shell files in the config directory. The `look-at` paths are dropped for modules, styles, themes and stylesheets ([[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]]); whether shell files may live elsewhere is open.
+- [x] Where shell files live: `$HOME/.config/tesserae-shell/Shells/`, or the directory `settings.yaml` names (decided 2026-10-27, [[Settings File]]).
+- [ ] Which shell file is the top-level one when `Shells/` holds several: proposed `main_shell` in `settings.yaml`, default `Main_Shell.yaml`.
 - [ ] The final names and types of the surface keys marked proposed.
 - [ ] How a surface lays out its modules (order, spacing, alignment): a surface layout key, or the surface being a container widget.
 - [ ] The keys each kind adds ([[Surface Types]]).

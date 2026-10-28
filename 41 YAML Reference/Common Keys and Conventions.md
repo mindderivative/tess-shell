@@ -21,7 +21,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 | Key | Meaning | Rule | Status |
 |---|---|---|---|
 | `shell` | The shell format version (`v1`, `v1234` in the examples) | Required, top level, first. A file without it is not a shell file and is refused with an error naming it | Decided; version format not decided |
-| `type` | What the file is | Required, top level. `Shell`, `Module`, `Theme`, `Style`, `Stylesheet`. Must agree with the file suffix | Decided |
+| `type` | What the file is | Required, top level. `Shell`, `Module`, `Theme`, `Style`, `Stylesheet`, `Settings`. Must agree with the file suffix (`settings.yaml` is a fixed name) | Decided |
 | `UID` | The file's shell-wide identifier (UUIDv7) | Written by the shell, directly below `shell:`, when the entry is first registered. Authors do not write it | Decided |
 | `name` | A name for a root, surface, container, module, widget or special case | Required on a root, surface and module. **Unique across the shell** (maintainer, 2026-10-26, replacing "per monitor"); reachable from anywhere through the registry. Anything with a unique name gets a UID. Repeated uses of one definition get path names (proposed) | Decided; path names proposed |
 
