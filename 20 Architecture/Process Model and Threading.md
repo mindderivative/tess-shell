@@ -107,14 +107,14 @@ The `tre` session answered over the mailbox on 2026-10-26, from the 0.5.8 source
 | Suggested engine addition | An opt-in keep-alive, for example `App.run(keep_alive=True)`: no error with zero windows, no exit when empty, output watch started at loop start. It needs a way to end the loop. A `LoopHandle` stop does not exist today; the loop ends only when every window closes. Rough size: about 60 to 100 lines plus tests and docs, low risk because it is opt-in |
 
 > [!warning] Blocked by [[TRE-REQ-005 Keep-Alive and Loop Stop]]
-> Option A was chosen by the maintainer on 2026-10-26: the opt-in keep-alive and a `LoopHandle` stop. `tre` has built it as [tre #238](https://github.com/mindderivative/tre/issues/238) (`run(keep_alive=True)` and `LoopHandle.stop()`) on a local branch awaiting review, for tre 0.5.9 (unpublished); details in the request. Until 0.5.9 is released, the stopgap is B.
+> Option A was chosen by the maintainer on 2026-10-26: the opt-in keep-alive and a `LoopHandle` stop. `tre` released it in 0.5.9 on 2026-10-27 as `App.run(keep_alive=True)` and `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]). The stopgap B is no longer needed.
 
 Options for the shell:
 
 | Option | Description | Verdict |
 |---|---|---|
 | A. Ask tre for the opt-in keep-alive and a `LoopHandle` stop | The clean answer; the stop is needed for shutdown anyway | **Recommended.** Small, opt-in, low risk |
-| B. A hidden 1x1 ordinary window as a stopgap | Works today (not on KWin) | Interim only: it shows in the task list and needs hiding |
+| B. A hidden 1x1 ordinary window as a stopgap | Worked today (not on KWin) | No longer needed: option A shipped in tre 0.5.9 |
 | C. Restart on demand, diffing `App.outputs()` | Cannot wake on a hot-plug | Not suitable for "react when an output is added" |
 
 The shell also needs a clean way to **end the loop** on quit. Today that means closing every window, which is not possible with zero windows. A `LoopHandle` stop would cover both ([[Process Model and Threading#Lifecycle (proposed)]]).
@@ -148,7 +148,7 @@ The loop cannot interrupt itself, so detecting a blocked loop needs a separate w
 - [ ] **Registry I/O and the UID write** on the loop or a single writer thread ([[ADR-0007 Shell UI Layer#Open items]]).
 - [ ] **Supervisor** in v1 or later.
 - [x] **No windows** policy: stay idle (maintainer, 2026-10-26).
-- [x] **No windows mechanism.** Option A, chosen 2026-10-26: ask tre for an opt-in keep-alive and a `LoopHandle` stop ([[TRE-REQ-005 Keep-Alive and Loop Stop]]), with B as a stopgap. The maintainer follows up with tre and files the issue.
+- [x] **No windows mechanism.** Option A, chosen 2026-10-26 and released in tre 0.5.9 on 2026-10-27: `App.run(keep_alive=True)` and `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]). The shell requires tre 0.5.9 or later.
 - [ ] **Where conversions run** (send or flush).
 
 ## Links

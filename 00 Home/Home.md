@@ -31,11 +31,10 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Drafted the [[Panel]] spec |
+| Last change | tre 0.5.9 released; updated the notes; wrote the [[Bar]] and [[Frame]] specs |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | Review [[Panel]] (attachment geometry, saved position, hide behaviour) and [[Clock Module]]; nothing else blocking |
-| Waiting on others | tre 0.5.9 release: `hit_shape="painted"` (#236, [[Hit Testing for Concave Corners]]) and `keep_alive`/`stop()` (#238, [[TRE-REQ-005 Keep-Alive and Loop Stop]]); built on local branches. The Frame uses the explicit-rectangle workaround, and the 1x1 window is the stopgap, until then |
-| Next | The Bar and Frame specs, more module specs (Workspaces, Audio), then `60 Quality` |
+| Waiting on you | Review [[Bar]], [[Frame]], [[Panel]] and [[Clock Module]]; nothing blocking |
+| Next | Module specs (Workspaces, Audio), the Popup spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
 | Deferred to testing | First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
@@ -46,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-27 | tre 0.5.9 released; [[TRE-REQ-005 Keep-Alive and Loop Stop]] and the hit-testing work shipped ([[Bar]] and [[Frame]] specs drafted) |
 | 2026-10-27 | [[Panel]] spec drafted |
 | 2026-10-27 | Structure settled: Checkbox, blocks anywhere, popup contents ([[Shell Structure]]) |
 | 2026-10-26 | Flow diagram updated (Building Blocks and Modules groups); [[Shell Structure]] rewritten |
@@ -53,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-26 | Popup focus and the exclusive-zone rule decided; theme fix for bold around code |
 | 2026-10-26 | Path names, param inheritance and popup caller decided ([[ADR-0007 Shell UI Layer]]) |
 | 2026-10-26 | List-item naming decided: optional `name:`, else from the position |
-| 2026-10-26 | TextBox/TextEditor split and the list form for repeated uses decided ([[ADR-0007 Shell UI Layer]]) |
 
 ## Go to
 

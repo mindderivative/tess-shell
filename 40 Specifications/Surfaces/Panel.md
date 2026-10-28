@@ -71,7 +71,7 @@ A Panel may use `bottom`, `top` or `overlay`. It may reserve space only on `top`
 
 ### Input region
 
-By default a Panel takes input over its whole surface. A Panel with a non-rectangular shape, a transparent margin for a shadow, or a click-through OSD sets the input region: the whole surface, nothing, rectangles, or `auto` (the union of the drawn shapes). The OSD uses nothing so clicks pass through. Shape-aware `auto` for curved and concave shapes waits for tre 0.5.9 ([[Hit Testing for Concave Corners]]).
+By default a Panel takes input over its whole surface. A Panel with a non-rectangular shape, a transparent margin for a shadow, or a click-through OSD sets the input region: the whole surface, nothing, rectangles, or `auto` (the union of the drawn shapes). The OSD uses nothing so clicks pass through. Shape-aware `auto` for curved and concave shapes uses `hit_shape="painted"` on path nodes, released in tre 0.5.9 ([[Hit Testing for Concave Corners]]).
 
 ## Configuration
 

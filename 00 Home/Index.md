@@ -66,7 +66,7 @@ Vision: [[10 Vision]]
 
 Research: [[Prior Art - Linux Shell Surfaces]]; [[Shadows on Layer Surfaces]]
 
-Engine requests: [[TRE-REQ-001 Layer Surface Window]] (stable; released in tre 0.5.8); [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (superseded; withdrawn); [[TRE-REQ-005 Keep-Alive and Loop Stop]] (draft; for tre)
+Engine requests: [[TRE-REQ-001 Layer Surface Window]] (stable; released in tre 0.5.8); [[TRE-REQ-004 Tesserae Layer and Popup Windows]] (superseded; withdrawn); [[TRE-REQ-005 Keep-Alive and Loop Stop]] (stable; released in tre 0.5.9)
 
 Planned, not yet written:
 - `60 Quality`, `70 Delivery`, the module and integration specs
@@ -75,7 +75,7 @@ Planned, not yet written:
 
 | Project | Role | Docs | Baseline |
 |---|---|---|---|
-| tre | Rendering engine (Rust, Python module `tre`) | [docs](https://mindderivative.github.io/tre/) | 0.5.8 |
+| tre | Rendering engine (Rust, Python module `tre`) | [docs](https://mindderivative.github.io/tre/) | 0.5.9 |
 | Tesserae | Separate project: declarative app framework (`tesserae-ui`). Reference only, not a dependency ([[ADR-0006 Shell Independent of Tesserae UI]]). | [docs](https://mindderivative.github.io/tesserae/) | 0.5.1 |
 
 Versions drift. If the live docs disagree with this table, the docs win; update the table.

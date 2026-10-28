@@ -2,10 +2,10 @@
 title: TRE-REQ-005 Keep-Alive and Loop Stop
 aliases: [TRE-REQ-005, tre Keep-Alive Request, LoopHandle stop]
 type: engine-request
-status: review
+status: stable
 owner: phil
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-10-27
 tags: [engine-request, integration/wayland, needs-verification]
 related: ["[[Process Model and Threading]]", "[[ADR-0003 Process Model]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[80 Engine Requests]]"]
 depends_on: []
@@ -19,11 +19,11 @@ depends_on: []
 > [!success] Taken up by tre (2026-10-26)
 > The maintainer approved the work and `tre` is building it as [tre #238](https://github.com/mindderivative/tre/issues/238), with the corner pass-through as [#236](https://github.com/mindderivative/tre/issues/236). `tre` reviewed this request, found it accurate and added four points, recorded below.
 
-> [!success] Built, awaiting release (tre report, 2026-10-26)
-> `tre` reports #238 and #236 are built on local branches (`keepalive-238` at `d62858e`, `hit-shape-236` at `fdd8294`; nothing pushed), awaiting the maintainer's review, and would ship in tre 0.5.9. I read the branch documentation: `docs/reference/app.md`, section "Staying up with no window: `keep_alive` (0.5.9)", and `docs/reference/paint.md` for `hit_shape`. Not in a published wheel; PyPI's latest is 0.5.8. Behaviour as built, per `tre`: `App.run(keep_alive=True)` (a `run()` argument) and `LoopHandle.stop() -> bool` (a running loop only; `False` before or after a run; closes every window without `close_requested`; each hears `closed` with reason `"stopped"`, on ordinary windows too; then `run()` returns normally). Idle cost with zero windows: 0.01 s of CPU in 5 s and no tre thread wakes. `tre` also fixed two things the request needed: `call_soon` now runs with zero windows, and the empty loop no longer spins a core. Verified by `tre` on a headless sway and on KWin; I have not run it. A shipped recipe for quitting on a signal: `signal.set_wakeup_fd` on a socketpair plus a watcher thread calling `stop()`, with an example `examples/keep_alive.py` that ends cleanly on SIGTERM.
+> [!success] Released in tre 0.5.9 (2026-10-27)
+> `tesserae-engine` 0.5.9 is on PyPI (uploaded 2026-10-27, checked) and its migration notes list `App.run(keep_alive=True)` and `LoopHandle.stop()` (#238), with `hit_shape` (#236) in the same release ([migration notes](https://mindderivative.github.io/tre/migrating-0.5/), `docs/reference/app.md` section "Staying up with no window"). `keep_alive` keeps the loop running with nothing open (output events and `call_soon` still arrive, and windows can be added from them); `stop()` ends any loop from a thread and closes every window without a `close_requested`, reason `"stopped"`. Without `keep_alive` nothing changes. The behaviour described below is what shipped, per tre's release notes; I have not run it. tre lists what it did not check on real hardware: a second GPU, non-AMD GPUs, a 4K frame with many joins, output hot-plug on KWin with a real monitor unplug, Windows and macOS.
 
-> [!warning] Blocks one shell behaviour
-> [[Process Model and Threading#No windows: what tre offers]] depends on this request. The shell's decision is "stay idle with no windows" (maintainer, 2026-10-26). Option A there (this request) was chosen; the maintainer follows up with tre to confirm. A stopgap exists (see [If declined](#if-declined)).
+> [!info] Was blocking one shell behaviour
+> [[Process Model and Threading#No windows: what tre offers]] depended on this request. The shell can now stay idle with no windows by using `run(keep_alive=True)` (tre 0.5.9). The stopgap (a 1x1 window) is no longer needed.
 
 This note is carried to the tre project by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]). It is not filed from this vault. The `tre` session was told over the mailbox on 2026-10-26 where to find it.
 

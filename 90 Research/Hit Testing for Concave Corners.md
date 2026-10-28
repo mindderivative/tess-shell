@@ -36,9 +36,9 @@ The maintainer confirmed (2026-10-25) that tre will provide a way for unfilled p
 
 tre's estimate: medium effort in the engine core plus tests, risk low to medium. Ring bands with curved corners may need steps above 2 px to stay under 256 rectangles at 4K.
 
-## Built by tre (2026-10-26, awaiting release)
+## Released in tre 0.5.9 (2026-10-27)
 
-`tre` reports #236 is built on the local branch `hit-shape-236` (`fdd8294`; nothing pushed) and awaits the maintainer's review, for tre 0.5.9. From its branch documentation (`docs/reference/paint.md`): a path node takes `hit_shape="painted"` (the default stays `"box"`): the fill region plus the stroke, used by pointer events and by `input_region="auto"`, and the region builder now keeps holes and concave notches. `tre` live-tested it on a rounded frame on sway and KWin: outside a convex corner, the interior and a concave fillet pass clicks through, while the ring and the fillet body take them. I have not run it. Until 0.5.9 is released, keep the explicit-rectangle workaround.
+`tesserae-engine` 0.5.9 is on PyPI (uploaded 2026-10-27, checked). Its migration notes list `hit_shape` on a `path` node (#236): `"box"` (the default, as before) or `"painted"`. A painted path is hit by its fill region and its stroke, not its box, so a click in a ring's hole or a concave notch passes to what is behind it, for pointer events and for a layer window's `input_region="auto"` alike. The region builder now handles shapes with holes and concave corners. tre says it is what a screen frame needs: a path with convex outer corners and concave inner fillets, clickable only on the ring. tre live-tested a rounded frame on sway and KWin before release (the earlier report). I have not run it. tre lists what it did not check: a 4K frame with many joins and output hot-plug on KWin with a real unplug. The explicit-rectangle workaround below is no longer needed for v1; keep it only as a fallback.
 
 ## tre issue #236
 
@@ -61,13 +61,13 @@ This costs the shell the geometry code, and the 256-rectangle cap limits the cur
 
 ## Also noticed
 
-tre `main` is already at 0.5.9 development: its latest commit says windows share one renderer and the bundled fonts, so 50 windows hold 98 MiB, not 310 (#235). That bears on the memory budget of a Frame on several monitors ([[Goals and Non-Goals]] G5). Unreleased; confirm when published. #needs-verification
+tre 0.5.9 shares one GPU device and one renderer among windows (#235). Five small windows hold the video memory one does (31 MiB, was 83 MiB, on AMD RADV), and fifty small windows hold 98 MiB of process memory, not 310 or 532 ([migration notes](https://mindderivative.github.io/tre/migrating-0.5/)). That helps a Frame, which is five windows per monitor ([[Goals and Non-Goals]] G5). Measured by tre on one AMD GPU; not run here.
 
 ## Open
 
-- [ ] When tre ships shape-aware hit testing, update the Frame mapping in [[Surface Types]] to use it.
-- [x] The explicit-rectangle workaround is enough for v1 (maintainer, 2026-10-25). 4K is not a v1 concern: the maintainer does not use 4K, and tre should finish #236 before anyone with 4K uses the shell.
-- [ ] The first tre release that includes #236.
+- [x] When tre ships shape-aware hit testing, update the Frame mapping in [[Surface Types]]: done (tre 0.5.9 shipped it).
+- [x] Superseded by tre 0.5.9: `hit_shape="painted"` with `input_region="auto"` replaces the explicit-rectangle workaround (the maintainer had accepted the workaround for v1 on 2026-10-25; 4K was not a concern).
+- [x] The first tre release that includes #236: 0.5.9 (2026-10-27).
 
 ## Links
 

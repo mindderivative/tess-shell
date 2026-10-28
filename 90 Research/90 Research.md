@@ -17,7 +17,7 @@ depends_on: []
 |---|---|---|
 | [[Prior Art - Linux Shell Surfaces]] | How other shells create layer surfaces | draft |
 | [[Shadows on Layer Surfaces]] | Compositor-drawn and in-surface shadows; what to research | draft |
-| [[Hit Testing for Concave Corners]] | tre's hit testing and input region for concave and convex corners; workaround and path forward | draft |
+| [[Hit Testing for Concave Corners]] | tre's hit testing for concave and convex corners; shipped in tre 0.5.9 as `hit_shape` | draft |
 | [[D-Bus Libraries for Python]] | Python D-Bus clients compared; recommendation `dbus-fast` on a shared asyncio thread | draft |
 | [[Logging with Loguru]] | Loguru as the candidate for the shell's logging, warnings and errors | draft |
 | [[Expression Languages for YAML]] | Jinja2, jinjyaml and safe evaluators for the shell's expression language | draft |

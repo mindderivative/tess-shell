@@ -1,0 +1,173 @@
+---
+title: Frame
+aliases: [Frame Surface, kind frame, Screen Frame]
+type: spec
+status: draft
+owner: phil
+created: 2026-10-27
+updated: 2026-10-27
+tags: [spec/surface, needs-verification]
+related: ["[[Surfaces]]", "[[Surface Types]]", "[[Bar]]", "[[Panel]]", "[[Hit Testing for Concave Corners]]", "[[TRE-REQ-001 Layer Surface Window]]"]
+depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Hit Testing for Concave Corners]]"]
+---
+
+# Frame
+
+> [!summary]
+> The Frame (`kind: frame`) is a ring around the screen, attached to all four edges and corners, that reserves space on every side. Its thickness is the same on every side or differs by side. Its corners are rounded, convex on the outside and concave on the inside. It has borders, a background and border colours, and shadows. Panels and Bars can be visually melded into it with rounded joins, so they look as if they grow out of the frame; this is a visual effect on separate surfaces, not one shared surface. The Frame is Top layer only. On tre it is a full-screen painter `LayerWindow` plus up to four thin space-reserving windows, using the path hit shape released in tre 0.5.9. The decisions are the maintainer's ([[Surface Types]]); key names marked proposed are mine. YAML is illustration.
+
+## Purpose and scope
+
+- Draw a continuous frame with rounded corners around each monitor, reserve its thickness as space so maximised windows stay inside it, and let clicks pass through the interior to the desktop.
+- v1: in scope (decided, 2026-10-26, [[V1 Scope#Surfaces]]).
+- Not in this note: the Panels and Bars that attach to it ([[Panel]], [[Bar]]), the Path block ([[Building Blocks]]), and shadows beyond the notes here ([[Shadows on Layer Surfaces]]).
+
+## Behaviour
+
+### Parts on tre
+
+The layout from [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]], moved to the Top layer and updated for tre 0.5.9. Eight surfaces (four edges, four corners) were rejected: more surfaces, and seams between neighbours.
+
+| Part | Count | `LayerWindow` settings | Draws |
+|---|---|---|---|
+| Painter | 1 per monitor | `layer="top"`, anchored to all four edges, `size=(0, 0)`, `exclusive_zone=-1`, `input_region="auto"` | The ring, its corners, border, and background, as `path` nodes |
+| Reserver | Up to 4 per monitor, one per side with a thickness above 0 | `layer="top"`, anchored to that edge and both edges across it, 1 px on the short axis, `exclusive_zone` equal to the side's thickness, `input_region=[]` | Nothing (transparent) |
+
+- The painter extends to every edge and ignores other zones (`exclusive_zone=-1`). The reservers push maximised windows inside the frame. A side with different thickness is a different reserver zone.
+- Both kinds are on `top` because the Frame is Top only and `top` is the layer where reserving is allowed ([[Surface Types#Layers per kind]]).
+- A change to a thickness is a change of `exclusive_zone` on one reserver, a step change (each is a configure round trip and windows reflow once), so thickness is not animated ([[TRE-REQ-001 Layer Surface Window#Animation]]).
+
+### The ring and its corners
+
+- The ring is a `path` node with a `fill`: an outer contour (the screen rectangle, with rounded corners for the convex outer corners) and an inner contour wound the other way (the opening, with rounded corners for the concave inner corners). With tre's non-zero fill rule, the opposite winding makes the hole ([paint reference](https://mindderivative.github.io/tre/reference/paint/)).
+- `hit_shape="painted"` on the ring (tre 0.5.9) makes the ring take clicks only where it is painted: its fill region and its stroke. A click in the opening, or in the notch of a concave corner, passes to what is behind it. The same shape drives `input_region="auto"`, so the compositor and tre agree.
+- Limit from tre: a click up to about 2 px inside the unfilled side of a curve may still be taken; tests use points 3 px or more inside the unfilled area.
+- The ring must be a Path block. `hit_shape` does not cover `svg` and `canvas` nodes ([[Hit Testing for Concave Corners]]).
+- The Path block therefore exposes `hit_shape`; the shape blocks (Circle, Ring and the like) are proposed to default it to `painted` ([[Building Blocks]]).
+
+### Thickness, radii, border, colours
+
+| Property | Form | Notes |
+|---|---|---|
+| Thickness | One number, a list of four clockwise from the top, or named sides | Uniform or one side thicker; a side of 0 has no reserver |
+| Outer corner radius | Four-sided: rounds the screen corners (convex) | |
+| Inner corner radius | Four-sided: rounds the opening (concave fillets) | |
+| Border | Thickness and colour, as a stroke on the ring's contours | A stroke is centred on the path and measured in pixels |
+| Background | A colour or a gradient | tre has linear, radial and sweep gradients |
+| Border colour | A colour or a token | |
+
+### Melding
+
+A Panel or Bar attached to the Frame looks as if it grows out of it, with rounded connections and borders. The maintainer's earlier Edge Shell design shows how: the surfaces stay separate, share one colour, draw their own rounded joins with curves, and repaint the frame strip beneath them so no seam shows ([[Shadows on Layer Surfaces#The maintainer's earlier work]]).
+
+- The joining surface draws the join shapes (Path blocks) in its own surface, over the frame.
+- **Layer order.** The Frame is on `top`, and the protocol leaves the order of surfaces on one layer undefined. A Panel that must draw over the Frame is therefore on the `overlay` layer (a Bar that melds is on `top` and relies on drawing outside the frame band, or must not overlap it). #needs-verification on KWin.
+- **Seams.** At idle there should be none. While either surface moves or animates there can be up to one frame of difference, because Wayland cannot commit two surfaces together ([[TRE-REQ-001 Layer Surface Window#Animation]]). The width of the seam is to be measured in the testing phase.
+
+### Shadows
+
+The painter covers the whole output, so a shadow cast from the ring onto the desktop is drawn inside the same surface; no oversize surface is needed, unlike a Bar or Panel ([[Shadows on Layer Surfaces]]). tre's painted hit shape is the fill and the stroke, so a shadow does not take clicks. #needs-verification that the `shadows` property is not part of the hit shape.
+
+### Children
+
+The diagram lets a layer window hold modules and containers. What a Frame holds is open: nothing in v1, or a thin strip along a side (a status line in the ring). See Open questions.
+
+### Multi-monitor
+
+One Frame per monitor, independent: each is a complete ring with its own thickness and corners, as in the maintainer's Edge Shell design. Whatever lies between stacked monitors is left alone. A monitor with no Frame gets none ([[Shell File]]).
+
+## Configuration
+
+| Key | Meaning | Status |
+|---|---|---|
+| `kind: frame` | The kind | Decided |
+| `layer` | `top` only | Decided |
+| `thickness` | Number, list of four clockwise from the top, or named sides | Proposed; the forms are decided |
+| `corner_radius` | Outer (convex) corners, four-sided | Proposed |
+| `inner_radius` | Inner (concave) corners, four-sided | Proposed |
+| `style` | Background, border, shadow, opacity | Decided (the key); property names proposed |
+| `children` | Blocks, containers and modules | Decided that a layer window has them; what they mean for a Frame is open |
+
+```yaml
+children:
+    screen_frame:
+        kind: frame
+        layer: top
+        thickness: [8, 8, 8, 8]          # or 8, or {top: 8, left: 24}
+        corner_radius: 14
+        inner_radius: 14
+        style:
+            background: "#0b0c0d"
+            border: true
+            border_thickness: 1
+            border_color: "#ffffff22"
+```
+
+An illustration only. `thickness`, `corner_radius` and `inner_radius` are proposals.
+
+## Python contract
+
+The Frame has no Python of its own. The shell builds the painter and reservers from the configuration and recomputes them on an output change. A module can show or hide the Frame through shell actions. Modules placed in a Frame would receive `use` records like any other ([[Module Context#Uses]]).
+
+## Integration
+
+- tre 0.5.9 or later: `path` with `hit_shape="painted"`, `input_region="auto"`, `LayerWindow` with `layer`, `anchor`, `size`, `exclusive_zone` (live through `set()`) ([[Hit Testing for Concave Corners]], [[TRE-REQ-001 Layer Surface Window]]). `namespace` and `output` are constructor-only.
+- Region size: for a 3840 x 2160 ring, 48 px thick, outer radius 32 and inner radius 24, tre measured 66 rectangles at 2 px bands, under the 256 cap. A frame with ten fillet joins may reach the cap, where tre uses 4 or 8 px bands, covering up to a band more at the curves and never less ([tre issue 236](https://github.com/mindderivative/tre/issues/236), read 2026-10-26).
+- Output changes: `output_updated` keeps the surfaces; the shell recomputes the ring and the reserver zones for the new size and scale ([[V1 Scope#Multi-monitor]]).
+- Memory: five windows per monitor. tre 0.5.9 shares one GPU device and renderer among windows, so five small windows hold what one does (31 MiB, was 83 MiB, on AMD RADV); the painter is full-screen and costs more per pixel ([migration notes](https://mindderivative.github.io/tre/migrating-0.5/)). Not measured for a Frame on this machine.
+- Coexistence with the Plasma panel: both reserve space; on one edge the compositor orders the zones. A Frame is usually drawn inside the Plasma panel on that edge or the panel is hidden on that monitor. #needs-verification.
+
+## Design
+
+- Colours, border and radii are style properties; light, dark and high contrast come from the theme ([[Style, Theme and Stylesheet Files#Rules]]). The Frame's colour is the colour that joining surfaces repeat.
+- Elevation shadows follow the shadow tokens of the design system (`50 Design System/`, not started).
+
+## Accessibility
+
+- The Frame is decoration. The painter's nodes are hidden from the accessibility tree (tre has an accessibility-hidden property) and are not focusable. The reserving windows are empty.
+- High contrast: the border colour and background come from the theme's high-contrast tokens.
+- Content placed in a Frame (if any) is reachable by keyboard like any module.
+
+## Performance budget
+
+- A static ring draws no frames at idle. It redraws when the monitor, scale or configuration changes.
+- Five windows per monitor, one full-screen. Budgets are set in `60 Quality/`; the 4K case is the one tre did not measure with many joins.
+- Changing a thickness reflows windows; do it rarely.
+
+## Failure modes and recovery
+
+| Failure | Result |
+|---|---|
+| A thickness of 0 on a side | No reserver for that side |
+| A radius larger than half the thickness or the band | Clamped; a warning names the property |
+| tre older than 0.5.9 | `hit_shape` unknown: error at start naming the required version (the shell requires 0.5.9 or later) |
+| The monitor is removed | All of the Frame's windows close (`output_removed`); recreated when it returns |
+| Scale or mode change | The ring and the reserver zones are recomputed |
+| The painter and a reserver disagree for a frame | Up to one frame of difference on screen; no data lost |
+| A Panel joined to the Frame on the same layer | Draw order undefined; the Panel uses `overlay` |
+| The input region reaches the 256-rectangle cap | tre coarsens the bands; clicks near curves may be taken by up to a band |
+
+## Open questions
+
+- [ ] What a Frame holds: nothing in v1, or a strip along a side.
+- [ ] Which layer a melded Panel uses and how the join is drawn (who repaints the frame strip), and how wide the seam is while moving (to measure).
+- [ ] The four reservers plus the painter tested together on KWin (tre did not test them together), and a 4K frame with many joins.
+- [ ] Fractional scale: 1 px reservers and the ring edge at 1.5x.
+- [ ] A fullscreen window and the Frame: the protocol puts fullscreen windows typically at the top layer, so a fullscreen window may cover the Frame.
+- [ ] Inner border, outer border, or both.
+- [ ] Whether the Frame can be hidden or shown at runtime, and what the reservers do while hidden.
+- [ ] Shadows ([[Shadows on Layer Surfaces]]) and whether the `shadows` property is excluded from the hit shape.
+
+## Acceptance criteria
+
+- [ ] On KWin a maximised window stops inside the ring on all four sides, and a side with a larger thickness reserves more.
+- [ ] A click on the ring is taken by the shell; a click in the opening and in the notch of a concave corner passes to the desktop (points 3 px or more inside the unfilled area).
+- [ ] The ring shows convex outer corners and concave inner corners at the configured radii, with the border and background.
+- [ ] A Panel on the overlay layer joined to the Frame shows no seam at idle.
+- [ ] Two monitors each have their own Frame; unplugging one removes only its windows, and plugging it back recreates them.
+- [ ] Idle: the Frame draws no frames.
+- [ ] With tre older than 0.5.9 the shell stops with a message naming the version.
+
+## Links
+
+- [[Surfaces]] · [[Surface Types]] · [[Bar]] · [[Panel]] · [[Hit Testing for Concave Corners]] · [[Building Blocks]]
