@@ -43,7 +43,8 @@ The maintainer's earlier Edge Shell design already lists `loguru` in its environ
 
 - [ ] Choose a logger in an ADR or the runtime spec (`40 Specifications/Runtime/`). Candidate: Loguru.
 - [x] Python 3.14 support and maintenance: confirmed by the maintainer and the repository (see above). Still to test: that the pinned release runs on 3.14.
-- [ ] Decide the log file location, rotation and retention.
+- [x] Default log location: `$HOME/.config/tesserae-shell/logs/`, configurable in `settings.yaml` (decided 2026-10-27, [[Settings File]]).
+- [ ] Decide log file naming, rotation and retention.
 - [ ] Decide the defaults for variable display in tracebacks.
 - [ ] Decide how TEL reports problems without depending on the shell's logger.
 

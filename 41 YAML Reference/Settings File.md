@@ -21,13 +21,14 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 ```text
 $HOME/.config/tesserae-shell/
     settings.yaml
-    registry.json
+    registry.json    default place; `settings.yaml` can move it
     Shells/          Main_Shell.yaml, <Name>_Shell.yaml
     Modules/         <module_name>/<Name>_Module.yaml and .py
     Styles/          <Name>_Style.yaml
     Themes/          <Name>_Theme.yaml
     Stylesheets/     <Name>_Stylesheet.yaml
     schemas/         generated, ignored by version control
+    logs/            log files (default)
 ```
 
 - Shell files live in `Shells/` (decided 2026-10-27). The folder names and the other four are from [[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]].
@@ -50,7 +51,8 @@ type: Settings
 |---|---|---|
 | `directories` | Where to look for each file type | A mapping from `shells`, `modules`, `styles`, `themes`, `stylesheets` to an absolute directory or a list of them |
 | `main_shell` | The shell file the shell starts from | A file name in the shells directory; default `Main_Shell.yaml` |
-| `logging` | Global log settings | Level and file location; keys set by [[Logging with Loguru]] |
+| `registry` | Where the registry file lives | An absolute path to a `registry.json` file; default `$HOME/.config/tesserae-shell/registry.json`. Same path rules as `directories` |
+| `logging` | Global log settings | `level`, and `directory` (default `$HOME/.config/tesserae-shell/logs/`, same path rules); rotation, retention and file naming are open ([[Logging with Loguru]]) |
 | `validation` | Schema validation settings | `enabled` (default true); the cache location is [[JSON Schema and Editor Support#The `jsonschema` dependency runtime, not only development]] |
 
 ```yaml
@@ -75,6 +77,10 @@ logging:
 - A name found twice in the same tier (two configured directories) is an error naming both files, as a duplicate unique name is ([[Common Keys and Conventions#Names and references]]).
 - Files found through a configured directory are registered like any other. Their editor modelines cannot always be relative to the config directory, so the shell writes the expanded, absolute path for them (never `~` or a variable) ([[JSON Schema and Editor Support#Where the schemas live]]).
 
+## Start order
+
+Decided 2026-10-27: `settings.yaml` is read first, before the registry, because it can move the registry to a custom location. Proposed order: expand paths and read `settings.yaml`; start logging with its `logging` keys (or the default log directory if the file failed); open the registry at the configured path; then find and load shell files, modules, styles, themes and stylesheets. The `settings.yaml` file itself is found only at `$HOME/.config/tesserae-shell/settings.yaml` (the fixed point everything else is relative to); the directory spelling is still open in [[ADR-0007 Shell UI Layer#Open items]].
+
 ## Reload
 
 Decided 2026-10-27: `settings.yaml` is read at start and watched like any other file. A change to `logging` applies at once; a change to `directories` or `main_shell` takes effect on a shell restart, because it changes what is loaded. A reload that produces an invalid `settings.yaml` keeps the running settings and reports the error; only a start stops.
@@ -83,7 +89,7 @@ Decided 2026-10-27: `settings.yaml` is read at start and watched like any other 
 
 Decided 2026-10-27: if `settings.yaml` cannot be read or fails validation, the shell does not start. It prints the error to the console and writes it to the log file, with `file:line:column`. It does not fall back to defaults, because a shell that starts with other settings than the user wrote hides the mistake and looks like a bug.
 
-- The settings file configures logging, so a failure cannot use the file's own `logging` keys. The error goes to the console and to the default log location. The default location is not set yet ([[Logging with Loguru]] leaves it open). #needs-verification
+- The settings file configures logging, so a failure cannot use the file's own `logging` keys. The error goes to the console and to the default log directory, `$HOME/.config/tesserae-shell/logs/` (decided 2026-10-27).
 - A missing `settings.yaml` is not a failure: the defaults apply (see Acceptance criteria).
 - The same stop-and-report rule is proposed for every path or directory error below.
 
@@ -99,14 +105,18 @@ Decided 2026-10-27: if `settings.yaml` cannot be read or fails validation, the s
 - [ ] The keys above (accept or change them), and which other global settings belong here.
 - [x] A configured directory list is searched first and the default folder is the fallback (decided 2026-10-27).
 - [x] `~` and environment variables are allowed; an unresolved path is an error (decided 2026-10-27).
-- [x] A bad `settings.yaml` stops the shell with an error on the console and in the log (decided 2026-10-27). Open: whether `settings.yaml` is read before the registry, and the default log location used when it fails.
+- [x] A bad `settings.yaml` stops the shell with an error on the console and in the log, in `$HOME/.config/tesserae-shell/logs/` (decided 2026-10-27).
+- [x] `settings.yaml` is read before the registry, because it can move the registry (decided 2026-10-27).
 - [x] Reload: `logging` applies at once; `directories` and `main_shell` need a restart (accepted as proposed, 2026-10-27).
+- [ ] Log file naming, rotation and retention ([[Logging with Loguru]]).
+- [ ] A moved registry: moving the file by hand, and what the shell does if the configured path has no registry (proposed: create an empty one).
 - [ ] Per-monitor settings: they belong in the shell file's `root`, not here ([[Shell File]]).
 - [ ] The Settings entry in the schema set ([[JSON Schema and Editor Support#Files]]).
 
 ## Acceptance criteria
 
-- [ ] With no `settings.yaml`, the shell loads from the five folders and starts `Main_Shell.yaml`.
+- [ ] With no `settings.yaml`, the shell loads from the five folders, keeps the registry at `registry.json` and logs to `logs/`.
+- [ ] A `registry` path in `settings.yaml` makes the shell read and write the registry there, and not at the default path.
 - [ ] A `directories.modules` entry makes the shell load modules from that path first; a module not found there is loaded from `Modules/`.
 - [ ] `~/shell/Modules` and `$HOME/shell/Modules` resolve and load; an unset variable fails at start with the key and the text written.
 - [ ] A settings file with an error stops the shell: the error is on the console and in the log, and no surface opens.

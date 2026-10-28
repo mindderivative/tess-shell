@@ -324,7 +324,7 @@ Decided by the maintainer in chat.
 Decided by the maintainer in chat: the shell requires the config directory by default, as many applications with plugins or add-ons do. Amended the same day: shell files get a folder, and `settings.yaml` can point elsewhere.
 
 - Shell files, Modules, Styles, Themes and Stylesheets live under `$HOME/.config/tesserae-shell/`, in `Shells/`, `Modules/`, `Styles/`, `Themes/` and `Stylesheets/`. A module is a folder `Modules/<module_name>/` ([[AGENTS#9. Naming in the designed system]]).
-- The settings file, `settings.yaml`, at the root of the config directory holds settings that are not project based, and can point to absolute directories for any of these types when the user wants a different layout. It replaces the `look-at` list of the 2026-10-25 text above, which is superseded. See [[Settings File]].
+- The settings file, `settings.yaml`, at the root of the config directory holds settings that are not project based, and can point to absolute directories for any of these types when the user wants a different layout. It is read before the registry and can move the registry file; logs default to `logs/` ([[Settings File#Start order]]). It replaces the `look-at` list of the 2026-10-25 text above, which is superseded. See [[Settings File]].
 - Shipped modules stay in the package and are registry-only; a user module of the same name overrides one.
 - Generated files live in the config directory too: `schemas/` ([[ADR-0011 JSON Schema for Shell Files]]).
 - Consequence: a file under the config directory takes an editor modeline that is a path relative to it, so it survives copying the directory to another machine. A file in a directory named by `settings.yaml` takes an absolute path.
