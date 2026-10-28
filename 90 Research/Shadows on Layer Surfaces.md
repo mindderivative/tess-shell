@@ -5,7 +5,7 @@ type: research
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-27
 tags: [research, spec/surface, integration/wayland, needs-verification]
 related: ["[[Surface Types]]", "[[Prior Art - Linux Shell Surfaces]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: []
@@ -14,7 +14,7 @@ depends_on: []
 # Shadows on layer surfaces
 
 > [!summary]
-> Every shell surface can have a shadow with elevation and colour. There are two ways to get one: draw it inside the surface (a larger, transparent surface), or ask the compositor to draw it. KDE has a protocol for the second. This note records what is known and what to research. Nothing here is tested.
+> Every shell surface can have a shadow with elevation and colour. There are two ways to get one: draw it inside the surface (a larger, transparent surface), or ask the compositor to draw it. KDE has a protocol for the second. A live test on KWin 6.8.1 (2026-10-27) shows route A works for top and overlay layer surfaces. The rest is still to research.
 
 Maintainer position (2026-10-25): KDE does shadows, so all surfaces can do shadows; the open job is to find out how other shells and desktops do it.
 
@@ -28,12 +28,29 @@ Maintainer position (2026-10-25): KDE does shadows, so all surfaces can do shado
 ## What is known
 
 - **The protocol.** `org_kde_kwin_shadow_manager` (version 2) creates an `org_kde_kwin_shadow` for a `wl_surface`: eight requests attach a `wl_buffer` to the top-left, top, top-right, right, bottom-right, bottom, bottom-left and left tiles; four offsets; `commit`; `unset`. The page does not say which surface roles it applies to. KWin 6.7 is listed at version 2; other compositors are listed but the support marker is undefined on the page ([wayland.app](https://wayland.app/protocols/kde-shadow)).
-- **KWin's handler does not check the role.** `create` fails only when the `wl_surface` is unknown to KWin (`"Invalid  surface"`); it does not look at toplevel, popup or layer role ([shadow.cpp](https://lxr.kde.org/source/plasma/kwin/src/wayland/shadow.cpp)). #needs-verification: whether KWin's scene then draws the shadow for a layer-shell surface. The file does not show it.
+- **KWin's handler does not check the role.** `create` fails only when the `wl_surface` is unknown to KWin (`"Invalid  surface"`); it does not look at toplevel, popup or layer role ([shadow.cpp](https://lxr.kde.org/source/plasma/kwin/src/wayland/shadow.cpp)). The live test below shows the scene does draw it.
 - **KDE's client API.** `KWindowShadow` in KWindowSystem wraps the protocol on Wayland and uses shared-memory buffers for the tiles ([windowshadow.cpp](https://codebrowser.dev/kde/kwindowsystem/src/platforms/wayland/windowshadow.cpp.html), [API](https://api.kde.org/frameworks/kwindowsystem/html/windowshadow_8h_source.html)). KWin's `Shadow::createShadow` tries the window's decoration, then the Wayland shadow interface, then X11, then internal windows ([shadow.cpp](https://lxr.kde.org/source/plasma/kwin/src/shadow.cpp?v=kf5-qt5)).
 - **Quickshell.** Its `PanelWindow` and `WlrLayershell` are decorationless layer surfaces, so a shadow is drawn inside the window's own surface ([PanelWindow](https://quickshell.org/docs/v0.2.0/types/Quickshell/PanelWindow)). That is route B. The usual way, from general knowledge and not from these pages, is a window larger than the bar with a transparent margin and an exclusive zone for the visible size.
 - **Plasma 6.8** adds server-side shadows for undecorated apps, with settings in KWin ([linuxiac](https://linuxiac.com/kde-plasma-6-8-adds-server-side-shadows-for-undecorated-apps/), [webpronews](https://www.webpronews.com/kde-plasma-6-8-brings-server-side-drop-shadows-to-tame-inconsistent-windows/)). #needs-verification: whether it covers layer surfaces. The reports describe windows.
 - **Hyprland.** Layer surfaces take layer rules by namespace (for example blur); the pages found do not show a shadow rule for layers ([Hyprland wiki](https://wiki.hypr.land/0.27.1/Useful-Utilities/Status-Bars)).
 - **Not found:** how plasma-framework's panel and dialog code applies shadows (a 2020 review mentions a planned port only); how Waybar, eww, Fabric and the others do it.
+
+## Live test on KWin 6.8.1 (2026-10-27)
+
+A scratch C client (not in the vault, in /tmp) created a 320x140 layer surface anchored to the centre, bound `org_kde_kwin_shadow_manager` (v2) and attached eight tiles (24 px, premultiplied black, peak alpha 170) with all four offsets set to one value. A flat pale surface on the top layer sat behind it so the shadow fell on a known colour. Screenshots with and without the shadow were compared pixel by pixel.
+
+| Layer | Offset | Result |
+|---|---|---|
+| top | 0 | No difference. The tiles sit under the body, so nothing shows. |
+| overlay | 0 | No difference (same reason). |
+| top | 24 | A soft shadow appears around the body on all four sides. |
+| overlay | 24 | Differences in the area around the body; shadow drawn (not viewed in a crop). |
+| bottom | 24 | No difference, but the surface was hidden behind other windows and the test backdrop, so the run says nothing. |
+
+- KWin 6.8.1 advertises `zwlr_layer_shell_v1` v5 and `org_kde_kwin_shadow_manager` v2.
+- The shadow offsets decide how far the shadow extends past the surface edge; an offset of 0 hides it. A first reading of the offset-0 runs as "no shadow" was wrong.
+- Not tested: the bottom and background layers on a visible area, shadows on a Frame-sized surface, popups, multi-output, and fractional scaling.
+- The shadow is compositor-drawn, so it is outside the surface: it does not count in the exclusive zone and the client cannot clip or animate it except by replacing the tiles.
 
 ## The maintainer's earlier work
 
@@ -47,7 +64,8 @@ This supports the maintainer's point that a visual meld works: it is one colour,
 
 ## To research
 
-- [ ] Whether KWin draws an `org_kde_kwin_shadow` shadow for a `wlr-layer-shell` surface (try it on KWin 6.8.1 with a test client).
+- [x] Whether KWin draws an `org_kde_kwin_shadow` shadow for a `wlr-layer-shell` surface: yes on top and overlay, KWin 6.8.1 (see the live test).
+- [ ] Bottom and background layers, and how the shadow follows a surface that animates its size.
 - [ ] How Plasma's own panels get their shadow (plasma-framework / plasma-workspace source).
 - [ ] How Waybar, eww, Fabric, AGS/Astal, Quickshell shells and COSMIC do shadows.
 - [ ] How the Edge Shell prototype drew its shadows.

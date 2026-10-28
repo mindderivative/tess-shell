@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-27 | Shadow test on KWin 6.8.1: compositor shadows work on top and overlay layer surfaces ([[Shadows on Layer Surfaces]]) |
 | 2026-10-27 | Frame layer and hosted melding decided ([[Frame]]) |
 | 2026-10-27 | Frame: melds on strips, strip expand/contract/peek, hosted melding proposed ([[Frame]]) |
 | 2026-10-27 | Shape hit shape, Bar keys decided; Frame layer question written up ([[Frame]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-27 | tre 0.5.9 released; [[TRE-REQ-005 Keep-Alive and Loop Stop]] and the hit-testing work shipped ([[Bar]] and [[Frame]] specs drafted) |
 | 2026-10-27 | [[Panel]] spec drafted |
 | 2026-10-27 | Structure settled: Checkbox, blocks anywhere, popup contents ([[Shell Structure]]) |
-| 2026-10-26 | Flow diagram updated (Building Blocks and Modules groups); [[Shell Structure]] rewritten |
 
 ## Go to
 
