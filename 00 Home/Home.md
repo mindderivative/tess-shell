@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-27 | [[Settings File]]: log files, empty registry, XDG directory rule decided |
 | 2026-10-27 | [[Settings File]]: global settings list deferred to testing |
 | 2026-10-27 | [[Settings File]]: start order, movable registry, `logs/` |
 | 2026-10-27 | [[Settings File]]: fallback, path expansion, stop on error decided |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-27 | Config directory required for modules, styles, themes, stylesheets ([[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]]) |
 | 2026-10-27 | JSON Schema: config-directory location, lazy import, validation cache ([[JSON Schema and Editor Support]]) |
 | 2026-10-27 | JSON Schema: draft-07, dependency cost measured ([[JSON Schema and Editor Support]]) |
-| 2026-10-27 | [[ADR-0011 JSON Schema for Shell Files]] accepted (Option A) |
 
 ## Go to
 

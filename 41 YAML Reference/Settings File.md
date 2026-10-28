@@ -34,7 +34,7 @@ $HOME/.config/tesserae-shell/
 - Shell files live in `Shells/` (decided 2026-10-27). The folder names and the other four are from [[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]].
 - `settings.yaml` can point to absolute directories for any of these types, for a user who wants a different layout (decided 2026-10-27). With no `settings.yaml`, or no key for a type, the folders above are used.
 - `settings.yaml` is the home for settings that are not project based (decided 2026-10-27).
-- The directory spelling (`$HOME/.config` against `$XDG_CONFIG_HOME`) is an open item in [[ADR-0007 Shell UI Layer#Open items]].
+- **Where the config directory is** (decided 2026-10-27, "whichever is safer for the operating system"): `$XDG_CONFIG_HOME/tesserae-shell/` when `XDG_CONFIG_HOME` is set, non-empty and an absolute path; otherwise `$HOME/.config/tesserae-shell/`. This follows the XDG base directory specification: an unset or empty variable means `$HOME/.config`, and a relative value is invalid and ignored ([spec](https://specifications.freedesktop.org/basedir/latest/)). The cache directory follows the same rule with `XDG_CACHE_HOME` and `$HOME/.cache`. Every note that writes `$HOME/.config/tesserae-shell/` means this directory at its default.
 
 ## File header
 
@@ -52,7 +52,7 @@ type: Settings
 | `directories` | Where to look for each file type | A mapping from `shells`, `modules`, `styles`, `themes`, `stylesheets` to an absolute directory or a list of them |
 | `main_shell` | The shell file the shell starts from | A file name in the shells directory; default `Main_Shell.yaml` |
 | `registry` | Where the registry file lives | An absolute path to a `registry.json` file; default `$HOME/.config/tesserae-shell/registry.json`. Same path rules as `directories` |
-| `logging` | Global log settings | `level`, and `directory` (default `$HOME/.config/tesserae-shell/logs/`, same path rules); rotation, retention and file naming are open ([[Logging with Loguru]]) |
+| `logging` | Global log settings | `level`, and `directory` (default `$HOME/.config/tesserae-shell/logs/`, same path rules); naming, rotation and retention are in the next section |
 | `validation` | Schema validation settings | `enabled` (default true); the cache location is [[JSON Schema and Editor Support#The `jsonschema` dependency runtime, not only development]] |
 
 ```yaml
@@ -76,6 +76,15 @@ logging:
 - **Paths.** `~` and environment variables are allowed (decided 2026-10-27). The shell expands them, and the result must be an absolute path. If a variable is unset or the path does not resolve, that is an error naming the key, the text written and what failed. There is no silent empty value. A path that resolves to a directory that does not exist is an error too. A relative path after expansion is an error: it would depend on the working directory.
 - A name found twice in the same tier (two configured directories) is an error naming both files, as a duplicate unique name is ([[Common Keys and Conventions#Names and references]]).
 - Files found through a configured directory are registered like any other. Their editor modelines cannot always be relative to the config directory, so the shell writes the expanded, absolute path for them (never `~` or a variable) ([[JSON Schema and Editor Support#Where the schemas live]]).
+
+## Log files
+
+Decided 2026-10-27:
+
+- **Name.** `log_yyyy-mm-dd`, for example `log_2026-10-27`. Proposed: a `.log` extension, so `log_2026-10-27.log`.
+- **Rotation.** A new day is a new log file. Proposed: the day changes at local midnight, since Loguru's timestamps are local time ([Loguru API](https://loguru.readthedocs.io/en/stable/api/logger.html)); a shell that runs across midnight starts the next file then.
+- **Retention.** Up to the user: the shell deletes no log files. Proposed: an optional `logging.retention` key (a number of days) is left until the shell is built and tested, and no key means keep everything.
+- **How it is built.** Loguru's file sink accepts a `{time}` field in the path and a daily rotation time, but the docs do not show a custom date format in the path or state a default retention. The shell may need to compute the file name itself and open a new sink at midnight. #needs-verification
 
 ## Start order
 
@@ -108,8 +117,8 @@ Decided 2026-10-27: if `settings.yaml` cannot be read or fails validation, the s
 - [x] A bad `settings.yaml` stops the shell with an error on the console and in the log, in `$HOME/.config/tesserae-shell/logs/` (decided 2026-10-27).
 - [x] `settings.yaml` is read before the registry, because it can move the registry (decided 2026-10-27).
 - [x] Reload: `logging` applies at once; `directories` and `main_shell` need a restart (accepted as proposed, 2026-10-27).
-- [ ] Log file naming, rotation and retention ([[Logging with Loguru]]).
-- [ ] A moved registry: moving the file by hand, and what the shell does if the configured path has no registry (proposed: create an empty one).
+- [x] Log file naming `log_yyyy-mm-dd`, rotation each new day, retention left to the user (decided 2026-10-27). Open: the `.log` extension, local midnight, an optional retention key, and how Loguru produces the name.
+- [x] If the configured registry path has no registry, the shell creates an empty one (decided 2026-10-27). Open: moving the file by hand.
 - [ ] Per-monitor settings: they belong in the shell file's `root`, not here ([[Shell File]]).
 - [ ] The Settings entry in the schema set ([[JSON Schema and Editor Support#Files]]).
 

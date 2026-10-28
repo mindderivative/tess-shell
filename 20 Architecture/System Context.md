@@ -51,7 +51,7 @@ flowchart LR
 | plasmashell | Shared D-Bus names, optionally its panels | Coexist: take nothing it holds ([[ADR-0004 Plasma Coexistence]]) | Names observed on one session: [Observed D-Bus names](#observed-d-bus-names) |
 | Session D-Bus | Services below | Data for modules | See modules |
 | PipeWire | Audio state | Audio module | #needs-verification: access path (D-Bus, `wpctl`, library) |
-| Config directory | `$HOME/.config/tesserae-shell/` | Shell files, modules, registry, themes, styles | [[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]] |
+| Config directory | `$XDG_CONFIG_HOME/tesserae-shell/`, else `$HOME/.config/tesserae-shell/` | Shell files, modules, registry, themes, styles | [[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]] |
 | KDE global shortcuts | `org.kde.KGlobalAccel` over D-Bus | Launcher shortcut | [[ADR-0005 Global Shortcuts]]; Wayland behaviour untested |
 | Other applications | Tray items, media players | Tray and Media modules | Via D-Bus |
 

@@ -311,7 +311,7 @@ Decided by the maintainer in chat.
 
 Decided by the maintainer in chat.
 
-- Shell configuration lives in `$HOME/.config/tesserae-shell/`. The registry is `registry.json` there. Subdirectories: `Styles`, `Themes`, `Stylesheets` and `Modules`, and from 2026-10-27 `Shells`.
+- Shell configuration lives in `$HOME/.config/tesserae-shell/` (the default; see Open items for the `XDG_CONFIG_HOME` rule, decided 2026-10-27). The registry is `registry.json` there. Subdirectories: `Styles`, `Themes`, `Stylesheets` and `Modules`, and from 2026-10-27 `Shells`.
 - **Search paths.** Superseded 2026-10-27 by the next section: `settings.yaml` now holds the directories. The original text: a list of directories (`look-at`) for modules, styles, themes and stylesheets, defaulting to the subdirectories above.
 - `name` is required on an entry and is part of its identity.
 - **The registry resolves references across files** (decided 2026-10-25). A `name` is unique per monitor and scoped to its own file, so a reference from another file, such as a Panel attached to a Bar, is looked up in the registry, which tracks names. If the referenced name no longer exists, the registry knows and the shell reports a warning or an error. Decided 2026-10-25 (the maintainer accepted the recommendation): **an error at load** when a reference never resolves, and **a warning while the shell runs** when a target disappears (for example after a hot reload), with the Panel kept hidden until the target returns. Both name the file and the missing name (`file:line:column`).
@@ -407,7 +407,7 @@ children:
 - [x] Params and "bubble up": decided (maintainer, 2026-10-26), opt-in only. A param declares `inherit: true` to be looked up the tree when it is not passed; the nearest ancestor that has it wins; a required param found nowhere is an error naming the chain searched. Everything else must be passed. See [[Module File#Params down the tree]].
 - [x] Popup call shape and caller context: decided (maintainer, 2026-10-26), the shell supplies the calling use to the action automatically. The module writes `self.ctx.popup(popup_name)` and the shell fills in the caller. See [[Module Context#Calling a popup]].
 - [x] Popup focus and dismissal: decided (maintainer, 2026-10-26), option 1. One flag; focus is on by default (matching tre's `grab`, which gives the popup the pointer and keyboard and closes it on an outside click or Escape); tooltip-like popups opt out and close when the pointer leaves. This replaces the earlier "opt-in" decision, which could not close a popup with no selections on an outside click, because clicks outside the application are not delivered to a popup without the grab. #needs-verification against tre's `PopupWindow`.
-- [ ] **Directory spelling.** `$HOME/.config` against `$XDG_CONFIG_HOME`. Recommendation: use `$XDG_CONFIG_HOME` when it is set, else `$HOME/.config`. The key for the search list (`look-at` as written) is spelled in `41 YAML Reference/`.
+- [x] **Directory spelling.** Decided 2026-10-27: `$XDG_CONFIG_HOME/tesserae-shell/` when it is set, non-empty and absolute, else `$HOME/.config/tesserae-shell/` ([[Settings File#The config directory]]). The key for the search list is superseded by `directories` in `settings.yaml`.
 - [ ] **What a registry mismatch changes.** The maintainer decided an entry with no match is treated as removed and a new one is registered; also decide whether a removed entry's saved state is dropped at once or kept for a while.
 
 ## Risks
