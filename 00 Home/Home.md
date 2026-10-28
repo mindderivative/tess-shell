@@ -31,13 +31,13 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Decided: directory fallback to defaults, `~` and variables in paths, a bad settings file stops the shell ([[Settings File]]) |
+| Last change | Applied the maintainer's answers to [[Bar]], [[Frame]], [[Panel]] and [[Clock Module]]; accepted the [[Style Schema]]; confirmed the directory fallback and the registry rebuild |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0011 JSON Schema for Shell Files]] (10 accepted; ADR-0002 superseded) |
-| Waiting on you | Confirm the directory fallback reading in [[Settings File]]; confirm the registry rebuild from UIDs ([[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]]); review the [[Style Schema]] proposal (keys, tokens, modes, selectors); the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
+| Waiting on you | Review the updated [[Bar]], [[Frame]], [[Panel]] and [[Clock Module]]; the Frame's `sides` key and the painter hosting strips; gradient border tiling ([[Frame#Thickness, radii, border, colours]]); key names the specs mark proposed |
 | Next | Module specs (Workspaces, Audio), the Popup spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
-| Deferred to testing | Which global settings belong in `settings.yaml` ([[Settings File]]); First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]) |
+| Deferred to testing | Which global settings belong in `settings.yaml` ([[Settings File]]); First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]); the four reservers plus the painter on KWin and a 4K Frame with many joins ([[Frame]]); fractional scale at 1.5x ([[Frame]]); fullscreen stacking and detection ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]); Bar over a Plasma panel ([[Bar]]) |
 
 ### Recent changes
 
@@ -47,12 +47,12 @@ Newest first. Keep the last 8. One line each.
 |---|---|
 | 2026-10-27 | [[Settings File]] small open items closed; Loguru file test |
 | 2026-10-27 | [[Settings File]]: log files, empty registry, XDG directory rule decided |
+| 2026-10-27 | Decisions applied to [[Bar]], [[Frame]], [[Panel]], [[Clock Module]], [[Surface Types]]; [[Style Schema]] accepted |
 | 2026-10-27 | [[Settings File]]: global settings list deferred to testing |
 | 2026-10-27 | [[Settings File]]: start order, movable registry, `logs/` |
 | 2026-10-27 | [[Settings File]]: fallback, path expansion, stop on error decided |
 | 2026-10-27 | [[Settings File]] and the Shells folder decided |
 | 2026-10-27 | Config directory required for modules, styles, themes, stylesheets ([[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]]) |
-| 2026-10-27 | JSON Schema: config-directory location, lazy import, validation cache ([[JSON Schema and Editor Support]]) |
 
 ## Go to
 

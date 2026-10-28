@@ -49,7 +49,7 @@ class Clock(Module):
 
 - **One class.** The file holds exactly one class extending `Module`. None or more than one is a load error naming the file ([[ADR-0007 Shell UI Layer#Monitors, names and errors (2026-10-25)]]).
 - **No constructor arguments.** The base class sets `self.ctx` before `start()` is called.
-- **Methods.** `start()`, `stop()`, and an optional `reload()`; the base class provides empty versions.
+- **Methods.** `start()`, `stop()`, an optional `reload()` and an optional `validate_use(use)`; the base class provides empty versions. `validate_use` is called when a use is loaded, before it is shown; it raises `ValueError` with a message to reject a param, and the shell reports it as an error naming the file, the use and the param ([[Clock Module]], decided 2026-10-27 that the Clock validates its format on use loaded; the hook and its name are proposed).
 - **Actions.** A shell file can call a module method from an event (the shell, not TEL, maps events: [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). Decided (maintainer, 2026-10-26): only methods marked with an `@action` decorator can be called from a shell file, and a shell file cannot call anything else. Slow work in an action goes to a thread and the method returns at once.
 
 ## Lifecycle
@@ -71,6 +71,7 @@ stateDiagram-v2
 |---|---|---|---|
 | `start()` | Loop thread | After the shell model is built ([[Process Model and Threading#Lifecycle (proposed)]]) | Return quickly. Start threads or timers for anything slow. Values sent before a surface exists are kept |
 | `stop()` | Loop thread | On quit, or before a code reload | Stop its own threads and close connections, within a timeout. The shell joins threads started through `ctx.thread` |
+| `validate_use(use)` | Loop thread | A use of the module is loaded or its params change | Check `use.params` and raise `ValueError` on a bad value. Quick, no I/O (proposed) |
 | `reload()` | Loop thread | The module's YAML changed and the Python did not | Re-read `self.ctx.config`. No restart |
 
 Code reload ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], mechanics proposed): the shell imports the new code first and checks it for the class; only then does it call `stop()` on the old instance, join its threads, purge the module's own modules from `sys.modules`, create the new instance and call `start()`. If the new code fails to import, the old instance keeps running and the error is logged with `file:line:column`. The value store keeps the last values until the new instance sends. #needs-verification: `importlib` with live threads, and supporting files in the module folder.

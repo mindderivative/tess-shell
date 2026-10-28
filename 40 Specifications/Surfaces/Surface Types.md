@@ -5,7 +5,7 @@ type: spec
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-27
 tags: [spec/surface, needs-verification]
 related: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0001 Shell Surface Strategy]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[V1 Scope]]", "[[Personas and Use Cases]]"]
 depends_on: ["[[TRE-REQ-001 Layer Surface Window]]", "[[ADR-0007 Shell UI Layer]]"]
@@ -72,6 +72,13 @@ From the flow diagram ([[Shell Structure]], 2026-10-26). `layer:` takes the four
 `background` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no kind uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is in a Special Cases group: a module calls it, and it holds modules and containers ([[Shell Structure]]).
 
 Reserved space is enforced to the `top` layer (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). An `exclusive_zone` on a surface not on `top` is a load error (decided, maintainer, 2026-10-26).
+
+## Fullscreen and maximised windows (decided 2026-10-27)
+
+- A fullscreen window covers every shell element: Bars, Frame, Panels and Popups, whatever their layer. A maximised window does not: it stops at the reserved space of the Bar and the Frame, and the shell draws above it as usual.
+- The layer-shell protocol says fullscreen windows are "typically" at the top layer, and surfaces on `overlay` sit above them ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)). So a surface on `overlay` could show over a fullscreen window unless the shell hides it. #needs-verification how KWin 6.8.1 stacks fullscreen windows against `top` and `overlay` surfaces, and how the shell learns that a window is fullscreen (a KWin D-Bus or scripting signal, or a foreign-toplevel protocol).
+- Required behaviour: while a fullscreen window is active on a monitor, the shell hides or lowers its surfaces on that monitor, and restores them when the window leaves fullscreen. The reserved space is released and restored with them. Whether a surface can opt out (an OSD that should show over a game) is open.
+- Plasma panels: a Bar wins over a Plasma panel on the same edge unless the Plasma panel is set to always on top, or a fullscreen window is active, which beats all shell rendering (maintainer, 2026-10-27). How the shell makes a Bar "win" is not verified: the compositor stacks the zones, and the shell does not control the order. #needs-verification
 
 ## Special cases
 

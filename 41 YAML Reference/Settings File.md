@@ -72,7 +72,7 @@ logging:
 ```
 
 - A value in `directories` is a path or a list of paths, searched in order (decided 2026-10-27).
-- **Fallback to the default.** The default folder for the type, inside the config directory, is searched after the configured ones (decided 2026-10-27, read as "fallback to defaults"). A name found in a configured directory is used and the default is not consulted for it; a name found only in the default folder is used from there. When the same name exists in both, the configured one wins and the shell logs a notice at info level naming both files (proposed). Correct me if you meant that a configured list replaces the default completely.
+- **Fallback to the default.** The default folder for the type, inside the config directory, is searched after the configured ones (decided 2026-10-27, read as "fallback to defaults"). A name found in a configured directory is used and the default is not consulted for it; a name found only in the default folder is used from there. When the same name exists in both, the configured one wins and the shell logs a notice at info level naming both files (proposed). The maintainer confirmed this reading on 2026-10-27.
 - **Paths.** `~` and environment variables are allowed (decided 2026-10-27). The shell expands them, and the result must be an absolute path. If a variable is unset or the path does not resolve, that is an error naming the key, the text written and what failed. There is no silent empty value. A path that resolves to a directory that does not exist is an error too. A relative path after expansion is an error: it would depend on the working directory.
 - A name found twice in the same tier (two configured directories) is an error naming both files, as a duplicate unique name is ([[Common Keys and Conventions#Names and references]]).
 - Files found through a configured directory are registered like any other. Their editor modelines cannot always be relative to the config directory, so the shell writes the expanded, absolute path for them (never `~` or a variable) ([[JSON Schema and Editor Support#Where the schemas live]]).
@@ -112,13 +112,13 @@ Decided 2026-10-27: if `settings.yaml` cannot be read or fails validation, the s
 ## Open
 
 - [x] The keys above are the starting set. Which other global settings belong here is deferred to building and testing the shell (maintainer, 2026-10-27); new keys are added to this note as they are found.
-- [x] A configured directory list is searched first and the default folder is the fallback (decided 2026-10-27).
+- [x] A configured directory list is searched first and the default folder is the fallback (decided 2026-10-27; reading confirmed by the maintainer the same day).
 - [x] `~` and environment variables are allowed; an unresolved path is an error (decided 2026-10-27).
 - [x] A bad `settings.yaml` stops the shell with an error on the console and in the log, in `$HOME/.config/tesserae-shell/logs/` (decided 2026-10-27).
 - [x] `settings.yaml` is read before the registry, because it can move the registry (decided 2026-10-27).
 - [x] Reload: `logging` applies at once; `directories` and `main_shell` need a restart (accepted as proposed, 2026-10-27).
 - [x] Log file naming `log_yyyy-mm-dd.log`, a new file each local day, no deletion unless `logging.retention` is set (decided 2026-10-27). Open: a real midnight crossing, tested at the testing phase.
-- [x] If the configured registry path has no registry, the shell creates an empty one (decided 2026-10-27). Moving the registry by hand: the user moves the file and sets `registry` in `settings.yaml`; the shell uses the file at the new path. If files already carry UIDs and the registry is new or empty, the shell logs a warning and rebuilds each entry's registry record from the UID in its file rather than issuing new UIDs (recommendation adopted 2026-10-27; the rebuild rules belong to [[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]] and are open there).
+- [x] If the configured registry path has no registry, the shell creates an empty one (decided 2026-10-27). Moving the registry by hand: the user moves the file and sets `registry` in `settings.yaml`; the shell uses the file at the new path. If files already carry UIDs and the registry is new or empty, the shell logs a warning and rebuilds each entry's registry record from the UID in its file rather than issuing new UIDs (recommendation adopted and confirmed by the maintainer, 2026-10-27; the rebuild rules belong to [[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]] and are open there).
 - [x] Per-monitor settings belong in the shell file's `root`, not here ([[Shell File]]) (recommendation adopted 2026-10-27).
 - [x] The Settings entry in the schema set: `settings.schema.json` ([[JSON Schema and Editor Support#Files]]).
 

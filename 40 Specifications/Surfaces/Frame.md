@@ -14,7 +14,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Hit
 # Frame
 
 > [!summary]
-> The Frame (`kind: frame`) is a ring around the screen, attached to all four edges and corners, that reserves space on every side. Its thickness is the same on every side or differs by side. Its corners are rounded, convex on the outside and concave on the inside. It has borders, a background and border colours, and shadows. Panels and Bars can be visually melded into it with rounded joins, so they look as if they grow out of the frame; this is a visual effect on separate surfaces, not one shared surface. The Frame is Top layer only. On tre it is a full-screen painter `LayerWindow` plus up to four thin space-reserving windows, using the path hit shape released in tre 0.5.9. The decisions are the maintainer's ([[Surface Types]]); key names marked proposed are mine. YAML is illustration.
+> The Frame (`kind: frame`) is a ring around the screen, attached to all four edges and corners, that reserves space on every side. Its thickness is the same on every side or differs by side. Its inner corners are rounded (concave); its outer corners are square by default and can be rounded (convex). It has inner and outer borders, a background, border colours (solid or gradient) and shadows. Panels and Bars can be visually melded into it with rounded joins, so they look as if they grow out of the frame; this is a visual effect on separate surfaces, not one shared surface. The Frame is Top layer only. On tre it is a full-screen painter `LayerWindow` plus up to four thin space-reserving windows, using the path hit shape released in tre 0.5.9. The decisions are the maintainer's ([[Surface Types]]); key names marked proposed are mine. YAML is illustration.
 
 ## Purpose and scope
 
@@ -79,12 +79,17 @@ The test of three layers against the wallpaper is no longer needed.
 
 | Property | Form | Notes |
 |---|---|---|
-| Thickness | One number, a list of four clockwise from the top, or named sides | Uniform or one side thicker; a side of 0 has no reserver |
-| Outer corner radius | Four-sided: rounds the screen corners (convex) | |
+| Thickness | One number, a list of four clockwise from the top, or named sides | The fill band of a side. Borders add to it (below). A side of 0 has no reserver |
+| Outer corner radius | Four-sided: rounds the screen corners (convex) | Default 0 (decided 2026-10-27): the Frame's outer corners usually touch the monitor's own corners, and a rounded outer corner would look odd |
 | Inner corner radius | Four-sided: rounds the opening (concave fillets) | |
-| Border | Thickness and colour, as a stroke on the ring's contours | A stroke is centred on the path and measured in pixels |
+| Inner border | Thickness and colour on the edge facing the desktop | Optional |
+| Outer border | Thickness and colour on the edge at the screen edge | Optional; having both is allowed (maintainer, 2026-10-27) |
 | Background | A colour or a gradient | tre has linear, radial and sweep gradients |
-| Border colour | A colour or a token | |
+| Border colour | A colour, a token or a gradient | A gradient border is decided; tiling it is opt-in (below) |
+
+**Thickness plus borders (decided 2026-10-27).** The border thickness adds to the Frame's overall thickness: a Frame with a thickness of 10 px and a 2 px border is 12 px in total, and the reserver's zone for that side is 12. With both an inner and an outer border the total is the thickness plus both. The same rule gives the strip's total thickness. The shell computes the zone and the painted bands; a stroke in tre is centred on its path ([paint reference](https://mindderivative.github.io/tre/reference/paint/)), so the shell offsets the contours by half a border.
+
+**Gradient borders and tiling (decided 2026-10-27 that a gradient is allowed and tiling is opt-in).** A border colour can be a gradient. What "tiling" repeats is not settled here: the likely meaning is that the gradient repeats along the ring instead of stretching once across it, with `border_tile` off by default (proposed key). tre's `Gradient` offers linear, radial and sweep, with positions relative to the box, and no spread or repeat option in its Python API ([tre Gradient](https://mindderivative.github.io/tre/reference/paint/)); only SVG gradients mention a spread method. So a tiled gradient is either built from repeated stops by the shell or needs an engine request. #needs-verification
 
 ### Melding
 
@@ -96,7 +101,7 @@ A Panel or Bar attached to the Frame looks as if it grows out of it, with rounde
 
 ### Shadows
 
-The painter covers the whole output, so a shadow cast from the ring onto the desktop is drawn inside the same surface; no oversize surface is needed, unlike a Bar or Panel ([[Shadows on Layer Surfaces]]). tre's painted hit shape is the fill and the stroke, so a shadow does not take clicks. #needs-verification that the `shadows` property is not part of the hit shape.
+The painter covers the whole output, so a shadow cast from the ring onto the desktop is drawn inside the same surface; no oversize surface is needed, unlike a Bar or Panel ([[Shadows on Layer Surfaces]]). tre's painted hit shape is the fill and the stroke, so a shadow does not take clicks. Decided 2026-10-27: all shadows, on every surface and block, are excluded from the hit shape and the input region. #needs-verification that tre's `shadows` property is not part of the painted hit shape; if it is, that is an engine request ([[AGENTS#6. Engine requests (tre / Tesserae)]]).
 
 ### What a Frame holds (decided 2026-10-27)
 
@@ -137,6 +142,19 @@ A strip can grow, shrink or peek out from its edge, along the whole side (edge t
 - A peek reserves nothing and draws over windows, which works because the painter is on `top`. A peek that reaches into a window's area is a hover reveal, so a keyboard way to open it is needed.
 - Reduced motion: the states switch instantly ([[Goals and Non-Goals]] G7).
 
+### Strips and Bars on one edge (decided 2026-10-27)
+
+A strip and a Bar can share an edge, with different jobs:
+
+- A strip, say 34 px thick, holds icons. Clicking an icon expands a Bar from the strip's inner edge: a sub-bar full of items related to that icon.
+- Or the strip holds the user's most used items, and a Bar is added beside it for the others they need quick access to.
+- A strip has every ability a Bar has: hidden, collapsed, peeking, animated, expanded and contracted, on its own ([[Bar#Auto-hide (decided 2026-10-27)]]). It can be hidden without hiding the Frame.
+- The sub-bar is a Bar attached to the strip (`attach_to` the Frame, hosted in the painter when melded). How an icon names the Bar it opens, and how the two surfaces animate together, is open.
+
+### Hidden and shown at runtime (decided 2026-10-27)
+
+The whole Frame can be hidden and shown at will during runtime. While hidden, the reservers go away (their zones are released, so windows use the full screen); when shown they return. The change is a step: zones change once and windows reflow once, the same as a strip's expand and contract. A fullscreen window hides all shell elements by the rule in [[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]].
+
 ### Hosted melding (decided 2026-10-27)
 
 The painter is a full-screen surface, so a Bar or Panel melded to the Frame can be drawn **inside the painter** instead of in a window of its own. The entry stays a sibling in the file and names its target (`attach_to`), as before; a flag such as `meld: true` tells the shell to host it in the Frame's surface.
@@ -166,8 +184,11 @@ One Frame per monitor, independent: each is a complete ring with its own thickne
 | `kind: frame` | The kind | Decided |
 | `layer` | `top` only | Decided |
 | `thickness` | Number, list of four clockwise from the top, or named sides | Proposed; the forms are decided |
-| `corner_radius` | Outer (convex) corners, four-sided | Proposed |
+| `corner_radius` | Outer (convex) corners, four-sided; default 0 | Default decided (2026-10-27); key proposed |
 | `inner_radius` | Inner (concave) corners, four-sided | Proposed |
+| `inner_border`, `outer_border` | Each a mapping with `thickness` and `color` (a colour, token or gradient); `border`, `border_thickness` and `border_color` in `style` are shorthand for the inner border | Both decided as allowed (2026-10-27); key names proposed |
+| `border_tile` | Repeat a gradient border along the ring; default off | Opt-in decided (2026-10-27); key name and mechanism proposed |
+| `hidden` | Hide the Frame at start; shown and hidden at runtime by a shell action | Decided that it can be hidden and shown; key proposed |
 | `style` | Background, border, shadow, opacity | Decided (the key); property names proposed |
 | `meld` | On a Bar or Panel entry that has `attach_to` the Frame: draw it inside the Frame's surface instead of in a window of its own | Proposed; the mechanism is decided (2026-10-27) |
 | `sides` | Per-side overrides: `top`, `right`, `bottom`, `left`, each with its own `thickness` and `children` (the strip) | Proposed; strips decided (2026-10-27), the key form is mine |
@@ -179,13 +200,11 @@ children:
         kind: frame
         layer: top
         thickness: [8, 8, 8, 8]          # or 8, or {top: 8, left: 24}
-        corner_radius: 14
+        corner_radius: 0                 # the default; the outer corners are square
         inner_radius: 14
+        inner_border: {thickness: 1, color: "#ffffff22"}
         style:
             background: "#0b0c0d"
-            border: true
-            border_thickness: 1
-            border_color: "#ffffff22"
         sides:                           # optional: a thicker side acts as a bar
             top:
                 thickness: 32
@@ -232,6 +251,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 |---|---|
 | A thickness of 0 on a side | No reserver for that side |
 | A radius larger than half the thickness or the band | Clamped; a warning names the property |
+| A fullscreen window on the monitor | The Frame and its reservers hide until it leaves fullscreen ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]) |
 | tre older than 0.5.9 | `hit_shape` unknown: error at start naming the required version (the shell requires 0.5.9 or later) |
 | The monitor is removed | All of the Frame's windows close (`output_removed`); recreated when it returns |
 | Scale or mode change | The ring and the reserver zones are recomputed |
@@ -243,13 +263,15 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 
 - [x] What a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars, all four edges or none (maintainer, 2026-10-27). Open: the key form (`sides`), and the painter hosting the strips (option A, recommended).
 - [x] The Frame's layer: `top`, with melded Bars and Panels hosted in the Frame's surface (maintainer, 2026-10-27). Open: how the join is drawn in the painter, and the cost of a large tree and region in the painter (to measure).
-- [ ] The four reservers plus the painter tested together on KWin (tre did not test them together), and a 4K frame with many joins.
-- [ ] Fractional scale: 1 px reservers and the ring edge at 1.5x.
-- [ ] A fullscreen window and the Frame: the protocol puts fullscreen windows typically at the top layer, so a fullscreen window may cover the Frame.
-- [ ] Inner border, outer border, or both.
-- [ ] A strip against a Bar attached to the Frame: when to use which, and whether a strip can be hidden on its own.
-- [ ] Whether the Frame can be hidden or shown at runtime, and what the reservers do while hidden.
-- [ ] Shadow tokens ([[ADR-0010 Surface Shadows]]) and whether the `shadows` property is excluded from the hit shape.
+- [x] The four reservers plus the painter tested together on KWin, and a 4K frame with many joins: after the v1 build, in the testing phase (maintainer, 2026-10-27).
+- [x] Fractional scale: wanted (maintainer, 2026-10-27). tre's docs say layer windows lay out in logical pixels and follow fractional scaling, and round a node's offset to a whole device pixel ([layer window reference](https://mindderivative.github.io/tre/reference/layer-window/), [window reference](https://mindderivative.github.io/tre/reference/window/)). Open: how a 1 px reserver and the ring edge look at 1.5x, tested with the rest. #needs-verification
+- [x] A fullscreen window covers all shell elements and a maximised window does not ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]). Open: how KWin stacks them and how the shell detects fullscreen.
+- [x] Inner border, outer border, or both: both are allowed (maintainer, 2026-10-27).
+- [x] A strip against a Bar attached to the Frame, and hiding a strip on its own: a strip and a Bar can share an edge, and a strip has all a Bar's abilities (maintainer, 2026-10-27). Open: the icon-to-Bar link.
+- [x] The Frame hidden or shown at runtime: yes; the reservers go while hidden and return when shown (maintainer, 2026-10-27).
+- [x] Shadows are excluded from the hit shape, for all shadows (maintainer, 2026-10-27). Open: whether tre already does this. #needs-verification
+- [ ] A gradient border's tiling: the mechanism (repeated stops, or an engine request).
+- [ ] Shadow tokens: `elevation`, `shadow` and `shadow_bleed` are accepted ([[Style Schema#Shadow keys]]); the Frame needs no bleed margin because the painter covers the output.
 
 ## Acceptance criteria
 
@@ -258,6 +280,10 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 - [ ] The ring shows convex outer corners and concave inner corners at the configured radii, with the border and background.
 - [ ] A Panel on the overlay layer joined to the Frame shows no seam at idle.
 - [ ] Two monitors each have their own Frame; unplugging one removes only its windows, and plugging it back recreates them.
+- [ ] A Frame with a thickness of 10 and a 2 px border reserves 12 px on that side; with an inner and an outer border of 2 px each it reserves 14.
+- [ ] A hidden Frame releases all its reserved space and a shown one restores it, with one reflow each.
+- [ ] A shadow around the ring takes no clicks.
+- [ ] A fullscreen window covers the Frame; a maximised window stops inside it.
 - [ ] Idle: the Frame draws no frames.
 - [ ] With tre older than 0.5.9 the shell stops with a message naming the version.
 

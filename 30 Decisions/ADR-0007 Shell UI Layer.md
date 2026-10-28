@@ -335,6 +335,7 @@ Decided by the maintainer in chat.
 
 - A UID is made with the built-in `uuid.uuid7()`, a time-ordered, random-backed UUIDv7. It is shell-wide and survives reloads.
 - **A registry keeps them.** A file (JSON), not a database ("a DB might be a little much"). Each entry maps a UID to what is known about it for a quick lookup on reload: its type or kind, its state, and the file it comes from (the module file, a config file).
+- **Rebuilding from UIDs (decided 2026-10-27).** If the registry is new, empty or moved, and the files already carry UIDs, the shell logs a warning and rebuilds each entry's record from the UID in its file instead of issuing new UIDs ([[Settings File]]). The rules for what the rebuilt record holds are open.
 - **A mismatch means the entry is new.** If the registry entry and the current file or entry do not agree, the shell treats the old one as removed and registers a new one.
 - Python 3.14 or later is the shell's minimum, accepted by the maintainer. `uuid.uuid7()` ran on 3.14.8 here; tre's wheels cover CPython 3.12 and later ([tre README](https://github.com/mindderivative/tre)). #needs-verification: that 3.14 is the first release with `uuid.uuid7()`.
 - Where the registry lives and how identity works: see Config directory and registry.

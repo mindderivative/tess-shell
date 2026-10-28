@@ -5,7 +5,7 @@ type: spec
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-10-27
 tags: [spec/module, needs-verification]
 related: ["[[Modules]]", "[[Module Contract]]", "[[Module Context]]", "[[Module File]]", "[[V1 Scope]]", "[[Building Blocks]]"]
 depends_on: ["[[Module Contract]]", "[[Module File]]"]
@@ -19,7 +19,7 @@ depends_on: ["[[Module Contract]]", "[[Module File]]"]
 ## Purpose and scope
 
 - Show the current time, and optionally a date in a tooltip, on any surface that places the module.
-- v1: local time and an optional fixed time zone per use. A clock face, alarms, timers and a calendar popup are out of scope ([[V1 Scope#After v1]]).
+- v1: local time and an optional fixed time zone per use, formatted as the desktop does by default. A clock face, alarms, timers and a calendar are out of scope ([[V1 Scope#After v1]]); no calendar to start with (maintainer, 2026-10-27).
 
 ## Files
 
@@ -40,7 +40,9 @@ type: Module
 name: Clock
 style: Clock_Style.yaml
 params:
-    format: {type: string, default: "%H:%M"}       # a strftime pattern
+    format: {type: string, default: ""}            # a strftime pattern; empty follows the desktop
+    locale: {type: string, default: ""}            # a locale name such as de_DE; empty follows the desktop
+    hour_cycle: {type: string, default: "desktop"} # desktop, 12 or 24
     timezone: {type: string, default: ""}          # an IANA name; empty is the local zone
     tooltip_format: {type: string, default: "%A, %d %B %Y"}
 
@@ -103,7 +105,7 @@ class Clock(Module):
         self.tick()
 ```
 
-An illustration of the shape, not tested code. What it shows:
+An illustration of the shape, not tested code. With the shared time source ([[Module Context#A shared time source]]) the Clock subscribes (`self.ctx.on_tick("minute", self.tick)`, or `"second"` when a use's format has seconds) instead of scheduling `self.ctx.after` itself; the sketch below shows the timer form. What it shows:
 
 - One instance, one timer, for every use. A format with seconds makes the timer fire every second; otherwise once a minute, aimed at the next minute boundary.
 - Each use gets its own text through `ctx.send(..., use=use)` ([[Module Context#Sending values]]).
@@ -114,7 +116,9 @@ An illustration of the shape, not tested code. What it shows:
 
 | Param | Type | Default | Meaning |
 |---|---|---|---|
-| `format` | string | `%H:%M` | A `strftime` pattern for the shown text |
+| `format` | string | empty | A `strftime` pattern for the shown text (decided 2026-10-27). Empty derives the pattern from the desktop's time format, with `hour_cycle` applied |
+| `locale` | string | empty | A locale name for month and day names; empty follows the desktop |
+| `hour_cycle` | string | `desktop` | `desktop`, `12` or `24`; the user can set it (decided 2026-10-27) |
 | `timezone` | string | empty | An IANA zone name such as `Europe/Berlin`; empty uses the local zone |
 | `tooltip_format` | string | `%A, %d %B %Y` | The text a tooltip shows |
 
@@ -145,10 +149,11 @@ The class follows [[Module Contract]]. It uses `ctx.uses`, `use.params`, `ctx.se
 
 ## Integration
 
-- Source: the system clock through Python's `datetime`; `zoneinfo` for zones. No service, no D-Bus, no file.
+- Source: the system clock through Python's `datetime`; `zoneinfo` for zones, and the shell's shared time source for ticks. No service, no D-Bus, no file.
 - Thread: the loop thread, through `ctx.after` ([[Process Model and Threading]]).
 - A Tooltip module can show the `tooltip` value on hover ([[Building Blocks]]); the standard Tooltip is not required for v1.
-- Following the desktop's 12 or 24 hour setting and locale: not specified here. #needs-verification how KDE exposes the regional settings.
+- Following the desktop's 12 or 24 hour setting and locale is the default; the user can set both (decided 2026-10-27, `locale` and `hour_cycle` params). #needs-verification how KDE exposes the regional settings (its locale files, or the environment).
+- **Shared time source (decided 2026-10-27).** The shell offers one time source, so all modules tick together. The Clock subscribes to it instead of running its own timer; the shape is proposed in [[Module Context#A shared time source]].
 
 ## Design
 
@@ -170,22 +175,23 @@ Tokens and components used: the Label module over the Text block; a text class f
 
 | Failure | Result |
 |---|---|
-| A `format` that is not a valid pattern, or that raises | The use shows a fallback (`--:--`) and the shell logs the module name, the use and the param; other uses are unaffected |
+| A `format` that is not a valid pattern, or that raises | Validated when the use is loaded: error naming the param and the file, the use shows the fallback (`--:--`); other uses are unaffected |
 | An unknown `timezone` | Error at load for that use, naming the param and the file (validated when the use is added); the use shows the fallback |
 | The system time jumps (resume, manual change, daylight saving) | The next tick is computed from the wall clock, so it corrects within one tick |
 | The timer callback raises | Logged with the module name; the next tick is still scheduled (the schedule is set before work that can fail; proposed) |
 
 ## Open questions
 
-- [ ] `strftime` patterns against a simpler set of tokens; locale-aware formatting.
-- [ ] Following the desktop's 12 or 24 hour setting and locale.
-- [ ] Whether `format` is validated when the use is loaded (a hook in the module contract) or on first tick.
-- [ ] A calendar popup on click: it needs a Popup and a Calendar module ([[Surface Types#Special cases]]); not v1.
-- [ ] Whether the shell offers a shared time source so all modules tick together.
+- [x] `strftime` patterns (maintainer, 2026-10-27, the recommendation). Open: locale-aware names through the `locale` param.
+- [x] Follow the desktop's 12 or 24 hour setting and locale by default; the user can set both (maintainer, 2026-10-27). Open: how KDE exposes them. #needs-verification
+- [x] `format` is validated when the use is loaded, through a hook in the module contract (maintainer, 2026-10-27, "on use loaded"). The hook is proposed in [[Module Contract]].
+- [x] No calendar to start with (maintainer, 2026-10-27).
+- [x] The shell offers a shared time source (maintainer, 2026-10-27); the shape is in [[Module Context#A shared time source]].
 
 ## Acceptance criteria
 
-- [ ] A bar shows the local time and the text changes at the start of each minute with the default format.
+- [ ] A bar shows the local time in the desktop's format, and the text changes at the start of each minute when the format has no seconds.
+- [ ] With `hour_cycle: 12` the time shows in 12-hour form; with `locale: de_DE` day and month names are German.
 - [ ] With `%S` in the format, the text changes every second without drift over 10 minutes.
 - [ ] Two uses with different formats and time zones show different text from one module instance.
 - [ ] After the system clock is moved by an hour, the text is correct within one tick.

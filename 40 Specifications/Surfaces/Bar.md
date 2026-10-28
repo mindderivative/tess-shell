@@ -14,7 +14,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 # Bar
 
 > [!summary]
-> The Bar (`kind: bar`) is a surface attached to one screen edge that reserves space, so maximised windows stop short of it. It can span the whole edge, touching three edges (its own and the two across it), or be shorter and sit at a position along the edge. A dock, a top bar and a side bar are all Bars. It is highly customisable: size, position, animation, hidden state, background, borders, rounded corners, shadows with elevation and colour, and transparency. A Bar is a tre `LayerWindow` anchored to an edge. The decisions are the maintainer's ([[Surface Types]]); key names marked proposed mirror tre's settings. YAML is illustration.
+> The Bar (`kind: bar`) is a surface attached to one screen edge that reserves space, so maximised windows stop short of it. It can span the whole edge, touching three edges (its own and the two across it), or be shorter and sit at a position along the edge. A dock, a top bar and a side bar are all Bars. A Bar is never floating: it touches its edge, and a surface that floats with a gap is a Panel (maintainer, 2026-10-27). It is highly customisable: size, position along the edge, animation, hidden state, background, borders, rounded corners, shadows with elevation and colour, and transparency. A Bar is a tre `LayerWindow` anchored to an edge. The decisions are the maintainer's ([[Surface Types]]); key names marked proposed mirror tre's settings. YAML is illustration.
 
 ## Purpose and scope
 
@@ -29,21 +29,30 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 |---|---|---|
 | Full-span bar on one edge | `anchor` the edge and both perpendicular edges; `size` 0 along the edge and the thickness across it; `exclusive_zone` the thickness | A top bar across the screen: anchor top, left, right; size (0, 32); zone 32 |
 | A shorter bar, centred on its edge | `anchor` the edge only; `size` the length and the thickness | A dock: anchor bottom; size (560, 64); zone 64. With one edge anchored the compositor centres it along that edge |
-| A shorter bar at a corner end | `anchor` the edge and one perpendicular edge; `margin` along the edge | A top bar starting 200 px in: anchor top, left; margin left 200 |
-| A floating bar with a gap | The same, with a `margin` on the edge | A top bar 8 px below the top: margin top 8; **the zone must include the margin** |
+| A shorter bar at a position along the edge | `anchor` the edge and one perpendicular edge; `margin` along the edge only | A top bar starting 200 px in: anchor top, left; margin left 200 (an offset along the edge, not a gap from it) |
 
 - A positive `exclusive_zone` counts only for a surface anchored to one edge, or one edge plus both perpendicular edges; with any other anchor set the compositor treats it as 0, and a `warning` event says so ([[TRE-REQ-001 Layer Surface Window#Shell need]]).
-- **The zone includes the margin.** The protocol says so for `set_margin`: "The exclusive zone includes the margin" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1), read 2026-10-27). So a floating bar with a margin of 8 and a thickness of 32 sets a zone of 40, or windows will overlap its gap. The shell can compute this from `thickness` and `margin`. #needs-verification on KWin 6.8.1.
+- **No gap from the edge.** A Bar touches its edge, so its reserved zone is its thickness. A surface with a gap from the edge is a Panel, which can reserve space itself ([[Panel]]). The protocol says the exclusive zone includes the margin on the anchored edge ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1), read 2026-10-27), which is why a Bar with a margin on its own edge is not offered. #needs-verification on KWin 6.8.1.
 - **Layers and reserving space.** A Bar may use `bottom`, `top` or `overlay`. It may reserve space only on `top`; an `exclusive_zone` on another layer is a load error ([[Surface Types#Layers per kind]]). A Bar on `bottom` or `overlay` is therefore not reserving and is for effects (a decorative strip, a launcher dock that floats over windows).
 - **Corner anchors.** A bar anchored to an edge and one perpendicular edge reserves nothing unless `exclusive_edge` names the edge; tre binds layer-shell version 5 for this ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]). KWin 6.8.1 and sway were tested for corner reservation.
 
 ### States
 
-A Bar is `Hidden`, `Showing`, `Visible`, `Hiding` or `Closed`, as a Panel is ([[Panel#States]]). Moving is not offered for a Bar in v1; a Bar is anchored. Auto-hide follows the pattern in the tre request ([[TRE-REQ-001 Layer Surface Window#Shell patterns]]):
+A Bar is `Hidden`, `Showing`, `Visible`, `Hiding` or `Closed`, as a Panel is ([[Panel#States]]). Moving is not offered: a Bar is anchored, and a movable surface is a Panel.
 
-- Hide: slide the bar out by animating a margin (a negative margin slides it past the edge; tre accepts negative margins on KWin), then set `exclusive_zone` to 0 when the slide ends.
-- Show: set the zone first, then slide in. Windows reflow once, not on every frame.
-- A hover-to-reveal strip keeps a thin input area at the edge while the bar is hidden.
+### Auto-hide (decided 2026-10-27)
+
+- **On by default; the user opts out** with `auto_hide: false`.
+- **A reasonable default delay,** which the user can change (`auto_hide_delay`, milliseconds). Proposed default: 1000 ms after the pointer leaves the Bar, tuned in testing.
+- **Keyboard reveal: none by default.** The user can set a key (`reveal_key`, a global shortcut through the KDE global-accel service, [[ADR-0005 Global Shortcuts]]). A Bar that hides itself and has no reveal key is still reachable by pointer through the hover strip.
+- The slide follows the pattern in the tre request ([[TRE-REQ-001 Layer Surface Window#Shell patterns]]):
+  - Hide: slide the bar out by animating a margin (a negative margin slides it past the edge; tre accepts negative margins on KWin), then set `exclusive_zone` to 0 when the slide ends.
+  - Show: set the zone first, then slide in. Windows reflow once, not on every frame.
+  - A hover-to-reveal strip keeps a thin input area at the edge while the bar is hidden.
+
+### Vertical Bars (decided 2026-10-27)
+
+A Bar on a left or right edge lays its contents out as a `FlexBox` with a vertical direction. Text is not rotated by default; the user opts in (`text_rotation`, proposed key and values). The standard modules follow the Bar's direction.
 
 ### Contents
 
@@ -66,14 +75,18 @@ A Bar belongs to a root, and so to one monitor ([[Shell File]]). A Bar defined o
 | `length` | The fixed length for `span: absolute` | Proposed |
 | `align` | Where a shorter bar sits along the edge: `start`, `center`, `end`, or an offset | Proposed |
 | `thickness` | The size across the edge | Decided (maintainer, 2026-10-27) |
-| `margin` | Four-sided gap, clockwise from the top | Proposed; order decided |
-| `reserve` | Reserve space: on or off. The shell computes `exclusive_zone` (thickness plus the margin on that edge) | Proposed; rule decided (only on `top`) |
+| `margin` | An offset along the edge only, for a shorter bar; never a gap from the edge | Proposed; the gap form is removed (2026-10-27) |
+| `reserve` | Reserve space: on or off. The shell computes `exclusive_zone` (the thickness) | Proposed; rule decided (only on `top`) |
 | `exclusive_zone` | The raw tre value, for an exact figure | Rule decided; key proposed |
 | `anchor`, `size` | The raw tre forms; `edge`, `span`, `length` and `thickness` map to them | Proposed |
 | `keyboard` | `none`, `on_demand` or `exclusive` | Proposed |
 | `input_region` | Whole, nothing, rectangles or `auto` | Proposed |
 | `attach_to`, `meld` | With `attach_to` a Frame: draw the Bar inside the Frame's surface, so it grows out of the frame; a thicker Frame edge (a strip) does the same job | Proposed; the mechanism is decided ([[Frame#Hosted melding (decided 2026-10-27)]]) |
-| `hidden`, `auto_hide` | Start hidden; slide out after a time or on leaving | Proposed |
+| `hidden` | Start hidden | Proposed |
+| `auto_hide` | Slide out after the delay when the pointer leaves; default true | Decided (on by default, opt-out, 2026-10-27) |
+| `auto_hide_delay` | The delay in milliseconds | Decided that it exists; default 1000 ms proposed |
+| `reveal_key` | A keyboard shortcut that reveals the Bar; default none | Decided (default none, 2026-10-27); key name proposed |
+| `text_rotation` | Rotate text on a vertical Bar; default off | Decided (opt-in, 2026-10-27); key name proposed |
 | `animation` | Slide or fade, with a duration | Proposed |
 
 ```yaml
@@ -102,7 +115,6 @@ children:
         span: absolute
         length: 560
         thickness: 64
-        margin: [0, 0, 8, 0]
         reserve: true
         children:
             - Tasks:
@@ -118,12 +130,13 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 
 - tre: a `LayerWindow` with `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard`, `input_region` (live through `set()` in one commit), margin animation, and `output` bound to the monitor ([[TRE-REQ-001 Layer Surface Window]]). A change to `output` or `namespace` means reopening the window.
 - Threads: window operations on the loop thread ([[Process Model and Threading]]).
-- **Coexistence with the Plasma panel.** plasmashell's panel reserves space too. On the same edge the compositor stacks the zones in an order the shell does not control; different edges or monitors avoid it. The maintainer's Edge Shell design used a per-monitor mode (shell, Plasma, both, none). #needs-verification how KWin orders two zones on one edge.
+- **Coexistence with the Plasma panel.** plasmashell's panel reserves space too. Decided 2026-10-27: the Bar wins over a Plasma panel unless that panel is set to always on top, or a window is fullscreen ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]); this is about fullscreen, not maximised. On the same edge the compositor stacks the zones in an order the shell does not control, so how the Bar wins is #needs-verification; different edges or monitors avoid it. The maintainer's Edge Shell design used a per-monitor mode (shell, Plasma, both, none).
 - Memory: about 18 MiB for a 1280 x 32 bar on tre 0.5.8; one surface per bar per monitor ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]).
 
 ## Design
 
 - The look is a style file, stylesheet or inline `style:` over the root container: background, border, corner radius, shadow, opacity ([[Style, Theme and Stylesheet Files#Rules]]).
+- A Bar matches the rest of the shell's surface elements (decided 2026-10-27): the same tokens, the same style keys and the same corner, border and shadow rules as a Panel and the Frame ([[Style Schema]]); a Bar has no look of its own.
 - Shadows: a surface cannot draw outside its own bounds. A Bar with a shadow is a larger transparent surface; the zone covers the body only and `input_region` follows the body ([[ADR-0010 Surface Shadows]], decided 2026-10-27).
 - Rounded corners on a full-span bar are drawn with the container's corner radius; a bar that melds into the Frame uses Path blocks ([[Frame#Melding]]).
 
@@ -132,6 +145,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 - tre publishes the Bar as one window of the application; the bar's window node has no accessible name yet, so the shell sets the surface name ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]).
 - Every module in it is keyboard-reachable. A hidden or auto-hidden Bar needs a keyboard way to reveal it (a global shortcut or a shell action).
 - Reduced motion: show and hide are instant ([[Goals and Non-Goals]] G7).
+- Auto-hide is on and the keyboard reveal is off by default (maintainer, 2026-10-27), so a keyboard-only user has no way to reveal the Bar until they set `reveal_key`. Open: whether the shell warns at first start, or reveals the Bar when it takes keyboard focus ([[#Auto-hide (decided 2026-10-27)]]).
 
 ## Performance budget
 
@@ -145,7 +159,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 |---|---|
 | `exclusive_zone` on a layer other than `top` | Error at load naming the file, the Bar and the key |
 | A size of 0 on an axis without both opposite anchors | Error before any request to the compositor |
-| The zone does not include the margin | Windows overlap the gap; the shell computes the zone from thickness and margin to avoid it |
+| A margin on the Bar's own edge | Error at load: a Bar does not float; use a Panel |
 | A corner-anchored Bar with a zone and no `exclusive_edge` | Reserves nothing; a `warning` event says so |
 | The monitor is removed | The Bar closes (`output_removed`); recreated when the monitor returns |
 | Two reserving surfaces on one edge | The compositor decides the order |
@@ -153,19 +167,22 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 ## Open questions
 
 - [x] The keys `edge`, `span` (`absolute`, `expanded`, `auto`) and `thickness` (maintainer, 2026-10-27). Open: the key for an absolute length (`length` proposed), `align`, `reserve`, and whether the raw `anchor` and `size` are also allowed.
-- [ ] Whether a Bar can be movable (a floating dock the user drags) or that is a Panel.
-- [ ] Auto-hide details: the hover strip, the delay, a keyboard reveal.
-- [ ] How the shell orders its Bar against the Plasma panel on the same edge.
-- [ ] A vertical bar's layout (a FlexBox with vertical alignment, text rotation).
-- [ ] Shadow margin and token key names ([[ADR-0010 Surface Shadows]]).
+- [x] Movable or floating: no. A floating surface is a Panel (maintainer, 2026-10-27).
+- [x] Auto-hide: on by default with opt-out, a default delay the user can change, keyboard reveal none by default (maintainer, 2026-10-27). Open: the default delay value, the hover strip's thickness, and the reveal key's key name.
+- [x] The Plasma panel on the same edge: the Bar wins, unless the Plasma panel is always on top or a window is fullscreen (maintainer, 2026-10-27). Open: how, and how KWin orders two zones on one edge. #needs-verification
+- [x] A vertical Bar: a FlexBox with a vertical direction; text rotation is opt-in (maintainer, 2026-10-27). Open: the `text_rotation` values.
+- [x] Shadow keys: `elevation`, `shadow` and `shadow_bleed` ([[Style Schema#Shadow keys]], accepted 2026-10-27).
 
 ## Acceptance criteria
 
 - [ ] A full-span top Bar with a zone of 32 makes a maximised window stop 32 px below the top edge on KWin.
-- [ ] A dock with an 8 px gap and a zone of 40 keeps maximised windows clear of its gap.
+- [ ] A dock on the bottom edge with a zone of 64 keeps maximised windows 64 px above the edge; a margin on its own edge is a load error.
 - [ ] A Bar on `bottom` or `overlay` with an `exclusive_zone` is a load error.
 - [ ] A Bar on each of two monitors appears on both, and unplugging one removes only its Bar.
-- [ ] Auto-hide slides the Bar out, then sets the zone to 0, and windows reflow once.
+- [ ] Auto-hide is on with no key written; `auto_hide: false` keeps the Bar visible. The Bar slides out after the delay, then sets the zone to 0, and windows reflow once; the pointer at the edge brings it back.
+- [ ] With `reveal_key` unset, no key reveals the Bar; with it set, the key does.
+- [ ] A left or right Bar lays out vertically with unrotated text; `text_rotation` turns rotation on.
+- [ ] A fullscreen window covers the Bar; a maximised window stops at it.
 - [ ] An idle Bar draws no frames between module updates.
 
 ## Links

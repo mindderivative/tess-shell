@@ -2,7 +2,7 @@
 title: Style Schema
 aliases: [Shell Style Schema, Token Names, Style Keys]
 type: yaml-ref
-status: draft
+status: review
 owner: phil
 created: 2026-10-27
 updated: 2026-10-27
@@ -14,7 +14,7 @@ depends_on: ["[[Style, Theme and Stylesheet Files]]"]
 # Style schema
 
 > [!summary]
-> The shell defines its own schema for style keys and design tokens. The names are the shell's, chosen once, and the same key means the same thing on every block, module and surface. This note is a proposal for the maintainer (2026-10-27, from "create our own YAML schema"): every name below is proposed until accepted. It fills the gaps that [[Style, Theme and Stylesheet Files]] leaves open: the full property list, the theme token set, the stylesheet selectors and the shadow keys.
+> The shell defines its own schema for style keys and design tokens. The names are the shell's, chosen once, and the same key means the same thing on every block, module and surface. This note is the accepted proposal (the maintainer accepted it on 2026-10-27, from "create our own YAML schema"); the names are the starting set and may change while the shell is built. It fills the gaps that [[Style, Theme and Stylesheet Files]] leaves open: the full property list, the theme token set, the stylesheet selectors and the shadow keys.
 
 ## Principles
 
@@ -128,14 +128,16 @@ Button:hovered:
 
 ## Open
 
-- [ ] Accept the principles and the key set, or change them.
-- [ ] The colour role names (a Material 3 list is the usual starting point; the set above is smaller).
-- [ ] Modes inside one theme, or one file per mode.
-- [ ] The `$group.name` reference form.
-- [ ] The state, part and selector forms.
-- [ ] Which keys are style and which are block properties (layout).
-- [ ] Whether `elevation` stays a level number or becomes names.
-- [x] The JSON Schema generation from block declarations: proposed in [[JSON Schema and Editor Support]].
+The maintainer accepted the proposal as written on 2026-10-27; the names below are the starting set and may change while the shell is built and tested.
+
+- [x] The principles and the key set.
+- [x] The colour role names.
+- [x] Modes inside one theme.
+- [x] The `$group.name` reference form.
+- [x] The state, part and selector forms.
+- [x] Which keys are style and which are block layout properties: as proposed, with the split revisited when the blocks are specified.
+- [x] `elevation` as a level number.
+- [x] The JSON Schema generation from block declarations: [[JSON Schema and Editor Support]], [[ADR-0011 JSON Schema for Shell Files]].
 
 ## Acceptance criteria
 

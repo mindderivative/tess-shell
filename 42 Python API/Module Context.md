@@ -30,6 +30,7 @@ depends_on: ["[[Module Contract]]"]
 | `ctx.dbus` | A helper over the shared `dbus-fast` service thread | Decided that it exists ([[ADR-0009 D-Bus Client Library]]); shape proposed |
 | `ctx.thread(fn, ...)` | Start a thread that catches and logs its exceptions and is joined on `stop` | Proposed |
 | `ctx.every(seconds, fn)`, `ctx.after(seconds, fn)` | Timers that run `fn` on the loop thread | Proposed |
+| `ctx.on_tick(unit, fn)` | Subscribe to the shell's shared time source (`second` or `minute`) | Decided that a shared source exists (2026-10-27); shape proposed ([[#A shared time source]]) |
 | `ctx.data_dir` | The module's folder, `Modules/<module_name>/` | Proposed |
 | `ctx.state_dir` | A writable folder for the module's own state, under the shell's config directory | Proposed |
 
@@ -253,6 +254,20 @@ level = proxy.get("Percentage")                  # may be awaited off the loop t
 
 - `ctx.every` and `ctx.after` run on the loop thread; use them only for short work. They use tre's timers (`window.after`, `window.every`), which do not wake the loop without a reason ([[Process Model and Threading#Performance notes]]).
 - `ctx.thread(fn)` is for blocking work. An exception is logged with the module's name. The shell joins it on `stop` with a timeout.
+
+## A shared time source
+
+Decided 2026-10-27: the shell offers a shared time source, so modules that show or use the time tick together instead of each running its own timer ([[Clock Module]]). Shape proposed:
+
+```python
+handle = self.ctx.on_tick("minute", self.tick)   # "second" or "minute"
+handle.cancel()                                  # the shell also cancels it on stop
+```
+
+- The callback runs on the loop thread, at the start of each second or minute of the wall clock, for every subscriber in one batch.
+- The shell computes the next boundary from the wall clock each time, so a sleep, a resume or a manual time change corrects itself within one tick.
+- A shell with no module subscribed to `second` runs no one-second timer.
+- The unit is a closed set (`second`, `minute`); finer timing uses `ctx.every`.
 
 ## What the context does not give
 
