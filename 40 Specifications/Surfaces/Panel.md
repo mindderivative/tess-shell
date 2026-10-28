@@ -154,7 +154,7 @@ A Panel has no Python of its own. A module reaches it through shell actions: sho
 ## Design
 
 - A Panel's look is a style file, a stylesheet or inline `style:` over a Box or FlexBox; shape, border, radius, shadow and background are style properties ([[Style, Theme and Stylesheet Files#Rules]]).
-- Shadows: a surface cannot draw outside its own bounds, so a Panel with a shadow needs either a larger transparent surface or a compositor-drawn shadow. Open ([[Shadows on Layer Surfaces]]).
+- Shadows: a surface cannot draw outside its own bounds, so a Panel with a shadow is a larger transparent surface, with the input region on the body ([[ADR-0010 Surface Shadows]], decided 2026-10-27).
 - A visual meld with a Bar or the Frame is drawn with Path blocks and a shared colour, on separate surfaces ([[Surface Types#Risks]]).
 
 ## Accessibility
@@ -194,7 +194,7 @@ A Panel has no Python of its own. A module reaches it through shell actions: sho
 - [ ] **A collapsed handle** (a strip that stays when the Panel is collapsed, as in the Edge Shell design) and its hover zone.
 - [ ] **Dragging across monitors.** tre clamps a drag to one output.
 - [ ] **Auto-hide timing** for an OSD, and who resets it when a new value arrives (a module re-shows the Panel).
-- [ ] **Shadows** (the two routes in [[Shadows on Layer Surfaces]]).
+- [ ] Shadow margin and token key names ([[ADR-0010 Surface Shadows]]).
 - [ ] **Keys the kind adds** beyond the table, and how a Panel becomes the baseline for other kinds.
 
 ## Acceptance criteria

@@ -249,7 +249,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 - [ ] Inner border, outer border, or both.
 - [ ] A strip against a Bar attached to the Frame: when to use which, and whether a strip can be hidden on its own.
 - [ ] Whether the Frame can be hidden or shown at runtime, and what the reservers do while hidden.
-- [ ] Shadows ([[Shadows on Layer Surfaces]]) and whether the `shadows` property is excluded from the hit shape.
+- [ ] Shadow tokens ([[ADR-0010 Surface Shadows]]) and whether the `shadows` property is excluded from the hit shape.
 
 ## Acceptance criteria
 

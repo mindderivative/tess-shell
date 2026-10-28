@@ -124,7 +124,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 ## Design
 
 - The look is a style file, stylesheet or inline `style:` over the root container: background, border, corner radius, shadow, opacity ([[Style, Theme and Stylesheet Files#Rules]]).
-- Shadows: a surface cannot draw outside its own bounds. A Bar with a shadow needs a larger transparent surface (the zone covers the body only, `input_region` follows the body), or a compositor-drawn shadow ([[Shadows on Layer Surfaces]]).
+- Shadows: a surface cannot draw outside its own bounds. A Bar with a shadow is a larger transparent surface; the zone covers the body only and `input_region` follows the body ([[ADR-0010 Surface Shadows]], decided 2026-10-27).
 - Rounded corners on a full-span bar are drawn with the container's corner radius; a bar that melds into the Frame uses Path blocks ([[Frame#Melding]]).
 
 ## Accessibility
@@ -157,7 +157,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 - [ ] Auto-hide details: the hover strip, the delay, a keyboard reveal.
 - [ ] How the shell orders its Bar against the Plasma panel on the same edge.
 - [ ] A vertical bar's layout (a FlexBox with vertical alignment, text rotation).
-- [ ] Shadows ([[Shadows on Layer Surfaces]]).
+- [ ] Shadow margin and token key names ([[ADR-0010 Surface Shadows]]).
 
 ## Acceptance criteria
 

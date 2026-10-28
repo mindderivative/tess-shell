@@ -2,7 +2,7 @@
 title: Shadows on Layer Surfaces
 aliases: [Surface Shadows, Shadow Research]
 type: research
-status: draft
+status: stable
 owner: phil
 created: 2026-10-25
 updated: 2026-10-27
@@ -14,6 +14,7 @@ depends_on: []
 # Shadows on layer surfaces
 
 > [!summary]
+> Decided 2026-10-27: route B, in-surface ([[ADR-0010 Surface Shadows]]).
 > Every shell surface can have a shadow with elevation and colour. There are two ways to get one: draw it inside the surface (a larger, transparent surface), or ask the compositor to draw it. KDE has a protocol for the second. Live tests on KWin 6.8.1 (2026-10-27) show route A works for top and overlay layer surfaces, and that neither route has a measurable cost at Bar and Panel size. The rest is still to research.
 
 Maintainer position (2026-10-25): KDE does shadows, so all surfaces can do shadows; the open job is to find out how other shells and desktops do it.
