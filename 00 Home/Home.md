@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | JSON Schema: draft-07 and `.shell/schemas/` decided; `jsonschema` cost measured ([[JSON Schema and Editor Support]]) |
+| Last change | JSON Schema: schemas in the config directory and ignored by git; lazy import and a validation cache decided ([[JSON Schema and Editor Support]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0011 JSON Schema for Shell Files]] (10 accepted; ADR-0002 superseded) |
-| Waiting on you | The `jsonschema` dependency plan (lazy import and a validation cache, [[JSON Schema and Editor Support#Open]]); review the [[Style Schema]] proposal (keys, tokens, modes, selectors); the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
+| Waiting on you | Review the [[Style Schema]] proposal (keys, tokens, modes, selectors); the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
 | Next | Module specs (Workspaces, Audio), the Popup spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -45,14 +45,14 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
-| 2026-10-27 | JSON Schema: draft-07, `.shell/schemas/`, dependency cost measured ([[JSON Schema and Editor Support]]) |
+| 2026-10-27 | JSON Schema: config-directory location, lazy import, validation cache ([[JSON Schema and Editor Support]]) |
+| 2026-10-27 | JSON Schema: draft-07, dependency cost measured ([[JSON Schema and Editor Support]]) |
 | 2026-10-27 | [[ADR-0011 JSON Schema for Shell Files]] accepted (Option A) |
 | 2026-10-27 | [[Style Schema]] proposed: style keys, theme tokens, selectors |
 | 2026-10-27 | Shadows decided: in-surface, [[ADR-0010 Surface Shadows]] |
 | 2026-10-27 | Shadow performance test: routes A and B cost nothing measurable at Panel size ([[Shadows on Layer Surfaces]]) |
 | 2026-10-27 | Shadow test on KWin 6.8.1: compositor shadows work on top and overlay layer surfaces ([[Shadows on Layer Surfaces]]) |
 | 2026-10-27 | Frame layer and hosted melding decided ([[Frame]]) |
-| 2026-10-27 | Frame: melds on strips, strip expand/contract/peek, hosted melding proposed ([[Frame]]) |
 
 ## Go to
 

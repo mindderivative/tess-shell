@@ -36,7 +36,7 @@ The shell has five YAML file types and many keys ([[Common Keys and Conventions]
 
 ## Decision
 
-Option A (maintainer, 2026-10-27). Draft-07 keywords and the location (the project root, under `.shell/schemas/`) were decided the same day. The `jsonschema` dependency stays open in [[JSON Schema and Editor Support#Open]]: validation runs at start and on reload, not per frame.
+Option A (maintainer, 2026-10-27). Decided the same day: draft-07 keywords; the schemas live in the config directory, `$HOME/.config/tesserae-shell/schemas/`, ignored by version control; `jsonschema` is imported lazily and a validation cache skips unchanged files. Validation runs at start and on reload, not per frame. Open items are in [[JSON Schema and Editor Support#Open]].
 
 ## Consequences
 
