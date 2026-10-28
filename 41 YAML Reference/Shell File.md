@@ -70,7 +70,7 @@ root:
 | `movable` | A Panel the mouse can move; its position is saved | panel | Proposed |
 | `hidden` | Start hidden | All | Proposed |
 | `attach_to` | The name of the surface a Panel attaches to | panel | Proposed (decided: attachment is by naming the surface) |
-| `anchor_to` | The name of the surface a Popup hangs off | popup | Proposed |
+| `anchor_to` | The name of the surface a Popup hangs off; optional, because the caller's surface is the parent ([[Popup#Parent and anchor]]) | popup | Proposed |
 
 Names follow tre's so the shell maps them directly. Per-kind keys (a Frame's side thicknesses and corner shapes, a Bar's span, a Popup's gravity) are listed in the per-kind specs once written ([[Surface Types]]).
 

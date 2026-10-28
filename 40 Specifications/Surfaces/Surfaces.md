@@ -18,4 +18,5 @@ depends_on: []
 | [[Surface Types]] | Bar, Frame, Panel, Popup: what each is and how it maps to tre | draft |
 | [[Bar]] | A surface attached to an edge that reserves space: geometry, the zone and margin rule, auto-hide | draft |
 | [[Frame]] | A ring around the screen: painter plus reservers, corners, melding | draft |
-| [[Panel]] | The multi-purpose surface: position, attachment, layers, keyboard, the four uses | draft |
+| [[Panel]] | The multi-purpose surface: position, attachment, layers, keyboard, the four uses | review |
+| [[Popup]] | A menu, flyout or tooltip off a rectangle of another surface: placement, size, focus, dismissal | draft |

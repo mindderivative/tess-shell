@@ -31,10 +31,10 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | [[Open Questions]]: a Dataview table of unverified claims, with what to verify |
+| Last change | Wrote the [[Popup]] spec (draft, nine open questions with recommendations) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0012 Keeping the Shell Above Plasma Panels]] (11 accepted; ADR-0002 superseded) |
-| Waiting on you | Confirm or change the spec order in the [[Roadmap]]; key names the specs mark proposed; the registry rebuild rules |
-| Next | Finish the specs in the [[Roadmap#Spec backlog (proposed order)]]: the Popup spec first. Module specs wait |
+| Waiting on you | Answer the nine [[Popup#Open questions]]; key names the specs mark proposed; the registry rebuild rules |
+| Next | Runtime specs: shell start and stop, config discovery and registry, validation and errors, hot reload ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
 | Deferred to testing | Which global settings belong in `settings.yaml` ([[Settings File]]); First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]); the four reservers plus the painter on KWin and a 4K Frame with many joins ([[Frame]]); fractional scale at 1.5x ([[Frame]]); fullscreen stacking and detection ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]); Bar over a Plasma panel ([[Bar]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-28 | [[Popup]] spec drafted |
 | 2026-10-27 | [[Open Questions]]: Dataview table of unverified claims and what to verify |
 | 2026-10-27 | [[Open Questions]]: Dataview list of unverified notes |
 | 2026-10-27 | [[Roadmap]], [[Open Questions]], [[Risk Register]] written |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-27 | ADR-0012 accepted; Frame `edges`; [[TRE-REQ-006 Repeating Gradients]] written; specs reviewed |
 | 2026-10-27 | [[ADR-0012 Keeping the Shell Above Plasma Panels]] proposed |
 | 2026-10-27 | KWin layer order and window rules recorded in [[Surface Types]] |
-| 2026-10-27 | [[Bar]] margins restored: reserved, so it is still a Bar |
 
 ## Go to
 

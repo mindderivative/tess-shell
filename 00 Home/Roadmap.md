@@ -22,7 +22,7 @@ depends_on: []
 |---|---|---|---|
 | Vision | [[10 Vision]]: [[Problem Statement]], [[Goals and Non-Goals]], [[Personas and Use Cases]], [[V1 Scope]] | stable | Nothing |
 | Architecture | [[20 Architecture]]: [[System Context]], [[Layers and Components]], [[Process Model and Threading]], [[Data Flow]], [[Shell Structure]] | draft | A service layer note (shared D-Bus and time source) |
-| Surfaces | [[Surfaces]]: [[Surface Types]], [[Bar]], [[Frame]], [[Panel]] | review (Surface Types draft) | The Popup spec; the Special Cases kinds (a Notification window) |
+| Surfaces | [[Surfaces]]: [[Surface Types]], [[Bar]], [[Frame]], [[Panel]], [[Popup]] | review (Surface Types and Popup draft) | The Special Cases kinds (a Notification window, after v1) |
 | Integration | None yet | not started | Wayland protocols, KWin (the fullscreen script, window rules), Plasma coexistence, the shared D-Bus service layer, portals, global shortcuts |
 | Runtime | [[Runtime]]: [[Expression Language Requirements]]; [[Settings File]], [[Shell File]], [[Module File]], [[Common Keys and Conventions]] (in `41`) | draft | Config discovery and layering, the registry, validation and error reporting, hot reload, shell start and stop, IPC and CLI, logging |
 | Python API | [[42 Python API]]: [[Module Contract]], [[Module Context]], [[Value Types and Conversion]], [[Python Builder]] | draft | Service APIs, events, versioning and stability |
@@ -39,7 +39,7 @@ Recommendation: write the notes that other notes already point at first, then th
 
 | # | Note | Folder | Why now |
 |---|---|---|---|
-| 1 | Popup | `40 Specifications/Surfaces/` | Completes Surfaces; Panel, Bar and the module contract already refer to it |
+| 1 | Popup (written 2026-10-28, draft) | `40 Specifications/Surfaces/` | Completes Surfaces; Panel, Bar and the module contract already refer to it |
 | 2 | Shell Start and Stop (the runtime lifecycle), Config Discovery and Registry, Validation and Errors, Hot Reload | `40 Specifications/Runtime/` | The settings, schema and module notes depend on them |
 | 3 | IPC and CLI | `40 Specifications/Runtime/` | ADR-0011 and ADR-0012 name commands (`schema`, the rule install and remove) |
 | 4 | Logging | `40 Specifications/Runtime/` | Settings File sets the folder and file names; the research note is open |
