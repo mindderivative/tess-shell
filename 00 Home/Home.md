@@ -31,9 +31,9 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Decided: the Frame stays on `top` and melded Bars and Panels are hosted in its surface ([[Frame#Hosted melding (decided 2026-10-27)]]) |
+| Last change | Shadow tests on KWin 6.8.1: the compositor route works on top and overlay, and neither route has a measurable cost at Panel size ([[Shadows on Layer Surfaces]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0009 D-Bus Client Library]] (8 accepted; ADR-0002 superseded) |
-| Waiting on you | The elevation shadows route ([[Shadows on Layer Surfaces]]); the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
+| Waiting on you | The elevation shadows route: compositor-drawn (needs an engine request) or in-surface (works today), see [[Shadows on Layer Surfaces]]; the Frame's `sides` key and the painter hosting strips; review [[Bar]], [[Frame]], [[Panel]], [[Clock Module]] |
 | Next | Module specs (Workspaces, Audio), the Popup spec, then `60 Quality` |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-27 | Shadow performance test: routes A and B cost nothing measurable at Panel size ([[Shadows on Layer Surfaces]]) |
 | 2026-10-27 | Shadow test on KWin 6.8.1: compositor shadows work on top and overlay layer surfaces ([[Shadows on Layer Surfaces]]) |
 | 2026-10-27 | Frame layer and hosted melding decided ([[Frame]]) |
 | 2026-10-27 | Frame: melds on strips, strip expand/contract/peek, hosted melding proposed ([[Frame]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-27 | Frame contents decided: ring, melded Bars and Panels, or thick-edge strips ([[Frame]]) |
 | 2026-10-27 | tre 0.5.9 released; [[TRE-REQ-005 Keep-Alive and Loop Stop]] and the hit-testing work shipped ([[Bar]] and [[Frame]] specs drafted) |
 | 2026-10-27 | [[Panel]] spec drafted |
-| 2026-10-27 | Structure settled: Checkbox, blocks anywhere, popup contents ([[Shell Structure]]) |
 
 ## Go to
 

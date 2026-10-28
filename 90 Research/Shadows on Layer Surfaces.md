@@ -14,7 +14,7 @@ depends_on: []
 # Shadows on layer surfaces
 
 > [!summary]
-> Every shell surface can have a shadow with elevation and colour. There are two ways to get one: draw it inside the surface (a larger, transparent surface), or ask the compositor to draw it. KDE has a protocol for the second. A live test on KWin 6.8.1 (2026-10-27) shows route A works for top and overlay layer surfaces. The rest is still to research.
+> Every shell surface can have a shadow with elevation and colour. There are two ways to get one: draw it inside the surface (a larger, transparent surface), or ask the compositor to draw it. KDE has a protocol for the second. Live tests on KWin 6.8.1 (2026-10-27) show route A works for top and overlay layer surfaces, and that neither route has a measurable cost at Bar and Panel size. The rest is still to research.
 
 Maintainer position (2026-10-25): KDE does shadows, so all surfaces can do shadows; the open job is to find out how other shells and desktops do it.
 
@@ -52,6 +52,26 @@ A scratch C client (not in the vault, in /tmp) created a 320x140 layer surface a
 - Not tested: the bottom and background layers on a visible area, shadows on a Frame-sized surface, popups, multi-output, and fractional scaling.
 - The shadow is compositor-drawn, so it is outside the surface: it does not count in the exclusive zone and the client cannot clip or animate it except by replacing the tiles.
 
+## Performance test, route A against route B (2026-10-27)
+
+Setup: KWin 6.8.1 on the live session, tre 0.5.8 (editable install), a 320x140 body with 12 px corners. Route B used a tre `LayerWindow` of 384x204 (a 32 px transparent margin) with a fill change every 16 ms so each frame redraws for 600 frames (about 10 s), read with `frame_stats()`; three repetitions per variant, means below. Route A used the scratch C client with static tiles (offset 24). KWin CPU is the `kwin_wayland` process time over the 10 s run. Scripts are in /tmp (not in the vault).
+
+| Variant | Surface | fps | Client CPU per frame | Draw stage | GPU per frame | KWin CPU per 10 s |
+|---|---|---|---|---|---|---|
+| B0: body only, no margin, no shadow | 320x140 | 60.0 | 0.44 ms | 0.38 ms | 0.04 ms | 0.58 s |
+| B1: margin, no shadow | 384x204 | 60.0 | 0.48 ms | 0.41 ms | 0.04 ms | 0.56 s |
+| B2: margin, tre card shadow (two layers) | 384x204 | 60.0 | 0.46 ms | 0.40 ms | 0.08 ms | 0.59 s |
+| B3: margin, one wide soft shadow (blur 24) | 384x204 | 60.0 | 0.43 ms | 0.37 ms | 0.06 ms | 0.59 s |
+| A: compositor shadow, static C client | 320x140 | no frames | none | none | none | 0.53 to 0.66 s (no shadow: 0.51 to 0.59 s) |
+
+Reading:
+
+- Route B costs 0.00 to 0.04 ms of client CPU and 0.02 to 0.04 ms of GPU per frame over a margin without a shadow, well under the 16.7 ms budget. Frames stayed at 60 fps in every run.
+- Video memory in tre was identical for all variants (524,528 bytes allocated in the shared device; the surface is too small to show up). The extra pixels of the margin cost 134,144 bytes per buffer (32 px on every side of this body), so a Frame-sized or Bar-sized margin must be computed, not assumed.
+- Route A costs the client nothing per frame. Its tile buffers are small shared-memory buffers (the client's resident memory was 2.4 MB without and 2.6 MB with the shadow). KWin's CPU with and without the shadow differs by less than the run-to-run spread (about 0.1 s per 10 s), so the shadow adds no measurable compositor cost on this machine.
+- Limits: route A was a static surface, route B was a redrawing one, so the rows measure different things and are not a like-for-like frame comparison. The test used one monitor, one small surface and a vsync-bound loop (the acquire stage holds about 16 ms of every frame, so CPU and GPU per frame are the figures to read, not total time). A large surface (Frame, a wide Bar with a margin) was not measured; route B's cost scales with its pixel area.
+- Conclusion: performance does not separate the routes at Bar and Panel size. The choice rests on other factors: route A needs tre to expose the surface (an engine request), draws outside the surface (not in the exclusive zone, not animatable except by replacing tiles), and needs no transparent margin or input-region handling; route B works with tre 0.5.8 today and lets the shadow animate with the node, at the price of a margin that every surface must declare.
+
 ## The maintainer's earlier work
 
 The `myShell` repository ([README](file:///home/phil/Projects/pyDev/projects/myShell/README.md)) holds the Edge Shell design spec, plan and shell specs, not the code. The maintainer reports a working Fabric version with shadows, animated panels and bars moving out of the frame (2026-10-25). The documents show the approach:
@@ -70,7 +90,7 @@ This supports the maintainer's point that a visual meld works: it is one colour,
 - [ ] How Waybar, eww, Fabric, AGS/Astal, Quickshell shells and COSMIC do shadows.
 - [ ] How the Edge Shell prototype drew its shadows.
 - [ ] Whether tre can expose the surface for route A, and whether the engine accepts a shadow request ([[AGENTS#6. Engine requests (tre / Tesserae)]]). Ask the `tre` session before writing a request.
-- [ ] The memory cost of the larger transparent buffer for route B, per [[Surface Types#Performance budget]].
+- [x] The memory cost of the larger transparent buffer for route B: 134 KB per buffer for a 32 px margin on a 320x140 body (see the performance test). Still to measure at Frame size, per [[Surface Types#Performance budget]].
 
 ## Links
 
