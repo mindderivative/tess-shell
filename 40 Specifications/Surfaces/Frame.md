@@ -68,9 +68,24 @@ A Panel or Bar attached to the Frame looks as if it grows out of it, with rounde
 
 The painter covers the whole output, so a shadow cast from the ring onto the desktop is drawn inside the same surface; no oversize surface is needed, unlike a Bar or Panel ([[Shadows on Layer Surfaces]]). tre's painted hit shape is the fill and the stroke, so a shadow does not take clicks. #needs-verification that the `shadows` property is not part of the hit shape.
 
-### Children
+### What a Frame holds (decided 2026-10-27)
 
-The diagram lets a layer window hold modules and containers. What a Frame holds is open: nothing in v1, or a thin strip along a side (a status line in the ring). See Open questions.
+A Frame can be one of three things, and a single Frame can mix them:
+
+1. A plain frame: just the ring.
+2. A frame with melding Bars or Panels attached to it (see Melding above).
+3. A frame with one or more thicker edges, where a thicker edge acts as a bar: a strip along that side that holds modules, containers and blocks. All four edges can have a strip, or none.
+
+A strip is part of the Frame, not a separate Bar. Its thickness is the side's thickness, so it is reserved space like any side.
+
+**How it is built on tre (proposed).** The painter, which is full-screen and already draws the ring, also hosts the strips' contents. Each strip is a container placed in its side's band, laid out inside the painter's surface. Why this and not separate Bar windows for the strips:
+
+| Option | Description | Verdict |
+|---|---|---|
+| A. The painter hosts the strips | One surface for the ring and its content; the reservers stay thin and empty | Recommended. Ring and content share one surface and one colour, so there is no seam and no layer-order question (the protocol leaves the order of surfaces on one layer undefined). `input_region="auto"` already follows what is drawn, so the strips take clicks and the opening passes through |
+| B. Each strip is its own window | The reserver for that side is sized to the strip and holds the content | A second surface on the same layer as the painter: undefined order, a possible seam, and more windows. It would be a Bar attached to the Frame, which is what Melding already covers |
+
+In option A the keyboard mode of the painter is `on_demand` if any strip holds a text input; otherwise `none`. The painter then takes pointer input over the strips and ring (by `auto`) and nothing in the opening.
 
 ### Multi-monitor
 
@@ -86,7 +101,8 @@ One Frame per monitor, independent: each is a complete ring with its own thickne
 | `corner_radius` | Outer (convex) corners, four-sided | Proposed |
 | `inner_radius` | Inner (concave) corners, four-sided | Proposed |
 | `style` | Background, border, shadow, opacity | Decided (the key); property names proposed |
-| `children` | Blocks, containers and modules | Decided that a layer window has them; what they mean for a Frame is open |
+| `sides` | Per-side overrides: `top`, `right`, `bottom`, `left`, each with its own `thickness` and `children` (the strip) | Proposed; strips decided (2026-10-27), the key form is mine |
+| `children` | Blocks, containers and modules on the Frame itself | Decided that a layer window has them; for a Frame the content goes in a side's strip |
 
 ```yaml
 children:
@@ -101,13 +117,20 @@ children:
             border: true
             border_thickness: 1
             border_color: "#ffffff22"
+        sides:                           # optional: a thicker side acts as a bar
+            top:
+                thickness: 32
+                children:
+                    - Workspaces:
+                    - Spacer:
+                    - Clock:
 ```
 
-An illustration only. `thickness`, `corner_radius` and `inner_radius` are proposals.
+An illustration only. `thickness`, `corner_radius`, `inner_radius` and `sides` are proposals. With no `sides`, the Frame is just the ring, and Bars and Panels can be melded to it.
 
 ## Python contract
 
-The Frame has no Python of its own. The shell builds the painter and reservers from the configuration and recomputes them on an output change. A module can show or hide the Frame through shell actions. Modules placed in a Frame would receive `use` records like any other ([[Module Context#Uses]]).
+The Frame has no Python of its own. The shell builds the painter and reservers from the configuration and recomputes them on an output change. A module can show or hide the Frame through shell actions. Modules placed in a Frame's strips receive `use` records like any other ([[Module Context#Uses]]).
 
 ## Integration
 
@@ -126,7 +149,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 
 - The Frame is decoration. The painter's nodes are hidden from the accessibility tree (tre has an accessibility-hidden property) and are not focusable. The reserving windows are empty.
 - High contrast: the border colour and background come from the theme's high-contrast tokens.
-- Content placed in a Frame (if any) is reachable by keyboard like any module.
+- Content in a Frame's strips is reachable by keyboard like any module; the ring itself is hidden from the accessibility tree.
 
 ## Performance budget
 
@@ -149,12 +172,13 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 
 ## Open questions
 
-- [ ] What a Frame holds: nothing in v1, or a strip along a side.
+- [x] What a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars, all four edges or none (maintainer, 2026-10-27). Open: the key form (`sides`), and the painter hosting the strips (option A, recommended).
 - [ ] Which layer a melded Panel uses and how the join is drawn (who repaints the frame strip), and how wide the seam is while moving (to measure).
 - [ ] The four reservers plus the painter tested together on KWin (tre did not test them together), and a 4K frame with many joins.
 - [ ] Fractional scale: 1 px reservers and the ring edge at 1.5x.
 - [ ] A fullscreen window and the Frame: the protocol puts fullscreen windows typically at the top layer, so a fullscreen window may cover the Frame.
 - [ ] Inner border, outer border, or both.
+- [ ] A strip against a Bar attached to the Frame: when to use which, and whether a strip can be hidden on its own.
 - [ ] Whether the Frame can be hidden or shown at runtime, and what the reservers do while hidden.
 - [ ] Shadows ([[Shadows on Layer Surfaces]]) and whether the `shadows` property is excluded from the hit shape.
 

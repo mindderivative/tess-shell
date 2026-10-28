@@ -44,6 +44,7 @@ Attached to all four edges and corners as a frame around the screen. It reserves
 - Borders, with background and border colours.
 - It can be visually melded into other surfaces, so they look as if they grow out of the frame, with rounded connections and borders.
 - Shadows with elevation and colour (this applies to every surface type).
+- A Frame can be only the ring, can have Bars and Panels melded into it, or can have one or more thicker edges that act as a bar, a strip along that side; all four edges can have a strip, or none (maintainer, 2026-10-27). See [[Frame]].
 
 ### Panel
 
