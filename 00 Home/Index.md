@@ -60,6 +60,7 @@ Operating rules for agents: [[AGENTS]].
 | [[ADR-0009 D-Bus Client Library]] | accepted (2026-10-26) | Module and integration specs |
 | [[ADR-0010 Surface Shadows]] | accepted (2026-10-27) | Bar, Panel and Frame specs, design tokens |
 | [[ADR-0011 JSON Schema for Shell Files]] | accepted (2026-10-27) | YAML reference, runtime validation, tooling |
+| [[ADR-0012 Keeping the Shell Above Plasma Panels]] | proposed (2026-10-27) | Bar, Frame, KWin integration, delivery |
 | [[ADR-0003 Process Model]] | accepted (2026-10-25) | Architecture, runtime, quality |
 | [[ADR-0004 Plasma Coexistence]] | accepted (2026-10-25) | Integration specs |
 | [[ADR-0005 Global Shortcuts]] | accepted (2026-10-25) | Launcher, integration specs |
