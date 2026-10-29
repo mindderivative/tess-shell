@@ -80,7 +80,11 @@ What tre reports and I did not check:
 - After process A exited the token stayed on the clipboard, probably because a clipboard manager (Klipper) took ownership. Without one a write is gone when its writer exits, so the shell must not rely on a write outliving its process.
 - Not covered: images and other non-text data, the primary selection, and pasting with Ctrl+V into a focused text field on KWin (no key injection there).
 
-The design `tre` suggests for a repository test needs no keys and no external tools: two processes with `DISPLAY` unset, one writes and stays alive, the other reads. It overwrites the real clipboard, so it would be opt-in and restore the previous text. About 60 to 80 lines. It is not built. Whether to file it with tre is the maintainer's decision.
+The design `tre` suggested for a repository test needs no keys and no external tools: two processes with `DISPLAY` unset, one writes and stays alive, the other reads.
+
+**Built and passing (tre, 2026-10-29).** `tre` then built it as `tests/test_clipboard_layer_live.py` (issue #243, branch `clipboard-test-243`, commit `5ff9bd6`, local and not pushed; I confirmed the branch, the commit and the file in the local tre checkout). Two processes, each a small click-through layer window with keyboard `none` and `DISPLAY` unset (asserted in the test), so the X11 fallback cannot pass. Three tests: a unique token; multi-line Unicode text; a second process's write replacing the first. tre reports it passes on KWin 6.8.1 and on a headless sway. It overwrites the real clipboard, so on a real desktop it runs only with `TRE_LIVE_CLIPBOARD=1`; the previous text is saved in memory, never printed, and put back. Under `tools/sway_live.sh` it runs unasked. If the shell wants the same proof in its own tests, the `Child`, `read` and `write_and_hold` helpers in that file can be copied. Limits: text only; with no clipboard manager a restored text lives only while the restoring process lives.
+
+The maintainer said on 2026-10-29 to file it with tre. Nothing needed filing: it already existed. I told the `tre` session by mailbox that the maintainer wants it, and that I filed and pushed nothing; the maintainer reviews and pushes it in the tre project.
 
 ### How the shell reaches them (decision wanted)
 
@@ -162,7 +166,7 @@ Answered on 2026-10-28.
 2. [x] Virtual desktops: the KWin D-Bus interface (as recommended).
 3. [x] A diagnostic: part of `tesserae-shell status`, not a new command (as recommended).
 4. [x] Blur behind translucent surfaces: an engine request later (as recommended).
-5. [x] The data-control protocol and a clipboard test: tre answered (see Clipboard above): `ext_data_control_manager_v1` first, then the wlr one; a one-shot check passed on KWin 6.8.1; the repository test is not built. The shell must still have its own test that proves clipboard read and write on KWin ([[#Acceptance Criteria]], maintainer, 2026-10-28). Open: whether the maintainer wants the test filed with tre (maintainer's call).
+5. [x] The data-control protocol and a clipboard test: tre answered and then built the test (see Clipboard above). The shell still has its own test criterion ([[#Acceptance Criteria]]); it can reuse tre's helpers. The maintainer asked for the test to be filed with tre on 2026-10-29; it already existed as tre issue 243.
 6. [x] Binding KDE-private protocols from a service or autostart launch: permission given (maintainer, 2026-10-28). Tested as a systemd user service: it works. An autostart launch is still untested.
 
 ## Acceptance Criteria
@@ -172,7 +176,7 @@ Answered on 2026-10-28.
 - [ ] With `wp_fractional_scale_manager_v1` absent, surfaces still open at integer scale.
 - [ ] The Tasks module gets its window list from the KWin script and does not open a second Wayland connection.
 - [ ] The listing of KWin's globals is repeated on each KWin release and the tables here are updated.
-- [ ] A test proves that clipboard write and read work from a layer surface on KWin: two processes with `DISPLAY` unset, one writes and stays alive, the other reads the same token; it is opt-in and restores the previous clipboard text (text only; images and the primary selection are not covered).
+- [ ] A test proves that clipboard write and read work from a layer surface on KWin. tre's `tests/test_clipboard_layer_live.py` (two processes, `DISPLAY` unset, opt-in with `TRE_LIVE_CLIPBOARD=1`) is the model; the shell's test reuses its helpers and restores the previous clipboard text. Text only; images and the primary selection are not covered.
 
 ## Links
 
