@@ -43,7 +43,7 @@ On a compositor without KDE's shortcut service the launcher still opens from the
 
 ### The interface
 
-Proposed methods. Names are `CamelCase` as D-Bus convention; every method that changes the shell returns a success flag and a message, or raises a D-Bus error.
+Proposed methods. Names are `CamelCase` as D-Bus convention; every method that changes the shell returns a success flag and a message as two values (signature `bs`, not a struct), or raises a D-Bus error. The test below showed `dbus-fast` returning two values from a method annotated `bs`.
 
 | Method | Arguments | Result | What it does |
 |---|---|---|---|
@@ -126,7 +126,7 @@ None. A module's `@action` methods are reachable through `Call`, and a module ne
 
 ## Integration
 
-- D-Bus: `dbus-fast` on the shared service thread, exporting the object ([[ADR-0009 D-Bus Client Library]]). Exporting was listed there as later work and is v1 work if [[ADR-0013 Control Interface]] is accepted. #needs-verification that `dbus-fast` exports an object with methods, properties and signals as needed.
+- D-Bus: `dbus-fast` on the shared service thread, exporting the object ([[ADR-0009 D-Bus Client Library]]). Exporting was listed there as later work and is v1 work if [[ADR-0013 Control Interface]] is accepted. Verified on 2026-10-28 with `dbus-fast` 5.2.0 (a scratch install, not on the system): a service exported a method returning `bs`, a method that raises a named D-Bus error, a method taking `as`, a read-only property with change notification, and a signal, under a name requested on the session bus; `busctl introspect`, `busctl call` and `busctl monitor` all worked, and a second `DO_NOT_QUEUE` request for the name got `EXISTS` ([[ADR-0013 Control Interface#Context]]).
 - KWin script: calls `callDBus(service, path, interface, "FullscreenState", outputs, callback)`; the call is asynchronous ([KWin scripting API](https://develop.kde.org/docs/plasma/kwin/api/), read 2026-10-28). How the script finds the shell's name and what it does when the shell is not running (the call fails, the callback ignores it) is specified with the script in the Integration notes.
 - Plasma coexistence: the shell owns only its own name, so nothing here claims a name plasmashell uses ([[ADR-0004 Plasma Coexistence]]).
 
