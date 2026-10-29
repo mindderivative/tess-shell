@@ -89,9 +89,9 @@ One executable, `tesserae-shell` (name proposed), also `python -m tesserae_shell
 
 Global options: `--config-dir PATH` (overrides the config directory, for tests), `--json`, `--timeout SECONDS` (default 5), `--quiet`.
 
-- **Fast to start.** A command from a shortcut must start quickly. The client path imports only the standard library and the D-Bus client; it never imports tre, Loguru, `jsonschema`, PyYAML or TEL. Measured: a client that connects to the bus and makes one call takes about 20 ms on this machine with `jeepney` ([[ADR-0013 Control Interface#Context]]). Heavy imports happen inside `run`, `check` and `schema` only.
+- **Fast to start.** A command from a shortcut must start quickly. The client path imports only the standard library and the D-Bus client; it never imports tre, Loguru, `jsonschema`, PyYAML or TEL. Measured on this machine: a `jeepney` client making one call takes about 21 ms ([[ADR-0013 Control Interface#Context]]). Heavy imports happen inside `run`, `check` and `schema` only.
 - The framework is `argparse` (standard library, nothing to install, the lowest start-up cost). Recommendation; `click` is installed here (8.5.0) but is a dependency.
-- The D-Bus client is `jeepney` (blocking, pure Python, the named fallback in [[ADR-0009 D-Bus Client Library]]). Recommendation.
+- The D-Bus client is `jeepney` (blocking, pure Python, the named fallback in [[ADR-0009 D-Bus Client Library]]). Recommendation, now backed by a measurement: a `jeepney` client making one call took 21.0 ms, a `dbus-fast` client 53.2 ms (its asyncio import dominates), and `busctl --user call` 1.5 ms. A shortcut can call `busctl` directly and skip Python altogether.
 - **Output.** Plain text for people, one result per line; `--json` for scripts, as one JSON object. Errors go to stderr in the printed form of [[Validation and Errors#The error record]].
 
 ### Exit codes of the client
@@ -163,7 +163,7 @@ Plain text and exit codes are readable by a screen reader and a script. `--json`
 2. **The bus name** `io.github.mindderivative.TesseraeShell` (recommended), or another.
 3. **The command name** `tesserae-shell`.
 4. `argparse` for the CLI (recommended), or `click`.
-5. `jeepney` as the CLI's D-Bus client (recommended), or `dbus-fast`.
+5. `jeepney` as the CLI's D-Bus client (recommended; 21 ms against 53 ms for `dbus-fast`), or `dbus-fast`.
 6. A `call` command that reaches module `@action` methods (recommended), or none.
 7. An `events` subcommand that streams the signals: later (recommended), or v1.
 8. A `log-level` command (recommended).

@@ -31,7 +31,7 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Wrote [[IPC and CLI]] (draft) and proposed [[ADR-0013 Control Interface]]: one D-Bus interface, the command line as a thin client |
+| Last change | Tested `dbus-fast` 5.2.0 for the control interface: it exports methods, a property and a signal; as a client `jeepney` is faster ([[ADR-0013 Control Interface#Context]]) |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0012 Keeping the Shell Above Plasma Panels]] (11 accepted; ADR-0013 proposed; ADR-0002 superseded) |
 | Waiting on you | Accept or change [[ADR-0013 Control Interface]]; the twelve [[IPC and CLI#Open questions]]; key names the specs mark proposed |
 | Next | Logging, then the Integration specs ([[Roadmap#Spec backlog (proposed order)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-28 | `dbus-fast` export and client cost tested ([[ADR-0013 Control Interface]]) |
 | 2026-10-28 | [[IPC and CLI]] written; [[ADR-0013 Control Interface]] proposed |
 | 2026-10-28 | [[Shell Start and Stop]]: `XDG_RUNTIME_DIR` rule decided |
 | 2026-10-28 | Runtime specs: all questions answered, in review |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-28 | Four Runtime specs written (start and stop, discovery and registry, validation and errors, hot reload) |
 | 2026-10-28 | [[Popup]] answers applied; [[TRE-REQ-007 Popup Body Geometry]] written |
 | 2026-10-28 | [[Popup]] spec drafted |
-| 2026-10-27 | [[Open Questions]]: Dataview table of unverified claims and what to verify |
 
 ## Go to
 
