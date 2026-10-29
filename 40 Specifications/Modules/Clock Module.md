@@ -11,12 +11,12 @@ related: ["[[Modules]]", "[[Module Contract]]", "[[Module Context]]", "[[Module 
 depends_on: ["[[Module Contract]]", "[[Module File]]"]
 ---
 
-# Clock module
+# Clock Module
 
 > [!summary]
 > The Clock shows the time. It is the simplest v1 module: no service, no D-Bus, no worker thread. Its layout is a Label, its style a small file, and its Python a timer on the loop thread that sends a formatted string once per second (or once per minute when the format has no seconds). Several uses can show different formats and time zones from one instance. All names and YAML below are illustrations built on the proposals in [[Module File]] and [[Module Context]]; nothing here is final.
 
-## Purpose and scope
+## Purpose and Scope
 
 - Show the current time, and optionally a date in a tooltip, on any surface that places the module.
 - v1: local time and an optional fixed time zone per use, formatted as the desktop does by default. A clock face, alarms, timers and a calendar are out of scope ([[V1 Scope#After v1]]); no calendar to start with (maintainer, 2026-10-27).
@@ -114,13 +114,13 @@ An illustration of the shape, not tested code. With the shared time source ([[Mo
 
 ## Configuration
 
-| Param | Type | Default | Meaning |
-|---|---|---|---|
-| `format` | string | empty | A `strftime` pattern for the shown text (decided 2026-10-27). Empty derives the pattern from the desktop's time format, with `hour_cycle` applied |
-| `locale` | string | empty | A locale name for month and day names; empty follows the desktop |
-| `hour_cycle` | string | `desktop` | `desktop`, `12` or `24`; the user can set it (decided 2026-10-27) |
-| `timezone` | string | empty | An IANA zone name such as `Europe/Berlin`; empty uses the local zone |
-| `tooltip_format` | string | `%A, %d %B %Y` | The text a tooltip shows |
+| Param            | Type   | Default        | Meaning                                                                                                                                           |
+|------------------|--------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| `format`         | string | empty          | A `strftime` pattern for the shown text (decided 2026-10-27). Empty derives the pattern from the desktop's time format, with `hour_cycle` applied |
+| `locale`         | string | empty          | A locale name for month and day names; empty follows the desktop                                                                                  |
+| `hour_cycle`     | string | `desktop`      | `desktop`, `12` or `24`; the user can set it (decided 2026-10-27)                                                                                 |
+| `timezone`       | string | empty          | An IANA zone name such as `Europe/Berlin`; empty uses the local zone                                                                              |
+| `tooltip_format` | string | `%A, %d %B %Y` | The text a tooltip shows                                                                                                                          |
 
 Placing it. The call form is decided in [[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]. One clock in a container:
 
@@ -143,7 +143,7 @@ children:
         format: "%H:%M NY"
 ```
 
-## Python contract
+## Python Contract
 
 The class follows [[Module Contract]]. It uses `ctx.uses`, `use.params`, `ctx.send(..., use=)` and `ctx.after`. It has no `stop` work (the shell cancels timers) and no `reload` work beyond re-reading params on the next tick. A changed `format` or `timezone` in a use takes effect on the next tick.
 
@@ -165,22 +165,22 @@ Tokens and components used: the Label module over the Text block; a text class f
 - A screen reader must not be told on every tick. The text is read when the user focuses the element or asks for it; live announcement is off by default (proposed). #needs-verification against how tre publishes name changes ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]).
 - The tooltip text is available as a description.
 
-## Performance budget
+## Performance Budget
 
 - One timer for all uses. With seconds, one wake and one text update per second per distinct text; without seconds, one per minute. No frames between updates ([[TRE-REQ-001 Layer Surface Window]]: an idle surface draws no frames).
 - Per tick: under 1 ms on the loop thread (proposed; measured in the testing phase).
 - A Clock must not add a timer that fires faster than the shown unit.
 
-## Failure modes and recovery
+## Failure Modes and Recovery
 
-| Failure | Result |
-|---|---|
-| A `format` that is not a valid pattern, or that raises | Validated when the use is loaded: error naming the param and the file, the use shows the fallback (`--:--`); other uses are unaffected |
-| An unknown `timezone` | Error at load for that use, naming the param and the file (validated when the use is added); the use shows the fallback |
-| The system time jumps (resume, manual change, daylight saving) | The next tick is computed from the wall clock, so it corrects within one tick |
-| The timer callback raises | Logged with the module name; the next tick is still scheduled (the schedule is set before work that can fail; proposed) |
+| Failure                                                        | Result                                                                                                                                 |
+|----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| A `format` that is not a valid pattern, or that raises         | Validated when the use is loaded: error naming the param and the file, the use shows the fallback (`--:--`); other uses are unaffected |
+| An unknown `timezone`                                          | Error at load for that use, naming the param and the file (validated when the use is added); the use shows the fallback                |
+| The system time jumps (resume, manual change, daylight saving) | The next tick is computed from the wall clock, so it corrects within one tick                                                          |
+| The timer callback raises                                      | Logged with the module name; the next tick is still scheduled (the schedule is set before work that can fail; proposed)                |
 
-## Open questions
+## Open Questions
 
 - [x] `strftime` patterns (maintainer, 2026-10-27, the recommendation). Open: locale-aware names through the `locale` param.
 - [x] Follow the desktop's 12 or 24 hour setting and locale by default; the user can set both (maintainer, 2026-10-27). Open: how KDE exposes them. #needs-verification
@@ -188,7 +188,7 @@ Tokens and components used: the Label module over the Text block; a text class f
 - [x] No calendar to start with (maintainer, 2026-10-27).
 - [x] The shell offers a shared time source (maintainer, 2026-10-27); the shape is in [[Module Context#A shared time source]].
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [ ] A bar shows the local time in the desktop's format, and the text changes at the start of each minute when the format has no seconds.
 - [ ] With `hour_cycle: 12` the time shows in 12-hour form; with `locale: de_DE` day and month names are German.

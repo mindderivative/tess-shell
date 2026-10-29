@@ -11,26 +11,26 @@ related: ["[[10 Vision]]", "[[Goals and Non-Goals]]", "[[Personas and Use Cases]
 depends_on: []
 ---
 
-# Problem statement
+# Problem Statement
 
 > [!summary]
 > People who want a custom desktop shell on Linux (a bar, a dock, OSDs, a launcher, desktop widgets) today choose between a toolkit-specific shell framework written in QML or GTK, or a fixed set of Plasma panels. Tesserae Shell offers a third way: describe surfaces in YAML, put logic in Python, and render everything with the tre GPU engine, alongside an unchanged KDE Plasma session.
 
-## The gap
+## The Gap
 
 [[Prior Art - Linux Shell Surfaces]] surveys the shells and libraries people use today. Four things stand out:
 
-| Observation | Source |
-|---|---|
-| Every shell surveyed places its surfaces on `wlr-layer-shell`; none uses compositor rules or KDE's own panel protocol. | [[Prior Art - Linux Shell Surfaces#Patterns]] |
+| Observation                                                                                                                                                                                                                                      | Source                                  |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
+| Every shell surveyed places its surfaces on `wlr-layer-shell`; none uses compositor rules or KDE's own panel protocol.                                                                                                                           | [[Prior Art - Linux Shell Surfaces#Patterns]] |
 | The surveyed shells are built on a UI toolkit chosen by their authors: QML on Qt (Quickshell, Caelestia, DankMaterialShell), GTK (Fabric, Wayle, HyprPanel, Waybar, eww). Customising one means learning that toolkit's language and widget set. | [[Prior Art - Linux Shell Surfaces#Survey]] |
-| Most target Hyprland, Sway or niri. Several state a hard requirement for one compositor (Caelestia: Hyprland). | [[Prior Art - Linux Shell Surfaces#Survey]] |
-| Fabric is the one surveyed shell with a Python API, and it draws with GTK. | [[Prior Art - Linux Shell Surfaces#Survey]] |
+| Most target Hyprland, Sway or niri. Several state a hard requirement for one compositor (Caelestia: Hyprland).                                                                                                                                   | [[Prior Art - Linux Shell Surfaces#Survey]] |
+| Fabric is the one surveyed shell with a Python API, and it draws with GTK.                                                                                                                                                                       | [[Prior Art - Linux Shell Surfaces#Survey]] |
 
 > [!question] Unverified
 > This note does not claim what Plasma's built-in panels can or cannot customise; no source has been read for that. #needs-verification
 
-## The opportunity
+## The Opportunity
 
 tre 0.5.8 can now create the surfaces a shell needs: `LayerWindow`, `PopupWindow` and an output API ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]). tre gives mechanism only: no widgets, no theme and no file formats ([[AGENTS#3. Layering principle]]). A shell that supplies those itself, as its own project on tre, has properties no surveyed shell combines:
 
@@ -47,13 +47,13 @@ A single sentence: **build a desktop shell from YAML and Python, run it next to 
 
 It is a tool for building shells, not one fixed shell. It ships a default shell as a reference and as the test target for the tool ([[V1 Scope]]).
 
-## Constraints that shape the problem
+## Constraints that Shape the Problem
 
-| Constraint | Consequence |
-|---|---|
+| Constraint                                                                                                                                             | Consequence                                                                                                                                                                                         |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | It runs beside an installed desktop environment (primary target KDE Plasma on Wayland); it does not replace the compositor, session or window manager. | Shell services such as the notification server and tray watcher are shared D-Bus names with plasmashell; each needs a coexist, replace or proxy decision ([[AGENTS#4. Known constraints and gaps (seed list)]]). |
-| tre owns every frame; Python owns intent. | A design that needs per-frame Python is rejected. |
-| The design is complete before code is written. | Every area in the checklist in [[AGENTS#12. Design completeness checklist]] needs a note first. |
+| tre owns every frame; Python owns intent.                                                                                                              | A design that needs per-frame Python is rejected.                                                                                                                                                   |
+| The design is complete before code is written.                                                                                                         | Every area in the checklist in [[AGENTS#12. Design completeness checklist]] needs a note first.                                                                                                          |
 
 ## Links
 

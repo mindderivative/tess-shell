@@ -33,14 +33,14 @@ So Tesserae can run on the tre that has `LayerWindow` but cannot yet ask for one
 
 ## Options
 
-### Option A — Depend on `tesserae-ui` (recommended, chosen)
+### Option A — Depend on `tesserae-ui` (Recommended, Chosen)
 
 Reuse the view language, `Signal`/`Computed`/`Effect`, MD3 components, themes, stylesheets and hot reload.
 
 - **For:** one YAML dialect, one reactivity model, one design system. Shell views and app views share components and themes.
 - **Against:** Tesserae is shaped around an application with a main window. A shell has many surfaces, some with no title, size or focus in the app sense. Tesserae must grow a surface concept.
 
-### Option B — Build a smaller layer directly on `tre`
+### Option B — Build a Smaller Layer Directly on `tre`
 
 - **For:** shaped for shells from the start.
 - **Against:** a second view language, second reactivity and second theme system to design, document and keep in step. Rejected by [[Goals and Non-Goals]] N8.

@@ -11,12 +11,12 @@ related: ["[[20 Architecture]]", "[[Layers and Components]]", "[[Process Model a
 depends_on: ["[[Layers and Components]]"]
 ---
 
-# Data flow
+# Data Flow
 
 > [!summary]
 > Five flows carry data through the shell: loading a shell, live module data, hot reload, monitor hot-plug and user input. Each starts in a named component of [[Layers and Components]], crosses threads only through `call_soon` ([[Process Model and Threading]]), and ends in a tre node. The diagrams are proposals built on the accepted ADRs; where an ADR decides a step, the step cites it.
 
-## Loading a shell
+## Loading a Shell
 
 ```mermaid
 flowchart TD
@@ -31,16 +31,16 @@ flowchart TD
     i --> j[Start modules]
 ```
 
-| Step | Decided by | Failure |
-|---|---|---|
-| Files, `shell:` key, `type:` | [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]] | A file without `shell:` is refused and named |
-| `import:` and nesting | [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]] | Cycle, missing file or name defined twice: load error with `file:line:column` |
-| Registry and UID | [[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]] | A mismatch registers a new entry; an unresolved reference is an error at load |
-| TEL compile | [[ADR-0008 Tesserae Expression Language]] | Error with file, line and column inside the YAML |
-| `monitor:` matching | [[V1 Scope#Multi-monitor]] | A root with no `monitor` is ignored; `monitor: default` covers monitors no root names |
-| Module start | [[ADR-0007 Shell UI Layer#Module Python (2026-10-25)]] | A module with no matching `.py` is a load error naming both files |
+| Step                         | Decided by                              | Failure                                                                               |
+|------------------------------|-----------------------------------------|---------------------------------------------------------------------------------------|
+| Files, `shell:` key, `type:` | [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]] | A file without `shell:` is refused and named                                          |
+| `import:` and nesting        | [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]] | Cycle, missing file or name defined twice: load error with `file:line:column`         |
+| Registry and UID             | [[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]] | A mismatch registers a new entry; an unresolved reference is an error at load         |
+| TEL compile                  | [[ADR-0008 Tesserae Expression Language]] | Error with file, line and column inside the YAML                                      |
+| `monitor:` matching          | [[V1 Scope#Multi-monitor]] | A root with no `monitor` is ignored; `monitor: default` covers monitors no root names |
+| Module start                 | [[ADR-0007 Shell UI Layer#Module Python (2026-10-25)]] | A module with no matching `.py` is a load error naming both files                     |
 
-## Live module data
+## Live Module Data
 
 The hand-off is decided ([[ADR-0007 Shell UI Layer#Module data reaches the view through shell entry points (2026-10-25)]]): the module sends values to shell entry points, the shell converts what it can, and the renderer updates. The sequence diagram is in [[Process Model and Threading#Handing a value to the loop (proposed)]].
 
@@ -51,7 +51,7 @@ What the diagram adds to the ADR (proposals):
 - A re-evaluated expression sets a node property with `node.set(...)`; tre redraws only what changed.
 - Static expressions (no live names) are evaluated once at load.
 
-## Hot reload
+## Hot Reload
 
 ```mermaid
 sequenceDiagram
@@ -74,7 +74,7 @@ sequenceDiagram
 - The shell's own UID write must not trigger a reload loop ([[ADR-0007 Shell UI Layer#Open items]]).
 - A changed module `.py` is reloaded at runtime (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). Proposed order: import the new code and check it has the module class; then `stop` the old instance and join its threads; purge the module's own modules from `sys.modules`; create the new instance and `start` it. A failed import keeps the old instance. The value store keeps the last values until the new instance sends. The `reload` hook handles a YAML-only change. #needs-verification
 
-## Monitor hot-plug
+## Monitor Hot-plug
 
 ```mermaid
 sequenceDiagram
@@ -98,7 +98,7 @@ sequenceDiagram
 - A Popup is exclusive to the monitor of its caller ([[Surface Types#Open questions]]).
 - **No windows: stay idle** (decided 2026-10-26). The shell keeps running and waits for `output_added`. tre has no keep-alive today; options are in [[Process Model and Threading#No windows: what tre offers]].
 
-## User input
+## User Input
 
 A pointer or key event reaches a tre node on the loop thread. **Events belong to the shell, not to TEL** (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). A shell file maps an event to a module method or a shell action. TEL only evaluates the argument expressions when the event fires (for example a value taken from the event). The vocabulary is set in `41 YAML Reference/`.
 
@@ -106,7 +106,7 @@ A pointer or key event reaches a tre node on the loop thread. **Events belong to
 - Window actions (close, dismiss a popup) are shell-provided.
 - A handler may set a value in the shell's store (a local state) or call a module method.
 
-## Open questions
+## Open Questions
 
 - [ ] Where the value store sits and how a module's last value is kept across a reload.
 - [ ] The handler vocabulary for input: the shell's, in `41 YAML Reference/` (not TEL's).

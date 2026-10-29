@@ -11,7 +11,7 @@ related: ["[[ADR-0002 Relationship to Tesserae UI]]", "[[ADR-0007 Shell UI Layer
 depends_on: []
 ---
 
-# ADR-0006: Shell independent of Tesserae UI
+# ADR-0006: Shell Independent of Tesserae UI
 
 > [!summary]
 > Tesserae Shell is its own project, built on tre. It does not depend on `tesserae-ui` and asks Tesserae for nothing. Tesserae stays an application framework; shell rendering is not added to it.
@@ -22,14 +22,14 @@ depends_on: []
 
 ## Options
 
-### Option A — Separate project on tre (chosen)
+### Option A — Separate Project on Tre (Chosen)
 
 The shell depends on `tesserae-engine` (tre) only. It owns its view layer, theme and widgets ([[ADR-0007 Shell UI Layer]]).
 
 - **For:** Tesserae keeps its scope. The shell is free to shape its API around surfaces and monitors. No Tesserae release gates the shell, and no tre or Tesserae pin has to move together.
 - **Against:** the shell must build what Tesserae already has: a view language, reactivity, theme and widgets. This is more work for one maintainer who owns both projects, and it is the second YAML dialect that [[ADR-0002 Relationship to Tesserae UI]] avoided.
 
-### Option B — Depend on `tesserae-ui`, extended for the shell
+### Option B — Depend on `tesserae-ui`, Extended for the Shell
 
 The choice of [[ADR-0002 Relationship to Tesserae UI]]. Superseded by this ADR.
 

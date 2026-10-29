@@ -11,7 +11,7 @@ related: ["[[D-Bus Libraries for Python]]", "[[Process Model and Threading]]", "
 depends_on: ["[[ADR-0003 Process Model]]"]
 ---
 
-# ADR-0009: D-Bus client library
+# ADR-0009: D-Bus Client Library
 
 > [!summary]
 > The shell uses `dbus-fast` for D-Bus, on one asyncio service thread that the shell provides and shares among modules. `jeepney` is the fallback. Modules may still import other libraries.
@@ -22,17 +22,17 @@ The shell and its modules read properties, watch signals and call methods on the
 
 ## Options
 
-### Option A — `dbus-fast` on a shared asyncio service thread (chosen)
+### Option A — `dbus-fast` on a Shared Asyncio Service Thread (Chosen)
 
 - **For:** MIT, no dependencies, pure Python with an optional Cython extension, release 5.2.0 on 2026-10-02, classifiers for Python 3.13 to 3.15, proxy objects, signals, and `bus.export` plus name requests for later services. One thread and one connection per bus for all modules.
 - **Against:** a slow callback on the service thread delays every D-Bus module. Binary wheels add a packaging concern (the pure-Python build is the escape hatch).
 
-### Option B — `jeepney` in module threads
+### Option B — `jeepney` in Module Threads
 
 - **For:** pure Python, no hidden loop, explicit.
 - **Against:** low-level, so more code per module; one connection per module. Last release 2025-02-27.
 
-### Option C — sd-bus (`sdbus`) or a GLib-based library
+### Option C — Sd-bus (`sdbus`) or a GLib-based Library
 
 - **Against:** a system library at build time, or a second event loop beside tre's.
 

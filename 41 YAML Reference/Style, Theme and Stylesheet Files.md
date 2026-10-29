@@ -11,14 +11,14 @@ related: ["[[41 YAML Reference]]", "[[Common Keys and Conventions]]", "[[Module 
 depends_on: ["[[Common Keys and Conventions]]"]
 ---
 
-# Style, theme and stylesheet files
+# Style, Theme and Stylesheet Files
 
 > [!summary]
 > Three files control how things look. A **style** file holds the values for one surface or module, like its inline `style:` key. A **stylesheet** holds shared rules that apply across the shell by widget type or class. A **theme** holds design tokens (colour, type, shape, motion) that the others refer to. The split is the maintainer's ([[ADR-0007 Shell UI Layer#Theme, style and stylesheet (2026-10-25)]]). The Style format below comes from the maintainer's Label example; Theme and Stylesheet are proposed in [[Style Schema]].
 
 All three are shell files: they carry `shell:` and `type:` (`Style`, `Theme`, `Stylesheet`). Their suffixes are `_Style.yaml`, `_Theme.yaml` and `_Stylesheet.yaml`, the same as Tesserae's; the `shell:` key tells them apart ([[Common Keys and Conventions]]).
 
-## Style file
+## Style File
 
 ```yaml
 shell: v1
@@ -46,11 +46,11 @@ Text:
     font_family: ["Hack Nerd Font Mono", "JetBrains Mono"]
 ```
 
-| Key | Meaning | Status |
-|---|---|---|
-| `classes` | Named groups of values a widget picks up with `class:` | Decided (the form) |
-| A widget name as a key (`Icon:`, `FlexBox:`, `Text:`) | Defaults for every widget of that type in the file that uses this style | Decided (the form) |
-| Property names | `size`, `weight`, `foreground`, `fill`, `background`, `border`, `border_thickness`, `border_color`, `corner_radius`, `font_family` | From the example; the full list is open |
+| Key                                                   | Meaning                                                                                                                            | Status                                  |
+|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
+| `classes`                                             | Named groups of values a widget picks up with `class:`                                                                             | Decided (the form)                      |
+| A widget name as a key (`Icon:`, `FlexBox:`, `Text:`) | Defaults for every widget of that type in the file that uses this style                                                            | Decided (the form)                      |
+| Property names                                        | `size`, `weight`, `foreground`, `fill`, `background`, `border`, `border_thickness`, `border_color`, `corner_radius`, `font_family` | From the example; the full list is open |
 
 - **Colour** forms: `"#RRGGBB"`, `"#RRGGBBAA"`, `RGBA(r, g, b, a)` ([[Common Keys and Conventions#Value forms]]).
 - **Four-sided** values: a number, a list of four clockwise from the top, or named sides. The example's `{2, 2, 2, 2}` becomes `2` or `[2, 2, 2, 2]`; `corner_radius: {8, 8, 8, 8}` becomes `8` or `[8, 8, 8, 8]` (top-left, top-right, bottom-right, bottom-left, clockwise from top-left).
@@ -63,7 +63,7 @@ Text:
 - The example writes `kind: Text` inside a class to say which block it applies to. `kind:` means a surface's kind everywhere else ([[Common Keys and Conventions#Keys that say what something is]]). With `widget:` gone the recommendation is `block: Text` inside a class. Maintainer to confirm.
 - Whether a class applies only to the widget type named, or to any widget that picks it, is open.
 
-## Theme file (not yet designed)
+## Theme File (Not yet Designed)
 
 A theme holds design tokens: colour roles, type scale, shape (radii), motion (durations, easing), spacing. Styles and stylesheets refer to tokens by name instead of repeating values, which is how light and dark, high contrast and reduced motion are followed from the desktop ([[Goals and Non-Goals]] G7). The token set and file shape belong to `50 Design System/`; this reference records only the file's header (`shell:`, `type: Theme`).
 
@@ -74,7 +74,7 @@ name: dark
 # token groups: colour, type, shape, motion, spacing -- not designed
 ```
 
-## Stylesheet file (not yet designed)
+## Stylesheet File (Not yet Designed)
 
 A stylesheet holds shared rules that apply across the shell by widget type or class, so a shell author can restyle every `Text` or every `.warning` in one place.
 
@@ -93,12 +93,12 @@ Decided by the maintainer on 2026-10-26 ([[ADR-0007 Shell UI Layer#Blocks, modul
 - **Priority**, lowest to highest: theme, then stylesheet, then style, then inline `style:`. It applies to all styling.
 - **Imports go downwards:**
 
-| File | May import | May not import |
-|---|---|---|
-| Theme | Stylesheets, styles; or use inline styling | n/a |
-| Stylesheet | Styles; or use inline styling | A theme |
-| Style | Nothing beneath it; inline values only | A theme or a stylesheet (proposed, to avoid cycles) |
-| Inline `style:` | A theme, a stylesheet, a style; or inline values | n/a |
+| File            | May import                                       | May not import                                      |
+|-----------------|--------------------------------------------------|-----------------------------------------------------|
+| Theme           | Stylesheets, styles; or use inline styling       | n/a                                                 |
+| Stylesheet      | Styles; or use inline styling                    | A theme                                             |
+| Style           | Nothing beneath it; inline values only           | A theme or a stylesheet (proposed, to avoid cycles) |
+| Inline `style:` | A theme, a stylesheet, a style; or inline values | n/a                                                 |
 
 - Priority follows the type of each file, not the path it was imported by. A stylesheet that a theme imports still outranks the theme.
 
@@ -106,7 +106,7 @@ Proposed (to confirm): when two files of the same type set the same property, th
 
 The maintainer's Edge Shell notes ordered it Theme, Frame, Panel, Widget with a widget's own property winning ([[Shadows on Layer Surfaces#The maintainer's earlier work]], `Shell_Specs`); the new rule is the same idea over the file types.
 
-## Errors specific to these files
+## Errors Specific to These Files
 
 - A property name the widget does not have: error with the closest names.
 - A value of the wrong form (a colour that is not one of the three): error with the forms.

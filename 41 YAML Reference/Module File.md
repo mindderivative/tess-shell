@@ -11,7 +11,7 @@ related: ["[[41 YAML Reference]]", "[[Common Keys and Conventions]]", "[[Shell F
 depends_on: ["[[Common Keys and Conventions]]", "[[ADR-0007 Shell UI Layer]]"]
 ---
 
-# Module file
+# Module File
 
 > [!summary]
 > A module file (`type: Module`, suffix `_Module.yaml`) is the layout part of a module: its widgets, the expressions that place data in them, and the params it accepts. It sits beside a style file and a matching Python file in a `Modules/<module_name>/` folder ([[ADR-0007 Shell UI Layer#What a module is (2026-10-26)]]). The Python is described in [[Module Contract]]. Examples are illustrations; the Label example is the maintainer's ([[Module Context#Example: the Label module]]).
@@ -42,18 +42,18 @@ FlexBox:
 
 ## Keys
 
-| Key | Meaning | Status |
-|---|---|---|
-| `shell`, `type: Module`, `UID` | As every file ([[Common Keys and Conventions]]) | Decided |
-| `name` | The module's name. Required | Decided |
-| `style` | A style file name, or an inline mapping of style values | Decided |
-| `params` | The values a use may pass, with their types | Decided; type names proposed |
-| A top-level widget (`FlexBox:`, `Box:` or `widget: ...`) | The root of the module's layout | Decided (the form) |
-| `children` | The root widget's children, a mapping of unique names to widgets | Decided |
+| Key                                                      | Meaning                                                          | Status                       |
+|----------------------------------------------------------|------------------------------------------------------------------|------------------------------|
+| `shell`, `type: Module`, `UID`                           | As every file ([[Common Keys and Conventions]])          | Decided                      |
+| `name`                                                   | The module's name. Required                                      | Decided                      |
+| `style`                                                  | A style file name, or an inline mapping of style values          | Decided                      |
+| `params`                                                 | The values a use may pass, with their types                      | Decided; type names proposed |
+| A top-level widget (`FlexBox:`, `Box:` or `widget: ...`) | The root of the module's layout                                  | Decided (the form)           |
+| `children`                                               | The root widget's children, a mapping of unique names to widgets | Decided                      |
 
 A module file has one layout root. There is no `root:` key and no `kind:`: a module is not a surface.
 
-## Blocks and modules in the layout
+## Blocks and Modules in the Layout
 
 A module's layout is made of building blocks and other modules ([[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]], decided 2026-10-26).
 
@@ -64,7 +64,7 @@ A module's layout is made of building blocks and other modules ([[ADR-0007 Shell
 - A block or module may take `class:` to pick up a class from a style file, or `style:` for its own style ([[Style, Theme and Stylesheet Files]]).
 - The v1 blocks and standard modules are in [[V1 Widgets]] and [[Building Blocks]].
 
-### The Label example under the new keys
+### The Label Example under the New Keys
 
 An illustration only; the maintainer's original is in [[Module Context#Example: the Label module]].
 
@@ -102,14 +102,14 @@ params:
 - In the Python a use's params are `use.params` ([[Module Context]]).
 - In an expression a param is `params.<name>`.
 
-## Data in the layout
+## Data in the Layout
 
 Expressions in the module's YAML place data in widgets. They read two kinds of name (decided 2026-10-26):
 
-| Name | Source |
-|---|---|
-| `params.<name>` | The value the use passed |
-| `<key>` | A value the module's Python sent with `ctx.send(key, value)` |
+| Name            | Source                                                       |
+|-----------------|--------------------------------------------------------------|
+| `params.<name>` | The value the use passed                                     |
+| `<key>`         | A value the module's Python sent with `ctx.send(key, value)` |
 
 ```yaml
 Text:
@@ -121,7 +121,7 @@ Text:
 - A clash between a param and a sent value of the same name is avoided by the `params.` prefix.
 - Direct addressing of a widget by its `name:` from Python is optional.
 
-## Using a module
+## Using a Module
 
 A module is placed under `children:` (there is no `modules:` key since 2026-10-26), each use with its own unique key. Decided (maintainer, 2026-10-26): a module is called by its unique name as the key, `widget:` and `module:` are gone, params are keys beneath it, and `import:` embeds a module file at that position ([[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]). A block is called with `block:`, under a key of its own.
 
@@ -155,7 +155,7 @@ children:
 
 `children:` is a mapping or a list, never a mix: a parser rejects a list item beside a mapping key, so `import:` is a list item here. An optional `name:` per item keeps each use's path name unique; without one the shell names it from its position (`Label_1`, `Label_2`), decided 2026-10-26 ([[ADR-0007 Shell UI Layer#Open items]]).
 
-## Params down the tree
+## Params down the Tree
 
 The maintainer suggested a "bubble up" policy for params (2026-10-26). My reading and thoughts:
 
@@ -165,7 +165,7 @@ The maintainer suggested a "bubble up" policy for params (2026-10-26). My readin
 - **Recommendation:** explicit and opt-in. A param declares `inherit: true` to be looked up the ancestry when not passed; the nearest ancestor that has it wins; a required param found nowhere is an error naming the chain it searched. Everything else must be passed. Because names and UIDs are reachable shell-wide through the registry, a value can also be read by an explicit reference, so inheriting is a convenience and not a necessity.
 - Decided (maintainer, 2026-10-26): opt-in only, as recommended. A param declares `inherit: true`; the nearest ancestor wins; a required param found nowhere is an error naming the chain.
 
-## Errors specific to module files
+## Errors Specific to Module Files
 
 - `type: Module` without a matching `_Module.py`: error naming both files.
 - A `type:` and suffix that disagree: error.

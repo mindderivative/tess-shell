@@ -11,7 +11,7 @@ related: ["[[IPC and CLI]]", "[[ADR-0009 D-Bus Client Library]]", "[[ADR-0012 Ke
 depends_on: ["[[ADR-0009 D-Bus Client Library]]", "[[ADR-0012 Keeping the Shell Above Plasma Panels]]"]
 ---
 
-# ADR-0013: Control interface
+# ADR-0013: Control Interface
 
 > [!summary]
 > How anything outside the shell process tells it to do something: the command line, a keyboard shortcut, the KWin script that reports fullscreen windows. The shell owns one session-bus name and exports a small D-Bus interface; the command line is a thin client of it. Accepted 2026-10-28 (Option B).
@@ -25,16 +25,20 @@ depends_on: ["[[ADR-0009 D-Bus Client Library]]", "[[ADR-0012 Keeping the Shell 
 
 ## Options
 
-### Option A — A Unix socket with JSON lines, and D-Bus only for the KWin script
+### Option A — A Unix Socket with JSON Lines, and D-Bus Only for the KWin Script
+
 - **For:** a client with no dependencies; trivial to script (`nc -U`).
 - **Against:** two mechanisms, two front-ends, two security stories; the socket does nothing the D-Bus interface cannot do.
 
-### Option B — One D-Bus interface for everything (recommended)
+### Option B — One D-Bus Interface for Everything (Recommended)
+
 The shell requests a bus name on the session bus and exports one object. The command line, the KWin script, `busctl`, `qdbus` and shortcut commands all call it. The command line is a thin client.
+
 - **For:** one front-end and one set of commands; the KWin script needs it anyway; introspectable (`busctl introspect`); signals for free (events); the bus enforces that only the same user's processes connect; measured client cost is close to the socket's (20 ms against 14 ms).
 - **Against:** needs the session bus (always present in a Plasma session); the CLI needs a small D-Bus client (`jeepney`, the named fallback in [[ADR-0009 D-Bus Client Library]], is 21 ms against `dbus-fast`'s 53 ms); a name on the bus must be chosen. A shortcut command can also call `busctl --user call` directly, which took 1.5 ms.
 
-### Option C — Both, behind one command table
+### Option C — Both, behind One Command Table
+
 - **For:** a CLI that works with no bus.
 - **Against:** the cost of A for a case that does not arise in the target session.
 

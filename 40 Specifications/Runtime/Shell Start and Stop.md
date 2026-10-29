@@ -11,19 +11,19 @@ related: ["[[Runtime]]", "[[Process Model and Threading]]", "[[Data Flow]]", "[[
 depends_on: ["[[ADR-0003 Process Model]]", "[[Settings File]]", "[[TRE-REQ-005 Keep-Alive and Loop Stop]]"]
 ---
 
-# Shell start and stop
+# Shell Start and Stop
 
 > [!summary]
 > The order in which the shell starts, what stops it from starting, how it runs with no windows, and how it stops. It is the runtime view of what [[Process Model and Threading]] and [[Data Flow]] sketch. Decided: one process and one tre loop ([[ADR-0003 Process Model]]), `settings.yaml` read first and a bad one stops the shell ([[Settings File]]), `run(keep_alive=True)` and `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]), stay idle with no windows. Everything else here is proposed, with a recommendation.
 
-## Purpose and scope
+## Purpose and Scope
 
 - Define the start sequence, the failure rule at each step, the running state, the stop sequence, and the process rules that surround them: one instance, signals, exit codes.
 - Not in this note: how files are found and the registry works ([[Config Discovery and Registry]]), how errors are worded ([[Validation and Errors]]), reloading a running shell ([[Hot Reload]]), the command line and the control socket (IPC and CLI, to write), and how the shell is launched at login (`70 Delivery`, to write).
 
 ## Behaviour
 
-### Process rules
+### Process Rules
 
 - **One process, one loop.** The shell is one Python process; tre's `App.run()` owns the main thread; everything that touches a window or node runs there ([[Process Model and Threading#The rules]]).
 - **One instance per session** (decided 2026-10-28). Two shells would fight over the registry, the D-Bus names the shell owns and the same surfaces. The shell takes a lock in `$XDG_RUNTIME_DIR/tesserae-shell/` on start. A second start finds the lock, prints that a shell is already running with its process id, and exits with code 4. The control commands go over the shell's D-Bus interface, not a socket ([[ADR-0013 Control Interface]], accepted 2026-10-28; [[IPC and CLI]]). Letting a second start ask the first to reload was rejected. The runtime directory rules are in the next item.
@@ -37,7 +37,7 @@ depends_on: ["[[ADR-0003 Process Model]]", "[[Settings File]]", "[[TRE-REQ-005 K
   - Observed on this machine, 2026-10-28: `XDG_RUNTIME_DIR=/run/user/1000`, owned by the user, mode `drwx------`, with `WAYLAND_DISPLAY=wayland-1`.
 - **Wayland only.** No Wayland compositor, or one without the layer shell, is an environment error: tre raises `UnsupportedPlatform` ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]) and the shell exits with code 2 naming it. X11 is not supported ([[V1 Scope#Target environment]]).
 
-### Start sequence
+### Start Sequence
 
 ```mermaid
 flowchart TD
@@ -55,20 +55,20 @@ flowchart TD
     l --> m[Running]
 ```
 
-| Step | What happens | Source | If it fails |
-|---|---|---|---|
-| 1. Pre-flight | Python 3.14 or later; tre 0.5.9 or later (the Frame needs `hit_shape`); a Wayland session; a valid `XDG_RUNTIME_DIR` (above) | [[Frame#Failure modes and recovery]], [[Surface Types]] | Stop, code 2, a message naming the missing version or the environment |
-| 2. Config directory | `$XDG_CONFIG_HOME/tesserae-shell/` if set, non-empty and absolute, else `$HOME/.config/tesserae-shell/` | [[Settings File#The config directory]] | If it does not exist, create it with the default folders (decided 2026-10-28) |
-| 3. Settings | Read `settings.yaml`; expand `~` and variables; check paths | [[Settings File]] | Stop, code 1, error on the console and in the default log directory |
-| 4. Logging | Start Loguru with the `logging` keys, or the defaults | [[Settings File#Log files]] | Fall back to the console only and say so; do not stop |
-| 5. Lock | Take the instance lock | This note | Another shell runs: stop, code 4 |
-| 6. Registry | Open `registry.json` at the configured path; create an empty one if missing; rebuild records from file UIDs when needed | [[Config Discovery and Registry]] | A registry that cannot be read or written: stop, code 1 |
-| 7. Discover, parse, validate | Find files, parse YAML, check the schema and the semantic rules, follow `import:` | [[Validation and Errors]] | Collect every error, then stop, code 1 |
-| 8. Resolve and compile | Resolve name references through the registry; compile TEL expressions | [[ADR-0008 Tesserae Expression Language]] | Stop, code 1 |
-| 9. Loop | `App.run(keep_alive=True)` starts the loop with zero windows; output events and `call_soon` work | [[TRE-REQ-005 Keep-Alive and Loop Stop]] | tre older than 0.5.9: caught in step 1 |
-| 10. Model | Read `App.outputs()`, match `monitor:` entries, build the shell model | [[V1 Scope#Multi-monitor]], [[Data Flow#Monitor hot-plug]] | A root that matches no monitor is ignored |
-| 11. Surfaces | Create one window per surface per monitor, from a callback on the loop | [[Surfaces]] | A surface that fails (a bad layer, tre `failed`) is logged and skipped; the others open |
-| 12. Modules | Create each module class once and call `start()` | [[Module Contract#Lifecycle]] | A module whose `start` raises is marked failed and logged; the others continue |
+| Step                         | What happens                                                                                                                 | Source                                                                           | If it fails                                                                             |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| 1. Pre-flight                | Python 3.14 or later; tre 0.5.9 or later (the Frame needs `hit_shape`); a Wayland session; a valid `XDG_RUNTIME_DIR` (above) | [[Frame#Failure modes and recovery]], [[Surface Types]] | Stop, code 2, a message naming the missing version or the environment                   |
+| 2. Config directory          | `$XDG_CONFIG_HOME/tesserae-shell/` if set, non-empty and absolute, else `$HOME/.config/tesserae-shell/`                      | [[Settings File#The config directory]]                                          | If it does not exist, create it with the default folders (decided 2026-10-28)           |
+| 3. Settings                  | Read `settings.yaml`; expand `~` and variables; check paths                                                                  | [[Settings File]]                                          | Stop, code 1, error on the console and in the default log directory                     |
+| 4. Logging                   | Start Loguru with the `logging` keys, or the defaults                                                                        | [[Settings File#Log files]]                                          | Fall back to the console only and say so; do not stop                                   |
+| 5. Lock                      | Take the instance lock                                                                                                       | This note                                                                        | Another shell runs: stop, code 4                                                        |
+| 6. Registry                  | Open `registry.json` at the configured path; create an empty one if missing; rebuild records from file UIDs when needed      | [[Config Discovery and Registry]]                                          | A registry that cannot be read or written: stop, code 1                                 |
+| 7. Discover, parse, validate | Find files, parse YAML, check the schema and the semantic rules, follow `import:`                                            | [[Validation and Errors]]                                          | Collect every error, then stop, code 1                                                  |
+| 8. Resolve and compile       | Resolve name references through the registry; compile TEL expressions                                                        | [[ADR-0008 Tesserae Expression Language]]                                          | Stop, code 1                                                                            |
+| 9. Loop                      | `App.run(keep_alive=True)` starts the loop with zero windows; output events and `call_soon` work                             | [[TRE-REQ-005 Keep-Alive and Loop Stop]]                                          | tre older than 0.5.9: caught in step 1                                                  |
+| 10. Model                    | Read `App.outputs()`, match `monitor:` entries, build the shell model                                                        | [[V1 Scope#Multi-monitor]], [[Data Flow#Monitor hot-plug]] | A root that matches no monitor is ignored                                               |
+| 11. Surfaces                 | Create one window per surface per monitor, from a callback on the loop                                                       | [[Surfaces]]                                          | A surface that fails (a bad layer, tre `failed`) is logged and skipped; the others open |
+| 12. Modules                  | Create each module class once and call `start()`                                                                             | [[Module Contract#Lifecycle]]                                          | A module whose `start` raises is marked failed and logged; the others continue          |
 
 - Steps 1 to 8 run before the loop and may block; the user sees an error and no surfaces. From step 9 on, the loop runs and nothing blocks it ([[Process Model and Threading#The rules]]).
 - The loop starts before the windows exist because tre can now run with none, and a window is added from a callback ([[TRE-REQ-005 Keep-Alive and Loop Stop]]). Modules start after the model is built, so a value sent before its surface exists is kept in the store ([[Process Model and Threading#Lifecycle (proposed)]]).
@@ -81,11 +81,11 @@ flowchart TD
 - An unhandled exception in a callback is logged by tre and does not stop the loop ([[Process Model and Threading#What tre guarantees]]).
 - The shell reports a ready state once step 12 finishes (a log line, a `State` property change on the shell's D-Bus interface, and a notice to systemd, below).
 
-### Telling systemd (decided 2026-10-28)
+### Telling Systemd (Decided 2026-10-28)
 
 The shell notifies systemd. When the environment variable `NOTIFY_SOCKET` is set, the shell sends one datagram with the text `READY=1` to that socket once step 12 finishes, and `STOPPING=1` when the stop sequence starts. systemd acts on them only when the unit uses `Type=notify` ([sd_notify](https://www.freedesktop.org/software/systemd/man/latest/sd_notify.html), read 2026-10-28). The protocol is a single datagram on a Unix socket, so the shell needs no library for it. With no `NOTIFY_SOCKET` set, the shell sends nothing. The unit file that sets `Type=notify` is a delivery item (`70 Delivery`, to write).
 
-### Stop sequence
+### Stop Sequence
 
 Triggers: SIGTERM or SIGINT, a `Quit` call on the shell's D-Bus interface, the session ending. SIGHUP reloads (proposed, [[Hot Reload]]). Python signal handlers do not run on an idle loop, so a watcher thread reads a socketpair fed by `signal.set_wakeup_fd` and calls `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]], [[Process Model and Threading#Lifecycle (proposed)]]).
 
@@ -100,16 +100,16 @@ Triggers: SIGTERM or SIGINT, a `Quit` call on the shell's D-Bus interface, the s
 - A step that overruns its timeout is logged by name (the module and the thread) and skipped; the process still exits.
 - Floating Panel positions are saved when the Panel's `moved` event fires, not only at stop, so a killed shell loses nothing ([[Panel#Position and attachment]]).
 
-### Exit codes
+### Exit Codes
 
-| Code | Meaning |
-|---|---|
-| 0 | Normal stop |
-| 1 | Configuration error: settings, a file, the registry |
-| 2 | Environment error: no Wayland or layer shell, tre or Python too old |
-| 4 | Another shell is already running |
-| 70 | An internal error: an unhandled exception outside a callback |
-| 130 | Forced stop by a second signal |
+| Code | Meaning                                                             |
+|------|---------------------------------------------------------------------|
+| 0    | Normal stop                                                         |
+| 1    | Configuration error: settings, a file, the registry                 |
+| 2    | Environment error: no Wayland or layer shell, tre or Python too old |
+| 4    | Another shell is already running                                    |
+| 70   | An internal error: an unhandled exception outside a callback        |
+| 130  | Forced stop by a second signal                                      |
 
 The codes are decided (2026-10-28). Codes 3 and 5 to 69 are left free for later use.
 
@@ -117,7 +117,7 @@ The codes are decided (2026-10-28). Codes 3 and 5 to 69 are left free for later 
 
 Start and stop read `settings.yaml` keys only: `directories`, `registry`, `logging`, `validation`, `main_shell` ([[Settings File]]). Proposed additions, to settle while building: `stop_timeout` (default 10 seconds) and `module_stop_timeout` (default 3 seconds). No other key.
 
-## Python contract
+## Python Contract
 
 None. A module sees `start()` after the model exists and `stop()` at shutdown ([[Module Contract#Lifecycle]]). The shell never calls a module before step 12.
 
@@ -137,25 +137,25 @@ None. Start and stop have no visual design; a failed start prints to the console
 
 A failure that stops the shell must also be readable without a console: the shell may be launched from a session with none. Decided 2026-10-28: the same error is sent as a desktop notification through `org.freedesktop.Notifications` when one is available (the shell calls it as a client; it does not own the server, [[ADR-0004 Plasma Coexistence]]). Open question 3.
 
-## Performance budget
+## Performance Budget
 
 - Start is dominated by file parsing, validation and window creation. With a warm validation cache `jsonschema` is never imported ([[JSON Schema and Editor Support#The `jsonschema` dependency runtime, not only development]]).
 - Budgets (time to first surface, time to ready, stop time) are set in `60 Quality/` and measured on this machine; none is measured yet.
 - Stop is bounded: 10 seconds in total (decided).
 
-## Failure modes and recovery
+## Failure Modes and Recovery
 
-| Failure | Result |
-|---|---|
-| A step before the loop fails | The shell prints every error found at that step, exits with the code above, and opens no surface |
-| A module raises in `start` | That module is marked failed and logged; surfaces keep default values; other modules run |
-| A surface fails to open | Logged and skipped; the rest open |
-| The Wayland connection is lost | tre's windows close, the loop ends, the process exits; a supervisor restarts it |
-| The loop hangs | The watchdog logs the stall; only a supervisor can recover ([[Process Model and Threading#Failure and recovery]]) |
-| The process is killed | Nothing is written at stop; the lock is released by the kernel when the process dies, because it is a file lock (decided with the lock) |
-| A stale lock with no process | A file lock held by `flock` dies with the process, so there is none to clear (decided with the lock) |
+| Failure                        | Result                                                                                                                                  |
+|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| A step before the loop fails   | The shell prints every error found at that step, exits with the code above, and opens no surface                                        |
+| A module raises in `start`     | That module is marked failed and logged; surfaces keep default values; other modules run                                                |
+| A surface fails to open        | Logged and skipped; the rest open                                                                                                       |
+| The Wayland connection is lost | tre's windows close, the loop ends, the process exits; a supervisor restarts it                                                         |
+| The loop hangs                 | The watchdog logs the stall; only a supervisor can recover ([[Process Model and Threading#Failure and recovery]])                                    |
+| The process is killed          | Nothing is written at stop; the lock is released by the kernel when the process dies, because it is a file lock (decided with the lock) |
+| A stale lock with no process   | A file lock held by `flock` dies with the process, so there is none to clear (decided with the lock)                                    |
 
-## Open questions
+## Open Questions
 
 All seven were answered on 2026-10-28.
 
@@ -169,7 +169,7 @@ All seven were answered on 2026-10-28.
 - [x] `XDG_RUNTIME_DIR` is required, with no fallback; the shell checks it in pre-flight and sets the sticky bit on its lock file (maintainer, 2026-10-28, as recommended; the control socket was dropped by ADR-0013).
 - [ ] Whether any cleaner runs on the target session, and that the sticky bit is honoured on those files. #needs-verification
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [ ] With no `settings.yaml`, the shell starts from the default folders and the surfaces open.
 - [ ] With an invalid `settings.yaml`, the shell exits with code 1, prints the error with `file:line:column` and writes it to `logs/`, and opens no surface.

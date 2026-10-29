@@ -11,7 +11,7 @@ related: ["[[V1 Scope]]", "[[ADR-0004 Plasma Coexistence]]"]
 depends_on: []
 ---
 
-# ADR-0005: Global shortcuts
+# ADR-0005: Global Shortcuts
 
 > [!summary]
 > The shell registers global shortcuts (launcher, OSD triggers) through KDE's global-accel service. The XDG GlobalShortcuts portal is the fallback to evaluate. Both are unverified on a live session and wait for the testing phase.
@@ -29,12 +29,12 @@ What the search found (2026-10-25, not tested):
 
 ## Options
 
-### Option A — KDE global-accel service (chosen)
+### Option A — KDE Global-accel Service (Chosen)
 
 - **For:** the native KDE path; shortcuts appear in System Settings, where the user can change them.
 - **Against:** KDE only. No shortcuts on wlroots compositors in v1.
 
-### Option B — XDG GlobalShortcuts portal
+### Option B — XDG GlobalShortcuts Portal
 
 - **For:** works across desktops that implement it.
 - **Against:** needs `BindShortcuts` on every start on recent Plasma; portal support differs by desktop. Kept as the fallback.

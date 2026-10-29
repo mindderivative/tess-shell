@@ -11,7 +11,7 @@ related: ["[[Surface Types]]", "[[Prior Art - Linux Shell Surfaces]]", "[[TRE-RE
 depends_on: []
 ---
 
-# Shadows on layer surfaces
+# Shadows on Layer Surfaces
 
 > [!summary]
 > Decided 2026-10-27: route B, in-surface ([[ADR-0010 Surface Shadows]]).
@@ -19,14 +19,14 @@ depends_on: []
 
 Maintainer position (2026-10-25): KDE does shadows, so all surfaces can do shadows; the open job is to find out how other shells and desktops do it.
 
-## Two routes
+## Two Routes
 
-| Route | How | What it needs |
-|---|---|---|
-| A. Compositor-drawn | The client attaches shadow tiles to its surface with `org_kde_kwin_shadow`, and KWin draws them outside the surface | The shell, through tre, must bind the shadow manager on the surface's connection and attach buffers. tre 0.5.8 does not document this. It would be an engine request. |
-| B. In-surface | The surface is larger than the visible body; the shadow is drawn in the transparent margin, and the exclusive zone covers the body only | tre's `shadows` node property; a larger transparent buffer; `input_region="auto"` so clicks pass through the margin |
+| Route               | How                                                                                                                                     | What it needs                                                                                                                                                         |
+|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| A. Compositor-drawn | The client attaches shadow tiles to its surface with `org_kde_kwin_shadow`, and KWin draws them outside the surface                     | The shell, through tre, must bind the shadow manager on the surface's connection and attach buffers. tre 0.5.8 does not document this. It would be an engine request. |
+| B. In-surface       | The surface is larger than the visible body; the shadow is drawn in the transparent margin, and the exclusive zone covers the body only | tre's `shadows` node property; a larger transparent buffer; `input_region="auto"` so clicks pass through the margin                                                   |
 
-## What is known
+## What is Known
 
 - **The protocol.** `org_kde_kwin_shadow_manager` (version 2) creates an `org_kde_kwin_shadow` for a `wl_surface`: eight requests attach a `wl_buffer` to the top-left, top, top-right, right, bottom-right, bottom, bottom-left and left tiles; four offsets; `commit`; `unset`. The page does not say which surface roles it applies to. KWin 6.7 is listed at version 2; other compositors are listed but the support marker is undefined on the page ([wayland.app](https://wayland.app/protocols/kde-shadow)).
 - **KWin's handler does not check the role.** `create` fails only when the `wl_surface` is unknown to KWin (`"Invalid  surface"`); it does not look at toplevel, popup or layer role ([shadow.cpp](https://lxr.kde.org/source/plasma/kwin/src/wayland/shadow.cpp)). The live test below shows the scene does draw it.
@@ -36,34 +36,34 @@ Maintainer position (2026-10-25): KDE does shadows, so all surfaces can do shado
 - **Hyprland.** Layer surfaces take layer rules by namespace (for example blur); the pages found do not show a shadow rule for layers ([Hyprland wiki](https://wiki.hypr.land/0.27.1/Useful-Utilities/Status-Bars)).
 - **Not found:** how plasma-framework's panel and dialog code applies shadows (a 2020 review mentions a planned port only); how Waybar, eww, Fabric and the others do it.
 
-## Live test on KWin 6.8.1 (2026-10-27)
+## Live Test on KWin 6.8.1 (2026-10-27)
 
 A scratch C client (not in the vault, in /tmp) created a 320x140 layer surface anchored to the centre, bound `org_kde_kwin_shadow_manager` (v2) and attached eight tiles (24 px, premultiplied black, peak alpha 170) with all four offsets set to one value. A flat pale surface on the top layer sat behind it so the shadow fell on a known colour. Screenshots with and without the shadow were compared pixel by pixel.
 
-| Layer | Offset | Result |
-|---|---|---|
-| top | 0 | No difference. The tiles sit under the body, so nothing shows. |
-| overlay | 0 | No difference (same reason). |
-| top | 24 | A soft shadow appears around the body on all four sides. |
-| overlay | 24 | Differences in the area around the body; shadow drawn (not viewed in a crop). |
-| bottom | 24 | No difference, but the surface was hidden behind other windows and the test backdrop, so the run says nothing. |
+| Layer   | Offset | Result                                                                                                         |
+|---------|--------|----------------------------------------------------------------------------------------------------------------|
+| top     | 0      | No difference. The tiles sit under the body, so nothing shows.                                                 |
+| overlay | 0      | No difference (same reason).                                                                                   |
+| top     | 24     | A soft shadow appears around the body on all four sides.                                                       |
+| overlay | 24     | Differences in the area around the body; shadow drawn (not viewed in a crop).                                  |
+| bottom  | 24     | No difference, but the surface was hidden behind other windows and the test backdrop, so the run says nothing. |
 
 - KWin 6.8.1 advertises `zwlr_layer_shell_v1` v5 and `org_kde_kwin_shadow_manager` v2.
 - The shadow offsets decide how far the shadow extends past the surface edge; an offset of 0 hides it. A first reading of the offset-0 runs as "no shadow" was wrong.
 - Not tested: the bottom and background layers on a visible area, shadows on a Frame-sized surface, popups, multi-output, and fractional scaling.
 - The shadow is compositor-drawn, so it is outside the surface: it does not count in the exclusive zone and the client cannot clip or animate it except by replacing the tiles.
 
-## Performance test, route A against route B (2026-10-27)
+## Performance Test, Route A against Route B (2026-10-27)
 
 Setup: KWin 6.8.1 on the live session, tre 0.5.8 (editable install), a 320x140 body with 12 px corners. Route B used a tre `LayerWindow` of 384x204 (a 32 px transparent margin) with a fill change every 16 ms so each frame redraws for 600 frames (about 10 s), read with `frame_stats()`; three repetitions per variant, means below. Route A used the scratch C client with static tiles (offset 24). KWin CPU is the `kwin_wayland` process time over the 10 s run. Scripts are in /tmp (not in the vault).
 
-| Variant | Surface | fps | Client CPU per frame | Draw stage | GPU per frame | KWin CPU per 10 s |
-|---|---|---|---|---|---|---|
-| B0: body only, no margin, no shadow | 320x140 | 60.0 | 0.44 ms | 0.38 ms | 0.04 ms | 0.58 s |
-| B1: margin, no shadow | 384x204 | 60.0 | 0.48 ms | 0.41 ms | 0.04 ms | 0.56 s |
-| B2: margin, tre card shadow (two layers) | 384x204 | 60.0 | 0.46 ms | 0.40 ms | 0.08 ms | 0.59 s |
-| B3: margin, one wide soft shadow (blur 24) | 384x204 | 60.0 | 0.43 ms | 0.37 ms | 0.06 ms | 0.59 s |
-| A: compositor shadow, static C client | 320x140 | no frames | none | none | none | 0.53 to 0.66 s (no shadow: 0.51 to 0.59 s) |
+| Variant                                    | Surface | fps       | Client CPU per frame | Draw stage | GPU per frame | KWin CPU per 10 s                          |
+|--------------------------------------------|---------|-----------|----------------------|------------|---------------|--------------------------------------------|
+| B0: body only, no margin, no shadow        | 320x140 | 60.0      | 0.44 ms              | 0.38 ms    | 0.04 ms       | 0.58 s                                     |
+| B1: margin, no shadow                      | 384x204 | 60.0      | 0.48 ms              | 0.41 ms    | 0.04 ms       | 0.56 s                                     |
+| B2: margin, tre card shadow (two layers)   | 384x204 | 60.0      | 0.46 ms              | 0.40 ms    | 0.08 ms       | 0.59 s                                     |
+| B3: margin, one wide soft shadow (blur 24) | 384x204 | 60.0      | 0.43 ms              | 0.37 ms    | 0.06 ms       | 0.59 s                                     |
+| A: compositor shadow, static C client      | 320x140 | no frames | none                 | none       | none          | 0.53 to 0.66 s (no shadow: 0.51 to 0.59 s) |
 
 Reading:
 
@@ -73,7 +73,7 @@ Reading:
 - Limits: route A was a static surface, route B was a redrawing one, so the rows measure different things and are not a like-for-like frame comparison. The test used one monitor, one small surface and a vsync-bound loop (the acquire stage holds about 16 ms of every frame, so CPU and GPU per frame are the figures to read, not total time). A large surface (Frame, a wide Bar with a margin) was not measured; route B's cost scales with its pixel area.
 - Conclusion: performance does not separate the routes at Bar and Panel size. The choice rests on other factors: route A needs tre to expose the surface (an engine request), draws outside the surface (not in the exclusive zone, not animatable except by replacing tiles), and needs no transparent margin or input-region handling; route B works with tre 0.5.8 today and lets the shadow animate with the node, at the price of a margin that every surface must declare.
 
-## The maintainer's earlier work
+## The Maintainer's Earlier Work
 
 The `myShell` repository ([README](file:///home/phil/Projects/pyDev/projects/myShell/README.md)) holds the Edge Shell design spec, plan and shell specs, not the code. The maintainer reports a working Fabric version with shadows, animated panels and bars moving out of the frame (2026-10-25). The documents show the approach:
 
@@ -83,7 +83,7 @@ The `myShell` repository ([README](file:///home/phil/Projects/pyDev/projects/myS
 
 This supports the maintainer's point that a visual meld works: it is one colour, drawn joins and repainting, not one shared surface.
 
-## To research
+## To Research
 
 - [x] Whether KWin draws an `org_kde_kwin_shadow` shadow for a `wlr-layer-shell` surface: yes on top and overlay, KWin 6.8.1 (see the live test).
 - [ ] Bottom and background layers, and how the shadow follows a surface that animates its size.

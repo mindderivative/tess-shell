@@ -11,12 +11,12 @@ related: ["[[Home]]", "[[Roadmap]]", "[[Risk Register]]", "[[Index]]"]
 depends_on: []
 ---
 
-# Open questions
+# Open Questions
 
 > [!summary]
 > The one place to find every open item and every claim not yet verified. Each section below is embedded from the note that owns it, so this page never holds a second copy (one source of truth, [[AGENTS#2. Hard rules]] rule 4). Resolved items stay visible as checked boxes. A new unknown goes in its own note's open section and, if it needs a home, here ([[AGENTS#11. Session workflow]]).
 
-## Unverified claims
+## Unverified Claims
 
 Every claim tagged `#needs-verification`, grouped by folder. **Where** links to the section that holds the claim, **Claim** is the sentence the tag follows, and **To verify** is what the text after the tag says to check (empty when the tag stands alone). The table is built by Dataview from the notes themselves, so it never goes stale and holds no copy of a claim.
 
@@ -93,7 +93,7 @@ for (const [area, rows] of [...groups.entries()].sort()) {
 }
 ```
 
-### Notes only
+### Notes Only
 
 The same notes as a plain list, with no JavaScript:
 
@@ -160,7 +160,7 @@ SORT file.name ASC
 
 ![[Popup#Open questions]]
 
-## Modules and runtime
+## Modules and Runtime
 
 ### [[Clock Module]]
 
@@ -170,16 +170,13 @@ SORT file.name ASC
 
 ![[Shell Start and Stop#Open questions]]
 
-
 ### [[Config Discovery and Registry]]
 
 ![[Config Discovery and Registry#Open questions]]
 
-
 ### [[Validation and Errors]]
 
 ![[Validation and Errors#Open questions]]
-
 
 ### [[Hot Reload]]
 
@@ -197,7 +194,7 @@ SORT file.name ASC
 
 ![[Expression Language Requirements#Open questions]]
 
-## YAML reference
+## YAML Reference
 
 ### [[Common Keys and Conventions]]
 
@@ -245,7 +242,7 @@ SORT file.name ASC
 
 ![[Value Types and Conversion#Open questions]]
 
-## Design system
+## Design System
 
 ### [[Building Blocks]]
 
@@ -255,7 +252,7 @@ SORT file.name ASC
 
 ![[V1 Widgets#Open questions]]
 
-## Engine requests
+## Engine Requests
 
 ### [[TRE-REQ-001 Layer Surface Window]]
 

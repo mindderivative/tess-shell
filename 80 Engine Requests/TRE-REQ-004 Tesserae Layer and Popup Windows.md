@@ -11,7 +11,7 @@ related: ["[[ADR-0002 Relationship to Tesserae UI]]", "[[ADR-0003 Process Model]
 depends_on: ["[[TRE-REQ-001 Layer Surface Window]]"]
 ---
 
-# TRE-REQ-004: Tesserae layer and popup windows
+# TRE-REQ-004: Tesserae Layer and Popup Windows
 
 > [!warning] Superseded by [[ADR-0006 Shell Independent of Tesserae UI]] (2026-10-25)
 > Withdrawn before it was carried to Tesserae. The shell no longer depends on `tesserae-ui`, so nothing is requested of Tesserae. The requirements (R1 to R9) and open questions move into the shell's own design: [[ADR-0007 Shell UI Layer]]. The note stays as a record of what Tesserae does today.
@@ -21,37 +21,37 @@ depends_on: ["[[TRE-REQ-001 Layer Surface Window]]"]
 
 This note is carried to the Tesserae project by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]). It is not filed from this vault. Numbers 002 and 003 stay reserved (see [[80 Engine Requests]]).
 
-## Shell need
+## Shell Need
 
 A shell opens, from YAML views and Python:
 
-| Need | Use case ([[Personas and Use Cases]]) |
-|---|---|
-| A view as the content of a `LayerWindow` (bar, OSD, launcher, widget, panel), bound to one monitor | UC1, UC3, UC4, UC5, UC6, UC11 |
-| The same view opened on several monitors, each with its own `Output` | UC1, UC10, UC11 |
-| A view as the content of a `PopupWindow` hung off a rectangle of a layer window | UC2 |
-| Layer-surface settings in the view file, changed live by hot reload | UC8 |
-| An app with no main window, which stays up when any one surface closes | UC10 |
+| Need                                                                                               | Use case ([[Personas and Use Cases]]) |
+|----------------------------------------------------------------------------------------------------|----------------------------------------------------|
+| A view as the content of a `LayerWindow` (bar, OSD, launcher, widget, panel), bound to one monitor | UC1, UC3, UC4, UC5, UC6, UC11                      |
+| The same view opened on several monitors, each with its own `Output`                               | UC1, UC10, UC11                                    |
+| A view as the content of a `PopupWindow` hung off a rectangle of a layer window                    | UC2                                                |
+| Layer-surface settings in the view file, changed live by hot reload                                | UC8                                                |
+| An app with no main window, which stays up when any one surface closes                             | UC10                                               |
 
-## Why it belongs in Tesserae
+## Why it Belongs in Tesserae
 
 tre owns the mechanism: surface roles, outputs, input regions, margin animation. Tesserae owns how a view becomes a window: the `widget: Window` root, `open_window`, the ViewModel, theme and stylesheet binding, and hot reload ([[AGENTS#3. Layering principle]]). The shell should not duplicate that composition path. If it did, the shell would carry a second way to build and re-theme a view, which is the dialect split [[ADR-0002 Relationship to Tesserae UI]] avoids.
 
-## What Tesserae does today
+## What Tesserae Does Today
 
 Source: local clone `/home/phil/Projects/pyDev/projects/tesserae` at commit `0eda3fe` (version 0.5.1.4, unreleased), read 2026-10-25. PyPI has `tesserae-ui` 0.5.1 (2026-10-19). #needs-verification: confirm each item below against the 0.5.1 release; the clone is ahead of PyPI.
 
-| Fact | Where |
-|---|---|
-| The pin is `tesserae-engine==0.5.8`. | `pyproject.toml` |
-| No source file, doc, plan or changelog mentions `LayerWindow`, `PopupWindow` or layer-shell. | search of `src`, `docs`, `design`, `PLAN.md`, `CHANGELOG.md` |
-| `App` creates one main `Window` in its constructor and `run()` always adds it. | `src/tesserae/app.py:318`, `:1844` |
-| `open_window(view, name, parent, modal, center)` builds a plain `Window(width=480, height=320)`, applies the view's `widget: Window` options, and returns an `AppWindow`. | `app.py:935-965` (the `Window(...)` at `:944`) |
-| Closing the main window closes every other window and ends the app. | `appwindows.py` docstring; `docs/guide/windows-and-docks.md` ("Several windows") |
-| Opening a window whose name is already open raises `ValueError`; a window is found by its view's name. | `app.py:950`, `:998` |
-| The ViewModel is the one that serves the view's name; the theme, stylesheet and `app` are the app's. | `docs/guide/windows-and-docks.md` |
-| `widget: Window` options are read when the window opens; hot reload does not re-apply them. | `docs/guide/hot-reload.md` |
-| `modal=True` dims the parent with a scrim layer; `center` cannot place a window on Wayland. | `appwindows.py`, `app.py:962` |
+| Fact                                                                                                                                                                      | Where                                                                            |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| The pin is `tesserae-engine==0.5.8`.                                                                                                                                      | `pyproject.toml`                                                                 |
+| No source file, doc, plan or changelog mentions `LayerWindow`, `PopupWindow` or layer-shell.                                                                              | search of `src`, `docs`, `design`, `PLAN.md`, `CHANGELOG.md`                     |
+| `App` creates one main `Window` in its constructor and `run()` always adds it.                                                                                            | `src/tesserae/app.py:318`, `:1844`                                               |
+| `open_window(view, name, parent, modal, center)` builds a plain `Window(width=480, height=320)`, applies the view's `widget: Window` options, and returns an `AppWindow`. | `app.py:935-965` (the `Window(...)` at `:944`)                                   |
+| Closing the main window closes every other window and ends the app.                                                                                                       | `appwindows.py` docstring; `docs/guide/windows-and-docks.md` ("Several windows") |
+| Opening a window whose name is already open raises `ValueError`; a window is found by its view's name.                                                                    | `app.py:950`, `:998`                                                             |
+| The ViewModel is the one that serves the view's name; the theme, stylesheet and `app` are the app's.                                                                      | `docs/guide/windows-and-docks.md`                                                |
+| `widget: Window` options are read when the window opens; hot reload does not re-apply them.                                                                               | `docs/guide/hot-reload.md`                                                       |
+| `modal=True` dims the parent with a scrim layer; `center` cannot place a window on Wayland.                                                                               | `appwindows.py`, `app.py:962`                                                    |
 
 tre side, for contrast ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]): `tre.App.run()` raises `RuntimeError` when no window is registered and ends when every window has closed ([App reference](https://mindderivative.github.io/tre/reference/app/)). A `LayerWindow` is constructed with `namespace` and binds to an `Output` at construction only.
 
@@ -60,7 +60,7 @@ tre side, for contrast ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 c
 > [!danger] Proposal, not existing API
 > Every name below is proposed for Tesserae. Nothing here exists. The Tesserae project decides names and shape. Keys that mirror tre keep tre's names ([[TRE-REQ-001 Layer Surface Window]]).
 
-### 1. A layer window root in a view
+### 1. A Layer Window Root in a View
 
 A view whose root is `widget: LayerWindow` is the content of a `LayerWindow`, as `widget: Window` is for a window.
 
@@ -98,7 +98,7 @@ bar.output            # the Output it is bound to
 - `AppWindow` gains `output` and `set(**props)` (forwards to `LayerWindow.set`). It keeps `window`, `close()`, `on_close()` and `closed`.
 - Before `run()` the window opens with the others; while it runs, on the loop's next turn, as `open_window` does.
 
-### 3. A popup root
+### 3. A Popup Root
 
 ```yaml
 name: TrayMenu
@@ -118,7 +118,7 @@ menu = app.open_popup("TrayMenu", parent=bar, anchor_rect=(100, 0, 60, 32), anch
 - The `closed` signal carries tre's reason (`"dismissed"` on an outside click or Escape). A click on another window of the same application reaches that window, so the shell closes the menu itself ([PopupWindow reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)).
 - `modal` and `center` do not apply and raise if given.
 
-### 4. An app with no main window
+### 4. An App with No Main Window
 
 ```python
 app = App(main_window=False, root=HERE)
@@ -131,45 +131,45 @@ app.run()
 - With no windows registered, tre raises `RuntimeError`. Tesserae gives a clear error, or runs idle if the shell opened none yet (a monitor set to "none", or no outputs). See Open questions.
 - Screens, routes and the main-window title bar are not available, as for any second window today.
 
-### 5. Hot reload
+### 5. Hot Reload
 
 - Saving a `widget: LayerWindow` view re-applies `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard` and `input_region` through `LayerWindow.set`, which is live and one commit (tre). This differs from `widget: Window`, whose options are read only at open ([Hot Reload](https://mindderivative.github.io/tesserae/guide/hot-reload/)).
 - `namespace` and `output` cannot change on a live window. Changing `namespace` in the file logs a warning that names the file and asks for a reopen. The shell reopens the window.
 - A bad value leaves the window as it was and logs an `ERROR` with `file:line:column`, as for any view.
 
-### 6. Events and animation reach the view
+### 6. Events and Animation Reach the View
 
 - tre events that matter to a shell are available as ViewModel handlers: `configure`, `moved`, `closed` (with `reason`), `warning`, `output_changed`. Minimum: Python can listen on `AppWindow.window` today, so this is a convenience; it is listed to avoid each shell wrapping the same thing.
 - Margin animation and `window_region: drag_margin` already pass through `AppWindow.window.animate(...)` and the node property. No new Tesserae API is requested for them.
 
 ## Requirements
 
-| # | Requirement |
-|---|---|
-| R1 | A `widget: LayerWindow` view opens a tre `LayerWindow` with the keys above and the view's content, themed with the app's theme and stylesheet. |
-| R2 | A view opens any number of times under distinct names, each bound to its own `Output`. |
-| R3 | A `widget: PopupWindow` view opens parented to an open layer or popup window with a given `anchor_rect`. |
-| R4 | `App(main_window=False)` runs without a main window and ends when the last window closes. |
-| R5 | Hot reload re-applies the live layer keys without recreating the window and reports the constructor-only keys. |
-| R6 | A key with no meaning for a layer surface is a load error with a position. |
+| #  | Requirement                                                                                                                                                                 |
+|----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| R1 | A `widget: LayerWindow` view opens a tre `LayerWindow` with the keys above and the view's content, themed with the app's theme and stylesheet.                              |
+| R2 | A view opens any number of times under distinct names, each bound to its own `Output`.                                                                                      |
+| R3 | A `widget: PopupWindow` view opens parented to an open layer or popup window with a given `anchor_rect`.                                                                    |
+| R4 | `App(main_window=False)` runs without a main window and ends when the last window closes.                                                                                   |
+| R5 | Hot reload re-applies the live layer keys without recreating the window and reports the constructor-only keys.                                                              |
+| R6 | A key with no meaning for a layer surface is a load error with a position.                                                                                                  |
 | R7 | Headless: a layer or popup view builds, themes and responds to `simulate` with no display, using tre's headless `LayerWindow` ([LayerWindow reference](https://mindderivative.github.io/tre/reference/layer-window/)). |
-| R8 | No Python in layout or paint: all new Tesserae code runs in callbacks ([[AGENTS#3. Layering principle]]). |
-| R9 | Threading: opening and closing run on the loop thread; other threads use `thread_handle().call_soon`. |
+| R8 | No Python in layout or paint: all new Tesserae code runs in callbacks ([[AGENTS#3. Layering principle]]).                                                            |
+| R9 | Threading: opening and closing run on the loop thread; other threads use `thread_handle().call_soon`.                                                                       |
 
 ## Alternatives
 
-| Alternative | Verdict |
-|---|---|
+| Alternative                                                                                                          | Verdict                                                                                                                                                                                 |
+|----------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | The shell builds `LayerWindow` itself and calls Tesserae's internal `_open_view(view, name, window)` (`app.py:911`). | Works today but depends on a private method and skips `open_window`'s bookkeeping (`AppWindow`, close handling, themed registration). Fragile across Tesserae releases. Prototype only. |
-| The shell wraps Tesserae with its own window opener and view loader. | Duplicates composition and theming; two paths to maintain. Against [[ADR-0002 Relationship to Tesserae UI]]. |
-| Drop `tesserae-ui` and build on tre directly. | Rejected in [[ADR-0002 Relationship to Tesserae UI]] (Option B). |
+| The shell wraps Tesserae with its own window opener and view loader.                                                 | Duplicates composition and theming; two paths to maintain. Against [[ADR-0002 Relationship to Tesserae UI]].                                                                             |
+| Drop `tesserae-ui` and build on tre directly.                                                                        | Rejected in [[ADR-0002 Relationship to Tesserae UI]] (Option B).                                                                                                                         |
 
-## If declined
+## If Declined
 
 1. Use the private-method prototype above, labelled throwaway, in `90 Research/`.
 2. Write an ADR superseding [[ADR-0002 Relationship to Tesserae UI]] if the private path proves unstable. The shell would then own a thin view-to-window layer on tre.
 
-## Open questions
+## Open Questions
 
 - [ ] **ViewModel per opening.** Tesserae serves a view with "the ViewModel that serves its name". A bar opened on three monitors has three windows and, today, one ViewModel. Does each opening get its own instance (so it knows its monitor), or share one with `params`? The shell needs per-monitor state (the monitor name, its workspaces) and shared state (the clock). Recommendation: one ViewModel instance per opening, with shared services passed in. #needs-verification against the ViewModel binding code.
 - [ ] **Zero windows.** tre raises `RuntimeError` with no registered window. A shell whose every monitor is "none" ([[V1 Scope#Multi-monitor]]) has none. Does Tesserae keep the loop alive with an idle hidden anchor, or does the shell open nothing and let `run()` return? Needs a tre answer or a Tesserae decision.
@@ -177,7 +177,7 @@ app.run()
 - [ ] **Naming.** `widget: LayerWindow` and `widget: PopupWindow` against a `kind:` key on `widget: Window`. Tesserae's choice.
 - [ ] **Version.** Which Tesserae release carries it, and is the pin `tesserae-engine>=0.5.8`?
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [ ] A `Bar_View.yaml` with a `widget: LayerWindow` root opens a bar on KWin that reserves its exclusive zone, using `app.open_layer`, with no main window.
 - [ ] The same view opened on two outputs under two names yields two bars, each on its output.

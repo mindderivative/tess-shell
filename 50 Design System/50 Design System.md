@@ -13,9 +13,9 @@ depends_on: []
 
 # 50 Design System
 
-| Note | Purpose | Status |
-|---|---|---|
-| [[Building Blocks]] | The shell's own primitives: what tre offers, what Tesserae does, the proposed set | draft |
-| [[V1 Widgets]] | The widgets a v1 view can use, traced to the modules that need them | draft |
+| Note                                    | Purpose                                                                           | Status |
+|-----------------------------------------|-----------------------------------------------------------------------------------|--------|
+| [[Building Blocks]] | The shell's own primitives: what tre offers, what Tesserae does, the proposed set | draft  |
+| [[V1 Widgets]] | The widgets a v1 view can use, traced to the modules that need them               | draft  |
 
 Tokens (colour, type, shape, motion, spacing), components, iconography and motion are not started.

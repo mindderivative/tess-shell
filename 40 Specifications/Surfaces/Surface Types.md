@@ -11,23 +11,23 @@ related: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0001 Shell Surface Strategy]]", 
 depends_on: ["[[TRE-REQ-001 Layer Surface Window]]", "[[ADR-0007 Shell UI Layer]]"]
 ---
 
-# Surface types
+# Surface Types
 
 > [!summary]
 > The shell has four surface types: **Bar**, **Frame**, **Panel** and **Popup**. A Bar attaches to an edge and reserves space. A Frame surrounds the screen and reserves space on every side. A Panel is the multi-purpose window: attached to a frame, a bar, another surface, or floating. A Popup anchors to a shell surface. Each is built from the tre 0.5.8 types `LayerWindow` and `PopupWindow`. Written from the maintainer's description of 2026-10-25.
 
-## Purpose and scope
+## Purpose and Scope
 
 These are the values of `kind:` on a surface in a shell file ([[ADR-0007 Shell UI Layer#Surface types (2026-10-25)]]). Names, files and the full YAML are in `41 YAML Reference/`. A dock, top bar or side bar is a Bar. An OSD, launcher or desktop widget is built as a Panel or a Popup ([[V1 Scope#Surfaces]]).
 
-## The four types
+## The Four Types
 
-| Type | Attaches to | Reserves space | Built on |
-|---|---|---|---|
-| Bar | One edge; may span edge to edge, touching three edges | Yes | `LayerWindow`, anchor to one edge or to one edge and both edges across it, positive `exclusive_zone` |
-| Frame | All four edges and corners | Yes, per side | One painter `LayerWindow` plus up to four reserver `LayerWindow`s |
-| Panel | A frame, a bar, another surface, or floating | Optional | `LayerWindow`; moved with `drag_margin` |
-| Popup | A shell surface | No | `PopupWindow` parented to a layer or popup window |
+| Type  | Attaches to                                           | Reserves space | Built on                                                                                             |
+|-------|-------------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------|
+| Bar   | One edge; may span edge to edge, touching three edges | Yes            | `LayerWindow`, anchor to one edge or to one edge and both edges across it, positive `exclusive_zone` |
+| Frame | All four edges and corners                            | Yes, per side  | One painter `LayerWindow` plus up to four reserver `LayerWindow`s                                    |
+| Panel | A frame, a bar, another surface, or floating          | Optional       | `LayerWindow`; moved with `drag_margin`                                                              |
+| Popup | A shell surface                                       | No             | `PopupWindow` parented to a layer or popup window                                                    |
 
 ### Bar
 
@@ -58,22 +58,22 @@ A Panel is not a child of the surface it attaches to. It may render on top of a 
 
 Anchored to anything, and rendered like an overlay. It is not a child in the shell file's tree: the file says what it is anchored to by reference, and the popup is its own entry. The parent that tre's `PopupWindow` needs ([[TRE-REQ-001 Layer Surface Window]]) is a Wayland protocol detail the shell handles, not a nesting the author writes. "Anything" is a shell surface: tre requires a layer window or another popup as the protocol parent (see Integration).
 
-## Layers per kind
+## Layers per Kind
 
 From the flow diagram ([[Shell Structure]], 2026-10-26). `layer:` takes the four layer-shell values.
 
-| Kind | Layers it may use | May reserve space |
-|---|---|---|
-| Bar | `bottom`, `top`, `overlay` | Only on `top` |
-| Panel | `bottom`, `top`, `overlay` | Only on `top` |
-| Frame | `top` only | Yes (it is on `top`) |
-| Popup | `overlay` (it hangs off a layer surface and the compositor stacks it above its parent) | No |
+| Kind  | Layers it may use                                                                      | May reserve space    |
+|-------|----------------------------------------------------------------------------------------|----------------------|
+| Bar   | `bottom`, `top`, `overlay`                                                             | Only on `top`        |
+| Panel | `bottom`, `top`, `overlay`                                                             | Only on `top`        |
+| Frame | `top` only                                                                             | Yes (it is on `top`) |
+| Popup | `overlay` (it hangs off a layer surface and the compositor stacks it above its parent) | No                   |
 
 `background` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no kind uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is in a Special Cases group: a module calls it, and it holds modules and containers ([[Shell Structure]]).
 
 Reserved space is enforced to the `top` layer (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). An `exclusive_zone` on a surface not on `top` is a load error (decided, maintainer, 2026-10-26).
 
-## Fullscreen and maximised windows (decided 2026-10-27)
+## Fullscreen and Maximised Windows (Decided 2026-10-27)
 
 - A fullscreen window covers every shell element: Bars, Frame, Panels and Popups, whatever their layer. A maximised window does not: it stops at the reserved space of the Bar and the Frame, and the shell draws above it as usual.
 - **KWin's stacking layers (read from the source, 2026-10-27, not tested live).** KWin orders its layers: Desktop, Below, Normal, Above, Notification, Active (an active fullscreen window or dialog), Popup, CriticalNotification, OnScreenDisplay, Overlay ([KWin `effect/globals.h`](https://invent.kde.org/plasma/kwin/-/raw/master/src/effect/globals.h)). A layer-shell surface maps Background to Desktop, Bottom to Below, Top to Above and Overlay to Overlay ([`layershellv1window.cpp`](https://invent.kde.org/plasma/kwin/-/raw/master/src/layershellv1window.cpp)). A Plasma panel is a dock window, and a dock window belongs to the Above layer too, as does any keep-above window ([`window.cpp`](https://invent.kde.org/plasma/kwin/-/raw/master/src/window.cpp), `belongsToLayer`).
@@ -81,7 +81,7 @@ Reserved space is enforced to the `top` layer (maintainer, 2026-10-26). The laye
 - Required behaviour: while a fullscreen window is active on a monitor, the shell hides or lowers its surfaces on that monitor, and restores them when the window leaves fullscreen. The reserved space is released and restored with them. Whether a surface can opt out (an OSD that should show over a game) is open.
 - Plasma panels: a Bar wins over a Plasma panel on the same edge unless the Plasma panel is set to always on top, or a fullscreen window is active, which beats all shell rendering (maintainer, 2026-10-27). The two share KWin's Above layer, so the shell cannot rely on layer order alone. The maintainer named five ways to keep the shell's windows above Plasma panels (2026-10-27: KWin window rules, layers above Normal, a persistent KWin script, PyGObject with KWindowSystem, and writing `kwinrulesrc`). [[ADR-0012 Keeping the Shell Above Plasma Panels]] compares them; the maintainer accepted its recommendation (2026-10-27): no reliance on stacking for v1, a KWin script for fullscreen detection, and an opt-in KWin rule for users who want the Bar to win. #needs-verification
 
-## Special cases
+## Special Cases
 
 The flow diagram ([[Shell Structure]]) groups the Popup under **Special Cases** (maintainer, 2026-10-26).
 
@@ -148,12 +148,12 @@ Every type shares the style keys (size, position, background, text, border, corn
 
 How each type maps to tre 0.5.8 ([[TRE-REQ-001 Layer Surface Window]]):
 
-| Type | Mapping | Notes |
-|---|---|---|
-| Bar | `LayerWindow(layer=..., anchor=<edge> or <edge + both across>, size=(0, N) or (N, 0), exclusive_zone=N, output=...)` | A positive zone counts only for one edge, or one edge plus both edges across it; any other anchor reserves nothing. |
+| Type  | Mapping                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Notes                                                                                                                                                                                                                                                                                                                 |
+|-------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Bar   | `LayerWindow(layer=..., anchor=<edge> or <edge + both across>, size=(0, N) or (N, 0), exclusive_zone=N, output=...)`                                                                                                                                                                                                                                                                                                                                                            | A positive zone counts only for one edge, or one edge plus both edges across it; any other anchor reserves nothing.                                                                                                                                                                                                   |
 | Frame | A painter `LayerWindow` (all four anchors, `size=(0, 0)`, `exclusive_zone=-1`, `layer="top"`, `input_region="auto"`, with the ring and corners drawn as `path` nodes with `hit_shape="painted"`, tre 0.5.9; see [[Hit Testing for Concave Corners]]) plus reservers: one edge and both edges across it, 1 px on the short axis, `layer="top"` (the Frame is Top only, [[Shell Structure]]), the side's thickness as `exclusive_zone`, `input_region=[]` | The layout from [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]]. Different side thicknesses are different reserver zones. Rounded corners are filled paths in the painter. tre did not test the four reservers plus the painter together, nor a 4K frame with many joins. Full spec: [[Frame]]. |
-| Panel | `LayerWindow`, floating (a corner or no anchor, positioned by margin) | Movable with `window_region="drag_margin"`; the engine moves it and fires `moved` on release. Margin animation covers slide in and out. Other surfaces' zones do not limit a drag. |
-| Popup | `PopupWindow(parent, anchor_rect, anchor, gravity, constraint_adjustment, grab)` | Parent is a `LayerWindow` or `PopupWindow`. The compositor flips and slides it to stay on screen. Escape dismissal is untested in tre. Full spec: [[Popup]]. |
+| Panel | `LayerWindow`, floating (a corner or no anchor, positioned by margin)                                                                                                                                                                                                                                                                                                                                                                                                           | Movable with `window_region="drag_margin"`; the engine moves it and fires `moved` on release. Margin animation covers slide in and out. Other surfaces' zones do not limit a drag.                                                                                                                                    |
+| Popup | `PopupWindow(parent, anchor_rect, anchor, gravity, constraint_adjustment, grab)`                                                                                                                                                                                                                                                                                                                                                                                                | Parent is a `LayerWindow` or `PopupWindow`. The compositor flips and slides it to stay on screen. Escape dismissal is untested in tre. Full spec: [[Popup]].                                                                                                                            |
 
 ## Design
 
@@ -163,11 +163,11 @@ Tokens and components come from the shell's own design system (`50 Design System
 
 Each surface is published to screen readers as one more window of the application. A bar's window node has no accessible name yet in tre, and a screen reader gets the tree but no screen position for a layer surface ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]). Names are set per surface in the shell file. Reduced motion and high contrast follow the desktop.
 
-## Performance budget
+## Performance Budget
 
 Per-surface video memory from tre 0.5.8: a 1280 x 32 bar about 18 MiB, a small window about 31 MiB, a 4K full-screen surface about 177 MiB. A Frame needs a full-screen painter, so it carries the large cost on each monitor, plus the reservers. Budgets are set in `60 Quality/`.
 
-## Failure modes and recovery
+## Failure Modes and Recovery
 
 - Monitor removed: the surfaces on it close with reason `"output_removed"`; they are created again when it returns.
 - Unsupported compositor: `LayerWindow` raises `UnsupportedPlatform`.
@@ -180,7 +180,7 @@ Per-surface video memory from tre 0.5.8: a 1280 x 32 bar about 18 MiB, a small w
 > - **Visual melding of a Panel into the Frame.** The meld is visual, not structural. It is one colour, drawn rounded joins, and repainting the frame strip under the panel, as in the maintainer's earlier Edge Shell design ([[Shadows on Layer Surfaces#The maintainer's earlier work]]). The surfaces stay separate. Wayland cannot commit two surfaces together, so a seam can show for up to a frame while both move (tre's documented limit, [[TRE-REQ-001 Layer Surface Window#Animation]]). Measure it in the testing phase. #needs-verification
 > - **Placing a Panel against another surface.** layer-shell cannot place one surface relative to another. The shell computes the Panel's margins from the other surface's geometry and recomputes when it moves or animates. This is positioning, not nesting. #needs-verification
 
-## Open questions
+## Open Questions
 
 - [x] Which surface types are in v1: Bar, Frame, Panel and Popup (decided 2026-10-25; Frame is in v1).
 - [x] Which uses are Panels: OSD and desktop widgets are Panels; the launcher is a Panel on the `overlay` layer with exclusive keyboard (decided 2026-10-25).
@@ -188,7 +188,7 @@ Per-surface video memory from tre 0.5.8: a 1280 x 32 bar about 18 MiB, a small w
 - [x] **How a Panel's attachment to another surface is written.** A Panel is attached by **referencing the name of the surface** (decided 2026-10-25). It is a reference, not nesting. Left for the Panel spec and `41 YAML Reference/`: which side or corner and what gap; what the Panel does when the target hides, moves or animates; A name that is referenced from another file resolves **through the registry** (decided 2026-10-25): the registry tracks names, so it knows which surface a Panel means and knows when that name no longer exists. A reference that never resolves is an error at load; a target that disappears while the shell runs is a warning, and the Panel stays hidden until it returns ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]). The one-frame skew between separate surfaces still applies ([[TRE-REQ-001 Layer Surface Window#Animation]]).
 - [x] **Concave corners and join drawing: hit testing.** Settled: tre 0.5.9 (released 2026-10-27) ships `hit_shape="painted"` on path nodes and a region builder that keeps holes and concave notches, so the Frame uses `input_region="auto"` and no explicit-rectangle workaround. Findings and history: [[Hit Testing for Concave Corners]].
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [ ] A Bar anchored to one edge spanning the full length reserves its zone on KWin; a maximised window stops short of it.
 - [ ] A Frame with different side thicknesses reserves each side separately, and clicks on the ring reach the shell while clicks in the interior reach the window below.

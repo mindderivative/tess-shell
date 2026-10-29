@@ -16,7 +16,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Hit
 > [!summary]
 > The Frame (`kind: frame`) is a ring around the screen, attached to all four edges and corners, that reserves space on every side. Its thickness is the same on every side or differs by side. Its inner corners are rounded (concave); its outer corners are square by default and can be rounded (convex). It has inner and outer borders, a background, border colours (solid or gradient) and shadows. Panels and Bars can be visually melded into it with rounded joins, so they look as if they grow out of the frame; this is a visual effect on separate surfaces, not one shared surface. The Frame is Top layer only. On tre it is a full-screen painter `LayerWindow` plus up to four thin space-reserving windows, using the path hit shape released in tre 0.5.9. The decisions are the maintainer's ([[Surface Types]]); key names marked proposed are mine. YAML is illustration.
 
-## Purpose and scope
+## Purpose and Scope
 
 - Draw a continuous frame with rounded corners around each monitor, reserve its thickness as space so maximised windows stay inside it, and let clicks pass through the interior to the desktop.
 - v1: in scope (decided, 2026-10-26, [[V1 Scope#Surfaces]]).
@@ -24,20 +24,20 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Hit
 
 ## Behaviour
 
-### Parts on tre
+### Parts on Tre
 
 The layout from [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]], moved to the Top layer and updated for tre 0.5.9. Eight surfaces (four edges, four corners) were rejected: more surfaces, and seams between neighbours.
 
-| Part | Count | `LayerWindow` settings | Draws |
-|---|---|---|---|
-| Painter | 1 per monitor | `layer="top"`, anchored to all four edges, `size=(0, 0)`, `exclusive_zone=-1`, `input_region="auto"` | The ring, its corners, border, and background, as `path` nodes |
-| Reserver | Up to 4 per monitor, one per side with a thickness above 0 | `layer="top"`, anchored to that edge and both edges across it, 1 px on the short axis, `exclusive_zone` equal to the side's thickness, `input_region=[]` | Nothing (transparent) |
+| Part     | Count                                                      | `LayerWindow` settings                                                                                                                                   | Draws                                                          |
+|----------|------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------|
+| Painter  | 1 per monitor                                              | `layer="top"`, anchored to all four edges, `size=(0, 0)`, `exclusive_zone=-1`, `input_region="auto"`                                                     | The ring, its corners, border, and background, as `path` nodes |
+| Reserver | Up to 4 per monitor, one per side with a thickness above 0 | `layer="top"`, anchored to that edge and both edges across it, 1 px on the short axis, `exclusive_zone` equal to the side's thickness, `input_region=[]` | Nothing (transparent)                                          |
 
 - The painter extends to every edge and ignores other zones (`exclusive_zone=-1`). The reservers push maximised windows inside the frame. A side with different thickness is a different reserver zone.
 - Both kinds are on `top` because the Frame is Top only and `top` is the layer where reserving is allowed ([[Surface Types#Layers per kind]]).
 - A change to a thickness is a change of `exclusive_zone` on one reserver, a step change (each is a configure round trip and windows reflow once), so thickness is not animated ([[TRE-REQ-001 Layer Surface Window#Animation]]).
 
-### The ring and its corners
+### The Ring and Its Corners
 
 - The ring is a `path` node with a `fill`: an outer contour (the screen rectangle, with rounded corners for the convex outer corners) and an inner contour wound the other way (the opening, with rounded corners for the concave inner corners). With tre's non-zero fill rule, the opposite winding makes the hole ([paint reference](https://mindderivative.github.io/tre/reference/paint/)).
 - `hit_shape="painted"` on the ring (tre 0.5.9) makes the ring take clicks only where it is painted: its fill region and its stroke. A click in the opening, or in the notch of a concave corner, passes to what is behind it. The same shape drives `input_region="auto"`, so the compositor and tre agree.
@@ -45,7 +45,7 @@ The layout from [[TRE-REQ-001 Layer Surface Window#Use case: screen frame]], mov
 - The ring must be a Path block. `hit_shape` does not cover `svg` and `canvas` nodes ([[Hit Testing for Concave Corners]]).
 - The Path block therefore exposes `hit_shape`; the shape blocks (Circle, Ring and the like) default it to `painted` (decided 2026-10-27, [[Building Blocks]]).
 
-### The Frame's layer (decided 2026-10-27)
+### The Frame's Layer (Decided 2026-10-27)
 
 Decided by the maintainer on 2026-10-27: the Frame stays on `top`, and melded Bars and Panels are hosted in the Frame's own surface (hosted melding), which removes the layer-order concern and keeps the Overlay layer free. The analysis that led there is kept below.
 
@@ -56,36 +56,36 @@ The Frame is on `top` in the diagram. The maintainer is unsure (2026-10-27): if 
 - **plasmashell's desktop** (the wallpaper) is also in KWin's desktop layer, which is where Background surfaces go. The stacking order between it and a Background Frame is KWin's, not ours. #needs-verification
 - **The reservers are invisible.** Where they sit changes nothing you see; only where the painter sits changes the look.
 
-| Option | Painter | Reservers | For | Against |
-|---|---|---|---|---|
-| 1. Top (the diagram) | `top` | `top` | The ring and strips are drawn above windows, like a bezel: a window dragged over the edge is tucked under it. Keeps "only Top reserves" and "Frame is Top only". Strips hosted in the painter are always visible | A standalone Bar melded to the Frame is on the same layer, so the draw order is undefined. A melded Panel works on `overlay`. A thick edge (a strip) replaces the melded Bar, so the problem is limited to Bars placed beside the Frame |
-| 2. Painter on `bottom`, reservers on `top` | `bottom` | `top` | Everything melded sits above the ring on a defined layer, Bars on `top`, Panels on `top` or `overlay`. Keeps "only Top reserves" (the reservers are the reserving surfaces, and they are on `top`). Above the wallpaper in KWin's order | The Frame is a composite over two layers. The ring and any strips it hosts sit below windows, so a window that overlaps the edge covers them, and a strip stops acting like a bar above windows |
-| 3. Painter on `background` (the maintainer's thought) | `background` | `top` | The same as option 2 | The same as option 2, plus it shares KWin's desktop layer with the wallpaper, so the ring could be drawn behind it; the layer name suggests it, and it is the layer kept for wallpapers ([[Surface Types#Layers per kind]]) |
+| Option                                                | Painter      | Reservers | For                                                                                                                                                                                                                                     | Against                                                                                                                                                                                                                                 |
+|-------------------------------------------------------|--------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1. Top (the diagram)                                  | `top`        | `top`     | The ring and strips are drawn above windows, like a bezel: a window dragged over the edge is tucked under it. Keeps "only Top reserves" and "Frame is Top only". Strips hosted in the painter are always visible                        | A standalone Bar melded to the Frame is on the same layer, so the draw order is undefined. A melded Panel works on `overlay`. A thick edge (a strip) replaces the melded Bar, so the problem is limited to Bars placed beside the Frame |
+| 2. Painter on `bottom`, reservers on `top`            | `bottom`     | `top`     | Everything melded sits above the ring on a defined layer, Bars on `top`, Panels on `top` or `overlay`. Keeps "only Top reserves" (the reservers are the reserving surfaces, and they are on `top`). Above the wallpaper in KWin's order | The Frame is a composite over two layers. The ring and any strips it hosts sit below windows, so a window that overlaps the edge covers them, and a strip stops acting like a bar above windows                                         |
+| 3. Painter on `background` (the maintainer's thought) | `background` | `top`     | The same as option 2                                                                                                                                                                                                                    | The same as option 2, plus it shares KWin's desktop layer with the wallpaper, so the ring could be drawn behind it; the layer name suggests it, and it is the layer kept for wallpapers ([[Surface Types#Layers per kind]])       |
 
 Recommendation: option 1 (keep `top`) together with hosted melding (option 4) for melded Bars and Panels, because it matches the bezel look, keeps the rules as they are, and the melding problem only exists for standalone Bars: a thick edge covers the bar case, and Panels use `overlay`. Option 2 is the alternative if melded standalone Bars matter more than the strips being above windows. Option 3 adds an uncertainty (the wallpaper) without a benefit over option 2. The maintainer's Edge Shell used `top` for its frame ([[Shadows on Layer Surfaces#The maintainer's earlier work]]).
 
 **The maintainer's question (2026-10-27): five layers, where 4 is overlay and 3 is melds?** The layer-shell protocol has exactly four layers (`background`, `bottom`, `top`, `overlay`) and cannot take a fifth, so the shell cannot add one. What it can do is give "melds" a place without a layer:
 
-| Option | Mapping |
-|---|---|
-| 4. Host melds in the painter (see Hosted melding) | Layers 0 to 3 as in the diagram; melds are drawn inside the Frame's own surface on `top`; `overlay` is left for real overlays. Recommended |
-| 2 (above) | Layer 1 (`bottom`) is the Frame's ring, layer 2 (`top`) is the melds, bars and strips-as-bars, layer 3 (`overlay`) is real overlays. Gives melds their own layer, at the cost of the ring being under windows |
+| Option                                            | Mapping                                                                                                                                                                                                       |
+|---------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4. Host melds in the painter (see Hosted melding) | Layers 0 to 3 as in the diagram; melds are drawn inside the Frame's own surface on `top`; `overlay` is left for real overlays. Recommended                                                                    |
+| 2 (above)                                         | Layer 1 (`bottom`) is the Frame's ring, layer 2 (`top`) is the melds, bars and strips-as-bars, layer 3 (`overlay`) is real overlays. Gives melds their own layer, at the cost of the ring being under windows |
 
 So the answer to "can we have a layer for melds" is: not as a fifth layer; use hosted melding on one surface (option 4) or the bottom/top split (option 2).
 
 The test of three layers against the wallpaper is no longer needed.
 
-### Thickness, radii, border, colours
+### Thickness, Radii, Border, Colours
 
-| Property | Form | Notes |
-|---|---|---|
-| Thickness | One number, a list of four clockwise from the top, or named sides | The fill band of a side. Borders add to it (below). A side of 0 has no reserver |
-| Outer corner radius | Four-sided: rounds the screen corners (convex) | Default 0 (decided 2026-10-27): the Frame's outer corners usually touch the monitor's own corners, and a rounded outer corner would look odd |
-| Inner corner radius | Four-sided: rounds the opening (concave fillets) | |
-| Inner border | Thickness and colour on the edge facing the desktop | Optional |
-| Outer border | Thickness and colour on the edge at the screen edge | Optional; having both is allowed (maintainer, 2026-10-27) |
-| Background | A colour or a gradient | tre has linear, radial and sweep gradients |
-| Border colour | A colour, a token or a gradient | A gradient border is decided; tiling it is opt-in (below) |
+| Property            | Form                                                              | Notes                                                                                                                                        |
+|---------------------|-------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| Thickness           | One number, a list of four clockwise from the top, or named sides | The fill band of a side. Borders add to it (below). A side of 0 has no reserver                                                              |
+| Outer corner radius | Four-sided: rounds the screen corners (convex)                    | Default 0 (decided 2026-10-27): the Frame's outer corners usually touch the monitor's own corners, and a rounded outer corner would look odd |
+| Inner corner radius | Four-sided: rounds the opening (concave fillets)                  |                                                                                                                                              |
+| Inner border        | Thickness and colour on the edge facing the desktop               | Optional                                                                                                                                     |
+| Outer border        | Thickness and colour on the edge at the screen edge               | Optional; having both is allowed (maintainer, 2026-10-27)                                                                                    |
+| Background          | A colour or a gradient                                            | tre has linear, radial and sweep gradients                                                                                                   |
+| Border colour       | A colour, a token or a gradient                                   | A gradient border is decided; tiling it is opt-in (below)                                                                                    |
 
 **Thickness plus borders (decided 2026-10-27).** The border thickness adds to the Frame's overall thickness: a Frame with a thickness of 10 px and a 2 px border is 12 px in total, and the reserver's zone for that side is 12. With both an inner and an outer border the total is the thickness plus both. The same rule gives the strip's total thickness. The shell computes the zone and the painted bands; a stroke in tre is centred on its path ([paint reference](https://mindderivative.github.io/tre/reference/paint/)), so the shell offsets the contours by half a border.
 
@@ -103,7 +103,7 @@ A Panel or Bar attached to the Frame looks as if it grows out of it, with rounde
 
 The painter covers the whole output, so a shadow cast from the ring onto the desktop is drawn inside the same surface; no oversize surface is needed, unlike a Bar or Panel ([[Shadows on Layer Surfaces]]). tre's painted hit shape is the fill and the stroke, so a shadow does not take clicks. Decided 2026-10-27: all shadows, on every surface and block, are excluded from the hit shape and the input region. #needs-verification that tre's `shadows` property is not part of the painted hit shape; if it is, that is an engine request ([[AGENTS#6. Engine requests (tre / Tesserae)]]).
 
-### What a Frame holds (decided 2026-10-27)
+### What a Frame Holds (Decided 2026-10-27)
 
 A Frame can be one of three things, and a single Frame can mix them:
 
@@ -120,29 +120,29 @@ Decided by the maintainer on 2026-10-27:
 
 **How it is built on tre (proposed).** The painter, which is full-screen and already draws the ring, also hosts the strips' contents. Each strip is a container placed in its side's band, laid out inside the painter's surface. Why this and not separate Bar windows for the strips:
 
-| Option | Description | Verdict |
-|---|---|---|
+| Option                          | Description                                                                 | Verdict                                                                                                                                                                                                                                                                                           |
+|---------------------------------|-----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | A. The painter hosts the strips | One surface for the ring and its content; the reservers stay thin and empty | Recommended. Ring and content share one surface and one colour, so there is no seam and no layer-order question (the protocol leaves the order of surfaces on one layer undefined). `input_region="auto"` already follows what is drawn, so the strips take clicks and the opening passes through |
-| B. Each strip is its own window | The reserver for that side is sized to the strip and holds the content | A second surface on the same layer as the painter: undefined order, a possible seam, and more windows. It would be a Bar attached to the Frame, which is what Melding already covers |
+| B. Each strip is its own window | The reserver for that side is sized to the strip and holds the content      | A second surface on the same layer as the painter: undefined order, a possible seam, and more windows. It would be a Bar attached to the Frame, which is what Melding already covers                                                                                                              |
 
 In option A the keyboard mode of the painter is `on_demand` if any strip holds a text input; otherwise `none`. The painter then takes pointer input over the strips and ring (by `auto`) and nothing in the opening.
 
-### Strip: expand, contract, peek
+### Strip: Expand, Contract, Peek
 
 A strip can grow, shrink or peek out from its edge, along the whole side (edge to edge). Space is reserved in steps, so the two things are separate (a reserver's zone changes in one step, a configure round trip, and tre does not animate it):
 
-| State | What you see | Reserved space |
-|---|---|---|
-| Contracted | The side at its base thickness (the ring) | The base thickness |
-| Expanded | The strip at full thickness | The full thickness |
-| Peek | The strip pushed out over the windows for a moment, as a hover reveal | The base thickness (it does not push windows) |
+| State      | What you see                                                          | Reserved space                                |
+|------------|-----------------------------------------------------------------------|-----------------------------------------------|
+| Contracted | The side at its base thickness (the ring)                             | The base thickness                            |
+| Expanded   | The strip at full thickness                                           | The full thickness                            |
+| Peek       | The strip pushed out over the windows for a moment, as a hover reveal | The base thickness (it does not push windows) |
 
 - The visual extent is animated inside the painter, which is full-screen and can draw anywhere; that is a node animation, not a window resize.
 - To expand: set the reserver's zone first, then animate the strip out. To contract: animate it in, then set the zone. Windows reflow once, not on every frame. This is the auto-hide pattern from the tre request ([[TRE-REQ-001 Layer Surface Window#Shell patterns]]).
 - A peek reserves nothing and draws over windows, which works because the painter is on `top`. A peek that reaches into a window's area is a hover reveal, so a keyboard way to open it is needed.
 - Reduced motion: the states switch instantly ([[Goals and Non-Goals]] G7).
 
-### Strips and Bars on one edge (decided 2026-10-27)
+### Strips and Bars on One Edge (Decided 2026-10-27)
 
 A strip and a Bar can share an edge, with different jobs:
 
@@ -151,23 +151,23 @@ A strip and a Bar can share an edge, with different jobs:
 - A strip has every ability a Bar has: hidden, collapsed, peeking, animated, expanded and contracted, on its own ([[Bar#Auto-hide (decided 2026-10-27)]]). It can be hidden without hiding the Frame.
 - The sub-bar is a Bar attached to the strip (`attach_to` the Frame, hosted in the painter when melded). How an icon names the Bar it opens, and how the two surfaces animate together, is open.
 
-### Hidden and shown at runtime (decided 2026-10-27)
+### Hidden and Shown at Runtime (Decided 2026-10-27)
 
 The whole Frame can be hidden and shown at will during runtime. While hidden, the reservers go away (their zones are released, so windows use the full screen); when shown they return. The change is a step: zones change once and windows reflow once, the same as a strip's expand and contract. A fullscreen window hides all shell elements by the rule in [[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]].
 
-### Hosted melding (decided 2026-10-27)
+### Hosted Melding (Decided 2026-10-27)
 
 The painter is a full-screen surface, so a Bar or Panel melded to the Frame can be drawn **inside the painter** instead of in a window of its own. The entry stays a sibling in the file and names its target (`attach_to`), as before; a flag such as `meld: true` tells the shell to host it in the Frame's surface.
 
-| | Separate window (melding as in Melding above) | Hosted in the painter |
-|---|---|---|
-| Layers used | Frame on `top`, the melded entry on a higher layer (`overlay`) | One surface, no extra layer |
-| Order against the Frame | Defined only across layers | Not an issue: one surface |
-| Seam while moving | Up to one frame of difference | None: one node tree |
-| Joins | Drawn in two surfaces with a shared colour | One path |
-| Content | Its own window | Nodes in the painter's tree |
-| Input | Its own input region | The painter's `auto` region follows what is drawn |
-| Cost | A window per melded entry | None, but the painter's tree and region grow |
+|                         | Separate window (melding as in Melding above)                  | Hosted in the painter                             |
+|-------------------------|----------------------------------------------------------------|---------------------------------------------------|
+| Layers used             | Frame on `top`, the melded entry on a higher layer (`overlay`) | One surface, no extra layer                       |
+| Order against the Frame | Defined only across layers                                     | Not an issue: one surface                         |
+| Seam while moving       | Up to one frame of difference                                  | None: one node tree                               |
+| Joins                   | Drawn in two surfaces with a shared colour                     | One path                                          |
+| Content                 | Its own window                                                 | Nodes in the painter's tree                       |
+| Input                   | Its own input region                                           | The painter's `auto` region follows what is drawn |
+| Cost                    | A window per melded entry                                      | None, but the painter's tree and region grow      |
 
 It is the fallback the Edge Shell design named: four invisible reserving strips plus one click-through full-screen canvas per monitor that draws the frame, corners and panels in one path ([[Shadows on Layer Surfaces#The maintainer's earlier work]], design spec section 5.1). The same approach lets the Overlay layer stay free for real overlays (a launcher, a dimming layer) instead of being used for melds.
 
@@ -179,20 +179,20 @@ One Frame per monitor, independent: each is a complete ring with its own thickne
 
 ## Configuration
 
-| Key | Meaning | Status |
-|---|---|---|
-| `kind: frame` | The kind | Decided |
-| `layer` | `top` only | Decided |
-| `thickness` | Number, list of four clockwise from the top, or named sides | Proposed; the forms are decided |
-| `corner_radius` | Outer (convex) corners, four-sided; default 0 | Default decided (2026-10-27); key proposed |
-| `inner_radius` | Inner (concave) corners, four-sided | Proposed |
-| `inner_border`, `outer_border` | Each a mapping with `thickness` and `color` (a colour, token or gradient); `border`, `border_thickness` and `border_color` in `style` are shorthand for the inner border | Both decided as allowed (2026-10-27); key names proposed |
-| `border_tile` | Repeat a gradient border along the ring; default off | Opt-in decided (2026-10-27); key name and mechanism proposed |
-| `hidden` | Hide the Frame at start; shown and hidden at runtime by a shell action | Decided that it can be hidden and shown; key proposed |
-| `style` | Background, border, shadow, opacity | Decided (the key); property names proposed |
-| `meld` | On a Bar or Panel entry that has `attach_to` the Frame: draw it inside the Frame's surface instead of in a window of its own | Proposed; the mechanism is decided (2026-10-27) |
-| `edges` | Per-edge overrides: `top`, `right`, `bottom`, `left`, each with its own `thickness` and `children` (the strip). An edge is the edge of the screen, however thick it is, and it starts at that edge; it is not a "side" of the screen that reaches past the halfway point | Decided (maintainer, 2026-10-27: `edges`, not `sides`) |
-| `children` | Blocks, containers and modules on the Frame itself | Decided that a layer window has them; for a Frame the content goes in a side's strip |
+| Key                            | Meaning                                                                                                                                                                                                                                                                  | Status                                                                               |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| `kind: frame`                  | The kind                                                                                                                                                                                                                                                                 | Decided                                                                              |
+| `layer`                        | `top` only                                                                                                                                                                                                                                                               | Decided                                                                              |
+| `thickness`                    | Number, list of four clockwise from the top, or named sides                                                                                                                                                                                                              | Proposed; the forms are decided                                                      |
+| `corner_radius`                | Outer (convex) corners, four-sided; default 0                                                                                                                                                                                                                            | Default decided (2026-10-27); key proposed                                           |
+| `inner_radius`                 | Inner (concave) corners, four-sided                                                                                                                                                                                                                                      | Proposed                                                                             |
+| `inner_border`, `outer_border` | Each a mapping with `thickness` and `color` (a colour, token or gradient); `border`, `border_thickness` and `border_color` in `style` are shorthand for the inner border                                                                                                 | Both decided as allowed (2026-10-27); key names proposed                             |
+| `border_tile`                  | Repeat a gradient border along the ring; default off                                                                                                                                                                                                                     | Opt-in decided (2026-10-27); key name and mechanism proposed                         |
+| `hidden`                       | Hide the Frame at start; shown and hidden at runtime by a shell action                                                                                                                                                                                                   | Decided that it can be hidden and shown; key proposed                                |
+| `style`                        | Background, border, shadow, opacity                                                                                                                                                                                                                                      | Decided (the key); property names proposed                                           |
+| `meld`                         | On a Bar or Panel entry that has `attach_to` the Frame: draw it inside the Frame's surface instead of in a window of its own                                                                                                                                             | Proposed; the mechanism is decided (2026-10-27)                                      |
+| `edges`                        | Per-edge overrides: `top`, `right`, `bottom`, `left`, each with its own `thickness` and `children` (the strip). An edge is the edge of the screen, however thick it is, and it starts at that edge; it is not a "side" of the screen that reaches past the halfway point | Decided (maintainer, 2026-10-27: `edges`, not `sides`)                               |
+| `children`                     | Blocks, containers and modules on the Frame itself                                                                                                                                                                                                                       | Decided that a layer window has them; for a Frame the content goes in a side's strip |
 
 ```yaml
 children:
@@ -216,7 +216,7 @@ children:
 
 An illustration only. `thickness`, `corner_radius`, `inner_radius` and `edges` are proposals. With no `edges`, the Frame is just the ring, and Bars and Panels can be melded to it.
 
-## Python contract
+## Python Contract
 
 The Frame has no Python of its own. The shell builds the painter and reservers from the configuration and recomputes them on an output change. A module can show or hide the Frame through shell actions. Modules placed in a Frame's strips receive `use` records like any other ([[Module Context#Uses]]).
 
@@ -239,27 +239,27 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 - High contrast: the border colour and background come from the theme's high-contrast tokens.
 - Content in a Frame's strips is reachable by keyboard like any module; the ring itself is hidden from the accessibility tree.
 
-## Performance budget
+## Performance Budget
 
 - A static ring draws no frames at idle. It redraws when the monitor, scale or configuration changes.
 - Five windows per monitor, one full-screen. Budgets are set in `60 Quality/`; the 4K case is the one tre did not measure with many joins.
 - Changing a thickness reflows windows; do it rarely.
 
-## Failure modes and recovery
+## Failure Modes and Recovery
 
-| Failure | Result |
-|---|---|
-| A thickness of 0 on a side | No reserver for that side |
-| A radius larger than half the thickness or the band | Clamped; a warning names the property |
-| A fullscreen window on the monitor | The Frame and its reservers hide until it leaves fullscreen ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]) |
-| tre older than 0.5.9 | `hit_shape` unknown: error at start naming the required version (the shell requires 0.5.9 or later) |
-| The monitor is removed | All of the Frame's windows close (`output_removed`); recreated when it returns |
-| Scale or mode change | The ring and the reserver zones are recomputed |
-| The painter and a reserver disagree for a frame | Up to one frame of difference on screen; no data lost |
-| A Panel joined to the Frame on the same layer | Draw order undefined; the Panel uses `overlay` |
-| The input region reaches the 256-rectangle cap | tre coarsens the bands; clicks near curves may be taken by up to a band |
+| Failure                                             | Result                                                                                                |
+|-----------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| A thickness of 0 on a side                          | No reserver for that side                                                                             |
+| A radius larger than half the thickness or the band | Clamped; a warning names the property                                                                 |
+| A fullscreen window on the monitor                  | The Frame and its reservers hide until it leaves fullscreen ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]) |
+| tre older than 0.5.9                                | `hit_shape` unknown: error at start naming the required version (the shell requires 0.5.9 or later)   |
+| The monitor is removed                              | All of the Frame's windows close (`output_removed`); recreated when it returns                        |
+| Scale or mode change                                | The ring and the reserver zones are recomputed                                                        |
+| The painter and a reserver disagree for a frame     | Up to one frame of difference on screen; no data lost                                                 |
+| A Panel joined to the Frame on the same layer       | Draw order undefined; the Panel uses `overlay`                                                        |
+| The input region reaches the 256-rectangle cap      | tre coarsens the bands; clicks near curves may be taken by up to a band                               |
 
-## Open questions
+## Open Questions
 
 - [x] What a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars, all four edges or none (maintainer, 2026-10-27). The key is `edges` (maintainer, 2026-10-27). The painter hosting the strips (option A) is accepted with the strips (maintainer review, 2026-10-27).
 - [x] The Frame's layer: `top`, with melded Bars and Panels hosted in the Frame's surface (maintainer, 2026-10-27). Open: how the join is drawn in the painter, and the cost of a large tree and region in the painter (to measure).
@@ -273,7 +273,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 - [x] A gradient border's tiling: the shell repeats stops; a native repeat is [[TRE-REQ-006 Repeating Gradients]], kept for the future (maintainer, 2026-10-27).
 - [x] Shadow tokens: `elevation`, `shadow` and `shadow_bleed` are accepted ([[Style Schema#Shadow keys]]); the Frame needs no bleed margin because the painter covers the output.
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [ ] On KWin a maximised window stops inside the ring on all four sides, and a side with a larger thickness reserves more.
 - [ ] A click on the ring is taken by the shell; a click in the opening and in the notch of a concave corner passes to the desktop (points 3 px or more inside the unfilled area).

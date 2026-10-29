@@ -16,45 +16,45 @@ depends_on: ["[[ADR-0013 Control Interface]]"]
 > [!summary]
 > How the outside world controls a running shell, and the command line that does it. The shell owns one session-bus name and exports one small D-Bus interface; the `tesserae-shell` command is a thin client of it, and a few subcommands run without a shell at all (`check`, `schema`, the KWin helpers). The KWin script that reports fullscreen windows ([[ADR-0012 Keeping the Shell Above Plasma Panels]]) calls the same interface. Decided by [[ADR-0013 Control Interface]] (accepted 2026-10-28, Option B). The commands and names below are proposals until the maintainer answers the open questions.
 
-## Purpose and scope
+## Purpose and Scope
 
 - Define the commands, the D-Bus interface, the command line, and the security and failure rules.
 - Not in this note: what each action does to a surface ([[Surfaces]]), how a module action is written ([[Module Contract]]), and how the shell registers global shortcuts itself ([[ADR-0005 Global Shortcuts]], the Integration notes, to write).
 
 ## Behaviour
 
-### Who calls the shell
+### Who Calls the Shell
 
-| Caller | Uses | Example |
-|---|---|---|
-| The user, in a terminal | The `tesserae-shell` command | `tesserae-shell reload` |
-| A keyboard shortcut | A KDE custom shortcut that runs a command, or a shortcut the shell registers itself ([[ADR-0005 Global Shortcuts]]) | `tesserae-shell toggle launcher` |
-| The KWin script | `callDBus` on the interface | Reporting which outputs have a fullscreen window ([[ADR-0012 Keeping the Shell Above Plasma Panels]]) |
-| Desktop tools | `busctl`, `qdbus`, KRunner or a launcher script | `busctl --user call ...` |
-| systemd | Signals and `sd_notify`, not this interface ([[Shell Start and Stop#Telling systemd (decided 2026-10-28)]]) | n/a |
+| Caller                  | Uses                                                                                                                          | Example                                                                                    |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| The user, in a terminal | The `tesserae-shell` command                                                                                                  | `tesserae-shell reload`                                                                    |
+| A keyboard shortcut     | A KDE custom shortcut that runs a command, or a shortcut the shell registers itself ([[ADR-0005 Global Shortcuts]]) | `tesserae-shell toggle launcher`                                                           |
+| The KWin script         | `callDBus` on the interface                                                                                                   | Reporting which outputs have a fullscreen window ([[ADR-0012 Keeping the Shell Above Plasma Panels]]) |
+| Desktop tools           | `busctl`, `qdbus`, KRunner or a launcher script                                                                               | `busctl --user call ...`                                                                   |
+| systemd                 | Signals and `sd_notify`, not this interface ([[Shell Start and Stop#Telling systemd (decided 2026-10-28)]])                                         | n/a                                                                                        |
 
 On a compositor without KDE's shortcut service the launcher still opens from the command or a shortcut the user binds in the compositor ([[ADR-0005 Global Shortcuts]]); this interface is what that command calls.
 
-### The bus name
+### The Bus Name
 
 - The shell requests one name on the session bus and exports one object, at start, once the model is built ([[Shell Start and Stop]]).
 - Decided names, 2026-10-28 (nothing is registered or checked for clashes): service `io.github.mindderivative.TesseraeShell`, object path `/io/github/mindderivative/TesseraeShell`, interface `io.github.mindderivative.TesseraeShell1`. A reverse-domain name needs a domain the project owns; the repositories of tre and Tesserae are under `github.com/mindderivative`, so the `io.github.<account>` form is used. The `1` in the interface name is the interface version: a breaking change makes `2`. 
 - The name is requested without queueing. A name that is already owned means another shell is running; the shell exits with code 4 ([[Shell Start and Stop#Exit codes]]). The lock file remains the first guard ([[Shell Start and Stop#Process rules]]).
 
-### The interface
+### The Interface
 
 Proposed methods. Names are `CamelCase` as D-Bus convention; every method that changes the shell returns a success flag and a message as two values (signature `bs`, not a struct), or raises a D-Bus error. The test below showed `dbus-fast` returning two values from a method annotated `bs`.
 
-| Method | Arguments | Result | What it does |
-|---|---|---|---|
-| `Reload` | none | `(b ok, s message)` | Reloads everything now, as `SIGHUP` does ([[Hot Reload]]); returns after the apply, with the errors if it failed |
-| `Quit` | none | none | Starts the stop sequence ([[Shell Start and Stop#Stop sequence]]) |
-| `Status` | none | `s` (JSON) | The state, versions, monitors, surfaces, modules and the last errors |
-| `Show`, `Hide`, `Toggle` | `s name` | `(b ok, s message)` | Show, hide or toggle a Bar, Panel or Frame by its unique name ([[Panel#States]]) |
-| `ClosePopup` | none | none | Closes the open Popup, if any |
-| `Call` | `s module, s action, s args` | `s` (JSON) | Calls an `@action` method of a module; `args` is a JSON array |
-| `SetLogLevel` | `s level` | none | Changes the log level until the next reload of `settings.yaml` ([[Settings File#Log files]]) |
-| `FullscreenState` | `as outputs` | none | For the KWin script: the outputs that now have an active fullscreen window; the shell hides its surfaces on those ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]) |
+| Method                   | Arguments                    | Result              | What it does                                                                                                                                                |
+|--------------------------|------------------------------|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Reload`                 | none                         | `(b ok, s message)` | Reloads everything now, as `SIGHUP` does ([[Hot Reload]]); returns after the apply, with the errors if it failed                   |
+| `Quit`                   | none                         | none                | Starts the stop sequence ([[Shell Start and Stop#Stop sequence]])                                                                                          |
+| `Status`                 | none                         | `s` (JSON)          | The state, versions, monitors, surfaces, modules and the last errors                                                                                        |
+| `Show`, `Hide`, `Toggle` | `s name`                     | `(b ok, s message)` | Show, hide or toggle a Bar, Panel or Frame by its unique name ([[Panel#States]])                                                     |
+| `ClosePopup`             | none                         | none                | Closes the open Popup, if any                                                                                                                               |
+| `Call`                   | `s module, s action, s args` | `s` (JSON)          | Calls an `@action` method of a module; `args` is a JSON array                                                                                               |
+| `SetLogLevel`            | `s level`                    | none                | Changes the log level until the next reload of `settings.yaml` ([[Settings File#Log files]])                                                    |
+| `FullscreenState`        | `as outputs`                 | none                | For the KWin script: the outputs that now have an active fullscreen window; the shell hides its surfaces on those ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]) |
 
 Properties: `State` (`starting`, `running`, `stopping`), `Version`, `ApiVersion`. Signals: `Reloaded(b ok, s summary)`, `ErrorReported(s rule, s file, i line, s message)`, `SurfaceChanged(s name, s state)`.
 
@@ -68,25 +68,25 @@ Properties: `State` (`starting`, `running`, `stopping`), `Version`, `ApiVersion`
 
 The shell's D-Bus service thread (a shared asyncio loop, [[ADR-0009 D-Bus Client Library]]) receives each call. The handler never touches a node: it queues the command for the loop with `call_soon` and awaits the result with a timeout of 5 seconds, then replies ([[Process Model and Threading#Handing a value to the loop (proposed)]]). The loop applies the command between frames. If the loop is stuck, the call times out with an error; `Quit` also asks tre to stop from the service thread through `LoopHandle.stop()`, which any thread may call ([[TRE-REQ-005 Keep-Alive and Loop Stop]]).
 
-### The command line
+### The Command Line
 
 One executable, `tesserae-shell` (name decided 2026-10-28), also `python -m tesserae_shell`.
 
-| Subcommand | Needs a shell | What it does |
-|---|---|---|
-| `run` | no | Starts the shell; the default when no subcommand is given; what systemd runs ([[Shell Start and Stop]]) |
-| `check [--json]` | no | Validates settings and files without starting: the same pipeline and errors as start ([[Validation and Errors]]); exit code 1 on any error |
-| `schema [--out DIR]` | no | Writes or refreshes the JSON schemas ([[ADR-0011 JSON Schema for Shell Files]], [[JSON Schema and Editor Support#Where the schemas live]]) |
-| `reload` | yes | Calls `Reload` |
-| `quit` | yes | Calls `Quit` |
-| `status [--json]` | yes | Calls `Status` and prints it |
-| `show NAME`, `hide NAME`, `toggle NAME` | yes | Calls the method of the same name |
-| `call MODULE ACTION [ARG ...]` | yes | Calls a module action; each `ARG` is a JSON value, or plain text if it is not valid JSON |
-| `log-level LEVEL` | yes | Calls `SetLogLevel` |
-| `events` | yes | Streams the interface's signals until interrupted. Not in v1: later (decided 2026-10-28); until then `busctl --user monitor` shows them |
-| `kwin script install`, `remove`, `status` | no | Installs or removes the KWin fullscreen script ([[ADR-0012 Keeping the Shell Above Plasma Panels]]) |
-| `kwin rule show`, `install`, `remove` | no | Shows, writes or removes the one KWin window rule group the shell owns; `install` shows the rule and asks, or needs `--yes` |
-| `version` | no | Prints the shell, tre and Python versions |
+| Subcommand                                | Needs a shell | What it does                                                                                                                                             |
+|-------------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `run`                                     | no            | Starts the shell; the default when no subcommand is given; what systemd runs ([[Shell Start and Stop]])                                   |
+| `check [--json]`                          | no            | Validates settings and files without starting: the same pipeline and errors as start ([[Validation and Errors]]); exit code 1 on any error |
+| `schema [--out DIR]`                      | no            | Writes or refreshes the JSON schemas ([[ADR-0011 JSON Schema for Shell Files]], [[JSON Schema and Editor Support#Where the schemas live]])                                  |
+| `reload`                                  | yes           | Calls `Reload`                                                                                                                                           |
+| `quit`                                    | yes           | Calls `Quit`                                                                                                                                             |
+| `status [--json]`                         | yes           | Calls `Status` and prints it                                                                                                                             |
+| `show NAME`, `hide NAME`, `toggle NAME`   | yes           | Calls the method of the same name                                                                                                                        |
+| `call MODULE ACTION [ARG ...]`            | yes           | Calls a module action; each `ARG` is a JSON value, or plain text if it is not valid JSON                                                                 |
+| `log-level LEVEL`                         | yes           | Calls `SetLogLevel`                                                                                                                                      |
+| `events`                                  | yes           | Streams the interface's signals until interrupted. Not in v1: later (decided 2026-10-28); until then `busctl --user monitor` shows them                  |
+| `kwin script install`, `remove`, `status` | no            | Installs or removes the KWin fullscreen script ([[ADR-0012 Keeping the Shell Above Plasma Panels]])                                                                 |
+| `kwin rule show`, `install`, `remove`     | no            | Shows, writes or removes the one KWin window rule group the shell owns; `install` shows the rule and asks, or needs `--yes`                              |
+| `version`                                 | no            | Prints the shell, tre and Python versions                                                                                                                |
 
 Global options: `--config-dir PATH` (overrides the config directory, for tests), `--json`, `--timeout SECONDS` (default 5), `--quiet`.
 
@@ -95,18 +95,18 @@ Global options: `--config-dir PATH` (overrides the config directory, for tests),
 - The D-Bus client is `jeepney` (blocking, pure Python, the named fallback in [[ADR-0009 D-Bus Client Library]]). Decided 2026-10-28, backed by a measurement: a `jeepney` client making one call took 21.0 ms, a `dbus-fast` client 53.2 ms (its asyncio import dominates), and `busctl --user call` 1.5 ms. A shortcut can call `busctl` directly and skip Python altogether.
 - **Output.** Plain text for people, one result per line; `--json` for scripts, as one JSON object. Errors go to stderr in the printed form of [[Validation and Errors#The error record]].
 
-### Exit codes of the client
+### Exit Codes of the Client
 
 The shell's own codes are in [[Shell Start and Stop#Exit codes]]. The client uses the same numbers where they apply, and adds two:
 
-| Code | Meaning |
-|---|---|
-| 0 | The command succeeded |
-| 1 | The command ran and failed (a `check` found errors, an unknown name, a rejected action) |
-| 2 | Environment error: no session bus, no config directory |
-| 3 | No shell is running: the bus name has no owner |
-| 4 | `run` only: another shell is already running |
-| 5 | The call timed out |
+| Code | Meaning                                                                                 |
+|------|-----------------------------------------------------------------------------------------|
+| 0    | The command succeeded                                                                   |
+| 1    | The command ran and failed (a `check` found errors, an unknown name, a rejected action) |
+| 2    | Environment error: no session bus, no config directory                                  |
+| 3    | No shell is running: the bus name has no owner                                          |
+| 4    | `run` only: another shell is already running                                            |
+| 5    | The call timed out                                                                      |
 
 Decided 2026-10-28; codes 3 and 5 were free in the shell's table.
 
@@ -121,7 +121,7 @@ Decided 2026-10-28; codes 3 and 5 were free in the shell's table.
 
 One `settings.yaml` key (decided 2026-10-28): `control`, default true; `control: false` runs the shell without exporting the interface, and the KWin script then cannot report fullscreen windows. The rest of the global settings list is deferred ([[Settings File]]).
 
-## Python contract
+## Python Contract
 
 None. A module's `@action` methods are reachable through `Call`, and a module never talks to the interface ([[Module Context]]).
 
@@ -139,26 +139,26 @@ None. Command output is plain text and works without colour.
 
 Plain text and exit codes are readable by a screen reader and a script. `--json` gives a stable shape.
 
-## Performance budget
+## Performance Budget
 
 - A control command costs the client about 20 ms plus the shell's work; target under 100 ms end to end for `toggle` on this machine (proposed; measured in testing).
 - On the loop a command is one `call_soon` callback that does a lookup and one tre call; it stays under a millisecond.
 - An idle shell receives no calls and wakes for none.
 
-## Failure modes and recovery
+## Failure Modes and Recovery
 
-| Failure | Result |
-|---|---|
-| No session bus | The client exits with code 2 naming `DBUS_SESSION_BUS_ADDRESS`; the shell cannot own a name and exits with code 2 if `control` is on |
-| The name has no owner | The client exits with code 3: "no shell is running" |
-| A call times out | The client exits with code 5; the shell's loop is probably busy or stuck |
-| An unknown surface name | Error with the nearest names; exit code 1 |
-| The shell is starting or stopping | The method returns an error saying so |
-| The client is newer than the shell | A missing method returns `UnknownMethod`; the client says the running shell is older and prints both versions |
-| A module action raises | The error is returned with the module name; the shell continues |
-| A second `run` | The name is taken: exit code 4 |
+| Failure                            | Result                                                                                                                               |
+|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| No session bus                     | The client exits with code 2 naming `DBUS_SESSION_BUS_ADDRESS`; the shell cannot own a name and exits with code 2 if `control` is on |
+| The name has no owner              | The client exits with code 3: "no shell is running"                                                                                  |
+| A call times out                   | The client exits with code 5; the shell's loop is probably busy or stuck                                                             |
+| An unknown surface name            | Error with the nearest names; exit code 1                                                                                            |
+| The shell is starting or stopping  | The method returns an error saying so                                                                                                |
+| The client is newer than the shell | A missing method returns `UnknownMethod`; the client says the running shell is older and prints both versions                        |
+| A module action raises             | The error is returned with the module name; the shell continues                                                                      |
+| A second `run`                     | The name is taken: exit code 4                                                                                                       |
 
-## Open questions
+## Open Questions
 
 - [x] **The channel:** one D-Bus interface, no socket ([[ADR-0013 Control Interface]], maintainer, 2026-10-28).
 - [x] **The bus name** `io.github.mindderivative.TesseraeShell` (maintainer, 2026-10-28).
@@ -174,7 +174,7 @@ Plain text and exit codes are readable by a screen reader and a script. `--json`
 - [x] Shell completion scripts: later (maintainer: "Later is fine").
 - [x] A `settings.yaml` key `control` to turn the interface off, and `Status` may list module names (maintainer, 2026-10-28).
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [ ] With the shell running, `tesserae-shell reload` returns after the apply and prints the result; with a bad file it prints the errors and exits with code 1.
 - [ ] `tesserae-shell toggle launcher` shows and hides the Panel and returns in under 100 ms.

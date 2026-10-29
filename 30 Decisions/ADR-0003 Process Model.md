@@ -11,7 +11,7 @@ related: ["[[V1 Scope]]", "[[ADR-0006 Shell Independent of Tesserae UI]]", "[[AD
 depends_on: []
 ---
 
-# ADR-0003: Process model
+# ADR-0003: Process Model
 
 > [!summary]
 > One process owns every surface on every monitor and runs one tre event loop. Background work runs on other threads and hands results to the loop with `LoopHandle.call_soon`.
@@ -22,12 +22,12 @@ tre runs on one thread, the one that created the `App`; every window, event hand
 
 ## Options
 
-### Option A — One process, one event loop (chosen)
+### Option A — One Process, One Event Loop (Chosen)
 
 - **For:** one configuration, one theme, one set of services shared by all surfaces; hot reload and monitor hot-plug act in one place; the cost of tre's GPU device per window is the only duplication.
 - **Against:** a hang or crash in one module stops every surface. Python modules share one GIL, so a slow module delays frames for all monitors.
 
-### Option B — One process per surface or per monitor
+### Option B — One Process per Surface or per Monitor
 
 - **For:** a failure stays inside one surface.
 - **Against:** shared state (theme, services, config) needs inter-process messaging; every process pays its own runtime and GPU memory; a bar and its popups must cooperate across processes.

@@ -11,25 +11,25 @@ related: ["[[42 Python API]]", "[[Module Context]]", "[[Value Types and Conversi
 depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0009 D-Bus Client Library]]"]
 ---
 
-# Module contract
+# Module Contract
 
 > [!summary]
 > A module has three parts: a layout YAML (`<Name>_Module.yaml`: widgets, expressions, `params:`), a style YAML, and a Python file (`<Name>_Module.py`) next to them, in a `Modules/<module_name>/` folder ([[ADR-0007 Shell UI Layer#What a module is (2026-10-26)]]). This note is about the Python part: the logic. The Python file holds one class that extends the shell's `Module` base. The shell creates it once, gives it a context, and calls `start`, `stop` and, for a changed configuration, `reload`. The module owns its data and its threads; it sends finished values to the shell, which renders them. **Decided** parts come from [[ADR-0007 Shell UI Layer]] and [[ADR-0009 D-Bus Client Library]]; names and signatures below are **proposed**. Short snippets are illustrations, not code to build.
 
-## What is decided
+## What is Decided
 
-| Decision | Source |
-|---|---|
-| A module is `<Name>_Module.yaml` plus a required matching `<Name>_Module.py`, next to each other, in `Modules/<module_name>/` with all supporting files | [[ADR-0007 Shell UI Layer#Modules (2026-10-25)]] |
-| The shell imports the file, finds the class that extends a shell `Module` base, creates it once, and calls `start`, `stop` and an optional `reload` | [[ADR-0007 Shell UI Layer#Module Python (2026-10-25)]] |
-| The module receives a context with its YAML values, its name and UID, a logger and the send entry point | same |
-| One instance per module file, shared by every use; per-use differences are the module's job | [[ADR-0007 Shell UI Layer#Modules (2026-10-25)]] |
-| The module's Python reaches its YAML by file name, unique name or UID | same |
-| Modules send values to shell entry points; the shell converts what it can | [[ADR-0007 Shell UI Layer#Module data reaches the view through shell entry points (2026-10-25)]] |
-| A module's Python can be reloaded at runtime | [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]] |
-| Blocking work runs off the loop; D-Bus goes through the shared `dbus-fast` service thread | [[Process Model and Threading]], [[ADR-0009 D-Bus Client Library]] |
+| Decision                                                                                                                                                | Source                                                                           |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| A module is `<Name>_Module.yaml` plus a required matching `<Name>_Module.py`, next to each other, in `Modules/<module_name>/` with all supporting files | [[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]                                          |
+| The shell imports the file, finds the class that extends a shell `Module` base, creates it once, and calls `start`, `stop` and an optional `reload`     | [[ADR-0007 Shell UI Layer#Module Python (2026-10-25)]]                                          |
+| The module receives a context with its YAML values, its name and UID, a logger and the send entry point                                                 | same                                                                             |
+| One instance per module file, shared by every use; per-use differences are the module's job                                                             | [[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]                                          |
+| The module's Python reaches its YAML by file name, unique name or UID                                                                                   | same                                                                             |
+| Modules send values to shell entry points; the shell converts what it can                                                                               | [[ADR-0007 Shell UI Layer#Module data reaches the view through shell entry points (2026-10-25)]]                                          |
+| A module's Python can be reloaded at runtime                                                                                                            | [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]                                          |
+| Blocking work runs off the loop; D-Bus goes through the shared `dbus-fast` service thread                                                               | [[Process Model and Threading]], [[ADR-0009 D-Bus Client Library]] |
 
-## The class (proposed)
+## The Class (Proposed)
 
 ```python
 # Modules/Clock/Clock_Module.py   (illustration; the import path is not decided)
@@ -67,16 +67,16 @@ stateDiagram-v2
     Failed --> Created: code reload
 ```
 
-| Method | Runs on | Called when | Must |
-|---|---|---|---|
-| `start()` | Loop thread | After the shell model is built ([[Process Model and Threading#Lifecycle (proposed)]]) | Return quickly. Start threads or timers for anything slow. Values sent before a surface exists are kept |
-| `stop()` | Loop thread | On quit, or before a code reload | Stop its own threads and close connections, within a timeout. The shell joins threads started through `ctx.thread` |
-| `validate_use(use)` | Loop thread | A use of the module is loaded or its params change | Check `use.params` and raise `ValueError` on a bad value. Quick, no I/O (proposed) |
-| `reload()` | Loop thread | The module's YAML changed and the Python did not | Re-read `self.ctx.config`. No restart |
+| Method              | Runs on     | Called when                                                              | Must                                                                                                               |
+|---------------------|-------------|--------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| `start()`           | Loop thread | After the shell model is built ([[Process Model and Threading#Lifecycle (proposed)]]) | Return quickly. Start threads or timers for anything slow. Values sent before a surface exists are kept            |
+| `stop()`            | Loop thread | On quit, or before a code reload                                         | Stop its own threads and close connections, within a timeout. The shell joins threads started through `ctx.thread` |
+| `validate_use(use)` | Loop thread | A use of the module is loaded or its params change                       | Check `use.params` and raise `ValueError` on a bad value. Quick, no I/O (proposed)                                 |
+| `reload()`          | Loop thread | The module's YAML changed and the Python did not                         | Re-read `self.ctx.config`. No restart                                                                              |
 
 Code reload ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], mechanics proposed): the shell imports the new code first and checks it for the class; only then does it call `stop()` on the old instance, join its threads, purge the module's own modules from `sys.modules`, create the new instance and call `start()`. If the new code fails to import, the old instance keeps running and the error is logged with `file:line:column`. The value store keeps the last values until the new instance sends. #needs-verification: `importlib` with live threads, and supporting files in the module folder.
 
-## Rules for the module author
+## Rules for the Module Author
 
 1. **Never touch tre nodes.** Send values; the shell renders ([[Layers and Components#Dependency rules]]).
 2. **Never block the loop.** `start`, `stop`, `reload` and actions return fast; blocking work uses `ctx.thread`, `ctx.dbus` or its own threads ([[Process Model and Threading#The rules]]).
@@ -91,18 +91,18 @@ Code reload ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], 
 - **Names.** The expressions that place values into widgets are written in the module's own layout YAML, not in the surface. Which names they read (the use's `params`, the values the Python sends) is open ([[ADR-0007 Shell UI Layer#Open items]]). #needs-verification
 - **D-Bus.** `ctx.dbus` ([[Module Context]]).
 
-## Failure modes and recovery
+## Failure Modes and Recovery
 
-| Failure | Result |
-|---|---|
-| No class, or more than one | Load error naming the file |
-| `<Name>_Module.py` missing | Load error naming both files |
-| `start()` raises | Module marked failed; logged with name and UID; other modules continue; surfaces keep last values or defaults |
-| An exception in a `ctx.thread` or `ctx.dbus` callback | Caught, logged with the module name; the module keeps running |
-| A bad code reload | Old instance keeps running; error logged |
-| `stop()` does not return within the timeout | Logged; the shell continues shutdown |
+| Failure                                               | Result                                                                                                        |
+|-------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| No class, or more than one                            | Load error naming the file                                                                                    |
+| `<Name>_Module.py` missing                            | Load error naming both files                                                                                  |
+| `start()` raises                                      | Module marked failed; logged with name and UID; other modules continue; surfaces keep last values or defaults |
+| An exception in a `ctx.thread` or `ctx.dbus` callback | Caught, logged with the module name; the module keeps running                                                 |
+| A bad code reload                                     | Old instance keeps running; error logged                                                                      |
+| `stop()` does not return within the timeout           | Logged; the shell continues shutdown                                                                          |
 
-## Open questions
+## Open Questions
 
 - [ ] Constructor versus `self.ctx` set by the base class (proposed above).
 - [x] Only `@action`-marked methods are callable from a shell file (maintainer, 2026-10-26).
@@ -112,7 +112,7 @@ Code reload ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], 
 - [ ] Which timer helpers `ctx` offers (`every`, `after`) and which clock they use.
 - [ ] Whether `reload()` is passed the changed keys.
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [ ] A module with one `Module` subclass and its matching YAML loads, starts and sends a value that a view shows.
 - [ ] A missing `.py`, no class, or two classes each fail with a message naming the files.

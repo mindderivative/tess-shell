@@ -11,37 +11,37 @@ related: ["[[42 Python API]]", "[[Module Context]]", "[[ADR-0007 Shell UI Layer]
 depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 ---
 
-# Value types and conversion
+# Value Types and Conversion
 
 > [!summary]
 > A module sends plain values. The values the renderer accepts are the types tre already accepts; where a module would naturally use another form, such as a HEX colour, the shell converts it. If a module needs a conversion the shell does not provide, the module converts to a type the shell does provide. The shell is there so a module author can use tre without Rust, so it covers the common conversions (maintainer, 2026-10-25). The list of conversions below is proposed; the principle is decided.
 
-## What tre accepts
+## What Tre Accepts
 
 From the tre reference ([painting guide](https://mindderivative.github.io/tre/guide/painting/), [properties](https://mindderivative.github.io/tre/reference/properties/), [paint](https://mindderivative.github.io/tre/reference/paint/)), read 2026-10-26:
 
-| Kind | tre type |
-|---|---|
-| Colour | `(r, g, b, a)`, a tuple of 0 to 255 integers, straight (not premultiplied) alpha |
-| Opacity | `0.0` to `1.0`, group opacity of a node and its subtree |
+| Kind              | tre type                                                                                                                 |
+|-------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Colour            | `(r, g, b, a)`, a tuple of 0 to 255 integers, straight (not premultiplied) alpha                                         |
+| Opacity           | `0.0` to `1.0`, group opacity of a node and its subtree                                                                  |
 | Size and position | A number of pixels; `"auto"`; a percentage such as `"50%"`; a percentage plus pixels such as `"calc(100% - 16)"` (0.5.7) |
-| Text | A string; `font_size` in pixels; styled spans as `(start, end, style)` byte ranges |
-| Corner radius | One number or `(top_left, top_right, bottom_right, bottom_left)` |
-| Shadows | A list of `(color, offset_x, offset_y, blur, spread)` |
-| Gradient | `Gradient.linear`, `.radial` or `.sweep` with colour stops |
-| Image | Straight-alpha RGBA8 bytes with `pixel_width` and `pixel_height`, set together |
-| Booleans, numbers | Plain Python |
+| Text              | A string; `font_size` in pixels; styled spans as `(start, end, style)` byte ranges                                       |
+| Corner radius     | One number or `(top_left, top_right, bottom_right, bottom_left)`                                                         |
+| Shadows           | A list of `(color, offset_x, offset_y, blur, spread)`                                                                    |
+| Gradient          | `Gradient.linear`, `.radial` or `.sweep` with colour stops                                                               |
+| Image             | Straight-alpha RGBA8 bytes with `pixel_width` and `pixel_height`, set together                                           |
+| Booleans, numbers | Plain Python                                                                                                             |
 
-## What a module sends
+## What a Module Sends
 
-| Kind | A module may send | The shell turns it into |
-|---|---|---|
-| Text, numbers, booleans, `None` | Plain Python values | Unchanged |
-| Lists and dicts | JSON-like data, nested; a list feeds a repeater (workspaces, tray items) | Unchanged; TEL reads it |
-| Colour | A `(r, g, b, a)` tuple; or `"#RRGGBB"` / `"#RRGGBBAA"`; or `RGBA(r, g, b, a)` with alpha 0.0 to 1.0 (the forms in the maintainer's style example); or a theme token name | The tre tuple (0 to 255 integers, so an alpha of 1.0 becomes 255). HEX to RGBA is the maintainer's example of a conversion the shell does |
-| Size | A number, `"auto"`, a percentage string | Unchanged (tre accepts them) |
-| Image | An image object with RGBA bytes and its size | The tre image properties; decoding files is the module's work, on its own thread ([[Process Model and Threading]]) |
-| Time and dates | A string the module formats, or a `datetime` | A formatted string for text; formatting is the module's choice |
+| Kind                            | A module may send                                                                                                                                                        | The shell turns it into                                                                                                                   |
+|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| Text, numbers, booleans, `None` | Plain Python values                                                                                                                                                      | Unchanged                                                                                                                                 |
+| Lists and dicts                 | JSON-like data, nested; a list feeds a repeater (workspaces, tray items)                                                                                                 | Unchanged; TEL reads it                                                                                                                   |
+| Colour                          | A `(r, g, b, a)` tuple; or `"#RRGGBB"` / `"#RRGGBBAA"`; or `RGBA(r, g, b, a)` with alpha 0.0 to 1.0 (the forms in the maintainer's style example); or a theme token name | The tre tuple (0 to 255 integers, so an alpha of 1.0 becomes 255). HEX to RGBA is the maintainer's example of a conversion the shell does |
+| Size                            | A number, `"auto"`, a percentage string                                                                                                                                  | Unchanged (tre accepts them)                                                                                                              |
+| Image                           | An image object with RGBA bytes and its size                                                                                                                             | The tre image properties; decoding files is the module's work, on its own thread ([[Process Model and Threading]])                |
+| Time and dates                  | A string the module formats, or a `datetime`                                                                                                                             | A formatted string for text; formatting is the module's choice                                                                            |
 
 Conversions the shell provides in v1 (the starting list was accepted by the maintainer on 2026-10-26):
 
@@ -52,7 +52,7 @@ Conversions the shell provides in v1 (the starting list was accepted by the main
 
 Everything else a module converts itself.
 
-## Four-sided values
+## Four-sided Values
 
 A style value with four sides (a border thickness, a corner radius, a margin, padding) is written in forms plain YAML already understands (maintainer, 2026-10-26, option A in [[ADR-0007 Shell UI Layer#Open items]]): one number for all sides, a list of four, or named sides:
 
@@ -64,7 +64,7 @@ border_thickness: {left: 2, top: 2, right: 2, bottom: 2}   # named sides
 
 The order of a list of four is clockwise from the top (top, right, bottom, left), confirmed by the maintainer on 2026-10-26, as tre's `margin` and `corner_radius` are. The shell converts the shorthand to tre's tuples.
 
-## Where conversion runs
+## Where Conversion Runs
 
 - **On send (module thread):** pure conversions that need no shell state (HEX to RGBA). Cheap, off the loop.
 - **On flush (loop thread):** conversions that need shell state (theme tokens). Done once per turn.
@@ -76,7 +76,7 @@ The order of a list of four is clockwise from the top (top, right, bottom, left)
 - A key that no view reads is stored and ignored; no error.
 - A conversion failure never raises into the module's thread: `ctx.send` returns, the error is logged.
 
-## Open questions
+## Open Questions
 
 - [x] The four conversions above are v1 (maintainer, 2026-10-26). Additions later.
 - [ ] Whether the shell warns when a key is sent but no view reads it (useful while building a shell).
@@ -84,7 +84,7 @@ The order of a list of four is clockwise from the top (top, right, bottom, left)
 - [ ] How an image is sent and who owns the buffer (copy or hand over).
 - [ ] Whether a module can declare its keys and types in its YAML so the shell can check a view against them at load.
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [ ] A module sends `"#8fd3b6"` and a view shows the matching tre colour.
 - [ ] A module sends a list of dicts and a repeater makes one entry per item.

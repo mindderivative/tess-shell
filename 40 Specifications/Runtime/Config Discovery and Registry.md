@@ -11,19 +11,19 @@ related: ["[[Runtime]]", "[[Settings File]]", "[[Shell File]]", "[[Module File]]
 depends_on: ["[[Settings File]]", "[[ADR-0007 Shell UI Layer]]"]
 ---
 
-# Config discovery and registry
+# Config Discovery and Registry
 
 > [!summary]
 > How the shell finds its files, decides which are loaded, gives each a stable identity, and keeps that identity in `registry.json`. Decided already: the config directory layout, the search order and fallback, `settings.yaml` before the registry, UIDs made with `uuid.uuid7()`, the registry as a JSON file, the UID written into the file below `shell:`, reference errors at load, and rebuilding the registry from file UIDs ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]], [[Settings File]]). This note adds the rules that make those work, as proposals with recommendations.
 
-## Purpose and scope
+## Purpose and Scope
 
 - Define discovery, file recognition, name uniqueness, the registry file and its operations, the UID write, and reference resolution.
 - Not in this note: what a shell, module, style, theme or stylesheet file contains ([[41 YAML Reference]]), how errors are reported ([[Validation and Errors]]), watching for changes ([[Hot Reload]]), and the order of start-up ([[Shell Start and Stop]]).
 
 ## Behaviour
 
-### Where files are
+### Where Files Are
 
 The folders and `settings.yaml` are in [[Settings File#The config directory]]: `Shells/`, `Modules/<module_name>/`, `Styles/`, `Themes/`, `Stylesheets/` and `schemas/` under the config directory. A configured directory in `settings.yaml` is searched first and the default folder is the fallback ([[Settings File]], decided 2026-10-27). Shipped modules come from the package and are registry-only; a user module of the same name overrides one ([[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]]).
 
@@ -59,7 +59,7 @@ flowchart TD
 - **Identity** compares the entry's values other than the UID, with `name` and `location`. If they agree, the entry is the same; a mismatch means a new entry and the old one is treated as removed ([[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]]).
 - **A copied file.** Two files that carry the same UID is an error naming both: the user deleted the `UID:` line in neither copy. The shell does not choose one (decided 2026-10-28). Giving the later file a new UID was rejected because it can silently change which copy keeps state.
 
-### The registry file
+### The Registry File
 
 `registry.json` is at the configured path, default `registry.json` in the config directory ([[Settings File]]). A JSON file, not a database (decided 2026-10-25). Proposed shape:
 
@@ -84,21 +84,21 @@ flowchart TD
 }
 ```
 
-| Field | Meaning |
-|---|---|
-| `registry` | The format version of the file; a newer version than the shell knows is an error |
-| `type` or `kind` | A file's type, or a surface's kind |
-| `name` | The unique name |
-| `file` | Relative to the config directory when inside it, otherwise absolute |
-| `owner` | For a named entry inside a file, the file's UID |
-| `state` | What the shell saves: a floating Panel's position ([[Panel#Position and attachment]]); other state is added as it is found |
+| Field            | Meaning                                                                                                                          |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `registry`       | The format version of the file; a newer version than the shell knows is an error                                                 |
+| `type` or `kind` | A file's type, or a surface's kind                                                                                               |
+| `name`           | The unique name                                                                                                                  |
+| `file`           | Relative to the config directory when inside it, otherwise absolute                                                              |
+| `owner`          | For a named entry inside a file, the file's UID                                                                                  |
+| `state`          | What the shell saves: a floating Panel's position ([[Panel#Position and attachment]]); other state is added as it is found |
 
 - **Reading.** At start, on the main thread before the loop runs ([[Shell Start and Stop]]). A file that is not valid JSON is an error and stops the shell; the shell does not overwrite it. A missing file is created empty (decided 2026-10-27).
 - **Writing.** A single writer thread collects changes and writes at most once every 500 ms, and once at stop. It writes to a temporary file in the same directory, flushes it, and replaces the registry atomically (`os.replace`), so a crash leaves the old file whole. Recommendation; this settles the open question about registry I/O on the loop ([[ADR-0007 Shell UI Layer#Open items]]).
 - **A moved or empty registry.** If the registry is new, empty or moved and the files already carry UIDs, the shell logs a warning and rebuilds each record from the UID in its file instead of issuing new ones (decided 2026-10-27, [[Settings File]]). What a rebuilt record holds is name, kind or type, and file, found by scanning; the saved `state` is lost (decided 2026-10-28).
 - **Removed entries.** When a file or entry is gone, its record is kept for 30 days and then dropped (decided 2026-10-28), so that renaming a file and back does not lose a Panel's position.
 
-### Writing the UID into a file
+### Writing the UID into a File
 
 The shell edits a file the user wrote, so it is careful (risk R-06 in the [[Risk Register]]).
 
@@ -119,7 +119,7 @@ The shell edits a file the user wrote, so it is careful (risk R-06 in the [[Risk
 
 `settings.yaml` keys: `directories`, `registry`, `main_shell` ([[Settings File]]). Proposed addition: `registry_retention` (days an orphaned record is kept, default 30; the 30 days are decided). No other key.
 
-## Python contract
+## Python Contract
 
 A module receives its own UID and name in the context and can read other YAML through the registry ([[Module Context]]). It never reads or writes the registry.
 
@@ -137,27 +137,27 @@ None.
 
 None directly. Error messages follow [[Validation and Errors]].
 
-## Performance budget
+## Performance Budget
 
 - Discovery scans a few dozen files; parsing dominates. With the validation cache an unchanged file is not re-validated ([[JSON Schema and Editor Support#The `jsonschema` dependency runtime, not only development]]).
 - A registry write is off the loop and bounded by one write per 500 ms.
 - Budgets are set in `60 Quality/`.
 
-## Failure modes and recovery
+## Failure Modes and Recovery
 
-| Failure | Result |
-|---|---|
-| `registry.json` is not valid JSON | Error naming the file; the shell stops and does not overwrite it |
-| The registry is newer than the shell knows | Error naming the version; the shell stops |
-| Two files carry the same UID | Error naming both |
-| A name defined twice | Error naming both files and lines |
-| A shell-suffix file with no `shell:` key | Error naming the file |
+| Failure                                         | Result                                                                      |
+|-------------------------------------------------|-----------------------------------------------------------------------------|
+| `registry.json` is not valid JSON               | Error naming the file; the shell stops and does not overwrite it            |
+| The registry is newer than the shell knows      | Error naming the version; the shell stops                                   |
+| Two files carry the same UID                    | Error naming both                                                           |
+| A name defined twice                            | Error naming both files and lines                                           |
+| A shell-suffix file with no `shell:` key        | Error naming the file                                                       |
 | A configured directory is missing or unreadable | Error naming the key and the path ([[Settings File#Errors specific to this file]]) |
-| The UID write fails | Warning; the file keeps a registry-only identity |
-| A file changes during the UID write | The write is skipped and retried |
-| The registry write fails (disk full) | Logged; the old file stays whole; retried at the next change and at stop |
+| The UID write fails                             | Warning; the file keeps a registry-only identity                            |
+| A file changes during the UID write             | The write is skipped and retried                                            |
+| The registry write fails (disk full)            | Logged; the old file stays whole; retried at the next change and at stop    |
 
-## Open questions
+## Open Questions
 
 All seven were answered on 2026-10-28, as recommended.
 
@@ -170,7 +170,7 @@ All seven were answered on 2026-10-28, as recommended.
 7. [x] **Unimported shell files:** a `_Shell.yaml` in `Shells/` that nothing imports is ignored with an info notice.
 - [ ] The registry writer: one thread, one write per 500 ms (proposed, not asked).
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [ ] With the default folders and no `settings.yaml`, the shell finds `Shells/Main_Shell.yaml` and registers every module, style, theme and stylesheet.
 - [ ] A `directories.modules` path is searched before `Modules/`; a module found only in `Modules/` still loads.

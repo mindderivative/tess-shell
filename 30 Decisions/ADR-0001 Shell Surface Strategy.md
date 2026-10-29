@@ -11,7 +11,7 @@ related: ["[[Layer Surfaces]]", "[[Open Questions]]", "[[Risk Register]]", "[[Pr
 depends_on: []
 ---
 
-# ADR-0001: Shell surface strategy
+# ADR-0001: Shell Surface Strategy
 
 > [!summary]
 > A shell needs surfaces that anchor to screen edges, reserve space, sit on a stacking layer, and control keyboard focus. tre up to 0.5.7 opened only `winit` windows (xdg-toplevel on Wayland) and had none of these; 0.5.8 adds them. This ADR compares four ways to close the gap and recommends adding a layer-surface type to tre.
@@ -26,14 +26,14 @@ depends_on: []
 
 **What a shell surface needs.** From `zwlr_layer_shell_v1` ([protocol page](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)):
 
-| Need | Protocol mechanism |
-|---|---|
-| Stacking layer | `layer`: background, bottom, top, overlay |
-| Edge placement | `anchor` bitfield: top 1, bottom 2, left 4, right 8 |
-| Reserved space | `exclusive_zone`: positive = pixels reserved, 0 = move out of the way, -1 = ignore others and extend to anchored edges |
-| Keyboard focus | `keyboard_interactivity`: `none` (default), `exclusive`, `on_demand` (since version 4) |
-| Per-output placement | The surface is created for a specific `wl_output` |
-| Popups | Menus, tray menus and flyouts must open relative to a shell surface. gtk-layer-shell routes GTK popups through the protocol; Quickshell positions its `PopupWindow` with `anchor.window` and `anchor.rect`. tre had no popup type before 0.5.8, which adds `PopupWindow` (an `xdg_popup` parented to a layer surface). |
+| Need                 | Protocol mechanism                                                                                                                                                                                                                                                                                                     |
+|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Stacking layer       | `layer`: background, bottom, top, overlay                                                                                                                                                                                                                                                                              |
+| Edge placement       | `anchor` bitfield: top 1, bottom 2, left 4, right 8                                                                                                                                                                                                                                                                    |
+| Reserved space       | `exclusive_zone`: positive = pixels reserved, 0 = move out of the way, -1 = ignore others and extend to anchored edges                                                                                                                                                                                                 |
+| Keyboard focus       | `keyboard_interactivity`: `none` (default), `exclusive`, `on_demand` (since version 4)                                                                                                                                                                                                                                 |
+| Per-output placement | The surface is created for a specific `wl_output`                                                                                                                                                                                                                                                                      |
+| Popups               | Menus, tray menus and flyouts must open relative to a shell surface. gtk-layer-shell routes GTK popups through the protocol; Quickshell positions its `PopupWindow` with `anchor.window` and `anchor.rect`. tre had no popup type before 0.5.8, which adds `PopupWindow` (an `xdg_popup` parented to a layer surface). |
 
 **What tre provided before 0.5.8.** The [custom windowing page](https://mindderivative.github.io/tre/design/custom-windowing/) documents `Window(width, height, title, decorations=False)`, runtime `decorations` toggling, drag, resize, `minimize/maximize/restore/close`, and `window.get("platform")`. It does not mention layer-shell, anchoring, exclusive zones, popups or raw Wayland handles; tre #195 confirmed the absences in the source. 0.5.8 adds the layer-surface types: [LayerWindow reference](https://mindderivative.github.io/tre/reference/layer-window/).
 
@@ -45,7 +45,7 @@ depends_on: []
 
 ## Options
 
-### Option A — Layer surfaces in tre (recommended)
+### Option A — Layer Surfaces in Tre (Recommended)
 
 tre gains a layer-surface window type. Sketch, not existing API:
 
@@ -62,7 +62,7 @@ A platform-neutral variant is also possible: a `PanelWindow`-style type whose la
 - **If infeasible:** fall back to Option B.
 - **Status:** built and released in tre 0.5.8 ([[TRE-REQ-001 Layer Surface Window]], `stable`). It specifies the window type, outputs and popups, and records the implementation candidates.
 
-### Option B — Shell-created surface, tre renders into it
+### Option B — Shell-created Surface, Tre Renders into it
 
 > [!info] Rejected unless Option A proves infeasible
 > With a shared maintainer there is no schedule reason to prefer B. Keep the option documented; write `TRE-REQ-002` only if the investigation in [[TRE-REQ-001 Layer Surface Window#Implementation candidates]] rules out Option A.
@@ -73,7 +73,7 @@ The shell runtime creates the layer-shell surface itself (a Wayland client bindi
 - **Against:** tre must accept an external surface. The docs reviewed show no such API, so this is still an engine request, though a smaller one. The shell now owns Wayland event handling (configure, resize, scale, output hot-plug) that `winit` normally hides. Input routing between two event sources is a design risk.
 - **Needs:** `TRE-REQ-002`, an external-surface or raw-handle request. Not written. #needs-verification
 
-### Option C — Plain xdg-toplevel plus KWin-specific placement
+### Option C — Plain Xdg-toplevel plus KWin-specific Placement
 
 Use ordinary tre windows. Position and stack them with KWin window rules or a KWin script (skip taskbar, keep above, fixed geometry).
 
@@ -81,7 +81,7 @@ Use ordinary tre windows. Position and stack them with KWin window rules or a KW
 - **Against:** no protocol-level exclusive zone, so maximised windows can cover the bar unless KWin scripting reserves space reliably. Placement on Wayland is up to the compositor, so behaviour depends on KWin internals and can break across versions. Rules and scripts must be installed or injected into the user's session, which widens the security surface. It is also KDE-only, with no path to other compositors.
 - **Use:** prototyping only. None of the shells surveyed in [[Prior Art - Linux Shell Surfaces]] uses this approach. #needs-verification for every KWin scripting claim here.
 
-### Option D — KDE Plasma shell protocol
+### Option D — KDE Plasma Shell Protocol
 
 Use KDE's own surface-role protocol (`org_kde_plasma_shell`) instead of `wlr-layer-shell`, with the same hand-off problem as Option B.
 
@@ -91,15 +91,15 @@ Use KDE's own surface-role protocol (`org_kde_plasma_shell`) instead of `wlr-lay
 
 ## Comparison
 
-| | A: tre layer type | B: external surface | C: xdg + KWin rules | D: plasma-shell |
-|---|---|---|---|---|
-| Edge anchoring | Yes | Yes | Approximate | Yes |
-| Exclusive zone | Yes | Yes | Unreliable | Yes |
-| Layers | Yes | Yes | Partial | Partial |
-| Engine change | Large | Medium | None | Medium |
-| Shell complexity | Low | High | Medium | High |
-| Compositors | KDE, wlroots family | KDE, wlroots family | KWin only | KWin only |
-| Matches layering principle | Yes | Partly | Partly | Partly |
+|                            | A: tre layer type   | B: external surface | C: xdg + KWin rules | D: plasma-shell |
+|----------------------------|---------------------|---------------------|---------------------|-----------------|
+| Edge anchoring             | Yes                 | Yes                 | Approximate         | Yes             |
+| Exclusive zone             | Yes                 | Yes                 | Unreliable          | Yes             |
+| Layers                     | Yes                 | Yes                 | Partial             | Partial         |
+| Engine change              | Large               | Medium              | None                | Medium          |
+| Shell complexity           | Low                 | High                | Medium              | High            |
+| Compositors                | KDE, wlroots family | KDE, wlroots family | KWin only           | KWin only       |
+| Matches layering principle | Yes                 | Partly              | Partly              | Partly          |
 
 ## Decision
 
@@ -108,11 +108,12 @@ Accepted 2026-10-25 by the maintainer: **Option A**, layer surfaces in tre. The 
 ## Consequences
 
 Option A is accepted, so:
+
 - [[TRE-REQ-001 Layer Surface Window]] carries the API, alternatives and fallback.
 - tre 0.5.8 has shipped it, so surface specs list [[TRE-REQ-001 Layer Surface Window]] in `depends_on` but carry no `Blocked by` callout. A spec names any untested gap from the request that affects it (for example `PopupWindow` Escape dismissal, Orca, input methods).
 - The Option C prototype is no longer needed: layout and design-system work can run on `LayerWindow` directly.
 
-## Open items
+## Open Items
 
 - [x] Confirm tre has no layer-shell or external-surface API (Window reference, source). Confirmed in tre #195, now superseded by the build.
 - [ ] Find the first KWin release exposing `zwlr_layer_shell_v1`; record the version. Deferred to the testing phase (maintainer, 2026-10-25): Tesserae Shell tests it once a build exists. The design assumes KWin 6.8.1, where tre tested.

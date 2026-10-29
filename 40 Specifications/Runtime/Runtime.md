@@ -13,12 +13,12 @@ depends_on: []
 
 # Runtime
 
-| Note | Purpose | Status |
-|---|---|---|
-| [[Shell Start and Stop]] | The start sequence, running with no windows, the stop sequence, one instance, exit codes | draft |
-| [[Config Discovery and Registry]] | Finding files, names, UIDs, `registry.json`, the UID write, references | draft |
-| [[Validation and Errors]] | The validation pipeline, the error record, `file:line:column`, severities | draft |
-| [[Logging]] | The logger, sinks, levels, the record, who writes, safety, cost | draft |
-| [[IPC and CLI]] | The D-Bus interface the shell exports, the `tesserae-shell` command, exit codes, security | draft |
-| [[Hot Reload]] | Watching files, the reload pipeline, the diff, what applies live, what reopens | draft |
-| [[Expression Language Requirements]] | What the shell needs from the Tesserae Expression Language | draft |
+| Note                                    | Purpose                                                                                   | Status |
+|-----------------------------------------|-------------------------------------------------------------------------------------------|--------|
+| [[Shell Start and Stop]] | The start sequence, running with no windows, the stop sequence, one instance, exit codes  | draft  |
+| [[Config Discovery and Registry]] | Finding files, names, UIDs, `registry.json`, the UID write, references                    | draft  |
+| [[Validation and Errors]] | The validation pipeline, the error record, `file:line:column`, severities                 | draft  |
+| [[Logging]] | The logger, sinks, levels, the record, who writes, safety, cost                           | draft  |
+| [[IPC and CLI]] | The D-Bus interface the shell exports, the `tesserae-shell` command, exit codes, security | draft  |
+| [[Hot Reload]] | Watching files, the reload pipeline, the diff, what applies live, what reopens            | draft  |
+| [[Expression Language Requirements]] | What the shell needs from the Tesserae Expression Language                                | draft  |

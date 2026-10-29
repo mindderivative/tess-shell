@@ -26,19 +26,19 @@ What Tesserae has today (local clone `/home/phil/Projects/pyDev/projects/tessera
 
 ## Options
 
-### Option A — Design TEL as a separate library (chosen)
+### Option A — Design TEL as a Separate Library (Chosen)
 
 - **For:** shaped for what the shell needs; shareable with Tesserae UI; no coupling to either; one language for both.
 - **Against:** a third project to design, test and version. Real work: grammar, evaluator, error reporting, limits, docs.
 
-### Option B — Adopt an existing evaluator
+### Option B — Adopt an Existing Evaluator
 
 simpleeval, CEL or a Jinja2 expression mode ([[Expression Languages for YAML]]).
 
 - **For:** less to write.
 - **Against:** their syntax and error reporting are not ours; name tracking for live re-evaluation has to be built around them.
 
-### Option C — Reuse Tesserae's `expr.py` inside the shell
+### Option C — Reuse Tesserae's `expr.py` inside the Shell
 
 - **Against:** it imports Tesserae's reactive types, which [[ADR-0006 Shell Independent of Tesserae UI]] rules out as a dependency.
 

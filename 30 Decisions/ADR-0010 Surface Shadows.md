@@ -11,7 +11,7 @@ related: ["[[Shadows on Layer Surfaces]]", "[[Surface Types]]", "[[Bar]]", "[[Pa
 depends_on: ["[[ADR-0001 Shell Surface Strategy]]"]
 ---
 
-# ADR-0010: Surface shadows
+# ADR-0010: Surface Shadows
 
 > [!summary]
 > Shadows are drawn inside the surface, with tre's `shadows` node property, in a transparent margin around the body (route B). The compositor shadow protocol is not used.
@@ -22,11 +22,13 @@ Every surface can have a shadow with elevation and colour ([[Surface Types]]). A
 
 ## Options
 
-### Option A — Compositor-drawn shadow
+### Option A — Compositor-drawn Shadow
+
 - **For:** no margin, no input-region handling; the shadow is outside the exclusive zone by construction.
 - **Against:** tre must expose the surface or attach the shadow, which is an engine request that does not exist; the shadow cannot animate with the node (only by replacing tiles); KWin-specific, so other compositors need route B anyway.
 
-### Option B — In-surface shadow (chosen)
+### Option B — In-surface Shadow (Chosen)
+
 - **For:** works with tre 0.5.8 today, uses the same node tree as the rest of the surface, animates with the node (`shadows` is animatable), and behaves the same on any compositor with layer-shell.
 - **Against:** every surface with a shadow is larger than its body; the margin costs buffer memory (134 KB per buffer for a 32 px margin on a 320x140 body) and needs the exclusive zone and input region set to the body.
 

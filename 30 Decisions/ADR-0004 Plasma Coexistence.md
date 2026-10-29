@@ -11,7 +11,7 @@ related: ["[[V1 Scope]]", "[[ADR-0003 Process Model]]"]
 depends_on: []
 ---
 
-# ADR-0004: Coexistence with plasmashell
+# ADR-0004: Coexistence with Plasmashell
 
 > [!summary]
 > Tesserae Shell coexists with plasmashell by default: it does not take a D-Bus name or a role that plasmashell holds. A service may replace plasmashell's role only after its own ADR.
@@ -22,14 +22,14 @@ Tesserae Shell runs beside an installed Plasma session and does not replace it (
 
 ## Options
 
-### Option A — Coexist by default; replace per service with an ADR (chosen)
+### Option A — Coexist by Default; Replace per Service with an ADR (Chosen)
 
 For each service, the spec records one of three modes: **coexist** (use the service as a client or second host), **proxy** (forward to plasmashell's), or **replace** (own the name). Replace needs its own ADR.
 
 - **For:** the Plasma session keeps working whatever the shell does; stopping the shell restores nothing because nothing was taken.
 - **Against:** a feature that needs ownership (a notification centre) cannot ship until its ADR exists.
 
-### Option B — Replace plasmashell's services wholesale
+### Option B — Replace Plasmashell's Services Wholesale
 
 - **Against:** needs plasmashell stopped or its names displaced, which breaks the "supplement, not replace" rule. Rejected.
 

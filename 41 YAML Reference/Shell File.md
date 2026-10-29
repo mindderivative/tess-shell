@@ -11,7 +11,7 @@ related: ["[[41 YAML Reference]]", "[[Common Keys and Conventions]]", "[[Surface
 depends_on: ["[[Common Keys and Conventions]]", "[[Surface Types]]"]
 ---
 
-# Shell file
+# Shell File
 
 > [!summary]
 > A shell file (`type: Shell`, suffix `_Shell.yaml`) defines the surfaces on one monitor and places modules in them. The whole shell is one such file, or a `Main_Shell.yaml` that imports others. This note lists the keys. **Decided** keys come from [[ADR-0007 Shell UI Layer]]; the surface property names marked **proposed** mirror tre's `LayerWindow` settings ([[TRE-REQ-001 Layer Surface Window]]) and are not yet agreed. Examples are illustrations.
@@ -45,32 +45,32 @@ root:
 - A child is a surface, keyed by its own unique name. `import:` inside `children:` pulls in surfaces from another `_Shell.yaml`; an imported file takes the importing root's monitor.
 - Surfaces are siblings and never nest ([[Common Keys and Conventions#Names and references]]).
 
-## Root keys
+## Root Keys
 
-| Key | Meaning | Status |
-|---|---|---|
-| `name` | Required; unique across the shell (full path for repeated uses, see [[ADR-0007 Shell UI Layer#Open items]]) | Decided (the rule); path form proposed |
-| `monitor` | A connector name (`DP-1`); falls back to the display description; `default` applies to every monitor no other root names; absent means the root is ignored | Decided |
-| `children` | Surfaces and imports | Decided |
+| Key        | Meaning                                                                                                                                                    | Status                                 |
+|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|
+| `name`     | Required; unique across the shell (full path for repeated uses, see [[ADR-0007 Shell UI Layer#Open items]])                                               | Decided (the rule); path form proposed |
+| `monitor`  | A connector name (`DP-1`); falls back to the display description; `default` applies to every monitor no other root names; absent means the root is ignored | Decided                                |
+| `children` | Surfaces and imports                                                                                                                                       | Decided                                |
 
-## Surface keys
+## Surface Keys
 
-| Key | Meaning | Applies to | Status |
-|---|---|---|---|
-| `kind` | `bar`, `frame`, `panel`, `popup` | All | Decided |
-| `layer` | `background`, `bottom`, `top`, `overlay` | All | Decided (the key) |
-| `style` | A style file or an inline mapping | All | Decided |
-| `children` | The surface's contents: blocks (containers included) and module uses. `children:` is the only holder; `modules:` is gone (maintainer, 2026-10-26). The syntax of a module use waits for the widget/module decision ([[Shell Structure#Blocks and modules (decided 2026-10-26)]]) | All | Decided (the key) |
-| `anchor` | Edges to attach to: `top`, `bottom`, `left`, `right` (one or a list) | bar, panel | Proposed |
-| `size` | `[width, height]`; `0` stretches between two anchored edges | bar, panel, popup | Proposed |
-| `exclusive_zone` | Space reserved along the anchored edge, in pixels. Only allowed on `layer: top`; on any other layer it is a load error (maintainer, 2026-10-26) | bar, panel, frame | Rule decided; key name proposed |
-| `margin` | Four-sided offset from the anchored edges | bar, panel | Proposed |
-| `keyboard` | `none`, `on_demand`, `exclusive` | All | Proposed (`exclusive` used for the launcher) |
-| `input_region` | Where input lands: the whole surface, nothing, rectangles, or `auto` | All | Proposed |
-| `movable` | A Panel the mouse can move; its position is saved | panel | Proposed |
-| `hidden` | Start hidden | All | Proposed |
-| `attach_to` | The name of the surface a Panel attaches to | panel | Proposed (decided: attachment is by naming the surface) |
-| `anchor_to` | The name of the surface a Popup hangs off; optional, because the caller's surface is the parent ([[Popup#Parent and anchor]]) | popup | Proposed |
+| Key              | Meaning                                                                                                                                                                                                                                                      | Applies to        | Status                                                  |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|---------------------------------------------------------|
+| `kind`           | `bar`, `frame`, `panel`, `popup`                                                                                                                                                                                                                             | All               | Decided                                                 |
+| `layer`          | `background`, `bottom`, `top`, `overlay`                                                                                                                                                                                                                     | All               | Decided (the key)                                       |
+| `style`          | A style file or an inline mapping                                                                                                                                                                                                                            | All               | Decided                                                 |
+| `children`       | The surface's contents: blocks (containers included) and module uses. `children:` is the only holder; `modules:` is gone (maintainer, 2026-10-26). The syntax of a module use waits for the widget/module decision ([[Shell Structure#Blocks and modules (decided 2026-10-26)]]) | All               | Decided (the key)                                       |
+| `anchor`         | Edges to attach to: `top`, `bottom`, `left`, `right` (one or a list)                                                                                                                                                                                         | bar, panel        | Proposed                                                |
+| `size`           | `[width, height]`; `0` stretches between two anchored edges                                                                                                                                                                                                  | bar, panel, popup | Proposed                                                |
+| `exclusive_zone` | Space reserved along the anchored edge, in pixels. Only allowed on `layer: top`; on any other layer it is a load error (maintainer, 2026-10-26)                                                                                                              | bar, panel, frame | Rule decided; key name proposed                         |
+| `margin`         | Four-sided offset from the anchored edges                                                                                                                                                                                                                    | bar, panel        | Proposed                                                |
+| `keyboard`       | `none`, `on_demand`, `exclusive`                                                                                                                                                                                                                             | All               | Proposed (`exclusive` used for the launcher)            |
+| `input_region`   | Where input lands: the whole surface, nothing, rectangles, or `auto`                                                                                                                                                                                         | All               | Proposed                                                |
+| `movable`        | A Panel the mouse can move; its position is saved                                                                                                                                                                                                            | panel             | Proposed                                                |
+| `hidden`         | Start hidden                                                                                                                                                                                                                                                 | All               | Proposed                                                |
+| `attach_to`      | The name of the surface a Panel attaches to                                                                                                                                                                                                                  | panel             | Proposed (decided: attachment is by naming the surface) |
+| `anchor_to`      | The name of the surface a Popup hangs off; optional, because the caller's surface is the parent ([[Popup#Parent and anchor]])                                                                                                                    | popup             | Proposed                                                |
 
 Names follow tre's so the shell maps them directly. Per-kind keys (a Frame's side thicknesses and corner shapes, a Bar's span, a Popup's gravity) are listed in the per-kind specs once written ([[Surface Types]]).
 
@@ -80,7 +80,7 @@ Names follow tre's so the shell maps them directly. Per-kind keys (a Frame's sid
 - A surface set for one monitor can be shared by several roots by importing the same `_Shell.yaml`.
 - A Popup opens only on the monitor of the surface that called it ([[Surface Types#Open questions]]).
 
-## Errors specific to shell files
+## Errors Specific to Shell Files
 
 - A root with no `name`, or two with the same name on one monitor: error, both places named.
 - A `kind:` that is not one of the four: error with the list.

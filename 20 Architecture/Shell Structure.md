@@ -11,14 +11,14 @@ related: ["[[20 Architecture]]", "[[Surface Types]]", "[[Module File]]", "[[Comm
 depends_on: []
 ---
 
-# Shell structure
+# Shell Structure
 
 > [!summary]
 > The maintainer's flow diagram ([[Shell Flow Diagram.canvas]], fifth version, 2026-10-26, now in this folder) shows what a shell is made of, from the desktop environment down to building blocks. This note puts it in words, checks it against the rest of the vault and the layer-shell protocol, and lists what is still open. The diagram is the maintainer's design.
 
 ![[Shell Flow Diagram.canvas]]
 
-## What the diagram shows
+## What the Diagram Shows
 
 ```mermaid
 flowchart TB
@@ -38,31 +38,31 @@ flowchart TB
     mod --> blocks[Building blocks]
 ```
 
-| Group | Contents |
-|---|---|
-| Desktop Environment | The layer surface (Layer 0 Background, Layer 1 Bottom, Layer 2 Top, Layer 3 Overlay), KWin between Layer 1 and Layer 2, Wallpapers on Layer 0, Reserved Space on Layer 2 |
-| Layer Windows | Panel (Bottom, Top or Overlay), Bar (Bottom, Top or Overlay), Frame (Top) |
-| Special Cases | Popup, drawn above its parent. A module calls it, and it holds containers and modules |
-| Modules (Nestable) | Spacer, List, Toggle, Label, Slider, Marquee text, TextBox, ProgressBar, Checkbox, TextInput, Menu and MenuItem, TextEditor, Revealer, Button, Stack, Icon, Badge, Image, Tooltip |
-| Building Blocks | Containers (nestable): FlexBox, Box, Grid. Shapes: Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path. Graphics: Bitmap, SVG. Typography: Text, TextField, TextField (Multi-Line). Other: Terminal, Canvas |
+| Group               | Contents                                                                                                                                                                                                                  |
+|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Desktop Environment | The layer surface (Layer 0 Background, Layer 1 Bottom, Layer 2 Top, Layer 3 Overlay), KWin between Layer 1 and Layer 2, Wallpapers on Layer 0, Reserved Space on Layer 2                                                  |
+| Layer Windows       | Panel (Bottom, Top or Overlay), Bar (Bottom, Top or Overlay), Frame (Top)                                                                                                                                                 |
+| Special Cases       | Popup, drawn above its parent. A module calls it, and it holds containers and modules                                                                                                                                     |
+| Modules (Nestable)  | Spacer, List, Toggle, Label, Slider, Marquee text, TextBox, ProgressBar, Checkbox, TextInput, Menu and MenuItem, TextEditor, Revealer, Button, Stack, Icon, Badge, Image, Tooltip                                         |
+| Building Blocks     | Containers (nestable): FlexBox, Box, Grid. Shapes: Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path. Graphics: Bitmap, SVG. Typography: Text, TextField, TextField (Multi-Line). Other: Terminal, Canvas |
 
 Reading the arrows: the Shell attaches to the layer surface; layer windows (Panel, Bar, Frame) hold modules and containers; a module holds containers and is made of building blocks; a module calls a popup, and a popup holds containers and modules.
 
-## Checked against the vault and the protocol
+## Checked against the Vault and the Protocol
 
-| Diagram | Check | Result |
-|---|---|---|
-| Four layers numbered 0 to 3 | The layer-shell protocol's four layers, "ordered by z depth, bottom-most first" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)) | Matches exactly ([[Common Keys and Conventions]]) |
-| KWin between Layer 1 and Layer 2 | The protocol: ordinary windows are rendered between the bottom and top layers | Matches exactly |
-| Reserved Space on Layer 2 | The shell's own rule | Decided ([[Surface Types#Layers per kind]]) |
-| Panel, Bar, Frame with the layers shown | [[Surface Types#Layers per kind]] | Matches |
-| Popup, drawn above parent, called by a module | An `xdg_popup` parented to a layer surface is drawn above its parent | Matches; the protocol page leaves the stacking to the xdg_popup rules |
-| Building Blocks: Containers, Shapes, Graphics, Typography, Other | [[Building Blocks]] | Matches exactly, including Grid, Path and the multi-line TextField |
-| Modules (Nestable) | [[Building Blocks]], [[V1 Widgets]] | 19 modules. **Checkbox is new** (see below). The other 18 match |
-| Layer 0 wallpapers only | [[Surface Types#Layers per kind]] | Matches |
-| Modules and containers nest | [[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]] | Matches |
+| Diagram                                                          | Check                                                                                                                        | Result                                                                |
+|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| Four layers numbered 0 to 3                                      | The layer-shell protocol's four layers, "ordered by z depth, bottom-most first" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)) | Matches exactly ([[Common Keys and Conventions]])             |
+| KWin between Layer 1 and Layer 2                                 | The protocol: ordinary windows are rendered between the bottom and top layers                                                | Matches exactly                                                       |
+| Reserved Space on Layer 2                                        | The shell's own rule                                                                                                         | Decided ([[Surface Types#Layers per kind]])                     |
+| Panel, Bar, Frame with the layers shown                          | [[Surface Types#Layers per kind]]                                                                                      | Matches                                                               |
+| Popup, drawn above parent, called by a module                    | An `xdg_popup` parented to a layer surface is drawn above its parent                                                         | Matches; the protocol page leaves the stacking to the xdg_popup rules |
+| Building Blocks: Containers, Shapes, Graphics, Typography, Other | [[Building Blocks]]                                                                                      | Matches exactly, including Grid, Path and the multi-line TextField    |
+| Modules (Nestable)                                               | [[Building Blocks]], [[V1 Widgets]]                                             | 19 modules. **Checkbox is new** (see below). The other 18 match       |
+| Layer 0 wallpapers only                                          | [[Surface Types#Layers per kind]]                                                                                      | Matches                                                               |
+| Modules and containers nest                                      | [[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]]                                                                                      | Matches                                                               |
 
-## Decided from the diagram
+## Decided from the Diagram
 
 - Layer 0 is for wallpapers only, for now (maintainer, 2026-10-26); the maintainer can see it used later for window tiling or as a base layer for a desktop dashboard.
 - Frame is Top only; its strips move to `top` ([[Surface Types]]). Top suits the painter, which must be above windows to be seen; the strips are invisible so any layer works, and Top-layer reservation is the case known to work on KWin.
@@ -73,7 +73,7 @@ Reading the arrows: the Shell attaches to the layer surface; layer windows (Pane
 - Popup focus is on by default with one flag; tooltip-like popups opt out.
 - The Frame stays on `top`. Melded Bars and Panels are drawn inside the Frame's own surface (hosted melding, 2026-10-27), so melds need no layer of their own and Overlay stays free ([[Frame#Hosted melding (decided 2026-10-27)]]).
 
-## What does not match, or needs a decision
+## What Does Not Match, or Needs a Decision
 
 All three points were answered by the maintainer on 2026-10-27:
 
@@ -81,7 +81,7 @@ All three points were answered by the maintainer on 2026-10-27:
 2. Blocks can be placed anywhere: directly on a surface, in a container or in a module. They are most commonly used inside a module. The diagram's arrow from Module to Block shows the common case, not a limit.
 3. A popup holds containers and modules. The maintainer added a container node under Special Cases to the diagram; it had been left out while rearranging.
 
-## Blocks and modules (decided 2026-10-26)
+## Blocks and Modules (Decided 2026-10-26)
 
 The maintainer looked at how Tesserae builds widgets and chose the shell's own building blocks ([[Building Blocks]]). A block is called with `block:`; a module is called by its unique name as the key; `widget:` and `module:` are gone; `import:` embeds a module file. The diagram now shows exactly that split: a Building Blocks group and a Modules group.
 
