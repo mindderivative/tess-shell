@@ -160,18 +160,18 @@ Plain text and exit codes are readable by a screen reader and a script. `--json`
 
 ## Open questions
 
-1. [x] **The channel:** one D-Bus interface, no socket ([[ADR-0013 Control Interface]], maintainer, 2026-10-28).
-2. [x] **The bus name** `io.github.mindderivative.TesseraeShell` (maintainer, 2026-10-28).
-3. [x] **The command name** `tesserae-shell` (maintainer, 2026-10-28).
-4. [x] `argparse` for the CLI (maintainer, 2026-10-28, as recommended).
-5. [x] `jeepney` as the CLI's D-Bus client (as recommended).
-6. [x] A `call` command that reaches module `@action` methods (as recommended).
-7. [x] An `events` subcommand: later, not v1 (as recommended).
-8. [x] A `log-level` command (as recommended).
-9. [x] The KWin helper commands under `kwin`, with consent (as recommended).
-10. [x] Client exit codes 3 and 5 (maintainer: "That is fine").
-11. [x] `FullscreenState` as a full list of outputs (as recommended).
-12. [x] Shell completion scripts: later (maintainer: "Later is fine").
+- [x] **The channel:** one D-Bus interface, no socket ([[ADR-0013 Control Interface]], maintainer, 2026-10-28).
+- [x] **The bus name** `io.github.mindderivative.TesseraeShell` (maintainer, 2026-10-28).
+- [x] **The command name** `tesserae-shell` (maintainer, 2026-10-28).
+- [x] `argparse` for the CLI (maintainer, 2026-10-28, as recommended).
+- [x] `jeepney` as the CLI's D-Bus client (as recommended).
+- [x] A `call` command that reaches module `@action` methods (as recommended).
+- [x] An `events` subcommand: later, not v1 (as recommended).
+- [x] A `log-level` command (as recommended).
+- [x] The KWin helper commands under `kwin`, with consent (as recommended).
+- [x] Client exit codes 3 and 5 (maintainer: "That is fine").
+- [x] `FullscreenState` as a full list of outputs (as recommended).
+- [x] Shell completion scripts: later (maintainer: "Later is fine").
 - [x] A `settings.yaml` key `control` to turn the interface off, and `Status` may list module names (maintainer, 2026-10-28).
 
 ## Acceptance criteria

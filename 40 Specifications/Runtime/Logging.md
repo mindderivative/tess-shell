@@ -35,7 +35,7 @@ Loguru, one process-wide logger ([[Logging with Loguru]]). Checked on this machi
 | Console | stderr | The same line, in colour when stderr is a terminal | Always; shorter under systemd |
 
 - **Started at step 4** of the start sequence, after `settings.yaml` is read ([[Shell Start and Stop#Start sequence]]). Until then, and if the file sink cannot start (a read-only directory), records go to the console only and the shell says so; it does not stop ([[Shell Start and Stop]]).
-- **If `settings.yaml` fails,** the error goes to the console and to the default log directory, `logs/` in the config directory ([[Settings File#A bad settings file stops the shell]]).
+- If `settings.yaml` fails, the error goes to the console and to the default log directory, `logs/` in the config directory ([[Settings File#A bad settings file stops the shell]]).
 - **The file sink swaps at local midnight:** a loop timer fires once a day, adds the next day's sink and removes the old one. It is the only periodic wake the logger adds. A restart on the same day appends ([[Settings File#Log files]]).
 - **Permissions.** The log directory is created with mode 0700 and files with 0600: records name files, modules and surfaces (proposed).
 - **Under systemd** the console line can drop the timestamp, because the journal adds its own. The shell uses the environment variable `JOURNAL_STREAM`, which systemd sets for a service whose output goes to the journal, to decide (proposed). #needs-verification of the variable's meaning in `systemd.exec(5)`.
@@ -76,7 +76,7 @@ Behind the line, each record carries structured fields (`file`, `line`, `column`
 - **The shell** logs with source `shell`.
 - **A module** logs through `self.ctx.log`, a logger bound to the module's name and UID ([[Module Context]]). The module does not touch sinks or levels. An exception in a callback or a `ctx.thread` function is logged by the shell with the module's name ([[Process Model and Threading#Failure and recovery]]).
 - **A library** that uses the standard `logging` module (for example `dbus-fast`) is routed into Loguru by one handler on the root logger, at `WARNING` and above by default. A test on 2026-10-28 showed the routing: a `dbus_fast` warning appeared as `lib:dbus_fast | WARNING | bus closed`.
-- **`warnings`** from Python are routed the same way, with source `warnings`. A test showed a `DeprecationWarning` arriving as a `WARNING` record with the file and line.
+- Python's `warnings` are routed the same way, with source `warnings`. A test showed a `DeprecationWarning` arriving as a `WARNING` record with the file and line.
 - **TEL** never imports Loguru. It raises errors that carry file, line and column, or uses the standard `logging` module, and the shell turns them into records ([[Logging with Loguru#What to check]], [[ADR-0008 Tesserae Expression Language]]).
 - **tre** writes its own errors to stderr through Rust's tracing, not through Python's `logging`. A test on 2026-10-28 made a click listener raise and got, on stderr only: `ERROR engine_py::dispatch: uncaught exception in a Python callback traceback=...`, with colour codes; nothing reached a Python `logging` handler. So tre's errors are not in the log file unless the shell forwards them. Recommendation: the shell wraps every callback it registers in a guard that logs the exception with Loguru, so tre's own message becomes a last resort; and it forwards the process's stderr into the log as source `tre`, through a pipe and a reader thread, falling back to leaving stderr alone if that cannot be set up. Question 3. #needs-verification that the forwarding cannot block the process.
 
@@ -159,12 +159,12 @@ A plain-text log is readable by a screen reader and `grep`. The console keeps th
 ## Open questions
 
 1. **The logger:** Loguru, as a formal decision (recommended), or the standard `logging` module.
-2. **`enqueue=True` for both sinks** (recommended), or synchronous writes.
+2. `enqueue=True` for both sinks (recommended), or synchronous writes.
 3. **tre's stderr:** forward it into the log (recommended), or leave it on stderr.
-4. **`diagnose` off by default,** with a key to turn it on (recommended).
+4. `diagnose` off by default, with a key to turn it on (recommended).
 5. **A JSON file format** as an option, text by default (recommended).
 6. **File permissions:** directory 0700, files 0600 (recommended).
-7. **Library records at `WARNING`** and above by default (recommended).
+7. Library records at `WARNING` and above by default (recommended).
 8. **Per-source levels** (for example `lib:dbus_fast: ERROR`): later (recommended), or v1.
 9. **Under systemd,** a shorter console line without the timestamp (recommended).
 
