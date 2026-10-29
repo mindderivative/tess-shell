@@ -190,6 +190,10 @@ SORT file.name ASC
 
 ![[Logging#Open questions]]
 
+### [[Wayland Protocols]]
+
+![[Wayland Protocols#Open Questions]]
+
 ### [[Expression Language Requirements]]
 
 ![[Expression Language Requirements#Open questions]]
