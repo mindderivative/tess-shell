@@ -2,7 +2,7 @@
 title: Wayland Protocols
 aliases: [Protocols, KWin Protocols, Compositor Protocols]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-28
 updated: 2026-10-28
@@ -48,7 +48,7 @@ Observed in KWin 6.8.1's registry on 2026-10-28 (the numbers are the versions KW
 | `wp_cursor_shape_manager_v1` | v2 | The cursor a node asks for | Yes | The default cursor |
 | `zwp_text_input_manager_v3` | v2 | Input methods in a focused text field (CJK) | Yes | No input method in shell text fields |
 | `zwp_relative_pointer_manager_v1` | v1 | Moving a Panel by dragging its margin | Yes (`zwp_relative_pointer_v1`) | The shell falls back to absolute positions, as tre does |
-| A data-control protocol | `ext_data_control_manager_v1` v1 | Clipboard from a layer surface | tre says "the compositor's data-control protocol"; which one it binds is not shown #needs-verification | Clipboard calls fail and are logged |
+| A data-control protocol | `ext_data_control_manager_v1` v1 | Clipboard from a layer surface | tre says "the compositor's data-control protocol"; which one it binds is not shown. Asked of the `tre` session over the mailbox on 2026-10-28, with a second question about a KWin test #needs-verification | Clipboard calls fail and are logged |
 | `zxdg_output_manager_v1`, `wl_output` | v3, v4 | Outputs and their names ([[Data Flow#Monitor hot-plug]]) | Yes | No output events: the shell cannot match monitors; it exits with code 2 |
 
 ### Protocols the shell needs and tre does not expose
@@ -62,7 +62,7 @@ Observed in KWin 6.8.1's registry on 2026-10-28 (the numbers are the versions KW
 
 Foreign-toplevel protocols are not offered by this KWin: neither `zwlr_foreign_toplevel_manager_v1` nor `ext_foreign_toplevel_list_v1` appears in the listing. The wlroots way of building a task list is therefore not available on KWin 6.8.1; this is the reason the Tasks module cannot copy a sway or Hyprland design. Likewise `ext_workspace_v1` is absent.
 
-**A bind test, 2026-10-28.** A small C client (scratch code in /tmp, not in the vault) bound `org_kde_plasma_window_management` at version 21 from an ordinary terminal and received eight `window_with_uuid` events, one per window, with no protocol error. So on this session KWin did not refuse an unprivileged process. Not tested: whether it is allowed when the shell starts from a systemd user service or from KDE autostart, and whether a Python Wayland binding works the same way. #needs-verification
+**A bind test, 2026-10-28.** A small C client (scratch code in /tmp, not in the vault) bound `org_kde_plasma_window_management` at version 21 from an ordinary terminal and received eight `window_with_uuid` events, one per window, with no protocol error. So on this session KWin did not refuse an unprivileged process. The same binary then ran as a transient systemd user service (`systemd-run --user`, with the maintainer's permission, 2026-10-28) and got the same result: it bound v21 and received the same eight window events, with `WAYLAND_DISPLAY=wayland-1` and `XDG_RUNTIME_DIR=/run/user/1000` set in the service's environment. So KWin 6.8.1 does not refuse an unprivileged client launched as a service. Not tested: a KDE autostart launch, and a Python Wayland binding. #needs-verification
 
 ### How the shell reaches them (decision wanted)
 
@@ -75,7 +75,7 @@ Options for a protocol tre does not expose:
 | C. D-Bus only | `org.kde.KWin` and other services | No script, no Wayland library | KWin's D-Bus API does not list windows without the script or the protocol (not verified) #needs-verification |
 | D. An engine request | tre exposes the connection | One connection | A large request for something outside tre's purpose |
 
-Recommendation: A for windows and fullscreen state, C (the `VirtualDesktopManager` D-Bus interface) for desktops, and no second Wayland connection in v1. The bind test shows B would work on this session, so it is a fallback, not a necessity. The deciding note is the KWin note to write; the answer here is the table above.
+Decided 2026-10-28: A for windows and fullscreen state, C (the `VirtualDesktopManager` D-Bus interface) for desktops, and no second Wayland connection in v1. The bind tests show B would work on this session, from a terminal and from a service, so it is a fallback, not a necessity. The deciding note is the KWin note to write; the answer here is the table above.
 
 ### Protocols that exist and the shell does not use
 
@@ -137,12 +137,14 @@ None here. A protocol adds nothing at idle; tre's surfaces and the KWin script h
 
 ## Open Questions
 
-1. **The window list:** the KWin script (recommended), a second Wayland connection, or D-Bus only.
-2. **Virtual desktops:** the KWin D-Bus interface (recommended), or `org_kde_plasma_virtual_desktop_management`.
-3. **A diagnostic** that lists needed protocols against the compositor's globals (recommended: part of `tesserae-shell status`, not a new command).
-4. **Blur behind translucent surfaces:** an engine request later (recommended), or not at all.
-5. **Which data-control protocol tre binds,** and whether the clipboard works on KWin 6.8.1 (to verify).
-6. **Permission to bind KDE-private protocols** from a service or autostart launch (to verify, only if option B is ever needed).
+Answered on 2026-10-28.
+
+1. [x] The window list: the KWin script (as recommended).
+2. [x] Virtual desktops: the KWin D-Bus interface (as recommended).
+3. [x] A diagnostic: part of `tesserae-shell status`, not a new command (as recommended).
+4. [x] Blur behind translucent surfaces: an engine request later (as recommended).
+5. [x] The data-control protocol and a clipboard test: ask `tre` (done by mailbox on 2026-10-28, information only). The shell must have a test that proves clipboard read and write work on KWin ([[#Acceptance Criteria]], maintainer, 2026-10-28). Waiting on tre's answer, and a peer's answer is a lead, not a source.
+6. [x] Binding KDE-private protocols from a service or autostart launch: permission given (maintainer, 2026-10-28). Tested as a systemd user service: it works. An autostart launch is still untested.
 
 ## Acceptance Criteria
 
@@ -151,6 +153,7 @@ None here. A protocol adds nothing at idle; tre's surfaces and the KWin script h
 - [ ] With `wp_fractional_scale_manager_v1` absent, surfaces still open at integer scale.
 - [ ] The Tasks module gets its window list from the KWin script and does not open a second Wayland connection.
 - [ ] The listing of KWin's globals is repeated on each KWin release and the tables here are updated.
+- [ ] A test proves that clipboard write and read work from a layer surface on KWin, using the clipboard protocol KWin offers; it saves and restores the user's clipboard, or runs in a throwaway session.
 
 ## Links
 

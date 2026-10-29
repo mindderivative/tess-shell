@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-10-27                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Last change         | Started the Integration specs: [[Wayland Protocols]] (draft) with KWin 6.8.1's globals and a bind test |
+| Last change         | Applied the Wayland Protocols answers; asked tre about the clipboard protocol; tested KDE-private binding from a service |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0013 Control Interface]] (12 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | The six [[Wayland Protocols#Open Questions]]; key names the specs mark proposed |
+| Waiting on you      | tre's answer on the clipboard protocol (mailbox); key names the specs mark proposed |
 | Next                | KWin integration, Plasma coexistence, the D-Bus service layer, portals, global shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]])                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-28 | [[Wayland Protocols]] answers applied; tre asked about clipboard |
 | 2026-10-28 | [[Wayland Protocols]] drafted; Integration started |
 | 2026-10-28 | [[Logging]] answers applied; Loguru chosen |
 | 2026-10-28 | [[Logging]] spec written (draft)                                      |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-28 | [[IPC and CLI]] answers applied, in review                                |
 | 2026-10-28 | [[ADR-0013 Control Interface]] accepted                                                  |
 | 2026-10-28 | `dbus-fast` export and client cost tested ([[ADR-0013 Control Interface]])               |
-| 2026-10-28 | [[IPC and CLI]] written; [[ADR-0013 Control Interface]] proposed |
 
 ## Go to
 
