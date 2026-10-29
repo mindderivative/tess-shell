@@ -194,6 +194,10 @@ SORT file.name ASC
 
 ![[Wayland Protocols#Open Questions]]
 
+### [[KWin Integration]]
+
+![[KWin Integration#Open Questions]]
+
 ### [[Expression Language Requirements]]
 
 ![[Expression Language Requirements#Open questions]]

@@ -18,3 +18,4 @@ How the shell talks to the desktop around it: the compositor, Plasma and the sys
 | Note | Purpose | Status |
 |---|---|---|
 | [[Wayland Protocols]] | The protocols the shell needs, what KWin 6.8.1 offers, and how the shell reaches protocols tre does not expose | draft |
+| [[KWin Integration]] | The KWin script, the window rule, the KWin D-Bus interfaces, the version check | draft |

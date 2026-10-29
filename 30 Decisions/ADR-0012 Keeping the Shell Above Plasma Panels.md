@@ -73,6 +73,10 @@ The maintainer accepted the recommendation as written (2026-10-27): v1 does not 
 - A KWin rule is a change to the user's desktop, so it needs consent and an undo.
 - Testing phase: on KWin 6.8.1, with a temporary rule and then a removal, check that a Layer rule matches a Plasma panel and a layer-shell surface, that a maximised window still stops at the panel's strut, and that an active fullscreen window covers `top` surfaces and not `overlay` ones.
 
+## Update 2026-10-29
+
+[[KWin Integration]] refines two points without changing the decision. The script can be loaded at run time by the shell through `/Scripting` (`loadScript`, `unloadScript`), so it need not be a persistent install; this is a question for the maintainer there. And if a rule is offered, raising the shell's own surfaces to KWin's Notification layer changes only the shell's windows, where lowering the Plasma panel leaves it open to being covered; neither is tested.
+
 ## Update 2026-10-28
 
 The KWin script can only reach the shell through a D-Bus call (`callDBus`; the scripting page documents no way to run a process). So the shell must export a D-Bus method for the script, named `FullscreenState` in [[IPC and CLI]]; see [[ADR-0013 Control Interface]] (proposed).
