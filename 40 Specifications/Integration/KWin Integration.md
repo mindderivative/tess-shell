@@ -75,7 +75,7 @@ Decision wanted. The accepted ADR said "a persistent KWin script" and left the i
 - **Order at start.** The shell loads the script after step 12 of the start sequence, when the interface is exported ([[Shell Start and Stop#Start sequence]]); a call that arrives before the shell can answer finds no name and the script's callback ignores the failure.
 - **If it fails to load** (the method returns an error, or the script file is missing): the fullscreen rule is off, the shell logs one warning naming the reason, and `tesserae-shell kwin script status` says so. The shell keeps running.
 - **If KWin never reports** (a script error inside KWin, an API change): the shell cannot see script errors, which go to KWin's journal. After loading, if no `FullscreenState` call arrives within 5 seconds, the shell logs a warning that the script is silent (proposed).
-- **The `kwin` commands** are in [[IPC and CLI#The command line]]: `kwin script install`, `remove` and `status` (mode P and the status of mode R).
+- The `kwin` commands are in [[IPC and CLI#The command line]]: `kwin script install`, `remove` and `status` (mode P and the status of mode R).
 
 ### Window rules
 
@@ -157,7 +157,7 @@ Hiding surfaces on fullscreen removes shell controls from view while a video or 
 3. **A test script inside KWin** that prints the class, name, title, type and layer of the shell's surfaces and of a Plasma panel, to settle how a rule can match them: permission to run it temporarily (recommended: yes).
 4. **The script id and folder** `tesserae-shell-kwin` in `kwin/TesseraeShell/`.
 5. **The silent-script warning after 5 seconds.**
-6. **`kwin.script` and `kwin.hide_on_fullscreen`** as settings keys.
+6. The settings keys `kwin.script` and `kwin.hide_on_fullscreen`.
 7. **An OSD that stays on top of a fullscreen window:** a per-surface opt-out, or none.
 
 ## Acceptance Criteria
