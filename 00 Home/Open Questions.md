@@ -189,6 +189,10 @@ SORT file.name ASC
 
 ![[IPC and CLI#Open questions]]
 
+### [[Logging]]
+
+![[Logging#Open questions]]
+
 ### [[Expression Language Requirements]]
 
 ![[Expression Language Requirements#Open questions]]
