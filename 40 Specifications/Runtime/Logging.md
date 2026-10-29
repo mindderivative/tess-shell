@@ -16,23 +16,23 @@ depends_on: ["[[Settings File]]", "[[Logging with Loguru]]"]
 > [!summary]
 > What the shell writes to its log, where, in what shape, and how fast. Loguru is the logger (the maintainer called it a great option on 2026-10-25; this note asks for the formal choice). Already decided: the log directory `logs/` in the config directory, one file per local day named `log_yyyy-mm-dd.log`, the sink swapped at local midnight, retention left to the user, the keys `level`, `directory` and `retention` under `logging`, a bad settings file logs to the default directory, and a runtime `SetLogLevel` call ([[Settings File#Log files]], [[Shell Start and Stop]], [[IPC and CLI]]). This note adds the record shape, the levels, the sinks, the routing of everything that does not use Loguru, the safety rules and the cost, as proposals with recommendations.
 
-## Purpose and scope
+## Purpose and Scope
 
 - Define the logger, the sinks, the level policy, the record fields, how modules, libraries and tre feed the log, and how secrets stay out.
 - Not in this note: the wording of validation errors ([[Validation and Errors]]), the start order ([[Shell Start and Stop]]), and the file naming and retention, which are in [[Settings File#Log files]] and are not repeated.
 
 ## Behaviour
 
-### The logger
+### The Logger
 
 Loguru, one process-wide logger ([[Logging with Loguru]]). Checked on this machine on 2026-10-28 with Loguru 0.7.3 on Python 3.14.8: it imports, and the tests below ran. Its newest release is 0.7.3 (2024-12-06) and the repository is active ([[Logging with Loguru#What to check]]). Pin the version and test each release on the supported Python. Question 1 asks for the formal decision.
 
 ### Sinks
 
-| Sink | Where | Format | When |
-|---|---|---|---|
-| File | `log_yyyy-mm-dd.log` in the log directory | One line per record, plain text, no colour | Always, once the log directory is usable |
-| Console | stderr | The same line, in colour when stderr is a terminal | Always; shorter under systemd |
+| Sink    | Where                                     | Format                                             | When                                     |
+|---------|-------------------------------------------|----------------------------------------------------|------------------------------------------|
+| File    | `log_yyyy-mm-dd.log` in the log directory | One line per record, plain text, no colour         | Always, once the log directory is usable |
+| Console | stderr                                    | The same line, in colour when stderr is a terminal | Always; shorter under systemd            |
 
 - **Started at step 4** of the start sequence, after `settings.yaml` is read ([[Shell Start and Stop#Start sequence]]). Until then, and if the file sink cannot start (a read-only directory), records go to the console only and the shell says so; it does not stop ([[Shell Start and Stop]]).
 - If `settings.yaml` fails, the error goes to the console and to the default log directory, `logs/` in the config directory ([[Settings File#A bad settings file stops the shell]]).
@@ -42,17 +42,17 @@ Loguru, one process-wide logger ([[Logging with Loguru]]). Checked on this machi
 
 ### Levels
 
-| Loguru level | Used for |
-|---|---|
-| `DEBUG` | Diagnostics: which file was loaded, a reload's diff, a D-Bus call |
-| `INFO` | The normal story: start, ready, a reload applied, stop |
-| `WARNING` | Something is off and the shell continues: a validation `warning`, a target that disappeared, a rebuilt registry record |
-| `ERROR` | A failure the shell survives: a validation `error` on a reload, a module that raised, a surface that failed to open |
-| `CRITICAL` | The shell cannot continue: an unhandled exception outside a callback (exit code 70) |
+| Loguru level | Used for                                                                                                               |
+|--------------|------------------------------------------------------------------------------------------------------------------------|
+| `DEBUG`      | Diagnostics: which file was loaded, a reload's diff, a D-Bus call                                                      |
+| `INFO`       | The normal story: start, ready, a reload applied, stop                                                                 |
+| `WARNING`    | Something is off and the shell continues: a validation `warning`, a target that disappeared, a rebuilt registry record |
+| `ERROR`      | A failure the shell survives: a validation `error` on a reload, a module that raised, a surface that failed to open    |
+| `CRITICAL`   | The shell cannot continue: an unhandled exception outside a callback (exit code 70)                                    |
 
 `TRACE` and `SUCCESS` are not used. A validation finding's `severity` maps to the same-named level, so the log and the console agree ([[Validation and Errors#The error record]]). The default level is `INFO` (`logging.level`, [[Settings File]]); the `--verbose` option of the command line is `DEBUG` for that run. `SetLogLevel` changes the level until the next reload of `settings.yaml`, which applies the file's `level` again ([[IPC and CLI]]).
 
-### The record
+### The Record
 
 One line, in this order, separated by ` | `:
 
@@ -61,17 +61,17 @@ One line, in this order, separated by ` | `:
 2026-10-28 09:14:04.001 | INFO    | module:Clock | - | started with 2 uses
 ```
 
-| Field | Meaning |
-|---|---|
-| time | Local time, with milliseconds |
-| level | As above, padded |
-| source | `shell`, `module:<name>`, `lib:<name>` (a library through the standard `logging` module), `warnings`, or `tre` |
-| location | `file:line:column rule` for a finding with a position, otherwise `-` |
-| message | The text |
+| Field    | Meaning                                                                                                        |
+|----------|----------------------------------------------------------------------------------------------------------------|
+| time     | Local time, with milliseconds                                                                                  |
+| level    | As above, padded                                                                                               |
+| source   | `shell`, `module:<name>`, `lib:<name>` (a library through the standard `logging` module), `warnings`, or `tre` |
+| location | `file:line:column rule` for a finding with a position, otherwise `-`                                           |
+| message  | The text                                                                                                       |
 
 Behind the line, each record carries structured fields (`file`, `line`, `column`, `rule`, `severity`, `module`, `uid`) through Loguru's `bind`, so a file in JSON form keeps them ([[Validation and Errors#The error record]]). `logging.format: json` writes one JSON object per line with `serialize=True` (proposed); the default is text. A test on 2026-10-28 showed `serialize` keeping the bound fields (`rule`, `file`, `line`, `column`) in the record's `extra`.
 
-### Who writes
+### Who Writes
 
 - **The shell** logs with source `shell`.
 - **A module** logs through `self.ctx.log`, a logger bound to the module's name and UID ([[Module Context]]). The module does not touch sinks or levels. An exception in a callback or a `ctx.thread` function is logged by the shell with the module's name ([[Process Model and Threading#Failure and recovery]]).
@@ -87,15 +87,15 @@ Behind the line, each record carries structured fields (`file`, `line`, `column`
 - **No per-frame logging.** Logging is for events. A `DEBUG` message in a hot path is still cheap when filtered out (0.13 µs per call in a test), but the shell keeps frames free of it ([[Goals and Non-Goals]] G4).
 - **Format with arguments,** not f-strings, so a filtered-out message costs nothing to build (`logger.debug("loaded {}", name)`).
 
-### Threads and speed
+### Threads and Speed
 
 Measured on this machine on 2026-10-28 (Loguru 0.7.3, a file sink, 20,000 calls):
 
-| Setting | Cost per call |
-|---|---|
-| A synchronous sink | 6.7 µs |
-| `enqueue=True` (a queue and a writer thread) | 27.2 µs |
-| A message below the sink's level | 0.13 µs |
+| Setting                                      | Cost per call |
+|----------------------------------------------|---------------|
+| A synchronous sink                           | 6.7 µs        |
+| `enqueue=True` (a queue and a writer thread) | 27.2 µs       |
+| A message below the sink's level             | 0.13 µs       |
 
 Loguru's sinks are safe to call from any thread. The loop thread must not block on disk or on a full pipe ([[Process Model and Threading#The rules]]), so the shell uses `enqueue=True` for both sinks: the call costs a few tens of microseconds and the write happens on Loguru's own thread. Recommendation. At stop, `logger.remove()` ends the sinks and waits for the queue, so the last records are written ([[Shell Start and Stop#Stop sequence]]). #needs-verification that `remove` flushes the queue.
 
@@ -108,19 +108,19 @@ Loguru's sinks are safe to call from any thread. The loop thread must not block 
 
 `logging` in `settings.yaml` ([[Settings File]]):
 
-| Key | Meaning | Status |
-|---|---|---|
-| `level` | The minimum level; default `INFO` | Decided |
-| `directory` | The log folder; default `logs/` in the config directory | Decided |
-| `retention` | Days to keep daily files; unset keeps all | Decided that it exists (2026-10-27) |
-| `format` | `text` or `json` for the file | Proposed; default `text` |
-| `diagnose` | Show variable values in tracebacks; default false | Proposed |
-| `console` | Write to stderr; default true | Proposed |
-| `capture_stderr` | Forward the process's stderr into the log; default true | Proposed (question 3) |
+| Key              | Meaning                                                 | Status                              |
+|------------------|---------------------------------------------------------|-------------------------------------|
+| `level`          | The minimum level; default `INFO`                       | Decided                             |
+| `directory`      | The log folder; default `logs/` in the config directory | Decided                             |
+| `retention`      | Days to keep daily files; unset keeps all               | Decided that it exists (2026-10-27) |
+| `format`         | `text` or `json` for the file                           | Proposed; default `text`            |
+| `diagnose`       | Show variable values in tracebacks; default false       | Proposed                            |
+| `console`        | Write to stderr; default true                           | Proposed                            |
+| `capture_stderr` | Forward the process's stderr into the log; default true | Proposed (question 3)               |
 
 The reload rule is already decided: a change to `logging` applies at once ([[Settings File]]).
 
-## Python contract
+## Python Contract
 
 `self.ctx.log` is a Loguru logger bound with `module` and `uid`. A module calls `self.ctx.log.info("started with {} uses", n)`; it never configures Loguru and never calls `logger.remove`. The module contract says what not to log ([[Module Context]], [[Module Contract]]).
 
@@ -138,25 +138,25 @@ Plain text, one record per line, no colour in the file, no emoji ([[AGENTS#10. W
 
 A plain-text log is readable by a screen reader and `grep`. The console keeps the same wording as the file.
 
-## Performance budget
+## Performance Budget
 
 - A record costs about 27 µs on the calling thread with `enqueue=True`; the shell logs events, not frames.
 - The logger adds one timer a day (the midnight swap) and one writer thread that sleeps until a record arrives ([[Goals and Non-Goals]] G4). Measured in testing.
 - Disk use is the user's to manage (retention, [[Settings File#Log files]]); a typical day at `INFO` is small. Not measured.
 
-## Failure modes and recovery
+## Failure Modes and Recovery
 
-| Failure | Result |
-|---|---|
-| The log directory cannot be created or written | Console only; a warning names the path |
-| The disk is full | Loguru's write error is swallowed; the shell continues; the console still has the record |
-| A reload changes `logging` to a bad value | The old logging stays and the error is reported ([[Validation and Errors]]) |
-| The midnight swap fails | The old file keeps being used; a warning names the reason |
-| tre writes to stderr and forwarding fails | The text stays on stderr (journal or terminal) |
-| A very noisy library | Its level is raised for its source (proposed); the cap is the sink's level |
-| Two shells | Prevented by the lock ([[Shell Start and Stop#Process rules]]) |
+| Failure                                        | Result                                                                                    |
+|------------------------------------------------|-------------------------------------------------------------------------------------------|
+| The log directory cannot be created or written | Console only; a warning names the path                                                    |
+| The disk is full                               | Loguru's write error is swallowed; the shell continues; the console still has the record  |
+| A reload changes `logging` to a bad value      | The old logging stays and the error is reported ([[Validation and Errors]]) |
+| The midnight swap fails                        | The old file keeps being used; a warning names the reason                                 |
+| tre writes to stderr and forwarding fails      | The text stays on stderr (journal or terminal)                                            |
+| A very noisy library                           | Its level is raised for its source (proposed); the cap is the sink's level                |
+| Two shells                                     | Prevented by the lock ([[Shell Start and Stop#Process rules]])                           |
 
-## Open questions
+## Open Questions
 
 1. **The logger:** Loguru, as a formal decision (recommended), or the standard `logging` module.
 2. `enqueue=True` for both sinks (recommended), or synchronous writes.
@@ -168,7 +168,7 @@ A plain-text log is readable by a screen reader and `grep`. The console keeps th
 8. **Per-source levels** (for example `lib:dbus_fast: ERROR`): later (recommended), or v1.
 9. **Under systemd,** a shorter console line without the timestamp (recommended).
 
-## Acceptance criteria
+## Acceptance Criteria
 
 - [ ] With the defaults, the shell writes `log_yyyy-mm-dd.log` in `logs/` and the same lines on stderr; a file with an error appears in both with `file:line:column` and the rule.
 - [ ] A module's `ctx.log.info` line shows `module:<name>` as its source.

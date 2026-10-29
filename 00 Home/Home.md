@@ -27,42 +27,42 @@ depends_on: []
 
 <!-- Maintained by the agent after every change (AGENTS.md section 11). Replace the values; do not append. -->
 
-| | |
-|---|---|
-| Phase | Design only. No code. |
-| Updated | 2026-10-27 |
-| Last change | Wrote the [[Logging]] spec (draft): Loguru, sinks, levels, routing, safety, cost, with tests |
-| Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0013 Control Interface]] (12 accepted; ADR-0002 superseded) |
-| Waiting on you | The nine [[Logging#Open questions]]; key names the specs mark proposed |
-| Next | The Integration specs: Wayland protocols, KWin, Plasma coexistence, D-Bus services, portals, shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
-| Blocked | Nothing |
-| Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
+|                     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Updated             | 2026-10-27                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Last change         | Wrote the [[Logging]] spec (draft): Loguru, sinks, levels, routing, safety, cost, with tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0013 Control Interface]] (12 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Waiting on you      | The nine [[Logging#Open questions]]; key names the specs mark proposed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Next                | The Integration specs: Wayland protocols, KWin, Plasma coexistence, D-Bus services, portals, shortcuts ([[Roadmap#Spec backlog (proposed order)]])                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Tracking            | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]])                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | Deferred to testing | Which global settings belong in `settings.yaml` ([[Settings File]]); First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]); the four reservers plus the painter on KWin and a 4K Frame with many joins ([[Frame]]); fractional scale at 1.5x ([[Frame]]); fullscreen stacking and detection ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]); Bar over a Plasma panel ([[Bar]]) |
 
-### Recent changes
+### Recent Changes
 
 Newest first. Keep the last 8. One line each.
 
-| Date | Change |
-|---|---|
-| 2026-10-28 | [[Logging]] spec written (draft) |
-| 2026-10-28 | [[IPC and CLI]]: `control` key and `Status` module names decided |
-| 2026-10-28 | [[IPC and CLI]] answers applied, in review |
-| 2026-10-28 | [[ADR-0013 Control Interface]] accepted |
-| 2026-10-28 | `dbus-fast` export and client cost tested ([[ADR-0013 Control Interface]]) |
+| Date       | Change                                                                                            |
+|------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-28 | [[Logging]] spec written (draft)                                      |
+| 2026-10-28 | [[IPC and CLI]]: `control` key and `Status` module names decided          |
+| 2026-10-28 | [[IPC and CLI]] answers applied, in review                                |
+| 2026-10-28 | [[ADR-0013 Control Interface]] accepted                                                  |
+| 2026-10-28 | `dbus-fast` export and client cost tested ([[ADR-0013 Control Interface]])               |
 | 2026-10-28 | [[IPC and CLI]] written; [[ADR-0013 Control Interface]] proposed |
-| 2026-10-28 | [[Shell Start and Stop]]: `XDG_RUNTIME_DIR` rule decided |
-| 2026-10-28 | Runtime specs: all questions answered, in review |
+| 2026-10-28 | [[Shell Start and Stop]]: `XDG_RUNTIME_DIR` rule decided                           |
+| 2026-10-28 | Runtime specs: all questions answered, in review                                                  |
 
 ## Go to
 
-| Track | Notes |
-|---|---|
-| Project | [[Index]] · [[Roadmap]] · [[Glossary]] · [[AGENTS]] |
-| Unknowns and risk | [[Open Questions]] · [[Risk Register]] |
-| Decisions | [[30 Decisions]] |
-| Research | [[90 Research]]: [[Prior Art - Linux Shell Surfaces]], [[Shadows on Layer Surfaces]], [[Hit Testing for Concave Corners]], [[D-Bus Libraries for Python]], [[Logging with Loguru]], [[Expression Languages for YAML]] |
-| Design areas | [[10 Vision]] · [[20 Architecture]] · [[40 Specifications]] · [[41 YAML Reference]] · [[42 Python API]] · [[50 Design System]] · [[60 Quality]] · [[70 Delivery]] · [[80 Engine Requests]] |
+| Track             | Notes                                                                                                                                                                                                                                                                                                                                                                                           |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Project           | [[Index]] · [[Roadmap]] · [[Glossary]] · [[AGENTS]]                                                                                                                                                                                                                        |
+| Unknowns and risk | [[Open Questions]] · [[Risk Register]]                                                                                                                                                                                                                                                                                                              |
+| Decisions         | [[30 Decisions]]                                                                                                                                                                                                                                                                                                                                                         |
+| Research          | [[90 Research]]: [[Prior Art - Linux Shell Surfaces]], [[Shadows on Layer Surfaces]], [[Hit Testing for Concave Corners]], [[D-Bus Libraries for Python]], [[Logging with Loguru]], [[Expression Languages for YAML]]                                                                                                   |
+| Design areas      | [[10 Vision]] · [[20 Architecture]] · [[40 Specifications]] · [[41 YAML Reference]] · [[42 Python API]] · [[50 Design System]] · [[60 Quality]] · [[70 Delivery]] · [[80 Engine Requests]] |
 
 ## Current
 
@@ -77,13 +77,13 @@ Newest first. Keep the last 8. One line each.
 
 Only the maintainer moves an ADR from `proposed` to `accepted`.
 
-## Needs verification
+## Needs Verification
 
 Claims tagged `#needs-verification`. Each must be sourced or listed in [[Open Questions]].
 
 ![[Home.base#Needs verification]]
 
-## Recently updated
+## Recently Updated
 
 ![[Home.base#Recently updated]]
 
@@ -95,11 +95,11 @@ Which design areas have notes, and how mature they are. A folder missing from th
 
 ![[Home.base#By status]]
 
-## Upstream baselines
+## Upstream Baselines
 
 ![[Index#Upstream projects]]
 
-## Session routine
+## Session Routine
 
 1. Read [[AGENTS]], [[Index]], [[Open Questions]] and [[Roadmap]].
 2. Extend an existing note before creating a new one.
