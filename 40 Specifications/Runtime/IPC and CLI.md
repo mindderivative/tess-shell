@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0013 Control Interface]]"]
 # IPC and CLI
 
 > [!summary]
-> How the outside world controls a running shell, and the command line that does it. The shell owns one session-bus name and exports one small D-Bus interface; the `tesserae-shell` command is a thin client of it, and a few subcommands run without a shell at all (`check`, `schema`, the KWin helpers). The KWin script that reports fullscreen windows ([[ADR-0012 Keeping the Shell Above Plasma Panels]]) calls the same interface. Written on the recommendation of [[ADR-0013 Control Interface]], which is `proposed`: if the maintainer picks another option, the transport sections change and the commands stay.
+> How the outside world controls a running shell, and the command line that does it. The shell owns one session-bus name and exports one small D-Bus interface; the `tesserae-shell` command is a thin client of it, and a few subcommands run without a shell at all (`check`, `schema`, the KWin helpers). The KWin script that reports fullscreen windows ([[ADR-0012 Keeping the Shell Above Plasma Panels]]) calls the same interface. Decided by [[ADR-0013 Control Interface]] (accepted 2026-10-28, Option B). The commands and names below are proposals until the maintainer answers the open questions.
 
 ## Purpose and scope
 
@@ -38,7 +38,7 @@ On a compositor without KDE's shortcut service the launcher still opens from the
 ### The bus name
 
 - The shell requests one name on the session bus and exports one object, at start, once the model is built ([[Shell Start and Stop]]).
-- Proposed names (nothing here is registered or checked for clashes): service `io.github.mindderivative.TesseraeShell`, object path `/io/github/mindderivative/TesseraeShell`, interface `io.github.mindderivative.TesseraeShell1`. A reverse-domain name needs a domain the project owns; the repositories of tre and Tesserae are under `github.com/mindderivative`, so the `io.github.<account>` form is used. The `1` in the interface name is the interface version: a breaking change makes `2`. #needs-verification that the account and the name suit the maintainer.
+- Decided names, 2026-10-28 (nothing is registered or checked for clashes): service `io.github.mindderivative.TesseraeShell`, object path `/io/github/mindderivative/TesseraeShell`, interface `io.github.mindderivative.TesseraeShell1`. A reverse-domain name needs a domain the project owns; the repositories of tre and Tesserae are under `github.com/mindderivative`, so the `io.github.<account>` form is used. The `1` in the interface name is the interface version: a breaking change makes `2`. 
 - The name is requested without queueing. A name that is already owned means another shell is running; the shell exits with code 4 ([[Shell Start and Stop#Exit codes]]). The lock file remains the first guard ([[Shell Start and Stop#Process rules]]).
 
 ### The interface
@@ -70,7 +70,7 @@ The shell's D-Bus service thread (a shared asyncio loop, [[ADR-0009 D-Bus Client
 
 ### The command line
 
-One executable, `tesserae-shell` (name proposed), also `python -m tesserae_shell`.
+One executable, `tesserae-shell` (name decided 2026-10-28), also `python -m tesserae_shell`.
 
 | Subcommand | Needs a shell | What it does |
 |---|---|---|
@@ -126,7 +126,7 @@ None. A module's `@action` methods are reachable through `Call`, and a module ne
 
 ## Integration
 
-- D-Bus: `dbus-fast` on the shared service thread, exporting the object ([[ADR-0009 D-Bus Client Library]]). Exporting was listed there as later work and is v1 work if [[ADR-0013 Control Interface]] is accepted. Verified on 2026-10-28 with `dbus-fast` 5.2.0 (a scratch install, not on the system): a service exported a method returning `bs`, a method that raises a named D-Bus error, a method taking `as`, a read-only property with change notification, and a signal, under a name requested on the session bus; `busctl introspect`, `busctl call` and `busctl monitor` all worked, and a second `DO_NOT_QUEUE` request for the name got `EXISTS` ([[ADR-0013 Control Interface#Context]]).
+- D-Bus: `dbus-fast` on the shared service thread, exporting the object ([[ADR-0009 D-Bus Client Library]]). Exporting was listed there as later work and is v1 work ([[ADR-0013 Control Interface]], accepted 2026-10-28). Verified on 2026-10-28 with `dbus-fast` 5.2.0 (a scratch install, not on the system): a service exported a method returning `bs`, a method that raises a named D-Bus error, a method taking `as`, a read-only property with change notification, and a signal, under a name requested on the session bus; `busctl introspect`, `busctl call` and `busctl monitor` all worked, and a second `DO_NOT_QUEUE` request for the name got `EXISTS` ([[ADR-0013 Control Interface#Context]]).
 - KWin script: calls `callDBus(service, path, interface, "FullscreenState", outputs, callback)`; the call is asynchronous ([KWin scripting API](https://develop.kde.org/docs/plasma/kwin/api/), read 2026-10-28). How the script finds the shell's name and what it does when the shell is not running (the call fails, the callback ignores it) is specified with the script in the Integration notes.
 - Plasma coexistence: the shell owns only its own name, so nothing here claims a name plasmashell uses ([[ADR-0004 Plasma Coexistence]]).
 
@@ -159,9 +159,9 @@ Plain text and exit codes are readable by a screen reader and a script. `--json`
 
 ## Open questions
 
-1. **The channel:** one D-Bus interface (recommended), a socket plus D-Bus, or both ([[ADR-0013 Control Interface]]).
-2. **The bus name** `io.github.mindderivative.TesseraeShell` (recommended), or another.
-3. **The command name** `tesserae-shell`.
+1. [x] **The channel:** one D-Bus interface, no socket ([[ADR-0013 Control Interface]], maintainer, 2026-10-28).
+2. [x] **The bus name** `io.github.mindderivative.TesseraeShell` (maintainer, 2026-10-28).
+3. [x] **The command name** `tesserae-shell` (maintainer, 2026-10-28).
 4. `argparse` for the CLI (recommended), or `click`.
 5. `jeepney` as the CLI's D-Bus client (recommended; 21 ms against 53 ms for `dbus-fast`), or `dbus-fast`.
 6. A `call` command that reaches module `@action` methods (recommended), or none.

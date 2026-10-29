@@ -26,13 +26,13 @@ depends_on: ["[[ADR-0003 Process Model]]", "[[Settings File]]", "[[TRE-REQ-005 K
 ### Process rules
 
 - **One process, one loop.** The shell is one Python process; tre's `App.run()` owns the main thread; everything that touches a window or node runs there ([[Process Model and Threading#The rules]]).
-- **One instance per session** (decided 2026-10-28). Two shells would fight over the registry, the D-Bus names the shell owns and the same surfaces. The shell takes a lock in `$XDG_RUNTIME_DIR/tesserae-shell/` on start. A second start finds the lock, prints that a shell is already running with its process id, and exits with code 4. The same socket carries the control commands of the IPC and CLI note. Letting a second start ask the first to reload was rejected. The runtime directory rules are in the next item.
-- **The runtime directory is required** (decided 2026-10-28). The shell needs `XDG_RUNTIME_DIR`, for its lock and control socket and because a Wayland client finds the compositor socket there when `WAYLAND_DISPLAY` is a relative name (from libwayland, not read for this note). It does not fall back to another directory, as the [XDG base directory spec](https://specifications.freedesktop.org/basedir/latest/) allows: a fallback such as `/tmp` would make the lock and the socket reachable by other users, and without the directory the shell has no Wayland connection anyway. In pre-flight the shell checks:
+- **One instance per session** (decided 2026-10-28). Two shells would fight over the registry, the D-Bus names the shell owns and the same surfaces. The shell takes a lock in `$XDG_RUNTIME_DIR/tesserae-shell/` on start. A second start finds the lock, prints that a shell is already running with its process id, and exits with code 4. The control commands go over the shell's D-Bus interface, not a socket ([[ADR-0013 Control Interface]], accepted 2026-10-28; [[IPC and CLI]]). Letting a second start ask the first to reload was rejected. The runtime directory rules are in the next item.
+- **The runtime directory is required** (decided 2026-10-28). The shell needs `XDG_RUNTIME_DIR`, for its lock file and because a Wayland client finds the compositor socket there when `WAYLAND_DISPLAY` is a relative name (from libwayland, not read for this note). It does not fall back to another directory, as the [XDG base directory spec](https://specifications.freedesktop.org/basedir/latest/) allows: a fallback such as `/tmp` would make the lock and the socket reachable by other users, and without the directory the shell has no Wayland connection anyway. In pre-flight the shell checks:
   - the variable is set, non-empty and an absolute path, and the directory exists: otherwise exit code 2 naming the variable and the problem;
   - the directory is owned by the current user: otherwise exit code 2;
   - the mode is 0700 (the spec requires it): otherwise a warning, and the shell continues.
-  The shell creates `$XDG_RUNTIME_DIR/tesserae-shell/` with mode 0700 for the lock file and the control socket. Both disappear at logout, which suits a lock that must not outlive the session.
-  - **Cleanup.** The spec says files not accessed for 6 hours may be cleaned unless their sticky bit is set, so the shell sets the sticky bit on the lock file and the socket instead of running a timer that would wake the idle loop. #needs-verification whether any cleaner runs on the target session, and that the bit is honoured on these files.
+  The shell creates `$XDG_RUNTIME_DIR/tesserae-shell/` with mode 0700 for the lock file. It disappears at logout, which suits a lock that must not outlive the session.
+  - **Cleanup.** The spec says files not accessed for 6 hours may be cleaned unless their sticky bit is set, so the shell sets the sticky bit on the lock file instead of running a timer that would wake the idle loop. #needs-verification whether any cleaner runs on the target session, and that the bit is honoured on these files.
   - **Where it is unset.** A systemd user service or a KDE autostart inherits the variable; a launch from cron or a bare SSH session with no login session does not, and gets the exit-2 message.
   - Observed on this machine, 2026-10-28: `XDG_RUNTIME_DIR=/run/user/1000`, owned by the user, mode `drwx------`, with `WAYLAND_DISPLAY=wayland-1`.
 - **Wayland only.** No Wayland compositor, or one without the layer shell, is an environment error: tre raises `UnsupportedPlatform` ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]) and the shell exits with code 2 naming it. X11 is not supported ([[V1 Scope#Target environment]]).
@@ -79,7 +79,7 @@ flowchart TD
 - **No windows: stay idle** (decided 2026-10-26). If every monitor is set to none, or no output is present, the shell keeps running and waits for `output_added` ([[Data Flow#Monitor hot-plug]]).
 - Monitors come and go: windows close with `output_removed` and are created again when the output returns; a dead window is never reused.
 - An unhandled exception in a callback is logged by tre and does not stop the loop ([[Process Model and Threading#What tre guarantees]]).
-- The shell reports a ready state once step 12 finishes (a log line, a `READY` notice on the control socket, and a notice to systemd, below).
+- The shell reports a ready state once step 12 finishes (a log line, a `State` property change on the shell's D-Bus interface, and a notice to systemd, below).
 
 ### Telling systemd (decided 2026-10-28)
 
@@ -87,7 +87,7 @@ The shell notifies systemd. When the environment variable `NOTIFY_SOCKET` is set
 
 ### Stop sequence
 
-Triggers: SIGTERM or SIGINT, a quit command on the control socket, the session ending. SIGHUP reloads (proposed, [[Hot Reload]]). Python signal handlers do not run on an idle loop, so a watcher thread reads a socketpair fed by `signal.set_wakeup_fd` and calls `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]], [[Process Model and Threading#Lifecycle (proposed)]]).
+Triggers: SIGTERM or SIGINT, a `Quit` call on the shell's D-Bus interface, the session ending. SIGHUP reloads (proposed, [[Hot Reload]]). Python signal handlers do not run on an idle loop, so a watcher thread reads a socketpair fed by `signal.set_wakeup_fd` and calls `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]], [[Process Model and Threading#Lifecycle (proposed)]]).
 
 1. Set the state to Stopping; send `STOPPING=1`; ignore file changes and reload requests.
 2. `LoopHandle.stop()`: every window closes without a veto (each hears `closed`, reason `"stopped"`), and `App.run()` returns.
@@ -166,7 +166,7 @@ All seven were answered on 2026-10-28.
 5. [x] **Timeouts:** 3 seconds per module and 10 seconds in total.
 6. [x] **Ready notice:** the shell notifies systemd (`READY=1` and `STOPPING=1` on `NOTIFY_SOCKET`).
 7. [x] **Lock path:** `$XDG_RUNTIME_DIR/tesserae-shell/`, not the config directory.
-- [x] `XDG_RUNTIME_DIR` is required, with no fallback; the shell checks it in pre-flight and sets the sticky bit on its lock and socket (maintainer, 2026-10-28, as recommended).
+- [x] `XDG_RUNTIME_DIR` is required, with no fallback; the shell checks it in pre-flight and sets the sticky bit on its lock file (maintainer, 2026-10-28, as recommended; the control socket was dropped by ADR-0013).
 - [ ] Whether any cleaner runs on the target session, and that the sticky bit is honoured on those files. #needs-verification
 
 ## Acceptance criteria
@@ -175,7 +175,7 @@ All seven were answered on 2026-10-28.
 - [ ] With an invalid `settings.yaml`, the shell exits with code 1, prints the error with `file:line:column` and writes it to `logs/`, and opens no surface.
 - [ ] With tre older than 0.5.9, the shell exits with code 2 and names the required version.
 - [ ] With `XDG_RUNTIME_DIR` unset, empty or relative, the shell exits with code 2 and names the variable; with a directory owned by another user it exits with code 2; with a mode other than 0700 it warns and starts.
-- [ ] The lock file and the control socket sit in `$XDG_RUNTIME_DIR/tesserae-shell/` (mode 0700) with the sticky bit set.
+- [ ] The lock file sits in `$XDG_RUNTIME_DIR/tesserae-shell/` (mode 0700) with the sticky bit set.
 - [ ] A second start while one runs exits with code 4 and names the first's process id.
 - [ ] With every output removed, the shell keeps running and reopens surfaces when an output returns.
 - [ ] SIGTERM on an idle shell stops it in under 10 seconds with code 0, after each module's `stop` ran and the registry was written.

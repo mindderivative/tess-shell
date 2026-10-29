@@ -2,7 +2,7 @@
 title: ADR-0013 Control Interface
 aliases: [ADR-0013, IPC Decision, Shell D-Bus Interface]
 type: adr
-status: proposed
+status: accepted
 owner: phil
 created: 2026-10-28
 updated: 2026-10-28
@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0009 D-Bus Client Library]]", "[[ADR-0012 Keeping the Shell 
 # ADR-0013: Control interface
 
 > [!summary]
-> How anything outside the shell process tells it to do something: the command line, a keyboard shortcut, the KWin script that reports fullscreen windows. Recommendation: the shell owns one session-bus name and exports a small D-Bus interface; the command line is a thin client of it. Status is `proposed`.
+> How anything outside the shell process tells it to do something: the command line, a keyboard shortcut, the KWin script that reports fullscreen windows. The shell owns one session-bus name and exports a small D-Bus interface; the command line is a thin client of it. Accepted 2026-10-28 (Option B).
 
 ## Context
 
@@ -40,12 +40,12 @@ The shell requests a bus name on the session bus and exports one object. The com
 
 ## Decision
 
-Blank until the maintainer accepts.
+Option B (maintainer, 2026-10-28, "yes" to the recommendation): one D-Bus interface for everything, with the bus name `io.github.mindderivative.TesseraeShell` and the command `tesserae-shell`. The lock file stays for the single-instance rule; there is no control socket.
 
 ## Consequences
 
 - The shell's D-Bus service thread (shared, [[ADR-0009 D-Bus Client Library]]) also exports the shell's own object. ADR-0009 had named `bus.export` and name requests as later work; this makes them v1 work.
-- If B is accepted, [[Shell Start and Stop]] changes: the control socket is replaced by the D-Bus interface, and the lock file stays for the single-instance rule. The runtime directory then holds the lock file only.
+- [[Shell Start and Stop]] uses the D-Bus interface where it said control socket, and the lock file stays for the single-instance rule. The runtime directory holds the lock file only.
 - The bus name is a project identifier that must be chosen and kept ([[IPC and CLI#The bus name]]).
 - The interface has no method that evaluates code or reads files ([[IPC and CLI#Security]]).
 

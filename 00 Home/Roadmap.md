@@ -31,7 +31,7 @@ depends_on: []
 | Quality | None yet | not started | Performance budgets, accessibility, testing strategy, security model for user Python, crash recovery and the watchdog |
 | Delivery | None yet | not started | Packaging, dependencies on tre, install, autostart and session integration, upgrades, licensing |
 | Engine requests | [[80 Engine Requests]]: [[TRE-REQ-001 Layer Surface Window]] (released), [[TRE-REQ-005 Keep-Alive and Loop Stop]] (released), [[TRE-REQ-006 Repeating Gradients]] (draft, not filed) | stable | Nothing blocks the shell |
-| Decisions | [[30 Decisions]]: ADR-0001, ADR-0003 to ADR-0012 accepted, ADR-0013 proposed, ADR-0002 superseded | accepted | ADR-0013 to accept |
+| Decisions | [[30 Decisions]]: ADR-0001, ADR-0003 to ADR-0012 accepted, ADR-0013 accepted, ADR-0002 superseded | accepted | Nothing proposed |
 
 ## Spec backlog (proposed order)
 
@@ -41,7 +41,7 @@ Recommendation: write the notes that other notes already point at first, then th
 |---|---|---|---|
 | 1 | Popup (written 2026-10-28, draft) | `40 Specifications/Surfaces/` | Completes Surfaces; Panel, Bar and the module contract already refer to it |
 | 2 | Shell Start and Stop, Config Discovery and Registry, Validation and Errors, Hot Reload (written 2026-10-28, draft) | `40 Specifications/Runtime/` | The settings, schema and module notes depend on them |
-| 3 | IPC and CLI (written 2026-10-28, draft; ADR-0013 proposed) | `40 Specifications/Runtime/` | ADR-0011 and ADR-0012 name commands (`schema`, the rule install and remove) |
+| 3 | IPC and CLI (written 2026-10-28, draft; ADR-0013 accepted) | `40 Specifications/Runtime/` | ADR-0011 and ADR-0012 name commands (`schema`, the rule install and remove) |
 | 4 | Logging | `40 Specifications/Runtime/` | Settings File sets the folder and file names; the research note is open |
 | 5 | Wayland Protocols, KWin Integration, Plasma Coexistence, D-Bus Service Layer, Portals, Global Shortcuts | `40 Specifications/Integration/` | The Integration row is empty; ADR-0004, ADR-0005, ADR-0009 and ADR-0012 feed it |
 | 6 | Design principles, tokens, components, iconography, motion, accessibility modes | `50 Design System/` | The Style Schema is accepted and needs the token values |

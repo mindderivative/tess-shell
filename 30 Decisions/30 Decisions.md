@@ -27,4 +27,4 @@ depends_on: []
 | [[ADR-0010 Surface Shadows]]                  | Shadows drawn inside the surface with a transparent margin                          | accepted 2026-10-27    |
 | [[ADR-0011 JSON Schema for Shell Files]]      | JSON Schema generated from block and module declarations, for editors and the shell | accepted 2026-10-27    |
 | [[ADR-0012 Keeping the Shell Above Plasma Panels]] | Ways to keep the Bar above a Plasma panel: KWin rules, a KWin script, others | accepted 2026-10-27 |
-| [[ADR-0013 Control Interface]] | One D-Bus interface for commands and the KWin script (A socket, B D-Bus, C both) | proposed 2026-10-28 |
+| [[ADR-0013 Control Interface]] | One D-Bus interface for commands and the KWin script (A socket, B D-Bus, C both) | accepted 2026-10-28 |

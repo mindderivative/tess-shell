@@ -55,7 +55,7 @@ Accepted 2026-10-26 by the maintainer in chat ("as recommended"): **Option A**.
 
 ## Update 2026-10-28
 
-Exporting an object and requesting a bus name, listed above as later work, becomes v1 work if [[ADR-0013 Control Interface]] is accepted: the shell exports its own interface for the command line and the KWin script ([[IPC and CLI]]).
+Exporting an object and requesting a bus name, listed above as later work, is v1 work, because [[ADR-0013 Control Interface]] was accepted 2026-10-28: the shell exports its own interface for the command line and the KWin script ([[IPC and CLI]]).
 
 ## Links
 

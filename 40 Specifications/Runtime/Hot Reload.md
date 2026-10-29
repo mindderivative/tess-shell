@@ -35,7 +35,7 @@ depends_on: ["[[Validation and Errors]]", "[[Config Discovery and Registry]]"]
 - **Alternatives.** `watchfiles` 1.3.0 (MIT, 2026-09-21, Python 3.14 classifier; a Rust extension and one dependency) has debouncing built in; `watchdog` 6.0.0 was last released 2024-11-01 and has no 3.14 classifier; `pyinotify` was last released in 2015. The shell is Linux-only, so inotify's limits do not matter. Decided 2026-10-28: `inotify_simple` with the shell's own debounce, for the smallest surface. #needs-verification on a target distribution.
 - **Debounce.** A change is acted on 200 ms after the last event for it (decided 2026-10-28), so an editor's burst of events, or a multi-file save, becomes one reload.
 - **inotify limits.** The number of watches is limited by `fs.inotify.max_user_watches`. Watches are per directory, a few dozen in all, so the limit is not close. If adding a watch fails, the shell logs a warning and runs without hot reload; a manual reload still works.
-- **Manual triggers.** `SIGHUP` and a `reload` command on the control socket reload everything (the IPC and CLI note, to write). Proposed.
+- **Manual triggers.** `SIGHUP` and the `Reload` call on the shell's D-Bus interface (`tesserae-shell reload`) reload everything ([[IPC and CLI]]). Proposed.
 
 ### The shell's own writes
 
