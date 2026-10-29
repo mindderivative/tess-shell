@@ -41,11 +41,11 @@ The maintainer's earlier Edge Shell design already lists `loguru` in its environ
 
 ## Open
 
-- [ ] Choose a logger in an ADR or the runtime spec (`40 Specifications/Runtime/`). Candidate: Loguru; the choice is question 1 of [[Logging#Open questions]] (written 2026-10-28).
+- [x] Choose a logger: Loguru, chosen by the maintainer on 2026-10-28 in [[Logging]] (the runtime spec).
 - [x] Python 3.14 support and maintenance: confirmed by the maintainer and the repository (see above). Still to test: that the pinned release runs on 3.14.
 - [x] Default log location: `$HOME/.config/tesserae-shell/logs/`, configurable in `settings.yaml` (decided 2026-10-27, [[Settings File]]).
 - [x] Log file naming `log_yyyy-mm-dd.log`, a new file each local day, retention left to the user (decided 2026-10-27, [[Settings File#Log files]]). A Loguru 0.7.3 test showed the `{time:YYYY-MM-DD}` path field works and a restart appends, but rotation adds a timestamp suffix to the finished file, so the shell swaps the sink itself at midnight.
-- [ ] Decide the defaults for variable display in tracebacks: proposed `diagnose` off, tested 2026-10-28 ([[Logging#Safety]]).
+- [x] Defaults for variable display in tracebacks: `diagnose` off, tested 2026-10-28 ([[Logging#Safety]]); decided 2026-10-28.
 - [ ] Decide how TEL reports problems without depending on the shell's logger.
 
 ## Links
