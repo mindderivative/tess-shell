@@ -114,12 +114,12 @@ Decided 2026-10-28; codes 3 and 5 were free in the shell's table.
 
 - Only processes of the same user can reach the session bus; the bus enforces it. The shell adds no authentication of its own. A sandboxed application with session-bus access could call the interface; narrowing that belongs to the security model in `60 Quality/` (to write).
 - **No method evaluates code, reads a file or runs a command.** `Call` reaches only methods a module marked `@action`, the same rule as a shell file ([[Module Contract]], decided 2026-10-26). `Reload` reads only the files the shell already watches.
-- `Status` must not return secrets: it lists names, states and counts, and never param values or log contents. Proposed.
+- `Status` must not return secrets: it lists names (including module names, decided 2026-10-28), states and counts, and never param values or log contents.
 - The KWin helpers write to the user's desktop configuration; they show what they will write and need consent ([[ADR-0012 Keeping the Shell Above Plasma Panels]]).
 
 ## Configuration
 
-None for the interface. Proposed `settings.yaml` key: `control: false` to run without exporting the interface (default true); the KWin script then cannot report fullscreen windows. The global settings list is deferred ([[Settings File]]).
+One `settings.yaml` key (decided 2026-10-28): `control`, default true; `control: false` runs the shell without exporting the interface, and the KWin script then cannot report fullscreen windows. The rest of the global settings list is deferred ([[Settings File]]).
 
 ## Python contract
 
@@ -172,7 +172,7 @@ Plain text and exit codes are readable by a screen reader and a script. `--json`
 10. [x] Client exit codes 3 and 5 (maintainer: "That is fine").
 11. [x] `FullscreenState` as a full list of outputs (as recommended).
 12. [x] Shell completion scripts: later (maintainer: "Later is fine").
-- [ ] Not asked: a `settings.yaml` key `control` to turn the interface off; whether `Status` is allowed to list module names.
+- [x] A `settings.yaml` key `control` to turn the interface off, and `Status` may list module names (maintainer, 2026-10-28).
 
 ## Acceptance criteria
 
