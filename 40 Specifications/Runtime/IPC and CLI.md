@@ -2,7 +2,7 @@
 title: IPC and CLI
 aliases: [Control Interface, Command Line, tesserae-shell CLI, Shell D-Bus Interface]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-28
 updated: 2026-10-28
@@ -61,7 +61,7 @@ Properties: `State` (`starting`, `running`, `stopping`), `Version`, `ApiVersion`
 - **No method opens a Popup.** A focused Popup needs a user action for its grab, which a bus call is not; a menu or launcher opened from a command is a Panel ([[Popup#Focus and dismissal (decided)]], decided 2026-10-28). `ClosePopup` is allowed.
 - **Names are unique names.** `Show`, `Hide` and `Toggle` take the unique `name:` of a surface and look it up in the registry; an unknown name is an error with the nearest names ([[Validation and Errors#The error record]]).
 - **Idempotent state changes.** `Show` on a shown surface succeeds and does nothing.
-- `FullscreenState` is a full state, not an event. The script sends the complete list each time; the shell diffs it. A lost message is corrected by the next one. Proposed.
+- `FullscreenState` is a full state, not an event. The script sends the complete list each time; the shell diffs it. A lost message is corrected by the next one. Decided 2026-10-28.
 - The method list is the minimum for v1; more are added as modules need them.
 
 ### Threading
@@ -83,6 +83,7 @@ One executable, `tesserae-shell` (name decided 2026-10-28), also `python -m tess
 | `show NAME`, `hide NAME`, `toggle NAME` | yes | Calls the method of the same name |
 | `call MODULE ACTION [ARG ...]` | yes | Calls a module action; each `ARG` is a JSON value, or plain text if it is not valid JSON |
 | `log-level LEVEL` | yes | Calls `SetLogLevel` |
+| `events` | yes | Streams the interface's signals until interrupted. Not in v1: later (decided 2026-10-28); until then `busctl --user monitor` shows them |
 | `kwin script install`, `remove`, `status` | no | Installs or removes the KWin fullscreen script ([[ADR-0012 Keeping the Shell Above Plasma Panels]]) |
 | `kwin rule show`, `install`, `remove` | no | Shows, writes or removes the one KWin window rule group the shell owns; `install` shows the rule and asks, or needs `--yes` |
 | `version` | no | Prints the shell, tre and Python versions |
@@ -90,8 +91,8 @@ One executable, `tesserae-shell` (name decided 2026-10-28), also `python -m tess
 Global options: `--config-dir PATH` (overrides the config directory, for tests), `--json`, `--timeout SECONDS` (default 5), `--quiet`.
 
 - **Fast to start.** A command from a shortcut must start quickly. The client path imports only the standard library and the D-Bus client; it never imports tre, Loguru, `jsonschema`, PyYAML or TEL. Measured on this machine: a `jeepney` client making one call takes about 21 ms ([[ADR-0013 Control Interface#Context]]). Heavy imports happen inside `run`, `check` and `schema` only.
-- The framework is `argparse` (standard library, nothing to install, the lowest start-up cost). Recommendation; `click` is installed here (8.5.0) but is a dependency.
-- The D-Bus client is `jeepney` (blocking, pure Python, the named fallback in [[ADR-0009 D-Bus Client Library]]). Recommendation, now backed by a measurement: a `jeepney` client making one call took 21.0 ms, a `dbus-fast` client 53.2 ms (its asyncio import dominates), and `busctl --user call` 1.5 ms. A shortcut can call `busctl` directly and skip Python altogether.
+- The framework is `argparse` (standard library, nothing to install, the lowest start-up cost). Decided 2026-10-28; `click` is installed here (8.5.0) but is a dependency.
+- The D-Bus client is `jeepney` (blocking, pure Python, the named fallback in [[ADR-0009 D-Bus Client Library]]). Decided 2026-10-28, backed by a measurement: a `jeepney` client making one call took 21.0 ms, a `dbus-fast` client 53.2 ms (its asyncio import dominates), and `busctl --user call` 1.5 ms. A shortcut can call `busctl` directly and skip Python altogether.
 - **Output.** Plain text for people, one result per line; `--json` for scripts, as one JSON object. Errors go to stderr in the printed form of [[Validation and Errors#The error record]].
 
 ### Exit codes of the client
@@ -107,7 +108,7 @@ The shell's own codes are in [[Shell Start and Stop#Exit codes]]. The client use
 | 4 | `run` only: another shell is already running |
 | 5 | The call timed out |
 
-Proposed; codes 3 and 5 were free in the shell's table.
+Decided 2026-10-28; codes 3 and 5 were free in the shell's table.
 
 ### Security
 
@@ -162,15 +163,16 @@ Plain text and exit codes are readable by a screen reader and a script. `--json`
 1. [x] **The channel:** one D-Bus interface, no socket ([[ADR-0013 Control Interface]], maintainer, 2026-10-28).
 2. [x] **The bus name** `io.github.mindderivative.TesseraeShell` (maintainer, 2026-10-28).
 3. [x] **The command name** `tesserae-shell` (maintainer, 2026-10-28).
-4. `argparse` for the CLI (recommended), or `click`.
-5. `jeepney` as the CLI's D-Bus client (recommended; 21 ms against 53 ms for `dbus-fast`), or `dbus-fast`.
-6. A `call` command that reaches module `@action` methods (recommended), or none.
-7. An `events` subcommand that streams the signals: later (recommended), or v1.
-8. A `log-level` command (recommended).
-9. **The KWin helper commands** under `kwin` with consent (recommended).
-10. **Client exit codes 3 and 5.**
-11. `FullscreenState` as a full list of outputs (recommended), or one event per window.
-12. **Shell completion** scripts: later.
+4. [x] `argparse` for the CLI (maintainer, 2026-10-28, as recommended).
+5. [x] `jeepney` as the CLI's D-Bus client (as recommended).
+6. [x] A `call` command that reaches module `@action` methods (as recommended).
+7. [x] An `events` subcommand: later, not v1 (as recommended).
+8. [x] A `log-level` command (as recommended).
+9. [x] The KWin helper commands under `kwin`, with consent (as recommended).
+10. [x] Client exit codes 3 and 5 (maintainer: "That is fine").
+11. [x] `FullscreenState` as a full list of outputs (as recommended).
+12. [x] Shell completion scripts: later (maintainer: "Later is fine").
+- [ ] Not asked: a `settings.yaml` key `control` to turn the interface off; whether `Status` is allowed to list module names.
 
 ## Acceptance criteria
 

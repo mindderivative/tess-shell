@@ -31,10 +31,10 @@ depends_on: []
 |---|---|
 | Phase | Design only. No code. |
 | Updated | 2026-10-27 |
-| Last change | Accepted [[ADR-0013 Control Interface]]: one D-Bus interface, the bus name and the `tesserae-shell` command |
+| Last change | Applied the IPC and CLI answers; the spec is in review |
 | Decided | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0013 Control Interface]] (12 accepted; ADR-0002 superseded) |
-| Waiting on you | The remaining [[IPC and CLI#Open questions]] (4 to 12); key names the specs mark proposed |
-| Next | Logging, then the Integration specs ([[Roadmap#Spec backlog (proposed order)]]) |
+| Waiting on you | Key names the specs mark proposed |
+| Next | The Logging spec, then the Integration specs ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked | Nothing |
 | Tracking | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]) |
 | Deferred to testing | Which global settings belong in `settings.yaml` ([[Settings File]]); First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]); the four reservers plus the painter on KWin and a 4K Frame with many joins ([[Frame]]); fractional scale at 1.5x ([[Frame]]); fullscreen stacking and detection ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]); Bar over a Plasma panel ([[Bar]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date | Change |
 |---|---|
+| 2026-10-28 | [[IPC and CLI]] answers applied, in review |
 | 2026-10-28 | [[ADR-0013 Control Interface]] accepted |
 | 2026-10-28 | `dbus-fast` export and client cost tested ([[ADR-0013 Control Interface]]) |
 | 2026-10-28 | [[IPC and CLI]] written; [[ADR-0013 Control Interface]] proposed |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-28 | Runtime specs: all questions answered, in review |
 | 2026-10-28 | [[Popup]] tooltip delays decided (500 and 200 ms) |
 | 2026-10-28 | Four Runtime specs written (start and stop, discovery and registry, validation and errors, hot reload) |
-| 2026-10-28 | [[Popup]] answers applied; [[TRE-REQ-007 Popup Body Geometry]] written |
 
 ## Go to
 
