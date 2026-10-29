@@ -53,6 +53,10 @@ Option B (maintainer, 2026-10-28, "yes" to the recommendation): one D-Bus interf
 - The bus name is a project identifier that must be chosen and kept ([[IPC and CLI#The bus name]]).
 - The interface has no method that evaluates code or reads files ([[IPC and CLI#Security]]).
 
+## Update 2026-10-29
+
+A test showed that a KWin script's `callDBus` cannot send an array of strings as `as`; it sends `av`. `FullscreenState` therefore takes one string holding a JSON array ([[IPC and CLI#The interface]], [[KWin Integration]]). The accepted decision is unchanged.
+
 ## Links
 
 [[IPC and CLI]] · [[ADR-0009 D-Bus Client Library]] · [[ADR-0012 Keeping the Shell Above Plasma Panels]] · [[30 Decisions]]

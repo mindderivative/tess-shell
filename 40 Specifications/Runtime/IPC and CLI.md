@@ -54,14 +54,14 @@ Proposed methods. Names are `CamelCase` as D-Bus convention; every method that c
 | `ClosePopup`             | none                         | none                | Closes the open Popup, if any                                                                                                                               |
 | `Call`                   | `s module, s action, s args` | `s` (JSON)          | Calls an `@action` method of a module; `args` is a JSON array                                                                                               |
 | `SetLogLevel`            | `s level`                    | none                | Changes the log level until the next reload of `settings.yaml` ([[Settings File#Log files]])                                                    |
-| `FullscreenState`        | `as outputs`                 | none                | For the KWin script: the outputs that now have an active fullscreen window; the shell hides its surfaces on those ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]) |
+| `FullscreenState`        | `s outputs`                 | none                | For the KWin script: the outputs that now have an active fullscreen window; the shell hides its surfaces on those ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]) |
 
 Properties: `State` (`starting`, `running`, `stopping`), `Version`, `ApiVersion`. Signals: `Reloaded(b ok, s summary)`, `ErrorReported(s rule, s file, i line, s message)`, `SurfaceChanged(s name, s state)`.
 
 - **No method opens a Popup.** A focused Popup needs a user action for its grab, which a bus call is not; a menu or launcher opened from a command is a Panel ([[Popup#Focus and dismissal (decided)]], decided 2026-10-28). `ClosePopup` is allowed.
 - **Names are unique names.** `Show`, `Hide` and `Toggle` take the unique `name:` of a surface and look it up in the registry; an unknown name is an error with the nearest names ([[Validation and Errors#The error record]]).
 - **Idempotent state changes.** `Show` on a shown surface succeeds and does nothing.
-- `FullscreenState` is a full state, not an event. The script sends the complete list each time; the shell diffs it. A lost message is corrected by the next one. Decided 2026-10-28.
+- `FullscreenState` takes its list as one string holding a JSON array (for example `["DP-1"]`), because a KWin script cannot send a D-Bus `as`: a test on 2026-10-29 showed `callDBus` sends a JavaScript array as `av`, and a method declared `as` was never called ([[KWin Integration#What a script inside KWin showed (test of 2026-10-29)]]). It is a full state, not an event. The script sends the complete list each time; the shell diffs it. A lost message is corrected by the next one. Decided 2026-10-28.
 - The method list is the minimum for v1; more are added as modules need them.
 
 ### Threading

@@ -2,7 +2,7 @@
 title: KWin Integration
 aliases: [KWin, KWin Script, KWin Rules]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-10-29
 updated: 2026-10-29
@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0012 Keeping the Shell Above Plasma Panels]]", "[[ADR-0013 C
 # KWin integration
 
 > [!summary]
-> What the shell does with KWin beyond the Wayland protocols: a small KWin script that reports which outputs have an active fullscreen window, the optional window rule that keeps the shell above Plasma panels, the KWin D-Bus interfaces the shell reads, and how the shell checks the KWin version. The choices come from [[ADR-0012 Keeping the Shell Above Plasma Panels]] (accepted) and [[ADR-0013 Control Interface]] (accepted). Facts about KWin come from this machine's KWin and Plasma 6.8.1 (D-Bus introspection and small read-only tests on 2026-10-29), from KWin's source, and from KDE's scripting page; each is marked with how it was obtained. Everything not decided is a proposal with a recommendation.
+> What the shell does with KWin beyond the Wayland protocols: a small KWin script that reports which outputs have an active fullscreen window, the optional window rule that keeps the shell above Plasma panels, the KWin D-Bus interfaces the shell reads, and how the shell checks the KWin version. The choices come from [[ADR-0012 Keeping the Shell Above Plasma Panels]] (accepted) and [[ADR-0013 Control Interface]] (accepted). Facts about KWin come from this machine's KWin and Plasma 6.8.1 (D-Bus introspection, small read-only tests, and a read-only script run inside KWin with the maintainer's permission, all on 2026-10-29), from KWin's source, and from KDE's scripting page; each is marked with how it was obtained. Everything not decided is a proposal with a recommendation.
 
 ## Purpose and scope
 
@@ -40,9 +40,9 @@ depends_on: ["[[ADR-0012 Keeping the Shell Above Plasma Panels]]", "[[ADR-0013 C
 
 **Purpose (v1).** Report the outputs that have an active fullscreen window, so the shell can hide its surfaces there ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]). Why "active": KWin puts a fullscreen window in its Active layer only while it is active; a fullscreen window that is not active stays in the normal layer ([KWin `globals.h`](https://invent.kde.org/plasma/kwin/-/raw/master/src/effect/globals.h): "active fullscreen, or active dialog"). Surfaces on the `top` layer are covered by an active fullscreen window by KWin itself; surfaces on `overlay` are not, so the shell must hide them, and it releases the reserved space of the hidden Bar and Frame ([[Frame#Hidden and shown at runtime (decided 2026-10-27)]]).
 
-**What it sends.** One call, `FullscreenState(as outputs)`, on the shell's interface: the full list of output names that have an active fullscreen window, empty when none ([[IPC and CLI#The interface]], decided 2026-10-28). It sends the full state each time, so a lost message is corrected by the next. It sends nothing else in v1: no titles, no classes, no window ids.
+**What it sends.** One call, `FullscreenState(s outputs)`, on the shell's interface: the full list of output names that have an active fullscreen window, empty when none, written as a JSON array in one string, for example `["DP-1"]` ([[IPC and CLI#The interface]]; the list is decided 2026-10-28, the string form follows from the test below). It sends the full state each time, so a lost message is corrected by the next. It sends nothing else in v1: no titles, no classes, no window ids.
 
-**When it sends.** At load, and whenever the active window changes, a window closes, a window enters or leaves fullscreen, or a window moves to another output. The signals it listens to are those of KWin's scripting API: `windowActivated` and `windowRemoved` on `workspace`, and per window the fullscreen and output change signals ([KWin scripting API](https://develop.kde.org/docs/plasma/kwin/api/), read 2026-10-28). The exact signal names are not all shown on the page read. #needs-verification
+**When it sends.** At load, and whenever the active window changes, a window closes, a window enters or leaves fullscreen, or a window moves to another output. The signals it listens to are `windowActivated` and `windowRemoved` on `workspace`, and per window `fullScreenChanged` and `outputChanged`; the test below found all four present on KWin 6.8.1.
 
 ```js
 // main.js, an illustration of the shape; not tested code
@@ -53,13 +53,33 @@ function report() {
     callDBus("io.github.mindderivative.TesseraeShell",
              "/io/github/mindderivative/TesseraeShell",
              "io.github.mindderivative.TesseraeShell1",
-             "FullscreenState", out);
+             "FullscreenState", JSON.stringify(out));
 }
 ```
 
-`callDBus` is asynchronous and takes the service, path, interface, method and arguments ([KWin scripting API](https://develop.kde.org/docs/plasma/kwin/api/)). Properties used, from the same page: `fullScreen` (read-write), `output` ("the output where the window center is on", read-only). `workspace.activeWindow` and `Output.name` are not on the page read. #needs-verification
+`callDBus` is asynchronous and takes the service, path, interface, method and arguments ([KWin scripting API](https://develop.kde.org/docs/plasma/kwin/api/)). Properties used: `fullScreen` (read-write), `output` ("the output where the window center is on", read-only) with its `name`, and `workspace.activeWindow`; the test below found all present.
 
 **Package.** A KPackage of type `KWin/Script`: a `metadata.json` and `contents/code/main.js`, like the script already installed on this machine (`kzones`: `KPackageStructure` `KWin/Script`, `X-Plasma-API` `declarativescript`, `X-Plasma-MainScript` `ui/main.qml`, `X-Plasma-MainScriptX` `code/main.js`, `X-Plasma-API-Minimum-Version` `6.0`; read 2026-10-29). The shell's package carries its own script at `kwin/TesseraeShell/` (proposed), with the id `tesserae-shell-kwin` (proposed).
+
+### What a script inside KWin showed (test of 2026-10-29)
+
+The maintainer allowed a read-only script run (question 3, answered as recommended). A short script was loaded with `loadScript` from a folder outside KWin's own, printed to KWin's journal, called a scratch D-Bus service on the session bus, and was then unloaded. It touched no setting and wrote no file in KWin's configuration. A layer-shell test surface (the scratch client from the shadow test) was running at the time.
+
+| Finding | Result |
+|---|---|
+| `loadScript(path, name)` accepts a path outside KWin's script folders | Yes: it returned an id, `isScriptLoaded(name)` became true, and `unloadScript(name)` returned true and made it false again. Mode R works. The script ran after `start()`; whether `loadScript` alone runs it was not separated, so the shell calls both |
+| Scripting API items | `workspace.activeWindow` (an object), `workspace.windowActivated` and `windowRemoved` (signals), `workspace.stackingOrder` (a list, 9 windows), `workspace.windowList` (a function), and per window `fullScreenChanged` and `outputChanged` (signals) are all present; `window.output.name` is a string (`DP-1`, `HDMI-A-1`) |
+| How a shell surface looks to KWin | `resourceClass` and `resourceName` are the surface's layer-shell namespace (`shadowtest` for the test client), `windowType` 0 (normal), `layer` 3 (the Above layer), `skipTaskbar` true |
+| How a Plasma panel looks | `resourceClass` and `resourceName` `plasmashell`, `windowType` 2 (dock), `dock` true, `layer` 3 (Above) |
+| The wallpaper | Two `plasmashell` windows, `windowType` 1 (desktop), `layer` 0, one per output |
+| Ordinary windows | `windowType` 0, `layer` 2 (normal); `fullScreen` false for all nine windows at the time |
+| What `callDBus` can send | A string argument works and the callback receives the method's return value. A JavaScript array arrives as `av` (an array of variants): a method declared `av` received it; a method declared `as` was never called, even with an empty array, and no error reached the script. So an array of strings cannot be sent as `as` |
+
+Consequences:
+
+- The `FullscreenState` argument is one string holding a JSON array, not `as`. [[IPC and CLI#The interface]] is updated to match. The shell parses the string and checks that every item is a string.
+- **A rule can match a shell surface by its class,** because KWin's resource class is the layer-shell namespace. tre's `LayerWindow` takes `namespace` in its constructor (a change means reopening the window, [[Hot Reload]]). Proposed convention: every shell surface uses a namespace that starts with `tesserae-shell`, for example `tesserae-shell.bar.top_bar` ([[Surface Types]]). A rule can then match the class by a substring or regular expression, and a Plasma panel by class `plasmashell` and type dock.
+- **The shell can read a surface's layer** through the script (`window.layer`), which settles what KWin does with each surface; the shell does not need to, and the script sends nothing but the fullscreen list.
 
 ### Loading the script
 
@@ -67,10 +87,10 @@ Two ways, and the first is the recommendation:
 
 | Mode | How | For | Against |
 |---|---|---|---|
-| R. Run-time load (recommended) | At start, after the shell's D-Bus name is owned, the shell calls `isScriptLoaded(id)`, then `unloadScript(id)` if it is, then `loadScript(path, id)` and `start()`; at stop it calls `unloadScript(id)` | No change to `kwinrc`; the script exists only while the shell runs, so a stopped shell leaves nothing behind; a fresh load sends the current state, which solves the shell-restart case | The semantics of `loadScript` with a path outside KWin's script folders are not verified #needs-verification; the script does not exist before the shell starts, which does not matter because the state is only used by the shell |
+| R. Run-time load (recommended) | At start, after the shell's D-Bus name is owned, the shell calls `isScriptLoaded(id)`, then `unloadScript(id)` if it is, then `loadScript(path, id)` and `start()`; at stop it calls `unloadScript(id)` | No change to `kwinrc`; the script exists only while the shell runs, so a stopped shell leaves nothing behind; a fresh load sends the current state, which solves the shell-restart case | Verified on 2026-10-29: `loadScript` takes a path outside KWin's folders; the script does not exist before the shell starts, which does not matter because the state is only used by the shell |
 | P. Persistent install | `tesserae-shell kwin script install` copies the package to `~/.local/share/kwin/scripts/tesserae-shell-kwin/`, sets `tesserae-shell-kwinEnabled=true` under `[Plugins]` in `kwinrc` and asks KWin to reconfigure | The script runs from login; it shows in System Settings; it works with the shell stopped | It writes the user's `kwinrc`; after a shell restart the state is stale until the next change (the shell would need to ask for it); needs the opt-in step |
 
-Decision wanted. The accepted ADR said "a persistent KWin script" and left the install step to delivery; mode R keeps the idea (a script reports fullscreen windows) and drops the install step. Question 1.
+Decided 2026-10-28 (question 1, as recommended): mode R is the default. The accepted ADR said "a persistent KWin script" and left the install step to delivery; mode R keeps the idea (a script reports fullscreen windows) and drops the install step. Mode P stays available through the `kwin script install` command.
 
 - **Order at start.** The shell loads the script after step 12 of the start sequence, when the interface is exported ([[Shell Start and Stop#Start sequence]]); a call that arrives before the shell can answer finds no name and the script's callback ignores the failure.
 - **If it fails to load** (the method returns an error, or the script file is missing): the fullscreen rule is off, the shell logs one warning naming the reason, and `tesserae-shell kwin script status` says so. The shell keeps running.
@@ -90,9 +110,9 @@ Opt-in, never automatic ([[ADR-0012 Keeping the Shell Above Plasma Panels]]).
 | Raise the shell's `top` surfaces to KWin's Notification layer | They sit above Plasma panels (Above) and below an active fullscreen window (Active); the Plasma panel is untouched | They share the Notification layer with Plasma's notification toasts; the order between them is not defined; needs a stable way to match shell surfaces |
 | Lower the Plasma panel to the Normal layer | The shell's surfaces sit above it | A panel at the Normal layer can be covered by a normal window raised over it |
 
-Recommendation if a rule is offered: raise the shell's surfaces, because it changes only the shell's own windows. Question 2.
+Decided 2026-10-28 (question 2, as recommended): if a rule is offered, it raises the shell's surfaces, because that changes only the shell's own windows; it stays opt-in.
 
-- **Matching a shell surface is not verified.** What KWin sets as a layer-shell surface's resource class, resource name and title is not shown in the files read, and `getWindowInfo` does not list layer surfaces (above). A test with a KWin script that prints these properties for the shell's surfaces and for a Plasma panel would settle it. It runs code inside the compositor, so it needs the maintainer's permission first. Question 3.
+- **Matching a shell surface is verified** (test above): the class is the namespace, the type is normal, the layer is Above; a Plasma panel is class `plasmashell`, type dock. What remains unverified is the rule file itself: the key names and stored values of the layer rule, and that the rule applies to a layer-shell surface and survives a reload. #needs-verification A test would write to `kwinrulesrc`, so it needs a backup and the maintainer's permission first.
 - **Writing the rule.** `tesserae-shell kwin rule show` prints the group that would be written; `install` writes one group to `kwinrulesrc`, adds its id to the list in `[General]`, and asks KWin to reload; `remove` deletes only that group and its entry. The shell never edits another group. The file exists on this machine and was not read. A KDE patch for a default-rules helper writes the file and then sends `reloadConfig` on `/KWin`, which is a method on this machine's `/KWin` too; forum reports on reloading are mixed ([discussion](https://discuss.kde.org/t/applying-window-rule-via-command-line/37452)). #needs-verification
 
 ### The KWin version
@@ -152,13 +172,17 @@ Hiding surfaces on fullscreen removes shell controls from view while a video or 
 
 ## Open Questions
 
-1. **How the script is loaded:** at run time by the shell (recommended), a persistent install, or both with run time as the default.
-2. **Which rule, if any:** raise the shell's surfaces (recommended) or lower the Plasma panel; and keep the rule opt-in.
-3. **A test script inside KWin** that prints the class, name, title, type and layer of the shell's surfaces and of a Plasma panel, to settle how a rule can match them: permission to run it temporarily (recommended: yes).
-4. **The script id and folder** `tesserae-shell-kwin` in `kwin/TesseraeShell/`.
-5. **The silent-script warning after 5 seconds.**
-6. The settings keys `kwin.script` and `kwin.hide_on_fullscreen`.
-7. **An OSD that stays on top of a fullscreen window:** a per-surface opt-out, or none.
+All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
+
+1. [x] How the script is loaded: at run time by the shell; a persistent install through the command.
+2. [x] Which rule, if any: raise the shell's surfaces; opt-in.
+3. [x] A test script inside KWin: permission given and the test done (above).
+4. [x] The script id and folder `tesserae-shell-kwin` in `kwin/TesseraeShell/`.
+5. [x] The silent-script warning after 5 seconds.
+6. [x] The settings keys `kwin.script` and `kwin.hide_on_fullscreen`.
+7. [x] An OSD on top of a fullscreen window: none in v1, consistent with the earlier decision that a fullscreen window always covers every shell element; revisit if a need appears. (This one had no recommendation written; I took the earlier decision as the answer.)
+- [ ] The namespace convention `tesserae-shell.<kind>.<name>` (proposed).
+- [ ] The rule file's key names and a test of the rule (needs a backup of `kwinrulesrc` and permission).
 
 ## Acceptance Criteria
 
@@ -171,6 +195,7 @@ Hiding surfaces on fullscreen removes shell controls from view while a video or 
 - [ ] After a normal stop in mode R, `isScriptLoaded` is false.
 - [ ] `tesserae-shell kwin rule install` writes one group and removes nothing else; `remove` restores the file's earlier content for every other group.
 - [ ] The script sends no window title, class or id.
+- [ ] A call with the string `["DP-1"]` reaches the shell; a call with `as` from a script does not (a regression check on the interface's signature).
 
 ## Links
 

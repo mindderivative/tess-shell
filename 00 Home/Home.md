@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-10-29                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Last change         | Wrote the [[KWin Integration]] spec (draft): the script, the rule, KWin D-Bus facts from introspection |
+| Last change         | Applied the KWin Integration answers; ran the read-only KWin script test; FullscreenState now takes a JSON string |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0013 Control Interface]] (12 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | The seven [[KWin Integration#Open Questions]], including permission to run a read-only test script inside KWin; key names the specs mark proposed |
+| Waiting on you      | Key names the specs mark proposed; the namespace convention (proposed, [[KWin Integration]]) |
 | Next                | Plasma coexistence, the D-Bus service layer, portals, global shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]])                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-29 | [[KWin Integration]] answers applied; KWin script test run |
 | 2026-10-29 | [[KWin Integration]] drafted |
 | 2026-10-29 | tre's clipboard test exists (#243); the maintainer wants it filed ([[Wayland Protocols]]) |
 | 2026-10-28 | tre answered the clipboard questions ([[Wayland Protocols]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-28 | [[Wayland Protocols]] drafted; Integration started |
 | 2026-10-28 | [[Logging]] answers applied; Loguru chosen |
 | 2026-10-28 | [[Logging]] spec written (draft)                                      |
-| 2026-10-28 | [[IPC and CLI]]: `control` key and `Status` module names decided          |
 
 ## Go to
 
