@@ -48,7 +48,7 @@ Observed in KWin 6.8.1's registry on 2026-10-28 (the numbers are the versions KW
 | `wp_cursor_shape_manager_v1` | v2 | The cursor a node asks for | Yes | The default cursor |
 | `zwp_text_input_manager_v3` | v2 | Input methods in a focused text field (CJK) | Yes | No input method in shell text fields |
 | `zwp_relative_pointer_manager_v1` | v1 | Moving a Panel by dragging its margin | Yes (`zwp_relative_pointer_v1`) | The shell falls back to absolute positions, as tre does |
-| A data-control protocol | `ext_data_control_manager_v1` v1 | Clipboard from a layer surface | tre says "the compositor's data-control protocol"; which one it binds is not shown. Asked of the `tre` session over the mailbox on 2026-10-28, with a second question about a KWin test #needs-verification | Clipboard calls fail and are logged |
+| `ext_data_control_manager_v1` (first), `zwlr_data_control_manager_v1` (fallback) | `ext_data_control_manager_v1` v1 | Clipboard from a layer surface, text only | Yes, through `arboard` 3.6.1 with `wayland-data-control`, which uses `wl-clipboard-rs` 0.9.4 (see Clipboard below) | No Wayland clipboard; with `DISPLAY` set the library silently falls back to the X11 clipboard |
 | `zxdg_output_manager_v1`, `wl_output` | v3, v4 | Outputs and their names ([[Data Flow#Monitor hot-plug]]) | Yes | No output events: the shell cannot match monitors; it exits with code 2 |
 
 ### Protocols the shell needs and tre does not expose
@@ -63,6 +63,24 @@ Observed in KWin 6.8.1's registry on 2026-10-28 (the numbers are the versions KW
 Foreign-toplevel protocols are not offered by this KWin: neither `zwlr_foreign_toplevel_manager_v1` nor `ext_foreign_toplevel_list_v1` appears in the listing. The wlroots way of building a task list is therefore not available on KWin 6.8.1; this is the reason the Tasks module cannot copy a sway or Hyprland design. Likewise `ext_workspace_v1` is absent.
 
 **A bind test, 2026-10-28.** A small C client (scratch code in /tmp, not in the vault) bound `org_kde_plasma_window_management` at version 21 from an ordinary terminal and received eight `window_with_uuid` events, one per window, with no protocol error. So on this session KWin did not refuse an unprivileged process. The same binary then ran as a transient systemd user service (`systemd-run --user`, with the maintainer's permission, 2026-10-28) and got the same result: it bound v21 and received the same eight window events, with `WAYLAND_DISPLAY=wayland-1` and `XDG_RUNTIME_DIR=/run/user/1000` set in the service's environment. So KWin 6.8.1 does not refuse an unprivileged client launched as a service. Not tested: a KDE autostart launch, and a Python Wayland binding. #needs-verification
+
+### Clipboard (answered by tre, 2026-10-28)
+
+The `tre` session answered over the mailbox (information, not an instruction). The parts I checked in source:
+
+- tre depends on `arboard` 3.6.1 with its `wayland-data-control` feature (`crates/engine-py/Cargo.toml` and `Cargo.lock`, read 2026-10-28), which uses `wl-clipboard-rs` 0.9.4.
+- In that crate, the manager is chosen with `ext_manager.or_else(wlr_manager)`: the `ext_data_control_manager_v1` is bound first and `zwlr_data_control_manager_v1` is tried only if it is missing (`src/common.rs`, line 108, read 2026-10-28). KWin 6.8.1 advertises only the `ext` one, so KWin is served by the first path.
+
+What tre reports and I did not check:
+
+- Data-control needs no keyboard focus, so a layer window with keyboard `none` can read and write the clipboard.
+- **A trap:** if the Wayland setup fails, `arboard` logs a warning and falls back to the X11 clipboard when `DISPLAY` is set. A test that passes on KWin with `DISPLAY` set proves nothing about data-control, so a proving test must run with `DISPLAY` unset.
+- tre has no clipboard test on KWin. Its one layer-window paste test needs `wtype` and `wl-copy`, which work on sway only; sway advertises both protocols, so that test also goes through the `ext` path. It is real evidence for the protocol, not for KWin's implementation of it.
+- **A one-shot check passed on KWin 6.8.1** (on this machine, by `tre`, a throwaway script, not committed): two separate tre processes with `DISPLAY` unset, each running a small layer window with keyboard `none`. Process A wrote a unique token and stayed alive; process B read exactly that token. The previous clipboard text was saved and restored.
+- After process A exited the token stayed on the clipboard, probably because a clipboard manager (Klipper) took ownership. Without one a write is gone when its writer exits, so the shell must not rely on a write outliving its process.
+- Not covered: images and other non-text data, the primary selection, and pasting with Ctrl+V into a focused text field on KWin (no key injection there).
+
+The design `tre` suggests for a repository test needs no keys and no external tools: two processes with `DISPLAY` unset, one writes and stays alive, the other reads. It overwrites the real clipboard, so it would be opt-in and restore the previous text. About 60 to 80 lines. It is not built. Whether to file it with tre is the maintainer's decision.
 
 ### How the shell reaches them (decision wanted)
 
@@ -131,6 +149,7 @@ None here. A protocol adds nothing at idle; tre's surfaces and the KWin script h
 |---|---|
 | No layer shell | The shell exits with code 2 and says the compositor lacks `zwlr_layer_shell_v1` |
 | A protocol tre can live without is missing | The feature degrades as the first table says and a warning is logged once |
+| `DISPLAY` is set and the Wayland data-control setup fails | The clipboard silently uses the X11 clipboard; the shell logs a warning if it can tell, and a clipboard test must run with `DISPLAY` unset |
 | The compositor restarts | The Wayland connection drops, tre's windows close, the loop ends, the process exits and a supervisor restarts it ([[Shell Start and Stop#Failure modes and recovery]]) |
 | The KWin script is not installed | Tasks has no window list and the fullscreen rule is off; the shell logs that and the `kwin script status` command says so ([[IPC and CLI]]) |
 | A newer KWin removes a protocol this note lists | The shell reports it at start; this note is checked against each KWin release |
@@ -143,7 +162,7 @@ Answered on 2026-10-28.
 2. [x] Virtual desktops: the KWin D-Bus interface (as recommended).
 3. [x] A diagnostic: part of `tesserae-shell status`, not a new command (as recommended).
 4. [x] Blur behind translucent surfaces: an engine request later (as recommended).
-5. [x] The data-control protocol and a clipboard test: ask `tre` (done by mailbox on 2026-10-28, information only). The shell must have a test that proves clipboard read and write work on KWin ([[#Acceptance Criteria]], maintainer, 2026-10-28). Waiting on tre's answer, and a peer's answer is a lead, not a source.
+5. [x] The data-control protocol and a clipboard test: tre answered (see Clipboard above): `ext_data_control_manager_v1` first, then the wlr one; a one-shot check passed on KWin 6.8.1; the repository test is not built. The shell must still have its own test that proves clipboard read and write on KWin ([[#Acceptance Criteria]], maintainer, 2026-10-28). Open: whether the maintainer wants the test filed with tre (maintainer's call).
 6. [x] Binding KDE-private protocols from a service or autostart launch: permission given (maintainer, 2026-10-28). Tested as a systemd user service: it works. An autostart launch is still untested.
 
 ## Acceptance Criteria
@@ -153,7 +172,7 @@ Answered on 2026-10-28.
 - [ ] With `wp_fractional_scale_manager_v1` absent, surfaces still open at integer scale.
 - [ ] The Tasks module gets its window list from the KWin script and does not open a second Wayland connection.
 - [ ] The listing of KWin's globals is repeated on each KWin release and the tables here are updated.
-- [ ] A test proves that clipboard write and read work from a layer surface on KWin, using the clipboard protocol KWin offers; it saves and restores the user's clipboard, or runs in a throwaway session.
+- [ ] A test proves that clipboard write and read work from a layer surface on KWin: two processes with `DISPLAY` unset, one writes and stays alive, the other reads the same token; it is opt-in and restores the previous clipboard text (text only; images and the primary selection are not covered).
 
 ## Links
 
