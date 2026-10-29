@@ -115,7 +115,7 @@ Loguru's sinks are safe to call from any thread. The loop thread must not block 
 | `retention`      | Days to keep daily files; unset keeps all               | Decided that it exists (2026-10-27) |
 | `format`         | `text` or `json` for the file                           | Decided (2026-10-28); default `text`            |
 | `diagnose`       | Show variable values in tracebacks; default false       | Decided (2026-10-28)                            |
-| `console`        | Write to stderr; default true                           | Proposed                            |
+| `console`        | Write to stderr; default true                           | Decided (key name accepted 2026-10-29) |
 | `capture_stderr` | Forward the process's stderr into the log; default true | Decided (2026-10-28)               |
 
 The reload rule is already decided: a change to `logging` applies at once ([[Settings File]]).

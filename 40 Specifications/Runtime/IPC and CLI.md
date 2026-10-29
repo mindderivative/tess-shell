@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0013 Control Interface]]"]
 # IPC and CLI
 
 > [!summary]
-> How the outside world controls a running shell, and the command line that does it. The shell owns one session-bus name and exports one small D-Bus interface; the `tesserae-shell` command is a thin client of it, and a few subcommands run without a shell at all (`check`, `schema`, the KWin helpers). The KWin script that reports fullscreen windows ([[ADR-0012 Keeping the Shell Above Plasma Panels]]) calls the same interface. Decided by [[ADR-0013 Control Interface]] (accepted 2026-10-28, Option B). The commands and names below are proposals until the maintainer answers the open questions.
+> How the outside world controls a running shell, and the command line that does it. The shell owns one session-bus name and exports one small D-Bus interface; the `tesserae-shell` command is a thin client of it, and a few subcommands run without a shell at all (`check`, `schema`, the KWin helpers). The KWin script that reports fullscreen windows ([[ADR-0012 Keeping the Shell Above Plasma Panels]]) calls the same interface. Decided by [[ADR-0013 Control Interface]] (accepted 2026-10-28, Option B). The commands and names below were accepted by the maintainer (2026-10-28 and 2026-10-29).
 
 ## Purpose and Scope
 
@@ -45,16 +45,16 @@ On a compositor without KDE's shortcut service the launcher still opens from the
 
 Proposed methods. Names are `CamelCase` as D-Bus convention; every method that changes the shell returns a success flag and a message as two values (signature `bs`, not a struct), or raises a D-Bus error. The test below showed `dbus-fast` returning two values from a method annotated `bs`.
 
-| Method                   | Arguments                    | Result              | What it does                                                                                                                                                |
-|--------------------------|------------------------------|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Reload`                 | none                         | `(b ok, s message)` | Reloads everything now, as `SIGHUP` does ([[Hot Reload]]); returns after the apply, with the errors if it failed                   |
-| `Quit`                   | none                         | none                | Starts the stop sequence ([[Shell Start and Stop#Stop sequence]])                                                                                          |
-| `Status`                 | none                         | `s` (JSON)          | The state, versions, monitors, surfaces, modules and the last errors                                                                                        |
-| `Show`, `Hide`, `Toggle` | `s name`                     | `(b ok, s message)` | Show, hide or toggle a Bar, Panel or Frame by its unique name ([[Panel#States]])                                                     |
-| `ClosePopup`             | none                         | none                | Closes the open Popup, if any                                                                                                                               |
-| `Call`                   | `s module, s action, s args` | `s` (JSON)          | Calls an `@action` method of a module; `args` is a JSON array                                                                                               |
-| `SetLogLevel`            | `s level`                    | none                | Changes the log level until the next reload of `settings.yaml` ([[Settings File#Log files]])                                                    |
-| `FullscreenState`        | `s outputs`                 | none                | For the KWin script: the outputs that now have an active fullscreen window; the shell hides its surfaces on those ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]) |
+| Method                   | Arguments                    | Result              | What it does                                                                                                                                                                                |
+| ------------------------ | ---------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Reload`                 | none                         | `(b ok, s message)` | Reloads everything now, as `SIGHUP` does ([[Hot Reload]]); returns after the apply, with the errors if it failed                                                                            |
+| `Quit`                   | none                         | none                | Starts the stop sequence ([[Shell Start and Stop#Stop sequence]])                                                                                                                           |
+| `Status`                 | none                         | `s` (JSON)          | The state, versions, monitors, surfaces, modules and the last errors                                                                                                                        |
+| `Show`, `Hide`, `Toggle` | `s name`                     | `(b ok, s message)` | Show, hide or toggle a Bar, Panel or Frame by its unique name ([[Panel#States]])                                                                                                            |
+| `ClosePopup`             | none                         | none                | Closes the open Popup, if any                                                                                                                                                               |
+| `Call`                   | `s module, s action, s args` | `s` (JSON)          | Calls an `@action` method of a module; `args` is a JSON array                                                                                                                               |
+| `SetLogLevel`            | `s level`                    | none                | Changes the log level until the next reload of `settings.yaml` ([[Settings File#Log files]])                                                                                                |
+| `FullscreenState`        | `s outputs`                  | none                | For the KWin script: the outputs that now have an active fullscreen window; the shell hides its surfaces on those ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]) |
 
 Properties: `State` (`starting`, `running`, `stopping`), `Version`, `ApiVersion`. Signals: `Reloaded(b ok, s summary)`, `ErrorReported(s rule, s file, i line, s message)`, `SurfaceChanged(s name, s state)`.
 

@@ -78,7 +78,7 @@ The maintainer allowed a read-only script run (question 3, answered as recommend
 Consequences:
 
 - The `FullscreenState` argument is one string holding a JSON array, not `as`. [[IPC and CLI#The interface]] is updated to match. The shell parses the string and checks that every item is a string.
-- **A rule can match a shell surface by its class,** because KWin's resource class is the layer-shell namespace. tre's `LayerWindow` takes `namespace` in its constructor (a change means reopening the window, [[Hot Reload]]). Proposed convention: every shell surface uses a namespace that starts with `tesserae-shell`, for example `tesserae-shell.bar.top_bar` ([[Surface Types]]). A rule can then match the class by a substring or regular expression, and a Plasma panel by class `plasmashell` and type dock.
+- **A rule can match a shell surface by its class,** because KWin's resource class is the layer-shell namespace. tre's `LayerWindow` takes `namespace` in its constructor (a change means reopening the window, [[Hot Reload]]). Decided 2026-10-29: every shell surface uses the namespace `tesserae-shell.<kind>.<name>`, for example `tesserae-shell.bar.top_bar` ([[Surface Types]]). A rule can then match the class by a substring or regular expression, and a Plasma panel by class `plasmashell` and type dock.
 - **The shell can read a surface's layer** through the script (`window.layer`), which settles what KWin does with each surface; the shell does not need to, and the script sends nothing but the fullscreen list.
 
 ### Loading the script
@@ -181,7 +181,7 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 5. [x] The silent-script warning after 5 seconds.
 6. [x] The settings keys `kwin.script` and `kwin.hide_on_fullscreen`.
 7. [x] An OSD on top of a fullscreen window: none in v1, consistent with the earlier decision that a fullscreen window always covers every shell element; revisit if a need appears. (This one had no recommendation written; I took the earlier decision as the answer.)
-- [ ] The namespace convention `tesserae-shell.<kind>.<name>` (proposed).
+- [x] The namespace convention: every shell surface uses the layer-shell namespace `tesserae-shell.<kind>.<name>` (maintainer, 2026-10-29, as proposed).
 - [ ] The rule file's key names and a test of the rule (needs a backup of `kwinrulesrc` and permission).
 
 ## Acceptance Criteria

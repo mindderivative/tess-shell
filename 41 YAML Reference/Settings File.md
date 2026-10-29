@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 # Settings File
 
 > [!summary]
-> The config directory, `$HOME/.config/tesserae-shell/`, holds the shell's files in fixed folders. One file at its root, `settings.yaml`, holds settings that are not tied to a single shell: where to look for files when the user wants a different layout, which shell file to start, and global behaviour. The folder layout and the file are the maintainer's (2026-10-27); the keys below are proposed.
+> The config directory, `$HOME/.config/tesserae-shell/`, holds the shell's files in fixed folders. One file at its root, `settings.yaml`, holds settings that are not tied to a single shell: where to look for files when the user wants a different layout, which shell file to start, and global behaviour. The folder layout and the file are the maintainer's (2026-10-27); the key names were accepted by the maintainer on 2026-10-29.
 
 ## The Config Directory
 
