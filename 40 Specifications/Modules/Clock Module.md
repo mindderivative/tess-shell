@@ -35,33 +35,38 @@ Modules/Clock/
 ### Layout (`Clock_Module.tdl`)
 
 ```
-TDL: v1
-shell: v1
-type: Module
-name: Clock
-style: Clock_Style.tdl
-params {
+---
+TDL: 0.1
+Module: v1
+Name: Clock
+---
+
+Style: Clock_Style.tdl
+Params {
     # a strftime pattern; empty follows the desktop
-    format { type: string, default: "" }
+    format { Type: string, Default: "" }
     # a locale name such as de_DE; empty follows the desktop
-    locale { type: string, default: "" }
+    locale { Type: string, Default: "" }
     # desktop, 12 or 24
-    hour_cycle { type: string, default: desktop }
+    hour_cycle { Type: string, Default: desktop }
     # an IANA name; empty is the local zone
-    timezone { type: string, default: "" }
-    tooltip_format { type: string, default: "%A, %d %B %Y" }
+    timezone { Type: string, Default: "" }
+    tooltip_format { Type: string, Default: "%A, %d %B %Y" }
 }
 
-block: FlexBox
-alignment: horizontal
-children {
-    Label {
-        # the value the Python sends; the slot is TDL's, the expression is TEL's
-        text: {{ time }}
-        class: clock_text
+FlexBox {
+    Alignment: horizontal
+    Children {
+        Label {
+            # the value the Python sends; the slot is TDL's, the expression is TEL's
+            Text: {{ time }}
+            Class: clock_text
+        }
     }
 }
 ```
+
+The metadata block and the registry are in [[TDL Language]]; `Name: Clock` is the word a use calls the module by. The param names (`format`, `timezone`) are the module author's; the `Type:` and `Default:` keys inside a declaration follow [[Module File#Params]] and are open there.
 
 - The Label is the standard module over the Text block ([[Building Blocks]]). It is not editable.
 - Params are what a use passes; a use that passes nothing gets the defaults.
@@ -70,16 +75,17 @@ children {
 ### Style (`Clock_Style.tdl`)
 
 ```
-TDL: v1
-shell: v1
-type: Style
+---
+TDL: 0.1
+Style: v1
+---
 
-classes {
+Classes {
     clock_text {
-        block: Text
-        size: 14
-        weight: 500
-        foreground: "#ffffff"
+        Kind: Text
+        Size: 14
+        Weight: 500
+        Foreground: "#ffffff"
     }
 }
 ```
@@ -137,21 +143,21 @@ An illustration of the shape, not tested code. With the shared time source ([[Mo
 Placing it. The call form is decided in [[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]. One clock in a container:
 
 ```
-children {
+Children {
     Clock { format: "%H:%M:%S" }
 }
 ```
 
-Two clocks in one container repeat the module name in one `children { }`, ordered by position ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 16); this replaces the earlier list form. The optional `name:` keeps each use's path name unique:
+Two clocks in one container repeat `Clock { }` in one `Children { }`, ordered by position ([[ADR-0014 Shell File Language#Layout Rules]]); this replaces the earlier list form. The optional `Name:` keeps each use's path name unique. Python keys each use as `Clock@<uid>` ([[TDL Language#Names and the Registry]]):
 
 ```
-children {
+Children {
     Clock {
-        name: local_clock
+        Name: local_clock
         format: "%H:%M"
     }
     Clock {
-        name: ny_clock
+        Name: ny_clock
         timezone: America/New_York
         format: "%H:%M NY"
     }
@@ -159,7 +165,7 @@ children {
 ```
 
 > [!question] Open item
-> Whether a module call takes its unique name from the word before the brace or from a `name:` key is open ([[Module File#Open]]). The example keeps `name:` for the use's path name, as in [[Module File#Using a Module]].
+> How a repeated use names itself in the file is open ([[TDL Language#Open]]). The head word is the module's type (ADR-0014, item 7); the example keeps `Name:` for the use's path name, as in [[Module File#Using a Module]].
 
 ## Python Contract
 

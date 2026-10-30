@@ -119,7 +119,7 @@ Decided 2026-10-28; codes 3 and 5 were free in the shell's table.
 
 ## Configuration
 
-One `settings.tdl` key (decided 2026-10-28): `control`, default true; `control: false` runs the shell without exporting the interface, and the KWin script then cannot report fullscreen windows. The rest of the global settings list is deferred ([[Settings File]]).
+One `settings.tdl` key (decided 2026-10-28): `Control`, default true; `Control: false` runs the shell without exporting the interface, and the KWin script then cannot report fullscreen windows. The rest of the global settings list is deferred ([[Settings File]]).
 
 ## Python Contract
 
@@ -172,7 +172,7 @@ Plain text and exit codes are readable by a screen reader and a script. `--json`
 - [x] Client exit codes 3 and 5 (maintainer: "That is fine").
 - [x] `FullscreenState` as a full list of outputs (as recommended).
 - [x] Shell completion scripts: later (maintainer: "Later is fine").
-- [x] A `settings.tdl` key `control` to turn the interface off, and `Status` may list module names (maintainer, 2026-10-28).
+- [x] A `settings.tdl` key `Control` to turn the interface off, and `Status` may list module names (maintainer, 2026-10-28).
 
 ## Acceptance Criteria
 

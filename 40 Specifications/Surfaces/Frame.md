@@ -14,7 +14,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Hit
 # Frame
 
 > [!summary]
-> The Frame (`kind: frame`) is a ring around the screen, attached to all four edges and corners, that reserves space on every side. Its thickness is the same on every side or differs by side. Its inner corners are rounded (concave); its outer corners are square by default and can be rounded (convex). It has inner and outer borders, a background, border colours (solid or gradient) and shadows. Panels and Bars can be visually melded into it with rounded joins, so they look as if they grow out of the frame; this is a visual effect on separate surfaces, not one shared surface. The Frame is Top layer only. On tre it is a full-screen painter `LayerWindow` plus up to four thin space-reserving windows, using the path hit shape released in tre 0.5.9. The decisions are the maintainer's ([[Surface Types]]); the key names were accepted by the maintainer on 2026-10-29. The examples are TDL illustrations ([[ADR-0014 Shell File Language]]).
+> The Frame (the `Frame` block) is a ring around the screen, attached to all four edges and corners, that reserves space on every side. Its thickness is the same on every side or differs by side. Its inner corners are rounded (concave); its outer corners are square by default and can be rounded (convex). It has inner and outer borders, a background, border colours (solid or gradient) and shadows. Panels and Bars can be visually melded into it with rounded joins, so they look as if they grow out of the frame; this is a visual effect on separate surfaces, not one shared surface. The Frame is Top layer only. On tre it is a full-screen painter `LayerWindow` plus up to four thin space-reserving windows, using the path hit shape released in tre 0.5.9. The decisions are the maintainer's ([[Surface Types]]); the key names were accepted by the maintainer on 2026-10-29. The examples are TDL illustrations ([[ADR-0014 Shell File Language]]).
 
 ## Purpose and Scope
 
@@ -89,7 +89,7 @@ The test of three layers against the wallpaper is no longer needed.
 
 **Thickness plus borders (decided 2026-10-27).** The border thickness adds to the Frame's overall thickness: a Frame with a thickness of 10 px and a 2 px border is 12 px in total, and the reserver's zone for that side is 12. With both an inner and an outer border the total is the thickness plus both. The same rule gives the strip's total thickness. The shell computes the zone and the painted bands; a stroke in tre is centred on its path ([paint reference](https://mindderivative.github.io/tre/reference/paint/)), so the shell offsets the contours by half a border.
 
-**Gradient borders and tiling (decided 2026-10-27 that a gradient is allowed and tiling is opt-in).** A border colour can be a gradient. What "tiling" repeats is not settled here: the likely meaning is that the gradient repeats along the ring instead of stretching once across it, with `border_tile` off by default (proposed key). tre's `Gradient` offers linear, radial and sweep, with positions relative to the box, and no spread or repeat option in its Python API ([tre Gradient](https://mindderivative.github.io/tre/reference/paint/)); only SVG gradients have a spread method. So a tiled gradient is built from repeated stops by the shell today, and a native repeat is written up as [[TRE-REQ-006 Repeating Gradients]] (draft, for the future, not filed).
+**Gradient borders and tiling (decided 2026-10-27 that a gradient is allowed and tiling is opt-in).** A border colour can be a gradient. What "tiling" repeats is not settled here: the likely meaning is that the gradient repeats along the ring instead of stretching once across it, with `Border_Tile` off by default (proposed key). tre's `Gradient` offers linear, radial and sweep, with positions relative to the box, and no spread or repeat option in its Python API ([tre Gradient](https://mindderivative.github.io/tre/reference/paint/)); only SVG gradients have a spread method. So a tiled gradient is built from repeated stops by the shell today, and a native repeat is written up as [[TRE-REQ-006 Repeating Gradients]] (draft, for the future, not filed).
 
 ### Melding
 
@@ -149,7 +149,7 @@ A strip and a Bar can share an edge, with different jobs:
 - A strip, say 34 px thick, holds icons. Clicking an icon expands a Bar from the strip's inner edge: a sub-bar full of items related to that icon.
 - Or the strip holds the user's most used items, and a Bar is added beside it for the others they need quick access to.
 - A strip has every ability a Bar has: hidden, collapsed, peeking, animated, expanded and contracted, on its own ([[Bar#Auto-hide (decided 2026-10-27)]]). It can be hidden without hiding the Frame.
-- The sub-bar is a Bar attached to the strip (`attach_to` the Frame, hosted in the painter when melded). How an icon names the Bar it opens, and how the two surfaces animate together, is open.
+- The sub-bar is a Bar attached to the strip (`Attach_To` the Frame, hosted in the painter when melded). How an icon names the Bar it opens, and how the two surfaces animate together, is open.
 
 ### Hidden and Shown at Runtime (Decided 2026-10-27)
 
@@ -157,7 +157,7 @@ The whole Frame can be hidden and shown at will during runtime. While hidden, th
 
 ### Hosted Melding (Decided 2026-10-27)
 
-The painter is a full-screen surface, so a Bar or Panel melded to the Frame can be drawn **inside the painter** instead of in a window of its own. The entry stays a sibling in the file and names its target (`attach_to`), as before; a flag such as `meld: true` tells the shell to host it in the Frame's surface.
+The painter is a full-screen surface, so a Bar or Panel melded to the Frame can be drawn **inside the painter** instead of in a window of its own. The entry stays a sibling in the file and names its target (`Attach_To`), as before; a flag such as `Meld: true` tells the shell to host it in the Frame's surface.
 
 |                         | Separate window (melding as in Melding above)                  | Hosted in the painter                             |
 |-------------------------|----------------------------------------------------------------|---------------------------------------------------|
@@ -175,41 +175,41 @@ Limits: a hosted entry cannot move to another monitor or be a free-floating, dra
 
 ### Multi-monitor
 
-One Frame per monitor, independent: each is a complete ring with its own thickness and corners, as in the maintainer's Edge Shell design. Whatever lies between stacked monitors is left alone. A monitor with no Frame gets none ([[Shell File]]).
+One Frame per monitor, independent: each is a complete ring with its own thickness and corners, as in the maintainer's Edge Shell design. Whatever lies between stacked monitors is left alone. A monitor with no Frame gets none ([[Shell File#Monitors]]).
 
 ## Configuration
 
 | Key                            | Meaning                                                                                                                                                                                                                                                                  | Status                                                                               |
 |--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| `kind: frame`                  | The kind                                                                                                                                                                                                                                                                 | Decided                                                                              |
-| `layer`                        | `top` only                                                                                                                                                                                                                                                               | Decided                                                                              |
-| `thickness`                    | Number, list of four clockwise from the top, or named sides                                                                                                                                                                                                              | Decided (key name accepted 2026-10-29); the forms are decided                       |
-| `corner_radius`                | Outer (convex) corners, four-sided; default 0                                                                                                                                                                                                                            | Default decided (2026-10-27); key accepted 2026-10-29                               |
-| `inner_radius`                 | Inner (concave) corners, four-sided                                                                                                                                                                                                                                      | Decided (key name accepted 2026-10-29)                                              |
-| `inner_border`, `outer_border` | Each a block with `thickness` and `color` (a colour, token or gradient); `border`, `border_thickness` and `border_color` in `style` are shorthand for the inner border                                                                                                 | Both decided as allowed (2026-10-27); key accepted 2026-10-29                       |
-| `border_tile`                  | Repeat a gradient border along the ring; default off                                                                                                                                                                                                                     | Opt-in decided (2026-10-27); key name and mechanism proposed                         |
-| `hidden`                       | Hide the Frame at start; shown and hidden at runtime by a shell action                                                                                                                                                                                                   | Decided that it can be hidden and shown; key accepted 2026-10-29                    |
-| `style`                        | Background, border, shadow, opacity                                                                                                                                                                                                                                      | Decided (the key); property names accepted 2026-10-29                                 |
-| `meld`                         | On a Bar or Panel entry that has `attach_to` the Frame: draw it inside the Frame's surface instead of in a window of its own                                                                                                                                             | Decided (key name accepted 2026-10-29); the mechanism is decided (2026-10-27)       |
-| `edges`                        | Per-edge overrides: `top`, `right`, `bottom`, `left`, each with its own `thickness` and `children` (the strip). An edge is the edge of the screen, however thick it is, and it starts at that edge; it is not a "side" of the screen that reaches past the halfway point | Decided (maintainer, 2026-10-27: `edges`, not `sides`)                               |
-| `children`                     | Blocks, containers and modules on the Frame itself                                                                                                                                                                                                                       | Decided that a layer window has them; for a Frame the content goes in a side's strip |
+| `Frame` (the head)             | The type; there is no `Kind:` key                                                                                                                                                                                                                                                               | Decided                                                                              |
+| `Layer`                        | `top` only                                                                                                                                                                                                                                                               | Decided                                                                              |
+| `Thickness`                    | Number, list of four clockwise from the top, or named sides                                                                                                                                                                                                              | Decided (key name accepted 2026-10-29); the forms are decided                       |
+| `Corner_Radius`                | Outer (convex) corners, four-sided; default 0                                                                                                                                                                                                                            | Default decided (2026-10-27); key accepted 2026-10-29                               |
+| `Inner_Radius`                 | Inner (concave) corners, four-sided                                                                                                                                                                                                                                      | Decided (key name accepted 2026-10-29)                                              |
+| `Inner_Border`, `Outer_Border` | Each a block with `Thickness` and `Color` (a colour, token or gradient); `Border`, `Border_Thickness` and `Border_Color` in `Style` are shorthand for the inner border                                                                                                 | Both decided as allowed (2026-10-27); key accepted 2026-10-29                       |
+| `Border_Tile`                  | Repeat a gradient border along the ring; default off                                                                                                                                                                                                                     | Opt-in decided (2026-10-27); key name and mechanism proposed                         |
+| `Hidden`                       | Hide the Frame at start; shown and hidden at runtime by a shell action                                                                                                                                                                                                   | Decided that it can be hidden and shown; key accepted 2026-10-29                    |
+| `Style`                        | Background, border, shadow, opacity                                                                                                                                                                                                                                      | Decided (the key); property names accepted 2026-10-29                                 |
+| `Meld`                         | On a Bar or Panel entry that has `Attach_To` the Frame: draw it inside the Frame's surface instead of in a window of its own                                                                                                                                             | Decided (key name accepted 2026-10-29); the mechanism is decided (2026-10-27)       |
+| `Edges`                        | Per-edge overrides: `top`, `right`, `bottom`, `left`, each with its own `Thickness` and `Children` (the strip). An edge is the edge of the screen, however thick it is, and it starts at that edge; it is not a "side" of the screen that reaches past the halfway point | Decided (maintainer, 2026-10-27: `Edges`, not `Sides`)                               |
+| `Children`                     | Blocks, containers and modules on the Frame itself                                                                                                                                                                                                                       | Decided that a layer window has them; for a Frame the content goes in a side's strip |
 
 ```
-screen_frame {
-    kind: frame
-    layer: top
-    thickness: [8, 8, 8, 8]          # or 8, or named sides (the form is open, see below)
-    corner_radius: 0                 # the default; the outer corners are square
-    inner_radius: 14
-    inner_border { thickness: 1, color: "#ffffff22" }
-    style {
-        background: "#0b0c0d"
+Frame {
+    Name: screen_frame
+    Layer: top
+    Thickness: [8, 8, 8, 8]          # or 8, or named sides (the form is open, see below)
+    Corner_Radius: 0                 # the default; the outer corners are square
+    Inner_Radius: 14
+    Inner_Border { Thickness: 1, Color: "#ffffff22" }
+    Style {
+        Background: "#0b0c0d"
     }
     # optional: a thicker edge acts as a bar
-    edges {
-        top {
-            thickness: 32
-            children {
+    Edges {
+        Top {
+            Thickness: 32
+            Children {
                 Workspaces { }
                 Spacer { }
                 Clock { }
@@ -219,7 +219,7 @@ screen_frame {
 }
 ```
 
-An illustration only. `thickness`, `corner_radius`, `inner_radius` and `edges` are proposals. With no `edges`, the Frame is just the ring, and Bars and Panels can be melded to it. The module uses (`Workspaces { }`) follow the pending module-use syntax of [[Shell File]].
+An illustration only. `Thickness`, `Corner_Radius`, `Inner_Radius` and `Edges` are proposals. Block heads such as `Inner_Border`, `Edges` and `Top` are not in the registry of [[TDL Language#Names and the Registry]]; how a Frame names them is open (see Open Questions). With no `Edges`, the Frame is just the ring, and Bars and Panels can be melded to it. A module use (`Workspaces { }`) is written with the module's name as the head ([[Module File#Using a Module]]).
 
 ## Python Contract
 
@@ -266,7 +266,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 
 ## Open Questions
 
-- [x] What a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars, all four edges or none (maintainer, 2026-10-27). The key is `edges` (maintainer, 2026-10-27). The painter hosting the strips (option A) is accepted with the strips (maintainer review, 2026-10-27).
+- [x] What a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars, all four edges or none (maintainer, 2026-10-27). The key is `Edges` (maintainer, 2026-10-27). The painter hosting the strips (option A) is accepted with the strips (maintainer review, 2026-10-27).
 - [x] The Frame's layer: `top`, with melded Bars and Panels hosted in the Frame's surface (maintainer, 2026-10-27). Open: how the join is drawn in the painter, and the cost of a large tree and region in the painter (to measure).
 - [x] The four reservers plus the painter tested together on KWin, and a 4K frame with many joins: after the v1 build, in the testing phase (maintainer, 2026-10-27).
 - [x] Fractional scale: wanted (maintainer, 2026-10-27). tre's docs say layer windows lay out in logical pixels and follow fractional scaling, and round a node's offset to a whole device pixel ([layer window reference](https://mindderivative.github.io/tre/reference/layer-window/), [window reference](https://mindderivative.github.io/tre/reference/window/)). Open: how a 1 px reserver and the ring edge look at 1.5x, tested with the rest. #needs-verification
@@ -276,8 +276,9 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 - [x] The Frame hidden or shown at runtime: yes; the reservers go while hidden and return when shown (maintainer, 2026-10-27).
 - [x] Shadows are excluded from the hit shape, for all shadows (maintainer, 2026-10-27). Open: whether tre already does this. #needs-verification
 - [x] A gradient border's tiling: the shell repeats stops; a native repeat is [[TRE-REQ-006 Repeating Gradients]], kept for the future (maintainer, 2026-10-27).
-- [ ] Named sides for `thickness` (`top: 8, left: 24`): in TDL it needs a block or another form; ADR-0014 does not yet define it. Open for the maintainer.
-- [x] Shadow tokens: `elevation`, `shadow` and `shadow_bleed` are accepted ([[Style Schema#Shadow keys]]); the Frame needs no bleed margin because the painter covers the output.
+- [ ] Named sides for `Thickness` (`Top: 8, Left: 24`): in TDL it needs a block or another form; ADR-0014 does not yet define it. Open for the maintainer.
+- [ ] How `Inner_Border`, `Outer_Border`, `Edges` and the edge names (`Top`, `Right`, `Bottom`, `Left`) are written in TDL: as nested blocks (as in the example) or as properties. The registry has no heads for them ([[TDL Language#Names and the Registry]]); ADR-0014 does not say. Open for the maintainer.
+- [x] Shadow tokens: `Elevation`, `Shadow` and `Shadow_Bleed` are accepted ([[Style Schema#Shadow keys]]); the Frame needs no bleed margin because the painter covers the output.
 
 ## Acceptance Criteria
 

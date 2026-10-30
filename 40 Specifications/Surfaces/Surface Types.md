@@ -18,7 +18,7 @@ depends_on: ["[[TRE-REQ-001 Layer Surface Window]]", "[[ADR-0007 Shell UI Layer]
 
 ## Purpose and Scope
 
-These are the values of `kind:` on a surface in a shell file ([[ADR-0007 Shell UI Layer#Surface types (2026-10-25)]]). Names, files and the full key reference are in the TDL reference (folder `41 YAML Reference`, rename pending); shell files are written in TDL ([[ADR-0014 Shell File Language]]). A dock, top bar or side bar is a Bar. An OSD, launcher or desktop widget is built as a Panel or a Popup ([[V1 Scope#Surfaces]]).
+The surface type is the block head in a shell file (`Bar`, `Frame`, `Panel`, `Popup`), with no `Kind:` or `Type:` key ([[TDL Language#Names and the Registry]], [[ADR-0007 Shell UI Layer#Surface types (2026-10-25)]]). Names, files and the full key reference are in the TDL reference (folder `41 YAML Reference`, rename pending); shell files are written in TDL ([[ADR-0014 Shell File Language]]). A dock, top bar or side bar is a Bar. An OSD, launcher or desktop widget is built as a Panel or a Popup ([[V1 Scope#Surfaces]]).
 
 ## The Four Types
 
@@ -60,18 +60,18 @@ Anchored to anything, and rendered like an overlay. It is not a child in the she
 
 ## Layers per Kind
 
-From the flow diagram ([[Shell Structure]], 2026-10-26). `layer:` takes the four layer-shell values.
+From the flow diagram ([[Shell Structure]], 2026-10-26). `Layer:` takes the four layer-shell values.
 
-| Kind  | Layers it may use                                                                      | May reserve space    |
+| Type  | Layers it may use                                                                      | May reserve space    |
 |-------|----------------------------------------------------------------------------------------|----------------------|
 | Bar   | `bottom`, `top`, `overlay`                                                             | Only on `top`        |
 | Panel | `bottom`, `top`, `overlay`                                                             | Only on `top`        |
 | Frame | `top` only                                                                             | Yes (it is on `top`) |
 | Popup | `overlay` (it hangs off a layer surface and the compositor stacks it above its parent) | No                   |
 
-`background` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no kind uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is in a Special Cases group: a module calls it, and it holds modules and containers ([[Shell Structure]]).
+`background` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no surface type uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is in a Special Cases group: a module calls it, and it holds modules and containers ([[Shell Structure]]).
 
-Reserved space is enforced to the `top` layer (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). An `exclusive_zone` on a surface not on `top` is a load error (decided, maintainer, 2026-10-26).
+Reserved space is enforced to the `top` layer (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). An `Exclusive_Zone` on a surface not on `top` is a load error (decided, maintainer, 2026-10-26).
 
 ## Fullscreen and Maximised Windows (Decided 2026-10-27)
 
@@ -85,39 +85,39 @@ Reserved space is enforced to the `top` layer (maintainer, 2026-10-26). The laye
 
 The flow diagram ([[Shell Structure]]) groups the Popup under **Special Cases** (maintainer, 2026-10-26).
 
-- A Popup stays a `kind: popup` entry in the shell file and names the surface it hangs off, as before.
+- A Popup stays a `Popup` block in the shell file and names the surface it hangs off, as before.
 - **A module calls it.** The diagram's edge is "Calls": a module's code (an `@action`, for example a click on a tray icon) asks the shell to open the popup. How the call is written is proposed in [[Module Context#Calling a popup]].
 - It holds modules, containers and blocks, like a layer window, and is drawn above its parent (confirmed on the flow diagram, 2026-10-27).
 - **It knows what called it** (maintainer, 2026-10-26): the caller's record (module, use, params, anchor) is available to the popup's own modules and expressions, so a tray menu shows the items of the tray icon that was clicked.
 - Focus is on by default (maintainer, 2026-10-26, replacing an earlier opt-in decision). An open popup takes the keyboard and mouse itself with nothing passed at call time, and closes on an outside click or Escape. Tooltip-like popups opt out and close when the pointer leaves. tre's `PopupWindow` has a `grab` flag that gives pointer and keyboard and closes the popup on an outside click or Escape, one flag for both; one flag, not two, as the maintainer chose. #needs-verification against tre.
-- **The group exists for kinds like it.** A **Notification window** behaves like a popup but differs enough to need its own `kind:`. Not in v1: the notification server is outside v1 ([[V1 Scope#After v1]], [[ADR-0004 Plasma Coexistence]]).
+- **The group exists for kinds like it.** A **Notification window** behaves like a popup but differs enough to need its own surface type (its own block head). Not in v1: the notification server is outside v1 ([[V1 Scope#After v1]], [[ADR-0004 Plasma Coexistence]]).
 
 ## Overlay
 
-The maintainer asked how an overlay is added in a shell file and how modules are assigned to it (2026-10-26). In the layer-shell protocol, `overlay` is one of four stacking layers (`background`, `bottom`, `top`, `overlay`), and any layer surface sits on one of them. Today the four kinds each take a `layer:`, so an overlay is a surface on the overlay layer, not a fifth kind.
+The maintainer asked how an overlay is added in a shell file and how modules are assigned to it (2026-10-26). In the layer-shell protocol, `overlay` is one of four stacking layers (`background`, `bottom`, `top`, `overlay`), and any layer surface sits on one of them. Today the four surface types each take a `Layer:`, so an overlay is a surface on the overlay layer, not a fifth type.
 
-**Option A, an overlay is a Panel (or other kind) on the overlay layer (recommended).** Nothing new is needed; the launcher is already specified this way ([[V1 Scope#Surfaces]]):
+**Option A, an overlay is a Panel (or other surface type) on the overlay layer (recommended).** Nothing new is needed; the launcher is already specified this way ([[V1 Scope#Surfaces]]):
 
 ```
-launcher {
-    kind: panel
-    layer: overlay
-    keyboard: exclusive
-    children {
-        import: Applications_Module.tdl
+Panel {
+    Name: launcher
+    Layer: overlay
+    Keyboard: exclusive
+    Children {
+        Import: Applications_Module.tdl
     }
 }
 ```
 
-Modules are placed under `children` as for any surface (the syntax of a module use is pending, as in [[Shell File]]). A panel can be anchored, floating, movable, hidden or full-screen, so one kind covers a launcher, an OSD and a full-screen overlay.
+Modules are placed under `Children` as for any surface ([[Module File#Using a Module]]). A panel can be anchored, floating, movable, hidden or full-screen, so one type covers a launcher, an OSD and a full-screen overlay.
 
-Option B, add `kind: overlay`. A surface kind that is the size of the whole output, transparent, on the overlay layer, with its input region following what is drawn in it:
+Option B, add an `Overlay` surface type. A surface type that is the size of the whole output, transparent, on the overlay layer, with its input region following what is drawn in it:
 
 ```
-screen_overlay {
-    kind: overlay
-    children {
-        import: Applications_Module.tdl
+Overlay {
+    Name: screen_overlay
+    Children {
+        Import: Applications_Module.tdl
     }
 }
 ```
@@ -125,7 +125,7 @@ screen_overlay {
 - For: one name for the "special" container the maintainer has in mind; it can host a launcher, OSD or dismissal layer without the author sizing a panel.
 - Against: an output-sized surface costs more video memory (tre measured 177 MiB for a 4K overlay against 18 MiB for a bar, before later changes; [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]), and tre's own advice is to build menus with `PopupWindow`, not an overlay. It duplicates what a full-screen panel can do.
 
-Decided (maintainer, 2026-10-26): Option A, `layer: overlay`. The `layer:` key works like layers in a graphics editor: the highest layer shows first, which is familiar. The maintainer's picture: the Overlay is the shell-wide layer that puts something on top of everything else, and a Panel added to it makes an overlay popup panel. In the files that is a Panel with `layer: overlay`; the overlay is a `layer:` value, not a fifth kind, and surfaces still do not nest. Not to be confused with the **Popup** kind, which is a menu or flyout anchored to a surface and placed by the compositor; an overlay panel is an ordinary panel that sits above the rest. If the maintainer meant a container that holds panels inside it, tell me: that would contradict "surfaces do not nest" ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]).
+Decided (maintainer, 2026-10-26): Option A, `Layer: overlay`. The `Layer:` key works like layers in a graphics editor: the highest layer shows first, which is familiar. The maintainer's picture: the Overlay is the shell-wide layer that puts something on top of everything else, and a Panel added to it makes an overlay popup panel. In the files that is a Panel with `Layer: overlay`; the overlay is a `Layer:` value, not a fifth surface type, and surfaces still do not nest. Not to be confused with the **Popup** type, which is a menu or flyout anchored to a surface and placed by the compositor; an overlay panel is an ordinary panel that sits above the rest. If the maintainer meant a container that holds panels inside it, tell me: that would contradict "surfaces do not nest" ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]).
 
 ## Behaviour
 
@@ -142,7 +142,7 @@ stateDiagram-v2
     Closed --> [*]: removed from configuration
 ```
 
-- A surface exists only for a monitor named by its root ([[ADR-0007 Shell UI Layer#Monitors, names and errors (2026-10-25)]]). On hot-plug the shell creates new windows; a closed layer window is dead ([[TRE-REQ-001 Layer Surface Window#Lifecycle and events]]).
+- A surface exists only for a monitor named by its `Monitor` block ([[ADR-0007 Shell UI Layer#Monitors, names and errors (2026-10-25)]]). On hot-plug the shell creates new windows; a closed layer window is dead ([[TRE-REQ-001 Layer Surface Window#Lifecycle and events]]).
 
 ## Configuration
 

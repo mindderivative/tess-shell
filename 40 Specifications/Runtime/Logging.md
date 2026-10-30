@@ -14,7 +14,7 @@ depends_on: ["[[Settings File]]", "[[Logging with Loguru]]"]
 # Logging
 
 > [!summary]
-> What the shell writes to its log, where, in what shape, and how fast. Loguru is the logger (the maintainer called it a great option on 2026-10-25; formally chosen 2026-10-28). Already decided: the log directory `logs/` in the config directory, one file per local day named `log_yyyy-mm-dd.log`, the sink swapped at local midnight, retention left to the user, the keys `level`, `directory` and `retention` under `logging`, a bad settings file logs to the default directory, and a runtime `SetLogLevel` call ([[Settings File#Log files]], [[Shell Start and Stop]], [[IPC and CLI]]). This note adds the record shape, the levels, the sinks, the routing of everything that does not use Loguru, the safety rules and the cost, as proposals with recommendations.
+> What the shell writes to its log, where, in what shape, and how fast. Loguru is the logger (the maintainer called it a great option on 2026-10-25; formally chosen 2026-10-28). Already decided: the log directory `logs/` in the config directory, one file per local day named `log_yyyy-mm-dd.log`, the sink swapped at local midnight, retention left to the user, the keys `Level`, `Directory` and `Retention` under `Logging`, a bad settings file logs to the default directory, and a runtime `SetLogLevel` call ([[Settings File#Log files]], [[Shell Start and Stop]], [[IPC and CLI]]). This note adds the record shape, the levels, the sinks, the routing of everything that does not use Loguru, the safety rules and the cost, as proposals with recommendations.
 
 ## Purpose and Scope
 
@@ -50,7 +50,7 @@ Loguru, one process-wide logger ([[Logging with Loguru]]). Checked on this machi
 | `ERROR`      | A failure the shell survives: a validation `error` on a reload, a module that raised, a surface that failed to open    |
 | `CRITICAL`   | The shell cannot continue: an unhandled exception outside a callback (exit code 70)                                    |
 
-`TRACE` and `SUCCESS` are not used. A validation finding's `severity` maps to the same-named level, so the log and the console agree ([[Validation and Errors#The error record]]). The default level is `INFO` (`logging.level`, [[Settings File]]); the `--verbose` option of the command line is `DEBUG` for that run. `SetLogLevel` changes the level until the next reload of `settings.tdl`, which applies the file's `level` again ([[IPC and CLI]]).
+`TRACE` and `SUCCESS` are not used. A validation finding's `severity` maps to the same-named level, so the log and the console agree ([[Validation and Errors#The error record]]). The default level is `INFO` (`Logging.Level`, [[Settings File]]); the `--verbose` option of the command line is `DEBUG` for that run. `SetLogLevel` changes the level until the next reload of `settings.tdl`, which applies the file's `Level` again ([[IPC and CLI]]).
 
 ### The Record
 
@@ -69,7 +69,7 @@ One line, in this order, separated by ` | `:
 | location | `file:line:column rule` for a finding with a position, otherwise `-`                                           |
 | message  | The text                                                                                                       |
 
-Behind the line, each record carries structured fields (`file`, `line`, `column`, `rule`, `severity`, `module`, `uid`) through Loguru's `bind`, so a file in JSON form keeps them ([[Validation and Errors#The error record]]). `logging.format: json` writes one JSON object per line with `serialize=True` (decided 2026-10-28); the default is text. A test on 2026-10-28 showed `serialize` keeping the bound fields (`rule`, `file`, `line`, `column`) in the record's `extra`.
+Behind the line, each record carries structured fields (`file`, `line`, `column`, `rule`, `severity`, `module`, `uid`) through Loguru's `bind`, so a file in JSON form keeps them ([[Validation and Errors#The error record]]). `Logging.Format: json` writes one JSON object per line with `serialize=True` (decided 2026-10-28); the default is text. A test on 2026-10-28 showed `serialize` keeping the bound fields (`rule`, `file`, `line`, `column`) in the record's `extra`.
 
 ### Who Writes
 
@@ -82,7 +82,7 @@ Behind the line, each record carries structured fields (`file`, `line`, `column`
 
 ### Safety
 
-- **No secrets.** Tracebacks are written with `diagnose=False` by default. A test on 2026-10-28 showed why: with `diagnose=True` Loguru prints the value of each variable in a failing frame (a variable holding `hunter2` appeared in the log), and with `diagnose=False` it did not. `logging.diagnose: true` is a switch for debugging (decided 2026-10-28).
+- **No secrets.** Tracebacks are written with `diagnose=False` by default. A test on 2026-10-28 showed why: with `diagnose=True` Loguru prints the value of each variable in a failing frame (a variable holding `hunter2` appeared in the log), and with `diagnose=False` it did not. `Logging.Diagnose: true` is a switch for debugging (decided 2026-10-28).
 - **No param values.** The shell and the standard modules do not log a module's params or a config value that might be private; the rule that `Status` follows ([[IPC and CLI#Security]]). A module author is told the same in the module contract.
 - **No per-frame logging.** Logging is for events. A `DEBUG` message in a hot path is still cheap when filtered out (0.13 µs per call in a test), but the shell keeps frames free of it ([[Goals and Non-Goals]] G4).
 - **Format with arguments,** not f-strings, so a filtered-out message costs nothing to build (`logger.debug("loaded {}", name)`).
@@ -106,19 +106,19 @@ Loguru's sinks are safe to call from any thread. The loop thread must not block 
 
 ## Configuration
 
-`logging` in `settings.tdl` ([[Settings File]]):
+`Logging` in `settings.tdl` ([[Settings File]]; the file's metadata form is undecided):
 
 | Key              | Meaning                                                 | Status                              |
 |------------------|---------------------------------------------------------|-------------------------------------|
-| `level`          | The minimum level; default `INFO`                       | Decided                             |
-| `directory`      | The log folder; default `logs/` in the config directory | Decided                             |
-| `retention`      | Days to keep daily files; unset keeps all               | Decided that it exists (2026-10-27) |
-| `format`         | `text` or `json` for the file                           | Decided (2026-10-28); default `text`            |
-| `diagnose`       | Show variable values in tracebacks; default false       | Decided (2026-10-28)                            |
-| `console`        | Write to stderr; default true                           | Decided (key name accepted 2026-10-29) |
-| `capture_stderr` | Forward the process's stderr into the log; default true | Decided (2026-10-28)               |
+| `Level`          | The minimum level; default `INFO`                       | Decided                             |
+| `Directory`      | The log folder; default `logs/` in the config directory | Decided                             |
+| `Retention`      | Days to keep daily files; unset keeps all               | Decided that it exists (2026-10-27) |
+| `Format`         | `text` or `json` for the file                           | Decided (2026-10-28); default `text`            |
+| `Diagnose`       | Show variable values in tracebacks; default false       | Decided (2026-10-28)                            |
+| `Console`        | Write to stderr; default true                           | Decided (key name accepted 2026-10-29) |
+| `Capture_Stderr` | Forward the process's stderr into the log; default true | Decided (2026-10-28)               |
 
-The reload rule is already decided: a change to `logging` applies at once ([[Settings File]]).
+The reload rule is already decided: a change to `Logging` applies at once ([[Settings File]]).
 
 ## Python Contract
 
@@ -150,7 +150,7 @@ A plain-text log is readable by a screen reader and `grep`. The console keeps th
 |------------------------------------------------|-------------------------------------------------------------------------------------------|
 | The log directory cannot be created or written | Console only; a warning names the path                                                    |
 | The disk is full                               | Loguru's write error is swallowed; the shell continues; the console still has the record  |
-| A reload changes `logging` to a bad value      | The old logging stays and the error is reported ([[Validation and Errors]]) |
+| A reload changes `Logging` to a bad value      | The old logging stays and the error is reported ([[Validation and Errors]]) |
 | The midnight swap fails                        | The old file keeps being used; a warning names the reason                                 |
 | tre writes to stderr and forwarding fails      | The text stays on stderr (journal or terminal)                                            |
 | A very noisy library                           | Its level is raised for its source (a later feature); the cap is the sink's level                |
@@ -178,7 +178,7 @@ All nine were answered on 2026-10-28, as recommended.
 - [ ] A module's `ctx.log.info` line shows `module:<name>` as its source.
 - [ ] A `dbus-fast` warning and a Python `DeprecationWarning` appear in the file as `WARNING` records with their sources.
 - [ ] An exception in a shell-registered callback is logged by the shell with a traceback and no variable values.
-- [ ] With `logging.diagnose: true` a traceback shows variable values; with it off it does not.
+- [ ] With `Logging.Diagnose: true` a traceback shows variable values; with it off it does not.
 - [ ] With the shell running across local midnight, the next record goes to the new day's file and the old file is whole.
 - [ ] With the log directory read-only, the shell starts, warns, and writes to the console.
 - [ ] `tesserae-shell log-level debug` makes `DEBUG` records appear until `settings.tdl` is reloaded.

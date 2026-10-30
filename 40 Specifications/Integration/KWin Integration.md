@@ -125,12 +125,12 @@ KWin is the Wayland compositor. If it exits, tre's connection drops, its windows
 
 ## Configuration
 
-`settings.tdl` (proposed, the settings list is deferred, [[Settings File]]):
+`settings.tdl` (proposed, the settings list is deferred, [[Settings File]]; keys are Capitalised like every shell file key, and the nesting is illustrative):
 
 | Key | Meaning | Default |
 |---|---|---|
-| `kwin.script` | `runtime` (mode R), `persistent` (mode P, installed by the command) or `off` | `runtime` |
-| `kwin.hide_on_fullscreen` | Hide the shell's surfaces on an output with an active fullscreen window | `true` |
+| `KWin.Script` | `runtime` (mode R), `persistent` (mode P, installed by the command) or `off` | `runtime` |
+| `KWin.Hide_On_Fullscreen` | Hide the shell's surfaces on an output with an active fullscreen window | `true` |
 
 A surface can opt out of hiding (an OSD that should show over a game): open, [[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]].
 
@@ -179,7 +179,7 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 3. [x] A test script inside KWin: permission given and the test done (above).
 4. [x] The script id and folder `tesserae-shell-kwin` in `kwin/TesseraeShell/`.
 5. [x] The silent-script warning after 5 seconds.
-6. [x] The settings keys `kwin.script` and `kwin.hide_on_fullscreen`.
+6. [x] The settings keys `KWin.Script` and `KWin.Hide_On_Fullscreen`.
 7. [x] An OSD on top of a fullscreen window: none in v1, consistent with the earlier decision that a fullscreen window always covers every shell element; revisit if a need appears. (This one had no recommendation written; I took the earlier decision as the answer.)
 - [x] The namespace convention: every shell surface uses the layer-shell namespace `tesserae-shell.<kind>.<name>` (maintainer, 2026-10-29, as proposed).
 - [ ] The rule file's key names and a test of the rule (needs a backup of `kwinrulesrc` and permission).

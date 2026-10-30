@@ -279,6 +279,19 @@ Raised while rewriting the notes for TDL (2026-10-29). Each is also an open item
 - [x] **File-type key and file name disagree:** the key is authoritative; a mismatch is a load error (item 16).
 - [ ] **Style tokens.** The `$color.surface` form (see [[Style Schema]]) against "no variables": the agent treated them as plain strings the shell resolves.
 
+Raised by the second rewrite pass (2026-10-29). The notes use the default shown; the maintainer has not decided:
+
+- [ ] **Module file layout.** Do `Style:` and `Params { }` sit in the body after the metadata block (as the notes show) or in the metadata block? Is `Type:` acceptable inside a param declaration now that it is gone as a file key? ([[Module File]])
+- [ ] **Param names on a use.** Written as the module declared them (`format:`, the notes' default) or Capitalised (`Format:`)? Module File's own Label example declares `text` and passes `Text:`, which is inconsistent until this is decided.
+- [ ] **Classes and themes.** How a style class is written when a block head is normally a registered type (the notes use the class name as the head with `Kind: Text` inside). Whether a theme has `Name:` in its metadata. Whether `$color.on_surface` token references match `On_Surface` case-insensitively ([[Style Schema]], [[Style, Theme and Stylesheet Files]]).
+- [ ] **Settings file.** The file-type key and metadata form of `settings.tdl` (the notes show `Settings: v1` as a placeholder), and whether settings keys are written nested or dotted (`Logging.Level`) ([[Settings File]]).
+- [ ] **Frame structure.** `Inner_Border`, `Outer_Border`, `Edges` and the edge names `Top`, `Right`, `Bottom`, `Left`: nested blocks or properties? ([[Frame]])
+- [ ] **Imported shell files.** Does an imported `_Shell.tdl` hold surface blocks only, or its own `Monitor` blocks? (The notes keep "an imported file takes the importing Monitor's monitor".)
+- [ ] **Where `UID:` goes** in the metadata block. The notes write it after the file-type key.
+- [ ] **How an action names a use:** `Label@<uid>` or the use's `Name:` ([[Module Context]]).
+- [ ] **Schema and the metadata block.** Whether the JSON Schema validates the metadata part, or the loader checks `TDL:` and the file-type key first ([[JSON Schema and Editor Support]]).
+- [ ] **Layer-window namespace.** `tesserae-shell.<kind>.<name>` should read `<type>` now that surfaces have no `Kind:` ([[Surface Types]]).
+
 ## Links
 
 - [[ADR-0007 Shell UI Layer]] · [[ADR-0008 Tesserae Expression Language]] · [[ADR-0011 JSON Schema for Shell Files]] · [[Expression Language Requirements]] · [[Python Builder]] · [[Shell File Syntax Comparison]] · [[Prior Art - Linux Shell Surfaces]] · [[30 Decisions]]

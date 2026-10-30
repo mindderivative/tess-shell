@@ -70,15 +70,15 @@ sequenceDiagram
 The new model is compared with the current one to decide what to change. Decided 2026-10-28: match by identity, then by name, then by position.
 
 - **By identity.** A file by its UID; a named entry (a surface, a module use, a popup) by its unique name within its file ([[Config Discovery and Registry#Identity and UIDs]]).
-- **By position.** A block that repeats a name in one `children { }` is named from its position (`Label_1`, `Label_2`) ([[ADR-0007 Shell UI Layer#Open items]]), so reordering such blocks looks like changes. The note says so and suggests giving blocks that must survive a reorder their own names. Open question 1.
+- **By position.** A block that repeats a name in one `Children { }` is named from its position (`Label_1`, `Label_2`) ([[ADR-0007 Shell UI Layer#Open items]]), so reordering such blocks looks like changes. The note says so and suggests giving blocks that must survive a reorder their own names. Open question 1.
 - An entry that is new is created; one that is gone is closed; one that matches is compared property by property.
 
 ### What is Applied Live and what Reopens
 
 | Change                                                                                                                           | Result                                                                                                                                                                                                                                                                                      |
 |----------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| A tre layer-window property: `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard`, `input_region` | Set live in one commit ([[TRE-REQ-001 Layer Surface Window#Proposed API]])                                                                                                                                                                                                                            |
-| `namespace` or `output` (the monitor)                                                                                            | The window is closed and created again; they are constructor-only                                                                                                                                                                                                                           |
+| A tre layer-window property, written in the file as `Layer`, `Anchor`, `Size`, `Exclusive_Zone`, `Exclusive_Edge`, `Margin`, `Keyboard`, `Input_Region` | Set live in one commit ([[TRE-REQ-001 Layer Surface Window#Proposed API]])                                                                                                                                                                                                                            |
+| The namespace, or the output the surface sits on (a different `Monitor` block, or a `Monitor` selector that now matches another output) | The window is closed and created again; tre's `namespace` and `output` are constructor-only                                                                                                                                                                                                                           |
 | A node property, a style value, a token, a theme                                                                                 | Set on the nodes; tre redraws only what changed                                                                                                                                                                                                                                             |
 | A module's TDL only                                                                                                             | The module's layout is rebuilt; the module's `reload()` hook runs and the instance stays ([[Module Contract#Lifecycle]])                                                                                                                                                          |
 | A module's `.py`                                                                                                                 | Code reload: import the new code and check it has the class, then `stop` the old instance and join its threads, purge the module's own modules from `sys.modules`, create the new instance and `start` it; a failed import keeps the old instance ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]) |
@@ -156,8 +156,8 @@ All seven were answered on 2026-10-28.
 
 - [ ] Saving a changed style file from an editor that saves atomically updates the running surface within about 300 ms, with one reload.
 - [ ] Saving a file with a TDL error leaves the shell unchanged and reports `file:line:column`.
-- [ ] Changing a Bar's `thickness` changes its reserved zone live, with one reflow of windows.
-- [ ] Changing a Panel's `monitor` closes and recreates its window.
+- [ ] Changing a Bar's `Thickness` changes its reserved zone live, with one reflow of windows.
+- [ ] Moving a Panel into another `Monitor` block closes and recreates its window.
 - [ ] Changing an imported file reloads every file that imports it, once.
 - [ ] A module's TDL change calls its `reload()` and keeps the instance; a `.py` change replaces the instance; a `.py` with a syntax error keeps the old instance.
 - [ ] The shell's own UID write does not trigger a reload.
