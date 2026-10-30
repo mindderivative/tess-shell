@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-29
 tags: [adr, architecture]
 related: ["[[ADR-0002 Relationship to Tesserae UI]]", "[[ADR-0007 Shell UI Layer]]", "[[ADR-0001 Shell Surface Strategy]]", "[[ADR-0003 Process Model]]"]
 depends_on: []
@@ -15,6 +15,9 @@ depends_on: []
 
 > [!summary]
 > Tesserae Shell is its own project, built on tre. It does not depend on `tesserae-ui` and asks Tesserae for nothing. Tesserae stays an application framework; shell rendering is not added to it.
+
+> [!note] Update 2026-10-29
+> The shell's view format is now TDL, not YAML ([[ADR-0014 Shell File Language]]), so the "second YAML dialect" below is a second file language. The remark about keeping `<Name>_View.yaml` names was superseded by [[ADR-0007 Shell UI Layer#File Naming (2026-10-25)]] before this update. The decision stands.
 
 ## Context
 

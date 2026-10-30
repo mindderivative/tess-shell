@@ -69,13 +69,13 @@ Accepted 2026-10-29 by the maintainer in chat: **Option A**, the Tesserae Data L
 3. **Separators** (maintainer, 2026-10-29). A newline or `,`. Trailing commas are allowed and never required.
 4. **Comments** start with `#`.
 5. **Strings** use `"..."` or `'...'`, with `\` character escapes.
-6. **Colours** are a quoted hex (`"#ffffff10"`, `"#ffffff"`) or `rgba(0 0 0 0)`, with spaces between the values and no commas (maintainer, 2026-10-29). The hex is quoted because `#` starts a comment.
+6. **Colours** are a quoted hex (`"#ffffff10"`, `"#ffffff"`) or `rgba(0 0 0 0)`, with spaces between the values and no commas (maintainer, 2026-10-29). The hex is quoted because `#` starts a comment. Red, green and blue are whole numbers 0 to 255 and alpha is a float 0.0 to 1.0, so `rgba(0 0 0 0.5)` is half transparent (as recommended, maintainer, 2026-10-29).
 7. **Lengths** have no unit suffix: a whole number is pixels, and a percentage is `<int>%` (`50%`) (maintainer, 2026-10-29). A float is for values that are not lengths, such as `opacity: 0.9`.
 8. **Version keys** (maintainer, 2026-10-29). A file starts with `TDL:` and then `shell:`. `TDL:` names the language version and `shell:` the shell-format version. The UID is written below `shell:` as before ([[ADR-0007 Shell UI Layer#Config Directory and Registry (2026-10-25)]]).
 9. **Where the parser lives** (maintainer, 2026-10-29, as recommended). A module in the shell package that imports nothing from the shell, so it can be split out like TEL if wanted.
 10. **Editor support** (maintainer, 2026-10-29). No language server in v1.
 11. **Brackets.** `{ }` for a block, `[ ]` for a list, and `( )` for the colour constructor `rgba(...)` and inside TEL expressions. Whether other constructors exist is open.
-14. **Unquoted words are strings** (maintainer, 2026-10-29), unless the word is a syntax word such as `children`. Reading, to confirm: a syntax word is special only where a key or keyword is expected, so `kind: children` is still the string `children`.
+14. **Unquoted words are strings** (maintainer, 2026-10-29), unless the word is a syntax word such as `children`. An unquoted value runs to the end of the line or to the next `,` or closing brace; text that holds either is quoted (as recommended, maintainer, 2026-10-29), so `text: Battery {{ x }}%` needs no quotes. Reading, to confirm: a syntax word is special only where a key or keyword is expected, so `kind: children` is still the string `children`.
 15. **Blocks** (maintainer, 2026-10-29). `name { ... }` is a block and `key: value` a property; blocks nest (`test { children { key: value } }`). The maintainer's example also wrote `children{` and `key:value`; reading, to confirm: spaces around `{` and after `:` are optional. Closing braces of nested blocks are separated by a space or a newline (`} }`), never written together: `{{` and `}}` belong to the expression slot. A slot next to a block therefore needs a space, and a block directly inside a block is written `{ {`.
 16. **Repeated names** (maintainer, 2026-10-29). The same module or block name may appear many times in one `children { }`, ordered by position in the tree, and the entries are named from that position (`Square_1`, `Square_2`, the rule of [[ADR-0007 Shell UI Layer#Open Items]]). Siblings are separated by a newline or `,`, so `Square { }, Square { },` is valid.
 17. **File extension** `.tdl` for every shell file type; the `_Shell`, `_Module`, `_Style`, `_Theme` and `_Stylesheet` suffixes stay (`Main_Shell.tdl`, `Audio_Module.tdl`, `Dock_Style.tdl`).
@@ -104,9 +104,9 @@ root dp1_root {
 }
 ```
 
-## Conditions and Repeats (Recommendation)
+## Conditions and Repeats (Decided)
 
-The maintainer asked for examples. The aim is to choose or repeat structure without a scripting language. Recommendation: two keyword blocks, `if` (with an optional `else`) and `for`. Everything else uses TEL.
+Confirmed as recommended by the maintainer on 2026-10-29. The aim is to choose or repeat structure without a scripting language. Two keyword blocks, `if` (with an optional `else`) and `for`. Everything else uses TEL.
 
 ```
 children {
@@ -155,7 +155,7 @@ Rules:
 - [x] **File extension.** `.tdl` (maintainer, 2026-10-29), not `.tess`, which does not say it is a data language and reads as a Tesserae file. Neither is registered in this machine's shared-mime-info (`/usr/share/mime/globs2`, checked 2026-10-29), which is a local check only.
 - [x] **Expression slot.** `{{ }}` on a single line, no quotes (maintainer, 2026-10-29).
 - [x] **Grammar basics.** Separators, comments, strings, colours, lengths and trailing commas, as in "What TDL Is" (maintainer, 2026-10-29).
-- [ ] **Conditions and repeats.** The recommendation above waits for the maintainer.
+- [x] **Conditions and repeats.** `if` with an optional `else`, and `for` with a required `key`, as recommended (maintainer, 2026-10-29).
 - [x] **Where the parser lives.** As recommended (maintainer, 2026-10-29).
 - [x] **Editor support.** No language server in v1 (maintainer, 2026-10-29).
 - [x] **Comparison.** Done: [[Shell File Syntax Comparison]].
@@ -175,8 +175,9 @@ Raised by the comparison ([[Shell File Syntax Comparison#What the TDL Sketch Sho
 
 Still open, from the answers:
 
-- [ ] **Alpha range.** In an `rgba` colour. Recommendation: red, green and blue are whole numbers 0 to 255, and alpha is a float 0.0 to 1.0, so `rgba(0 0 0 0.5)` is half transparent. This matches the float-for-non-lengths rule.
-- [ ] **Unquoted text with spaces.** `text: Battery {{ x }}%` has spaces. Recommendation: an unquoted value runs to the end of the line or to the next `,` or closing brace; quote it when it holds either. Confirm.
+- [x] **Alpha range.** 0 to 255 for red, green and blue, 0.0 to 1.0 for alpha (as recommended, maintainer, 2026-10-29).
+- [x] **Unquoted text with spaces.** Runs to the end of the line or the next `,` or closing brace (as recommended, maintainer, 2026-10-29).
+- [x] **The rewrite pass** began 2026-10-29 (maintainer): breadth first through the vault tree, each level before the next. `settings.yaml` becomes `settings.tdl`: the agent's assumption, since the settings file is a shell file type; confirm. The folder `41 YAML Reference` keeps its name until the maintainer decides a rename (a move needs approval).
 - [ ] **Two readings to confirm** from "What TDL Is" items 14 and 15: syntax words are special only in key position, and spaces around `{` and after `:` are optional.
 
 ## Links

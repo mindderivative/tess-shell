@@ -5,7 +5,7 @@ type: design
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-10-29
 tags: [design, needs-verification]
 related: ["[[50 Design System]]", "[[V1 Widgets]]", "[[Shell Structure]]", "[[Module File]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 # Building Blocks
 
 > [!summary]
-> The shell has its own set of building blocks: the primitives that every module is composed from. The maintainer chose the concept on 2026-10-26 (look at how Tesserae builds widgets, look at what tre allows, make blocks geared for a shell) and then gave the set. A block is built in and called with `block:`. A module is composed in YAML from blocks and other modules, and is called by its unique name. The set below is decided; how each block is built on tre, and its properties, are proposals.
+> The shell has its own set of building blocks: the primitives that every module is composed from. The maintainer chose the concept on 2026-10-26 (look at how Tesserae builds widgets, look at what tre allows, make blocks geared for a shell) and then gave the set. A block is built in and called with `block:`. A module is composed in TDL from blocks and other modules, and is called by its unique name. The set below is decided; how each block is built on tre, and its properties, are proposals.
 
 ## The Blocks (Decided, Maintainer, 2026-10-26)
 
@@ -26,14 +26,14 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 | Shapes     | Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path | `path` and `box` with corner radius; Path is a free-form path, added 2026-10-26 for the Frame's concave corners and Panel joins; hit shape per [[Hit Testing for Concave Corners]] |
 | Other      | Terminal, Canvas                                                  | `terminal`, `canvas`                                                                                                                                                                   |
 
-- A block needs no name or UID. Calling one from YAML (`block: Text`) makes the shell's Python build it.
+- A block needs no name or UID. Calling one from TDL (`block: Text`) makes the shell's Python build it.
 - A block can be placed anywhere: on a surface, in a container or in a module. It is most commonly used inside a module (maintainer, 2026-10-27).
 - A container is a block (`block: FlexBox`), not a module and not a separate key. This replaces the earlier idea of a key of its own for containers.
 - Blocks are fixed by the shell. Whether a module author can add a block is open.
 
 ## The Modules Built from Them (The Maintainer's List)
 
-Composed in YAML, called by name, optionally with Python. The standard set the maintainer sees:
+Composed in TDL, called by name, optionally with Python. The standard set the maintainer sees:
 
 | Module         | What it is                                                                                                                                       | Built mainly from             |
 |----------------|--------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------|

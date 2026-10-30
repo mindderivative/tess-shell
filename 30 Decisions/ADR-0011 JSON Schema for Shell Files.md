@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-29
 tags: [adr, tooling, needs-verification]
 related: ["[[JSON Schema and Editor Support]]", "[[Style Schema]]", "[[ADR-0007 Shell UI Layer]]", "[[Common Keys and Conventions]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]"]
@@ -15,6 +15,9 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 
 > [!summary]
 > Define the shell's YAML with JSON Schema files, generated from the block and module declarations. Editors use them for completion, hover and validation; the shell uses them to validate at load and on hot reload. Accepted 2026-10-27 on the maintainer's idea.
+
+> [!warning] Under review after ADR-0014 (2026-10-29)
+> The shell's files are now TDL, not YAML ([[ADR-0014 Shell File Language]]). What still holds: JSON Schema files generated from the block and module declarations can validate the tree the TDL parser produces, at load and on reload, and semantic checks stay in the shell. What no longer applies: completion, hover and validation in editors through the YAML language server and the Red Hat YAML extension, and the spike's results on YAML (kept as dated findings). There is no language server in v1; a small TextMate grammar gives highlighting only. The text below is the 2026-10-27 decision as made. The maintainer has not yet decided how this ADR changes; see [[JSON Schema and Editor Support]].
 
 ## Context
 

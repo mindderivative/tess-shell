@@ -5,7 +5,7 @@ type: vision
 status: stable
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-29
 tags: [vision]
 related: ["[[10 Vision]]", "[[Goals and Non-Goals]]", "[[Personas and Use Cases]]", "[[Prior Art - Linux Shell Surfaces]]"]
 depends_on: []
@@ -14,7 +14,7 @@ depends_on: []
 # Problem Statement
 
 > [!summary]
-> People who want a custom desktop shell on Linux (a bar, a dock, OSDs, a launcher, desktop widgets) today choose between a toolkit-specific shell framework written in QML or GTK, or a fixed set of Plasma panels. Tesserae Shell offers a third way: describe surfaces in YAML, put logic in Python, and render everything with the tre GPU engine, alongside an unchanged KDE Plasma session.
+> People who want a custom desktop shell on Linux (a bar, a dock, OSDs, a launcher, desktop widgets) today choose between a toolkit-specific shell framework written in QML or GTK, or a fixed set of Plasma panels. Tesserae Shell offers a third way: describe surfaces in TDL (the Tesserae Data Language, [[ADR-0014 Shell File Language]]), put logic in Python, and render everything with the tre GPU engine, alongside an unchanged KDE Plasma session.
 
 ## The Gap
 
@@ -43,7 +43,7 @@ Tesserae, the maintainer's application framework on the same engine, is a separa
 
 ## What Tesserae Shell is for
 
-A single sentence: **build a desktop shell from YAML and Python, run it next to Plasma, and change it live.**
+A single sentence: **build a desktop shell from TDL and Python, run it next to Plasma, and change it live.**
 
 It is a tool for building shells, not one fixed shell. It ships a default shell as a reference and as the test target for the tool ([[V1 Scope]]).
 

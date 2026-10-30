@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-26
+updated: 2026-10-29
 tags: [architecture, needs-verification]
 related: ["[[20 Architecture]]", "[[Layers and Components]]", "[[Process Model and Threading]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[Layers and Components]]"]
@@ -20,7 +20,7 @@ depends_on: ["[[Layers and Components]]"]
 
 ```mermaid
 flowchart TD
-    a[Find shell files in the config directory] --> b[Parse YAML and check shell, type keys]
+    a[Find shell files in the config directory] --> b[Parse TDL and check TDL, shell, type keys]
     b --> c[Follow import: and nest]
     c --> d[Check or write registry and UID]
     d --> e[Resolve name references through registry]
@@ -36,7 +36,7 @@ flowchart TD
 | Files, `shell:` key, `type:` | [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]] | A file without `shell:` is refused and named                                          |
 | `import:` and nesting        | [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]] | Cycle, missing file or name defined twice: load error with `file:line:column`         |
 | Registry and UID             | [[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]] | A mismatch registers a new entry; an unresolved reference is an error at load         |
-| TEL compile                  | [[ADR-0008 Tesserae Expression Language]] | Error with file, line and column inside the YAML                                      |
+| TEL compile                  | [[ADR-0008 Tesserae Expression Language]] | Error with file, line and column inside the TDL file                                  |
 | `monitor:` matching          | [[V1 Scope#Multi-monitor]] | A root with no `monitor` is ignored; `monitor: default` covers monitors no root names |
 | Module start                 | [[ADR-0007 Shell UI Layer#Module Python (2026-10-25)]] | A module with no matching `.py` is a load error naming both files                     |
 
@@ -72,7 +72,7 @@ sequenceDiagram
 - tre's layer window takes `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard` and `input_region` live through `set()` in one commit. `namespace` and `output` are constructor-only, so changing them means closing and recreating the window ([[TRE-REQ-001 Layer Surface Window#Proposed API]]).
 - A bad file leaves the old state ([[Process Model and Threading#Lifecycle (proposed)]]).
 - The shell's own UID write must not trigger a reload loop ([[ADR-0007 Shell UI Layer#Open items]]).
-- A changed module `.py` is reloaded at runtime (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). Proposed order: import the new code and check it has the module class; then `stop` the old instance and join its threads; purge the module's own modules from `sys.modules`; create the new instance and `start` it. A failed import keeps the old instance. The value store keeps the last values until the new instance sends. The `reload` hook handles a YAML-only change. #needs-verification
+- A changed module `.py` is reloaded at runtime (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). Proposed order: import the new code and check it has the module class; then `stop` the old instance and join its threads; purge the module's own modules from `sys.modules`; create the new instance and `start` it. A failed import keeps the old instance. The value store keeps the last values until the new instance sends. The `reload` hook handles a TDL-only change. #needs-verification
 
 ## Monitor Hot-plug
 
@@ -100,7 +100,7 @@ sequenceDiagram
 
 ## User Input
 
-A pointer or key event reaches a tre node on the loop thread. **Events belong to the shell, not to TEL** (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). A shell file maps an event to a module method or a shell action. TEL only evaluates the argument expressions when the event fires (for example a value taken from the event). The vocabulary is set in `41 YAML Reference/`.
+A pointer or key event reaches a tre node on the loop thread. **Events belong to the shell, not to TEL** (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). A shell file maps an event to a module method or a shell action. TEL only evaluates the argument expressions when the event fires (for example a value taken from the event). The vocabulary is set in the TDL reference (folder `41 YAML Reference/`, rename pending).
 
 - A module method that does slow work hands it to the module's thread and returns at once.
 - Window actions (close, dismiss a popup) are shell-provided.
@@ -109,7 +109,7 @@ A pointer or key event reaches a tre node on the loop thread. **Events belong to
 ## Open Questions
 
 - [ ] Where the value store sits and how a module's last value is kept across a reload.
-- [ ] The handler vocabulary for input: the shell's, in `41 YAML Reference/` (not TEL's).
+- [ ] The handler vocabulary for input: the shell's, in the TDL reference (folder `41 YAML Reference/`, rename pending), not TEL's.
 - [x] A module's `.py` can be reloaded at runtime (maintainer, 2026-10-26). Mechanics are proposed above.
 - [x] How the diff of a reload works: by identity (file UID), then name, then position (proposed in [[Hot Reload#The diff]]).
 - [ ] What `output_updated` does to surfaces whose size depends on the output.

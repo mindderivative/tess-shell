@@ -1,11 +1,11 @@
 ---
 title: Style, Theme and Stylesheet Files
-aliases: [_Style.yaml, _Theme.yaml, _Stylesheet.yaml, Style Files]
+aliases: [_Style.tdl, _Theme.tdl, _Stylesheet.tdl, _Style.yaml, _Theme.yaml, _Stylesheet.yaml, Style Files]
 type: yaml-ref
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-10-29
 tags: [yaml-ref, design, needs-verification]
 related: ["[[41 YAML Reference]]", "[[Common Keys and Conventions]]", "[[Module File]]", "[[Shell File]]", "[[50 Design System]]"]
 depends_on: ["[[Common Keys and Conventions]]"]
@@ -16,43 +16,49 @@ depends_on: ["[[Common Keys and Conventions]]"]
 > [!summary]
 > Three files control how things look. A **style** file holds the values for one surface or module, like its inline `style:` key. A **stylesheet** holds shared rules that apply across the shell by widget type or class. A **theme** holds design tokens (colour, type, shape, motion) that the others refer to. The split is the maintainer's ([[ADR-0007 Shell UI Layer#Theme, style and stylesheet (2026-10-25)]]). The Style format below comes from the maintainer's Label example; Theme and Stylesheet are proposed in [[Style Schema]].
 
-All three are shell files: they carry `shell:` and `type:` (`Style`, `Theme`, `Stylesheet`). Their suffixes are `_Style.yaml`, `_Theme.yaml` and `_Stylesheet.yaml`, the same as Tesserae's; the `shell:` key tells them apart ([[Common Keys and Conventions]]).
+All three are shell files: they carry `shell:` and `type:` (`Style`, `Theme`, `Stylesheet`). Their suffixes are `_Style.tdl`, `_Theme.tdl` and `_Stylesheet.tdl`, the same suffixes as Tesserae's, with the extension `.tdl` ([[ADR-0014 Shell File Language]]); the `TDL:` and `shell:` keys tell them apart ([[Common Keys and Conventions]]).
 
 ## Style File
 
-```yaml
+```
+TDL: v1
 shell: v1
 type: Style
 
-classes:
-    text_style:
+classes {
+    text_style {
         block: Text           # the example writes `kind: Text`; see Classes below
         size: 16
         weight: 500
         foreground: "#ffffff"
+    }
+}
 
-Icon:
+Icon {
     foreground: "#ffffff"
     fill: "#00000000"
+}
 
-FlexBox:
+FlexBox {
     background: "#000000"
     border: true
     border_thickness: 2
     border_color: "#ffffff"
     corner_radius: 8
+}
 
-Text:
+Text {
     font_family: ["Hack Nerd Font Mono", "JetBrains Mono"]
+}
 ```
 
 | Key                                                   | Meaning                                                                                                                            | Status                                  |
 |-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
 | `classes`                                             | Named groups of values a widget picks up with `class:`                                                                             | Decided (the form)                      |
-| A widget name as a key (`Icon:`, `FlexBox:`, `Text:`) | Defaults for every widget of that type in the file that uses this style                                                            | Decided (the form)                      |
+| A widget name as a block (`Icon { }`, `FlexBox { }`, `Text { }`) | Defaults for every widget of that type in the file that uses this style                                                            | Decided (the form)                      |
 | Property names                                        | `size`, `weight`, `foreground`, `fill`, `background`, `border`, `border_thickness`, `border_color`, `corner_radius`, `font_family` | From the example; the full list is open |
 
-- **Colour** forms: `"#RRGGBB"`, `"#RRGGBBAA"`, `RGBA(r, g, b, a)` ([[Common Keys and Conventions#Value forms]]).
+- **Colour** forms: the quoted hex `"#RRGGBB"` and `"#RRGGBBAA"`, and `rgba(r g b a)` with spaces, red, green and blue 0 to 255 and alpha 0.0 to 1.0 ([[ADR-0014 Shell File Language#What TDL Is (Decided)]]; the list in [[Common Keys and Conventions#Value forms]] may still show the older spelling).
 - **Four-sided** values: a number, a list of four clockwise from the top, or named sides. The example's `{2, 2, 2, 2}` becomes `2` or `[2, 2, 2, 2]`; `corner_radius: {8, 8, 8, 8}` becomes `8` or `[8, 8, 8, 8]` (top-left, top-right, bottom-right, bottom-left, clockwise from top-left).
 - **Lists:** `font_family: ["Hack Nerd Font Mono", "JetBrains Mono"]`, an ordered fallback list (the example's braces become square brackets).
 - The same values may be written inline under `style:` in a module or surface.
@@ -67,7 +73,8 @@ Text:
 
 A theme holds design tokens: colour roles, type scale, shape (radii), motion (durations, easing), spacing. Styles and stylesheets refer to tokens by name instead of repeating values, which is how light and dark, high contrast and reduced motion are followed from the desktop ([[Goals and Non-Goals]] G7). The token set and file shape belong to `50 Design System/`; this reference records only the file's header (`shell:`, `type: Theme`).
 
-```yaml
+```
+TDL: v1
 shell: v1
 type: Theme
 name: dark
@@ -78,7 +85,8 @@ name: dark
 
 A stylesheet holds shared rules that apply across the shell by widget type or class, so a shell author can restyle every `Text` or every `.warning` in one place.
 
-```yaml
+```
+TDL: v1
 shell: v1
 type: Stylesheet
 # rules by widget type or class -- not designed
@@ -88,7 +96,7 @@ type: Stylesheet
 
 Decided by the maintainer on 2026-10-26 ([[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]]).
 
-- Styling applies to building blocks and to everything else that can be styled (surfaces, modules). The forms are `<Name>_Theme.yaml`, `<Name>_Stylesheet.yaml`, `<Name>_Style.yaml` and inline `style:`.
+- Styling applies to building blocks and to everything else that can be styled (surfaces, modules). The forms are `<Name>_Theme.tdl`, `<Name>_Stylesheet.tdl`, `<Name>_Style.tdl` and inline `style:`.
 - Customising a block is referencing another stylesheet or style, or writing inline `style:`. A custom style is not a full replacement; it changes only what it names.
 - **Priority**, lowest to highest: theme, then stylesheet, then style, then inline `style:`. It applies to all styling.
 - **Imports go downwards:**
@@ -118,7 +126,7 @@ The maintainer's Edge Shell notes ordered it Theme, Frame, Panel, Widget with a 
 - [ ] The full property list per widget, and which belong in style and which on the widget.
 - [ ] The class key (`block: Text`, recommended).
 - [ ] The theme token set and file shape ([[50 Design System]], not started).
-- [ ] The stylesheet rule shape (selectors by type, class, name).
+- [ ] The stylesheet rule shape (selectors by type, class, name). The class, name, state and part selectors cannot be written as TDL block names yet: see [[Style Schema#Stylesheet Selectors]].
 - [x] The precedence order: theme, stylesheet, style, inline (decided).
 - [ ] Whether a style file may extend another.
 - [ ] Light/dark and high-contrast switching: in the theme, or in several theme files.

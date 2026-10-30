@@ -5,9 +5,9 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-10-29
 tags: [api, needs-verification]
-related: ["[[42 Python API]]", "[[Module Context]]", "[[ADR-0007 Shell UI Layer]]", "[[Expression Language Requirements]]"]
+related: ["[[42 Python API]]", "[[Module Context]]", "[[ADR-0007 Shell UI Layer]]", "[[ADR-0014 Shell File Language]]", "[[Expression Language Requirements]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 ---
 
@@ -38,7 +38,7 @@ From the tre reference ([painting guide](https://mindderivative.github.io/tre/gu
 |---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
 | Text, numbers, booleans, `None` | Plain Python values                                                                                                                                                      | Unchanged                                                                                                                                 |
 | Lists and dicts                 | JSON-like data, nested; a list feeds a repeater (workspaces, tray items)                                                                                                 | Unchanged; TEL reads it                                                                                                                   |
-| Colour                          | A `(r, g, b, a)` tuple; or `"#RRGGBB"` / `"#RRGGBBAA"`; or `RGBA(r, g, b, a)` with alpha 0.0 to 1.0 (the forms in the maintainer's style example); or a theme token name | The tre tuple (0 to 255 integers, so an alpha of 1.0 becomes 255). HEX to RGBA is the maintainer's example of a conversion the shell does |
+| Colour                          | A `(r, g, b, a)` tuple; or `"#RRGGBB"` / `"#RRGGBBAA"`; or the TDL colour form `rgba(r g b a)` with alpha 0.0 to 1.0 (the forms in the maintainer's style example, written in TDL spelling; [[#Colour and Length Literals in TDL]]); or a theme token name | The tre tuple (0 to 255 integers, so an alpha of 1.0 becomes 255). HEX to RGBA is the maintainer's example of a conversion the shell does |
 | Size                            | A number, `"auto"`, a percentage string                                                                                                                                  | Unchanged (tre accepts them)                                                                                                              |
 | Image                           | An image object with RGBA bytes and its size                                                                                                                             | The tre image properties; decoding files is the module's work, on its own thread ([[Process Model and Threading]])                |
 | Time and dates                  | A string the module formats, or a `datetime`                                                                                                                             | A formatted string for text; formatting is the module's choice                                                                            |
@@ -52,15 +52,36 @@ Conversions the shell provides in v1 (the starting list was accepted by the main
 
 Everything else a module converts itself.
 
+## Colour and Length Literals in TDL
+
+A value written in a shell file reaches the shell as a TDL literal ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], items 6, 7 and 14). The parser reads the literal; the conversions of this note then apply as for any other source. This table only maps the literal forms to the tre types above; it adds no conversion.
+
+| Literal in a TDL file                 | Parsed as                                         | tre type it ends as (conversion)                                                         |
+|---------------------------------------|---------------------------------------------------|------------------------------------------------------------------------------------------|
+| `"#ffffff"`, `"#ffffff10"` (quoted)   | A hex colour string; quoted because `#` starts a comment | `(r, g, b, a)` by conversion 1 (HEX to RGBA)                                        |
+| `rgba(0 0 0 0.5)`                     | Red, green, blue as whole numbers 0 to 255, alpha as a float 0.0 to 1.0, space separated | `(r, g, b, a)`; the alpha float becomes 0 to 255 by conversion 3 (0.5 becomes 128 or 127; the rounding is not decided) |
+| `16`, `120` (a whole number)          | A length in pixels                                | A number of pixels, unchanged                                                            |
+| `50%`                                 | A percentage length (`<int>%`)                    | tre's percentage string `"50%"`, unchanged                                               |
+| `0.9` (a float)                       | A non-length number, such as `opacity: 0.9`       | A float, unchanged                                                                       |
+| `auto`                                | An unquoted word, so a string                     | tre's `"auto"`, unchanged                                                                |
+| `true`, `false`                       | See the note below                                | A Python boolean                                                                         |
+| A token name such as `primary`        | An unquoted word, so a string                     | A theme colour by conversion 2, when the key takes a colour                              |
+
+- A float is not a length. A fraction of the parent is written `50%`, and `calc(100% - 16)` has no TDL literal ([[#Open Questions]]).
+- `rgba(...)` takes commas in the old YAML examples (`RGBA(255, 255, 255, 1.0)`); TDL uses spaces because `,` is a separator.
+- #needs-verification: ADR-0014 does not say whether `true`, `false` and bare numbers are typed values or strings that the key's schema coerces. The style example in [[Module Context]] uses `border: true` and `size: 16`; this note assumes numbers and booleans come out as numbers and booleans, as in the `opacity: 0.9` example of the ADR.
+
 ## Four-sided Values
 
-A style value with four sides (a border thickness, a corner radius, a margin, padding) is written in forms plain YAML already understands (maintainer, 2026-10-26, option A in [[ADR-0007 Shell UI Layer#Open items]]): one number for all sides, a list of four, or named sides:
+A style value with four sides (a border thickness, a corner radius, a margin, padding) is written in forms the file language already has (maintainer, 2026-10-26, option A in [[ADR-0007 Shell UI Layer#Open items]], decided for YAML): one number for all sides, a list of four, or named sides. In TDL the same three forms read:
 
-```yaml
-border_thickness: 2                                   # all four sides
-border_thickness: [2, 2, 2, 2]                        # four values, clockwise from the top
-border_thickness: {left: 2, top: 2, right: 2, bottom: 2}   # named sides
 ```
+border_thickness: 2                                          # all four sides
+border_thickness: [2, 2, 2, 2]                               # four values, clockwise from the top
+border_thickness { left: 2, top: 2, right: 2, bottom: 2 }    # named sides, as a block
+```
+
+The named-sides form was a YAML mapping. Writing it as a TDL block is the direct reading of ADR-0014 (a block holds properties), not a decision; the brace shorthand `{2, 2, 2, 2}` is not valid TDL, because `{ }` opens a block ([[#Open Questions]]).
 
 The order of a list of four is clockwise from the top (top, right, bottom, left), confirmed by the maintainer on 2026-10-26, as tre's `margin` and `corner_radius` are. The shell converts the shorthand to tre's tuples.
 
@@ -80,9 +101,11 @@ The order of a list of four is clockwise from the top (top, right, bottom, left)
 
 - [x] The four conversions above are v1 (maintainer, 2026-10-26). Additions later.
 - [ ] Whether the shell warns when a key is sent but no view reads it (useful while building a shell).
-- [ ] Units (logical pixels only, or also percentages and a scale-aware unit).
+- [ ] Units (logical pixels only, or also percentages and a scale-aware unit). TDL fixes the file spelling: pixels as a whole number, `50%` for a percentage ([[ADR-0014 Shell File Language]]); a TDL literal for `calc(100% - 16)` is not defined.
+- [ ] Whether named sides are written as a block (`border_thickness { left: 2, ... }`) or the form changes, and whether a brace shorthand `{2, 2, 2, 2}` is defined in TDL.
+- [ ] How `rgba(...)` alpha converts to 0 to 255 (rounding), and whether `true`, `false` and numbers are typed by the parser or by the key's schema.
 - [ ] How an image is sent and who owns the buffer (copy or hand over).
-- [ ] Whether a module can declare its keys and types in its YAML so the shell can check a view against them at load.
+- [ ] Whether a module can declare its keys and types in its TDL file so the shell can check a view against them at load.
 
 ## Acceptance Criteria
 
@@ -93,4 +116,4 @@ The order of a list of four is clockwise from the top (top, right, bottom, left)
 
 ## Links
 
-- [[42 Python API]] · [[Module Contract]] · [[Module Context]] · [[ADR-0007 Shell UI Layer]]
+- [[42 Python API]] · [[Module Contract]] · [[Module Context]] · [[ADR-0007 Shell UI Layer]] · [[ADR-0014 Shell File Language]]

@@ -14,7 +14,7 @@ depends_on: []
 # Tesserae Shell: Design Vault
 
 > [!summary]
-> Tesserae Shell is a tool for building desktop shell environments (bars, panels, docks, launchers, OSDs, notification centres, widgets) that run alongside KDE Plasma on Wayland. It is built on the **tre** rendering engine, with Python logic and a YAML front-end. This vault holds the complete design. No code is written until the checklist in [[Roadmap]] is `stable` or deferred by an ADR.
+> Tesserae Shell is a tool for building desktop shell environments (bars, panels, docks, launchers, OSDs, notification centres, widgets) that run alongside KDE Plasma on Wayland. It is built on the **tre** rendering engine, with Python logic and a front-end in TDL, the Tesserae Data Language. This vault holds the complete design. No code is written until the checklist in [[Roadmap]] is `stable` or deferred by an ADR.
 
 Operating rules for agents: [[AGENTS]].
 
@@ -37,7 +37,7 @@ Operating rules for agents: [[AGENTS]].
 | `20 Architecture`    | [[20 Architecture]] | System context, process model, data flow, threading         |
 | `30 Decisions`       | [[30 Decisions]] | ADRs                                                        |
 | `40 Specifications`  | [[40 Specifications]] | Surfaces, modules, runtime, integration                     |
-| `41 YAML Reference`  | [[41 YAML Reference]] | Schema for every config key and file type                   |
+| `41 YAML Reference`  | [[41 YAML Reference]] | TDL reference: every config key and file type (rename pending) |
 | `42 Python API`      | [[42 Python API]] | Module and ViewModel contracts, services, events            |
 | `50 Design System`   | [[50 Design System]] | Tokens, components, iconography, motion                     |
 | `60 Quality`         | [[60 Quality]] | Budgets, accessibility, testing, security, recovery         |
@@ -55,14 +55,14 @@ Operating rules for agents: [[AGENTS]].
 | [[ADR-0001 Shell Surface Strategy]] | accepted (2026-10-25)  | All surface specs                                  |
 | [[ADR-0002 Relationship to Tesserae UI]] | superseded by ADR-0006 | none                                               |
 | [[ADR-0006 Shell Independent of Tesserae UI]] | accepted (2026-10-25)  | Architecture, packaging                            |
-| [[ADR-0007 Shell UI Layer]] | accepted (2026-10-25)  | View, YAML and Python API specs                    |
-| [[ADR-0008 Tesserae Expression Language]] | accepted (2026-10-25)  | Expression language, YAML reference                |
+| [[ADR-0007 Shell UI Layer]] | accepted (2026-10-25)  | View, TDL reference and Python API specs           |
+| [[ADR-0008 Tesserae Expression Language]] | accepted (2026-10-25)  | Expression language, TDL reference                 |
 | [[ADR-0009 D-Bus Client Library]] | accepted (2026-10-26)  | Module and integration specs                       |
 | [[ADR-0010 Surface Shadows]] | accepted (2026-10-27)  | Bar, Panel and Frame specs, design tokens          |
-| [[ADR-0011 JSON Schema for Shell Files]] | accepted (2026-10-27)  | YAML reference, runtime validation, tooling        |
+| [[ADR-0011 JSON Schema for Shell Files]] | accepted (2026-10-27)  | TDL reference, runtime validation, tooling (under review) |
 | [[ADR-0012 Keeping the Shell Above Plasma Panels]] | accepted (2026-10-27)  | Bar, Frame, KWin integration, delivery             |
 | [[ADR-0013 Control Interface]] | accepted (2026-10-28)  | IPC and CLI, the KWin script, Shell Start and Stop |
-| [[ADR-0014 Shell File Language]] | accepted (2026-10-29)  | YAML reference, Python Builder, JSON Schema tooling |
+| [[ADR-0014 Shell File Language]] | accepted (2026-10-29)  | TDL reference, Python Builder, JSON Schema tooling  |
 | [[ADR-0003 Process Model]] | accepted (2026-10-25)  | Architecture, runtime, quality                     |
 | [[ADR-0004 Plasma Coexistence]] | accepted (2026-10-25)  | Integration specs                                  |
 | [[ADR-0005 Global Shortcuts]] | accepted (2026-10-25)  | Launcher, integration specs                        |

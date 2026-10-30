@@ -5,7 +5,7 @@ type: yaml-ref
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-29
 tags: [yaml-ref, design]
 related: ["[[41 YAML Reference]]", "[[Style, Theme and Stylesheet Files]]", "[[Common Keys and Conventions]]", "[[Building Blocks]]", "[[ADR-0010 Surface Shadows]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[Style, Theme and Stylesheet Files]]"]
@@ -23,7 +23,7 @@ depends_on: ["[[Style, Theme and Stylesheet Files]]"]
 3. **Pixels, not CSS units.** A number is logical pixels; the forms in [[Common Keys and Conventions#Value forms]] apply. No `px`, `em`, `rem` suffixes.
 4. **Flat first, groups where they pay.** The maintainer's Style example is flat (`border_thickness`, `border_color`); keep that. Groups appear only for repeated structures (a shadow list).
 5. **Tokens are referenced, never copied.** A theme defines a value once; styles and stylesheets name it.
-6. **The schema is generated from the blocks.** Each block and module declares its properties (type, default, choices, doc), parts and states in Python ([[Building Blocks#Properties, parts and states]]); the shell builds the key lists, the validation errors and a JSON Schema for editors from those declarations, so the YAML reference and the code cannot drift ([[JSON Schema and Editor Support]], [[ADR-0011 JSON Schema for Shell Files]]). The declaration form is proposed; Tesserae's mechanism is a model, not a dependency.
+6. **The schema is generated from the blocks.** Each block and module declares its properties (type, default, choices, doc), parts and states in Python ([[Building Blocks#Properties, parts and states]]); the shell builds the key lists, the validation errors and a JSON Schema that validates the parsed tree from those declarations, so the TDL reference (folder 41 YAML Reference, rename pending) and the code cannot drift ([[JSON Schema and Editor Support]], [[ADR-0011 JSON Schema for Shell Files]]). The declaration form is proposed; Tesserae's mechanism is a model, not a dependency.
 
 ## Style Keys
 
@@ -51,13 +51,16 @@ Decision behind them: shadows are drawn inside the surface with a transparent ma
 | `shadow`       | An explicit list that replaces the elevation: each item has `color`, `x`, `y`, `blur`, `spread`                                       |
 | `shadow_bleed` | The transparent margin around a surface body. `auto` (default) computes it from the shadow; a number or four-sided value overrides it |
 
-```yaml
-Panel_Card:
+```
+Panel_Card {
     elevation: 2
     corner_radius: 12
-    shadow:
-        - {color: "#00000040", x: 0, y: 2, blur: 6, spread: 0}
+    shadow: [{color: "#00000040", x: 0, y: 2, blur: 6, spread: 0}]
+}
 ```
+
+> [!question] Unnamed blocks as list items
+> [[ADR-0014 Shell File Language#What TDL Is (Decided)]] defines named blocks and lists, but not an unnamed block `{ ... }` as a list item. The shadow list above assumes it. Open for the maintainer: allow unnamed blocks in a list, or write each shadow as a repeated named block.
 
 An `elevation` and a `shadow` on one entry: `shadow` wins and a warning names both. `shadow_bleed` applies to surfaces only; on a block it is an error, because only a surface owns a buffer. The names follow tre's four numbers per shadow (offset, blur, spread) without copying its tuple form ([[Value Types and Conversion]]).
 
@@ -74,30 +77,38 @@ A theme file holds token groups. Proposed groups and starting names, small on pu
 | `elevation` | `0` to `5`                                                                                                                                          | Each level is a shadow list                               |
 | `motion`    | `duration.short`, `duration.medium`, `duration.long`, `easing.standard`, `easing.emphasised`                                                        | Milliseconds and easing names; zero under reduced motion  |
 
-A token is referenced as `$group.name`, for example `$color.surface` or `$type.body.size`. The `$` prefix is plain YAML and does not clash with TEL's delimiter. An unknown token is an error with the nearest names.
+A token is referenced as `$group.name`, for example `$color.surface` or `$type.body.size`. The `$group.name` text is an ordinary unquoted string to TDL, and the shell resolves it by token lookup; it is not TDL syntax and does not clash with TEL's delimiter. An unknown token is an error with the nearest names.
 
-```yaml
+```
+TDL: v1
 shell: v1
 type: Theme
 name: dark
-color:
+
+color {
     surface: "#1D1B20"
     on_surface: "#E6E0E9"
     primary: "#D0BCFF"
-shape:
+}
+shape {
     small: 4
     medium: 8
     large: 16
-elevation:
+}
+elevation {
     1: [{color: "#00000033", x: 0, y: 1, blur: 3, spread: 0}]
     2: [{color: "#00000040", x: 0, y: 2, blur: 6, spread: 0}]
+}
 ```
 
-Light, dark, high contrast and reduced motion are modes of one theme: a `modes:` mapping (`light`, `dark`, `high_contrast`, `reduced_motion`) overrides token values, and the shell picks the mode from the desktop ([[Goals and Non-Goals]] G7). Recommendation over one theme file per mode: tokens stay in one place and a missing override is easy to spot. Open.
+> [!question] Constructs ADR-0014 does not define
+> Two forms in this example are not in [[ADR-0014 Shell File Language#What TDL Is (Decided)]]: keys that are numbers (`1`, `2`, and the `space` scale `1` to `8`), and the unnamed block in a list (see [[#Shadow Keys]]). Open for the maintainer: allow number keys, or name the levels (`level_1`).
+
+Light, dark, high contrast and reduced motion are modes of one theme: a `modes` block (`light`, `dark`, `high_contrast`, `reduced_motion`) overrides token values, and the shell picks the mode from the desktop ([[Goals and Non-Goals]] G7). Recommendation over one theme file per mode: tokens stay in one place and a missing override is easy to spot. Open.
 
 ## Stylesheet Selectors
 
-Keys of a stylesheet are selectors; the value is a style mapping.
+The block names of a stylesheet are selectors; the body is a style block.
 
 | Selector                | Matches                   | Example key      |
 |-------------------------|---------------------------|------------------|
@@ -107,19 +118,21 @@ Keys of a stylesheet are selectors; the value is a style mapping.
 | A trailing state        | The state                 | `Button:hovered` |
 | A trailing double colon | A named part of a block   | `Slider::track`  |
 
-All five parse as plain YAML keys (checked with PyYAML, 2026-10-27). Specificity is the order in the table, reversed: name beats class beats type; a state adds to the base rule. Within the priority order theme, stylesheet, style, inline ([[Style, Theme and Stylesheet Files#Rules]]).
+Measured on YAML, 2026-10-27: all five parsed as plain YAML keys (checked with PyYAML). Specificity is the order in the table, reversed: name beats class beats type; a state adds to the base rule. Within the priority order theme, stylesheet, style, inline ([[Style, Theme and Stylesheet Files#Rules]]).
 
-```yaml
+```
+TDL: v1
 shell: v1
 type: Stylesheet
-Text:
+
+Text {
     foreground: $color.on_surface
     size: $type.body.size
-.warning:
-    foreground: $color.warning
-Button:hovered:
-    background: $color.primary
+}
 ```
+
+> [!question] Selector names are not valid TDL block names
+> Under [[ADR-0014 Shell File Language#What TDL Is (Decided)]] a block is `name { ... }` and `:` and `#` have syntax roles (`#` starts a comment). So `.warning`, `#clock_label`, `Button:hovered` and `Slider::track` cannot be written as block names, and the example shows only the plain type selector. The YAML check above no longer applies. Open for the maintainer: quoted block names (`"Button:hovered" { }`), or another selector syntax. Nothing is invented here.
 
 ## Why Not Copy CSS or Another Framework's Names
 
@@ -138,6 +151,7 @@ The maintainer accepted the proposal as written on 2026-10-27; the names below a
 - [x] Which keys are style and which are block layout properties: as proposed, with the split revisited when the blocks are specified.
 - [x] `elevation` as a level number.
 - [x] The JSON Schema generation from block declarations: [[JSON Schema and Editor Support]], [[ADR-0011 JSON Schema for Shell Files]].
+- [ ] TDL forms for selectors, number keys and unnamed list blocks (see the callouts above), after [[ADR-0014 Shell File Language]].
 
 ## Acceptance Criteria
 
@@ -145,7 +159,7 @@ The maintainer accepted the proposal as written on 2026-10-27; the names below a
 - [ ] A theme with every token group loads; an unknown token reports `file:line:column` and the nearest names.
 - [ ] A stylesheet with each selector form loads and applies in the stated priority.
 - [ ] A surface with an elevation draws its shadow inside a margin sized by `shadow_bleed: auto`, and the reserved space is unchanged.
-- [ ] The generated JSON Schema rejects an unknown key in an editor.
+- [ ] The generated JSON Schema rejects an unknown key when the shell validates the parsed tree at load (editor feedback is open: [[JSON Schema and Editor Support]]).
 
 ## Links
 

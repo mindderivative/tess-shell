@@ -1,11 +1,11 @@
 ---
 title: Shell File
-aliases: [_Shell.yaml, Main_Shell.yaml, Shell YAML]
+aliases: [_Shell.yaml, Main_Shell.yaml, Shell YAML, _Shell.tdl, Main_Shell.tdl, Shell TDL]
 type: yaml-ref
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-10-29
 tags: [yaml-ref, spec/surface, needs-verification]
 related: ["[[41 YAML Reference]]", "[[Common Keys and Conventions]]", "[[Surface Types]]", "[[Module File]]"]
 depends_on: ["[[Common Keys and Conventions]]", "[[Surface Types]]"]
@@ -14,35 +14,42 @@ depends_on: ["[[Common Keys and Conventions]]", "[[Surface Types]]"]
 # Shell File
 
 > [!summary]
-> A shell file (`type: Shell`, suffix `_Shell.yaml`) defines the surfaces on one monitor and places modules in them. The whole shell is one such file, or a `Main_Shell.yaml` that imports others. This note lists the keys. **Decided** keys come from [[ADR-0007 Shell UI Layer]]; the surface property names mirror tre's `LayerWindow` settings ([[TRE-REQ-001 Layer Surface Window]]) and were accepted by the maintainer on 2026-10-29. Examples are illustrations.
+> A shell file (`type: Shell`, suffix `_Shell.tdl`, written in TDL, [[ADR-0014 Shell File Language]]) defines the surfaces on one monitor and places modules in them. The whole shell is one such file, or a `Main_Shell.tdl` that imports others. This note lists the keys. **Decided** keys come from [[ADR-0007 Shell UI Layer]]; the surface property names mirror tre's `LayerWindow` settings ([[TRE-REQ-001 Layer Surface Window]]) and were accepted by the maintainer on 2026-10-29. Examples are illustrations.
 
 ## Structure
 
-```yaml
+```
+TDL: v1
 shell: v1
 type: Shell
 
-root:
-    name: dp1_root
+root dp1_root {
     monitor: DP-1
-    children:
-        import: TopBar_Shell.yaml            # one file, or a list
-        top_bar:
+    children {
+        # one file, or a list
+        import: TopBar_Shell.tdl
+        top_bar {
             kind: bar
-            style: Dock_Style.yaml
-            children:                            # modules and containers go under children; the syntax of a module use is pending
-                clock: Clock_Module.yaml
-                audio: Audio_Module.yaml
-        launcher:
+            style: Dock_Style.tdl
+            # modules and containers go under children; the syntax of a module use is pending
+            children {
+                import: [Clock_Module.tdl, Audio_Module.tdl]
+            }
+        }
+        launcher {
             kind: panel
             layer: overlay
             keyboard: exclusive
-            children:
-                apps: Applications_Module.yaml
+            children {
+                import: Applications_Module.tdl
+            }
+        }
+    }
+}
 ```
 
-- `root` holds one monitor's tree. Its `name` is required; `monitor` binds it to a monitor; `children` is a mapping.
-- A child is a surface, keyed by its own unique name. `import:` inside `children:` pulls in surfaces from another `_Shell.yaml`; an imported file takes the importing root's monitor.
+- `root` holds one monitor's tree. Its name is required and is the word before the brace (`root dp1_root { }`, the form of the ADR-0014 sketch); `monitor` binds it to a monitor; `children` is a block.
+- A child is a surface, a block named by its own unique name. `import:` inside `children` pulls in surfaces from another `_Shell.tdl`; an imported file takes the importing root's monitor.
 - Surfaces are siblings and never nest ([[Common Keys and Conventions#Names and references]]).
 
 ## Root Keys
@@ -59,8 +66,8 @@ root:
 |------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|---------------------------------------------------------|
 | `kind`           | `bar`, `frame`, `panel`, `popup`                                                                                                                                                                                                                             | All               | Decided                                                 |
 | `layer`          | `background`, `bottom`, `top`, `overlay`                                                                                                                                                                                                                     | All               | Decided (the key)                                       |
-| `style`          | A style file or an inline mapping                                                                                                                                                                                                                            | All               | Decided                                                 |
-| `children`       | The surface's contents: blocks (containers included) and module uses. `children:` is the only holder; `modules:` is gone (maintainer, 2026-10-26). The syntax of a module use waits for the widget/module decision ([[Shell Structure#Blocks and modules (decided 2026-10-26)]]) | All               | Decided (the key)                                       |
+| `style`          | A style file or an inline `style { }` block                                                                                                                                                                                                                            | All               | Decided                                                 |
+| `children`       | The surface's contents: blocks (containers included) and module uses. `children` is the only holder; `modules:` is gone (maintainer, 2026-10-26). The syntax of a module use waits for the widget/module decision ([[Shell Structure#Blocks and modules (decided 2026-10-26)]]) | All               | Decided (the key)                                       |
 | `anchor`         | Edges to attach to: `top`, `bottom`, `left`, `right` (one or a list)                                                                                                                                                                                         | bar, panel        | Decided (key name accepted 2026-10-29)                 |
 | `size`           | `[width, height]`; `0` stretches between two anchored edges                                                                                                                                                                                                  | bar, panel, popup | Decided (key name accepted 2026-10-29)                 |
 | `exclusive_zone` | Space reserved along the anchored edge, in pixels. Only allowed on `layer: top`; on any other layer it is a load error (maintainer, 2026-10-26)                                                                                                              | bar, panel, frame | Rule decided; key accepted 2026-10-29                  |
@@ -77,7 +84,7 @@ Names follow tre's so the shell maps them directly. Per-kind keys (a Frame's sid
 ## Monitors
 
 - One root per monitor. A monitor no root names gets the `monitor: default` root if there is one, and nothing otherwise.
-- A surface set for one monitor can be shared by several roots by importing the same `_Shell.yaml`.
+- A surface set for one monitor can be shared by several roots by importing the same `_Shell.tdl`.
 - A Popup opens only on the monitor of the surface that called it ([[Surface Types#Open questions]]).
 
 ## Errors Specific to Shell Files
@@ -90,12 +97,13 @@ Names follow tre's so the shell maps them directly. Per-kind keys (a Frame's sid
 
 ## Open
 
-- [ ] Several `root:` blocks in one file, or one file per monitor (the Label example used two files).
-- [x] Where shell files live: `$HOME/.config/tesserae-shell/Shells/`, or the directory `settings.yaml` names (decided 2026-10-27, [[Settings File]]).
-- [ ] Which shell file is the top-level one when `Shells/` holds several: proposed `main_shell` in `settings.yaml`, default `Main_Shell.yaml`.
+- [ ] Several `root` blocks in one file, or one file per monitor (the Label example used two files).
+- [x] Where shell files live: `$HOME/.config/tesserae-shell/Shells/`, or the directory `settings.tdl` names (decided 2026-10-27, [[Settings File]]).
+- [ ] Which shell file is the top-level one when `Shells/` holds several: proposed `main_shell` in `settings.tdl`, default `Main_Shell.tdl`.
 - [x] The names of the surface keys: accepted by the maintainer on 2026-10-29. Their types follow the per-kind specs.
 - [ ] How a surface lays out its modules (order, spacing, alignment): a surface layout key, or the surface being a container widget.
 - [ ] The keys each kind adds ([[Surface Types]]).
+- [ ] Whether a root's name is only the word before the brace (`root dp1_root { }`) or also a `name:` key; the Root Keys table keeps `name` as the meaning.
 
 ## Links
 

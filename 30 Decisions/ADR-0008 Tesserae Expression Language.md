@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-29
 tags: [adr, architecture]
 related: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0006 Shell Independent of Tesserae UI]]", "[[Expression Languages for YAML]]", "[[Expression Language Requirements]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]"]
@@ -65,9 +65,10 @@ Details, decided by the maintainer in chat on 2026-10-25:
 - Tesserae's `expr.py` is the starting point: it shows what worked (sandbox by `ast` whitelist, static against reactive, limits, positions in errors). TEL is a redesign, not an extraction.
 - **Repository and licence.** The repository is [mindderivative/tess-el](https://github.com/mindderivative/tess-el) and the licence is MIT; the local project is `/home/phil/Projects/pyDev/projects/tess-el` (decided by the maintainer, 2026-10-25; on that date the local clone holds only the MIT `LICENSE`). Syntax is worked out in the TEL project, not here. TEL still needs versioning and a language version recorded in files; the maintainer's, not decided.
 - Risk: three projects (tre, TEL, the shell) must move together at first. Keep the TEL interface small and stable.
+- Since 2026-10-29 the shell's files are written in TDL, a structure-only data language with `{{ }}` expression slots ([[ADR-0014 Shell File Language]]). TDL has no expression syntax of its own: every slot goes to TEL, which keeps its decided scope (values and structure, no statements). The parser tells TEL where a slot starts, so TEL's errors point into the file.
 
 > [!danger] Scope risk
-> A language of one's own can grow without limit and runs from a configuration file. Keep it to values and structure with a sandbox, and test that the Python front-end and the YAML give the same tree ([[ADR-0007 Shell UI Layer#View format: a full expression language, and Python as an equal front-end (2026-10-25)]]).
+> A language of one's own can grow without limit and runs from a configuration file. Keep it to values and structure with a sandbox, and test that the Python front-end and the TDL file give the same tree ([[ADR-0007 Shell UI Layer#View format: a full expression language, and Python as an equal front-end (2026-10-25)]]).
 
 ## Links
 

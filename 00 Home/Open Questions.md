@@ -206,7 +206,7 @@ SORT file.name ASC
 
 ![[Expression Language Requirements#Open questions]]
 
-## YAML Reference
+## TDL Reference
 
 ### [[Common Keys and Conventions]]
 
