@@ -20,12 +20,12 @@ depends_on: ["[[Layers and Components]]"]
 
 ```mermaid
 flowchart TD
-    a[Find shell files in the config directory] --> b[Parse TDL and check TDL, shell, type keys]
-    b --> c[Follow import: and nest]
+    a[Find shell files in the config directory] --> b[Parse TDL and check the metadata block and file-type key]
+    b --> c[Follow Import and nest]
     c --> d[Check or write registry and UID]
     d --> e[Resolve name references through registry]
     e --> f[Compile TEL expressions]
-    f --> g[Read outputs and match monitor:]
+    f --> g[Read outputs and match Monitor blocks]
     g --> h[Build the shell model]
     h --> i[Open one window per surface per monitor]
     i --> j[Start modules]
@@ -33,11 +33,11 @@ flowchart TD
 
 | Step                         | Decided by                              | Failure                                                                               |
 |------------------------------|-----------------------------------------|---------------------------------------------------------------------------------------|
-| Files, `shell:` key, `type:` | [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]] | A file without `shell:` is refused and named                                          |
-| `import:` and nesting        | [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]] | Cycle, missing file or name defined twice: load error with `file:line:column`         |
+| Files, metadata block, file-type key | [[TDL Language#The Metadata Block]], [[ADR-0014 Shell File Language#File Layout (Decided 2026-10-29)]] | A file without the block, `TDL:` or exactly one file-type key is refused and named; a key that disagrees with the suffix is a load error naming both |
+| `Import` and nesting         | [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]] | Cycle, missing file or a name registered twice (a user module overrides a shipped one): load error with `file:line:column`         |
 | Registry and UID             | [[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]] | A mismatch registers a new entry; an unresolved reference is an error at load         |
 | TEL compile                  | [[ADR-0008 Tesserae Expression Language]] | Error with file, line and column inside the TDL file                                  |
-| `monitor:` matching          | [[V1 Scope#Multi-monitor]] | A root with no `monitor` is ignored; `monitor: default` covers monitors no root names |
+| `Monitor` matching           | [[V1 Scope#Multi-monitor]], [[TDL Language#Monitors]] | A `Monitor` with no selector is ignored; `Index: default` covers monitors no other `Monitor` names |
 | Module start                 | [[ADR-0007 Shell UI Layer#Module Python (2026-10-25)]] | A module with no matching `.py` is a load error naming both files                     |
 
 ## Live Module Data
@@ -85,7 +85,7 @@ sequenceDiagram
     C->>T: output added or removed
     T->>S: output_added or output_removed (loop thread)
     alt added
-        S->>M: match roots by name, description, default
+        S->>M: match Monitor blocks by connector, description, index, default
         S->>T: create windows for that monitor
     else removed
         T->>S: windows closed, reason output_removed

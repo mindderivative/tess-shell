@@ -163,7 +163,7 @@ Decided by the maintainer in chat, 2026-10-29. They supersede the first-lines ru
 Decided by the maintainer in chat, 2026-10-29, answering the open items that followed:
 
 10. **Capitalised keys everywhere.** Every key in a shell file is Capitalised, and a key of several words capitalises each word and joins them with `_` (`Exclusive_Zone`, `Border_Thickness`, `Anchor_To`). Tre's own names stay lowercase (`exclusive_zone`); the shell maps between them.
-11. **`Kind:` has one meaning.** It references a type by its exact name (`Kind: Panel`, `Kind: Clock`). There is no `Kind: Block` or `Kind: Module`. A name registered twice is a load error, except that a user module of the same name overrides a shipped module ([[ADR-0007 Shell UI Layer]]).
+11. The Kind key has one meaning. It references a type by its exact name (`Kind: Panel`, `Kind: Clock`). There is no `Kind: Block` or `Kind: Module`. A name registered twice is a load error, except that a user module of the same name overrides a shipped module ([[ADR-0007 Shell UI Layer]]).
 12. **Instance UIDs** stay in the registry, with Python keys of the form `Clock@<uid>`. The shell injects `UID:` into a use in the file only when the user asks for stable identity across reordering.
 13. **Structure words** `If`, `Else`, `For`, `In` and `Key` are Capitalised. Enum values stay lowercase (`Layer: overlay`, `Keyboard: exclusive`).
 14. **Unknown metadata keys** are kept and ignored. A user may add their own metadata and read it in `<Name>_Module.py`.
@@ -275,6 +275,7 @@ Raised while rewriting the notes for TDL (2026-10-29). Each is also an open item
 - [x] **Metadata keys:** unknown keys are kept and ignored (item 14). Which keys are required is in the TDL language reference.
 - [x] **Instance UIDs:** in the registry as `Clock@<uid>`; `UID:` injected into a use only on request (item 12).
 - [x] **Monitor selectors:** `Index:`, `Connector:`, `Description:`, and `Index: default` (item 15). Open: the order when a block has several selectors.
+- [ ] **Question-mark conditional for values** (maintainer, 2026-10-29: "supporting this would be great", `If` stays). It belongs to TEL, not to TDL, so it is written inside a slot: `Color: {{ hovered ? "#1e1e2e" : "#313244" }}`. Outside a slot the text is an unquoted string (Layout Rules, "What TDL Is" item 14). TEL has `a if c else b` today; `?:` needs a change in TEL, recorded as the proposed T19 in [[Expression Language Requirements]]. The maintainer carries it to the TEL project.
 - [x] **File-type key and file name disagree:** the key is authoritative; a mismatch is a load error (item 16).
 - [ ] **Style tokens.** The `$color.surface` form (see [[Style Schema]]) against "no variables": the agent treated them as plain strings the shell resolves.
 

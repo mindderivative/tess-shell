@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0009 D-Bus Client Library]]"]
 # Module Contract
 
 > [!summary]
-> A module has three parts: a layout TDL file (`<Name>_Module.tdl`: widgets, expressions, `params:`; [[ADR-0014 Shell File Language]]), a style TDL file, and a Python file (`<Name>_Module.py`) next to them, in a `Modules/<module_name>/` folder ([[ADR-0007 Shell UI Layer#What a module is (2026-10-26)]]). This note is about the Python part: the logic. The Python file holds one class that extends the shell's `Module` base. The shell creates it once, gives it a context, and calls `start`, `stop` and, for a changed configuration, `reload`. The module owns its data and its threads; it sends finished values to the shell, which renders them. **Decided** parts come from [[ADR-0007 Shell UI Layer]] and [[ADR-0009 D-Bus Client Library]]; names and signatures below are **proposed**. Short snippets are illustrations, not code to build.
+> A module has three parts: a layout TDL file (`<Name>_Module.tdl`: a metadata block with `Module: v1` and `Name:`, then widgets, expressions and `Params`; [[ADR-0014 Shell File Language]]), a style TDL file, and a Python file (`<Name>_Module.py`) next to them, in a `Modules/<module_name>/` folder ([[ADR-0007 Shell UI Layer#What a module is (2026-10-26)]]). This note is about the Python part: the logic. The Python file holds one class that extends the shell's `Module` base. The shell creates it once, gives it a context, and calls `start`, `stop` and, for a changed configuration, `reload`. The module owns its data and its threads; it sends finished values to the shell, which renders them. **Decided** parts come from [[ADR-0007 Shell UI Layer]] and [[ADR-0009 D-Bus Client Library]]; names and signatures below are **proposed**. Short snippets are illustrations, not code to build.
 
 ## What is Decided
 
@@ -22,8 +22,8 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0009 D-Bus Client Library]]"]
 |---------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
 | A module is `<Name>_Module.tdl` plus a required matching `<Name>_Module.py`, next to each other, in `Modules/<module_name>/` with all supporting files | [[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]                                          |
 | The shell imports the file, finds the class that extends a shell `Module` base, creates it once, and calls `start`, `stop` and an optional `reload`     | [[ADR-0007 Shell UI Layer#Module Python (2026-10-25)]]                                          |
-| The module receives a context with its TDL values, its name and UID, a logger and the send entry point                                                 | same                                                                             |
-| One instance per module file, shared by every use; per-use differences are the module's job                                                             | [[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]                                          |
+| The module receives a context with its TDL values, its name (the `Name:` in its metadata block) and UID, a logger and the send entry point                                                 | same                                                                             |
+| One instance per module file, shared by every use; per-use differences are the module's job. The Python reaches each use by the key `<Module>@<uid>` ([[Module Context#Uses]])                                                             | [[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]                                          |
 | The module's Python reaches its TDL file by file name, unique name or UID                                                                                   | same                                                                             |
 | Modules send values to shell entry points; the shell converts what it can                                                                               | [[ADR-0007 Shell UI Layer#Module data reaches the view through shell entry points (2026-10-25)]]                                          |
 | A module's Python can be reloaded at runtime                                                                                                            | [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]                                          |
@@ -107,7 +107,7 @@ Code reload ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], 
 - [ ] Constructor versus `self.ctx` set by the base class (proposed above).
 - [x] Only `@action`-marked methods are callable from a shell file (maintainer, 2026-10-26).
 - [ ] The decorator's final name, and whether actions can return values.
-- [ ] How a module file bound under several entries is named in expressions (the file's `name:` or the entry's key).
+- [ ] How a module used several times is named in expressions: the module's `Name:` (the head of each use) or the use's own `Name:`. ADR-0014 answers the file side (the head word is the module name, `Name:` is the unique name of the use; [[ADR-0014 Shell File Language#Layout Rules]], items 6 and 7); the expression side stays open.
 - [ ] The shell's package name and import path.
 - [ ] Which timer helpers `ctx` offers (`every`, `after`) and which clock they use.
 - [ ] Whether `reload()` is passed the changed keys.

@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 # Building Blocks
 
 > [!summary]
-> The shell has its own set of building blocks: the primitives that every module is composed from. The maintainer chose the concept on 2026-10-26 (look at how Tesserae builds widgets, look at what tre allows, make blocks geared for a shell) and then gave the set. A block is built in and called with `block:`. A module is composed in TDL from blocks and other modules, and is called by its unique name. The set below is decided; how each block is built on tre, and its properties, are proposals.
+> The shell has its own set of building blocks: the primitives that every module is composed from. The maintainer chose the concept on 2026-10-26 (look at how Tesserae builds widgets, look at what tre allows, make blocks geared for a shell) and then gave the set. A block is built in and called by its name as the head of a block (`Text { }`). A module is composed in TDL from blocks and other modules, and is called by its name the same way (`Clock { }`). The names of blocks, surface types and modules are in one registry ([[TDL Language#Names and the Registry]]). The set below is decided; how each block is built on tre, and its properties, are proposals.
 
 ## The Blocks (Decided, Maintainer, 2026-10-26)
 
@@ -26,9 +26,9 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 | Shapes     | Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path | `path` and `box` with corner radius; Path is a free-form path, added 2026-10-26 for the Frame's concave corners and Panel joins; hit shape per [[Hit Testing for Concave Corners]] |
 | Other      | Terminal, Canvas                                                  | `terminal`, `canvas`                                                                                                                                                                   |
 
-- A block needs no name or UID. Calling one from TDL (`block: Text`) makes the shell's Python build it.
+- A block needs no name or UID. Calling one from TDL (`Text { }`) makes the shell's Python build it. A `Name:` is optional and gives the block its own unique name (`Text { Name: title }`).
 - A block can be placed anywhere: on a surface, in a container or in a module. It is most commonly used inside a module (maintainer, 2026-10-27).
-- A container is a block (`block: FlexBox`), not a module and not a separate key. This replaces the earlier idea of a key of its own for containers.
+- A container is a block (`FlexBox { }`), not a module and not a separate key. This replaces the earlier idea of a key of its own for containers.
 - Blocks are fixed by the shell. Whether a module author can add a block is open.
 
 ## The Modules Built from Them (The Maintainer's List)
@@ -61,7 +61,7 @@ These ship with the shell as a standard set; the shell's own modules are open to
 
 ## Names
 
-The module `Text` was a mistake and is now TextBox, so no name is both a block and a module. Image and Icon (modules) sit on Bitmap and SVG (blocks). Label and TextBox are bodies of the Text block and are not editable; TextInput and TextEditor are modules over the TextField block and its multi-line variant and are editable. A block is called with `block:`; a module by its name as the key ([[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]).
+The module `Text` was a mistake and is now TextBox, so no name is both a block and a module. Image and Icon (modules) sit on Bitmap and SVG (blocks). Label and TextBox are bodies of the Text block and are not editable; TextInput and TextEditor are modules over the TextField block and its multi-line variant and are editable. A block and a module are both called by their name as the block head, and a name registered twice is a load error, except that a user module overrides a shipped one ([[ADR-0014 Shell File Language#File Layout (Decided 2026-10-29)]], [[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]).
 
 ## What Tre Offers
 
@@ -90,9 +90,9 @@ Following Tesserae's idea, each block declares:
 
 Decided by the maintainer (2026-10-26); the full rules are in [[Style, Theme and Stylesheet Files#Rules]].
 
-- A block is styled by a stylesheet, a style file, or inline `style:`.
-- Customising a block means referencing another file or writing inline `style:`. A custom style changes only what it names; it is not a full replacement.
-- Priority, lowest to highest: theme, stylesheet, style, inline `style:`.
+- A block is styled by a stylesheet, a style file, or inline `Style`.
+- Customising a block means referencing another file or writing inline `Style`. A custom style changes only what it names; it is not a full replacement.
+- Priority, lowest to highest: theme, stylesheet, style, inline `Style`.
 
 ## Open
 

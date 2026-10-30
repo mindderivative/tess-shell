@@ -62,23 +62,23 @@ A value written in a shell file reaches the shell as a TDL literal ([[ADR-0014 S
 | `rgba(0 0 0 0.5)`                     | Red, green, blue as whole numbers 0 to 255, alpha as a float 0.0 to 1.0, space separated | `(r, g, b, a)`; the alpha float becomes 0 to 255 by conversion 3 (0.5 becomes 128 or 127; the rounding is not decided) |
 | `16`, `120` (a whole number)          | A length in pixels                                | A number of pixels, unchanged                                                            |
 | `50%`                                 | A percentage length (`<int>%`)                    | tre's percentage string `"50%"`, unchanged                                               |
-| `0.9` (a float)                       | A non-length number, such as `opacity: 0.9`       | A float, unchanged                                                                       |
+| `0.9` (a float)                       | A non-length number, such as `Opacity: 0.9`       | A float, unchanged                                                                       |
 | `auto`                                | An unquoted word, so a string                     | tre's `"auto"`, unchanged                                                                |
 | `true`, `false`                       | See the note below                                | A Python boolean                                                                         |
 | A token name such as `primary`        | An unquoted word, so a string                     | A theme colour by conversion 2, when the key takes a colour                              |
 
 - A float is not a length. A fraction of the parent is written `50%`, and `calc(100% - 16)` has no TDL literal ([[#Open Questions]]).
 - `rgba(...)` takes commas in the old YAML examples (`RGBA(255, 255, 255, 1.0)`); TDL uses spaces because `,` is a separator.
-- #needs-verification: ADR-0014 does not say whether `true`, `false` and bare numbers are typed values or strings that the key's schema coerces. The style example in [[Module Context]] uses `border: true` and `size: 16`; this note assumes numbers and booleans come out as numbers and booleans, as in the `opacity: 0.9` example of the ADR.
+- #needs-verification: ADR-0014 does not say whether `true`, `false` and bare numbers are typed values or strings that the key's schema coerces. The style example in [[Module Context]] uses `Border: true` and `Size: 16`; this note assumes numbers and booleans come out as numbers and booleans, as in the `Opacity: 0.9` example of the ADR.
 
 ## Four-sided Values
 
 A style value with four sides (a border thickness, a corner radius, a margin, padding) is written in forms the file language already has (maintainer, 2026-10-26, option A in [[ADR-0007 Shell UI Layer#Open items]], decided for YAML): one number for all sides, a list of four, or named sides. In TDL the same three forms read:
 
 ```
-border_thickness: 2                                          # all four sides
-border_thickness: [2, 2, 2, 2]                               # four values, clockwise from the top
-border_thickness { left: 2, top: 2, right: 2, bottom: 2 }    # named sides, as a block
+Border_Thickness: 2                                          # all four sides
+Border_Thickness: [2, 2, 2, 2]                               # four values, clockwise from the top
+Border_Thickness { Left: 2, Top: 2, Right: 2, Bottom: 2 }    # named sides, as a block
 ```
 
 The named-sides form was a YAML mapping. Writing it as a TDL block is the direct reading of ADR-0014 (a block holds properties), not a decision; the brace shorthand `{2, 2, 2, 2}` is not valid TDL, because `{ }` opens a block ([[#Open Questions]]).
@@ -102,7 +102,7 @@ The order of a list of four is clockwise from the top (top, right, bottom, left)
 - [x] The four conversions above are v1 (maintainer, 2026-10-26). Additions later.
 - [ ] Whether the shell warns when a key is sent but no view reads it (useful while building a shell).
 - [ ] Units (logical pixels only, or also percentages and a scale-aware unit). TDL fixes the file spelling: pixels as a whole number, `50%` for a percentage ([[ADR-0014 Shell File Language]]); a TDL literal for `calc(100% - 16)` is not defined.
-- [ ] Whether named sides are written as a block (`border_thickness { left: 2, ... }`) or the form changes, and whether a brace shorthand `{2, 2, 2, 2}` is defined in TDL.
+- [ ] Whether named sides are written as a block (`Border_Thickness { Left: 2, ... }`) or the form changes, and whether a brace shorthand `{2, 2, 2, 2}` is defined in TDL.
 - [ ] How `rgba(...)` alpha converts to 0 to 255 (rounding), and whether `true`, `false` and numbers are typed by the parser or by the key's schema.
 - [ ] How an image is sent and who owns the buffer (copy or hand over).
 - [ ] Whether a module can declare its keys and types in its TDL file so the shell can check a view against them at load.

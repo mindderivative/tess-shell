@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-10-29
 tags: [architecture, needs-verification]
 related: ["[[20 Architecture]]", "[[Surface Types]]", "[[Module File]]", "[[Common Keys and Conventions]]", "[[V1 Widgets]]"]
 depends_on: []
@@ -66,9 +66,9 @@ Reading the arrows: the Shell attaches to the layer surface; layer windows (Pane
 
 - Layer 0 is for wallpapers only, for now (maintainer, 2026-10-26); the maintainer can see it used later for window tiling or as a base layer for a desktop dashboard.
 - Frame is Top only; its strips move to `top` ([[Surface Types]]). Top suits the painter, which must be above windows to be seen; the strips are invisible so any layer works, and Top-layer reservation is the case known to work on KWin.
-- The shell enforces `top` as the only layer that reserves space. The protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion. An `exclusive_zone` off `top` is a load error (decided, maintainer, 2026-10-26).
+- The shell enforces `top` as the only layer that reserves space. The protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion. An `Exclusive_Zone` off `top` is a load error (decided, maintainer, 2026-10-26).
 - KWin is "between Layer 1 and Layer 2", as the protocol says.
-- A Popup stays a `kind: popup` entry in the shell file; a module calls it; it holds containers and modules ([[Surface Types#Special cases]]). The Special Cases group exists for popup-like kinds, such as a Notification window (not v1).
+- A Popup stays a `Popup { Name: ... }` block in the shell file; a module calls it; it holds containers and modules ([[Surface Types#Special cases]]). The Special Cases group exists for popup-like kinds, such as a Notification window (not v1).
 - The building blocks and the modules are the lists in [[Building Blocks]], with the full decision in [[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]].
 - Popup focus is on by default with one flag; tooltip-like popups opt out.
 - The Frame stays on `top`. Melded Bars and Panels are drawn inside the Frame's own surface (hosted melding, 2026-10-27), so melds need no layer of their own and Overlay stays free ([[Frame#Hosted melding (decided 2026-10-27)]]).
@@ -83,7 +83,7 @@ All three points were answered by the maintainer on 2026-10-27:
 
 ## Blocks and Modules (Decided 2026-10-26)
 
-The maintainer looked at how Tesserae builds widgets and chose the shell's own building blocks ([[Building Blocks]]). A block is called with `block:`; a module is called by its unique name as the key; `widget:` and `module:` are gone; `import:` embeds a module file. The diagram now shows exactly that split: a Building Blocks group and a Modules group.
+The maintainer looked at how Tesserae builds widgets and chose the shell's own building blocks ([[Building Blocks]]). Since the layout decisions of 2026-10-29 a block and a module are both called by their name as the head of a block (`Text { Name: title }`, `Clock { }`), with no `Block:`, `widget:` or `module:` key; the names of blocks, surface types and modules are in one registry ([[TDL Language#Names and the Registry]], [[ADR-0014 Shell File Language#File Layout (Decided 2026-10-29)]]). `Import` embeds a module file. The diagram shows the same split: a Building Blocks group and a Modules group.
 
 What Tesserae does, for reference (design `yaml-language.md` section 3 and guide `components.md`, local clone commit `0eda3fe`, read 2026-10-26): a widget is either built in (Python) or a view (a file with `params:`), both called the same way, and a called view has no ViewModel of its own. The shell kept the declared-properties idea and made two kinds with different keys.
 
