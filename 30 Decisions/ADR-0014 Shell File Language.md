@@ -104,6 +104,52 @@ root dp1_root {
 }
 ```
 
+## File Layout Sketch (Maintainer, 2026-10-29)
+
+The maintainer's picture of a file, given in chat after the rewrite pass. It is not yet a decision: it changes the file header, the case of built-in names, and what a block's head means. It is reproduced as given, including the spelling `Rectanlge` and the lowercase `import:` in one place. The questions it raises are under Open Items.
+
+```
+---
+TDL: 0.1
+Shell: 0.2
+FileName: example.tdl 
+---
+
+# This is a comment
+
+Monitor {
+  Name: DP-1
+  Children {
+    # one file, or a list
+    import: TopBar_Shell.tdl
+    Rectanlge {
+      Kind: shape
+      Style: Dock_Style.tdl
+      # modules and containers go under children; the syntax of a module use is pending
+      Children {
+        Import: [
+          Clock_Module.tdl,
+          Audio_Module.tdl,
+        ]
+      }
+    }
+    Panel {
+      Layer: overlay
+      Keyboard: exclusive
+      Children {
+        Import: Applications_Module.tdl
+      }
+    }
+  }
+}
+```
+
+What it shows, as read by the agent:
+
+- A metadata block between two `---` lines at the top of the file, with `TDL`, `Shell` and `FileName` keys.
+- Built-in syntax (keys and block types) is Capitalised, and multi-word names use snake case. Values and user names are lowercase (`overlay`, `exclusive`, `DP-1`).
+- A block's head is its type (`Monitor`, `Panel`, `Rectangle`), and a name goes in a `Name:` property. `Monitor` replaces `root`.
+
 ## Conditions and Repeats (Decided)
 
 Confirmed as recommended by the maintainer on 2026-10-29. The aim is to choose or repeat structure without a scripting language. Two keyword blocks, `if` (with an optional `else`) and `for`. Everything else uses TEL.
@@ -198,6 +244,17 @@ Raised while rewriting the notes for TDL (2026-10-29). Each is also an open item
 - [ ] **Rename of the folder `41 YAML Reference`** and the note type `yaml-ref`. A move needs your approval; every note says "rename pending".
 - [ ] **`ctx.yaml()`** in the module context ([[Module Context]]): rename (for example `ctx.file`) or keep.
 - [ ] **Python builder** signatures for `If` and `For` and whether comments count in the parity test ([[Python Builder]]).
+- [ ] **Layout sketch, questions** ([[ADR-0014 Shell File Language#File Layout Sketch (Maintainer, 2026-10-29)]]):
+  1. Is the `---` block required, and is it where `UID:` goes? It replaces the first lines `TDL:` and `shell:` of "What TDL Is" item 8.
+  2. File type: the sketch has no `Type`. Is the key the type (`Shell: 0.2` for a shell file, `Module: 0.1` for a module), or does `Type: Shell` stay?
+  3. Versions are strings, not numbers, or `0.1` and `0.10` collide. Confirm.
+  4. `FileName` repeats what the file system already says and goes stale when a file is renamed. Keep it, or drop it?
+  5. Case. Built-in names are Capitalised, with snake case for several words (`Exclusive_Zone`?). Modules and blocks are also Capitalised (`Label`, `Box`, `FlexBox`), so case alone cannot tell syntax from a module name. Which rule separates them?
+  6. Case in the current notes. Every key in about 45 notes is lowercase and mirrors tre's names (`kind`, `layer`, `exclusive_zone`). Is the change to Capitalised keys everywhere, which means a second rewrite pass?
+  7. Is `Rectangle { Kind: shape }` a surface or a block? The surface kinds are `bar`, `frame`, `panel` and `popup` (Panel appears as a block type and Kind is `shape`).
+  8. Does `Name: DP-1` name the monitor connector or the unique name? The old `root` had both `name` and `monitor`. How does a block get a unique name when its head is its type (`Panel { }` has none)?
+  9. Several `Monitor` blocks in one file: allowed? It would settle the open item about several roots.
+  10. Spelling: `Import` and `import`, and `Rectanlge`, are typos in the sketch. Confirm `Import` and `Rectangle`.
 - [ ] **`$color.surface` style tokens** (see [[Style Schema]]) against "no variables": the agent treated them as plain strings the shell resolves.
 
 ## Links
