@@ -96,7 +96,7 @@ root dp1_root {
             margin: [4, 4, 0, 4]            # top, right, bottom, left
             style {
                 background: "#1e1e2ee6"
-                border_color: rgba(255, 255, 255, 0.1)
+                border_color: rgba(255 255 255 0.1)
                 radius: 8
                 opacity: 0.9
             }
@@ -184,7 +184,7 @@ root dp1_root monitor=DP-1 {
 | Nesting is explicit                                      | No: indentation                                              | Yes: braces                                                           | Yes: braces                                            |
 | Expression slot costs quotes                             | Yes, when it starts with `{{`                                | No                                                                    | Yes, always a quoted string                            |
 | Conditions and repeats among module calls                | List form, extra indent, keys `then`, `else`, `do`           | Keyword blocks, no list form                                          | Keyword nodes, no list form                            |
-| Repeated module of one name in one container             | List form                                                    | Needs an answer ([[ADR-0014 Shell File Language#Open Items]])         | Natural (nodes repeat)                                 |
+| Repeated module of one name in one container             | List form                                                    | Allowed, ordered by position ([[ADR-0014 Shell File Language#What TDL Is (Decided)]]) | Natural (nodes repeat)                                 |
 | Colour with alpha                                        | Quoted string                                                | `rgba(...)` bare, or a quoted hex                                     | Quoted string                                          |
 | Comment                                                  | `#`                                                          | `#` (so a hex colour must be quoted)                                  | `//` and `/-`                                          |
 | Four-sided values                                        | List; brace form fails                                       | List now; a brace form can be defined                                 | Several arguments (`margin 4 4 0 4`)                   |
@@ -196,14 +196,14 @@ root dp1_root monitor=DP-1 {
 
 ## What the TDL Sketch Shows to Settle
 
-These are problems the example surfaced, not criticism of the choice. They are recorded as open items in [[ADR-0014 Shell File Language#Open Items]].
+These are problems the first sketch surfaced, not criticism of the choice. The maintainer answered them on 2026-10-29 ([[ADR-0014 Shell File Language#Open Items]]); the answer is after each point.
 
-1. `rgba(255, 255, 255, 0.1)` has commas inside parentheses, but `,` is also a separator. The parser must treat a parenthesised group as one value.
-2. `#` starts a comment, so `#1e1e2ee6` has to be quoted but `rgba(...)` does not. Two forms for colours.
-3. `text: Battery {{ battery.percent }}%` is an unquoted string with spaces. A comma in such text would split it; quote the text then.
-4. `}} {` in `if {{ x }} {` reads as two closers and an opener. It parses, but is easy to misread; a mandatory keyword between them would help (`do`, `then`).
-5. `{{` always opens a slot. A block directly inside a block would need a space (`{ {`).
-6. `opacity: 0.9` is a plain number while `size: [0.5, 32]` would be a fraction of the parent. A float means different things by property.
+1. `rgba(255, 255, 255, 0.1)` has commas inside parentheses, but `,` is also a separator. Answer: write `rgba(255 255 255 0.1)`, space separated.
+2. `#` starts a comment, so `#1e1e2ee6` has to be quoted but `rgba(...)` does not. Two forms for colours. Answer: keep the quotes on hex.
+3. `text: Battery {{ battery.percent }}%` is an unquoted string with spaces. A comma in such text would split it. Open: where an unquoted value ends.
+4. `}} {` in `if {{ x }} {` reads as two closers and an opener. It parses, but is easy to misread. Answer: `}}` is only ever a slot end, and nested blocks close as `} }`.
+5. `{{` always opens a slot. A block directly inside a block needs a space (`{ {`). Answer: confirmed.
+6. `opacity: 0.9` is a plain number while `size: [0.5, 32]` would be a fraction of the parent. Answer: a percentage is `50%`, and a float is only for values that are not lengths.
 
 ## Result
 

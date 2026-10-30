@@ -69,12 +69,17 @@ Accepted 2026-10-29 by the maintainer in chat: **Option A**, the Tesserae Data L
 3. **Separators** (maintainer, 2026-10-29). A newline or `,`. Trailing commas are allowed and never required.
 4. **Comments** start with `#`.
 5. **Strings** use `"..."` or `'...'`, with `\` character escapes.
-6. **Colours** are a quoted hex (`"#ffffff10"`, `"#ffffff"`) or `rgba(0,0,0,0)`.
-7. **Lengths** are a bare number with no suffix: an int for whole numbers and a float for percentages (what the float means is open, below).
+6. **Colours** are a quoted hex (`"#ffffff10"`, `"#ffffff"`) or `rgba(0 0 0 0)`, with spaces between the values and no commas (maintainer, 2026-10-29). The hex is quoted because `#` starts a comment.
+7. **Lengths** have no unit suffix: a whole number is pixels, and a percentage is `<int>%` (`50%`) (maintainer, 2026-10-29). A float is for values that are not lengths, such as `opacity: 0.9`.
 8. **Version keys** (maintainer, 2026-10-29). A file starts with `TDL:` and then `shell:`. `TDL:` names the language version and `shell:` the shell-format version. The UID is written below `shell:` as before ([[ADR-0007 Shell UI Layer#Config Directory and Registry (2026-10-25)]]).
 9. **Where the parser lives** (maintainer, 2026-10-29, as recommended). A module in the shell package that imports nothing from the shell, so it can be split out like TEL if wanted.
 10. **Editor support** (maintainer, 2026-10-29). No language server in v1.
-11. **Brackets.** `{ }` for a block, `[ ]` for a list, and `( )` for the colour constructor `rgba(...)` and inside TEL expressions. Whether other constructors are allowed is open.
+11. **Brackets.** `{ }` for a block, `[ ]` for a list, and `( )` for the colour constructor `rgba(...)` and inside TEL expressions. Whether other constructors exist is open.
+14. **Unquoted words are strings** (maintainer, 2026-10-29), unless the word is a syntax word such as `children`. Reading, to confirm: a syntax word is special only where a key or keyword is expected, so `kind: children` is still the string `children`.
+15. **Blocks** (maintainer, 2026-10-29). `name { ... }` is a block and `key: value` a property; blocks nest (`test { children { key: value } }`). The maintainer's example also wrote `children{` and `key:value`; reading, to confirm: spaces around `{` and after `:` are optional. Closing braces of nested blocks are separated by a space or a newline (`} }`), never written together: `{{` and `}}` belong to the expression slot. A slot next to a block therefore needs a space, and a block directly inside a block is written `{ {`.
+16. **Repeated names** (maintainer, 2026-10-29). The same module or block name may appear many times in one `children { }`, ordered by position in the tree, and the entries are named from that position (`Square_1`, `Square_2`, the rule of [[ADR-0007 Shell UI Layer#Open Items]]). Siblings are separated by a newline or `,`, so `Square { }, Square { },` is valid.
+17. **File extension** `.tdl` for every shell file type; the `_Shell`, `_Module`, `_Style`, `_Theme` and `_Stylesheet` suffixes stay (`Main_Shell.tdl`, `Audio_Module.tdl`, `Dock_Style.tdl`).
+18. **Syntax highlighting.** A small TextMate grammar ships with v1 (maintainer, 2026-10-29). Its content comes from the TDL reference, once written.
 12. **Carries over unchanged:** the keys and what they mean (`shell`, `type`, `kind`, `name`, `children`, `import`, `style`, `block`), the file types and suffixes (`_Shell`, `_Module`, `_Style`, `_Theme`, `_Stylesheet`), unique names and UIDs, the registry, and a module as layout, style and `.py` ([[ADR-0007 Shell UI Layer]]).
 13. **Lossless tree.** The parser keeps comments and layout, so the UID write needs no separate YAML writer. The parser and the Python builder produce the same tree, and the parity test of ADR-0007 stands.
 
@@ -147,7 +152,7 @@ Rules:
 ## Open Items
 
 - [x] **Name.** Tesserae Data Language, TDL (maintainer, 2026-10-29). #needs-verification: that the code name `tdl` and any PyPI package name are free and do not clash with another well-known TDL; check before registering.
-- [ ] **File extension.** The maintainer offered `.tdl` or `.tess`. Recommendation: `.tdl`. It matches the language name, and `.tess` does not say it is a data language and reads as a Tesserae file. Neither is registered in this machine's shared-mime-info (`/usr/share/mime/globs2`, checked 2026-10-29), which is a local check only. File names become `Main_Shell.tdl`, `Audio_Module.tdl`, `Dock_Style.tdl`.
+- [x] **File extension.** `.tdl` (maintainer, 2026-10-29), not `.tess`, which does not say it is a data language and reads as a Tesserae file. Neither is registered in this machine's shared-mime-info (`/usr/share/mime/globs2`, checked 2026-10-29), which is a local check only.
 - [x] **Expression slot.** `{{ }}` on a single line, no quotes (maintainer, 2026-10-29).
 - [x] **Grammar basics.** Separators, comments, strings, colours, lengths and trailing commas, as in "What TDL Is" (maintainer, 2026-10-29).
 - [ ] **Conditions and repeats.** The recommendation above waits for the maintainer.
@@ -157,16 +162,22 @@ Rules:
 - [x] **KDL parser facts.** Not applicable (maintainer, 2026-10-29).
 - [x] **Version key.** `TDL:` then `shell:` (maintainer, 2026-10-29). This also replaces the extra Tesserae-file guard in [[ADR-0007 Shell UI Layer#File Naming (2026-10-25)]]: the extension and `TDL:` tell a shell file from a YAML or Tesserae one.
 
-Raised by the comparison ([[Shell File Syntax Comparison#What the TDL Sketch Shows to Settle]]) and not yet answered:
+Raised by the comparison ([[Shell File Syntax Comparison#What the TDL Sketch Shows to Settle]]) and answered by the maintainer on 2026-10-29:
 
-- [ ] **What a float length means.** `0.5` as half of the parent (a fraction) or `50.0` as 50 percent? Recommendation: a fraction from 0.0 to 1.0, and a float outside that range is an error; the property's declared type (`length` accepts an int in pixels or a float fraction, `number` takes either as a plain number) decides, so `opacity: 0.9` is not a length. Fractional pixels (12.5) cannot be written as a length under this rule.
-- [ ] **Parentheses and commas.** `rgba(0,0,0,0)` has commas inside `( )`. Recommendation: the parser reads a parenthesised group as one value, and `rgba`, `rgb` and `hsla` are the only constructors in v1.
-- [ ] **Hex colours need quotes** because `#` starts a comment. Recommendation: keep it, so one rule stays simple; the formatter and the error message say so.
-- [ ] **Unquoted words.** `DP-1`, `bar` and `battery-missing` are written without quotes. Recommendation: a bare word is a string if it has no spaces, `,`, `#`, brackets or quotes; anything else needs quotes. Text such as `Battery {{ x }}%` has spaces: decide whether a value runs to the end of the line, or must be quoted.
-- [ ] **Block form.** `name { ... }` for a block and `key: value` for a property, as in the examples. Confirm, and decide whether a block may also be written `name: { ... }`.
-- [ ] **A slot next to a block.** `{{` always opens a slot, so a block directly inside a block is written `{ {`. Confirm.
-- [ ] **Repeated module of one name in one container.** ADR-0007 uses a list for repeats; TDL could allow the same name twice inside `children { }` and name the entries from their order. Recommendation: allow it, and keep the unique-name rule for named entries.
-- [ ] **Syntax highlighting in v1.** A TextMate grammar is small and gives highlighting in Kate and VS Code with no server. Recommendation: ship one, but it can wait for the TDL spec.
+- [x] **Lengths and floats.** `<int>%` for a percentage, a whole number for pixels, a float only for values that are not lengths.
+- [x] **Parentheses and commas.** `rgba(0 0 0 0)`, space separated.
+- [x] **Hex colours** are quoted because `#` starts a comment.
+- [x] **Unquoted words** are strings unless a syntax word (reading to confirm: by position).
+- [x] **Block form** confirmed, with nested blocks and `} }` never `}}`.
+- [x] **A slot next to a block** confirmed: `{{` always opens a slot.
+- [x] **Repeated name in one container** allowed, ordered by position.
+- [x] **Syntax highlighting in v1:** a small TextMate grammar.
+
+Still open, from the answers:
+
+- [ ] **Alpha range.** In an `rgba` colour. Recommendation: red, green and blue are whole numbers 0 to 255, and alpha is a float 0.0 to 1.0, so `rgba(0 0 0 0.5)` is half transparent. This matches the float-for-non-lengths rule.
+- [ ] **Unquoted text with spaces.** `text: Battery {{ x }}%` has spaces. Recommendation: an unquoted value runs to the end of the line or to the next `,` or closing brace; quote it when it holds either. Confirm.
+- [ ] **Two readings to confirm** from "What TDL Is" items 14 and 15: syntax words are special only in key position, and spaces around `{` and after `:` are optional.
 
 ## Links
 
