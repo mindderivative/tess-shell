@@ -7,7 +7,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-18
-updated: 2026-10-25
+updated: 2026-10-29
 tags:
   - moc
 related:
@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-10-29                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Last change         | Key names accepted across the specs; namespace convention decided |
+| Last change         | [[ADR-0014 Shell File Language]] proposed: TDL, a structure-only data language in place of YAML |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0013 Control Interface]] (12 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | Nothing |
+| Waiting on you      | Accept, change or reject [[ADR-0014 Shell File Language]] (TDL); its first open items are the file extension, the expression slot and the comparison of one shell in YAML, TDL and KDL |
 | Next                | Plasma coexistence, the D-Bus service layer, portals, global shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]])                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-29 | [[ADR-0014 Shell File Language]] proposed: Tesserae Data Language (TDL) in place of YAML |
 | 2026-10-29 | Proposed key names accepted across the specs; namespace `tesserae-shell.<kind>.<name>` decided |
 | 2026-10-29 | [[KWin Integration]] answers applied; KWin script test run |
 | 2026-10-29 | [[KWin Integration]] drafted |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-28 | tre answered the clipboard questions ([[Wayland Protocols]]) |
 | 2026-10-28 | [[Wayland Protocols]] answers applied; tre asked about clipboard |
 | 2026-10-28 | [[Wayland Protocols]] drafted; Integration started |
-| 2026-10-28 | [[Logging]] answers applied; Loguru chosen |
 
 ## Go to
 

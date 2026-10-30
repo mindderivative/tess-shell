@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-29
 tags: [moc, risk]
 related: ["[[Home]]", "[[Roadmap]]", "[[Open Questions]]"]
 depends_on: []
@@ -37,6 +37,7 @@ depends_on: []
 | R-17 | The design is KWin-first; protocol and layer behaviour on other compositors is untested                                | [[ADR-0001 Shell Surface Strategy]], [[V1 Scope]]                                          | Deferred to the testing phase; other compositors are not v1                                                                                                         |
 | R-18 | A corrupt or moved registry loses identities                                                                           | [[Settings File]], [[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]]                                          | Rebuild each record from the UID in its file, with a warning; the rules for the rebuilt record are open                                                             |
 | R-19 | User Python runs in the shell's process with the user's rights, so a bad module can read files or hang the shell       | [[Module Contract]]                                                                                   | The security model is not written (`60 Quality`); keep modules to the documented context; whether to sandbox is not decided                                         |
+| R-20 | A shell language of our own (TDL) needs a parser, errors, formatter and editor support, and loses the YAML language server's help; its grammar could grow into a scripting language | [[ADR-0014 Shell File Language]], [[ADR-0011 JSON Schema for Shell Files]] | Proposed: keep TDL structure-only with expressions in TEL; compare the same shell in YAML, TDL and KDL before freezing the grammar; plan editor support (open) |
 
 ## Links
 

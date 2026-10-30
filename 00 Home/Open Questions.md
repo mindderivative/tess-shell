@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-29
 tags: [moc, question]
 related: ["[[Home]]", "[[Roadmap]]", "[[Risk Register]]", "[[Index]]"]
 depends_on: []
@@ -137,6 +137,10 @@ SORT file.name ASC
 ### [[ADR-0007 Shell UI Layer]]
 
 ![[ADR-0007 Shell UI Layer#Open items]]
+
+### [[ADR-0014 Shell File Language]]
+
+![[ADR-0014 Shell File Language#Open Items]]
 
 ## Surfaces
 
