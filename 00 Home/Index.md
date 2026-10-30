@@ -37,7 +37,7 @@ Operating rules for agents: [[AGENTS]].
 | `20 Architecture`    | [[20 Architecture]] | System context, process model, data flow, threading         |
 | `30 Decisions`       | [[30 Decisions]] | ADRs                                                        |
 | `40 Specifications`  | [[40 Specifications]] | Surfaces, modules, runtime, integration                     |
-| `41 YAML Reference`  | [[41 YAML Reference]] | TDL reference: every config key and file type (rename pending) |
+| `41 TDL Reference`  | [[41 TDL Reference]] | TDL reference: every config key and file type |
 | `42 Python API`      | [[42 Python API]] | Module and ViewModel contracts, services, events            |
 | `50 Design System`   | [[50 Design System]] | Tokens, components, iconography, motion                     |
 | `60 Quality`         | [[60 Quality]] | Budgets, accessibility, testing, security, recovery         |
@@ -46,7 +46,7 @@ Operating rules for agents: [[AGENTS]].
 | `90 Research`        | [[90 Research]] | Prior art, protocol notes, spikes                           |
 
 > [!warning] Folder indexes pending
-> Only `00 Home`, `10 Vision`, `20 Architecture`, `30 Decisions`, `40 Specifications`, `41 YAML Reference`, `42 Python API`, `50 Design System`, `80 Engine Requests` and `90 Research` have content so far. [[80 Engine Requests]], [[10 Vision]], [[20 Architecture]], [[30 Decisions]], [[40 Specifications]], [[41 YAML Reference]], [[42 Python API]], [[50 Design System]] and [[90 Research]] have their folder index; the others do not exist yet, so their links are unresolved. Create each when its folder gets its first note.
+> Only `00 Home`, `10 Vision`, `20 Architecture`, `30 Decisions`, `40 Specifications`, `41 TDL Reference`, `42 Python API`, `50 Design System`, `80 Engine Requests` and `90 Research` have content so far. [[80 Engine Requests]], [[10 Vision]], [[20 Architecture]], [[30 Decisions]], [[40 Specifications]], [[41 TDL Reference]], [[42 Python API]], [[50 Design System]] and [[90 Research]] have their folder index; the others do not exist yet, so their links are unresolved. Create each when its folder gets its first note.
 
 ## Decisions
 

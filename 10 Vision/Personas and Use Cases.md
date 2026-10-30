@@ -21,7 +21,7 @@ depends_on: []
 | ID | Persona       | Does                                                                                      | Needs from the tool                                                                                   |
 |----|---------------|-------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
 | P1 | Shell user    | Runs a shell someone else configured, adjusts a colour, a clock format or a module order. | Readable TDL, hot reload, errors with `file:line:column` ([[AGENTS#3. Layering principle]]).  |
-| P2 | Shell author  | Designs a whole shell: surfaces, themes, stylesheets, layout per monitor.                 | The full TDL reference (folder 41 YAML Reference, rename pending), a theme system, per-output surfaces, live preview.                           |
+| P2 | Shell author  | Designs a whole shell: surfaces, themes, stylesheets, layout per monitor.                 | The full TDL reference (folder 41 TDL Reference), a theme system, per-output surfaces, live preview.                           |
 | P3 | Module author | Writes Python that supplies data to a view (battery, media, weather).                     | A small module contract, service APIs, a clear thread rule ([[AGENTS#3. Layering principle]]). |
 
 The maintainer is all three while the design is made. Separate personas keep the TDL surface small enough for P1 and the Python surface stable enough for P3.

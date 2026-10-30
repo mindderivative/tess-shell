@@ -93,7 +93,7 @@ The store is this note's addition. The ADR says a module sends data to shell ent
 ## Open Questions
 
 - [ ] Is the value store a component of its own, or part of the shell model?
-- [x] How a widget event (a click) reaches a module: the shell maps the event to a module method or a shell action; TEL only evaluates argument expressions ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). The key names are set in the TDL reference (folder `41 YAML Reference/`, rename pending).
+- [x] How a widget event (a click) reaches a module: the shell maps the event to a module method or a shell action; TEL only evaluates argument expressions ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). The key names are set in the TDL reference (folder `41 TDL Reference/`).
 - [ ] Where theme changes (light/dark, high contrast, reduced motion following the desktop) are read and pushed ([[Goals and Non-Goals]] G7).
 - [ ] The global shortcut service: a runtime component or a module.
 - [ ] After [[ADR-0014 Shell File Language]], `If` and `For` are TDL keyword blocks, while the TEL row above and the summary still list conditions, repeaters and "structure" under TEL. Which component builds and rebuilds the `If` and `For` branches (the parser, the shell model, TEL) is not decided here. Needs the maintainer.

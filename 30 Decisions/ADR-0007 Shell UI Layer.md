@@ -82,7 +82,7 @@ Decided by the maintainer in chat.
 - A shell file imports another with `import:` under `children:`, naming a `<Name>_Shell.yaml` file. `children:` is a mapping, not a list. A single-file shell writes the same content inline as keys and values indented under `children:`. The two forms mean the same thing.
 - **Imports nest.** An imported file can import further files. Reason: a small change then stays inside one small file and does not break the rest.
 
-The maintainer's example, as given (2026-10-25). It is a basic example, **not exact implementation guidance**; the grammar is set in `41 YAML Reference/`:
+The maintainer's example, as given (2026-10-25). It is a basic example, **not exact implementation guidance**; the grammar is set in `41 TDL Reference/`:
 
 ```yaml
 shell: v1234
@@ -280,7 +280,7 @@ The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properti
 
 ### Monitors, Names and Errors (2026-10-25)
 
-- `monitor` accepts anything the shell gives it. A root with no `monitor` is ignored. A file imported by a root uses that root's monitor. How `monitor` is written for a name, a description or a default is set in `41 YAML Reference/`.
+- `monitor` accepts anything the shell gives it. A root with no `monitor` is ignored. A file imported by a root uses that root's monitor. How `monitor` is written for a name, a description or a default is set in `41 TDL Reference/`.
 - `name` is unique per monitor. It need not be unique shell-wide. Its scope is the YAML file it is in and the Python scripts attached to that file. It references something inside its own file or from its script.
 - **A UID is shell-wide** and reachable from the highest level to the lowest. Each YAML file gets one automatically.
 - Load errors carry `file:line:column`: an import cycle (it prints the chain of files, `A_Shell.yaml` to `B_Shell.yaml` to `A_Shell.yaml`), a missing file, and a name defined twice (it names both places). An import path is relative to the importing file. Logging candidate: Loguru ([[Logging with Loguru]]); not decided.
@@ -291,7 +291,7 @@ The surface types are **Bar, Frame, Panel and Popup**. Their behaviour, properti
 Decided by the maintainer in chat (option C of the earlier open item).
 
 - **Python and YAML give the same result.** A shell can be written in Python as if the YAML were Python, or in YAML; someone may choose either. Both build the same thing.
-- **YAML has a full expression language**, such as `{if condition, do something, do something else}`. Conditions and repeaters are part of it. The syntax is set in `41 YAML Reference/`.
+- **YAML has a full expression language**, such as `{if condition, do something, do something else}`. Conditions and repeaters are part of it. The syntax is set in `41 TDL Reference/`.
 - **Python is for what YAML should not do:** the major logic, heavy calculation, terminal access and system access. That is the module's job.
 - Consequences: (1) there is one model, the tree of surfaces and values, that both a Python builder and the YAML parser produce; (2) the expression language must be limited to evaluating values and structure, with no file, process or system access, because it runs from a configuration file; (3) a test must show that a shell written in Python and the same shell written in YAML produce the same tree. #needs-verification: size of the expression language against the "small layer" intent of Option A. See Risks below.
 
@@ -307,7 +307,7 @@ Decided by the maintainer in chat (option A). The shell imports `<Name>_Module.p
 
 Decided by the maintainer in chat.
 
-- **Events belong to the shell, not to TEL.** TEL is an expression language only ([[ADR-0008 Tesserae Expression Language]]); statements, handlers and events are the shell's. The shell may put an `event` name in the scope it gives TEL. A shell file maps an event (a click, a key, a change) to a module method or a shell action; arguments may be TEL expressions evaluated when the event fires. The vocabulary (`handlers:` or `on_click:` keys, the actions the shell provides) is set in `41 YAML Reference/`.
+- **Events belong to the shell, not to TEL.** TEL is an expression language only ([[ADR-0008 Tesserae Expression Language]]); statements, handlers and events are the shell's. The shell may put an `event` name in the scope it gives TEL. A shell file maps an event (a click, a key, a change) to a module method or a shell action; arguments may be TEL expressions evaluated when the event fires. The vocabulary (`handlers:` or `on_click:` keys, the actions the shell provides) is set in `41 TDL Reference/`.
 - **A module's Python can be reloaded at runtime.** When a module's files change, the shell reloads it without restarting the process. Proposed mechanics (not decided): import the new code first and check that it has the module class; only then call `stop` on the old instance, join its threads with a timeout, purge the module's own modules from `sys.modules`, create the new instance and call `start`. If the new code fails to import, the old instance keeps running and the error is logged with `file:line:column`. The `reload` hook is for a changed YAML configuration only, without a restart. #needs-verification: the interaction of `importlib` with a module's own threads, supporting files in `Modules/<module_name>/`, and state that survives (the value store keeps the last values until the new instance sends).
 
 ### Config Directory and Registry (2026-10-25)
@@ -359,7 +359,7 @@ A style file holds the values for one surface or module, the same as its inline 
 
 Option A is accepted, so:
 
-- `41 YAML Reference/` defines the shell's view format, theme file and shell file types from scratch, and `42 Python API/` defines the reactive core and the module contract.
+- `41 TDL Reference/` defines the shell's view format, theme file and shell file types from scratch, and `42 Python API/` defines the reactive core and the module contract.
 - `50 Design System/` owns the tokens and widgets. It may reuse Material Design 3 ideas; that is a design choice, not a dependency.
 - `20 Architecture` gains a UI layer between tre and the shell runtime.
 - The widget list is fixed by [[V1 Scope]] surfaces and modules. Anything beyond it needs a reason.
@@ -380,7 +380,7 @@ Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import
 - [x] **Four-sided shorthand: option A** (maintainer, 2026-10-26): forms YAML already understands. One number for all sides (`border_thickness: 2`), a list of four (`[2, 2, 2, 2]`), or named sides (`{left: 2, top: 2, right: 2, bottom: 2}`). The maintainer's brace forms were written from experience of other UI tools; they do not survive a standard YAML load (PyYAML read `{2, 2, 2, 2}` as `{2: None}` on 2026-10-26). The order of a list of four is clockwise from the top (top, right, bottom, left), confirmed by the maintainer on 2026-10-26, as tre's `margin` is; named sides are the unambiguous form.
 - [x] **Is "overlay" a kind?** No (maintainer, 2026-10-26): the Overlay is the shell-wide layer that puts something on top of everything else, and a Panel with `layer: overlay` is an overlay popup panel. The kinds stay bar, frame, panel and popup. See [[Surface Types#Overlay]].
 - [x] What `type:` means in "layer surfaces (`type:`)". The file identifiers: `_Shell.yaml`, `_Module.yaml` and so on, with `type: Shell`, `type: Module` (maintainer, 2026-10-26). Nothing to do with rendering.
-- [ ] **Expression language design.** Its grammar, sandbox and errors are designed in the TEL project. The shell's requirements on it are in [[Expression Language Requirements]]. `41 YAML Reference/` records which TEL features a shell file may use and what names an expression can reference (module values, tokens, other entries).
+- [ ] **Expression language design.** Its grammar, sandbox and errors are designed in the TEL project. The shell's requirements on it are in [[Expression Language Requirements]]. `41 TDL Reference/` records which TEL features a shell file may use and what names an expression can reference (module values, tokens, other entries).
 - [ ] **Python builder API.** The Python front-end that produces the same tree as the YAML, and the parity test. Written in `42 Python API/`.
 - [x] **Writing the UID into a user's file.** Decided 2026-10-25: once the file is found, the shell opens it and writes `UID:` below `shell:`. The points below are implementation defaults for that write, not open questions; the maintainer called the question obvious. Defaults — The shell edits a file the user owns. Needs: a YAML writer that keeps comments and layout; no reload loop when the watcher sees the shell's own write; behaviour for a read-only file or a file shared by two shells; and what happens when the user copies a file, so two files carry one UID. Recommendation: the writer keeps comments, writes are ignored by the watcher for that file, a read-only file is registered without injection and warned, and a duplicate UID is a load error naming both files.
 - [ ] `kind:` inside a class. The Label style example writes `kind: Text` to say which widget a class applies to; `kind:` is the surface kind everywhere else. Recommendation: `widget: Text` inside a class ([[Style, Theme and Stylesheet Files#Classes]]).

@@ -47,7 +47,7 @@ Accepted 2026-10-25 by the maintainer in chat: **Option A**. Tesserae Shell is a
 - Engine needs go to tre only ([[AGENTS#6. Engine requests (tre / Tesserae)]]).
 - The shell now needs its own view language, reactivity, theme and widgets. How is open: [[ADR-0007 Shell UI Layer]] (`proposed`).
 - [[Goals and Non-Goals]] G1, G2 and N8, [[Problem Statement]] and [[V1 Scope]] are updated to match.
-- Tesserae remains prior art and a naming reference. Its docs stay in [[AGENTS#13. Reference links]]. The shell may keep similar file names (`<Name>_View.yaml`) for familiarity; that is decided in `41 YAML Reference`.
+- Tesserae remains prior art and a naming reference. Its docs stay in [[AGENTS#13. Reference links]]. The shell may keep similar file names (`<Name>_View.yaml`) for familiarity; that is decided in `41 TDL Reference`.
 - Amended by [[ADR-0008 Tesserae Expression Language]]: the shell also uses TEL, a separate library that does not depend on Tesserae UI. Independence from Tesserae UI stands.
 - Lower risk for [[ADR-0003 Process Model]]: the single event loop is a plain tre `App`, with no framework layer above it.
 

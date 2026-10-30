@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-29
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [adr, architecture, needs-verification]
 related: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0008 Tesserae Expression Language]]", "[[ADR-0011 JSON Schema for Shell Files]]", "[[Expression Language Requirements]]", "[[Python Builder]]", "[[JSON Schema and Editor Support]]", "[[Shell File Syntax Comparison]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0008 Tesserae Expression Language]]"]
@@ -167,7 +167,7 @@ Decided by the maintainer in chat, 2026-10-29, answering the open items that fol
 12. **Instance UIDs** stay in the registry, with Python keys of the form `Clock@<uid>`. The shell injects `UID:` into a use in the file only when the user asks for stable identity across reordering.
 13. **Structure words** `If`, `Else`, `For`, `In` and `Key` are Capitalised. Enum values stay lowercase (`Layer: overlay`, `Keyboard: exclusive`).
 14. **Unknown metadata keys** are kept and ignored. A user may add their own metadata and read it in `<Name>_Module.py`.
-15. **Monitor selectors.** A `Monitor` block names its monitor with `Index:`, `Connector:` (the connector name, `DP-1`) or `Description:` (the display description). `Index: default` applies to every monitor no other `Monitor` block names. A `Monitor` block with no selector is ignored. Several selectors on one block: the shell tries `Connector`, then `Description`, then `Index`, the order of ADR-0007 (proposed, not stated by the maintainer).
+15. **Monitor selectors.** A `Monitor` block names its monitor with `Index:`, `Connector:` (the connector name, `DP-1`) or `Description:` (the display description). `Index: default` applies to every monitor no other `Monitor` block names. A `Monitor` block with no selector is ignored. Several selectors on one block: the shell tries `Connector`, then `Description`, then `Index`, the order of ADR-0007 (the agent's proposal, decided as recommended on 2026-10-30).
 16. **The file-type key is authoritative.** A mismatch with the file suffix is a load error naming both.
 
 ## Conditions and Repeats (Decided)
@@ -210,7 +210,7 @@ Rules:
 
 > [!danger] Monitor index is not a stable name
 > `Index: 0` is the position in the compositor's output array. If the order changes (a monitor is unplugged, the machine wakes from sleep with a dock, outputs are announced in another order), a bar can move to a different physical screen. The protocol does not promise a stable order across sessions or hot-plug, and KWin's behaviour is untested #needs-verification. ADR-0007 matched by connector name (`DP-1`) and then description for this reason. Decided 2026-10-29: `Connector:` and `Description:` are also selectors on `Monitor` (Layout Rules item 15). [[Risk Register]] R-21.
-- `41 YAML Reference/`, the `*.yaml` names in [[AGENTS#9. Naming in the designed system]] and the YAML examples across the specs need rewriting. That is a large pass and needs the maintainer's instruction; the agent has not started it and does not edit `AGENTS.md`.
+- `41 TDL Reference/`, the `*.yaml` names in [[AGENTS#9. Naming in the designed system]] and the YAML examples across the specs need rewriting. That is a large pass and needs the maintainer's instruction; the agent has not started it and does not edit `AGENTS.md`.
 - [[ADR-0011 JSON Schema for Shell Files]] needs a rethink. The schemas can still validate the parsed tree at load, but completion and hover from the YAML language server no longer apply, and there is no language server in v1.
 - [[Expression Language Requirements]] gains two requirements: the parser tells TEL where each expression starts, and TEL accepts a child scope that adds the `for` name. Not yet added.
 - The Python builder spec stays, with the parity test now against the TDL parser.
@@ -218,6 +218,37 @@ Rules:
 
 > [!danger] Owning a language
 > A language of the shell's own needs a parser, error messages, a formatter and docs, and none of the editor support YAML gives for free (no language server in v1). If that is not built, authors write blind. This risk is [[Risk Register]] R-20. A grammar that grows beyond structure becomes a scripting language inside a configuration file, which [[ADR-0008 Tesserae Expression Language]] set out to avoid.
+
+## Decisions on the Open Items (2026-10-30)
+
+The maintainer said in chat: "Do all as you would recommend". These are the agent's recommendations, taken as decisions on that instruction. They apply to every open item below except the question-mark conditional, which the TEL project must decide. The maintainer can change any of them.
+
+| #   | Topic                       | Decision                                                                                                                                                                                                                                                                 |
+|-----|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| D1  | Two readings                | A syntax word (`Children`, `If`, `Import`) is special only where a key or keyword is expected, so `Kind: Children` is the string `Children`. Spaces around `{` and after `:` are optional.                                                                                |
+| D2  | Booleans, null, empty list  | `true`, `false` and `null` are lowercase bare words, and `[]` is an empty list. The parser keeps a bare word as a string; the key's declared type in the schema turns it into a boolean, number or null. This follows "unquoted words are strings".                       |
+| D3  | Names                       | A block's name is only its head (its type). `Name:` gives the unique name. There is no `root name { }` form.                                                                                                                                                              |
+| D4  | Lists of blocks, numeric keys | No unnamed block as a list item: write repeated named blocks (`Shadows { Shadow { } Shadow { } }`), ordered by position. No numeric keys: a key starts with a letter; scales use names such as `Level_1` to `Level_5` and `Step_1` to `Step_8`.                          |
+| D5  | Stylesheet selectors        | A stylesheet rule is a `Rule { Selector: ".warning", ... }` block, repeated as needed. The selector is a quoted string. No new head form is added to the grammar.                                                                                                          |
+| D6  | Percent plus pixels         | Not in v1. A length is a whole number or `<int>%`. A form for tre's `calc(100% - 16)` waits for a surface that needs it.                                                                                                                                                 |
+| D7  | Named sides                 | A four-sided value is one number, a list of four (top, right, bottom, left), or a block of named sides: `Thickness { Top: 8, Left: 24 }`.                                                                                                                                  |
+| D8  | One-line and empty blocks   | Allowed: `Params { format { Type: string } }` and `Spacer { }`.                                                                                                                                                                                                          |
+| D9  | Repeated property key       | An error naming both places. Repeated block names are allowed; repeated keys in one block are not.                                                                                                                                                                       |
+| D10 | UID write                   | The shell patches the file text at the node's position and leaves every other byte alone, so comments and layout survive. It does not print the tree back out. `UID:` goes directly after the file-type key.                                                              |
+| D11 | TEL's structure role        | TEL evaluates expressions (values) only. TDL owns `If` and `For`. The shell's model builder evaluates a condition or iterable through TEL and rebuilds that branch or entry. TEL's requirements T3 and T8 are narrowed to expression-level conditionals and comprehensions. |
+| D12 | ADR-0011                    | Stands for load-time and reload validation of the parsed tree; the editor part (completion, hover, modelines) is dropped. `schemas/` is still generated on disk, for the `tesserae-shell schema` command and a future language server. The loader reads the metadata block first, because the file-type key picks the schema, then the schema validates both the metadata part and the block part. The parsed tree is an ordered list of entries (head, properties, children) that keeps repeated names. |
+| D13 | Folder rename               | `41 TDL Reference` becomes `41 TDL Reference`, its index note becomes `41 TDL Reference`, and the note type `tdl-ref` becomes `tdl-ref`. The old names stay as aliases.                                                                                                |
+| D14 | Module context accessor     | `ctx.yaml()` is renamed `ctx.tdl()`: a read-only view of the module's own TDL file, metadata included.                                                                                                                                                                   |
+| D15 | Python builder              | The sketched `If(cond, then, otherwise)` and `For(name, iterable, key, body)` stand. The parity test compares trees, including metadata, and ignores comments and layout.                                                                                                |
+| D16 | Style tokens                | `$color.on_surface` is a plain string that the style engine resolves by theme key, not a TDL variable. A reference is lowercase and matches the theme's Capitalised keys (`On_Surface`) without regard to case.                                                           |
+| D17 | Module file layout          | `Style:` and `Params { }` sit in the body after the metadata block; the metadata holds identity, versions and user data. A param declaration may have a `Type:` property, which is not a file key.                                                                       |
+| D18 | Param names on a use        | Written as the module declared them (`text:`, `format:`): they are the module author's names, so they keep their case.                                                                                                                                                   |
+| D19 | Classes and themes          | A class in a style file is a block named by the user inside `Classes { }`, with `Kind: Text` naming the type it applies to. A theme may carry `Name:` in its metadata (optional; unknown metadata is kept).                                                              |
+| D20 | Settings file               | The file-type key is `Settings: v1` and the file is `settings.tdl` (confirmed as the name). Settings keys are nested blocks (`Logging { Level: info }`); `Logging.Level` is only a prose shorthand for the path.                                                          |
+| D21 | Frame structure             | `Inner_Border`, `Outer_Border` and `Edges` are nested blocks, and `Edges` holds `Top`, `Right`, `Bottom`, `Left` blocks.                                                                                                                                                 |
+| D22 | Imported shell files        | An imported `_Shell.tdl` holds surface blocks only. It sits under a `Monitor`'s `Children` and takes that `Monitor`'s monitor.                                                                                                                                            |
+| D23 | Naming a use                | Python always receives the `Clock@<uid>` key from `ctx.uses` and passes it back to name a use in an action. A use's `Name:` is for the file, references and expressions.                                                                                                  |
+| D24 | Layer-window namespace      | The placeholder reads `tesserae-shell.<type>.<name>`, with the type in lower case (`bar`, `panel`).                                                                                                                                                                       |
 
 ## Open Items
 
@@ -247,27 +278,27 @@ Still open, from the answers:
 
 - [x] **Alpha range.** 0 to 255 for red, green and blue, 0.0 to 1.0 for alpha (as recommended, maintainer, 2026-10-29).
 - [x] **Unquoted text with spaces.** Runs to the end of the line or the next `,` or closing brace (as recommended, maintainer, 2026-10-29).
-- [x] **The rewrite pass** began 2026-10-29 (maintainer): breadth first through the vault tree, each level before the next. `settings.yaml` becomes `settings.tdl`: the agent's assumption, since the settings file is a shell file type; confirm. The folder `41 YAML Reference` keeps its name until the maintainer decides a rename (a move needs approval).
-- [ ] **Two readings to confirm** from "What TDL Is" items 14 and 15: syntax words are special only in key position, and spaces around `{` and after `:` are optional.
+- [x] **The rewrite pass** began 2026-10-29 (maintainer): breadth first through the vault tree, each level before the next. `settings.yaml` becomes `settings.tdl`: the agent's assumption, since the settings file is a shell file type; confirm. The folder `41 TDL Reference` keeps its name until the maintainer decides a rename (a move needs approval).
+- [x] **Two readings to confirm** from "What TDL Is" items 14 and 15: syntax words are special only in key position, and spaces around `{` and after `:` are optional. Decided 2026-10-30, see Decisions on the Open Items.
 
 Raised while rewriting the notes for TDL (2026-10-29). Each is also an open item in the note that hit it; the agent took the shown default in the examples and the maintainer has not decided:
 
-- [ ] **Literals not defined.** Booleans (`true`, `false`), null, and an empty list `[]`. The examples use `true` and `false`. Decide, and say whether the parser types bare words or the key's schema does.
-- [ ] **Names.** Is a block's name only the word before the brace (`root dp1_root { }`, `Clock { }`), or can a `name:` key also give it? Affects module calls, the root header and the path-name rule. The notes keep a `name:` property where YAML had one.
-- [ ] **Unnamed blocks as list items** (`[{color: "#000", x: 0}]`), as shadows and elevation need. Alternative: a repeated named block per item.
-- [ ] **Numeric keys** (`elevation { 1: ... }`, the `space` scale 1 to 8). Alternative: named levels.
-- [ ] **Stylesheet selectors** (`.warning`, `#clock_label`, `Button:hovered`, `Slider::track`) cannot be block names, because `#` starts a comment and `:` makes a property. Options: quoted names, or a separate selector form.
-- [ ] **Percent plus pixels.** Is there a TDL form for tre's `calc(100% - 16)`?
-- [ ] **Named sides** (`thickness {top: 8, left: 24}`, `border_thickness`). Assumed: a block with named keys.
-- [ ] **One-line blocks** such as `params { format { type: string, default: "" } }` and an empty block `Spacer { }`. Assumed allowed.
-- [ ] **A repeated property key in one block:** an error, or last wins? Repeated block names are allowed; repeated keys are not covered.
-- [ ] **How the UID write edits the file:** patch the text at the tree node's position, or print the tree back out. Both keep comments.
+- [x] **Literals not defined.** Booleans (`true`, `false`), null, and an empty list `[]`. The examples use `true` and `false`. Decide, and say whether the parser types bare words or the key's schema does. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Names.** Is a block's name only the word before the brace (`root dp1_root { }`, `Clock { }`), or can a `name:` key also give it? Affects module calls, the root header and the path-name rule. The notes keep a `name:` property where YAML had one. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Unnamed blocks as list items** (`[{color: "#000", x: 0}]`), as shadows and elevation need. Alternative: a repeated named block per item. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Numeric keys** (`elevation { 1: ... }`, the `space` scale 1 to 8). Alternative: named levels. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Stylesheet selectors** (`.warning`, `#clock_label`, `Button:hovered`, `Slider::track`) cannot be block names, because `#` starts a comment and `:` makes a property. Options: quoted names, or a separate selector form. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Percent plus pixels.** Is there a TDL form for tre's `calc(100% - 16)`? Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Named sides** (`thickness {top: 8, left: 24}`, `border_thickness`). Assumed: a block with named keys. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **One-line blocks** such as `params { format { type: string, default: "" } }` and an empty block `Spacer { }`. Assumed allowed. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **A repeated property key in one block:** an error, or last wins? Repeated block names are allowed; repeated keys are not covered. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **How the UID write edits the file:** patch the text at the tree node's position, or print the tree back out. Both keep comments. Decided 2026-10-30, see Decisions on the Open Items.
 - [x] **Several roots in one file** (now several `Monitor` blocks): allowed, decided 2026-10-29 ([[Shell File]] still describes `root`).
-- [ ] **TEL's structure role.** [[ADR-0008 Tesserae Expression Language]] says TEL owns "structure and values" and its requirements T3 and T8 give it conditions and repeats; this ADR gives `if` and `for` to TDL. Decide whether TEL keeps any structure role, and which component builds and rebuilds those branches (the parser, the shell model or TEL) ([[Layers and Components]]).
-- [ ] **ADR-0011.** Whether it stands for load-time validation only, is superseded, or is rewritten; which editor feedback is wanted after v1; whether `schemas/` is still written to disk now that no modeline points at it; and the shape of the parsed tree when names repeat ([[JSON Schema and Editor Support]]).
-- [ ] **Folder rename.** The folder `41 YAML Reference` and the note type `yaml-ref`. A move needs your approval; every note says "rename pending".
-- [ ] **Module context accessor.** `ctx.yaml()` in the module context ([[Module Context]]): rename (for example `ctx.file`) or keep.
-- [ ] **Python builder** signatures for `If` and `For` and whether comments count in the parity test ([[Python Builder]]).
+- [x] **TEL's structure role.** [[ADR-0008 Tesserae Expression Language]] says TEL owns "structure and values" and its requirements T3 and T8 give it conditions and repeats; this ADR gives `if` and `for` to TDL. Decide whether TEL keeps any structure role, and which component builds and rebuilds those branches (the parser, the shell model or TEL) ([[Layers and Components]]). Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **ADR-0011.** Whether it stands for load-time validation only, is superseded, or is rewritten; which editor feedback is wanted after v1; whether `schemas/` is still written to disk now that no modeline points at it; and the shape of the parsed tree when names repeat ([[JSON Schema and Editor Support]]). Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Folder rename.** Done 2026-10-30: the folder `41 YAML Reference` is now `41 TDL Reference`, its index note is `41 TDL Reference`, and the note type `yaml-ref` is now `tdl-ref`. The old names stay as aliases (see Decisions on the Open Items, D13).
+- [x] **Module context accessor.** `ctx.yaml()` in the module context ([[Module Context]]): rename (for example `ctx.file`) or keep. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Python builder** signatures for `If` and `For` and whether comments count in the parity test ([[Python Builder]]). Decided 2026-10-30, see Decisions on the Open Items.
 - [x] **Layout sketch, ten questions** answered by the maintainer on 2026-10-29: the metadata block is required and holds `UID:`; the file-type key replaces `Type:`; versions are strings; `FileName` was an example; one registry of names for blocks and modules; `Kind: shape` was an example; `Name:` is the unique name and `Index:` picks the monitor; several `Monitor` blocks are allowed; `Import` and `Rectangle` are the right spellings. See "Layout Rules".
 - [x] **Capitalised keys everywhere,** with each word of a key Capitalised and joined by `_` (maintainer, 2026-10-29; Layout Rules item 10).
 - [x] **One meaning of the Kind key:** a reference by exact name only (Layout Rules item 11).
@@ -277,20 +308,20 @@ Raised while rewriting the notes for TDL (2026-10-29). Each is also an open item
 - [x] **Monitor selectors:** `Index:`, `Connector:`, `Description:`, and `Index: default` (item 15). Open: the order when a block has several selectors.
 - [ ] **Question-mark conditional for values** (maintainer, 2026-10-29: "supporting this would be great", `If` stays). It belongs to TEL, not to TDL, so it is written inside a slot: `Color: {{ hovered ? "#1e1e2e" : "#313244" }}`. Outside a slot the text is an unquoted string (Layout Rules, "What TDL Is" item 14). TEL has `a if c else b` today; `?:` needs a change in TEL, recorded as the proposed T19 in [[Expression Language Requirements]]. The maintainer carries it to the TEL project.
 - [x] **File-type key and file name disagree:** the key is authoritative; a mismatch is a load error (item 16).
-- [ ] **Style tokens.** The `$color.surface` form (see [[Style Schema]]) against "no variables": the agent treated them as plain strings the shell resolves.
+- [x] **Style tokens.** The `$color.surface` form (see [[Style Schema]]) against "no variables": the agent treated them as plain strings the shell resolves. Decided 2026-10-30, see Decisions on the Open Items.
 
 Raised by the second rewrite pass (2026-10-29). The notes use the default shown; the maintainer has not decided:
 
-- [ ] **Module file layout.** Do `Style:` and `Params { }` sit in the body after the metadata block (as the notes show) or in the metadata block? Is `Type:` acceptable inside a param declaration now that it is gone as a file key? ([[Module File]])
-- [ ] **Param names on a use.** Written as the module declared them (`format:`, the notes' default) or Capitalised (`Format:`)? Module File's own Label example declares `text` and passes `Text:`, which is inconsistent until this is decided.
-- [ ] **Classes and themes.** How a style class is written when a block head is normally a registered type (the notes use the class name as the head with `Kind: Text` inside). Whether a theme has `Name:` in its metadata. Whether `$color.on_surface` token references match `On_Surface` case-insensitively ([[Style Schema]], [[Style, Theme and Stylesheet Files]]).
-- [ ] **Settings file.** The file-type key and metadata form of `settings.tdl` (the notes show `Settings: v1` as a placeholder), and whether settings keys are written nested or dotted (`Logging.Level`) ([[Settings File]]).
-- [ ] **Frame structure.** `Inner_Border`, `Outer_Border`, `Edges` and the edge names `Top`, `Right`, `Bottom`, `Left`: nested blocks or properties? ([[Frame]])
-- [ ] **Imported shell files.** Does an imported `_Shell.tdl` hold surface blocks only, or its own `Monitor` blocks? (The notes keep "an imported file takes the importing Monitor's monitor".)
-- [ ] **Where `UID:` goes** in the metadata block. The notes write it after the file-type key.
-- [ ] **How an action names a use:** `Label@<uid>` or the use's `Name:` ([[Module Context]]).
-- [ ] **Schema and the metadata block.** Whether the JSON Schema validates the metadata part, or the loader checks `TDL:` and the file-type key first ([[JSON Schema and Editor Support]]).
-- [ ] **Layer-window namespace.** `tesserae-shell.<kind>.<name>` should read `<type>` now that surfaces have no `Kind:` ([[Surface Types]]).
+- [x] **Module file layout.** Do `Style:` and `Params { }` sit in the body after the metadata block (as the notes show) or in the metadata block? Is `Type:` acceptable inside a param declaration now that it is gone as a file key? ([[Module File]]) Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Param names on a use.** Written as the module declared them (`format:`, the notes' default) or Capitalised (`Format:`)? Module File's own Label example declares `text` and passes `Text:`, which is inconsistent until this is decided. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Classes and themes.** How a style class is written when a block head is normally a registered type (the notes use the class name as the head with `Kind: Text` inside). Whether a theme has `Name:` in its metadata. Whether `$color.on_surface` token references match `On_Surface` case-insensitively ([[Style Schema]], [[Style, Theme and Stylesheet Files]]). Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Settings file.** The file-type key and metadata form of `settings.tdl` (the notes show `Settings: v1` as a placeholder), and whether settings keys are written nested or dotted (`Logging.Level`) ([[Settings File]]). Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Frame structure.** `Inner_Border`, `Outer_Border`, `Edges` and the edge names `Top`, `Right`, `Bottom`, `Left`: nested blocks or properties? ([[Frame]]) Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Imported shell files.** Does an imported `_Shell.tdl` hold surface blocks only, or its own `Monitor` blocks? (The notes keep "an imported file takes the importing Monitor's monitor".) Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Where `UID:` goes** in the metadata block. The notes write it after the file-type key. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **How an action names a use:** `Label@<uid>` or the use's `Name:` ([[Module Context]]). Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Schema and the metadata block.** Whether the JSON Schema validates the metadata part, or the loader checks `TDL:` and the file-type key first ([[JSON Schema and Editor Support]]). Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **Layer-window namespace.** `tesserae-shell.<kind>.<name>` should read `<type>` now that surfaces have no `Kind:` ([[Surface Types]]). Decided 2026-10-30, see Decisions on the Open Items.
 
 ## Links
 

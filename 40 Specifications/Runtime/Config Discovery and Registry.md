@@ -19,7 +19,7 @@ depends_on: ["[[Settings File]]", "[[ADR-0007 Shell UI Layer]]"]
 ## Purpose and Scope
 
 - Define discovery, file recognition, name uniqueness, the registry file and its operations, the UID write, and reference resolution.
-- Not in this note: what a shell, module, style, theme or stylesheet file contains (the TDL reference, folder [[41 YAML Reference]], rename pending), how errors are reported ([[Validation and Errors]]), watching for changes ([[Hot Reload]]), and the order of start-up ([[Shell Start and Stop]]).
+- Not in this note: what a shell, module, style, theme or stylesheet file contains (the TDL reference, folder [[41 TDL Reference]]), how errors are reported ([[Validation and Errors]]), watching for changes ([[Hot Reload]]), and the order of start-up ([[Shell Start and Stop]]).
 
 ## Behaviour
 

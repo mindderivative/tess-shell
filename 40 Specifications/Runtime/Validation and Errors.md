@@ -19,7 +19,7 @@ depends_on: ["[[ADR-0011 JSON Schema for Shell Files]]", "[[Common Keys and Conv
 ## Purpose and Scope
 
 - One pipeline and one error format for all five file types, the settings file and the Python modules.
-- Not in this note: what the keys mean (the TDL reference, folder [[41 YAML Reference]], rename pending), the JSON Schema files themselves ([[JSON Schema and Editor Support]]), and TEL's own grammar ([[Expression Language Requirements]]).
+- Not in this note: what the keys mean (the TDL reference, folder [[41 TDL Reference]]), the JSON Schema files themselves ([[JSON Schema and Editor Support]]), and TEL's own grammar ([[Expression Language Requirements]]).
 
 ## Behaviour
 

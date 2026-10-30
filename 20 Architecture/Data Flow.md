@@ -100,7 +100,7 @@ sequenceDiagram
 
 ## User Input
 
-A pointer or key event reaches a tre node on the loop thread. **Events belong to the shell, not to TEL** (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). A shell file maps an event to a module method or a shell action. TEL only evaluates the argument expressions when the event fires (for example a value taken from the event). The vocabulary is set in the TDL reference (folder `41 YAML Reference/`, rename pending).
+A pointer or key event reaches a tre node on the loop thread. **Events belong to the shell, not to TEL** (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). A shell file maps an event to a module method or a shell action. TEL only evaluates the argument expressions when the event fires (for example a value taken from the event). The vocabulary is set in the TDL reference (folder `41 TDL Reference/`).
 
 - A module method that does slow work hands it to the module's thread and returns at once.
 - Window actions (close, dismiss a popup) are shell-provided.
@@ -109,7 +109,7 @@ A pointer or key event reaches a tre node on the loop thread. **Events belong to
 ## Open Questions
 
 - [ ] Where the value store sits and how a module's last value is kept across a reload.
-- [ ] The handler vocabulary for input: the shell's, in the TDL reference (folder `41 YAML Reference/`, rename pending), not TEL's.
+- [ ] The handler vocabulary for input: the shell's, in the TDL reference (folder `41 TDL Reference/`), not TEL's.
 - [x] A module's `.py` can be reloaded at runtime (maintainer, 2026-10-26). Mechanics are proposed above.
 - [x] How the diff of a reload works: by identity (file UID), then name, then position (proposed in [[Hot Reload#The diff]]).
 - [ ] What `output_updated` does to surfaces whose size depends on the output.

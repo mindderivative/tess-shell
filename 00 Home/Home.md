@@ -62,7 +62,7 @@ Newest first. Keep the last 8. One line each.
 | Unknowns and risk | [[Open Questions]] · [[Risk Register]]                                                                                                                                                                                                                                                                                                              |
 | Decisions         | [[30 Decisions]]                                                                                                                                                                                                                                                                                                                                                         |
 | Research          | [[90 Research]]: [[Prior Art - Linux Shell Surfaces]], [[Shadows on Layer Surfaces]], [[Hit Testing for Concave Corners]], [[D-Bus Libraries for Python]], [[Logging with Loguru]], [[Expression Languages for YAML]], [[Shell File Syntax Comparison]]                                                                                                   |
-| Design areas      | [[10 Vision]] · [[20 Architecture]] · [[40 Specifications]] · [[41 YAML Reference]] · [[42 Python API]] · [[50 Design System]] · [[60 Quality]] · [[70 Delivery]] · [[80 Engine Requests]] |
+| Design areas      | [[10 Vision]] · [[20 Architecture]] · [[40 Specifications]] · [[41 TDL Reference]] · [[42 Python API]] · [[50 Design System]] · [[60 Quality]] · [[70 Delivery]] · [[80 Engine Requests]] |
 
 ## Current
 
