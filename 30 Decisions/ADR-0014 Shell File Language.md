@@ -71,7 +71,7 @@ Accepted 2026-10-29 by the maintainer in chat: **Option A**, the Tesserae Data L
 5. **Strings** use `"..."` or `'...'`, with `\` character escapes.
 6. **Colours** are a quoted hex (`"#ffffff10"`, `"#ffffff"`) or `rgba(0 0 0 0)`, with spaces between the values and no commas (maintainer, 2026-10-29). The hex is quoted because `#` starts a comment. Red, green and blue are whole numbers 0 to 255 and alpha is a float 0.0 to 1.0, so `rgba(0 0 0 0.5)` is half transparent (as recommended, maintainer, 2026-10-29).
 7. **Lengths** have no unit suffix: a whole number is pixels, and a percentage is `<int>%` (`50%`) (maintainer, 2026-10-29). A float is for values that are not lengths, such as `opacity: 0.9`.
-8. **Version keys** (maintainer, 2026-10-29). A file starts with `TDL:` and then `shell:`. `TDL:` names the language version and `shell:` the shell-format version. The UID is written below `shell:` as before ([[ADR-0007 Shell UI Layer#Config Directory and Registry (2026-10-25)]]).
+8. **Version keys** (maintainer, 2026-10-29). Superseded the same day by the metadata block of "Layout Rules" below: the `TDL:` version and the file-type key sit between two `---` lines, and the UID is written there, not below `shell:` ([[ADR-0007 Shell UI Layer#Config Directory and Registry (2026-10-25)]]).
 9. **Where the parser lives** (maintainer, 2026-10-29, as recommended). A module in the shell package that imports nothing from the shell, so it can be split out like TEL if wanted.
 10. **Editor support** (maintainer, 2026-10-29). No language server in v1.
 11. **Brackets.** `{ }` for a block, `[ ]` for a list, and `( )` for the colour constructor `rgba(...)` and inside TEL expressions. Whether other constructors exist is open.
@@ -83,30 +83,32 @@ Accepted 2026-10-29 by the maintainer in chat: **Option A**, the Tesserae Data L
 12. **Carries over unchanged:** the keys and what they mean (`shell`, `type`, `kind`, `name`, `children`, `import`, `style`, `block`), the file types and suffixes (`_Shell`, `_Module`, `_Style`, `_Theme`, `_Stylesheet`), unique names and UIDs, the registry, and a module as layout, style and `.py` ([[ADR-0007 Shell UI Layer]]).
 13. **Lossless tree.** The parser keeps comments and layout, so the UID write needs no separate YAML writer. The parser and the Python builder produce the same tree, and the parity test of ADR-0007 stands.
 
-An illustration of the feel, not the grammar:
+An illustration of the feel, not the grammar, in the layout of "Layout Rules" (the case of the keys inside blocks is still to be confirmed):
 
 ```
-TDL: v1
-shell: v1
-type: Shell
+---
+TDL: 0.1
+Shell: v1
+---
 
-root dp1_root {
-    monitor: DP-1
-    children {
-        top_bar {
-            kind: bar
-            style { background: "#1e1e2ee6", radius: 8 }
-            children {
-                Label { text: Battery {{ battery.percent }}% }
+Monitor {
+    Name: dp1
+    Index: 0
+    Children {
+        Bar {
+            Name: top_bar
+            Style { Background: "#1e1e2ee6", Radius: 8 }
+            Children {
+                Label { Text: Battery {{ battery.percent }}% }
             }
         }
     }
 }
 ```
 
-## File Layout Sketch (Maintainer, 2026-10-29)
+## File Layout (Decided 2026-10-29)
 
-The maintainer's picture of a file, given in chat after the rewrite pass. It is not yet a decision: it changes the file header, the case of built-in names, and what a block's head means. It is reproduced as given, including the spelling `Rectanlge` and the lowercase `import:` in one place. The questions it raises are under Open Items.
+The maintainer's picture of a file, given in chat after the rewrite pass, and their answers to the ten questions it raised. The sketch is reproduced as given, including the typos `Rectanlge` (read as `Rectangle`) and the lowercase `import:` (read as `Import:`, confirmed). `Kind: shape` and `FileName:` in it were examples, not decisions. The rules are under "Layout Rules" after the sketch.
 
 ```
 ---
@@ -144,11 +146,19 @@ Monitor {
 }
 ```
 
-What it shows, as read by the agent:
+### Layout Rules
 
-- A metadata block between two `---` lines at the top of the file, with `TDL`, `Shell` and `FileName` keys.
-- Built-in syntax (keys and block types) is Capitalised, and multi-word names use snake case. Values and user names are lowercase (`overlay`, `exclusive`, `DP-1`).
-- A block's head is its type (`Monitor`, `Panel`, `Rectangle`), and a name goes in a `Name:` property. `Monitor` replaces `root`.
+Decided by the maintainer in chat, 2026-10-29. They supersede the first-lines rule of "What TDL Is" item 8 and parts of [[ADR-0007 Shell UI Layer]] (listed in Consequences).
+
+1. **Metadata block.** Every file starts with a block between two `---` lines. It is required. It holds the language version `TDL:` (as in the sketch), the file-type key, `UID:` (the shell writes it there), and, for a module, `Name:`. Other metadata keys are allowed; `FileName` in the sketch was an example, not a required key.
+2. **The key names the file type.** `Shell: v1`, `Module: v1`, `Style:`, `Stylesheet:` or `Theme:` in the metadata says what kind of file it is, and it is required. There is no `Type:` and no separate `shell:` key. The file name suffix (`*_Shell.tdl`) says the same thing.
+3. **Versions are strings** (`v1`, `0.1`).
+4. **Case.** Built-in syntax is Capitalised, with snake case for several words: keys (`Name`, `Children`, `Layer`), block and surface types (`Panel`, `Rectangle`), and the structure words. A reference to a built-in type or a module by value uses its exact name: `Kind: Panel`, `Kind: Clock`.
+5. **One registry of names.** Built-in blocks, the surface types (`Bar`, `Frame`, `Panel`, `Popup`) and modules are all in the built-in name registry and are treated the same way. If something is needed to tell a block from a module, `Kind: Block` or `Kind: Module` is available (optional).
+6. **A block's head is its type,** so `Panel { Name: Unique_Panel_Name }` needs no `Kind:` or `Type:`. `Name:` is the unique name. This replaces `kind:` for surfaces.
+7. **A module's name** is the `Name:` in the metadata of its file (`Name: Clock` in `Clock_Module.tdl`). A use is written with that name as the head: `Clock { }`. Every use of a module is an instance.
+8. **Telling uses apart.** Python registers each use with the module name and the UID as a prefix or suffix. The maintainer's candidates: `Clock:UID`, `Clock#UID`, `Clock@UID`, `Clock[UID]` (a key in a Python collection). If the file itself needs a way to tell which `Clock` is which, the shell injects `UID: <UUIDv7>` into that use during parsing.
+9. **Monitors.** `Monitor { }` is a top-level block and replaces `root`. `Index: 0` picks a monitor by its position in the compositor's output array; with one monitor it is `Index: 0`, and the next monitor is `Index: 1`. `Name:` is the unique name. Several `Monitor` blocks in one file are allowed.
 
 ## Conditions and Repeats (Decided)
 
@@ -186,6 +196,10 @@ Rules:
 ## Consequences
 
 - [[ADR-0007 Shell UI Layer]] is superseded only in its view-format parts (YAML as the file format and the `*.yaml` names). Its decisions on keys, modules, names, UIDs and the registry stand. ADR-0007 carries a note to that effect.
+- The layout rules also supersede these ADR-0007 decisions: the `shell:` and `type:` keys (the file-type key in the metadata block replaces both); `kind:` for surfaces (`Bar`, `Frame`, `Panel`, `Popup` are block heads); `root` with `monitor:` matched by connector name and description (`Monitor` with `Index:`); lowercase key names (Capitalised, snake case for several words); the `UID:` line below `shell:` (the UID goes in the metadata block). ADR-0007's rule that a unique name is the block's key becomes `Name:`. The notes rewritten earlier on 2026-10-29 still show the old forms and need a second pass once the open items below are answered.
+
+> [!danger] Monitor index is not a stable name
+> `Index: 0` is the position in the compositor's output array. If the order changes (a monitor is unplugged, the machine wakes from sleep with a dock, outputs are announced in another order), a bar can move to a different physical screen. The protocol does not promise a stable order across sessions or hot-plug, and KWin's behaviour is untested #needs-verification. ADR-0007 matched by connector name (`DP-1`) and then description for this reason. Recommendation: keep `Index:` as the maintainer decided and also allow `Connector:` and `Description:` selectors on `Monitor`, with `Index:` as a fallback. [[Risk Register]] R-21.
 - `41 YAML Reference/`, the `*.yaml` names in [[AGENTS#9. Naming in the designed system]] and the YAML examples across the specs need rewriting. That is a large pass and needs the maintainer's instruction; the agent has not started it and does not edit `AGENTS.md`.
 - [[ADR-0011 JSON Schema for Shell Files]] needs a rethink. The schemas can still validate the parsed tree at load, but completion and hover from the YAML language server no longer apply, and there is no language server in v1.
 - [[Expression Language Requirements]] gains two requirements: the parser tells TEL where each expression starts, and TEL accepts a child scope that adds the `for` name. Not yet added.
@@ -244,17 +258,14 @@ Raised while rewriting the notes for TDL (2026-10-29). Each is also an open item
 - [ ] **Rename of the folder `41 YAML Reference`** and the note type `yaml-ref`. A move needs your approval; every note says "rename pending".
 - [ ] **`ctx.yaml()`** in the module context ([[Module Context]]): rename (for example `ctx.file`) or keep.
 - [ ] **Python builder** signatures for `If` and `For` and whether comments count in the parity test ([[Python Builder]]).
-- [ ] **Layout sketch, questions** ([[ADR-0014 Shell File Language#File Layout Sketch (Maintainer, 2026-10-29)]]):
-  1. Is the `---` block required, and is it where `UID:` goes? It replaces the first lines `TDL:` and `shell:` of "What TDL Is" item 8.
-  2. File type: the sketch has no `Type`. Is the key the type (`Shell: 0.2` for a shell file, `Module: 0.1` for a module), or does `Type: Shell` stay?
-  3. Versions are strings, not numbers, or `0.1` and `0.10` collide. Confirm.
-  4. `FileName` repeats what the file system already says and goes stale when a file is renamed. Keep it, or drop it?
-  5. Case. Built-in names are Capitalised, with snake case for several words (`Exclusive_Zone`?). Modules and blocks are also Capitalised (`Label`, `Box`, `FlexBox`), so case alone cannot tell syntax from a module name. Which rule separates them?
-  6. Case in the current notes. Every key in about 45 notes is lowercase and mirrors tre's names (`kind`, `layer`, `exclusive_zone`). Is the change to Capitalised keys everywhere, which means a second rewrite pass?
-  7. Is `Rectangle { Kind: shape }` a surface or a block? The surface kinds are `bar`, `frame`, `panel` and `popup` (Panel appears as a block type and Kind is `shape`).
-  8. Does `Name: DP-1` name the monitor connector or the unique name? The old `root` had both `name` and `monitor`. How does a block get a unique name when its head is its type (`Panel { }` has none)?
-  9. Several `Monitor` blocks in one file: allowed? It would settle the open item about several roots.
-  10. Spelling: `Import` and `import`, and `Rectanlge`, are typos in the sketch. Confirm `Import` and `Rectangle`.
+- [x] **Layout sketch, ten questions** answered by the maintainer on 2026-10-29: the metadata block is required and holds `UID:`; the file-type key replaces `Type:`; versions are strings; `FileName` was an example; one registry of names for blocks and modules; `Kind: shape` was an example; `Name:` is the unique name and `Index:` picks the monitor; several `Monitor` blocks are allowed; `Import` and `Rectangle` are the right spellings. See "Layout Rules".
+- [ ] **Capitalised keys everywhere.** The maintainer's sketch and answers use Capitalised keys, but the question "is this a change to every key in the notes, with snake case for several words (`Exclusive_Zone`)" was not answered. Tre's names are lowercase (`exclusive_zone`) and "Names follow tre's" in [[Shell File]]. Confirm, because it sets the second rewrite pass.
+- [ ] **Two meanings of `Kind:`.** In the maintainer's text `Kind: Panel` and `Kind: Clock` reference a type by its exact name, and `Kind: Block` / `Kind: Module` tell a block from a module. Recommendation: `Kind:` is only a reference by exact name (used where a type is named by value, such as a style class or a popup call), and one name registry makes `Kind: Block` / `Kind: Module` unnecessary; a name used twice in the registry is a load error, except that a user module of the same name overrides a shipped module as decided in ADR-0007.
+- [ ] **Structure words and values in the new case rules.** Recommendation: `If`, `Else`, `For`, `In` and `Key` are Capitalised; enum values stay lowercase (`Layer: overlay`, `Keyboard: exclusive`) as in the sketch.
+- [ ] **Metadata keys.** Which are required (`TDL:`, the file-type key), which are optional (`UID:`, `Name:` for a module), and whether an unknown key is ignored, kept or an error. Recommendation: unknown keys are kept in the tree and ignored, with a warning for a near-miss of a known key.
+- [ ] **Instance UIDs.** The maintainer said `UID: <UUIDv7>` is injected into a use if the file needs it, while ADR-0007 keeps an instance UID in the registry only and names uses from their position. Recommendation: keep instance UIDs in the registry, written with `@` (`Clock@<uid>`, which is safe in Python and does not clash with `#` or `:`), and inject `UID:` into a use only when the user asks for stable identity across reordering.
+- [ ] **Monitor selectors.** `Index:` is decided; the danger callout under Consequences asks to add `Connector:` and `Description:`, and the old rule that `monitor: default` applies to every monitor no other block names needs a TDL form (for example `Index: default`).
+- [ ] **File-type key and file name disagree.** Recommendation: the key is authoritative and a mismatch with the suffix is a load error naming both, as ADR-0007 did for `type:`.
 - [ ] **`$color.surface` style tokens** (see [[Style Schema]]) against "no variables": the agent treated them as plain strings the shell resolves.
 
 ## Links

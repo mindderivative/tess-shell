@@ -33,7 +33,7 @@ depends_on: []
 | Updated             | 2026-10-29                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Last change         | Rewrite pass for TDL done through level 2 (about 45 notes); open syntax questions collected in [[ADR-0014 Shell File Language#Open Items]] |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | [[ADR-0014 Shell File Language#Open Items]]: ten questions on your file-layout sketch (`---` header, Capitalised names, `Monitor`, block head as type), then the literals and naming questions raised by the rewrite (booleans, `name:`, unnamed list blocks, selectors, `calc`), TEL's structure role, what happens to ADR-0011, the folder rename, `settings.tdl` |
+| Waiting on you      | [[ADR-0014 Shell File Language#Open Items]]: Capitalised keys everywhere (sets the second rewrite pass), the two meanings of `Kind:`, `Index:` as the monitor selector (risk R-21), instance UIDs, metadata keys, then the literals and naming questions raised by the rewrite (booleans, `name:`, unnamed list blocks, selectors, `calc`), TEL's structure role, what happens to ADR-0011, the folder rename, `settings.tdl` |
 | Next                | Plasma coexistence, the D-Bus service layer, portals, global shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]])                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-29 | [[ADR-0014 Shell File Language]] layout rules decided: `---` metadata, file-type key, block head as type, `Monitor` with `Index:` |
 | 2026-10-29 | TDL rewrite pass, levels 0 to 2: AGENTS, Home, Vision, Architecture, Decisions, 41 reference, 42 Python API, 40 Specifications |
 | 2026-10-29 | [[ADR-0014 Shell File Language]] grammar answers recorded: `.tdl`, `50%`, `rgba(0 0 0 0)`, repeated names, TextMate grammar |
 | 2026-10-29 | [[ADR-0014 Shell File Language]] accepted (TDL replaces YAML); [[Shell File Syntax Comparison]] written |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-29 | [[KWin Integration]] answers applied; KWin script test run |
 | 2026-10-29 | [[KWin Integration]] drafted |
 | 2026-10-29 | tre's clipboard test exists (#243); the maintainer wants it filed ([[Wayland Protocols]]) |
-| 2026-10-28 | tre answered the clipboard questions ([[Wayland Protocols]]) |
 
 ## Go to
 
