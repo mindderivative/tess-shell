@@ -219,6 +219,89 @@ Rules:
 > [!danger] Owning a language
 > A language of the shell's own needs a parser, error messages, a formatter and docs, and none of the editor support YAML gives for free (no language server in v1). If that is not built, authors write blind. This risk is [[Risk Register]] R-20. A grammar that grows beyond structure becomes a scripting language inside a configuration file, which [[ADR-0008 Tesserae Expression Language]] set out to avoid.
 
+## Second Layout Sketch (Maintainer, 2026-10-30)
+
+The maintainer's second picture of a file, given in chat the day after the first. It is not a decision; it differs from the decided layout in several places (listed after it, with the questions under Open Items). Reproduced as given, including the `...` placeholders.
+
+```
+---
+TDL: <version>        # Tesserae Data Language version
+TEL: <version>        # Tesserae Expression Language version
+TRE: <version>        # Tesserae Rendering Engine version
+TUIF: <version>       # Tesserae UI Framework version (Required if building a normal app)
+Shell: <version>      # Tesserae Shell version (Required if building a shell app)
+Name: ShellRoot       # Unique name for the Shell, View, Module, Style, Stylesheet, Theme, etc...
+---
+
+# This is a comment
+
+# Root for a Shell, use View {/} if a Tesserae app
+Shell {
+  Monitor {
+    Name: DP-1
+    Children {
+      # one file, or a list
+      import: TopBar_Shell.tdl
+      # AND OR USE INLINE
+      Bar {                   # Build-in Module made up of building blocks and built-in modules
+        Name: TopBar          # Unique name of this Bar module, can use .get(ShellRoot.DP-1.TopBar)
+        UID: <UUIDv7>         # Injected by Shell
+        Style: TopBar_Style.tdl
+        # OR USE INLINE
+        Style {
+          Border: [
+            Color: "#1e1e1e"          # HEX or HEX + Alpha or RGBA
+            Thickness: [2, 2, 2, 2]   # OR single number for all the same or 0 for no border
+          ]
+          Background: "#1f1f1f"
+          Padding: [0, 0, 0, 0]       # Padding affects all children
+          Margin: [0, 0, 0, 0]        # Margin adds transparent space around self
+          CornerRadius: [8, 8, 8, 8]  # Rounding of self corners
+        }
+        # modules and containers go under children; the syntax of a module use is pending
+        Children {
+          Import: [
+            Clock_Module.tdl,
+            Audio_Module.tdl,
+          ]
+        }
+        Width: 300
+        Height: 50
+        Edge: Top
+        Alignment: Center    # Where the Bar sits along the Edge it is attached to
+        Offset: 0            # Positive or Negative moves the Bar the amount of pixels along the Edge
+        Flex: Horizontal    # How children are stacked; Horizontal, Vertical, None
+        Grid {              # If Flex is `Flex:` None otherwise treated as `Grid: None`
+          Columns: 2
+          Rows: 2
+          Gap: 4
+          Style { ... }     # Inline or File
+        
+        }
+      }
+    }
+  }
+  
+  Monitor {
+    ...
+  }
+}
+```
+
+Where it differs from the decided layout (Layout Rules and D1 to D24):
+
+- The metadata block pins the versions of TEL, TRE and TUIF (Tesserae UI Framework), and holds `Name:` for every file type. `Shell:` now reads as "Tesserae Shell version", and the file type is no longer a metadata key.
+- A root block (`Shell { }`, or `View { }` for a Tesserae app) wraps the `Monitor` blocks. TDL would serve Tesserae UI as well as the shell.
+- `Monitor` is named `Name: DP-1` (a connector) instead of `Index:`, `Connector:` or `Description:`.
+- Names are addressed by a dotted path (`ShellRoot.DP-1.TopBar`).
+- `Bar` is a built-in module, not a surface type; a `UID:` is injected into the block in the file (Layout Rules item 12 limits that to when asked).
+- `Border: [ Color: ..., Thickness: ... ]` puts keys inside `[ ]`.
+- `CornerRadius` is one CamelCase word; the decided rule joins capitalised words with `_`.
+- Enum values are Capitalised (`Edge: Top`, `Flex: Horizontal`, `Alignment: Center`); the decided rule keeps them lowercase.
+- The Bar uses `Width`, `Height`, `Edge`, `Alignment`, `Offset` and has its own `Flex` and `Grid` properties; the Bar spec has `Edge`, `Span`, `Length`, `Thickness`, `Anchor`, `Size`, `Margin` and `Exclusive_Zone`.
+- Trailing comments follow values on the same line (`TDL: <version>        # ...`); the decided rule makes an unquoted value run to the end of the line.
+- `import:` and `Import:` both appear.
+
 ## Decisions on the Open Items (2026-10-30)
 
 The maintainer said in chat: "Do all as you would recommend". These are the agent's recommendations, taken as decisions on that instruction. They apply to every open item below except the question-mark conditional, which the TEL project must decide. The maintainer can change any of them.
@@ -322,6 +405,25 @@ Raised by the second rewrite pass (2026-10-29). The notes use the default shown;
 - [x] **How an action names a use:** `Label@<uid>` or the use's `Name:` ([[Module Context]]). Decided 2026-10-30, see Decisions on the Open Items.
 - [x] **Schema and the metadata block.** Whether the JSON Schema validates the metadata part, or the loader checks `TDL:` and the file-type key first ([[JSON Schema and Editor Support]]). Decided 2026-10-30, see Decisions on the Open Items.
 - [x] **Layer-window namespace.** `tesserae-shell.<kind>.<name>` should read `<type>` now that surfaces have no `Kind:` ([[Surface Types]]). Decided 2026-10-30, see Decisions on the Open Items.
+
+Raised by the second layout sketch (2026-10-30). Each is a question for the maintainer; the agent's recommendation follows it:
+
+- [ ] **Is TDL now a language shared with Tesserae UI,** as `TUIF:` and `View { }` suggest? This changes [[ADR-0006 Shell Independent of Tesserae UI]] only at the language level (the shell still does not depend on `tesserae-ui`). Recommendation: yes, TDL is a separate project like TEL, with its own repository and version; its grammar knows nothing about bars or monitors; the shell and Tesserae UI each define their own blocks and schema on top of it.
+- [ ] **Where does the file type live?** The sketch has no file-type key; the root block (`Shell`, `View`, and presumably `Module`, `Style`, `Stylesheet`, `Theme`) may name it. This replaces Layout Rules item 2. Recommendation: the root block names the file type and the metadata `Shell:` / `Module:` etc. goes away; the suffix must agree, as before.
+- [ ] **What does `Shell: <version>` mean?** The format version of the shell's blocks, or the version of the Tesserae Shell program? Recommendation: the shell-format version, since a file records what it was written for; `TRE:`, `TEL:` and `TUIF:` are the minimum versions of the other projects. State "minimum" or "exact" for each.
+- [ ] **Is `Name:` required in the metadata of every file?** The sketch puts it there for all types. Recommendation: required for a module (the call name), optional for the rest.
+- [ ] **How is a monitor chosen?** `Name: DP-1` is a connector, which makes the unique name unstable and clashes with the decided `Index:`, `Connector:`, `Description:` selectors. Recommendation: keep the selectors and give `Monitor` its own identifier-style `Name:` (`Name: main`).
+- [ ] **Dotted name paths** (`ShellRoot.DP-1.TopBar`, `.get(...)`). `DP-1` is not an identifier, so inside a TEL expression `ShellRoot.DP-1.TopBar` reads as a subtraction. Recommendation: names are identifiers (letters, digits, `_`), and paths use them.
+- [ ] **Is `Bar` a surface or a module?** The sketch says it is a built-in module. Recommendation: it stays a surface type (it owns a layer window); it is called like a module and sits in the same name registry.
+- [ ] **UID injection.** The sketch writes `UID:` into the `Bar` block. Recommendation: only into a block that has a `Name:`, and only when the user asks for stable identity (Layout Rules item 12 stays).
+- [ ] **`Border: [ Color: ..., Thickness: ... ]`.** Keys inside `[ ]` break the rule that `[ ]` is a list and `{ }` a block. Recommendation: write `Border { Color: "#1e1e1e", Thickness: [2, 2, 2, 2] }`.
+- [ ] **Key spelling.** `CornerRadius` or `Corner_Radius`? Recommendation: keep the decided `Corner_Radius`.
+- [ ] **Enum value case.** Capitalised (`Edge: Top`) or lowercase (`Layer: overlay`)? Recommendation: Capitalised for every enum value, because the sketch uses it throughout and it reads the same as the keys; this reverses D13's "enum values lowercase" and needs a pass over the notes.
+- [ ] **Bar geometry keys.** `Width`, `Height`, `Edge`, `Alignment`, `Offset` against the accepted `Edge`, `Span`, `Length`, `Thickness`, `Anchor`, `Size`, `Margin`, `Exclusive_Zone` ([[Bar]], [[Shell File]]). Recommendation: adopt the sketch's names for a Bar's placement and keep `Exclusive_Zone` and `Layer`; map them to tre's `anchor`, `margin` and `size` in the shell. Decide how a full-width Bar is written (`Width: 100%`).
+- [ ] **`Flex` and `Grid` on every block.** The sketch gives the Bar its own `Flex` property and `Grid { }` block; [[Building Blocks]] has `Box`, `FlexBox` and `Grid` as blocks. Recommendation: keep the blocks and let a surface or module hold one layout child; do not add layout properties to every block.
+- [ ] **Trailing comments.** `Key: value   # note` needs a rule, or the comment becomes part of the value. Recommendation: a `#` after whitespace ends an unquoted value and starts a comment; a value that needs `#` is quoted.
+- [ ] **`import:` and `Import:`.** Recommendation: only `Import`.
+- [ ] **Margin and Padding meanings.** `Padding` inside, `Margin` outside the block, as in the comments. The Bar spec's `Margin` is the offset from the anchored edge. Recommendation: one meaning (outside space) and a separate key for the edge offset (`Offset`).
 
 ## Links
 
