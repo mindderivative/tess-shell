@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-10-30 |
-| Last change         | [[ADR-0014 Shell File Language]]: all open items decided as recommended (D1 to D24); folder renamed to `41 TDL Reference`; decisions applied across the notes |
+| Last change         | [[ADR-0014 Shell File Language]]: second-sketch decisions D25 to D36 recorded; [[TDL Language]] rewritten as the TDL definition |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | Your second TDL sketch ([[ADR-0014 Shell File Language#Second Layout Sketch (Maintainer, 2026-10-30)]]): 16 questions, mainly whether TDL is shared with Tesserae UI and where the file type lives; then carry T17 to T19 to the TEL project |
+| Waiting on you      | Say go for a third rewrite pass (root block as file type, upper-case enums, Bar `Width`/`Height`/`Edge`, version pins, name rules) and confirm the readings under [[ADR-0014 Shell File Language#Second-Sketch Decisions (2026-10-30)]]; carry T17 to T19 to the TEL project |
 | Next                | Plasma coexistence, the D-Bus service layer, portals, global shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-30 | Second-sketch decisions D25 to D36 (TDL its own project, root block as file type, upper-case enums, name rules); [[TDL Language]] rewritten |
 | 2026-10-30 | [[ADR-0014 Shell File Language]] open items decided (D1 to D24); `41 YAML Reference` renamed `41 TDL Reference`; decisions applied to the notes |
 | 2026-10-29 | Second TDL pass over the vault; [[TDL Language]] added; `?:` conditional proposed as T19 |
 | 2026-10-29 | [[ADR-0014 Shell File Language]] layout rules decided: `---` metadata, file-type key, block head as type, `Monitor` with `Index:` |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-29 | [[ADR-0014 Shell File Language]] grammar answers recorded: `.tdl`, `50%`, `rgba(0 0 0 0)`, repeated names, TextMate grammar |
 | 2026-10-29 | [[ADR-0014 Shell File Language]] accepted (TDL replaces YAML); [[Shell File Syntax Comparison]] written |
 | 2026-10-29 | Proposed key names accepted across the specs; namespace `tesserae-shell.<kind>.<name>` decided |
-| 2026-10-29 | [[KWin Integration]] answers applied; KWin script test run |
 
 ## Go to
 
