@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-29
 tags: [adr, architecture, needs-verification]
 related: ["[[ADR-0006 Shell Independent of Tesserae UI]]", "[[V1 Scope]]", "[[Goals and Non-Goals]]"]
 depends_on: ["[[ADR-0006 Shell Independent of Tesserae UI]]"]
@@ -18,6 +18,9 @@ depends_on: ["[[ADR-0006 Shell Independent of Tesserae UI]]"]
 
 > [!success] Accepted 2026-10-25
 > The maintainer chose Option A.
+
+> [!warning] View format partly superseded by [[ADR-0014 Shell File Language]] (2026-10-29)
+> Shell files are written in the Tesserae Data Language (TDL), not YAML. The YAML examples and `*.yaml` names below show the keys and structure as decided; the file format and extension change. The decisions on keys, modules, names, UIDs and the registry stand.
 
 ## Context
 

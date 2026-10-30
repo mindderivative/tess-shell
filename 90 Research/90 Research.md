@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-29
 tags: [moc, research]
 related: ["[[Index]]", "[[AGENTS]]"]
 depends_on: []
@@ -21,3 +21,4 @@ depends_on: []
 | [[D-Bus Libraries for Python]] | Python D-Bus clients compared; recommendation `dbus-fast` on a shared asyncio thread                  | draft  |
 | [[Logging with Loguru]] | Loguru as the candidate for the shell's logging, warnings and errors                                  | draft  |
 | [[Expression Languages for YAML]] | Jinja2, jinjyaml and safe evaluators for the shell's expression language                              | draft  |
+| [[Shell File Syntax Comparison]] | The same small shell in YAML, TDL and KDL; led to [[ADR-0014 Shell File Language]]                    | draft  |

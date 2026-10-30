@@ -62,7 +62,7 @@ Operating rules for agents: [[AGENTS]].
 | [[ADR-0011 JSON Schema for Shell Files]] | accepted (2026-10-27)  | YAML reference, runtime validation, tooling        |
 | [[ADR-0012 Keeping the Shell Above Plasma Panels]] | accepted (2026-10-27)  | Bar, Frame, KWin integration, delivery             |
 | [[ADR-0013 Control Interface]] | accepted (2026-10-28)  | IPC and CLI, the KWin script, Shell Start and Stop |
-| [[ADR-0014 Shell File Language]] | proposed (2026-10-29)  | YAML reference, Python Builder, JSON Schema tooling |
+| [[ADR-0014 Shell File Language]] | accepted (2026-10-29)  | YAML reference, Python Builder, JSON Schema tooling |
 | [[ADR-0003 Process Model]] | accepted (2026-10-25)  | Architecture, runtime, quality                     |
 | [[ADR-0004 Plasma Coexistence]] | accepted (2026-10-25)  | Integration specs                                  |
 | [[ADR-0005 Global Shortcuts]] | accepted (2026-10-25)  | Launcher, integration specs                        |
