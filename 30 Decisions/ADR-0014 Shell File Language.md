@@ -180,6 +180,26 @@ Still open, from the answers:
 - [x] **The rewrite pass** began 2026-10-29 (maintainer): breadth first through the vault tree, each level before the next. `settings.yaml` becomes `settings.tdl`: the agent's assumption, since the settings file is a shell file type; confirm. The folder `41 YAML Reference` keeps its name until the maintainer decides a rename (a move needs approval).
 - [ ] **Two readings to confirm** from "What TDL Is" items 14 and 15: syntax words are special only in key position, and spaces around `{` and after `:` are optional.
 
+Raised while rewriting the notes for TDL (2026-10-29). Each is also an open item in the note that hit it; the agent took the shown default in the examples and the maintainer has not decided:
+
+- [ ] **Literals not defined.** Booleans (`true`, `false`), null, and an empty list `[]`. The examples use `true` and `false`. Decide, and say whether the parser types bare words or the key's schema does.
+- [ ] **Names.** Is a block's name only the word before the brace (`root dp1_root { }`, `Clock { }`), or can a `name:` key also give it? Affects module calls, the root header and the path-name rule. The notes keep a `name:` property where YAML had one.
+- [ ] **Unnamed blocks as list items** (`[{color: "#000", x: 0}]`), as shadows and elevation need. Alternative: a repeated named block per item.
+- [ ] **Numeric keys** (`elevation { 1: ... }`, the `space` scale 1 to 8). Alternative: named levels.
+- [ ] **Stylesheet selectors** (`.warning`, `#clock_label`, `Button:hovered`, `Slider::track`) cannot be block names, because `#` starts a comment and `:` makes a property. Options: quoted names, or a separate selector form.
+- [ ] **Percent plus pixels.** Is there a TDL form for tre's `calc(100% - 16)`?
+- [ ] **Named sides** (`thickness {top: 8, left: 24}`, `border_thickness`). Assumed: a block with named keys.
+- [ ] **One-line blocks** such as `params { format { type: string, default: "" } }` and an empty block `Spacer { }`. Assumed allowed.
+- [ ] **A repeated property key in one block:** an error, or last wins? Repeated block names are allowed; repeated keys are not covered.
+- [ ] **How the UID write edits the file:** patch the text at the tree node's position, or print the tree back out. Both keep comments.
+- [ ] **Several `root` blocks in one file,** or one file per monitor (already open in [[Shell File]]).
+- [ ] **TEL's structure role.** [[ADR-0008 Tesserae Expression Language]] says TEL owns "structure and values" and its requirements T3 and T8 give it conditions and repeats; this ADR gives `if` and `for` to TDL. Decide whether TEL keeps any structure role, and which component builds and rebuilds those branches (the parser, the shell model or TEL) ([[Layers and Components]]).
+- [ ] **ADR-0011.** Whether it stands for load-time validation only, is superseded, or is rewritten; which editor feedback is wanted after v1; whether `schemas/` is still written to disk now that no modeline points at it; and the shape of the parsed tree when names repeat ([[JSON Schema and Editor Support]]).
+- [ ] **Rename of the folder `41 YAML Reference`** and the note type `yaml-ref`. A move needs your approval; every note says "rename pending".
+- [ ] **`ctx.yaml()`** in the module context ([[Module Context]]): rename (for example `ctx.file`) or keep.
+- [ ] **Python builder** signatures for `If` and `For` and whether comments count in the parity test ([[Python Builder]]).
+- [ ] **`$color.surface` style tokens** (see [[Style Schema]]) against "no variables": the agent treated them as plain strings the shell resolves.
+
 ## Links
 
 - [[ADR-0007 Shell UI Layer]] · [[ADR-0008 Tesserae Expression Language]] · [[ADR-0011 JSON Schema for Shell Files]] · [[Expression Language Requirements]] · [[Python Builder]] · [[Shell File Syntax Comparison]] · [[Prior Art - Linux Shell Surfaces]] · [[30 Decisions]]

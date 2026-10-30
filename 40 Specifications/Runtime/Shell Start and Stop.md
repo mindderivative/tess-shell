@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-10-29
 tags: [spec/runtime, needs-verification]
 related: ["[[Runtime]]", "[[Process Model and Threading]]", "[[Data Flow]]", "[[Settings File]]", "[[Config Discovery and Registry]]", "[[Validation and Errors]]", "[[Hot Reload]]", "[[TRE-REQ-005 Keep-Alive and Loop Stop]]", "[[ADR-0003 Process Model]]"]
 depends_on: ["[[ADR-0003 Process Model]]", "[[Settings File]]", "[[TRE-REQ-005 Keep-Alive and Loop Stop]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0003 Process Model]]", "[[Settings File]]", "[[TRE-REQ-005 K
 # Shell Start and Stop
 
 > [!summary]
-> The order in which the shell starts, what stops it from starting, how it runs with no windows, and how it stops. It is the runtime view of what [[Process Model and Threading]] and [[Data Flow]] sketch. Decided: one process and one tre loop ([[ADR-0003 Process Model]]), `settings.yaml` read first and a bad one stops the shell ([[Settings File]]), `run(keep_alive=True)` and `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]), stay idle with no windows. Everything else here is proposed, with a recommendation.
+> The order in which the shell starts, what stops it from starting, how it runs with no windows, and how it stops. It is the runtime view of what [[Process Model and Threading]] and [[Data Flow]] sketch. Decided: one process and one tre loop ([[ADR-0003 Process Model]]), `settings.tdl` read first and a bad one stops the shell ([[Settings File]]; the `.tdl` name of the settings file is an assumption to confirm, [[ADR-0014 Shell File Language#Open Items]]), `run(keep_alive=True)` and `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]), stay idle with no windows. Everything else here is proposed, with a recommendation.
 
 ## Purpose and Scope
 
@@ -42,7 +42,7 @@ depends_on: ["[[ADR-0003 Process Model]]", "[[Settings File]]", "[[TRE-REQ-005 K
 ```mermaid
 flowchart TD
     a[1 Pre-flight: Python, tre, Wayland] --> b[2 Find the config directory]
-    b --> c[3 Read settings.yaml]
+    b --> c[3 Read settings.tdl]
     c --> d[4 Start logging]
     d --> e[5 Take the instance lock]
     e --> f[6 Open the registry]
@@ -59,11 +59,11 @@ flowchart TD
 |------------------------------|------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
 | 1. Pre-flight                | Python 3.14 or later; tre 0.5.9 or later (the Frame needs `hit_shape`); a Wayland session; a valid `XDG_RUNTIME_DIR` (above) | [[Frame#Failure modes and recovery]], [[Surface Types]] | Stop, code 2, a message naming the missing version or the environment                   |
 | 2. Config directory          | `$XDG_CONFIG_HOME/tesserae-shell/` if set, non-empty and absolute, else `$HOME/.config/tesserae-shell/`                      | [[Settings File#The config directory]]                                          | If it does not exist, create it with the default folders (decided 2026-10-28)           |
-| 3. Settings                  | Read `settings.yaml`; expand `~` and variables; check paths                                                                  | [[Settings File]]                                          | Stop, code 1, error on the console and in the default log directory                     |
+| 3. Settings                  | Read `settings.tdl`; expand `~` and variables; check paths                                                                  | [[Settings File]]                                          | Stop, code 1, error on the console and in the default log directory                     |
 | 4. Logging                   | Start Loguru with the `logging` keys, or the defaults                                                                        | [[Settings File#Log files]]                                          | Fall back to the console only and say so; do not stop                                   |
 | 5. Lock                      | Take the instance lock                                                                                                       | This note                                                                        | Another shell runs: stop, code 4                                                        |
 | 6. Registry                  | Open `registry.json` at the configured path; create an empty one if missing; rebuild records from file UIDs when needed      | [[Config Discovery and Registry]]                                          | A registry that cannot be read or written: stop, code 1                                 |
-| 7. Discover, parse, validate | Find files, parse YAML, check the schema and the semantic rules, follow `import:`                                            | [[Validation and Errors]]                                          | Collect every error, then stop, code 1                                                  |
+| 7. Discover, parse, validate | Find files, parse TDL, check the schema and the semantic rules, follow `import:`                                            | [[Validation and Errors]]                                          | Collect every error, then stop, code 1                                                  |
 | 8. Resolve and compile       | Resolve name references through the registry; compile TEL expressions                                                        | [[ADR-0008 Tesserae Expression Language]]                                          | Stop, code 1                                                                            |
 | 9. Loop                      | `App.run(keep_alive=True)` starts the loop with zero windows; output events and `call_soon` work                             | [[TRE-REQ-005 Keep-Alive and Loop Stop]]                                          | tre older than 0.5.9: caught in step 1                                                  |
 | 10. Model                    | Read `App.outputs()`, match `monitor:` entries, build the shell model                                                        | [[V1 Scope#Multi-monitor]], [[Data Flow#Monitor hot-plug]] | A root that matches no monitor is ignored                                               |
@@ -115,7 +115,7 @@ The codes are decided (2026-10-28). Codes 3 and 5 to 69 are left free for later 
 
 ## Configuration
 
-Start and stop read `settings.yaml` keys only: `directories`, `registry`, `logging`, `validation`, `main_shell` ([[Settings File]]). Proposed additions, to settle while building: `stop_timeout` (default 10 seconds) and `module_stop_timeout` (default 3 seconds). No other key.
+Start and stop read `settings.tdl` keys only: `directories`, `registry`, `logging`, `validation`, `main_shell` ([[Settings File]]). Proposed additions, to settle while building: `stop_timeout` (default 10 seconds) and `module_stop_timeout` (default 3 seconds). No other key.
 
 ## Python Contract
 
@@ -171,8 +171,8 @@ All seven were answered on 2026-10-28.
 
 ## Acceptance Criteria
 
-- [ ] With no `settings.yaml`, the shell starts from the default folders and the surfaces open.
-- [ ] With an invalid `settings.yaml`, the shell exits with code 1, prints the error with `file:line:column` and writes it to `logs/`, and opens no surface.
+- [ ] With no `settings.tdl`, the shell starts from the default folders and the surfaces open.
+- [ ] With an invalid `settings.tdl`, the shell exits with code 1, prints the error with `file:line:column` and writes it to `logs/`, and opens no surface.
 - [ ] With tre older than 0.5.9, the shell exits with code 2 and names the required version.
 - [ ] With `XDG_RUNTIME_DIR` unset, empty or relative, the shell exits with code 2 and names the variable; with a directory owned by another user it exits with code 2; with a mode other than 0700 it warns and starts.
 - [ ] The lock file sits in `$XDG_RUNTIME_DIR/tesserae-shell/` (mode 0700) with the sticky bit set.

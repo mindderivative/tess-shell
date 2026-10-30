@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-29
 tags: [spec/surface, needs-verification]
 related: ["[[Surfaces]]", "[[Surface Types]]", "[[Shell File]]", "[[Common Keys and Conventions]]", "[[Shell Structure]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 # Panel
 
 > [!summary]
-> The Panel (`kind: panel`) is the multi-purpose surface. It can attach to the Frame, a Bar or another surface by naming it, or float free. It can be moved with the mouse, anchored, hidden and animated, and it can sit on the Bottom, Top or Overlay layer. The OSD, the desktop widget, the launcher and the slide-in panel are all Panels. A Panel is a tre `LayerWindow`; it may become the baseline other kinds build on. The decisions are the maintainer's ([[Surface Types]], [[ADR-0007 Shell UI Layer]]); the key names were accepted by the maintainer on 2026-10-29 (many mirror tre's settings). YAML is illustration.
+> The Panel (`kind: panel`) is the multi-purpose surface. It can attach to the Frame, a Bar or another surface by naming it, or float free. It can be moved with the mouse, anchored, hidden and animated, and it can sit on the Bottom, Top or Overlay layer. The OSD, the desktop widget, the launcher and the slide-in panel are all Panels. A Panel is a tre `LayerWindow`; it may become the baseline other kinds build on. The decisions are the maintainer's ([[Surface Types]], [[ADR-0007 Shell UI Layer]]); the key names were accepted by the maintainer on 2026-10-29 (many mirror tre's settings). The examples are TDL illustrations ([[ADR-0014 Shell File Language]]).
 
 ## Purpose and Scope
 
@@ -72,7 +72,7 @@ stateDiagram-v2
 - `gap` is the true visible gap, borders included: the distance between the Panel's outer border edge and the target's outer edge. A Panel with a 2 px border and a target with none, with `gap: 10`, has exactly 10 px between them. The shell subtracts the border from the offset it computes, and ignores a shadow margin, which is transparent ([[ADR-0010 Surface Shadows]]).
 - `align` runs along the edge: for `attach: left` or `right`, `start` lines up the top edges, `center` the middles and `end` the bottom edges; for `attach: top` or `bottom`, `start` lines up the left edges and `end` the right edges (the second half is by analogy).
 
-```yaml
+```
 attach_to: top_bar
 attach: left
 align: start
@@ -157,50 +157,63 @@ Keys of a Panel entry. Decided keys are from [[Common Keys and Conventions]]; pr
 
 ### The Four Uses
 
-```yaml
-children:
-    volume_osd:                       # OSD: brief, click-through, on the overlay layer
-        kind: panel
-        layer: overlay
-        anchor: [bottom]
-        margin: [0, 0, 80, 0]
-        size: [260, 60]
-        input_region: []
-        hide_after: 1500
-        children:
-            - ProgressBar:
-                value: "{{ volume }}"
-    clock_widget:                     # desktop widget: movable, position saved
-        kind: panel
-        layer: bottom
-        anchor: [top, left]
-        margin: [40, 0, 0, 40]
-        movable: true
-        children:
-            - Clock:
-    launcher:                         # launcher: overlay layer, exclusive keyboard
-        kind: panel
-        layer: overlay
-        keyboard: exclusive
-        size: [600, 400]
-        hidden: true
-        children:
-            - TextInput:
-            - List:
-    side_panel:                       # slide-in panel attached to a bar
-        kind: panel
-        layer: top
-        attach_to: top_bar
-        attach: bottom
-        align: end
-        gap: 8
-        hidden: true
-        animation: {type: slide, duration: 200}
-        children:
-            - Slider:
+```
+# OSD: brief, click-through, on the overlay layer
+volume_osd {
+    kind: panel
+    layer: overlay
+    anchor: [bottom]
+    margin: [0, 0, 80, 0]
+    size: [260, 60]
+    input_region: []
+    hide_after: 1500
+    children {
+        ProgressBar { value: {{ volume }} }
+    }
+}
+
+# desktop widget: movable, position saved
+clock_widget {
+    kind: panel
+    layer: bottom
+    anchor: [top, left]
+    margin: [40, 0, 0, 40]
+    movable: true
+    children {
+        Clock { }
+    }
+}
+
+# launcher: overlay layer, exclusive keyboard
+launcher {
+    kind: panel
+    layer: overlay
+    keyboard: exclusive
+    size: [600, 400]
+    hidden: true
+    children {
+        TextInput { }
+        List { }
+    }
+}
+
+# slide-in panel attached to a bar
+side_panel {
+    kind: panel
+    layer: top
+    attach_to: top_bar
+    attach: bottom
+    align: end
+    gap: 8
+    hidden: true
+    animation { type: slide, duration: 200 }
+    children {
+        Slider { }
+    }
+}
 ```
 
-An illustration only: the module params (`value`, a Slider's params) and the expression syntax are not designed here.
+An illustration only: the module params (`value`, a Slider's params) are not designed here, and the module-use syntax is pending ([[Shell File]]). The `true` in `movable: true` assumes a boolean literal, which ADR-0014 does not yet define (open).
 
 ## Python Contract
 

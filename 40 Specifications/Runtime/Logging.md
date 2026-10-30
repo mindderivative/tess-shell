@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-10-29
 tags: [spec/runtime, needs-verification]
 related: ["[[Runtime]]", "[[Logging with Loguru]]", "[[Settings File]]", "[[Validation and Errors]]", "[[Shell Start and Stop]]", "[[IPC and CLI]]", "[[Module Context]]", "[[Process Model and Threading]]"]
 depends_on: ["[[Settings File]]", "[[Logging with Loguru]]"]
@@ -34,8 +34,8 @@ Loguru, one process-wide logger ([[Logging with Loguru]]). Checked on this machi
 | File    | `log_yyyy-mm-dd.log` in the log directory | One line per record, plain text, no colour         | Always, once the log directory is usable |
 | Console | stderr                                    | The same line, in colour when stderr is a terminal | Always; shorter under systemd            |
 
-- **Started at step 4** of the start sequence, after `settings.yaml` is read ([[Shell Start and Stop#Start sequence]]). Until then, and if the file sink cannot start (a read-only directory), records go to the console only and the shell says so; it does not stop ([[Shell Start and Stop]]).
-- If `settings.yaml` fails, the error goes to the console and to the default log directory, `logs/` in the config directory ([[Settings File#A bad settings file stops the shell]]).
+- **Started at step 4** of the start sequence, after `settings.tdl` is read ([[Shell Start and Stop#Start sequence]]). Until then, and if the file sink cannot start (a read-only directory), records go to the console only and the shell says so; it does not stop ([[Shell Start and Stop]]).
+- If `settings.tdl` fails, the error goes to the console and to the default log directory, `logs/` in the config directory ([[Settings File#A bad settings file stops the shell]]).
 - **The file sink swaps at local midnight:** a loop timer fires once a day, adds the next day's sink and removes the old one. It is the only periodic wake the logger adds. A restart on the same day appends ([[Settings File#Log files]]).
 - **Permissions.** The log directory is created with mode 0700 and files with 0600: records name files, modules and surfaces (decided 2026-10-28).
 - **Under systemd** the console line can drop the timestamp, because the journal adds its own. The shell uses the environment variable `JOURNAL_STREAM`, which systemd sets for a service whose output goes to the journal, to decide (decided 2026-10-28). #needs-verification of the variable's meaning in `systemd.exec(5)`.
@@ -50,14 +50,14 @@ Loguru, one process-wide logger ([[Logging with Loguru]]). Checked on this machi
 | `ERROR`      | A failure the shell survives: a validation `error` on a reload, a module that raised, a surface that failed to open    |
 | `CRITICAL`   | The shell cannot continue: an unhandled exception outside a callback (exit code 70)                                    |
 
-`TRACE` and `SUCCESS` are not used. A validation finding's `severity` maps to the same-named level, so the log and the console agree ([[Validation and Errors#The error record]]). The default level is `INFO` (`logging.level`, [[Settings File]]); the `--verbose` option of the command line is `DEBUG` for that run. `SetLogLevel` changes the level until the next reload of `settings.yaml`, which applies the file's `level` again ([[IPC and CLI]]).
+`TRACE` and `SUCCESS` are not used. A validation finding's `severity` maps to the same-named level, so the log and the console agree ([[Validation and Errors#The error record]]). The default level is `INFO` (`logging.level`, [[Settings File]]); the `--verbose` option of the command line is `DEBUG` for that run. `SetLogLevel` changes the level until the next reload of `settings.tdl`, which applies the file's `level` again ([[IPC and CLI]]).
 
 ### The Record
 
 One line, in this order, separated by ` | `:
 
 ```
-2026-10-28 09:14:03.512 | ERROR   | shell | Shells/Main_Shell.yaml:12:9 unknown-key | unknown style key 'colour' on bar 'top_bar'
+2026-10-28 09:14:03.512 | ERROR   | shell | Shells/Main_Shell.tdl:12:9 unknown-key | unknown style key 'colour' on bar 'top_bar'
 2026-10-28 09:14:04.001 | INFO    | module:Clock | - | started with 2 uses
 ```
 
@@ -106,7 +106,7 @@ Loguru's sinks are safe to call from any thread. The loop thread must not block 
 
 ## Configuration
 
-`logging` in `settings.yaml` ([[Settings File]]):
+`logging` in `settings.tdl` ([[Settings File]]):
 
 | Key              | Meaning                                                 | Status                              |
 |------------------|---------------------------------------------------------|-------------------------------------|
@@ -181,7 +181,7 @@ All nine were answered on 2026-10-28, as recommended.
 - [ ] With `logging.diagnose: true` a traceback shows variable values; with it off it does not.
 - [ ] With the shell running across local midnight, the next record goes to the new day's file and the old file is whole.
 - [ ] With the log directory read-only, the shell starts, warns, and writes to the console.
-- [ ] `tesserae-shell log-level debug` makes `DEBUG` records appear until `settings.yaml` is reloaded.
+- [ ] `tesserae-shell log-level debug` makes `DEBUG` records appear until `settings.tdl` is reloaded.
 - [ ] A burst of 10,000 log calls from a module thread does not delay the loop by more than a frame (measured).
 - [ ] After a normal stop, the last record written before stop is in the file.
 - [ ] An unhandled exception on a module thread is logged at `CRITICAL` before the process ends.

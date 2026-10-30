@@ -125,7 +125,7 @@ KWin is the Wayland compositor. If it exits, tre's connection drops, its windows
 
 ## Configuration
 
-`settings.yaml` (proposed, the settings list is deferred, [[Settings File]]):
+`settings.tdl` (proposed, the settings list is deferred, [[Settings File]]):
 
 | Key | Meaning | Default |
 |---|---|---|

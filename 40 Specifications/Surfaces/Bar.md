@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-29
 tags: [spec/surface, needs-verification]
 related: ["[[Surfaces]]", "[[Surface Types]]", "[[Panel]]", "[[Frame]]", "[[Shell File]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 # Bar
 
 > [!summary]
-> The Bar (`kind: bar`) is a surface attached to one screen edge that reserves space, so maximised windows stop short of it. It can span the whole edge, touching three edges (its own and the two across it), or be shorter and sit at a position along the edge. A dock, a top bar and a side bar are all Bars. A Bar can have margins and then looks as if it floats, but it is still attached to its edge: the margin space is reserved, so it behaves as if the Bar were flush (maintainer, 2026-10-27). A surface that is not attached to an edge and reserves nothing is a Panel. It is highly customisable: size, position, margins, animation, hidden state, background, borders, rounded corners, shadows with elevation and colour, and transparency. A Bar is a tre `LayerWindow` anchored to an edge. The decisions are the maintainer's ([[Surface Types]]); the key names were accepted by the maintainer on 2026-10-29 (many mirror tre's settings). YAML is illustration.
+> The Bar (`kind: bar`) is a surface attached to one screen edge that reserves space, so maximised windows stop short of it. It can span the whole edge, touching three edges (its own and the two across it), or be shorter and sit at a position along the edge. A dock, a top bar and a side bar are all Bars. A Bar can have margins and then looks as if it floats, but it is still attached to its edge: the margin space is reserved, so it behaves as if the Bar were flush (maintainer, 2026-10-27). A surface that is not attached to an edge and reserves nothing is a Panel. It is highly customisable: size, position, margins, animation, hidden state, background, borders, rounded corners, shadows with elevation and colour, and transparency. A Bar is a tre `LayerWindow` anchored to an edge. The decisions are the maintainer's ([[Surface Types]]); the key names were accepted by the maintainer on 2026-10-29 (many mirror tre's settings). The examples are TDL illustrations ([[ADR-0014 Shell File Language]]).
 
 ## Purpose and Scope
 
@@ -90,39 +90,45 @@ A Bar belongs to a root, and so to one monitor ([[Shell File]]). A Bar defined o
 | `text_rotation`     | Rotate text on a vertical Bar; default off                                                                                                        | Decided (opt-in, 2026-10-27); key accepted 2026-10-29                       |
 | `animation`         | Slide or fade, with a duration                                                                                                                    | Decided (key name accepted 2026-10-29)                                      |
 
-```yaml
-children:
-    top_bar:
-        kind: bar
-        layer: top
-        edge: top
-        span: expanded
-        thickness: 32
-        reserve: true
-        style: TopBar_Style.yaml
-        children:
-            - FlexBox:
-                alignment: horizontal
-                children:
-                    - Workspaces:
-                    - Spacer:
-                    - Clock:
-                    - Spacer:
-                    - Tray:
-    dock:
-        kind: bar
-        layer: top
-        edge: bottom
-        span: absolute
-        length: 560
-        thickness: 64
-        margin: [0, 0, 8, 0]
-        reserve: true
-        children:
-            - Tasks:
+```
+top_bar {
+    kind: bar
+    layer: top
+    edge: top
+    span: expanded
+    thickness: 32
+    reserve: true
+    style: TopBar_Style.tdl
+    children {
+        FlexBox {
+            alignment: horizontal
+            children {
+                Workspaces { }
+                Spacer { }
+                Clock { }
+                Spacer { }
+                Tray { }
+            }
+        }
+    }
+}
+
+dock {
+    kind: bar
+    layer: top
+    edge: bottom
+    span: absolute
+    length: 560
+    thickness: 64
+    margin: [0, 0, 8, 0]
+    reserve: true
+    children {
+        Tasks { }
+    }
+}
 ```
 
-An illustration only. The module names (Workspaces, Tray, Tasks) are v1 modules whose specs are not written; `length` and `reserve` are proposals.
+An illustration only. The module names (Workspaces, Tray, Tasks) are v1 modules whose specs are not written; `length` and `reserve` are proposals. `reserve: true` assumes a boolean literal, which ADR-0014 does not yet define (open), and the module-use syntax is pending ([[Shell File]]).
 
 ## Python Contract
 

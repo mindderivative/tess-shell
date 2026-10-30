@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-10-29
 tags: [spec/runtime, needs-verification]
 related: ["[[Runtime]]", "[[Data Flow]]", "[[Process Model and Threading]]", "[[Validation and Errors]]", "[[Config Discovery and Registry]]", "[[Settings File]]", "[[Module Contract]]", "[[Shell Start and Stop]]"]
 depends_on: ["[[Validation and Errors]]", "[[Config Discovery and Registry]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[Validation and Errors]]", "[[Config Discovery and Registry]]"]
 # Hot Reload
 
 > [!summary]
-> The shell watches its files and applies a change to the running shell without a restart. A watcher thread notices a change, reads, parses and validates it, and hands a finished result to the loop, which applies the difference: it changes live properties in place and reopens a window only when a property cannot change live. A bad file leaves the old state running. Decided: hot reload exists, a bad file keeps the old state, a changed module `.py` reloads at runtime, `settings.yaml` applies `logging` at once and needs a restart for `directories` and `main_shell`, and the shell's own UID write must not cause a loop ([[Data Flow#Hot reload]], [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], [[Settings File]]). The mechanics below are proposals with recommendations.
+> The shell watches its files and applies a change to the running shell without a restart. A watcher thread notices a change, reads, parses (with the shell's TDL parser, [[ADR-0014 Shell File Language]]) and validates it, and hands a finished result to the loop, which applies the difference: it changes live properties in place and reopens a window only when a property cannot change live. A bad file leaves the old state running. Decided: hot reload exists, a bad file keeps the old state, a changed module `.py` reloads at runtime, `settings.tdl` applies `logging` at once and needs a restart for `directories` and `main_shell`, and the shell's own UID write must not cause a loop ([[Data Flow#Hot reload]], [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], [[Settings File]]). The name `settings.tdl` is an assumption pending maintainer confirmation. The mechanics below are proposals with recommendations.
 
 ## Purpose and Scope
 
@@ -25,9 +25,9 @@ depends_on: ["[[Validation and Errors]]", "[[Config Discovery and Registry]]"]
 
 ### What is Watched
 
-- Every directory that can hold a shell file: the config directory's `Shells/`, `Modules/` (and the module folders in it), `Styles/`, `Themes/`, `Stylesheets/`, the directories `settings.yaml` names, and `settings.yaml` itself ([[Settings File]]). `schemas/`, `logs/` and `backups/` are not watched.
+- Every directory that can hold a shell file: the config directory's `Shells/`, `Modules/` (and the module folders in it), `Styles/`, `Themes/`, `Stylesheets/`, the directories `settings.tdl` names, and `settings.tdl` itself ([[Settings File]]). `schemas/`, `logs/` and `backups/` are not watched.
 - A change to an imported file is a change to every file that imports it: the shell keeps a map from each file to its importers and reloads the whole affected set together.
-- Watching is on by default. A key `hot_reload: false` in `settings.yaml` turns it off; a manual reload still works (the key is decided 2026-10-28; the rest of the settings list is deferred to the build, [[Settings File]]).
+- Watching is on by default. A key `hot_reload: false` in `settings.tdl` turns it off; a manual reload still works (the key is decided 2026-10-28; the rest of the settings list is deferred to the build, [[Settings File]]).
 
 ### How a Change is Noticed
 
@@ -70,7 +70,7 @@ sequenceDiagram
 The new model is compared with the current one to decide what to change. Decided 2026-10-28: match by identity, then by name, then by position.
 
 - **By identity.** A file by its UID; a named entry (a surface, a module use, a popup) by its unique name within its file ([[Config Discovery and Registry#Identity and UIDs]]).
-- **By position.** A list item without a `name:` is named from its position (`Label_1`) ([[ADR-0007 Shell UI Layer#Open items]]), so reordering unnamed items looks like changes. The note says so and suggests naming items that must survive a reorder. Open question 1.
+- **By position.** A block that repeats a name in one `children { }` is named from its position (`Label_1`, `Label_2`) ([[ADR-0007 Shell UI Layer#Open items]]), so reordering such blocks looks like changes. The note says so and suggests giving blocks that must survive a reorder their own names. Open question 1.
 - An entry that is new is created; one that is gone is closed; one that matches is compared property by property.
 
 ### What is Applied Live and what Reopens
@@ -80,15 +80,15 @@ The new model is compared with the current one to decide what to change. Decided
 | A tre layer-window property: `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard`, `input_region` | Set live in one commit ([[TRE-REQ-001 Layer Surface Window#Proposed API]])                                                                                                                                                                                                                            |
 | `namespace` or `output` (the monitor)                                                                                            | The window is closed and created again; they are constructor-only                                                                                                                                                                                                                           |
 | A node property, a style value, a token, a theme                                                                                 | Set on the nodes; tre redraws only what changed                                                                                                                                                                                                                                             |
-| A module's YAML only                                                                                                             | The module's layout is rebuilt; the module's `reload()` hook runs and the instance stays ([[Module Contract#Lifecycle]])                                                                                                                                                          |
+| A module's TDL only                                                                                                             | The module's layout is rebuilt; the module's `reload()` hook runs and the instance stays ([[Module Contract#Lifecycle]])                                                                                                                                                          |
 | A module's `.py`                                                                                                                 | Code reload: import the new code and check it has the class, then `stop` the old instance and join its threads, purge the module's own modules from `sys.modules`, create the new instance and `start` it; a failed import keeps the old instance ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]) |
 | A change to a Popup entry                                                                                                        | An open Popup is closed; the next open uses the new definition ([[Popup]])                                                                                                                                                                                    |
-| `settings.yaml`: `logging`                                                                                                       | Applied at once                                                                                                                                                                                                                                                                             |
-| `settings.yaml`: `directories`, `main_shell`, `registry`                                                                         | Reported as needing a restart; nothing changes until then ([[Settings File]])                                                                                                                                                                                         |
+| `settings.tdl`: `logging`                                                                                                       | Applied at once                                                                                                                                                                                                                                                                             |
+| `settings.tdl`: `directories`, `main_shell`, `registry`                                                                         | Reported as needing a restart; nothing changes until then ([[Settings File]])                                                                                                                                                                                         |
 
 ### State that Survives
 
-- A module instance survives a YAML-only change, and its last sent values stay in the value store until the new instance sends ([[Data Flow#Hot reload]]).
+- A module instance survives a TDL-only change, and its last sent values stay in the value store until the new instance sends ([[Data Flow#Hot reload]]).
 - A Panel's visibility (shown, hidden, collapsed) survives by name; a floating Panel's position is in the registry and survives ([[Panel#Position and attachment]]).
 - An open Popup does not survive a reload that touches it.
 - Animations in progress finish or jump to their end state (proposed); a reload is not animated.
@@ -102,11 +102,11 @@ The new model is compared with the current one to decide what to change. Decided
 
 ## Configuration
 
-`settings.yaml`: `hot_reload` (default true), `reload_debounce` (milliseconds, default 200). Both keys decided 2026-10-28; the global settings list is built while the shell is built ([[Settings File]]).
+`settings.tdl`: `hot_reload` (default true), `reload_debounce` (milliseconds, default 200). Both keys decided 2026-10-28; the global settings list is built while the shell is built ([[Settings File]]).
 
 ## Python Contract
 
-`reload()` is for a changed YAML configuration and does not restart the module ([[Module Contract]]). A module never watches files itself for its own config; it reads `self.ctx.config` again in `reload()`.
+`reload()` is for a changed TDL configuration and does not restart the module ([[Module Contract]]). A module never watches files itself for its own config; it reads `self.ctx.config` again in `reload()`.
 
 ## Integration
 
@@ -138,13 +138,13 @@ A reload that fails is announced by the notification as well as the log ([[Valid
 | An event storm (a build tool writes many files) | One reload after 200 ms of quiet                              |
 | A reload while another is running               | Queued; the second runs after the first with the newest files |
 | A module's new code fails to import             | The old instance keeps running; the error is logged           |
-| A change to `directories` in `settings.yaml`    | Reported as needing a restart                                 |
+| A change to `directories` in `settings.tdl`    | Reported as needing a restart                                 |
 
 ## Open Questions
 
 All seven were answered on 2026-10-28.
 
-1. [x] **The diff key:** by identity, then name, then position. Naming list items that must survive a reorder is the author's job.
+1. [x] **The diff key:** by identity, then name, then position. Giving blocks that must survive a reorder is the author's job.
 2. [x] **Watcher library:** `inotify_simple` with a 200 ms debounce.
 3. [x] **Panel state across a reload:** shown, hidden and collapsed survive by name.
 4. [x] **A failed apply:** try to restore the window, then close it and continue.
@@ -155,13 +155,13 @@ All seven were answered on 2026-10-28.
 ## Acceptance Criteria
 
 - [ ] Saving a changed style file from an editor that saves atomically updates the running surface within about 300 ms, with one reload.
-- [ ] Saving a file with a YAML error leaves the shell unchanged and reports `file:line:column`.
+- [ ] Saving a file with a TDL error leaves the shell unchanged and reports `file:line:column`.
 - [ ] Changing a Bar's `thickness` changes its reserved zone live, with one reflow of windows.
 - [ ] Changing a Panel's `monitor` closes and recreates its window.
 - [ ] Changing an imported file reloads every file that imports it, once.
-- [ ] A module's YAML change calls its `reload()` and keeps the instance; a `.py` change replaces the instance; a `.py` with a syntax error keeps the old instance.
+- [ ] A module's TDL change calls its `reload()` and keeps the instance; a `.py` change replaces the instance; a `.py` with a syntax error keeps the old instance.
 - [ ] The shell's own UID write does not trigger a reload.
-- [ ] A change to `directories` in `settings.yaml` is reported as needing a restart and changes nothing else.
+- [ ] A change to `directories` in `settings.tdl` is reported as needing a restart and changes nothing else.
 - [ ] With the watch limit exhausted, the shell warns and still reloads on `SIGHUP`.
 - [ ] A reload applies in one turn: no frame shows half the change.
 - [ ] An open Popup whose definition changed is closed.

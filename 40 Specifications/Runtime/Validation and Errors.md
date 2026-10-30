@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-10-29
 tags: [spec/runtime, needs-verification]
 related: ["[[Runtime]]", "[[Common Keys and Conventions]]", "[[JSON Schema and Editor Support]]", "[[ADR-0011 JSON Schema for Shell Files]]", "[[Config Discovery and Registry]]", "[[Hot Reload]]", "[[Shell Start and Stop]]", "[[Expression Language Requirements]]"]
 depends_on: ["[[ADR-0011 JSON Schema for Shell Files]]", "[[Common Keys and Conventions]]"]
@@ -14,12 +14,12 @@ depends_on: ["[[ADR-0011 JSON Schema for Shell Files]]", "[[Common Keys and Conv
 # Validation and Errors
 
 > [!summary]
-> Every problem the shell finds in a file is reported with the file, line and column, says what is wrong and what to write, and goes to the console and the log. Checking runs in stages, from the file's bytes to a running module. At start any error stops the shell; on a reload any error keeps the old state ([[Process Model and Threading#Lifecycle (proposed)]]). Decided: `file:line:column` ([[AGENTS#3. Layering principle]]), JSON Schema for structure ([[ADR-0011 JSON Schema for Shell Files]]), the schema cache ([[JSON Schema and Editor Support]]), a bad `settings.yaml` stops the shell ([[Settings File]]). Everything else is proposed with a recommendation.
+> Every problem the shell finds in a file is reported with the file, line and column, says what is wrong and what to write, and goes to the console and the log. Checking runs in stages, from the file's bytes to a running module. At start any error stops the shell; on a reload any error keeps the old state ([[Process Model and Threading#Lifecycle (proposed)]]). Decided: `file:line:column` ([[AGENTS#3. Layering principle]]), JSON Schema for structure ([[ADR-0011 JSON Schema for Shell Files]]), the schema cache ([[JSON Schema and Editor Support]]), a bad `settings.tdl` stops the shell ([[Settings File]]). Everything else is proposed with a recommendation.
 
 ## Purpose and Scope
 
 - One pipeline and one error format for all five file types, the settings file and the Python modules.
-- Not in this note: what the keys mean ([[41 YAML Reference]]), the JSON Schema files themselves ([[JSON Schema and Editor Support]]), and TEL's own grammar ([[Expression Language Requirements]]).
+- Not in this note: what the keys mean (the TDL reference, folder [[41 YAML Reference]], rename pending), the JSON Schema files themselves ([[JSON Schema and Editor Support]]), and TEL's own grammar ([[Expression Language Requirements]]).
 
 ## Behaviour
 
@@ -39,11 +39,11 @@ flowchart LR
 | Stage          | Checks                                                                                   | Tool                                                             | Position comes from                                                   |
 |----------------|------------------------------------------------------------------------------------------|------------------------------------------------------------------|-----------------------------------------------------------------------|
 | 1. Read        | The file opens and is UTF-8 (a byte-order mark is allowed and dropped)                   | Standard library                                                 | The file, line 1                                                      |
-| 2. Parse       | YAML syntax; no duplicate keys; only plain data (no tags that build objects)             | PyYAML's safe loader with a strict mapping rule                  | The YAML node marks                                                   |
-| 3. Header      | `shell:` present and a known version; `type:` agrees with the suffix; `UID:` well formed | The shell                                                        | The key's node                                                        |
-| 4. Schema      | Types, enums, required keys, unknown keys, value forms (colour, four-sided, size)        | `jsonschema`, draft-07 ([[ADR-0011 JSON Schema for Shell Files]]) | The node at the error's path                                          |
+| 2. Parse       | TDL syntax; the tree holds only blocks, properties, lists and literal values; `{{ }}` slots are kept as text for stage 6 | The shell's TDL parser ([[ADR-0014 Shell File Language]])        | The parser's own positions                                            |
+| 3. Header      | `TDL:` then `shell:` present with known versions; `type:` agrees with the suffix; `UID:` well formed | The shell                                                        | The key's node                                                        |
+| 4. Schema      | Types, enums, required keys, unknown keys, value forms (colour, four-sided, size)        | `jsonschema`, draft-07 ([[ADR-0011 JSON Schema for Shell Files]]) | The tree node at the error's path                                       |
 | 5. Semantic    | Rules a schema cannot say (below)                                                        | The shell                                                        | The node at the offending key or value                                |
-| 6. Expressions | TEL compiles; every name it reads is known                                               | TEL                                                              | The expression's position inside the YAML string                      |
+| 6. Expressions | TEL compiles; every name it reads is known                                               | TEL                                                              | The slot's `Origin` (file, line, column) from the parser              |
 | 7. Modules     | The `.py` imports; it holds one `Module` class; `validate_use` accepts each use          | Python                                                           | The traceback line for the `.py`; the use's node for a rejected param |
 | 8. Run time    | An expression that fails to evaluate; a module callback that raises; a tre error         | The shell                                                        | The node or module that ran                                           |
 
@@ -53,10 +53,13 @@ flowchart LR
 
 ### Parsing
 
-- PyYAML keeps the last of two equal keys silently. A test on 2026-10-28 loaded `children:` with two `Clock:` keys and got one. The shell's loader raises on a duplicate and names both lines (`duplicate key 'Clock' (first at line 2)`, at line 4). This matters because a module is called by its name as the key ([[Module File#Using a module]]).
-- The loader builds only plain data: mappings, lists, strings, numbers, booleans and null. It never constructs objects from tags, so a file cannot run code. Recommendation; it is the safe-loader rule.
-- The loader keeps the node tree beside the data, so any path in the data maps to a line and column. A spike on 2026-10-27 did this with PyYAML's `compose` marks and got errors at the right place ([[JSON Schema and Editor Support#Findings from a spike (2026-10-27)]]).
+- The parser is the shell's own, in a module that imports nothing from the shell ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 9). Its syntax errors carry `file:line:column` directly. There is no third-party parser, so no marks to translate.
+- The same block name may repeat in one `children { }`, ordered by position, so a repeated module call is not an error ([[Module File#Using a module]]). A property key repeated in one block is not decided; see Open Questions.
+- The tree holds structure and literal values only. A file cannot run code: TDL has no statements, variables or tags, and every `{{ }}` slot is handed to TEL, which is sandboxed ([[Expression Language Requirements]]).
+- The tree is lossless: it keeps comments and layout, and every node knows its line and column, so any path in the data maps to a position. This replaces the earlier YAML design, which kept PyYAML's `compose` node marks beside the data (spike of 2026-10-27, [[JSON Schema and Editor Support#Findings from a spike (2026-10-27)]]).
 - Columns are 1-based and count characters, as editors do.
+- No language server in v1, so these printed errors are the author's main feedback ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 10). A small TextMate grammar gives highlighting only.
+- Not yet defined by ADR-0014, and so open here: boolean and null literals (what stage 4 sees for `hidden: true`), and how an unquoted word becomes a number or a string for schema types.
 
 ### Semantic Checks
 
@@ -71,7 +74,7 @@ Rules a schema cannot say, with the note that owns each:
 | `exclusive_zone` only on `layer: top`; a Bar has no margin that breaks its zone; thickness forms are valid                 | [[Surface Types#Layers per kind]], [[Bar]], [[Frame]] |
 | `attach_to` and `anchor_to` resolve; a Panel's target is a surface, a module or a Panel                                    | [[Panel]], [[Popup]]                                          |
 | `auto_hide` and `reveal_key` are consistent                                                                                | [[Bar#Auto-hide (decided 2026-10-27)]]                                                                                   |
-| The Python for a module exists, next to its YAML                                                                           | [[Module File]]                                                                                   |
+| The Python for a module exists, next to its TDL                                                                           | [[Module File]]                                                                                   |
 | A file in `Shells/` and its imports agree on the monitor rule                                                              | [[Shell File#Monitors]]                                                                                   |
 
 A rule belongs to one stage. An unknown key is found by the schema (stage 4), not again by stage 5.
@@ -92,14 +95,14 @@ Every finding has the same fields:
 Printed form, as a compiler prints it, with the offending line and a caret under the column:
 
 ```
-Shells/Main_Shell.yaml:12:9: error: unknown style key 'colour' on bar 'top_bar'
+Shells/Main_Shell.tdl:12:9: error: unknown style key 'colour' on bar 'top_bar'
     12 |         colour: red
        |         ^
     hint: did you mean 'border_color'?
 ```
 
 - **Nearest names** come from `difflib.get_close_matches` in the standard library. A test on 2026-10-28 gave `border_color` for the typo `colour` and for `border_colour`.
-- **Say what to write.** A message names the wrong thing, then the right form: `a colour is "#RRGGBB", "#RRGGBBAA" or RGBA(r, g, b, a)` ([[Common Keys and Conventions#Errors]]).
+- **Say what to write.** A message names the wrong thing, then the right form: `a colour is "#RRGGBB", "#RRGGBBAA" or rgba(r g b a)` ([[Common Keys and Conventions#Errors]]).
 - **Severity.** An `error` refuses the file or the load. A `warning` never stops anything (a target that disappeared, a rebuilt registry record, a stale cache). An `info` is a note (an ignored file, a configured directory overriding the default).
 
 ### How Many Errors, and in what Order
@@ -124,11 +127,11 @@ Shells/Main_Shell.yaml:12:9: error: unknown style key 'colour' on bar 'top_bar'
 | Reload                 | The old state is kept and the error is reported ([[Hot Reload]])    | Printed; the new state applies |
 | Stage 8, while running | Logged with the node or module; the node shows its fallback, the rest of the shell continues | Logged                         |
 
-A bad `settings.yaml` always stops the shell at start (decided 2026-10-27) and keeps the running settings on a reload.
+A bad `settings.tdl` always stops the shell at start (decided 2026-10-27) and keeps the running settings on a reload.
 
 ## Configuration
 
-`settings.yaml`: `validation` with `enabled` (default true) and the cache location ([[Settings File]]). Proposed additions: `validation.max_errors` (default 50) and `validation.notify` (default true). No other key.
+`settings.tdl`: `validation` with `enabled` (default true) and the cache location ([[Settings File]]). Proposed additions: `validation.max_errors` (default 50) and `validation.notify` (default true). No other key.
 
 ## Python Contract
 
@@ -136,9 +139,9 @@ A module reports a rejected param by raising `ValueError` in `validate_use` ([[M
 
 ## Integration
 
-- `jsonschema` (lazy, with a pass cache keyed by content hash and schema version), PyYAML, `difflib`, Loguru ([[JSON Schema and Editor Support]], [[Logging with Loguru]]).
+- `jsonschema` (lazy, with a pass cache keyed by content hash and schema version; it validates the tree the TDL parser produces, and [[ADR-0011 JSON Schema for Shell Files]] is being rethought for TDL), the TDL parser, `difflib`, Loguru ([[JSON Schema and Editor Support]], [[Logging with Loguru]]).
 - Threads: stages 1 to 7 run on the config watcher thread or before the loop at start; the loop only receives a finished result or a finished report ([[Process Model and Threading#Threads]]).
-- TEL: errors arrive with a line and column inside the expression string; the shell adds the string's position ([[Expression Language Requirements]]). For a multi-line string the offset needs the node's start mark and indentation. #needs-verification
+- TEL: the parser tells TEL where each `{{ }}` slot starts as an `Origin` (file, line, column, 1-based), so TEL errors point into the file and the shell adds no offset itself. A slot is on one line, so no indentation arithmetic is needed. This is the proposed requirement T17 in [[Expression Language Requirements]], not yet sent to the TEL project. #needs-verification
 
 ## Design
 
@@ -158,7 +161,7 @@ A plain-text error is readable by a screen reader in a terminal. An error that s
 | Failure                                                     | Result                                                                                                                                       |
 |-------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
 | The validator itself fails (a schema that does not compile) | A shell error naming the schema; the shell falls back to its own checks of required keys and types ([[JSON Schema and Editor Support#Failure modes and recovery]]) |
-| A file is huge or binary                                    | Stage 1 error naming the size or the encoding; the size limit is 1 MiB per YAML file (decided 2026-10-28)                                    |
+| A file is huge or binary                                    | Stage 1 error naming the size or the encoding; the size limit is 1 MiB per TDL file (decided 2026-10-28, written for YAML files)                                    |
 | An error cannot be mapped to a node                         | Reported at the nearest parent's line, with the path in the message                                                                          |
 | Logging is not available                                    | The console still gets the error                                                                                                             |
 
@@ -171,13 +174,21 @@ All seven were answered on 2026-10-28, as recommended.
 3. [x] **Stop at 50 errors.**
 4. [x] **A notification for a failed start or reload,** opt-out.
 5. [x] A `check` command (it needs the IPC and CLI note).
-6. [x] **A size limit of 1 MiB per YAML file.**
+6. [x] **A size limit of 1 MiB per TDL file.**
 7. [x] **Stage 5 only after every file passes stage 4.**
+
+Raised by the move to TDL ([[ADR-0014 Shell File Language]]), not yet asked:
+
+> [!question] Open for the maintainer
+> - [ ] A property key repeated inside one block: an error naming both lines, or last wins. ADR-0014 allows repeated block names only.
+> - [ ] Boolean and null literals, and how unquoted words become numbers, for stage 4 types.
+> - [ ] The TDL error list (rule slugs for syntax errors such as an unclosed brace or a `}}` written for two closing braces) is part of the TDL reference, once written.
+> - [ ] Stage 3 now checks `TDL:` before `shell:` (a missing or unknown `TDL:` version is an error): proposed, ADR-0014 item 8 names the keys but not the error.
 
 ## Acceptance Criteria
 
-- [ ] A file with a YAML syntax error is reported with `file:line:column`, and no later stage runs for it.
-- [ ] A `children:` mapping with two equal keys is rejected with both lines named.
+- [ ] A file with a TDL syntax error is reported with `file:line:column`, and no later stage runs for it.
+- [ ] Two blocks with the same name in one `children { }` load, in positional order (the YAML-era rule that rejected duplicate keys no longer applies).
 - [ ] An unknown style key reports its line and column and offers the nearest key.
 - [ ] A wrong-typed value reports the types allowed and what to write.
 - [ ] A file with six deliberate mistakes yields six errors, each at the right line and column ([[JSON Schema and Editor Support#Acceptance criteria]]).
@@ -187,6 +198,7 @@ All seven were answered on 2026-10-28, as recommended.
 - [ ] A warning never stops the shell.
 - [ ] The log record of each finding carries `file`, `line`, `column`, `rule` and `severity`.
 - [ ] No error is reported twice by two stages.
+- [ ] A `{{ }}` slot with an error in its expression reports the file line and the column of the error inside the slot, using the `Origin` the parser gave TEL.
 
 ## Links
 

@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-10-27
+updated: 2026-10-29
 tags: [spec/module, needs-verification]
 related: ["[[Modules]]", "[[Module Contract]]", "[[Module Context]]", "[[Module File]]", "[[V1 Scope]]", "[[Building Blocks]]"]
 depends_on: ["[[Module Contract]]", "[[Module File]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[Module Contract]]", "[[Module File]]"]
 # Clock Module
 
 > [!summary]
-> The Clock shows the time. It is the simplest v1 module: no service, no D-Bus, no worker thread. Its layout is a Label, its style a small file, and its Python a timer on the loop thread that sends a formatted string once per second (or once per minute when the format has no seconds). Several uses can show different formats and time zones from one instance. All names and YAML below are illustrations built on the proposals in [[Module File]] and [[Module Context]]; nothing here is final.
+> The Clock shows the time. It is the simplest v1 module: no service, no D-Bus, no worker thread. Its layout is a Label, its style a small file, and its Python a timer on the loop thread that sends a formatted string once per second (or once per minute when the format has no seconds). Several uses can show different formats and time zones from one instance. All names and TDL below are illustrations built on the proposals in [[Module File]] and [[Module Context]]; nothing here is final.
 
 ## Purpose and Scope
 
@@ -25,51 +25,63 @@ depends_on: ["[[Module Contract]]", "[[Module File]]"]
 
 ```
 Modules/Clock/
-    Clock_Module.yaml      the layout and its params
-    Clock_Style.yaml       the look
+    Clock_Module.tdl       the layout and its params
+    Clock_Style.tdl        the look
     Clock_Module.py        the logic
 ```
 
 ## Behaviour
 
-### Layout (`Clock_Module.yaml`)
+### Layout (`Clock_Module.tdl`)
 
-```yaml
+```
+TDL: v1
 shell: v1
 type: Module
 name: Clock
-style: Clock_Style.yaml
-params:
-    format: {type: string, default: ""}            # a strftime pattern; empty follows the desktop
-    locale: {type: string, default: ""}            # a locale name such as de_DE; empty follows the desktop
-    hour_cycle: {type: string, default: "desktop"} # desktop, 12 or 24
-    timezone: {type: string, default: ""}          # an IANA name; empty is the local zone
-    tooltip_format: {type: string, default: "%A, %d %B %Y"}
+style: Clock_Style.tdl
+params {
+    # a strftime pattern; empty follows the desktop
+    format { type: string, default: "" }
+    # a locale name such as de_DE; empty follows the desktop
+    locale { type: string, default: "" }
+    # desktop, 12 or 24
+    hour_cycle { type: string, default: desktop }
+    # an IANA name; empty is the local zone
+    timezone { type: string, default: "" }
+    tooltip_format { type: string, default: "%A, %d %B %Y" }
+}
 
 block: FlexBox
 alignment: horizontal
-children:
-    Label:
-        text: "{{ time }}"                          # the value the Python sends; TEL decides the syntax
+children {
+    Label {
+        # the value the Python sends; the slot is TDL's, the expression is TEL's
+        text: {{ time }}
         class: clock_text
+    }
+}
 ```
 
 - The Label is the standard module over the Text block ([[Building Blocks]]). It is not editable.
 - Params are what a use passes; a use that passes nothing gets the defaults.
 - `time` is a value sent by the Python for this use. How a name reaches an expression is in [[Module File#Data in the layout]].
 
-### Style (`Clock_Style.yaml`)
+### Style (`Clock_Style.tdl`)
 
-```yaml
+```
+TDL: v1
 shell: v1
 type: Style
 
-classes:
-    clock_text:
+classes {
+    clock_text {
         block: Text
         size: 14
         weight: 500
         foreground: "#ffffff"
+    }
+}
 ```
 
 ### Logic (`Clock_Module.py`)
@@ -124,24 +136,30 @@ An illustration of the shape, not tested code. With the shared time source ([[Mo
 
 Placing it. The call form is decided in [[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]. One clock in a container:
 
-```yaml
-children:
-    Clock:
-        format: "%H:%M:%S"
+```
+children {
+    Clock { format: "%H:%M:%S" }
+}
 ```
 
-Two clocks in one container repeat the module, so they use the list form (a mapping cannot hold the key `Clock` twice):
+Two clocks in one container repeat the module name in one `children { }`, ordered by position ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 16); this replaces the earlier list form. The optional `name:` keeps each use's path name unique:
 
-```yaml
-children:
-    - Clock:
+```
+children {
+    Clock {
         name: local_clock
         format: "%H:%M"
-    - Clock:
+    }
+    Clock {
         name: ny_clock
         timezone: America/New_York
         format: "%H:%M NY"
+    }
+}
 ```
+
+> [!question] Open item
+> Whether a module call takes its unique name from the word before the brace or from a `name:` key is open ([[Module File#Open]]). The example keeps `name:` for the use's path name, as in [[Module File#Using a Module]].
 
 ## Python Contract
 

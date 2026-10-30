@@ -5,7 +5,7 @@ type: spec
 status: draft
 owner: phil
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-10-29
 tags: [spec/surface, needs-verification]
 related: ["[[TRE-REQ-007 Popup Body Geometry]]", "[[Surfaces]]", "[[Surface Types]]", "[[Bar]]", "[[Panel]]", "[[Module Context]]", "[[Shell File]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Module Context]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Mod
 # Popup
 
 > [!summary]
-> The Popup (`kind: popup`) is a menu, flyout or tooltip that hangs off a rectangle of another shell surface. A module calls it, usually from a click; the shell builds it, tre's `PopupWindow` shows it, and the compositor places it beside the rectangle and keeps it on screen. It holds containers, modules and blocks, knows what called it, takes the keyboard and pointer by default, and closes on an outside click or Escape. Decisions below are the maintainer's ([[Surface Types#Special cases]], [[ADR-0007 Shell UI Layer]], and the answers of 2026-10-28); key names are proposed. YAML is illustration.
+> The Popup (`kind: popup`) is a menu, flyout or tooltip that hangs off a rectangle of another shell surface. A module calls it, usually from a click; the shell builds it, tre's `PopupWindow` shows it, and the compositor places it beside the rectangle and keeps it on screen. It holds containers, modules and blocks, knows what called it, takes the keyboard and pointer by default, and closes on an outside click or Escape. Decisions below are the maintainer's ([[Surface Types#Special cases]], [[ADR-0007 Shell UI Layer]], and the answers of 2026-10-28); key names are proposed. The examples are TDL illustrations ([[ADR-0014 Shell File Language]]).
 
 ## Purpose and Scope
 
@@ -104,20 +104,22 @@ A tooltip is a Popup that opens when the pointer enters its caller and closes wh
 
 **On the thing hovered** (`tooltip:`). On a module use the key is `tooltip: <file>` or an inline Popup:
 
-```yaml
-Clock:
-    tooltip: Clock_Tooltip.yaml        # a file that holds the Popup
-Clock:
-    tooltip:                           # or an inline popup
-        children:
-            - Label:
-                text: "{{ caller.data.text }}"
+```
+Clock { tooltip: Clock_Tooltip.tdl }    # a file that holds the Popup
+
+Clock {
+    tooltip {                           # or an inline popup
+        children {
+            Label { text: {{ caller.data.text }} }
+        }
+    }
+}
 ```
 
 - **The caller is the thing hovered.** For a module use that is the module's rectangle; it is the Popup's anchor and its `caller` record.
 - **Opt-in for all modules, built-in and custom** (maintainer, 2026-10-28): the `tooltip:` key is available on every module use, provided by the shell, with no module code.
 - **Manual use** on a block, a surface or anything that is not a module works the same way as on a module, unless the author customises it (maintainer, 2026-10-28; this replaces my earlier note that a hand-written handler was needed). The author writes the same key where they want one.
-- The value forms: a file name (a shell file holding the Popup, found like any shell file), an inline Popup mapping, and, proposed, the unique name of a `kind: popup` entry resolved through the registry.
+- The value forms: a file name (a shell file holding the Popup, found like any shell file), an inline Popup block, and, proposed, the unique name of a `kind: popup` entry resolved through the registry.
 - Defaults for the delays (decided 2026-10-28): `enter_delay: 500` and `exit_delay: 200` milliseconds. The user can change them; testing may tune them.
 - A tooltip is not focusable and takes no keyboard.
 
@@ -150,29 +152,31 @@ The caller's record is available to the Popup's modules and expressions (decided
 | `tooltip` (on a module use, or manually on a block or surface) | A Popup file or an inline Popup, opened as that thing's tooltip                                                   | Key and forms decided (2026-10-28); the unique-name form is proposed                    |
 | `animation`                                                    | Fade or none; no slide (the compositor places it)                                                                 | Decided (key name accepted 2026-10-29)                                                 |
 
-```yaml
-children:
-    tray_menu:
-        kind: popup
-        attach: bottom
-        align: start
-        gap: 4
-        children:
-            - Menu:
-                items: "{{ caller.data.items }}"
-    clock_tooltip:
-        kind: popup
-        tooltip: true                    # focus off, opens on enter, closes on exit
-        enter_delay: 500
-        exit_delay: 200
-        attach: bottom
-        align: center
-        children:
-            - Label:
-                text: "{{ caller.data.text }}"
+```
+tray_menu {
+    kind: popup
+    attach: bottom
+    align: start
+    gap: 4
+    children {
+        Menu { items: {{ caller.data.items }} }
+    }
+}
+
+clock_tooltip {
+    kind: popup
+    tooltip: true                    # focus off, opens on enter, closes on exit
+    enter_delay: 500
+    exit_delay: 200
+    attach: bottom
+    align: center
+    children {
+        Label { text: {{ caller.data.text }} }
+    }
+}
 ```
 
-An illustration only. `Menu` and `Label` are modules from [[V1 Widgets]]; the expression syntax is TEL's.
+An illustration only. `Menu` and `Label` are modules from [[V1 Widgets]]; the expression syntax is TEL's. The `true` in `tooltip: true` assumes a boolean literal, which ADR-0014 does not yet define (open); the module-use syntax is pending ([[Shell File]]).
 
 ## Python Contract
 
@@ -242,7 +246,7 @@ All nine were answered on 2026-10-28.
 - [ ] An outside click or Escape closes a focused Popup; the dismissing click does not also open it again.
 - [ ] A click on another shell surface closes a focused Popup.
 - [ ] A Popup with `focus: false` takes no keyboard and closes after `exit_delay` once the pointer leaves it and its caller.
-- [ ] A module use with `tooltip: Clock_Tooltip.yaml` opens that Popup after `enter_delay` when the pointer enters the module, and closes it after `exit_delay` on leaving; an inline `tooltip:` mapping does the same.
+- [ ] A module use with `tooltip: Clock_Tooltip.tdl` opens that Popup after `enter_delay` when the pointer enters the module, and closes it after `exit_delay` on leaving; an inline `tooltip` block does the same.
 - [ ] A Popup with content taller than 400 px is 400 px tall and scrolls.
 - [ ] A Popup with a 12 px shadow margin and `gap: 4` has its visible body 4 px from the anchor, the same as one without a margin.
 - [ ] A submenu opens beside its item; closing the parent closes it.

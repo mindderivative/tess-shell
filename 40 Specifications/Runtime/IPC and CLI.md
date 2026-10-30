@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-10-29
 tags: [spec/runtime, integration/dbus, needs-verification]
 related: ["[[Runtime]]", "[[ADR-0013 Control Interface]]", "[[Shell Start and Stop]]", "[[Validation and Errors]]", "[[Hot Reload]]", "[[ADR-0009 D-Bus Client Library]]", "[[ADR-0012 Keeping the Shell Above Plasma Panels]]", "[[ADR-0005 Global Shortcuts]]", "[[ADR-0011 JSON Schema for Shell Files]]"]
 depends_on: ["[[ADR-0013 Control Interface]]"]
@@ -53,7 +53,7 @@ Proposed methods. Names are `CamelCase` as D-Bus convention; every method that c
 | `Show`, `Hide`, `Toggle` | `s name`                     | `(b ok, s message)` | Show, hide or toggle a Bar, Panel or Frame by its unique name ([[Panel#States]])                                                                                                            |
 | `ClosePopup`             | none                         | none                | Closes the open Popup, if any                                                                                                                                                               |
 | `Call`                   | `s module, s action, s args` | `s` (JSON)          | Calls an `@action` method of a module; `args` is a JSON array                                                                                                                               |
-| `SetLogLevel`            | `s level`                    | none                | Changes the log level until the next reload of `settings.yaml` ([[Settings File#Log files]])                                                                                                |
+| `SetLogLevel`            | `s level`                    | none                | Changes the log level until the next reload of `settings.tdl` ([[Settings File#Log files]])                                                                                                |
 | `FullscreenState`        | `s outputs`                  | none                | For the KWin script: the outputs that now have an active fullscreen window; the shell hides its surfaces on those ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]) |
 
 Properties: `State` (`starting`, `running`, `stopping`), `Version`, `ApiVersion`. Signals: `Reloaded(b ok, s summary)`, `ErrorReported(s rule, s file, i line, s message)`, `SurfaceChanged(s name, s state)`.
@@ -90,7 +90,7 @@ One executable, `tesserae-shell` (name decided 2026-10-28), also `python -m tess
 
 Global options: `--config-dir PATH` (overrides the config directory, for tests), `--json`, `--timeout SECONDS` (default 5), `--quiet`.
 
-- **Fast to start.** A command from a shortcut must start quickly. The client path imports only the standard library and the D-Bus client; it never imports tre, Loguru, `jsonschema`, PyYAML or TEL. Measured on this machine: a `jeepney` client making one call takes about 21 ms ([[ADR-0013 Control Interface#Context]]). Heavy imports happen inside `run`, `check` and `schema` only.
+- **Fast to start.** A command from a shortcut must start quickly. The client path imports only the standard library and the D-Bus client; it never imports tre, Loguru, `jsonschema`, the TDL parser or TEL. Measured on this machine: a `jeepney` client making one call takes about 21 ms ([[ADR-0013 Control Interface#Context]]). Heavy imports happen inside `run`, `check` and `schema` only.
 - The framework is `argparse` (standard library, nothing to install, the lowest start-up cost). Decided 2026-10-28; `click` is installed here (8.5.0) but is a dependency.
 - The D-Bus client is `jeepney` (blocking, pure Python, the named fallback in [[ADR-0009 D-Bus Client Library]]). Decided 2026-10-28, backed by a measurement: a `jeepney` client making one call took 21.0 ms, a `dbus-fast` client 53.2 ms (its asyncio import dominates), and `busctl --user call` 1.5 ms. A shortcut can call `busctl` directly and skip Python altogether.
 - **Output.** Plain text for people, one result per line; `--json` for scripts, as one JSON object. Errors go to stderr in the printed form of [[Validation and Errors#The error record]].
@@ -119,7 +119,7 @@ Decided 2026-10-28; codes 3 and 5 were free in the shell's table.
 
 ## Configuration
 
-One `settings.yaml` key (decided 2026-10-28): `control`, default true; `control: false` runs the shell without exporting the interface, and the KWin script then cannot report fullscreen windows. The rest of the global settings list is deferred ([[Settings File]]).
+One `settings.tdl` key (decided 2026-10-28): `control`, default true; `control: false` runs the shell without exporting the interface, and the KWin script then cannot report fullscreen windows. The rest of the global settings list is deferred ([[Settings File]]).
 
 ## Python Contract
 
@@ -172,7 +172,7 @@ Plain text and exit codes are readable by a screen reader and a script. `--json`
 - [x] Client exit codes 3 and 5 (maintainer: "That is fine").
 - [x] `FullscreenState` as a full list of outputs (as recommended).
 - [x] Shell completion scripts: later (maintainer: "Later is fine").
-- [x] A `settings.yaml` key `control` to turn the interface off, and `Status` may list module names (maintainer, 2026-10-28).
+- [x] A `settings.tdl` key `control` to turn the interface off, and `Status` may list module names (maintainer, 2026-10-28).
 
 ## Acceptance Criteria
 
@@ -186,7 +186,7 @@ Plain text and exit codes are readable by a screen reader and a script. `--json`
 - [ ] The KWin script's `FullscreenState` call makes the shell hide its surfaces on that output and show them again when the list no longer names it.
 - [ ] `busctl --user introspect` lists the methods, properties and signals above.
 - [ ] A second `tesserae-shell run` exits with code 4.
-- [ ] The client path does not import tre, Loguru, `jsonschema` or PyYAML (checked by listing the imported modules of `reload`).
+- [ ] The client path does not import tre, Loguru, `jsonschema` or the TDL parser (checked by listing the imported modules of `reload`).
 
 ## Links
 

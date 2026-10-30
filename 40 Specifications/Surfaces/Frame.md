@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-29
 tags: [spec/surface, needs-verification]
 related: ["[[Surfaces]]", "[[Surface Types]]", "[[Bar]]", "[[Panel]]", "[[Hit Testing for Concave Corners]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Hit Testing for Concave Corners]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Hit
 # Frame
 
 > [!summary]
-> The Frame (`kind: frame`) is a ring around the screen, attached to all four edges and corners, that reserves space on every side. Its thickness is the same on every side or differs by side. Its inner corners are rounded (concave); its outer corners are square by default and can be rounded (convex). It has inner and outer borders, a background, border colours (solid or gradient) and shadows. Panels and Bars can be visually melded into it with rounded joins, so they look as if they grow out of the frame; this is a visual effect on separate surfaces, not one shared surface. The Frame is Top layer only. On tre it is a full-screen painter `LayerWindow` plus up to four thin space-reserving windows, using the path hit shape released in tre 0.5.9. The decisions are the maintainer's ([[Surface Types]]); the key names were accepted by the maintainer on 2026-10-29. YAML is illustration.
+> The Frame (`kind: frame`) is a ring around the screen, attached to all four edges and corners, that reserves space on every side. Its thickness is the same on every side or differs by side. Its inner corners are rounded (concave); its outer corners are square by default and can be rounded (convex). It has inner and outer borders, a background, border colours (solid or gradient) and shadows. Panels and Bars can be visually melded into it with rounded joins, so they look as if they grow out of the frame; this is a visual effect on separate surfaces, not one shared surface. The Frame is Top layer only. On tre it is a full-screen painter `LayerWindow` plus up to four thin space-reserving windows, using the path hit shape released in tre 0.5.9. The decisions are the maintainer's ([[Surface Types]]); the key names were accepted by the maintainer on 2026-10-29. The examples are TDL illustrations ([[ADR-0014 Shell File Language]]).
 
 ## Purpose and Scope
 
@@ -186,7 +186,7 @@ One Frame per monitor, independent: each is a complete ring with its own thickne
 | `thickness`                    | Number, list of four clockwise from the top, or named sides                                                                                                                                                                                                              | Decided (key name accepted 2026-10-29); the forms are decided                       |
 | `corner_radius`                | Outer (convex) corners, four-sided; default 0                                                                                                                                                                                                                            | Default decided (2026-10-27); key accepted 2026-10-29                               |
 | `inner_radius`                 | Inner (concave) corners, four-sided                                                                                                                                                                                                                                      | Decided (key name accepted 2026-10-29)                                              |
-| `inner_border`, `outer_border` | Each a mapping with `thickness` and `color` (a colour, token or gradient); `border`, `border_thickness` and `border_color` in `style` are shorthand for the inner border                                                                                                 | Both decided as allowed (2026-10-27); key accepted 2026-10-29                       |
+| `inner_border`, `outer_border` | Each a block with `thickness` and `color` (a colour, token or gradient); `border`, `border_thickness` and `border_color` in `style` are shorthand for the inner border                                                                                                 | Both decided as allowed (2026-10-27); key accepted 2026-10-29                       |
 | `border_tile`                  | Repeat a gradient border along the ring; default off                                                                                                                                                                                                                     | Opt-in decided (2026-10-27); key name and mechanism proposed                         |
 | `hidden`                       | Hide the Frame at start; shown and hidden at runtime by a shell action                                                                                                                                                                                                   | Decided that it can be hidden and shown; key accepted 2026-10-29                    |
 | `style`                        | Background, border, shadow, opacity                                                                                                                                                                                                                                      | Decided (the key); property names accepted 2026-10-29                                 |
@@ -194,27 +194,32 @@ One Frame per monitor, independent: each is a complete ring with its own thickne
 | `edges`                        | Per-edge overrides: `top`, `right`, `bottom`, `left`, each with its own `thickness` and `children` (the strip). An edge is the edge of the screen, however thick it is, and it starts at that edge; it is not a "side" of the screen that reaches past the halfway point | Decided (maintainer, 2026-10-27: `edges`, not `sides`)                               |
 | `children`                     | Blocks, containers and modules on the Frame itself                                                                                                                                                                                                                       | Decided that a layer window has them; for a Frame the content goes in a side's strip |
 
-```yaml
-children:
-    screen_frame:
-        kind: frame
-        layer: top
-        thickness: [8, 8, 8, 8]          # or 8, or {top: 8, left: 24}
-        corner_radius: 0                 # the default; the outer corners are square
-        inner_radius: 14
-        inner_border: {thickness: 1, color: "#ffffff22"}
-        style:
-            background: "#0b0c0d"
-        edges:                           # optional: a thicker edge acts as a bar
-            top:
-                thickness: 32
-                children:
-                    - Workspaces:
-                    - Spacer:
-                    - Clock:
+```
+screen_frame {
+    kind: frame
+    layer: top
+    thickness: [8, 8, 8, 8]          # or 8, or named sides (the form is open, see below)
+    corner_radius: 0                 # the default; the outer corners are square
+    inner_radius: 14
+    inner_border { thickness: 1, color: "#ffffff22" }
+    style {
+        background: "#0b0c0d"
+    }
+    # optional: a thicker edge acts as a bar
+    edges {
+        top {
+            thickness: 32
+            children {
+                Workspaces { }
+                Spacer { }
+                Clock { }
+            }
+        }
+    }
+}
 ```
 
-An illustration only. `thickness`, `corner_radius`, `inner_radius` and `edges` are proposals. With no `edges`, the Frame is just the ring, and Bars and Panels can be melded to it.
+An illustration only. `thickness`, `corner_radius`, `inner_radius` and `edges` are proposals. With no `edges`, the Frame is just the ring, and Bars and Panels can be melded to it. The module uses (`Workspaces { }`) follow the pending module-use syntax of [[Shell File]].
 
 ## Python Contract
 
@@ -271,6 +276,7 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 - [x] The Frame hidden or shown at runtime: yes; the reservers go while hidden and return when shown (maintainer, 2026-10-27).
 - [x] Shadows are excluded from the hit shape, for all shadows (maintainer, 2026-10-27). Open: whether tre already does this. #needs-verification
 - [x] A gradient border's tiling: the shell repeats stops; a native repeat is [[TRE-REQ-006 Repeating Gradients]], kept for the future (maintainer, 2026-10-27).
+- [ ] Named sides for `thickness` (`top: 8, left: 24`): in TDL it needs a block or another form; ADR-0014 does not yet define it. Open for the maintainer.
 - [x] Shadow tokens: `elevation`, `shadow` and `shadow_bleed` are accepted ([[Style Schema#Shadow keys]]); the Frame needs no bleed margin because the painter covers the output.
 
 ## Acceptance Criteria
