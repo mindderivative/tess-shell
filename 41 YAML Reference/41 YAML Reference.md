@@ -17,6 +17,7 @@ The keys and forms of every shell file, written in TDL (Tesserae Data Language, 
 
 | Note                                    | Purpose                                                                                                      | Status |
 |-----------------------------------------|--------------------------------------------------------------------------------------------------------------|--------|
+| [[TDL Language]] | The language itself: file header, punctuation, case rules, name registry, monitors, structure words      | draft  |
 | [[Common Keys and Conventions]] | Keys every file has, `type`/`kind`/`widget`, names, value forms, errors                                      | draft  |
 | [[Shell File]] | The shell file: root, monitor, surfaces and their keys                                                       | draft  |
 | [[Module File]] | The module file: layout, params, data in the layout, using a module                                          | draft  |
