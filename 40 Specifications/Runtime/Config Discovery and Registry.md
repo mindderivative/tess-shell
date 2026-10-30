@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/runtime, needs-verification]
 related: ["[[Runtime]]", "[[Settings File]]", "[[Shell File]]", "[[Module File]]", "[[Common Keys and Conventions]]", "[[Validation and Errors]]", "[[Hot Reload]]", "[[Shell Start and Stop]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[Settings File]]", "[[ADR-0007 Shell UI Layer]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[Settings File]]", "[[ADR-0007 Shell UI Layer]]"]
 # Config Discovery and Registry
 
 > [!summary]
-> How the shell finds its files, decides which are loaded, gives each a stable identity, and keeps that identity in `registry.json`. Decided already: the config directory layout, the search order and fallback, `settings.tdl` before the registry (the name `settings.tdl` is an assumption pending maintainer confirmation, [[ADR-0014 Shell File Language#Open Items]]), UIDs made with `uuid.uuid7()`, the registry as a JSON file, the UID written into the file's metadata block, reference errors at load, and rebuilding the registry from file UIDs ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]], [[Settings File]]). This note adds the rules that make those work, as proposals with recommendations.
+> How the shell finds its files, decides which are loaded, gives each a stable identity, and keeps that identity in `registry.json`. Decided already: the config directory layout, the search order and fallback, `settings.tdl` before the registry (the name `settings.tdl` is confirmed, with the file-type key `Settings: v1`, D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]), UIDs made with `uuid.uuid7()`, the registry as a JSON file, the UID written into the file's metadata block, reference errors at load, and rebuilding the registry from file UIDs ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]], [[Settings File]]). This note adds the rules that make those work, as proposals with recommendations.
 
 ## Purpose and Scope
 
@@ -33,7 +33,7 @@ The folders and `settings.tdl` are in [[Settings File#The config directory]]: `S
 flowchart TD
     a[Read the directory list for each file type] --> b[Scan each directory]
     b --> c[Recognise files by suffix, then by metadata block and file-type key]
-    c --> d[Load main_shell and follow Import:]
+    c --> d[Load Main_Shell and follow Import:]
     d --> e[Register every recognised file]
     e --> f[Check names are unique]
     f --> g[Resolve references]
@@ -41,9 +41,9 @@ flowchart TD
 
 - **What is scanned.** Each directory is scanned recursively for files that end in a shell suffix (`_Shell.tdl`, `_Module.tdl`, `_Style.tdl`, `_Theme.tdl`, `_Stylesheet.tdl`). Dot files, `schemas/`, `logs/` and editor temporary files (names starting with a dot or ending in `~`, `.swp`, `.tmp` or `.bak`) are skipped. Recursive, not one level, so a user can sort Styles into folders; a module is still one folder `Modules/<module_name>/` ([[AGENTS#9. Naming in the designed system]]). Decided 2026-10-28.
 - **What is a shell file.** A file is recognised by its suffix and by its metadata block, which holds `TDL:` and exactly one file-type key (`Shell:`, `Module:`, `Style:`, `Stylesheet:` or `Theme:`). The key is authoritative over the suffix ([[TDL Language#The Metadata Block]], [[ADR-0014 Shell File Language#Layout Rules]], [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]], [[Common Keys and Conventions#Keys every file has]]). A file with a shell suffix and no metadata block, no `TDL:`, or not exactly one file-type key is refused with an error naming it. A key that disagrees with the suffix is a load error that names both. A file with another name is ignored, and a note is logged at info level.
-- **What is loaded.** The top-level shell file is `main_shell` from `settings.tdl` (default `Main_Shell.tdl`) in the shells directory, and every file reachable through `Import:` from it ([[Shell File]]). A `_Shell.tdl` in `Shells/` that nothing imports is not loaded and is logged at info level (decided 2026-10-28). Modules, styles, themes and stylesheets are all registered, whether used or not, so that a name used as a key resolves.
+- **What is loaded.** The top-level shell file is `Main_Shell` from `settings.tdl` (default `Main_Shell.tdl`) in the shells directory, and every file reachable through `Import:` from it ([[Shell File]]). An imported `_Shell.tdl` holds surface blocks only, sits under a `Monitor`'s `Children` and takes that `Monitor`'s monitor (D22). A `_Shell.tdl` in `Shells/` that nothing imports is not loaded and is logged at info level (decided 2026-10-28). Modules, styles, themes and stylesheets are all registered, whether used or not, so that a name used as a key resolves.
 - **Imports** are paths relative to the importing file and nest ([[Common Keys and Conventions#Structure keys]]). A cycle is an error naming the chain; a missing file is an error with the paths tried.
-- **Parsing** uses the shell's own TDL parser ([[ADR-0014 Shell File Language]]). The same module or block name may appear many times in one `Children { }`, ordered by position, and each is named from its position (`Clock_1`, `Clock_2`), so a repeated name is not an error ([[TDL Language#Names and the Registry]]). A property key repeated inside one block (two `Text:` lines) is not decided in ADR-0014; see Open Questions. Parse errors carry `file:line:column` from the parser ([[Validation and Errors#Parsing]]). (Earlier, with YAML, a loader had to reject duplicate keys because PyYAML keeps the last of two equal keys silently; a test on 2026-10-28 loaded two `Clock:` entries and got one.)
+- **Parsing** uses the shell's own TDL parser ([[ADR-0014 Shell File Language]]). The same module or block name may appear many times in one `Children { }`, ordered by position, and each is named from its position (`Clock_1`, `Clock_2`), so a repeated name is not an error ([[TDL Language#Names and the Registry]]). A property key repeated inside one block (two `Text:` lines) is an error naming both places (D9, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). The loader reads the metadata block first, because the file-type key picks the schema; the parsed tree is an ordered list of entries (head, properties, children) that keeps repeated names (D12). Parse errors carry `file:line:column` from the parser ([[Validation and Errors#Parsing]]). (Earlier, with YAML, a loader had to reject duplicate keys because PyYAML keeps the last of two equal keys silently; a test on 2026-10-28 loaded two `Clock:` entries and got one.)
 
 ### Names
 
@@ -103,7 +103,7 @@ flowchart TD
 The shell edits a file the user wrote, so it is careful (risk R-06 in the [[Risk Register]]).
 
 1. Before the first write to a file, copy it to a backups folder under the config directory (`backups/`, ignored by version control like `schemas/`; decided 2026-10-28).
-2. Insert the line `UID: <uuid7>` into the metadata block (between the `---` lines, after the file-type key) in the parser's lossless tree, which keeps comments and layout, then write the tree back out; there is no separate comment-keeping writer ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 13). Comments, order and quoting survive. Keep the file's line endings. How the tree is written back (edit the text at the node's position, or print the tree) is not decided; see Open Questions.
+2. Patch the file text at the tree node's position to insert the line `UID: <uuid7>` into the metadata block (between the `---` lines, directly after the file-type key), and leave every other byte alone, so comments, layout, order, quoting and line endings survive. The shell does not print the tree back out (D10, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; [[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 13); there is no separate comment-keeping writer.
 3. Check that the file did not change since it was read (content hash); if it did, skip and retry on the next load.
 4. Write a temporary file in the same directory, then replace the original atomically; keep the file's permissions.
 5. Tell the watcher this write is the shell's own, so the change does not trigger a reload ([[Hot Reload#The shell's own writes]]).
@@ -113,11 +113,11 @@ The shell edits a file the user wrote, so it is careful (risk R-06 in the [[Risk
 
 - A reference is by name: `Attach_To`, `Anchor_To`, a module call head, `Import:` paths for files, `Kind:` where a type is named by value. The registry resolves it ([[Common Keys and Conventions#Names and references]]).
 - An unresolved reference is an error at load naming the file, the entry and the name. A target that disappears while running is a warning and the referring surface stays hidden until it returns ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]], [[Panel#Failure modes and recovery]]).
-- Python reaches a file's parsed TDL tree by file name, unique name or UID through `ctx.yaml(ref)` ([[Module Context]]; the method name keeps `yaml` until that note is rewritten); the registry resolves it.
+- Python reaches a file's parsed TDL tree by file name, unique name or UID through `ctx.tdl(ref)` ([[Module Context]]; renamed from `ctx.yaml` by D14); the registry resolves it.
 
 ## Configuration
 
-`settings.tdl` keys: `directories`, `registry`, `main_shell` ([[Settings File]]). Proposed addition: `registry_retention` (days an orphaned record is kept, default 30; the 30 days are decided). No other key.
+`settings.tdl` keys: `Directories`, `Registry`, `Main_Shell` ([[Settings File]]). Proposed addition: `Registry_Retention` (days an orphaned record is kept, default 30; the 30 days are decided). No other key.
 
 ## Python Contract
 
@@ -139,7 +139,7 @@ None directly. Error messages follow [[Validation and Errors]].
 
 ## Performance Budget
 
-- Discovery scans a few dozen files; parsing dominates. With the validation cache an unchanged file is not re-validated ([[JSON Schema and Editor Support#The `jsonschema` dependency runtime, not only development]]).
+- Discovery scans a few dozen files; parsing dominates. With the validation cache an unchanged file is not re-validated ([[JSON Schema and Editor Support#The `jsonschema` Dependency: Runtime, Not Only Development]]).
 - A registry write is off the loop and bounded by one write per 500 ms.
 - Budgets are set in `60 Quality/`.
 
@@ -170,18 +170,19 @@ All seven were answered on 2026-10-28, as recommended.
 6. [x] A `backups/` folder under the config directory for the first UID write.
 7. [x] **Unimported shell files:** a `_Shell.tdl` in `Shells/` that nothing imports is ignored with an info notice.
 - [ ] The registry writer: one thread, one write per 500 ms (proposed, not asked).
-- [ ] The UID write with TDL: whether the shell patches the text at the lossless tree's position or prints the tree back out. Either keeps comments (ADR-0014 item 13); the choice is not made.
-- [ ] A property key repeated inside one block: an error, or last wins. ADR-0014 allows repeated block names only.
+- [x] The UID write: the shell patches the text at the node's position and does not print the tree back out (D10, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [x] A property key repeated inside one block is an error naming both places; repeated block names are allowed (D9).
 
 ## Acceptance Criteria
 
 - [ ] With the default folders and no `settings.tdl`, the shell finds `Shells/Main_Shell.tdl` and registers every module, style, theme and stylesheet.
-- [ ] A `directories.modules` path is searched before `Modules/`; a module found only in `Modules/` still loads.
+- [ ] A `Directories.Modules` path is searched before `Modules/`; a module found only in `Modules/` still loads.
 - [ ] Two entries with the same name fail the load and the error names both files and lines.
+- [ ] A property key repeated inside one block fails the load and the error names both places.
 - [ ] Two `Clock { }` blocks in one `Children { }` load, in positional order, named `Clock_1` and `Clock_2`.
 - [ ] A `.tdl` syntax error is reported with `file:line:column` from the TDL parser.
 - [ ] A shell-suffix file with no metadata block, no `TDL:`, or not exactly one file-type key is refused by name; a file-type key that disagrees with the suffix is a load error naming both.
-- [ ] The first load writes `UID:` into the metadata block of each file, keeping comments and line endings, and a backup exists first.
+- [ ] The first load writes `UID:` into the metadata block of each file, keeping comments and line endings and changing no other byte, and a backup exists first.
 - [ ] A file moved to another folder keeps its UID and its saved state.
 - [ ] Deleting `registry.json` and starting rebuilds records from the files' UIDs with a warning, and creates the file.
 - [ ] A crash during a registry write leaves the previous registry readable.

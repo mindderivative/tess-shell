@@ -206,11 +206,11 @@ Rules:
 ## Consequences
 
 - [[ADR-0007 Shell UI Layer]] is superseded only in its view-format parts (YAML as the file format and the `*.yaml` names). Its decisions on keys, modules, names, UIDs and the registry stand. ADR-0007 carries a note to that effect.
-- The layout rules also supersede these ADR-0007 decisions: the `shell:` and `type:` keys (the file-type key in the metadata block replaces both); `kind:` for surfaces (`Bar`, `Frame`, `Panel`, `Popup` are block heads); `root` with `monitor:` matched by connector name and description (`Monitor` with `Index:`); lowercase key names (Capitalised, snake case for several words); the `UID:` line below `shell:` (the UID goes in the metadata block). ADR-0007's rule that a unique name is the block's key becomes `Name:`. The notes rewritten earlier on 2026-10-29 still show the old forms and need a second pass once the open items below are answered.
+- The layout rules also supersede these ADR-0007 decisions: the `shell:` and `type:` keys (the file-type key in the metadata block replaces both); `kind:` for surfaces (`Bar`, `Frame`, `Panel`, `Popup` are block heads); `root` with `monitor:` matched by connector name and description (`Monitor` with `Index:`); lowercase key names (Capitalised, snake case for several words); the `UID:` line below `shell:` (the UID goes in the metadata block). ADR-0007's rule that a unique name is the block's key becomes `Name:`. The notes were revised to these forms on 2026-10-29 and 2026-10-30.
 
 > [!danger] Monitor index is not a stable name
 > `Index: 0` is the position in the compositor's output array. If the order changes (a monitor is unplugged, the machine wakes from sleep with a dock, outputs are announced in another order), a bar can move to a different physical screen. The protocol does not promise a stable order across sessions or hot-plug, and KWin's behaviour is untested #needs-verification. ADR-0007 matched by connector name (`DP-1`) and then description for this reason. Decided 2026-10-29: `Connector:` and `Description:` are also selectors on `Monitor` (Layout Rules item 15). [[Risk Register]] R-21.
-- `41 TDL Reference/`, the `*.yaml` names in [[AGENTS#9. Naming in the designed system]] and the YAML examples across the specs need rewriting. That is a large pass and needs the maintainer's instruction; the agent has not started it and does not edit `AGENTS.md`.
+- `41 TDL Reference/`, the `*.tdl` names in [[AGENTS#9. Naming in the designed system]] and the examples across the specs were rewritten in two passes on 2026-10-29 and 2026-10-30, and the open items were applied on 2026-10-30. [[TDL Language]] is the single reference.
 - [[ADR-0011 JSON Schema for Shell Files]] needs a rethink. The schemas can still validate the parsed tree at load, but completion and hover from the YAML language server no longer apply, and there is no language server in v1.
 - [[Expression Language Requirements]] gains two requirements: the parser tells TEL where each expression starts, and TEL accepts a child scope that adds the `for` name. Not yet added.
 - The Python builder spec stays, with the parity test now against the TDL parser.
@@ -278,10 +278,10 @@ Still open, from the answers:
 
 - [x] **Alpha range.** 0 to 255 for red, green and blue, 0.0 to 1.0 for alpha (as recommended, maintainer, 2026-10-29).
 - [x] **Unquoted text with spaces.** Runs to the end of the line or the next `,` or closing brace (as recommended, maintainer, 2026-10-29).
-- [x] **The rewrite pass** began 2026-10-29 (maintainer): breadth first through the vault tree, each level before the next. `settings.yaml` becomes `settings.tdl`: the agent's assumption, since the settings file is a shell file type; confirm. The folder `41 TDL Reference` keeps its name until the maintainer decides a rename (a move needs approval).
+- [x] **The rewrite pass** began 2026-10-29 (maintainer): breadth first through the vault tree, each level before the next. `settings.yaml` became `settings.tdl` (confirmed in D20), and the folder was renamed on 2026-10-30 (D13).
 - [x] **Two readings to confirm** from "What TDL Is" items 14 and 15: syntax words are special only in key position, and spaces around `{` and after `:` are optional. Decided 2026-10-30, see Decisions on the Open Items.
 
-Raised while rewriting the notes for TDL (2026-10-29). Each is also an open item in the note that hit it; the agent took the shown default in the examples and the maintainer has not decided:
+Raised while rewriting the notes for TDL (2026-10-29) and decided on 2026-10-30 as recommended (D1 to D24). Each was also an open item in the note that hit it:
 
 - [x] **Literals not defined.** Booleans (`true`, `false`), null, and an empty list `[]`. The examples use `true` and `false`. Decide, and say whether the parser types bare words or the key's schema does. Decided 2026-10-30, see Decisions on the Open Items.
 - [x] **Names.** Is a block's name only the word before the brace (`root dp1_root { }`, `Clock { }`), or can a `name:` key also give it? Affects module calls, the root header and the path-name rule. The notes keep a `name:` property where YAML had one. Decided 2026-10-30, see Decisions on the Open Items.
@@ -318,7 +318,7 @@ Raised by the second rewrite pass (2026-10-29). The notes use the default shown;
 - [x] **Settings file.** The file-type key and metadata form of `settings.tdl` (the notes show `Settings: v1` as a placeholder), and whether settings keys are written nested or dotted (`Logging.Level`) ([[Settings File]]). Decided 2026-10-30, see Decisions on the Open Items.
 - [x] **Frame structure.** `Inner_Border`, `Outer_Border`, `Edges` and the edge names `Top`, `Right`, `Bottom`, `Left`: nested blocks or properties? ([[Frame]]) Decided 2026-10-30, see Decisions on the Open Items.
 - [x] **Imported shell files.** Does an imported `_Shell.tdl` hold surface blocks only, or its own `Monitor` blocks? (The notes keep "an imported file takes the importing Monitor's monitor".) Decided 2026-10-30, see Decisions on the Open Items.
-- [x] **Where `UID:` goes** in the metadata block. The notes write it after the file-type key. Decided 2026-10-30, see Decisions on the Open Items.
+- [x] **UID position** in the metadata block (`UID:`). The notes write it after the file-type key. Decided 2026-10-30, see Decisions on the Open Items.
 - [x] **How an action names a use:** `Label@<uid>` or the use's `Name:` ([[Module Context]]). Decided 2026-10-30, see Decisions on the Open Items.
 - [x] **Schema and the metadata block.** Whether the JSON Schema validates the metadata part, or the loader checks `TDL:` and the file-type key first ([[JSON Schema and Editor Support]]). Decided 2026-10-30, see Decisions on the Open Items.
 - [x] **Layer-window namespace.** `tesserae-shell.<kind>.<name>` should read `<type>` now that surfaces have no `Kind:` ([[Surface Types]]). Decided 2026-10-30, see Decisions on the Open Items.

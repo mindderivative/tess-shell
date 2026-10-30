@@ -1,13 +1,13 @@
 ---
 title: Shell File
 aliases: [_Shell.yaml, Main_Shell.yaml, Shell YAML, _Shell.tdl, Main_Shell.tdl, Shell TDL]
-type: yaml-ref
+type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-29
-tags: [yaml-ref, spec/surface, needs-verification]
-related: ["[[41 YAML Reference]]", "[[TDL Language]]", "[[Common Keys and Conventions]]", "[[Surface Types]]", "[[Module File]]", "[[ADR-0014 Shell File Language]]"]
+updated: 2026-10-30
+tags: [tdl-ref, spec/surface, needs-verification]
+related: ["[[41 TDL Reference]]", "[[TDL Language]]", "[[Common Keys and Conventions]]", "[[Surface Types]]", "[[Module File]]", "[[ADR-0014 Shell File Language]]"]
 depends_on: ["[[Common Keys and Conventions]]", "[[Surface Types]]"]
 ---
 
@@ -52,7 +52,7 @@ Monitor {
 
 - A file is the metadata block, then top-level blocks ([[TDL Language#A File]]). The only top-level block of a shell file is `Monitor`.
 - `Monitor` holds one monitor's tree. `Name:` is its unique name; a selector binds it to a monitor; `Children` is a block.
-- A child is a surface: a block whose head is its type (`Bar`, `Frame`, `Panel`, `Popup`), with a unique `Name:`. `Import:` inside `Children` pulls in surfaces from another `_Shell.tdl`; an imported file takes the importing Monitor's monitor.
+- A child is a surface: a block whose head is its type (`Bar`, `Frame`, `Panel`, `Popup`), with a unique `Name:`. `Import:` inside `Children` pulls in surfaces from another `_Shell.tdl`. An imported file holds surface blocks only, sits under a Monitor's `Children` and takes that Monitor's monitor (D22 in [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 - Surfaces are siblings and never nest ([[Common Keys and Conventions#Names and References]]).
 
 ## Monitor Keys
@@ -60,7 +60,7 @@ Monitor {
 | Key                                    | Meaning                                                                                                                                  | Status                                 |
 |----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|
 | `Name`                                 | Required; unique across the shell (full path for repeated uses, see [[ADR-0007 Shell UI Layer#Open items]])                              | Decided (the rule); path form proposed |
-| `Index`, `Connector`, `Description`    | The selectors. The meaning of each, `Index: default`, and the rule for a Monitor with no selector are in [[TDL Language#Monitors]]       | Decided (2026-10-29)                   |
+| `Index`, `Connector`, `Description`    | The selectors. The meaning of each, `Index: default`, and the rule for a Monitor with no selector and the order in which several selectors are tried are in [[TDL Language#Monitors]]       | Decided (2026-10-29)                   |
 | `Children`                             | Surfaces and imports                                                                                                                     | Decided                                |
 
 ## Surface Keys
@@ -83,9 +83,9 @@ The details of each are in [[Surface Types]].
 | `Style`          | A style file or an inline `Style { }` block                                                                                                                                                                                                                   | All               | Decided                                                 |
 | `Children`       | The surface's contents: blocks (containers included) and module uses. `Children` is the only holder; `modules:` is gone (maintainer, 2026-10-26). A module use is written with the module's name as the head ([[Module File#Using a Module]]) | All               | Decided                                                 |
 | `Anchor`         | Edges to attach to: `top`, `bottom`, `left`, `right` (one or a list)                                                                                                                                                                                          | Bar, Panel        | Decided (key name accepted 2026-10-29)                  |
-| `Size`           | `[width, height]`; `0` stretches between two anchored edges                                                                                                                                                                                                   | Bar, Panel, Popup | Decided (key name accepted 2026-10-29)                  |
+| `Size`           | `[width, height]` (a length is a whole number or `<int>%`, D6); `0` stretches between two anchored edges                                                                                                                                                                                                   | Bar, Panel, Popup | Decided (key name accepted 2026-10-29)                  |
 | `Exclusive_Zone` | Space reserved along the anchored edge, in pixels. Only allowed on `Layer: top`; on any other layer it is a load error (maintainer, 2026-10-26)                                                                                                              | Bar, Panel, Frame | Rule decided; key accepted 2026-10-29                   |
-| `Margin`         | Four-sided offset from the anchored edges                                                                                                                                                                                                                     | Bar, Panel        | Decided (key name accepted 2026-10-29)                  |
+| `Margin`         | Four-sided offset from the anchored edges: one number, a list of four, or named sides (`Margin { Top: 8, Left: 24 }`, D7)                                                                                                                                                                                                                     | Bar, Panel        | Decided (key name accepted 2026-10-29)                  |
 | `Keyboard`       | `none`, `on_demand`, `exclusive`                                                                                                                                                                                                                              | All               | Decided (key name accepted 2026-10-29) (`exclusive` used for the launcher) |
 | `Input_Region`   | Where input lands: the whole surface, nothing, rectangles, or `auto`                                                                                                                                                                                          | All               | Decided (key name accepted 2026-10-29)                  |
 | `Movable`        | A Panel the mouse can move; its position is saved                                                                                                                                                                                                             | Panel             | Decided (key name accepted 2026-10-29)                  |
@@ -98,7 +98,7 @@ Tre's names are lowercase (`exclusive_zone`); the shell maps the Capitalised key
 ## Monitors
 
 - A shell file holds one `Monitor` block per monitor, and several may appear in one file (decided 2026-10-29). A monitor no block names gets the `Index: default` block if there is one, and nothing otherwise.
-- A surface set for one monitor can be shared by several `Monitor` blocks by importing the same `_Shell.tdl`.
+- A surface set for one monitor can be shared by several `Monitor` blocks by importing the same `_Shell.tdl`, which holds surface blocks only (D22).
 - A Popup opens only on the monitor of the surface that called it ([[Surface Types#Open questions]]).
 - `Index:` is a position, not a stable name; `Connector:` and `Description:` are the stable selectors ([[Risk Register]] R-21).
 
@@ -116,14 +116,14 @@ Tre's names are lowercase (`exclusive_zone`); the shell maps the Capitalised key
 
 - [x] Several `root` blocks in one file: now several `Monitor` blocks, allowed (decided 2026-10-29, [[ADR-0014 Shell File Language#Layout Rules]], item 9).
 - [x] Where shell files live: `$HOME/.config/tesserae-shell/Shells/`, or the directory `settings.tdl` names (decided 2026-10-27, [[Settings File]]).
-- [ ] Which shell file is the top-level one when `Shells/` holds several: proposed `main_shell` in `settings.tdl`, default `Main_Shell.tdl`.
+- [ ] Which shell file is the top-level one when `Shells/` holds several: proposed `Main_Shell` in `settings.tdl` ([[Settings File]]), default `Main_Shell.tdl`.
 - [x] The names of the surface keys: accepted by the maintainer on 2026-10-29. Their types follow the per-type specs.
 - [ ] How a surface lays out its modules (order, spacing, alignment): a surface layout key, or the surface being a container widget.
 - [ ] The keys each surface type adds ([[Surface Types]]).
 - [x] Whether a surface is named by the word before the brace or by a key: the head is the type and `Name:` is the unique name (ADR-0014, item 6).
-- [ ] The order in which the shell tries several monitor selectors on one block (`Connector`, `Description`, `Index` is proposed, ADR-0014 item 15).
-- [ ] What an imported `_Shell.tdl` contains: surface blocks that take the importing Monitor, or its own `Monitor` blocks. This note assumes the first, as before 2026-10-29; the maintainer has not said.
+- [x] The order in which the shell tries several monitor selectors on one block: `Connector`, then `Description`, then `Index` (ADR-0014 Layout Rules, item 15, decided 2026-10-30).
+- [x] What an imported `_Shell.tdl` contains: surface blocks only, which take the importing Monitor's monitor (D22, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 
 ## Links
 
-- [[41 YAML Reference]] · [[TDL Language]] · [[Common Keys and Conventions]] · [[Module File]] · [[Surface Types]]
+- [[41 TDL Reference]] · [[TDL Language]] · [[Common Keys and Conventions]] · [[Module File]] · [[Surface Types]]

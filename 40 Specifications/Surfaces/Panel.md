@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/surface, needs-verification]
 related: ["[[Surfaces]]", "[[Surface Types]]", "[[Shell File]]", "[[Common Keys and Conventions]]", "[[Shell Structure]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
@@ -213,7 +213,7 @@ Panel {
 }
 ```
 
-An illustration only: the module params (`Value`, a Slider's params) are not designed here; a module use is written with the module's name as the head ([[Module File#Using a Module]]). The `true` in `Movable: true` and `Hidden: true`, and the empty list in `Input_Region: []`, assume forms ADR-0014 does not yet define (open).
+An illustration only: the module params (`Value`, a Slider's params) are not designed here; a module use is written with the module's name as the head ([[Module File#Using a Module]]). `true` in `Movable: true` and `Hidden: true` is a bare word that the parser keeps as a string and the key's declared type turns into a boolean, and `[]` in `Input_Region: []` is the empty list (D2, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 
 ## Python Contract
 

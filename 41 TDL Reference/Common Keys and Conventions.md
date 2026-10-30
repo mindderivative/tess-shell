@@ -1,13 +1,13 @@
 ---
 title: Common Keys and Conventions
 aliases: [YAML Conventions, Shell YAML Keys, TDL Conventions]
-type: yaml-ref
+type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-29
-tags: [yaml-ref, needs-verification]
-related: ["[[41 YAML Reference]]", "[[TDL Language]]", "[[Shell File]]", "[[Module File]]", "[[Style, Theme and Stylesheet Files]]", "[[ADR-0007 Shell UI Layer]]", "[[ADR-0014 Shell File Language]]"]
+updated: 2026-10-30
+tags: [tdl-ref, needs-verification]
+related: ["[[41 TDL Reference]]", "[[TDL Language]]", "[[Shell File]]", "[[Module File]]", "[[Style, Theme and Stylesheet Files]]", "[[ADR-0007 Shell UI Layer]]", "[[ADR-0014 Shell File Language]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0014 Shell File Language]]"]
 ---
 
@@ -23,11 +23,11 @@ Every file starts with a metadata block between two `---` lines. The keys, the v
 | Key                                              | Meaning                                                                 | Status                                  |
 |--------------------------------------------------|-------------------------------------------------------------------------|-----------------------------------------|
 | `TDL`                                            | The language version, a string                                          | Decided (2026-10-29)                    |
-| `Shell`, `Module`, `Style`, `Stylesheet`, `Theme` | The file-type key: exactly one, its value a version string (`Shell: v1`). Authoritative; the suffix must agree | Decided (2026-10-29)                    |
+| `Shell`, `Module`, `Style`, `Stylesheet`, `Theme`, `Settings` | The file-type key: exactly one, its value a version string (`Shell: v1`). Authoritative; the suffix must agree (`Settings` is for `settings.tdl`, D20) | Decided (2026-10-29)                    |
 | `UID`                                            | The file's shell-wide identifier (UUIDv7), written by the shell         | Decided                                 |
 | `Name`                                           | A module file only: its unique name and the word that calls it          | Decided (2026-10-29)                    |
 
-File suffixes: `<Name>_Shell.tdl`, `<Name>_Module.tdl`, `<Name>_Style.tdl`, `<Name>_Theme.tdl`, `<Name>_Stylesheet.tdl`, plus a Python file `<Name>_Module.py` next to a module ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]). The settings file is `settings.tdl` (assumed name, to confirm, [[Settings File]]). A shell is one `*.tdl` file or a `Main_Shell.tdl` importing `<Name>_Shell.tdl` files. The syntax of blocks and properties is in [[TDL Language#Punctuation]].
+File suffixes: `<Name>_Shell.tdl`, `<Name>_Module.tdl`, `<Name>_Style.tdl`, `<Name>_Theme.tdl`, `<Name>_Stylesheet.tdl`, plus a Python file `<Name>_Module.py` next to a module ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]]). The settings file is `settings.tdl`, with the file-type key `Settings: v1` (D20 in [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; [[Settings File]]). A shell is one `*.tdl` file or a `Main_Shell.tdl` importing `<Name>_Shell.tdl` files. The syntax of blocks and properties is in [[TDL Language#Punctuation]].
 
 ## Keys that Say what Something is
 
@@ -38,7 +38,7 @@ There is no `Type:`, no lowercase `shell:`, no `Kind:` on a surface and no `Bloc
 | A file                          | The file-type key in the metadata block                                                                     | `Shell`, `Module`, `Style`, `Stylesheet`, `Theme`                                                                                                   | Decided (2026-10-29)                                    |
 | A surface                       | The block head                                                                                              | `Bar`, `Frame`, `Panel`, `Popup` ([[Surface Types]])                                                                                                | Decided (2026-10-29; replaces `kind:`)                  |
 | A building block                | The block head                                                                                              | Box, FlexBox, Grid, Text, TextField, Bitmap, SVG, Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path, Terminal, Canvas ([[Building Blocks]]) | Decided (2026-10-29; replaces `block:`)                 |
-| A module call                   | The block head, which is the `Name:` in the module file's metadata                                           | `Clock { }`; params and `Style` are keys inside                                                                                                     | Decided (2026-10-29); repeats allowed, ordered by position |
+| A module call                   | The block head, which is the `Name:` in the module file's metadata                                           | `Clock { }`; params are keys inside, written as the module declared them (D18)                                                                                                     | Decided (2026-10-29); repeats allowed, ordered by position |
 | A monitor                       | The block head `Monitor`                                                                                    | Selectors are in [[TDL Language#Monitors]]                                                                                                          | Decided (2026-10-29; replaces `root`)                   |
 
 - All of these names are in one registry. A name registered twice is a load error, except that a user module of the same name overrides a shipped module ([[TDL Language#Names and the Registry]]).
@@ -55,7 +55,7 @@ There is no `Type:`, no lowercase `shell:`, no `Kind:` on a surface and no `Bloc
 | `Children`                   | A Monitor, a surface, a container, a popup             | A block of entries: blocks and module calls (the same head may repeat, ordered by position), `Import` properties, and `If` and `For` blocks ([[ADR-0014 Shell File Language#Conditions and Repeats (Decided)]]). The only holder of contents; `modules:` is gone | Decided                                                                                                                                                                                 |
 | `Import`                     | Inside `Children`; a shell file; a module file; an inline `Style` | One file name or a list. Inside `Children` it brings in `<Name>_Shell.tdl` surfaces or embeds a `<Name>_Module.tdl` at that position, which is how modules nest; inside `Style` it imports a style file. Paths are relative to the importing file; imports nest | Decided                                                                                                                                                                                 |
 | `If`, `Else`, `For`, `In`, `Key` | Inside `Children`                                  | Conditions and repeats; the forms are in [[TDL Language#Structure Words]]                                                                                                                                                                                       | Decided (2026-10-29)                                                                                                                                                                    |
-| `Params`                     | A module file declares them; a use passes them         | Typed values                                                                                                                                                                                                                                                   | Decided that they exist; type names proposed                                                                                                                                            |
+| `Params`                     | A module file declares them; a use passes them         | Typed values                                                                                                                                                                                                                                                   | Decided that they exist and where they sit (D17); the type names are proposed                                                                                                                                            |
 | `Tooltip`                    | A module use; a block or surface when written by hand  | A Popup file name or an inline Popup, opened as that thing's tooltip. Available on every module, built-in and custom, with no module code ([[Popup#Tooltips (decided 2026-10-28)]]). On a Popup entry, `Tooltip: true` makes it a tooltip                      | Decided (2026-10-28); the unique-name form is proposed                                                                                                                                  |
 | `Style`                      | A surface, a module                                    | A style file name, or an inline `Style { }` block of style values                                                                                                                                                                                              | Decided                                                                                                                                                                                 |
 | `Layer`                      | A surface                                              | `background`, `bottom`, `top`, `overlay`, numbered 0 to 3 as in the protocol; `overlay` is the highest. A Bar or Panel may use `bottom`, `top` or `overlay`; a Frame only `top`; a Popup stacks above its parent                                               | Decided (the key and the four values, flow diagram 2026-10-26). Only `top` surfaces may reserve space (`Exclusive_Zone`). `background` is for wallpapers only, for now: no surface type uses it |
@@ -74,11 +74,11 @@ The value forms are stated once in [[TDL Language#Values]]; this table adds how 
 
 | Kind                                                        | Forms                                                                                                                                            | Notes                                                                                                       |
 |-------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| Colour                                                      | `"#RRGGBB"`, `"#RRGGBBAA"` (quoted, because `#` starts a comment), `rgba(0 0 0 0.5)` (space separated; red, green and blue 0 to 255, alpha 0.0 to 1.0), a theme token name | The shell converts to tre's `(r, g, b, a)` with 0 to 255 integers ([[Value Types and Conversion]]) |
+| Colour                                                      | `"#RRGGBB"`, `"#RRGGBBAA"` (quoted, because `#` starts a comment), `rgba(0 0 0 0.5)` (space separated; red, green and blue 0 to 255, alpha 0.0 to 1.0), a theme token reference such as `$color.on_surface`, a plain string the style engine resolves by theme key (D16, [[Style Schema#Theme Tokens]]) | The shell converts to tre's `(r, g, b, a)` with 0 to 255 integers ([[Value Types and Conversion]]) |
 | Four-sided values (borders, corner radii, margins, padding) | One number for all sides; a list of four clockwise from the top (top, right, bottom, left), `[2, 2, 2, 2]`; named sides as a block, `Margin { Left: 2, Top: 2, Right: 2, Bottom: 2 }` | The brace-only form `{2, 2, 2, 2}` is not used (PyYAML read it as `{2: None}` on 2026-10-26; in TDL a brace opens a named block) |
-| Size                                                        | A whole number of pixels, `auto`, a percentage `50%`; a percentage plus pixels (tre's `calc(100% - 16)`) has no TDL form yet, see Open | Lengths have no unit suffix; a float is only for non-lengths such as `Opacity: 0.9` (ADR-0014). The forms tre accepts |
-| Text, numbers, booleans                                     | Unquoted words are strings; quote text that holds a `,` or a closing brace; `"..."` or `'...'` with `\` escapes                                   | Boolean spelling is not stated in ADR-0014, see Open                                                        |
-| Lists, blocks                                               | `[a, b]` lists; `Head { ... }` blocks                                                                                                            | A list feeds a `For` repeat                                                                                 |
+| Size                                                        | A whole number of pixels, `auto`, a percentage `50%`; a percentage plus pixels (tre's `calc(100% - 16)`) is not in v1 (D6) | Lengths have no unit suffix; a float is only for non-lengths such as `Opacity: 0.9` (ADR-0014). The forms tre accepts |
+| Text, numbers, booleans                                     | Unquoted words are strings; quote text that holds a `,` or a closing brace; `"..."` or `'...'` with `\` escapes                                   | `true`, `false` and `null` are bare words that the key's schema type reads as boolean or null; `[]` is the empty list (D2)                                                        |
+| Lists, blocks                                               | `[a, b]` lists; `Head { ... }` blocks, one-line `Spacer { }` allowed (D8)                                                                                                            | A list feeds a `For` repeat; no unnamed block as a list item, no numeric keys (D4); a repeated key in one block is an error naming both places (D9)                                                                                 |
 | Expression                                                  | A `{{ ... }}` slot on one line, no quotes; TEL evaluates it                                                                                      | Reads `params.<name>` and values the module sends                                                           |
 
 ## Errors
@@ -93,10 +93,10 @@ Every error carries `file:line:column`, from the shell's own TDL parser (ADR-001
 - [x] The expression delimiter: `{{ }}` on one line (ADR-0014, 2026-10-29). The expression syntax inside it is TEL's.
 - [x] Whether a block is named by the word before the brace or by a key: the head is the type and `Name:` is the unique name (ADR-0014, item 6).
 - [ ] Units beyond pixels (a scale-aware unit).
-- [ ] A TDL form for a percentage plus pixels (`calc(100% - 16)`), which ADR-0014 does not define.
-- [ ] Boolean and null spellings in TDL (`true`/`false`), which ADR-0014 does not state.
+- [x] A TDL form for a percentage plus pixels: none in v1; it waits for a surface that needs it (D6, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [x] Boolean and null spellings: bare `true`, `false`, `null`; `[]` is the empty list (D2).
 - [ ] How a repeated use names itself in the file; see [[TDL Language#Open]].
 
 ## Links
 
-- [[41 YAML Reference]] · [[TDL Language]] · [[Shell File]] · [[Module File]] · [[Style, Theme and Stylesheet Files]] · [[ADR-0007 Shell UI Layer]]
+- [[41 TDL Reference]] · [[TDL Language]] · [[Shell File]] · [[Module File]] · [[Style, Theme and Stylesheet Files]] · [[ADR-0007 Shell UI Layer]]

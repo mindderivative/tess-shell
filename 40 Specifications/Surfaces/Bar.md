@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/surface, needs-verification]
 related: ["[[Surfaces]]", "[[Surface Types]]", "[[Panel]]", "[[Frame]]", "[[Shell File]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
@@ -72,7 +72,7 @@ A Bar belongs to a `Monitor` block, and so to one monitor ([[Shell File]]). A Ba
 | `Children`          | Blocks, containers and modules                                                                                                                    | Decided                                                                      |
 | `Style`             | A style file or inline values                                                                                                                     | Decided                                                                      |
 | `Edge`              | `left`, `right`, `top` or `bottom`: the edge it attaches to                                                                                       | Decided (maintainer, 2026-10-27)                                             |
-| `Span`              | `absolute` (a fixed length), `expanded` (stretches along the whole edge, touching three edges) or `auto` (sized to its content)                   | Decided (the three values); how an absolute length is given is open          |
+| `Span`              | `absolute` (a fixed length), `expanded` (stretches along the whole edge, touching three edges) or `auto` (sized to its content)                   | Decided (the three values); an absolute length is given by `Length`          |
 | `Length`            | The fixed length for `Span: absolute`                                                                                                             | Decided (key name accepted 2026-10-29)                                      |
 | `Align`             | Where a shorter bar sits along the edge: `start`, `center`, `end`, or an offset                                                                   | Decided (key name accepted 2026-10-29)                                      |
 | `Thickness`         | The size across the edge                                                                                                                          | Decided (maintainer, 2026-10-27)                                             |
@@ -128,7 +128,7 @@ Bar {
 }
 ```
 
-An illustration only. The module names (Workspaces, Tray, Tasks) are v1 modules whose specs are not written; `Length` and `Reserve` are proposals. `Reserve: true` assumes a boolean literal, which ADR-0014 does not yet define (open), and a module use is written with the module's name as the head ([[Module File#Using a Module]]).
+An illustration only. The module names (Workspaces, Tray, Tasks) are v1 modules whose specs are not written; `Length` and `Reserve` are proposals. `Reserve: true` is a bare word that the parser keeps as a string and the key's declared type turns into a boolean ([[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]], D2), and a module use is written with the module's name as the head ([[Module File#Using a Module]]).
 
 ## Python Contract
 
@@ -174,7 +174,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 
 ## Open Questions
 
-- [x] The keys `Edge`, `Span` (`absolute`, `expanded`, `auto`) and `Thickness` (maintainer, 2026-10-27). Open: the key for an absolute length (`Length` proposed), `Align`, `Reserve`, and whether the raw `Anchor` and `Size` are also allowed.
+- [x] The keys `Edge`, `Span` (`absolute`, `expanded`, `auto`) and `Thickness` (maintainer, 2026-10-27). The key for an absolute length is `Length` (accepted 2026-10-29). Open: `Align`, and whether the raw `Anchor` and `Size` are also allowed.
 - [x] Movable: no, a Bar is anchored and a movable surface is a Panel. Floating: a Bar with margins looks floating but stays attached and its margin space is reserved (maintainer, 2026-10-27).
 - [x] Auto-hide: on by default with opt-out, a default delay the user can change, keyboard reveal none by default (maintainer, 2026-10-27). Open: the default delay value, the hover strip's thickness, and the reveal key's key name (`Reveal_Key`).
 - [x] The Plasma panel on the same edge: the Bar wins, unless the Plasma panel is always on top or a window is fullscreen (maintainer, 2026-10-27). Open: how, and how KWin orders two zones on one edge. #needs-verification

@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/runtime, needs-verification]
 related: ["[[Runtime]]", "[[Data Flow]]", "[[Process Model and Threading]]", "[[Validation and Errors]]", "[[Config Discovery and Registry]]", "[[Settings File]]", "[[Module Contract]]", "[[Shell Start and Stop]]"]
 depends_on: ["[[Validation and Errors]]", "[[Config Discovery and Registry]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[Validation and Errors]]", "[[Config Discovery and Registry]]"]
 # Hot Reload
 
 > [!summary]
-> The shell watches its files and applies a change to the running shell without a restart. A watcher thread notices a change, reads, parses (with the shell's TDL parser, [[ADR-0014 Shell File Language]]) and validates it, and hands a finished result to the loop, which applies the difference: it changes live properties in place and reopens a window only when a property cannot change live. A bad file leaves the old state running. Decided: hot reload exists, a bad file keeps the old state, a changed module `.py` reloads at runtime, `settings.tdl` applies `logging` at once and needs a restart for `directories` and `main_shell`, and the shell's own UID write must not cause a loop ([[Data Flow#Hot reload]], [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], [[Settings File]]). The name `settings.tdl` is an assumption pending maintainer confirmation. The mechanics below are proposals with recommendations.
+> The shell watches its files and applies a change to the running shell without a restart. A watcher thread notices a change, reads, parses (with the shell's TDL parser, [[ADR-0014 Shell File Language]]) and validates it, and hands a finished result to the loop, which applies the difference: it changes live properties in place and reopens a window only when a property cannot change live. A bad file leaves the old state running. Decided: hot reload exists, a bad file keeps the old state, a changed module `.py` reloads at runtime, `settings.tdl` applies `logging` at once and needs a restart for `directories` and `main_shell`, and the shell's own UID write must not cause a loop ([[Data Flow#Hot reload]], [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], [[Settings File]]). The name `settings.tdl` is confirmed (D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). The mechanics below are proposals with recommendations.
 
 ## Purpose and Scope
 
@@ -25,9 +25,9 @@ depends_on: ["[[Validation and Errors]]", "[[Config Discovery and Registry]]"]
 
 ### What is Watched
 
-- Every directory that can hold a shell file: the config directory's `Shells/`, `Modules/` (and the module folders in it), `Styles/`, `Themes/`, `Stylesheets/`, the directories `settings.tdl` names, and `settings.tdl` itself ([[Settings File]]). `schemas/`, `logs/` and `backups/` are not watched.
+- Every directory that can hold a shell file: the config directory's `Shells/`, `Modules/` (and the module folders in it), `Styles/`, `Themes/`, `Stylesheets/`, the directories `settings.tdl` names (`Directories`), and `settings.tdl` itself ([[Settings File]]). `schemas/`, `logs/` and `backups/` are not watched.
 - A change to an imported file is a change to every file that imports it: the shell keeps a map from each file to its importers and reloads the whole affected set together.
-- Watching is on by default. A key `hot_reload: false` in `settings.tdl` turns it off; a manual reload still works (the key is decided 2026-10-28; the rest of the settings list is deferred to the build, [[Settings File]]).
+- Watching is on by default. A key `Hot_Reload: false` in `settings.tdl` (`false` is a bare word that the key's declared type turns into a boolean, D2, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]) turns it off; a manual reload still works (the key is decided 2026-10-28; the rest of the settings list is deferred to the build, [[Settings File]]).
 
 ### How a Change is Noticed
 
@@ -39,7 +39,7 @@ depends_on: ["[[Validation and Errors]]", "[[Config Discovery and Registry]]"]
 
 ### The Shell's Own Writes
 
-The shell writes the registry and the `UID:` line into files ([[Config Discovery and Registry#Writing the UID into a file]]). A write it makes must not cause a reload. The writer records the content hash it wrote; when the watcher sees an event whose file now has that hash, it drops the event. A change by anyone else has a different hash and passes. This settles the open item about a reload loop ([[ADR-0007 Shell UI Layer#Open items]]).
+The shell writes the registry and the `UID:` line into files ([[Config Discovery and Registry#Writing the UID into a file]]). A write it makes must not cause a reload. The UID write patches the file text at the node's position and changes nothing else (D10, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]), so the written bytes are the file's new content and one hash covers them. The writer records the content hash it wrote; when the watcher sees an event whose file now has that hash, it drops the event. A change by anyone else has a different hash and passes. This settles the open item about a reload loop ([[ADR-0007 Shell UI Layer#Open items]]).
 
 ### The Reload Pipeline
 
@@ -83,8 +83,8 @@ The new model is compared with the current one to decide what to change. Decided
 | A module's TDL only                                                                                                             | The module's layout is rebuilt; the module's `reload()` hook runs and the instance stays ([[Module Contract#Lifecycle]])                                                                                                                                                          |
 | A module's `.py`                                                                                                                 | Code reload: import the new code and check it has the class, then `stop` the old instance and join its threads, purge the module's own modules from `sys.modules`, create the new instance and `start` it; a failed import keeps the old instance ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]) |
 | A change to a Popup entry                                                                                                        | An open Popup is closed; the next open uses the new definition ([[Popup]])                                                                                                                                                                                    |
-| `settings.tdl`: `logging`                                                                                                       | Applied at once                                                                                                                                                                                                                                                                             |
-| `settings.tdl`: `directories`, `main_shell`, `registry`                                                                         | Reported as needing a restart; nothing changes until then ([[Settings File]])                                                                                                                                                                                         |
+| `settings.tdl`: `Logging`                                                                                                       | Applied at once                                                                                                                                                                                                                                                                             |
+| `settings.tdl`: `Directories`, `Main_Shell`, `Registry`                                                                         | Reported as needing a restart; nothing changes until then ([[Settings File]])                                                                                                                                                                                         |
 
 ### State that Survives
 
@@ -102,7 +102,7 @@ The new model is compared with the current one to decide what to change. Decided
 
 ## Configuration
 
-`settings.tdl`: `hot_reload` (default true), `reload_debounce` (milliseconds, default 200). Both keys decided 2026-10-28; the global settings list is built while the shell is built ([[Settings File]]).
+`settings.tdl`: `Hot_Reload` (default true), `Reload_Debounce` (milliseconds, default 200). Both keys decided 2026-10-28; the global settings list is built while the shell is built ([[Settings File]]).
 
 ## Python Contract
 
@@ -138,7 +138,7 @@ A reload that fails is announced by the notification as well as the log ([[Valid
 | An event storm (a build tool writes many files) | One reload after 200 ms of quiet                              |
 | A reload while another is running               | Queued; the second runs after the first with the newest files |
 | A module's new code fails to import             | The old instance keeps running; the error is logged           |
-| A change to `directories` in `settings.tdl`    | Reported as needing a restart                                 |
+| A change to `Directories` in `settings.tdl`    | Reported as needing a restart                                 |
 
 ## Open Questions
 
@@ -149,7 +149,7 @@ All seven were answered on 2026-10-28.
 3. [x] **Panel state across a reload:** shown, hidden and collapsed survive by name.
 4. [x] **A failed apply:** try to restore the window, then close it and continue.
 5. [x] **A notice when a reload applies:** off by default.
-6. [x] **Settings keys:** `hot_reload` and `reload_debounce`.
+6. [x] **Settings keys:** `Hot_Reload` and `Reload_Debounce`.
 7. [x] **TEL compile on a worker thread:** yes; TEL does all the work and reports the answer (maintainer, 2026-10-28). Still to confirm in the TEL project: no shared mutable state.
 
 ## Acceptance Criteria
@@ -161,7 +161,7 @@ All seven were answered on 2026-10-28.
 - [ ] Changing an imported file reloads every file that imports it, once.
 - [ ] A module's TDL change calls its `reload()` and keeps the instance; a `.py` change replaces the instance; a `.py` with a syntax error keeps the old instance.
 - [ ] The shell's own UID write does not trigger a reload.
-- [ ] A change to `directories` in `settings.tdl` is reported as needing a restart and changes nothing else.
+- [ ] A change to `Directories` in `settings.tdl` is reported as needing a restart and changes nothing else.
 - [ ] With the watch limit exhausted, the shell warns and still reloads on `SIGHUP`.
 - [ ] A reload applies in one turn: no frame shows half the change.
 - [ ] An open Popup whose definition changed is closed.

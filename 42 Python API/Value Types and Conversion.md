@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [api, needs-verification]
 related: ["[[42 Python API]]", "[[Module Context]]", "[[ADR-0007 Shell UI Layer]]", "[[ADR-0014 Shell File Language]]", "[[Expression Language Requirements]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]"]
@@ -64,24 +64,24 @@ A value written in a shell file reaches the shell as a TDL literal ([[ADR-0014 S
 | `50%`                                 | A percentage length (`<int>%`)                    | tre's percentage string `"50%"`, unchanged                                               |
 | `0.9` (a float)                       | A non-length number, such as `Opacity: 0.9`       | A float, unchanged                                                                       |
 | `auto`                                | An unquoted word, so a string                     | tre's `"auto"`, unchanged                                                                |
-| `true`, `false`                       | See the note below                                | A Python boolean                                                                         |
+| `true`, `false`, `null`               | Bare words, kept by the parser as strings (D2)    | The key's declared type in the schema turns them into a Python boolean, number or `None`; `[]` is an empty list |
 | A token name such as `primary`        | An unquoted word, so a string                     | A theme colour by conversion 2, when the key takes a colour                              |
 
-- A float is not a length. A fraction of the parent is written `50%`, and `calc(100% - 16)` has no TDL literal ([[#Open Questions]]).
+- A float is not a length. A fraction of the parent is written `50%`. `calc(100% - 16)` has no TDL literal: a percent-plus-pixels form is not in v1 (D6, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 - `rgba(...)` takes commas in the old YAML examples (`RGBA(255, 255, 255, 1.0)`); TDL uses spaces because `,` is a separator.
-- #needs-verification: ADR-0014 does not say whether `true`, `false` and bare numbers are typed values or strings that the key's schema coerces. The style example in [[Module Context]] uses `Border: true` and `Size: 16`; this note assumes numbers and booleans come out as numbers and booleans, as in the `Opacity: 0.9` example of the ADR.
+- Decided (D2, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]): the parser keeps `true`, `false`, `null` and bare numbers as strings, and the key's declared type in the schema turns them into booleans, numbers or null. The style example in [[Module Context]] uses `Border: true` and `Size: 16`, which come out as a boolean and a number by that rule.
 
 ## Four-sided Values
 
-A style value with four sides (a border thickness, a corner radius, a margin, padding) is written in forms the file language already has (maintainer, 2026-10-26, option A in [[ADR-0007 Shell UI Layer#Open items]], decided for YAML): one number for all sides, a list of four, or named sides. In TDL the same three forms read:
+A style value with four sides (a border thickness, a corner radius, a margin, padding) is written in forms the file language already has (maintainer, 2026-10-26, option A in [[ADR-0007 Shell UI Layer#Open items]]; fixed for TDL by D7, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]): one number for all sides, a list of four, or a block of named sides. In TDL the three forms read:
 
 ```
 Border_Thickness: 2                                          # all four sides
 Border_Thickness: [2, 2, 2, 2]                               # four values, clockwise from the top
-Border_Thickness { Left: 2, Top: 2, Right: 2, Bottom: 2 }    # named sides, as a block
+Border_Thickness { Top: 2, Left: 24 }                         # named sides, as a block; an unnamed side is not set here
 ```
 
-The named-sides form was a YAML mapping. Writing it as a TDL block is the direct reading of ADR-0014 (a block holds properties), not a decision; the brace shorthand `{2, 2, 2, 2}` is not valid TDL, because `{ }` opens a block ([[#Open Questions]]).
+The named-sides form was a YAML mapping; in TDL it is a block (D7). The brace shorthand `{2, 2, 2, 2}` is not valid TDL, because `{ }` opens a block.
 
 The order of a list of four is clockwise from the top (top, right, bottom, left), confirmed by the maintainer on 2026-10-26, as tre's `margin` and `corner_radius` are. The shell converts the shorthand to tre's tuples.
 
@@ -101,9 +101,10 @@ The order of a list of four is clockwise from the top (top, right, bottom, left)
 
 - [x] The four conversions above are v1 (maintainer, 2026-10-26). Additions later.
 - [ ] Whether the shell warns when a key is sent but no view reads it (useful while building a shell).
-- [ ] Units (logical pixels only, or also percentages and a scale-aware unit). TDL fixes the file spelling: pixels as a whole number, `50%` for a percentage ([[ADR-0014 Shell File Language]]); a TDL literal for `calc(100% - 16)` is not defined.
-- [ ] Whether named sides are written as a block (`Border_Thickness { Left: 2, ... }`) or the form changes, and whether a brace shorthand `{2, 2, 2, 2}` is defined in TDL.
-- [ ] How `rgba(...)` alpha converts to 0 to 255 (rounding), and whether `true`, `false` and numbers are typed by the parser or by the key's schema.
+- [ ] Units (logical pixels only, or also a scale-aware unit). TDL fixes the file spelling: pixels as a whole number, `50%` for a percentage ([[ADR-0014 Shell File Language]]); percent plus pixels is not in v1 (D6, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [x] Named sides are a block, and no brace shorthand is defined (D7, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [x] `true`, `false` and numbers are typed by the key's schema, not the parser (D2, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [ ] How `rgba(...)` alpha converts to 0 to 255 (rounding).
 - [ ] How an image is sent and who owns the buffer (copy or hand over).
 - [ ] Whether a module can declare its keys and types in its TDL file so the shell can check a view against them at load.
 

@@ -1,23 +1,23 @@
 ---
 title: JSON Schema and Editor Support
 aliases: [Shell JSON Schema, YAML Schema Files, TDL Schema Files, Editor Support]
-type: yaml-ref
+type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-27
-updated: 2026-10-29
-tags: [yaml-ref, tooling, needs-verification]
-related: ["[[41 YAML Reference]]", "[[Style Schema]]", "[[Common Keys and Conventions]]", "[[Module File]]", "[[Shell File]]", "[[Building Blocks]]", "[[ADR-0011 JSON Schema for Shell Files]]", "[[ADR-0014 Shell File Language]]"]
+updated: 2026-10-30
+tags: [tdl-ref, tooling, needs-verification]
+related: ["[[41 TDL Reference]]", "[[Style Schema]]", "[[Common Keys and Conventions]]", "[[Module File]]", "[[Shell File]]", "[[Building Blocks]]", "[[ADR-0011 JSON Schema for Shell Files]]", "[[ADR-0014 Shell File Language]]"]
 depends_on: ["[[ADR-0011 JSON Schema for Shell Files]]"]
 ---
 
 # JSON Schema and Editor Support
 
 > [!summary]
-> The shell publishes JSON Schema files for its shell files. The shell validates the parsed tree against them at load and on hot reload. The schemas are generated from the block and module declarations, so the reference and the code cannot drift. [[ADR-0011 JSON Schema for Shell Files]] (accepted 2026-10-27) also relied on the YAML language server for completion and hover in editors; shell files are now TDL ([[ADR-0014 Shell File Language]]), so that part no longer applies. There is no language server in v1, and a small TextMate grammar (syntax highlighting) ships with v1. The details below are proposed.
+> The shell publishes JSON Schema files for its shell files. The shell validates the parsed tree against them at load and on hot reload. The schemas are generated from the block and module declarations, so the reference and the code cannot drift. [[ADR-0011 JSON Schema for Shell Files]] (accepted 2026-10-27) also relied on the YAML language server for completion and hover in editors; shell files are now TDL ([[ADR-0014 Shell File Language]]), so the editor part is dropped. ADR-0011 stands for load-time and reload validation of the parsed tree (D12 in [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). There is no language server in v1, and a small TextMate grammar (syntax highlighting) ships with v1. The details below are proposed.
 
-> [!important] Revised for TDL, 2026-10-29
-> What still holds: schemas generated from block and module declarations; the shell validates the parsed tree at load and on reload; semantic checks stay in the shell; the `jsonschema` cost and cache. What no longer applies: the Red Hat YAML extension, modelines, `yaml.schemas` globs and the language server's completion, hover and diagnostics. [[ADR-0011 JSON Schema for Shell Files]] is being revisited by the maintainer (the agent does not edit ADRs). Everything about editor feedback beyond highlighting is an open item in [[#Open]]. The spike findings below were measured on YAML, 2026-10-27, and are kept as dated findings.
+> [!important] Revised for TDL, 2026-10-30
+> What still holds: schemas generated from block and module declarations; the shell validates the parsed tree at load and on reload; semantic checks stay in the shell; the `jsonschema` cost and cache. What no longer applies: the Red Hat YAML extension, modelines, `yaml.schemas` globs and the language server's completion, hover and diagnostics. ADR-0011 stands for load and reload validation and the editor part is dropped (D12). Everything about editor feedback beyond highlighting is an open item in [[#Open]]. The spike findings below were measured on YAML, 2026-10-27, and are kept as dated findings.
 
 ## What the Editor and the Shell Each Get
 
@@ -33,11 +33,11 @@ This section described the YAML language server: a `# yaml-language-server: $sch
 
 The shell itself picks the schema from the file-type key in the file's metadata block (`Shell:`, `Module:`, `Style:`, `Stylesheet:` or `Theme:`, [[TDL Language#The Metadata Block]]), so it needs no association. For an editor the question is open ([[#Open]]): with no language server in v1 there is nothing to associate. The `*_Shell.tdl`, `*_Module.tdl`, `*_Style.tdl`, `*_Theme.tdl` and `*_Stylesheet.tdl` suffixes still give clean globs for any later tool.
 
-Draft decided 2026-10-27: draft-07 keywords (`definitions`, `if`/`then`/`else`, `enum`, `const`, `patternProperties`) and the shell validates with the same draft. The reason given then was that any editor version works; with no editor consumer in v1 the choice stands for the shell's own validator, and is open to revisit with ADR-0011.
+Draft decided 2026-10-27: draft-07 keywords (`definitions`, `if`/`then`/`else`, `enum`, `const`, `patternProperties`) and the shell validates with the same draft. The reason given then was that any editor version works; with no editor consumer in v1 the choice stands for the shell's own validator, and stands with ADR-0011 (D12).
 
 ## Where the Schemas Live
 
-Decided 2026-10-27 (replacing the project-root `.shell/schemas/` of earlier the same day): the shell's config directory, `$HOME/.config/tesserae-shell/schemas/` ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]). The generator writes every schema the shell uses into that folder: copies of the shipped ones (pinned to the shell version that wrote them) and the generated project schema. The decision was made so a YAML modeline could point at that folder; with no modeline, whether the folder is still needed on disk is open ([[#Open]]).
+Decided 2026-10-27 (replacing the project-root `.shell/schemas/` of earlier the same day): the shell's config directory, `$HOME/.config/tesserae-shell/schemas/` ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]). The generator writes every schema the shell uses into that folder: copies of the shipped ones (pinned to the shell version that wrote them) and the generated project schema. The decision was made so a YAML modeline could point at that folder. With no modeline the folder is still generated on disk, for the `tesserae-shell schema` command and a future language server (D12, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 
 - **Ignored by version control** (decided 2026-10-27): the folder is generated, so the shell writes a `.gitignore` containing `*` inside it. A user who keeps the config directory in git then never commits the schemas.
 - **Modeline path.** Dropped with the modeline (it was a YAML language server feature). Files that `settings.tdl` places outside the config directory ([[Settings File]]) need no schema path.
@@ -48,16 +48,16 @@ Decided 2026-10-27 (replacing the project-root `.shell/schemas/` of earlier the 
 |--------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
 | `shell.schema.json`                                                | Files with the `Shell:` key: monitors, surfaces, children                                             | Shipped, per format version (`Shell: v1` maps to a `v1` folder and `$id`)       |
 | `module.schema.json`                                               | Files with the `Module:` key: params, layout, style                                                   | Shipped                                                                         |
-| `settings.schema.json`                                             | The config directory's `settings.tdl` ([[Settings File]]); its file-type key is not decided         | Shipped                                                                         |
+| `settings.schema.json`                                             | The config directory's `settings.tdl` ([[Settings File]]); its file-type key is `Settings:` (D20)         | Shipped                                                                         |
 | `style.schema.json`, `theme.schema.json`, `stylesheet.schema.json` | The three look files ([[Style Schema]])                                        | Shipped; the theme token enums are filled in by generation                      |
 | `definitions.schema.json`                                          | Shared definitions: colour, four-sided values, size, token reference, shadow, each block's properties | Generated from the block declarations ([[Building Blocks#Properties, parts and states]]) |
 | `project.schema.json`                                              | One config directory: which module names exist and their `params`                                     | Generated from the module files in the config directory and the registry        |
 
-The six file-type schemas are told apart by which file-type key the metadata block has. The parsed tree has two parts: a metadata part (the keys between the `---` lines, including `TDL:`, the file-type key, `UID:` and any user keys) and a block part (the blocks that follow). Each file-type schema requires its own key in the metadata part (`required: [Shell]` for `shell.schema.json`, and so on) and exactly one of the five, then validates the block part with its `if`/`then` branches; unknown metadata keys are allowed ([[ADR-0014 Shell File Language#Layout Rules]], items 1, 2 and 14). The suffix check (a mismatch with the file-type key is a load error) is the loader's, not the schema's. Whether the metadata part is validated by the schema or by the loader is open ([[#Open]]).
+The six file-type schemas are told apart by which file-type key the metadata block has. The loader reads the metadata block first, because the file-type key picks the schema; the schema then validates both parts (D12, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). The parsed tree has two parts: a metadata part (the keys between the `---` lines, including `TDL:`, the file-type key, `UID:` and any user keys) and a block part (the blocks that follow). Each file-type schema requires its own key in the metadata part (`required: [Shell]` for `shell.schema.json`, and so on) and exactly one of the six, then validates the block part with its `if`/`then` branches; unknown metadata keys are allowed ([[ADR-0014 Shell File Language#Layout Rules]], items 1, 2 and 14). The suffix check (a mismatch with the file-type key is a load error) is the loader's, not the schema's.
 
 ## Why a Generated Project Schema
 
-A module is called by its name as the block head, with params beneath ([[Module File#Using a module]]). A static schema cannot know which names a user's shell defines. The generated project schema lists each module name as an allowed head in `Children` with that module's `Params` as its value schema, so the schema checks each module call's params. Block entries (a built-in block name as the head, such as `Text`) fall through to the block branches; both kinds of name come from the one registry ([[TDL Language#Names and the Registry]]). This was written for YAML mappings; in TDL the same name may repeat in one `Children { }`, ordered by position, so the shape of the parsed tree and of `Children` in the schema is open ([[#Open]]). Completion of module names is an editor feature and is not in v1. The shell regenerates the project schema when the registry changes ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]); the command is proposed as `tesserae-shell schema`.
+A module is called by its name as the block head, with params beneath ([[Module File#Using a module]]). A static schema cannot know which names a user's shell defines. The generated project schema lists each module name as an allowed head in `Children` with that module's `Params` as its value schema, so the schema checks each module call's params. Block entries (a built-in block name as the head, such as `Text`) fall through to the block branches; both kinds of name come from the one registry ([[TDL Language#Names and the Registry]]). This was written for YAML mappings; in TDL the same name may repeat in one `Children { }`, ordered by position, so the parsed tree is an ordered list of entries (head, properties, children) that keeps repeated names, and `Children` in the schema is an array of such entries (D12). Completion of module names is an editor feature and is not in v1. The shell regenerates the project schema when the registry changes ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]); the command is proposed as `tesserae-shell schema`.
 
 ## Findings from a Spike (2026-10-27)
 
@@ -112,14 +112,14 @@ These numbers are one machine and synthetic files. Re-measure with real shell fi
 - [x] Editor support in v1: no language server; a small TextMate grammar ships (maintainer, 2026-10-29, [[ADR-0014 Shell File Language]]).
 - [ ] An Obsidian view of the schemas is out of scope; the maintainer's editor is the target.
 
-Redesign questions for the maintainer, after [[ADR-0014 Shell File Language]] (the agent has not answered them):
+Redesign questions after [[ADR-0014 Shell File Language]], answered by D12 ([[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]) unless marked open:
 
 > [!question] Redesign of ADR-0011
-> - [ ] Does [[ADR-0011 JSON Schema for Shell Files]] stand for load-time validation only, or is it superseded?
-> - [ ] After v1, which editor feedback is wanted (completion, hover, diagnostics), and by what route: a TDL language server, an editor plugin that reads these schemas, or none?
-> - [ ] Is the schema folder `schemas/` still written to disk, or built in memory or in the cache, now that no modeline points at it?
-> - [ ] What is the shape of the block part the schema validates, given repeated names in one `Children { }`: an ordered list of entries rather than a mapping? The `Children` and project-schema design above depend on it.
-> - [ ] The parsed tree has a metadata part that holds `TDL:` (ADR-0014 Layout Rules item 1). Does the schema validate that part, or does the loader check `TDL:` and the file-type key before the schema runs?
+> - [x] ADR-0011 stands for load-time and reload validation of the parsed tree; the editor part is dropped.
+> - [ ] After v1, which editor feedback is wanted (completion, hover, diagnostics), and by what route: a TDL language server, an editor plugin that reads these schemas, or none? D12 keeps the schemas for a future language server and decides nothing more.
+> - [x] `schemas/` is still generated on disk, for the `tesserae-shell schema` command and a future language server.
+> - [x] The block part is an ordered list of entries (head, properties, children) that keeps repeated names.
+> - [x] The loader reads the metadata block first (the file-type key picks the schema); the schema then validates both the metadata part and the block part.
 > - [ ] What does the TDL parser cost on 50, 500 and 5000 entries? Re-measure with the validation numbers above.
 > - [ ] Do the schema-path-to-position mapping and the oneOf versus if/then findings hold on a TDL tree?
 > - [ ] What does the TextMate grammar cover beyond highlighting (nothing else is planned)?
@@ -135,4 +135,4 @@ Redesign questions for the maintainer, after [[ADR-0014 Shell File Language]] (t
 
 ## Links
 
-- [[41 YAML Reference]] · [[Style Schema]] · [[Common Keys and Conventions]] · [[Module File]] · [[Shell File]] · [[Building Blocks]] · [[ADR-0011 JSON Schema for Shell Files]]
+- [[41 TDL Reference]] · [[Style Schema]] · [[Common Keys and Conventions]] · [[Module File]] · [[Shell File]] · [[Building Blocks]] · [[ADR-0011 JSON Schema for Shell Files]]

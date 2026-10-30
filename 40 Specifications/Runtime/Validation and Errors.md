@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/runtime, needs-verification]
 related: ["[[Runtime]]", "[[Common Keys and Conventions]]", "[[JSON Schema and Editor Support]]", "[[ADR-0011 JSON Schema for Shell Files]]", "[[Config Discovery and Registry]]", "[[Hot Reload]]", "[[Shell Start and Stop]]", "[[Expression Language Requirements]]"]
 depends_on: ["[[ADR-0011 JSON Schema for Shell Files]]", "[[Common Keys and Conventions]]"]
@@ -39,9 +39,9 @@ flowchart LR
 | Stage          | Checks                                                                                   | Tool                                                             | Position comes from                                                   |
 |----------------|------------------------------------------------------------------------------------------|------------------------------------------------------------------|-----------------------------------------------------------------------|
 | 1. Read        | The file opens and is UTF-8 (a byte-order mark is allowed and dropped)                   | Standard library                                                 | The file, line 1                                                      |
-| 2. Parse       | TDL syntax; the tree holds only blocks, properties, lists and literal values; `{{ }}` slots are kept as text for stage 6 | The shell's TDL parser ([[ADR-0014 Shell File Language]])        | The parser's own positions                                            |
-| 3. Header      | The metadata block is present; `TDL:` is present with a known version; exactly one file-type key (`Shell:`, `Module:`, `Style:`, `Stylesheet:`, `Theme:`) with a known version; the key agrees with the suffix; `UID:` well formed | The shell                                                        | The key's node                                                        |
-| 4. Schema      | Types, enums, required keys, unknown keys (the metadata block's other keys are kept and ignored), value forms (colour, four-sided, size) | `jsonschema`, draft-07 ([[ADR-0011 JSON Schema for Shell Files]]) | The tree node at the error's path                                       |
+| 2. Parse       | TDL syntax; the tree is an ordered list of entries (head, properties, children) that keeps repeated names (D12); it holds only blocks, properties, lists and literal values; `{{ }}` slots are kept as text for stage 6 | The shell's TDL parser ([[ADR-0014 Shell File Language]])        | The parser's own positions                                            |
+| 3. Header      | The loader reads the metadata block first, because the file-type key picks the schema (D12). The metadata block is present; `TDL:` is present with a known version; exactly one file-type key (`Shell:`, `Module:`, `Style:`, `Stylesheet:`, `Theme:`) with a known version; the key agrees with the suffix; `UID:` well formed | The shell                                                        | The key's node                                                        |
+| 4. Schema      | The schema picked at stage 3 validates the metadata part and the block part (D12). Types, enums, required keys, unknown keys (the metadata block's other keys are kept and ignored), value forms (colour, four-sided, size) | `jsonschema`, draft-07 ([[ADR-0011 JSON Schema for Shell Files]]) | The tree node at the error's path                                       |
 | 5. Semantic    | Rules a schema cannot say (below)                                                        | The shell                                                        | The node at the offending key or value                                |
 | 6. Expressions | TEL compiles; every name it reads is known                                               | TEL                                                              | The slot's `Origin` (file, line, column) from the parser              |
 | 7. Modules     | The `.py` imports; it holds one `Module` class; `validate_use` accepts each use          | Python                                                           | The traceback line for the `.py`; the use's node for a rejected param |
@@ -55,12 +55,12 @@ flowchart LR
 ### Parsing
 
 - The parser is the shell's own, in a module that imports nothing from the shell ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 9). Its syntax errors carry `file:line:column` directly. There is no third-party parser, so no marks to translate.
-- The same block name may repeat in one `Children { }`, ordered by position, so a repeated module call is not an error ([[Module File#Using a module]]). A property key repeated in one block is not decided; see Open Questions.
+- The same block name may repeat in one `Children { }`, ordered by position, so a repeated module call is not an error ([[Module File#Using a module]]). A property key repeated in one block is an error naming both places (D9, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]); the stage 5 rule is in the table below.
 - The tree holds structure and literal values only. A file cannot run code: TDL has no statements, variables or tags, and every `{{ }}` slot is handed to TEL, which is sandboxed ([[Expression Language Requirements]]).
 - The tree is lossless: it keeps comments and layout, and every node knows its line and column, so any path in the data maps to a position. This replaces the earlier YAML design, which kept PyYAML's `compose` node marks beside the data (spike of 2026-10-27, [[JSON Schema and Editor Support#Findings from a spike (2026-10-27)]]).
 - Columns are 1-based and count characters, as editors do.
 - No language server in v1, so these printed errors are the author's main feedback ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 10). A small TextMate grammar gives highlighting only.
-- Not yet defined by ADR-0014, and so open here: boolean and null literals (what stage 4 sees for `Hidden: true`), and how an unquoted word becomes a number or a string for schema types.
+- `true`, `false` and `null` are lowercase bare words, and `[]` is the empty list. The parser keeps a bare word as a string, so stage 4 sees `Hidden: true` as the string `true` and the key's declared type in the schema turns it into a boolean, number or null (D2, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 
 ### Semantic Checks
 
@@ -68,6 +68,7 @@ Rules a schema cannot say, with the note that owns each:
 
 | Rule                                                                                                                       | Owner                                                                                                                     |
 |----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| A property key appears once in a block; a repeat is an error naming both places (D9; repeated block names are allowed) | [[TDL Language#Punctuation]] |
 | A name is registered once (one registry for blocks, surface types and modules; a user module overrides a shipped one); a name used as a reference exists | [[Config Discovery and Registry#Names]], [[Common Keys and Conventions#Names and references]]                                          |
 | No import cycle; every imported file exists                                                                                | [[Config Discovery and Registry#Discovery]]                                                                                   |
 | A block head names a registered block, surface type or module; a module's params have the declared types; `validate_use` accepts them | [[Module File]], [[Module Contract]]                                          |
@@ -132,7 +133,7 @@ A bad `settings.tdl` always stops the shell at start (decided 2026-10-27) and ke
 
 ## Configuration
 
-`settings.tdl`: `validation` with `enabled` (default true) and the cache location ([[Settings File]]). Proposed additions: `validation.max_errors` (default 50) and `validation.notify` (default true). No other key.
+`settings.tdl`: `Validation` with `Enabled` (default true) and the cache location ([[Settings File]]). Proposed additions: `Max_Errors` (default 50) and `Notify` (default true) in the `Validation` block. No other key.
 
 ## Python Contract
 
@@ -154,7 +155,7 @@ A plain-text error is readable by a screen reader in a terminal. An error that s
 
 ## Performance Budget
 
-- A cached file costs a hash. A changed file costs a parse and a validation; a few milliseconds per hundred entries on this machine ([[JSON Schema and Editor Support#The `jsonschema` dependency runtime, not only development]]).
+- A cached file costs a hash. A changed file costs a parse and a validation; a few milliseconds per hundred entries on this machine ([[JSON Schema and Editor Support#The `jsonschema` Dependency: Runtime, Not Only Development]]).
 - Collecting up to 50 errors adds nothing the user feels; the cap protects the log.
 
 ## Failure Modes and Recovery
@@ -181,10 +182,13 @@ All seven were answered on 2026-10-28, as recommended.
 Raised by the move to TDL ([[ADR-0014 Shell File Language]]), not yet asked:
 
 > [!question] Open for the maintainer
-> - [ ] A property key repeated inside one block: an error naming both lines, or last wins. ADR-0014 allows repeated block names only.
-> - [ ] Boolean and null literals, and how unquoted words become numbers, for stage 4 types.
 > - [ ] The TDL error list (rule slugs for syntax errors such as an unclosed brace or a `}}` written for two closing braces) is part of the TDL reference, once written.
-> - [ ] Stage 3 checks the metadata block, then `TDL:`, then the file-type key (a missing or unknown `TDL:` version is an error): proposed, ADR-0014 names the keys but not the error text.
+
+Answered on 2026-10-30 ("Do all as you would recommend", [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]):
+
+- [x] A property key repeated inside one block is an error naming both places (D9).
+- [x] Boolean and null literals, and how unquoted words become numbers, for stage 4 types: the key's declared type decides (D2).
+- [x] Stage 3 reads the metadata block first, then `TDL:`, then the file-type key, which picks the schema (D12). The error text for each rule is part of the TDL error list above.
 
 ## Acceptance Criteria
 
@@ -193,6 +197,7 @@ Raised by the move to TDL ([[ADR-0014 Shell File Language]]), not yet asked:
 - [ ] Two blocks with the same name in one `Children { }` load, in positional order (the YAML-era rule that rejected duplicate keys no longer applies).
 - [ ] An unknown style key reports its line and column and offers the nearest key.
 - [ ] A wrong-typed value reports the types allowed and what to write.
+- [ ] A property key repeated in one block is reported as an error naming both places.
 - [ ] A file with six deliberate mistakes yields six errors, each at the right line and column ([[JSON Schema and Editor Support#Acceptance criteria]]).
 - [ ] A module key that names nothing registered reports the nearest names.
 - [ ] A TEL error reports the file line and the column inside the expression.

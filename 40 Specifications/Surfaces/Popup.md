@@ -5,7 +5,7 @@ type: spec
 status: draft
 owner: phil
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/surface, needs-verification]
 related: ["[[TRE-REQ-007 Popup Body Geometry]]", "[[Surfaces]]", "[[Surface Types]]", "[[Bar]]", "[[Panel]]", "[[Module Context]]", "[[Shell File]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Module Context]]"]
@@ -176,7 +176,7 @@ Popup {
 }
 ```
 
-An illustration only. `Menu` and `Label` are modules from [[V1 Widgets]]; the expression syntax is TEL's. The `true` in `Tooltip: true` assumes a boolean literal, which ADR-0014 does not yet define (open); a module use is written with the module's name as the head ([[Module File#Using a Module]]).
+An illustration only. `Menu` and `Label` are modules from [[V1 Widgets]]; the expression syntax is TEL's. `true` in `Tooltip: true` is a bare word that the parser keeps as a string and the key's declared type turns into a boolean (D2, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]); a module use is written with the module's name as the head ([[Module File#Using a Module]]).
 
 ## Python Contract
 

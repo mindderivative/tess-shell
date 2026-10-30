@@ -7,7 +7,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-18
-updated: 2026-10-29
+updated: 2026-10-30
 tags:
   - moc
 related:
@@ -30,13 +30,13 @@ depends_on: []
 |                     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| Updated             | 2026-10-29                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Last change         | Second TDL rewrite pass done (metadata block, Capitalised keys, block heads, Monitor); [[TDL Language]] written; open questions in [[ADR-0014 Shell File Language#Open Items]] |
+| Updated             | 2026-10-30 |
+| Last change         | [[ADR-0014 Shell File Language]]: all open items decided as recommended (D1 to D24); folder renamed to `41 TDL Reference`; decisions applied across the notes |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | [[ADR-0014 Shell File Language#Open Items]]: the module file layout and param-name case, settings file form, Frame structure, literals (booleans, null, `[]`), what happens to ADR-0011, TEL's structure role, the folder rename, `settings.tdl`; carry T17 to T19 to the TEL project ([[Expression Language Requirements]]) (booleans, `name:`, unnamed list blocks, selectors, `calc`), TEL's structure role, what happens to ADR-0011, the folder rename, `settings.tdl` |
+| Waiting on you      | Carry T17, T18 and T19 to the TEL project ([[Expression Language Requirements]]); ADR-0014 leaves open the `?:` conditional (T19, TEL's call), the TDL syntax-error names, a `calc` form and the shipped-module list ([[ADR-0014 Shell File Language#Open Items]]) |
 | Next                | Plasma coexistence, the D-Bus service layer, portals, global shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Tracking            | Tesserae is adding a matching version key to all its `.yaml` files (maintainer report); check the key name and release when published ([[ADR-0007 Shell UI Layer#File naming (2026-10-25)]])                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
 | Deferred to testing | Which global settings belong in `settings.tdl` ([[Settings File]]); First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]); the four reservers plus the painter on KWin and a 4K Frame with many joins ([[Frame]]); fractional scale at 1.5x ([[Frame]]); fullscreen stacking and detection ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]); Bar over a Plasma panel ([[Bar]]) |
 
 ### Recent Changes
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-30 | [[ADR-0014 Shell File Language]] open items decided (D1 to D24); `41 YAML Reference` renamed `41 TDL Reference`; decisions applied to the notes |
 | 2026-10-29 | Second TDL pass over the vault; [[TDL Language]] added; `?:` conditional proposed as T19 |
 | 2026-10-29 | [[ADR-0014 Shell File Language]] layout rules decided: `---` metadata, file-type key, block head as type, `Monitor` with `Index:` |
 | 2026-10-29 | TDL rewrite pass, levels 0 to 2: AGENTS, Home, Vision, Architecture, Decisions, 41 reference, 42 Python API, 40 Specifications |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-29 | [[ADR-0014 Shell File Language]] accepted (TDL replaces YAML); [[Shell File Syntax Comparison]] written |
 | 2026-10-29 | Proposed key names accepted across the specs; namespace `tesserae-shell.<kind>.<name>` decided |
 | 2026-10-29 | [[KWin Integration]] answers applied; KWin script test run |
-| 2026-10-29 | [[KWin Integration]] drafted |
 
 ## Go to
 

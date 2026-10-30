@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [architecture, needs-verification]
 related: ["[[20 Architecture]]", "[[Layers and Components]]", "[[Process Model and Threading]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[Layers and Components]]"]
@@ -71,7 +71,7 @@ sequenceDiagram
 
 - tre's layer window takes `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard` and `input_region` live through `set()` in one commit. `namespace` and `output` are constructor-only, so changing them means closing and recreating the window ([[TRE-REQ-001 Layer Surface Window#Proposed API]]).
 - A bad file leaves the old state ([[Process Model and Threading#Lifecycle (proposed)]]).
-- The shell's own UID write must not trigger a reload loop ([[ADR-0007 Shell UI Layer#Open items]]).
+- The shell's own UID write must not trigger a reload loop: it patches the file text at the node's position and the watcher drops the event by content hash (D10, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; [[Hot Reload#The Shell's Own Writes]]).
 - A changed module `.py` is reloaded at runtime (decided 2026-10-26, [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]). Proposed order: import the new code and check it has the module class; then `stop` the old instance and join its threads; purge the module's own modules from `sys.modules`; create the new instance and `start` it. A failed import keeps the old instance. The value store keeps the last values until the new instance sends. The `reload` hook handles a TDL-only change. #needs-verification
 
 ## Monitor Hot-plug

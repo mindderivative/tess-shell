@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [api, needs-verification]
 related: ["[[42 Python API]]", "[[ADR-0007 Shell UI Layer]]", "[[ADR-0008 Tesserae Expression Language]]", "[[ADR-0014 Shell File Language]]", "[[Expression Language Requirements]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]"]
@@ -21,13 +21,13 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 - Python and the file form give the same result. A shell written in Python builds the same tree as one written in TDL. The TDL parser and the Python builder produce the same tree, and the parity test stands ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 13; the original decision, for YAML: [[ADR-0007 Shell UI Layer#View format: a full expression language, and Python as an equal front-end (2026-10-25)]]).
 - Python is for what a shell file should not do: major logic, heavy calculation, terminal and system access. That is the module's job ([[Module Contract]]).
 - TEL has a Python form so expressions can be built as code ([[Expression Language Requirements]] T7). TEL is an expression language only ([[ADR-0008 Tesserae Expression Language]]).
-- The shell file format is the shell's: the metadata block with its file-type key, block heads as types (`Monitor`, `Bar`, `Text`, `Clock`), `Name:`, `Children`, `Import` and UIDs ([[TDL Language]], [[ADR-0014 Shell File Language#File Layout (Decided 2026-10-29)]], [[ADR-0007 Shell UI Layer]]). The builder produces the same tree as the parser, including the metadata part.
+- The shell file format is the shell's: the metadata block with its file-type key, block heads as types (`Monitor`, `Bar`, `Text`, `Clock`), `Name:`, `Children`, `Import` and UIDs ([[TDL Language]], [[ADR-0014 Shell File Language#File Layout (Decided 2026-10-29)]], [[ADR-0007 Shell UI Layer]]). The builder produces the same tree as the parser, including the metadata part. The loader's tree is an ordered list of entries (head, properties, children) that keeps repeated names, and the builder produces the same (D12, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 
 ## Requirements
 
 | #  | Requirement                                                                                                                            |
 |----|----------------------------------------------------------------------------------------------------------------------------------------|
-| P1 | Every construct in a shell file has a Python equivalent: the metadata block, `Monitor` blocks, surfaces (`Bar`, `Frame`, `Panel`, `Popup`), blocks, styles, module uses, imports, and `If` and `For` blocks ([[#Metadata and Heads (Proposed Signature Sketch)]], [[#If and For (Proposed Signature Sketch)]]) |
+| P1 | Every construct in a shell file has a Python equivalent: the metadata block, `Monitor` blocks, surfaces (`Bar`, `Frame`, `Panel`, `Popup`), blocks, styles, module uses, imports, and `If` and `For` blocks ([[#Metadata and Heads (Proposed Signature Sketch)]], [[#If and For (Decided Sketch)]]) |
 | P2 | A parity test shows the same shell written both ways (Python and TDL) builds the same tree, including the metadata block, `If` and `For` |
 | P3 | The Python form goes through the same validation, with the same errors; a position is a Python source line where there is no TDL file  |
 | P4 | Names, UIDs and the registry work the same. A Python shell still needs a file for the UID to be written into; where is open            |
@@ -57,11 +57,11 @@ shell.add(Monitor(name="main", index=0, children=[
 
 - Python and tre identifiers keep their own case (`name=`, `index=`); the builder maps them to the Capitalised TDL keys (`Name`, `Index`), as it maps `exclusive_zone` to `Exclusive_Zone`.
 - A module's metadata `Name:` is set the same way (`ModuleFile(meta={..., "Name": "Clock"})`).
-- A module use is a head too (`Clock(name="main_clock")`). Python keys it `Clock@<uid>` as with a parsed use.
+- A module use is a head too (`Clock(name="main_clock")`). Python keys it `Clock@<uid>` as with a parsed use, and passes that key back to name the use in an action (D23, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 
-## If and For (Proposed Signature Sketch)
+## If and For (Decided Sketch)
 
-[[ADR-0014 Shell File Language#Conditions and Repeats (Decided)]] gives the file form two structure keywords, `If` (with an optional `Else`) and `For` (with a required `Key`), and says the builder gets the same two constructs so the parity test covers them. The ADR fixes no Python signature. The sketch below is proposed: names, argument order and the way a block takes children are not decided, and nothing here is TEL's Python form (owned by the TEL project).
+[[ADR-0014 Shell File Language#Conditions and Repeats (Decided)]] gives the file form two structure keywords, `If` (with an optional `Else`) and `For` (with a required `Key`), and says the builder gets the same two constructs so the parity test covers them. The sketched signatures `If(cond, then, otherwise)` and `For(name, iterable, key, body)` stand (D15, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). Nothing here is TEL's Python form (owned by the TEL project).
 
 ```python
 # Illustration only. Each line pairs with the TDL form above it.
@@ -88,7 +88,8 @@ For("item", expr("tray.items"),
 - [ ] Whether the Python form is a separate package or part of the shell package.
 - [ ] How errors point to Python source lines (P3).
 - [ ] Whether imports between Python and TDL are v1 (P7).
-- [ ] The signatures of the metadata setter, the head constructors ([[#Metadata and Heads (Proposed Signature Sketch)]]), `If` and `For` ([[#If and For (Proposed Signature Sketch)]]) and whether the builder tree keeps comments as the TDL tree does (the parity test compares trees; comments may not count).
+- [x] `If` and `For` signatures stand, and the parity test compares trees, including metadata, and ignores comments and layout (D15, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [ ] The signatures of the metadata setter and the head constructors ([[#Metadata and Heads (Proposed Signature Sketch)]]).
 - [ ] The TEL Python form: owned by the TEL project; the shell side needs it before this note can be designed.
 
 ## Acceptance Criteria

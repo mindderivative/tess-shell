@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [api, needs-verification]
 related: ["[[42 Python API]]", "[[Module Contract]]", "[[Value Types and Conversion]]", "[[ADR-0009 D-Bus Client Library]]", "[[ADR-0014 Shell File Language]]"]
 depends_on: ["[[Module Contract]]"]
@@ -23,10 +23,10 @@ depends_on: ["[[Module Contract]]"]
 | `ctx.name`                                         | The module's `Name:` from the metadata block of its TDL file (required; the word a use is called by, [[TDL Language#Names and the Registry]])                                                                                                                     | Decided ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]])                                                          |
 | `ctx.uid`                                          | The module file's UID (UUIDv7)                                                                                                                                    | Decided                                                                                                    |
 | `ctx.config`                                       | The module's TDL keys and values, read-only, including any extra metadata keys the author added to the metadata block (the shell ignores them; [[ADR-0014 Shell File Language#Layout Rules]], item 14) | Decided ("its YAML values", now TDL)                                                                                |
-| `ctx.yaml(ref=None)`                               | A read-only view of a TDL file by file name, unique name or UID; default is the module's own. Lets the Python read the rest of the file's keys, tokens and so on. The name `yaml` is from before [[ADR-0014 Shell File Language]] and is open ([[#Open Questions]]) | Decided ([[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]); shape proposed                                          |
+| `ctx.tdl(ref=None)`                                | A read-only view of a TDL file by file name, unique name or UID; default is the module's own, metadata included. Lets the Python read the rest of the file's keys, tokens and so on. Was `ctx.yaml` before D14 ([[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]) | Decided ([[ADR-0007 Shell UI Layer#Modules (2026-10-25)]], D14); shape of the view open ([[#Open Questions]]) |
 | `ctx.log`                                          | A logger bound with the module's name and UID                                                                                                                     | Decided that a logger is given; the library is open ([[Logging with Loguru]])              |
 | `ctx.send(key, value, use=None)`                   | Send a value to the shell. Thread-safe, coalesced, never blocks                                                                                                   | Decided that an entry point exists; signature proposed                                                     |
-| `ctx.uses`                                         | The places this module is used, keyed `<Module>@<uid>` (for example `Clock@<uid>`); each record has the use's `Name:`, monitor, UID and `params`                  | Key form decided ([[ADR-0014 Shell File Language#Layout Rules]], item 12); record shape proposed          |
+| `ctx.uses`                                         | The places this module is used, keyed `<Module>@<uid>` (for example `Clock@<uid>`); each record has the use's `Name:`, monitor, UID and `params`                  | Key form decided ([[ADR-0014 Shell File Language#Layout Rules]], item 12); Python always gets and passes back this key (D23, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]); record shape proposed |
 | `ctx.dbus`                                         | A helper over the shared `dbus-fast` service thread                                                                                                               | Decided that it exists ([[ADR-0009 D-Bus Client Library]]); shape proposed                           |
 | `ctx.thread(fn, ...)`                              | Start a thread that catches and logs its exceptions and is joined on `stop`                                                                                       | Proposed                                                                                                   |
 | `ctx.every(seconds, fn)`, `ctx.after(seconds, fn)` | Timers that run `fn` on the loop thread                                                                                                                           | Proposed                                                                                                   |
@@ -134,7 +134,7 @@ Text {
 }
 ```
 
-The maintainer's four-sided and font-list shorthand `{2, 2, 2, 2}` and `{"Hack Nerd Font Mono", "JetBrains Mono"}` is written as lists here, because `{ }` is a block in TDL ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 15). The colours use the TDL forms, quoted hex or space-separated `rgba(...)` ([[Value Types and Conversion#Colour and Length Literals in TDL]]). The `"#fffffff0"` in the comment is as the maintainer wrote it (nine digits). Whether the brace shorthand is defined in TDL is open ([[#Open Questions]]).
+The maintainer's four-sided and font-list shorthand `{2, 2, 2, 2}` and `{"Hack Nerd Font Mono", "JetBrains Mono"}` is written as lists here, because `{ }` is a block in TDL ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 15). The colours use the TDL forms, quoted hex or space-separated `rgba(...)` ([[Value Types and Conversion#Colour and Length Literals in TDL]]). The `"#fffffff0"` in the comment is as the maintainer wrote it (nine digits). The brace shorthand is not defined in TDL; a four-sided value is one number, a list of four or a block of named sides (D7, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 
 `Modules/Label/Label_Module.py`: the logic
 
@@ -144,7 +144,7 @@ from tesserae_shell import Module, action
 
 # The example opened and parsed its own layout file here with a YAML loader.
 # The shell already holds the parsed tree, so the Python asks the context
-# (self.ctx.yaml(), see Members) instead of opening the file.
+# (self.ctx.tdl(), see Members) instead of opening the file.
 text_name = "Label_Text"   # the Name: of the Text block in Label_Module.tdl
 
 class Label(Module):
@@ -167,8 +167,8 @@ class Label(Module):
         self.ctx.send("text", text, use=use)      # the key is always "text"; only this use gets this value
 
     @action
-    def rename(self, use_key, text):              # a shell-file event can call this (key names: 41 YAML Reference)
-        use = self.ctx.uses[use_key]               # use_key is "Label@<uid>"
+    def rename(self, use_key, text):              # a shell-file event can call this (key names: 41 TDL Reference)
+        use = self.ctx.uses[use_key]               # use_key is the "Label@<uid>" key from ctx.uses (D23)
         saved = self.saved()
         saved[use.name] = text                     # e.g. {"side_label": "Mail"}
         (self.ctx.state_dir / "labels.json").write_text(json.dumps(saved))
@@ -196,7 +196,7 @@ Monitor {
             Children {
                 Label {
                     Name: top_label
-                    text: "Work"
+                    text: "Work"            # param name as the module declared it (D18)
                 }
                 # the head Label is the module's Name:; the use's own unique name is its Name:
             }
@@ -217,7 +217,7 @@ Monitor {
 ### How the Pieces Fit (My Reading, for the Maintainer to Correct)
 
 1. A surface lists modules under `Children`, each a block headed by the module's `Name:` (`Label`) with its own unique `Name:` (`top_label`, `side_label`) and the params it passes (`text: "Work"`).
-2. The shell finds the module's TDL file through the registry and checks the passed params against its `Params` declaration (`text` is a string).
+2. The shell finds the module's TDL file through the registry and checks the passed params against its `Params` declaration (`text` is a string). Param names are written as the module declared them (D18, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 3. The shell builds the module's widgets (a `FlexBox` holding an `Icon` and a `Text`) inside the surface, and applies the style file named by `Style:`. The `Class: text_style` on the `Text` picks up the `text_style` class.
 4. The Python class is created once. For each use it gets a `use` record, keyed `Label@<uid>`: the use's `Name:`, its monitor and its params.
 5. The Python sends values (`ctx.send("text", ..., use=use)`). The module's expressions, written in its layout TDL file, place those values into widgets.
@@ -226,13 +226,13 @@ Monitor {
 
 | Point                      | Note                                                                                                                                                                                                                                                                                                                                                              |
 |----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Reading the module's TDL file | The example opened `Label_Module.yaml` itself with a YAML loader and indexed into it. `ctx.yaml()` ([[#Members]]) exists for this: the shell already knows the path and the parsed tree, so the Python needs neither `open` nor a working directory. The index `data["FlexBox"][8]...` was the example's shorthand for "find the widget whose `Name:` is `Label_Text`"; how a view of the TDL tree finds a block by `Name:` is open ([[#Open Questions]]) |
+| Reading the module's TDL file | The example opened `Label_Module.yaml` itself with a YAML loader and indexed into it. `ctx.tdl()` ([[#Members]]) exists for this: the shell already knows the path and the parsed tree, so the Python needs neither `open` nor a working directory. The index `data["FlexBox"][8]...` was the example's shorthand for "find the widget whose `Name:` is `Label_Text`"; how a view of the TDL tree finds a block by `Name:` is open ([[#Open Questions]]) |
 | Options or params          | **Decided:** `use.params` ("params matches the file", said of YAML before ADR-0014). The example's `use.options.get("top_label")` reads the entry's value for the param, which is `use.params["text"]`                                                                                                                                                                                          |
 | The fourth source          | `f"${text_name}"` asks for the text widget's name, so the module can address a widget by `Name:`                                                                                                                                                                                                                                                                  |
 | The text in the widget     | The `Text` widget has no `text:` expression in the example. How the sent value or the param reaches it is the first open item in [[ADR-0007 Shell UI Layer#Open items]]                                                                                                                                                                                          |
 | `text: {{ "label.text" }}` | In the `side_label` use, a param bound to the module's own sent value. What `label.text` resolves to for that use is part of the same open item                                                                                                                                                                                                                 |
 | `Children` entries         | **Decided:** the block head is the type (`Text { Name: Label_Text }`), with no `Block:` or `widget:` key ([[ADR-0014 Shell File Language#Layout Rules]], item 6). The same block or module name may repeat in one `Children { }`, ordered by position (`Text_1`, `Text_2`; [[TDL Language#Names and the Registry]])                                                |
-| Style syntax               | `{2, 2, 2, 2}` is the maintainer's list shorthand for four sides. PyYAML read it as `{2: None}` (2026-10-26), and in TDL `{ }` is a block, so the examples write `[2, 2, 2, 2]`. Whether a brace shorthand is defined is open ([[ADR-0007 Shell UI Layer#Open items]]). The colour forms are in [[Value Types and Conversion]]                          |
+| Style syntax               | `{2, 2, 2, 2}` is the maintainer's list shorthand for four sides. PyYAML read it as `{2: None}` (2026-10-26), and in TDL `{ }` is a block, so the examples write `[2, 2, 2, 2]`. No brace shorthand is defined (D7, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). The colour forms are in [[Value Types and Conversion]]                          |
 | Style file type            | **Decided:** `Style: v1` in the metadata block                                                                                                                                                                                                                                                                                                                                        |
 
 ## Calling a Popup
@@ -311,17 +311,17 @@ handle.cancel()                                  # the shell also cancels it on 
 - [ ] Whether `ctx.uses` is a mapping (as in the example), a list or an event stream. The example above is for the maintainer to judge the use cases (2026-10-26).
 - [ ] Whether a module can send to a specific monitor.
 - [ ] Whether `ctx.state_dir` is needed or `ctx.data_dir` is enough.
-- [ ] What `ctx.yaml()` returns for imported files and for values that are TEL expressions (the raw text or the evaluated value).
-- [ ] The name `ctx.yaml`: shell files are TDL now ([[ADR-0014 Shell File Language]]), so the name misleads, and the layout decisions of 2026-10-29 do not answer it. Rename (for example `ctx.file`) or keep? Needs the maintainer.
-- [ ] What shape the read-only view of the TDL tree has (blocks with repeated names, lookup by `Name:`, the metadata block), and whether it exposes comments (the parser keeps a lossless tree, ADR-0014). Not defined by ADR-0014.
-- [ ] Whether the brace shorthand `{2, 2, 2, 2}` for four-sided values is defined in TDL (the examples use lists).
+- [ ] What `ctx.tdl()` returns for imported files and for values that are TEL expressions (the raw text or the evaluated value).
+- [x] The name `ctx.yaml` is renamed `ctx.tdl` (D14, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [ ] What shape the read-only view of the TDL tree has. D12 ([[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]) fixes the tree as an ordered list of entries (head, properties, children) that keeps repeated names, with the metadata block read first. Still open: lookup by `Name:` and whether the view exposes comments.
+- [x] The brace shorthand `{2, 2, 2, 2}` is not defined; the three forms of D7 stand ([[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 - [ ] The timer clock and what happens to timers on reload.
-- [ ] Whether the param names written on a use (`text: "Work"`) stay as the module declared them, lowercase and user-chosen, or are Capitalised like other keys. The examples keep them as declared.
-- [ ] How an action names the use it acts on (`Label@<uid>` or the use's `Name:`).
+- [x] Param names written on a use stay as the module declared them (D18, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [x] An action names a use by the `Label@<uid>` key from `ctx.uses` (D23, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 
 ## Acceptance Criteria
 
-- [ ] A module reads its own keys through `ctx.config` and another file through `ctx.yaml(ref)` by name, UID and file name, and reaches each of its uses by `<Module>@<uid>`.
+- [ ] A module reads its own keys through `ctx.config` and another file through `ctx.tdl(ref)` by name, UID and file name, and reaches each of its uses by `<Module>@<uid>`.
 - [ ] `ctx.send` from a thread reaches the loop in one turn and coalesces repeated sends.
 - [ ] A module sends different text to two uses of the same module file.
 - [ ] A module is told when a use appears and when it goes away.

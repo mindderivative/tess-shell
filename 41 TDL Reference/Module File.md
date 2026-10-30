@@ -1,13 +1,13 @@
 ---
 title: Module File
 aliases: [_Module.yaml, Module YAML, _Module.tdl, Module TDL]
-type: yaml-ref
+type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-29
-tags: [yaml-ref, needs-verification]
-related: ["[[41 YAML Reference]]", "[[TDL Language]]", "[[Common Keys and Conventions]]", "[[Shell File]]", "[[Module Contract]]", "[[Module Context]]", "[[ADR-0014 Shell File Language]]"]
+updated: 2026-10-30
+tags: [tdl-ref, needs-verification]
+related: ["[[41 TDL Reference]]", "[[TDL Language]]", "[[Common Keys and Conventions]]", "[[Shell File]]", "[[Module Contract]]", "[[Module Context]]", "[[ADR-0014 Shell File Language]]"]
 depends_on: ["[[Common Keys and Conventions]]", "[[ADR-0007 Shell UI Layer]]"]
 ---
 
@@ -53,8 +53,8 @@ FlexBox {
 | Key                                                      | Meaning                                                                          | Status                       |
 |----------------------------------------------------------|----------------------------------------------------------------------------------|------------------------------|
 | `TDL`, `Module`, `Name`, `UID` (metadata block)          | As every file ([[TDL Language#The Metadata Block]]). `Name` is the module's unique name and the word that calls it. Required | Decided (2026-10-29)         |
-| `Style`                                                  | A style file name, or an inline `Style { }` block of style values                | Decided                      |
-| `Params`                                                 | The values a use may pass, with their types                                      | Decided; type names proposed |
+| `Style`                                                  | In the body after the metadata block: a style file name, or an inline `Style { }` block of style values | Decided (D17, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]) |
+| `Params`                                                 | In the body after the metadata block: the values a use may pass, each a block that may have a `Type:` property | Decided (D17); the type names are proposed |
 | A top-level block (`FlexBox { }`, `Box { }`)             | The root of the module's layout; the head is a building block or a module        | Decided (the form)           |
 | `Children`                                               | The root block's children, blocks and module uses                                | Decided                      |
 
@@ -65,7 +65,7 @@ A module file has one layout root. There is no `Monitor` and no surface head in 
 A module's layout is made of building blocks and other modules ([[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]], decided 2026-10-26). Both are called the same way, by the registry name as the block head ([[TDL Language#Names and the Registry]]).
 
 - A block is called by its name as the head (`FlexBox { }`, `Text { }`). A block needs no `Name:` and no UID unless the Python or an expression refers to it.
-- A module is called by the `Name:` in its metadata, with its params as keys inside (`Label { Text: Hello }`). A module nests another with `Import: <Name>_Module.tdl`.
+- A module is called by the `Name:` in its metadata, with its params as keys inside (`Label { text: Hello }`; the names are the module author's and keep their case, D18). A module nests another with `Import: <Name>_Module.tdl`.
 - `Name:` on a block or use is its unique name, optional unless something refers to it.
 - A block or module may take `Class:` to pick up a class from a style file, or `Style:` for its own style ([[Style, Theme and Stylesheet Files]]).
 - The v1 blocks and standard modules are in [[V1 Widgets]] and [[Building Blocks]].
@@ -81,7 +81,7 @@ Params {
 ```
 
 - The module declares typed params. A use passes values; the shell checks them against the declaration and reports a mismatch with `file:line:column` ([[Module Contract#Failure modes and recovery]]).
-- Param names (`text`, `size`) are the author's. Type names are proposed, matching [[Value Types and Conversion]]: `string`, `number`, `boolean`, `color`, `size`, `list`, `mapping`. A `Default` is optional (proposed).
+- Param names (`text`, `size`) are the author's. Type names are proposed, matching [[Value Types and Conversion]]: `string`, `number`, `boolean`, `color`, `size`, `list`, `mapping`. A `Default` is optional (proposed). `Type:` is a property of a param declaration and not a file key (D17).
 - In the Python a use's params are `use.params` ([[Module Context]]).
 - In an expression a param is `params.<name>`.
 
@@ -117,7 +117,7 @@ Children {
     # a module, called by its name
     Label {
         # a param, as a key inside the call
-        Text: "This is a title"
+        text: "This is a title"
         # an inline style can import a style file
         Style { Import: Custom_Style.tdl }
     }
@@ -141,8 +141,8 @@ A module file may be used many times; there is one Python instance for all uses,
 
 ```
 Children {
-    Label { Text: "label 1" }
-    Label { Text: "label 2" }
+    Label { text: "label 1" }
+    Label { text: "label 2" }
     Import: Custom_Module.tdl
 }
 ```
@@ -175,8 +175,8 @@ The maintainer suggested a "bubble up" policy for params (2026-10-26). My readin
 - [ ] The `Params` type names and whether defaults are v1.
 - [ ] How the module's root is written when it is not a container (a single `Text`).
 - [ ] The widget property names (`Foreground`, `Fill`, `Alignment`, `Justify_Content`, `Align_Content`, `Width`, `Height`) and which go in style or on the widget.
-- [ ] Where a module file's own `Style:` and `Params { }` sit: in the body before the layout root (as here) or in the metadata block. ADR-0014 does not say.
-- [ ] Whether the `Type:` and `Default:` keys inside a param declaration stay, given that `Type:` is gone as a file key.
+- [x] Where a module file's own `Style:` and `Params { }` sit: in the body after the metadata block (D17, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [x] Whether `Type:` stays inside a param declaration: yes, as a property, not a file key (D17). Open: `Default:` and the type names ([[#Params]]).
 - [ ] Whether a module can declare the keys its Python sends, so the shell checks a layout against them at load ([[Value Types and Conversion#Open questions]]).
 - [x] Whether a module can contain other modules: the flow diagram says yes ("Can Nest"); the meaning for params, names and UIDs is open ([[Shell Structure]]).
 - [ ] How events are declared on a widget (`On_Click:` and the like) and how they name `@action` methods ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]).
@@ -184,4 +184,4 @@ The maintainer suggested a "bubble up" policy for params (2026-10-26). My readin
 
 ## Links
 
-- [[41 YAML Reference]] · [[TDL Language]] · [[Common Keys and Conventions]] · [[Shell File]] · [[Module Contract]] · [[Module Context]]
+- [[41 TDL Reference]] · [[TDL Language]] · [[Common Keys and Conventions]] · [[Shell File]] · [[Module Contract]] · [[Module Context]]

@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/surface, needs-verification]
 related: ["[[Surfaces]]", "[[Surface Types]]", "[[Bar]]", "[[Panel]]", "[[Hit Testing for Concave Corners]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Hit Testing for Concave Corners]]"]
@@ -79,7 +79,7 @@ The test of three layers against the wallpaper is no longer needed.
 
 | Property            | Form                                                              | Notes                                                                                                                                        |
 |---------------------|-------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| Thickness           | One number, a list of four clockwise from the top, or named sides | The fill band of a side. Borders add to it (below). A side of 0 has no reserver                                                              |
+| Thickness           | One number, a list of four (top, right, bottom, left), or a block of named sides (`Thickness { Top: 8, Left: 24 }`, D7) | The fill band of a side. Borders add to it (below). A side of 0 has no reserver                                                              |
 | Outer corner radius | Four-sided: rounds the screen corners (convex)                    | Default 0 (decided 2026-10-27): the Frame's outer corners usually touch the monitor's own corners, and a rounded outer corner would look odd |
 | Inner corner radius | Four-sided: rounds the opening (concave fillets)                  |                                                                                                                                              |
 | Inner border        | Thickness and colour on the edge facing the desktop               | Optional                                                                                                                                     |
@@ -198,7 +198,7 @@ One Frame per monitor, independent: each is a complete ring with its own thickne
 Frame {
     Name: screen_frame
     Layer: top
-    Thickness: [8, 8, 8, 8]          # or 8, or named sides (the form is open, see below)
+    Thickness: [8, 8, 8, 8]          # or 8, or a block: Thickness { Top: 8, Left: 24 }
     Corner_Radius: 0                 # the default; the outer corners are square
     Inner_Radius: 14
     Inner_Border { Thickness: 1, Color: "#ffffff22" }
@@ -219,7 +219,7 @@ Frame {
 }
 ```
 
-An illustration only. `Thickness`, `Corner_Radius`, `Inner_Radius` and `Edges` are proposals. Block heads such as `Inner_Border`, `Edges` and `Top` are not in the registry of [[TDL Language#Names and the Registry]]; how a Frame names them is open (see Open Questions). With no `Edges`, the Frame is just the ring, and Bars and Panels can be melded to it. A module use (`Workspaces { }`) is written with the module's name as the head ([[Module File#Using a Module]]).
+An illustration only. `Thickness`, `Corner_Radius`, `Inner_Radius` and `Edges` are proposals. `Inner_Border`, `Outer_Border` and `Edges` are nested blocks, and `Edges` holds `Top`, `Right`, `Bottom` and `Left` blocks (D21, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]); a four-sided value is one number, a list of four or a block of named sides (D7). With no `Edges`, the Frame is just the ring, and Bars and Panels can be melded to it. A module use (`Workspaces { }`) is written with the module's name as the head ([[Module File#Using a Module]]).
 
 ## Python Contract
 
@@ -276,8 +276,8 @@ The Frame has no Python of its own. The shell builds the painter and reservers f
 - [x] The Frame hidden or shown at runtime: yes; the reservers go while hidden and return when shown (maintainer, 2026-10-27).
 - [x] Shadows are excluded from the hit shape, for all shadows (maintainer, 2026-10-27). Open: whether tre already does this. #needs-verification
 - [x] A gradient border's tiling: the shell repeats stops; a native repeat is [[TRE-REQ-006 Repeating Gradients]], kept for the future (maintainer, 2026-10-27).
-- [ ] Named sides for `Thickness` (`Top: 8, Left: 24`): in TDL it needs a block or another form; ADR-0014 does not yet define it. Open for the maintainer.
-- [ ] How `Inner_Border`, `Outer_Border`, `Edges` and the edge names (`Top`, `Right`, `Bottom`, `Left`) are written in TDL: as nested blocks (as in the example) or as properties. The registry has no heads for them ([[TDL Language#Names and the Registry]]); ADR-0014 does not say. Open for the maintainer.
+- [x] Named sides for `Thickness`: a block of named sides, `Thickness { Top: 8, Left: 24 }` (D7, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [x] `Inner_Border`, `Outer_Border`, `Edges` and the edge names are nested blocks; `Edges` holds `Top`, `Right`, `Bottom`, `Left` blocks (D21, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 - [x] Shadow tokens: `Elevation`, `Shadow` and `Shadow_Bleed` are accepted ([[Style Schema#Shadow keys]]); the Frame needs no bleed margin because the painter covers the output.
 
 ## Acceptance Criteria

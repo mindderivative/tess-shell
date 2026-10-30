@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/module, needs-verification]
 related: ["[[Modules]]", "[[Module Contract]]", "[[Module Context]]", "[[Module File]]", "[[V1 Scope]]", "[[Building Blocks]]"]
 depends_on: ["[[Module Contract]]", "[[Module File]]"]
@@ -66,7 +66,7 @@ FlexBox {
 }
 ```
 
-The metadata block and the registry are in [[TDL Language]]; `Name: Clock` is the word a use calls the module by. The param names (`format`, `timezone`) are the module author's; the `Type:` and `Default:` keys inside a declaration follow [[Module File#Params]] and are open there.
+The metadata block and the registry are in [[TDL Language]]; `Name: Clock` is the word a use calls the module by. The param names (`format`, `timezone`) are the module author's; the param names keep their case on a use (D18, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). `Style:` and `Params { }` sit in the body after the metadata block, and `Type:` is a property of a param declaration, not a file key (D17). The `Default:` key and the type names are still open in [[Module File#Params]].
 
 - The Label is the standard module over the Text block ([[Building Blocks]]). It is not editable.
 - Params are what a use passes; a use that passes nothing gets the defaults.
@@ -164,8 +164,7 @@ Children {
 }
 ```
 
-> [!question] Open item
-> How a repeated use names itself in the file is open ([[TDL Language#Open]]). The head word is the module's type (ADR-0014, item 7); the example keeps `Name:` for the use's path name, as in [[Module File#Using a Module]].
+A use is named by its head alone; `Name:` gives it a unique name, and an unnamed repeat is named from its position (`Clock_1`, `Clock_2`). There is no `root name { }` form (D3, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; [[Module File#Using a Module]]). Python always receives the `Clock@<uid>` key from `ctx.uses` and passes it back to name a use in an action (D23).
 
 ## Python Contract
 

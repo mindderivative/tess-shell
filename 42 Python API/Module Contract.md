@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [api, needs-verification]
 related: ["[[42 Python API]]", "[[Module Context]]", "[[Value Types and Conversion]]", "[[ADR-0007 Shell UI Layer]]", "[[ADR-0014 Shell File Language]]", "[[Process Model and Threading]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0009 D-Bus Client Library]]"]
@@ -23,7 +23,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0009 D-Bus Client Library]]"]
 | A module is `<Name>_Module.tdl` plus a required matching `<Name>_Module.py`, next to each other, in `Modules/<module_name>/` with all supporting files | [[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]                                          |
 | The shell imports the file, finds the class that extends a shell `Module` base, creates it once, and calls `start`, `stop` and an optional `reload`     | [[ADR-0007 Shell UI Layer#Module Python (2026-10-25)]]                                          |
 | The module receives a context with its TDL values, its name (the `Name:` in its metadata block) and UID, a logger and the send entry point                                                 | same                                                                             |
-| One instance per module file, shared by every use; per-use differences are the module's job. The Python reaches each use by the key `<Module>@<uid>` ([[Module Context#Uses]])                                                             | [[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]                                          |
+| One instance per module file, shared by every use; per-use differences are the module's job. The Python reaches each use by the key `<Module>@<uid>`, which it receives from `ctx.uses` and passes back to name a use in an action (D23, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; [[Module Context#Uses]])                                                             | [[ADR-0007 Shell UI Layer#Modules (2026-10-25)]]                                          |
 | The module's Python reaches its TDL file by file name, unique name or UID                                                                                   | same                                                                             |
 | Modules send values to shell entry points; the shell converts what it can                                                                               | [[ADR-0007 Shell UI Layer#Module data reaches the view through shell entry points (2026-10-25)]]                                          |
 | A module's Python can be reloaded at runtime                                                                                                            | [[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]]                                          |
@@ -107,7 +107,7 @@ Code reload ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], 
 - [ ] Constructor versus `self.ctx` set by the base class (proposed above).
 - [x] Only `@action`-marked methods are callable from a shell file (maintainer, 2026-10-26).
 - [ ] The decorator's final name, and whether actions can return values.
-- [ ] How a module used several times is named in expressions: the module's `Name:` (the head of each use) or the use's own `Name:`. ADR-0014 answers the file side (the head word is the module name, `Name:` is the unique name of the use; [[ADR-0014 Shell File Language#Layout Rules]], items 6 and 7); the expression side stays open.
+- [x] How a module used several times is named: a use's `Name:` is for the file, references and expressions, and Python uses the `<Module>@<uid>` key (D23, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; the head word is the module name, [[ADR-0014 Shell File Language#Layout Rules]], items 6 and 7). Which names an expression reads (`params`, sent values) stays open under Integration.
 - [ ] The shell's package name and import path.
 - [ ] Which timer helpers `ctx` offers (`every`, `after`) and which clock they use.
 - [ ] Whether `reload()` is passed the changed keys.

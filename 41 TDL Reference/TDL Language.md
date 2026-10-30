@@ -1,13 +1,13 @@
 ---
 title: TDL Language
 aliases: [TDL Reference, Tesserae Data Language, TDL Syntax]
-type: yaml-ref
+type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-29
-updated: 2026-10-29
-tags: [yaml-ref, tdl, needs-verification]
-related: ["[[ADR-0014 Shell File Language]]", "[[41 YAML Reference]]", "[[Common Keys and Conventions]]", "[[Shell File]]", "[[Module File]]", "[[Shell File Syntax Comparison]]"]
+updated: 2026-10-30
+tags: [tdl-ref, tdl, needs-verification]
+related: ["[[ADR-0014 Shell File Language]]", "[[41 TDL Reference]]", "[[Common Keys and Conventions]]", "[[Shell File]]", "[[Module File]]", "[[Shell File Syntax Comparison]]"]
 depends_on: ["[[ADR-0014 Shell File Language]]"]
 ---
 
@@ -74,7 +74,10 @@ This is an illustration. The key names inside the blocks follow the notes linked
 
 Rules that follow from these:
 
-- Spaces around `{` and after `:` are optional (the maintainer's example wrote `children{ key:value }`; to confirm, [[ADR-0014 Shell File Language#Open Items]]).
+- Spaces around `{` and after `:` are optional (the maintainer's example wrote `children{ key:value }`; [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]], D1). A syntax word is special only where a key or keyword is expected.
+- A block may be written on one line (`Params { format { Type: string } }`) and may be empty (`Spacer { }`) (D8).
+- A key starts with a letter. There are no numeric keys: scales use names such as `Level_1` and `Step_1` (D4). A list holds values, not blocks: repeat a named block instead (`Shadows { Shadow { } Shadow { } }`) (D4).
+- A property key may appear once in a block. A repeat is an error naming both places (D9). Repeated block names are allowed.
 - Nested blocks close with a space or a newline between the braces: `} }`, never `}}`. `{{` always opens a slot, so a block directly inside a block is written `{ {`.
 - An unquoted word is a string. An unquoted value runs to the end of the line or to the next `,` or closing brace; text that holds either is quoted.
 - A hex colour is quoted, because `#` starts a comment: `"#ffffff10"`, `"#ffffff"`.
@@ -87,11 +90,13 @@ Rules that follow from these:
 | Number      | A float is for values that are not lengths (`Opacity: 0.9`)                                                                        |
 | Colour      | `"#RRGGBB"`, `"#RRGGBBAA"`, or `rgba(r g b a)` with red, green and blue 0 to 255 and alpha 0.0 to 1.0                              |
 | String      | An unquoted word, or `"..."` / `'...'`                                                                                             |
-| List        | `[a, b, c]`; an item may sit on its own line                                                                                       |
+| Boolean, null | `true`, `false` and `null` are bare words. The parser keeps them as strings; the key's declared type in the schema makes them a boolean or null (D2) |
+| Four-sided  | One number, a list of four (top, right, bottom, left), or a block of named sides: `Thickness { Top: 8, Left: 24 }` (D7)              |
+| List        | `[a, b, c]` or `[]`; an item may sit on its own line                                                                               |
 | Enum        | A lowercase bare word (`Layer: overlay`, `Keyboard: exclusive`)                                                                    |
 | Expression  | `{{ ... }}`. A value that is exactly one slot keeps its type; text with a slot inside is a string                                  |
 
-Not yet defined, and listed under "Open": booleans, null, an empty list, a percentage plus pixels.
+A percentage plus pixels (tre's `calc(100% - 16)`) has no form in v1 (D6). A style token such as `$color.on_surface` is a plain string that the style engine resolves by theme key; it is not a variable, and matching ignores case (D16).
 
 ## Names and the Registry
 
@@ -134,7 +139,7 @@ Not yet defined, and listed under "Open": booleans, null, an empty list, a perce
 
 - `Index: default` applies to every monitor no other `Monitor` block names.
 - A `Monitor` with no selector is ignored.
-- If a block has several selectors, the shell tries `Connector`, then `Description`, then `Index` (proposed; the maintainer did not state an order).
+- If a block has several selectors, the shell tries `Connector`, then `Description`, then `Index` and uses the first match (the order of ADR-0007; decided 2026-10-30 as recommended).
 - `Index:` is not a stable name: the position can change after a hot-plug, a wake or a reboot. This is [[Risk Register]] R-21 and why `Connector:` and `Description:` exist.
 
 ## Errors
@@ -154,18 +159,15 @@ No language server in v1. A small TextMate grammar ships in v1 for highlighting 
 | [[Module File]]                           | The module file, params, data slots                |
 | [[Style, Theme and Stylesheet Files]]     | Style, theme and stylesheet files                  |
 | [[Style Schema]]                          | Style properties                                   |
-| [[Settings File]]                         | `settings.tdl` (assumed name, to confirm)          |
+| [[Settings File]]                         | `settings.tdl` with `Settings: v1` (D20)           |
 
 ## Open
 
-- [ ] Boolean and null spellings (`true`, `false`), and an empty list `[]`.
-- [ ] A form for a percentage plus pixels (tre's `calc(100% - 16)`).
-- [ ] Unnamed blocks as list items, numeric keys and stylesheet selectors (`.warning`, `#clock_label`, `Button:hovered`), which the block syntax does not cover ([[ADR-0014 Shell File Language#Open Items]]).
-- [ ] The order of several monitor selectors on one block.
-- [ ] Whether spaces around `{` and after `:` are optional.
-- [ ] A repeated property key in one block: an error, or last wins.
+All open grammar questions were decided on 2026-10-30 ([[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). What is left:
+
 - [ ] The names and slugs of TDL syntax errors.
-- [ ] The key name for a use's own name: the head word is the type, and `Name:` is the unique name; how a repeated use names itself in the file is the position rule above.
+- [ ] A form for tre's `calc(100% - 16)`, when a surface needs it (D6).
+- [ ] The full list of shipped modules and their registry names ([[V1 Widgets]]).
 
 ## Acceptance Criteria
 
@@ -177,7 +179,10 @@ No language server in v1. A small TextMate grammar ships in v1 for highlighting 
 - `Index: default` applies to a monitor no other block names.
 - A metadata key the shell does not know is kept and ignored.
 - `}}` where a block closes inside a block is an error that says to write `} }`.
+- A property key written twice in one block is an error naming both places.
+- `true`, `false` and `null` are accepted where the schema declares a boolean or null, and refused (with the expected type) where it declares a string or number.
+- `Thickness { Top: 8, Left: 24 }`, `Thickness: 8` and `Thickness: [8, 8, 8, 8]` load to the same four-sided value shape.
 
 ## Links
 
-- [[ADR-0014 Shell File Language]] · [[41 YAML Reference]] · [[Common Keys and Conventions]] · [[Shell File Syntax Comparison]] · [[Expression Language Requirements]] · [[Risk Register]]
+- [[ADR-0014 Shell File Language]] · [[41 TDL Reference]] · [[Common Keys and Conventions]] · [[Shell File Syntax Comparison]] · [[Expression Language Requirements]] · [[Risk Register]]

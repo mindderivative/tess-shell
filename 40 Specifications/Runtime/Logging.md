@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/runtime, needs-verification]
 related: ["[[Runtime]]", "[[Logging with Loguru]]", "[[Settings File]]", "[[Validation and Errors]]", "[[Shell Start and Stop]]", "[[IPC and CLI]]", "[[Module Context]]", "[[Process Model and Threading]]"]
 depends_on: ["[[Settings File]]", "[[Logging with Loguru]]"]
@@ -106,7 +106,15 @@ Loguru's sinks are safe to call from any thread. The loop thread must not block 
 
 ## Configuration
 
-`Logging` in `settings.tdl` ([[Settings File]]; the file's metadata form is undecided):
+`Logging` in `settings.tdl` ([[Settings File]]; the file-type key is `Settings: v1` and the keys are nested blocks, D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; `Logging.Level` elsewhere in this note is only a prose shorthand for the path):
+
+```
+Logging {
+    Level: info
+    Diagnose: false
+}
+```
+
 
 | Key              | Meaning                                                 | Status                              |
 |------------------|---------------------------------------------------------|-------------------------------------|
@@ -178,7 +186,7 @@ All nine were answered on 2026-10-28, as recommended.
 - [ ] A module's `ctx.log.info` line shows `module:<name>` as its source.
 - [ ] A `dbus-fast` warning and a Python `DeprecationWarning` appear in the file as `WARNING` records with their sources.
 - [ ] An exception in a shell-registered callback is logged by the shell with a traceback and no variable values.
-- [ ] With `Logging.Diagnose: true` a traceback shows variable values; with it off it does not.
+- [ ] With `Diagnose: true` in `Logging` a traceback shows variable values; with it off it does not.
 - [ ] With the shell running across local midnight, the next record goes to the new day's file and the old file is whole.
 - [ ] With the log directory read-only, the shell starts, warns, and writes to the console.
 - [ ] `tesserae-shell log-level debug` makes `DEBUG` records appear until `settings.tdl` is reloaded.

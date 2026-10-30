@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-29
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/integration, integration/kwin, needs-verification]
 related: ["[[Integration]]", "[[Wayland Protocols]]", "[[ADR-0012 Keeping the Shell Above Plasma Panels]]", "[[ADR-0013 Control Interface]]", "[[IPC and CLI]]", "[[Surface Types]]", "[[System Context]]", "[[Bar]]", "[[Frame]]"]
 depends_on: ["[[ADR-0012 Keeping the Shell Above Plasma Panels]]", "[[ADR-0013 Control Interface]]"]
@@ -78,7 +78,7 @@ The maintainer allowed a read-only script run (question 3, answered as recommend
 Consequences:
 
 - The `FullscreenState` argument is one string holding a JSON array, not `as`. [[IPC and CLI#The interface]] is updated to match. The shell parses the string and checks that every item is a string.
-- **A rule can match a shell surface by its class,** because KWin's resource class is the layer-shell namespace. tre's `LayerWindow` takes `namespace` in its constructor (a change means reopening the window, [[Hot Reload]]). Decided 2026-10-29: every shell surface uses the namespace `tesserae-shell.<kind>.<name>`, for example `tesserae-shell.bar.top_bar` ([[Surface Types]]). A rule can then match the class by a substring or regular expression, and a Plasma panel by class `plasmashell` and type dock.
+- **A rule can match a shell surface by its class,** because KWin's resource class is the layer-shell namespace. tre's `LayerWindow` takes `namespace` in its constructor (a change means reopening the window, [[Hot Reload]]). Decided 2026-10-29: every shell surface uses the namespace `tesserae-shell.<type>.<name>` with the type in lower case (D24, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]), for example `tesserae-shell.bar.top_bar` ([[Surface Types]]). A rule can then match the class by a substring or regular expression, and a Plasma panel by class `plasmashell` and type dock.
 - **The shell can read a surface's layer** through the script (`window.layer`), which settles what KWin does with each surface; the shell does not need to, and the script sends nothing but the fullscreen list.
 
 ### Loading the script
@@ -125,12 +125,19 @@ KWin is the Wayland compositor. If it exits, tre's connection drops, its windows
 
 ## Configuration
 
-`settings.tdl` (proposed, the settings list is deferred, [[Settings File]]; keys are Capitalised like every shell file key, and the nesting is illustrative):
+`settings.tdl` (the file-type key is `Settings: v1` and the keys are nested blocks, D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; `KWin.Script` is only a prose shorthand for the path; the settings list is deferred, [[Settings File]]):
 
 | Key | Meaning | Default |
 |---|---|---|
 | `KWin.Script` | `runtime` (mode R), `persistent` (mode P, installed by the command) or `off` | `runtime` |
 | `KWin.Hide_On_Fullscreen` | Hide the shell's surfaces on an output with an active fullscreen window | `true` |
+
+```
+KWin {
+    Script: runtime
+    Hide_On_Fullscreen: true
+}
+```
 
 A surface can opt out of hiding (an OSD that should show over a game): open, [[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]].
 
@@ -181,7 +188,7 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 5. [x] The silent-script warning after 5 seconds.
 6. [x] The settings keys `KWin.Script` and `KWin.Hide_On_Fullscreen`.
 7. [x] An OSD on top of a fullscreen window: none in v1, consistent with the earlier decision that a fullscreen window always covers every shell element; revisit if a need appears. (This one had no recommendation written; I took the earlier decision as the answer.)
-- [x] The namespace convention: every shell surface uses the layer-shell namespace `tesserae-shell.<kind>.<name>` (maintainer, 2026-10-29, as proposed).
+- [x] The namespace convention: every shell surface uses the layer-shell namespace `tesserae-shell.<type>.<name>`, the type in lower case (maintainer, 2026-10-29, as proposed; the placeholder reads `<type>` since D24).
 - [ ] The rule file's key names and a test of the rule (needs a backup of `kwinrulesrc` and permission).
 
 ## Acceptance Criteria

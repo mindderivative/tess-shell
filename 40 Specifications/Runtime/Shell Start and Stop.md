@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/runtime, needs-verification]
 related: ["[[Runtime]]", "[[Process Model and Threading]]", "[[Data Flow]]", "[[Settings File]]", "[[Config Discovery and Registry]]", "[[Validation and Errors]]", "[[Hot Reload]]", "[[TRE-REQ-005 Keep-Alive and Loop Stop]]", "[[ADR-0003 Process Model]]"]
 depends_on: ["[[ADR-0003 Process Model]]", "[[Settings File]]", "[[TRE-REQ-005 Keep-Alive and Loop Stop]]"]
@@ -14,7 +14,7 @@ depends_on: ["[[ADR-0003 Process Model]]", "[[Settings File]]", "[[TRE-REQ-005 K
 # Shell Start and Stop
 
 > [!summary]
-> The order in which the shell starts, what stops it from starting, how it runs with no windows, and how it stops. It is the runtime view of what [[Process Model and Threading]] and [[Data Flow]] sketch. Decided: one process and one tre loop ([[ADR-0003 Process Model]]), `settings.tdl` read first and a bad one stops the shell ([[Settings File]]; the `.tdl` name of the settings file is an assumption to confirm, [[ADR-0014 Shell File Language#Open Items]]), `run(keep_alive=True)` and `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]), stay idle with no windows. Everything else here is proposed, with a recommendation.
+> The order in which the shell starts, what stops it from starting, how it runs with no windows, and how it stops. It is the runtime view of what [[Process Model and Threading]] and [[Data Flow]] sketch. Decided: one process and one tre loop ([[ADR-0003 Process Model]]), `settings.tdl` read first and a bad one stops the shell ([[Settings File]]; `settings.tdl` is the confirmed name, with the file-type key `Settings: v1`, D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]), `run(keep_alive=True)` and `LoopHandle.stop()` ([[TRE-REQ-005 Keep-Alive and Loop Stop]]), stay idle with no windows. Everything else here is proposed, with a recommendation.
 
 ## Purpose and Scope
 
@@ -139,7 +139,7 @@ A failure that stops the shell must also be readable without a console: the shel
 
 ## Performance Budget
 
-- Start is dominated by file parsing, validation and window creation. With a warm validation cache `jsonschema` is never imported ([[JSON Schema and Editor Support#The `jsonschema` dependency runtime, not only development]]).
+- Start is dominated by file parsing, validation and window creation. With a warm validation cache `jsonschema` is never imported ([[JSON Schema and Editor Support#The `jsonschema` Dependency: Runtime, Not Only Development]]).
 - Budgets (time to first surface, time to ready, stop time) are set in `60 Quality/` and measured on this machine; none is measured yet.
 - Stop is bounded: 10 seconds in total (decided).
 
