@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-10-31 |
-| Last change         | Proposed answers P1 to P7 for the third-pass leftovers; Bar-to-tre mapping written ([[Bar]], [[ADR-0014 Shell File Language]]) |
+| Last change         | P2 to P7 decided (D55 to D60): `Alignment` values, Panel `Meld` removed, registry `offset`, settings enums, schema folders ([[ADR-0014 Shell File Language]]) |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | Answer P1 to P7 in [[ADR-0014 Shell File Language#Proposed Answers for the Third-Pass Leftovers (2026-10-31)]] ("as recommended" works); the TEL release number to pin as `TEL:` once path tracking ships |
+| Waiting on you      | P1 in [[ADR-0014 Shell File Language#Proposed Answers for the Third-Pass Leftovers (2026-10-31)]]: the Bar-to-tre mapping in [[Bar]]; whether a Bar `Gap` should decide its meld with a Frame; the TEL release number to pin as `TEL:` once path tracking ships |
 | Next                | Building Blocks reference (gates the shipped modules); then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-31 | P2 to P7 decided (D55 to D60); Panel `Meld` removed ([[ADR-0014 Shell File Language]]) |
 | 2026-10-31 | Proposed answers P1 to P7 and the Bar-to-tre mapping ([[Bar]], [[ADR-0014 Shell File Language]]) |
 | 2026-10-31 | TEL built path tracking (T20); name-tree dependency question settled ([[Expression Language Requirements]]) |
 | 2026-10-31 | `tess-el` answered the T17 to T20 questions ([[Expression Language Requirements]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-31 | Questions on T17 to T20 sent to `tess-el` ([[Expression Language Requirements]]) |
 | 2026-10-31 | TEL requests T17 to T20 accepted ([[Expression Language Requirements]]) |
 | 2026-10-31 | Slot-end rule proposed (ADR-0014 open item) after the question on TDL and TEL sharing slots |
-| 2026-10-31 | TDL error list accepted (D52); corner-radius order accepted (D53); TEL requests T17 to T20 explained |
 
 ## Go to
 

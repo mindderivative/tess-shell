@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [spec/surface, needs-verification]
 related: ["[[Surfaces]]", "[[Surface Types]]", "[[Bar]]", "[[Panel]]", "[[Hit Testing for Concave Corners]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Hit Testing for Concave Corners]]"]
@@ -197,7 +197,7 @@ One Frame per monitor, independent: each is a complete ring with its own thickne
 | `Padding`                      | Space between a strip's children and its sides; four-sided (left, top, right, bottom). Applies only to a side used as a strip. A Frame has no `Gap`                                                                                                                       | Decided (D41 to D45)                                                                 |
 | `Hidden`                       | Hide the Frame at start; shown and hidden at runtime by a shell action                                                                                                                                                                                                   | Decided that it can be hidden and shown; key accepted 2026-10-29                    |
 | `Style`                        | Background, border, shadow, opacity                                                                                                                                                                                                                                      | Decided (the key); property names accepted 2026-10-29                                 |
-| `Meld`                         | On a Bar or Panel entry that has `Attach_To` the Frame: draw it inside the Frame's surface instead of in a window of its own                                                                                                                                             | Decided (key name accepted 2026-10-29); the mechanism is decided (2026-10-27)       |
+| `Meld`                         | On a Bar entry that has `Attach_To` the Frame: draw it inside the Frame's surface instead of in a window of its own (a Panel has no `Meld` key; its `Margin` decides, D56)                                                                                                                                             | Decided (key name accepted 2026-10-29); the mechanism is decided (2026-10-27)       |
 | `Edges`                        | Per-edge overrides: `Left`, `Top`, `Right`, `Bottom`, each with its own `Thickness` and `Children` (the strip). An edge is the edge of the screen, however thick it is, and it starts at that edge; it is not a "side" of the screen that reaches past the halfway point | Decided (maintainer, 2026-10-27: `Edges`, not `Sides`)                               |
 | `Children`                     | Blocks, containers and modules on the Frame itself                                                                                                                                                                                                                       | Decided that a layer window has them; for a Frame the content goes in a side's strip |
 

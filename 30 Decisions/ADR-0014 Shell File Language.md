@@ -429,6 +429,19 @@ The agent's recommendations for the seven items under "Raised by the third rewri
 
 Verified while preparing P1 (2026-10-31): the protocol makes a 0 size without opposite anchors an error, which is why D46 is right; tre accepts negative margins and animates them (so hiding by margin is allowed); a positive exclusive zone counts only for one edge or one edge plus both perpendicular edges, and a corner anchor needs `exclusive_edge` (layer-shell version 5). Not verified: what zone KWin 6.8.1 reserves when a margin is set (the 2026-10-27 reading is zone = size plus Gap), whether the compositor ignores margins on an unanchored axis, whether `Output` sizes are already rotated, and how to measure content for `AUTO` before the window exists.
 
+### Sixth-Round Decisions (2026-10-31)
+
+Decided by the maintainer in chat: "P2 - P7 as recommended" (the proposed answers above). P1, the mapping of `Alignment`, `Offset` and `Gap` to tre, was not answered and stays open.
+
+| #   | Topic                    | Decision                                                                                                                                                                                                                                                                     |
+|-----|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| D55 | `Alignment`              | Values `START`, `CENTER`, `END`; default `CENTER`. `Alignment` and `Offset` have no effect on an `EXPAND` axis, and the shell warns if they are set.                                                                                                                           |
+| D56 | `Meld` on a Panel        | Removed. A `Margin` on the Frame-facing sides decides the meld (D44). A Bar attached to a Frame keeps its `Meld` key; whether a Bar `Gap` should decide its meld the same way is open.                                                                                         |
+| D57 | Registry position order  | The registry stores a moved Panel's position as `offset` in the shell's left, top, right, bottom order and converts at the tre boundary ([[Config Discovery and Registry]]).                                                                                                  |
+| D58 | Settings enum values     | `Logging.Level`: `TRACE`, `DEBUG`, `INFO`, `SUCCESS`, `WARNING`, `ERROR`, `CRITICAL`. `Logging.Format`: `TEXT`, `JSON`. `KWin.Script`: `RUNTIME`, `PERSISTENT`, `OFF` ([[Settings File]]).                                                                                      |
+| D59 | Where `Padding` applies  | Decided in the building-blocks step, not before: `Padding` belongs to a block with `Children`; whether a leaf block such as `TextField` has an inner inset is a [[Building Blocks]] question.                                                                                  |
+| D60 | Schema version folders   | `tdl/<major.minor>/` for the metadata part, keyed by `TDL:`, and `shell/<major.minor>/` for the blocks, keyed by the `Shell:` minimum. The loader picks the metadata schema first ([[JSON Schema and Editor Support]]).                                                        |
+
 ## Open Items
 
 - [x] **Name.** Tesserae Data Language, TDL (maintainer, 2026-10-29). #needs-verification: that the code name `tdl` and any PyPI package name are free and do not clash with another well-known TDL; check before registering.
@@ -524,12 +537,12 @@ Raised by the second layout sketch (2026-10-30). Each is a question for the main
 Raised by the third rewrite pass (2026-10-30). The notes keep the shown default:
 
 - [ ] **Alignment, Offset and Gap to tre.** How the shell computes tre's `anchor`, `size` and margins from `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` (the same kind of computation as the Panel attachment geometry), and how a collapsed Bar keeps a layer surface so that a size of 0 never arises at creation ([[Bar]]; #needs-verification).
-- [ ] **Alignment values.** `START`, `CENTER`, `END` are used in the examples; the maintainer has not listed the values or the default.
-- [ ] **The Meld key on a Panel.** The key `Meld`: a margin on the Frame-facing sides now decides whether a Panel melds with a Frame, so the `Meld` key may be redundant ([[Panel]]).
-- [ ] **Registry state order.** The registry stores a moved Panel's `margin` in tre's order (top, right, bottom, left), because it comes from tre's `moved` event. Recommendation: leave the JSON in tre's order and name the order in the registry note ([[Config Discovery and Registry]]).
-- [ ] **Setting keys and values.** The enum values of settings keys (`Logging.Format`: `TEXT`, `JSON`; `KWin.Script`: `RUNTIME`, `PERSISTENT`, `OFF`; log levels) follow the upper-case rule but are not listed in [[Settings File]].
-- [ ] **Where Padding applies.** The key `Padding`: the notes say every element with `Children` (Bar, Panel, Frame strips, Popup); the block-level list waits for the building blocks ([[Building Blocks]]).
-- [ ] **Version-folder id.** The schema `$id` folder used to come from `Shell: v1`; how `TDL:` and `Shell:` map to it is open ([[JSON Schema and Editor Support]]).
+- [x] **Alignment values.** `START`, `CENTER`, `END` are used in the examples; the maintainer has not listed the values or the default. Decided 2026-10-31 (D55).
+- [x] **The Meld key on a Panel.** The key `Meld`: a margin on the Frame-facing sides now decides whether a Panel melds with a Frame, so the `Meld` key may be redundant ([[Panel]]). Decided 2026-10-31 (D56): removed on a Panel.
+- [x] **Registry state order.** The registry stores a moved Panel's `margin` in tre's order (top, right, bottom, left), because it comes from tre's `moved` event. Recommendation: leave the JSON in tre's order and name the order in the registry note ([[Config Discovery and Registry]]). Decided 2026-10-31 (D57): `offset` in the shell's order.
+- [x] **Setting keys and values.** The enum values of settings keys (`Logging.Format`: `TEXT`, `JSON`; `KWin.Script`: `RUNTIME`, `PERSISTENT`, `OFF`; log levels) follow the upper-case rule but are not listed in [[Settings File]]. Decided 2026-10-31 (D58).
+- [ ] **Where Padding applies.** The key `Padding`: the notes say every element with `Children` (Bar, Panel, Frame strips, Popup); the block-level list waits for the building blocks ([[Building Blocks]]). Decided 2026-10-31 (D59): decided in the Building Blocks step; stays open until then.
+- [x] **Version-folder id.** The schema `$id` folder used to come from `Shell: v1`; how `TDL:` and `Shell:` map to it is open ([[JSON Schema and Editor Support]]). Decided 2026-10-31 (D60).
 
 Raised by the maintainer's question on slot handling (2026-10-31):
 

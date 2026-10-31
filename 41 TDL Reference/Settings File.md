@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-27
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [tdl-ref, runtime]
 related: ["[[41 TDL Reference]]", "[[Common Keys and Conventions]]", "[[Shell File]]", "[[Module File]]", "[[Style, Theme and Stylesheet Files]]", "[[JSON Schema and Editor Support]]", "[[ADR-0007 Shell UI Layer]]", "[[Logging with Loguru]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]"]
@@ -58,6 +58,14 @@ The metadata block of every shell file is defined in [[TDL Language#The Metadata
 | `Validation`  | Schema validation settings           | `Enabled` (default true); the cache location is [[JSON Schema and Editor Support#The `jsonschema` Dependency: Runtime, Not Only Development]]                                                                                              |
 
 Keys are Capitalised like every key in a shell file ([[TDL Language#Names and the Registry]]). The key names are the agent's Capitalisation of the 2026-10-29 names; `Level`, `Directory`, `Retention` and `Enabled` follow the same rule.
+
+Enum values of settings keys are full upper case, like every enum value (D58):
+
+| Key                | Values                                                                 |
+|--------------------|------------------------------------------------------------------------|
+| `Logging.Level`    | `TRACE`, `DEBUG`, `INFO`, `SUCCESS`, `WARNING`, `ERROR`, `CRITICAL` (Loguru's level names) |
+| `Logging.Format`   | `TEXT`, `JSON`                                                         |
+| `KWin.Script`      | `RUNTIME`, `PERSISTENT`, `OFF`                                         |
 
 ```
 ---

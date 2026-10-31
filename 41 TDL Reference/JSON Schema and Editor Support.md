@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-27
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [tdl-ref, tooling, needs-verification]
 related: ["[[41 TDL Reference]]", "[[Style Schema]]", "[[Common Keys and Conventions]]", "[[Module File]]", "[[Shell File]]", "[[Building Blocks]]", "[[ADR-0011 JSON Schema for Shell Files]]", "[[ADR-0014 Shell File Language]]"]
 depends_on: ["[[ADR-0011 JSON Schema for Shell Files]]"]
@@ -46,7 +46,7 @@ Decided 2026-10-27 (replacing the project-root `.shell/schemas/` of earlier the 
 
 | Schema                                                             | For                                                                                                   | Shipped or generated                                                            |
 |--------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| `shell.schema.json`                                                | Files with the root block `Shell`: monitors, surfaces, children                                       | Shipped, per format version (the `TDL:` and `Shell:` versions in the metadata map to a version folder and `$id`; the mapping is open) |
+| `shell.schema.json`                                                | Files with the root block `Shell`: monitors, surfaces, children                                       | Shipped, per version: `shell/<major.minor>/` keyed by the `Shell:` minimum, with the metadata part in `tdl/<major.minor>/` keyed by `TDL:`; the loader picks the metadata schema first (D60) |
 | `module.schema.json`                                               | Files with the root block `Module`: params, layout, style                                                   | Shipped                                                                         |
 | `settings.schema.json`                                             | The config directory's `settings.tdl` ([[Settings File]]); its root block is `Settings` (D20)         | Shipped                                                                         |
 | `style.schema.json`, `theme.schema.json`, `stylesheet.schema.json` | The three look files ([[Style Schema]])                                        | Shipped; the theme token enums are filled in by generation                      |

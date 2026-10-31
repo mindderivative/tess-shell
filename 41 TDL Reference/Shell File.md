@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [tdl-ref, spec/surface, needs-verification]
 related: ["[[41 TDL Reference]]", "[[TDL Language]]", "[[Common Keys and Conventions]]", "[[Surface Types]]", "[[Module File]]", "[[ADR-0014 Shell File Language]]"]
 depends_on: ["[[Common Keys and Conventions]]", "[[Surface Types]]"]
@@ -105,7 +105,7 @@ The details of each are in [[Surface Types]].
 | `Edge`           | The edge a Bar attaches to: `TOP`, `BOTTOM`, `LEFT`, `RIGHT`                                                                                                                                                                                                  | Bar               | Decided (2026-10-30; replaces the raw `Anchor`)        |
 | `Width`, `Height` | Pixels, `50%`, `AUTO` (shrink to content on that axis) or `EXPAND` (stretch edge to edge along the attached Edge). A top Bar with `Height: EXPAND` cannot stretch: it resolves to `Max_Height`, else `Min_Height`, else 0 px ([[TDL Language#Sizes (Shell Schema)]])                                                                  | Bar               | Decided (D34, D46)                                      |
 | `Max_Width`, `Max_Height`, `Min_Width`, `Min_Height` | Bounds on the size, in pixels                                                                                                                                                                                                                 | Bar               | Decided (D34)                                           |
-| `Alignment`      | Where the Bar sits along its Edge: `START`, `CENTER`, `END`                                                                                                                                                                                                   | Bar               | Decided (2026-10-30)                                    |
+| `Alignment`      | Where the Bar sits along its Edge: `START`, `CENTER`, `END`; default `CENTER`; no effect on an `EXPAND` axis (D55)                                                                                                                                                                                                   | Bar               | Decided (2026-10-30)                                    |
 | `Offset`         | A Bar: one number that moves it along the Edge, positive or negative. A Panel: four-sided (left, top, right, bottom), positions it from its anchored edges; this replaces the Panel's old `Margin` (D51)                                                    | Bar, Panel        | Decided (D51)                                           |
 | `Gap`            | The distance to what the surface is attached to. A Bar: one number, the space between the Edge and the Bar. A Popup: to its anchor. A Panel: to a target that is not a Frame (D49). Never a layout's child spacing, which is `Spacing`                       | Bar, Popup, Panel | Decided (D49)                                           |
 | `Anchor`         | Edges a Panel attaches to when floating: `TOP`, `BOTTOM`, `LEFT`, `RIGHT` (one or a list)                                                                                                                                                                      | Panel             | Decided (key name accepted 2026-10-29)                  |

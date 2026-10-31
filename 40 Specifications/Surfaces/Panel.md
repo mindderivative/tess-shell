@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [spec/surface, needs-verification]
 related: ["[[Surfaces]]", "[[Surface Types]]", "[[Shell File]]", "[[Common Keys and Conventions]]", "[[Shell Structure]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
@@ -87,6 +87,7 @@ This attaches the Panel's right edge to the target's left edge, lines up their t
 
 - With no margin on those sides, the Panel and the Frame meld as before ([[Frame#Hosted melding (decided 2026-10-27)]]).
 - With a margin there, they do not meld: the Frame edge continues straight and the Panel's corners round as a floating Panel's do.
+- A Panel has no `Meld` key (D56): the `Margin` on the Frame-facing sides is the one switch. A Bar attached to a Frame keeps its `Meld` key; whether a Bar `Gap` should decide its meld the same way is open.
 - `Offset` positions the Panel from its anchored edges; `Margin` is transparent space around the Panel and `Padding` is inside it ([[Shell File#Surface Keys]]).
 
 **Following the target (decided 2026-10-27).**
@@ -151,7 +152,6 @@ Keys of a Panel entry. Decided keys are from [[Common Keys and Conventions]]; pr
 | `Gap`              | Pixels between the Panel and a target that is not a Frame, borders included                                                                                            | Decided (2026-10-27)                                                         |
 | `Align`            | `START`, `CENTER`, `END` along the shared edge                                                                                                       | Decided (2026-10-27)                                                         |
 | `Open_With_Target` | Opening the target also opens this Panel; default off                                                                                                | Opt-in decided (2026-10-27); key accepted 2026-10-29                        |
-| `Meld`             | With `Attach_To` a Frame: draw the Panel inside the Frame's surface, so it grows out of the frame with no seam; a `Margin` on the Frame-facing sides stops the meld                                       | Decided (key name accepted 2026-10-29); the mechanism is decided ([[Frame#Hosted melding (decided 2026-10-27)]]) |
 | `Anchor`           | `TOP`, `BOTTOM`, `LEFT`, `RIGHT` (one or a list)                                                                                                     | Decided (key name accepted 2026-10-29)                                      |
 | `Size`             | `[width, height]`                                                                                                                                    | Decided (key name accepted 2026-10-29)                                      |
 | `Offset`           | Four-sided position from the anchored edges (left, top, right, bottom); replaces the Panel's old `Margin`. The shell reorders it to tre's `margin` | Decided (D51)                                                               |

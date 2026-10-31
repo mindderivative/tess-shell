@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [spec/runtime, needs-verification]
 related: ["[[Runtime]]", "[[Settings File]]", "[[Shell File]]", "[[Module File]]", "[[Common Keys and Conventions]]", "[[Validation and Errors]]", "[[Hot Reload]]", "[[Shell Start and Stop]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[Settings File]]", "[[ADR-0007 Shell UI Layer]]"]
@@ -78,11 +78,13 @@ flowchart TD
       "name": "clock_widget",
       "file": "Shells/Main_Shell.tdl",
       "owner": "0192f4a0-7c3e-7000-8a1b-3f2c9d4e5a60",
-      "state": {"margin": [40, 0, 0, 40]}
+      "state": {"offset": [40, 40, 0, 0]}
     }
   }
 }
 ```
+
+The registry stores a moved Panel's position as `offset` in the shell's order (left, top, right, bottom), not in tre's `margin` order; the shell converts at the tre boundary (D57). The example is a Panel 40 px from the left and 40 px from the top.
 
 | Field            | Meaning                                                                                                                          |
 |------------------|----------------------------------------------------------------------------------------------------------------------------------|
