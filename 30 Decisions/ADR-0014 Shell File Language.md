@@ -411,6 +411,7 @@ Decided by the maintainer in chat.
 |-----|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
 | D52 | TDL error list     | The 18 error codes in [[TDL Language#Errors]] are accepted. The maintainer asked what "T17 to T20" meant; the plain-language explanation is in [[Expression Language Requirements#Requests to the TEL Project (T17 to T20)]]. |
 | D53 | Corner-radius order | Four corner radii run top-left, top-right, bottom-right, bottom-left (clockwise from the top-left corner), as kept in D50.                          |
+| D54 | Where a slot ends  | A slot ends at the first `}}` that is not inside a quoted string (single or double quotes, with `\` escapes). A `}}` meant for the expression is written `} }`. The TDL parser cuts every slot out of the file and gives TEL only the inner text and its start; TEL's template scanner is not used for shell files. Accepted by the maintainer, 2026-10-31. |
 
 ## Open Items
 
@@ -516,7 +517,7 @@ Raised by the third rewrite pass (2026-10-30). The notes keep the shown default:
 
 Raised by the maintainer's question on slot handling (2026-10-31):
 
-- [ ] **Where a slot ends.** The idea that TDL cuts every `{{ }}` out of the file, passes the texts to TEL, and takes values back is mostly the design already: TDL parses the file once and gives TEL each slot's text and start (T17); TEL compiles once and re-evaluates on a name change; results go to the model, not back into the file, and the shell converts them. What is missing is a rule that lets TDL find the end of a slot without TEL's parser. Today TEL's template rule ends a part at the first `}}` after which the text reads as one expression (TEL project `docs/language.md`, section 8). Recommendation: a slot ends at the first `}}` that is not inside a quoted string (single or double quotes, with `\` escapes), and a `}}` meant for the expression is written `} }`, the same habit as closing nested blocks. TDL then gives TEL only the inner text and TEL's template scanner is not used for shell files. Cost: an expression with nested braces needs a space. See [[Expression Language Requirements#Requests to the TEL Project (T17 to T20)]].
+- [x] **Where a slot ends.** The idea that TDL cuts every `{{ }}` out of the file, passes the texts to TEL, and takes values back is mostly the design already: TDL parses the file once and gives TEL each slot's text and start (T17); TEL compiles once and re-evaluates on a name change; results go to the model, not back into the file, and the shell converts them. What is missing is a rule that lets TDL find the end of a slot without TEL's parser. Today TEL's template rule ends a part at the first `}}` after which the text reads as one expression (TEL project `docs/language.md`, section 8). Recommendation: a slot ends at the first `}}` that is not inside a quoted string (single or double quotes, with `\` escapes), and a `}}` meant for the expression is written `} }`, the same habit as closing nested blocks. TDL then gives TEL only the inner text and TEL's template scanner is not used for shell files. Cost: an expression with nested braces needs a space. See [[Expression Language Requirements#Requests to the TEL Project (T17 to T20)]]. Decided 2026-10-31 as recommended (D54).
 
 ## Links
 

@@ -113,6 +113,7 @@ Rules that follow from these:
 - Nested blocks close with a space or a newline between the braces: `} }`, never `}}`. `{{` always opens a slot, so a block directly inside a block is written `{ {`.
 - An unquoted word is a string. An unquoted value runs to the end of the line, the next `,`, a closing brace or a comment; text that holds `,` or a brace is quoted.
 - A hex colour is quoted, because `#` starts a comment: `"#ffffff10"`, `"#ffffff"`.
+- **Where a slot ends (D54).** A slot starts at `{{` and ends at the first `}}` that is not inside a quoted string (single or double quotes, with `\` escapes). A `}}` meant for the expression is written `} }`, the same habit as closing nested blocks. The parser gives TEL only the inner text and the position where it starts.
 - A block may be written on one line (`Params { format { Type: string } }`) and may be empty (`Spacer { }`) (D8).
 - A key starts with a letter. There are no numeric keys: scales use names such as `Level_1` and `Step_1`. A list holds values, not blocks: repeat a named block instead (`Shadows { Shadow { } Shadow { } }`) (D4).
 - A property key may appear once in a block. A repeat is an error naming both places (D9). Repeated block names are allowed.
@@ -247,6 +248,7 @@ Decided on 2026-10-30 and removed from this list: the version pins are minimums 
 - `Index: default` applies to a monitor no other block names.
 - A metadata key the shell does not know is kept and ignored.
 - `}}` where a block closes inside a block is an error that says to write `} }`.
+- `{{ {'a': {'b': 1}} }}` ends the slot at the first `}}` and TEL reports the leftover text; `{{ {'a': {'b': 1} } }}` evaluates to the dict, and `{{ '}}' }}` is the string `}}` because the `}}` is inside quotes.
 - A property key written twice in one block is an error naming both places.
 - `Color: #fff` is an error that says to quote the colour; `Color: "#fff"   # note` is the colour `#fff` and a comment.
 - `Edge: top` is an error that says enum values are upper case; `Edge: TOP` loads.

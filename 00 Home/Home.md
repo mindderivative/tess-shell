@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-10-31 |
-| Last change         | Questions on T17 to T20 sent to the `tess-el` session over the mailbox (answers only); awaiting its reply |
+| Last change         | Slot-end rule accepted (D54): a slot ends at the first `}}` outside quotes; `} }` for an expression's own braces |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | The open items from the third pass in [[ADR-0014 Shell File Language#Open Items]] (how Bar `Alignment`, `Offset` and `Gap` map to tre, `Alignment` values, the `Meld` key, settings enum values); the four accepted TEL requests (T17 to T20), explained in [[Expression Language Requirements#Requests to the TEL Project (T17 to T20)]], to the TEL project; the slot-end rule in [[ADR-0014 Shell File Language#Open Items]] |
+| Waiting on you      | The open items from the third pass in [[ADR-0014 Shell File Language#Open Items]] (how Bar `Alignment`, `Offset` and `Gap` map to tre, `Alignment` values, the `Meld` key, settings enum values); the four accepted TEL requests (T17 to T20), explained in [[Expression Language Requirements#Requests to the TEL Project (T17 to T20)]], to the TEL project |
 | Next                | Plasma coexistence, the D-Bus service layer, portals, global shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-31 | Slot-end rule accepted (D54) in [[ADR-0014 Shell File Language]] and [[TDL Language]] |
 | 2026-10-31 | Questions on T17 to T20 sent to `tess-el` ([[Expression Language Requirements]]) |
 | 2026-10-31 | TEL requests T17 to T20 accepted ([[Expression Language Requirements]]) |
 | 2026-10-31 | Slot-end rule proposed (ADR-0014 open item) after the question on TDL and TEL sharing slots |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-30 | Third TDL rewrite pass over the vault; fourth-round decisions D49 to D51 in [[ADR-0014 Shell File Language]] |
 | 2026-10-30 | Third-round decisions D37 to D48 in [[ADR-0014 Shell File Language]]; proposed TDL error list in [[TDL Language]]; T20 proposed |
 | 2026-10-30 | Second-sketch decisions D25 to D36 (TDL its own project, root block as file type, upper-case enums, name rules); [[TDL Language]] rewritten |
-| 2026-10-30 | [[ADR-0014 Shell File Language]] open items decided (D1 to D24); `41 YAML Reference` renamed `41 TDL Reference`; decisions applied to the notes |
 
 ## Go to
 
