@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [spec/surface, needs-verification]
 related: ["[[Surfaces]]", "[[Surface Types]]", "[[Panel]]", "[[Frame]]", "[[Shell File]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
@@ -34,7 +34,38 @@ The Bar is placed with `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap
 | A shorter bar at one end           | `Edge: TOP`, `Width: 400`, `Height: 32`, `Alignment: START`, `Offset: 200` | `anchor` the edge and one perpendicular edge; a `margin` along the edge for the offset                                         |
 | A bar that looks floating          | `Edge: TOP`, `Width: EXPAND`, `Height: 32`, `Gap: 8`           | The same, with a `margin` on its own edge; the zone is 40. It is still a Bar: the 8 px is reserved                              |
 
-The shell computes tre's `anchor`, `size` and `margin` from `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap`, the same way it computes a Panel's attachment geometry. The tre column shows what each shape needs, not the computation. How `Alignment`, `Offset` and `Gap` map to the three settings, and how a collapsed Bar keeps a layer surface, is open (#needs-verification; [[#Open Questions]]).
+The shell computes tre's `anchor`, `size`, `margin` and `exclusive_zone` from `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap`, the same way it computes a Panel's attachment geometry. The computation is proposed below (2026-10-31) and waits for the maintainer.
+
+#### Mapping to tre (Proposed)
+
+Sources: the [layer-shell protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1) (`set_size`, `set_anchor`, `set_exclusive_zone`, `set_margin`, read 2026-10-31) and the [tre LayerWindow reference](https://mindderivative.github.io/tre/reference/layer-window/) (read 2026-10-31). tre takes `margin` as (top, right, bottom, left), whole pixels, negative allowed; `size` 0 on an axis stretches between two anchors on that axis and is otherwise a protocol error (`invalid_size`); `anchor`, `size`, `margin` and `exclusive_zone` are live through `set()`; a margin can be animated.
+
+Terms. The along axis runs along the Edge (x for a top or bottom Bar, y for a left or right Bar), the across axis is the thickness. `L` is the resolved length along the Edge (`Width` for top and bottom, `Height` for left and right), `T` the resolved thickness across it, and `O` the output's logical size along the Edge (`Output.width` or `Output.height` from `App.outputs()`, in logical pixels). The start side is the left side of a top or bottom Bar and the top side of a left or right Bar. A positive `Offset` moves the Bar toward the end of the Edge.
+
+| Step                | Rule                                                                                                                                                                                                                                       |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Resolve a size      | Pixels stay; `p%` is p/100 of the output's size on that axis; `AUTO` is the content's size on that axis; `EXPAND` along the Edge stretches (below); `EXPAND` across the Edge is `Max_`, else `Min_`, else 0. Then clamp to `Min_` and `Max_`. |
+| Across size and zone | `size` across is `T`. The Gap goes on the Edge's own side: `margin` on that side is `Gap`. `exclusive_zone` is `T + Gap` (2026-10-27 rule above), only when `Layer` is `TOP` and `Reserve` is true.                                                |
+| `EXPAND` along      | `anchor` is the Edge plus both perpendicular edges; `size` along is 0; no margin along. `Alignment` and `Offset` have no effect; the shell warns if either is set.                                                                      |
+| `START`             | `anchor` is the Edge plus the start side; `margin` on the start side is `Offset`; `size` along is `L`; `exclusive_edge` is the Edge.                                                                                                   |
+| `END`               | `anchor` is the Edge plus the end side; `margin` on the end side is `-Offset`; `size` along is `L`; `exclusive_edge` is the Edge.                                                                                                      |
+| `CENTER`, no Offset | `anchor` is the Edge only; the compositor centres the Bar along it; `size` along is `L`. No `exclusive_edge` is needed.                                                                                                                  |
+| `CENTER` with Offset | `anchor` is the Edge plus the start side; `margin` on the start side is `(O - L) / 2 + Offset`; `exclusive_edge` is the Edge. The shell recomputes it on `output_updated`.                                                                  |
+| Zero size           | A resolved `T`, or an `L` that is not `EXPAND`, of 0 is not created (D46). This matches the protocol: a 0 on an axis without anchors on both opposite edges is `invalid_size`.                                                          |
+| Hidden or peeking   | The window keeps its size. The shell animates the Edge-side margin to `-(T - peek)` (negative margins are accepted and were honoured on KWin, [[TRE-REQ-001 Layer Surface Window]]) and sets `exclusive_zone` to 0 when the slide ends. A size of 0 never arises. |
+| Recompute           | On any live key change, on `output_updated` (size, scale or rotation), and when an `AUTO` size's content changes. The shell sends one `set()` with the new `anchor`, `size`, `margin` and `exclusive_zone`.                              |
+
+Worked examples on a 1920 px wide output (margin as top, right, bottom, left):
+
+| TDL                                                                                   | `anchor`           | `size`      | `margin`        | `exclusive_zone`        |
+|---------------------------------------------------------------------------------------|--------------------|-------------|-----------------|-------------------------|
+| `Edge: TOP`, `Width: EXPAND`, `Height: 32`                                            | top, left, right   | (0, 32)     | (0, 0, 0, 0)    | 32                      |
+| `Edge: TOP`, `Width: EXPAND`, `Height: 32`, `Gap: 8`                                  | top, left, right   | (0, 32)     | (8, 0, 0, 0)    | 40                      |
+| `Edge: BOTTOM`, `Width: 560`, `Height: 64`, `Alignment: CENTER`                       | bottom             | (560, 64)   | (0, 0, 0, 0)    | 64 (only if `Layer` is `TOP`)   |
+| `Edge: TOP`, `Width: 400`, `Height: 32`, `Alignment: START`, `Offset: 200`            | top, left          | (400, 32)   | (0, 0, 0, 200)  | 32, `exclusive_edge` top |
+| `Edge: TOP`, `Width: 400`, `Height: 32`, `Alignment: END`, `Offset: 40`               | top, right         | (400, 32)   | (0, -40, 0, 0)  | 32, `exclusive_edge` top |
+
+Still unverified (#needs-verification): the exact zone a compositor reserves for a margin (the protocol says the zone "includes the margin"; the 40 above is the 2026-10-27 reading) on KWin 6.8.1; whether margins on an axis with no anchor are ignored by the compositor (the reason `CENTER` with an Offset anchors to the start side instead); whether `Output.width` and `height` are already rotated for a rotated output; and whether tre offers a way to measure content for `AUTO` before the window exists.
 
 - A positive `exclusive_zone` counts only for a surface anchored to one edge, or one edge plus both perpendicular edges; with any other anchor set the compositor treats it as 0, and a `warning` event says so ([[TRE-REQ-001 Layer Surface Window#Shell need]]).
 - A size is pixels, a percent, `AUTO` or `EXPAND` ([[TDL Language#Sizes (Shell Schema)]]). `AUTO` shrinks the Bar to its content on that axis. `Max_Width`, `Max_Height`, `Min_Width` and `Min_Height` bound the result.
@@ -184,7 +215,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 ## Open Questions
 
 - [x] The placement keys: `Edge`, `Width`, `Height`, the `Max_` and `Min_` bounds, `Alignment`, `Offset` and `Gap`; they replace `Span`, `Length`, `Thickness`, `Margin` and the raw `Anchor` and `Size` (maintainer, 2026-10-30).
-- [ ] How `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` map to tre's `anchor`, `size` and margins, and how a collapsed Bar keeps a layer surface in the protocol. #needs-verification ([[Shell File#Open]])
+- [ ] The mapping of `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` to tre is proposed under Geometry (2026-10-31) and waits for the maintainer. A hidden or peeking Bar keeps its size and slides by a negative margin, so a size of 0 never arises. The unverified points are listed under the mapping table.
 - [x] Movable: no, a Bar is anchored and a movable surface is a Panel. Floating: a Bar with a `Gap` looks floating but stays attached and its gap space is reserved (maintainer, 2026-10-27).
 - [x] Auto-hide: on by default with opt-out, a default delay the user can change, keyboard reveal none by default (maintainer, 2026-10-27). Open: the default delay value, the hover strip's thickness, and the reveal key's key name (`Reveal_Key`).
 - [x] The Plasma panel on the same edge: the Bar wins, unless the Plasma panel is always on top or a window is fullscreen (maintainer, 2026-10-27). Open: how, and how KWin orders two zones on one edge. #needs-verification

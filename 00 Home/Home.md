@@ -31,10 +31,10 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-10-31 |
-| Last change         | TEL built full-path tracking (T20), local and unreleased; the shell uses `reads` for name-tree dependencies ([[Expression Language Requirements]]) |
+| Last change         | Proposed answers P1 to P7 for the third-pass leftovers; Bar-to-tre mapping written ([[Bar]], [[ADR-0014 Shell File Language]]) |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | The open items from the third pass in [[ADR-0014 Shell File Language#Open Items]] (how Bar `Alignment`, `Offset` and `Gap` map to tre, `Alignment` values, the `Meld` key, settings enum values); the TEL release number to pin as `TEL:` once path tracking ships |
-| Next                | Plasma coexistence, the D-Bus service layer, portals, global shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
+| Waiting on you      | Answer P1 to P7 in [[ADR-0014 Shell File Language#Proposed Answers for the Third-Pass Leftovers (2026-10-31)]] ("as recommended" works); the TEL release number to pin as `TEL:` once path tracking ships |
+| Next                | Building Blocks reference (gates the shipped modules); then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
 | Deferred to testing | Which global settings belong in `settings.tdl` ([[Settings File]]); First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]); the four reservers plus the painter on KWin and a 4K Frame with many joins ([[Frame]]); fractional scale at 1.5x ([[Frame]]); fullscreen stacking and detection ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]); Bar over a Plasma panel ([[Bar]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-31 | Proposed answers P1 to P7 and the Bar-to-tre mapping ([[Bar]], [[ADR-0014 Shell File Language]]) |
 | 2026-10-31 | TEL built path tracking (T20); name-tree dependency question settled ([[Expression Language Requirements]]) |
 | 2026-10-31 | `tess-el` answered the T17 to T20 questions ([[Expression Language Requirements]]) |
 | 2026-10-31 | Slot-end rule accepted (D54) in [[ADR-0014 Shell File Language]] and [[TDL Language]] |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-31 | TEL requests T17 to T20 accepted ([[Expression Language Requirements]]) |
 | 2026-10-31 | Slot-end rule proposed (ADR-0014 open item) after the question on TDL and TEL sharing slots |
 | 2026-10-31 | TDL error list accepted (D52); corner-radius order accepted (D53); TEL requests T17 to T20 explained |
-| 2026-10-30 | Third TDL rewrite pass over the vault; fourth-round decisions D49 to D51 in [[ADR-0014 Shell File Language]] |
 
 ## Go to
 

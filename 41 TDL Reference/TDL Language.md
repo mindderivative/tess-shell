@@ -182,7 +182,7 @@ A percentage plus pixels (tre's `calc(100% - 16)`) has no form in v1 (D6). A sty
 
 ## Sizes (Shell Schema)
 
-A `Width` or `Height` is a number of pixels, a percentage, `AUTO` or `EXPAND`. `AUTO` shrinks to wrap the content on that axis. `EXPAND` stretches edge to edge along the edge a surface is attached to; across that axis it cannot stretch, so a top Bar with `Height: EXPAND` resolves to `Max_Height`, else `Min_Height`, else 0 px. `Max_Width`, `Max_Height`, `Min_Width` and `Min_Height` bound a size (D34). A resolved size of 0 may be invalid for a layer surface (see the danger callout in [[ADR-0014 Shell File Language#Second-Sketch Decisions (2026-10-30)]]).
+A `Width` or `Height` is a number of pixels, a percentage, `AUTO` or `EXPAND`. `AUTO` shrinks to wrap the content on that axis. `EXPAND` stretches edge to edge along the edge a surface is attached to; across that axis it cannot stretch, so a top Bar with `Height: EXPAND` resolves to `Max_Height`, else `Min_Height`, else 0 px. `Max_Width`, `Max_Height`, `Min_Width` and `Min_Height` bound a size (D34). A resolved size of 0 is invalid for a layer surface unless it is anchored to both opposite edges, so such a Bar is not created (D46, verified against the protocol 2026-10-31).
 
 ## Errors
 
@@ -234,7 +234,7 @@ Decided on 2026-10-30 and removed from this list: the version pins are minimums 
 
 - [x] The names and slugs of TDL syntax errors: the list under "Errors" is accepted (D52).
 - [ ] The full list of shipped modules and their registry names: after the building blocks are worked out (D48, [[V1 Widgets]]).
-- [ ] How a collapsed or hidden Bar keeps a layer surface, so that a size of 0 never arises at creation (D46; #needs-verification against the layer-shell protocol).
+- [ ] How a collapsed or hidden Bar keeps a layer surface: proposed in [[Bar#Mapping to tre (Proposed)]] (the window keeps its size and slides by a negative margin). The protocol makes a 0 size without opposite anchors an error, so D46 stands (verified 2026-10-31).
 - [x] `Gap` is the distance to what a surface is attached to, and a layout's child spacing is `Spacing` (D49). The four-sided order is Left, Top, Right, Bottom (D50). A Bar's `Offset` is one number, a Panel's is four-sided (D51) ([[ADR-0014 Shell File Language#Fourth-Round Decisions (2026-10-30)]]).
 
 ## Acceptance Criteria
