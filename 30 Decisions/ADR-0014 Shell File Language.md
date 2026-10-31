@@ -519,6 +519,11 @@ Raised by the maintainer's question on slot handling (2026-10-31):
 
 - [x] **Where a slot ends.** The idea that TDL cuts every `{{ }}` out of the file, passes the texts to TEL, and takes values back is mostly the design already: TDL parses the file once and gives TEL each slot's text and start (T17); TEL compiles once and re-evaluates on a name change; results go to the model, not back into the file, and the shell converts them. What is missing is a rule that lets TDL find the end of a slot without TEL's parser. Today TEL's template rule ends a part at the first `}}` after which the text reads as one expression (TEL project `docs/language.md`, section 8). Recommendation: a slot ends at the first `}}` that is not inside a quoted string (single or double quotes, with `\` escapes), and a `}}` meant for the expression is written `} }`, the same habit as closing nested blocks. TDL then gives TEL only the inner text and TEL's template scanner is not used for shell files. Cost: an expression with nested braces needs a space. See [[Expression Language Requirements#Requests to the TEL Project (T17 to T20)]]. Decided 2026-10-31 as recommended (D54).
 
+Raised by the answers of the `tess-el` session (2026-10-31, [[Expression Language Requirements#TEL's Answers (2026-10-31)]]):
+
+- [ ] **Dependency tracking for the name tree.** TEL reports only the top-level name (`RootShell`) until it builds full-path tracking (the TEL project's D13, which waits for the maintainer's go-ahead). Recommendation: the shell records each property read in its own object layer, so a slot depends on `Top_Bar.Width` and not on the whole tree; drop that when TEL has path tracking. The alternative is to re-evaluate every slot that reads `RootShell` on any change.
+- [ ] **Go-ahead in the TEL project** for path tracking (T20) and for the cost test of the question-mark conditional (T19). Both are the maintainer's decisions in the TEL project; the shell sends nothing more.
+
 ## Links
 
 - [[ADR-0007 Shell UI Layer]] · [[ADR-0008 Tesserae Expression Language]] · [[ADR-0011 JSON Schema for Shell Files]] · [[Expression Language Requirements]] · [[Python Builder]] · [[Shell File Syntax Comparison]] · [[Prior Art - Linux Shell Surfaces]] · [[30 Decisions]]
