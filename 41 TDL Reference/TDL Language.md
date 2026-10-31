@@ -65,7 +65,7 @@ Shell {
 }
 ```
 
-This is an illustration: the version values are made up, and the keys inside `Bar` follow the notes linked under "Where the Keys Are". The version fields are the maintainer's sketch; whether each is required is open.
+This is an illustration: the version values are made up, and the keys inside `Bar` follow the notes linked under "Where the Keys Are". The version fields are minimum versions (D37); which are required depends on what the file builds (see "The Metadata Block").
 
 ## The Metadata Block
 
@@ -73,9 +73,9 @@ This is an illustration: the version values are made up, and the keys inside `Ba
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|
 | Every file starts with a block between two lines that hold only `---`. The block is required.                                                                                                | ADR-0014 item 1    |
 | `TDL:` is the language version. Required. Versions are strings, never numbers.                                                                                                               | Items 1 and 3      |
-| `TEL:`, `TRE:`, `TUIF:` and `Shell:` say which versions of the other projects the file was written for (`TUIF` for a Tesserae app, `Shell` for a shell). Whether each is a minimum or an exact version, and which are required per file, is open. | Second sketch      |
+| `TEL:`, `TRE:`, `TUIF:` and `Shell:` are minimum versions of the other projects (`Shell:` is the Tesserae Shell release). A shell requires `TEL`, `TRE` and `Shell`; a Tesserae app requires `TEL`, `TRE` and `TUIF`. A shell adds `TUIF` to use something from an app, and an app adds `Shell` to use something from the shell (D37, D38). | Second sketch      |
 | There is no file-type key. The root block names the file type (see below).                                                                                                                   | D26                |
-| `Name:` is the unique name of the file's root (`Shell_Root`, a module's call name). It follows the name rules below.                                                                         | Second sketch, D28 |
+| `Name:` is required in every file (D39). It is the unique name of the file's root (`RootShell`, a module's call name) and the root of a dotted path, so the parser and TEL reach elements of the file by name: `RootShell.DP1.Top_Bar`. It follows the name rules below.                                                                         | Second sketch, D28 |
 | `UID:` is written here by the shell when the file is first registered; authors do not write it. It goes directly after the last version field.                                               | D10                |
 | Other keys are allowed. The shell keeps them and ignores them, so a user can add their own metadata and read it from `<Name>_Module.py`.                                                     | Item 14            |
 
@@ -185,7 +185,30 @@ A `Width` or `Height` is a number of pixels, a percentage, `AUTO` or `EXPAND`. `
 
 ## Errors
 
-Every error carries `file:line:column` from the shell's own TDL parser, which keeps a lossless tree (comments and layout survive the UID write). A TEL error inside a slot points into the file because the parser gives TEL the slot's start ([[Expression Language Requirements]], T17). The error list for TDL syntax is not written (see Open).
+Every error carries `file:line:column` from the shell's own TDL parser, which keeps a lossless tree (comments and layout survive the UID write). A TEL error inside a slot points into the file because the parser gives TEL the slot's start ([[Expression Language Requirements]], T17). The list below is the agent's proposal for the syntax errors; the maintainer has not decided it.
+
+Proposed form, copied from TEL's decided errors ([[Expression Language Requirements]]): one base error class with a stable `code` slug on every error, a message, a hint that says what to write, and a 1-based `file`, `line` and `column`. Value and schema checks (unknown key, wrong type, enum case) belong to the shell's schema ([[Validation and Errors]]), not to TDL.
+
+| Code                       | When                                                              | Hint                                           |
+|----------------------------|-------------------------------------------------------------------|------------------------------------------------|
+| `tdl-no-metadata`          | The file does not start with a `---` block                        | Start the file with `---`                      |
+| `tdl-metadata-unclosed`    | The metadata block has no closing `---`                           | Close the block with `---`                     |
+| `tdl-no-version`           | No `TDL:` in the metadata                                         | Add `TDL: <version>`                           |
+| `tdl-no-name`              | No `Name:` in the metadata                                        | Add `Name: <identifier>`                       |
+| `tdl-bad-name`             | A `Name:` with a character other than a letter, digit or `_`, or that starts with a digit | Use letters, digits and `_`            |
+| `tdl-no-root`              | No root block after the metadata                                  | Add one root block, for example `Shell { }`    |
+| `tdl-many-roots`           | More than one root block                                          | Keep one root block                            |
+| `tdl-root-suffix`          | The root block disagrees with the file suffix                     | Rename the file or change the root block       |
+| `tdl-unclosed-block`       | A `{` has no closing `}` before the end of the file               | Add the missing `}`                            |
+| `tdl-unexpected-close`     | A `}` with no open block                                          | Remove the extra `}`                           |
+| `tdl-double-close`         | `}}` where two blocks close                                       | Write `} }`                                    |
+| `tdl-unclosed-slot`        | A `{{` with no `}}` on the same line                              | Close the slot on the same line                |
+| `tdl-empty-slot`           | A `{{ }}` with nothing in it                                      | Put an expression in the slot                  |
+| `tdl-unclosed-string`      | A quote with no closing quote on the line                         | Close the string                               |
+| `tdl-bad-escape`           | A `\` followed by a character that is not an escape               | Use a valid escape or double the `\`           |
+| `tdl-duplicate-key`        | A property key twice in one block                                 | Remove one; the message names both places      |
+| `tdl-bare-hash`            | A value that starts with `#` outside quotes                       | Quote the colour: `"#ffffff"`                  |
+| `tdl-reserved-name`        | A block or module named `If`, `Else`, `For`, `In` or `Key`        | Choose another name                            |
 
 ## Editor Support
 
@@ -202,18 +225,17 @@ No language server in v1. A small TextMate grammar ships in v1 for highlighting 
 | [[Style Schema]]                          | Style properties                                   |
 | [[Settings File]]                         | `settings.tdl`                                     |
 
-These notes still show the layout of 2026-10-29 (a file-type key in the metadata block, lowercase enum values, `Span` and `Thickness` for a Bar). They are revised after the maintainer confirms the open items below.
+These notes still show the layout of 2026-10-29 (a file-type key in the metadata block, lowercase enum values, `Span` and `Thickness` for a Bar, a Bar `Margin`). They are revised in a third pass after the maintainer confirms the geometry questions in [[ADR-0014 Shell File Language#Third-Round Decisions (2026-10-30)]].
 
 ## Open
 
-- [ ] Whether `TEL:`, `TRE:`, `TUIF:` and `Shell:` are minimum or exact versions, and which are required for which file type.
-- [ ] Whether `Name:` is required in the metadata of every file, or only for a module.
-- [ ] The spelling `Import` against `import:`.
-- [ ] `Margin` (outside the block) against the Bar's edge offset, and `Padding` (inside the block).
-- [ ] The names and slugs of TDL syntax errors.
-- [ ] A form for tre's `calc(100% - 16)`, when a surface needs it (D6).
-- [ ] The full list of shipped modules and their registry names ([[V1 Widgets]]).
-- [ ] A resolved size of 0 on a layer surface (#needs-verification against the layer-shell protocol).
+Decided on 2026-10-30 and removed from this list: the version pins are minimums (D37), `Name:` is required in every file (D39), the spelling is `Import` (D40), `Margin`, `Gap`, `Offset` and `Padding` meanings (D41 to D45), and `calc` is out of v1 (D47).
+
+- [ ] The names and slugs of TDL syntax errors: the proposed list under "Errors" waits for the maintainer.
+- [ ] The full list of shipped modules and their registry names: after the building blocks are worked out (D48, [[V1 Widgets]]).
+- [ ] How a collapsed or hidden Bar keeps a layer surface, so that a size of 0 never arises at creation (D46; #needs-verification against the layer-shell protocol).
+- [ ] The `Gap` meaning shared by a Bar, a layout and a Panel or Popup, and the key for a layout's child spacing ([[ADR-0014 Shell File Language#Third-Round Decisions (2026-10-30)]]).
+- [ ] The order of the four sides in the Panel `Margin` example.
 
 ## Acceptance Criteria
 

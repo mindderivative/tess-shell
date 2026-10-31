@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-10-30 |
-| Last change         | [[ADR-0014 Shell File Language]]: second-sketch decisions D25 to D36 recorded; [[TDL Language]] rewritten as the TDL definition |
+| Last change         | [[ADR-0014 Shell File Language]]: third-round decisions D37 to D48 (version pins, Name path, Bar Gap, Panel Offset and Margin, Frame Margin); proposed TDL error list; T20 proposed |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | Say go for a third rewrite pass (root block as file type, upper-case enums, Bar `Width`/`Height`/`Edge`, version pins, name rules) and confirm the readings under [[ADR-0014 Shell File Language#Second-Sketch Decisions (2026-10-30)]]; carry T17 to T19 to the TEL project |
+| Waiting on you      | Three geometry questions in [[ADR-0014 Shell File Language#Third-Round Decisions (2026-10-30)]] (the `Gap` meaning and a rename for layout spacing, the Panel `Margin` side order, the two `Offset` shapes), the proposed TDL error list ([[TDL Language#Errors]]), then say go for the third rewrite pass; carry T17 to T20 to the TEL project |
 | Next                | Plasma coexistence, the D-Bus service layer, portals, global shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-30 | Third-round decisions D37 to D48 in [[ADR-0014 Shell File Language]]; proposed TDL error list in [[TDL Language]]; T20 proposed |
 | 2026-10-30 | Second-sketch decisions D25 to D36 (TDL its own project, root block as file type, upper-case enums, name rules); [[TDL Language]] rewritten |
 | 2026-10-30 | [[ADR-0014 Shell File Language]] open items decided (D1 to D24); `41 YAML Reference` renamed `41 TDL Reference`; decisions applied to the notes |
 | 2026-10-29 | Second TDL pass over the vault; [[TDL Language]] added; `?:` conditional proposed as T19 |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-29 | TDL rewrite pass, levels 0 to 2: AGENTS, Home, Vision, Architecture, Decisions, 41 reference, 42 Python API, 40 Specifications |
 | 2026-10-29 | [[ADR-0014 Shell File Language]] grammar answers recorded: `.tdl`, `50%`, `rgba(0 0 0 0)`, repeated names, TextMate grammar |
 | 2026-10-29 | [[ADR-0014 Shell File Language]] accepted (TDL replaces YAML); [[Shell File Syntax Comparison]] written |
-| 2026-10-29 | Proposed key names accepted across the specs; namespace `tesserae-shell.<kind>.<name>` decided |
 
 ## Go to
 
