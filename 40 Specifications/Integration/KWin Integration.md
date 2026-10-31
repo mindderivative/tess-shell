@@ -125,17 +125,19 @@ KWin is the Wayland compositor. If it exits, tre's connection drops, its windows
 
 ## Configuration
 
-`settings.tdl` (the file-type key is `Settings: v1` and the keys are nested blocks, D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; `KWin.Script` is only a prose shorthand for the path; the settings list is deferred, [[Settings File]]):
+`settings.tdl` (the file type is named by the root block `Settings { }` and the keys are nested blocks, D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; `KWin.Script` is only a prose shorthand for the path; the settings list is deferred, [[Settings File]]). The mode values are enums, so they are upper case ([[TDL Language#Values]]):
 
 | Key | Meaning | Default |
 |---|---|---|
-| `KWin.Script` | `runtime` (mode R), `persistent` (mode P, installed by the command) or `off` | `runtime` |
+| `KWin.Script` | `RUNTIME` (mode R), `PERSISTENT` (mode P, installed by the command) or `OFF` | `RUNTIME` |
 | `KWin.Hide_On_Fullscreen` | Hide the shell's surfaces on an output with an active fullscreen window | `true` |
 
 ```
-KWin {
-    Script: runtime
-    Hide_On_Fullscreen: true
+Settings {
+    KWin {
+        Script: RUNTIME
+        Hide_On_Fullscreen: true
+    }
 }
 ```
 

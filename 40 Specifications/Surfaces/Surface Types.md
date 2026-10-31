@@ -33,6 +33,8 @@ The surface type is the block head in a shell file (`Bar`, `Frame`, `Panel`, `Po
 
 Attached to an edge. It can span the whole edge, which makes it touch three edges (its own edge and the two edges across it). It reserves space so maximised windows stop short of it. It can be a dock, a top bar, a side bar or anything else anchored to an edge.
 
+Its placement keys are `Edge`, `Width`, `Height` (a size, `AUTO` or `EXPAND`), the bounds `Max_Width`, `Max_Height`, `Min_Width` and `Min_Height`, `Alignment`, `Offset` (one number along the Edge) and `Gap` (one number, the space between the Edge and the Bar). It has no `Margin`. The reserved zone includes the `Gap`. See [[Bar]] and [[Shell File#Surface Keys]].
+
 Highly customisable: width, height, position, animation, hidden state, background, text, borders, rounded corners, shadows with elevation and colour, transparency and so on.
 
 ### Frame
@@ -40,17 +42,20 @@ Highly customisable: width, height, position, animation, hidden state, backgroun
 Attached to all four edges and corners as a frame around the screen. It reserves space.
 
 - Thickness is uniform or differs by side.
+- `Margin` is transparent space between the Frame's outer sides and the display edge; it adds to the Frame's size (Thickness 10 with `Margin: [5, 5, 5, 5]` is 15 per side, 17 with a 2 px border, and the reserved zone is that total). A Frame has no `Gap`. Its `Padding` applies only to a side used as a strip.
 - Corners are rounded, convex and concave.
 - Borders, with background and border colours.
 - It can be visually melded into other surfaces, so they look as if they grow out of the frame, with rounded connections and borders.
 - Shadows with elevation and colour (this applies to every surface type).
-- A Frame can be only the ring, can have Bars and Panels melded into it, or can have one or more thicker edges that act as a bar, a strip along that side; all four edges can have a strip, or none (maintainer, 2026-10-27). See [[Frame]]. The Frame stays on `top`; melded Bars and Panels are drawn inside the Frame's own surface (hosted melding, decided 2026-10-27), so no separate layer is needed for melds and Overlay stays free.
+- A Frame can be only the ring, can have Bars and Panels melded into it, or can have one or more thicker edges that act as a bar, a strip along that side; all four edges can have a strip, or none (maintainer, 2026-10-27). See [[Frame]]. The Frame stays on `TOP`; melded Bars and Panels are drawn inside the Frame's own surface (hosted melding, decided 2026-10-27), so no separate layer is needed for melds and Overlay stays free.
 
 ### Panel
 
 The full spec is [[Panel]].
 
 The multi-purpose window. It attaches to the frame, a bar, another surface type, or floats. It can be moved with the mouse, anchored, hidden and so on. Ideally it works almost anywhere, and it may be the baseline the other surface types build on. As with the Bar, it is highly customisable.
+
+A Panel is positioned by `Offset` (left, top, right, bottom) from its anchored edges, or attached to a non-Frame target with `Attach_To`, `Attach`, `Align` and `Gap`. `Margin` is transparent space around it and `Padding` is inside. Attached to a Frame, a `Margin` on the Frame-facing sides separates the two and stops the meld; with no margin they meld ([[Panel#Attachment Geometry (Decided 2026-10-27)]]).
 
 A Panel is not a child of the surface it attaches to. It may render on top of a bar or the frame, but each is its own surface and its own entry in the shell file; the attachment is a reference, not a parent/child relationship.
 
@@ -60,24 +65,24 @@ Anchored to anything, and rendered like an overlay. It is not a child in the she
 
 ## Layers per Kind
 
-From the flow diagram ([[Shell Structure]], 2026-10-26). `Layer:` takes the four layer-shell values.
+From the flow diagram ([[Shell Structure]], 2026-10-26). `Layer:` takes the four layer-shell values, written in upper case: `BACKGROUND`, `BOTTOM`, `TOP`, `OVERLAY`.
 
 | Type  | Layers it may use                                                                      | May reserve space    |
 |-------|----------------------------------------------------------------------------------------|----------------------|
-| Bar   | `bottom`, `top`, `overlay`                                                             | Only on `top`        |
-| Panel | `bottom`, `top`, `overlay`                                                             | Only on `top`        |
-| Frame | `top` only                                                                             | Yes (it is on `top`) |
-| Popup | `overlay` (it hangs off a layer surface and the compositor stacks it above its parent) | No                   |
+| Bar   | `BOTTOM`, `TOP`, `OVERLAY`                                                             | Only on `TOP`        |
+| Panel | `BOTTOM`, `TOP`, `OVERLAY`                                                             | Only on `TOP`        |
+| Frame | `TOP` only                                                                             | Yes (it is on `top`) |
+| Popup | `OVERLAY` (it hangs off a layer surface and the compositor stacks it above its parent) | No                   |
 
-`background` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no surface type uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is in a Special Cases group: a module calls it, and it holds modules and containers ([[Shell Structure]]).
+`BACKGROUND` (Layer 0) is for wallpapers only, for now (maintainer, 2026-10-26); no surface type uses it, and the shell does not draw wallpapers in v1 ([[V1 Scope]]). The maintainer can see it used later for window tiling or as a base layer for a desktop dashboard. In the flow diagram the Popup is in a Special Cases group: a module calls it, and it holds modules and containers ([[Shell Structure]]).
 
-Reserved space is enforced to the `top` layer (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). An `Exclusive_Zone` on a surface not on `top` is a load error (decided, maintainer, 2026-10-26).
+Reserved space is enforced to the `TOP` layer (maintainer, 2026-10-26). The layer-shell protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion and because Top-layer reservation is the case known to work on KWin ([[Shell Structure#What does not match, or needs a decision]]). An `Exclusive_Zone` on a surface not on `TOP` is a load error (decided, maintainer, 2026-10-26).
 
 ## Fullscreen and Maximised Windows (Decided 2026-10-27)
 
 - A fullscreen window covers every shell element: Bars, Frame, Panels and Popups, whatever their layer. A maximised window does not: it stops at the reserved space of the Bar and the Frame, and the shell draws above it as usual.
 - **KWin's stacking layers (read from the source, 2026-10-27, not tested live).** KWin orders its layers: Desktop, Below, Normal, Above, Notification, Active (an active fullscreen window or dialog), Popup, CriticalNotification, OnScreenDisplay, Overlay ([KWin `effect/globals.h`](https://invent.kde.org/plasma/kwin/-/raw/master/src/effect/globals.h)). A layer-shell surface maps Background to Desktop, Bottom to Below, Top to Above and Overlay to Overlay ([`layershellv1window.cpp`](https://invent.kde.org/plasma/kwin/-/raw/master/src/layershellv1window.cpp)). A Plasma panel is a dock window, and a dock window belongs to the Above layer too, as does any keep-above window ([`window.cpp`](https://invent.kde.org/plasma/kwin/-/raw/master/src/window.cpp), `belongsToLayer`).
-- **What that means.** A `top` surface and a Plasma panel share KWin's Above layer, so their order is not fixed by the layer; an `overlay` surface is above everything. An active fullscreen window is in the Active layer: above Above (so it covers `top` surfaces and Plasma panels) and below Overlay (so an `overlay` surface can still show over it). #needs-verification on KWin 6.8.1 with a test.
+- **What that means.** A `TOP` surface and a Plasma panel share KWin's Above layer, so their order is not fixed by the layer; an `OVERLAY` surface is above everything. An active fullscreen window is in the Active layer: above Above (so it covers `TOP` surfaces and Plasma panels) and below Overlay (so an `OVERLAY` surface can still show over it). #needs-verification on KWin 6.8.1 with a test.
 - Required behaviour: while a fullscreen window is active on a monitor, the shell hides or lowers its surfaces on that monitor, and restores them when the window leaves fullscreen. The reserved space is released and restored with them. Whether a surface can opt out (an OSD that should show over a game) is open.
 - Plasma panels: a Bar wins over a Plasma panel on the same edge unless the Plasma panel is set to always on top, or a fullscreen window is active, which beats all shell rendering (maintainer, 2026-10-27). The two share KWin's Above layer, so the shell cannot rely on layer order alone. The maintainer named five ways to keep the shell's windows above Plasma panels (2026-10-27: KWin window rules, layers above Normal, a persistent KWin script, PyGObject with KWindowSystem, and writing `kwinrulesrc`). [[ADR-0012 Keeping the Shell Above Plasma Panels]] compares them; the maintainer accepted its recommendation (2026-10-27): no reliance on stacking for v1, a KWin script for fullscreen detection, and an opt-in KWin rule for users who want the Bar to win. #needs-verification
 
@@ -94,15 +99,15 @@ The flow diagram ([[Shell Structure]]) groups the Popup under **Special Cases** 
 
 ## Overlay
 
-The maintainer asked how an overlay is added in a shell file and how modules are assigned to it (2026-10-26). In the layer-shell protocol, `overlay` is one of four stacking layers (`background`, `bottom`, `top`, `overlay`), and any layer surface sits on one of them. Today the four surface types each take a `Layer:`, so an overlay is a surface on the overlay layer, not a fifth type.
+The maintainer asked how an overlay is added in a shell file and how modules are assigned to it (2026-10-26). In the layer-shell protocol, `overlay` is one of four stacking layers (`BACKGROUND`, `BOTTOM`, `TOP`, `OVERLAY` in TDL), and any layer surface sits on one of them. Today the four surface types each take a `Layer:`, so an overlay is a surface on the overlay layer, not a fifth type.
 
 **Option A, an overlay is a Panel (or other surface type) on the overlay layer (recommended).** Nothing new is needed; the launcher is already specified this way ([[V1 Scope#Surfaces]]):
 
 ```
 Panel {
-    Name: launcher
-    Layer: overlay
-    Keyboard: exclusive
+    Name: Launcher
+    Layer: OVERLAY
+    Keyboard: EXCLUSIVE
     Children {
         Import: Applications_Module.tdl
     }
@@ -115,7 +120,7 @@ Option B, add an `Overlay` surface type. A surface type that is the size of the 
 
 ```
 Overlay {
-    Name: screen_overlay
+    Name: Screen_Overlay
     Children {
         Import: Applications_Module.tdl
     }
@@ -125,7 +130,7 @@ Overlay {
 - For: one name for the "special" container the maintainer has in mind; it can host a launcher, OSD or dismissal layer without the author sizing a panel.
 - Against: an output-sized surface costs more video memory (tre measured 177 MiB for a 4K overlay against 18 MiB for a bar, before later changes; [[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]), and tre's own advice is to build menus with `PopupWindow`, not an overlay. It duplicates what a full-screen panel can do.
 
-Decided (maintainer, 2026-10-26): Option A, `Layer: overlay`. The `Layer:` key works like layers in a graphics editor: the highest layer shows first, which is familiar. The maintainer's picture: the Overlay is the shell-wide layer that puts something on top of everything else, and a Panel added to it makes an overlay popup panel. In the files that is a Panel with `Layer: overlay`; the overlay is a `Layer:` value, not a fifth surface type, and surfaces still do not nest. Not to be confused with the **Popup** type, which is a menu or flyout anchored to a surface and placed by the compositor; an overlay panel is an ordinary panel that sits above the rest. If the maintainer meant a container that holds panels inside it, tell me: that would contradict "surfaces do not nest" ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]).
+Decided (maintainer, 2026-10-26): Option A, `Layer: OVERLAY`. The `Layer:` key works like layers in a graphics editor: the highest layer shows first, which is familiar. The maintainer's picture: the Overlay is the shell-wide layer that puts something on top of everything else, and a Panel added to it makes an overlay popup panel. In the files that is a Panel with `Layer: OVERLAY`; the overlay is a `Layer:` value, not a fifth surface type, and surfaces still do not nest (a module's root layout may be a surface, such as a module that holds a `Bar`, but a surface never sits inside another surface; [[TDL Language#A File]]). Not to be confused with the **Popup** type, which is a menu or flyout anchored to a surface and placed by the compositor; an overlay panel is an ordinary panel that sits above the rest. If the maintainer meant a container that holds panels inside it, tell me: that would contradict "surfaces do not nest" ([[ADR-0007 Shell UI Layer#Keys that say what a thing is (2026-10-26)]]).
 
 ## Behaviour
 
@@ -146,7 +151,7 @@ stateDiagram-v2
 
 ## Configuration
 
-Every type shares the style keys (size, position, background, text, border, corner radii, shadow, transparency, animation, hidden). The type adds its own: edge and span for a Bar, side thicknesses and corner shapes for a Frame, the attachment target and mobility for a Panel, the anchor rectangle and gravity for a Popup. The keys are collected in [[Shell File#Surface keys]] (decided keys, and proposed names that mirror tre's). #needs-verification
+Every type shares the style keys (size, position, background, text, border, corner radii, shadow, transparency, animation, hidden). The type adds its own: `Edge`, size, `Alignment`, `Offset` and `Gap` for a Bar, side thicknesses and corner shapes for a Frame, the attachment target and mobility for a Panel, the anchor rectangle and gravity for a Popup. The keys are collected in [[Shell File#Surface keys]] (decided keys, and proposed names that mirror tre's). #needs-verification
 
 ## Integration
 
@@ -188,7 +193,7 @@ Per-surface video memory from tre 0.5.8: a 1280 x 32 bar about 18 MiB, a small w
 ## Open Questions
 
 - [x] Which surface types are in v1: Bar, Frame, Panel and Popup (decided 2026-10-25; Frame is in v1).
-- [x] Which uses are Panels: OSD and desktop widgets are Panels; the launcher is a Panel on the `overlay` layer with exclusive keyboard (decided 2026-10-25).
+- [x] Which uses are Panels: OSD and desktop widgets are Panels; the launcher is a Panel on the `OVERLAY` layer with exclusive keyboard (decided 2026-10-25).
 - [x] A Popup is exclusive to the monitor it is called on. It opens only on the monitor of the surface that called it, and is never anchored to a surface on another monitor (decided 2026-10-25).
 - [x] **How a Panel's attachment to another surface is written.** A Panel is attached by **referencing the name of the surface** (decided 2026-10-25). It is a reference, not nesting. Left for the Panel spec and the TDL reference (folder `41 TDL Reference`): which side or corner and what gap; what the Panel does when the target hides, moves or animates; A name that is referenced from another file resolves **through the registry** (decided 2026-10-25): the registry tracks names, so it knows which surface a Panel means and knows when that name no longer exists. A reference that never resolves is an error at load; a target that disappears while the shell runs is a warning, and the Panel stays hidden until it returns ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]). The one-frame skew between separate surfaces still applies ([[TRE-REQ-001 Layer Surface Window#Animation]]).
 - [x] **Concave corners and join drawing: hit testing.** Settled: tre 0.5.9 (released 2026-10-27) ships `hit_shape="painted"` on path nodes and a region builder that keeps holes and concave notches, so the Frame uses `input_region="auto"` and no explicit-rectangle workaround. Findings and history: [[Hit Testing for Concave Corners]].

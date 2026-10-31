@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [spec/runtime, integration/dbus, needs-verification]
 related: ["[[Runtime]]", "[[ADR-0013 Control Interface]]", "[[Shell Start and Stop]]", "[[Validation and Errors]]", "[[Hot Reload]]", "[[ADR-0009 D-Bus Client Library]]", "[[ADR-0012 Keeping the Shell Above Plasma Panels]]", "[[ADR-0005 Global Shortcuts]]", "[[ADR-0011 JSON Schema for Shell Files]]"]
 depends_on: ["[[ADR-0013 Control Interface]]"]
@@ -59,7 +59,7 @@ Proposed methods. Names are `CamelCase` as D-Bus convention; every method that c
 Properties: `State` (`starting`, `running`, `stopping`), `Version`, `ApiVersion`. Signals: `Reloaded(b ok, s summary)`, `ErrorReported(s rule, s file, i line, s message)`, `SurfaceChanged(s name, s state)`.
 
 - **No method opens a Popup.** A focused Popup needs a user action for its grab, which a bus call is not; a menu or launcher opened from a command is a Panel ([[Popup#Focus and dismissal (decided)]], decided 2026-10-28). `ClosePopup` is allowed.
-- **Names are unique names.** `Show`, `Hide` and `Toggle` take the unique `name:` of a surface and look it up in the registry; an unknown name is an error with the nearest names ([[Validation and Errors#The error record]]).
+- **Names are unique names.** `Show`, `Hide` and `Toggle` take the unique `Name:` of a surface and look it up in the registry; an unknown name is an error with the nearest names ([[Validation and Errors#The error record]]).
 - **Idempotent state changes.** `Show` on a shown surface succeeds and does nothing.
 - `FullscreenState` takes its list as one string holding a JSON array (for example `["DP-1"]`), because a KWin script cannot send a D-Bus `as`: a test on 2026-10-29 showed `callDBus` sends a JavaScript array as `av`, and a method declared `as` was never called ([[KWin Integration#What a script inside KWin showed (test of 2026-10-29)]]). It is a full state, not an event. The script sends the complete list each time; the shell diffs it. A lost message is corrected by the next one. Decided 2026-10-28.
 - The method list is the minimum for v1; more are added as modules need them.
@@ -149,7 +149,7 @@ Plain text and exit codes are readable by a screen reader and a script. `--json`
 
 | Failure                            | Result                                                                                                                               |
 |------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| No session bus                     | The client exits with code 2 naming `DBUS_SESSION_BUS_ADDRESS`; the shell cannot own a name and exits with code 2 if `control` is on |
+| No session bus                     | The client exits with code 2 naming `DBUS_SESSION_BUS_ADDRESS`; the shell cannot own a name and exits with code 2 if `Control` is on |
 | The name has no owner              | The client exits with code 3: "no shell is running"                                                                                  |
 | A call times out                   | The client exits with code 5; the shell's loop is probably busy or stuck                                                             |
 | An unknown surface name            | Error with the nearest names; exit code 1                                                                                            |

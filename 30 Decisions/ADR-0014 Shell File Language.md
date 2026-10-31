@@ -495,6 +495,16 @@ Raised by the second layout sketch (2026-10-30). Each is a question for the main
 - [x] **Import spelling.** Both `import:` and `Import:` appear. Recommendation: only `Import`. Decided 2026-10-30, see Third-Round Decisions.
 - [x] **Margin and Padding meanings.** `Padding` inside, `Margin` outside the block, as in the comments. The Bar spec's `Margin` is the offset from the anchored edge. Recommendation: one meaning (outside space) and a separate key for the edge offset (`Offset`). Decided 2026-10-30, see Third-Round Decisions.
 
+Raised by the third rewrite pass (2026-10-30). The notes keep the shown default:
+
+- [ ] **Alignment, Offset and Gap to tre.** How the shell computes tre's `anchor`, `size` and margins from `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` (the same kind of computation as the Panel attachment geometry), and how a collapsed Bar keeps a layer surface so that a size of 0 never arises at creation ([[Bar]]; #needs-verification).
+- [ ] **Alignment values.** `START`, `CENTER`, `END` are used in the examples; the maintainer has not listed the values or the default.
+- [ ] **The `Meld` key on a Panel.** A margin on the Frame-facing sides now decides whether a Panel melds with a Frame, so the `Meld` key may be redundant ([[Panel]]).
+- [ ] **Registry state order.** The registry stores a moved Panel's `margin` in tre's order (top, right, bottom, left), because it comes from tre's `moved` event. Recommendation: leave the JSON in tre's order and name the order in the registry note ([[Config Discovery and Registry]]).
+- [ ] **Setting keys and values.** The enum values of settings keys (`Logging.Format`: `TEXT`, `JSON`; `KWin.Script`: `RUNTIME`, `PERSISTENT`, `OFF`; log levels) follow the upper-case rule but are not listed in [[Settings File]].
+- [ ] **Where `Padding` applies.** The notes say every element with `Children` (Bar, Panel, Frame strips, Popup); the block-level list waits for the building blocks ([[Building Blocks]]).
+- [ ] **Version-folder id.** The schema `$id` folder used to come from `Shell: v1`; how `TDL:` and `Shell:` map to it is open ([[JSON Schema and Editor Support]]).
+
 ## Links
 
 - [[ADR-0007 Shell UI Layer]] · [[ADR-0008 Tesserae Expression Language]] · [[ADR-0011 JSON Schema for Shell Files]] · [[Expression Language Requirements]] · [[Python Builder]] · [[Shell File Syntax Comparison]] · [[Prior Art - Linux Shell Surfaces]] · [[30 Decisions]]

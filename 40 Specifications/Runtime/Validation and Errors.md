@@ -40,15 +40,15 @@ flowchart LR
 |----------------|------------------------------------------------------------------------------------------|------------------------------------------------------------------|-----------------------------------------------------------------------|
 | 1. Read        | The file opens and is UTF-8 (a byte-order mark is allowed and dropped)                   | Standard library                                                 | The file, line 1                                                      |
 | 2. Parse       | TDL syntax; the tree is an ordered list of entries (head, properties, children) that keeps repeated names (D12); it holds only blocks, properties, lists and literal values; `{{ }}` slots are kept as text for stage 6 | The shell's TDL parser ([[ADR-0014 Shell File Language]])        | The parser's own positions                                            |
-| 3. Header      | The loader reads the metadata block first, because the file-type key picks the schema (D12). The metadata block is present; `TDL:` is present with a known version; exactly one file-type key (`Shell:`, `Module:`, `Style:`, `Stylesheet:`, `Theme:`) with a known version; the key agrees with the suffix; `UID:` well formed | The shell                                                        | The key's node                                                        |
-| 4. Schema      | The schema picked at stage 3 validates the metadata part and the block part (D12). Types, enums, required keys, unknown keys (the metadata block's other keys are kept and ignored), value forms (colour, four-sided, size) | `jsonschema`, draft-07 ([[ADR-0011 JSON Schema for Shell Files]]) | The tree node at the error's path                                       |
+| 3. Header      | The loader reads the metadata block first, then the root block, which picks the schema (D12). The metadata block is present; `TDL:` is present with a known version; `Name:` is present and follows the name rules (letters, digits and `_`, starting with a letter); the minimum version pins (`TEL:`, `TRE:`, `Shell:`) are met; exactly one root block (`Shell`, `Module`, `Style`, `Stylesheet`, `Theme`); the root block agrees with the suffix; `UID:` well formed | The shell                                                        | The key's or the root block's node                                    |
+| 4. Schema      | The schema picked at stage 3 validates the metadata part and the block part (D12). Types, enums (upper case: `Edge: top` is refused with a hint to write `TOP`), required keys, unknown keys (the metadata block's other keys are kept and ignored), value forms (colour, four-sided in the order left, top, right, bottom, size) | `jsonschema`, draft-07 ([[ADR-0011 JSON Schema for Shell Files]]) | The tree node at the error's path                                       |
 | 5. Semantic    | Rules a schema cannot say (below)                                                        | The shell                                                        | The node at the offending key or value                                |
 | 6. Expressions | TEL compiles; every name it reads is known                                               | TEL                                                              | The slot's `Origin` (file, line, column) from the parser              |
 | 7. Modules     | The `.py` imports; it holds one `Module` class; `validate_use` accepts each use          | Python                                                           | The traceback line for the `.py`; the use's node for a rejected param |
 | 8. Run time    | An expression that fails to evaluate; a module callback that raises; a tre error         | The shell                                                        | The node or module that ran                                           |
 
 - Unknown keys are errors, not warnings, to catch typos (decided 2026-10-28). The exception is the metadata block, where other keys are allowed and the shell ignores them ([[TDL Language#The Metadata Block]]).
-- **Stage 3 errors** name the file and say which rule failed: no metadata block, no `TDL:`, not exactly one file-type key, or the key and the suffix disagree (the error names both; the key is authoritative, [[ADR-0014 Shell File Language#Layout Rules]]).
+- **Stage 3 errors** name the file and say which rule failed: no metadata block, no `TDL:`, no `Name:`, a bad `Name:`, no root block or more than one, or the root block and the suffix disagree (the error names both; the root block is authoritative, [[TDL Language#The Root Block]]). The proposed codes and hints (`tdl-no-metadata`, `tdl-no-version`, `tdl-no-name`, `tdl-bad-name`, `tdl-no-root`, `tdl-many-roots`, `tdl-root-suffix` and the others) are in [[TDL Language#Errors]]; this note does not copy them.
 - **A file that fails stage 2 or 3 is not checked further,** because later stages need its data; other files continue. Stage 5 runs only when every file has passed stage 4, because it compares across files (decided 2026-10-28).
 - **Stages 1 to 7 run before anything is shown** at start, and before anything is applied on a reload ([[Hot Reload]]). Stage 8 happens while running.
 
@@ -73,7 +73,8 @@ Rules a schema cannot say, with the note that owns each:
 | No import cycle; every imported file exists                                                                                | [[Config Discovery and Registry#Discovery]]                                                                                   |
 | A block head names a registered block, surface type or module; a module's params have the declared types; `validate_use` accepts them | [[Module File]], [[Module Contract]]                                          |
 | A token `$group.name` exists in the active theme                                                                           | [[Style Schema#Theme tokens]]                                                                                   |
-| `Exclusive_Zone` only on `Layer: top`; a Bar has no margin that breaks its zone; thickness forms are valid                 | [[Surface Types#Layers per kind]], [[Bar]], [[Frame]] |
+| `Exclusive_Zone` only on `Layer: TOP`; a Bar resolves to a size above 0 on the axis it is attached along (a Bar that resolves to 0, for example a top Bar with `Height: EXPAND` and no `Max_Height` or `Min_Height`, is not created: a warning names the Bar and says to set `Min_Height`; the check is at creation and never stops hide, peek, expand or contract of a Bar or Frame strip); a Frame or Panel `Margin` agrees with the meld rule (a Panel attached to a Frame with a `Margin` on the sides facing the Frame does not meld, with none it melds; a Frame's `Margin` adds to its total size) | [[Surface Types#Layers per kind]], [[Bar]], [[Frame]], [[Panel]] |
+| Names follow the rules (letters, digits and `_`, starting with a letter); enum values are upper case; the root block agrees with the suffix | [[TDL Language#Names and the Registry]], [[TDL Language#The Root Block]] |
 | `Attach_To` and `Anchor_To` resolve; a Panel's target is a surface, a module or a Panel                                    | [[Panel]], [[Popup]]                                          |
 | `Auto_Hide` and `Reveal_Key` are consistent                                                                                | [[Bar#Auto-hide (decided 2026-10-27)]]                                                                                   |
 | The Python for a module exists, next to its TDL                                                                           | [[Module File]]                                                                                   |
@@ -182,18 +183,21 @@ All seven were answered on 2026-10-28, as recommended.
 Raised by the move to TDL ([[ADR-0014 Shell File Language]]), not yet asked:
 
 > [!question] Open for the maintainer
-> - [ ] The TDL error list (rule slugs for syntax errors such as an unclosed brace or a `}}` written for two closing braces) is part of the TDL reference, once written.
+> - [ ] The TDL error list (rule slugs for syntax errors such as an unclosed brace or a `}}` written for two closing braces) is a proposal in [[TDL Language#Errors]]; the maintainer has not decided it.
 
 Answered on 2026-10-30 ("Do all as you would recommend", [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]):
 
 - [x] A property key repeated inside one block is an error naming both places (D9).
 - [x] Boolean and null literals, and how unquoted words become numbers, for stage 4 types: the key's declared type decides (D2).
-- [x] Stage 3 reads the metadata block first, then `TDL:`, then the file-type key, which picks the schema (D12). The error text for each rule is part of the TDL error list above.
+- [x] Stage 3 reads the metadata block first, then `TDL:`, then the root block, which picks the schema (D12, with the file-type key replaced by the root block). The error text for each rule is part of the TDL error list in [[TDL Language#Errors]].
 
 ## Acceptance Criteria
 
 - [ ] A file with a TDL syntax error is reported with `file:line:column`, and no later stage runs for it.
-- [ ] A file with no metadata block, no `TDL:`, or not exactly one file-type key is refused at stage 3 with an error naming the file; a file-type key that disagrees with the suffix is an error naming both.
+- [ ] A file with no metadata block, no `TDL:`, no `Name:`, or not exactly one root block is refused at stage 3 with an error naming the file; a root block that disagrees with the suffix is an error naming both.
+- [ ] A `Name:` with a `-` or a leading digit is refused with an error that says which characters are allowed.
+- [ ] `Edge: top` is refused with an error that says enum values are upper case.
+- [ ] A Bar that resolves to size 0 on its attached axis is not created and the warning names the Bar and says to set `Min_Height`; hiding and revealing a Bar is not stopped by this check.
 - [ ] Two blocks with the same name in one `Children { }` load, in positional order (the YAML-era rule that rejected duplicate keys no longer applies).
 - [ ] An unknown style key reports its line and column and offers the nearest key.
 - [ ] A wrong-typed value reports the types allowed and what to write.

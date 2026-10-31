@@ -225,7 +225,7 @@ No language server in v1. A small TextMate grammar ships in v1 for highlighting 
 | [[Style Schema]]                          | Style properties                                   |
 | [[Settings File]]                         | `settings.tdl`                                     |
 
-These notes still show the layout of 2026-10-29 (a file-type key in the metadata block, lowercase enum values, `Span` and `Thickness` for a Bar, a Bar `Margin`). They are revised in a third pass after the maintainer confirms the geometry questions in [[ADR-0014 Shell File Language#Third-Round Decisions (2026-10-30)]].
+These notes were revised on 2026-10-30 to the decisions of [[ADR-0014 Shell File Language#Third-Round Decisions (2026-10-30)]] and [[ADR-0014 Shell File Language#Fourth-Round Decisions (2026-10-30)]]: the root block names the file type, enum values are upper case, four-sided values run left, top, right, bottom, and the Bar uses `Edge`, `Width`, `Height`, `Gap` and `Offset`.
 
 ## Open
 

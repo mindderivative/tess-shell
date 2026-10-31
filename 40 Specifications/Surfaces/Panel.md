@@ -41,22 +41,22 @@ stateDiagram-v2
 ```
 
 - Show, hide and toggle are shell actions a module or an event can call; a Panel can also hide itself after a time (an OSD).
-- Moving is done by the engine: the surface follows the pointer by changing its margins, with no Python in the loop. On release the Panel's `moved` event gives the final margins, which the shell saves ([[TRE-REQ-001 Layer Surface Window#Margin drag]]).
+- Moving is done by the engine: the surface follows the pointer by changing its tre `margin`, with no Python in the loop. On release the Panel's `moved` event gives the final margins, which the shell turns into an `Offset` and saves ([[TRE-REQ-001 Layer Surface Window#Margin drag]]).
 - A closed Panel is dead; the shell creates a new window when the monitor returns ([[Data Flow#Monitor hot-plug]]).
 
 ### Position and Attachment
 
 | Mode                          | How it is written (proposed)                                    | How it is built on tre                                                    |
 |-------------------------------|-----------------------------------------------------------------|---------------------------------------------------------------------------|
-| Anchored to an edge or corner | `Anchor: [top, right]` with `Margin`                            | `anchor` and `margin` settings                                            |
-| Floating                      | no `Anchor`                                                     | The compositor centres it; a `Margin` offset places it                    |
+| Anchored to an edge or corner | `Anchor: [TOP, RIGHT]` with `Offset`                            | `anchor` and `margin` settings (the shell reorders `Offset` to tre's order) |
+| Floating                      | no `Anchor`                                                     | The compositor centres it; an `Offset` places it                    |
 | Movable                       | `Movable: true`                                                 | A node with `window_region="drag_margin"`; the engine changes the margins |
-| Attached to a target          | `Attach_To: top_bar`, `Attach: left`, `Gap: 10`, `Align: start` | The shell computes margins from the target's geometry (below)             |
+| Attached to a target          | `Attach_To: Top_Bar`, `Attach: LEFT`, `Gap: 10`, `Align: START` | The shell computes margins from the target's geometry (below)             |
 
 - **Attaching is by naming the surface** (decided, [[ADR-0007 Shell UI Layer#Open items]]). It is a reference, not nesting. The registry resolves the name; an unresolved name is an error at load, and a target that disappears while running is a warning and the Panel stays hidden until it returns.
 - layer-shell has no way to place one surface relative to another, so the shell computes the margins itself and recomputes them when the target moves or animates. Two separate surfaces animating together can differ by up to a frame on screen ([[TRE-REQ-001 Layer Surface Window#Animation]]).
 - Dragging clamps the Panel to its output. It does not cross to another monitor (no cross-monitor dragging for now; a later item), and other surfaces' reserved zones do not limit it.
-- **Only a floating Panel has a persistent position** (decided 2026-10-27). An attached or anchored Panel is placed by its target or its anchor, so nothing is saved for it. The floating Panel's position is saved in the registry, which already holds a unique identity for it (proposed key: the final margins from the `moved` event).
+- **Only a floating Panel has a persistent position** (decided 2026-10-27). An attached or anchored Panel is placed by its target or its anchor, so nothing is saved for it. The floating Panel's position is saved in the registry, which already holds a unique identity for it (proposed key: the final margins from the `moved` event, kept as an `Offset`).
 
 ### Attachment Geometry (Decided 2026-10-27)
 
@@ -64,22 +64,30 @@ stateDiagram-v2
 
 | Key      | Values                           | Meaning                                      |
 |----------|----------------------------------|----------------------------------------------|
-| `Attach` | `left`, `right`, `top`, `bottom` | Which edge of the target the Panel meets     |
+| `Attach` | `LEFT`, `RIGHT`, `TOP`, `BOTTOM` | Which edge of the target the Panel meets     |
 | `Gap`    | An integer, in pixels            | The space between the Panel and the target   |
-| `Align`  | `start`, `center`, `end`         | How the Panel lines up along the shared edge |
+| `Align`  | `START`, `CENTER`, `END`         | How the Panel lines up along the shared edge |
 
-- `Attach: left` puts the Panel's right edge against the target's left edge. `Attach: right` puts the Panel's left edge against the target's right edge. `Attach: top` puts the Panel's bottom edge against the target's top edge. `Attach: bottom` puts the Panel's top edge against the target's bottom edge.
+- `Attach: LEFT` puts the Panel's right edge against the target's left edge. `Attach: RIGHT` puts the Panel's left edge against the target's right edge. `Attach: TOP` puts the Panel's bottom edge against the target's top edge. `Attach: BOTTOM` puts the Panel's top edge against the target's bottom edge.
 - `Gap` is the true visible gap, borders included: the distance between the Panel's outer border edge and the target's outer edge. A Panel with a 2 px border and a target with none, with `Gap: 10`, has exactly 10 px between them. The shell subtracts the border from the offset it computes, and ignores a shadow margin, which is transparent ([[ADR-0010 Surface Shadows]]).
-- `Align` runs along the edge: for `Attach: left` or `right`, `start` lines up the top edges, `center` the middles and `end` the bottom edges; for `Attach: top` or `bottom`, `start` lines up the left edges and `end` the right edges (the second half is by analogy).
+- `Align` runs along the edge: for `Attach: LEFT` or `RIGHT`, `START` lines up the top edges, `CENTER` the middles and `END` the bottom edges; for `Attach: TOP` or `BOTTOM`, `START` lines up the left edges and `END` the right edges (the second half is by analogy).
 
 ```
-Attach_To: top_bar
-Attach: left
-Align: start
+Attach_To: Top_Bar
+Attach: LEFT
+Align: START
 Gap: 10
 ```
 
+This form is for a target that is not a Frame. A Panel attached to a Frame uses `Margin` instead of `Gap`; see Attached to a Frame below.
+
 This attaches the Panel's right edge to the target's left edge, lines up their top edges, and leaves 10 px between the Panel's right edge and the target's left edge.
+
+**Attached to a Frame (decided 2026-10-30, D49 to D51).** A Frame has no `Gap`. The Panel's `Margin` on the sides that face the Frame is the separation:
+
+- With no margin on those sides, the Panel and the Frame meld as before ([[Frame#Hosted melding (decided 2026-10-27)]]).
+- With a margin there, they do not meld: the Frame edge continues straight and the Panel's corners round as a floating Panel's do.
+- `Offset` positions the Panel from its anchored edges; `Margin` is transparent space around the Panel and `Padding` is inside it ([[Shell File#Surface Keys]]).
 
 **Following the target (decided 2026-10-27).**
 
@@ -114,14 +122,14 @@ A Panel can collapse to a handle on its edge, as the maintainer's Edge Shell doe
 
 ### Layers
 
-A Panel may use `bottom`, `top` or `overlay`. It may reserve space only on `top` (an `Exclusive_Zone` elsewhere is a load error, [[Surface Types#Layers per kind]]).
+A Panel may use `BOTTOM`, `TOP` or `OVERLAY`. It may reserve space only on `TOP` (an `Exclusive_Zone` elsewhere is a load error, [[Surface Types#Layers per kind]]).
 
-- The protocol leaves the order of surfaces on one layer undefined ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)). So a Panel that must draw over a Bar needs a higher layer than the Bar (a Bar on `top`, the Panel on `overlay`), or it must not overlap it.
-- `background` is not offered to any surface type.
+- The protocol leaves the order of surfaces on one layer undefined ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)). So a Panel that must draw over a Bar needs a higher layer than the Bar (a Bar on `TOP`, the Panel on `OVERLAY`), or it must not overlap it.
+- `BACKGROUND` is not offered to any surface type.
 
 ### Keyboard and Focus
 
-- `Keyboard: none` is the default; a Panel with a text field needs `on_demand`; the launcher uses `exclusive` on the overlay layer.
+- `Keyboard: NONE` is the default; a Panel with a text field needs `ON_DEMAND`; the launcher uses `EXCLUSIVE` on the overlay layer.
 - A popup a Panel calls inherits the Panel's keyboard setting ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)).
 
 ### Input Region
@@ -135,21 +143,23 @@ Keys of a Panel entry. Decided keys are from [[Common Keys and Conventions]]; pr
 | Key                | Meaning                                                                                                                                              | Status                                                                       |
 |--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
 | `Panel` (the head) | The type; there is no `Kind:` key                                                                                                                                           | Decided                                                                      |
-| `Layer`            | `bottom`, `top` or `overlay`                                                                                                                         | Decided                                                                      |
+| `Layer`            | `BOTTOM`, `TOP` or `OVERLAY`                                                                                                                         | Decided                                                                      |
 | `Children`         | Blocks, containers and modules                                                                                                                       | Decided                                                                      |
 | `Style`            | A style file or inline values                                                                                                                        | Decided                                                                      |
 | `Attach_To`        | The name of the target: a surface, a module in a Bar, or another Panel                                                                               | Decided that attachment is by name; key accepted 2026-10-29                 |
-| `Attach`           | `left`, `right`, `top`, `bottom`: the target's edge the Panel meets                                                                                  | Decided (2026-10-27)                                                         |
-| `Gap`              | Pixels between the Panel and its target, borders included                                                                                            | Decided (2026-10-27)                                                         |
-| `Align`            | `start`, `center`, `end` along the shared edge                                                                                                       | Decided (2026-10-27)                                                         |
+| `Attach`           | `LEFT`, `RIGHT`, `TOP`, `BOTTOM`: the target's edge the Panel meets                                                                                  | Decided (2026-10-27)                                                         |
+| `Gap`              | Pixels between the Panel and a target that is not a Frame, borders included                                                                                            | Decided (2026-10-27)                                                         |
+| `Align`            | `START`, `CENTER`, `END` along the shared edge                                                                                                       | Decided (2026-10-27)                                                         |
 | `Open_With_Target` | Opening the target also opens this Panel; default off                                                                                                | Opt-in decided (2026-10-27); key accepted 2026-10-29                        |
-| `Meld`             | With `Attach_To` a Frame: draw the Panel inside the Frame's surface, so it grows out of the frame with no seam                                       | Decided (key name accepted 2026-10-29); the mechanism is decided ([[Frame#Hosted melding (decided 2026-10-27)]]) |
-| `Anchor`           | `top`, `bottom`, `left`, `right` (one or a list)                                                                                                     | Decided (key name accepted 2026-10-29)                                      |
+| `Meld`             | With `Attach_To` a Frame: draw the Panel inside the Frame's surface, so it grows out of the frame with no seam; a `Margin` on the Frame-facing sides stops the meld                                       | Decided (key name accepted 2026-10-29); the mechanism is decided ([[Frame#Hosted melding (decided 2026-10-27)]]) |
+| `Anchor`           | `TOP`, `BOTTOM`, `LEFT`, `RIGHT` (one or a list)                                                                                                     | Decided (key name accepted 2026-10-29)                                      |
 | `Size`             | `[width, height]`                                                                                                                                    | Decided (key name accepted 2026-10-29)                                      |
-| `Margin`           | Four-sided offset, clockwise from the top                                                                                                            | Decided (key name accepted 2026-10-29); order decided                       |
-| `Keyboard`         | `none`, `on_demand`, `exclusive`                                                                                                                     | Decided (key name accepted 2026-10-29)                                      |
+| `Offset`           | Four-sided position from the anchored edges (left, top, right, bottom); replaces the Panel's old `Margin`. The shell reorders it to tre's `margin` | Decided (D51)                                                               |
+| `Margin`           | Transparent space around the Panel (left, top, right, bottom). Attached to a Frame, on the Frame-facing sides it separates the two and stops the meld | Decided (D41 to D45)                                                        |
+| `Padding`          | Transparent space between the children and the Panel's four sides (left, top, right, bottom)                                                        | Decided (D41 to D45)                                                        |
+| `Keyboard`         | `NONE`, `ON_DEMAND`, `EXCLUSIVE`                                                                                                                     | Decided (key name accepted 2026-10-29)                                      |
 | `Input_Region`     | Whole, nothing, rectangles or `auto`                                                                                                                 | Decided (key name accepted 2026-10-29)                                      |
-| `Exclusive_Zone`   | Space to reserve; only on `top`                                                                                                                      | Rule decided; key accepted 2026-10-29                                       |
+| `Exclusive_Zone`   | Space to reserve; only on `TOP`                                                                                                                      | Rule decided; key accepted 2026-10-29                                       |
 | `Movable`          | The mouse can move it; the position is saved. Floating Panels only                                                                                   | Decided (key name accepted 2026-10-29); saved in the registry (decided 2026-10-27) |
 | `Hidden`           | Start hidden                                                                                                                                         | Decided (key name accepted 2026-10-29)                                      |
 | `Hide_After`       | Hide itself after a time, for an OSD; the default is a reasonable value the user can set, and the caller resets the timer when it re-shows the Panel | Decided (2026-10-27); the default value is open                              |
@@ -160,10 +170,10 @@ Keys of a Panel entry. Decided keys are from [[Common Keys and Conventions]]; pr
 ```
 # OSD: brief, click-through, on the overlay layer
 Panel {
-    Name: volume_osd
-    Layer: overlay
-    Anchor: [bottom]
-    Margin: [0, 0, 80, 0]
+    Name: Volume_OSD
+    Layer: OVERLAY
+    Anchor: [BOTTOM]
+    Offset: [0, 0, 0, 80]
     Size: [260, 60]
     Input_Region: []
     Hide_After: 1500
@@ -174,10 +184,10 @@ Panel {
 
 # desktop widget: movable, position saved
 Panel {
-    Name: clock_widget
-    Layer: bottom
-    Anchor: [top, left]
-    Margin: [40, 0, 0, 40]
+    Name: Clock_Widget
+    Layer: BOTTOM
+    Anchor: [TOP, LEFT]
+    Offset: [40, 40, 0, 0]
     Movable: true
     Children {
         Clock { }
@@ -186,9 +196,9 @@ Panel {
 
 # launcher: overlay layer, exclusive keyboard
 Panel {
-    Name: launcher
-    Layer: overlay
-    Keyboard: exclusive
+    Name: Launcher
+    Layer: OVERLAY
+    Keyboard: EXCLUSIVE
     Size: [600, 400]
     Hidden: true
     Children {
@@ -199,14 +209,14 @@ Panel {
 
 # slide-in panel attached to a bar
 Panel {
-    Name: side_panel
-    Layer: top
-    Attach_To: top_bar
-    Attach: bottom
-    Align: end
+    Name: Side_Panel
+    Layer: TOP
+    Attach_To: Top_Bar
+    Attach: BOTTOM
+    Align: END
     Gap: 8
     Hidden: true
-    Animation { Type: slide, Duration: 200 }
+    Animation { Type: SLIDE, Duration: 200 }
     Children {
         Slider { }
     }
@@ -254,7 +264,7 @@ A Panel has no Python of its own. A module reaches it through shell actions: sho
 | `Attach_To` never resolves                               | Error at load naming the file, the Panel and the name                             |
 | The target disappears while running                      | Warning; the Panel stays hidden until the target returns                          |
 | A size of 0 on an axis without both opposite anchors     | Error before any request to the compositor (tre rejects it)                       |
-| `Exclusive_Zone` on a layer other than `top`             | Error at load                                                                     |
+| `Exclusive_Zone` on a layer other than `TOP`             | Error at load                                                                     |
 | The saved position is off the output (a monitor changed) | Clamped to the output; if impossible, the configured default                      |
 | The monitor is removed                                   | The Panel closes (`output_removed`); it is created again when the monitor returns |
 | The compositor closes the surface                        | The Panel is dead; the shell recreates it                                         |
@@ -275,21 +285,22 @@ A Panel has no Python of its own. A module reaches it through shell actions: sho
 
 ## Acceptance Criteria
 
-- [ ] A Panel with `Layer: bottom`, an anchor and a margin appears at that place on its monitor and above the wallpaper.
-- [ ] A movable Panel follows the mouse, stays on its output, and its final margins are saved and used on the next start.
+- [ ] A Panel with `Layer: BOTTOM`, an anchor and an `Offset` appears at that place on its monitor and above the wallpaper.
+- [ ] A movable Panel follows the mouse, stays on its output, and its final position is saved and used on the next start.
 - [ ] A Panel with `Attach_To` appears next to its named target; with the target removed from the file, loading reports the missing name; with the target hidden while running, a warning is logged and the Panel hides.
-- [ ] A Panel on the overlay layer with `Keyboard: exclusive` takes the keyboard and Escape closes it.
+- [ ] A Panel on the overlay layer with `Keyboard: EXCLUSIVE` takes the keyboard and Escape closes it.
 - [ ] An OSD with `Input_Region: []` lets clicks pass through and hides itself after `Hide_After`.
 - [ ] A slide-in Panel moves by margin animation and, with reduced motion on, appears instantly.
-- [ ] An `Exclusive_Zone` on a Panel that is not on `top` is a load error.
+- [ ] An `Exclusive_Zone` on a Panel that is not on `TOP` is a load error.
 - [ ] After the monitor is unplugged and plugged back, the Panel is created again where it was saved.
-- [ ] `Attach: left`, `Align: start`, `Gap: 10` puts the Panel's right edge 10 px from the target's left edge with their top edges level; a 2 px Panel border is inside the 10.
+- [ ] `Attach: LEFT`, `Align: START`, `Gap: 10` puts the Panel's right edge 10 px from the target's left edge with their top edges level; a 2 px Panel border is inside the 10.
 - [ ] A Panel follows an animating target; it hides when the target hides, and stays open and follows when the target peeks.
 - [ ] A keyboard shortcut opens the Panel while its target is hidden only if the target has peeking.
 - [ ] A second Panel attached to the first follows it; `Open_With_Target` opens both from the target.
 - [ ] A hidden Panel is not closed: showing it returns it to the same state and place.
 - [ ] A collapsed Panel shows its handle; hover peeks, a click or a drag past 50% extends it.
 - [ ] Only a floating Panel's position is written to the registry.
+- [ ] A Panel attached to a Frame with no `Margin` on the Frame-facing sides melds; with a `Margin` there it does not meld, the Frame edge continues straight and the Panel's corners round.
 
 ## Links
 

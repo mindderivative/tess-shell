@@ -69,7 +69,7 @@ One line, in this order, separated by ` | `:
 | location | `file:line:column rule` for a finding with a position, otherwise `-`                                           |
 | message  | The text                                                                                                       |
 
-Behind the line, each record carries structured fields (`file`, `line`, `column`, `rule`, `severity`, `module`, `uid`) through Loguru's `bind`, so a file in JSON form keeps them ([[Validation and Errors#The error record]]). `Logging.Format: json` writes one JSON object per line with `serialize=True` (decided 2026-10-28); the default is text. A test on 2026-10-28 showed `serialize` keeping the bound fields (`rule`, `file`, `line`, `column`) in the record's `extra`.
+Behind the line, each record carries structured fields (`file`, `line`, `column`, `rule`, `severity`, `module`, `uid`) through Loguru's `bind`, so a file in JSON form keeps them ([[Validation and Errors#The error record]]). `Logging.Format: JSON` writes one JSON object per line with `serialize=True` (decided 2026-10-28); the default is `TEXT`. A test on 2026-10-28 showed `serialize` keeping the bound fields (`rule`, `file`, `line`, `column`) in the record's `extra`.
 
 ### Who Writes
 
@@ -106,12 +106,14 @@ Loguru's sinks are safe to call from any thread. The loop thread must not block 
 
 ## Configuration
 
-`Logging` in `settings.tdl` ([[Settings File]]; the file-type key is `Settings: v1` and the keys are nested blocks, D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; `Logging.Level` elsewhere in this note is only a prose shorthand for the path):
+`Logging` in `settings.tdl` ([[Settings File]]; the file type is named by the root block `Settings { }` and the keys are nested blocks, D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; `Logging.Level` elsewhere in this note is only a prose shorthand for the path). Level and format values are enums, so they are upper case ([[TDL Language#Values]]):
 
 ```
-Logging {
-    Level: info
-    Diagnose: false
+Settings {
+    Logging {
+        Level: INFO
+        Diagnose: false
+    }
 }
 ```
 
@@ -121,7 +123,7 @@ Logging {
 | `Level`          | The minimum level; default `INFO`                       | Decided                             |
 | `Directory`      | The log folder; default `logs/` in the config directory | Decided                             |
 | `Retention`      | Days to keep daily files; unset keeps all               | Decided that it exists (2026-10-27) |
-| `Format`         | `text` or `json` for the file                           | Decided (2026-10-28); default `text`            |
+| `Format`         | `TEXT` or `JSON` for the file                           | Decided (2026-10-28); default `TEXT`            |
 | `Diagnose`       | Show variable values in tracebacks; default false       | Decided (2026-10-28)                            |
 | `Console`        | Write to stderr; default true                           | Decided (key name accepted 2026-10-29) |
 | `Capture_Stderr` | Forward the process's stderr into the log; default true | Decided (2026-10-28)               |
@@ -189,7 +191,7 @@ All nine were answered on 2026-10-28, as recommended.
 - [ ] With `Diagnose: true` in `Logging` a traceback shows variable values; with it off it does not.
 - [ ] With the shell running across local midnight, the next record goes to the new day's file and the old file is whole.
 - [ ] With the log directory read-only, the shell starts, warns, and writes to the console.
-- [ ] `tesserae-shell log-level debug` makes `DEBUG` records appear until `settings.tdl` is reloaded.
+- [ ] `tesserae-shell log-level DEBUG` makes `DEBUG` records appear until `settings.tdl` is reloaded.
 - [ ] A burst of 10,000 log calls from a module thread does not delay the loop by more than a frame (measured).
 - [ ] After a normal stop, the last record written before stop is in the file.
 - [ ] An unhandled exception on a module thread is logged at `CRITICAL` before the process ends.

@@ -14,7 +14,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 # Bar
 
 > [!summary]
-> The Bar (the `Bar` block) is a surface attached to one screen edge that reserves space, so maximised windows stop short of it. It can span the whole edge, touching three edges (its own and the two across it), or be shorter and sit at a position along the edge. A dock, a top bar and a side bar are all Bars. A Bar can have margins and then looks as if it floats, but it is still attached to its edge: the margin space is reserved, so it behaves as if the Bar were flush (maintainer, 2026-10-27). A surface that is not attached to an edge and reserves nothing is a Panel. It is highly customisable: size, position, margins, animation, hidden state, background, borders, rounded corners, shadows with elevation and colour, and transparency. A Bar is a tre `LayerWindow` anchored to an edge. The decisions are the maintainer's ([[Surface Types]]); the key names were accepted by the maintainer on 2026-10-29 (many mirror tre's settings). The examples are TDL illustrations ([[ADR-0014 Shell File Language]]).
+> The Bar (the `Bar` block) is a surface attached to one screen edge that reserves space, so maximised windows stop short of it. It can span the whole edge, touching three edges (its own and the two across it), or be shorter and sit at a position along the edge. A dock, a top bar and a side bar are all Bars. A Bar can have a `Gap` to its edge and then looks as if it floats, but it is still attached to its edge: the gap space is reserved, so it behaves as if the Bar were flush (maintainer, 2026-10-27). A Bar has no `Margin`; its placement keys are `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` (maintainer, 2026-10-30). A surface that is not attached to an edge and reserves nothing is a Panel. It is highly customisable: size, position, gap, animation, hidden state, background, borders, rounded corners, shadows with elevation and colour, and transparency. A Bar is a tre `LayerWindow` anchored to an edge. The decisions are the maintainer's ([[Surface Types]]); the key names were accepted by the maintainer on 2026-10-29 (many mirror tre's settings). The examples are TDL illustrations ([[ADR-0014 Shell File Language]]).
 
 ## Purpose and Scope
 
@@ -25,16 +25,23 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 
 ### Geometry
 
-| Shape                              | tre settings                                                                                                                        | Example                                                                                                                   |
-|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
-| Full-span bar on one edge          | `anchor` the edge and both perpendicular edges; `size` 0 along the edge and the thickness across it; `exclusive_zone` the thickness | A top bar across the screen: anchor top, left, right; size (0, 32); zone 32                                               |
-| A shorter bar, centred on its edge | `anchor` the edge only; `size` the length and the thickness                                                                         | A dock: anchor bottom; size (560, 64); zone 64. With one edge anchored the compositor centres it along that edge          |
-| A shorter bar at a corner end      | `anchor` the edge and one perpendicular edge; `margin` along the edge                                                               | A top bar starting 200 px in: anchor top, left; margin left 200                                                           |
-| A bar that looks floating          | The same, with a `margin` on its own edge                                                                                           | A top bar 8 px below the top: margin top 8; **the zone must include the margin**. It is still a Bar: the 8 px is reserved |
+The Bar is placed with `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` ([[Shell File#Surface Keys]]). For a top or bottom Bar `Width` is the length along the edge and `Height` the size across it; for a left or right Bar `Width` is the size across the edge and `Height` the length along it.
+
+| Shape                              | TDL keys (top Bar shown)                                       | tre settings it implies                                                                                                        |
+|------------------------------------|----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| Full-span bar on one edge          | `Edge: TOP`, `Width: EXPAND`, `Height: 32`                     | `anchor` the edge and both perpendicular edges; `size` 0 along the edge and 32 across it; `exclusive_zone` 32                   |
+| A shorter bar, centred on its edge | `Edge: BOTTOM`, `Width: 560`, `Height: 64`, `Alignment: CENTER` | `anchor` the edge only; `size` (560, 64); the compositor centres it along that edge                                            |
+| A shorter bar at one end           | `Edge: TOP`, `Width: 400`, `Height: 32`, `Alignment: START`, `Offset: 200` | `anchor` the edge and one perpendicular edge; a `margin` along the edge for the offset                                         |
+| A bar that looks floating          | `Edge: TOP`, `Width: EXPAND`, `Height: 32`, `Gap: 8`           | The same, with a `margin` on its own edge; the zone is 40. It is still a Bar: the 8 px is reserved                              |
+
+The shell computes tre's `anchor`, `size` and `margin` from `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap`, the same way it computes a Panel's attachment geometry. The tre column shows what each shape needs, not the computation. How `Alignment`, `Offset` and `Gap` map to the three settings, and how a collapsed Bar keeps a layer surface, is open (#needs-verification; [[#Open Questions]]).
 
 - A positive `exclusive_zone` counts only for a surface anchored to one edge, or one edge plus both perpendicular edges; with any other anchor set the compositor treats it as 0, and a `warning` event says so ([[TRE-REQ-001 Layer Surface Window#Shell need]]).
-- **A margin is part of the Bar (decided 2026-10-27).** A Bar with a margin looks as if it floats but stays attached to its edge, and the margin space is reserved, so windows stop where they would for a flush Bar. The protocol says the exclusive zone includes the margin: "The exclusive zone includes the margin" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1), read 2026-10-27). So a Bar with a margin of 8 and a thickness of 32 sets a zone of 40, or windows would overlap its gap. The shell computes the zone from `Thickness` and `Margin`. A Panel differs: it is not attached to an edge and does not have to reserve anything. #needs-verification on KWin 6.8.1.
-- **Layers and reserving space.** A Bar may use `bottom`, `top` or `overlay`. It may reserve space only on `top`; an `Exclusive_Zone` on another layer is a load error ([[Surface Types#Layers per kind]]). A Bar on `bottom` or `overlay` is therefore not reserving and is for effects (a decorative strip, a launcher dock that floats over windows).
+- A size is pixels, a percent, `AUTO` or `EXPAND` ([[TDL Language#Sizes (Shell Schema)]]). `AUTO` shrinks the Bar to its content on that axis. `Max_Width`, `Max_Height`, `Min_Width` and `Min_Height` bound the result.
+- **The EXPAND rule.** `EXPAND` stretches the Bar edge to edge along its attached Edge. Across the Edge it cannot stretch, because the attached edge does not reach the opposite edge: a top Bar with `Height: EXPAND` resolves to `Max_Height`, else `Min_Height`, else 0 px (D34, D46).
+- **The zero-size rule.** A Bar whose size resolves to 0 on the axis it is attached along (a top Bar with `Height: EXPAND` and no bound, or `Height: 0`) is not created. The shell warns, names the Bar and says to set `Min_Height` (`Min_Width` for a left or right Bar). The check runs at creation only; it never stops hide, peek, expand or contract of a Bar or of a Frame strip, which may reach a size of 0 while hidden or contracted ([[Frame#Strip: Expand, Contract, Peek]]).
+- **The gap is part of the Bar (decided 2026-10-27).** A Bar with a `Gap` looks as if it floats but stays attached to its edge, and the gap space is reserved, so windows stop where they would for a flush Bar. The protocol says the exclusive zone includes the margin: "The exclusive zone includes the margin" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1), read 2026-10-27). So a Bar with a `Gap` of 8 and a `Height` of 32 sets a zone of 40, or windows would overlap its gap. The shell computes the zone from the size across the Edge and the `Gap`. A Panel differs: it is not attached to an edge and does not have to reserve anything. #needs-verification on KWin 6.8.1.
+- **Layers and reserving space.** A Bar may use `BOTTOM`, `TOP` or `OVERLAY`. It may reserve space only on `TOP`; an `Exclusive_Zone` on another layer is a load error ([[Surface Types#Layers per kind]]). A Bar on `BOTTOM` or `OVERLAY` is therefore not reserving and is for effects (a decorative strip, a launcher dock that floats over windows).
 - **Corner anchors.** A bar anchored to an edge and one perpendicular edge reserves nothing unless `exclusive_edge` (tre's argument) names the edge; tre binds layer-shell version 5 for this ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]). KWin 6.8.1 and sway were tested for corner reservation.
 
 ### States
@@ -53,7 +60,7 @@ A Bar is `Hidden`, `Showing`, `Visible`, `Hiding` or `Closed`, as a Panel is ([[
 
 ### Vertical Bars (Decided 2026-10-27)
 
-A Bar on a left or right edge lays its contents out as a `FlexBox` with a vertical direction. Text is not rotated by default; the user opts in (`Text_Rotation`, proposed key and values). The standard modules follow the Bar's direction.
+A Bar on a left or right edge lays its contents out as a `FlexBox` with `Flex: VERTICAL`. Text is not rotated by default; the user opts in (`Text_Rotation`, proposed key and values). The standard modules follow the Bar's direction.
 
 ### Contents
 
@@ -67,41 +74,43 @@ A Bar belongs to a `Monitor` block, and so to one monitor ([[Shell File]]). A Ba
 
 | Key                 | Meaning                                                                                                                                           | Status                                                                       |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
-| `Bar` (the head)   | The type; there is no `Kind:` key                                                                                                                                        | Decided                                                                      |
-| `Layer`             | `bottom`, `top` or `overlay`                                                                                                                      | Decided                                                                      |
+| `Bar` (the head)    | The type; there is no `Kind:` key                                                                                                                 | Decided                                                                      |
+| `Layer`             | `BOTTOM`, `TOP` or `OVERLAY`                                                                                                                      | Decided                                                                      |
 | `Children`          | Blocks, containers and modules                                                                                                                    | Decided                                                                      |
 | `Style`             | A style file or inline values                                                                                                                     | Decided                                                                      |
-| `Edge`              | `left`, `right`, `top` or `bottom`: the edge it attaches to                                                                                       | Decided (maintainer, 2026-10-27)                                             |
-| `Span`              | `absolute` (a fixed length), `expanded` (stretches along the whole edge, touching three edges) or `auto` (sized to its content)                   | Decided (the three values); an absolute length is given by `Length`          |
-| `Length`            | The fixed length for `Span: absolute`                                                                                                             | Decided (key name accepted 2026-10-29)                                      |
-| `Align`             | Where a shorter bar sits along the edge: `start`, `center`, `end`, or an offset                                                                   | Decided (key name accepted 2026-10-29)                                      |
-| `Thickness`         | The size across the edge                                                                                                                          | Decided (maintainer, 2026-10-27)                                             |
-| `Margin`            | Four-sided gap, clockwise from the top; the reserved zone includes it                                                                             | Decided (key name accepted 2026-10-29); order decided; margins kept (maintainer, 2026-10-27) |
-| `Reserve`           | Reserve space: on or off. The shell computes `Exclusive_Zone` (thickness plus the margin on that edge)                                            | Decided (key name accepted 2026-10-29); rule decided (only on `top`)        |
-| `Exclusive_Zone`    | The raw tre value, for an exact figure                                                                                                            | Rule decided; key accepted 2026-10-29                                       |
-| `Anchor`, `Size`    | The raw tre forms; `Edge`, `Span`, `Length` and `Thickness` map to them                                                                           | Decided (key name accepted 2026-10-29)                                      |
-| `Keyboard`          | `none`, `on_demand` or `exclusive`                                                                                                                | Decided (key name accepted 2026-10-29)                                      |
-| `Input_Region`      | Whole, nothing, rectangles or `auto`                                                                                                              | Decided (key name accepted 2026-10-29)                                      |
+| `Edge`              | `LEFT`, `RIGHT`, `TOP` or `BOTTOM`: the edge it attaches to                                                                                       | Decided (maintainer, 2026-10-27)                                             |
+| `Width`, `Height`   | Pixels, `50%`, `AUTO` (shrink to content on that axis) or `EXPAND` (stretch edge to edge along the Edge); the EXPAND rule and the zero-size rule are in Geometry | Decided (D34, D46; replaces `Span`, `Length` and `Thickness`)        |
+| `Max_Width`, `Max_Height`, `Min_Width`, `Min_Height` | Bounds on the size, in pixels                                                                                                    | Decided (D34)                                                                |
+| `Alignment`         | Where a shorter Bar sits along the Edge: `START`, `CENTER`, `END`                                                                                 | Decided (2026-10-30; replaces `Align`)                                       |
+| `Offset`            | One number that moves the Bar along the Edge; positive or negative                                                                                | Decided (D51)                                                                |
+| `Gap`               | One number: the space between the Edge and the Bar; the reserved zone includes it                                                                 | Decided (D49); replaces the Bar `Margin`                                     |
+| `Reserve`           | Reserve space: on or off. The shell computes `Exclusive_Zone` (the size across the Edge plus the `Gap`)                                           | Decided (key name accepted 2026-10-29); rule decided (only on `TOP`)         |
+| `Exclusive_Zone`    | The raw tre value, for an exact figure                                                                                                            | Rule decided; key accepted 2026-10-29                                        |
+| `Keyboard`          | `NONE`, `ON_DEMAND` or `EXCLUSIVE`                                                                                                                | Decided (key name accepted 2026-10-29)                                       |
+| `Input_Region`      | Whole, nothing, rectangles or `auto`                                                                                                              | Decided (key name accepted 2026-10-29)                                       |
 | `Attach_To`, `Meld` | With `Attach_To` a Frame: draw the Bar inside the Frame's surface, so it grows out of the frame; a thicker Frame edge (a strip) does the same job | Decided (key name accepted 2026-10-29); the mechanism is decided ([[Frame#Hosted melding (decided 2026-10-27)]]) |
-| `Hidden`            | Start hidden                                                                                                                                      | Decided (key name accepted 2026-10-29)                                      |
+| `Hidden`            | Start hidden                                                                                                                                      | Decided (key name accepted 2026-10-29)                                       |
 | `Auto_Hide`         | Slide out after the delay when the pointer leaves; default true                                                                                   | Decided (on by default, opt-out, 2026-10-27)                                 |
 | `Auto_Hide_Delay`   | The delay in milliseconds                                                                                                                         | Decided that it exists; default 1000 ms proposed                             |
-| `Reveal_Key`        | A keyboard shortcut that reveals the Bar; default none                                                                                            | Decided (default none, 2026-10-27); key accepted 2026-10-29                 |
-| `Text_Rotation`     | Rotate text on a vertical Bar; default off                                                                                                        | Decided (opt-in, 2026-10-27); key accepted 2026-10-29                       |
-| `Animation`         | Slide or fade, with a duration                                                                                                                    | Decided (key name accepted 2026-10-29)                                      |
+| `Reveal_Key`        | A keyboard shortcut that reveals the Bar; default none                                                                                            | Decided (default none, 2026-10-27); key accepted 2026-10-29                  |
+| `Text_Rotation`     | Rotate text on a vertical Bar; default off                                                                                                        | Decided (opt-in, 2026-10-27); key accepted 2026-10-29                        |
+| `Animation`         | Slide or fade, with a duration                                                                                                                    | Decided (key name accepted 2026-10-29)                                       |
+
+The Bar has no `Margin` and no raw `Anchor` or `Size`: the shell computes tre's `anchor`, `size` and `margin` from the placement keys (Geometry). `Padding` is allowed, as on every element that has `Children` ([[Common Keys and Conventions]]).
 
 ```
 Bar {
-    Name: top_bar
-    Layer: top
-    Edge: top
-    Span: expanded
-    Thickness: 32
+    Name: Top_Bar
+    Layer: TOP
+    Edge: TOP
+    Width: EXPAND
+    Height: 32
     Reserve: true
     Style: TopBar_Style.tdl
     Children {
         FlexBox {
-            Alignment: horizontal
+            Name: Top_Bar_Row
+            Flex: HORIZONTAL
             Children {
                 Workspaces { }
                 Spacer { }
@@ -114,13 +123,13 @@ Bar {
 }
 
 Bar {
-    Name: dock
-    Layer: top
-    Edge: bottom
-    Span: absolute
-    Length: 560
-    Thickness: 64
-    Margin: [0, 0, 8, 0]
+    Name: Dock
+    Layer: TOP
+    Edge: BOTTOM
+    Width: 560
+    Height: 64
+    Alignment: CENTER
+    Gap: 8
     Reserve: true
     Children {
         Tasks { }
@@ -128,7 +137,7 @@ Bar {
 }
 ```
 
-An illustration only. The module names (Workspaces, Tray, Tasks) are v1 modules whose specs are not written; `Length` and `Reserve` are proposals. `Reserve: true` is a bare word that the parser keeps as a string and the key's declared type turns into a boolean ([[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]], D2), and a module use is written with the module's name as the head ([[Module File#Using a Module]]).
+An illustration only. The module names (Workspaces, Tray, Tasks) are v1 modules whose specs are not written; `Reserve` is a proposal. `Reserve: true` is a bare word that the parser keeps as a string and the key's declared type turns into a boolean ([[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]], D2), and a module use is written with the module's name as the head ([[Module File#Using a Module]]). The dock reserves 72 px: its height of 64 plus its `Gap` of 8.
 
 ## Python Contract
 
@@ -165,17 +174,18 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 
 | Failure                                                   | Result                                                                                     |
 |-----------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| `Exclusive_Zone` on a layer other than `top`              | Error at load naming the file, the Bar and the key                                         |
-| A size of 0 on an axis without both opposite anchors      | Error before any request to the compositor                                                 |
-| The zone does not include the margin                      | Windows overlap the gap; the shell computes the zone from thickness and margin to avoid it |
+| `Exclusive_Zone` on a layer other than `TOP`              | Error at load naming the file, the Bar and the key                                         |
+| A size of 0 on the axis it is attached along              | The Bar is not created; a warning names the Bar and says to set `Min_Height` or `Min_Width`. Checked at creation only |
+| The zone does not include the `Gap`                       | Windows overlap the gap; the shell computes the zone from the size across the Edge and the `Gap` to avoid it |
 | A corner-anchored Bar with a zone and no `exclusive_edge` | Reserves nothing; a `warning` event says so                                                |
 | The monitor is removed                                    | The Bar closes (`output_removed`); recreated when the monitor returns                      |
 | Two reserving surfaces on one edge                        | The compositor decides the order                                                           |
 
 ## Open Questions
 
-- [x] The keys `Edge`, `Span` (`absolute`, `expanded`, `auto`) and `Thickness` (maintainer, 2026-10-27). The key for an absolute length is `Length` (accepted 2026-10-29). Open: `Align`, and whether the raw `Anchor` and `Size` are also allowed.
-- [x] Movable: no, a Bar is anchored and a movable surface is a Panel. Floating: a Bar with margins looks floating but stays attached and its margin space is reserved (maintainer, 2026-10-27).
+- [x] The placement keys: `Edge`, `Width`, `Height`, the `Max_` and `Min_` bounds, `Alignment`, `Offset` and `Gap`; they replace `Span`, `Length`, `Thickness`, `Margin` and the raw `Anchor` and `Size` (maintainer, 2026-10-30).
+- [ ] How `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` map to tre's `anchor`, `size` and margins, and how a collapsed Bar keeps a layer surface in the protocol. #needs-verification ([[Shell File#Open]])
+- [x] Movable: no, a Bar is anchored and a movable surface is a Panel. Floating: a Bar with a `Gap` looks floating but stays attached and its gap space is reserved (maintainer, 2026-10-27).
 - [x] Auto-hide: on by default with opt-out, a default delay the user can change, keyboard reveal none by default (maintainer, 2026-10-27). Open: the default delay value, the hover strip's thickness, and the reveal key's key name (`Reveal_Key`).
 - [x] The Plasma panel on the same edge: the Bar wins, unless the Plasma panel is always on top or a window is fullscreen (maintainer, 2026-10-27). Open: how, and how KWin orders two zones on one edge. #needs-verification
 - [x] A vertical Bar: a FlexBox with a vertical direction; text rotation is opt-in (maintainer, 2026-10-27). Open: the `Text_Rotation` values.
@@ -184,8 +194,10 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 ## Acceptance Criteria
 
 - [ ] A full-span top Bar with a zone of 32 makes a maximised window stop 32 px below the top edge on KWin.
-- [ ] A dock with an 8 px gap and a thickness of 64 sets a zone of 72 and keeps maximised windows 72 px above the edge, the same as a flush Bar of that total size.
-- [ ] A Bar on `bottom` or `overlay` with an `Exclusive_Zone` is a load error.
+- [ ] A dock with a `Gap` of 8 and a `Height` of 64 sets a zone of 72 and keeps maximised windows 72 px above the edge, the same as a flush Bar of that total size.
+- [ ] A Bar on `BOTTOM` or `OVERLAY` with an `Exclusive_Zone` is a load error.
+- [ ] A top Bar with `Height: EXPAND` resolves to `Max_Height`, else `Min_Height`, else 0; at 0 it is not created and the warning names `Min_Height`.
+- [ ] A Bar or Frame strip that is hidden or contracted can still be shown or expanded; the zero-size check does not stop it.
 - [ ] A Bar on each of two monitors appears on both, and unplugging one removes only its Bar.
 - [ ] Auto-hide is on with no key written; `Auto_Hide: false` keeps the Bar visible. The Bar slides out after the delay, then sets the zone to 0, and windows reflow once; the pointer at the edge brings it back.
 - [ ] With `Reveal_Key` unset, no key reveals the Bar; with it set, the key does.

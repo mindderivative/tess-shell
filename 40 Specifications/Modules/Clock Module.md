@@ -37,36 +37,40 @@ Modules/Clock/
 ```
 ---
 TDL: 0.1
-Module: v1
+TEL: 0.1
+TRE: 0.5.9
+Shell: 0.1
 Name: Clock
 ---
 
-Style: Clock_Style.tdl
-Params {
-    # a strftime pattern; empty follows the desktop
-    format { Type: string, Default: "" }
-    # a locale name such as de_DE; empty follows the desktop
-    locale { Type: string, Default: "" }
-    # desktop, 12 or 24
-    hour_cycle { Type: string, Default: desktop }
-    # an IANA name; empty is the local zone
-    timezone { Type: string, Default: "" }
-    tooltip_format { Type: string, Default: "%A, %d %B %Y" }
-}
+Module {
+    Style: Clock_Style.tdl
+    Params {
+        # a strftime pattern; empty follows the desktop
+        format { Type: string, Default: "" }
+        # a locale name such as de_DE; empty follows the desktop
+        locale { Type: string, Default: "" }
+        # desktop, 12 or 24
+        hour_cycle { Type: string, Default: desktop }
+        # an IANA name; empty is the local zone
+        timezone { Type: string, Default: "" }
+        tooltip_format { Type: string, Default: "%A, %d %B %Y" }
+    }
 
-FlexBox {
-    Alignment: horizontal
-    Children {
-        Label {
-            # the value the Python sends; the slot is TDL's, the expression is TEL's
-            Text: {{ time }}
-            Class: clock_text
+    FlexBox {
+        Flex: HORIZONTAL
+        Children {
+            Label {
+                # the value the Python sends; the slot is TDL's, the expression is TEL's
+                Text: {{ time }}
+                Class: clock_text
+            }
         }
     }
 }
 ```
 
-The metadata block and the registry are in [[TDL Language]]; `Name: Clock` is the word a use calls the module by. The param names (`format`, `timezone`) are the module author's; the param names keep their case on a use (D18, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). `Style:` and `Params { }` sit in the body after the metadata block, and `Type:` is a property of a param declaration, not a file key (D17). The `Default:` key and the type names are still open in [[Module File#Params]].
+The metadata block and the registry are in [[TDL Language]]; the metadata `Name: Clock` is the word a use calls the module by, and the root block `Module { }` names the file type ([[Module File]]). The param names (`format`, `timezone`) are the module author's; the param names keep their case on a use (D18, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). `Style:` and `Params { }` sit inside `Module { }`, and `Type:` is a property of a param declaration, not a file key (D17). The `Default:` key and the type names are still open in [[Module File#Params]].
 
 - The Label is the standard module over the Text block ([[Building Blocks]]). It is not editable.
 - Params are what a use passes; a use that passes nothing gets the defaults.
@@ -77,15 +81,20 @@ The metadata block and the registry are in [[TDL Language]]; `Name: Clock` is th
 ```
 ---
 TDL: 0.1
-Style: v1
+TEL: 0.1
+TRE: 0.5.9
+Shell: 0.1
+Name: Clock_Style
 ---
 
-Classes {
-    clock_text {
-        Kind: Text
-        Size: 14
-        Weight: 500
-        Foreground: "#ffffff"
+Style {
+    Classes {
+        clock_text {
+            Kind: Text
+            Size: 14
+            Weight: 500
+            Foreground: "#ffffff"
+        }
     }
 }
 ```
