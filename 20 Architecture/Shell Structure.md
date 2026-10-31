@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [architecture, needs-verification]
 related: ["[[20 Architecture]]", "[[Surface Types]]", "[[Module File]]", "[[Common Keys and Conventions]]", "[[V1 Widgets]]"]
 depends_on: []
@@ -65,13 +65,13 @@ Reading the arrows: the Shell attaches to the layer surface; layer windows (Pane
 ## Decided from the Diagram
 
 - Layer 0 is for wallpapers only, for now (maintainer, 2026-10-26); the maintainer can see it used later for window tiling or as a base layer for a desktop dashboard.
-- Frame is Top only; its strips move to `top` ([[Surface Types]]). Top suits the painter, which must be above windows to be seen; the strips are invisible so any layer works, and Top-layer reservation is the case known to work on KWin.
-- The shell enforces `top` as the only layer that reserves space. The protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion. An `Exclusive_Zone` off `top` is a load error (decided, maintainer, 2026-10-26).
+- Frame is Top only; its strips move to `TOP` ([[Surface Types]]). Top suits the painter, which must be above windows to be seen; the strips are invisible so any layer works, and Top-layer reservation is the case known to work on KWin.
+- The shell enforces `TOP` as the only layer that reserves space. The protocol ties exclusive zones to no layer, so this is the shell's rule, chosen to reduce confusion. An `Exclusive_Zone` off `TOP` is a load error (decided, maintainer, 2026-10-26).
 - KWin is "between Layer 1 and Layer 2", as the protocol says.
 - A Popup stays a `Popup { Name: ... }` block in the shell file; a module calls it; it holds containers and modules ([[Surface Types#Special cases]]). The Special Cases group exists for popup-like kinds, such as a Notification window (not v1).
 - The building blocks and the modules are the lists in [[Building Blocks]], with the full decision in [[ADR-0007 Shell UI Layer#Blocks, modules and styling (2026-10-26)]].
 - Popup focus is on by default with one flag; tooltip-like popups opt out.
-- The Frame stays on `top`. Melded Bars and Panels are drawn inside the Frame's own surface (hosted melding, 2026-10-27), so melds need no layer of their own and Overlay stays free ([[Frame#Hosted melding (decided 2026-10-27)]]).
+- The Frame stays on `TOP`. Melded Bars and Panels are drawn inside the Frame's own surface (hosted melding, 2026-10-27), so melds need no layer of their own and Overlay stays free ([[Frame#Hosted melding (decided 2026-10-27)]]).
 
 ## What Does Not Match, or Needs a Decision
 

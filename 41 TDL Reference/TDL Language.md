@@ -127,7 +127,7 @@ Rules that follow from these:
 | String        | An unquoted word, or `"..."` / `'...'`                                                                                                    |
 | Enum          | A full upper-case bare word: `LEFT`, `TOP`, `RIGHT`, `BOTTOM`, `OVERLAY`, `HORIZONTAL` (D33)                                              |
 | Boolean, null | `true`, `false` and `null` are lowercase bare words. The parser keeps them as strings; the key's declared type in the schema makes them a boolean or null (D2) |
-| Four-sided    | One number, a list of four (top, right, bottom, left), or a block of named sides: `Thickness { Top: 8, Left: 24 }` (D7)                     |
+| Four-sided    | One number, a list of four in the order left, top, right, bottom, or a block of named sides: `Thickness { Left: 24, Top: 8 }` (D7, D50). Four corner radii run from the top-left corner clockwise                     |
 | List          | `[a, b, c]` or `[]`; an item may sit on its own line                                                                                      |
 | Expression    | `{{ ... }}`. A value that is exactly one slot keeps its type; text with a slot inside is a string                                         |
 
@@ -234,8 +234,7 @@ Decided on 2026-10-30 and removed from this list: the version pins are minimums 
 - [ ] The names and slugs of TDL syntax errors: the proposed list under "Errors" waits for the maintainer.
 - [ ] The full list of shipped modules and their registry names: after the building blocks are worked out (D48, [[V1 Widgets]]).
 - [ ] How a collapsed or hidden Bar keeps a layer surface, so that a size of 0 never arises at creation (D46; #needs-verification against the layer-shell protocol).
-- [ ] The `Gap` meaning shared by a Bar, a layout and a Panel or Popup, and the key for a layout's child spacing ([[ADR-0014 Shell File Language#Third-Round Decisions (2026-10-30)]]).
-- [ ] The order of the four sides in the Panel `Margin` example.
+- [x] `Gap` is the distance to what a surface is attached to, and a layout's child spacing is `Spacing` (D49). The four-sided order is Left, Top, Right, Bottom (D50). A Bar's `Offset` is one number, a Panel's is four-sided (D51) ([[ADR-0014 Shell File Language#Fourth-Round Decisions (2026-10-30)]]).
 
 ## Acceptance Criteria
 

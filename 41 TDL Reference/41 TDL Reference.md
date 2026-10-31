@@ -17,13 +17,13 @@ The keys and forms of every shell file, written in TDL (Tesserae Data Language, 
 
 | Note                                    | Purpose                                                                                                      | Status |
 |-----------------------------------------|--------------------------------------------------------------------------------------------------------------|--------|
-| [[TDL Language]] | The language itself: file header, punctuation, case rules, name registry, monitors, structure words      | draft  |
+| [[TDL Language]] | The language itself: metadata block, root block, punctuation, case rules, name registry, monitors, sizes, structure words      | draft  |
 | [[Common Keys and Conventions]] | Keys every file has, what says what a thing is, names, value forms, errors                                      | draft  |
 | [[Shell File]] | The shell file: root, monitor, surfaces and their keys                                                       | draft  |
 | [[Module File]] | The module file: layout, params, data in the layout, using a module                                          | draft  |
-| [[Style, Theme and Stylesheet Files]] | Style format from the Label example; theme and stylesheet to design                                          | draft  |
-| [[Settings File]] | The config directory layout and `settings.tdl`: directories, main shell, global settings (keys proposed)    | draft  |
-| [[JSON Schema and Editor Support]] | JSON Schema files that validate the parsed TDL tree at load and reload; the `tesserae-shell schema` command; no editor part in v1 (D12) | draft  |
+| [[Style, Theme and Stylesheet Files]] | Style, theme and stylesheet files: metadata block and root block (`Style { }`, `Theme { }`, `Stylesheet { }`); style format from the Label example                                          | draft  |
+| [[Settings File]] | The config directory layout and `settings.tdl` (root block `Settings { }`): directories, main shell, global settings (keys proposed)    | draft  |
+| [[JSON Schema and Editor Support]] | JSON Schema files, chosen by the root block and suffix, that validate the parsed TDL tree at load and reload; the `tesserae-shell schema` command; no editor part in v1 (D12) | draft  |
 | [[Style Schema]] | Proposed shell-owned style keys, theme tokens, shadow keys and stylesheet `Rule` blocks                          | draft  |
 
 Expressions are TEL's ([[Expression Language Requirements]]); their grammar is worked out in the TEL project. Not started: a per-widget property reference, the surface-kind keys, the event and action keys, and the JSON Schema files themselves (the design is in [[JSON Schema and Editor Support]]; the Theme and Stylesheet shapes are proposed in [[Style Schema]]; the key names of the style schema are still a proposal).

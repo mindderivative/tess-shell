@@ -148,6 +148,9 @@ Monitor {
 
 ### Layout Rules
 
+> [!warning] Partly superseded on 2026-10-30
+> Items 2 (file-type key) and 13 (lowercase enum values) were superseded by D26 and D33, and the metadata contents of item 1 by D37 to D39. The four-sided order of item 7 of "What TDL Is" and of the earlier notes was replaced by D50. The table of Decisions and the later rounds are the current rules.
+
 Decided by the maintainer in chat, 2026-10-29. They supersede the first-lines rule of "What TDL Is" item 8 and parts of [[ADR-0007 Shell UI Layer]] (listed in Consequences).
 
 1. **Metadata block.** Every file starts with a block between two `---` lines. It is required. It holds the language version `TDL:` (as in the sketch), the file-type key, `UID:` (the shell writes it there), and, for a module, `Name:`. Other metadata keys are allowed; `FileName` in the sketch was an example, not a required key.
@@ -387,6 +390,18 @@ Readings and conflicts in the answers (the notes follow the readings; the mainta
 - `Offset` has two shapes: a Bar's is one number along its Edge (D41), a Panel's is four-sided from its anchored edges (D43). Recommendation: keep the name in both and document the shapes.
 - The answer on D46 is read as: the check runs when a size is resolved at creation. A hidden, collapsed or peeking surface keeps its window (a peek strip), so it does not resolve to 0. How a collapsed Bar keeps a surface in the protocol is #needs-verification.
 - `Name:` is unique across the shell (decided 2026-10-26) and also forms a path (D39). A module used twice gets a path name for each use (`RootShell.DP1.Top_Bar.Clock_1`).
+
+### Fourth-Round Decisions (2026-10-30)
+
+Decided by the maintainer in chat, settling the three conflicts left by the third round.
+
+| #   | Topic                 | Decision                                                                                                                                                                                                                                                                                                                                                                   |
+|-----|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| D49 | `Gap` and `Spacing`   | `Gap` is the distance to the thing a surface is attached to: a Bar to its Edge, a Popup to its anchor, a Panel to a target that is not a Frame. The spacing between the children of a layout is `Spacing` (D35 becomes `Flex`, `Columns`, `Rows`, `Spacing`).                                                                                                              |
+| D50 | Four-sided order      | Left, Top, Right, Bottom, the convention of other UI frameworks. It replaces the clockwise order from the top (top, right, bottom, left) of 2026-10-26. `Margin: [10, 0, 0, 10]` on a bottom-left Panel is 10 px on the left and bottom. Named sides (`Thickness { Left: 8, Top: 4 }`) are unchanged. The shell reorders to tre's order when it passes a value to tre. |
+| D51 | `Offset` shapes       | A Bar's `Offset` is one number along its Edge. A Panel's `Offset` is four-sided (Left, Top, Right, Bottom) from its anchored edges. The name is kept for both.                                                                                                                                                                                                                |
+
+Readings: the order of four corner radii is not stated. It stays top-left, top-right, bottom-right, bottom-left (clockwise from the top-left corner) until the maintainer says otherwise. An asymmetric four-sided value in an earlier example is reordered from (top, right, bottom, left) to (left, top, right, bottom); a symmetric one such as `[2, 2, 2, 2]` is unchanged.
 
 ## Open Items
 

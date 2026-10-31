@@ -5,7 +5,7 @@ type: design
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [design, needs-verification]
 related: ["[[50 Design System]]", "[[V1 Widgets]]", "[[Shell Structure]]", "[[Module File]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]"]
@@ -30,6 +30,21 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 - A block can be placed anywhere: on a surface, in a container or in a module. It is most commonly used inside a module (maintainer, 2026-10-27).
 - A container is a block (`FlexBox { }`), not a module and not a separate key. This replaces the earlier idea of a key of its own for containers.
 - Blocks are fixed by the shell. Whether a module author can add a block is open.
+
+## Layout, Padding and Margin
+
+A surface or a module passes layout properties to its layout block (`Box`, `FlexBox` or `Grid`) (D35, with `Gap` renamed by D49; [[ADR-0014 Shell File Language#Fourth-Round Decisions (2026-10-30)]]):
+
+| Property  | Value                                      | Meaning                                                                            |
+|-----------|--------------------------------------------|------------------------------------------------------------------------------------|
+| `Flex`    | `VERTICAL`, `HORIZONTAL`, `NONE`           | How the children are stacked. `NONE` leaves the layout to `Columns` and `Rows`     |
+| `Columns` | A whole number                             | The number of columns of a `Grid`                                                  |
+| `Rows`    | A whole number                             | The number of rows of a `Grid`                                                     |
+| `Spacing` | A whole number of pixels                   | The space between the children of the layout. It is not `Gap`, which is the distance from a surface to what it is attached to |
+
+- `Padding` (four-sided, left, top, right, bottom) exists on every block that has `Children`: transparent space between its children and its four sides (D42). Blocks without `Children` (`Text`, `Bitmap`, `SVG`, the shapes, `Terminal`, `Canvas`) have none.
+- `Margin` (four-sided, left, top, right, bottom) is transparent space around the block itself, outside it (D41 to D45). A Bar has none (D41).
+- The exact property set per block stays a proposal until each block's properties are written (see Open).
 
 ## The Modules Built from Them (The Maintainer's List)
 
@@ -99,7 +114,7 @@ Decided by the maintainer (2026-10-26); the full rules are in [[Style, Theme and
 - [ ] Whether a module author can add a block (in Python, shipped with a module), or blocks are fixed.
 - [x] A free-form Path block: added (2026-10-26).
 - [x] Whether the listed modules can be built from the listed blocks: the maintainer reports yes, tested on Tesserae (2026-10-26). Revealer and Marquee need animated layout and translate properties; Stack needs layered children; Slider, Toggle and Button need pointer and drag events from the blocks.
-- [ ] Grid: what it offers against tre's layout.
+- [ ] Grid: what it offers against tre's layout, and how `Columns`, `Rows` and `Spacing` map to it.
 - [x] The default hit shape of Path and the shape blocks: `painted` (maintainer, 2026-10-27): the reason to use a shape is for the look and for the hit box to be the painted shape. tre 0.5.9 has `hit_shape` `box` (its default) or `painted`; the shell's shape blocks set `painted`. SVG and Canvas are not covered by `hit_shape` ([[Hit Testing for Concave Corners]]).
 - [ ] How icons are found (a theme icon set, files, both).
 - [ ] The state model: whether input blocks have properties the user edits (Tesserae's `model`) and how that reaches a module.

@@ -14,51 +14,58 @@ depends_on: ["[[Common Keys and Conventions]]", "[[ADR-0007 Shell UI Layer]]"]
 # Module File
 
 > [!summary]
-> A module file (file-type key `Module: v1`, suffix `_Module.tdl`, written in TDL, [[ADR-0014 Shell File Language]]) is the layout part of a module: its widgets, the expressions that place data in them, and the params it accepts. It sits beside a style file and a matching Python file in a `Modules/<module_name>/` folder ([[ADR-0007 Shell UI Layer#What a module is (2026-10-26)]]). The Python is described in [[Module Contract]]. The metadata block and the registry are in [[TDL Language]]. Examples are illustrations; the Label example is the maintainer's ([[Module Context#Example: the Label module]]).
+> A module file (root block `Module { }`, suffix `_Module.tdl`, written in TDL, [[ADR-0014 Shell File Language]]) is the layout part of a module: its widgets, the expressions that place data in them, and the params it accepts. It sits beside a style file and a matching Python file in a `Modules/<module_name>/` folder ([[ADR-0007 Shell UI Layer#What a module is (2026-10-26)]]). The Python is described in [[Module Contract]]. The metadata block and the registry are in [[TDL Language]]. Examples are illustrations; the Label example is the maintainer's ([[Module Context#Example: the Label module]]).
 
 ## Structure
 
 ```
 ---
 TDL: 0.1
-Module: v1
+TEL: 0.1
+TRE: 0.5.9
+Shell: 0.1
 Name: Label
 ---
 
-Style: Label_Style.tdl
-Params {
-    text { Type: string }
-}
+Module {
+    Style: Label_Style.tdl
+    Params {
+        text { Type: string }
+    }
 
-FlexBox {
-    Name: Label_Module_FlexBox
-    Alignment: horizontal
-    Width: 120
-    Height: 34
-    Children {
-        Icon {
-            Name: Monitor_Icon
-            Icon: monitor.svg
-        }
-        Text {
-            Name: Label_Text
-            Class: text_style
+    FlexBox {
+        Name: Label_Module_FlexBox
+        Flex: HORIZONTAL
+        Width: 120
+        Height: 34
+        Children {
+            Icon {
+                Name: Monitor_Icon
+                Icon: monitor.svg
+            }
+            Text {
+                Name: Label_Text
+                Class: text_style
+            }
         }
     }
 }
 ```
 
+The metadata `Name: Label` is the module's call name. The root block `Module { }` holds `Params { }`, `Style` and the layout. A module whose root layout is a surface holds it the same way, for example a module `Top_Bar` with `Module { Bar { Name: Top_Bar_Surface Edge: TOP Width: EXPAND Height: 32 } }`, usable under several `Monitor` blocks (D29).
+
 ## Keys
 
 | Key                                                      | Meaning                                                                          | Status                       |
 |----------------------------------------------------------|----------------------------------------------------------------------------------|------------------------------|
-| `TDL`, `Module`, `Name`, `UID` (metadata block)          | As every file ([[TDL Language#The Metadata Block]]). `Name` is the module's unique name and the word that calls it. Required | Decided (2026-10-29)         |
-| `Style`                                                  | In the body after the metadata block: a style file name, or an inline `Style { }` block of style values | Decided (D17, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]) |
-| `Params`                                                 | In the body after the metadata block: the values a use may pass, each a block that may have a `Type:` property | Decided (D17); the type names are proposed |
-| A top-level block (`FlexBox { }`, `Box { }`)             | The root of the module's layout; the head is a building block or a module        | Decided (the form)           |
+| `TDL`, version pins, `Name`, `UID` (metadata block)      | As every file ([[TDL Language#The Metadata Block]]). `Name` is the module's call name and unique name. Required (D39) | Decided (2026-10-30)         |
+| `Module { }`                                             | The root block; it names the file type and holds everything below                | Decided (2026-10-30)         |
+| `Style`                                                  | Inside `Module { }`: a style file name, or an inline `Style { }` block of style values | Decided (D17, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]) |
+| `Params`                                                 | Inside `Module { }`: the values a use may pass, each a block that may have a `Type:` property | Decided (D17); the type names are proposed |
+| A block inside `Module { }` (`FlexBox { }`, `Box { }`)   | The root of the module's layout; the head is a building block, a module or a surface | Decided (the form)           |
 | `Children`                                               | The root block's children, blocks and module uses                                | Decided                      |
 
-A module file has one layout root. There is no `Monitor` and no surface head in it: a module is not a surface.
+A module file has one layout root. There is no `Monitor` in it. The layout root may be a surface (`Bar`, `Panel`, ...), but surfaces never nest inside surfaces.
 
 ## Blocks and Modules in the Layout
 
@@ -161,8 +168,8 @@ The maintainer suggested a "bubble up" policy for params (2026-10-26). My readin
 
 ## Errors Specific to Module Files
 
-- A `Module:` file without a matching `_Module.py`: error naming both files.
-- A file-type key and suffix that disagree: error naming both.
+- A `Module { }` file without a matching `_Module.py`: error naming both files.
+- A root block and suffix that disagree: error naming both.
 - A module file without `Name:` in its metadata: error.
 - A `Name` registered twice: error naming both places; a user module of a shipped module's name overrides it ([[TDL Language#Names and the Registry]]).
 - A param passed that is not declared, or of the wrong type: error naming the use and the param.
@@ -175,7 +182,7 @@ The maintainer suggested a "bubble up" policy for params (2026-10-26). My readin
 - [ ] The `Params` type names and whether defaults are v1.
 - [ ] How the module's root is written when it is not a container (a single `Text`).
 - [ ] The widget property names (`Foreground`, `Fill`, `Alignment`, `Justify_Content`, `Align_Content`, `Width`, `Height`) and which go in style or on the widget.
-- [x] Where a module file's own `Style:` and `Params { }` sit: in the body after the metadata block (D17, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [x] Where a module file's own `Style:` and `Params { }` sit: inside the `Module { }` root block (D17, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 - [x] Whether `Type:` stays inside a param declaration: yes, as a property, not a file key (D17). Open: `Default:` and the type names ([[#Params]]).
 - [ ] Whether a module can declare the keys its Python sends, so the shell checks a layout against them at load ([[Value Types and Conversion#Open questions]]).
 - [x] Whether a module can contain other modules: the flow diagram says yes ("Can Nest"); the meaning for params, names and UIDs is open ([[Shell Structure]]).

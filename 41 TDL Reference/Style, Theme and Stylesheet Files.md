@@ -16,40 +16,42 @@ depends_on: ["[[Common Keys and Conventions]]"]
 > [!summary]
 > Three files control how things look. A **style** file holds the values for one surface or module, like its inline `Style:` key. A **stylesheet** holds shared rules that apply across the shell by widget type or class. A **theme** holds design tokens (colour, type, shape, motion) that the others refer to. The split is the maintainer's ([[ADR-0007 Shell UI Layer#Theme, style and stylesheet (2026-10-25)]]). The Style format below comes from the maintainer's Label example; Theme and Stylesheet are proposed in [[Style Schema]].
 
-All three are shell files: each starts with a metadata block whose file-type key is `Style:`, `Theme:` or `Stylesheet:` ([[TDL Language#The Metadata Block]]). Their suffixes are `_Style.tdl`, `_Theme.tdl` and `_Stylesheet.tdl`, the same suffixes as Tesserae's, with the extension `.tdl` ([[ADR-0014 Shell File Language]]); the metadata block and the file-type key tell them apart from a Tesserae file, and the key is authoritative over the suffix ([[ADR-0014 Shell File Language#Layout Rules]], item 16).
+All three are shell files: each starts with a metadata block (`TDL:` and a required `Name:`, [[TDL Language#The Metadata Block]]) and holds one root block: `Style { }`, `Theme { }` or `Stylesheet { }` ([[TDL Language#The Root Block]]). Their suffixes are `_Style.tdl`, `_Theme.tdl` and `_Stylesheet.tdl`, the same suffixes as Tesserae's, with the extension `.tdl` ([[ADR-0014 Shell File Language]]). The root block is authoritative; a mismatch with the suffix is a load error naming both.
 
 ## Style File
 
 ```
 ---
 TDL: 0.1
-Style: v1
+Name: Label_Style
 ---
 
-Classes {
-    text_style {
-        Kind: Text            # the type the class applies to; see Classes below
-        Size: 16
-        Weight: 500
-        Foreground: "#ffffff"
+Style {
+    Classes {
+        text_style {
+            Kind: Text            # the type the class applies to; see Classes below
+            Size: 16
+            Weight: 500
+            Foreground: "#ffffff"
+        }
     }
-}
 
-Icon {
-    Foreground: "#ffffff"
-    Fill: "#00000000"
-}
+    Icon {
+        Foreground: "#ffffff"
+        Fill: "#00000000"
+    }
 
-FlexBox {
-    Background: "#000000"
-    Border: true
-    Border_Thickness: 2
-    Border_Color: "#ffffff"
-    Corner_Radius: 8
-}
+    FlexBox {
+        Background: "#000000"
+        Border: true
+        Border_Thickness: 2
+        Border_Color: "#ffffff"
+        Corner_Radius: 8
+    }
 
-Text {
-    Font_Family: ["Hack Nerd Font Mono", "JetBrains Mono"]
+    Text {
+        Font_Family: ["Hack Nerd Font Mono", "JetBrains Mono"]
+    }
 }
 ```
 
@@ -60,7 +62,7 @@ Text {
 | Property names                                        | `Size`, `Weight`, `Foreground`, `Fill`, `Background`, `Border`, `Border_Thickness`, `Border_Color`, `Corner_Radius`, `Font_Family` | From the example; the full list is open |
 
 - **Colour** forms: the quoted hex `"#RRGGBB"` and `"#RRGGBBAA"`, and `rgba(r g b a)` with spaces, red, green and blue 0 to 255 and alpha 0.0 to 1.0 ([[ADR-0014 Shell File Language#What TDL Is (Decided)]]; the list in [[Common Keys and Conventions#Value forms]] uses the same spelling).
-- **Four-sided** values: a number, a list of four clockwise from the top, or a block of named sides such as `Margin { Top: 8, Left: 24 }` (D7, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). The example's `{2, 2, 2, 2}` becomes `2` or `[2, 2, 2, 2]`; `Corner_Radius: {8, 8, 8, 8}` becomes `8` or `[8, 8, 8, 8]` (top-left, top-right, bottom-right, bottom-left, clockwise from top-left).
+- **Four-sided** values: a number, a list of four in the order left, top, right, bottom (D50), or a block of named sides such as `Margin { Top: 8, Left: 24 }` (D7, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). `Padding` is transparent space inside an element that has `Children`; `Margin` is transparent space around the element ([[Style Schema#Style Keys]]). The example's `{2, 2, 2, 2}` becomes `2` or `[2, 2, 2, 2]`; `Corner_Radius: {8, 8, 8, 8}` becomes `8` or `[8, 8, 8, 8]` (top-left, top-right, bottom-right, bottom-left, clockwise from top-left).
 - **Lists:** `Font_Family: ["Hack Nerd Font Mono", "JetBrains Mono"]`, an ordered fallback list (the example's braces become square brackets).
 - The same values may be written inline under `Style:` in a module or surface.
 - `Border: true` is a bare word that the key's schema type reads as a boolean (D2, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
@@ -74,29 +76,34 @@ Text {
 
 ## Theme File (Not yet Designed)
 
-A theme holds design tokens: colour roles, type scale, shape (radii), motion (durations, easing), spacing. Styles and stylesheets refer to tokens by name instead of repeating values, which is how light and dark, high contrast and reduced motion are followed from the desktop ([[Goals and Non-Goals]] G7). The token set and file shape belong to `50 Design System/`; this reference records only the file's metadata block (`Theme:`).
+A theme holds design tokens: colour roles, type scale, shape (radii), motion (durations, easing), spacing. Styles and stylesheets refer to tokens by name instead of repeating values, which is how light and dark, high contrast and reduced motion are followed from the desktop ([[Goals and Non-Goals]] G7). The token set and file shape belong to `50 Design System/`; this reference records only the file's metadata block and root block (`Theme { }`).
 
 ```
 ---
 TDL: 0.1
-Theme: v1
-Name: dark
+Name: Dark
 ---
-# token groups: colour, type, shape, motion, spacing -- not designed
+
+Theme {
+    # token groups: colour, type, shape, motion, spacing -- not designed
+}
 ```
 
-A theme may carry `Name:` in its metadata; it is optional, and unknown metadata is kept (D19, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). [[Style Schema#Theme Tokens]] shows the proposed token shape.
+`Name:` is required in the metadata, as in every file (D39); unknown metadata is kept (D19, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). [[Style Schema#Theme Tokens]] shows the proposed token shape.
 
 ## Stylesheet File (Not yet Designed)
 
-A stylesheet holds shared rules that apply across the shell by widget type or class, so a shell author can restyle every `Text` or every `.warning` in one place. A rule is a `Rule { Selector: ".warning", ... }` block, repeated as needed, and the selector is a quoted string (D5, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; the forms are in [[Style Schema#Stylesheet Selectors]]).
+A stylesheet holds shared rules that apply across the shell by widget type or class, so a shell author can restyle every `Text` or every `.warning` in one place. A rule is a `Rule { Selector: ".warning", ... }` block inside the root `Stylesheet { }`, repeated as needed, and the selector is a quoted string (D5, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; the forms are in [[Style Schema#Stylesheet Selectors]]).
 
 ```
 ---
 TDL: 0.1
-Stylesheet: v1
+Name: Base_Stylesheet
 ---
-# Rule blocks (Selector plus style values) -- see Style Schema
+
+Stylesheet {
+    # Rule blocks (Selector plus style values) -- see Style Schema
+}
 ```
 
 ## Rules

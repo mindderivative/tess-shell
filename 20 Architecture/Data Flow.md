@@ -20,7 +20,7 @@ depends_on: ["[[Layers and Components]]"]
 
 ```mermaid
 flowchart TD
-    a[Find shell files in the config directory] --> b[Parse TDL and check the metadata block and file-type key]
+    a[Find shell files in the config directory] --> b[Parse TDL and check the metadata block, TDL, Name and the root block against the suffix]
     b --> c[Follow Import and nest]
     c --> d[Check or write registry and UID]
     d --> e[Resolve name references through registry]
@@ -33,7 +33,7 @@ flowchart TD
 
 | Step                         | Decided by                              | Failure                                                                               |
 |------------------------------|-----------------------------------------|---------------------------------------------------------------------------------------|
-| Files, metadata block, file-type key | [[TDL Language#The Metadata Block]], [[ADR-0014 Shell File Language#File Layout (Decided 2026-10-29)]] | A file without the block, `TDL:` or exactly one file-type key is refused and named; a key that disagrees with the suffix is a load error naming both |
+| Files, metadata block, root block | [[TDL Language#The Metadata Block]], [[TDL Language#The Root Block]], [[ADR-0014 Shell File Language#Second-Sketch Decisions (2026-10-30)]] | A file without the block, `TDL:`, `Name:` or exactly one root block is refused and named; a root block that disagrees with the suffix is a load error naming both |
 | `Import` and nesting         | [[ADR-0007 Shell UI Layer#Recognising a shell file and importing (2026-10-25)]] | Cycle, missing file or a name registered twice (a user module overrides a shipped one): load error with `file:line:column`         |
 | Registry and UID             | [[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]] | A mismatch registers a new entry; an unresolved reference is an error at load         |
 | TEL compile                  | [[ADR-0008 Tesserae Expression Language]] | Error with file, line and column inside the TDL file                                  |

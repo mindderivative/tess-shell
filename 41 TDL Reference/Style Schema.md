@@ -19,7 +19,7 @@ depends_on: ["[[Style, Theme and Stylesheet Files]]"]
 ## Principles
 
 1. **One name per concept.** `Corner_Radius` is the radius everywhere; a block never has its own spelling.
-2. **Capitalised keys.** Every key is Capitalised, and a key of several words Capitalises each word and joins them with `_` (`Border_Thickness`). Enum values stay lowercase. The rule is in [[TDL Language#Names and the Registry]]; this note does not restate it.
+2. **Capitalised keys.** Every key is Capitalised, and a key of several words Capitalises each word and joins them with `_` (`Border_Thickness`). Enum values are full upper case (`CENTER`, `START`, `AUTO`). The rule is in [[TDL Language#Names and the Registry]]; this note does not restate it.
 3. **Pixels, not CSS units.** A number is logical pixels; the forms in [[Common Keys and Conventions#Value forms]] apply. No `px`, `em`, `rem` suffixes.
 4. **Flat first, groups where they pay.** The maintainer's Style example is flat (`Border_Thickness`, `Border_Color`); keep that. Groups appear only for repeated structures (a `Shadows` block of `Shadow` blocks, D4).
 5. **Tokens are referenced, never copied.** A theme defines a value once; styles and stylesheets name it.
@@ -32,12 +32,14 @@ Proposed set for v1. A key a block does not have is an error with the nearest na
 | Group  | Keys                                                                           | Notes                                                                                                   |
 |--------|--------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | Fill   | `Background`, `Foreground`, `Fill`, `Opacity`                                  | `Foreground` is text and icon colour; `Fill` is a shape's interior (from the maintainer's Icon example) |
-| Border | `Border` (bool), `Border_Thickness`, `Border_Color`, `Corner_Radius`           | Four-sided forms; `Border_Thickness` and `Corner_Radius` take one number, four clockwise or named sides |
-| Space  | `Padding`, `Margin`, `Gap`                                                     | Four-sided for the first two; `Gap` is a number                                                         |
+| Border | `Border` (bool), `Border_Thickness`, `Border_Color`, `Corner_Radius`           | Four-sided forms; `Border_Thickness` takes one number, four in the order left, top, right, bottom, or named sides; `Corner_Radius` takes one number, four from the top-left corner clockwise, or named corners |
+| Space  | `Padding`, `Margin`, `Spacing`                                                 | `Padding` and `Margin` are four-sided (left, top, right, bottom); `Spacing` is a number                 |
 | Text   | `Font_Family`, `Size`, `Weight`, `Line_Height`, `Align`, `Overflow`            | `Font_Family` is an ordered fallback list; `Size` is the text size in pixels                            |
 | Shadow | `Elevation`, `Shadows`, `Shadow_Bleed`                                          | See below                                                                                               |
 | Motion | `Transition`, `Duration`, `Easing`                                             | A property list plus timing; token names allowed                                                        |
 | State  | A state key (`Hovered`, `Pressed`, `Focused`, `Disabled`) holding style values | Overrides the base values while the state holds                                                         |
+
+`Padding` is transparent space inside an element, between its children and its four sides, and exists on every element that has `Children`. `Margin` is transparent space outside the element, around the element itself. `Spacing` is the distance between a layout's children. `Gap` is not a style key: it is the distance from a surface to what it is attached to, a surface key ([[Surface Types]], [[TDL Language#Sizes (Shell Schema)]]). A Bar has no `Margin`, a Panel positions itself with `Offset`, and a Frame's `Margin` adds to its total size; those rules belong to the surfaces and are not repeated here.
 
 Layout keys (`Direction`, `Align_Items`, `Justify`, `Width`, `Height`, `Flex_Grow`) belong to the block's properties, not to style ([[Building Blocks]]); the split is open.
 
@@ -49,7 +51,7 @@ Decision behind them: shadows are drawn inside the surface with a transparent ma
 |----------------|---------------------------------------------------------------------------------------------------------------------------------------|
 | `Elevation`    | A level from the theme's elevation scale (`0` to `5`; `0` is no shadow); the theme turns it into shadow layers                                          |
 | `Shadows`      | A block of repeated `Shadow` blocks that replaces the elevation, ordered by position: each `Shadow` has `Color`, `X`, `Y`, `Blur`, `Spread` (no unnamed block as a list item, D4, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]) |
-| `Shadow_Bleed` | The transparent margin around a surface body. `auto` (default) computes it from the shadow; a number or four-sided value overrides it |
+| `Shadow_Bleed` | The transparent margin around a surface body. `AUTO` (default) computes it from the shadow; a number or four-sided value overrides it |
 
 ```
 Panel {
@@ -82,37 +84,38 @@ A token is referenced as `$group.name`, for example `$color.surface` or `$type.b
 ```
 ---
 TDL: 0.1
-Theme: v1
-Name: dark
+Name: Dark
 ---
 
-Color {
-    Surface: "#1D1B20"
-    On_Surface: "#E6E0E9"
-    Primary: "#D0BCFF"
-}
-Shape {
-    Small: 4
-    Medium: 8
-    Large: 16
-}
-Elevation {
-    Level_1 {
-        Shadows { Shadow { Color: "#00000033", X: 0, Y: 1, Blur: 3, Spread: 0 } }
+Theme {
+    Color {
+        Surface: "#1D1B20"
+        On_Surface: "#E6E0E9"
+        Primary: "#D0BCFF"
     }
-    Level_2 {
-        Shadows { Shadow { Color: "#00000040", X: 0, Y: 2, Blur: 6, Spread: 0 } }
+    Shape {
+        Small: 4
+        Medium: 8
+        Large: 16
+    }
+    Elevation {
+        Level_1 {
+            Shadows { Shadow { Color: "#00000033", X: 0, Y: 1, Blur: 3, Spread: 0 } }
+        }
+        Level_2 {
+            Shadows { Shadow { Color: "#00000040", X: 0, Y: 2, Blur: 6, Spread: 0 } }
+        }
     }
 }
 ```
 
-A token name in a theme file (`On_Surface`) is a Capitalised key; the lowercase reference matches it ignoring case (D16). A theme may carry `Name: dark` in its metadata block; it is optional and unknown metadata is kept (D19). Scales use names, not numeric keys: `Level_1` to `Level_5` and `Step_1` to `Step_8` (D4).
+A token name in a theme file (`On_Surface`) is a Capitalised key; the lowercase reference matches it ignoring case (D16). A theme file has a root block `Theme { }`, and `Name:` in its metadata block is required, as in every file (D39, [[TDL Language#The Metadata Block]]); unknown metadata is kept (D19). Scales use names, not numeric keys: `Level_1` to `Level_5` and `Step_1` to `Step_8` (D4).
 
 Light, dark, high contrast and reduced motion are modes of one theme: a `Modes` block (`Light`, `Dark`, `High_Contrast`, `Reduced_Motion`) overrides token values, and the shell picks the mode from the desktop ([[Goals and Non-Goals]] G7). Recommendation over one theme file per mode: tokens stay in one place and a missing override is easy to spot. Open.
 
 ## Stylesheet Selectors
 
-A stylesheet is a list of `Rule` blocks, repeated as needed and ordered by position. Each `Rule` has a `Selector:` property, a quoted string, and style values beside it (D5, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+A stylesheet is a root block `Stylesheet { }` holding `Rule` blocks, repeated as needed and ordered by position. Each `Rule` has a `Selector:` property, a quoted string, and style values beside it (D5, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
 
 | Selector                | Matches                   | Example `Selector:` value |
 |-------------------------|---------------------------|---------------------------|
@@ -127,21 +130,23 @@ The selector is a string, so `.`, `#`, `:` and `::` are not TDL syntax there. Sp
 ```
 ---
 TDL: 0.1
-Stylesheet: v1
+Name: Base_Stylesheet
 ---
 
-Rule {
-    Selector: "Text"
-    Foreground: $color.on_surface
-    Size: $type.body.size
-}
-Rule {
-    Selector: ".warning"
-    Foreground: $color.warning
-}
-Rule {
-    Selector: "Button:hovered"
-    Background: $color.surface_raised
+Stylesheet {
+    Rule {
+        Selector: "Text"
+        Foreground: $color.on_surface
+        Size: $type.body.size
+    }
+    Rule {
+        Selector: ".warning"
+        Foreground: $color.warning
+    }
+    Rule {
+        Selector: "Button:hovered"
+        Background: $color.surface_raised
+    }
 }
 ```
 
