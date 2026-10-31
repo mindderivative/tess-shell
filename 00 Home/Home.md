@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-10-31 |
-| Last change         | Bar-to-tre mapping accepted (D61); a Bar `Gap` decides its Frame meld (D62); Panel `Meld` restored with its real meaning (D56 corrected) ([[ADR-0014 Shell File Language]]) |
+| Last change         | `Meld` restored, confirmed; the `?:` cost test in the TEL repo read and run: 0 mismatches in 30,000 cases, same evaluation speed, about 4x compile time ([[Expression Language Requirements]]) |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | Confirm the corrected `Meld` key (hosted or separate window, default `false`) in [[ADR-0014 Shell File Language#Seventh-Round Decisions (2026-10-31)]]; the building-blocks reference is next; the TEL release number to pin as `TEL:` once path tracking ships |
+| Waiting on you      | TEL's decision on `?:` (T19) after its cost test; the TEL release number to pin as `TEL:` once path tracking ships; the building-blocks reference is next ([[Roadmap]]) |
 | Next                | Building Blocks reference (gates the shipped modules); then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-31 | `Meld` restored (confirmed); `?:` cost test results recorded ([[Expression Language Requirements]]) |
 | 2026-10-31 | P1 accepted (D61); Bar `Gap` decides its meld (D62); Panel `Meld` restored (D56 corrected) ([[ADR-0014 Shell File Language]]) |
 | 2026-10-31 | P2 to P7 decided (D55 to D60); Panel `Meld` removed ([[ADR-0014 Shell File Language]]) |
 | 2026-10-31 | Proposed answers P1 to P7 and the Bar-to-tre mapping ([[Bar]], [[ADR-0014 Shell File Language]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-31 | `tess-el` answered the T17 to T20 questions ([[Expression Language Requirements]]) |
 | 2026-10-31 | Slot-end rule accepted (D54) in [[ADR-0014 Shell File Language]] and [[TDL Language]] |
 | 2026-10-31 | Questions on T17 to T20 sent to `tess-el` ([[Expression Language Requirements]]) |
-| 2026-10-31 | TEL requests T17 to T20 accepted ([[Expression Language Requirements]]) |
 
 ## Go to
 
