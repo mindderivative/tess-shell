@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-29
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [tdl-ref, tdl, needs-verification]
 related: ["[[ADR-0014 Shell File Language]]", "[[41 TDL Reference]]", "[[Common Keys and Conventions]]", "[[Shell File]]", "[[Module File]]", "[[Shell File Syntax Comparison]]"]
 depends_on: ["[[ADR-0014 Shell File Language]]"]
@@ -185,7 +185,7 @@ A `Width` or `Height` is a number of pixels, a percentage, `AUTO` or `EXPAND`. `
 
 ## Errors
 
-Every error carries `file:line:column` from the shell's own TDL parser, which keeps a lossless tree (comments and layout survive the UID write). A TEL error inside a slot points into the file because the parser gives TEL the slot's start ([[Expression Language Requirements]], T17). The list below is the agent's proposal for the syntax errors; the maintainer has not decided it.
+Every error carries `file:line:column` from the shell's own TDL parser, which keeps a lossless tree (comments and layout survive the UID write). A TEL error inside a slot points into the file because the parser gives TEL the slot's start ([[Expression Language Requirements]], T17). The list below was accepted by the maintainer on 2026-10-30 (D52). New codes are added here as the parser is designed.
 
 Proposed form, copied from TEL's decided errors ([[Expression Language Requirements]]): one base error class with a stable `code` slug on every error, a message, a hint that says what to write, and a 1-based `file`, `line` and `column`. Value and schema checks (unknown key, wrong type, enum case) belong to the shell's schema ([[Validation and Errors]]), not to TDL.
 
@@ -231,7 +231,7 @@ These notes were revised on 2026-10-30 to the decisions of [[ADR-0014 Shell File
 
 Decided on 2026-10-30 and removed from this list: the version pins are minimums (D37), `Name:` is required in every file (D39), the spelling is `Import` (D40), `Margin`, `Gap`, `Offset` and `Padding` meanings (D41 to D45), and `calc` is out of v1 (D47).
 
-- [ ] The names and slugs of TDL syntax errors: the proposed list under "Errors" waits for the maintainer.
+- [x] The names and slugs of TDL syntax errors: the list under "Errors" is accepted (D52).
 - [ ] The full list of shipped modules and their registry names: after the building blocks are worked out (D48, [[V1 Widgets]]).
 - [ ] How a collapsed or hidden Bar keeps a layer surface, so that a size of 0 never arises at creation (D46; #needs-verification against the layer-shell protocol).
 - [x] `Gap` is the distance to what a surface is attached to, and a layout's child spacing is `Spacing` (D49). The four-sided order is Left, Top, Right, Bottom (D50). A Bar's `Offset` is one number, a Panel's is four-sided (D51) ([[ADR-0014 Shell File Language#Fourth-Round Decisions (2026-10-30)]]).

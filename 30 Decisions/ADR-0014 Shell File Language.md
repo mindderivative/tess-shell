@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-29
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [adr, architecture, needs-verification]
 related: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0008 Tesserae Expression Language]]", "[[ADR-0011 JSON Schema for Shell Files]]", "[[Expression Language Requirements]]", "[[Python Builder]]", "[[JSON Schema and Editor Support]]", "[[Shell File Syntax Comparison]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0008 Tesserae Expression Language]]"]
@@ -402,6 +402,15 @@ Decided by the maintainer in chat, settling the three conflicts left by the thir
 | D51 | `Offset` shapes       | A Bar's `Offset` is one number along its Edge. A Panel's `Offset` is four-sided (Left, Top, Right, Bottom) from its anchored edges. The name is kept for both.                                                                                                                                                                                                                |
 
 Readings: the order of four corner radii is not stated. It stays top-left, top-right, bottom-right, bottom-left (clockwise from the top-left corner) until the maintainer says otherwise. An asymmetric four-sided value in an earlier example is reordered from (top, right, bottom, left) to (left, top, right, bottom); a symmetric one such as `[2, 2, 2, 2]` is unchanged.
+
+### Fifth-Round Decisions (2026-10-31)
+
+Decided by the maintainer in chat.
+
+| #   | Topic              | Decision                                                                                                                                              |
+|-----|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| D52 | TDL error list     | The 18 error codes in [[TDL Language#Errors]] are accepted. The maintainer asked what "T17 to T20" meant; the plain-language explanation is in [[Expression Language Requirements#Requests to the TEL Project (T17 to T20)]]. |
+| D53 | Corner-radius order | Four corner radii run top-left, top-right, bottom-right, bottom-left (clockwise from the top-left corner), as kept in D50.                          |
 
 ## Open Items
 
