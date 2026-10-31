@@ -234,7 +234,7 @@ Decided on 2026-10-30 and removed from this list: the version pins are minimums 
 
 - [x] The names and slugs of TDL syntax errors: the list under "Errors" is accepted (D52).
 - [ ] The full list of shipped modules and their registry names: after the building blocks are worked out (D48, [[V1 Widgets]]).
-- [ ] How a collapsed or hidden Bar keeps a layer surface: proposed in [[Bar#Mapping to tre (Proposed)]] (the window keeps its size and slides by a negative margin). The protocol makes a 0 size without opposite anchors an error, so D46 stands (verified 2026-10-31).
+- [ ] How a collapsed or hidden Bar keeps a layer surface: accepted in [[Bar#Mapping to tre]] (D61): the window keeps its size and slides by a negative margin. The protocol makes a 0 size without opposite anchors an error, so D46 stands (verified 2026-10-31).
 - [x] `Gap` is the distance to what a surface is attached to, and a layout's child spacing is `Spacing` (D49). The four-sided order is Left, Top, Right, Bottom (D50). A Bar's `Offset` is one number, a Panel's is four-sided (D51) ([[ADR-0014 Shell File Language#Fourth-Round Decisions (2026-10-30)]]).
 
 ## Acceptance Criteria

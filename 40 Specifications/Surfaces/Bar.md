@@ -34,9 +34,9 @@ The Bar is placed with `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap
 | A shorter bar at one end           | `Edge: TOP`, `Width: 400`, `Height: 32`, `Alignment: START`, `Offset: 200` | `anchor` the edge and one perpendicular edge; a `margin` along the edge for the offset                                         |
 | A bar that looks floating          | `Edge: TOP`, `Width: EXPAND`, `Height: 32`, `Gap: 8`           | The same, with a `margin` on its own edge; the zone is 40. It is still a Bar: the 8 px is reserved                              |
 
-The shell computes tre's `anchor`, `size`, `margin` and `exclusive_zone` from `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap`, the same way it computes a Panel's attachment geometry. The computation is proposed below (2026-10-31) and waits for the maintainer.
+The shell computes tre's `anchor`, `size`, `margin` and `exclusive_zone` from `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap`, the same way it computes a Panel's attachment geometry. The maintainer accepted the computation below on 2026-10-31 (D61).
 
-#### Mapping to tre (Proposed)
+#### Mapping to tre
 
 Sources: the [layer-shell protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1) (`set_size`, `set_anchor`, `set_exclusive_zone`, `set_margin`, read 2026-10-31) and the [tre LayerWindow reference](https://mindderivative.github.io/tre/reference/layer-window/) (read 2026-10-31). tre takes `margin` as (top, right, bottom, left), whole pixels, negative allowed; `size` 0 on an axis stretches between two anchors on that axis and is otherwise a protocol error (`invalid_size`); `anchor`, `size`, `margin` and `exclusive_zone` are live through `set()`; a margin can be animated.
 
@@ -119,7 +119,7 @@ A Bar belongs to a `Monitor` block, and so to one monitor ([[Shell File]]). A Ba
 | `Exclusive_Zone`    | The raw tre value, for an exact figure                                                                                                            | Rule decided; key accepted 2026-10-29                                        |
 | `Keyboard`          | `NONE`, `ON_DEMAND` or `EXCLUSIVE`                                                                                                                | Decided (key name accepted 2026-10-29)                                       |
 | `Input_Region`      | Whole, nothing, rectangles or `auto`                                                                                                              | Decided (key name accepted 2026-10-29)                                       |
-| `Attach_To`, `Meld` | With `Attach_To` a Frame: draw the Bar inside the Frame's surface, so it grows out of the frame; a thicker Frame edge (a strip) does the same job | Decided (key name accepted 2026-10-29); the mechanism is decided ([[Frame#Hosted melding (decided 2026-10-27)]]) |
+| `Attach_To`, `Meld` | With `Attach_To` a Frame, a Bar melds when its `Gap` on the Frame-facing side is 0, and does not when the `Gap` is above 0; with no Frame there is no meld (D62). `Meld: true` draws a melded Bar inside the Frame's surface instead of in a window of its own; a thicker Frame edge (a strip) does the same job | Decided (key name accepted 2026-10-29); the mechanism is decided ([[Frame#Hosted melding (decided 2026-10-27)]]) |
 | `Hidden`            | Start hidden                                                                                                                                      | Decided (key name accepted 2026-10-29)                                       |
 | `Auto_Hide`         | Slide out after the delay when the pointer leaves; default true                                                                                   | Decided (on by default, opt-out, 2026-10-27)                                 |
 | `Auto_Hide_Delay`   | The delay in milliseconds                                                                                                                         | Decided that it exists; default 1000 ms proposed                             |
@@ -215,7 +215,7 @@ A Bar has no Python of its own. Modules in it receive `use` records with the Bar
 ## Open Questions
 
 - [x] The placement keys: `Edge`, `Width`, `Height`, the `Max_` and `Min_` bounds, `Alignment`, `Offset` and `Gap`; they replace `Span`, `Length`, `Thickness`, `Margin` and the raw `Anchor` and `Size` (maintainer, 2026-10-30).
-- [ ] The mapping of `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` to tre is proposed under Geometry (2026-10-31) and waits for the maintainer. A hidden or peeking Bar keeps its size and slides by a negative margin, so a size of 0 never arises. The unverified points are listed under the mapping table.
+- [x] The mapping of `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` to tre is accepted (maintainer, 2026-10-31, D61), under Geometry. A hidden or peeking Bar keeps its size and slides by a negative margin, so a size of 0 never arises. Open, #needs-verification: the points listed under the mapping table.
 - [x] Movable: no, a Bar is anchored and a movable surface is a Panel. Floating: a Bar with a `Gap` looks floating but stays attached and its gap space is reserved (maintainer, 2026-10-27).
 - [x] Auto-hide: on by default with opt-out, a default delay the user can change, keyboard reveal none by default (maintainer, 2026-10-27). Open: the default delay value, the hover strip's thickness, and the reveal key's key name (`Reveal_Key`).
 - [x] The Plasma panel on the same edge: the Bar wins, unless the Plasma panel is always on top or a window is fullscreen (maintainer, 2026-10-27). Open: how, and how KWin orders two zones on one edge. #needs-verification

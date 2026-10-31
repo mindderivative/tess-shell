@@ -87,7 +87,7 @@ This attaches the Panel's right edge to the target's left edge, lines up their t
 
 - With no margin on those sides, the Panel and the Frame meld as before ([[Frame#Hosted melding (decided 2026-10-27)]]).
 - With a margin there, they do not meld: the Frame edge continues straight and the Panel's corners round as a floating Panel's do.
-- A Panel has no `Meld` key (D56): the `Margin` on the Frame-facing sides is the one switch. A Bar attached to a Frame keeps its `Meld` key; whether a Bar `Gap` should decide its meld the same way is open.
+- Whether a Panel melds is decided by its `Margin` on the Frame-facing sides (D44). The `Meld` key does not switch melding on or off: it only chooses how a melded Panel is drawn, hosted inside the Frame's surface or as a window of its own (D56, amended 2026-10-31). With a margin there, `Meld` has no effect.
 - `Offset` positions the Panel from its anchored edges; `Margin` is transparent space around the Panel and `Padding` is inside it ([[Shell File#Surface Keys]]).
 
 **Following the target (decided 2026-10-27).**
@@ -155,6 +155,7 @@ Keys of a Panel entry. Decided keys are from [[Common Keys and Conventions]]; pr
 | `Anchor`           | `TOP`, `BOTTOM`, `LEFT`, `RIGHT` (one or a list)                                                                                                     | Decided (key name accepted 2026-10-29)                                      |
 | `Size`             | `[width, height]`                                                                                                                                    | Decided (key name accepted 2026-10-29)                                      |
 | `Offset`           | Four-sided position from the anchored edges (left, top, right, bottom); replaces the Panel's old `Margin`. The shell reorders it to tre's `margin` | Decided (D51)                                                               |
+| `Meld`             | Only with `Attach_To` a Frame and no `Margin` on the Frame-facing sides: `true` draws the Panel inside the Frame's surface (hosted melding); `false`, the default, keeps a window of its own that draws its own joins. It does not decide whether the Panel melds; the `Margin` does | Amended 2026-10-31 (D56); the mechanism is decided ([[Frame#Hosted Melding (Decided 2026-10-27)]]) |
 | `Margin`           | Transparent space around the Panel (left, top, right, bottom). Attached to a Frame, on the Frame-facing sides it separates the two and stops the meld | Decided (D41 to D45)                                                        |
 | `Padding`          | Transparent space between the children and the Panel's four sides (left, top, right, bottom)                                                        | Decided (D41 to D45)                                                        |
 | `Keyboard`         | `NONE`, `ON_DEMAND`, `EXCLUSIVE`                                                                                                                     | Decided (key name accepted 2026-10-29)                                      |
