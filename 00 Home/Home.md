@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-10-31 |
-| Last change         | `tess-el` answered the T17 to T20 questions: T17 and T18 already work, T19 and T20 path tracking are wanted but not built ([[Expression Language Requirements]]) |
+| Last change         | TEL built full-path tracking (T20), local and unreleased; the shell uses `reads` for name-tree dependencies ([[Expression Language Requirements]]) |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | Choose how the shell tracks dependencies on the name tree until TEL has path tracking ([[ADR-0014 Shell File Language#Open Items]]); the open items from the third pass in the same place (how Bar `Alignment`, `Offset` and `Gap` map to tre, `Alignment` values, the `Meld` key, settings enum values); your go-ahead in the TEL project for T19 and T20 |
+| Waiting on you      | The open items from the third pass in [[ADR-0014 Shell File Language#Open Items]] (how Bar `Alignment`, `Offset` and `Gap` map to tre, `Alignment` values, the `Meld` key, settings enum values); the TEL release number to pin as `TEL:` once path tracking ships |
 | Next                | Plasma coexistence, the D-Bus service layer, portals, global shortcuts ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-10-31 | TEL built path tracking (T20); name-tree dependency question settled ([[Expression Language Requirements]]) |
 | 2026-10-31 | `tess-el` answered the T17 to T20 questions ([[Expression Language Requirements]]) |
 | 2026-10-31 | Slot-end rule accepted (D54) in [[ADR-0014 Shell File Language]] and [[TDL Language]] |
 | 2026-10-31 | Questions on T17 to T20 sent to `tess-el` ([[Expression Language Requirements]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-31 | Slot-end rule proposed (ADR-0014 open item) after the question on TDL and TEL sharing slots |
 | 2026-10-31 | TDL error list accepted (D52); corner-radius order accepted (D53); TEL requests T17 to T20 explained |
 | 2026-10-30 | Third TDL rewrite pass over the vault; fourth-round decisions D49 to D51 in [[ADR-0014 Shell File Language]] |
-| 2026-10-30 | Third-round decisions D37 to D48 in [[ADR-0014 Shell File Language]]; proposed TDL error list in [[TDL Language]]; T20 proposed |
 
 ## Go to
 

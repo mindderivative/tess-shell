@@ -521,8 +521,8 @@ Raised by the maintainer's question on slot handling (2026-10-31):
 
 Raised by the answers of the `tess-el` session (2026-10-31, [[Expression Language Requirements#TEL's Answers (2026-10-31)]]):
 
-- [ ] **Dependency tracking for the name tree.** TEL reports only the top-level name (`RootShell`) until it builds full-path tracking (the TEL project's D13, which waits for the maintainer's go-ahead). Recommendation: the shell records each property read in its own object layer, so a slot depends on `Top_Bar.Width` and not on the whole tree; drop that when TEL has path tracking. The alternative is to re-evaluate every slot that reads `RootShell` on any change.
-- [ ] **Go-ahead in the TEL project** for path tracking (T20) and for the cost test of the question-mark conditional (T19). Both are the maintainer's decisions in the TEL project; the shell sends nothing more.
+- [x] **Dependency tracking for the name tree.** Settled 2026-10-31: TEL built full-path tracking, so the shell uses `reads` and does not record reads itself ([[Expression Language Requirements#TEL's Answers (2026-10-31)]]). The earlier text follows. TEL reports only the top-level name (`RootShell`) until it builds full-path tracking (the TEL project's D13, which waits for the maintainer's go-ahead). Recommendation: the shell records each property read in its own object layer, so a slot depends on `Top_Bar.Width` and not on the whole tree; drop that when TEL has path tracking. The alternative is to re-evaluate every slot that reads `RootShell` on any change.
+- [x] **Go-ahead in the TEL project** (given for path tracking; the cost test for T19 is still the TEL project's) for path tracking (T20) and for the cost test of the question-mark conditional (T19). Both are the maintainer's decisions in the TEL project; the shell sends nothing more.
 
 ## Links
 
