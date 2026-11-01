@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-29
-updated: 2026-10-31
+updated: 2026-11-01
 tags: [adr, architecture, needs-verification]
 related: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0008 Tesserae Expression Language]]", "[[ADR-0011 JSON Schema for Shell Files]]", "[[Expression Language Requirements]]", "[[Python Builder]]", "[[JSON Schema and Editor Support]]", "[[Shell File Syntax Comparison]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0008 Tesserae Expression Language]]"]
@@ -454,6 +454,17 @@ Decided by the maintainer in chat: "P1 is accepted" and "yes a Bar's gap will de
 
 Both `Meld` and the `Gap` or `Margin` rule apply only with `Attach_To` naming a Frame. `Meld: true` with a `Gap` or `Margin` above 0 on the Frame-facing side has nothing to host and the shell warns.
 
+### Eighth-Round Notes (2026-11-01)
+
+Facts from the TEL repository, read on 2026-11-01. They are TEL's decisions (the maintainer's, in the TEL project), recorded here because they touch D11 and the `For` rules.
+
+| #   | Topic                      | What the TEL repository says                                                                                                                                                                                                                                              |
+|-----|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| D63 | `?:` in TEL                | Accepted and built (TEL decisions S to W; issue #24; language version 0.1), local and not yet released. Compile cost about 2.1 to 2.9 times for an expression that uses it; evaluation and memory the same.                                                                 |
+| D64 | TEL and structure          | TEL evaluates a condition and reconciles a repeater by key; the shell owns the keys, the tree and the UIDs (TEL's D15 and D16, 2026-11-01). Conditions are built; the repeater reconciliation is designed and approved, not built. This refines D11 (TEL is an expression language with a reconciliation helper). |
+
+Open from this: the names of repeated entries. TEL names an entry `<name>_0001` from a counter that only grows and gives a new number to a key that disappears and returns (TEL's D7 and 5H). The TDL rules above say a `For` entry is named `Icon_<key>`. Recommendation: use TEL's counter names. A key can be any value (`DP-1`, a path, a number), but a `Name:` may hold only letters, digits and `_` (D28), so a key-based name could break the name rules. Identity by key stays TEL's (kept, new, moved, removed). The TDL `For ... In ... Key` header maps to TEL's repeater: the item name, the inner text of the iterable slot and the inner text of the `Key` slot. Not decided.
+
 ## Open Items
 
 - [x] **Name.** Tesserae Data Language, TDL (maintainer, 2026-10-29). #needs-verification: that the code name `tdl` and any PyPI package name are free and do not clash with another well-known TDL; check before registering.
@@ -510,7 +521,7 @@ Raised while rewriting the notes for TDL (2026-10-29) and decided on 2026-10-30 
 - [x] **Metadata keys:** unknown keys are kept and ignored (item 14). Which keys are required is in the TDL language reference.
 - [x] **Instance UIDs:** in the registry as `Clock@<uid>`; `UID:` injected into a use only on request (item 12).
 - [x] **Monitor selectors:** `Index:`, `Connector:`, `Description:`, and `Index: default` (item 15). Open: the order when a block has several selectors.
-- [ ] **Question-mark conditional for values** (maintainer, 2026-10-29: "supporting this would be great", `If` stays). It belongs to TEL, not to TDL, so it is written inside a slot: `Color: {{ hovered ? "#1e1e2e" : "#313244" }}`. Outside a slot the text is an unquoted string (Layout Rules, "What TDL Is" item 14). TEL has `a if c else b` today; `?:` needs a change in TEL, recorded as the proposed T19 in [[Expression Language Requirements]]. The maintainer carries it to the TEL project.
+- [x] **Question-mark conditional for values** (maintainer, 2026-10-29: "supporting this would be great", `If` stays). It belongs to TEL, not to TDL, so it is written inside a slot: `Color: {{ hovered ? "#1e1e2e" : "#313244" }}`. Outside a slot the text is an unquoted string (Layout Rules, "What TDL Is" item 14). TEL has `a if c else b` today; `?:` needs a change in TEL, recorded as the proposed T19 in [[Expression Language Requirements]]. The maintainer carries it to the TEL project. Settled 2026-11-01: TEL accepted it (its decisions S to W) and built it, local and unreleased ([[Expression Language Requirements#TEL's Answers (2026-10-31)]]).
 - [x] **File-type key and file name disagree:** the key is authoritative; a mismatch is a load error (item 16).
 - [x] **Style tokens.** The `$color.surface` form (see [[Style Schema]]) against "no variables": the agent treated them as plain strings the shell resolves. Decided 2026-10-30, see Decisions on the Open Items.
 
@@ -564,6 +575,10 @@ Raised by the answers of the `tess-el` session (2026-10-31, [[Expression Languag
 
 - [x] **Dependency tracking for the name tree.** Settled 2026-10-31: TEL built full-path tracking, so the shell uses `reads` and does not record reads itself ([[Expression Language Requirements#TEL's Answers (2026-10-31)]]). The earlier text follows. TEL reports only the top-level name (`RootShell`) until it builds full-path tracking (the TEL project's D13, which waits for the maintainer's go-ahead). Recommendation: the shell records each property read in its own object layer, so a slot depends on `Top_Bar.Width` and not on the whole tree; drop that when TEL has path tracking. The alternative is to re-evaluate every slot that reads `RootShell` on any change.
 - [x] **Go-ahead in the TEL project** (given for path tracking; the cost test for T19 is still the TEL project's) for path tracking (T20) and for the cost test of the question-mark conditional (T19). Both are the maintainer's decisions in the TEL project; the shell sends nothing more.
+
+Raised by TEL's step 5 design (2026-11-01):
+
+- [ ] **Names of repeated entries.** Adopt TEL's `<name>_0001` counter names for `For` entries instead of `Icon_<key>`, as recommended under Eighth-Round Notes. Also adopt `If` as TEL's condition with the first true branch winning, and `Else` as the end of the chain.
 
 ## Links
 
