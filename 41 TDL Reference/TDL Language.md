@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-29
-updated: 2026-10-31
+updated: 2026-11-01
 tags: [tdl-ref, tdl, needs-verification]
 related: ["[[ADR-0014 Shell File Language]]", "[[41 TDL Reference]]", "[[Common Keys and Conventions]]", "[[Shell File]]", "[[Module File]]", "[[Shell File Syntax Comparison]]"]
 depends_on: ["[[ADR-0014 Shell File Language]]"]
@@ -151,6 +151,7 @@ A percentage plus pixels (tre's `calc(100% - 16)`) has no form in v1 (D6). A sty
 - **Kind has one meaning.** `Kind:` references a type by its exact name (`Kind: Panel`, `Kind: Clock`), where a type is named by value rather than by a block head, such as a style class.
 - A name registered twice is a load error. A user module of the same name overrides a shipped module ([[ADR-0007 Shell UI Layer#Module Call, Shipped Modules and Path (2026-10-26)]]).
 - **Repeats.** The same block or module name may appear many times in one `Children { }`. Entries are ordered by position and named from it (`Square_1`, `Square_2`). Siblings are separated by a newline or `,`.
+- **For entries.** The entries of a `For`: TEL names each entry `<name>_0001`, `<name>_0002` and so on from a counter that only grows; a key that disappears and returns gets a new number (D65). The entry is identified by its `Key`, which may be any value; only the generated name is limited to letters, digits and `_`.
 - **Modules and surfaces.** A user module may hold a surface as its root: a module `Top_Bar` can hold a `Bar` and be used under several `Monitor` blocks. Surfaces do not nest inside surfaces (D29).
 - **Instances.** Python keys each use by the module name and the UID, `Clock@<uid>`. The shell writes `UID:` into a block only if it has a `Name:` and the user asks for stable identity across reordering (D30).
 

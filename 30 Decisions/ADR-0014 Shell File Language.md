@@ -200,7 +200,7 @@ Rules:
 
 - **Which tool.** A changing value is a TEL expression. A thing that exists or not, or one of two subtrees, is `if`. A repeat is `for`. There is no `else if`: nest an `if` inside `else`. There is no `while`, `break`, `let` or assignment.
 - **Where they go.** `if` and `for` may appear wherever `children` may. Their bodies are `children`. They are structure and do not run code.
-- A `for` binds one name (`item`), visible inside its body and to TEL only there. `key` is required: it gives each generated entry a stable identity so a reordered list reuses entries, and it names them (`Icon_<key>`) under the path-name rule of [[ADR-0007 Shell UI Layer#Open Items]].
+- A `for` binds one name (`item`), visible inside its body and to TEL only there. `key` is required: it gives each generated entry a stable identity so a reordered list reuses entries, and TEL names them `Icon_0001`, `Icon_0002` and so on from a counter that only grows (D65; the TEL project's D7 and 5H).
 - **Reserved words:** `if`, `else`, `for`, `in`, `key`. A block or module cannot use them as its name.
 - **Reactive.** The shell re-evaluates a condition or iterable when a name it reads changes (TEL tracks the names, TEL project `docs/language.md` section 12.3) and rebuilds only that branch or entry.
 - **Bounded.** TEL's limits apply to the expression ([[Expression Language Requirements]]). The shell adds a cap on the number of entries a `for` creates; the value is not decided.
@@ -462,8 +462,9 @@ Facts from the TEL repository, read on 2026-11-01. They are TEL's decisions (the
 |-----|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | D63 | `?:` in TEL                | Accepted and built (TEL decisions S to W; issue #24; language version 0.1), local and not yet released. Compile cost about 2.1 to 2.9 times for an expression that uses it; evaluation and memory the same.                                                                 |
 | D64 | TEL and structure          | TEL evaluates a condition and reconciles a repeater by key; the shell owns the keys, the tree and the UIDs (TEL's D15 and D16, 2026-11-01). Conditions are built; the repeater reconciliation is designed and approved, not built. This refines D11 (TEL is an expression language with a reconciliation helper). |
+| D65 | Names of `For` entries     | Adopted from TEL: an entry of a `For` is named `<name>_0001`, `<name>_0002` and so on, from a counter that only grows; a key that disappears and returns gets a new number (maintainer, 2026-11-01, "adopt tel's counter names"). Identity by key stays TEL's (kept, new, moved, removed). The `<name>` is the `Name:` of the `For` block when it has one, else the head of its child, else `For` (the agent's proposal, to confirm). Statically repeated blocks keep their position names (`Square_1`, `Square_2`). |
 
-Open from this: the names of repeated entries. TEL names an entry `<name>_0001` from a counter that only grows and gives a new number to a key that disappears and returns (TEL's D7 and 5H). The TDL rules above say a `For` entry is named `Icon_<key>`. Recommendation: use TEL's counter names. A key can be any value (`DP-1`, a path, a number), but a `Name:` may hold only letters, digits and `_` (D28), so a key-based name could break the name rules. Identity by key stays TEL's (kept, new, moved, removed). The TDL `For ... In ... Key` header maps to TEL's repeater: the item name, the inner text of the iterable slot and the inner text of the `Key` slot. Not decided.
+Open from this: the names of repeated entries. TEL names an entry `<name>_0001` from a counter that only grows and gives a new number to a key that disappears and returns (TEL's D7 and 5H). The TDL rules above say a `For` entry is named `Icon_<key>`. Recommendation: use TEL's counter names. A key can be any value (`DP-1`, a path, a number), but a `Name:` may hold only letters, digits and `_` (D28), so a key-based name could break the name rules. Identity by key stays TEL's (kept, new, moved, removed). The TDL `For ... In ... Key` header maps to TEL's repeater: the item name, the inner text of the iterable slot and the inner text of the `Key` slot. Decided 2026-11-01 (D65).
 
 ## Open Items
 
@@ -578,7 +579,7 @@ Raised by the answers of the `tess-el` session (2026-10-31, [[Expression Languag
 
 Raised by TEL's step 5 design (2026-11-01):
 
-- [ ] **Names of repeated entries.** Adopt TEL's `<name>_0001` counter names for `For` entries instead of `Icon_<key>`, as recommended under Eighth-Round Notes. Also adopt `If` as TEL's condition with the first true branch winning, and `Else` as the end of the chain.
+- [x] **Names of repeated entries.** Adopt TEL's `<name>_0001` counter names for `For` entries instead of `Icon_<key>`, as recommended under Eighth-Round Notes. Also adopt `If` as TEL's condition with the first true branch winning, and `Else` as the end of the chain. Decided 2026-11-01 (D65) for the counter names. The `If` chain is unchanged: `If` with an optional `Else`, no `Else If`; the shell calls TEL's `select` with the one condition.
 
 ## Links
 

@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-11-01 |
-| Last change         | TEL accepted and built `?:` (T19); TEL's step 5 design for conditions and repeater reconciliation read and recorded ([[Expression Language Requirements]], [[ADR-0014 Shell File Language]]) |
+| Last change         | `For` entries use TEL's counter names, `<name>_0001` (D65, [[ADR-0014 Shell File Language]]) |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | The names of repeated `For` entries: TEL's `<name>_0001` counter names against `Icon_<key>` ([[ADR-0014 Shell File Language#Open Items]]); the TEL release number to pin as `TEL:` (it will carry path tracking, `?:` and conditions); the building-blocks reference is next |
+| Waiting on you      | Confirm the base name of a `For` entry (the `For` block's `Name:`, else its child's head) in [[ADR-0014 Shell File Language#Eighth-Round Notes (2026-11-01)]]; the TEL release number to pin as `TEL:`; the building-blocks reference is next |
 | Next                | Building Blocks reference (gates the shipped modules); then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-11-01 | `For` entries use TEL's counter names (D65) ([[ADR-0014 Shell File Language]]) |
 | 2026-11-01 | TEL accepted and built `?:`; TEL step 5 (conditions, repeater reconciliation) recorded ([[Expression Language Requirements]]) |
 | 2026-10-31 | `Meld` restored (confirmed); `?:` cost test results recorded ([[Expression Language Requirements]]) |
 | 2026-10-31 | P1 accepted (D61); Bar `Gap` decides its meld (D62); Panel `Meld` restored (D56 corrected) ([[ADR-0014 Shell File Language]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-10-31 | Proposed answers P1 to P7 and the Bar-to-tre mapping ([[Bar]], [[ADR-0014 Shell File Language]]) |
 | 2026-10-31 | TEL built path tracking (T20); name-tree dependency question settled ([[Expression Language Requirements]]) |
 | 2026-10-31 | `tess-el` answered the T17 to T20 questions ([[Expression Language Requirements]]) |
-| 2026-10-31 | Slot-end rule accepted (D54) in [[ADR-0014 Shell File Language]] and [[TDL Language]] |
 
 ## Go to
 
