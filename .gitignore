@@ -1,10 +1,14 @@
-# Hidden files and folders (.obsidian, .copilot, .claude, ...), except this file
-.*
-!.gitignore
+# Editors
+.vscode/
+.idea/
 
-# Copilot chat logs and plugin data
-copilot/
-
-# Agent instructions (local only)
-AGENTS.md
-CLAUDE.md
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
