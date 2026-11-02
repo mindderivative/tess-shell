@@ -2,7 +2,7 @@
 title: TRE-REQ-008 SMIL Animation in SVG Nodes
 aliases: [TRE-REQ-008, SMIL in tre, Animated SVG Icons]
 type: engine-request
-status: draft
+status: review
 owner: phil
 created: 2026-11-01
 updated: 2026-11-01
@@ -16,8 +16,8 @@ depends_on: []
 > [!summary]
 > Let tre's `svg` node play the SMIL animation (`<animate>`, `<set>`, `<animateTransform>`) that an SVG document carries, so that animated icons such as the Material Line Icons set draw and move as their authors made them. Today tre draws such a document as one static frame. The request is for a time-sampled render of the document, driven by tre's own frame clock. It is not needed to ship v1.
 
-> [!info] Not to be filed now
-> Written 2026-11-01 at the maintainer's instruction ("A and C"), after the animated-icon test in [[Block Reference#The Icon Set Files (2026-11-01)]]. Not filed from this vault, and the `tre` session has not been told ([[AGENTS#6. Engine requests (tre / Tesserae)]]). The maintainer carries it. On 2026-11-01, at the maintainer's instruction, the shell session sent the `tre` session one mailbox message: a status question (is SMIL playback planned or rejected, which approach, would a time-sampled `svg_time` fit) with the path to this note. The message asks for answers only; it files nothing. A reply is information, checked against tre's docs before use.
+> [!success] Taken up by tre (2026-11-01)
+> The maintainer gave the `tre` session the go-ahead to plan, scope and start on this request. tre scoped it and filed [tre issue #245](https://github.com/mindderivative/tre/issues/245), now in Ready and not started; work waits for the shell's answers (sent 2026-11-01) or the maintainer's go. The vault copy below is the shell's statement of the need and stays a draft. History: a status question went to `tre` first (it found no issue, no design note and no mention in its live code; the maintainer then gave the go-ahead); the shell sent the prior art found in tre's own `archive/` (below) and, after tre's three questions, the measurements under "tre's Scope and the Shell's Answers". Replies are information, checked against tre's docs and source before use.
 
 > [!success] Not blocking v1
 > The shell ships only the static Material Design Icons set (`mdi`) in v1 (decided 2026-11-01). Nothing in the specs waits on this request.
@@ -79,6 +79,24 @@ node.get("svg_duration")            # seconds the document runs, or None if it l
 
 How tre does it is its own choice. One way, given that `resvg` and so `usvg` have no animation: read the SMIL elements in a pre-pass, evaluate their values at the time, write them into the attributes of a static copy of the document, and give that to `usvg`. Re-parsing a few-hundred-byte icon per sample may be cheap enough; this is not measured.
 
+## Prior Art in tre's Own Repository
+
+`archive/crates/tre-svg/src/smil.rs` in the tre repository (the archived v0.1.0 engine, 408 lines, read 2026-11-01): its header says `usvg` does not process SMIL animation elements at all, confirmed there by reading `usvg`'s source, so it parsed the raw document in a separate `roxmltree` pass and drove the extracted keyframes through the engine's tween machinery. Its scope was `<animate>` (one scalar attribute, `values` or `from`/`to`), `<animateTransform type="translate">` and `dur`; its stated gaps were `begin`, `repeatCount`, `calcMode`, `rotate`, `scale` and `animateMotion`. The archived README also lists "keyframe morphing". The live engine has no SMIL code.
+
+## tre's Scope and the Shell's Answers (2026-11-01)
+
+tre's scope for issue #245, as the `tre` session reported it: `svg_time` (seconds, default 0, animatable with the existing `animate`) and a read-only `svg_duration` (`None` if any `repeatCount` is indefinite); no `svg_play` (the host loops with `animate`). Mechanism: a pre-pass over `usvg` (parse the source with `roxmltree`, evaluate SMIL at the time, write the values into a static copy of the XML, then the existing `SvgDocument` parse). Subset: `animate`, `set`, `animateTransform` (`rotate`, `translate`, `scale`), `dur`, `begin` as plain clock offsets, `to`, `values`, `keyTimes`, `repeatCount`, `fill` freeze or remove; a `d` morph only when both strings share one command sequence (else the first value is held); everything else ignored, with the first frame drawn as today. tre's cost target: 30 animated icons re-sampled every frame in under 4 ms, falling back to 30 Hz sampling.
+
+The shell's answers (measured on the 1,218 line icons, 5,748 timing elements):
+
+| tre's question                       | Shell's answer                                                                                                                                                                                                                                                              |
+|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `fill` defaults to remove            | Acceptable. 5,300 elements write `freeze`; the other 448 have no `fill` and all repeat forever, so the default never shows.                                                                                                                                                  |
+| Anything beyond the subset?          | No, but to-animation is the main form: 3,072 of 5,223 `animate` and `animateTransform` elements have `to` and no `from` and no `values`, starting from the attribute on the parent element. `from` is never used. `begin`: 4,214 elements, all plain seconds (no lists, no negatives, no `ms`); 1,534 have none. `dur` is always in seconds; all 525 `set` elements are `opacity` with `to`. `keyTimes`: 446, always with `values`. `d` morphs: 549 with `values` and 129 `to`-only, and in all of them the command sequence is the same, so the hold-first fallback never triggers. Not used: `by`, `calcMode`, `keySplines`, `additive`, `accumulate`, `repeatDur`, `end`, `restart`, `href`. |
+| Is the cost target enough?           | More than enough: a handful of looping icons at a time (172 of the 1,218 loop forever) and short intros of 0.1 to 0.6 s on a state change. An expectation only; no shell UI exists yet.                                                                                      |
+
+A caution the shell sent with the answers: a looping icon keeps its window redrawing, and the shell has an idle-CPU budget ([[AGENTS#12. Design Completeness Checklist]], Quality). The shell asked what tre does while only an `svg_time` animation runs (frame rate and wake-ups) and whether it pauses for a hidden or occluded window. 30 Hz sampling for loops suits the shell.
+
 ## Alternatives
 
 | Alternative                                                                                                 | Verdict                                                                                                                                      |
@@ -98,10 +116,10 @@ Not measured. By reading the data: the elements and attributes in the table abov
 
 ## Open Questions
 
-- [ ] Whether tre prefers a pre-pass over `usvg`, a different SVG library or its own SMIL evaluator.
+- [x] Whether tre prefers a pre-pass over `usvg`, a different SVG library or its own SMIL evaluator: a pre-pass over `usvg` (tre, issue #245).
 - [ ] Whether `usvg` already drops SMIL elements or fails on them (it drew the test icons without error).
-- [ ] The cost of re-parsing a small document per sample, and of drawing 20 or 30 animated icons at once on a shell with several bars.
-- [ ] Whether `svg_time` should be animatable by tre's easing, or driven only linearly.
+- [ ] The cost of re-parsing a small document per sample: tre's target is 30 icons per frame in under 4 ms, to be measured in issue #245. What tre does while only an `svg_time` animation runs (wake-ups, hidden or occluded windows) is asked of tre and open.
+- [x] Whether `svg_time` is animatable: yes, with the existing `animate` (tre, issue #245).
 
 ## Links
 
