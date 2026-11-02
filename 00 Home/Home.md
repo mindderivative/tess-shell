@@ -31,7 +31,7 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-11-01 |
-| Last change         | The maintainer's three icon JSON files inspected and recorded ([[Block Reference#The Icon Set Files (2026-11-01)]]); R-23 added for the icon licences |
+| Last change         | Recommendation recorded: keep the shipped icon set as JSON, with `currentColor` and a licence section in the export ([[Block Reference#The Icon Set Files (2026-11-01)]]) |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | Waiting on you      | Which static icon file to ship (base and no-anim are identical); the animated set's source and licence; a test of an animated icon in tre; the list of built-in shell actions; the TEL release number to pin as `TEL:` |
 | Next                | The shipped-module list ([[V1 Widgets]]); then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-11-01 | Icon format recommendation: JSON for the shipped set ([[Block Reference]]) |
 | 2026-11-01 | Icon set JSON files inspected; R-23 added ([[Block Reference]]) |
 | 2026-11-01 | Custom-block API, event value form and Icons key accepted ([[Block Reference]]) |
 | 2026-11-01 | Stack dropped; `On_` reserved; custom-block API and event value form recommended ([[Block Reference]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-11-01 | [[Block Reference]] written (proposals R1 to R11); R-22 added for the Terminal block |
 | 2026-11-01 | Base name of a `For` entry confirmed (D65) |
 | 2026-11-01 | `For` entries use TEL's counter names (D65) ([[ADR-0014 Shell File Language]]) |
-| 2026-11-01 | TEL accepted and built `?:`; TEL step 5 (conditions, repeater reconciliation) recorded ([[Expression Language Requirements]]) |
 
 ## Go to
 

@@ -364,6 +364,7 @@ Findings and recommendations (the agent's; not decided):
 5. **Loading.** Read a file on the first lookup and keep the dictionary; at 3 to 5 ms it needs no index.
 6. **Licence.** Apache 2.0 requires the licence text and notices to travel with redistributed icons, and "some icons" carry their own licences, so the package may need a per-icon list. The animated set is drawn in a different style from the static one (stroked, animated), and the single `LICENSE.txt` does not say where it comes from: confirm its source and licence. #needs-verification; [[Risk Register]] R-23.
 7. **Names.** The shipped names are kebab-case (`account-alert`); freedesktop names differ (`audio-volume-high`), so the theme lookup (row 2) serves the names the shipped set lacks.
+8. **JSON or separate SVG files.** Recommended (the maintainer offered to export separate files): keep the shipped set as JSON. It is 3 files against about 8,700, about 4 MB against roughly 35 MB of 4 KB disk blocks (an estimate), loads in about 5 ms once, and carries one version and licence. Separate files stay the format of the user and developer folders (rows 3 and 4). In the export, write `currentColor` in place of `#fff` so the shell needs no replacement, and add a licence and source section (Iconify's optional `info` object, #needs-verification; otherwise a plain `license` key). Keep the animated set a separate file.
 
 ## Custom Blocks (R12)
 
