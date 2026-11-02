@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-11-01 |
-| Last change         | tre scoped SMIL animation as issue #245 (Ready, not started); the shell answered its three questions with measurements ([[TRE-REQ-008 SMIL Animation in SVG Nodes]]) |
+| Last change         | tre recorded the shell's answers on #245 and added an idle-CPU measurement as an acceptance item; #245 stays Ready, not started ([[TRE-REQ-008 SMIL Animation in SVG Nodes]]) |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | tre's reply on idle cost and its go to start (issue #245); the list of built-in shell actions; shipping the icon licence texts; the `TEL:` and `TRE:` release numbers to pin (path tracking, `?:` and SMIL are unreleased) |
+| Waiting on you      | Your go for tre to start #245 (it waits for one); the list of built-in shell actions; shipping the icon licence texts; the `TEL:` and `TRE:` release numbers to pin (path tracking, `?:` and SMIL are unreleased) |
 | Next                | The shipped-module list ([[V1 Widgets]]); then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-11-01 | tre recorded the shell's answers on #245; idle-CPU measurement added as an acceptance item ([[TRE-REQ-008 SMIL Animation in SVG Nodes]]) |
 | 2026-11-01 | tre scoped SMIL as issue #245; the shell answered tre's questions ([[TRE-REQ-008 SMIL Animation in SVG Nodes]]) |
 | 2026-11-01 | Status question on SMIL sent to the `tre` session ([[TRE-REQ-008 SMIL Animation in SVG Nodes]]) |
 | 2026-11-01 | Animated icons: `mdi` only in v1; [[TRE-REQ-008 SMIL Animation in SVG Nodes]] written |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-11-01 | Icon sets re-exported (`mdi`, `mli`); findings and R-23 updated ([[Block Reference]]) |
 | 2026-11-01 | Icon sets to be exported with `currentColor` ([[Block Reference]]) |
 | 2026-11-01 | Icon format recommendation: JSON for the shipped set ([[Block Reference]]) |
-| 2026-11-01 | Icon set JSON files inspected; R-23 added ([[Block Reference]]) |
 
 ## Go to
 

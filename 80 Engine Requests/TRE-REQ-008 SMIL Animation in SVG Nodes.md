@@ -95,6 +95,8 @@ The shell's answers (measured on the 1,218 line icons, 5,748 timing elements):
 | Anything beyond the subset?          | No, but to-animation is the main form: 3,072 of 5,223 `animate` and `animateTransform` elements have `to` and no `from` and no `values`, starting from the attribute on the parent element. `from` is never used. `begin`: 4,214 elements, all plain seconds (no lists, no negatives, no `ms`); 1,534 have none. `dur` is always in seconds; all 525 `set` elements are `opacity` with `to`. `keyTimes`: 446, always with `values`. `d` morphs: 549 with `values` and 129 `to`-only, and in all of them the command sequence is the same, so the hold-first fallback never triggers. Not used: `by`, `calcMode`, `keySplines`, `additive`, `accumulate`, `repeatDur`, `end`, `restart`, `href`. |
 | Is the cost target enough?           | More than enough: a handful of looping icons at a time (172 of the 1,218 loop forever) and short intros of 0.1 to 0.6 s on a state change. An expectation only; no shell UI exists yet.                                                                                      |
 
+tre's reply (2026-11-01): it recorded the answers on #245. To-animation, with the start value read from the parent element's attribute, is now explicit stage-1 scope; the `fill` default of remove, `begin` as plain seconds and 30 Hz sampling for loops are kept. It has not verified what tre does while only an `svg_time` animation runs (frame rate, wake-ups) or whether hidden, occluded or minimised windows pause, and its documentation does not say; it added an acceptance item to #245 (measure idle CPU with one looping icon and document the result) and will not guess a number. #245 stays in Ready, not started.
+
 A caution the shell sent with the answers: a looping icon keeps its window redrawing, and the shell has an idle-CPU budget ([[AGENTS#12. Design Completeness Checklist]], Quality). The shell asked what tre does while only an `svg_time` animation runs (frame rate and wake-ups) and whether it pauses for a hidden or occluded window. 30 Hz sampling for loops suits the shell.
 
 ## Alternatives
@@ -118,7 +120,7 @@ Not measured. By reading the data: the elements and attributes in the table abov
 
 - [x] Whether tre prefers a pre-pass over `usvg`, a different SVG library or its own SMIL evaluator: a pre-pass over `usvg` (tre, issue #245).
 - [ ] Whether `usvg` already drops SMIL elements or fails on them (it drew the test icons without error).
-- [ ] The cost of re-parsing a small document per sample: tre's target is 30 icons per frame in under 4 ms, to be measured in issue #245. What tre does while only an `svg_time` animation runs (wake-ups, hidden or occluded windows) is asked of tre and open.
+- [ ] The cost of re-parsing a small document per sample: tre's target is 30 icons per frame in under 4 ms, to be measured in issue #245. What tre does while only an `svg_time` animation runs (wake-ups, hidden or occluded windows) is unverified; tre added measuring it as an acceptance item of #245.
 - [x] Whether `svg_time` is animatable: yes, with the existing `animate` (tre, issue #245).
 
 ## Links
