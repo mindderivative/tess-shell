@@ -330,7 +330,7 @@ The Icon module finds an icon by name in this order; the first hit wins. A file 
 
 | Order | Source                                                                                                              | Notes                                                                                                                                                       |
 |-------|---------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1     | The shipped set: SVG icons in JSON files that ship with the shell                                               | The maintainer's Iconify-style JSON files (see "The Icon Set Files"). The shell reads them on first use and gives tre an SVG document built from each icon's body |
+| 1     | The shipped set: SVG icons in JSON files that ship with the shell                                               | The maintainer's Iconify-style JSON files (see "The Icon Set Files"); v1 ships `mdi` only (decided 2026-11-01). The shell reads them on first use and gives tre an SVG document built from each icon's body |
 | 2     | The desktop's freedesktop icon theme                                                                                | [Icon Theme Specification](https://specifications.freedesktop.org/icon-theme-spec/latest/); the current theme comes from the desktop settings #needs-verification |
 | 3     | The `Icons` folder in the shell's config directory                                                                  | `$HOME/.config/tesserae-shell/Icons/` ([[Settings File]])                                                                                                    |
 | 4     | The locations a developer lists in `settings.tdl`                                                                   | Under `Directories { Icons: [...] }`, searched in order (proposed key; [[Settings File]])                                                                    |
@@ -358,13 +358,13 @@ The maintainer's files are in `/home/phil/Projects/pyDev/projects/tess-icons/ico
 
 Recommendations (the agent's; not decided):
 
-1. **Prefixes (accepted 2026-11-01).** An icon name may carry its set prefix, `mli:account-alert-loop`, which always selects that set. A name with no prefix looks in `mdi` first. The Icon module's `Animated` parameter (false by default) looks in `mli` first and falls back to `mdi`. This settles the 207 shared names.
+1. **Prefixes (accepted 2026-11-01).** An icon name may carry its set prefix, `mli:account-alert-loop`, which always selects that set. A name with no prefix looks in `mdi` first. The Icon module's `Animated` parameter (false by default) looks in `mli` first and falls back to `mdi`; in v1 only `mdi` ships, so `Animated` has no effect until `mli` does. This settles the 207 shared names.
 2. **Load lazily.** Read a file on the first lookup that needs it and keep the dictionary. The animated file is read only when something asks for it.
 3. **Animated icons in tre (tested 2026-11-01).** tre draws a SMIL icon as one static frame and does not play it. The test rendered offscreen with `Window.snapshot()` (no display) from the local tre source tree (0.5.9, git `0fd1e7e`): `mdi` `account` and `battery-charging`, and `mli` `account`, `alert-circle-loop`, `beer`, `beer-alt` and `beer-alt-filled`, each at the start, after `advance(500)`, at `snapshot(time=2.0)` and after `advance(2500)`. The painted pixels were identical at every time for all seven, and the images are the same. The `mli` `account` icon, whose strokes start hidden by `stroke-dashoffset` and are meant to draw on, shows only its torso arc, without the head, at the start and after three seconds. So an animated icon shown today looks unfinished. Masks work: the `beer` icon, which has a `<mask>` and an `<animate>`, draws its cup; 462 of the 1,218 line icons have both. #needs-verification on whether an icon that sets values only in the end frame (a `fill="freeze"` intro) would look right frozen at its end state.
 4. **Licences travel with the files (done in the folder, 2026-11-01).** The folder now holds `MDI-LICENSE.txt` (Pictogrammers, Apache 2.0) and `MLI-LICENSE.txt` (MIT, with the copyright line of Vjacheslav Trushkin), and the `spdx` fields read `Apache-2.0` and `MIT`. Still to do in delivery: ship both texts in the package. Pictogrammers' note that "some of the icons are redistributed under their respective licenses" may need a per-icon list. [[Risk Register]] R-23.
 5. **Names.** Shipped names are kebab-case (`account-alert`); freedesktop names differ (`audio-volume-high`), so the theme lookup (row 2) serves the names neither set has.
 
-Options for the animated set, given item 3 (the agent's recommendation, not decided):
+Options for the animated set, given item 3. Decided by the maintainer on 2026-11-01: A (ship only `mdi` in v1) and C (an engine request, written as [[TRE-REQ-008 SMIL Animation in SVG Nodes]], not filed). B stays a possible later addition.
 
 | Option                                                                                         | Cost                                                                                                                                  | Recommendation                              |
 |------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
@@ -416,7 +416,7 @@ class Meter(Block):
 ## Open
 
 - [ ] The list of built-in shell actions.
-- [ ] The icon files: which option to take for the animated set (A, B or C under "The Icon Set Files"), and shipping both licence texts in the package.
+- [ ] Shipping the licence texts in the package. The animated set is settled for v1 (option A) and the engine request [[TRE-REQ-008 SMIL Animation in SVG Nodes]] is written, not filed.
 - [ ] The value sets and defaults of the align, justify and cursor keys, and the text form of grid tracks (#needs-verification against tre's source or a test).
 - [ ] The default sizes of an SVG and of a Terminal (#needs-verification).
 - [ ] The event and action vocabulary and the value form of an `On_` key.
