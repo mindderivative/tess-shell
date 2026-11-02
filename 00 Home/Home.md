@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-11-01 |
-| Last change         | Icon sets re-exported as two files (`mdi` static, `mli` animated, with `currentColor`, authors and licences); findings recorded ([[Block Reference#The Icon Set Files (2026-11-01)]]) |
+| Last change         | Animated icons tested in tre: SMIL is not played, masks are drawn; icon licences and SPDX fixed; prefix rule accepted ([[Block Reference#The Icon Set Files (2026-11-01)]]) |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | A test of an animated line icon with a mask in tre; the MIT licence text for the line set; the prefix rule for icon names; the list of built-in shell actions; the TEL release number to pin as `TEL:` |
+| Waiting on you      | The animated icon set: option A (`mdi` only in v1), B (a static `mli` export) or C (an engine request for SMIL) ([[Block Reference#The Icon Set Files (2026-11-01)]]); the list of built-in shell actions; the TEL release number to pin as `TEL:` |
 | Next                | The shipped-module list ([[V1 Widgets]]); then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-11-01 | Animated icons tested in tre (SMIL not played, masks drawn); icon licences present ([[Block Reference]]) |
 | 2026-11-01 | Icon sets re-exported (`mdi`, `mli`); findings and R-23 updated ([[Block Reference]]) |
 | 2026-11-01 | Icon sets to be exported with `currentColor` ([[Block Reference]]) |
 | 2026-11-01 | Icon format recommendation: JSON for the shipped set ([[Block Reference]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-11-01 | Custom-block API, event value form and Icons key accepted ([[Block Reference]]) |
 | 2026-11-01 | Stack dropped; `On_` reserved; custom-block API and event value form recommended ([[Block Reference]]) |
 | 2026-11-01 | Block proposals R1 to R11 decided; Revealer renamed Expander; icon lookup order set ([[Block Reference]]) |
-| 2026-11-01 | [[Block Reference]] written (proposals R1 to R11); R-22 added for the Terminal block |
 
 ## Go to
 

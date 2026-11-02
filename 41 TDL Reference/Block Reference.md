@@ -358,11 +358,19 @@ The maintainer's files are in `/home/phil/Projects/pyDev/projects/tess-icons/ico
 
 Recommendations (the agent's; not decided):
 
-1. **Prefixes.** An icon name may carry its set prefix, `mli:account-alert-loop`, which always selects that set. A name with no prefix looks in `mdi` first. The Icon module's `Animated` parameter (false by default) looks in `mli` first and falls back to `mdi`. This settles the 207 shared names.
+1. **Prefixes (accepted 2026-11-01).** An icon name may carry its set prefix, `mli:account-alert-loop`, which always selects that set. A name with no prefix looks in `mdi` first. The Icon module's `Animated` parameter (false by default) looks in `mli` first and falls back to `mdi`. This settles the 207 shared names.
 2. **Load lazily.** Read a file on the first lookup that needs it and keep the dictionary. The animated file is read only when something asks for it.
-3. **Animated icons are untested in tre.** tre's documentation does not say whether its `svg` node plays SMIL, nor whether it supports `<mask>`, which many line icons use. Test one animated line icon with a mask in tre before shipping the set. If tre draws it static, the options are an engine request or leaving `mli` out of v1. #needs-verification.
-4. **Licences travel with the files.** Apache 2.0 and MIT both require their notices to be redistributed. The folder holds Pictogrammers' `LICENSE.txt` (Apache 2.0 for the icons, and "some of the icons are redistributed under their respective licenses"); the MIT licence text with the line-md copyright line is not in the folder. Ship both texts with the package, and record the set's `license` object in the About text. The `spdx` field reads `Apache 2.0` where the SPDX identifier is `Apache-2.0` (#needs-verification against the SPDX list); the shell should not rely on that field. [[Risk Register]] R-23.
+3. **Animated icons in tre (tested 2026-11-01).** tre draws a SMIL icon as one static frame and does not play it. The test rendered offscreen with `Window.snapshot()` (no display) from the local tre source tree (0.5.9, git `0fd1e7e`): `mdi` `account` and `battery-charging`, and `mli` `account`, `alert-circle-loop`, `beer`, `beer-alt` and `beer-alt-filled`, each at the start, after `advance(500)`, at `snapshot(time=2.0)` and after `advance(2500)`. The painted pixels were identical at every time for all seven, and the images are the same. The `mli` `account` icon, whose strokes start hidden by `stroke-dashoffset` and are meant to draw on, shows only its torso arc, without the head, at the start and after three seconds. So an animated icon shown today looks unfinished. Masks work: the `beer` icon, which has a `<mask>` and an `<animate>`, draws its cup; 462 of the 1,218 line icons have both. #needs-verification on whether an icon that sets values only in the end frame (a `fill="freeze"` intro) would look right frozen at its end state.
+4. **Licences travel with the files (done in the folder, 2026-11-01).** The folder now holds `MDI-LICENSE.txt` (Pictogrammers, Apache 2.0) and `MLI-LICENSE.txt` (MIT, with the copyright line of Vjacheslav Trushkin), and the `spdx` fields read `Apache-2.0` and `MIT`. Still to do in delivery: ship both texts in the package. Pictogrammers' note that "some of the icons are redistributed under their respective licenses" may need a per-icon list. [[Risk Register]] R-23.
 5. **Names.** Shipped names are kebab-case (`account-alert`); freedesktop names differ (`audio-volume-high`), so the theme lookup (row 2) serves the names neither set has.
+
+Options for the animated set, given item 3 (the agent's recommendation, not decided):
+
+| Option                                                                                         | Cost                                                                                                                                  | Recommendation                              |
+|------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
+| A. Ship only `mdi` in v1; leave `mli` out until tre plays SMIL                                  | None. The shell works with 7,447 static icons.                                                                                         | Recommended for v1                          |
+| B. Export a static `mli`: each icon in its end state, with the animation tags removed           | A change in the tess-icons export (the earlier "no-anim" idea). It gives a second, line-style family that tre can draw correctly.     | Recommended as a later addition             |
+| C. An engine request to tre for SMIL (`<animate>`, `<set>`, `<animateTransform>`)                | A request to tre ([[AGENTS#6. Engine requests (tre / Tesserae)]]); not needed to ship v1; the shell cannot play SMIL itself (Python never runs per frame). | Write it only if you want animated icons    |
 
 ## Custom Blocks (R12)
 
@@ -408,7 +416,7 @@ class Meter(Block):
 ## Open
 
 - [ ] The list of built-in shell actions.
-- [ ] The icon files: whether tre plays the animated set and draws its masks, the shipped licence texts (the MIT text of the line set is missing from the folder), and the prefix rule for names ("The Icon Set Files").
+- [ ] The icon files: which option to take for the animated set (A, B or C under "The Icon Set Files"), and shipping both licence texts in the package.
 - [ ] The value sets and defaults of the align, justify and cursor keys, and the text form of grid tracks (#needs-verification against tre's source or a test).
 - [ ] The default sizes of an SVG and of a Terminal (#needs-verification).
 - [ ] The event and action vocabulary and the value form of an `On_` key.
