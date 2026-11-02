@@ -7,14 +7,12 @@ owner: phil
 created: 2026-10-25
 updated: 2026-10-27
 tags: [research, spec/surface, integration/wayland, needs-verification]
-related: ["[[Surface Types]]", "[[Prior Art - Linux Shell Surfaces]]", "[[TRE-REQ-001 Layer Surface Window]]"]
-depends_on: []
 ---
 
 # Shadows on Layer Surfaces
 
-> [!summary]
-> Decided 2026-10-27: route B, in-surface ([[ADR-0010 Surface Shadows]]).
+> [!NOTE]
+> Decided 2026-10-27: route B, in-surface ([ADR-0010 Surface Shadows](../30%20Decisions/ADR-0010%20Surface%20Shadows.md)).
 > Every shell surface can have a shadow with elevation and colour. There are two ways to get one: draw it inside the surface (a larger, transparent surface), or ask the compositor to draw it. KDE has a protocol for the second. Live tests on KWin 6.8.1 (2026-10-27) show route A works for top and overlay layer surfaces, and that neither route has a measurable cost at Bar and Panel size. The rest is still to research.
 
 Maintainer position (2026-10-25): KDE does shadows, so all surfaces can do shadows; the open job is to find out how other shells and desktops do it.
@@ -75,11 +73,11 @@ Reading:
 
 ## The Maintainer's Earlier Work
 
-The `myShell` repository ([README](file:///home/phil/Projects/pyDev/projects/myShell/README.md)) holds the Edge Shell design spec, plan and shell specs, not the code. The maintainer reports a working Fabric version with shadows, animated panels and bars moving out of the frame (2026-10-25). The documents show the approach:
+The `myShell` repository ([README](file://~/Projects/pyDev/projects/myShell/README.md)) holds the Edge Shell design spec, plan and shell specs, not the code. The maintainer reports a working Fabric version with shadows, animated panels and bars moving out of the frame (2026-10-25). The documents show the approach:
 
-- A frame of four edge strips and four corner surfaces per monitor, and one surface per panel, allocated once at its fully extended size, so KWin never resizes a layer surface during an animation; animation redraws and moves the input region ([design spec §5.1](file:///home/phil/Projects/pyDev/projects/myShell/docs/superpowers/specs/2026-10-11-edge-shell-design.md)).
+- A frame of four edge strips and four corner surfaces per monitor, and one surface per panel, allocated once at its fully extended size, so KWin never resizes a layer surface during an animation; animation redraws and moves the input region ([design spec §5.1](file://~/Projects/pyDev/projects/myShell/docs/superpowers/specs/2026-10-11-edge-shell-design.md)).
 - Panels and frame share one colour, panels are drawn with cairo as one path with curved joins, and panels repaint the frame strip beneath them to avoid hairline seams. A fallback is one click-through full-screen canvas per monitor (§3, §5.1, §10).
-- The shell specs list `frame_shadow`, `frame_shadow_elevation` and `frame_shadow_color` ([Shell_Specs](file:///home/phil/Projects/pyDev/projects/myShell/docs/Shell_Specs.md)). How the shadow is drawn is not in the documents read. #needs-verification
+- The shell specs list `frame_shadow`, `frame_shadow_elevation` and `frame_shadow_color` ([Shell_Specs](file://~/Projects/pyDev/projects/myShell/docs/Shell_Specs.md)). How the shadow is drawn is not in the documents read. #needs-verification
 
 This supports the maintainer's point that a visual meld works: it is one colour, drawn joins and repainting, not one shared surface.
 
@@ -90,9 +88,9 @@ This supports the maintainer's point that a visual meld works: it is one colour,
 - [ ] How Plasma's own panels get their shadow (plasma-framework / plasma-workspace source).
 - [ ] How Waybar, eww, Fabric, AGS/Astal, Quickshell shells and COSMIC do shadows.
 - [ ] How the Edge Shell prototype drew its shadows.
-- [ ] Whether tre can expose the surface for route A, and whether the engine accepts a shadow request ([[AGENTS#6. Engine requests (tre / Tesserae)]]). Ask the `tre` session before writing a request.
-- [x] The memory cost of the larger transparent buffer for route B: 134 KB per buffer for a 32 px margin on a 320x140 body (see the performance test). Still to measure at Frame size, per [[Surface Types#Performance budget]].
+- [ ] Whether tre can expose the surface for route A, and whether the engine accepts a shadow request (AGENTS > 6. Engine requests (tre / Tesserae)). Ask the `tre` session before writing a request.
+- [x] The memory cost of the larger transparent buffer for route B: 134 KB per buffer for a 32 px margin on a 320x140 body (see the performance test). Still to measure at Frame size, per [Surface Types > Performance budget](../40%20Specifications/Surfaces/Surface%20Types.md#performance-budget).
 
 ## Links
 
-- [[Surface Types]] · [[Prior Art - Linux Shell Surfaces]] · [[TRE-REQ-001 Layer Surface Window]]
+- [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md) · [Prior Art - Linux Shell Surfaces](Prior%20Art%20-%20Linux%20Shell%20Surfaces.md) · [TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)

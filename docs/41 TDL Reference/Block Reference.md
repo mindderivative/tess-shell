@@ -5,20 +5,18 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-11-01
-updated: 2026-11-01
+updated: 2026-11-02
 tags: [tdl-ref, spec/widget, needs-verification]
-related: ["[[Building Blocks]]", "[[V1 Widgets]]", "[[Style Schema]]", "[[TDL Language]]", "[[Common Keys and Conventions]]", "[[Module File]]", "[[Hit Testing for Concave Corners]]"]
-depends_on: ["[[Building Blocks]]", "[[TDL Language]]"]
 ---
 
 # Block Reference
 
-> [!summary]
-> The properties, events, accessibility defaults and tre mapping of every building block. The set of blocks is decided ([[Building Blocks]]). The maintainer decided proposals R1 to R11 on 2026-11-01 ("as recommended", with R7 changed); the decisions are in "Decisions of 2026-11-01" below. Anything marked Open or Proposed is not decided. Visual keys (fill, border, text styling, shadow, motion, states) are style keys and live in [[Style Schema]]; this note covers what a block is, holds, does and reports. Written 2026-11-01 from tre's documentation ([properties](https://mindderivative.github.io/tre/reference/properties/), [paint](https://mindderivative.github.io/tre/reference/paint/), [events](https://mindderivative.github.io/tre/reference/events/), [accessibility](https://mindderivative.github.io/tre/guide/accessibility/), [building a widget](https://mindderivative.github.io/tre/guide/building-a-widget/), read 2026-11-01). Where tre's page does not document a default or a value set, the cell says so and the claim is #needs-verification.
+> [!NOTE]
+> The properties, events, accessibility defaults and tre mapping of every building block. The set of blocks is decided ([Building Blocks](../50%20Design%20System/Building%20Blocks.md)). The maintainer decided proposals R1 to R11 on 2026-11-01 ("as recommended", with R7 changed); the decisions are in "Decisions of 2026-11-01" below. Anything marked Open or Proposed is not decided. Visual keys (fill, border, text styling, shadow, motion, states) are style keys and live in [Style Schema](Style%20Schema.md); this note covers what a block is, holds, does and reports. Written 2026-11-01 from tre's documentation ([properties](https://mindderivative.github.io/tre/reference/properties/), [paint](https://mindderivative.github.io/tre/reference/paint/), [events](https://mindderivative.github.io/tre/reference/events/), [accessibility](https://mindderivative.github.io/tre/guide/accessibility/), [building a widget](https://mindderivative.github.io/tre/guide/building-a-widget/), read 2026-11-01). Where tre's page does not document a default or a value set, the cell says so and the claim is #needs-verification.
 
 ## How to Read the Tables
 
-- Keys follow [[TDL Language#Names and the Registry]]: Capitalised words joined by `_`, enum values in upper case. A key that has a tre property keeps tre's name where the shell has not chosen another (`Min_Width` for `min_width`), and the tre column names it.
+- Keys follow [TDL Language > Names and the Registry](TDL%20Language.md#names-and-the-registry): Capitalised words joined by `_`, enum values in upper case. A key that has a tre property keeps tre's name where the shell has not chosen another (`Min_Width` for `min_width`), and the tre column names it.
 - A block is called by its head (`Text { }`). The properties below go inside it. Default `none` means the key is not set.
 - A key that is also a style key (`Padding`, `Margin`, `Spacing`, `Opacity`) is a shorthand: writing it on a block is the same as writing it in that block's inline `Style`, with the priority of inline style (proposed rule R2 below).
 - tre's defaults mostly are not documented; the tre defaults named here are the ones the page states.
@@ -43,10 +41,10 @@ Every block has these.
 
 | Key       | Values                                        | Default | tre | Meaning                                                                                       |
 |-----------|-----------------------------------------------|---------|-----|-----------------------------------------------------------------------------------------------|
-| `Name`    | An identifier ([[TDL Language]], D28)          | none    | none | The unique name; gives the block a path (`RootShell.DP1.Top_Bar.Title`)                       |
-| `Class`   | One class name, or a list                      | none    | none | Style classes ([[Style, Theme and Stylesheet Files#Classes]])                                  |
-| `Style`   | A style file, or an inline `Style { }` block   | none    | none | [[Style, Theme and Stylesheet Files#Rules]]                                                    |
-| `Tooltip` | A Popup file, or an inline `Popup { }` block   | none    | none | Available on every block and module (decided 2026-10-28, [[Popup#Tooltips (decided 2026-10-28)]]) |
+| `Name`    | An identifier ([TDL Language](TDL%20Language.md), D28)          | none    | none | The unique name; gives the block a path (`RootShell.DP1.Top_Bar.Title`)                       |
+| `Class`   | One class name, or a list                      | none    | none | Style classes ([Style, Theme and Stylesheet Files > Classes](Style%2C%20Theme%20and%20Stylesheet%20Files.md#classes))                                  |
+| `Style`   | A style file, or an inline `Style { }` block   | none    | none | [Style, Theme and Stylesheet Files > Rules](Style%2C%20Theme%20and%20Stylesheet%20Files.md#rules)                                                    |
+| `Tooltip` | A Popup file, or an inline `Popup { }` block   | none    | none | Available on every block and module (decided 2026-10-28, [Popup > Tooltips (decided 2026-10-28)](../40%20Specifications/Surfaces/Popup.md#tooltips-decided-2026-10-28)) |
 
 ### State
 
@@ -104,7 +102,7 @@ State flags (`checked`, `selected`, `expanded`, `pressed`, `value`, `value_min`,
 
 An event key is `On_` plus the event name. The `On_` prefix is reserved for events (maintainer, 2026-11-01, R5): the events in the table below are the first set, and event names are added here as blocks need them. An unknown `On_` key is an error that names the closest events.
 
-An action is what the shell does when the event happens. It is a method of the module's Python class marked `@action`, or a built-in shell action ([[Module Contract#The Class (Proposed)]]; decided 2026-10-26 that nothing else can be called from a shell file). Arguments may be TEL expressions, evaluated when the event fires ([[ADR-0007 Shell UI Layer#Events and Module Reload (2026-10-26)]]).
+An action is what the shell does when the event happens. It is a method of the module's Python class marked `@action`, or a built-in shell action ([Module Contract > The Class (Proposed)](../42%20Python%20API/Module%20Contract.md#the-class-proposed); decided 2026-10-26 that nothing else can be called from a shell file). Arguments may be TEL expressions, evaluated when the event fires ([ADR-0007 Shell UI Layer > Events and Module Reload (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26)).
 
 Value form (decided by the maintainer, 2026-11-01):
 
@@ -139,7 +137,8 @@ Block-specific events are listed with the block. tre has no double-click and no 
 
 ### Box
 
-> [!success] How a Box differs from a FlexBox (decided 2026-11-01, R1)
+> [!TIP]
+> **How a Box differs from a FlexBox (decided 2026-11-01, R1)**
 > The maintainer defined a Box as a basic container with no auto-stacking, invisible when unstyled and a panel of its own when fully styled. In tre every node with children lays them out as flex. Decided (R1): a Box is a one-cell grid. All children occupy the same cell and overlap; the Box is as large as its largest child unless sized; each child can align itself with `Align_Self` and `Justify_Self`. Nothing is stacked automatically, and the Stack module becomes a Box.
 
 | Key       | Values                  | Default | tre                         | Meaning                                                           |
@@ -205,11 +204,11 @@ For long lists (launcher results, tasks) where only visible entries are built. M
 | `Padding`    | Four-sided                    | 0       | `padding`                   | Inset around the words (R6)                                                                           |
 | `On_Link`    | event                         | none    | `link` (`href`)             | A press and release on a link span                                                                    |
 
-Style keys: `Font_Family`, `Size`, `Weight`, `Line_Height`, `Align`, `Overflow`, `Foreground` ([[Style Schema#Style Keys]]). tre also has `font_style`, `letter_spacing`, `spans` (rich text) and `fill`; the shell has no key for `font_style` and `letter_spacing` yet, and rich text is post-v1 (R10). `Width: AUTO` is tre's `"fit-content"` for text. Role none; the block that shows the text carries the label. Label is a Text with `Wrap: NONE`; TextBox is a Text with `Wrap: WORD`.
+Style keys: `Font_Family`, `Size`, `Weight`, `Line_Height`, `Align`, `Overflow`, `Foreground` ([Style Schema > Style Keys](Style%20Schema.md#style-keys)). tre also has `font_style`, `letter_spacing`, `spans` (rich text) and `fill`; the shell has no key for `font_style` and `letter_spacing` yet, and rich text is post-v1 (R10). `Width: AUTO` is tre's `"fit-content"` for text. Role none; the block that shows the text carries the label. Label is a Text with `Wrap: NONE`; TextBox is a Text with `Wrap: WORD`.
 
 ### TextField
 
-tre's advice is a `text_input` inside a box that paints the background and border ([[Building Blocks#What Tre Offers]], building a widget). The block is that composition.
+tre's advice is a `text_input` inside a box that paints the background and border ([Building Blocks > What Tre Offers](../50%20Design%20System/Building%20Blocks.md#what-tre-offers), building a widget). The block is that composition.
 
 | Key               | Values                    | Default | tre                       | Meaning                                                                                                            |
 |-------------------|---------------------------|---------|---------------------------|--------------------------------------------------------------------------------------------------------------------|
@@ -223,7 +222,7 @@ tre's advice is a `text_input` inside a box that paints the background and borde
 | `On_Submit`       | event                     | none    | `submit`                  | Enter in a single-line field                                                                                        |
 | `On_Input`        | event                     | none    | `input` (`text`)          | Committed text; with `On_Change` it covers input methods (`compose_start`, `compose_update`, `compose_end` are handled inside the block) |
 
-Not available in tre and so not offered: password masking, a maximum length, a read-only flag (none are on tre's page). A module that needs one makes an engine request ([[AGENTS#6. Engine requests (tre / Tesserae)]]). `syntax_spans` and `folded_ranges` exist in tre for code editing and are post-v1. Role `TEXTBOX`, focusable. Input methods work on layer surfaces in tre 0.5.8; no real input method was tested ([[V1 Widgets#Open Questions]]).
+Not available in tre and so not offered: password masking, a maximum length, a read-only flag (none are on tre's page). A module that needs one makes an engine request (AGENTS > 6. Engine requests (tre / Tesserae)). `syntax_spans` and `folded_ranges` exist in tre for code editing and are post-v1. Role `TEXTBOX`, focusable. Input methods work on layer surfaces in tre 0.5.8; no real input method was tested ([V1 Widgets > Open Questions](../50%20Design%20System/V1%20Widgets.md#open-questions)).
 
 ## Graphics
 
@@ -231,7 +230,7 @@ Not available in tre and so not offered: password masking, a maximum length, a r
 
 | Key      | Values                         | Default   | tre                    | Meaning                                                                                              |
 |----------|--------------------------------|-----------|------------------------|------------------------------------------------------------------------------------------------------|
-| `Source` | A file path, relative to the file that names it | none | `rgba`, `pixel_width`, `pixel_height` | The image. The shell reads and decodes the file and gives tre the pixels (data in, not files, [[AGENTS#3. Layering principle]]) |
+| `Source` | A file path, relative to the file that names it | none | `rgba`, `pixel_width`, `pixel_height` | The image. The shell reads and decodes the file and gives tre the pixels (data in, not files, AGENTS > 3. Layering principle) |
 | `Fit`    | `FILL`, `CONTAIN`, `COVER`      | `CONTAIN` | `fit`                  | How the image fits the block                                                                         |
 
 A side is at most 8192 pixels (tre). Decoding png, jpeg, gif and webp needs an image library in the shell, and an animated gif needs frame stepping through repeated `set(rgba=...)`; both are open (R8). A tint is not documented in tre; an icon that must take the theme colour is an `SVG`. Role none; `A11y_Hidden` true unless `Label` is set.
@@ -247,7 +246,7 @@ tre fits an SVG uniformly and centres it (`xMidYMid meet`), so `Fit` is not offe
 
 ## Shapes
 
-All shapes are drawn as a tre `path` (SVG path data) and take the style keys `Fill` (the interior) and `Border_Color`, `Border_Thickness` (the stroke, centred on the outline). A shape's default hit shape is `PAINTED` (decided 2026-10-27); `Hit_Shape` can set `BOX` ([[Hit Testing for Concave Corners]]; tre's `hit_shape` is `"box"` by default and `"painted"`). Shapes have no `Children`, so no `Padding`. Role none; `A11y_Hidden` true.
+All shapes are drawn as a tre `path` (SVG path data) and take the style keys `Fill` (the interior) and `Border_Color`, `Border_Thickness` (the stroke, centred on the outline). A shape's default hit shape is `PAINTED` (decided 2026-10-27); `Hit_Shape` can set `BOX` ([Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md); tre's `hit_shape` is `"box"` by default and `"painted"`). Shapes have no `Children`, so no `Padding`. Role none; `A11y_Hidden` true.
 
 | Block     | Own keys                                                                                       | Notes                                                                                            |
 |-----------|------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
@@ -274,8 +273,9 @@ Differences from a Box: a Box's stroke is drawn inside the box without changing 
 
 Style keys: `Size` (font), and a `Terminal_Palette` block for `palette` (`ansi`, `foreground`, `background`, `cursor`, `selection`). Role `TEXTBOX`.
 
-> [!danger] A Terminal starts a process
-> tre's `shell` argument is set at creation and runs a program. TDL is data from a configuration file and must not start processes. Decided (R4): TDL has no `Command` key. A Terminal is attached by a module's Python, which supplies the process. A shell file can place a Terminal block but cannot make it run anything. Recorded in [[Risk Register]] as R-22. Post-v1.
+> [!CAUTION]
+> **A Terminal starts a process**
+> tre's `shell` argument is set at creation and runs a program. TDL is data from a configuration file and must not start processes. Decided (R4): TDL has no `Command` key. A Terminal is attached by a module's Python, which supplies the process. A shell file can place a Terminal block but cannot make it run anything. Recorded in [Risk Register](../00%20Home/Risk%20Register.md) as R-22. Post-v1.
 
 ### Canvas
 
@@ -301,7 +301,7 @@ The drawing is Python, so a Canvas is for a module that ships its own `.py`. Rol
 | Menu, MenuItem (modules)     | `MENU`, `MENUITEM`            | yes       | `expanded` on a menu with a submenu                                                                     |
 | List (module)                | `LIST`, `LISTITEM`            | yes       | `selected` on the chosen entry                                                                          |
 
-A focus ring appears only for keyboard focus (`focus_visible`), as a non-blurred shadow with spread so it does not shift layout (tre's building-a-widget guide). The style state `Focused` therefore means keyboard focus. Reduced motion and high contrast are the theme's job ([[Goals and Non-Goals]] G7).
+A focus ring appears only for keyboard focus (`focus_visible`), as a non-blurred shadow with spread so it does not shift layout (tre's building-a-widget guide). The style state `Focused` therefore means keyboard focus. Reduced motion and high contrast are the theme's job ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7).
 
 ## Decisions of 2026-11-01
 
@@ -314,12 +314,12 @@ Proposals R1 to R11 were decided by the maintainer in chat ("As recommended"), e
 | R3  | Scrolling blocks            | `ScrollBox` is added to the block set. `VirtualList` waits until a module needs it.                                                                                                                                                                                      |
 | R4  | Terminal                    | No `Command` key in TDL; a module's Python attaches the process. Post-v1.                                                                                                                                                                                                |
 | R5  | Event values                | `On_` is reserved for events; event names are added as blocks need them. An action is an `@action` method or a built-in shell action. The value form under Events is a proposal.                                                                                                                                                                  |
-| R6  | Input state and Padding     | Data in through `Text`, edits out through `On_Change`; no two-way binding. `Padding` is on every block with `Children` and also on `Text` and `TextField` (this decides D59 of [[ADR-0014 Shell File Language]]).                                                          |
+| R6  | Input state and Padding     | Data in through `Text`, edits out through `On_Change`; no two-way binding. `Padding` is on every block with `Children` and also on `Text` and `TextField` (this decides D59 of [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)).                                                          |
 | R7  | Icons                       | Changed by the maintainer. Lookup order: (1) a shipped set of SVG icons in a JSON file, (2) the desktop's freedesktop icon theme, (3) the `Icons` folder in the shell's config directory, (4) the locations a developer lists in `settings.tdl`. See "Icons" below. The maintainer provides the JSON file. |
 | R8  | Image decoding              | The shell decodes png, jpeg, gif and webp with an image library (a dependency to choose). An animated gif is stepped by the shell. Post-v1 for animation.                                                                                                                |
-| R9  | A block handle for Python   | A module can reach a block it names and call `focus()`, `capture_pointer()`, `release_pointer()`, `redraw()` and read `layout_width` and `layout_height`. To be written into [[Module Context]].                                                                         |
+| R9  | A block handle for Python   | A module can reach a block it names and call `focus()`, `capture_pointer()`, `release_pointer()`, `redraw()` and read `layout_width` and `layout_height`. To be written into [Module Context](../42%20Python%20API/Module%20Context.md).                                                                         |
 | R10 | Rich text                   | tre's `spans` become repeated `Span` blocks inside a Text. Post-v1.                                                                                                                                                                                                       |
-| R11 | v1 block set                | Box, FlexBox, Grid, Text, TextField (single line), Bitmap, SVG, Rectangle, Circle, Ring, Path and ScrollBox. The rest follow when a module needs them ([[V1 Widgets]]).                                                                                                    |
+| R11 | v1 block set                | Box, FlexBox, Grid, Text, TextField (single line), Bitmap, SVG, Rectangle, Circle, Ring, Path and ScrollBox. The rest follow when a module needs them ([V1 Widgets](../50%20Design%20System/V1%20Widgets.md)).                                                                                                    |
 | R12 | Custom blocks               | A module author can add a block, in Python, shipped with the module. The mechanism (accepted 2026-11-01) is under "Custom Blocks" below.                                                                                                                                     |
 | R13 | Revealer renamed            | The module Revealer is now Expander, the familiar name (maintainer, 2026-11-01).                                                                                                                                                                                          |
 | R14 | Stack                       | The maintainer asked what separates a Stack from a FlexBox. A FlexBox places children side by side or one under another. A Stack puts them on top of each other in one cell. With R1 a Box already does that, so the Stack module has nothing left to add. Decided (maintainer, 2026-11-01): Stack is dropped; use a Box. |
@@ -332,18 +332,18 @@ The Icon module finds an icon by name in this order; the first hit wins. A file 
 |-------|---------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1     | The shipped set: SVG icons in JSON files that ship with the shell                                               | The maintainer's Iconify-style JSON files (see "The Icon Set Files"); v1 ships `mdi` only (decided 2026-11-01). The shell reads them on first use and gives tre an SVG document built from each icon's body |
 | 2     | The desktop's freedesktop icon theme                                                                                | [Icon Theme Specification](https://specifications.freedesktop.org/icon-theme-spec/latest/); the current theme comes from the desktop settings #needs-verification |
-| 3     | The `Icons` folder in the shell's config directory                                                                  | `$HOME/.config/tesserae-shell/Icons/` ([[Settings File]])                                                                                                    |
-| 4     | The locations a developer lists in `settings.tdl`                                                                   | Under `Directories { Icons: [...] }`, searched in order (proposed key; [[Settings File]])                                                                    |
+| 3     | The `Icons` folder in the shell's config directory                                                                  | `$HOME/.config/tesserae-shell/Icons/` ([Settings File](Settings%20File.md))                                                                                                    |
+| 4     | The locations a developer lists in `settings.tdl`                                                                   | Under `Directories { Icons: [...] }`, searched in order (proposed key; [Settings File](Settings%20File.md))                                                                    |
 
 The maintainer provided the icon set as JSON files (2026-11-01); they are described under "The Icon Set Files" below.
 
-Settings key (decided by the maintainer, 2026-11-01): `Directories { Icons: [...] }`, the same key as the other file types, one path or a list searched in order. The config `Icons/` folder (row 3) comes first and the listed paths follow, as the maintainer set the order; this is the one place where a listed path is searched after the default folder, because the Settings File note proposes the opposite for the other types ([[Settings File]]).
+Settings key (decided by the maintainer, 2026-11-01): `Directories { Icons: [...] }`, the same key as the other file types, one path or a list searched in order. The config `Icons/` folder (row 3) comes first and the listed paths follow, as the maintainer set the order; this is the one place where a listed path is searched after the default folder, because the Settings File note proposes the opposite for the other types ([Settings File](Settings%20File.md)).
 
 Consequences to confirm: because the shipped set is first, a file in `Icons/` or the desktop theme cannot replace a shipped icon of the same name; to use another `battery-full` a user names the file by path or uses another name. Open: how the JSON file is versioned and updated, and the Icon module's parameter for the name (not `Name`, which is the unique name). The icon set's licence goes into the delivery notes.
 
 ### The Icon Set Files (2026-11-01)
 
-The maintainer's files are in `/home/phil/Projects/pyDev/projects/tess-icons/icon-sets/Material-Design-Icons/` (his tess-icons project). He re-exported them on 2026-11-01 as two files, each with a set name, author, URL and licence. Read-only inspection of the re-export:
+The maintainer's files are in `~/Projects/pyDev/projects/tess-icons/icon-sets/Material-Design-Icons/` (his tess-icons project). He re-exported them on 2026-11-01 as two files, each with a set name, author, URL and licence. Read-only inspection of the re-export:
 
 | File                          | Set                    | Prefix | Author and URL                                                                       | Licence (as the file states it) | Icons | Size   | Content                                                                                                                  |
 |-------------------------------|------------------------|--------|--------------------------------------------------------------------------------------|---------------------------------|-------|--------|--------------------------------------------------------------------------------------------------------------------------|
@@ -352,7 +352,7 @@ The maintainer's files are in `/home/phil/Projects/pyDev/projects/tess-icons/ico
 
 - **Format.** Iconify-style: top keys `name`, `author`, `license`, `prefix`, `icons`, `width`, `height` (24); each icon has only `body`, the markup inside the `<svg>` element. No aliases and no per-icon viewBox.
 - **Names.** 207 names exist in both sets, 7,240 only in `mdi` and 1,011 only in `mli`.
-- **Cost.** Loading took 7.8 ms and 2.6 ms ([[Block Reference#The Icon Set Files (2026-11-01)]] earlier measurement for the first export: 4.5 MB and 1.6 MB of memory; the new files are the same size within 3 percent).
+- **Cost.** Loading took 7.8 ms and 2.6 ms ([Block Reference > The Icon Set Files (2026-11-01)](#the-icon-set-files-2026-11-01) earlier measurement for the first export: 4.5 MB and 1.6 MB of memory; the new files are the same size within 3 percent).
 - **Hard-coded colours.** The line set still has `#fff` or `#000` in 464 bodies. All 464 are inside a `<mask>`, where black and white are the mask's own values and must stay. The recolouring check in the icon tests therefore ignores `<mask>` and `<clipPath>` content and fails on a hard-coded colour anywhere else.
 - **The earlier findings that changed.** The duplicate no-anim file is gone. The recolouring is done in the data (`currentColor`), so the shell does none. The animated set's source and licence are stated in the file: it is the Material Line Icons set by Vjacheslav Trushkin, MIT.
 
@@ -361,27 +361,27 @@ Recommendations (the agent's; not decided):
 1. **Prefixes (accepted 2026-11-01).** An icon name may carry its set prefix, `mli:account-alert-loop`, which always selects that set. A name with no prefix looks in `mdi` first. The Icon module's `Animated` parameter (false by default) looks in `mli` first and falls back to `mdi`; in v1 only `mdi` ships, so `Animated` has no effect until `mli` does. This settles the 207 shared names.
 2. **Load lazily.** Read a file on the first lookup that needs it and keep the dictionary. The animated file is read only when something asks for it.
 3. **Animated icons in tre (tested 2026-11-01).** tre draws a SMIL icon as one static frame and does not play it. The test rendered offscreen with `Window.snapshot()` (no display) from the local tre source tree (0.5.9, git `0fd1e7e`): `mdi` `account` and `battery-charging`, and `mli` `account`, `alert-circle-loop`, `beer`, `beer-alt` and `beer-alt-filled`, each at the start, after `advance(500)`, at `snapshot(time=2.0)` and after `advance(2500)`. The painted pixels were identical at every time for all seven, and the images are the same. The `mli` `account` icon, whose strokes start hidden by `stroke-dashoffset` and are meant to draw on, shows only its torso arc, without the head, at the start and after three seconds. So an animated icon shown today looks unfinished. Masks work: the `beer` icon, which has a `<mask>` and an `<animate>`, draws its cup; 462 of the 1,218 line icons have both. #needs-verification on whether an icon that sets values only in the end frame (a `fill="freeze"` intro) would look right frozen at its end state.
-4. **Licences travel with the files (done in the folder, 2026-11-01).** The folder now holds `MDI-LICENSE.txt` (Pictogrammers, Apache 2.0) and `MLI-LICENSE.txt` (MIT, with the copyright line of Vjacheslav Trushkin), and the `spdx` fields read `Apache-2.0` and `MIT`. Still to do in delivery: ship both texts in the package. Pictogrammers' note that "some of the icons are redistributed under their respective licenses" may need a per-icon list. [[Risk Register]] R-23.
+4. **Licences travel with the files (done in the folder, 2026-11-01).** The folder now holds `MDI-LICENSE.txt` (Pictogrammers, Apache 2.0) and `MLI-LICENSE.txt` (MIT, with the copyright line of Vjacheslav Trushkin), and the `spdx` fields read `Apache-2.0` and `MIT`. Still to do in delivery: ship both texts in the package. Pictogrammers' note that "some of the icons are redistributed under their respective licenses" may need a per-icon list. [Risk Register](../00%20Home/Risk%20Register.md) R-23.
 5. **Names.** Shipped names are kebab-case (`account-alert`); freedesktop names differ (`audio-volume-high`), so the theme lookup (row 2) serves the names neither set has.
 
-Options for the animated set, given item 3. Decided by the maintainer on 2026-11-01: A (ship only `mdi` in v1) and C (an engine request, written as [[TRE-REQ-008 SMIL Animation in SVG Nodes]]; the maintainer gave tre the go-ahead and tre scoped it as issue #245, Ready, 2026-11-01). B stays a possible later addition. `mli` can ship once a tre release carries the request and the `TRE:` pin names it.
+Options for the animated set, given item 3. Decided by the maintainer on 2026-11-01: A (ship only `mdi` in v1) and C (an engine request, written as [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Engine%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md); the maintainer gave tre the go-ahead, tre scoped it as issue #245 and built it on a local branch on 2026-11-02, unreleased). B stays a possible later addition. `mli` can ship once a tre release carries the request and the `TRE:` pin names it.
 
 | Option                                                                                         | Cost                                                                                                                                  | Recommendation                              |
 |------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
 | A. Ship only `mdi` in v1; leave `mli` out until tre plays SMIL                                  | None. The shell works with 7,447 static icons.                                                                                         | Recommended for v1                          |
 | B. Export a static `mli`: each icon in its end state, with the animation tags removed           | A change in the tess-icons export (the earlier "no-anim" idea). It gives a second, line-style family that tre can draw correctly.     | Recommended as a later addition             |
-| C. An engine request to tre for SMIL (`<animate>`, `<set>`, `<animateTransform>`)                | A request to tre ([[AGENTS#6. Engine requests (tre / Tesserae)]]); not needed to ship v1; the shell cannot play SMIL itself (Python never runs per frame). | Write it only if you want animated icons    |
+| C. An engine request to tre for SMIL (`<animate>`, `<set>`, `<animateTransform>`)                | A request to tre (AGENTS > 6. Engine requests (tre / Tesserae)); not needed to ship v1; the shell cannot play SMIL itself (Python never runs per frame). | Write it only if you want animated icons    |
 
 ## Custom Blocks (R12)
 
 The maintainer decided that a module author can add a block, in Python, shipped with the module. The mechanism below was accepted on 2026-11-01.
 
-- A block is a Python class in the module's `<Name>_Module.py`, derived from a shell `Block` base. It declares its properties (type, default, choices, doc), parts, states and events the way a built-in does, so the schema and the error messages cover it ([[Style Schema]], [[JSON Schema and Editor Support]]).
+- A block is a Python class in the module's `<Name>_Module.py`, derived from a shell `Block` base. It declares its properties (type, default, choices, doc), parts, states and events the way a built-in does, so the schema and the error messages cover it ([Style Schema](Style%20Schema.md), [JSON Schema and Editor Support](JSON%20Schema%20and%20Editor%20Support.md)).
 - It is built from tre nodes: a tree of the existing node kinds. It cannot add a new tre node kind.
-- It is registered by name in the one registry when the module loads, and removed when the module is unloaded or reloaded ([[Hot Reload]]). A name used twice is a load error, except that a user module overrides a shipped one.
+- It is registered by name in the one registry when the module loads, and removed when the module is unloaded or reloaded ([Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md)). A name used twice is a load error, except that a user module overrides a shipped one.
 - Once the module has loaded, any file can use the block by its name, like any other.
-- It runs the module's Python in the shell's process, so the unwritten security model for user Python applies ([[Risk Register]] R-19).
-- API (decided by the maintainer, 2026-11-01): v1 custom blocks are leaf blocks, with no `Children`, because composition is what modules are for. A name needs no prefix: a name used twice is a load error that names both places. The class sketch is under "Custom Block API (Decided)" and is mirrored in [[Module Contract#Custom Blocks (Decided)]].
+- It runs the module's Python in the shell's process, so the unwritten security model for user Python applies ([Risk Register](../00%20Home/Risk%20Register.md) R-19).
+- API (decided by the maintainer, 2026-11-01): v1 custom blocks are leaf blocks, with no `Children`, because composition is what modules are for. A name needs no prefix: a name used twice is a load error that names both places. The class sketch is under "Custom Block API (Decided)" and is mirrored in [Module Contract > Custom Blocks (Decided)](../42%20Python%20API/Module%20Contract.md#custom-blocks-decided).
 
 ### Custom Block API (Decided)
 
@@ -409,14 +409,14 @@ class Meter(Block):
 ```
 
 - `build` and `update` are callbacks that return fast; neither runs per frame. A `Canvas` is redrawn on a change, not every frame.
-- The shell validates the properties from the declaration (type, default, doc) and puts the block in the project schema ([[JSON Schema and Editor Support]]).
+- The shell validates the properties from the declaration (type, default, doc) and puts the block in the project schema ([JSON Schema and Editor Support](JSON%20Schema%20and%20Editor%20Support.md)).
 - A file holds one `Module` class and any number of `Block` classes.
 - The shell's own node builder wraps tre's node kinds; the exact calls are not decided, and no tre API is invented here.
 
 ## Open
 
 - [ ] The list of built-in shell actions.
-- [ ] Shipping the licence texts in the package. The animated set is settled for v1 (option A) and the engine request [[TRE-REQ-008 SMIL Animation in SVG Nodes]] is written, not filed.
+- [ ] Shipping the licence texts in the package. The animated set is settled for v1 (option A) and the engine request [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Engine%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md) is written, not filed.
 - [ ] The value sets and defaults of the align, justify and cursor keys, and the text form of grid tracks (#needs-verification against tre's source or a test).
 - [ ] The default sizes of an SVG and of a Terminal (#needs-verification).
 - [ ] The event and action vocabulary and the value form of an `On_` key.
@@ -425,7 +425,7 @@ class Meter(Block):
 ## Acceptance Criteria
 
 - Every block in the decided set has a table here, and every key has a type, a default or `none`, and the tre property it maps to, or `none`.
-- An unknown key on a block is an error that names the closest keys ([[Common Keys and Conventions]]).
+- An unknown key on a block is an error that names the closest keys ([Common Keys and Conventions](Common%20Keys%20and%20Conventions.md)).
 - `Flex: NONE` on a `FlexBox` is an error that says so.
 - A `Box` with two children lays them in one cell, and sizes to the larger.
 - `Enabled: false` stops `On_Click`, sets the accessibility state `disabled` and applies the style state `Disabled`.
@@ -435,4 +435,4 @@ class Meter(Block):
 
 ## Links
 
-- [[Building Blocks]] · [[V1 Widgets]] · [[Style Schema]] · [[TDL Language]] · [[Common Keys and Conventions]] · [[Module File]] · [[41 TDL Reference]]
+- [Building Blocks](../50%20Design%20System/Building%20Blocks.md) · [V1 Widgets](../50%20Design%20System/V1%20Widgets.md) · [Style Schema](Style%20Schema.md) · [TDL Language](TDL%20Language.md) · [Common Keys and Conventions](Common%20Keys%20and%20Conventions.md) · [Module File](Module%20File.md) · [41 TDL Reference](41%20TDL%20Reference.md)

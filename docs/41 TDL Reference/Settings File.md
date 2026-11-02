@@ -7,14 +7,12 @@ owner: phil
 created: 2026-10-27
 updated: 2026-10-31
 tags: [tdl-ref, runtime]
-related: ["[[41 TDL Reference]]", "[[Common Keys and Conventions]]", "[[Shell File]]", "[[Module File]]", "[[Style, Theme and Stylesheet Files]]", "[[JSON Schema and Editor Support]]", "[[ADR-0007 Shell UI Layer]]", "[[Logging with Loguru]]"]
-depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 ---
 
 # Settings File
 
-> [!summary]
-> The config directory, `$HOME/.config/tesserae-shell/`, holds the shell's files in fixed folders. One file at its root, `settings.tdl`, holds settings that are not tied to a single shell: where to look for files when the user wants a different layout, which shell file to start, and global behaviour. The folder layout and the file are the maintainer's (2026-10-27); the key names were accepted by the maintainer on 2026-10-29, and the name `settings.tdl` is confirmed (D20; its file-type key `Settings: v1` was replaced by the root block `Settings { }`, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+> [!NOTE]
+> The config directory, `$HOME/.config/tesserae-shell/`, holds the shell's files in fixed folders. One file at its root, `settings.tdl`, holds settings that are not tied to a single shell: where to look for files when the user wants a different layout, which shell file to start, and global behaviour. The folder layout and the file are the maintainer's (2026-10-27); the key names were accepted by the maintainer on 2026-10-29, and the name `settings.tdl` is confirmed (D20; its file-type key `Settings: v1` was replaced by the root block `Settings { }`, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 
 ## The Config Directory
 
@@ -32,7 +30,7 @@ $HOME/.config/tesserae-shell/
     logs/            log files (default)
 ```
 
-- Shell files live in `Shells/` (decided 2026-10-27). The folder names and the other four are from [[ADR-0007 Shell UI Layer#Modules, styles, themes and stylesheets live in the config directory (2026-10-27)]].
+- Shell files live in `Shells/` (decided 2026-10-27). The folder names and the other four are from [ADR-0007 Shell UI Layer > Modules, styles, themes and stylesheets live in the config directory (2026-10-27)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#modules-styles-themes-and-stylesheets-live-in-the-config-directory-2026-10-27).
 - `settings.tdl` can point to absolute directories for any of these types, for a user who wants a different layout (decided 2026-10-27). With no `settings.tdl`, or no key for a type, the folders above are used.
 - `settings.tdl` is the home for settings that are not project based (decided 2026-10-27).
 - **Where the config directory is** (decided 2026-10-27, "whichever is safer for the operating system"): `$XDG_CONFIG_HOME/tesserae-shell/` when `XDG_CONFIG_HOME` is set, non-empty and an absolute path; otherwise `$HOME/.config/tesserae-shell/`. This follows the XDG base directory specification: an unset or empty variable means `$HOME/.config`, and a relative value is invalid and ignored ([spec](https://specifications.freedesktop.org/basedir/latest/)). The cache directory follows the same rule with `XDG_CACHE_HOME` and `$HOME/.cache`. Every note that writes `$HOME/.config/tesserae-shell/` means this directory at its default.
@@ -46,19 +44,19 @@ Name: Settings
 ---
 ```
 
-The metadata block of every shell file is defined in [[TDL Language#The Metadata Block]]; the file type is named by the root block, `Settings { }` (D20, [[TDL Language#The Root Block]]), and holds all the keys below. The file is a sixth file type, beside the five of [[ADR-0014 Shell File Language#Layout Rules]]; the name is fixed (`settings.tdl`, not `<Name>_Settings.tdl`) because there is one per config directory. `Name:` is required (D39). Proposed: it carries no `UID` and is not entered in the registry. [[AGENTS#9. Naming in the designed system]] lists the file suffixes and types; adding `Settings` there is the maintainer's edit.
+The metadata block of every shell file is defined in [TDL Language > The Metadata Block](TDL%20Language.md#the-metadata-block); the file type is named by the root block, `Settings { }` (D20, [TDL Language > The Root Block](TDL%20Language.md#the-root-block)), and holds all the keys below. The file is a sixth file type, beside the five of [ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules); the name is fixed (`settings.tdl`, not `<Name>_Settings.tdl`) because there is one per config directory. `Name:` is required (D39). Proposed: it carries no `UID` and is not entered in the registry. AGENTS > 9. Naming in the designed system lists the file suffixes and types; adding `Settings` there is the maintainer's edit.
 
 ## Keys (Proposed)
 
 | Key           | Meaning                              | Value                                                                                                                                                                                |
 |---------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Directories` | Where to look for each file type     | A block with the keys `Shells`, `Modules`, `Styles`, `Themes`, `Stylesheets`, `Icons` to an absolute directory or a list of them. `Icons` lists extra locations searched after the config `Icons/` folder (decided 2026-11-01, [[Block Reference#Icons (R7)]])                                                                     |
+| `Directories` | Where to look for each file type     | A block with the keys `Shells`, `Modules`, `Styles`, `Themes`, `Stylesheets`, `Icons` to an absolute directory or a list of them. `Icons` lists extra locations searched after the config `Icons/` folder (decided 2026-11-01, [Block Reference > Icons (R7)](Block%20Reference.md#icons-r7))                                                                     |
 | `Main_Shell`  | The shell file the shell starts from | A file name in the shells directory; default `Main_Shell.tdl`                                                                                                                       |
 | `Registry`    | Where the registry file lives        | An absolute path to a `registry.json` file; default `$HOME/.config/tesserae-shell/registry.json`. Same path rules as `Directories`                                                   |
-| `Logging`     | Global log settings                  | `Level`, `Directory` (default `logs/` in the config directory, same path rules) and `Retention` (optional, days); naming and rotation are in [[#Log files]] |
-| `Validation`  | Schema validation settings           | `Enabled` (default true); the cache location is [[JSON Schema and Editor Support#The `jsonschema` Dependency: Runtime, Not Only Development]]                                                                                              |
+| `Logging`     | Global log settings                  | `Level`, `Directory` (default `logs/` in the config directory, same path rules) and `Retention` (optional, days); naming and rotation are in [Log files](#log-files) |
+| `Validation`  | Schema validation settings           | `Enabled` (default true); the cache location is [JSON Schema and Editor Support > The `jsonschema` Dependency: Runtime, Not Only Development](JSON%20Schema%20and%20Editor%20Support.md#the-jsonschema-dependency-runtime-not-only-development)                                                                                              |
 
-Keys are Capitalised like every key in a shell file ([[TDL Language#Names and the Registry]]). The key names are the agent's Capitalisation of the 2026-10-29 names; `Level`, `Directory`, `Retention` and `Enabled` follow the same rule.
+Keys are Capitalised like every key in a shell file ([TDL Language > Names and the Registry](TDL%20Language.md#names-and-the-registry)). The key names are the agent's Capitalisation of the 2026-10-29 names; `Level`, `Directory`, `Retention` and `Enabled` follow the same rule.
 
 Enum values of settings keys are full upper case, like every enum value (D58):
 
@@ -76,8 +74,8 @@ Name: Settings
 
 Settings {
     Directories {
-        Modules: ["/home/phil/Projects/shell/Modules", "/home/phil/.config/tesserae-shell/Modules"]
-        Themes: /home/phil/Projects/shell/Themes
+        Modules: ["~/Projects/shell/Modules", "~/.config/tesserae-shell/Modules"]
+        Themes: ~/Projects/shell/Themes
     }
 
     Main_Shell: Main_Shell.tdl
@@ -88,13 +86,13 @@ Settings {
 }
 ```
 
-Settings keys are nested blocks, as the example shows (`Logging { Level: INFO }`). `Logging.Level` in the prose below is only a shorthand for that path (D20). The metadata block and the brace blocks follow [[TDL Language]]; the paths in the list are quoted to keep the example safe, and whether bare paths are fine in a list is not stated there.
+Settings keys are nested blocks, as the example shows (`Logging { Level: INFO }`). `Logging.Level` in the prose below is only a shorthand for that path (D20). The metadata block and the brace blocks follow [TDL Language](TDL%20Language.md); the paths in the list are quoted to keep the example safe, and whether bare paths are fine in a list is not stated there.
 
 - A value in `Directories` is a path or a list of paths, searched in order (decided 2026-10-27).
 - **Fallback to the default.** The default folder for the type, inside the config directory, is searched after the configured ones (decided 2026-10-27, read as "fallback to defaults"). A name found in a configured directory is used and the default is not consulted for it; a name found only in the default folder is used from there. When the same name exists in both, the configured one wins and the shell logs a notice at info level naming both files (proposed). The maintainer confirmed this reading on 2026-10-27.
 - **Paths.** `~` and environment variables are allowed (decided 2026-10-27). The shell expands them, and the result must be an absolute path. If a variable is unset or the path does not resolve, that is an error naming the key, the text written and what failed. There is no silent empty value. A path that resolves to a directory that does not exist is an error too. A relative path after expansion is an error: it would depend on the working directory.
-- A name found twice in the same tier (two configured directories) is an error naming both files, as a duplicate unique name is ([[Common Keys and Conventions#Names and references]]).
-- Files found through a configured directory are registered like any other. How such files are associated with a schema depends on the schema set: the loader picks the schema from the root block and the suffix, so no association is needed ([[JSON Schema and Editor Support#Associating a Schema with a File]]).
+- A name found twice in the same tier (two configured directories) is an error naming both files, as a duplicate unique name is ([Common Keys and Conventions > Names and references](Common%20Keys%20and%20Conventions.md#names-and-references)).
+- Files found through a configured directory are registered like any other. How such files are associated with a schema depends on the schema set: the loader picks the schema from the root block and the suffix, so no association is needed ([JSON Schema and Editor Support > Associating a Schema with a File](JSON%20Schema%20and%20Editor%20Support.md#associating-a-schema-with-a-file)).
 
 ## Log Files
 
@@ -107,7 +105,7 @@ Decided 2026-10-27; the details marked below were settled by adopting the recomm
 
 ## Start Order
 
-Decided 2026-10-27: `settings.tdl` is read first, before the registry, because it can move the registry to a custom location. Proposed order: expand paths and read `settings.tdl`; start logging with its `Logging` keys (or the default log directory if the file failed); open the registry at the configured path; then find and load shell files, modules, styles, themes and stylesheets. The `settings.tdl` file itself is found only at `$HOME/.config/tesserae-shell/settings.tdl` (the fixed point everything else is relative to); the directory spelling is still open in [[ADR-0007 Shell UI Layer#Open items]].
+Decided 2026-10-27: `settings.tdl` is read first, before the registry, because it can move the registry to a custom location. Proposed order: expand paths and read `settings.tdl`; start logging with its `Logging` keys (or the default log directory if the file failed); open the registry at the configured path; then find and load shell files, modules, styles, themes and stylesheets. The `settings.tdl` file itself is found only at `$HOME/.config/tesserae-shell/settings.tdl` (the fixed point everything else is relative to); the directory spelling is still open in [ADR-0007 Shell UI Layer > Open items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items).
 
 ## Reload
 
@@ -126,7 +124,7 @@ Decided 2026-10-27: if `settings.tdl` cannot be read or fails validation, the sh
 - A directory that does not exist, or a path with an unset variable or one that does not resolve: error with the key, the text written and what failed.
 - A relative path in `Directories`: error with the key.
 - A `Main_Shell` that is not in the shells directory: error naming the directories searched.
-- An unknown key: error with the closest names, as in every file ([[Common Keys and Conventions#Errors]]).
+- An unknown key: error with the closest names, as in every file ([Common Keys and Conventions > Errors](Common%20Keys%20and%20Conventions.md#errors)).
 
 ## Open
 
@@ -137,11 +135,11 @@ Decided 2026-10-27: if `settings.tdl` cannot be read or fails validation, the sh
 - [x] `settings.tdl` is read before the registry, because it can move the registry (decided 2026-10-27).
 - [x] Reload: `Logging` applies at once; `Directories` and `Main_Shell` need a restart (accepted as proposed, 2026-10-27).
 - [x] Log file naming `log_yyyy-mm-dd.log`, a new file each local day, no deletion unless `Logging.Retention` is set (decided 2026-10-27). Open: a real midnight crossing, tested at the testing phase.
-- [x] If the configured registry path has no registry, the shell creates an empty one (decided 2026-10-27). Moving the registry by hand: the user moves the file and sets `Registry` in `settings.tdl`; the shell uses the file at the new path. If files already carry UIDs and the registry is new or empty, the shell logs a warning and rebuilds each entry's registry record from the UID in its file rather than issuing new UIDs (recommendation adopted and confirmed by the maintainer, 2026-10-27; the rebuild rules belong to [[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]] and are open there).
-- [x] Per-monitor settings belong in the shell file's `Monitor` block, not here ([[Shell File]], [[TDL Language#Monitors]]) (recommendation adopted 2026-10-27).
-- [x] The name `settings.tdl` is confirmed (D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+- [x] If the configured registry path has no registry, the shell creates an empty one (decided 2026-10-27). Moving the registry by hand: the user moves the file and sets `Registry` in `settings.tdl`; the shell uses the file at the new path. If files already carry UIDs and the registry is new or empty, the shell logs a warning and rebuilds each entry's registry record from the UID in its file rather than issuing new UIDs (recommendation adopted and confirmed by the maintainer, 2026-10-27; the rebuild rules belong to [ADR-0007 Shell UI Layer > UIDs and the registry (2026-10-25)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#uids-and-the-registry-2026-10-25) and are open there).
+- [x] Per-monitor settings belong in the shell file's `Monitor` block, not here ([Shell File](Shell%20File.md), [TDL Language > Monitors (Shell Schema)](TDL%20Language.md#monitors-shell-schema)) (recommendation adopted 2026-10-27).
+- [x] The name `settings.tdl` is confirmed (D20, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] The metadata form of `settings.tdl`: the root block `Settings { }` with a required `Name:` (D20 as revised by D26 and D39).
-- [x] The Settings entry in the schema set: `settings.schema.json` ([[JSON Schema and Editor Support#Files]]).
+- [x] The Settings entry in the schema set: `settings.schema.json` ([JSON Schema and Editor Support > Files](JSON%20Schema%20and%20Editor%20Support.md#files)).
 
 ## Acceptance Criteria
 
@@ -156,4 +154,4 @@ Decided 2026-10-27: if `settings.tdl` cannot be read or fails validation, the sh
 
 ## Links
 
-- [[41 TDL Reference]] · [[Common Keys and Conventions]] · [[Shell File]] · [[JSON Schema and Editor Support]] · [[ADR-0007 Shell UI Layer]]
+- [41 TDL Reference](41%20TDL%20Reference.md) · [Common Keys and Conventions](Common%20Keys%20and%20Conventions.md) · [Shell File](Shell%20File.md) · [JSON Schema and Editor Support](JSON%20Schema%20and%20Editor%20Support.md) · [ADR-0007 Shell UI Layer](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md)

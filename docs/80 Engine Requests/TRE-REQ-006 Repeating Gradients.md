@@ -7,21 +7,20 @@ owner: phil
 created: 2026-10-27
 updated: 2026-10-27
 tags: [engine-request, needs-verification]
-related: ["[[Frame]]", "[[Style Schema]]", "[[Building Blocks]]", "[[80 Engine Requests]]"]
-depends_on: []
 ---
 
 # TRE-REQ-006: Repeating Gradients
 
-> [!summary]
+> [!NOTE]
 > Let a `tre.Gradient` repeat its ramp a set number of times across the node's bounds, so a gradient border or fill can tile (stripes, repeated colour cycles around a ring). The underlying graphics library already supports a repeat mode; tre does not expose it. Written for the future: the maintainer will carry it to tre later, and the shell works without it.
 
-> [!info] Not to be filed now
-> The maintainer asked for this request to be written and kept (2026-10-27). It is not filed from this vault, and the `tre` session has not been told ([[AGENTS#6. Engine requests (tre / Tesserae)]]).
+> [!NOTE]
+> **Not to be filed now**
+> The maintainer asked for this request to be written and kept (2026-10-27). It is not filed from this vault, and the `tre` session has not been told (AGENTS > 6. Engine requests (tre / Tesserae)).
 
 ## Shell Need
 
-The Frame's border colour can be a gradient, and tiling it is an opt-in (`border_tile`, [[Frame#Thickness, radii, border, colours]]). "Tiling" is read here as: the ramp repeats along the gradient, instead of stretching once across the shape. Uses:
+The Frame's border colour can be a gradient, and tiling it is an opt-in (`border_tile`, [Frame > Thickness, radii, border, colours](../40%20Specifications/Surfaces/Frame.md#thickness-radii-border-colours)). "Tiling" is read here as: the ramp repeats along the gradient, instead of stretching once across the shape. Uses:
 
 | Use                                               | Gradient                       | What repeats                             |
 |---------------------------------------------------|--------------------------------|------------------------------------------|
@@ -47,7 +46,8 @@ It is paint mechanism: how a ramp is laid across a shape. The shell can imitate 
 
 ## Proposed API
 
-> [!danger] Proposal, not existing API
+> [!CAUTION]
+> **Proposal, not existing API**
 > Names are mine and tre may choose others.
 
 ```python
@@ -79,4 +79,4 @@ Small, by reading the code: a field on the core `Gradient`, one extra argument o
 
 ## Links
 
-[[Frame]] · [[Style Schema]] · [[80 Engine Requests]]
+[Frame](../40%20Specifications/Surfaces/Frame.md) · [Style Schema](../41%20TDL%20Reference/Style%20Schema.md) · [80 Engine Requests](80%20Engine%20Requests.md)

@@ -7,19 +7,17 @@ owner: phil
 created: 2026-10-27
 updated: 2026-10-31
 tags: [spec/surface, needs-verification]
-related: ["[[Surfaces]]", "[[Surface Types]]", "[[Shell File]]", "[[Common Keys and Conventions]]", "[[Shell Structure]]", "[[TRE-REQ-001 Layer Surface Window]]"]
-depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]"]
 ---
 
 # Panel
 
-> [!summary]
-> The Panel (the `Panel` block) is the multi-purpose surface. It can attach to the Frame, a Bar or another surface by naming it, or float free. It can be moved with the mouse, anchored, hidden and animated, and it can sit on the Bottom, Top or Overlay layer. The OSD, the desktop widget, the launcher and the slide-in panel are all Panels. A Panel is a tre `LayerWindow`; it may become the baseline other kinds build on. The decisions are the maintainer's ([[Surface Types]], [[ADR-0007 Shell UI Layer]]); the key names were accepted by the maintainer on 2026-10-29 (many mirror tre's settings). The examples are TDL illustrations ([[ADR-0014 Shell File Language]]).
+> [!NOTE]
+> The Panel (the `Panel` block) is the multi-purpose surface. It can attach to the Frame, a Bar or another surface by naming it, or float free. It can be moved with the mouse, anchored, hidden and animated, and it can sit on the Bottom, Top or Overlay layer. The OSD, the desktop widget, the launcher and the slide-in panel are all Panels. A Panel is a tre `LayerWindow`; it may become the baseline other kinds build on. The decisions are the maintainer's ([Surface Types](Surface%20Types.md), [ADR-0007 Shell UI Layer](../../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md)); the key names were accepted by the maintainer on 2026-10-29 (many mirror tre's settings). The examples are TDL illustrations ([ADR-0014 Shell File Language](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)).
 
 ## Purpose and Scope
 
-- One surface type that covers four v1 uses ([[V1 Scope#Surfaces]]): the OSD, the desktop widget, the launcher and the slide-in panel, plus an overlay popup panel (a Panel on the overlay layer, [[Surface Types#Overlay]]).
-- Not in this note: the Bar and Frame (their own specs), the Popup (menus and flyouts anchored to a surface, [[Surface Types#Special cases]]), and what a Panel contains (blocks, containers and modules, [[Building Blocks]]).
+- One surface type that covers four v1 uses ([V1 Scope > Surfaces](../../10%20Vision/V1%20Scope.md#surfaces)): the OSD, the desktop widget, the launcher and the slide-in panel, plus an overlay popup panel (a Panel on the overlay layer, [Surface Types > Overlay](Surface%20Types.md#overlay)).
+- Not in this note: the Bar and Frame (their own specs), the Popup (menus and flyouts anchored to a surface, [Surface Types > Special cases](Surface%20Types.md#special-cases)), and what a Panel contains (blocks, containers and modules, [Building Blocks](../../50%20Design%20System/Building%20Blocks.md)).
 
 ## Behaviour
 
@@ -41,8 +39,8 @@ stateDiagram-v2
 ```
 
 - Show, hide and toggle are shell actions a module or an event can call; a Panel can also hide itself after a time (an OSD).
-- Moving is done by the engine: the surface follows the pointer by changing its tre `margin`, with no Python in the loop. On release the Panel's `moved` event gives the final margins, which the shell turns into an `Offset` and saves ([[TRE-REQ-001 Layer Surface Window#Margin drag]]).
-- A closed Panel is dead; the shell creates a new window when the monitor returns ([[Data Flow#Monitor hot-plug]]).
+- Moving is done by the engine: the surface follows the pointer by changing its tre `margin`, with no Python in the loop. On release the Panel's `moved` event gives the final margins, which the shell turns into an `Offset` and saves ([TRE-REQ-001 Layer Surface Window > Margin drag](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#margin-drag)).
+- A closed Panel is dead; the shell creates a new window when the monitor returns ([Data Flow > Monitor hot-plug](../../20%20Architecture/Data%20Flow.md#monitor-hot-plug)).
 
 ### Position and Attachment
 
@@ -53,8 +51,8 @@ stateDiagram-v2
 | Movable                       | `Movable: true`                                                 | A node with `window_region="drag_margin"`; the engine changes the margins |
 | Attached to a target          | `Attach_To: Top_Bar`, `Attach: LEFT`, `Gap: 10`, `Align: START` | The shell computes margins from the target's geometry (below)             |
 
-- **Attaching is by naming the surface** (decided, [[ADR-0007 Shell UI Layer#Open items]]). It is a reference, not nesting. The registry resolves the name; an unresolved name is an error at load, and a target that disappears while running is a warning and the Panel stays hidden until it returns.
-- layer-shell has no way to place one surface relative to another, so the shell computes the margins itself and recomputes them when the target moves or animates. Two separate surfaces animating together can differ by up to a frame on screen ([[TRE-REQ-001 Layer Surface Window#Animation]]).
+- **Attaching is by naming the surface** (decided, [ADR-0007 Shell UI Layer > Open items](../../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)). It is a reference, not nesting. The registry resolves the name; an unresolved name is an error at load, and a target that disappears while running is a warning and the Panel stays hidden until it returns.
+- layer-shell has no way to place one surface relative to another, so the shell computes the margins itself and recomputes them when the target moves or animates. Two separate surfaces animating together can differ by up to a frame on screen ([TRE-REQ-001 Layer Surface Window > Animation](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#animation)).
 - Dragging clamps the Panel to its output. It does not cross to another monitor (no cross-monitor dragging for now; a later item), and other surfaces' reserved zones do not limit it.
 - **Only a floating Panel has a persistent position** (decided 2026-10-27). An attached or anchored Panel is placed by its target or its anchor, so nothing is saved for it. The floating Panel's position is saved in the registry, which already holds a unique identity for it (proposed key: the final margins from the `moved` event, kept as an `Offset`).
 
@@ -69,7 +67,7 @@ stateDiagram-v2
 | `Align`  | `START`, `CENTER`, `END`         | How the Panel lines up along the shared edge |
 
 - `Attach: LEFT` puts the Panel's right edge against the target's left edge. `Attach: RIGHT` puts the Panel's left edge against the target's right edge. `Attach: TOP` puts the Panel's bottom edge against the target's top edge. `Attach: BOTTOM` puts the Panel's top edge against the target's bottom edge.
-- `Gap` is the true visible gap, borders included: the distance between the Panel's outer border edge and the target's outer edge. A Panel with a 2 px border and a target with none, with `Gap: 10`, has exactly 10 px between them. The shell subtracts the border from the offset it computes, and ignores a shadow margin, which is transparent ([[ADR-0010 Surface Shadows]]).
+- `Gap` is the true visible gap, borders included: the distance between the Panel's outer border edge and the target's outer edge. A Panel with a 2 px border and a target with none, with `Gap: 10`, has exactly 10 px between them. The shell subtracts the border from the offset it computes, and ignores a shadow margin, which is transparent ([ADR-0010 Surface Shadows](../../30%20Decisions/ADR-0010%20Surface%20Shadows.md)).
 - `Align` runs along the edge: for `Attach: LEFT` or `RIGHT`, `START` lines up the top edges, `CENTER` the middles and `END` the bottom edges; for `Attach: TOP` or `BOTTOM`, `START` lines up the left edges and `END` the right edges (the second half is by analogy).
 
 ```
@@ -85,10 +83,10 @@ This attaches the Panel's right edge to the target's left edge, lines up their t
 
 **Attached to a Frame (decided 2026-10-30, D49 to D51).** A Frame has no `Gap`. The Panel's `Margin` on the sides that face the Frame is the separation:
 
-- With no margin on those sides, the Panel and the Frame meld as before ([[Frame#Hosted melding (decided 2026-10-27)]]).
+- With no margin on those sides, the Panel and the Frame meld as before ([Frame > Hosted melding (decided 2026-10-27)](Frame.md#hosted-melding-decided-2026-10-27)).
 - With a margin there, they do not meld: the Frame edge continues straight and the Panel's corners round as a floating Panel's do.
 - Whether a Panel melds is decided by its `Margin` on the Frame-facing sides (D44). The `Meld` key does not switch melding on or off: it only chooses how a melded Panel is drawn, hosted inside the Frame's surface or as a window of its own (D56, amended 2026-10-31). With a margin there, `Meld` has no effect.
-- `Offset` positions the Panel from its anchored edges; `Margin` is transparent space around the Panel and `Padding` is inside it ([[Shell File#Surface Keys]]).
+- `Offset` positions the Panel from its anchored edges; `Margin` is transparent space around the Panel and `Padding` is inside it ([Shell File > Surface Keys](../../41%20TDL%20Reference/Shell%20File.md#surface-keys)).
 
 **Following the target (decided 2026-10-27).**
 
@@ -107,7 +105,7 @@ Hide and show mean hidden, not closed. A hidden Panel keeps its identity and its
 
 ### Collapsed Handle (Decided 2026-10-27: Use the Edge Shell as the Example)
 
-A Panel can collapse to a handle on its edge, as the maintainer's Edge Shell does ([design spec](file:///home/phil/Projects/pyDev/projects/myShell/docs/superpowers/specs/2026-10-11-edge-shell-design.md), [Shell_Specs](file:///home/phil/Projects/pyDev/projects/myShell/docs/Shell_Specs.md)). What it does, as written there:
+A Panel can collapse to a handle on its edge, as the maintainer's Edge Shell does ([design spec](file://~/Projects/pyDev/projects/myShell/docs/superpowers/specs/2026-10-11-edge-shell-design.md), [Shell_Specs](file://~/Projects/pyDev/projects/myShell/docs/Shell_Specs.md)). What it does, as written there:
 
 | State     | Visible                                                           | Enters when                                                                       |
 |-----------|-------------------------------------------------------------------|-----------------------------------------------------------------------------------|
@@ -123,7 +121,7 @@ A Panel can collapse to a handle on its edge, as the maintainer's Edge Shell doe
 
 ### Layers
 
-A Panel may use `BOTTOM`, `TOP` or `OVERLAY`. It may reserve space only on `TOP` (an `Exclusive_Zone` elsewhere is a load error, [[Surface Types#Layers per kind]]).
+A Panel may use `BOTTOM`, `TOP` or `OVERLAY`. It may reserve space only on `TOP` (an `Exclusive_Zone` elsewhere is a load error, [Surface Types > Layers per kind](Surface%20Types.md#layers-per-kind)).
 
 - The protocol leaves the order of surfaces on one layer undefined ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)). So a Panel that must draw over a Bar needs a higher layer than the Bar (a Bar on `TOP`, the Panel on `OVERLAY`), or it must not overlap it.
 - `BACKGROUND` is not offered to any surface type.
@@ -135,11 +133,11 @@ A Panel may use `BOTTOM`, `TOP` or `OVERLAY`. It may reserve space only on `TOP`
 
 ### Input Region
 
-By default a Panel takes input over its whole surface. A Panel with a non-rectangular shape, a transparent margin for a shadow, or a click-through OSD sets the input region: the whole surface, nothing, rectangles, or `auto` (the union of the drawn shapes). The OSD uses nothing so clicks pass through. Shape-aware `auto` for curved and concave shapes uses `hit_shape="painted"` on path nodes, released in tre 0.5.9 ([[Hit Testing for Concave Corners]]).
+By default a Panel takes input over its whole surface. A Panel with a non-rectangular shape, a transparent margin for a shadow, or a click-through OSD sets the input region: the whole surface, nothing, rectangles, or `auto` (the union of the drawn shapes). The OSD uses nothing so clicks pass through. Shape-aware `auto` for curved and concave shapes uses `hit_shape="painted"` on path nodes, released in tre 0.5.9 ([Hit Testing for Concave Corners](../../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md)).
 
 ## Configuration
 
-Keys of a Panel entry. Decided keys are from [[Common Keys and Conventions]]; proposed ones mirror tre ([[Shell File#Surface keys]]).
+Keys of a Panel entry. Decided keys are from [Common Keys and Conventions](../../41%20TDL%20Reference/Common%20Keys%20and%20Conventions.md); proposed ones mirror tre ([Shell File > Surface keys](../../41%20TDL%20Reference/Shell%20File.md#surface-keys)).
 
 | Key                | Meaning                                                                                                                                              | Status                                                                       |
 |--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
@@ -155,7 +153,7 @@ Keys of a Panel entry. Decided keys are from [[Common Keys and Conventions]]; pr
 | `Anchor`           | `TOP`, `BOTTOM`, `LEFT`, `RIGHT` (one or a list)                                                                                                     | Decided (key name accepted 2026-10-29)                                      |
 | `Size`             | `[width, height]`                                                                                                                                    | Decided (key name accepted 2026-10-29)                                      |
 | `Offset`           | Four-sided position from the anchored edges (left, top, right, bottom); replaces the Panel's old `Margin`. The shell reorders it to tre's `margin` | Decided (D51)                                                               |
-| `Meld`             | Only with `Attach_To` a Frame and no `Margin` on the Frame-facing sides: `true` draws the Panel inside the Frame's surface (hosted melding); `false`, the default, keeps a window of its own that draws its own joins. It does not decide whether the Panel melds; the `Margin` does | Amended 2026-10-31 (D56); the mechanism is decided ([[Frame#Hosted Melding (Decided 2026-10-27)]]) |
+| `Meld`             | Only with `Attach_To` a Frame and no `Margin` on the Frame-facing sides: `true` draws the Panel inside the Frame's surface (hosted melding); `false`, the default, keeps a window of its own that draws its own joins. It does not decide whether the Panel melds; the `Margin` does | Amended 2026-10-31 (D56); the mechanism is decided ([Frame > Hosted Melding (Decided 2026-10-27)](Frame.md#hosted-melding-decided-2026-10-27)) |
 | `Margin`           | Transparent space around the Panel (left, top, right, bottom). Attached to a Frame, on the Frame-facing sides it separates the two and stops the meld | Decided (D41 to D45)                                                        |
 | `Padding`          | Transparent space between the children and the Panel's four sides (left, top, right, bottom)                                                        | Decided (D41 to D45)                                                        |
 | `Keyboard`         | `NONE`, `ON_DEMAND`, `EXCLUSIVE`                                                                                                                     | Decided (key name accepted 2026-10-29)                                      |
@@ -224,31 +222,31 @@ Panel {
 }
 ```
 
-An illustration only: the module params (`Value`, a Slider's params) are not designed here; a module use is written with the module's name as the head ([[Module File#Using a Module]]). `true` in `Movable: true` and `Hidden: true` is a bare word that the parser keeps as a string and the key's declared type turns into a boolean, and `[]` in `Input_Region: []` is the empty list (D2, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]).
+An illustration only: the module params (`Value`, a Slider's params) are not designed here; a module use is written with the module's name as the head ([Module File > Using a Module](../../41%20TDL%20Reference/Module%20File.md#using-a-module)). `true` in `Movable: true` and `Hidden: true` is a bare word that the parser keeps as a string and the key's declared type turns into a boolean, and `[]` in `Input_Region: []` is the empty list (D2, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 
 ## Python Contract
 
-A Panel has no Python of its own. A module reaches it through shell actions: show, hide, toggle, move. A module is told when a use appears or goes away ([[Module Context#Uses]]). The position the user dragged to is shell state, not module state.
+A Panel has no Python of its own. A module reaches it through shell actions: show, hide, toggle, move. A module is told when a use appears or goes away ([Module Context > Uses](../../42%20Python%20API/Module%20Context.md#uses)). The position the user dragged to is shell state, not module state.
 
 ## Integration
 
-- tre: a `LayerWindow` with `layer`, `anchor`, `size`, `margin`, `keyboard`, `input_region`, `exclusive_zone` (live through `set()`), margin animation with `animate`, `window_region="drag_margin"` and the `moved` event ([[TRE-REQ-001 Layer Surface Window]]). `namespace` and `output` are constructor-only, so a change means reopening the window.
-- Threads: window operations on the loop thread; no worker thread ([[Process Model and Threading]]).
-- Saved position: only a floating Panel has one. The registry holds each entry's state ([[ADR-0007 Shell UI Layer#Config directory and registry (2026-10-25)]]); the final margins from `moved` are written there (decided 2026-10-27, key proposed). On a monitor change the saved position is clamped to the output.
-- Memory: a surface costs about 18 MiB for a 1280 x 32 bar and 31 MiB for a 200 x 100 window on tre 0.5.8, and a full-screen 4K overlay about 177 MiB ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]). A launcher should be a sized panel, not full-screen, unless a dimmed backdrop is wanted.
+- tre: a `LayerWindow` with `layer`, `anchor`, `size`, `margin`, `keyboard`, `input_region`, `exclusive_zone` (live through `set()`), margin animation with `animate`, `window_region="drag_margin"` and the `moved` event ([TRE-REQ-001 Layer Surface Window](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)). `namespace` and `output` are constructor-only, so a change means reopening the window.
+- Threads: window operations on the loop thread; no worker thread ([Process Model and Threading](../../20%20Architecture/Process%20Model%20and%20Threading.md)).
+- Saved position: only a floating Panel has one. The registry holds each entry's state ([ADR-0007 Shell UI Layer > Config directory and registry (2026-10-25)](../../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#config-directory-and-registry-2026-10-25)); the final margins from `moved` are written there (decided 2026-10-27, key proposed). On a monitor change the saved position is clamped to the output.
+- Memory: a surface costs about 18 MiB for a 1280 x 32 bar and 31 MiB for a 200 x 100 window on tre 0.5.8, and a full-screen 4K overlay about 177 MiB ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)). A launcher should be a sized panel, not full-screen, unless a dimmed backdrop is wanted.
 
 ## Design
 
-- A Panel's look is a style file, a stylesheet or an inline `Style` block over a Box or FlexBox; shape, border, radius, shadow and background are style properties ([[Style, Theme and Stylesheet Files#Rules]]).
-- Shadows: as [[ADR-0010 Surface Shadows]] defines them: a larger transparent surface, the input region on the body, and the shadow keys `Elevation`, `Shadow` and `Shadow_Bleed` ([[Style Schema#Shadow keys]]). Shadows are excluded from the hit shape.
-- A visual meld with a Bar or the Frame is drawn with Path blocks and a shared colour, on separate surfaces ([[Surface Types#Risks]]).
+- A Panel's look is a style file, a stylesheet or an inline `Style` block over a Box or FlexBox; shape, border, radius, shadow and background are style properties ([Style, Theme and Stylesheet Files > Rules](../../41%20TDL%20Reference/Style%2C%20Theme%20and%20Stylesheet%20Files.md#rules)).
+- Shadows: as [ADR-0010 Surface Shadows](../../30%20Decisions/ADR-0010%20Surface%20Shadows.md) defines them: a larger transparent surface, the input region on the body, and the shadow keys `Elevation`, `Shadow` and `Shadow_Bleed` ([Style Schema > Shadow keys](../../41%20TDL%20Reference/Style%20Schema.md#shadow-keys)). Shadows are excluded from the hit shape.
+- A visual meld with a Bar or the Frame is drawn with Path blocks and a shared colour, on separate surfaces ([Surface Types > Risks](Surface%20Types.md#risks)).
 
 ## Accessibility
 
 - The Panel's window is published as one window of the application, with the nodes' roles, labels and states set in the shell file. A hidden Panel is not in the tab order.
 - The launcher takes the keyboard exclusively on open; Escape closes it.
-- The screen reader gets the tree but no screen position for a layer surface ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]).
-- Reduced motion: show and hide are instant, no slide or fade ([[Goals and Non-Goals]] G7).
+- The screen reader gets the tree but no screen position for a layer surface ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)).
+- Reduced motion: show and hide are instant, no slide or fade ([Goals and Non-Goals](../../10%20Vision/Goals%20and%20Non-Goals.md) G7).
 - A collapsed or auto-hidden Panel needs a keyboard-reachable way to open it.
 
 ## Performance Budget
@@ -305,4 +303,4 @@ A Panel has no Python of its own. A module reaches it through shell actions: sho
 
 ## Links
 
-- [[Surfaces]] · [[Surface Types]] · [[Shell File]] · [[Building Blocks]] · [[Shell Structure]]
+- [Surfaces](Surfaces.md) · [Surface Types](Surface%20Types.md) · [Shell File](../../41%20TDL%20Reference/Shell%20File.md) · [Building Blocks](../../50%20Design%20System/Building%20Blocks.md) · [Shell Structure](../../20%20Architecture/Shell%20Structure.md)

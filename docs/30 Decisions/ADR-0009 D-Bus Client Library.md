@@ -7,18 +7,16 @@ owner: phil
 created: 2026-10-26
 updated: 2026-10-26
 tags: [adr, integration/dbus, needs-verification]
-related: ["[[D-Bus Libraries for Python]]", "[[Process Model and Threading]]", "[[System Context]]", "[[ADR-0003 Process Model]]"]
-depends_on: ["[[ADR-0003 Process Model]]"]
 ---
 
 # ADR-0009: D-Bus Client Library
 
-> [!summary]
+> [!NOTE]
 > The shell uses `dbus-fast` for D-Bus, on one asyncio service thread that the shell provides and shares among modules. `jeepney` is the fallback. Modules may still import other libraries.
 
 ## Context
 
-The shell and its modules read properties, watch signals and call methods on the session and system buses (UPower, NetworkManager, MPRIS, KWin, the tray, global shortcuts). Blocking work never runs on the loop thread ([[ADR-0003 Process Model]]). [[D-Bus Libraries for Python]] compares the options with data from PyPI and GitHub (2026-10-26).
+The shell and its modules read properties, watch signals and call methods on the session and system buses (UPower, NetworkManager, MPRIS, KWin, the tray, global shortcuts). Blocking work never runs on the loop thread ([ADR-0003 Process Model](ADR-0003%20Process%20Model.md)). [D-Bus Libraries for Python](../90%20Research/D-Bus%20Libraries%20for%20Python.md) compares the options with data from PyPI and GitHub (2026-10-26).
 
 ## Options
 
@@ -47,16 +45,16 @@ Accepted 2026-10-26 by the maintainer in chat ("as recommended"): **Option A**.
 
 ## Consequences
 
-- The service thread joins the thread inventory ([[Process Model and Threading#Threads]]).
-- The module contract says callbacks on the service thread are short and never block; exceptions are caught and logged with the module's name ([[Logging with Loguru]]).
+- The service thread joins the thread inventory ([Process Model and Threading > Threads](../20%20Architecture/Process%20Model%20and%20Threading.md#threads)).
+- The module contract says callbacks on the service thread are short and never block; exceptions are caught and logged with the module's name ([Logging with Loguru](../90%20Research/Logging%20with%20Loguru.md)).
 - A spike checks, on Python 3.14: UPower's battery percentage, a `PropertiesChanged` signal, KWin's `/VirtualDesktopManager`, and the idle cost. #needs-verification until it runs.
-- The PipeWire access path is a separate survey ([[D-Bus Libraries for Python#Open]]).
+- The PipeWire access path is a separate survey ([D-Bus Libraries for Python > Open](../90%20Research/D-Bus%20Libraries%20for%20Python.md#open)).
 - The helper's name and shape belong to `42 Python API/`.
 
 ## Update 2026-10-28
 
-Exporting an object and requesting a bus name, listed above as later work, is v1 work, because [[ADR-0013 Control Interface]] was accepted 2026-10-28: the shell exports its own interface for the command line and the KWin script ([[IPC and CLI]]).
+Exporting an object and requesting a bus name, listed above as later work, is v1 work, because [ADR-0013 Control Interface](ADR-0013%20Control%20Interface.md) was accepted 2026-10-28: the shell exports its own interface for the command line and the KWin script ([IPC and CLI](../40%20Specifications/Runtime/IPC%20and%20CLI.md)).
 
 ## Links
 
-- [[D-Bus Libraries for Python]] · [[Process Model and Threading]] · [[System Context]]
+- [D-Bus Libraries for Python](../90%20Research/D-Bus%20Libraries%20for%20Python.md) · [Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md) · [System Context](../20%20Architecture/System%20Context.md)

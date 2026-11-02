@@ -7,19 +7,17 @@ owner: phil
 created: 2026-10-29
 updated: 2026-10-30
 tags: [spec/integration, integration/kwin, needs-verification]
-related: ["[[Integration]]", "[[Wayland Protocols]]", "[[ADR-0012 Keeping the Shell Above Plasma Panels]]", "[[ADR-0013 Control Interface]]", "[[IPC and CLI]]", "[[Surface Types]]", "[[System Context]]", "[[Bar]]", "[[Frame]]"]
-depends_on: ["[[ADR-0012 Keeping the Shell Above Plasma Panels]]", "[[ADR-0013 Control Interface]]"]
 ---
 
 # KWin integration
 
-> [!summary]
-> What the shell does with KWin beyond the Wayland protocols: a small KWin script that reports which outputs have an active fullscreen window, the optional window rule that keeps the shell above Plasma panels, the KWin D-Bus interfaces the shell reads, and how the shell checks the KWin version. The choices come from [[ADR-0012 Keeping the Shell Above Plasma Panels]] (accepted) and [[ADR-0013 Control Interface]] (accepted). Facts about KWin come from this machine's KWin and Plasma 6.8.1 (D-Bus introspection, small read-only tests, and a read-only script run inside KWin with the maintainer's permission, all on 2026-10-29), from KWin's source, and from KDE's scripting page; each is marked with how it was obtained. Everything not decided is a proposal with a recommendation.
+> [!NOTE]
+> What the shell does with KWin beyond the Wayland protocols: a small KWin script that reports which outputs have an active fullscreen window, the optional window rule that keeps the shell above Plasma panels, the KWin D-Bus interfaces the shell reads, and how the shell checks the KWin version. The choices come from [ADR-0012 Keeping the Shell Above Plasma Panels](../../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md) (accepted) and [ADR-0013 Control Interface](../../30%20Decisions/ADR-0013%20Control%20Interface.md) (accepted). Facts about KWin come from this machine's KWin and Plasma 6.8.1 (D-Bus introspection, small read-only tests, and a read-only script run inside KWin with the maintainer's permission, all on 2026-10-29), from KWin's source, and from KDE's scripting page; each is marked with how it was obtained. Everything not decided is a proposal with a recommendation.
 
 ## Purpose and scope
 
 - Specify the KWin script (what it reports, how it is loaded, what happens when it is missing), the window rule and the `kwin` commands, the D-Bus interfaces of KWin the shell uses, and the version check.
-- Not in this note: the protocols ([[Wayland Protocols]]), the KWin global-shortcut service ([[ADR-0005 Global Shortcuts]], the shortcuts note to write), and the stacking rules themselves ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]).
+- Not in this note: the protocols ([Wayland Protocols](Wayland%20Protocols.md)), the KWin global-shortcut service ([ADR-0005 Global Shortcuts](../../30%20Decisions/ADR-0005%20Global%20Shortcuts.md), the shortcuts note to write), and the stacking rules themselves ([Surface Types > Fullscreen and maximised windows (decided 2026-10-27)](../Surfaces/Surface%20Types.md#fullscreen-and-maximised-windows-decided-2026-10-27)).
 
 ## Behaviour
 
@@ -29,18 +27,18 @@ depends_on: ["[[ADR-0012 Keeping the Shell Above Plasma Panels]]", "[[ADR-0013 C
 |---|---|---|
 | `/KWin` | `supportInformation` (text that includes `KWin version: 6.8.1`), `getWindowInfo(uuid)`, `queryWindowInfo` (the user picks a window), `showDesktop`, `currentDesktop`, `setCurrentDesktop`, `activeOutputName`, `reconfigure`, `reloadConfig` | The version check; window facts for a known window |
 | `/Scripting` | `loadScript(path[, name])`, `loadDeclarativeScript(path[, name])`, `isScriptLoaded(name)`, `unloadScript(name)`, `start()` | Loading the shell's script at run time |
-| `/VirtualDesktopManager` | `current`, `desktops`, `currentChanged` ([[System Context#Observed D-Bus names]]) | The Workspaces module |
+| `/VirtualDesktopManager` | `current`, `desktops`, `currentChanged` ([System Context > Observed D-Bus names](../../20%20Architecture/System%20Context.md#observed-d-bus-names)) | The Workspaces module |
 | `/WindowsRunner` | A KRunner interface that matches windows | Not used; a possible way to list windows, unverified #needs-verification |
 
 - `getWindowInfo(uuid)` returns 30 properties, among them `fullscreen`, `layer`, `resourceClass`, `resourceName`, `type`, `keepAbove`, `keepBelow`, `skipTaskbar`, `caption`, `desktopFile`, and the geometry. Checked on 2026-10-29 against a Chrome window: `fullscreen` false, `layer` 2, `resourceClass` `google-chrome`. The layer values follow KWin's enum, where 2 is the normal layer ([KWin `globals.h`](https://invent.kde.org/plasma/kwin/-/raw/master/src/effect/globals.h), read 2026-10-28).
-- **No call lists the windows.** `/KWin` has no list method. A window's uuid comes from the `org_kde_plasma_window_management` protocol or from a KWin script ([[Wayland Protocols#Protocols the shell needs and tre does not expose]]). So fullscreen detection by D-Bus alone needs one of those two to learn the uuids; that is why the script is the route.
-- **Layer-shell surfaces and Plasma panels are not in that window list.** A test on 2026-10-29 started a layer-shell surface (the scratch client from the shadow test) and listed `org_kde_plasma_window_management` windows: only the five ordinary windows appeared. So `getWindowInfo` cannot show how KWin matches a shell surface or a panel; only a script inside KWin can, which is what the rule test in [[#Window rules]] needs.
+- **No call lists the windows.** `/KWin` has no list method. A window's uuid comes from the `org_kde_plasma_window_management` protocol or from a KWin script ([Wayland Protocols > Protocols the shell needs and tre does not expose](Wayland%20Protocols.md#protocols-the-shell-needs-and-tre-does-not-expose)). So fullscreen detection by D-Bus alone needs one of those two to learn the uuids; that is why the script is the route.
+- **Layer-shell surfaces and Plasma panels are not in that window list.** A test on 2026-10-29 started a layer-shell surface (the scratch client from the shadow test) and listed `org_kde_plasma_window_management` windows: only the five ordinary windows appeared. So `getWindowInfo` cannot show how KWin matches a shell surface or a panel; only a script inside KWin can, which is what the rule test in [Window rules](#window-rules) needs.
 
 ### The KWin script
 
-**Purpose (v1).** Report the outputs that have an active fullscreen window, so the shell can hide its surfaces there ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]). Why "active": KWin puts a fullscreen window in its Active layer only while it is active; a fullscreen window that is not active stays in the normal layer ([KWin `globals.h`](https://invent.kde.org/plasma/kwin/-/raw/master/src/effect/globals.h): "active fullscreen, or active dialog"). Surfaces on the `top` layer are covered by an active fullscreen window by KWin itself; surfaces on `overlay` are not, so the shell must hide them, and it releases the reserved space of the hidden Bar and Frame ([[Frame#Hidden and shown at runtime (decided 2026-10-27)]]).
+**Purpose (v1).** Report the outputs that have an active fullscreen window, so the shell can hide its surfaces there ([Surface Types > Fullscreen and maximised windows (decided 2026-10-27)](../Surfaces/Surface%20Types.md#fullscreen-and-maximised-windows-decided-2026-10-27)). Why "active": KWin puts a fullscreen window in its Active layer only while it is active; a fullscreen window that is not active stays in the normal layer ([KWin `globals.h`](https://invent.kde.org/plasma/kwin/-/raw/master/src/effect/globals.h): "active fullscreen, or active dialog"). Surfaces on the `top` layer are covered by an active fullscreen window by KWin itself; surfaces on `overlay` are not, so the shell must hide them, and it releases the reserved space of the hidden Bar and Frame ([Frame > Hidden and shown at runtime (decided 2026-10-27)](../Surfaces/Frame.md#hidden-and-shown-at-runtime-decided-2026-10-27)).
 
-**What it sends.** One call, `FullscreenState(s outputs)`, on the shell's interface: the full list of output names that have an active fullscreen window, empty when none, written as a JSON array in one string, for example `["DP-1"]` ([[IPC and CLI#The interface]]; the list is decided 2026-10-28, the string form follows from the test below). It sends the full state each time, so a lost message is corrected by the next. It sends nothing else in v1: no titles, no classes, no window ids.
+**What it sends.** One call, `FullscreenState(s outputs)`, on the shell's interface: the full list of output names that have an active fullscreen window, empty when none, written as a JSON array in one string, for example `["DP-1"]` ([IPC and CLI > The interface](../Runtime/IPC%20and%20CLI.md#the-interface); the list is decided 2026-10-28, the string form follows from the test below). It sends the full state each time, so a lost message is corrected by the next. It sends nothing else in v1: no titles, no classes, no window ids.
 
 **When it sends.** At load, and whenever the active window changes, a window closes, a window enters or leaves fullscreen, or a window moves to another output. The signals it listens to are `windowActivated` and `windowRemoved` on `workspace`, and per window `fullScreenChanged` and `outputChanged`; the test below found all four present on KWin 6.8.1.
 
@@ -77,8 +75,8 @@ The maintainer allowed a read-only script run (question 3, answered as recommend
 
 Consequences:
 
-- The `FullscreenState` argument is one string holding a JSON array, not `as`. [[IPC and CLI#The interface]] is updated to match. The shell parses the string and checks that every item is a string.
-- **A rule can match a shell surface by its class,** because KWin's resource class is the layer-shell namespace. tre's `LayerWindow` takes `namespace` in its constructor (a change means reopening the window, [[Hot Reload]]). Decided 2026-10-29: every shell surface uses the namespace `tesserae-shell.<type>.<name>` with the type in lower case (D24, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]), for example `tesserae-shell.bar.top_bar` ([[Surface Types]]). A rule can then match the class by a substring or regular expression, and a Plasma panel by class `plasmashell` and type dock.
+- The `FullscreenState` argument is one string holding a JSON array, not `as`. [IPC and CLI > The interface](../Runtime/IPC%20and%20CLI.md#the-interface) is updated to match. The shell parses the string and checks that every item is a string.
+- **A rule can match a shell surface by its class,** because KWin's resource class is the layer-shell namespace. tre's `LayerWindow` takes `namespace` in its constructor (a change means reopening the window, [Hot Reload](../Runtime/Hot%20Reload.md)). Decided 2026-10-29: every shell surface uses the namespace `tesserae-shell.<type>.<name>` with the type in lower case (D24, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)), for example `tesserae-shell.bar.top_bar` ([Surface Types](../Surfaces/Surface%20Types.md)). A rule can then match the class by a substring or regular expression, and a Plasma panel by class `plasmashell` and type dock.
 - **The shell can read a surface's layer** through the script (`window.layer`), which settles what KWin does with each surface; the shell does not need to, and the script sends nothing but the fullscreen list.
 
 ### Loading the script
@@ -92,18 +90,18 @@ Two ways, and the first is the recommendation:
 
 Decided 2026-10-28 (question 1, as recommended): mode R is the default. The accepted ADR said "a persistent KWin script" and left the install step to delivery; mode R keeps the idea (a script reports fullscreen windows) and drops the install step. Mode P stays available through the `kwin script install` command.
 
-- **Order at start.** The shell loads the script after step 12 of the start sequence, when the interface is exported ([[Shell Start and Stop#Start sequence]]); a call that arrives before the shell can answer finds no name and the script's callback ignores the failure.
+- **Order at start.** The shell loads the script after step 12 of the start sequence, when the interface is exported ([Shell Start and Stop > Start sequence](../Runtime/Shell%20Start%20and%20Stop.md#start-sequence)); a call that arrives before the shell can answer finds no name and the script's callback ignores the failure.
 - **If it fails to load** (the method returns an error, or the script file is missing): the fullscreen rule is off, the shell logs one warning naming the reason, and `tesserae-shell kwin script status` says so. The shell keeps running.
 - **If KWin never reports** (a script error inside KWin, an API change): the shell cannot see script errors, which go to KWin's journal. After loading, if no `FullscreenState` call arrives within 5 seconds, the shell logs a warning that the script is silent (proposed).
-- The `kwin` commands are in [[IPC and CLI#The command line]]: `kwin script install`, `remove` and `status` (mode P and the status of mode R).
+- The `kwin` commands are in [IPC and CLI > The command line](../Runtime/IPC%20and%20CLI.md#the-command-line): `kwin script install`, `remove` and `status` (mode P and the status of mode R).
 
 ### Window rules
 
-Opt-in, never automatic ([[ADR-0012 Keeping the Shell Above Plasma Panels]]).
+Opt-in, never automatic ([ADR-0012 Keeping the Shell Above Plasma Panels](../../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md)).
 
 - **Matching.** A rule matches on the window type, the resource class and name, the window role, the client machine, the title, a tag and the transient parent; `desktopFile` is a thing a rule sets, not a thing it matches ([KWin `rules.cpp`](https://invent.kde.org/plasma/kwin/-/raw/master/src/rules.cpp), read 2026-10-29). The type is a bit mask with a default of all types.
 - **The layer rule.** A force rule (`DontAffect`, `Force` or `ForceTemporarily`) sets the window's layer when it is active. The config key names and the stored values of the layer are defined outside the files read. #needs-verification
-- **Two uses** ([[ADR-0012 Keeping the Shell Above Plasma Panels]]):
+- **Two uses** ([ADR-0012 Keeping the Shell Above Plasma Panels](../../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md)):
 
 | Rule | Effect | Cost |
 |---|---|---|
@@ -117,15 +115,15 @@ Decided 2026-10-28 (question 2, as recommended): if a rule is offered, it raises
 
 ### The KWin version
 
-At start, the shell reads `supportInformation` on `/KWin` and takes the line `KWin version: …` (6.8.1 here, checked 2026-10-29). It logs the version. A minimum version is not set: the first KWin with the layer shell is deferred to the testing phase ([[ADR-0001 Shell Surface Strategy#Open items]]). If KWin is not the compositor (the call fails, or another compositor), the KWin script and rule features are off and the shell logs it.
+At start, the shell reads `supportInformation` on `/KWin` and takes the line `KWin version: …` (6.8.1 here, checked 2026-10-29). It logs the version. A minimum version is not set: the first KWin with the layer shell is deferred to the testing phase ([ADR-0001 Shell Surface Strategy > Open items](../../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md#open-items)). If KWin is not the compositor (the call fails, or another compositor), the KWin script and rule features are off and the shell logs it.
 
 ### If KWin goes away
 
-KWin is the Wayland compositor. If it exits, tre's connection drops, its windows close, the loop ends and the shell exits; the script goes with KWin ([[Shell Start and Stop#Failure modes and recovery]]). The shell does nothing KWin-specific to recover.
+KWin is the Wayland compositor. If it exits, tre's connection drops, its windows close, the loop ends and the shell exits; the script goes with KWin ([Shell Start and Stop > Failure modes and recovery](../Runtime/Shell%20Start%20and%20Stop.md#failure-modes-and-recovery)). The shell does nothing KWin-specific to recover.
 
 ## Configuration
 
-`settings.tdl` (the file type is named by the root block `Settings { }` and the keys are nested blocks, D20, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; `KWin.Script` is only a prose shorthand for the path; the settings list is deferred, [[Settings File]]). The mode values are enums, so they are upper case ([[TDL Language#Values]]):
+`settings.tdl` (the file type is named by the root block `Settings { }` and the keys are nested blocks, D20, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30); `KWin.Script` is only a prose shorthand for the path; the settings list is deferred, [Settings File](../../41%20TDL%20Reference/Settings%20File.md)). The mode values are enums, so they are upper case ([TDL Language > Values](../../41%20TDL%20Reference/TDL%20Language.md#values)):
 
 | Key | Meaning | Default |
 |---|---|---|
@@ -141,17 +139,17 @@ Settings {
 }
 ```
 
-A surface can opt out of hiding (an OSD that should show over a game): open, [[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]].
+A surface can opt out of hiding (an OSD that should show over a game): open, [Surface Types > Fullscreen and maximised windows (decided 2026-10-27)](../Surfaces/Surface%20Types.md#fullscreen-and-maximised-windows-decided-2026-10-27).
 
 ## Python contract
 
-None. A module does not talk to KWin; the Workspaces module reads `/VirtualDesktopManager` through the shell's D-Bus helper ([[Module Context]]).
+None. A module does not talk to KWin; the Workspaces module reads `/VirtualDesktopManager` through the shell's D-Bus helper ([Module Context](../../42%20Python%20API/Module%20Context.md)).
 
 ## Integration
 
-- D-Bus: the KWin objects above, through `dbus-fast` on the shared service thread ([[ADR-0009 D-Bus Client Library]]); the script calls the shell's interface ([[ADR-0013 Control Interface]]).
-- Threads: the calls to `/Scripting` and `/KWin` run on the service thread; the incoming `FullscreenState` is handed to the loop with `call_soon` ([[IPC and CLI#Threading]]).
-- Plasma: the rule and the script do not touch plasmashell; coexistence is in the Plasma note to write ([[ADR-0004 Plasma Coexistence]]).
+- D-Bus: the KWin objects above, through `dbus-fast` on the shared service thread ([ADR-0009 D-Bus Client Library](../../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)); the script calls the shell's interface ([ADR-0013 Control Interface](../../30%20Decisions/ADR-0013%20Control%20Interface.md)).
+- Threads: the calls to `/Scripting` and `/KWin` run on the service thread; the incoming `FullscreenState` is handed to the loop with `call_soon` ([IPC and CLI > Threading](../Runtime/IPC%20and%20CLI.md#threading)).
+- Plasma: the rule and the script do not touch plasmashell; coexistence is in the Plasma note to write ([ADR-0004 Plasma Coexistence](../../30%20Decisions/ADR-0004%20Plasma%20Coexistence.md)).
 
 ## Design
 
@@ -159,7 +157,7 @@ None.
 
 ## Accessibility
 
-Hiding surfaces on fullscreen removes shell controls from view while a video or a game runs; the keyboard way to bring them back is the shortcut or command that shows them ([[IPC and CLI]]).
+Hiding surfaces on fullscreen removes shell controls from view while a video or a game runs; the keyboard way to bring them back is the shortcut or command that shows them ([IPC and CLI](../Runtime/IPC%20and%20CLI.md)).
 
 ## Performance budget
 
@@ -177,7 +175,7 @@ Hiding surfaces on fullscreen removes shell controls from view while a video or 
 | KWin changes a scripting property | As above; this note and the script are checked against each KWin release |
 | The shell stops | The script is unloaded (mode R) |
 | The rule cannot be written or reloaded | The command reports the cause and leaves `kwinrulesrc` as it was |
-| Two shells | Prevented by the lock ([[Shell Start and Stop#Process rules]]) |
+| Two shells | Prevented by the lock ([Shell Start and Stop > Process rules](../Runtime/Shell%20Start%20and%20Stop.md#process-rules)) |
 
 ## Open Questions
 
@@ -208,4 +206,4 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 
 ## Links
 
-- [[Integration]] · [[Wayland Protocols]] · [[ADR-0012 Keeping the Shell Above Plasma Panels]] · [[ADR-0013 Control Interface]] · [[IPC and CLI]] · [[Surface Types]] · [[System Context]]
+- [Integration](Integration.md) · [Wayland Protocols](Wayland%20Protocols.md) · [ADR-0012 Keeping the Shell Above Plasma Panels](../../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md) · [ADR-0013 Control Interface](../../30%20Decisions/ADR-0013%20Control%20Interface.md) · [IPC and CLI](../Runtime/IPC%20and%20CLI.md) · [Surface Types](../Surfaces/Surface%20Types.md) · [System Context](../../20%20Architecture/System%20Context.md)

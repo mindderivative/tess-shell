@@ -7,17 +7,16 @@ owner: phil
 created: 2026-10-26
 updated: 2026-10-26
 tags: [research, integration/dbus, needs-verification]
-related: ["[[System Context]]", "[[Process Model and Threading]]", "[[ADR-0004 Plasma Coexistence]]"]
-depends_on: []
 ---
 
 # D-Bus Libraries for Python
 
-> [!success] Decided 2026-10-26
-> The maintainer accepted the recommendation: [[ADR-0009 D-Bus Client Library]].
+> [!TIP]
+> **Decided 2026-10-26**
+> The maintainer accepted the recommendation: [ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md).
 
-> [!summary]
-> The shell and its modules need a D-Bus client for UPower, NetworkManager, MPRIS, KWin, the tray and the global shortcut service ([[System Context]]). This survey compares the Python options. Recommendation: `dbus-fast`, run on one shared asyncio service thread that the shell provides, with `jeepney` as the fallback. The maintainer asked for the survey and a recommendation (2026-10-26); the choice is theirs. Release data comes from PyPI and GitHub on 2026-10-26; nothing was installed or run.
+> [!NOTE]
+> The shell and its modules need a D-Bus client for UPower, NetworkManager, MPRIS, KWin, the tray and the global shortcut service ([System Context](../20%20Architecture/System%20Context.md)). This survey compares the Python options. Recommendation: `dbus-fast`, run on one shared asyncio service thread that the shell provides, with `jeepney` as the fallback. The maintainer asked for the survey and a recommendation (2026-10-26); the choice is theirs. Release data comes from PyPI and GitHub on 2026-10-26; nothing was installed or run.
 
 ## What the Shell Needs
 
@@ -25,10 +24,10 @@ depends_on: []
 |--------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
 | Read properties and watch signals          | Battery, network, media, workspaces, tray                                                                              |
 | Call methods                               | Mute, play and pause, activate a window                                                                                |
-| Session and system buses                   | UPower and NetworkManager are on the system bus; the rest on the session bus ([[System Context#Observed D-Bus names]]) |
-| Work off the loop thread                   | Blocking work never runs on the loop ([[Process Model and Threading]])                                         |
+| Session and system buses                   | UPower and NetworkManager are on the system bus; the rest on the session bus ([System Context > Observed D-Bus names](../20%20Architecture/System%20Context.md#observed-d-bus-names)) |
+| Work off the loop thread                   | Blocking work never runs on the loop ([Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md))                                         |
 | Export an interface and own a name (later) | A notification server or tray watcher is outside v1, but the choice should not block it                                |
-| Python 3.14, Linux                         | The shell's minimum ([[ADR-0007 Shell UI Layer#UIDs and the registry (2026-10-25)]])                                                          |
+| Python 3.14, Linux                         | The shell's minimum ([ADR-0007 Shell UI Layer > UIDs and the registry (2026-10-25)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#uids-and-the-registry-2026-10-25))                                                          |
 | Few dependencies, installable              | The shell is a Python package                                                                                          |
 
 ## Candidates
@@ -46,7 +45,7 @@ depends_on: []
 
 ## Fit with the Architecture
 
-[[Process Model and Threading]] says each module owns its threads and the shell provides a helper, with a shared service thread as an option. D-Bus is I/O-bound, which suits asyncio: one event loop on one thread can hold the session and system bus connections for every module, instead of a thread per module.
+[Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md) says each module owns its threads and the shell provides a helper, with a shared service thread as an option. D-Bus is I/O-bound, which suits asyncio: one event loop on one thread can hold the session and system bus connections for every module, instead of a thread per module.
 
 | Option                                                         | Description                                                                                                                                                                                                                                                                                                              | Verdict                                                                                                                                                                                 |
 |----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -65,17 +64,17 @@ depends_on: []
 ## Risks and Checks
 
 - #needs-verification: that `dbus-fast` 5.2.0 installs and runs on Python 3.14 (classifiers say so; nothing was run).
-- A single service thread is a shared resource: one slow callback delays all D-Bus modules. The contract and a watchdog on the service thread help ([[Process Model and Threading#Failure and recovery]]).
-- Exceptions in a callback on the service thread must be caught and logged with the module's name ([[Logging with Loguru]]).
+- A single service thread is a shared resource: one slow callback delays all D-Bus modules. The contract and a watchdog on the service thread help ([Process Model and Threading > Failure and recovery](../20%20Architecture/Process%20Model%20and%20Threading.md#failure-and-recovery)).
+- Exceptions in a callback on the service thread must be caught and logged with the module's name ([Logging with Loguru](Logging%20with%20Loguru.md)).
 - The Cython extension adds binary wheels; the pure-Python build is the escape hatch.
 
 ## Open
 
-- [x] The maintainer's choice of library: `dbus-fast` on a shared asyncio service thread, `jeepney` as the fallback ([[ADR-0009 D-Bus Client Library]]).
-- [x] The shared service thread is part of the chosen design ([[ADR-0009 D-Bus Client Library]]).
-- [ ] The name and shape of the helper for modules ([[42 Python API]], to write).
+- [x] The maintainer's choice of library: `dbus-fast` on a shared asyncio service thread, `jeepney` as the fallback ([ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)).
+- [x] The shared service thread is part of the chosen design ([ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)).
+- [ ] The name and shape of the helper for modules ([42 Python API](../42%20Python%20API/42%20Python%20API.md), to write).
 - [ ] PipeWire access path (D-Bus, `wpctl`, a library): a separate survey.
 
 ## Links
 
-- [[System Context]] · [[Process Model and Threading]] · [[90 Research]]
+- [System Context](../20%20Architecture/System%20Context.md) · [Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md) · [90 Research](90%20Research.md)

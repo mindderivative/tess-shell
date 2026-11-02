@@ -5,26 +5,26 @@ type: engine-request
 status: review
 owner: phil
 created: 2026-11-01
-updated: 2026-11-01
+updated: 2026-11-02
 tags: [engine-request, design, needs-verification]
-related: ["[[Block Reference]]", "[[Building Blocks]]", "[[80 Engine Requests]]", "[[Risk Register]]"]
-depends_on: []
 ---
 
 # TRE-REQ-008: SMIL Animation in SVG Nodes
 
-> [!summary]
+> [!NOTE]
 > Let tre's `svg` node play the SMIL animation (`<animate>`, `<set>`, `<animateTransform>`) that an SVG document carries, so that animated icons such as the Material Line Icons set draw and move as their authors made them. Today tre draws such a document as one static frame. The request is for a time-sampled render of the document, driven by tre's own frame clock. It is not needed to ship v1.
 
-> [!success] Taken up by tre (2026-11-01)
+> [!TIP]
+> **Taken up by tre (2026-11-01) and built on a local branch (2026-11-02)**
 > The maintainer gave the `tre` session the go-ahead to plan, scope and start on this request. tre scoped it and filed [tre issue #245](https://github.com/mindderivative/tre/issues/245), now in Ready and not started; work waits for the shell's answers (sent 2026-11-01) or the maintainer's go. The vault copy below is the shell's statement of the need and stays a draft. History: a status question went to `tre` first (it found no issue, no design note and no mention in its live code; the maintainer then gave the go-ahead); the shell sent the prior art found in tre's own `archive/` (below) and, after tre's three questions, the measurements under "tre's Scope and the Shell's Answers". Replies are information, checked against tre's docs and source before use.
 
-> [!success] Not blocking v1
+> [!TIP]
+> **Not blocking v1**
 > The shell ships only the static Material Design Icons set (`mdi`) in v1 (decided 2026-11-01). Nothing in the specs waits on this request.
 
 ## Shell Need
 
-The maintainer's icon sets include Material Line Icons (`mli`, MIT, by Vjacheslav Trushkin): 1,218 line icons, 1,216 of them animated with SMIL, among them loading spinners, alert pulses and draw-on intros. They would let a shell show a battery that charges, a spinner while the network connects or an alert that pulses, with no Python in the loop. Without SMIL support the same icons look unfinished (the `account` icon draws only its torso, because its strokes begin hidden). The shell cannot play SMIL itself: Python never runs per frame ([[AGENTS#3. Layering principle]]).
+The maintainer's icon sets include Material Line Icons (`mli`, MIT, by Vjacheslav Trushkin): 1,218 line icons, 1,216 of them animated with SMIL, among them loading spinners, alert pulses and draw-on intros. They would let a shell show a battery that charges, a spinner while the network connects or an alert that pulses, with no Python in the loop. Without SMIL support the same icons look unfinished (the `account` icon draws only its torso, because its strokes begin hidden). The shell cannot play SMIL itself: Python never runs per frame (AGENTS > 3. Layering principle).
 
 ## What tre Does Today
 
@@ -34,7 +34,7 @@ The maintainer's icon sets include Material Line Icons (`mli`, MIT, by Vjachesla
 | tre parses SVG with `usvg` 0.47 (default features off, feature `text`)                                                                                                                       | `crates/engine-core/Cargo.toml`, line 34, local tre source at git `0fd1e7e`, read 2026-11-01                                   |
 | `resvg`, the renderer `usvg` belongs to, supports only static SVG: "No animations" and "There are no plans on implementing them either"                                                       | [resvg README](https://github.com/linebender/resvg), read 2026-11-01. It does not say whether `usvg` differs                    |
 | An SVG `<mask>` is drawn (luminance and alpha masks)                                                                                                                                        | tre `tests/test_svg.py`; and the test below                                                                                    |
-| tre draws a SMIL document as one static frame, at every time: the painted pixels and the images were identical at the start, after `advance(500)`, at `snapshot(time=2.0)` and after `advance(2500)` for seven icons | Test of 2026-11-01, offscreen with `Window.snapshot()` on the local tre source (0.5.9); details in [[Block Reference#The Icon Set Files (2026-11-01)]] |
+| tre draws a SMIL document as one static frame, at every time: the painted pixels and the images were identical at the start, after `advance(500)`, at `snapshot(time=2.0)` and after `advance(2500)` for seven icons | Test of 2026-11-01, offscreen with `Window.snapshot()` on the local tre source (0.5.9); details in [Block Reference > The Icon Set Files (2026-11-01)](../41%20TDL%20Reference/Block%20Reference.md#the-icon-set-files-2026-11-01) |
 | tre animates node properties itself, in Rust, on its frame clock: `animate(...)` on `translate_x`, `opacity`, `scale`, `rotation_deg`, `trim_start`, `trim_end`, margins and more                       | [Properties reference](https://mindderivative.github.io/tre/reference/properties/), [Paint reference](https://mindderivative.github.io/tre/reference/paint/) |
 
 ## Why it Belongs in the Engine
@@ -59,7 +59,8 @@ The hardest of these is the `d` morph (678 uses): interpolating between path str
 
 ## Proposed API
 
-> [!danger] Proposal, not existing API
+> [!CAUTION]
+> **Proposal, not existing API**
 > Names are mine and tre may choose others.
 
 ```python
@@ -95,9 +96,28 @@ The shell's answers (measured on the 1,218 line icons, 5,748 timing elements):
 | Anything beyond the subset?          | No, but to-animation is the main form: 3,072 of 5,223 `animate` and `animateTransform` elements have `to` and no `from` and no `values`, starting from the attribute on the parent element. `from` is never used. `begin`: 4,214 elements, all plain seconds (no lists, no negatives, no `ms`); 1,534 have none. `dur` is always in seconds; all 525 `set` elements are `opacity` with `to`. `keyTimes`: 446, always with `values`. `d` morphs: 549 with `values` and 129 `to`-only, and in all of them the command sequence is the same, so the hold-first fallback never triggers. Not used: `by`, `calcMode`, `keySplines`, `additive`, `accumulate`, `repeatDur`, `end`, `restart`, `href`. |
 | Is the cost target enough?           | More than enough: a handful of looping icons at a time (172 of the 1,218 loop forever) and short intros of 0.1 to 0.6 s on a state change. An expectation only; no shell UI exists yet.                                                                                      |
 
-tre's reply (2026-11-01): it recorded the answers on #245. To-animation, with the start value read from the parent element's attribute, is now explicit stage-1 scope; the `fill` default of remove, `begin` as plain seconds and 30 Hz sampling for loops are kept. It has not verified what tre does while only an `svg_time` animation runs (frame rate, wake-ups) or whether hidden, occluded or minimised windows pause, and its documentation does not say; it added an acceptance item to #245 (measure idle CPU with one looping icon and document the result) and will not guess a number. #245 stays in Ready, not started.
+tre's reply (2026-11-01): it recorded the answers on #245. (The build and its measured idle cost are under "Built in tre" below.) To-animation, with the start value read from the parent element's attribute, is now explicit stage-1 scope; the `fill` default of remove, `begin` as plain seconds and 30 Hz sampling for loops are kept. It has not verified what tre does while only an `svg_time` animation runs (frame rate, wake-ups) or whether hidden, occluded or minimised windows pause, and its documentation does not say; it added an acceptance item to #245 (measure idle CPU with one looping icon and document the result) and will not guess a number. #245 stays in Ready, not started.
 
-A caution the shell sent with the answers: a looping icon keeps its window redrawing, and the shell has an idle-CPU budget ([[AGENTS#12. Design Completeness Checklist]], Quality). The shell asked what tre does while only an `svg_time` animation runs (frame rate and wake-ups) and whether it pauses for a hidden or occluded window. 30 Hz sampling for loops suits the shell.
+A caution the shell sent with the answers: a looping icon keeps its window redrawing, and the shell has an idle-CPU budget (AGENTS > 12. Design Completeness Checklist, Quality). The shell asked what tre does while only an `svg_time` animation runs (frame rate and wake-ups) and whether it pauses for a hidden or occluded window. 30 Hz sampling for loops suits the shell.
+
+## Built in tre (Reported 2026-11-02)
+
+The `tre` session reported that #245 is built and In review on the local branch `svg-smil-245`, not pushed or merged, so in no release. Checked on 2026-11-02 in tre's repository: one commit, `f788434` ("SMIL animation in svg nodes: svg_time and svg_duration, sampled from the document's own timeline (#245)"), the API described in `python/tre/_core.pyi` under version 0.5.10, `main` unchanged at `0fd1e7e`.
+
+| What                                       | As built, per tre                                                                                                                                                               |
+|--------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `svg_time`                                 | Seconds into the document's SMIL animation, animatable with `animate`; `set(svg=...)` restarts it at 0                                                                           |
+| `svg_duration`                             | Read-only; `None` for an indefinite repeat, `0.0` for a document without animation                                                                                              |
+| Subset                                     | As scoped, including to-only animation from the parent attribute, `values` and `keyTimes`, and `d` morphs; unsupported SMIL is ignored                                           |
+| Sampling cost                              | 30 looping icons re-sampled per frame took 0.22 ms                                                                                                                              |
+| Idle                                       | An idle window uses 0.0% CPU                                                                                                                                                    |
+| While `svg_time` animates                  | The window redraws every frame at the display rate, with no 30 Hz cap, and tre has no occlusion handling, so a hidden window keeps redrawing                                    |
+| One looping icon on `llvmpipe` (software)  | About 30% of one core. A GPU was not measured                                                                                                                                   |
+| Follow-up                                  | A lower sample rate would be a follow-up issue in tre, if the shell's idle budget needs it                                                                                       |
+
+Occlusion (tre issue #246, reported 2026-11-02, information only from the `tre` session): on sway a window hidden on another workspace stalled the whole application loop, because its swapchain acquire blocked; a second visible window stopped animating and Python threads starved. The fix is built and In review on the local branch `occlusion-246`, not pushed or released. On Wayland a hidden window (other workspace, minimized, or a `LayerWindow` under a fullscreen window) stops drawing and costs about 0% CPU. It adds a window state and event `occluded` (X11 and macOS signal only, unverified) and a window property `pause_when_occluded` (default true). It was verified only on headless sway with `llvmpipe`; KWin, a real GPU, macOS and Windows were not run. #needs-verification The shell runs many surfaces in one process ([ADR-0003 Process Model](../30%20Decisions/ADR-0003%20Process%20Model.md)), so this stall would have frozen every other surface; check it on KWin, with layer surfaces, before relying on it.
+
+Consequences for the shell: v1 ships only static `mdi` icons, so nothing in v1 loops. Before `mli` ships, a looping icon must not run in a hidden or collapsed surface (the shell knows when a Bar is hidden), and the shell needs a rule on how many loops may run at once; the follow-up in tre (a sample-rate cap, pause when occluded) is the shell's to ask for if it wants them. [Risk Register](../00%20Home/Risk%20Register.md) R-24.
 
 ## Alternatives
 
@@ -110,7 +130,7 @@ A caution the shell sent with the answers: a looping icon keeps its window redra
 
 ## If Declined
 
-The shell ships only the static `mdi` set (decided 2026-11-01). It may later add a static export of the line set, with each icon in its end state and the animation tags removed, which tre draws correctly. Icons do not move; a spinner is not available as an icon, and a shell that wants one draws it with tre's `path` node and `trim_end`, or with a module's Canvas ([[Block Reference#Other]]).
+The shell ships only the static `mdi` set (decided 2026-11-01). It may later add a static export of the line set, with each icon in its end state and the animation tags removed, which tre draws correctly. Icons do not move; a spinner is not available as an icon, and a shell that wants one draws it with tre's `path` node and `trim_end`, or with a module's Canvas ([Block Reference > Other](../41%20TDL%20Reference/Block%20Reference.md#other)).
 
 ## Size
 
@@ -120,9 +140,9 @@ Not measured. By reading the data: the elements and attributes in the table abov
 
 - [x] Whether tre prefers a pre-pass over `usvg`, a different SVG library or its own SMIL evaluator: a pre-pass over `usvg` (tre, issue #245).
 - [ ] Whether `usvg` already drops SMIL elements or fails on them (it drew the test icons without error).
-- [ ] The cost of re-parsing a small document per sample: tre's target is 30 icons per frame in under 4 ms, to be measured in issue #245. What tre does while only an `svg_time` animation runs (wake-ups, hidden or occluded windows) is unverified; tre added measuring it as an acceptance item of #245.
+- [ ] The cost of re-parsing a small document per sample: tre's target is 30 icons per frame in under 4 ms, to be measured in issue #245. What tre does while only an `svg_time` animation runs (wake-ups, hidden or occluded windows) was unverified on 2026-11-01; tre measured it on 2026-11-02 (see "Built in tre").
 - [x] Whether `svg_time` is animatable: yes, with the existing `animate` (tre, issue #245).
 
 ## Links
 
-[[Block Reference]] · [[Building Blocks]] · [[80 Engine Requests]] · [[Risk Register]]
+[Block Reference](../41%20TDL%20Reference/Block%20Reference.md) · [Building Blocks](../50%20Design%20System/Building%20Blocks.md) · [80 Engine Requests](80%20Engine%20Requests.md) · [Risk Register](../00%20Home/Risk%20Register.md)

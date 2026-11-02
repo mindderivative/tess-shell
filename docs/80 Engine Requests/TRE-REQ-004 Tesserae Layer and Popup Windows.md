@@ -7,25 +7,24 @@ owner: phil
 created: 2026-10-25
 updated: 2026-10-25
 tags: [engine-request, spec/surface, tesserae, needs-verification]
-related: ["[[ADR-0002 Relationship to Tesserae UI]]", "[[ADR-0003 Process Model]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[V1 Scope]]", "[[80 Engine Requests]]"]
-depends_on: ["[[TRE-REQ-001 Layer Surface Window]]"]
 ---
 
 # TRE-REQ-004: Tesserae Layer and Popup Windows
 
-> [!warning] Superseded by [[ADR-0006 Shell Independent of Tesserae UI]] (2026-10-25)
-> Withdrawn before it was carried to Tesserae. The shell no longer depends on `tesserae-ui`, so nothing is requested of Tesserae. The requirements (R1 to R9) and open questions move into the shell's own design: [[ADR-0007 Shell UI Layer]]. The note stays as a record of what Tesserae does today.
+> [!WARNING]
+> **Superseded by [ADR-0006 Shell Independent of Tesserae UI](../30%20Decisions/ADR-0006%20Shell%20Independent%20of%20Tesserae%20UI.md) (2026-10-25)**
+> Withdrawn before it was carried to Tesserae. The shell no longer depends on `tesserae-ui`, so nothing is requested of Tesserae. The requirements (R1 to R9) and open questions move into the shell's own design: [ADR-0007 Shell UI Layer](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md). The note stays as a record of what Tesserae does today.
 
-> [!summary]
-> Let a Tesserae view be the content of a tre `LayerWindow` or `PopupWindow`, and let a Tesserae app run with no main window. Tesserae 0.5.1 opens only ordinary windows, so a shell built on `tesserae-ui` ([[ADR-0002 Relationship to Tesserae UI]]) cannot put a bar on screen from a YAML view. This request is addressed to the Tesserae project, not to tre: tre 0.5.8 already has the mechanism.
+> [!NOTE]
+> Let a Tesserae view be the content of a tre `LayerWindow` or `PopupWindow`, and let a Tesserae app run with no main window. Tesserae 0.5.1 opens only ordinary windows, so a shell built on `tesserae-ui` ([ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md)) cannot put a bar on screen from a YAML view. This request is addressed to the Tesserae project, not to tre: tre 0.5.8 already has the mechanism.
 
-This note is carried to the Tesserae project by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]). It is not filed from this vault. Numbers 002 and 003 stay reserved (see [[80 Engine Requests]]).
+This note is carried to the Tesserae project by the maintainer (AGENTS > 6. Engine requests (tre / Tesserae)). It is not filed from this vault. Numbers 002 and 003 stay reserved (see [80 Engine Requests](80%20Engine%20Requests.md)).
 
 ## Shell Need
 
 A shell opens, from YAML views and Python:
 
-| Need                                                                                               | Use case ([[Personas and Use Cases]]) |
+| Need                                                                                               | Use case ([Personas and Use Cases](../10%20Vision/Personas%20and%20Use%20Cases.md)) |
 |----------------------------------------------------------------------------------------------------|----------------------------------------------------|
 | A view as the content of a `LayerWindow` (bar, OSD, launcher, widget, panel), bound to one monitor | UC1, UC3, UC4, UC5, UC6, UC11                      |
 | The same view opened on several monitors, each with its own `Output`                               | UC1, UC10, UC11                                    |
@@ -35,11 +34,11 @@ A shell opens, from YAML views and Python:
 
 ## Why it Belongs in Tesserae
 
-tre owns the mechanism: surface roles, outputs, input regions, margin animation. Tesserae owns how a view becomes a window: the `widget: Window` root, `open_window`, the ViewModel, theme and stylesheet binding, and hot reload ([[AGENTS#3. Layering principle]]). The shell should not duplicate that composition path. If it did, the shell would carry a second way to build and re-theme a view, which is the dialect split [[ADR-0002 Relationship to Tesserae UI]] avoids.
+tre owns the mechanism: surface roles, outputs, input regions, margin animation. Tesserae owns how a view becomes a window: the `widget: Window` root, `open_window`, the ViewModel, theme and stylesheet binding, and hot reload (AGENTS > 3. Layering principle). The shell should not duplicate that composition path. If it did, the shell would carry a second way to build and re-theme a view, which is the dialect split [ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md) avoids.
 
 ## What Tesserae Does Today
 
-Source: local clone `/home/phil/Projects/pyDev/projects/tesserae` at commit `0eda3fe` (version 0.5.1.4, unreleased), read 2026-10-25. PyPI has `tesserae-ui` 0.5.1 (2026-10-19). #needs-verification: confirm each item below against the 0.5.1 release; the clone is ahead of PyPI.
+Source: local clone `~/Projects/pyDev/projects/tesserae` at commit `0eda3fe` (version 0.5.1.4, unreleased), read 2026-10-25. PyPI has `tesserae-ui` 0.5.1 (2026-10-19). #needs-verification: confirm each item below against the 0.5.1 release; the clone is ahead of PyPI.
 
 | Fact                                                                                                                                                                      | Where                                                                            |
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
@@ -53,12 +52,13 @@ Source: local clone `/home/phil/Projects/pyDev/projects/tesserae` at commit `0ed
 | `widget: Window` options are read when the window opens; hot reload does not re-apply them.                                                                               | `docs/guide/hot-reload.md`                                                       |
 | `modal=True` dims the parent with a scrim layer; `center` cannot place a window on Wayland.                                                                               | `appwindows.py`, `app.py:962`                                                    |
 
-tre side, for contrast ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]): `tre.App.run()` raises `RuntimeError` when no window is registered and ends when every window has closed ([App reference](https://mindderivative.github.io/tre/reference/app/)). A `LayerWindow` is constructed with `namespace` and binds to an `Output` at construction only.
+tre side, for contrast ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)): `tre.App.run()` raises `RuntimeError` when no window is registered and ends when every window has closed ([App reference](https://mindderivative.github.io/tre/reference/app/)). A `LayerWindow` is constructed with `namespace` and binds to an `Output` at construction only.
 
 ## Proposed API
 
-> [!danger] Proposal, not existing API
-> Every name below is proposed for Tesserae. Nothing here exists. The Tesserae project decides names and shape. Keys that mirror tre keep tre's names ([[TRE-REQ-001 Layer Surface Window]]).
+> [!CAUTION]
+> **Proposal, not existing API**
+> Every name below is proposed for Tesserae. Nothing here exists. The Tesserae project decides names and shape. Keys that mirror tre keep tre's names ([TRE-REQ-001 Layer Surface Window](TRE-REQ-001%20Layer%20Surface%20Window.md)).
 
 ### 1. A Layer Window Root in a View
 
@@ -153,7 +153,7 @@ app.run()
 | R5 | Hot reload re-applies the live layer keys without recreating the window and reports the constructor-only keys.                                                              |
 | R6 | A key with no meaning for a layer surface is a load error with a position.                                                                                                  |
 | R7 | Headless: a layer or popup view builds, themes and responds to `simulate` with no display, using tre's headless `LayerWindow` ([LayerWindow reference](https://mindderivative.github.io/tre/reference/layer-window/)). |
-| R8 | No Python in layout or paint: all new Tesserae code runs in callbacks ([[AGENTS#3. Layering principle]]).                                                            |
+| R8 | No Python in layout or paint: all new Tesserae code runs in callbacks (AGENTS > 3. Layering principle).                                                            |
 | R9 | Threading: opening and closing run on the loop thread; other threads use `thread_handle().call_soon`.                                                                       |
 
 ## Alternatives
@@ -161,18 +161,18 @@ app.run()
 | Alternative                                                                                                          | Verdict                                                                                                                                                                                 |
 |----------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | The shell builds `LayerWindow` itself and calls Tesserae's internal `_open_view(view, name, window)` (`app.py:911`). | Works today but depends on a private method and skips `open_window`'s bookkeeping (`AppWindow`, close handling, themed registration). Fragile across Tesserae releases. Prototype only. |
-| The shell wraps Tesserae with its own window opener and view loader.                                                 | Duplicates composition and theming; two paths to maintain. Against [[ADR-0002 Relationship to Tesserae UI]].                                                                             |
-| Drop `tesserae-ui` and build on tre directly.                                                                        | Rejected in [[ADR-0002 Relationship to Tesserae UI]] (Option B).                                                                                                                         |
+| The shell wraps Tesserae with its own window opener and view loader.                                                 | Duplicates composition and theming; two paths to maintain. Against [ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md).                                                                             |
+| Drop `tesserae-ui` and build on tre directly.                                                                        | Rejected in [ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md) (Option B).                                                                                                                         |
 
 ## If Declined
 
 1. Use the private-method prototype above, labelled throwaway, in `90 Research/`.
-2. Write an ADR superseding [[ADR-0002 Relationship to Tesserae UI]] if the private path proves unstable. The shell would then own a thin view-to-window layer on tre.
+2. Write an ADR superseding [ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md) if the private path proves unstable. The shell would then own a thin view-to-window layer on tre.
 
 ## Open Questions
 
 - [ ] **ViewModel per opening.** Tesserae serves a view with "the ViewModel that serves its name". A bar opened on three monitors has three windows and, today, one ViewModel. Does each opening get its own instance (so it knows its monitor), or share one with `params`? The shell needs per-monitor state (the monitor name, its workspaces) and shared state (the clock). Recommendation: one ViewModel instance per opening, with shared services passed in. #needs-verification against the ViewModel binding code.
-- [ ] **Zero windows.** tre raises `RuntimeError` with no registered window. A shell whose every monitor is "none" ([[V1 Scope#Multi-monitor]]) has none. Does Tesserae keep the loop alive with an idle hidden anchor, or does the shell open nothing and let `run()` return? Needs a tre answer or a Tesserae decision.
+- [ ] **Zero windows.** tre raises `RuntimeError` with no registered window. A shell whose every monitor is "none" ([V1 Scope > Multi-monitor](../10%20Vision/V1%20Scope.md#multi-monitor)) has none. Does Tesserae keep the loop alive with an idle hidden anchor, or does the shell open nothing and let `run()` return? Needs a tre answer or a Tesserae decision.
 - [ ] **Output hot-plug in Tesserae.** `App.outputs()` and the `output_*` events are tre's. Does Tesserae expose them (`app.outputs`, `app.on("output_added")`), or does the shell use `tre.App` directly through `app._tre_app`? Recommendation: Tesserae exposes them, so the shell stays off private attributes.
 - [ ] **Naming.** `widget: LayerWindow` and `widget: PopupWindow` against a `kind:` key on `widget: Window`. Tesserae's choice.
 - [ ] **Version.** Which Tesserae release carries it, and is the pin `tesserae-engine>=0.5.8`?
@@ -190,7 +190,7 @@ app.run()
 
 ## Links
 
-- [[ADR-0002 Relationship to Tesserae UI]] · [[ADR-0003 Process Model]] · [[TRE-REQ-001 Layer Surface Window]]
+- [ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md) · [ADR-0003 Process Model](../30%20Decisions/ADR-0003%20Process%20Model.md) · [TRE-REQ-001 Layer Surface Window](TRE-REQ-001%20Layer%20Surface%20Window.md)
 - [Tesserae: Windows, Docks and Embedded Views](https://mindderivative.github.io/tesserae/guide/windows-and-docks/) · [Window Options](https://mindderivative.github.io/tesserae/guide/window-options/) · [Hot Reload](https://mindderivative.github.io/tesserae/guide/hot-reload/)
 - [tre: LayerWindow](https://mindderivative.github.io/tre/reference/layer-window/) · [Outputs](https://mindderivative.github.io/tre/reference/outputs/) · [App](https://mindderivative.github.io/tre/reference/app/)
-- [[80 Engine Requests]] · [[Index]]
+- [80 Engine Requests](80%20Engine%20Requests.md) · [Index](../00%20Home/Index.md)

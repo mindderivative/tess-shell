@@ -7,16 +7,14 @@ owner: phil
 created: 2026-10-18
 updated: 2026-10-18
 tags: [research, integration/wayland, spec/surface, needs-verification]
-related: ["[[ADR-0001 Shell Surface Strategy]]"]
-depends_on: []
 ---
 
 # Prior Art: how Linux Shells Create Surfaces
 
-> [!summary]
+> [!NOTE]
 > Every shell surveyed places its bars and panels on `wlr-layer-shell` (`zwlr_layer_shell_v1`). None positions ordinary windows with compositor rules, and none uses KDE's own panel protocol. Toolkits differ in where the layer role is attached: a helper library for GTK, a built-in window type for Quickshell. Compositor-specific code is used for workspace and window state, not for the surface itself.
 
-Feeds [[ADR-0001 Shell Surface Strategy]]. Surveyed 2026-10-18 from project pages; gaps are tagged `#needs-verification`.
+Feeds [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md). Surveyed 2026-10-18 from project pages; gaps are tagged `#needs-verification`.
 
 ## Survey
 
@@ -59,6 +57,6 @@ Feeds [[ADR-0001 Shell Surface Strategy]]. Surveyed 2026-10-18 from project page
 
 ## Links
 
-- [[ADR-0001 Shell Surface Strategy]]
+- [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md)
 - [wlr-layer-shell-unstable-v1](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)
 - [Quickshell PanelWindow](https://quickshell.org/docs/v0.2.0/types/Quickshell/PanelWindow/)

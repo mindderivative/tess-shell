@@ -7,22 +7,22 @@ owner: phil
 created: 2026-10-18
 updated: 2026-10-25
 tags: [engine-request, spec/surface, integration/wayland, needs-verification]
-related: ["[[ADR-0001 Shell Surface Strategy]]", "[[Prior Art - Linux Shell Surfaces]]", "[[80 Engine Requests]]"]
-depends_on: []
 ---
 
 # TRE-REQ-001: Layer Surface Window
 
-> [!summary]
+> [!NOTE]
 > Add a `LayerWindow` type to tre. It is a `Window` whose Wayland role is `zwlr_layer_shell_v1` instead of xdg-toplevel, so it can anchor to screen edges, reserve space, sit on a stacking layer, take a chosen keyboard mode and bind to one output. A companion `PopupWindow` type opens menus and flyouts parented to a layer surface. A small output API lets the shell place one surface per monitor. An `input_region`, margin animation and margin drag cover non-rectangular shells, slide and fade motion, and movable widgets.
 
-> [!success] Released in tre 0.5.8 (2026-10-25)
+> [!TIP]
+> **Released in tre 0.5.8 (2026-10-25)**
 > [tre #195](https://github.com/mindderivative/tre/issues/195) is closed and everything in it shipped in tre 0.5.8 (`tesserae-engine==0.5.8` on PyPI; 0.5.7 had none of it), including `PopupWindow` ([tre #223](https://github.com/mindderivative/tre/issues/223)). See [Delivered](#delivered-tre-195-closed). Confirmed against the shell by the maintainer on 2026-10-25; the request is `stable`. The untested items listed under Delivered stay open for the testing phase.
 
-> [!info] Surface specs depend on this request
-> The engine blocker is gone: a tre release has `LayerWindow`. Every note under `40 Specifications/Surfaces/` links `[[TRE-REQ-001 Layer Surface Window]]` in `depends_on`. [[ADR-0001 Shell Surface Strategy]] is accepted (Option A, 2026-10-25), so a surface spec carries no `Blocked by` callout for this request; it names any untested gap below that affects it.
+> [!NOTE]
+> **Surface specs depend on this request**
+> The engine blocker is gone: a tre release has `LayerWindow`. Every note under `40 Specifications/Surfaces/` links `[[TRE-REQ-001 Layer Surface Window]]` in `depends_on`. [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md) is accepted (Option A, 2026-10-25), so a surface spec carries no `Blocked by` callout for this request; it names any untested gap below that affects it.
 
-This note is carried to the tre project by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]).
+This note is carried to the tre project by the maintainer (AGENTS > 6. Engine requests (tre / Tesserae)).
 
 ## Delivered (Tre #195 Closed)
 
@@ -59,11 +59,13 @@ Sources, read 2026-10-25: [tre #195](https://github.com/mindderivative/tre/issue
 - `set(exclusive_edge=None)` raises on a surface that has an edge: the protocol cannot clear one.
 - Hit testing follows `corner_radius` for every window; masks and `clip_children` are still ignored.
 
-> [!success] KWin supports corner reservation (tre hand-off, 2026-10-25)
+> [!TIP]
+> **KWin supports corner reservation (tre hand-off, 2026-10-25)**
 > The hand-off and the [LayerWindow reference](https://mindderivative.github.io/tre/reference/layer-window/) now record it: on KWin 6.8.1 a `("top", "right")` surface with `exclusive_zone=28` and `exclusive_edge="top"` shrinks a maximised window by 28 px (1012 to 984); with `"right"` it narrows instead; with no edge nothing is reserved. sway behaves the same. The first "no reservation" result ([tre #201](https://github.com/mindderivative/tre/issues/201)) is not reproduced and its cause is unknown (likely a fault in the first test run, not a KWin gap). Do not report it to KDE. This agrees with KWin's source ([layershell_v1.cpp](https://invent.kde.org/plasma/kwin/-/raw/master/src/wayland/layershell_v1.cpp)).
 
-> [!warning] VRAM per window: mostly fixed in 0.5.8, one item open
-> Research ([tre #207](https://github.com/mindderivative/tre/issues/207), [vram-per-window](https://mindderivative.github.io/tre/design/vram-per-window/)): tre itself allocates under 1 MiB for a small window; `wgpu` reserved about 192 MiB per window device. 0.5.8 asks for small memory blocks by default ([#219](https://github.com/mindderivative/tre/issues/219)): a 200 x 100 window drops from 211 to 31 MiB, a 1280 x 32 bar from 198 to 18 MiB, two windows from 404 to 44 MiB, a 4K overlay from 325 to 177 MiB, with no measured frame-time change. `TRE_GPU_MEMORY=performance` restores the old blocks. A full-screen surface still costs about 19 bytes a pixel (swapchain images plus tre's persistent target), so a 4K overlay is not cheap; use `PopupWindow` for menus. `frame_stats()["memory"]` reports allocated and reserved GPU memory ([#222](https://github.com/mindderivative/tre/issues/222)), and a window with `partial_redraw=False` keeps no extra frame ([#221](https://github.com/mindderivative/tre/issues/221)). Still open: [#220](https://github.com/mindderivative/tre/issues/220), one device shared by all windows (each window keeps its own GPU device and costs about 13 MiB more). Measured on one AMD RADV GPU only. Plan the surface count for a multi-monitor shell against these numbers. Record in [[Risk Register]] when it exists.
+> [!WARNING]
+> **VRAM per window: mostly fixed in 0.5.8, one item open**
+> Research ([tre #207](https://github.com/mindderivative/tre/issues/207), [vram-per-window](https://mindderivative.github.io/tre/design/vram-per-window/)): tre itself allocates under 1 MiB for a small window; `wgpu` reserved about 192 MiB per window device. 0.5.8 asks for small memory blocks by default ([#219](https://github.com/mindderivative/tre/issues/219)): a 200 x 100 window drops from 211 to 31 MiB, a 1280 x 32 bar from 198 to 18 MiB, two windows from 404 to 44 MiB, a 4K overlay from 325 to 177 MiB, with no measured frame-time change. `TRE_GPU_MEMORY=performance` restores the old blocks. A full-screen surface still costs about 19 bytes a pixel (swapchain images plus tre's persistent target), so a 4K overlay is not cheap; use `PopupWindow` for menus. `frame_stats()["memory"]` reports allocated and reserved GPU memory ([#222](https://github.com/mindderivative/tre/issues/222)), and a window with `partial_redraw=False` keeps no extra frame ([#221](https://github.com/mindderivative/tre/issues/221)). Still open: [#220](https://github.com/mindderivative/tre/issues/220), one device shared by all windows (each window keeps its own GPU device and costs about 13 MiB more). Measured on one AMD RADV GPU only. Plan the surface count for a multi-monitor shell against these numbers. Record in [Risk Register](../00%20Home/Risk%20Register.md) when it exists.
 
 **Not tested anywhere (tre hand-off, 0.5.8):** touch (no hardware); non-AMD GPUs; labwc and other wlroots compositors besides sway; GNOME (no layer shell); Windows and macOS (layer surfaces are Linux-only); a real v4-only layer-shell compositor; a real input method (fcitx5, ibus), and KWin's text-input path; Orca (checked with `busctl` as the reader only); crispness at 1.5x; that a `set()` of zone and anchor never causes a wrong-size configure; a live `reduced_motion` change on a layer surface; frame callbacks under a fullscreen window; Escape dismissal of a `PopupWindow`; the four reservers plus painter together; transparency and paste on KWin (the tests use `grim` and `wtype`, which are wlroots-only).
 
@@ -161,7 +163,7 @@ One request change came out of the spike: the compositor's own output choice alt
 
 ## Why This Belongs in the Engine
 
-Surface roles are windowing mechanism: they decide how the compositor places and stacks a window, not what the window contains. [[AGENTS#3. Layering principle]] puts mechanism in tre. If the shell created the surface (ADR-0001 Option B), it would own configure, scale, output hot-plug and input routing, which tre already owns for ordinary windows. Python sets properties and never touches a frame; `LayerWindow` keeps that split.
+Surface roles are windowing mechanism: they decide how the compositor places and stacks a window, not what the window contains. AGENTS > 3. Layering principle puts mechanism in tre. If the shell created the surface (ADR-0001 Option B), it would own configure, scale, output hot-plug and input routing, which tre already owns for ordinary windows. Python sets properties and never touches a frame; `LayerWindow` keeps that split.
 
 ## What Tre Has Today
 
@@ -181,7 +183,8 @@ Source: [Python API](https://mindderivative.github.io/tre/api/python/), [Custom 
 
 #needs-verification: confirm the absences in the tre source and `ARCHITECTURE.md`. The Window reference and Layers guide were not read in full.
 
-> [!warning] Name collision
+> [!WARNING]
+> **Name collision**
 > tre already uses "layer" for in-window overlays (`show_layer`). The new type uses the protocol's term for a different thing. Keep `layer=` on `LayerWindow` to match the protocol and Fabric, and define both senses in the Glossary. See [Open items](#open-items).
 
 ## Proposed API
@@ -363,7 +366,8 @@ A frame around the screen edge needs one painter and up to four reservers. Corne
 - `exclusive_edge` stays in the request for corner-anchored surfaces that reserve one edge, such as a corner clock. The frame does not need it.
 - #needs-verification on KWin 6.7: that a full-screen `-1` surface does not disturb the reservers' zones; that a 1 px reserver with an empty input region maps and keeps its zone; and that damage tracking keeps the mostly-transparent painter cheap at idle.
 
-> [!question] Shape gaps for a later request
+> [!NOTE]
+> **Shape gaps for a later request**
 > Correction, 2026-10-19: tre 0.5.6 added masks ([tre #164](https://github.com/mindderivative/tre/issues/164), closed), so clipping a subtree to a non-rectangular shape exists; the property was not read for this note. Still unconfirmed: concave `corner_radius`, blend modes, and box hit-testing that follows rounded corners or a mask. The frame works without them because paths cover the geometry. Re-check the 0.5.7 docs before deciding whether `TRE-REQ-003` is needed. `TRE-REQ-002` stays reserved for ADR-0001 Option B.
 
 ## Required Behaviour (non-API)
@@ -392,8 +396,9 @@ tre's backend is `winit` in `engine-platform`. `winit` has no layer-shell role. 
 
 Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 stays out of scope. Remaining I2 risks: two readers on one socket and the second input path (seat, focus, clipboard, AccessKit).
 
-> [!danger] Two input sources
-> I1 puts seat, focus and clipboard handling in two places. A shell where bar clicks work but the clipboard or focus behaves differently from a tre dialog is a defect users will see. Record in [[Risk Register]] when that note exists.
+> [!CAUTION]
+> **Two input sources**
+> I1 puts seat, focus and clipboard handling in two places. A shell where bar clicks work but the clipboard or focus behaves differently from a tre dialog is a defect users will see. Record in [Risk Register](../00%20Home/Risk%20Register.md) when that note exists.
 
 ## Alternatives
 
@@ -461,8 +466,8 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 
 ## Links
 
-- [[ADR-0001 Shell Surface Strategy]]
-- [[Prior Art - Linux Shell Surfaces]]
+- [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md)
+- [Prior Art - Linux Shell Surfaces](../90%20Research/Prior%20Art%20-%20Linux%20Shell%20Surfaces.md)
 - [wlr-layer-shell-unstable-v1](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)
 - [tre Python API](https://mindderivative.github.io/tre/api/python/) · [Custom windowing](https://mindderivative.github.io/tre/design/custom-windowing/) · [Architecture](https://mindderivative.github.io/tre/architecture/)
-- [[80 Engine Requests]] · [[Index]]
+- [80 Engine Requests](80%20Engine%20Requests.md) · [Index](../00%20Home/Index.md)

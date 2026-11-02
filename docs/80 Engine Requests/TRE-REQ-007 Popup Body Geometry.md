@@ -7,21 +7,20 @@ owner: phil
 created: 2026-10-28
 updated: 2026-10-28
 tags: [engine-request, integration/wayland, needs-verification]
-related: ["[[Popup]]", "[[ADR-0010 Surface Shadows]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[80 Engine Requests]]"]
-depends_on: []
 ---
 
 # TRE-REQ-007: Popup Body Geometry
 
-> [!summary]
+> [!NOTE]
 > Let a `PopupWindow` say which rectangle of its surface is the popup proper, so the compositor places and constrains that rectangle and ignores a transparent margin around it (a shadow margin). Written for the future; the shell has a workaround, so nothing is blocked. The maintainer will carry it to tre when it is wanted.
 
-> [!info] Not to be filed now
-> Written 2026-10-28 after the maintainer decided that a popup's placement uses its visual shape. Not filed from this vault, and the `tre` session has not been told ([[AGENTS#6. Engine requests (tre / Tesserae)]]).
+> [!NOTE]
+> **Not to be filed now**
+> Written 2026-10-28 after the maintainer decided that a popup's placement uses its visual shape. Not filed from this vault, and the `tre` session has not been told (AGENTS > 6. Engine requests (tre / Tesserae)).
 
 ## Shell Need
 
-A popup with a shadow draws the shadow in a transparent margin inside its own surface, because a surface cannot draw outside itself ([[ADR-0010 Surface Shadows]]). The maintainer decided (2026-10-28, [[Popup]]) that the compositor places the visual shape (the border and the body), and that the transparent margin is ignored and not counted in the popup's size.
+A popup with a shadow draws the shadow in a transparent margin inside its own surface, because a surface cannot draw outside itself ([ADR-0010 Surface Shadows](../30%20Decisions/ADR-0010%20Surface%20Shadows.md)). The maintainer decided (2026-10-28, [Popup](../40%20Specifications/Surfaces/Popup.md)) that the compositor places the visual shape (the border and the body), and that the transparent margin is ignored and not counted in the popup's size.
 
 ## What Tre Does Today
 
@@ -40,7 +39,8 @@ The window geometry is a Wayland request on the popup's own `xdg_surface`; the s
 
 ## Proposed API
 
-> [!danger] Proposal, not existing API
+> [!CAUTION]
+> **Proposal, not existing API**
 > Names are mine and tre may choose others.
 
 ```python
@@ -62,7 +62,7 @@ PopupWindow(parent, size=(w + 2 * m, h + 2 * m), geometry=(m, m, w, h), ...)
 
 ## If Declined
 
-The shell uses the workaround: it computes the margin from the shadow ([[Style Schema#Shadow keys]]), enlarges the popup by it, and shifts `offset`. Flip and slide decisions use the larger rectangle, so a popup with a shadow can flip up to one margin early.
+The shell uses the workaround: it computes the margin from the shadow ([Style Schema > Shadow keys](../41%20TDL%20Reference/Style%20Schema.md#shadow-keys)), enlarges the popup by it, and shifts `offset`. Flip and slide decisions use the larger rectangle, so a popup with a shadow can flip up to one margin early.
 
 ## Size
 
@@ -70,4 +70,4 @@ Small by reading the code: one argument, and the `set_window_geometry` call take
 
 ## Links
 
-[[Popup]] · [[ADR-0010 Surface Shadows]] · [[80 Engine Requests]]
+[Popup](../40%20Specifications/Surfaces/Popup.md) · [ADR-0010 Surface Shadows](../30%20Decisions/ADR-0010%20Surface%20Shadows.md) · [80 Engine Requests](80%20Engine%20Requests.md)

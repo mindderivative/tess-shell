@@ -7,19 +7,17 @@ owner: phil
 created: 2026-10-26
 updated: 2026-10-30
 tags: [spec/module, needs-verification]
-related: ["[[Modules]]", "[[Module Contract]]", "[[Module Context]]", "[[Module File]]", "[[V1 Scope]]", "[[Building Blocks]]"]
-depends_on: ["[[Module Contract]]", "[[Module File]]"]
 ---
 
 # Clock Module
 
-> [!summary]
-> The Clock shows the time. It is the simplest v1 module: no service, no D-Bus, no worker thread. Its layout is a Label, its style a small file, and its Python a timer on the loop thread that sends a formatted string once per second (or once per minute when the format has no seconds). Several uses can show different formats and time zones from one instance. All names and TDL below are illustrations built on the proposals in [[Module File]] and [[Module Context]]; nothing here is final.
+> [!NOTE]
+> The Clock shows the time. It is the simplest v1 module: no service, no D-Bus, no worker thread. Its layout is a Label, its style a small file, and its Python a timer on the loop thread that sends a formatted string once per second (or once per minute when the format has no seconds). Several uses can show different formats and time zones from one instance. All names and TDL below are illustrations built on the proposals in [Module File](../../41%20TDL%20Reference/Module%20File.md) and [Module Context](../../42%20Python%20API/Module%20Context.md); nothing here is final.
 
 ## Purpose and Scope
 
 - Show the current time, and optionally a date in a tooltip, on any surface that places the module.
-- v1: local time and an optional fixed time zone per use, formatted as the desktop does by default. A clock face, alarms, timers and a calendar are out of scope ([[V1 Scope#After v1]]); no calendar to start with (maintainer, 2026-10-27).
+- v1: local time and an optional fixed time zone per use, formatted as the desktop does by default. A clock face, alarms, timers and a calendar are out of scope ([V1 Scope > After v1](../../10%20Vision/V1%20Scope.md#after-v1)); no calendar to start with (maintainer, 2026-10-27).
 
 ## Files
 
@@ -70,11 +68,11 @@ Module {
 }
 ```
 
-The metadata block and the registry are in [[TDL Language]]; the metadata `Name: Clock` is the word a use calls the module by, and the root block `Module { }` names the file type ([[Module File]]). The param names (`format`, `timezone`) are the module author's; the param names keep their case on a use (D18, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]). `Style:` and `Params { }` sit inside `Module { }`, and `Type:` is a property of a param declaration, not a file key (D17). The `Default:` key and the type names are still open in [[Module File#Params]].
+The metadata block and the registry are in [TDL Language](../../41%20TDL%20Reference/TDL%20Language.md); the metadata `Name: Clock` is the word a use calls the module by, and the root block `Module { }` names the file type ([Module File](../../41%20TDL%20Reference/Module%20File.md)). The param names (`format`, `timezone`) are the module author's; the param names keep their case on a use (D18, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). `Style:` and `Params { }` sit inside `Module { }`, and `Type:` is a property of a param declaration, not a file key (D17). The `Default:` key and the type names are still open in [Module File > Params](../../41%20TDL%20Reference/Module%20File.md#params).
 
-- The Label is the standard module over the Text block ([[Building Blocks]]). It is not editable.
+- The Label is the standard module over the Text block ([Building Blocks](../../50%20Design%20System/Building%20Blocks.md)). It is not editable.
 - Params are what a use passes; a use that passes nothing gets the defaults.
-- `time` is a value sent by the Python for this use. How a name reaches an expression is in [[Module File#Data in the layout]].
+- `time` is a value sent by the Python for this use. How a name reaches an expression is in [Module File > Data in the layout](../../41%20TDL%20Reference/Module%20File.md#data-in-the-layout).
 
 ### Style (`Clock_Style.tdl`)
 
@@ -132,12 +130,12 @@ class Clock(Module):
         self.tick()
 ```
 
-An illustration of the shape, not tested code. With the shared time source ([[Module Context#A shared time source]]) the Clock subscribes (`self.ctx.on_tick("minute", self.tick)`, or `"second"` when a use's format has seconds) instead of scheduling `self.ctx.after` itself; the sketch below shows the timer form. What it shows:
+An illustration of the shape, not tested code. With the shared time source ([Module Context > A shared time source](../../42%20Python%20API/Module%20Context.md#a-shared-time-source)) the Clock subscribes (`self.ctx.on_tick("minute", self.tick)`, or `"second"` when a use's format has seconds) instead of scheduling `self.ctx.after` itself; the sketch below shows the timer form. What it shows:
 
 - One instance, one timer, for every use. A format with seconds makes the timer fire every second; otherwise once a minute, aimed at the next minute boundary.
-- Each use gets its own text through `ctx.send(..., use=use)` ([[Module Context#Sending values]]).
+- Each use gets its own text through `ctx.send(..., use=use)` ([Module Context > Sending values](../../42%20Python%20API/Module%20Context.md#sending-values)).
 - The next tick is computed from the wall clock each time, so a sleep, a resume or a manual time change corrects itself within one tick.
-- Everything runs on the loop thread and takes well under a millisecond; there is no worker thread ([[Process Model and Threading#The rules]]).
+- Everything runs on the loop thread and takes well under a millisecond; there is no worker thread ([Process Model and Threading > The rules](../../20%20Architecture/Process%20Model%20and%20Threading.md#the-rules)).
 
 ## Configuration
 
@@ -149,7 +147,7 @@ An illustration of the shape, not tested code. With the shared time source ([[Mo
 | `timezone`       | string | empty          | An IANA zone name such as `Europe/Berlin`; empty uses the local zone                                                                              |
 | `tooltip_format` | string | `%A, %d %B %Y` | The text a tooltip shows                                                                                                                          |
 
-Placing it. The call form is decided in [[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]. One clock in a container:
+Placing it. The call form is decided in [ADR-0007 Shell UI Layer > Module call, shipped modules and Path (2026-10-26)](../../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#module-call-shipped-modules-and-path-2026-10-26). One clock in a container:
 
 ```
 Children {
@@ -157,7 +155,7 @@ Children {
 }
 ```
 
-Two clocks in one container repeat `Clock { }` in one `Children { }`, ordered by position ([[ADR-0014 Shell File Language#Layout Rules]]); this replaces the earlier list form. The optional `Name:` keeps each use's path name unique. Python keys each use as `Clock@<uid>` ([[TDL Language#Names and the Registry]]):
+Two clocks in one container repeat `Clock { }` in one `Children { }`, ordered by position ([ADR-0014 Shell File Language > Layout Rules](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules)); this replaces the earlier list form. The optional `Name:` keeps each use's path name unique. Python keys each use as `Clock@<uid>` ([TDL Language > Names and the Registry](../../41%20TDL%20Reference/TDL%20Language.md#names-and-the-registry)):
 
 ```
 Children {
@@ -173,33 +171,33 @@ Children {
 }
 ```
 
-A use is named by its head alone; `Name:` gives it a unique name, and an unnamed repeat is named from its position (`Clock_1`, `Clock_2`). There is no `root name { }` form (D3, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; [[Module File#Using a Module]]). Python always receives the `Clock@<uid>` key from `ctx.uses` and passes it back to name a use in an action (D23).
+A use is named by its head alone; `Name:` gives it a unique name, and an unnamed repeat is named from its position (`Clock_1`, `Clock_2`). There is no `root name { }` form (D3, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30); [Module File > Using a Module](../../41%20TDL%20Reference/Module%20File.md#using-a-module)). Python always receives the `Clock@<uid>` key from `ctx.uses` and passes it back to name a use in an action (D23).
 
 ## Python Contract
 
-The class follows [[Module Contract]]. It uses `ctx.uses`, `use.params`, `ctx.send(..., use=)` and `ctx.after`. It has no `stop` work (the shell cancels timers) and no `reload` work beyond re-reading params on the next tick. A changed `format` or `timezone` in a use takes effect on the next tick.
+The class follows [Module Contract](../../42%20Python%20API/Module%20Contract.md). It uses `ctx.uses`, `use.params`, `ctx.send(..., use=)` and `ctx.after`. It has no `stop` work (the shell cancels timers) and no `reload` work beyond re-reading params on the next tick. A changed `format` or `timezone` in a use takes effect on the next tick.
 
 ## Integration
 
 - Source: the system clock through Python's `datetime`; `zoneinfo` for zones, and the shell's shared time source for ticks. No service, no D-Bus, no file.
-- Thread: the loop thread, through `ctx.after` ([[Process Model and Threading]]).
-- A Tooltip module can show the `tooltip` value on hover ([[Building Blocks]]); the standard Tooltip is not required for v1.
+- Thread: the loop thread, through `ctx.after` ([Process Model and Threading](../../20%20Architecture/Process%20Model%20and%20Threading.md)).
+- A Tooltip module can show the `tooltip` value on hover ([Building Blocks](../../50%20Design%20System/Building%20Blocks.md)); the standard Tooltip is not required for v1.
 - Following the desktop's 12 or 24 hour setting and locale is the default; the user can set both (decided 2026-10-27, `locale` and `hour_cycle` params). #needs-verification how KDE exposes the regional settings (its locale files, or the environment).
-- **Shared time source (decided 2026-10-27).** The shell offers one time source, so all modules tick together. The Clock subscribes to it instead of running its own timer; the shape is proposed in [[Module Context#A shared time source]].
+- **Shared time source (decided 2026-10-27).** The shell offers one time source, so all modules tick together. The Clock subscribes to it instead of running its own timer; the shape is proposed in [Module Context > A shared time source](../../42%20Python%20API/Module%20Context.md#a-shared-time-source).
 
 ## Design
 
-Tokens and components used: the Label module over the Text block; a text class from the style file. The look comes from the theme for the colour and type scale ([[50 Design System]]).
+Tokens and components used: the Label module over the Text block; a text class from the style file. The look comes from the theme for the colour and type scale ([50 Design System](../../50%20Design%20System/50%20Design%20System.md)).
 
 ## Accessibility
 
 - The Label exposes its text as the accessible name; the value changes every second or minute.
-- A screen reader must not be told on every tick. The text is read when the user focuses the element or asks for it; live announcement is off by default (proposed). #needs-verification against how tre publishes name changes ([[TRE-REQ-001 Layer Surface Window#Delivered (tre #195 closed)]]).
+- A screen reader must not be told on every tick. The text is read when the user focuses the element or asks for it; live announcement is off by default (proposed). #needs-verification against how tre publishes name changes ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)).
 - The tooltip text is available as a description.
 
 ## Performance Budget
 
-- One timer for all uses. With seconds, one wake and one text update per second per distinct text; without seconds, one per minute. No frames between updates ([[TRE-REQ-001 Layer Surface Window]]: an idle surface draws no frames).
+- One timer for all uses. With seconds, one wake and one text update per second per distinct text; without seconds, one per minute. No frames between updates ([TRE-REQ-001 Layer Surface Window](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md): an idle surface draws no frames).
 - Per tick: under 1 ms on the loop thread (proposed; measured in the testing phase).
 - A Clock must not add a timer that fires faster than the shown unit.
 
@@ -216,9 +214,9 @@ Tokens and components used: the Label module over the Text block; a text class f
 
 - [x] `strftime` patterns (maintainer, 2026-10-27, the recommendation). Open: locale-aware names through the `locale` param.
 - [x] Follow the desktop's 12 or 24 hour setting and locale by default; the user can set both (maintainer, 2026-10-27). Open: how KDE exposes them. #needs-verification
-- [x] `format` is validated when the use is loaded, through a hook in the module contract (maintainer, 2026-10-27, "on use loaded"). The hook is proposed in [[Module Contract]].
+- [x] `format` is validated when the use is loaded, through a hook in the module contract (maintainer, 2026-10-27, "on use loaded"). The hook is proposed in [Module Contract](../../42%20Python%20API/Module%20Contract.md).
 - [x] No calendar to start with (maintainer, 2026-10-27).
-- [x] The shell offers a shared time source (maintainer, 2026-10-27); the shape is in [[Module Context#A shared time source]].
+- [x] The shell offers a shared time source (maintainer, 2026-10-27); the shape is in [Module Context > A shared time source](../../42%20Python%20API/Module%20Context.md#a-shared-time-source).
 
 ## Acceptance Criteria
 
@@ -233,4 +231,4 @@ Tokens and components used: the Label module over the Text block; a text class f
 
 ## Links
 
-- [[Modules]] · [[Module Contract]] · [[Module Context]] · [[Module File]] · [[V1 Scope]]
+- [Modules](Modules.md) · [Module Contract](../../42%20Python%20API/Module%20Contract.md) · [Module Context](../../42%20Python%20API/Module%20Context.md) · [Module File](../../41%20TDL%20Reference/Module%20File.md) · [V1 Scope](../../10%20Vision/V1%20Scope.md)

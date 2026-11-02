@@ -7,14 +7,12 @@ owner: phil
 created: 2026-10-29
 updated: 2026-10-29
 tags: [research, tdl]
-related: ["[[ADR-0014 Shell File Language]]", "[[ADR-0007 Shell UI Layer]]", "[[Shell File]]", "[[Common Keys and Conventions]]"]
-depends_on: []
 ---
 
 # Shell File Syntax Comparison
 
-> [!summary]
-> One small shell written three ways: YAML (today, [[ADR-0007 Shell UI Layer]]), TDL (the language chosen in [[ADR-0014 Shell File Language]]) and KDL 2. The shell has one bar with a clock and a battery, a tray that repeats, and a popup. The TDL form follows the maintainer's answers of 2026-10-29. Keys come from [[Shell File]]; the module calls (`Label`, `Icon`) follow [[ADR-0007 Shell UI Layer#Module Call, Shipped Modules and Path (2026-10-26)]]. All three are illustrations, not grammar.
+> [!NOTE]
+> One small shell written three ways: YAML (today, [ADR-0007 Shell UI Layer](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md)), TDL (the language chosen in [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)) and KDL 2. The shell has one bar with a clock and a battery, a tray that repeats, and a popup. The TDL form follows the maintainer's answers of 2026-10-29. Keys come from [Shell File](../41%20TDL%20Reference/Shell%20File.md); the module calls (`Label`, `Icon`) follow [ADR-0007 Shell UI Layer > Module Call, Shipped Modules and Path (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#module-call-shipped-modules-and-path-2026-10-26). All three are illustrations, not grammar.
 
 ## What Each File Must Say
 
@@ -72,8 +70,8 @@ root:
                     text: "{{ caller.data.title }}"
 ```
 
-- A value that starts with `{{` must be quoted, or YAML reads it as a flow mapping ([[ADR-0008 Tesserae Expression Language]], TEL notes on templates).
-- A `children` that holds an `if` and a `for` has to be a list, so every entry gets a dash and an extra indent level. Mapping keys cannot repeat, which is why repeated modules need the list form too ([[ADR-0007 Shell UI Layer#Open Items]]).
+- A value that starts with `{{` must be quoted, or YAML reads it as a flow mapping ([ADR-0008 Tesserae Expression Language](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md), TEL notes on templates).
+- A `children` that holds an `if` and a `for` has to be a list, so every entry gets a dash and an extra indent level. Mapping keys cannot repeat, which is why repeated modules need the list form too ([ADR-0007 Shell UI Layer > Open Items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)).
 - The sides of the margin are positional (`[4, 4, 0, 4]`); the brace form `{4, 4, 0, 4}` fails (PyYAML read it as `{4: None}` on 2026-10-26).
 
 ## TDL
@@ -125,7 +123,7 @@ root dp1_root {
 }
 ```
 
-- `{{ }}` needs no quotes. A value that is exactly one slot keeps its type; text with a slot in it is a string ([[ADR-0008 Tesserae Expression Language]] and the TEL project's `docs/language.md`, section 8).
+- `{{ }}` needs no quotes. A value that is exactly one slot keeps its type; text with a slot in it is a string ([ADR-0008 Tesserae Expression Language](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md) and the TEL project's `docs/language.md`, section 8).
 - A block is a name and braces. A property is `key: value`. Entries sit on their own lines or are separated by `,`.
 - `children` holds an `if` and a `for` among module calls without turning into a list.
 
@@ -184,19 +182,19 @@ root dp1_root monitor=DP-1 {
 | Nesting is explicit                                      | No: indentation                                              | Yes: braces                                                           | Yes: braces                                            |
 | Expression slot costs quotes                             | Yes, when it starts with `{{`                                | No                                                                    | Yes, always a quoted string                            |
 | Conditions and repeats among module calls                | List form, extra indent, keys `then`, `else`, `do`           | Keyword blocks, no list form                                          | Keyword nodes, no list form                            |
-| Repeated module of one name in one container             | List form                                                    | Allowed, ordered by position ([[ADR-0014 Shell File Language#What TDL Is (Decided)]]) | Natural (nodes repeat)                                 |
+| Repeated module of one name in one container             | List form                                                    | Allowed, ordered by position ([ADR-0014 Shell File Language > What TDL Is (Decided)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#what-tdl-is-decided)) | Natural (nodes repeat)                                 |
 | Colour with alpha                                        | Quoted string                                                | `rgba(...)` bare, or a quoted hex                                     | Quoted string                                          |
 | Comment                                                  | `#`                                                          | `#` (so a hex colour must be quoted)                                  | `//` and `/-`                                          |
 | Four-sided values                                        | List; brace form fails                                       | List now; a brace form can be defined                                 | Several arguments (`margin 4 4 0 4`)                   |
 | File looks like a Tesserae or YAML file                  | Yes, unless the version key is checked                       | No: its own extension and a `TDL:` first line                         | No, with its own extension                             |
 | Parser and error positions                               | Third-party, in use by the vault                             | Ours to build and test                                                | Third-party; Python package not checked                |
-| Editor help (completion, hover) today                    | YAML language server and JSON Schema ([[ADR-0011 JSON Schema for Shell Files]]) | None in v1 (maintainer, 2026-10-29)                    | None for our keys                                      |
+| Editor help (completion, hover) today                    | YAML language server and JSON Schema ([ADR-0011 JSON Schema for Shell Files](../30%20Decisions/ADR-0011%20JSON%20Schema%20for%20Shell%20Files.md)) | None in v1 (maintainer, 2026-10-29)                    | None for our keys                                      |
 | Round trip for the UID write                             | Needs a comment-keeping YAML writer                          | Our parser keeps a lossless tree                                      | Parser dependent; not checked                          |
 | New work                                                 | None                                                         | Grammar, parser, formatter, docs                                      | Parser dependency, schema                              |
 
 ## What the TDL Sketch Shows to Settle
 
-These are problems the first sketch surfaced, not criticism of the choice. The maintainer answered them on 2026-10-29 ([[ADR-0014 Shell File Language#Open Items]]); the answer is after each point.
+These are problems the first sketch surfaced, not criticism of the choice. The maintainer answered them on 2026-10-29 ([ADR-0014 Shell File Language > Open Items](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#open-items)); the answer is after each point.
 
 1. `rgba(255, 255, 255, 0.1)` has commas inside parentheses, but `,` is also a separator. Answer: write `rgba(255 255 255 0.1)`, space separated.
 2. `#` starts a comment, so `#1e1e2ee6` has to be quoted but `rgba(...)` does not. Two forms for colours. Answer: keep the quotes on hex.
@@ -207,8 +205,8 @@ These are problems the first sketch surfaced, not criticism of the choice. The m
 
 ## Result
 
-The comparison supports the maintainer's choice on two points: the slot needs no quotes in TDL, and conditions and repeats read as structure instead of a list of one-key mappings. It does not remove the cost listed in [[Risk Register]] R-20. KDL is the closest ready-made option; its fixed syntax would leave `rgba(...)`, bare slots and the chosen separators out of reach.
+The comparison supports the maintainer's choice on two points: the slot needs no quotes in TDL, and conditions and repeats read as structure instead of a list of one-key mappings. It does not remove the cost listed in [Risk Register](../00%20Home/Risk%20Register.md) R-20. KDL is the closest ready-made option; its fixed syntax would leave `rgba(...)`, bare slots and the chosen separators out of reach.
 
 ## Links
 
-- [[ADR-0014 Shell File Language]] · [[ADR-0007 Shell UI Layer]] · [[Shell File]] · [[Expression Language Requirements]] · [[90 Research]]
+- [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md) · [ADR-0007 Shell UI Layer](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md) · [Shell File](../41%20TDL%20Reference/Shell%20File.md) · [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md) · [90 Research](90%20Research.md)

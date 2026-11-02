@@ -7,18 +7,16 @@ owner: phil
 created: 2026-10-25
 updated: 2026-10-25
 tags: [adr, integration/dbus, needs-verification]
-related: ["[[V1 Scope]]", "[[ADR-0003 Process Model]]"]
-depends_on: []
 ---
 
 # ADR-0004: Coexistence with Plasmashell
 
-> [!summary]
+> [!NOTE]
 > Tesserae Shell coexists with plasmashell by default: it does not take a D-Bus name or a role that plasmashell holds. A service may replace plasmashell's role only after its own ADR.
 
 ## Context
 
-Tesserae Shell runs beside an installed Plasma session and does not replace it ([[AGENTS#1. What Tesserae Shell is]]). Some D-Bus names and roles can belong to only one process (the notification server, StatusNotifierWatcher). Which names plasmashell holds on a running session has not been checked. Observed on the maintainer's session on 2026-10-26 (plasmashell 6.8.1, KWin 6.8.1; `busctl --user list`): plasmashell holds `org.freedesktop.Notifications` and `org.kde.JobViewServer`; `kded6` holds `org.kde.StatusNotifierWatcher`, with plasmashell registered as one host; `kwin_wayland` holds `org.kde.kglobalaccel`. Full table: [[System Context#Observed D-Bus names]]. #needs-verification on other distributions.
+Tesserae Shell runs beside an installed Plasma session and does not replace it (AGENTS > 1. What Tesserae Shell is). Some D-Bus names and roles can belong to only one process (the notification server, StatusNotifierWatcher). Which names plasmashell holds on a running session has not been checked. Observed on the maintainer's session on 2026-10-26 (plasmashell 6.8.1, KWin 6.8.1; `busctl --user list`): plasmashell holds `org.freedesktop.Notifications` and `org.kde.JobViewServer`; `kded6` holds `org.kde.StatusNotifierWatcher`, with plasmashell registered as one host; `kwin_wayland` holds `org.kde.kglobalaccel`. Full table: [System Context > Observed D-Bus names](../20%20Architecture/System%20Context.md#observed-d-bus-names). #needs-verification on other distributions.
 
 ## Options
 
@@ -40,10 +38,10 @@ Accepted 2026-10-25 by the maintainer in chat ("as recommended"): **Option A**.
 ## Consequences
 
 - Every integration spec under `40 Specifications/Integration/` has a coexistence row: owner of the name today, mode chosen, and what happens when the shell starts before or after plasmashell.
-- The notification centre is outside v1 ([[V1 Scope#After v1]]).
+- The notification centre is outside v1 ([V1 Scope > After v1](../10%20Vision/V1%20Scope.md#after-v1)).
 - The tray module acts as a client of the tray protocol and does not own StatusNotifierWatcher unless a later ADR says so. On the observed session the watcher belongs to `kded6`, not plasmashell, so a second host can register beside plasmashell's. #needs-verification on other distributions.
-- Starting and stopping the shell must leave the Plasma session usable ([[Goals and Non-Goals]] G3).
+- Starting and stopping the shell must leave the Plasma session usable ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G3).
 
 ## Links
 
-- [[ADR-0003 Process Model]] · [[V1 Scope#Decisions to take]]
+- [ADR-0003 Process Model](ADR-0003%20Process%20Model.md) · [V1 Scope > Decisions to take](../10%20Vision/V1%20Scope.md#decisions-to-take)

@@ -7,21 +7,19 @@ owner: phil
 created: 2026-10-29
 updated: 2026-11-01
 tags: [tdl-ref, tdl, needs-verification]
-related: ["[[ADR-0014 Shell File Language]]", "[[41 TDL Reference]]", "[[Common Keys and Conventions]]", "[[Shell File]]", "[[Module File]]", "[[Shell File Syntax Comparison]]"]
-depends_on: ["[[ADR-0014 Shell File Language]]"]
 ---
 
 # TDL Language
 
-> [!summary]
-> The Tesserae Data Language (TDL) is a structure-only data language. It is its own project, like TEL, and until that project has a repository this note defines it (D25 in [[ADR-0014 Shell File Language#Second-Sketch Decisions (2026-10-30)]]). TDL has no knowledge of bars or monitors: the shell and Tesserae UI each define the blocks and keys they accept on top of it. Expressions are TEL's ([[ADR-0008 Tesserae Expression Language]]); TDL only marks where one starts. The decisions are the maintainer's (2026-10-29 and 2026-10-30); this note states them as rules and does not re-argue them.
+> [!NOTE]
+> The Tesserae Data Language (TDL) is a structure-only data language. It is its own project, like TEL, and until that project has a repository this note defines it (D25 in [ADR-0014 Shell File Language > Second-Sketch Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#second-sketch-decisions-2026-10-30)). TDL has no knowledge of bars or monitors: the shell and Tesserae UI each define the blocks and keys they accept on top of it. Expressions are TEL's ([ADR-0008 Tesserae Expression Language](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md)); TDL only marks where one starts. The decisions are the maintainer's (2026-10-29 and 2026-10-30); this note states them as rules and does not re-argue them.
 
 ## Two Layers
 
 | Layer                     | Defines                                                                                                                     | Where                                                                                                   |
 |---------------------------|-----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | TDL (the language)        | The metadata block, punctuation, values, names, the root block, `Children`, `Import`, `If`, `Else`, `For`, `In`, `Key`, case rules, errors | This note                                                                                               |
-| The shell's schema        | `Shell`, `Monitor`, `Bar`, `Frame`, `Panel`, `Popup`, the building blocks, modules and their keys                                  | [[Shell File]], [[Module File]], [[Building Blocks]], [[Style Schema]], [[Settings File]]                |
+| The shell's schema        | `Shell`, `Monitor`, `Bar`, `Frame`, `Panel`, `Popup`, the building blocks, modules and their keys                                  | [Shell File](Shell%20File.md), [Module File](Module%20File.md), [Building Blocks](../50%20Design%20System/Building%20Blocks.md), [Style Schema](Style%20Schema.md), [Settings File](Settings%20File.md)                |
 | Tesserae UI's schema      | `View` and its blocks                                                                                                       | Not designed here                                                                                       |
 
 ## A File
@@ -144,12 +142,12 @@ A percentage plus pixels (tre's `calc(100% - 16)`) has no form in v1 (D6). A sty
   | Group     | Names                                                                                                              |
   |-----------|--------------------------------------------------------------------------------------------------------------------|
   | Top level | Shell, Monitor                                                                                                     |
-  | Surfaces  | Bar, Frame, Panel, Popup ([[Surface Types]])                                                                       |
-  | Blocks    | Box, FlexBox, Grid, Text, TextField, Bitmap, SVG, Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path, Terminal, Canvas ([[Building Blocks]]) |
-  | Modules   | The shipped modules (Label, Icon, Button, ... , [[V1 Widgets]]) and every module with a `Name:` in its metadata   |
+  | Surfaces  | Bar, Frame, Panel, Popup ([Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md))                                                                       |
+  | Blocks    | Box, FlexBox, Grid, Text, TextField, Bitmap, SVG, Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path, Terminal, Canvas ([Building Blocks](../50%20Design%20System/Building%20Blocks.md)) |
+  | Modules   | The shipped modules (Label, Icon, Button, ... , [V1 Widgets](../50%20Design%20System/V1%20Widgets.md)) and every module with a `Name:` in its metadata   |
 
 - **Kind has one meaning.** `Kind:` references a type by its exact name (`Kind: Panel`, `Kind: Clock`), where a type is named by value rather than by a block head, such as a style class.
-- A name registered twice is a load error. A user module of the same name overrides a shipped module ([[ADR-0007 Shell UI Layer#Module Call, Shipped Modules and Path (2026-10-26)]]).
+- A name registered twice is a load error. A user module of the same name overrides a shipped module ([ADR-0007 Shell UI Layer > Module Call, Shipped Modules and Path (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#module-call-shipped-modules-and-path-2026-10-26)).
 - **Repeats.** The same block or module name may appear many times in one `Children { }`. Entries are ordered by position and named from it (`Square_1`, `Square_2`). Siblings are separated by a newline or `,`.
 - **For entries.** The entries of a `For`: TEL names each entry `<name>_0001`, `<name>_0002` and so on from a counter that only grows; a key that disappears and returns gets a new number (D65). The entry is identified by its `Key`, which may be any value; only the generated name is limited to letters, digits and `_`. The `<name>` is the `Name:` of the `For` block when it has one, else the head of its child (for example `Icon_0001`), else `For`.
 - **Modules and surfaces.** A user module may hold a surface as its root: a module `Top_Bar` can hold a `Bar` and be used under several `Monitor` blocks. Surfaces do not nest inside surfaces (D29).
@@ -164,7 +162,7 @@ A percentage plus pixels (tre's `calc(100% - 16)`) has no form in v1 (D6). A sty
 | `If`, `Else`                                       | `If {{ cond }} { ... } Else { ... }`; no `Else If`; nest an `If` inside `Else`                                   |
 | `For`, `In`, `Key`                                 | `For item In {{ list }} Key {{ item.id }} { ... }`. `Key` is required: it gives each entry a stable identity     |
 
-`If`, `Else`, `For`, `In` and `Key` cannot be the name of a block or module. The rules for conditions and repeats are in [[ADR-0014 Shell File Language#Conditions and Repeats (Decided)]].
+`If`, `Else`, `For`, `In` and `Key` cannot be the name of a block or module. The rules for conditions and repeats are in [ADR-0014 Shell File Language > Conditions and Repeats (Decided)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#conditions-and-repeats-decided).
 
 ## Monitors (Shell Schema)
 
@@ -179,7 +177,7 @@ A percentage plus pixels (tre's `calc(100% - 16)`) has no form in v1 (D6). A sty
 - `Index: default` applies to every monitor no other `Monitor` block names.
 - A `Monitor` with no selector is ignored.
 - If a block has several selectors, the shell tries `Connector`, then `Description`, then `Index` and uses the first match.
-- `Index:` is not a stable name: the position can change after a hot-plug, a wake or a reboot. This is [[Risk Register]] R-21 and why `Connector:` and `Description:` exist.
+- `Index:` is not a stable name: the position can change after a hot-plug, a wake or a reboot. This is [Risk Register](../00%20Home/Risk%20Register.md) R-21 and why `Connector:` and `Description:` exist.
 
 ## Sizes (Shell Schema)
 
@@ -187,9 +185,9 @@ A `Width` or `Height` is a number of pixels, a percentage, `AUTO` or `EXPAND`. `
 
 ## Errors
 
-Every error carries `file:line:column` from the shell's own TDL parser, which keeps a lossless tree (comments and layout survive the UID write). A TEL error inside a slot points into the file because the parser gives TEL the slot's start ([[Expression Language Requirements]], T17). The list below was accepted by the maintainer on 2026-10-30 (D52). New codes are added here as the parser is designed.
+Every error carries `file:line:column` from the shell's own TDL parser, which keeps a lossless tree (comments and layout survive the UID write). A TEL error inside a slot points into the file because the parser gives TEL the slot's start ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md), T17). The list below was accepted by the maintainer on 2026-10-30 (D52). New codes are added here as the parser is designed.
 
-Proposed form, copied from TEL's decided errors ([[Expression Language Requirements]]): one base error class with a stable `code` slug on every error, a message, a hint that says what to write, and a 1-based `file`, `line` and `column`. Value and schema checks (unknown key, wrong type, enum case) belong to the shell's schema ([[Validation and Errors]]), not to TDL.
+Proposed form, copied from TEL's decided errors ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)): one base error class with a stable `code` slug on every error, a message, a hint that says what to write, and a 1-based `file`, `line` and `column`. Value and schema checks (unknown key, wrong type, enum case) belong to the shell's schema ([Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)), not to TDL.
 
 | Code                       | When                                                              | Hint                                           |
 |----------------------------|-------------------------------------------------------------------|------------------------------------------------|
@@ -214,29 +212,29 @@ Proposed form, copied from TEL's decided errors ([[Expression Language Requireme
 
 ## Editor Support
 
-No language server in v1. A small TextMate grammar ships in v1 for highlighting in Kate and VS Code. Its content comes from this note once the open items are settled ([[ADR-0014 Shell File Language#What TDL Is (Decided)]], item 18).
+No language server in v1. A small TextMate grammar ships in v1 for highlighting in Kate and VS Code. Its content comes from this note once the open items are settled ([ADR-0014 Shell File Language > What TDL Is (Decided)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#what-tdl-is-decided), item 18).
 
 ## Where the Keys Are
 
 | Note                                      | Holds                                              |
 |-------------------------------------------|----------------------------------------------------|
-| [[Common Keys and Conventions]]           | Keys every file has, value forms, names, errors    |
-| [[Shell File]]                            | `Monitor` and the surface keys                     |
-| [[Module File]]                           | The module file, params, data slots                |
-| [[Style, Theme and Stylesheet Files]]     | Style, theme and stylesheet files                  |
-| [[Style Schema]]                          | Style properties                                   |
-| [[Settings File]]                         | `settings.tdl`                                     |
+| [Common Keys and Conventions](Common%20Keys%20and%20Conventions.md)           | Keys every file has, value forms, names, errors    |
+| [Shell File](Shell%20File.md)                            | `Monitor` and the surface keys                     |
+| [Module File](Module%20File.md)                           | The module file, params, data slots                |
+| [Style, Theme and Stylesheet Files](Style%2C%20Theme%20and%20Stylesheet%20Files.md)     | Style, theme and stylesheet files                  |
+| [Style Schema](Style%20Schema.md)                          | Style properties                                   |
+| [Settings File](Settings%20File.md)                         | `settings.tdl`                                     |
 
-These notes were revised on 2026-10-30 to the decisions of [[ADR-0014 Shell File Language#Third-Round Decisions (2026-10-30)]] and [[ADR-0014 Shell File Language#Fourth-Round Decisions (2026-10-30)]]: the root block names the file type, enum values are upper case, four-sided values run left, top, right, bottom, and the Bar uses `Edge`, `Width`, `Height`, `Gap` and `Offset`.
+These notes were revised on 2026-10-30 to the decisions of [ADR-0014 Shell File Language > Third-Round Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#third-round-decisions-2026-10-30) and [ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30): the root block names the file type, enum values are upper case, four-sided values run left, top, right, bottom, and the Bar uses `Edge`, `Width`, `Height`, `Gap` and `Offset`.
 
 ## Open
 
 Decided on 2026-10-30 and removed from this list: the version pins are minimums (D37), `Name:` is required in every file (D39), the spelling is `Import` (D40), `Margin`, `Gap`, `Offset` and `Padding` meanings (D41 to D45), and `calc` is out of v1 (D47).
 
 - [x] The names and slugs of TDL syntax errors: the list under "Errors" is accepted (D52).
-- [ ] The full list of shipped modules and their registry names: after the building blocks are worked out (D48, [[V1 Widgets]]).
-- [ ] How a collapsed or hidden Bar keeps a layer surface: accepted in [[Bar#Mapping to tre]] (D61): the window keeps its size and slides by a negative margin. The protocol makes a 0 size without opposite anchors an error, so D46 stands (verified 2026-10-31).
-- [x] `Gap` is the distance to what a surface is attached to, and a layout's child spacing is `Spacing` (D49). The four-sided order is Left, Top, Right, Bottom (D50). A Bar's `Offset` is one number, a Panel's is four-sided (D51) ([[ADR-0014 Shell File Language#Fourth-Round Decisions (2026-10-30)]]).
+- [ ] The full list of shipped modules and their registry names: after the building blocks are worked out (D48, [V1 Widgets](../50%20Design%20System/V1%20Widgets.md)).
+- [ ] How a collapsed or hidden Bar keeps a layer surface: accepted in [Bar > Mapping to tre](../40%20Specifications/Surfaces/Bar.md#mapping-to-tre) (D61): the window keeps its size and slides by a negative margin. The protocol makes a 0 size without opposite anchors an error, so D46 stands (verified 2026-10-31).
+- [x] `Gap` is the distance to what a surface is attached to, and a layout's child spacing is `Spacing` (D49). The four-sided order is Left, Top, Right, Bottom (D50). A Bar's `Offset` is one number, a Panel's is four-sided (D51) ([ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30)).
 
 ## Acceptance Criteria
 
@@ -260,4 +258,4 @@ Decided on 2026-10-30 and removed from this list: the version pins are minimums 
 
 ## Links
 
-- [[ADR-0014 Shell File Language]] · [[41 TDL Reference]] · [[Common Keys and Conventions]] · [[Shell File Syntax Comparison]] · [[Expression Language Requirements]] · [[Risk Register]]
+- [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md) · [41 TDL Reference](41%20TDL%20Reference.md) · [Common Keys and Conventions](Common%20Keys%20and%20Conventions.md) · [Shell File Syntax Comparison](../90%20Research/Shell%20File%20Syntax%20Comparison.md) · [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md) · [Risk Register](../00%20Home/Risk%20Register.md)

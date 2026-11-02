@@ -7,18 +7,16 @@ owner: phil
 created: 2026-10-27
 updated: 2026-10-27
 tags: [adr, spec/surface]
-related: ["[[Shadows on Layer Surfaces]]", "[[Surface Types]]", "[[Bar]]", "[[Panel]]", "[[Frame]]", "[[ADR-0001 Shell Surface Strategy]]", "[[ADR-0007 Shell UI Layer]]"]
-depends_on: ["[[ADR-0001 Shell Surface Strategy]]"]
 ---
 
 # ADR-0010: Surface Shadows
 
-> [!summary]
+> [!NOTE]
 > Shadows are drawn inside the surface, with tre's `shadows` node property, in a transparent margin around the body (route B). The compositor shadow protocol is not used.
 
 ## Context
 
-Every surface can have a shadow with elevation and colour ([[Surface Types]]). A layer surface cannot draw outside its own bounds, so there are two routes ([[Shadows on Layer Surfaces]]): the compositor draws the shadow (`org_kde_kwin_shadow`, route A), or the shell draws it inside a larger transparent surface (route B). Tests on KWin 6.8.1 (2026-10-27) show both work and neither costs anything measurable at Bar and Panel size ([[Shadows on Layer Surfaces#Performance test, route A against route B (2026-10-27)]]).
+Every surface can have a shadow with elevation and colour ([Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md)). A layer surface cannot draw outside its own bounds, so there are two routes ([Shadows on Layer Surfaces](../90%20Research/Shadows%20on%20Layer%20Surfaces.md)): the compositor draws the shadow (`org_kde_kwin_shadow`, route A), or the shell draws it inside a larger transparent surface (route B). Tests on KWin 6.8.1 (2026-10-27) show both work and neither costs anything measurable at Bar and Panel size ([Shadows on Layer Surfaces > Performance test, route A against route B (2026-10-27)](../90%20Research/Shadows%20on%20Layer%20Surfaces.md#performance-test-route-a-against-route-b-2026-10-27)).
 
 ## Options
 
@@ -38,11 +36,11 @@ Option B (maintainer, 2026-10-27: it has the features wanted and fits a shell ma
 
 ## Consequences
 
-- A surface with a shadow gets a transparent margin on each side, sized from the shadow's offset, blur and spread. The shell computes it; the exclusive zone covers the body only and the input region follows the body ([[Panel#Input region]]). Key names for the margin and the shadow tokens are proposed, not decided.
+- A surface with a shadow gets a transparent margin on each side, sized from the shadow's offset, blur and spread. The shell computes it; the exclusive zone covers the body only and the input region follows the body ([Panel > Input region](../40%20Specifications/Surfaces/Panel.md#input-region)). Key names for the margin and the shadow tokens are proposed, not decided.
 - The margin counts in the surface's size and memory; a Frame-sized margin is not measured and goes to the testing phase.
-- The Frame needs no margin: its painter already covers the output ([[Frame#Shadows]]).
+- The Frame needs no margin: its painter already covers the output ([Frame > Shadows](../40%20Specifications/Surfaces/Frame.md#shadows)).
 - Open: whether tre's painted hit shape excludes the `shadows` property (a test for the testing phase).
 
 ## Links
 
-[[Shadows on Layer Surfaces]] · [[Surface Types]] · [[Bar]] · [[Panel]] · [[Frame]] · [[30 Decisions]]
+[Shadows on Layer Surfaces](../90%20Research/Shadows%20on%20Layer%20Surfaces.md) · [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md) · [Bar](../40%20Specifications/Surfaces/Bar.md) · [Panel](../40%20Specifications/Surfaces/Panel.md) · [Frame](../40%20Specifications/Surfaces/Frame.md) · [30 Decisions](30%20Decisions.md)

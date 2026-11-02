@@ -7,20 +7,18 @@ owner: phil
 created: 2026-10-27
 updated: 2026-10-27
 tags: [adr, integration/kwin, needs-verification]
-related: ["[[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]", "[[Bar]]", "[[Frame]]", "[[ADR-0004 Plasma Coexistence]]", "[[ADR-0001 Shell Surface Strategy]]"]
-depends_on: ["[[ADR-0004 Plasma Coexistence]]"]
 ---
 
 # ADR-0012: Keeping the Shell above Plasma Panels
 
-> [!summary]
+> [!NOTE]
 > The maintainer wants a Bar to win over a Plasma panel on the same edge, unless that panel is always on top or a window is fullscreen. A `top` layer-shell surface and a Plasma panel share KWin's Above layer, so layer order does not settle it. This ADR compares the five ways the maintainer named (2026-10-27) and recommends one combination. Accepted 2026-10-27 as recommended; the facts come from KWin's source and one check on this machine, with no live test of any option.
 
 ## Context
 
-- KWin's layers, lowest to highest: Desktop, Below, Normal, Above, Notification, Active, Popup, CriticalNotification, OnScreenDisplay, Overlay ([`globals.h`](https://invent.kde.org/plasma/kwin/-/raw/master/src/effect/globals.h)). A layer-shell `top` surface is in Above; `overlay` is in Overlay; a dock window (a Plasma panel) is in Above too ([`window.cpp`](https://invent.kde.org/plasma/kwin/-/raw/master/src/window.cpp)). See [[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]].
-- Our rule: only `top` surfaces reserve space ([[Surface Types#Layers per kind]]). Required behaviour: a fullscreen window covers every shell element.
-- The shell is a Python process on tre windows, with no Qt ([[ADR-0003 Process Model]]).
+- KWin's layers, lowest to highest: Desktop, Below, Normal, Above, Notification, Active, Popup, CriticalNotification, OnScreenDisplay, Overlay ([`globals.h`](https://invent.kde.org/plasma/kwin/-/raw/master/src/effect/globals.h)). A layer-shell `top` surface is in Above; `overlay` is in Overlay; a dock window (a Plasma panel) is in Above too ([`window.cpp`](https://invent.kde.org/plasma/kwin/-/raw/master/src/window.cpp)). See [Surface Types > Fullscreen and maximised windows (decided 2026-10-27)](../40%20Specifications/Surfaces/Surface%20Types.md#fullscreen-and-maximised-windows-decided-2026-10-27).
+- Our rule: only `top` surfaces reserve space ([Surface Types > Layers per kind](../40%20Specifications/Surfaces/Surface%20Types.md#layers-per-kind)). Required behaviour: a fullscreen window covers every shell element.
+- The shell is a Python process on tre windows, with no Qt ([ADR-0003 Process Model](ADR-0003%20Process%20Model.md)).
 
 ## Options
 
@@ -58,7 +56,7 @@ This is the delivery of Option 1, not a different effect. Rules are INI groups; 
 
 ## Recommendation (Proposed)
 
-- **Do not rely on stacking for v1 correctness.** Default: `top`, coexist ([[ADR-0004 Plasma Coexistence]]); put the Bar on an edge or monitor the Plasma panel does not use, or hide the Plasma panel there, as the maintainer's Edge Shell does with its per-monitor mode (shell, Plasma, both, none).
+- **Do not rely on stacking for v1 correctness.** Default: `top`, coexist ([ADR-0004 Plasma Coexistence](ADR-0004%20Plasma%20Coexistence.md)); put the Bar on an edge or monitor the Plasma panel does not use, or hide the Plasma panel there, as the maintainer's Edge Shell does with its per-monitor mode (shell, Plasma, both, none).
 - **Ship Option 3 for fullscreen detection** (needed anyway): a small KWin script reports fullscreen windows to the shell, which hides its surfaces on that monitor.
 - **Offer Options 1 and 5 as an opt-in, explicit step** for a user who wants the Bar to win: a shell command writes one clearly named rule group (lowering the Plasma panel's layer) after showing it to the user, and a second command removes it. Never automatic.
 - **Reject Options 2 and 4** as the answer: 2 does not settle the order or covers notifications, 4 has no binding.
@@ -69,18 +67,18 @@ The maintainer accepted the recommendation as written (2026-10-27): v1 does not 
 
 ## Consequences
 
-- The fullscreen rule needs a KWin script; the install path and enable step are a delivery item ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]).
+- The fullscreen rule needs a KWin script; the install path and enable step are a delivery item ([Surface Types > Fullscreen and maximised windows (decided 2026-10-27)](../40%20Specifications/Surfaces/Surface%20Types.md#fullscreen-and-maximised-windows-decided-2026-10-27)).
 - A KWin rule is a change to the user's desktop, so it needs consent and an undo.
 - Testing phase: on KWin 6.8.1, with a temporary rule and then a removal, check that a Layer rule matches a Plasma panel and a layer-shell surface, that a maximised window still stops at the panel's strut, and that an active fullscreen window covers `top` surfaces and not `overlay` ones.
 
 ## Update 2026-10-29
 
-[[KWin Integration]] refines two points without changing the decision. The script can be loaded at run time by the shell through `/Scripting` (`loadScript`, `unloadScript`), so it need not be a persistent install; this is a question for the maintainer there. And if a rule is offered, raising the shell's own surfaces to KWin's Notification layer changes only the shell's windows, where lowering the Plasma panel leaves it open to being covered; neither is tested.
+[KWin Integration](../40%20Specifications/Integration/KWin%20Integration.md) refines two points without changing the decision. The script can be loaded at run time by the shell through `/Scripting` (`loadScript`, `unloadScript`), so it need not be a persistent install; this is a question for the maintainer there. And if a rule is offered, raising the shell's own surfaces to KWin's Notification layer changes only the shell's windows, where lowering the Plasma panel leaves it open to being covered; neither is tested.
 
 ## Update 2026-10-28
 
-The KWin script can only reach the shell through a D-Bus call (`callDBus`; the scripting page documents no way to run a process). So the shell must export a D-Bus method for the script, named `FullscreenState` in [[IPC and CLI]]; see [[ADR-0013 Control Interface]] (proposed).
+The KWin script can only reach the shell through a D-Bus call (`callDBus`; the scripting page documents no way to run a process). So the shell must export a D-Bus method for the script, named `FullscreenState` in [IPC and CLI](../40%20Specifications/Runtime/IPC%20and%20CLI.md); see [ADR-0013 Control Interface](ADR-0013%20Control%20Interface.md) (proposed).
 
 ## Links
 
-[[Surface Types]] · [[Bar]] · [[Frame]] · [[ADR-0004 Plasma Coexistence]] · [[30 Decisions]]
+[Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md) · [Bar](../40%20Specifications/Surfaces/Bar.md) · [Frame](../40%20Specifications/Surfaces/Frame.md) · [ADR-0004 Plasma Coexistence](ADR-0004%20Plasma%20Coexistence.md) · [30 Decisions](30%20Decisions.md)

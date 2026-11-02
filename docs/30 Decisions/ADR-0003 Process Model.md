@@ -7,18 +7,16 @@ owner: phil
 created: 2026-10-25
 updated: 2026-10-25
 tags: [adr, architecture]
-related: ["[[V1 Scope]]", "[[ADR-0006 Shell Independent of Tesserae UI]]", "[[ADR-0001 Shell Surface Strategy]]"]
-depends_on: []
 ---
 
 # ADR-0003: Process Model
 
-> [!summary]
+> [!NOTE]
 > One process owns every surface on every monitor and runs one tre event loop. Background work runs on other threads and hands results to the loop with `LoopHandle.call_soon`.
 
 ## Context
 
-tre runs on one thread, the one that created the `App`; every window, event handler and Python callback runs there once `App.run()` starts. Any thread may use `App.thread_handle()` and `call_soon(fn)` to queue work on the loop ([tre threading guide](https://mindderivative.github.io/tre/guide/threading/)). One `App` can hold many windows, including layer windows on several outputs ([Outputs](https://mindderivative.github.io/tre/reference/outputs/)). [[AGENTS#3. Layering principle]] already fixes that Python never runs in layout or paint.
+tre runs on one thread, the one that created the `App`; every window, event handler and Python callback runs there once `App.run()` starts. Any thread may use `App.thread_handle()` and `call_soon(fn)` to queue work on the loop ([tre threading guide](https://mindderivative.github.io/tre/guide/threading/)). One `App` can hold many windows, including layer windows on several outputs ([Outputs](https://mindderivative.github.io/tre/reference/outputs/)). AGENTS > 3. Layering principle already fixes that Python never runs in layout or paint.
 
 ## Options
 
@@ -38,14 +36,15 @@ Accepted 2026-10-25 by the maintainer in chat: **Option A**, one process owning 
 
 ## Consequences
 
-- Every service spec states its thread and how it crosses into the loop ([[AGENTS#3. Layering principle]]). Blocking work (D-Bus, sockets, polling, disk) never runs on the loop thread.
-- A module that blocks the loop freezes all surfaces. [[60 Quality]] must define a watchdog and crash recovery (restart the process, restore surfaces from configuration). #tech-debt until written.
+- Every service spec states its thread and how it crosses into the loop (AGENTS > 3. Layering principle). Blocking work (D-Bus, sockets, polling, disk) never runs on the loop thread.
+- A module that blocks the loop freezes all surfaces. 60 Quality must define a watchdog and crash recovery (restart the process, restore surfaces from configuration). #tech-debt until written.
 - The shell may run under a small supervisor that restarts it. Whether it is part of v1 is open.
-- No isolation between user modules ([[Goals and Non-Goals]] N7).
+- No isolation between user modules ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) N7).
 
-> [!danger] Single point of failure
-> One hung Python callback blocks every bar, OSD and widget. Add to [[Risk Register]] when it exists.
+> [!CAUTION]
+> **Single point of failure**
+> One hung Python callback blocks every bar, OSD and widget. Add to [Risk Register](../00%20Home/Risk%20Register.md) when it exists.
 
 ## Links
 
-- [[ADR-0006 Shell Independent of Tesserae UI]] · [[V1 Scope#Decisions to take]]
+- [ADR-0006 Shell Independent of Tesserae UI](ADR-0006%20Shell%20Independent%20of%20Tesserae%20UI.md) · [V1 Scope > Decisions to take](../10%20Vision/V1%20Scope.md#decisions-to-take)

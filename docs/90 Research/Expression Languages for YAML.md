@@ -7,29 +7,28 @@ owner: phil
 created: 2026-10-25
 updated: 2026-10-25
 tags: [research, needs-verification]
-related: ["[[ADR-0007 Shell UI Layer]]", "[[Goals and Non-Goals]]"]
-depends_on: []
 ---
 
 # Expression Languages for YAML
 
-> [!info] Outcome (2026-10-25)
-> The maintainer chose to design their own language, the Tesserae Expression Language ([[ADR-0008 Tesserae Expression Language]]). This survey is kept as input. Its requirement table became [[Expression Language Requirements]].
+> [!NOTE]
+> **Outcome (2026-10-25)**
+> The maintainer chose to design their own language, the Tesserae Expression Language ([ADR-0008 Tesserae Expression Language](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md)). This survey is kept as input. Its requirement table became [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md).
 
-> [!summary]
-> The maintainer decided the shell's view format has a full expression language (`{if condition, do something, do something else}`) and asked whether to adopt an existing one instead of building one ([[ADR-0007 Shell UI Layer]]). Jinja2 is the standard, probably too heavy; there are lighter safe evaluators. The deciding factor is not syntax. A shell's values change while it runs, so an expression must be re-evaluated when a value it reads changes. Recommendation: adopt a small safe evaluator behind a shell-owned interface, and test two candidates in a short spike. Nothing here is tested.
+> [!NOTE]
+> The maintainer decided the shell's view format has a full expression language (`{if condition, do something, do something else}`) and asked whether to adopt an existing one instead of building one ([ADR-0007 Shell UI Layer](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md)). Jinja2 is the standard, probably too heavy; there are lighter safe evaluators. The deciding factor is not syntax. A shell's values change while it runs, so an expression must be re-evaluated when a value it reads changes. Recommendation: adopt a small safe evaluator behind a shell-owned interface, and test two candidates in a short spike. Nothing here is tested.
 
 ## What the Shell Needs from it
 
 | # | Requirement                                                        | Why                                                                                                                                                       |
 |---|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1 | Safe: values and structure only, no file, process or system access | It runs from a configuration file. System work belongs to modules ([[ADR-0007 Shell UI Layer#View format: a full expression language, and Python as an equal front-end (2026-10-25)]]).                                              |
+| 1 | Safe: values and structure only, no file, process or system access | It runs from a configuration file. System work belongs to modules ([ADR-0007 Shell UI Layer > View format: a full expression language, and Python as an equal front-end (2026-10-25)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#view-format-a-full-expression-language-and-python-as-an-equal-front-end-2026-10-25)).                                              |
 | 2 | Re-evaluated when an input changes (live)                          | A clock label reads a time the module sends every second. A load-time render is not enough.                                                               |
-| 3 | The shell can see which names an expression reads                  | So it re-runs only the expressions whose inputs changed, on the loop thread, with no Python in layout or paint ([[AGENTS#3. Layering principle]]). |
-| 4 | Errors point at `file:line:column` in the YAML                     | Required of every config error ([[AGENTS#3. Layering principle]]).                                                                                 |
+| 3 | The shell can see which names an expression reads                  | So it re-runs only the expressions whose inputs changed, on the loop thread, with no Python in layout or paint (AGENTS > 3. Layering principle). |
+| 4 | Errors point at `file:line:column` in the YAML                     | Required of every config error (AGENTS > 3. Layering principle).                                                                                 |
 | 5 | Conditions and repeaters                                           | Decided by the maintainer; workspaces and tray need repeaters.                                                                                            |
 | 6 | Small, with few dependencies, and working on Python 3.14           | Option A of ADR-0007 is a small layer on tre; Python 3.14 is the minimum. #needs-verification for each candidate                                          |
-| 7 | Same result from the Python front-end                              | A shell written in Python builds the same tree ([[Goals and Non-Goals]] G1).                                                              |
+| 7 | Same result from the Python front-end                              | A shell written in Python builds the same tree ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G1).                                                              |
 
 Two different jobs are mixed in "expression language":
 
@@ -61,4 +60,4 @@ Two different jobs are mixed in "expression language":
 
 ## Links
 
-- [[ADR-0007 Shell UI Layer]] · [[Goals and Non-Goals]] · [[90 Research]]
+- [ADR-0007 Shell UI Layer](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md) · [Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) · [90 Research](90%20Research.md)

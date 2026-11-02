@@ -7,38 +7,39 @@ owner: phil
 created: 2026-10-26
 updated: 2026-10-27
 tags: [engine-request, integration/wayland, needs-verification]
-related: ["[[Process Model and Threading]]", "[[ADR-0003 Process Model]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[80 Engine Requests]]"]
-depends_on: []
 ---
 
 # TRE-REQ-005: Keep-alive and Loop Stop
 
-> [!summary]
+> [!NOTE]
 > Add to tre an opt-in keep-alive, so `App.run()` can stay alive with zero windows and keep delivering output events and `call_soon` callbacks, and a way to end the loop from outside: a `LoopHandle` stop. Today the loop ends only when every window has closed, and `run()` refuses to start with none. A desktop shell must stay up with no windows when every monitor is configured to show nothing or the last output is unplugged, and must shut down cleanly on quit.
 
-> [!success] Taken up by tre (2026-10-26)
+> [!TIP]
+> **Taken up by tre (2026-10-26)**
 > The maintainer approved the work and `tre` is building it as [tre #238](https://github.com/mindderivative/tre/issues/238), with the corner pass-through as [#236](https://github.com/mindderivative/tre/issues/236). `tre` reviewed this request, found it accurate and added four points, recorded below.
 
-> [!success] Released in tre 0.5.9 (2026-10-27)
+> [!TIP]
+> **Released in tre 0.5.9 (2026-10-27)**
 > `tesserae-engine` 0.5.9 is on PyPI (uploaded 2026-10-27, checked) and its migration notes list `App.run(keep_alive=True)` and `LoopHandle.stop()` (#238), with `hit_shape` (#236) in the same release ([migration notes](https://mindderivative.github.io/tre/migrating-0.5/), `docs/reference/app.md` section "Staying up with no window"). `keep_alive` keeps the loop running with nothing open (output events and `call_soon` still arrive, and windows can be added from them); `stop()` ends any loop from a thread and closes every window without a `close_requested`, reason `"stopped"`. Without `keep_alive` nothing changes. The behaviour described below is what shipped, per tre's release notes; I have not run it. tre lists what it did not check on real hardware: a second GPU, non-AMD GPUs, a 4K frame with many joins, output hot-plug on KWin with a real monitor unplug, Windows and macOS.
 
-> [!info] Was blocking one shell behaviour
-> [[Process Model and Threading#No windows: what tre offers]] depended on this request. The shell can now stay idle with no windows by using `run(keep_alive=True)` (tre 0.5.9). The stopgap (a 1x1 window) is no longer needed.
+> [!NOTE]
+> **Was blocking one shell behaviour**
+> [Process Model and Threading > No windows: what tre offers](../20%20Architecture/Process%20Model%20and%20Threading.md#no-windows-what-tre-offers) depended on this request. The shell can now stay idle with no windows by using `run(keep_alive=True)` (tre 0.5.9). The stopgap (a 1x1 window) is no longer needed.
 
-This note is carried to the tre project by the maintainer ([[AGENTS#6. Engine requests (tre / Tesserae)]]). It is not filed from this vault. The `tre` session was told over the mailbox on 2026-10-26 where to find it.
+This note is carried to the tre project by the maintainer (AGENTS > 6. Engine requests (tre / Tesserae)). It is not filed from this vault. The `tre` session was told over the mailbox on 2026-10-26 where to find it.
 
 ## Shell Need
 
 | Need                            | Why                                                                                                                                                                                              |
 |---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Run with zero windows           | Every monitor can be set to show none of the shell, or the last output can be unplugged ([[V1 Scope#Multi-monitor]]). The shell must not exit; it waits for an output to come back. |
+| Run with zero windows           | Every monitor can be set to show none of the shell, or the last output can be unplugged ([V1 Scope > Multi-monitor](../10%20Vision/V1%20Scope.md#multi-monitor)). The shell must not exit; it waits for an output to come back. |
 | Output events with zero windows | `output_added`, `output_removed` and `output_updated` must keep arriving, so the shell can create surfaces when a monitor appears.                                                               |
-| `call_soon` with zero windows   | Module threads hand values to the loop; the registry and watchers use it too ([[Process Model and Threading]]).                                                                          |
-| End the loop from outside       | Quit, signal and "stopping" ([[Process Model and Threading#Lifecycle (proposed)]]) need to end `run()`. Today the loop ends only when every window closes, which is not possible with zero windows.           |
+| `call_soon` with zero windows   | Module threads hand values to the loop; the registry and watchers use it too ([Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md)).                                                                          |
+| End the loop from outside       | Quit, signal and "stopping" ([Process Model and Threading > Lifecycle (proposed)](../20%20Architecture/Process%20Model%20and%20Threading.md#lifecycle-proposed)) need to end `run()`. Today the loop ends only when every window closes, which is not possible with zero windows.           |
 
 ## Why it Belongs in the Engine
 
-It is event-loop mechanism: when the loop runs and when it ends. The shell cannot decide it from outside: the exit decision is inside tre's platform loop, and the output watch runs on tre's layer thread only while the loop runs. This is mechanism, not meaning ([[AGENTS#3. Layering principle]]).
+It is event-loop mechanism: when the loop runs and when it ends. The shell cannot decide it from outside: the exit decision is inside tre's platform loop, and the output watch runs on tre's layer thread only while the loop runs. This is mechanism, not meaning (AGENTS > 3. Layering principle).
 
 ## What Tre Does Today
 
@@ -59,7 +60,8 @@ Findings from the `tre` session over the mailbox (2026-10-26, from the 0.5.8 sou
 
 ## Proposed API
 
-> [!danger] Proposal, not existing API
+> [!CAUTION]
+> **Proposal, not existing API**
 > `tre` is building this as #238. The shape below is what `tre` described on 2026-10-26; the names are the tre project's.
 
 ```python
@@ -86,9 +88,9 @@ Behaviour `tre` is building:
 
 ### How the Shell Uses it
 
-- **Quit path.** `signal.set_wakeup_fd` on a socketpair, plus a watcher thread that reads it and calls `handle.stop()`. `tre` tested the watcher: it saw SIGTERM at once on an idle loop. The shell's quit path is planned that way ([[Process Model and Threading#Lifecycle (proposed)]]). If `stop()` returns `False` (the loop is not running yet), the watcher retries until the loop is up or the quit flag is set.
+- **Quit path.** `signal.set_wakeup_fd` on a socketpair, plus a watcher thread that reads it and calls `handle.stop()`. `tre` tested the watcher: it saw SIGTERM at once on an idle loop. The shell's quit path is planned that way ([Process Model and Threading > Lifecycle (proposed)](../20%20Architecture/Process%20Model%20and%20Threading.md#lifecycle-proposed)). If `stop()` returns `False` (the loop is not running yet), the watcher retries until the loop is up or the quit flag is set.
 - **Order on quit.** `stop()` closes the windows and `run()` returns; then the shell stops modules, joins their threads and writes the registry, on the same main thread. `closed` with reason `"app"` or `"stopped"` during shutdown must not make the surface manager recreate a window.
-- **Hot-plug.** With `keep_alive`, an `output_added` handler adds windows, as in [[Data Flow#Monitor hot-plug]].
+- **Hot-plug.** With `keep_alive`, an `output_added` handler adds windows, as in [Data Flow > Monitor hot-plug](../20%20Architecture/Data%20Flow.md#monitor-hot-plug).
 - Nothing in these semantics breaks the shell (`tre` asked).
 
 ## Alternatives
@@ -104,7 +106,7 @@ Behaviour `tre` is building:
 
 1. Use the ordinary 1x1 `Window` as a keep-alive, verified on KWin and hidden if possible (`minimize()`), as an interim and not shippable without that check.
 2. End the loop by closing every window including the keep-alive window, since no `LoopHandle.stop()` exists.
-3. Record the limits in [[Process Model and Threading]] and add a Risk Register entry (visible window; task-list entry).
+3. Record the limits in [Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md) and add a Risk Register entry (visible window; task-list entry).
 
 ## Open Questions
 
@@ -112,7 +114,7 @@ Behaviour `tre` is building:
 - [x] `keep_alive` is an argument of `run()`, not of `App` (`tre`).
 - [x] Non-Wayland: `keep_alive` works, with no output events and no error (`tre`).
 - [x] The `closed` reason for a stop: `"stopped"`, on ordinary windows too (as built, per `tre`).
-- [ ] Idle cost with zero windows: `tre` checks CPU ticks and wake-ups over 5 s ([[Process Model and Threading#Performance notes]]).
+- [ ] Idle cost with zero windows: `tre` checks CPU ticks and wake-ups over 5 s ([Process Model and Threading > Performance notes](../20%20Architecture/Process%20Model%20and%20Threading.md#performance-notes)).
 - [ ] Whether KWin behaves the same as sway.
 
 ## Acceptance Criteria
@@ -129,5 +131,5 @@ Behaviour `tre` is building:
 
 ## Links
 
-- [[Process Model and Threading]] · [[ADR-0003 Process Model]] · [[TRE-REQ-001 Layer Surface Window]] · [[80 Engine Requests]]
+- [Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md) · [ADR-0003 Process Model](../30%20Decisions/ADR-0003%20Process%20Model.md) · [TRE-REQ-001 Layer Surface Window](TRE-REQ-001%20Layer%20Surface%20Window.md) · [80 Engine Requests](80%20Engine%20Requests.md)
 - [tre App reference](https://mindderivative.github.io/tre/reference/app/) · [Outputs](https://mindderivative.github.io/tre/reference/outputs/) · [Threading](https://mindderivative.github.io/tre/guide/threading/)

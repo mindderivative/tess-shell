@@ -7,22 +7,20 @@ owner: phil
 created: 2026-10-25
 updated: 2026-10-29
 tags: [adr, architecture]
-related: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0006 Shell Independent of Tesserae UI]]", "[[Expression Languages for YAML]]", "[[Expression Language Requirements]]"]
-depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 ---
 
 # ADR-0008: Tesserae Expression Language (TEL)
 
-> [!summary]
+> [!NOTE]
 > The shell's expression language is a new one, the **Tesserae Expression Language (TEL)**, designed as a separate Python library. The shell uses it and drives its requirements; TEL does not depend on the shell. Tesserae UI could use it too.
 
 ## Context
 
-[[ADR-0007 Shell UI Layer]] decided the view format has a full expression language and left open whether to build one or adopt one. [[Expression Languages for YAML]] surveyed Jinja2, jinjyaml, simpleeval, CEL and others, and recommended adopting a small safe evaluator.
+[ADR-0007 Shell UI Layer](ADR-0007%20Shell%20UI%20Layer.md) decided the view format has a full expression language and left open whether to build one or adopt one. [Expression Languages for YAML](../90%20Research/Expression%20Languages%20for%20YAML.md) surveyed Jinja2, jinjyaml, simpleeval, CEL and others, and recommended adopting a small safe evaluator.
 
 The maintainer chose to design a language of their own (2026-10-25, in chat): it can then do what the shell needs and wants, and Tesserae UI "needs something better than what it is currently using".
 
-What Tesserae has today (local clone `/home/phil/Projects/pyDev/projects/tesserae`, commit `0eda3fe`, read 2026-10-25): `src/tesserae/expr.py`, 1,198 lines, "a sandboxed subset of Python". It parses with Python's `ast`, checks nodes against a whitelist, runs a small evaluator and never `eval`s. It resolves names through a scope, tells static from reactive expressions, applies limits (a step budget, source size, caps on `range`, repeated sequences, `**` and strings), and reports every failure with a line and column. It imports `tesserae.reactive` (`Signal`, `Computed`), so it is tied to Tesserae. Its design is described in Tesserae's `design/yaml-language.md`, section 8.
+What Tesserae has today (local clone `~/Projects/pyDev/projects/tesserae`, commit `0eda3fe`, read 2026-10-25): `src/tesserae/expr.py`, 1,198 lines, "a sandboxed subset of Python". It parses with Python's `ast`, checks nodes against a whitelist, runs a small evaluator and never `eval`s. It resolves names through a scope, tells static from reactive expressions, applies limits (a step budget, source size, caps on `range`, repeated sequences, `**` and strings), and reports every failure with a line and column. It imports `tesserae.reactive` (`Signal`, `Computed`), so it is tied to Tesserae. Its design is described in Tesserae's `design/yaml-language.md`, section 8.
 
 ## Options
 
@@ -33,14 +31,14 @@ What Tesserae has today (local clone `/home/phil/Projects/pyDev/projects/tessera
 
 ### Option B — Adopt an Existing Evaluator
 
-simpleeval, CEL or a Jinja2 expression mode ([[Expression Languages for YAML]]).
+simpleeval, CEL or a Jinja2 expression mode ([Expression Languages for YAML](../90%20Research/Expression%20Languages%20for%20YAML.md)).
 
 - **For:** less to write.
 - **Against:** their syntax and error reporting are not ours; name tracking for live re-evaluation has to be built around them.
 
 ### Option C — Reuse Tesserae's `expr.py` inside the Shell
 
-- **Against:** it imports Tesserae's reactive types, which [[ADR-0006 Shell Independent of Tesserae UI]] rules out as a dependency.
+- **Against:** it imports Tesserae's reactive types, which [ADR-0006 Shell Independent of Tesserae UI](ADR-0006%20Shell%20Independent%20of%20Tesserae%20UI.md) rules out as a dependency.
 
 ## Decision
 
@@ -55,22 +53,23 @@ Details, decided by the maintainer in chat on 2026-10-25:
 - A redesign, with `expr.py` as the starting point. Tesserae's `expr.py` is the starting point, not the design. TEL is separated from it and made much more efficient.
 - **TEL owns structure and values.** It has everything it needs to run on its own, with no shell and no Tesserae UI. Anyone can adopt it in plain YAML by importing its parser in a Python script.
 - **Name.** The Tesserae Expression Language, written `tel` in code, as `tre` is for the engine. For PyPI the maintainer's preference is `tesserae-expression-language`, else `tel`, else `tess-el`. On 2026-10-25 `tel` is already a package on PyPI; no package named `tesserae-expression-language` or `tess-el` was found. #needs-verification: availability when registering.
-- **Expression language only (2026-10-26).** TEL has no statements, handlers or event handling. The shell owns all of that and may use TEL to evaluate argument expressions at event time; an `event` name the shell puts in the scope is an ordinary name to TEL. Confirmed by the maintainer, who told the `tess-el` project the same day; `tess-el` confirmed over the mailbox. [[Expression Language Requirements]] T15.
+- **Expression language only (2026-10-26).** TEL has no statements, handlers or event handling. The shell owns all of that and may use TEL to evaluate argument expressions at event time; an `event` name the shell puts in the scope is an ordinary name to TEL. Confirmed by the maintainer, who told the `tess-el` project the same day; `tess-el` confirmed over the mailbox. [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md) T15.
 - **Kept separate from Tesserae.** The maintainer handles all contact with the Tesserae project, including `expr.py`. The shell side does not message the `tesserae` session about it.
 
 ## Consequences
 
-- The shell now depends on tre **and TEL**. [[ADR-0006 Shell Independent of Tesserae UI]] and [[ADR-0007 Shell UI Layer]] said "tre only"; TEL is a library, not Tesserae UI, so the independence from Tesserae UI stands.
-- The vault holds the shell's requirements on TEL ([[Expression Language Requirements]]). TEL's own design lives in the TEL project, not here. Do not copy its design into this vault; link it once it exists ([[AGENTS#2. Hard rules]], rule 4).
+- The shell now depends on tre **and TEL**. [ADR-0006 Shell Independent of Tesserae UI](ADR-0006%20Shell%20Independent%20of%20Tesserae%20UI.md) and [ADR-0007 Shell UI Layer](ADR-0007%20Shell%20UI%20Layer.md) said "tre only"; TEL is a library, not Tesserae UI, so the independence from Tesserae UI stands.
+- The vault holds the shell's requirements on TEL ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)). TEL's own design lives in the TEL project, not here. Do not copy its design into this vault; link it once it exists (AGENTS > 2. Hard rules, rule 4).
 - Tesserae's `expr.py` is the starting point: it shows what worked (sandbox by `ast` whitelist, static against reactive, limits, positions in errors). TEL is a redesign, not an extraction.
-- **Repository and licence.** The repository is [mindderivative/tess-el](https://github.com/mindderivative/tess-el) and the licence is MIT; the local project is `/home/phil/Projects/pyDev/projects/tess-el` (decided by the maintainer, 2026-10-25; on that date the local clone holds only the MIT `LICENSE`). Syntax is worked out in the TEL project, not here. TEL still needs versioning and a language version recorded in files; the maintainer's, not decided.
+- **Repository and licence.** The repository is [mindderivative/tess-el](https://github.com/mindderivative/tess-el) and the licence is MIT; the local project is `~/Projects/pyDev/projects/tess-el` (decided by the maintainer, 2026-10-25; on that date the local clone holds only the MIT `LICENSE`). Syntax is worked out in the TEL project, not here. TEL still needs versioning and a language version recorded in files; the maintainer's, not decided.
 - Risk: three projects (tre, TEL, the shell) must move together at first. Keep the TEL interface small and stable.
-- Decided 2026-10-30 ([[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]], D11): TEL evaluates expressions (values) only. The conditions and repeats of a shell file are TDL's `If` and `For`; the shell's model builder evaluates their condition or iterable through TEL and rebuilds that branch or entry. "TEL owns structure and values" above now reads "TEL owns values".
-- Since 2026-10-29 the shell's files are written in TDL, a structure-only data language with `{{ }}` expression slots ([[ADR-0014 Shell File Language]]). TDL has no expression syntax of its own: every slot goes to TEL, which keeps its decided scope (values and structure, no statements). The parser tells TEL where a slot starts, so TEL's errors point into the file.
+- Decided 2026-10-30 ([ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30), D11): TEL evaluates expressions (values) only. The conditions and repeats of a shell file are TDL's `If` and `For`; the shell's model builder evaluates their condition or iterable through TEL and rebuilds that branch or entry. "TEL owns structure and values" above now reads "TEL owns values".
+- Since 2026-10-29 the shell's files are written in TDL, a structure-only data language with `{{ }}` expression slots ([ADR-0014 Shell File Language](ADR-0014%20Shell%20File%20Language.md)). TDL has no expression syntax of its own: every slot goes to TEL, which keeps its decided scope (values and structure, no statements). The parser tells TEL where a slot starts, so TEL's errors point into the file.
 
-> [!danger] Scope risk
-> A language of one's own can grow without limit and runs from a configuration file. Keep it to values and structure with a sandbox, and test that the Python front-end and the TDL file give the same tree ([[ADR-0007 Shell UI Layer#View format: a full expression language, and Python as an equal front-end (2026-10-25)]]).
+> [!CAUTION]
+> **Scope risk**
+> A language of one's own can grow without limit and runs from a configuration file. Keep it to values and structure with a sandbox, and test that the Python front-end and the TDL file give the same tree ([ADR-0007 Shell UI Layer > View format: a full expression language, and Python as an equal front-end (2026-10-25)](ADR-0007%20Shell%20UI%20Layer.md#view-format-a-full-expression-language-and-python-as-an-equal-front-end-2026-10-25)).
 
 ## Links
 
-- [[ADR-0007 Shell UI Layer]] · [[ADR-0006 Shell Independent of Tesserae UI]] · [[Expression Languages for YAML]] · [[Expression Language Requirements]]
+- [ADR-0007 Shell UI Layer](ADR-0007%20Shell%20UI%20Layer.md) · [ADR-0006 Shell Independent of Tesserae UI](ADR-0006%20Shell%20Independent%20of%20Tesserae%20UI.md) · [Expression Languages for YAML](../90%20Research/Expression%20Languages%20for%20YAML.md) · [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)

@@ -7,13 +7,11 @@ owner: phil
 created: 2026-10-25
 updated: 2026-10-25
 tags: [research, spec/surface, integration/wayland, needs-verification]
-related: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Shadows on Layer Surfaces]]"]
-depends_on: []
 ---
 
 # Hit Testing for Concave Corners
 
-> [!summary]
+> [!NOTE]
 > A Frame draws a ring with rounded convex and concave corners. Clicks on the ring must reach the shell; clicks in the interior, and in the concave notch of a corner, must pass to the window below. tre 0.5.8 cannot do that for a path node. The maintainer confirmed that tre will provide a path forward. A workaround works today.
 
 ## What Tre Does Today
@@ -61,14 +59,14 @@ This costs the shell the geometry code, and the 256-rectangle cap limits the cur
 
 ## Also Noticed
 
-tre 0.5.9 shares one GPU device and one renderer among windows (#235). Five small windows hold the video memory one does (31 MiB, was 83 MiB, on AMD RADV), and fifty small windows hold 98 MiB of process memory, not 310 or 532 ([migration notes](https://mindderivative.github.io/tre/migrating-0.5/)). That helps a Frame, which is five windows per monitor ([[Goals and Non-Goals]] G5). Measured by tre on one AMD GPU; not run here.
+tre 0.5.9 shares one GPU device and one renderer among windows (#235). Five small windows hold the video memory one does (31 MiB, was 83 MiB, on AMD RADV), and fifty small windows hold 98 MiB of process memory, not 310 or 532 ([migration notes](https://mindderivative.github.io/tre/migrating-0.5/)). That helps a Frame, which is five windows per monitor ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G5). Measured by tre on one AMD GPU; not run here.
 
 ## Open
 
-- [x] When tre ships shape-aware hit testing, update the Frame mapping in [[Surface Types]]: done (tre 0.5.9 shipped it).
+- [x] When tre ships shape-aware hit testing, update the Frame mapping in [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md): done (tre 0.5.9 shipped it).
 - [x] Superseded by tre 0.5.9: `hit_shape="painted"` with `input_region="auto"` replaces the explicit-rectangle workaround (the maintainer had accepted the workaround for v1 on 2026-10-25; 4K was not a concern).
 - [x] The first tre release that includes #236: 0.5.9 (2026-10-27).
 
 ## Links
 
-- [[Surface Types]] · [[TRE-REQ-001 Layer Surface Window]] · [[90 Research]]
+- [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md) · [TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) · [90 Research](90%20Research.md)
