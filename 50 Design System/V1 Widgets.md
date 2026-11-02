@@ -43,7 +43,7 @@ depends_on: ["[[V1 Scope]]", "[[Building Blocks]]"]
 | Spacer         | Bar layout (left, centre and right groups)                            |
 | Expander       | A must have (maintainer, 2026-10-26; renamed from Revealer 2026-11-01): hover-to-reveal and auto-hide |
 
-Also in the maintainer's standard set but not yet needed by a v1 module: TextBox (multi-line text, not editable), TextEditor (multi-line, editable), Checkbox, Stack, Badge, Tooltip, Toggle, Marquee text. Grid, the multi-line TextField, Terminal and Canvas are blocks with no v1 use yet.
+Also in the maintainer's standard set but not yet needed by a v1 module: TextBox (multi-line text, not editable), TextEditor (multi-line, editable), Checkbox, Badge, Tooltip, Toggle, Marquee text. Grid, the multi-line TextField, Terminal and Canvas are blocks with no v1 use yet.
 
 ## Notes
 
@@ -53,7 +53,7 @@ Also in the maintainer's standard set but not yet needed by a v1 module: TextBox
 
 ## Open Questions
 
-- [ ] Which of TextBox, TextEditor, Stack, Badge, Tooltip, Toggle and Marquee text are v1.
+- [ ] Which of TextBox, TextEditor, Badge, Tooltip, Toggle and Marquee text are v1.
 - [ ] Which text-input behaviour TextField needs for v1 (composition and input methods work on layer surfaces in tre 0.5.8; no real input method was tested).
 - [x] The properties and states of each: [[Block Reference]]; proposals R1 to R11 decided 2026-11-01. The v1 block set is R11.
 

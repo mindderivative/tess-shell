@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-11-01
 tags: [api, needs-verification]
 related: ["[[42 Python API]]", "[[Module Context]]", "[[Value Types and Conversion]]", "[[ADR-0007 Shell UI Layer]]", "[[ADR-0014 Shell File Language]]", "[[Process Model and Threading]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]", "[[ADR-0009 D-Bus Client Library]]"]
@@ -85,6 +85,10 @@ Code reload ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], 
 5. **No heavy computation on the shared service thread.** D-Bus callbacks are short and never block, or they delay every D-Bus module ([[ADR-0009 D-Bus Client Library]]).
 6. **Heavy CPU work leaves the process** (a subprocess or native code); the GIL is shared with the loop ([[Process Model and Threading#Performance notes]]).
 
+## Custom Blocks (Proposed)
+
+A module author can add a block, in Python, shipped with the module (maintainer, 2026-11-01). The block is a `Block` class in the module's `.py` with declared properties, parts, states and events; it is built from tre's node kinds. The API sketch and the rules are written once in [[Block Reference#Custom Blocks (R12)]]; this note does not repeat them. A file holds exactly one `Module` class (above) and any number of `Block` classes.
+
 ## Integration
 
 - **Threads.** Methods on the loop; module work on `ctx.thread`s; D-Bus callbacks on the shared service thread; values cross to the loop with `call_soon` through `ctx.send`.
@@ -106,7 +110,8 @@ Code reload ([[ADR-0007 Shell UI Layer#Events and module reload (2026-10-26)]], 
 
 - [ ] Constructor versus `self.ctx` set by the base class (proposed above).
 - [x] Only `@action`-marked methods are callable from a shell file (maintainer, 2026-10-26).
-- [ ] The decorator's final name, and whether actions can return values.
+- [ ] The decorator's final name, and whether actions can return values. The value form of an event key (a bare action name, or a block with `Action:` and named arguments) is proposed in [[Block Reference#Events]].
+- [ ] The `Block` base class and `Prop` helper of a custom block ([[Block Reference#Custom Block API (Recommended)]]).
 - [x] How a module used several times is named: a use's `Name:` is for the file, references and expressions, and Python uses the `<Module>@<uid>` key (D23, [[ADR-0014 Shell File Language#Decisions on the Open Items (2026-10-30)]]; the head word is the module name, [[ADR-0014 Shell File Language#Layout Rules]], items 6 and 7). Which names an expression reads (`params`, sent values) stays open under Integration.
 - [ ] The shell's package name and import path.
 - [ ] Which timer helpers `ctx` offers (`every`, `after`) and which clock they use.

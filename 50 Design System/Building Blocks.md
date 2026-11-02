@@ -65,7 +65,6 @@ Composed in TDL, called by name, optionally with Python. The standard set the ma
 | ProgressBar    | A read-only bar                                                                                                                                  | Box                           |
 | Menu, MenuItem | Menu content for a popup                                                                                                                         | FlexBox, Button               |
 | Expander       | Show or hide children with an animation. A must have (renamed from Revealer, maintainer 2026-11-01)                                                                                             | Box                           |
-| Stack          | Layered children in one cell. A Box already does this (R1 of [[Block Reference]]); recommended to drop. Not decided | Box                           |
 | Badge          | A count or dot on an icon                                                                                                                        | Circle, Text                  |
 | Tooltip        | Hover text                                                                                                                                       | Box, Text                     |
 | Toggle         | A switch                                                                                                                                         | Box, Circle                   |
@@ -75,6 +74,8 @@ Composed in TDL, called by name, optionally with Python. The standard set the ma
 These ship with the shell as a standard set; the shell's own modules are open to being overridden ([[ADR-0007 Shell UI Layer#Open items]]). Which are needed for v1 is in [[V1 Widgets]].
 
 ## Names
+
+The Stack module was dropped on 2026-11-01: a Box layers its children in one cell ([[Block Reference#Decisions of 2026-11-01]], R1 and R14).
 
 The module `Text` was a mistake and is now TextBox, so no name is both a block and a module. Image and Icon (modules) sit on Bitmap and SVG (blocks). Label and TextBox are bodies of the Text block and are not editable; TextInput and TextEditor are modules over the TextField block and its multi-line variant and are editable. A block and a module are both called by their name as the block head, and a name registered twice is a load error, except that a user module overrides a shipped one ([[ADR-0014 Shell File Language#File Layout (Decided 2026-10-29)]], [[ADR-0007 Shell UI Layer#Module call, shipped modules and Path (2026-10-26)]]).
 
@@ -113,7 +114,7 @@ Decided by the maintainer (2026-10-26); the full rules are in [[Style, Theme and
 
 - [x] A module author can add a block, in Python, shipped with the module (maintainer, 2026-11-01). The mechanism is a proposal in [[Block Reference#Custom Blocks (R12)]].
 - [x] A free-form Path block: added (2026-10-26).
-- [x] Whether the listed modules can be built from the listed blocks: the maintainer reports yes, tested on Tesserae (2026-10-26). Expander and Marquee need animated layout and translate properties; Stack needs layered children; Slider, Toggle and Button need pointer and drag events from the blocks.
+- [x] Whether the listed modules can be built from the listed blocks: the maintainer reports yes, tested on Tesserae (2026-10-26). Expander and Marquee need animated layout and translate properties; Slider, Toggle and Button need pointer and drag events from the blocks.
 - [x] Grid: tre has a grid (`display: "grid"`, `grid_template_columns`, `grid_template_rows`, `row_gap`, `column_gap`); the mapping of `Columns`, `Rows` and `Spacing` is in [[Block Reference#Grid]]. Open: the text form of tre's track template.
 - [x] The default hit shape of Path and the shape blocks: `painted` (maintainer, 2026-10-27): the reason to use a shape is for the look and for the hit box to be the painted shape. tre 0.5.9 has `hit_shape` `box` (its default) or `painted`; the shell's shape blocks set `painted`. SVG and Canvas are not covered by `hit_shape` ([[Hit Testing for Concave Corners]]).
 - [x] How icons are found: the shipped SVG set (a JSON file), then the freedesktop icon theme, then the config `Icons` folder, then the locations a developer lists in the settings file (maintainer, 2026-11-01; [[Block Reference#Icons (R7)]]).

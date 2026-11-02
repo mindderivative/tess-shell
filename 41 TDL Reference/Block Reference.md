@@ -102,7 +102,26 @@ State flags (`checked`, `selected`, `expanded`, `pressed`, `value`, `value_min`,
 
 ### Events
 
-An event key is `On_` plus the event name. Its value is an action: a module method or a shell action, with arguments that may be TEL expressions evaluated when the event fires ([[ADR-0007 Shell UI Layer#Events and Module Reload (2026-10-26)]]). The exact value form is open (R5).
+An event key is `On_` plus the event name. The `On_` prefix is reserved for events (maintainer, 2026-11-01, R5): the events in the table below are the first set, and event names are added here as blocks need them. An unknown `On_` key is an error that names the closest events.
+
+An action is what the shell does when the event happens. It is a method of the module's Python class marked `@action`, or a built-in shell action ([[Module Contract#The Class (Proposed)]]; decided 2026-10-26 that nothing else can be called from a shell file). Arguments may be TEL expressions, evaluated when the event fires ([[ADR-0007 Shell UI Layer#Events and Module Reload (2026-10-26)]]).
+
+Proposed value form (the agent's recommendation, not decided):
+
+```
+On_Click: toggle_mute
+
+On_Change {
+    Action: set_volume
+    value: {{ event.value }}
+}
+```
+
+- A bare name is an action with no arguments.
+- The block form has an `Action:` key, which is syntax (Capitalised), and the action's arguments. Argument keys are written as the Python parameters are, like a module's params (D18); their values are literals or slots.
+- `event` is a name in the scope of those slots, with the fields of tre's event (for example `value` on `change`).
+- A name resolves first among the module's `@action` methods, then among the built-in shell actions. The list of built-in actions is open.
+- One action per event key. A sequence is a method that calls others: Python owns intent.
 
 | Key                                                         | tre event                                      | On which blocks                               |
 |-------------------------------------------------------------|------------------------------------------------|-----------------------------------------------|
@@ -294,16 +313,16 @@ Proposals R1 to R11 were decided by the maintainer in chat ("As recommended"), e
 | R2  | Property or style?          | Layout and behaviour are properties; visual keys are style keys. A key that is both (`Padding`, `Margin`, `Spacing`, `Opacity`) is accepted on the block as a shorthand for inline `Style`, with inline priority.                                                         |
 | R3  | Scrolling blocks            | `ScrollBox` is added to the block set. `VirtualList` waits until a module needs it.                                                                                                                                                                                      |
 | R4  | Terminal                    | No `Command` key in TDL; a module's Python attaches the process. Post-v1.                                                                                                                                                                                                |
-| R5  | Event values                | `On_<Event>` keys. The value form is written with the event and action vocabulary, which is not started.                                                                                                                                                                  |
+| R5  | Event values                | `On_` is reserved for events; event names are added as blocks need them. An action is an `@action` method or a built-in shell action. The value form under Events is a proposal.                                                                                                                                                                  |
 | R6  | Input state and Padding     | Data in through `Text`, edits out through `On_Change`; no two-way binding. `Padding` is on every block with `Children` and also on `Text` and `TextField` (this decides D59 of [[ADR-0014 Shell File Language]]).                                                          |
-| R7  | Icons                       | Changed by the maintainer. Lookup order: (1) a shipped set of SVG icons in a JSON file, (2) the desktop's freedesktop icon theme, (3) the `Icons` folder in the shell's config directory, (4) the locations a developer lists in `settings.tdl`. See "Icons" below.        |
+| R7  | Icons                       | Changed by the maintainer. Lookup order: (1) a shipped set of SVG icons in a JSON file, (2) the desktop's freedesktop icon theme, (3) the `Icons` folder in the shell's config directory, (4) the locations a developer lists in `settings.tdl`. See "Icons" below. The maintainer provides the JSON file. |
 | R8  | Image decoding              | The shell decodes png, jpeg, gif and webp with an image library (a dependency to choose). An animated gif is stepped by the shell. Post-v1 for animation.                                                                                                                |
 | R9  | A block handle for Python   | A module can reach a block it names and call `focus()`, `capture_pointer()`, `release_pointer()`, `redraw()` and read `layout_width` and `layout_height`. To be written into [[Module Context]].                                                                         |
 | R10 | Rich text                   | tre's `spans` become repeated `Span` blocks inside a Text. Post-v1.                                                                                                                                                                                                       |
 | R11 | v1 block set                | Box, FlexBox, Grid, Text, TextField (single line), Bitmap, SVG, Rectangle, Circle, Ring, Path and ScrollBox. The rest follow when a module needs them ([[V1 Widgets]]).                                                                                                    |
 | R12 | Custom blocks               | A module author can add a block, in Python, shipped with the module. The mechanism is under "Custom Blocks" below and is a proposal.                                                                                                                                     |
 | R13 | Revealer renamed            | The module Revealer is now Expander, the familiar name (maintainer, 2026-11-01).                                                                                                                                                                                          |
-| R14 | Stack                       | The maintainer asked what separates a Stack from a FlexBox. A FlexBox places children side by side or one under another. A Stack puts them on top of each other in one cell. With R1 a Box already does that, so the Stack module has nothing left to add. Recommendation: drop Stack from the module list. Not decided. |
+| R14 | Stack                       | The maintainer asked what separates a Stack from a FlexBox. A FlexBox places children side by side or one under another. A Stack puts them on top of each other in one cell. With R1 a Box already does that, so the Stack module has nothing left to add. Decided (maintainer, 2026-11-01): Stack is dropped; use a Box. |
 
 ## Icons (R7)
 
@@ -316,7 +335,11 @@ The Icon module finds an icon by name in this order; the first hit wins. A file 
 | 3     | The `Icons` folder in the shell's config directory                                                                  | `$HOME/.config/tesserae-shell/Icons/` ([[Settings File]])                                                                                                    |
 | 4     | The locations a developer lists in `settings.tdl`                                                                   | Under `Directories { Icons: [...] }`, searched in order (proposed key; [[Settings File]])                                                                    |
 
-Consequences to confirm: because the shipped set is first, a file in `Icons/` or the desktop theme cannot replace a shipped icon of the same name; to use another `battery-full` a user names the file by path or uses another name. Open: which icon set to ship and its licence (candidates are permissively licensed sets such as Lucide, Phosphor, Tabler or Material Symbols; each licence is #needs-verification), how the JSON file is versioned and updated, and the Icon module's parameter for the name (not `Name`, which is the unique name). The icon set and its licence go into the delivery notes.
+The maintainer will provide the JSON file of the icon set (2026-11-01). Its format and licence information come with it, so the shape in row 1 is a placeholder.
+
+Settings key (recommended, not decided): `Directories { Icons: [...] }`, the same key as the other file types, one path or a list searched in order. The config `Icons/` folder (row 3) comes first and the listed paths follow, as the maintainer set the order; this is the one place where a listed path is searched after the default folder, because the Settings File note proposes the opposite for the other types ([[Settings File]]).
+
+Consequences to confirm: because the shipped set is first, a file in `Icons/` or the desktop theme cannot replace a shipped icon of the same name; to use another `battery-full` a user names the file by path or uses another name. Open: how the JSON file is versioned and updated, and the Icon module's parameter for the name (not `Name`, which is the unique name). The icon set's licence goes into the delivery notes.
 
 ## Custom Blocks (R12)
 
@@ -327,11 +350,42 @@ The maintainer decided that a module author can add a block, in Python, shipped 
 - It is registered by name in the one registry when the module loads, and removed when the module is unloaded or reloaded ([[Hot Reload]]). A name used twice is a load error, except that a user module overrides a shipped one.
 - Once the module has loaded, any file can use the block by its name, like any other.
 - It runs the module's Python in the shell's process, so the unwritten security model for user Python applies ([[Risk Register]] R-19).
-- Open: the base-class API, which belongs in [[Module Contract]]; whether a custom block's name needs a prefix to avoid clashes; and whether a custom block can have `Children`.
+- Recommended API (not decided): v1 custom blocks are leaf blocks, with no `Children`, because composition is what modules are for. A name needs no prefix: a name used twice is a load error that names both places. The class sketch is under "Custom Block API (Recommended)" and is mirrored in [[Module Contract#Custom Blocks (Proposed)]].
+
+### Custom Block API (Recommended)
+
+An illustration, not the import path or the final names:
+
+```python
+# Modules/Meter/Meter_Module.py
+from tesserae_shell import Module, Block, Prop
+
+class Meter(Block):
+    name = "Meter"                               # the head used in TDL
+    properties = {
+        "Value": Prop(float, default=0.0, doc="0.0 to 1.0"),
+        "Segments": Prop(int, default=10, doc="Number of bars"),
+    }
+    parts = ("track", "fill")                    # a style can address them
+    states = ("hovered", "disabled")             # a style can target them
+    events = ("On_Click",)                       # event keys it offers
+
+    def build(self, ctx, props):                 # once, on the loop thread
+        ...                                      # returns a tree of tre nodes
+
+    def update(self, ctx, props, changed):       # when a property changes
+        ...
+```
+
+- `build` and `update` are callbacks that return fast; neither runs per frame. A `Canvas` is redrawn on a change, not every frame.
+- The shell validates the properties from the declaration (type, default, doc) and puts the block in the project schema ([[JSON Schema and Editor Support]]).
+- A file holds one `Module` class and any number of `Block` classes.
+- The shell's own node builder wraps tre's node kinds; the exact calls are not decided, and no tre API is invented here.
 
 ## Open
 
-- [ ] The custom-block mechanism (R12), the Stack decision (R14), the shipped icon set and its licence, and the settings key for icon locations.
+- [ ] The recommended custom-block API (R12), the settings key for icon locations, the action value form under Events, and the list of built-in shell actions.
+- [ ] The icon JSON file: its format and licence, which the maintainer provides.
 - [ ] The value sets and defaults of the align, justify and cursor keys, and the text form of grid tracks (#needs-verification against tre's source or a test).
 - [ ] The default sizes of an SVG and of a Terminal (#needs-verification).
 - [ ] The event and action vocabulary and the value form of an `On_` key.

@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-11-01 |
-| Last change         | Block proposals R1 to R11 decided (R7 changed: shipped SVG icon set first); Revealer renamed Expander; custom blocks allowed ([[Block Reference]]) |
+| Last change         | Stack dropped; `On_` reserved for events; the maintainer provides the icon JSON; custom-block API and event value form recommended ([[Block Reference]]) |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | Drop the Stack module (a Box already layers children)? ([[Block Reference#Decisions of 2026-11-01]], R14); the icon set to ship and its licence; the settings key for icon locations; the custom-block mechanism (R12); the TEL release number to pin as `TEL:` |
+| Waiting on you      | The recommended custom-block API, event value form and `Directories { Icons }` key in [[Block Reference]]; the icon JSON file from you; the TEL release number to pin as `TEL:` (waiting on the TEL release) |
 | Next                | The shipped-module list (V1 Widgets) and the event and action vocabulary; then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-11-01 | Stack dropped; `On_` reserved; custom-block API and event value form recommended ([[Block Reference]]) |
 | 2026-11-01 | Block proposals R1 to R11 decided; Revealer renamed Expander; icon lookup order set ([[Block Reference]]) |
 | 2026-11-01 | [[Block Reference]] written (proposals R1 to R11); R-22 added for the Terminal block |
 | 2026-11-01 | Base name of a `For` entry confirmed (D65) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-11-01 | TEL accepted and built `?:`; TEL step 5 (conditions, repeater reconciliation) recorded ([[Expression Language Requirements]]) |
 | 2026-10-31 | `Meld` restored (confirmed); `?:` cost test results recorded ([[Expression Language Requirements]]) |
 | 2026-10-31 | P1 accepted (D61); Bar `Gap` decides its meld (D62); Panel `Meld` restored (D56 corrected) ([[ADR-0014 Shell File Language]]) |
-| 2026-10-31 | P2 to P7 decided (D55 to D60); Panel `Meld` removed ([[ADR-0014 Shell File Language]]) |
 
 ## Go to
 
