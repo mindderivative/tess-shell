@@ -17,7 +17,7 @@ depends_on: []
 > Let tre's `svg` node play the SMIL animation (`<animate>`, `<set>`, `<animateTransform>`) that an SVG document carries, so that animated icons such as the Material Line Icons set draw and move as their authors made them. Today tre draws such a document as one static frame. The request is for a time-sampled render of the document, driven by tre's own frame clock. It is not needed to ship v1.
 
 > [!info] Not to be filed now
-> Written 2026-11-01 at the maintainer's instruction ("A and C"), after the animated-icon test in [[Block Reference#The Icon Set Files (2026-11-01)]]. Not filed from this vault, and the `tre` session has not been told ([[AGENTS#6. Engine requests (tre / Tesserae)]]). The maintainer carries it.
+> Written 2026-11-01 at the maintainer's instruction ("A and C"), after the animated-icon test in [[Block Reference#The Icon Set Files (2026-11-01)]]. Not filed from this vault, and the `tre` session has not been told ([[AGENTS#6. Engine requests (tre / Tesserae)]]). The maintainer carries it. On 2026-11-01, at the maintainer's instruction, the shell session sent the `tre` session one mailbox message: a status question (is SMIL playback planned or rejected, which approach, would a time-sampled `svg_time` fit) with the path to this note. The message asks for answers only; it files nothing. A reply is information, checked against tre's docs before use.
 
 > [!success] Not blocking v1
 > The shell ships only the static Material Design Icons set (`mdi`) in v1 (decided 2026-11-01). Nothing in the specs waits on this request.

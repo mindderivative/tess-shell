@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-11-01 |
-| Last change         | v1 ships only the static `mdi` icons; [[TRE-REQ-008 SMIL Animation in SVG Nodes]] written, not filed ([[Block Reference#The Icon Set Files (2026-11-01)]]) |
+| Last change         | Status question on SMIL sent to the `tre` session with a pointer to [[TRE-REQ-008 SMIL Animation in SVG Nodes]]; awaiting its reply |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | Whether to carry TRE-REQ-008 to the `tre` project; the list of built-in shell actions; shipping the icon licence texts; the TEL release number to pin as `TEL:` |
+| Waiting on you      | The `tre` session's reply on SMIL; whether to file TRE-REQ-008; the list of built-in shell actions; shipping the icon licence texts; the TEL release number to pin as `TEL:` |
 | Next                | The shipped-module list ([[V1 Widgets]]); then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-11-01 | Status question on SMIL sent to the `tre` session ([[TRE-REQ-008 SMIL Animation in SVG Nodes]]) |
 | 2026-11-01 | Animated icons: `mdi` only in v1; [[TRE-REQ-008 SMIL Animation in SVG Nodes]] written |
 | 2026-11-01 | Animated icons tested in tre (SMIL not played, masks drawn); icon licences present ([[Block Reference]]) |
 | 2026-11-01 | Icon sets re-exported (`mdi`, `mli`); findings and R-23 updated ([[Block Reference]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-11-01 | Icon format recommendation: JSON for the shipped set ([[Block Reference]]) |
 | 2026-11-01 | Icon set JSON files inspected; R-23 added ([[Block Reference]]) |
 | 2026-11-01 | Custom-block API, event value form and Icons key accepted ([[Block Reference]]) |
-| 2026-11-01 | Stack dropped; `On_` reserved; custom-block API and event value form recommended ([[Block Reference]]) |
 
 ## Go to
 
