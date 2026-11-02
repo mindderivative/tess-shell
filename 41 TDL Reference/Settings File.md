@@ -27,6 +27,7 @@ $HOME/.config/tesserae-shell/
     Styles/          <Name>_Style.tdl
     Themes/          <Name>_Theme.tdl
     Stylesheets/     <Name>_Stylesheet.tdl
+    Icons/           SVG and PNG icons (searched third, [[Block Reference#Icons (R7)]])
     schemas/         generated, ignored by version control
     logs/            log files (default)
 ```
@@ -51,7 +52,7 @@ The metadata block of every shell file is defined in [[TDL Language#The Metadata
 
 | Key           | Meaning                              | Value                                                                                                                                                                                |
 |---------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Directories` | Where to look for each file type     | A block with the keys `Shells`, `Modules`, `Styles`, `Themes`, `Stylesheets` to an absolute directory or a list of them                                                                     |
+| `Directories` | Where to look for each file type     | A block with the keys `Shells`, `Modules`, `Styles`, `Themes`, `Stylesheets`, `Icons` to an absolute directory or a list of them. `Icons` lists extra locations searched after the config `Icons/` folder (proposed key, [[Block Reference#Icons (R7)]])                                                                     |
 | `Main_Shell`  | The shell file the shell starts from | A file name in the shells directory; default `Main_Shell.tdl`                                                                                                                       |
 | `Registry`    | Where the registry file lives        | An absolute path to a `registry.json` file; default `$HOME/.config/tesserae-shell/registry.json`. Same path rules as `Directories`                                                   |
 | `Logging`     | Global log settings                  | `Level`, `Directory` (default `logs/` in the config directory, same path rules) and `Retention` (optional, days); naming and rotation are in [[#Log files]] |

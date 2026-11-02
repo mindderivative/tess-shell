@@ -19,7 +19,7 @@ depends_on: ["[[Surface Types]]", "[[TRE-REQ-001 Layer Surface Window]]", "[[Mod
 ## Purpose and Scope
 
 - The v1 uses: a tray icon's menu, a clock's calendar later, a context menu, a flyout from a Bar module, and a tooltip ([[V1 Scope#Surfaces]]).
-- Not in this note: the Panel (a surface that attaches or floats and stays open, [[Panel]]); the Notification window, a surface type of its own that is not v1 ([[Surface Types#Special cases]]); the Menu, Tooltip and Revealer modules that fill popups ([[V1 Widgets]]).
+- Not in this note: the Panel (a surface that attaches or floats and stays open, [[Panel]]); the Notification window, a surface type of its own that is not v1 ([[Surface Types#Special cases]]); the Menu, Tooltip and Expander modules that fill popups ([[V1 Widgets]]).
 - A Popup is not a child in the shell file's tree: it is its own entry, and what it hangs off is a reference ([[Surface Types#Popup]]).
 
 ## Behaviour

@@ -20,7 +20,7 @@ depends_on: ["[[ADR-0007 Shell UI Layer]]"]
 
 | Group      | Blocks                                                            | Built on (proposed)                                                                                                                                                                    |
 |------------|-------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Containers | Box, FlexBox, Grid                                                | tre `box`; FlexBox with flex layout; Grid needs checking against tre's layout #needs-verification                                                                                      |
+| Containers | Box, FlexBox, Grid, ScrollBox                                     | tre `box` (a Box is a one-cell grid, a FlexBox a flex container, a Grid a grid container); ScrollBox is `scroll_view` (added 2026-11-01); `virtual_list` later ([[Block Reference]]) |
 | Typography | Text, TextField, a multi-line variant of TextField                | `text`, `text_input`                                                                                                                                                                   |
 | Graphics   | Bitmap (a rasterized bitmap), SVG (a vector graphic)              | `image`, `svg`                                                                                                                                                                         |
 | Shapes     | Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path | `path` and `box` with corner radius; Path is a free-form path, added 2026-10-26 for the Frame's concave corners and Panel joins; hit shape per [[Hit Testing for Concave Corners]] |
@@ -64,8 +64,8 @@ Composed in TDL, called by name, optionally with Python. The standard set the ma
 | Slider         | A draggable value                                                                                                                                | Box, shapes                   |
 | ProgressBar    | A read-only bar                                                                                                                                  | Box                           |
 | Menu, MenuItem | Menu content for a popup                                                                                                                         | FlexBox, Button               |
-| Revealer       | Show or hide children with an animation. A must have                                                                                             | Box                           |
-| Stack          | Layered children in one cell                                                                                                                     | Box                           |
+| Expander       | Show or hide children with an animation. A must have (renamed from Revealer, maintainer 2026-11-01)                                                                                             | Box                           |
+| Stack          | Layered children in one cell. A Box already does this (R1 of [[Block Reference]]); recommended to drop. Not decided | Box                           |
 | Badge          | A count or dot on an icon                                                                                                                        | Circle, Text                  |
 | Tooltip        | Hover text                                                                                                                                       | Box, Text                     |
 | Toggle         | A switch                                                                                                                                         | Box, Circle                   |
@@ -111,14 +111,14 @@ Decided by the maintainer (2026-10-26); the full rules are in [[Style, Theme and
 
 ## Open
 
-- [ ] Whether a module author can add a block (in Python, shipped with a module), or blocks are fixed.
+- [x] A module author can add a block, in Python, shipped with the module (maintainer, 2026-11-01). The mechanism is a proposal in [[Block Reference#Custom Blocks (R12)]].
 - [x] A free-form Path block: added (2026-10-26).
-- [x] Whether the listed modules can be built from the listed blocks: the maintainer reports yes, tested on Tesserae (2026-10-26). Revealer and Marquee need animated layout and translate properties; Stack needs layered children; Slider, Toggle and Button need pointer and drag events from the blocks.
+- [x] Whether the listed modules can be built from the listed blocks: the maintainer reports yes, tested on Tesserae (2026-10-26). Expander and Marquee need animated layout and translate properties; Stack needs layered children; Slider, Toggle and Button need pointer and drag events from the blocks.
 - [x] Grid: tre has a grid (`display: "grid"`, `grid_template_columns`, `grid_template_rows`, `row_gap`, `column_gap`); the mapping of `Columns`, `Rows` and `Spacing` is in [[Block Reference#Grid]]. Open: the text form of tre's track template.
 - [x] The default hit shape of Path and the shape blocks: `painted` (maintainer, 2026-10-27): the reason to use a shape is for the look and for the hit box to be the painted shape. tre 0.5.9 has `hit_shape` `box` (its default) or `painted`; the shell's shape blocks set `painted`. SVG and Canvas are not covered by `hit_shape` ([[Hit Testing for Concave Corners]]).
-- [ ] How icons are found: proposed in [[Block Reference#Proposals for the Maintainer]] (R7), the desktop's freedesktop icon theme first, then a file path.
-- [ ] The state model: proposed in [[Block Reference#Proposals for the Maintainer]] (R6), data in through `Text` and edits out through `On_Change`, with no two-way binding.
-- [ ] Accessibility defaults for each block (roles, labels, keyboard operation) ([[Goals and Non-Goals]] G7): proposed in [[Block Reference#Accessibility Defaults]].
+- [x] How icons are found: the shipped SVG set (a JSON file), then the freedesktop icon theme, then the config `Icons` folder, then the locations a developer lists in the settings file (maintainer, 2026-11-01; [[Block Reference#Icons (R7)]]).
+- [x] The state model: data in through `Text` and edits out through `On_Change`, with no two-way binding (R6, maintainer, 2026-11-01).
+- [x] Accessibility defaults for each block (roles, labels, keyboard operation) ([[Goals and Non-Goals]] G7): as in [[Block Reference#Accessibility Defaults]] (maintainer, 2026-11-01).
 
 ## Links
 

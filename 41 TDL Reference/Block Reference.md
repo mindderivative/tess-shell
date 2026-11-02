@@ -14,7 +14,7 @@ depends_on: ["[[Building Blocks]]", "[[TDL Language]]"]
 # Block Reference
 
 > [!summary]
-> The properties, events, accessibility defaults and tre mapping of every building block. The set of blocks is decided ([[Building Blocks]]); everything in this note is a proposal for the maintainer unless a row says Decided. Visual keys (fill, border, text styling, shadow, motion, states) are style keys and live in [[Style Schema]]; this note covers what a block is, holds, does and reports. Written 2026-11-01 from tre's documentation ([properties](https://mindderivative.github.io/tre/reference/properties/), [paint](https://mindderivative.github.io/tre/reference/paint/), [events](https://mindderivative.github.io/tre/reference/events/), [accessibility](https://mindderivative.github.io/tre/guide/accessibility/), [building a widget](https://mindderivative.github.io/tre/guide/building-a-widget/), read 2026-11-01). Where tre's page does not document a default or a value set, the cell says so and the claim is #needs-verification.
+> The properties, events, accessibility defaults and tre mapping of every building block. The set of blocks is decided ([[Building Blocks]]). The maintainer decided proposals R1 to R11 on 2026-11-01 ("as recommended", with R7 changed); the decisions are in "Decisions of 2026-11-01" below. Anything marked Open or Proposed is not decided. Visual keys (fill, border, text styling, shadow, motion, states) are style keys and live in [[Style Schema]]; this note covers what a block is, holds, does and reports. Written 2026-11-01 from tre's documentation ([properties](https://mindderivative.github.io/tre/reference/properties/), [paint](https://mindderivative.github.io/tre/reference/paint/), [events](https://mindderivative.github.io/tre/reference/events/), [accessibility](https://mindderivative.github.io/tre/guide/accessibility/), [building a widget](https://mindderivative.github.io/tre/guide/building-a-widget/), read 2026-11-01). Where tre's page does not document a default or a value set, the cell says so and the claim is #needs-verification.
 
 ## How to Read the Tables
 
@@ -120,8 +120,8 @@ Block-specific events are listed with the block. tre has no double-click and no 
 
 ### Box
 
-> [!question] How a Box differs from a FlexBox
-> The maintainer defined a Box as a basic container with no auto-stacking, invisible when unstyled and a panel of its own when fully styled. In tre every node with children lays them out as flex. Recommendation (R1): a Box is a one-cell grid. All children occupy the same cell and overlap; the Box is as large as its largest child unless sized; each child can align itself with `Align_Self` and `Justify_Self`. Nothing is stacked automatically, and the Stack module becomes a Box.
+> [!success] How a Box differs from a FlexBox (decided 2026-11-01, R1)
+> The maintainer defined a Box as a basic container with no auto-stacking, invisible when unstyled and a panel of its own when fully styled. In tre every node with children lays them out as flex. Decided (R1): a Box is a one-cell grid. All children occupy the same cell and overlap; the Box is as large as its largest child unless sized; each child can align itself with `Align_Self` and `Justify_Self`. Nothing is stacked automatically, and the Stack module becomes a Box.
 
 | Key       | Values                  | Default | tre                         | Meaning                                                           |
 |-----------|-------------------------|---------|-----------------------------|-------------------------------------------------------------------|
@@ -157,9 +157,9 @@ A vertical Bar is a FlexBox with `Flex: VERTICAL` (decided 2026-10-27). The defa
 
 The exact text form of tre's `grid_template_columns` is not on the page; the shell builds it from the list above #needs-verification. A child sets its cell with `Grid_Column` and `Grid_Row`.
 
-### ScrollBox (Proposed Addition, R3)
+### ScrollBox (Decided 2026-11-01, R3)
 
-The decided block set has no scrolling block, yet the List module needs one: tre's scrolling is a node kind of its own (`scroll_view`). Recommendation: add `ScrollBox`.
+The decided block set has no scrolling block, yet the List module needs one: tre's scrolling is a node kind of its own (`scroll_view`). Decided: `ScrollBox` is added to the block set.
 
 | Key              | Values                                | Default    | tre              | Meaning                                                                  |
 |------------------|---------------------------------------|------------|------------------|--------------------------------------------------------------------------|
@@ -169,7 +169,7 @@ The decided block set has no scrolling block, yet the List module needs one: tre
 | `Padding`        | Four-sided                            | 0          | `padding`        | Inside space                                                              |
 | `On_Scroll`      | event                                 | none       | `scroll`         | Fires when the offset changes (`old_value`, `new_value`)                  |
 
-### VirtualList (Proposed Addition, R3)
+### VirtualList (Later, R3)
 
 For long lists (launcher results, tasks) where only visible entries are built. Maps to tre's `virtual_list`: `item_count`, `item_extent` (or `size_hint`), `materialize`, `scroll_offset`. The properties would be `Item_Count`, `Item_Extent`, `Scroll_Offset`, and an item template. How an item template is written in TDL, and how it meets the `For` repeater (TEL reconciles by key), is open; recommendation: leave VirtualList until a module needs more entries than a ScrollBox can build.
 
@@ -256,7 +256,7 @@ Differences from a Box: a Box's stroke is drawn inside the box without changing 
 Style keys: `Size` (font), and a `Terminal_Palette` block for `palette` (`ansi`, `foreground`, `background`, `cursor`, `selection`). Role `TEXTBOX`.
 
 > [!danger] A Terminal starts a process
-> tre's `shell` argument is set at creation and runs a program. TDL is data from a configuration file and must not start processes. Recommendation (R4): TDL has no `Command` key. A Terminal is attached by a module's Python, which supplies the process. A shell file can place a Terminal block but cannot make it run anything. Added to [[Risk Register]] as R-22. Post-v1.
+> tre's `shell` argument is set at creation and runs a program. TDL is data from a configuration file and must not start processes. Decided (R4): TDL has no `Command` key. A Terminal is attached by a module's Python, which supplies the process. A shell file can place a Terminal block but cannot make it run anything. Recorded in [[Risk Register]] as R-22. Post-v1.
 
 ### Canvas
 
@@ -284,25 +284,54 @@ The drawing is Python, so a Canvas is for a module that ships its own `.py`. Rol
 
 A focus ring appears only for keyboard focus (`focus_visible`), as a non-blurred shadow with spread so it does not shift layout (tre's building-a-widget guide). The style state `Focused` therefore means keyboard focus. Reduced motion and high contrast are the theme's job ([[Goals and Non-Goals]] G7).
 
-## Proposals for the Maintainer
+## Decisions of 2026-11-01
 
-| #   | Question                          | Recommendation                                                                                                                                                                                                                                              |
-|-----|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| R1  | What is a Box?                     | A one-cell grid: children overlap, size to the largest, align themselves. The Stack module then is a Box with named layers and may not be needed as a separate module.                                                                                       |
-| R2  | Property or style?                 | Layout and behaviour are properties; visual keys are style keys (Style Schema). A key that is both (`Padding`, `Margin`, `Spacing`, `Opacity`) is accepted on the block as a shorthand for inline `Style`, with inline priority.                              |
-| R3  | Scrolling blocks                   | Add `ScrollBox` now (the List module needs it) and `VirtualList` only when a module needs it. The decided block set has neither, and tre has both node kinds.                                                                                                |
-| R4  | Terminal                           | No `Command` key in TDL; a module's Python attaches the process. Post-v1.                                                                                                                                                                                    |
-| R5  | Event values                       | `On_<Event>` keys. The value form (a module method name with TEL argument expressions, or a shell action) is written with the event and action vocabulary of the TDL reference, which is not started.                                                      |
-| R6  | Input state                        | Data in through `Text`, edits out through `On_Change`; no two-way binding. The module's Python holds the state and sets `Text` back. `Padding` goes on `Text` and `TextField` as well as on blocks with `Children`, because they own an inset (decides D59).        |
-| R7  | Icons                              | The Icon module looks a name up in the freedesktop icon theme of the desktop ([Icon Theme Specification](https://specifications.freedesktop.org/icon-theme-spec/latest/), details #needs-verification) and falls back to a file path; it returns an `SVG` or a `Bitmap`. |
-| R8  | Image decoding                     | The shell decodes png, jpeg, gif and webp with an image library (a dependency to choose and add to the delivery notes). An animated gif is stepped by the shell. Post-v1 for animation.                                                                      |
-| R9  | A block handle for Python          | A module can reach a block it names and call `focus()`, `capture_pointer()`, `release_pointer()`, `redraw()` and read `layout_width` and `layout_height`. The Slider needs pointer capture. Write it into [[Module Context]].                                  |
-| R10 | Rich text                          | tre's `spans` become repeated `Span` blocks inside a Text, post-v1.                                                                                                                                                                                          |
-| R11 | v1 block set                       | Box, FlexBox, Grid, Text, TextField (single line), Bitmap, SVG, Rectangle, Circle, Ring, Path, and ScrollBox. The rest (Square, Ellipse, Triangle, Hexagon, Terminal, Canvas, the multi-line TextField) follow when a module needs them ([[V1 Widgets]]).        |
+Proposals R1 to R11 were decided by the maintainer in chat ("As recommended"), except R7, which the maintainer changed. R12 to R14 record the maintainer's other answers of the same day.
+
+| #   | Topic                      | Decision                                                                                                                                                                                                                                                                |
+|-----|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| R1  | What is a Box?              | A one-cell grid: children overlap, the Box sizes to the largest, children align themselves.                                                                                                                                                                              |
+| R2  | Property or style?          | Layout and behaviour are properties; visual keys are style keys. A key that is both (`Padding`, `Margin`, `Spacing`, `Opacity`) is accepted on the block as a shorthand for inline `Style`, with inline priority.                                                         |
+| R3  | Scrolling blocks            | `ScrollBox` is added to the block set. `VirtualList` waits until a module needs it.                                                                                                                                                                                      |
+| R4  | Terminal                    | No `Command` key in TDL; a module's Python attaches the process. Post-v1.                                                                                                                                                                                                |
+| R5  | Event values                | `On_<Event>` keys. The value form is written with the event and action vocabulary, which is not started.                                                                                                                                                                  |
+| R6  | Input state and Padding     | Data in through `Text`, edits out through `On_Change`; no two-way binding. `Padding` is on every block with `Children` and also on `Text` and `TextField` (this decides D59 of [[ADR-0014 Shell File Language]]).                                                          |
+| R7  | Icons                       | Changed by the maintainer. Lookup order: (1) a shipped set of SVG icons in a JSON file, (2) the desktop's freedesktop icon theme, (3) the `Icons` folder in the shell's config directory, (4) the locations a developer lists in `settings.tdl`. See "Icons" below.        |
+| R8  | Image decoding              | The shell decodes png, jpeg, gif and webp with an image library (a dependency to choose). An animated gif is stepped by the shell. Post-v1 for animation.                                                                                                                |
+| R9  | A block handle for Python   | A module can reach a block it names and call `focus()`, `capture_pointer()`, `release_pointer()`, `redraw()` and read `layout_width` and `layout_height`. To be written into [[Module Context]].                                                                         |
+| R10 | Rich text                   | tre's `spans` become repeated `Span` blocks inside a Text. Post-v1.                                                                                                                                                                                                       |
+| R11 | v1 block set                | Box, FlexBox, Grid, Text, TextField (single line), Bitmap, SVG, Rectangle, Circle, Ring, Path and ScrollBox. The rest follow when a module needs them ([[V1 Widgets]]).                                                                                                    |
+| R12 | Custom blocks               | A module author can add a block, in Python, shipped with the module. The mechanism is under "Custom Blocks" below and is a proposal.                                                                                                                                     |
+| R13 | Revealer renamed            | The module Revealer is now Expander, the familiar name (maintainer, 2026-11-01).                                                                                                                                                                                          |
+| R14 | Stack                       | The maintainer asked what separates a Stack from a FlexBox. A FlexBox places children side by side or one under another. A Stack puts them on top of each other in one cell. With R1 a Box already does that, so the Stack module has nothing left to add. Recommendation: drop Stack from the module list. Not decided. |
+
+## Icons (R7)
+
+The Icon module finds an icon by name in this order; the first hit wins. A file path (relative to the file that names it) skips the lookup.
+
+| Order | Source                                                                                                              | Notes                                                                                                                                                       |
+|-------|---------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1     | The shipped set: SVG icons in one JSON file that ships with the shell                                               | Proposed shape: a JSON object that maps an icon name to an SVG document, plus the set's name and licence. The shell reads it once at start and gives the SVG text to tre |
+| 2     | The desktop's freedesktop icon theme                                                                                | [Icon Theme Specification](https://specifications.freedesktop.org/icon-theme-spec/latest/); the current theme comes from the desktop settings #needs-verification |
+| 3     | The `Icons` folder in the shell's config directory                                                                  | `$HOME/.config/tesserae-shell/Icons/` ([[Settings File]])                                                                                                    |
+| 4     | The locations a developer lists in `settings.tdl`                                                                   | Under `Directories { Icons: [...] }`, searched in order (proposed key; [[Settings File]])                                                                    |
+
+Consequences to confirm: because the shipped set is first, a file in `Icons/` or the desktop theme cannot replace a shipped icon of the same name; to use another `battery-full` a user names the file by path or uses another name. Open: which icon set to ship and its licence (candidates are permissively licensed sets such as Lucide, Phosphor, Tabler or Material Symbols; each licence is #needs-verification), how the JSON file is versioned and updated, and the Icon module's parameter for the name (not `Name`, which is the unique name). The icon set and its licence go into the delivery notes.
+
+## Custom Blocks (R12)
+
+The maintainer decided that a module author can add a block, in Python, shipped with the module. The mechanism below is the agent's proposal.
+
+- A block is a Python class in the module's `<Name>_Module.py`, derived from a shell `Block` base. It declares its properties (type, default, choices, doc), parts, states and events the way a built-in does, so the schema and the error messages cover it ([[Style Schema]], [[JSON Schema and Editor Support]]).
+- It is built from tre nodes: a tree of the existing node kinds. It cannot add a new tre node kind.
+- It is registered by name in the one registry when the module loads, and removed when the module is unloaded or reloaded ([[Hot Reload]]). A name used twice is a load error, except that a user module overrides a shipped one.
+- Once the module has loaded, any file can use the block by its name, like any other.
+- It runs the module's Python in the shell's process, so the unwritten security model for user Python applies ([[Risk Register]] R-19).
+- Open: the base-class API, which belongs in [[Module Contract]]; whether a custom block's name needs a prefix to avoid clashes; and whether a custom block can have `Children`.
 
 ## Open
 
-- [ ] The proposals R1 to R11 above.
+- [ ] The custom-block mechanism (R12), the Stack decision (R14), the shipped icon set and its licence, and the settings key for icon locations.
 - [ ] The value sets and defaults of the align, justify and cursor keys, and the text form of grid tracks (#needs-verification against tre's source or a test).
 - [ ] The default sizes of an SVG and of a Terminal (#needs-verification).
 - [ ] The event and action vocabulary and the value form of an `On_` key.

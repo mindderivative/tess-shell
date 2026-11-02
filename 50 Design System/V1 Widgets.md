@@ -21,6 +21,7 @@ depends_on: ["[[V1 Scope]]", "[[Building Blocks]]"]
 | Block                                  | Needed by                                                                     |
 |----------------------------------------|-------------------------------------------------------------------------------|
 | Box, FlexBox                           | Every surface and module                                                      |
+| ScrollBox                              | List (Applications results, Tasks, Tray overflow)                             |
 | Text                                   | Clock, Workspaces, Tasks, Battery, Network, Media, Applications               |
 | TextField                              | TextInput, and TextBox through its multi-line variant                         |
 | Bitmap, SVG                            | Tray, Audio, Network, Battery, Media, Tasks, Applications (icons and artwork) |
@@ -40,7 +41,7 @@ depends_on: ["[[V1 Scope]]", "[[Building Blocks]]"]
 | List           | Applications (results), Tasks, Tray overflow                          |
 | Menu, MenuItem | Tray menus, Audio (device list), Network (network list)               |
 | Spacer         | Bar layout (left, centre and right groups)                            |
-| Revealer       | A must have (maintainer, 2026-10-26): hover-to-reveal and auto-hide   |
+| Expander       | A must have (maintainer, 2026-10-26; renamed from Revealer 2026-11-01): hover-to-reveal and auto-hide |
 
 Also in the maintainer's standard set but not yet needed by a v1 module: TextBox (multi-line text, not editable), TextEditor (multi-line, editable), Checkbox, Stack, Badge, Tooltip, Toggle, Marquee text. Grid, the multi-line TextField, Terminal and Canvas are blocks with no v1 use yet.
 
@@ -54,7 +55,7 @@ Also in the maintainer's standard set but not yet needed by a v1 module: TextBox
 
 - [ ] Which of TextBox, TextEditor, Stack, Badge, Tooltip, Toggle and Marquee text are v1.
 - [ ] Which text-input behaviour TextField needs for v1 (composition and input methods work on layer surfaces in tre 0.5.8; no real input method was tested).
-- [ ] The properties and states of each: proposed in [[Block Reference]] (2026-11-01); the maintainer has not decided them.
+- [x] The properties and states of each: [[Block Reference]]; proposals R1 to R11 decided 2026-11-01. The v1 block set is R11.
 
 ## Links
 

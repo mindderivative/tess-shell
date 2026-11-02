@@ -43,7 +43,7 @@ flowchart TB
 | Desktop Environment | The layer surface (Layer 0 Background, Layer 1 Bottom, Layer 2 Top, Layer 3 Overlay), KWin between Layer 1 and Layer 2, Wallpapers on Layer 0, Reserved Space on Layer 2                                                  |
 | Layer Windows       | Panel (Bottom, Top or Overlay), Bar (Bottom, Top or Overlay), Frame (Top)                                                                                                                                                 |
 | Special Cases       | Popup, drawn above its parent. A module calls it, and it holds containers and modules                                                                                                                                     |
-| Modules (Nestable)  | Spacer, List, Toggle, Label, Slider, Marquee text, TextBox, ProgressBar, Checkbox, TextInput, Menu and MenuItem, TextEditor, Revealer, Button, Stack, Icon, Badge, Image, Tooltip                                         |
+| Modules (Nestable)  | Spacer, List, Toggle, Label, Slider, Marquee text, TextBox, ProgressBar, Checkbox, TextInput, Menu and MenuItem, TextEditor, Expander, Button, Stack, Icon, Badge, Image, Tooltip                                         |
 | Building Blocks     | Containers (nestable): FlexBox, Box, Grid. Shapes: Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path. Graphics: Bitmap, SVG. Typography: Text, TextField, TextField (Multi-Line). Other: Terminal, Canvas |
 
 Reading the arrows: the Shell attaches to the layer surface; layer windows (Panel, Bar, Frame) hold modules and containers; a module holds containers and is made of building blocks; a module calls a popup, and a popup holds containers and modules.
