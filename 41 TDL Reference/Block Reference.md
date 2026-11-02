@@ -343,28 +343,26 @@ Consequences to confirm: because the shipped set is first, a file in `Icons/` or
 
 ### The Icon Set Files (2026-11-01)
 
-The maintainer's files are in `/home/phil/Projects/pyDev/projects/tess-icons/icon-sets/Material-Design-Icons/` (his tess-icons project). Read-only inspection on 2026-11-01:
+The maintainer's files are in `/home/phil/Projects/pyDev/projects/tess-icons/icon-sets/Material-Design-Icons/` (his tess-icons project). He re-exported them on 2026-11-01 as two files, each with a set name, author, URL and licence. Read-only inspection of the re-export:
 
-| File                                  | Prefix       | Icons | Size   | Content                                                                                                                                                             |
-|---------------------------------------|--------------|-------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `material-design-base-icons.json`     | `md-base`    | 7,447 | 2.6 MB | Static icons on a 24 by 24 grid                                                                                                                                     |
-| `material-design-no-anim-icons.json`  | `md-no-anim` | 7,447 | 2.6 MB | The same icons as the base file: the two `icons` objects are equal, and only the prefix differs                                                                     |
-| `material-design-anim-icons.json`     | `md-anim`    | 1,218 | 1.4 MB | Animated with SMIL (`<animate>` in 1,216 icons, `<set>` or `<animateTransform>` in 343); 164 names end in `-loop`; 207 names also exist in the base set and 1,011 do not |
+| File                          | Set                    | Prefix | Author and URL                                                                       | Licence (as the file states it) | Icons | Size   | Content                                                                                                                  |
+|-------------------------------|------------------------|--------|--------------------------------------------------------------------------------------|---------------------------------|-------|--------|--------------------------------------------------------------------------------------------------------------------------|
+| `material-design-icons.json`  | Material Design Icons  | `mdi`  | Pictogrammers, [github.com/Templarian/MaterialDesign](https://github.com/Templarian/MaterialDesign) | Apache 2.0                      | 7,447 | 2.7 MB | Static, 24 by 24; every body uses `currentColor` (7,447 of 7,447) and none uses `#fff`                                    |
+| `material-line-icons.json`    | Material Line Icons    | `mli`  | Vjacheslav Trushkin, [github.com/cyberalien/line-md](https://github.com/cyberalien/line-md) | MIT                             | 1,218 | 1.5 MB | Animated with SMIL (`<animate>` in 1,216, `<set>` or `<animateTransform>` in 343); 164 names end in `-loop`; all bodies use `currentColor` |
 
-- **Format.** Iconify-style: an object with `prefix`, `icons` (an icon name mapped to an object with only `body`, the markup inside the `<svg>` element), `width` and `height` (24). No per-icon viewBox, no aliases and no licence field.
-- **Licence.** The folder's `LICENSE.txt` is the Pictogrammers Free License: the icons are Apache 2.0, and "some of the icons are redistributed under their respective licenses".
-- **Cost.** Loading took 5.4 ms (base) and 3.2 ms (animated) and held 4.5 MB and 1.6 MB in Python (measured with `tracemalloc` on this machine).
+- **Format.** Iconify-style: top keys `name`, `author`, `license`, `prefix`, `icons`, `width`, `height` (24); each icon has only `body`, the markup inside the `<svg>` element. No aliases and no per-icon viewBox.
+- **Names.** 207 names exist in both sets, 7,240 only in `mdi` and 1,011 only in `mli`.
+- **Cost.** Loading took 7.8 ms and 2.6 ms ([[Block Reference#The Icon Set Files (2026-11-01)]] earlier measurement for the first export: 4.5 MB and 1.6 MB of memory; the new files are the same size within 3 percent).
+- **Hard-coded colours.** The line set still has `#fff` or `#000` in 464 bodies. All 464 are inside a `<mask>`, where black and white are the mask's own values and must stay. The recolouring check in the icon tests therefore ignores `<mask>` and `<clipPath>` content and fails on a hard-coded colour anywhere else.
+- **The earlier findings that changed.** The duplicate no-anim file is gone. The recolouring is done in the data (`currentColor`), so the shell does none. The animated set's source and licence are stated in the file: it is the Material Line Icons set by Vjacheslav Trushkin, MIT.
 
-Findings and recommendations (the agent's; not decided):
+Recommendations (the agent's; not decided):
 
-1. **Recolouring.** Every body in the base file hard-codes `#fff` (7,447 of 7,447; no `currentColor`). tre's `svg_color` tints only `currentColor`, so the maintainer will export the files with `currentColor` in place of `#fff` (decided 2026-11-01) and the shell does no replacement; the `Foreground` style key then themes the icon. A check in the icon tests fails if a body still holds a hard-coded colour. The animated samples use `stroke="#fff"` the same way; only the base file was scanned in full.
-2. **The document.** From the maintainer's `currentColor` files the shell builds `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">` + body + `</svg>`, with the size from the file's `width` and `height`, and caches it by name.
-3. **One static file.** The base and no-anim files hold the same icons, so ship one. Was no-anim meant to hold the static versions of the 1,218 animated icons?
-4. **Animated icons.** tre's documentation does not say whether its `svg` node plays SMIL: the reference documents `svg`, `svg_color` and `svg_images` only. Test one animated icon in tre before relying on the set. If tre draws it static, the options are an engine request or leaving the animated set out of v1. The Icon module would take an `Animated` parameter, false by default, because 207 names exist in both files. #needs-verification.
-5. **Loading.** Read a file on the first lookup and keep the dictionary; at 3 to 5 ms it needs no index.
-6. **Licence.** Apache 2.0 requires the licence text and notices to travel with redistributed icons, and "some icons" carry their own licences, so the package may need a per-icon list. The animated set is drawn in a different style from the static one (stroked, animated), and the single `LICENSE.txt` does not say where it comes from: confirm its source and licence. #needs-verification; [[Risk Register]] R-23.
-7. **Names.** The shipped names are kebab-case (`account-alert`); freedesktop names differ (`audio-volume-high`), so the theme lookup (row 2) serves the names the shipped set lacks.
-8. **JSON or separate SVG files.** Recommended (the maintainer offered to export separate files): keep the shipped set as JSON. It is 3 files against about 8,700, about 4 MB against roughly 35 MB of 4 KB disk blocks (an estimate), loads in about 5 ms once, and carries one version and licence. Separate files stay the format of the user and developer folders (rows 3 and 4). In the export the maintainer will write `currentColor` in place of `#fff` (so the shell needs no replacement), and should add a licence and source section (Iconify's optional `info` object, #needs-verification; otherwise a plain `license` key). Keep the animated set a separate file.
+1. **Prefixes.** An icon name may carry its set prefix, `mli:account-alert-loop`, which always selects that set. A name with no prefix looks in `mdi` first. The Icon module's `Animated` parameter (false by default) looks in `mli` first and falls back to `mdi`. This settles the 207 shared names.
+2. **Load lazily.** Read a file on the first lookup that needs it and keep the dictionary. The animated file is read only when something asks for it.
+3. **Animated icons are untested in tre.** tre's documentation does not say whether its `svg` node plays SMIL, nor whether it supports `<mask>`, which many line icons use. Test one animated line icon with a mask in tre before shipping the set. If tre draws it static, the options are an engine request or leaving `mli` out of v1. #needs-verification.
+4. **Licences travel with the files.** Apache 2.0 and MIT both require their notices to be redistributed. The folder holds Pictogrammers' `LICENSE.txt` (Apache 2.0 for the icons, and "some of the icons are redistributed under their respective licenses"); the MIT licence text with the line-md copyright line is not in the folder. Ship both texts with the package, and record the set's `license` object in the About text. The `spdx` field reads `Apache 2.0` where the SPDX identifier is `Apache-2.0` (#needs-verification against the SPDX list); the shell should not rely on that field. [[Risk Register]] R-23.
+5. **Names.** Shipped names are kebab-case (`account-alert`); freedesktop names differ (`audio-volume-high`), so the theme lookup (row 2) serves the names neither set has.
 
 ## Custom Blocks (R12)
 
@@ -410,7 +408,7 @@ class Meter(Block):
 ## Open
 
 - [ ] The list of built-in shell actions.
-- [ ] The icon files: which of base and no-anim to ship, whether tre plays the animated set, and the animated set's source and licence ("The Icon Set Files").
+- [ ] The icon files: whether tre plays the animated set and draws its masks, the shipped licence texts (the MIT text of the line set is missing from the folder), and the prefix rule for names ("The Icon Set Files").
 - [ ] The value sets and defaults of the align, justify and cursor keys, and the text form of grid tracks (#needs-verification against tre's source or a test).
 - [ ] The default sizes of an SVG and of a Terminal (#needs-verification).
 - [ ] The event and action vocabulary and the value form of an `On_` key.
