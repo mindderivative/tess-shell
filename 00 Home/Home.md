@@ -31,10 +31,10 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-11-01 |
-| Last change         | Stack dropped; `On_` reserved for events; the maintainer provides the icon JSON; custom-block API and event value form recommended ([[Block Reference]]) |
+| Last change         | Custom-block API, event value form and `Directories { Icons }` key accepted ([[Block Reference]]) |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | The recommended custom-block API, event value form and `Directories { Icons }` key in [[Block Reference]]; the icon JSON file from you; the TEL release number to pin as `TEL:` (waiting on the TEL release) |
-| Next                | The shipped-module list (V1 Widgets) and the event and action vocabulary; then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
+| Waiting on you      | The icon JSON file from you; the list of built-in shell actions; the TEL release number to pin as `TEL:` (waiting on the TEL release) |
+| Next                | The shipped-module list ([[V1 Widgets]]); then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
 | Deferred to testing | Which global settings belong in `settings.tdl` ([[Settings File]]); First KWin release with layer-shell, `org_kde_plasma_shell`, GNOME ([[ADR-0001 Shell Surface Strategy#Open items]]); how KWin presents mirrored outputs ([[V1 Scope#Multi-monitor]]); the four reservers plus the painter on KWin and a 4K Frame with many joins ([[Frame]]); fractional scale at 1.5x ([[Frame]]); fullscreen stacking and detection ([[Surface Types#Fullscreen and maximised windows (decided 2026-10-27)]]); Bar over a Plasma panel ([[Bar]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-11-01 | Custom-block API, event value form and Icons key accepted ([[Block Reference]]) |
 | 2026-11-01 | Stack dropped; `On_` reserved; custom-block API and event value form recommended ([[Block Reference]]) |
 | 2026-11-01 | Block proposals R1 to R11 decided; Revealer renamed Expander; icon lookup order set ([[Block Reference]]) |
 | 2026-11-01 | [[Block Reference]] written (proposals R1 to R11); R-22 added for the Terminal block |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-11-01 | `For` entries use TEL's counter names (D65) ([[ADR-0014 Shell File Language]]) |
 | 2026-11-01 | TEL accepted and built `?:`; TEL step 5 (conditions, repeater reconciliation) recorded ([[Expression Language Requirements]]) |
 | 2026-10-31 | `Meld` restored (confirmed); `?:` cost test results recorded ([[Expression Language Requirements]]) |
-| 2026-10-31 | P1 accepted (D61); Bar `Gap` decides its meld (D62); Panel `Meld` restored (D56 corrected) ([[ADR-0014 Shell File Language]]) |
 
 ## Go to
 

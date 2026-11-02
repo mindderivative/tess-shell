@@ -106,7 +106,7 @@ An event key is `On_` plus the event name. The `On_` prefix is reserved for even
 
 An action is what the shell does when the event happens. It is a method of the module's Python class marked `@action`, or a built-in shell action ([[Module Contract#The Class (Proposed)]]; decided 2026-10-26 that nothing else can be called from a shell file). Arguments may be TEL expressions, evaluated when the event fires ([[ADR-0007 Shell UI Layer#Events and Module Reload (2026-10-26)]]).
 
-Proposed value form (the agent's recommendation, not decided):
+Value form (decided by the maintainer, 2026-11-01):
 
 ```
 On_Click: toggle_mute
@@ -320,7 +320,7 @@ Proposals R1 to R11 were decided by the maintainer in chat ("As recommended"), e
 | R9  | A block handle for Python   | A module can reach a block it names and call `focus()`, `capture_pointer()`, `release_pointer()`, `redraw()` and read `layout_width` and `layout_height`. To be written into [[Module Context]].                                                                         |
 | R10 | Rich text                   | tre's `spans` become repeated `Span` blocks inside a Text. Post-v1.                                                                                                                                                                                                       |
 | R11 | v1 block set                | Box, FlexBox, Grid, Text, TextField (single line), Bitmap, SVG, Rectangle, Circle, Ring, Path and ScrollBox. The rest follow when a module needs them ([[V1 Widgets]]).                                                                                                    |
-| R12 | Custom blocks               | A module author can add a block, in Python, shipped with the module. The mechanism is under "Custom Blocks" below and is a proposal.                                                                                                                                     |
+| R12 | Custom blocks               | A module author can add a block, in Python, shipped with the module. The mechanism (accepted 2026-11-01) is under "Custom Blocks" below.                                                                                                                                     |
 | R13 | Revealer renamed            | The module Revealer is now Expander, the familiar name (maintainer, 2026-11-01).                                                                                                                                                                                          |
 | R14 | Stack                       | The maintainer asked what separates a Stack from a FlexBox. A FlexBox places children side by side or one under another. A Stack puts them on top of each other in one cell. With R1 a Box already does that, so the Stack module has nothing left to add. Decided (maintainer, 2026-11-01): Stack is dropped; use a Box. |
 
@@ -337,24 +337,24 @@ The Icon module finds an icon by name in this order; the first hit wins. A file 
 
 The maintainer will provide the JSON file of the icon set (2026-11-01). Its format and licence information come with it, so the shape in row 1 is a placeholder.
 
-Settings key (recommended, not decided): `Directories { Icons: [...] }`, the same key as the other file types, one path or a list searched in order. The config `Icons/` folder (row 3) comes first and the listed paths follow, as the maintainer set the order; this is the one place where a listed path is searched after the default folder, because the Settings File note proposes the opposite for the other types ([[Settings File]]).
+Settings key (decided by the maintainer, 2026-11-01): `Directories { Icons: [...] }`, the same key as the other file types, one path or a list searched in order. The config `Icons/` folder (row 3) comes first and the listed paths follow, as the maintainer set the order; this is the one place where a listed path is searched after the default folder, because the Settings File note proposes the opposite for the other types ([[Settings File]]).
 
 Consequences to confirm: because the shipped set is first, a file in `Icons/` or the desktop theme cannot replace a shipped icon of the same name; to use another `battery-full` a user names the file by path or uses another name. Open: how the JSON file is versioned and updated, and the Icon module's parameter for the name (not `Name`, which is the unique name). The icon set's licence goes into the delivery notes.
 
 ## Custom Blocks (R12)
 
-The maintainer decided that a module author can add a block, in Python, shipped with the module. The mechanism below is the agent's proposal.
+The maintainer decided that a module author can add a block, in Python, shipped with the module. The mechanism below was accepted on 2026-11-01.
 
 - A block is a Python class in the module's `<Name>_Module.py`, derived from a shell `Block` base. It declares its properties (type, default, choices, doc), parts, states and events the way a built-in does, so the schema and the error messages cover it ([[Style Schema]], [[JSON Schema and Editor Support]]).
 - It is built from tre nodes: a tree of the existing node kinds. It cannot add a new tre node kind.
 - It is registered by name in the one registry when the module loads, and removed when the module is unloaded or reloaded ([[Hot Reload]]). A name used twice is a load error, except that a user module overrides a shipped one.
 - Once the module has loaded, any file can use the block by its name, like any other.
 - It runs the module's Python in the shell's process, so the unwritten security model for user Python applies ([[Risk Register]] R-19).
-- Recommended API (not decided): v1 custom blocks are leaf blocks, with no `Children`, because composition is what modules are for. A name needs no prefix: a name used twice is a load error that names both places. The class sketch is under "Custom Block API (Recommended)" and is mirrored in [[Module Contract#Custom Blocks (Proposed)]].
+- API (decided by the maintainer, 2026-11-01): v1 custom blocks are leaf blocks, with no `Children`, because composition is what modules are for. A name needs no prefix: a name used twice is a load error that names both places. The class sketch is under "Custom Block API (Decided)" and is mirrored in [[Module Contract#Custom Blocks (Decided)]].
 
-### Custom Block API (Recommended)
+### Custom Block API (Decided)
 
-An illustration, not the import path or the final names:
+The API is decided; the sketch is an illustration, and the import path and the final class and helper names are not:
 
 ```python
 # Modules/Meter/Meter_Module.py
@@ -384,7 +384,7 @@ class Meter(Block):
 
 ## Open
 
-- [ ] The recommended custom-block API (R12), the settings key for icon locations, the action value form under Events, and the list of built-in shell actions.
+- [ ] The list of built-in shell actions.
 - [ ] The icon JSON file: its format and licence, which the maintainer provides.
 - [ ] The value sets and defaults of the align, justify and cursor keys, and the text form of grid tracks (#needs-verification against tre's source or a test).
 - [ ] The default sizes of an SVG and of a Terminal (#needs-verification).
