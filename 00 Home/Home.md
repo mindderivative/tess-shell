@@ -31,9 +31,9 @@ depends_on: []
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Phase               | Design only. No code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Updated             | 2026-11-01 |
-| Last change         | Custom-block API, event value form and `Directories { Icons }` key accepted ([[Block Reference]]) |
+| Last change         | The maintainer's three icon JSON files inspected and recorded ([[Block Reference#The Icon Set Files (2026-11-01)]]); R-23 added for the icon licences |
 | Decided             | [[ADR-0001 Shell Surface Strategy]], [[ADR-0003 Process Model]] to [[ADR-0014 Shell File Language]] (13 accepted; ADR-0002 superseded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Waiting on you      | The icon JSON file from you; the list of built-in shell actions; the TEL release number to pin as `TEL:` (waiting on the TEL release) |
+| Waiting on you      | Which static icon file to ship (base and no-anim are identical); the animated set's source and licence; a test of an animated icon in tre; the list of built-in shell actions; the TEL release number to pin as `TEL:` |
 | Next                | The shipped-module list ([[V1 Widgets]]); then the missing Integration notes ([[Roadmap#Spec backlog (proposed order)]]) |
 | Blocked             | Nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Tracking            | Nothing. Tesserae's own version key no longer matters to the shell: the `.tdl` extension and the metadata block tell the files apart ([[ADR-0014 Shell File Language]]) |
@@ -45,6 +45,7 @@ Newest first. Keep the last 8. One line each.
 
 | Date       | Change                                                                                            |
 |------------|---------------------------------------------------------------------------------------------------|
+| 2026-11-01 | Icon set JSON files inspected; R-23 added ([[Block Reference]]) |
 | 2026-11-01 | Custom-block API, event value form and Icons key accepted ([[Block Reference]]) |
 | 2026-11-01 | Stack dropped; `On_` reserved; custom-block API and event value form recommended ([[Block Reference]]) |
 | 2026-11-01 | Block proposals R1 to R11 decided; Revealer renamed Expander; icon lookup order set ([[Block Reference]]) |
@@ -52,7 +53,6 @@ Newest first. Keep the last 8. One line each.
 | 2026-11-01 | Base name of a `For` entry confirmed (D65) |
 | 2026-11-01 | `For` entries use TEL's counter names (D65) ([[ADR-0014 Shell File Language]]) |
 | 2026-11-01 | TEL accepted and built `?:`; TEL step 5 (conditions, repeater reconciliation) recorded ([[Expression Language Requirements]]) |
-| 2026-10-31 | `Meld` restored (confirmed); `?:` cost test results recorded ([[Expression Language Requirements]]) |
 
 ## Go to
 

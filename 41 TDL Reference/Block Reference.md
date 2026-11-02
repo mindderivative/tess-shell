@@ -330,16 +330,40 @@ The Icon module finds an icon by name in this order; the first hit wins. A file 
 
 | Order | Source                                                                                                              | Notes                                                                                                                                                       |
 |-------|---------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1     | The shipped set: SVG icons in one JSON file that ships with the shell                                               | Proposed shape: a JSON object that maps an icon name to an SVG document, plus the set's name and licence. The shell reads it once at start and gives the SVG text to tre |
+| 1     | The shipped set: SVG icons in JSON files that ship with the shell                                               | The maintainer's Iconify-style JSON files (see "The Icon Set Files"). The shell reads them on first use and gives tre an SVG document built from each icon's body |
 | 2     | The desktop's freedesktop icon theme                                                                                | [Icon Theme Specification](https://specifications.freedesktop.org/icon-theme-spec/latest/); the current theme comes from the desktop settings #needs-verification |
 | 3     | The `Icons` folder in the shell's config directory                                                                  | `$HOME/.config/tesserae-shell/Icons/` ([[Settings File]])                                                                                                    |
 | 4     | The locations a developer lists in `settings.tdl`                                                                   | Under `Directories { Icons: [...] }`, searched in order (proposed key; [[Settings File]])                                                                    |
 
-The maintainer will provide the JSON file of the icon set (2026-11-01). Its format and licence information come with it, so the shape in row 1 is a placeholder.
+The maintainer provided the icon set as JSON files (2026-11-01); they are described under "The Icon Set Files" below.
 
 Settings key (decided by the maintainer, 2026-11-01): `Directories { Icons: [...] }`, the same key as the other file types, one path or a list searched in order. The config `Icons/` folder (row 3) comes first and the listed paths follow, as the maintainer set the order; this is the one place where a listed path is searched after the default folder, because the Settings File note proposes the opposite for the other types ([[Settings File]]).
 
 Consequences to confirm: because the shipped set is first, a file in `Icons/` or the desktop theme cannot replace a shipped icon of the same name; to use another `battery-full` a user names the file by path or uses another name. Open: how the JSON file is versioned and updated, and the Icon module's parameter for the name (not `Name`, which is the unique name). The icon set's licence goes into the delivery notes.
+
+### The Icon Set Files (2026-11-01)
+
+The maintainer's files are in `/home/phil/Projects/pyDev/projects/tess-icons/icon-sets/Material-Design-Icons/` (his tess-icons project). Read-only inspection on 2026-11-01:
+
+| File                                  | Prefix       | Icons | Size   | Content                                                                                                                                                             |
+|---------------------------------------|--------------|-------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `material-design-base-icons.json`     | `md-base`    | 7,447 | 2.6 MB | Static icons on a 24 by 24 grid                                                                                                                                     |
+| `material-design-no-anim-icons.json`  | `md-no-anim` | 7,447 | 2.6 MB | The same icons as the base file: the two `icons` objects are equal, and only the prefix differs                                                                     |
+| `material-design-anim-icons.json`     | `md-anim`    | 1,218 | 1.4 MB | Animated with SMIL (`<animate>` in 1,216 icons, `<set>` or `<animateTransform>` in 343); 164 names end in `-loop`; 207 names also exist in the base set and 1,011 do not |
+
+- **Format.** Iconify-style: an object with `prefix`, `icons` (an icon name mapped to an object with only `body`, the markup inside the `<svg>` element), `width` and `height` (24). No per-icon viewBox, no aliases and no licence field.
+- **Licence.** The folder's `LICENSE.txt` is the Pictogrammers Free License: the icons are Apache 2.0, and "some of the icons are redistributed under their respective licenses".
+- **Cost.** Loading took 5.4 ms (base) and 3.2 ms (animated) and held 4.5 MB and 1.6 MB in Python (measured with `tracemalloc` on this machine).
+
+Findings and recommendations (the agent's; not decided):
+
+1. **Recolouring.** Every body in the base file hard-codes `#fff` (7,447 of 7,447; no `currentColor`). tre's `svg_color` tints only `currentColor`, so the shell replaces `#fff` with `currentColor` when it builds the document, and the `Foreground` style key then themes the icon. The animated samples use `stroke="#fff"` the same way; only the base file was scanned in full.
+2. **The document.** The shell builds `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">` + body + `</svg>`, with the size from the file's `width` and `height`, and caches it by name.
+3. **One static file.** The base and no-anim files hold the same icons, so ship one. Was no-anim meant to hold the static versions of the 1,218 animated icons?
+4. **Animated icons.** tre's documentation does not say whether its `svg` node plays SMIL: the reference documents `svg`, `svg_color` and `svg_images` only. Test one animated icon in tre before relying on the set. If tre draws it static, the options are an engine request or leaving the animated set out of v1. The Icon module would take an `Animated` parameter, false by default, because 207 names exist in both files. #needs-verification.
+5. **Loading.** Read a file on the first lookup and keep the dictionary; at 3 to 5 ms it needs no index.
+6. **Licence.** Apache 2.0 requires the licence text and notices to travel with redistributed icons, and "some icons" carry their own licences, so the package may need a per-icon list. The animated set is drawn in a different style from the static one (stroked, animated), and the single `LICENSE.txt` does not say where it comes from: confirm its source and licence. #needs-verification; [[Risk Register]] R-23.
+7. **Names.** The shipped names are kebab-case (`account-alert`); freedesktop names differ (`audio-volume-high`), so the theme lookup (row 2) serves the names the shipped set lacks.
 
 ## Custom Blocks (R12)
 
@@ -385,7 +409,7 @@ class Meter(Block):
 ## Open
 
 - [ ] The list of built-in shell actions.
-- [ ] The icon JSON file: its format and licence, which the maintainer provides.
+- [ ] The icon files: which of base and no-anim to ship, whether tre plays the animated set, and the animated set's source and licence ("The Icon Set Files").
 - [ ] The value sets and defaults of the align, justify and cursor keys, and the text form of grid tracks (#needs-verification against tre's source or a test).
 - [ ] The default sizes of an SVG and of a Terminal (#needs-verification).
 - [ ] The event and action vocabulary and the value form of an `On_` key.
