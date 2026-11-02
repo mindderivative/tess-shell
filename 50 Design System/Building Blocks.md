@@ -5,7 +5,7 @@ type: design
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-11-01
 tags: [design, needs-verification]
 related: ["[[50 Design System]]", "[[V1 Widgets]]", "[[Shell Structure]]", "[[Module File]]", "[[ADR-0007 Shell UI Layer]]"]
 depends_on: ["[[ADR-0007 Shell UI Layer]]"]
@@ -44,7 +44,7 @@ A surface or a module passes layout properties to its layout block (`Box`, `Flex
 
 - `Padding` (four-sided, left, top, right, bottom) exists on every block that has `Children`: transparent space between its children and its four sides (D42). Blocks without `Children` (`Text`, `Bitmap`, `SVG`, the shapes, `Terminal`, `Canvas`) have none.
 - `Margin` (four-sided, left, top, right, bottom) is transparent space around the block itself, outside it (D41 to D45). A Bar has none (D41).
-- The exact property set per block stays a proposal until each block's properties are written (see Open).
+- The property set per block is written in [[Block Reference]] (proposed, 2026-11-01).
 
 ## The Modules Built from Them (The Maintainer's List)
 
@@ -114,11 +114,11 @@ Decided by the maintainer (2026-10-26); the full rules are in [[Style, Theme and
 - [ ] Whether a module author can add a block (in Python, shipped with a module), or blocks are fixed.
 - [x] A free-form Path block: added (2026-10-26).
 - [x] Whether the listed modules can be built from the listed blocks: the maintainer reports yes, tested on Tesserae (2026-10-26). Revealer and Marquee need animated layout and translate properties; Stack needs layered children; Slider, Toggle and Button need pointer and drag events from the blocks.
-- [ ] Grid: what it offers against tre's layout, and how `Columns`, `Rows` and `Spacing` map to it.
+- [x] Grid: tre has a grid (`display: "grid"`, `grid_template_columns`, `grid_template_rows`, `row_gap`, `column_gap`); the mapping of `Columns`, `Rows` and `Spacing` is in [[Block Reference#Grid]]. Open: the text form of tre's track template.
 - [x] The default hit shape of Path and the shape blocks: `painted` (maintainer, 2026-10-27): the reason to use a shape is for the look and for the hit box to be the painted shape. tre 0.5.9 has `hit_shape` `box` (its default) or `painted`; the shell's shape blocks set `painted`. SVG and Canvas are not covered by `hit_shape` ([[Hit Testing for Concave Corners]]).
-- [ ] How icons are found (a theme icon set, files, both).
-- [ ] The state model: whether input blocks have properties the user edits (Tesserae's `model`) and how that reaches a module.
-- [ ] Accessibility defaults for each block (roles, labels, keyboard operation) ([[Goals and Non-Goals]] G7).
+- [ ] How icons are found: proposed in [[Block Reference#Proposals for the Maintainer]] (R7), the desktop's freedesktop icon theme first, then a file path.
+- [ ] The state model: proposed in [[Block Reference#Proposals for the Maintainer]] (R6), data in through `Text` and edits out through `On_Change`, with no two-way binding.
+- [ ] Accessibility defaults for each block (roles, labels, keyboard operation) ([[Goals and Non-Goals]] G7): proposed in [[Block Reference#Accessibility Defaults]].
 
 ## Links
 

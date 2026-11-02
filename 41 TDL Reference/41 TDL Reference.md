@@ -18,6 +18,7 @@ The keys and forms of every shell file, written in TDL (Tesserae Data Language, 
 | Note                                    | Purpose                                                                                                      | Status |
 |-----------------------------------------|--------------------------------------------------------------------------------------------------------------|--------|
 | [[TDL Language]] | The language itself: metadata block, root block, punctuation, case rules, name registry, monitors, sizes, structure words      | draft  |
+| [[Block Reference]] | The properties, events, accessibility defaults and tre mapping of every building block (proposed) | draft  |
 | [[Common Keys and Conventions]] | Keys every file has, what says what a thing is, names, value forms, errors                                      | draft  |
 | [[Shell File]] | The shell file: root, monitor, surfaces and their keys                                                       | draft  |
 | [[Module File]] | The module file: layout, params, data in the layout, using a module                                          | draft  |
@@ -26,4 +27,4 @@ The keys and forms of every shell file, written in TDL (Tesserae Data Language, 
 | [[JSON Schema and Editor Support]] | JSON Schema files, chosen by the root block and suffix, that validate the parsed TDL tree at load and reload; the `tesserae-shell schema` command; no editor part in v1 (D12) | draft  |
 | [[Style Schema]] | Proposed shell-owned style keys, theme tokens, shadow keys and stylesheet `Rule` blocks                          | draft  |
 
-Expressions are TEL's ([[Expression Language Requirements]]); their grammar is worked out in the TEL project. Not started: a per-widget property reference, the surface-kind keys, the event and action keys, and the JSON Schema files themselves (the design is in [[JSON Schema and Editor Support]]; the Theme and Stylesheet shapes are proposed in [[Style Schema]]; the key names of the style schema are still a proposal).
+Expressions are TEL's ([[Expression Language Requirements]]); their grammar is worked out in the TEL project. Not started: the surface-kind keys, the event and action keys, and the JSON Schema files themselves (the design is in [[JSON Schema and Editor Support]]; the Theme and Stylesheet shapes are proposed in [[Style Schema]]; the key names of the style schema are still a proposal).

@@ -39,6 +39,7 @@ depends_on: []
 | R-19 | User Python runs in the shell's process with the user's rights, so a bad module can read files or hang the shell       | [[Module Contract]]                                                                                   | The security model is not written (`60 Quality`); keep modules to the documented context; whether to sandbox is not decided                                         |
 | R-20 | A shell language of our own (TDL) needs a parser, errors, formatter and editor support, and loses the YAML language server's help; its grammar could grow into a scripting language | [[ADR-0014 Shell File Language]], [[ADR-0011 JSON Schema for Shell Files]] | TDL is structure-only with expressions in TEL (accepted 2026-10-29); the same shell compared in [[Shell File Syntax Comparison]]; no language server in v1, a highlighting grammar is open |
 | R-21 | A monitor chosen by `Index:` (position in the compositor's output array) can change to another screen on hot-plug, wake or reboot | [[ADR-0014 Shell File Language#Consequences]] | Decided 2026-10-29: `Monitor` also accepts `Connector:` and `Description:`; test the output order on KWin (#needs-verification) |
+| R-22 | A Terminal block could start a process from a configuration file | [[Block Reference#Terminal]] | Proposed: TDL has no `Command` key; a module's Python attaches the process; post-v1 |
 
 ## Links
 

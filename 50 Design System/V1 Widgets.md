@@ -54,7 +54,7 @@ Also in the maintainer's standard set but not yet needed by a v1 module: TextBox
 
 - [ ] Which of TextBox, TextEditor, Stack, Badge, Tooltip, Toggle and Marquee text are v1.
 - [ ] Which text-input behaviour TextField needs for v1 (composition and input methods work on layer surfaces in tre 0.5.8; no real input method was tested).
-- [ ] The properties and states of each, once the view format is written ([[Building Blocks]]).
+- [ ] The properties and states of each: proposed in [[Block Reference]] (2026-11-01); the maintainer has not decided them.
 
 ## Links
 
