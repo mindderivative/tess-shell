@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [architecture, needs-verification]
 ---
 
@@ -26,7 +26,8 @@ flowchart TD
     f --> g[Read outputs and match Monitor blocks]
     g --> h[Build the shell model]
     h --> i[Open one window per surface per monitor]
-    i --> j[Start modules]
+    i --> i2[Bind to tre: build each subtree detached, link slots, attach]
+    i2 --> j[Start modules]
 ```
 
 | Step                         | Decided by                              | Failure                                                                               |
@@ -36,6 +37,7 @@ flowchart TD
 | Registry and UID             | [ADR-0007 Shell UI Layer > Config directory and registry (2026-10-25)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#config-directory-and-registry-2026-10-25) | A mismatch registers a new entry; an unresolved reference is an error at load         |
 | TEL compile                  | [ADR-0008 Tesserae Expression Language](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md) | Error with file, line and column inside the TDL file                                  |
 | `Monitor` matching           | [V1 Scope > Multi-monitor](../10%20Vision/V1%20Scope.md#multi-monitor), [TDL Language > Monitors (Shell Schema)](../41%20TDL%20Reference/TDL%20Language.md#monitors-shell-schema) | A `Monitor` with no selector is ignored; `Index: default` covers monitors no other `Monitor` names |
+| Bind to tre                  | [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md) (proposed) | A value tre refuses is reported with the `file:line:column` of the key; the surface stays empty and the others open |
 | Module start                 | [ADR-0007 Shell UI Layer > Module Python (2026-10-25)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#module-python-2026-10-25) | A module with no matching `.py` is a load error naming both files                     |
 
 ## Live Module Data
@@ -67,7 +69,7 @@ sequenceDiagram
     end
 ```
 
-- tre's layer window takes `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard` and `input_region` live through `set()` in one commit. `namespace` and `output` are constructor-only, so changing them means closing and recreating the window ([TRE-REQ-001 Layer Surface Window > Proposed API](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#proposed-api)).
+- tre's layer window takes `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard` and `input_region` live through `set()` in one commit. `namespace` and `output` are constructor-only, so changing them means closing and recreating the window ([TRE-REQ-001 Layer Surface Window > Proposed API](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#proposed-api)).
 - A bad file leaves the old state ([Process Model and Threading > Lifecycle (proposed)](Process%20Model%20and%20Threading.md#lifecycle-proposed)).
 - The shell's own UID write must not trigger a reload loop: it patches the file text at the node's position and the watcher drops the event by content hash (D10, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30); [Hot Reload > The Shell's Own Writes](../40%20Specifications/Runtime/Hot%20Reload.md#the-shells-own-writes)).
 - A changed module `.py` is reloaded at runtime (decided 2026-10-26, [ADR-0007 Shell UI Layer > Events and module reload (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26)). Proposed order: import the new code and check it has the module class; then `stop` the old instance and join its threads; purge the module's own modules from `sys.modules`; create the new instance and `start` it. A failed import keeps the old instance. The value store keeps the last values until the new instance sends. The `reload` hook handles a TDL-only change. #needs-verification

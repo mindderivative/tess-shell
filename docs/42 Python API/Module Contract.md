@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-11-01
+updated: 2026-11-03
 tags: [api, needs-verification]
 ---
 
@@ -31,7 +31,7 @@ tags: [api, needs-verification]
 
 ```python
 # Modules/Clock/Clock_Module.py   (illustration; the import path is not decided)
-from tesserae_shell import Module
+from tess_shell import Module
 
 class Clock(Module):
     def start(self):

@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [tdl-ref, design, needs-verification]
 ---
 
@@ -28,8 +28,8 @@ Style {
     Classes {
         text_style {
             Kind: Text            # the type the class applies to; see Classes below
-            Size: 16
-            Weight: 500
+            Font_Size: 16
+            Font_Weight: 500
             Foreground: "#ffffff"
         }
     }
@@ -41,8 +41,7 @@ Style {
 
     FlexBox {
         Background: "#000000"
-        Border: true
-        Border_Thickness: 2
+        Border_Width: 2
         Border_Color: "#ffffff"
         Corner_Radius: 8
     }
@@ -53,17 +52,17 @@ Style {
 }
 ```
 
-| Key                                                   | Meaning                                                                                                                            | Status                                  |
-|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
-| `Classes`                                             | Named groups of values a widget picks up with `Class:`                                                                             | Decided (the form)                      |
-| A widget name as a block (`Icon { }`, `FlexBox { }`, `Text { }`) | Defaults for every widget of that type in the file that uses this style                                                            | Decided (the form)                      |
-| Property names                                        | `Size`, `Weight`, `Foreground`, `Fill`, `Background`, `Border`, `Border_Thickness`, `Border_Color`, `Corner_Radius`, `Font_Family` | From the example; the full list is open |
+| Key                                                              | Meaning                                                                                                                                  | Status                                  |
+|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
+| `Classes`                                                        | Named groups of values a widget picks up with `Class:`                                                                                   | Decided (the form)                      |
+| A widget name as a block (`Icon { }`, `FlexBox { }`, `Text { }`) | Defaults for every widget of that type in the file that uses this style                                                                  | Decided (the form)                      |
+| Property names                                                   | `Font_Size`, `Font_Weight`, `Foreground`, `Fill`, `Background`, `Border`, `Border_Width`, `Border_Color`, `Corner_Radius`, `Font_Family` | From the example; the full list is open |
 
 - **Colour** forms: the quoted hex `"#RRGGBB"` and `"#RRGGBBAA"`, and `rgba(r g b a)` with spaces, red, green and blue 0 to 255 and alpha 0.0 to 1.0 ([ADR-0014 Shell File Language > What TDL Is (Decided)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#what-tdl-is-decided); the list in [Common Keys and Conventions > Value forms](Common%20Keys%20and%20Conventions.md#value-forms) uses the same spelling).
 - **Four-sided** values: a number, a list of four in the order left, top, right, bottom (D50), or a block of named sides such as `Margin { Top: 8, Left: 24 }` (D7, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). `Padding` is transparent space inside an element that has `Children`; `Margin` is transparent space around the element ([Style Schema > Style Keys](Style%20Schema.md#style-keys)). The example's `{2, 2, 2, 2}` becomes `2` or `[2, 2, 2, 2]`; `Corner_Radius: {8, 8, 8, 8}` becomes `8` or `[8, 8, 8, 8]` (top-left, top-right, bottom-right, bottom-left, clockwise from top-left).
 - **Lists:** `Font_Family: ["Hack Nerd Font Mono", "JetBrains Mono"]`, an ordered fallback list (the example's braces become square brackets).
 - The same values may be written inline under `Style:` in a module or surface.
-- `Border: true` is a bare word that the key's schema type reads as a boolean (D2, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
+- `Border` is always a block, `Border { Width: 2, Color: "#ffffff" }`; the flat `Border_Width: 2` and `Border_Color: "#ffffff"` write the same two values. There is no `Border: true` or `Border: false`. A border takes layout space ([Style Schema > Style Keys](Style%20Schema.md#style-keys)).
 
 ### Classes
 

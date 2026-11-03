@@ -16,7 +16,7 @@ tags: [engine-request, needs-verification]
 
 > [!NOTE]
 > **Not to be filed now**
-> The maintainer asked for this request to be written and kept (2026-10-27). It is not filed from this vault, and the `tre` session has not been told (AGENTS > 6. Engine requests (tre / Tesserae)).
+> The maintainer asked for this request to be written and kept (2026-10-27). It is not filed from this vault, and the `tre` session has not been told (AGENTS > 6. Requests Between Projects).
 
 ## Shell Need
 
@@ -79,4 +79,4 @@ Small, by reading the code: a field on the core `Gradient`, one extra argument o
 
 ## Links
 
-[Frame](../40%20Specifications/Surfaces/Frame.md) · [Style Schema](../41%20TDL%20Reference/Style%20Schema.md) · [80 Engine Requests](80%20Engine%20Requests.md)
+[Frame](../40%20Specifications/Surfaces/Frame.md) · [Style Schema](../41%20TDL%20Reference/Style%20Schema.md) · [80 Requests](80%20Requests.md)

@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-29
+updated: 2026-11-02
 tags: [moc, adr]
 ---
 
@@ -27,3 +27,5 @@ tags: [moc, adr]
 | [ADR-0012 Keeping the Shell Above Plasma Panels](ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md) | Ways to keep the Bar above a Plasma panel: KWin rules, a KWin script, others        | accepted 2026-10-27    |
 | [ADR-0013 Control Interface](ADR-0013%20Control%20Interface.md) | One D-Bus interface for commands and the KWin script (A socket, B D-Bus, C both)    | accepted 2026-10-28    |
 | [ADR-0014 Shell File Language](ADR-0014%20Shell%20File%20Language.md) | A structure-only data language of the shell's own, TDL, in place of YAML (A custom, B YAML, C KDL, D QML) | accepted 2026-10-29    |
+| [ADR-0015 Render Binder](ADR-0015%20Render%20Binder.md) | A generic, table-driven binder turns the typed tree into tre nodes (Option A recommended) | accepted 2026-11-02 |
+| [ADR-0016 Staged Development](ADR-0016%20Staged%20Development.md) | Coding starts in stages; rows are deferred to the milestone that needs them | accepted 2026-11-02 |

@@ -5,14 +5,14 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [spec/runtime, needs-verification]
 ---
 
 # Shell Start and Stop
 
 > [!NOTE]
-> The order in which the shell starts, what stops it from starting, how it runs with no windows, and how it stops. It is the runtime view of what [Process Model and Threading](../../20%20Architecture/Process%20Model%20and%20Threading.md) and [Data Flow](../../20%20Architecture/Data%20Flow.md) sketch. Decided: one process and one tre loop ([ADR-0003 Process Model](../../30%20Decisions/ADR-0003%20Process%20Model.md)), `settings.tdl` read first and a bad one stops the shell ([Settings File](../../41%20TDL%20Reference/Settings%20File.md); `settings.tdl` is the confirmed name, with the root block `Settings { }`, D20, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)), `run(keep_alive=True)` and `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)), stay idle with no windows. Everything else here is proposed, with a recommendation.
+> The order in which the shell starts, what stops it from starting, how it runs with no windows, and how it stops. It is the runtime view of what [Process Model and Threading](../../20%20Architecture/Process%20Model%20and%20Threading.md) and [Data Flow](../../20%20Architecture/Data%20Flow.md) sketch. Decided: one process and one tre loop ([ADR-0003 Process Model](../../30%20Decisions/ADR-0003%20Process%20Model.md)), `settings.tdl` read first and a bad one stops the shell ([Settings File](../../41%20TDL%20Reference/Settings%20File.md); `settings.tdl` is the confirmed name, with the root block `Settings { }`, D20, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)), `run(keep_alive=True)` and `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)), stay idle with no windows. Everything else here is proposed, with a recommendation.
 
 ## Purpose and Scope
 
@@ -33,7 +33,7 @@ tags: [spec/runtime, needs-verification]
   - **Cleanup.** The spec says files not accessed for 6 hours may be cleaned unless their sticky bit is set, so the shell sets the sticky bit on the lock file instead of running a timer that would wake the idle loop. #needs-verification whether any cleaner runs on the target session, and that the bit is honoured on these files.
   - **Where it is unset.** A systemd user service or a KDE autostart inherits the variable; a launch from cron or a bare SSH session with no login session does not, and gets the exit-2 message.
   - Observed on this machine, 2026-10-28: `XDG_RUNTIME_DIR=/run/user/1000`, owned by the user, mode `drwx------`, with `WAYLAND_DISPLAY=wayland-1`.
-- **Wayland only.** No Wayland compositor, or one without the layer shell, is an environment error: tre raises `UnsupportedPlatform` ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)) and the shell exits with code 2 naming it. X11 is not supported ([V1 Scope > Target environment](../../10%20Vision/V1%20Scope.md#target-environment)).
+- **Wayland only.** No Wayland compositor, or one without the layer shell, is an environment error: tre raises `UnsupportedPlatform` ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)) and the shell exits with code 2 naming it. X11 is not supported ([V1 Scope > Target environment](../../10%20Vision/V1%20Scope.md#target-environment)).
 
 ### Start Sequence
 
@@ -63,14 +63,14 @@ flowchart TD
 | 6. Registry                  | Open `registry.json` at the configured path; create an empty one if missing; rebuild records from file UIDs when needed      | [Config Discovery and Registry](Config%20Discovery%20and%20Registry.md)                                          | A registry that cannot be read or written: stop, code 1                                 |
 | 7. Discover, parse, validate | Find files, parse TDL (the metadata block, then the root block, which must agree with the suffix), check the schema and the semantic rules, follow `Import:` | [Validation and Errors](Validation%20and%20Errors.md)                                          | Collect every error, then stop, code 1                                                  |
 | 8. Resolve and compile       | Resolve name references through the registry; compile TEL expressions                                                        | [ADR-0008 Tesserae Expression Language](../../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md)                                          | Stop, code 1                                                                            |
-| 9. Loop                      | `App.run(keep_alive=True)` starts the loop with zero windows; output events and `call_soon` work                             | [TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)                                          | tre older than 0.5.9: caught in step 1                                                  |
+| 9. Loop                      | `App.run(keep_alive=True)` starts the loop with zero windows; output events and `call_soon` work                             | [TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)                                          | tre older than 0.5.9: caught in step 1                                                  |
 | 10. Model                    | Read `App.outputs()`, match `Monitor` blocks by `Connector`, then `Description`, then `Index` ([TDL Language > Monitors (Shell Schema)](../../41%20TDL%20Reference/TDL%20Language.md#monitors-shell-schema)), build the shell model | [V1 Scope > Multi-monitor](../../10%20Vision/V1%20Scope.md#multi-monitor), [Data Flow > Monitor hot-plug](../../20%20Architecture/Data%20Flow.md#monitor-hot-plug) | A `Monitor` block that matches no monitor is ignored                                               |
 | 11. Surfaces                 | Create one window per surface per monitor, from a callback on the loop                                                       | [Surfaces](../Surfaces/Surfaces.md)                                          | A surface that fails (a bad layer, tre `failed`) is logged and skipped; the others open |
 | 12. Modules                  | Create each module class once and call `start()`                                                                             | [Module Contract > Lifecycle](../../42%20Python%20API/Module%20Contract.md#lifecycle)                                          | A module whose `start` raises is marked failed and logged; the others continue          |
 
 - Steps 1 to 8 run before the loop and may block; the user sees an error and no surfaces. From step 9 on, the loop runs and nothing blocks it ([Process Model and Threading > The rules](../../20%20Architecture/Process%20Model%20and%20Threading.md#the-rules)).
-- The loop starts before the windows exist because tre can now run with none, and a window is added from a callback ([TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). Modules start after the model is built, so a value sent before its surface exists is kept in the store ([Process Model and Threading > Lifecycle (proposed)](../../20%20Architecture/Process%20Model%20and%20Threading.md#lifecycle-proposed)).
-- Threads start where they are first needed: the config watcher after step 8, the D-Bus service thread when the first module asks for D-Bus, the signal watcher at step 9, the watchdog after step 12 ([Process Model and Threading > Threads](../../20%20Architecture/Process%20Model%20and%20Threading.md#threads)).
+- The loop starts before the windows exist because tre can now run with none, and a window is added from a callback ([TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). Modules start after the model is built, so a value sent before its surface exists is kept in the store ([Process Model and Threading > Lifecycle (proposed)](../../20%20Architecture/Process%20Model%20and%20Threading.md#lifecycle-proposed)).
+- Threads start where they are first needed: the config watcher after step 8, the D-Bus service thread at step 10, when the shell exports its own interface ([D-Bus Service Layer > The Service Thread](../Integration/D-Bus%20Service%20Layer.md#the-service-thread)), the signal watcher at step 9, the watchdog after step 12 ([Process Model and Threading > Threads](../../20%20Architecture/Process%20Model%20and%20Threading.md#threads)).
 
 ### Running
 
@@ -85,12 +85,12 @@ The shell notifies systemd. When the environment variable `NOTIFY_SOCKET` is set
 
 ### Stop Sequence
 
-Triggers: SIGTERM or SIGINT, a `Quit` call on the shell's D-Bus interface, the session ending. SIGHUP reloads (proposed, [Hot Reload](Hot%20Reload.md)). Python signal handlers do not run on an idle loop, so a watcher thread reads a socketpair fed by `signal.set_wakeup_fd` and calls `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md), [Process Model and Threading > Lifecycle (proposed)](../../20%20Architecture/Process%20Model%20and%20Threading.md#lifecycle-proposed)).
+Triggers: SIGTERM or SIGINT, a `Quit` call on the shell's D-Bus interface, the session ending. SIGHUP reloads (proposed, [Hot Reload](Hot%20Reload.md)). Python signal handlers do not run on an idle loop, so a watcher thread reads a socketpair fed by `signal.set_wakeup_fd` and calls `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md), [Process Model and Threading > Lifecycle (proposed)](../../20%20Architecture/Process%20Model%20and%20Threading.md#lifecycle-proposed)).
 
 1. Set the state to Stopping; send `STOPPING=1`; ignore file changes and reload requests.
 2. `LoopHandle.stop()`: every window closes without a veto (each hears `closed`, reason `"stopped"`), and `App.run()` returns.
 3. Stop modules in reverse start order: call `stop()`, join the module's threads. A module gets 3 seconds; the whole step gets 10 seconds (decided 2026-10-28; tuned in testing).
-4. Stop the D-Bus service thread, the watcher and the watchdog.
+4. Set the shell's shortcut actions inactive and drop the Tray module's host name, on the D-Bus service thread, with a limit of 1 second ([Global Shortcuts > Cleaning Up](../Integration/Global%20Shortcuts.md#cleaning-up), [Plasma Coexistence](../Integration/Plasma%20Coexistence.md)). Then stop the D-Bus service thread, the watcher and the watchdog.
 5. Write the registry once, atomically ([Config Discovery and Registry > The registry file](Config%20Discovery%20and%20Registry.md#the-registry-file)).
 6. Flush logs, release the instance lock, exit with code 0.
 
@@ -121,7 +121,7 @@ None. A module sees `start()` after the model exists and `stop()` at shutdown ([
 
 ## Integration
 
-- tre: `App.run(keep_alive=True)`, `App.thread_handle()`, `LoopHandle.stop()` and `call_soon`, `App.outputs()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). The shell requires 0.5.9 or later.
+- tre: `App.run(keep_alive=True)`, `App.thread_handle()`, `LoopHandle.stop()` and `call_soon`, `App.outputs()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). The shell requires 0.5.9 or later.
 - Signals: `signal.set_wakeup_fd` on a socketpair and a watcher thread ([Process Model and Threading > Threads](../../20%20Architecture/Process%20Model%20and%20Threading.md#threads)).
 - systemd: the `sd_notify` datagram on `NOTIFY_SOCKET` ([Telling systemd (decided 2026-10-28)](#telling-systemd-decided-2026-10-28)).
 - Wayland and KWin: the session must provide `wlr-layer-shell`; the surface specs list what else is used ([Surfaces](../Surfaces/Surfaces.md)).

@@ -88,9 +88,9 @@ This supports the maintainer's point that a visual meld works: it is one colour,
 - [ ] How Plasma's own panels get their shadow (plasma-framework / plasma-workspace source).
 - [ ] How Waybar, eww, Fabric, AGS/Astal, Quickshell shells and COSMIC do shadows.
 - [ ] How the Edge Shell prototype drew its shadows.
-- [ ] Whether tre can expose the surface for route A, and whether the engine accepts a shadow request (AGENTS > 6. Engine requests (tre / Tesserae)). Ask the `tre` session before writing a request.
+- [ ] Whether tre can expose the surface for route A, and whether the engine accepts a shadow request (AGENTS > 6. Requests Between Projects). Ask the `tre` session before writing a request.
 - [x] The memory cost of the larger transparent buffer for route B: 134 KB per buffer for a 32 px margin on a 320x140 body (see the performance test). Still to measure at Frame size, per [Surface Types > Performance budget](../40%20Specifications/Surfaces/Surface%20Types.md#performance-budget).
 
 ## Links
 
-- [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md) · [Prior Art - Linux Shell Surfaces](Prior%20Art%20-%20Linux%20Shell%20Surfaces.md) · [TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)
+- [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md) · [Prior Art - Linux Shell Surfaces](Prior%20Art%20-%20Linux%20Shell%20Surfaces.md) · [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)

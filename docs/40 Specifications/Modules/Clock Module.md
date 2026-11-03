@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-11-03
 tags: [spec/module, needs-verification]
 ---
 
@@ -89,8 +89,8 @@ Style {
     Classes {
         clock_text {
             Kind: Text
-            Size: 14
-            Weight: 500
+            Font_Size: 14
+            Font_Weight: 500
             Foreground: "#ffffff"
         }
     }
@@ -102,7 +102,7 @@ Style {
 ```python
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from tesserae_shell import Module
+from tess_shell import Module
 
 class Clock(Module):
     def start(self):
@@ -192,12 +192,12 @@ Tokens and components used: the Label module over the Text block; a text class f
 ## Accessibility
 
 - The Label exposes its text as the accessible name; the value changes every second or minute.
-- A screen reader must not be told on every tick. The text is read when the user focuses the element or asks for it; live announcement is off by default (proposed). #needs-verification against how tre publishes name changes ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)).
+- A screen reader must not be told on every tick. The text is read when the user focuses the element or asks for it; live announcement is off by default (proposed). #needs-verification against how tre publishes name changes ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)).
 - The tooltip text is available as a description.
 
 ## Performance Budget
 
-- One timer for all uses. With seconds, one wake and one text update per second per distinct text; without seconds, one per minute. No frames between updates ([TRE-REQ-001 Layer Surface Window](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md): an idle surface draws no frames).
+- One timer for all uses. With seconds, one wake and one text update per second per distinct text; without seconds, one per minute. No frames between updates ([TRE-REQ-001 Layer Surface Window](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md): an idle surface draws no frames).
 - Per tick: under 1 ms on the loop thread (proposed; measured in the testing phase).
 - A Clock must not add a timer that fires faster than the shown unit.
 

@@ -16,7 +16,7 @@ tags: [engine-request, integration/wayland, needs-verification]
 
 > [!NOTE]
 > **Not to be filed now**
-> Written 2026-10-28 after the maintainer decided that a popup's placement uses its visual shape. Not filed from this vault, and the `tre` session has not been told (AGENTS > 6. Engine requests (tre / Tesserae)).
+> Written 2026-10-28 after the maintainer decided that a popup's placement uses its visual shape. Not filed from this vault, and the `tre` session has not been told (AGENTS > 6. Requests Between Projects).
 
 ## Shell Need
 
@@ -70,4 +70,4 @@ Small by reading the code: one argument, and the `set_window_geometry` call take
 
 ## Links
 
-[Popup](../40%20Specifications/Surfaces/Popup.md) · [ADR-0010 Surface Shadows](../30%20Decisions/ADR-0010%20Surface%20Shadows.md) · [80 Engine Requests](80%20Engine%20Requests.md)
+[Popup](../40%20Specifications/Surfaces/Popup.md) · [ADR-0010 Surface Shadows](../30%20Decisions/ADR-0010%20Surface%20Shadows.md) · [80 Requests](80%20Requests.md)

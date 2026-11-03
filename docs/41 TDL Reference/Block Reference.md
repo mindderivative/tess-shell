@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-11-01
-updated: 2026-11-02
+updated: 2026-11-03
 tags: [tdl-ref, spec/widget, needs-verification]
 ---
 
@@ -109,7 +109,7 @@ Value form (decided by the maintainer, 2026-11-01):
 ```
 On_Click: toggle_mute
 
-On_Change {
+On_Changed {
     Action: set_volume
     value: {{ event.value }}
 }
@@ -204,25 +204,25 @@ For long lists (launcher results, tasks) where only visible entries are built. M
 | `Padding`    | Four-sided                    | 0       | `padding`                   | Inset around the words (R6)                                                                           |
 | `On_Link`    | event                         | none    | `link` (`href`)             | A press and release on a link span                                                                    |
 
-Style keys: `Font_Family`, `Size`, `Weight`, `Line_Height`, `Align`, `Overflow`, `Foreground` ([Style Schema > Style Keys](Style%20Schema.md#style-keys)). tre also has `font_style`, `letter_spacing`, `spans` (rich text) and `fill`; the shell has no key for `font_style` and `letter_spacing` yet, and rich text is post-v1 (R10). `Width: AUTO` is tre's `"fit-content"` for text. Role none; the block that shows the text carries the label. Label is a Text with `Wrap: NONE`; TextBox is a Text with `Wrap: WORD`.
+Style keys: `Font_Family`, `Font_Size`, `Font_Weight`, `Line_Height`, `Text_Align`, `Overflow`, `Foreground` ([Style Schema > Style Keys](Style%20Schema.md#style-keys)). tre also has `font_style`, `letter_spacing`, `spans` (rich text) and `fill`; the shell has no key for `font_style` and `letter_spacing` yet, and rich text is post-v1 (R10). `Width: AUTO` is tre's `"fit-content"` for text. Role none; the block that shows the text carries the label. Label is a Text with `Wrap: NONE`; TextBox is a Text with `Wrap: WORD`.
 
 ### TextField
 
 tre's advice is a `text_input` inside a box that paints the background and border ([Building Blocks > What Tre Offers](../50%20Design%20System/Building%20Blocks.md#what-tre-offers), building a widget). The block is that composition.
 
-| Key               | Values                    | Default | tre                       | Meaning                                                                                                            |
-|-------------------|---------------------------|---------|---------------------------|--------------------------------------------------------------------------------------------------------------------|
-| `Text`            | A string                  | empty   | `text`                    | The value. Data goes in through this key; edits come out through `On_Change` (R6)                                  |
-| `Placeholder`     | A string                  | none    | `placeholder` (only in an example, not in a property table) | Shown while empty #needs-verification; otherwise a Text drawn by the composition |
-| `Multiline`       | true, false               | false   | `multiline`               | A multi-line field. The TextEditor module is a TextField with this set                                              |
-| `Selection`       | `[start, end]` (byte offsets) | none | `selection`               | The selection                                                                                                       |
-| `Show_Whitespace` | true, false               | false   | `show_whitespace`         | Draws whitespace marks (a code editor)                                                                              |
-| `Padding`         | Four-sided                | by theme | the box's `padding`      | Inset of the text inside the field                                                                                  |
-| `On_Change`       | event                     | none    | `change` (`old_value`, `new_value`, user edits only) | Fires for edits by the user, not for a value the module set |
-| `On_Submit`       | event                     | none    | `submit`                  | Enter in a single-line field                                                                                        |
-| `On_Input`        | event                     | none    | `input` (`text`)          | Committed text; with `On_Change` it covers input methods (`compose_start`, `compose_update`, `compose_end` are handled inside the block) |
+| Key               | Values                        | Default  | tre                                                         | Meaning                                                                                                                                                                                      |
+|-------------------|-------------------------------|----------|-------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Text`            | A string                      | empty    | `text`                                                      | The value. Data goes in through this key; edits come out through `On_Changed` (R6)                                                                                                           |
+| `Placeholder`     | A string                      | none     | `placeholder` (only in an example, not in a property table) | Shown while empty #needs-verification; otherwise a Text drawn by the composition                                                                                                             |
+| `Multiline`       | true, false                   | false    | `multiline`                                                 | A multi-line field. The TextEditor module is a TextField with this set                                                                                                                       |
+| `Selection`       | `[start, end]` (byte offsets) | none     | `selection`                                                 | The selection                                                                                                                                                                                |
+| `Show_Whitespace` | true, false                   | false    | `show_whitespace`                                           | Draws whitespace marks (a code editor)                                                                                                                                                       |
+| `Padding`         | Four-sided                    | by theme | the box's `padding`                                         | Inset of the text inside the field                                                                                                                                                           |
+| `On_Changed`      | event                         | none     | `change` (`old_value`, `new_value`, user edits only)        | Fires on every change the user makes to the text (each keystroke, paste or deletion). It does not fire when the module sets the text                                                                                                          |
+| `On_Submit`       | event                         | none     | `submit`                                                    | Enter in a single-line field                                                                                                                                                                 |
+| `On_Text_Commit`  | event                         | none     | `input` (`text`)                                            | Fires for committed text, for example an input-method composition; with `On_Changed` it covers input methods (`compose_start`, `compose_update`, `compose_end` are handled inside the block) |
 
-Not available in tre and so not offered: password masking, a maximum length, a read-only flag (none are on tre's page). A module that needs one makes an engine request (AGENTS > 6. Engine requests (tre / Tesserae)). `syntax_spans` and `folded_ranges` exist in tre for code editing and are post-v1. Role `TEXTBOX`, focusable. Input methods work on layer surfaces in tre 0.5.8; no real input method was tested ([V1 Widgets > Open Questions](../50%20Design%20System/V1%20Widgets.md#open-questions)).
+Not available in tre and so not offered: password masking, a maximum length, a read-only flag (none are on tre's page). A module that needs one makes an engine request (AGENTS > 6. Requests Between Projects). `syntax_spans` and `folded_ranges` exist in tre for code editing and are post-v1. Role `TEXTBOX`, focusable. Input methods work on layer surfaces in tre 0.5.8; no real input method was tested ([V1 Widgets > Open Questions](../50%20Design%20System/V1%20Widgets.md#open-questions)).
 
 ## Graphics
 
@@ -246,20 +246,20 @@ tre fits an SVG uniformly and centres it (`xMidYMid meet`), so `Fit` is not offe
 
 ## Shapes
 
-All shapes are drawn as a tre `path` (SVG path data) and take the style keys `Fill` (the interior) and `Border_Color`, `Border_Thickness` (the stroke, centred on the outline). A shape's default hit shape is `PAINTED` (decided 2026-10-27); `Hit_Shape` can set `BOX` ([Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md); tre's `hit_shape` is `"box"` by default and `"painted"`). Shapes have no `Children`, so no `Padding`. Role none; `A11y_Hidden` true.
+All shapes are drawn as a tre `path` (SVG path data) and take the style keys `Fill` (the interior) and `Border_Color`, `Border_Width` (the stroke, centred on the outline). A shape's default hit shape is `PAINTED` (decided 2026-10-27); `Hit_Shape` can set `BOX` ([Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md); tre's `hit_shape` is `"box"` by default and `"painted"`). Shapes have no `Children`, so no `Padding`. Role none; `A11y_Hidden` true.
 
-| Block     | Own keys                                                                                       | Notes                                                                                            |
-|-----------|------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| Rectangle | `Corner_Radius` (one number, or four from the top-left corner clockwise)                        | `Width`, `Height`                                                                                |
-| Square    | `Side` (a length), `Corner_Radius`                                                              | A Rectangle with equal sides                                                                     |
-| Circle    | `Diameter` (a length)                                                                           | A circle fits its box                                                                            |
-| Ellipse   | `Width`, `Height`                                                                               | A Circle with two sizes                                                                          |
-| Ring      | `Diameter`; the ring's thickness is `Border_Thickness`                                          | A Circle with no fill and a border                                                               |
-| Triangle  | `Direction` (`UP`, `DOWN`, `LEFT`, `RIGHT`; default `UP`)                                       | An isosceles triangle in its box                                                                 |
-| Hexagon   | `Orientation` (`POINTY`, `FLAT`; default `POINTY`)                                              | A regular hexagon in its box                                                                     |
+| Block     | Own keys                                                                                         | Notes                                                                                                                                                                           |
+|-----------|--------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Rectangle | `Corner_Radius` (one number, or four from the top-left corner clockwise)                         | `Width`, `Height`                                                                                                                                                               |
+| Square    | `Side` (a length), `Corner_Radius`                                                               | A Rectangle with equal sides                                                                                                                                                    |
+| Circle    | `Diameter` (a length)                                                                            | A circle fits its box                                                                                                                                                           |
+| Ellipse   | `Width`, `Height`                                                                                | A Circle with two sizes                                                                                                                                                         |
+| Ring      | `Diameter`; the ring's thickness is `Border_Width`                                               | A Circle with no fill and a border                                                                                                                                              |
+| Triangle  | `Direction` (`UP`, `DOWN`, `LEFT`, `RIGHT`; default `UP`)                                        | An isosceles triangle in its box                                                                                                                                                |
+| Hexagon   | `Orientation` (`POINTY`, `FLAT`; default `POINTY`)                                               | A regular hexagon in its box                                                                                                                                                    |
 | Path      | `Data` (SVG path syntax), `View_Box` (`[min_x, min_y, width, height]`), `Trim_Start`, `Trim_End` | tre's `path`: `data`, `view_box`, `trim_start`, `trim_end` (0.0 to 1.0). Used for the Frame's concave corners and Panel joins. Caps and joins are round and not settable in tre |
 
-Differences from a Box: a Box's stroke is drawn inside the box without changing layout (`stroke_color`, `stroke_width`); a path's stroke is centred on the outline and is the same width whatever the view box. The shape blocks are generated path data, so the shell computes them from `Width` and `Height`. Triangle and Hexagon have no corner rounding in v1.
+Differences from a Box: a Box's `Border` takes layout space (2026-11-02), so its content and children sit inside the border; tre's box stroke (`stroke_color`, `stroke_width`) is drawn inside the box without changing layout, so the shell adds the border width to the box's space (proposed mapping, #needs-verification); a path's stroke is centred on the outline and is the same width whatever the view box. The shape blocks are generated path data, so the shell computes them from `Width` and `Height`. Triangle and Hexagon have no corner rounding in v1.
 
 ## Other
 
@@ -271,7 +271,7 @@ Differences from a Box: a Box's stroke is drawn inside the box without changing 
 | `Scrollback_Lines` | A whole number           | tre's default | `scrollback_lines` (creation only) | History kept                                                |
 | `Selection`        | Four numbers             | none    | `selection`                | The selection                                                                    |
 
-Style keys: `Size` (font), and a `Terminal_Palette` block for `palette` (`ansi`, `foreground`, `background`, `cursor`, `selection`). Role `TEXTBOX`.
+Style keys: `Font_Size`, and a `Terminal_Palette` block for `palette` (`ansi`, `foreground`, `background`, `cursor`, `selection`). Role `TEXTBOX`.
 
 > [!CAUTION]
 > **A Terminal starts a process**
@@ -307,22 +307,22 @@ A focus ring appears only for keyboard focus (`focus_visible`), as a non-blurred
 
 Proposals R1 to R11 were decided by the maintainer in chat ("As recommended"), except R7, which the maintainer changed. R12 to R14 record the maintainer's other answers of the same day.
 
-| #   | Topic                      | Decision                                                                                                                                                                                                                                                                |
-|-----|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| R1  | What is a Box?              | A one-cell grid: children overlap, the Box sizes to the largest, children align themselves.                                                                                                                                                                              |
-| R2  | Property or style?          | Layout and behaviour are properties; visual keys are style keys. A key that is both (`Padding`, `Margin`, `Spacing`, `Opacity`) is accepted on the block as a shorthand for inline `Style`, with inline priority.                                                         |
-| R3  | Scrolling blocks            | `ScrollBox` is added to the block set. `VirtualList` waits until a module needs it.                                                                                                                                                                                      |
-| R4  | Terminal                    | No `Command` key in TDL; a module's Python attaches the process. Post-v1.                                                                                                                                                                                                |
-| R5  | Event values                | `On_` is reserved for events; event names are added as blocks need them. An action is an `@action` method or a built-in shell action. The value form under Events is a proposal.                                                                                                                                                                  |
-| R6  | Input state and Padding     | Data in through `Text`, edits out through `On_Change`; no two-way binding. `Padding` is on every block with `Children` and also on `Text` and `TextField` (this decides D59 of [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)).                                                          |
-| R7  | Icons                       | Changed by the maintainer. Lookup order: (1) a shipped set of SVG icons in a JSON file, (2) the desktop's freedesktop icon theme, (3) the `Icons` folder in the shell's config directory, (4) the locations a developer lists in `settings.tdl`. See "Icons" below. The maintainer provides the JSON file. |
-| R8  | Image decoding              | The shell decodes png, jpeg, gif and webp with an image library (a dependency to choose). An animated gif is stepped by the shell. Post-v1 for animation.                                                                                                                |
-| R9  | A block handle for Python   | A module can reach a block it names and call `focus()`, `capture_pointer()`, `release_pointer()`, `redraw()` and read `layout_width` and `layout_height`. To be written into [Module Context](../42%20Python%20API/Module%20Context.md).                                                                         |
-| R10 | Rich text                   | tre's `spans` become repeated `Span` blocks inside a Text. Post-v1.                                                                                                                                                                                                       |
-| R11 | v1 block set                | Box, FlexBox, Grid, Text, TextField (single line), Bitmap, SVG, Rectangle, Circle, Ring, Path and ScrollBox. The rest follow when a module needs them ([V1 Widgets](../50%20Design%20System/V1%20Widgets.md)).                                                                                                    |
-| R12 | Custom blocks               | A module author can add a block, in Python, shipped with the module. The mechanism (accepted 2026-11-01) is under "Custom Blocks" below.                                                                                                                                     |
-| R13 | Revealer renamed            | The module Revealer is now Expander, the familiar name (maintainer, 2026-11-01).                                                                                                                                                                                          |
-| R14 | Stack                       | The maintainer asked what separates a Stack from a FlexBox. A FlexBox places children side by side or one under another. A Stack puts them on top of each other in one cell. With R1 a Box already does that, so the Stack module has nothing left to add. Decided (maintainer, 2026-11-01): Stack is dropped; use a Box. |
+| #   | Topic                     | Decision                                                                                                                                                                                                                                                                                                                  |
+|-----|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| R1  | What is a Box?            | A one-cell grid: children overlap, the Box sizes to the largest, children align themselves.                                                                                                                                                                                                                               |
+| R2  | Property or style?        | Layout and behaviour are properties; visual keys are style keys. A key that is both (`Padding`, `Margin`, `Spacing`, `Opacity`) is accepted on the block as a shorthand for inline `Style`, with inline priority.                                                                                                         |
+| R3  | Scrolling blocks          | `ScrollBox` is added to the block set. `VirtualList` waits until a module needs it.                                                                                                                                                                                                                                       |
+| R4  | Terminal                  | No `Command` key in TDL; a module's Python attaches the process. Post-v1.                                                                                                                                                                                                                                                 |
+| R5  | Event values              | `On_` is reserved for events; event names are added as blocks need them. An action is an `@action` method or a built-in shell action. The value form under Events is a proposal.                                                                                                                                          |
+| R6  | Input state and Padding   | Data in through `Text`, edits out through `On_Changed`; no two-way binding. `Padding` is on every block with `Children` and also on `Text` and `TextField` (this decides D59 of [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)).                                                                                                        |
+| R7  | Icons                     | Changed by the maintainer. Lookup order: (1) a shipped set of SVG icons in a JSON file, (2) the desktop's freedesktop icon theme, (3) the `Icons` folder in the shell's config directory, (4) the locations a developer lists in `settings.tdl`. See "Icons" below. The maintainer provides the JSON file.                |
+| R8  | Image decoding            | The shell decodes png, jpeg, gif and webp with an image library (a dependency to choose). An animated gif is stepped by the shell. Post-v1 for animation.                                                                                                                                                                 |
+| R9  | A block handle for Python | A module can reach a block it names and call `focus()`, `capture_pointer()`, `release_pointer()`, `redraw()` and read `layout_width` and `layout_height`. To be written into [Module Context](../42%20Python%20API/Module%20Context.md).                                                                                                                          |
+| R10 | Rich text                 | tre's `spans` become repeated `Span` blocks inside a Text. Post-v1.                                                                                                                                                                                                                                                       |
+| R11 | v1 block set              | Box, FlexBox, Grid, Text, TextField (single line), Bitmap, SVG, Rectangle, Circle, Ring, Path and ScrollBox. The rest follow when a module needs them ([V1 Widgets](../50%20Design%20System/V1%20Widgets.md)).                                                                                                                                                   |
+| R12 | Custom blocks             | A module author can add a block, in Python, shipped with the module. The mechanism (accepted 2026-11-01) is under "Custom Blocks" below.                                                                                                                                                                                  |
+| R13 | Revealer renamed          | The module Revealer is now Expander, the familiar name (maintainer, 2026-11-01).                                                                                                                                                                                                                                          |
+| R14 | Stack                     | The maintainer asked what separates a Stack from a FlexBox. A FlexBox places children side by side or one under another. A Stack puts them on top of each other in one cell. With R1 a Box already does that, so the Stack module has nothing left to add. Decided (maintainer, 2026-11-01): Stack is dropped; use a Box. |
 
 ## Icons (R7)
 
@@ -364,13 +364,13 @@ Recommendations (the agent's; not decided):
 4. **Licences travel with the files (done in the folder, 2026-11-01).** The folder now holds `MDI-LICENSE.txt` (Pictogrammers, Apache 2.0) and `MLI-LICENSE.txt` (MIT, with the copyright line of Vjacheslav Trushkin), and the `spdx` fields read `Apache-2.0` and `MIT`. Still to do in delivery: ship both texts in the package. Pictogrammers' note that "some of the icons are redistributed under their respective licenses" may need a per-icon list. [Risk Register](../00%20Home/Risk%20Register.md) R-23.
 5. **Names.** Shipped names are kebab-case (`account-alert`); freedesktop names differ (`audio-volume-high`), so the theme lookup (row 2) serves the names neither set has.
 
-Options for the animated set, given item 3. Decided by the maintainer on 2026-11-01: A (ship only `mdi` in v1) and C (an engine request, written as [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Engine%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md); the maintainer gave tre the go-ahead, tre scoped it as issue #245 and built it on a local branch on 2026-11-02, unreleased). B stays a possible later addition. `mli` can ship once a tre release carries the request and the `TRE:` pin names it.
+Options for the animated set, given item 3. Decided by the maintainer on 2026-11-01: A (ship only `mdi` in v1) and C (an engine request, written as [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md); the maintainer gave tre the go-ahead, tre scoped it as issue #245 and built it on a local branch on 2026-11-02, unreleased). B stays a possible later addition. `mli` can ship once a tre release carries the request and the `TRE:` pin names it.
 
 | Option                                                                                         | Cost                                                                                                                                  | Recommendation                              |
 |------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
 | A. Ship only `mdi` in v1; leave `mli` out until tre plays SMIL                                  | None. The shell works with 7,447 static icons.                                                                                         | Recommended for v1                          |
 | B. Export a static `mli`: each icon in its end state, with the animation tags removed           | A change in the tess-icons export (the earlier "no-anim" idea). It gives a second, line-style family that tre can draw correctly.     | Recommended as a later addition             |
-| C. An engine request to tre for SMIL (`<animate>`, `<set>`, `<animateTransform>`)                | A request to tre (AGENTS > 6. Engine requests (tre / Tesserae)); not needed to ship v1; the shell cannot play SMIL itself (Python never runs per frame). | Write it only if you want animated icons    |
+| C. An engine request to tre for SMIL (`<animate>`, `<set>`, `<animateTransform>`)                | A request to tre (AGENTS > 6. Requests Between Projects); not needed to ship v1; the shell cannot play SMIL itself (Python never runs per frame). | Write it only if you want animated icons    |
 
 ## Custom Blocks (R12)
 
@@ -389,7 +389,7 @@ The API is decided; the sketch is an illustration, and the import path and the f
 
 ```python
 # Modules/Meter/Meter_Module.py
-from tesserae_shell import Module, Block, Prop
+from tess_shell import Module, Block, Prop
 
 class Meter(Block):
     name = "Meter"                               # the head used in TDL
@@ -416,11 +416,12 @@ class Meter(Block):
 ## Open
 
 - [ ] The list of built-in shell actions.
-- [ ] Shipping the licence texts in the package. The animated set is settled for v1 (option A) and the engine request [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Engine%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md) is written, not filed.
+- [ ] Shipping the licence texts in the package. The animated set is settled for v1 (option A) and the engine request [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md) is written, not filed.
 - [ ] The value sets and defaults of the align, justify and cursor keys, and the text form of grid tracks (#needs-verification against tre's source or a test).
 - [ ] The default sizes of an SVG and of a Terminal (#needs-verification).
 - [ ] The event and action vocabulary and the value form of an `On_` key.
 - [ ] Which style keys have no tre property yet (`font_style`, `letter_spacing`) and whether the shell offers them.
+- [ ] Does Width include padding and border? Recommendation: yes (border-box, as CSS `box-sizing: border-box` and most UI toolkits).
 
 ## Acceptance Criteria
 
@@ -431,7 +432,7 @@ class Meter(Block):
 - `Enabled: false` stops `On_Click`, sets the accessibility state `disabled` and applies the style state `Disabled`.
 - A `Bitmap` or `SVG` with no `Label` is hidden from assistive technology.
 - A `Terminal` in a TDL file does not start a process.
-- A `TextField` reports a user edit through `On_Change` and does not report a value the module set.
+- A `TextField` reports a user edit through `On_Changed` and does not report a value the module set.
 
 ## Links
 

@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-30
+updated: 2026-11-03
 tags: [architecture]
 ---
 
@@ -51,16 +51,18 @@ flowchart TB
 
 | Layer | Owns                                                                                            | Never owns                                     | Spec                                    |
 |-------|-------------------------------------------------------------------------------------------------|------------------------------------------------|-----------------------------------------|
-| tre   | Frames, layout, paint, animation, input, layer surfaces, outputs, hit testing                   | Widgets, themes, file formats, shell meaning   | [TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) |
+| tre   | Frames, layout, paint, animation, input, layer surfaces, outputs, hit testing                   | Widgets, themes, file formats, shell meaning   | [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) |
 | TEL   | Expression syntax, evaluation, limits, name tracking, expression-level conditionals and comprehensions, error positions | Surfaces, modules, files, the registry, any UI | [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md) |
+| tdl   | Reading a TDL file into a lossless tree with positions and errors, and writing it back with an edit (the UID) | Blocks, keys, schemas, tre, TEL, files other than the text it is given | [TDL Library API](../42%20Python%20API/TDL%20Library%20API.md) |
 
 ## Shell Components (Proposed)
 
 | Component                 | Responsibility                                                                                                                                                                           | Thread                                                           |
 |---------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
-| Config loader and watcher | Finds shell files in the config directory and its Modules, Styles, Themes and Stylesheets folders, parses TDL with the shell's own parser (an ordered list of entries that keeps repeated names, [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md), D12), checks the metadata block (`TDL`, `Name`, the version pins) and the root block against the suffix ([TDL Language > The Root Block](../41%20TDL%20Reference/TDL%20Language.md#the-root-block)), follows `Import`, reports errors with `file:line:column`, watches files | Watching on a worker; applying on the loop                       |
+| Config loader and watcher | Finds shell files in the config directory and its Modules, Styles, Themes and Stylesheets folders, parses TDL with the `tess_dl` library (the `tess-dl` project, [TDL Library API](../42%20Python%20API/TDL%20Library%20API.md)) (an ordered list of entries that keeps repeated names, [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md), D12), checks the metadata block (`TDL`, `Name`, the version pins) and the root block against the suffix ([TDL Language > The Root Block](../41%20TDL%20Reference/TDL%20Language.md#the-root-block)), follows `Import`, reports errors with `file:line:column`, watches files | Watching on a worker; applying on the loop                       |
 | Registry                  | `registry.json`: UIDs, names, kinds, locations; one registry of names for blocks, surface types and modules ([TDL Language > Names and the Registry](../41%20TDL%20Reference/TDL%20Language.md#names-and-the-registry)); writes the `UID:` into the metadata block of files by patching the text at the node's position (D10); resolves cross-file references                                                                             | Loop (file I/O on a worker for large writes) #needs-verification |
 | Shell model               | The tree built from a shell file: `Monitor` blocks, surfaces, widgets, modules, with TEL expressions compiled; builds and rebuilds the `If` and `For` branches, evaluating the condition or iterable through TEL (D11)                                                                                       | Loop                                                             |
+| Render binder (proposed) | Turns the typed shell tree into tre nodes with two tables (block to node kind, key to property), links `{{ }}` slots to node properties, updates only what changed, and diffs a reload by key; imports nothing from the shell ([ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md)) | Loop |
 | Widgets, theme, styles    | The widget set in [V1 Widgets](../50%20Design%20System/V1%20Widgets.md), tokens from theme files, style files and stylesheets                                                                          | Loop                                                             |
 | Surface manager           | Reads outputs, creates and closes a `LayerWindow` or `PopupWindow` per surface and monitor, handles hot-plug and `Monitor` matching                                                     | Loop                                                             |
 | Module host               | Imports `<Name>_Module.py`, creates the module class once, calls `start`, `stop`, `reload`; gives it a context                                                                           | Loop for calls; module work on module threads                    |
@@ -71,7 +73,7 @@ The store is this note's addition. The ADR says a module sends data to shell ent
 
 ## Dependency Rules
 
-1. tre and TEL do not import the shell. The shell imports both ([ADR-0008 Tesserae Expression Language](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md)).
+1. tre, TEL and `tess_dl` do not import the shell. The shell imports both ([ADR-0008 Tesserae Expression Language](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md)).
 2. The UI layer does not talk to D-Bus, files or sockets. Only modules and the runtime do.
 3. Modules do not touch tre nodes. They send values; the shell renders.
 4. Python never runs in layout or paint (AGENTS > 3. Layering principle). Expressions and module callbacks run between frames on the loop thread.

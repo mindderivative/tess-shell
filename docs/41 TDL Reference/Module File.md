@@ -129,9 +129,10 @@ Children {
     Icon {
         # or a file path; wrap in quotes if needed
         Svg: home.svg
+        Width: 18
+        Height: 18
         Style {
             Foreground: "#ffffff"
-            Size: 18
         }
     }
     # a building block

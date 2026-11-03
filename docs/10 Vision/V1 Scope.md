@@ -5,7 +5,7 @@ type: vision
 status: stable
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-02
 tags: [vision]
 ---
 
@@ -19,8 +19,9 @@ tags: [vision]
 | Item          | v1                                                                                                                | Basis                                                                                                                    |
 |---------------|-------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Desktop       | KDE Plasma on Wayland                                                                                             | AGENTS > 1. What Tesserae Shell is                                                                                  |
-| Compositor    | KWin first. wlroots compositors (sway tested by tre) best effort, not a release gate.                             | tre tested KWin 6.8.1 and sway 1.12 ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed))                                            |
+| Compositor    | KWin first. wlroots compositors (sway tested by tre) best effort, not a release gate.                             | tre tested KWin 6.8.1 and sway 1.12 ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed))                                            |
 | Engine        | `tesserae-engine` 0.5.9 or later (0.5.8 added layer surfaces; 0.5.9 added `keep_alive`, `stop()` and `hit_shape`) | PyPI, 2026-10-27                                                                                                         |
+| Expressions   | `tesserae-el` 0.1.0 (TEL language version 0.1; Python 3.14 or later; no dependencies) | PyPI, 2026-11-02; [Expression Language Requirements > TEL 0.1.0 Released (2026-11-02)](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md#tel-010-released-2026-11-02) |
 | Not supported | X11, GNOME, Windows, macOS                                                                                        | `LayerWindow` raises `UnsupportedPlatform`; GNOME decision deferred to testing ([ADR-0001 Shell Surface Strategy > Open items](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md#open-items)) |
 
 ## Surfaces
@@ -47,10 +48,10 @@ Maintainer requirement (2026-10-25): any monitor can host the shell, each monito
 | Equal monitors          | No monitor is special to the tool. "Primary" is a configuration choice, not a built-in role.                                                                                                            |
 | Per-monitor surface set | Each monitor lists the surfaces it shows (bar, OSD, widgets and so on), their position and their modules.                                                                                               |
 | All, some or none       | A monitor may show every surface, a chosen subset, or nothing. A monitor with none gets no `LayerWindow` at all.                                                                                        |
-| Hot-plug                | Adding a monitor opens its configured surfaces. Removing one closes them, and the shell creates new windows on return because a closed `LayerWindow` is dead ([TRE-REQ-001 Layer Surface Window > Lifecycle and events](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#lifecycle-and-events)). |
-| Identity                | A monitor is matched by the connector name tre reports (`Output.name`, for example `DP-1`) ([TRE-REQ-001 Layer Surface Window > Outputs](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#outputs)).                                                                   |
+| Hot-plug                | Adding a monitor opens its configured surfaces. Removing one closes them, and the shell creates new windows on return because a closed `LayerWindow` is dead ([TRE-REQ-001 Layer Surface Window > Lifecycle and events](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#lifecycle-and-events)). |
+| Identity                | A monitor is matched by the connector name tre reports (`Output.name`, for example `DP-1`) ([TRE-REQ-001 Layer Surface Window > Outputs](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#outputs)).                                                                   |
 
-Every `LayerWindow` is bound to an explicit `Output`, never `output=None` ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)).
+Every `LayerWindow` is bound to an explicit `Output`, never `output=None` ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)).
 
 Decided by the maintainer in chat, 2026-10-25:
 
@@ -108,4 +109,4 @@ All four were taken by the maintainer on 2026-10-25 and are recorded as ADRs. On
 ## Links
 
 - [10 Vision](10%20Vision.md) · [Problem Statement](Problem%20Statement.md) · [Goals and Non-Goals](Goals%20and%20Non-Goals.md) · [Personas and Use Cases](Personas%20and%20Use%20Cases.md)
-- [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md) · [TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)
+- [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md) · [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)

@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-11-03
 tags: [api, needs-verification]
 ---
 
@@ -116,8 +116,8 @@ Style {
     Classes {
         text_style {
             Kind: Text
-            Size: 16
-            Weight: 500
+            Font_Size: 16
+            Font_Weight: 500
             Foreground: "#ffffff"   # or "#fffffff0" or rgba(255 255 255 1.0)
         }
     }
@@ -129,8 +129,7 @@ Style {
 
     FlexBox {
         Background: "#000000"       # or "#000000f0" or rgba(0 0 0 1.0)
-        Border: true
-        Border_Thickness: [2, 2, 2, 2]
+        Border_Width: [2, 2, 2, 2]
         Border_Color: "#ffffff"
         Corner_Radius: [8, 8, 8, 8]
     }
@@ -147,7 +146,7 @@ The maintainer's four-sided and font-list shorthand `{2, 2, 2, 2}` and `{"Hack N
 
 ```python
 import json
-from tesserae_shell import Module, action
+from tess_shell import Module, action
 
 # The example opened and parsed its own layout file here with a YAML loader.
 # The shell already holds the parsed tree, so the Python asks the context

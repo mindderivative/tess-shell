@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-25
-updated: 2026-10-29
+updated: 2026-11-03
 tags: [adr, architecture, needs-verification]
 ---
 
@@ -35,7 +35,7 @@ tre provides mechanism only: nodes, layout, paint, animation, input, text, acces
 | Live reload             | Saving a view or theme updates open surfaces ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G2).                                                             |
 | Errors with position    | `file:line:column` for every config mistake (AGENTS > 3. Layering principle).                                                                 |
 
-What Tesserae has for reference (not a dependency): a YAML view language with Python ViewModels, `Signal`/`Computed`/`Effect`, Material Design 3 components, themes, stylesheets and hot reload ([Tesserae overview](https://mindderivative.github.io/tesserae/)). Its source is the maintainer's own, so its design can be read freely.
+What Tesserae has for reference (not a dependency): a YAML view language with Python ViewModels, `Signal`/`Computed`/`Effect`, Material Design 3 components, themes, stylesheets and hot reload ([Tesserae overview](https://mindderivative.github.io/tess-ui/)). Its source is the maintainer's own, so its design can be read freely.
 
 ## Options
 
@@ -364,7 +364,7 @@ Option A is accepted, so:
 - `20 Architecture` gains a UI layer between tre and the shell runtime.
 - The widget list is fixed by [V1 Scope](../10%20Vision/V1%20Scope.md) surfaces and modules. Anything beyond it needs a reason.
 - Size and cost are estimated before the first spec is `stable`. #needs-verification
-- tre is the shared base. An engine need from the shell is a request to tre (AGENTS > 6. Engine requests (tre / Tesserae)), and a request raised by Tesserae may already cover it, or the reverse. Before writing a request, check tre's open issues and ask the `tre` session through the mailbox (AGENTS > 14. Peer-session mailbox) so one change serves both projects. The maintainer still files upstream.
+- tre is the shared base. An engine need from the shell is a request to tre (AGENTS > 6. Requests Between Projects), and a request raised by Tesserae may already cover it, or the reverse. Before writing a request, check tre's open issues and ask the `tre` session through the mailbox (AGENTS > 14. Peer-session mailbox) so one change serves both projects. The maintainer still files upstream.
 - The shell does not import Tesserae code. Ideas may be taken from Tesserae's design; the code is written again for the shell.
 
 ## Open Items

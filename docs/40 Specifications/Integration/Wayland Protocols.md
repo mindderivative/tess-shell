@@ -27,7 +27,7 @@ tags: [spec/integration, integration/wayland, needs-verification]
 
 | Route | What it covers | Who owns it |
 |---|---|---|
-| tre | Surfaces (layer shell, popups, windows), input, scale, cursor, clipboard, text input, outputs | tre, through `winit` and `smithay-client-toolkit`; the shell calls tre's Python API ([TRE-REQ-001 Layer Surface Window](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)) |
+| tre | Surfaces (layer shell, popups, windows), input, scale, cursor, clipboard, text input, outputs | tre, through `winit` and `smithay-client-toolkit`; the shell calls tre's Python API ([TRE-REQ-001 Layer Surface Window](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)) |
 | D-Bus | Settings, services, virtual desktops, the KWin script's reports | The shell, on its D-Bus service thread ([ADR-0009 D-Bus Client Library](../../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md), [ADR-0013 Control Interface](../../30%20Decisions/ADR-0013%20Control%20Interface.md)) |
 | A second Wayland connection | A protocol tre does not expose | Nothing yet: the shell has no Wayland library and Python has none in the standard library |
 
@@ -111,7 +111,7 @@ Decided 2026-10-28: A for windows and fullscreen state, C (the `VirtualDesktopMa
 
 ### Version rules
 
-- The shell asks tre for a surface; tre binds the layer shell at version 5 and fails with `UnsupportedPlatform` if the compositor has none ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)).
+- The shell asks tre for a surface; tre binds the layer shell at version 5 and fails with `UnsupportedPlatform` if the compositor has none ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)).
 - Where the shell binds anything itself (none in v1), it binds the lower of the advertised version and the version it was written for, and never relies on a feature newer than it bound.
 - tre 0.5.9 or later ([V1 Scope > Target environment](../../10%20Vision/V1%20Scope.md#target-environment)).
 
@@ -129,7 +129,7 @@ None. A module never sees a protocol; it sees values the shell sends.
 
 ## Integration
 
-- tre and its crates: [TRE-REQ-001 Layer Surface Window](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md).
+- tre and its crates: [TRE-REQ-001 Layer Surface Window](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md).
 - The KWin script and D-Bus: [ADR-0012 Keeping the Shell Above Plasma Panels](../../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md), [ADR-0013 Control Interface](../../30%20Decisions/ADR-0013%20Control%20Interface.md), the KWin and D-Bus notes to write.
 - Threads: tre owns its Wayland threads; the shell sees only the loop thread and its callbacks ([Process Model and Threading](../../20%20Architecture/Process%20Model%20and%20Threading.md)).
 
@@ -139,7 +139,7 @@ None.
 
 ## Accessibility
 
-tre publishes a layer surface's accessibility tree without a screen position, because an application cannot know where its surfaces are ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)). That is a Wayland limit, not one of this note's choices.
+tre publishes a layer surface's accessibility tree without a screen position, because an application cannot know where its surfaces are ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)). That is a Wayland limit, not one of this note's choices.
 
 ## Performance budget
 
@@ -178,4 +178,4 @@ Answered on 2026-10-28.
 
 ## Links
 
-- [Integration](Integration.md) · [ADR-0001 Shell Surface Strategy](../../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md) · [TRE-REQ-001 Layer Surface Window](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) · [ADR-0012 Keeping the Shell Above Plasma Panels](../../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md) · [System Context](../../20%20Architecture/System%20Context.md) · [V1 Scope](../../10%20Vision/V1%20Scope.md)
+- [Integration](Integration.md) · [ADR-0001 Shell Surface Strategy](../../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md) · [TRE-REQ-001 Layer Surface Window](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) · [ADR-0012 Keeping the Shell Above Plasma Panels](../../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md) · [System Context](../../20%20Architecture/System%20Context.md) · [V1 Scope](../../10%20Vision/V1%20Scope.md)

@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [api, needs-verification]
 ---
 
@@ -73,21 +73,21 @@ A value written in a shell file reaches the shell as a TDL literal ([ADR-0014 Sh
 - A float is not a length. A fraction of the parent is written `50%`, and the shell passes it to tre as the string `"50%"`. `calc(100% - 16)` has no TDL literal: a percent-plus-pixels form is not in v1 (D6, D47, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - Keywords and enum values are upper case in TDL (`AUTO`, `EXPAND`, `TOP`); `true`, `false` and `null` stay lowercase. tre's own values are lowercase.
 - `rgba(...)` takes commas in the old YAML examples (`RGBA(255, 255, 255, 1.0)`); TDL uses spaces because `,` is a separator.
-- Decided (D2, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)): the parser keeps `true`, `false`, `null` and bare numbers as strings, and the key's declared type in the schema turns them into booleans, numbers or null. The style example in [Module Context](Module%20Context.md) uses `Border: true` and `Size: 16`, which come out as a boolean and a number by that rule.
+- Decided (D2, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)): the parser keeps `true`, `false`, `null` and bare numbers as strings, and the key's declared type in the schema turns them into booleans, numbers or null. The style example in [Module Context](Module%20Context.md) uses `Border_Width: [2, 2, 2, 2]` and `Font_Size: 16`, which come out as a list of numbers and a number by that rule.
 
 ## Four-sided Values
 
-A style value with four sides (a border thickness, a corner radius, a margin, padding) is written in forms the file language already has (maintainer, 2026-10-26, option A in [ADR-0007 Shell UI Layer > Open items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items); fixed for TDL by D7, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)): one number for all sides, a list of four, or a block of named sides. In TDL the three forms read:
+A style value with four sides (a border width, a corner radius, a margin, padding) is written in forms the file language already has (maintainer, 2026-10-26, option A in [ADR-0007 Shell UI Layer > Open items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items); fixed for TDL by D7, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)): one number for all sides, a list of four, or a block of named sides. In TDL the three forms read:
 
 ```
-Border_Thickness: 2                                          # all four sides
-Border_Thickness: [2, 2, 2, 2]                               # four values: left, top, right, bottom
-Border_Thickness { Left: 24, Top: 2 }                        # named sides, as a block; an unnamed side is not set here
+Border_Width: 2                                              # all four sides
+Border_Width: [2, 2, 2, 2]                                   # four values: left, top, right, bottom
+Border_Width { Left: 24, Top: 2 }                            # named sides, as a block; an unnamed side is not set here
 ```
 
 The named-sides form was a YAML mapping; in TDL it is a block (D7). The brace shorthand `{2, 2, 2, 2}` is not valid TDL, because `{ }` opens a block.
 
-The order of a list of four in TDL is left, top, right, bottom (D50, [ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30)), the convention of other UI frameworks. It replaces the clockwise order from the top that the maintainer confirmed on 2026-10-26. tre's `margin` is still `(top, right, bottom, left)`, so the shell reorders a four-sided value when it passes it to tre. A symmetric list such as `[2, 2, 2, 2]` is the same in both orders.
+The order of a list of four in TDL is left, top, right, bottom (D50, [ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30)), which matches Flutter, Qt and WPF and differs from CSS and SwiftUI (#needs-verification). It replaces the clockwise order from the top that the maintainer confirmed on 2026-10-26. tre's `margin` is still `(top, right, bottom, left)`, so the shell reorders a four-sided value when it passes it to tre. A symmetric list such as `[2, 2, 2, 2]` is the same in both orders. A list of two or three items is an error with the slug `bad-sides` ([Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)); the hint says to use one number, four items or named sides, because CSS orders its sides top, right, bottom, left and accepts two or three.
 
 | TDL (left, top, right, bottom) | tre `margin` (top, right, bottom, left) | Reading                  |
 |--------------------------------|------------------------------------------|--------------------------|

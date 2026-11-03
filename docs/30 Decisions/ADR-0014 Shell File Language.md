@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-29
-updated: 2026-11-01
+updated: 2026-11-03
 tags: [adr, architecture, needs-verification]
 ---
 
@@ -401,7 +401,7 @@ Decided by the maintainer in chat, settling the three conflicts left by the thir
 | #   | Topic                 | Decision                                                                                                                                                                                                                                                                                                                                                                   |
 |-----|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | D49 | `Gap` and `Spacing`   | `Gap` is the distance to the thing a surface is attached to: a Bar to its Edge, a Popup to its anchor, a Panel to a target that is not a Frame. The spacing between the children of a layout is `Spacing` (D35 becomes `Flex`, `Columns`, `Rows`, `Spacing`).                                                                                                              |
-| D50 | Four-sided order      | Left, Top, Right, Bottom, the convention of other UI frameworks. It replaces the clockwise order from the top (top, right, bottom, left) of 2026-10-26. `Margin: [10, 0, 0, 10]` on a bottom-left Panel is 10 px on the left and bottom. Named sides (`Thickness { Left: 8, Top: 4 }`) are unchanged. The shell reorders to tre's order when it passes a value to tre. |
+| D50 | Four-sided order      | Left, Top, Right, Bottom, the order of Flutter, Qt and WPF (CSS and SwiftUI start at the top; corrected 2026-11-02, D72). It replaces the clockwise order from the top (top, right, bottom, left) of 2026-10-26. `Margin: [10, 0, 0, 10]` on a bottom-left Panel is 10 px on the left and bottom. Named sides (`Thickness { Left: 8, Top: 4 }`) are unchanged. The shell reorders to tre's order when it passes a value to tre. |
 | D51 | `Offset` shapes       | A Bar's `Offset` is one number along its Edge. A Panel's `Offset` is four-sided (Left, Top, Right, Bottom) from its anchored edges. The name is kept for both.                                                                                                                                                                                                                |
 
 Readings: the order of four corner radii is not stated. It stays top-left, top-right, bottom-right, bottom-left (clockwise from the top-left corner) until the maintainer says otherwise. An asymmetric four-sided value in an earlier example is reordered from (top, right, bottom, left) to (left, top, right, bottom); a symmetric one such as `[2, 2, 2, 2]` is unchanged.
@@ -412,7 +412,7 @@ Decided by the maintainer in chat.
 
 | #   | Topic              | Decision                                                                                                                                              |
 |-----|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| D52 | TDL error list     | The 18 error codes in [TDL Language > Errors](../41%20TDL%20Reference/TDL%20Language.md#errors) are accepted. The maintainer asked what "T17 to T20" meant; the plain-language explanation is in [Expression Language Requirements > Requests to the TEL Project (T17 to T20)](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md#requests-to-the-tel-project-t17-to-t20). |
+| D52 | TDL error list     | The 18 error codes in [TDL Language > Errors](../41%20TDL%20Reference/TDL%20Language.md#errors) are accepted (17 after D91 moved the suffix check to the shell, then 22 with D93). The maintainer asked what "T17 to T20" meant; the plain-language explanation is in [Expression Language Requirements > Requests to the TEL Project (T17 to T20)](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md#requests-to-the-tel-project-t17-to-t20). |
 | D53 | Corner-radius order | Four corner radii run top-left, top-right, bottom-right, bottom-left (clockwise from the top-left corner), as kept in D50.                          |
 | D54 | Where a slot ends  | A slot ends at the first `}}` that is not inside a quoted string (single or double quotes, with `\` escapes). A `}}` meant for the expression is written `} }`. The TDL parser cuts every slot out of the file and gives TEL only the inner text and its start; TEL's template scanner is not used for shell files. Accepted by the maintainer, 2026-10-31. |
 
@@ -464,14 +464,79 @@ Facts from the TEL repository, read on 2026-11-01. They are TEL's decisions (the
 | #   | Topic                      | What the TEL repository says                                                                                                                                                                                                                                              |
 |-----|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | D63 | `?:` in TEL                | Accepted and built (TEL decisions S to W; issue #24; language version 0.1), local and not yet released. Compile cost about 2.1 to 2.9 times for an expression that uses it; evaluation and memory the same.                                                                 |
-| D64 | TEL and structure          | TEL evaluates a condition and reconciles a repeater by key; the shell owns the keys, the tree and the UIDs (TEL's D15 and D16, 2026-11-01). Conditions are built; the repeater reconciliation is designed and approved, not built. This refines D11 (TEL is an expression language with a reconciliation helper). |
+| D64 | TEL and structure          | TEL evaluates a condition and reconciles a repeater by key; the shell owns the keys, the tree and the UIDs (TEL's D15 and D16, 2026-11-01). Conditions and the repeater reconciliation are built and released in TEL 0.1.0 (2026-11-02). This refines D11 (TEL is an expression language with a reconciliation helper). |
 | D65 | Names of `For` entries     | Adopted from TEL: an entry of a `For` is named `<name>_0001`, `<name>_0002` and so on, from a counter that only grows; a key that disappears and returns gets a new number (maintainer, 2026-11-01, "adopt tel's counter names"). Identity by key stays TEL's (kept, new, moved, removed). The `<name>` is the `Name:` of the `For` block when it has one, else the head of its child, else `For` (the agent's proposal, confirmed by the maintainer 2026-11-01: "as you propose for the base-name rule"). Statically repeated blocks keep their position names (`Square_1`, `Square_2`). |
 
 Open from this: the names of repeated entries. TEL names an entry `<name>_0001` from a counter that only grows and gives a new number to a key that disappears and returns (TEL's D7 and 5H). The TDL rules above say a `For` entry is named `Icon_<key>`. Recommendation: use TEL's counter names. A key can be any value (`DP-1`, a path, a number), but a `Name:` may hold only letters, digits and `_` (D28), so a key-based name could break the name rules. Identity by key stays TEL's (kept, new, moved, removed). The TDL `For ... In ... Key` header maps to TEL's repeater: the item name, the inner text of the iterable slot and the inner text of the `Key` slot. Decided 2026-11-01 (D65).
 
+### Ninth-Round Decisions (2026-11-02)
+
+Maintainer answers in chat, 2026-11-02, after the `tess-dl` readiness review.
+
+| #   | Topic                         | Decision |
+|-----|-------------------------------|----------|
+| D66 | `tess-dl` is the source of truth | The `tess-dl` project owns the TDL language text from now on. The vault keeps the shell's schema and the decisions. The split and the order of the move are in [tess-dl Handover](../41%20TDL%20Reference/tess-dl%20Handover.md). |
+| D67 | Project basics                | Licence MIT, Python 3.14 or later, no runtime dependencies, pytest for tests, and the language version (`0.1`) kept separate from the package version. |
+| D68 | Familiar names, plain prose   | TDL's names, behaviour and documentation are written for people from the UI design world: where a concept exists in CSS, Flutter, QML, SwiftUI or Compose, TDL uses the familiar name and behaviour unless there is a recorded reason not to, and the docs say where it differs. "Make sure people expect something in another framework to work the same or similar in ours." The audit is [Familiar Names Audit](../41%20TDL%20Reference/Familiar%20Names%20Audit.md). |
+| D69 | The public API of the library | Work started on [TDL Library API](../42%20Python%20API/TDL%20Library%20API.md) (proposed). Its open questions, for example whether values stay lexical, are not yet answered. |
+| D70 | Peer session                  | `tess-dl` joins the peer sessions (the maintainer is telling the other sessions). Requests to it are `TDL-REQ-###`. |
+
+### Tenth-Round Decisions (2026-11-02)
+
+Maintainer answers to [Familiar Names Audit](../41%20TDL%20Reference/Familiar%20Names%20Audit.md) and the [TDL Library API](../42%20Python%20API/TDL%20Library%20API.md) questions. Rows marked "kept" answer a challenge to an earlier decision.
+
+| #   | Topic                     | Decision |
+|-----|---------------------------|----------|
+| D71 | `Gap` kept                | `Gap` stays as the distance from a surface to what it is attached to (D49). "Margin is used more normally throughout and the distance between what a surface attaches to is fairly unique." The docs say it is not CSS `gap`; space between children is `Spacing`. |
+| D72 | Four-sided order kept     | Left, Top, Right, Bottom stays (D50). The claim that it is the convention of other frameworks is corrected: it matches Flutter, Qt and WPF and differs from CSS and SwiftUI. A list of two or three items is an error with a hint (one number, four items, or named sides). |
+| D73 | `Panel` and `Bar` kept    | The names stay. The docs say a Plasma panel is a `Bar` here. |
+| D74 | Values stay lexical       | The `tess_dl` library returns lexical kinds (word, string, number, percent, call, list, slot, template); the shell's schema types them ([TDL Library API](../42%20Python%20API/TDL%20Library%20API.md) 1, "yes"). |
+| D75 | Popup `Anchor_To` renamed | Popup `Anchor_To` is `Attach_To`, as for a Panel. `Anchor` stays the layer-shell edges. |
+| D76 | Font and size keys        | `Size` (font) is `Font_Size`, `Weight` is `Font_Weight`, the text `Align` is `Text_Align`, and a Terminal's font size is `Font_Size`. Panel `Size` is `Width` and `Height` as a Bar has them; the same applies to a Popup (`Size` is `Width` and `Height`, `Max_Size` is `Max_Width` and `Max_Height`, an extension the agent made for consistency). |
+| D77 | `Alignment`               | One name, `Alignment`, for the placement along the shared edge on Bar, Panel and Popup. |
+| D78 | Border                    | Border is only the block `Border { Width, Color }`; the boolean form is removed. The flat key `Border_Thickness` is `Border_Width`. A Frame's `Thickness` (the ring band) is unchanged. |
+| D79 | Border takes layout space | A border takes layout space wherever it is used. Whether `Width` includes padding and border is open (recommendation: yes, as CSS border-box). |
+| D80 | Text events               | `On_Changed` fires on every edit of the text; `On_Input` becomes `On_Text_Commit` and fires for committed text. (The maintainer wrote `On_Changed`; the notes had `On_Change`.) |
+| D81 | `Visible` everywhere      | Surfaces use `Visible` (default true) and no longer `Hidden`. |
+| D82 | `Emphasized`              | The easing token is `Emphasized`; keys and tokens use US spelling. |
+| D83 | Documented, not renamed   | `EXPAND` and `AUTO` keep their names with both senses explained; `Tooltip` keeps its two uses with the difference explained; the colour forms stay and the docs say alpha is last. All go in a new section of [Common Keys and Conventions](../41%20TDL%20Reference/Common%20Keys%20and%20Conventions.md) for readers who know other frameworks. |
+
+Still open from the audit (not answered): `Flex` to `Orientation`, `Frame` to a new name, `On_Unfocus`, `Focused`, `Position: RELATIVE`, `Offset`, `Label`, `Elevation`, `START` and `END` (all answered later, D84 to D91).
+
+### Eleventh-Round Decisions (2026-11-02)
+
+The remaining rows of [Familiar Names Audit](../41%20TDL%20Reference/Familiar%20Names%20Audit.md), answered by the maintainer.
+
+| #   | Topic                    | Decision |
+|-----|--------------------------|----------|
+| D84 | Kept as they are         | `Flex` (audit row 3), the `Frame` surface name (4), `On_Unfocus` (15), `Label` (16) and `START` and `END` (24) keep their names. Each is explained in [Common Keys and Conventions > For Readers Who Know Other Frameworks](../41%20TDL%20Reference/Common%20Keys%20and%20Conventions.md#for-readers-who-know-other-frameworks); `START` and `END` are documented as left-to-right only in v1. |
+| D85 | `Focused`                | Kept and documented: it applies to keyboard focus only (audit row 12). |
+| D86 | `Position`               | `RELATIVE` and `ABSOLUTE` are kept (audit row 13). |
+| D87 | `Offset`                 | `Offset: <number>`, where the number is positive or negative: positive moves towards the end, negative towards the start (audit row 14). This is the Bar's `Offset` already (D41). It means a Panel's four-sided `Offset` (D43, D51) no longer fits; the key for a Panel's position from its anchored edges is open (recommendation: `Inset`, four-sided). |
+| D88 | `Elevation`              | A percentage. `0%` is no elevation and `100%` is just above a reasonable amount, which was about 64 px in the maintainer's tests (audit row 19). It replaces the levels 0 to 5. The theme turns the percentage into shadow layers; the curve and the `Max` shadow are for the design system, and [Style Schema](../41%20TDL%20Reference/Style%20Schema.md) carries a proposal (the theme holds the shadow at 100% and a `Reach` of 64 px; the shell scales it). |
+
+Open from this round: the Panel position key (D87), and the elevation curve (D88). Both are settled in the twelfth round (D89, D90); the elevation numbers stay provisional.
+
+### Twelfth-Round Decisions (2026-11-02)
+
+| #   | Topic                      | Decision |
+|-----|----------------------------|----------|
+| D89 | A Panel's `Inset`          | The key that positions a Panel from its anchored edges is `Inset`, four-sided (left, top, right, bottom), in place of the Panel's `Offset` (maintainer, 2026-11-02, closing the open point of D87). `Offset` is a Bar key only. |
+| D90 | Elevation numbers          | The curve from the percentage to the shadow, and the figure of 64 px for 100%, are provisional: the maintainer's tests used a different surface renderer, so they are re-tuned once tre's shadow rendering is seen. The percentage meaning of D88 stands. |
+| D91 | Root block and suffix      | The `tess_dl` library does not check that a file's root block matches its name suffix; "tdl should not care what the file is called". The shell raises it as `shell-root-suffix` and Tesserae UI does its own check. D52's list becomes 17 language errors (`tdl-root-suffix` removed). |
+
+### Thirteenth-Round Decisions (2026-11-02)
+
+| #   | Topic                    | Decision |
+|-----|--------------------------|----------|
+| D92 | The `tess-dl` start      | The `tess-dl` session starts the first slice from [tess-dl First Slice](../41%20TDL%20Reference/tess-dl%20First%20Slice.md). `tess-dl` owns the conformance corpus; the shell proposes cases through `TDL-REQ-###`. All TDL documentation moves into `tess-dl/docs/` eventually. Until then the vault note is the current brief, and the maintainer gives the session its location, because the copy in the session's docs is outdated (maintainer, 2026-11-02). |
+| D93 | New and extra error codes | Accepted by the maintainer on 2026-11-02, sent by the `tess-dl` session as `TDL-REQ-001`: `tdl-unexpected-text` (text that is not valid where it stands, G13) and four limit and input codes, `tdl-too-large`, `tdl-too-deep`, `tdl-unsupported-version` and `tdl-bad-encoding` (G18). The library has 22 codes: 18 language errors and four limit and input codes. Depth 64 is decided (G11). |
+| D94 | Grammar answers          | The 12 grammar ambiguities of [tess-dl First Slice](../41%20TDL%20Reference/tess-dl%20First%20Slice.md) are answered as G1 to G12, and the maintainer's open questions as G14 to G17, in `tess-dl` `docs/decisions.md` (commit `5e44072`). That file is the record; the vault does not copy the rows. A summary is in [TDL Language](../41%20TDL%20Reference/TDL%20Language.md). |
+| D95 | Python import names      | The import names change on 2026-11-03 to avoid conflicts in the future (maintainer): `tre` is `tess_re`, `tesserae` is `tess_ui`, `tel` is `tess_el`, `tdl` is `tess_dl`, and the shell's is `tess_shell` (was `tesserae_shell`) once coding starts. The PyPI distribution names (`tesserae-engine`, `tesserae-ui`, `tesserae-el`, `tesserae-dl`, `tesserae-shell`) do not change (maintainer, 2026-11-03), and the GitHub repositories are `tess-re`, `tess-ui`, `tess-el`, `tess-dl` and `tess-shell`; the command `tesserae-shell` is not part of this change. Notes that quote an older import name in history (the older requests, ADRs and measurements) keep it. |
+
 ## Open Items
 
-- [x] **Name.** Tesserae Data Language, TDL (maintainer, 2026-10-29). #needs-verification: that the code name `tdl` and any PyPI package name are free and do not clash with another well-known TDL; check before registering.
+- [x] **Name.** Tesserae Data Language, TDL (maintainer, 2026-10-29). #needs-verification: that the code name `tdl` and any PyPI package name are free and do not clash with another well-known TDL; check before registering. Resolved (maintainer, 2026-11-02): the TDL project, repository and local folder are `tess-dl`, the PyPI package is `tesserae-dl` (free on PyPI 2026-11-02; `tdl` is taken), and the Python import name was set to `tdl` on 2026-11-02 and changed to `tess_dl` on 2026-11-03 (D95) so that the import names of all the projects cannot clash with other packages, such as the unrelated PyPI package `tdl`.
 - [x] **File extension.** `.tdl` (maintainer, 2026-10-29), not `.tess`, which does not say it is a data language and reads as a Tesserae file. Neither is registered in this machine's shared-mime-info (`/usr/share/mime/globs2`, checked 2026-10-29), which is a local check only.
 - [x] **Expression slot.** `{{ }}` on a single line, no quotes (maintainer, 2026-10-29).
 - [x] **Grammar basics.** Separators, comments, strings, colours, lengths and trailing commas, as in "What TDL Is" (maintainer, 2026-10-29).

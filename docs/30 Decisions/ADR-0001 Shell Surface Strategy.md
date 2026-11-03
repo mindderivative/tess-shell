@@ -20,7 +20,7 @@ tags: [adr, spec/surface, integration/wayland, needs-verification]
 
 > [!TIP]
 > **Option A is released in tre 0.5.8 (2026-10-25)**
-> tre closed [#195](https://github.com/mindderivative/tre/issues/195) and released it in 0.5.8 (`tesserae-engine==0.5.8`): `LayerWindow`, `PopupWindow`, outputs, `input_region`, margin animation and drag, `exclusive_edge`, IME and screen-reader support. Window GPU memory is much lower by default (a bar about 18 MiB, was 198; one shared device is still open as tre #220). Gaps and what was tested: [TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed). Accepted by the maintainer on 2026-10-25.
+> tre closed [#195](https://github.com/mindderivative/tre/issues/195) and released it in 0.5.8 (`tesserae-engine==0.5.8`): `LayerWindow`, `PopupWindow`, outputs, `input_region`, margin animation and drag, `exclusive_edge`, IME and screen-reader support. Window GPU memory is much lower by default (a bar about 18 MiB, was 198; one shared device is still open as tre #220). Gaps and what was tested: [TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed). Accepted by the maintainer on 2026-10-25.
 
 ## Context
 
@@ -60,13 +60,13 @@ A platform-neutral variant is also possible: a `PanelWindow`-style type whose la
 - **For:** matches the layering principle. One rendering path (tre owns every frame). Python only sets surface properties, as in Fabric. Every toolkit surveyed attaches the layer role at its own boundary. Other tre users benefit.
 - **Against:** implementation cost. `winit` has no layer-shell role of its own, so tre needs a platform-specific path beside it, and that path must reproduce input, text input, scale, clipboard and accessibility handling that `winit` supplies today. Scheduling is not a risk: tre and Tesserae Shell share a maintainer.
 - **If infeasible:** fall back to Option B.
-- **Status:** built and released in tre 0.5.8 ([TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md), `stable`). It specifies the window type, outputs and popups, and records the implementation candidates.
+- **Status:** built and released in tre 0.5.8 ([TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md), `stable`). It specifies the window type, outputs and popups, and records the implementation candidates.
 
 ### Option B — Shell-created Surface, Tre Renders into it
 
 > [!NOTE]
 > **Rejected unless Option A proves infeasible**
-> With a shared maintainer there is no schedule reason to prefer B. Keep the option documented; write `TRE-REQ-002` only if the investigation in [TRE-REQ-001 Layer Surface Window > Implementation candidates](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#implementation-candidates) rules out Option A.
+> With a shared maintainer there is no schedule reason to prefer B. Keep the option documented; write `TRE-REQ-002` only if the investigation in [TRE-REQ-001 Layer Surface Window > Implementation candidates](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#implementation-candidates) rules out Option A.
 
 The shell runtime creates the layer-shell surface itself (a Wayland client binding in Python or a small Rust helper) and hands tre a native surface or window handle to render into.
 
@@ -104,14 +104,14 @@ Use KDE's own surface-role protocol (`org_kde_plasma_shell`) instead of `wlr-lay
 
 ## Decision
 
-Accepted 2026-10-25 by the maintainer: **Option A**, layer surfaces in tre. The shell builds its bars, panels, docks, OSDs and popups on `LayerWindow` and `PopupWindow` from `tesserae-engine` 0.5.8 or later ([TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)). Options B, C and D are not pursued; `TRE-REQ-002` stays unwritten unless a later ADR supersedes this one.
+Accepted 2026-10-25 by the maintainer: **Option A**, layer surfaces in tre. The shell builds its bars, panels, docks, OSDs and popups on `LayerWindow` and `PopupWindow` from `tesserae-engine` 0.5.8 or later ([TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)). Options B, C and D are not pursued; `TRE-REQ-002` stays unwritten unless a later ADR supersedes this one.
 
 ## Consequences
 
 Option A is accepted, so:
 
-- [TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) carries the API, alternatives and fallback.
-- tre 0.5.8 has shipped it, so surface specs list [TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) in `depends_on` but carry no `Blocked by` callout. A spec names any untested gap from the request that affects it (for example `PopupWindow` Escape dismissal, Orca, input methods).
+- [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) carries the API, alternatives and fallback.
+- tre 0.5.8 has shipped it, so surface specs list [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) in `depends_on` but carry no `Blocked by` callout. A spec names any untested gap from the request that affects it (for example `PopupWindow` Escape dismissal, Orca, input methods).
 - The Option C prototype is no longer needed: layout and design-system work can run on `LayerWindow` directly.
 
 ## Open Items
@@ -120,8 +120,8 @@ Option A is accepted, so:
 - [ ] Find the first KWin release exposing `zwlr_layer_shell_v1`; record the version. Deferred to the testing phase (maintainer, 2026-10-25): Tesserae Shell tests it once a build exists. The design assumes KWin 6.8.1, where tre tested.
 - [ ] Verify `org_kde_plasma_shell` status for third-party clients. Deferred to the testing phase (maintainer, 2026-10-25). Option D is not pursued, so nothing in the design depends on it.
 - [ ] Decide whether non-layer-shell compositors (GNOME) are explicitly out of scope for v1. Deferred to the testing phase (maintainer, 2026-10-25). Until then the design targets KWin and wlroots compositors; `LayerWindow` raises `UnsupportedPlatform` elsewhere.
-- [x] Specify popup behaviour (parenting, grabs, dismissal) in `TRE-REQ-001`. Built as `PopupWindow` in tre 0.5.8; see [TRE-REQ-001 Layer Surface Window > Popups](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#popups).
-- [x] Choose the backend path for layer surfaces: I2 built, a second event queue on `winit`'s `wl_display`; tre binds layer-shell v5 itself. See [TRE-REQ-001 Layer Surface Window > Implementation candidates](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#implementation-candidates).
+- [x] Specify popup behaviour (parenting, grabs, dismissal) in `TRE-REQ-001`. Built as `PopupWindow` in tre 0.5.8; see [TRE-REQ-001 Layer Surface Window > Popups](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#popups).
+- [x] Choose the backend path for layer surfaces: I2 built, a second event queue on `winit`'s `wl_display`; tre binds layer-shell v5 itself. See [TRE-REQ-001 Layer Surface Window > Implementation candidates](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#implementation-candidates).
 - [ ] Read the gtk-layer-shell and Quickshell source to see how they attach a layer role to a toolkit surface; this informs Option B.
 
 ## Links
@@ -129,6 +129,6 @@ Option A is accepted, so:
 - [wlr-layer-shell-unstable-v1](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)
 - [tre: custom windowing](https://mindderivative.github.io/tre/design/custom-windowing/)
 - [tre: architecture](https://mindderivative.github.io/tre/architecture/)
-- [TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)
+- [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)
 - [Prior Art - Linux Shell Surfaces](../90%20Research/Prior%20Art%20-%20Linux%20Shell%20Surfaces.md)
 - [Open Questions](../00%20Home/Open%20Questions.md) · [Risk Register](../00%20Home/Risk%20Register.md) · [Index](../00%20Home/Index.md)

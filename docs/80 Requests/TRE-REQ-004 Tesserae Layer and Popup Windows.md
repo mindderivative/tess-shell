@@ -5,7 +5,7 @@ type: engine-request
 status: superseded
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-03
 tags: [engine-request, spec/surface, tesserae, needs-verification]
 ---
 
@@ -18,7 +18,7 @@ tags: [engine-request, spec/surface, tesserae, needs-verification]
 > [!NOTE]
 > Let a Tesserae view be the content of a tre `LayerWindow` or `PopupWindow`, and let a Tesserae app run with no main window. Tesserae 0.5.1 opens only ordinary windows, so a shell built on `tesserae-ui` ([ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md)) cannot put a bar on screen from a YAML view. This request is addressed to the Tesserae project, not to tre: tre 0.5.8 already has the mechanism.
 
-This note is carried to the Tesserae project by the maintainer (AGENTS > 6. Engine requests (tre / Tesserae)). It is not filed from this vault. Numbers 002 and 003 stay reserved (see [80 Engine Requests](80%20Engine%20Requests.md)).
+This note is carried to the Tesserae project by the maintainer (AGENTS > 6. Requests Between Projects). It is not filed from this vault. Numbers 002 and 003 stay reserved (see [80 Requests](80%20Requests.md)).
 
 ## Shell Need
 
@@ -133,7 +133,7 @@ app.run()
 
 ### 5. Hot Reload
 
-- Saving a `widget: LayerWindow` view re-applies `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard` and `input_region` through `LayerWindow.set`, which is live and one commit (tre). This differs from `widget: Window`, whose options are read only at open ([Hot Reload](https://mindderivative.github.io/tesserae/guide/hot-reload/)).
+- Saving a `widget: LayerWindow` view re-applies `layer`, `anchor`, `size`, `exclusive_zone`, `exclusive_edge`, `margin`, `keyboard` and `input_region` through `LayerWindow.set`, which is live and one commit (tre). This differs from `widget: Window`, whose options are read only at open ([Hot Reload](https://mindderivative.github.io/tess-ui/guide/hot-reload/)).
 - `namespace` and `output` cannot change on a live window. Changing `namespace` in the file logs a warning that names the file and asks for a reopen. The shell reopens the window.
 - A bad value leaves the window as it was and logs an `ERROR` with `file:line:column`, as for any view.
 
@@ -191,6 +191,6 @@ app.run()
 ## Links
 
 - [ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md) · [ADR-0003 Process Model](../30%20Decisions/ADR-0003%20Process%20Model.md) · [TRE-REQ-001 Layer Surface Window](TRE-REQ-001%20Layer%20Surface%20Window.md)
-- [Tesserae: Windows, Docks and Embedded Views](https://mindderivative.github.io/tesserae/guide/windows-and-docks/) · [Window Options](https://mindderivative.github.io/tesserae/guide/window-options/) · [Hot Reload](https://mindderivative.github.io/tesserae/guide/hot-reload/)
+- [Tesserae: Windows, Docks and Embedded Views](https://mindderivative.github.io/tess-ui/guide/windows-and-docks/) · [Window Options](https://mindderivative.github.io/tess-ui/guide/window-options/) · [Hot Reload](https://mindderivative.github.io/tess-ui/guide/hot-reload/)
 - [tre: LayerWindow](https://mindderivative.github.io/tre/reference/layer-window/) · [Outputs](https://mindderivative.github.io/tre/reference/outputs/) · [App](https://mindderivative.github.io/tre/reference/app/)
-- [80 Engine Requests](80%20Engine%20Requests.md) · [Index](../00%20Home/Index.md)
+- [80 Requests](80%20Requests.md) · [Index](../00%20Home/Index.md)

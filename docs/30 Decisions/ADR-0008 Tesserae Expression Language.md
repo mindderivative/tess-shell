@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-25
-updated: 2026-10-29
+updated: 2026-11-03
 tags: [adr, architecture]
 ---
 
@@ -52,7 +52,7 @@ Details, decided by the maintainer in chat on 2026-10-25:
 
 - A redesign, with `expr.py` as the starting point. Tesserae's `expr.py` is the starting point, not the design. TEL is separated from it and made much more efficient.
 - **TEL owns structure and values.** It has everything it needs to run on its own, with no shell and no Tesserae UI. Anyone can adopt it in plain YAML by importing its parser in a Python script.
-- **Name.** The Tesserae Expression Language, written `tel` in code, as `tre` is for the engine. For PyPI the maintainer's preference is `tesserae-expression-language`, else `tel`, else `tess-el`. On 2026-10-25 `tel` is already a package on PyPI; no package named `tesserae-expression-language` or `tess-el` was found. #needs-verification: availability when registering.
+- **Name.** The Tesserae Expression Language, written `tel` in code, as `tre` is for the engine. For PyPI the maintainer's preference is `tesserae-expression-language`, else `tel`, else `tess-el`. On 2026-10-25 `tel` is already a package on PyPI; no package named `tesserae-expression-language` or `tess-el` was found. Outcome (2026-11-02): PyPI refused `tess-el`, which clashes with `tessel`, so the package is `tesserae-el` (0.1.0, import name `tel`, changed to `tess_el` on 2026-11-03); see [Expression Language Requirements > TEL 0.1.0 Released (2026-11-02)](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md#tel-010-released-2026-11-02). #needs-verification: availability when registering.
 - **Expression language only (2026-10-26).** TEL has no statements, handlers or event handling. The shell owns all of that and may use TEL to evaluate argument expressions at event time; an `event` name the shell puts in the scope is an ordinary name to TEL. Confirmed by the maintainer, who told the `tess-el` project the same day; `tess-el` confirmed over the mailbox. [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md) T15.
 - **Kept separate from Tesserae.** The maintainer handles all contact with the Tesserae project, including `expr.py`. The shell side does not message the `tesserae` session about it.
 

@@ -5,7 +5,7 @@ type: spec
 status: draft
 owner: phil
 created: 2026-10-28
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [spec/surface, needs-verification]
 ---
 
@@ -44,41 +44,41 @@ stateDiagram-v2
 - The parent is the surface that holds the calling use (decided, [Module Context > Calling a popup](../../42%20Python%20API/Module%20Context.md#calling-a-popup)), so a Popup opens on that surface's monitor only and is never anchored across monitors ([Surface Types > Open questions](Surface%20Types.md#open-questions)). tre requires the parent to be an open `LayerWindow` or `PopupWindow` ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)); a Popup called from a hosted Frame strip or a melded entry hangs off the Frame's painter window.
 - The caller passes the anchor rectangle: the clicked icon, in its surface's coordinates (decided, [Module Context > Calling a popup](../../42%20Python%20API/Module%20Context.md#calling-a-popup)).
 - A submenu is a Popup called from a module inside a Popup; its parent is that Popup. Closing the parent closes the submenus (tre).
-- `Anchor_To` names a parent in the file. Decided 2026-10-28: the caller decides the parent, so `Anchor_To` is needed only for a Popup opened without a module caller, and is optional otherwise.
+- `Attach_To` names a parent in the file. Decided 2026-10-28: the caller decides the parent, so `Attach_To` is needed only for a Popup opened without a module caller, and is optional otherwise.
 
 ### Placement
 
 The compositor places the popup against the anchor rectangle and keeps it on screen. The shell offers the same words as a Panel's attachment ([Panel > Attachment geometry (decided 2026-10-27)](Panel.md#attachment-geometry-decided-2026-10-27)), decided 2026-10-28, and maps them to tre's arguments:
 
-| `Attach` and `Align` | tre `anchor`   | tre `gravity`  |
-|----------------------|----------------|----------------|
-| `BOTTOM`, `START`    | `bottom_left`  | `bottom_right` |
-| `BOTTOM`, `CENTER`   | `bottom`       | `bottom`       |
-| `BOTTOM`, `END`      | `bottom_right` | `bottom_left`  |
-| `TOP`, `START`       | `top_left`     | `top_right`    |
-| `TOP`, `CENTER`      | `top`          | `top`          |
-| `TOP`, `END`         | `top_right`    | `top_left`     |
-| `RIGHT`, `START`     | `top_right`    | `bottom_right` |
-| `RIGHT`, `CENTER`    | `right`        | `right`        |
-| `RIGHT`, `END`       | `bottom_right` | `top_right`    |
-| `LEFT`, `START`      | `top_left`     | `bottom_left`  |
-| `LEFT`, `CENTER`     | `left`         | `left`         |
-| `LEFT`, `END`        | `bottom_left`  | `top_left`     |
+| `Attach` and `Alignment` | tre `anchor`   | tre `gravity`  |
+|--------------------------|----------------|----------------|
+| `BOTTOM`, `START`        | `bottom_left`  | `bottom_right` |
+| `BOTTOM`, `CENTER`       | `bottom`       | `bottom`       |
+| `BOTTOM`, `END`          | `bottom_right` | `bottom_left`  |
+| `TOP`, `START`           | `top_left`     | `top_right`    |
+| `TOP`, `CENTER`          | `top`          | `top`          |
+| `TOP`, `END`             | `top_right`    | `top_left`     |
+| `RIGHT`, `START`         | `top_right`    | `bottom_right` |
+| `RIGHT`, `CENTER`        | `right`        | `right`        |
+| `RIGHT`, `END`           | `bottom_right` | `top_right`    |
+| `LEFT`, `START`          | `top_left`     | `bottom_left`  |
+| `LEFT`, `CENTER`         | `left`         | `left`         |
+| `LEFT`, `END`            | `bottom_left`  | `top_left`     |
 
 - `Attach: BOTTOM` puts the popup's top edge against the anchor's bottom edge, as in the Panel. `Gap` becomes tre's `offset` away from the anchor (positive for the attached side).
-- The default is `Attach: BOTTOM`, `Align: START` (the first row, which is tre's own example), with tre's default adjustment `("flip_y", "slide_x")`: the compositor flips the popup above the anchor when there is no room below, and slides it sideways to stay on screen ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)). A popup under a bottom bar therefore opens upward with no setting.
+- The default is `Attach: BOTTOM`, `Alignment: START` (the first row, which is tre's own example), with tre's default adjustment `("flip_y", "slide_x")`: the compositor flips the popup above the anchor when there is no room below, and slides it sideways to stay on screen ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)). A popup under a bottom bar therefore opens upward with no setting.
 - The mapping follows the protocol's words: a corner anchor puts the anchor point at that corner, and a corner gravity places the popup towards that corner ([xdg-shell](https://wayland.app/protocols/xdg-shell)). #needs-verification against a running KWin 6.8.1.
 - `configure` reports where the compositor put it, so a flip is visible to the shell ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)); the content can react (an arrow on the other side).
-- **The visual shape is what is placed (decided 2026-10-28).** The shape the compositor uses for placement is the popup's border plus its body size. A transparent margin for a shadow is ignored and is not part of the popup's size, so `Attach: BOTTOM` with `Gap: 4` leaves 4 px between the anchor and the body, margin or not. tre today sets the window geometry to the whole surface, margin included (`set_window_geometry(0, 0, width, height)`, `crates/engine-platform/src/layer.rs`, read 2026-10-28), so the compositor would place the margin. Until tre can name the body ([TRE-REQ-007 Popup Body Geometry](../../80%20Engine%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md), draft, not filed), the shell enlarges the popup by the margin and shifts tre's `offset` by it; the compositor's flip and slide then use the larger rectangle, so a popup near a screen edge can flip up to one margin early. #needs-verification on KWin 6.8.1.
+- **The visual shape is what is placed (decided 2026-10-28).** The shape the compositor uses for placement is the popup's border plus its body size. A transparent margin for a shadow is ignored and is not part of the popup's size, so `Attach: BOTTOM` with `Gap: 4` leaves 4 px between the anchor and the body, margin or not. tre today sets the window geometry to the whole surface, margin included (`set_window_geometry(0, 0, width, height)`, `crates/engine-platform/src/layer.rs`, read 2026-10-28), so the compositor would place the margin. Until tre can name the body ([TRE-REQ-007 Popup Body Geometry](../../80%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md), draft, not filed), the shell enlarges the popup by the margin and shifts tre's `offset` by it; the compositor's flip and slide then use the larger rectangle, so a popup near a screen edge can flip up to one margin early. #needs-verification on KWin 6.8.1.
 
 ### Size (Proposed)
 
 tre fixes a popup's size at creation. A tray menu's height depends on its items, so the shell measures first. A throwaway test on tre 0.5.8 showed it works without a display: a headless `Window` with a content tree of three text lines, a layout pass (`advance`), and `get("layout_width")` / `get("layout_height")` returned 126 by 72 for a box with `fit-content` sizes (2026-10-28, scratch script in /tmp). Proposed flow on open:
 
-1. Build the content in a headless window at the largest size allowed (`Max_Size`), run layout, read the content's laid-out size.
+1. Build the content in a headless window at the largest size allowed (`Max_Width` and `Max_Height`), run layout, read the content's laid-out size.
 2. Create the `PopupWindow` with that size, then build the content again in it.
 
-Costs: the content is built twice per open. `Size: AUTO` is the default; a fixed `Size: [w, h]` skips the measurement. `Max_Size: [width, height]` defaults to `[300, 400]` (decided 2026-10-28). Content larger than `Max_Size` is clamped to it and scrolls (decided 2026-10-28). A change in content size while open (an item appears) cannot resize the popup: it closes and reopens, or the content scrolls.
+Costs: the content is built twice per open. `Width: AUTO` and `Height: AUTO` are the defaults; a fixed `Width` and `Height` skip the measurement. `Max_Width` and `Max_Height` default to 300 and 400 (decided 2026-10-28). Content larger than `Max_Width` or `Max_Height` is clamped to it and scrolls (decided 2026-10-28). A change in content size while open (an item appears) cannot resize the popup: it closes and reopens, or the content scrolls.
 
 ### Focus and Dismissal (Decided)
 
@@ -131,30 +131,30 @@ The caller's record is available to the Popup's modules and expressions (decided
 
 ## Configuration
 
-| Key                                                            | Meaning                                                                                                           | Status                                                                                  |
-|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
-| `Popup` (the head)                                             | The type; there is no `Kind:` key                                                                                                        | Decided                                                                                 |
-| `Children`                                                     | Containers, modules and blocks                                                                                    | Decided                                                                                 |
-| `Style`                                                        | A style file or inline values                                                                                     | Decided                                                                                 |
-| `Anchor_To`                                                    | A default parent by name; optional                                                                                | Key proposed in [Shell File](../../41%20TDL%20Reference/Shell%20File.md); optional, decided (2026-10-28) |
-| `Attach`, `Align`, `Gap`                                       | Placement against the anchor rectangle, as for a Panel                                                            | Decided (2026-10-28)                                                                    |
-| `Adjust`                                                       | What the compositor may do to keep it on screen: `FLIP_X`, `FLIP_Y`, `SLIDE_X`, `SLIDE_Y`, `RESIZE_X`, `RESIZE_Y` (the shell passes tre's lowercase names) | Decided (key name accepted 2026-10-29); default `[FLIP_Y, SLIDE_X]` (tre's default `flip_y`, `slide_x`)    |
-| `Size`                                                         | `AUTO` or `[width, height]`                                                                                       | Decided (2026-10-28); default `AUTO`                                                    |
-| `Max_Size`                                                     | `[width, height]`: the largest `AUTO` may reach; content beyond it scrolls                                        | Decided; default `[300, 400]` (2026-10-28)                                              |
-| `Focus`                                                        | Take the keyboard and pointer; default true                                                                       | Decided (2026-10-26)                                                                    |
-| `Tooltip` (on a Popup)                                         | `true` makes the Popup a tooltip: `Focus: false`, `Open_On_Enter`, `Close_On_Exit`; default false                 | Decided (2026-10-28)                                                                    |
-| `Open_On_Enter`                                                | Open when the pointer enters the caller (a tooltip)                                                               | Key decided (2026-10-28)                                                                |
-| `Enter_Delay`                                                  | Milliseconds before it opens                                                                                      | Decided; default 500 (2026-10-28)                                                       |
-| `Close_On_Exit`                                                | Close when the pointer leaves the caller and the popup                                                            | Key decided (2026-10-28)                                                                |
-| `Exit_Delay`                                                   | Milliseconds before it closes                                                                                     | Decided; default 200 (2026-10-28)                                                       |
-| `Tooltip` (on a module use, or manually on a block or surface) | A Popup file or an inline Popup, opened as that thing's tooltip                                                   | Key and forms decided (2026-10-28); the unique-name form is proposed                    |
-| `Animation`                                                    | Fade or none; no slide (the compositor places it)                                                                 | Decided (key name accepted 2026-10-29)                                                 |
+| Key                                                            | Meaning                                                                                                                                                                         | Status                                                                                                  |
+|----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| `Popup` (the head)                                             | The type; there is no `Kind:` key                                                                                                                                               | Decided                                                                                                 |
+| `Children`                                                     | Containers, modules and blocks                                                                                                                                                  | Decided                                                                                                 |
+| `Style`                                                        | A style file or inline values                                                                                                                                                   | Decided                                                                                                 |
+| `Attach_To`                                                    | A default parent by name; optional                                                                                                                                              | Key proposed in [Shell File](../../41%20TDL%20Reference/Shell%20File.md); optional, decided (2026-10-28)                                          |
+| `Attach`, `Alignment`, `Gap`                                   | Placement against the anchor rectangle, as for a Panel. `Alignment` is one name for the same idea as the Bar's and the Panel's: where the surface sits along the edge it shares | Decided (2026-10-28)                                                                                    |
+| `Adjust`                                                       | What the compositor may do to keep it on screen: `FLIP_X`, `FLIP_Y`, `SLIDE_X`, `SLIDE_Y`, `RESIZE_X`, `RESIZE_Y` (the shell passes tre's lowercase names)                      | Decided (key name accepted 2026-10-29); default `[FLIP_Y, SLIDE_X]` (tre's default `flip_y`, `slide_x`) |
+| `Width`, `Height`                                              | Pixels, `50%` or `AUTO`, the forms a Bar takes ([Bar > Geometry](Bar.md#geometry); `EXPAND` is Bar only); each is its own key                                                                                | Decided (2026-10-28; the pair `Size` was split, 2026-11-02); default `AUTO`                             |
+| `Max_Width`, `Max_Height`                                      | Pixels: the largest `AUTO` may reach on that axis; content beyond it scrolls                                                                                                    | Decided; defaults 300 and 400 (2026-10-28)                                                              |
+| `Focus`                                                        | Take the keyboard and pointer; default true                                                                                                                                     | Decided (2026-10-26)                                                                                    |
+| `Tooltip` (on a Popup)                                         | `true` makes the Popup a tooltip: `Focus: false`, `Open_On_Enter`, `Close_On_Exit`; default false                                                                               | Decided (2026-10-28)                                                                                    |
+| `Open_On_Enter`                                                | Open when the pointer enters the caller (a tooltip)                                                                                                                             | Key decided (2026-10-28)                                                                                |
+| `Enter_Delay`                                                  | Milliseconds before it opens                                                                                                                                                    | Decided; default 500 (2026-10-28)                                                                       |
+| `Close_On_Exit`                                                | Close when the pointer leaves the caller and the popup                                                                                                                          | Key decided (2026-10-28)                                                                                |
+| `Exit_Delay`                                                   | Milliseconds before it closes                                                                                                                                                   | Decided; default 200 (2026-10-28)                                                                       |
+| `Tooltip` (on a module use, or manually on a block or surface) | A Popup file or an inline Popup, opened as that thing's tooltip                                                                                                                 | Key and forms decided (2026-10-28); the unique-name form is proposed                                    |
+| `Animation`                                                    | Fade or none; no slide (the compositor places it)                                                                                                                               | Decided (key name accepted 2026-10-29)                                                                  |
 
 ```
 Popup {
     Name: Tray_Menu
     Attach: BOTTOM
-    Align: START
+    Alignment: START
     Gap: 4
     Children {
         Menu { Items: {{ caller.data.items }} }
@@ -167,7 +167,7 @@ Popup {
     Enter_Delay: 500
     Exit_Delay: 200
     Attach: BOTTOM
-    Align: CENTER
+    Alignment: CENTER
     Children {
         Label { Text: {{ caller.data.text }} }
     }
@@ -189,13 +189,13 @@ A Popup has no Python of its own. A module opens it from an action with `self.ct
 
 ## Design
 
-- The look is a style file, stylesheet or an inline `Style` block ([Style, Theme and Stylesheet Files > Rules](../../41%20TDL%20Reference/Style%2C%20Theme%20and%20Stylesheet%20Files.md#rules)): background, border, radii, shadow. A Popup uses the same tokens and keys as the other surfaces ([Style Schema](../../41%20TDL%20Reference/Style%20Schema.md)), and elevation level 3 is a sensible default for a menu (proposed, token values in `50 Design System/`).
+- The look is a style file, stylesheet or an inline `Style` block ([Style, Theme and Stylesheet Files > Rules](../../41%20TDL%20Reference/Style%2C%20Theme%20and%20Stylesheet%20Files.md#rules)): background, border, radii, shadow. A Popup uses the same tokens and keys as the other surfaces ([Style Schema](../../41%20TDL%20Reference/Style%20Schema.md)), and an elevation of about 20% is a sensible default for a menu (proposed, token values in `50 Design System/`).
 - Shadows: a popup's surface cannot draw outside itself, so a shadow needs a transparent margin ([ADR-0010 Surface Shadows](../../30%20Decisions/ADR-0010%20Surface%20Shadows.md)). The margin is ignored for placement (decided 2026-10-28, see Placement); the input region follows the body. Test a popup with a margin and a shadow on KWin 6.8.1.
 - The Menu module owns arrow-key navigation and item layout; the Popup provides focus and dismissal.
 
 ## Accessibility
 
-- A Popup is one more window of the application for a screen reader ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)). Its nodes declare roles and labels in the file.
+- A Popup is one more window of the application for a screen reader ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)). Its nodes declare roles and labels in the file.
 - With focus on, keyboard focus moves into the Popup on open and returns to the element that opened it on close; Escape closes. #needs-verification how tre moves and restores focus.
 - A tooltip (`Focus: false`) is not focusable; its text is also available as the anchor's description ([Clock Module > Accessibility](../Modules/Clock%20Module.md#accessibility)).
 - Reduced motion: fade is off ([Goals and Non-Goals](../../10%20Vision/Goals%20and%20Non-Goals.md) G7).
@@ -214,7 +214,7 @@ A Popup has no Python of its own. A module opens it from an action with `self.ct
 | A Popup is called with a name that does not exist                        | Error at the call, naming the module and the name                                                   |
 | The compositor denies the grab (no valid user action, or a stale serial) | The popup is dismissed at once; the shell logs it and, for a `Focus: true` Popup, reports the cause |
 | The monitor is removed                                                   | The parent closes, so the Popup closes                                                              |
-| The content is larger than `Max_Size`                                    | Clamped to `Max_Size`; the content scrolls (decided 2026-10-28)                                     |
+| The content is larger than `Max_Width` or `Max_Height`                   | Clamped to `Max_Width` and `Max_Height`; the content scrolls (decided 2026-10-28)                   |
 | A module's content expression fails                                      | The Popup opens with the failing node empty and the error is logged, as in any view                 |
 | A second Popup is called while one is open                               | The first closes, unless the second is a submenu                                                    |
 
@@ -222,17 +222,17 @@ A Popup has no Python of its own. A module opens it from an action with `self.ct
 
 All nine were answered on 2026-10-28.
 
-1. [x] **Parent:** the caller's surface; `Anchor_To` optional (maintainer, as recommended).
-2. [x] **Placement words:** `Attach`, `Align`, `Gap`, as the Panel (as recommended).
-3. [x] **Size:** `AUTO` by a headless measuring pass, a fixed `Size`, `Max_Size`; a content change while open closes and reopens (as recommended).
+1. [x] **Parent:** the caller's surface; `Attach_To` optional (maintainer, as recommended).
+2. [x] **Placement words:** `Attach`, `Alignment`, `Gap`, as the Panel (as recommended).
+3. [x] **Size:** `AUTO` by a headless measuring pass, a fixed `Width` and `Height`, `Max_Width` and `Max_Height`; a content change while open closes and reopens (as recommended).
 4. [x] **Opening without input:** a Popup opens in response to input; a shortcut-opened menu is an overlay Panel (as recommended).
 5. [x] **One open at a time,** except submenus (as recommended).
 6. [x] **Create on open, destroy on close** (as recommended).
 7. [x] **Clicks on other shell surfaces** close a focused Popup (as recommended).
 8. [x] **Tooltip behaviour:** keys `Close_On_Exit`, `Exit_Delay`, `Enter_Delay` and `Open_On_Enter`; the caller is the hovered module; a `Tooltip` key is opt-in for every module, built-in and custom; the same key works by hand on blocks and surfaces (maintainer, 2026-10-28). The key names were settled the same day (below). Open: how the shell reads a module's rectangle.
-9. [x] **Shadows:** the visual shape (border plus body size) is what the compositor places; the transparent shadow margin is ignored and is not part of the popup's size. tre sets the geometry to the whole surface today, so this is a workaround now and [TRE-REQ-007 Popup Body Geometry](../../80%20Engine%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md) later (maintainer, 2026-10-28).
-- [x] Content larger than `Max_Size`: clamp and scroll (maintainer, 2026-10-28).
-- [x] The default `Max_Size`: `[300, 400]` (maintainer, 2026-10-28).
+9. [x] **Shadows:** the visual shape (border plus body size) is what the compositor places; the transparent shadow margin is ignored and is not part of the popup's size. tre sets the geometry to the whole surface today, so this is a workaround now and [TRE-REQ-007 Popup Body Geometry](../../80%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md) later (maintainer, 2026-10-28).
+- [x] Content larger than `Max_Width` or `Max_Height`: clamp and scroll (maintainer, 2026-10-28).
+- [x] The default `Max_Width` and `Max_Height`: 300 and 400 (maintainer, 2026-10-28).
 - [x] The tooltip key: `Tooltip: true | false` on a Popup; `Tooltip: <file>` or an inline Popup on a module, and the same on a block or surface when written by hand (maintainer, 2026-10-28).
 - [x] The default delays: `Enter_Delay` 500 ms and `Exit_Delay` 200 ms (maintainer, 2026-10-28).
 
@@ -250,7 +250,7 @@ All nine were answered on 2026-10-28.
 - [ ] A submenu opens beside its item; closing the parent closes it.
 - [ ] A Popup called while another is open closes the first.
 - [ ] After removing the parent surface, the Popup closes and the shell logs a `failed` reason.
-- [ ] The Popup's size matches its content within 1 px with `Size: AUTO`.
+- [ ] The Popup's size matches its content within 1 px with `Width: AUTO` and `Height: AUTO`.
 
 ## Links
 

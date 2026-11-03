@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [moc, tdl-ref]
 ---
 
@@ -16,6 +16,8 @@ The keys and forms of every shell file, written in TDL (Tesserae Data Language, 
 | Note                                    | Purpose                                                                                                      | Status |
 |-----------------------------------------|--------------------------------------------------------------------------------------------------------------|--------|
 | [TDL Language](TDL%20Language.md) | The language itself: metadata block, root block, punctuation, case rules, name registry, monitors, sizes, structure words      | draft  |
+| [tess-dl Handover](tess-dl%20Handover.md) | Which parts of the language move to the `tess-dl` project as the source of truth, and how | draft |
+| [tess-dl First Slice](tess-dl%20First%20Slice.md) | The brief for the first work in `tess-dl`: goal, order, corpus, error cases, grammar questions | draft |
 | [Block Reference](Block%20Reference.md) | The properties, events, accessibility defaults and tre mapping of every building block (proposed) | draft  |
 | [Common Keys and Conventions](Common%20Keys%20and%20Conventions.md) | Keys every file has, what says what a thing is, names, value forms, errors                                      | draft  |
 | [Shell File](Shell%20File.md) | The shell file: root, monitor, surfaces and their keys                                                       | draft  |

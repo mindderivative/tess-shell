@@ -31,7 +31,7 @@ tags: [vision]
 
 ## The Opportunity
 
-tre 0.5.8 can now create the surfaces a shell needs: `LayerWindow`, `PopupWindow` and an output API ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)). tre gives mechanism only: no widgets, no theme and no file formats (AGENTS > 3. Layering principle). A shell that supplies those itself, as its own project on tre, has properties no surveyed shell combines:
+tre 0.5.8 can now create the surfaces a shell needs: `LayerWindow`, `PopupWindow` and an output API ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)). tre gives mechanism only: no widgets, no theme and no file formats (AGENTS > 3. Layering principle). A shell that supplies those itself, as its own project on tre, has properties no surveyed shell combines:
 
 - One rendering path in Rust, with Python only in callbacks (AGENTS > 3. Layering principle).
 - A declarative front-end that a non-programmer can read, edit and hot-reload.

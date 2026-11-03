@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-30
+updated: 2026-11-03
 tags: [spec/runtime, integration/dbus, needs-verification]
 ---
 
@@ -64,11 +64,11 @@ Properties: `State` (`starting`, `running`, `stopping`), `Version`, `ApiVersion`
 
 ### Threading
 
-The shell's D-Bus service thread (a shared asyncio loop, [ADR-0009 D-Bus Client Library](../../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)) receives each call. The handler never touches a node: it queues the command for the loop with `call_soon` and awaits the result with a timeout of 5 seconds, then replies ([Process Model and Threading > Handing a value to the loop (proposed)](../../20%20Architecture/Process%20Model%20and%20Threading.md#handing-a-value-to-the-loop-proposed)). The loop applies the command between frames. If the loop is stuck, the call times out with an error; `Quit` also asks tre to stop from the service thread through `LoopHandle.stop()`, which any thread may call ([TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)).
+The shell's D-Bus service thread (a shared asyncio loop, [ADR-0009 D-Bus Client Library](../../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)) receives each call. The handler never touches a node: it queues the command for the loop with `call_soon` and awaits the result with a timeout of 5 seconds, then replies ([Process Model and Threading > Handing a value to the loop (proposed)](../../20%20Architecture/Process%20Model%20and%20Threading.md#handing-a-value-to-the-loop-proposed)). The loop applies the command between frames. If the loop is stuck, the call times out with an error; `Quit` also asks tre to stop from the service thread through `LoopHandle.stop()`, which any thread may call ([TRE-REQ-005 Keep-Alive and Loop Stop](../../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)).
 
 ### The Command Line
 
-One executable, `tesserae-shell` (name decided 2026-10-28), also `python -m tesserae_shell`.
+One executable, `tesserae-shell` (name decided 2026-10-28), also `python -m tess_shell`.
 
 | Subcommand                                | Needs a shell | What it does                                                                                                                                             |
 |-------------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|

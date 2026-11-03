@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-27
-updated: 2026-10-29
+updated: 2026-11-03
 tags: [moc, question]
 ---
 
@@ -39,6 +39,7 @@ The same notes as a plain list, with no JavaScript:
 - [ADR-0012 Keeping the Shell Above Plasma Panels](../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md)
 - [ADR-0013 Control Interface](../30%20Decisions/ADR-0013%20Control%20Interface.md)
 - [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)
+- [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md)
 - [Bar](../40%20Specifications/Surfaces/Bar.md)
 - [Block Reference](../41%20TDL%20Reference/Block%20Reference.md)
 - [Building Blocks](../50%20Design%20System/Building%20Blocks.md)
@@ -46,10 +47,13 @@ The same notes as a plain list, with no JavaScript:
 - [Common Keys and Conventions](../41%20TDL%20Reference/Common%20Keys%20and%20Conventions.md)
 - [Config Discovery and Registry](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md)
 - [D-Bus Libraries for Python](../90%20Research/D-Bus%20Libraries%20for%20Python.md)
+- [D-Bus Service Layer](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md)
 - [Data Flow](../20%20Architecture/Data%20Flow.md)
 - [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)
 - [Expression Languages for YAML](../90%20Research/Expression%20Languages%20for%20YAML.md)
+- [Familiar Names Audit](../41%20TDL%20Reference/Familiar%20Names%20Audit.md)
 - [Frame](../40%20Specifications/Surfaces/Frame.md)
+- [Global Shortcuts](../40%20Specifications/Integration/Global%20Shortcuts.md)
 - [Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md)
 - [Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md)
 - [IPC and CLI](../40%20Specifications/Runtime/IPC%20and%20CLI.md)
@@ -62,7 +66,9 @@ The same notes as a plain list, with no JavaScript:
 - [Module Contract](../42%20Python%20API/Module%20Contract.md)
 - [Module File](../41%20TDL%20Reference/Module%20File.md)
 - [Panel](../40%20Specifications/Surfaces/Panel.md)
+- [Plasma Coexistence](../40%20Specifications/Integration/Plasma%20Coexistence.md)
 - [Popup](../40%20Specifications/Surfaces/Popup.md)
+- [Portals](../40%20Specifications/Integration/Portals.md)
 - [Prior Art - Linux Shell Surfaces](../90%20Research/Prior%20Art%20-%20Linux%20Shell%20Surfaces.md)
 - [Problem Statement](../10%20Vision/Problem%20Statement.md)
 - [Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md)
@@ -78,11 +84,13 @@ The same notes as a plain list, with no JavaScript:
 - [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md)
 - [System Context](../20%20Architecture/System%20Context.md)
 - [TDL Language](../41%20TDL%20Reference/TDL%20Language.md)
-- [TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)
-- [TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)
-- [TRE-REQ-006 Repeating Gradients](../80%20Engine%20Requests/TRE-REQ-006%20Repeating%20Gradients.md)
-- [TRE-REQ-007 Popup Body Geometry](../80%20Engine%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md)
-- [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Engine%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md)
+- [Testing Strategy](../60%20Quality/Testing%20Strategy.md)
+- [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)
+- [TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)
+- [TRE-REQ-006 Repeating Gradients](../80%20Requests/TRE-REQ-006%20Repeating%20Gradients.md)
+- [TRE-REQ-007 Popup Body Geometry](../80%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md)
+- [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md)
+- [TRE-REQ-009 Batch and Tree Building](../80%20Requests/TRE-REQ-009%20Batch%20and%20Tree%20Building.md)
 - [V1 Scope](../10%20Vision/V1%20Scope.md)
 - [Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)
 - [Value Types and Conversion](../42%20Python%20API/Value%20Types%20and%20Conversion.md)
@@ -126,7 +134,7 @@ The same notes as a plain list, with no JavaScript:
 - [ ] **Registry I/O and the UID write** on the loop or a single writer thread ([ADR-0007 Shell UI Layer > Open items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)). Proposed in [Config Discovery and Registry > The registry file](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md#the-registry-file): one writer thread, one write per 500 ms.
 - [ ] **Supervisor** in v1 or later.
 - [x] **No windows** policy: stay idle (maintainer, 2026-10-26).
-- [x] **No windows mechanism.** Option A, chosen 2026-10-26 and released in tre 0.5.9 on 2026-10-27: `App.run(keep_alive=True)` and `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). The shell requires tre 0.5.9 or later.
+- [x] **No windows mechanism.** Option A, chosen 2026-10-26 and released in tre 0.5.9 on 2026-10-27: `App.run(keep_alive=True)` and `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). The shell requires tre 0.5.9 or later.
 - [ ] **Where conversions run** (send or flush).
 
 
@@ -149,8 +157,8 @@ The same notes as a plain list, with no JavaScript:
 - [ ] Find the first KWin release exposing `zwlr_layer_shell_v1`; record the version. Deferred to the testing phase (maintainer, 2026-10-25): Tesserae Shell tests it once a build exists. The design assumes KWin 6.8.1, where tre tested.
 - [ ] Verify `org_kde_plasma_shell` status for third-party clients. Deferred to the testing phase (maintainer, 2026-10-25). Option D is not pursued, so nothing in the design depends on it.
 - [ ] Decide whether non-layer-shell compositors (GNOME) are explicitly out of scope for v1. Deferred to the testing phase (maintainer, 2026-10-25). Until then the design targets KWin and wlroots compositors; `LayerWindow` raises `UnsupportedPlatform` elsewhere.
-- [x] Specify popup behaviour (parenting, grabs, dismissal) in `TRE-REQ-001`. Built as `PopupWindow` in tre 0.5.8; see [TRE-REQ-001 Layer Surface Window > Popups](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#popups).
-- [x] Choose the backend path for layer surfaces: I2 built, a second event queue on `winit`'s `wl_display`; tre binds layer-shell v5 itself. See [TRE-REQ-001 Layer Surface Window > Implementation candidates](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#implementation-candidates).
+- [x] Specify popup behaviour (parenting, grabs, dismissal) in `TRE-REQ-001`. Built as `PopupWindow` in tre 0.5.8; see [TRE-REQ-001 Layer Surface Window > Popups](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#popups).
+- [x] Choose the backend path for layer surfaces: I2 built, a second event queue on `winit`'s `wl_display`; tre binds layer-shell v5 itself. See [TRE-REQ-001 Layer Surface Window > Implementation candidates](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#implementation-candidates).
 - [ ] Read the gtk-layer-shell and Quickshell source to see how they attach a layer role to a toolkit surface; this informs Option B.
 
 
@@ -206,7 +214,7 @@ children:
 ### [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)
 
 
-- [x] **Name.** Tesserae Data Language, TDL (maintainer, 2026-10-29). #needs-verification: that the code name `tdl` and any PyPI package name are free and do not clash with another well-known TDL; check before registering.
+- [x] **Name.** Tesserae Data Language, TDL (maintainer, 2026-10-29). #needs-verification: that the code name `tdl` and any PyPI package name are free and do not clash with another well-known TDL; check before registering. Resolved (maintainer, 2026-11-02): the TDL project, repository and local folder are `tess-dl`, the PyPI package is `tesserae-dl` (free on PyPI 2026-11-02; `tdl` is taken), and the Python import name was set to `tdl` on 2026-11-02 and changed to `tess_dl` on 2026-11-03 (D95) so that the import names of all the projects cannot clash with other packages, such as the unrelated PyPI package `tdl`.
 - [x] **File extension.** `.tdl` (maintainer, 2026-10-29), not `.tess`, which does not say it is a data language and reads as a Tesserae file. Neither is registered in this machine's shared-mime-info (`/usr/share/mime/globs2`, checked 2026-10-29), which is a local check only.
 - [x] **Expression slot.** `{{ }}` on a single line, no quotes (maintainer, 2026-10-29).
 - [x] **Grammar basics.** Separators, comments, strings, colours, lengths and trailing commas, as in "What TDL Is" (maintainer, 2026-10-29).
@@ -328,7 +336,7 @@ Raised by TEL's step 5 design (2026-11-01):
 - [x] Which surface types are in v1: Bar, Frame, Panel and Popup (decided 2026-10-25; Frame is in v1).
 - [x] Which uses are Panels: OSD and desktop widgets are Panels; the launcher is a Panel on the `OVERLAY` layer with exclusive keyboard (decided 2026-10-25).
 - [x] A Popup is exclusive to the monitor it is called on. It opens only on the monitor of the surface that called it, and is never anchored to a surface on another monitor (decided 2026-10-25).
-- [x] **How a Panel's attachment to another surface is written.** A Panel is attached by **referencing the name of the surface** (decided 2026-10-25). It is a reference, not nesting. Left for the Panel spec and the TDL reference (folder `41 TDL Reference`): which side or corner and what gap; what the Panel does when the target hides, moves or animates; A name that is referenced from another file resolves **through the registry** (decided 2026-10-25): the registry tracks names, so it knows which surface a Panel means and knows when that name no longer exists. A reference that never resolves is an error at load; a target that disappears while the shell runs is a warning, and the Panel stays hidden until it returns ([ADR-0007 Shell UI Layer > Config directory and registry (2026-10-25)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#config-directory-and-registry-2026-10-25)). The one-frame skew between separate surfaces still applies ([TRE-REQ-001 Layer Surface Window > Animation](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#animation)).
+- [x] **How a Panel's attachment to another surface is written.** A Panel is attached by **referencing the name of the surface** (decided 2026-10-25). It is a reference, not nesting. Left for the Panel spec and the TDL reference (folder `41 TDL Reference`): which side or corner and what gap; what the Panel does when the target hides, moves or animates; A name that is referenced from another file resolves **through the registry** (decided 2026-10-25): the registry tracks names, so it knows which surface a Panel means and knows when that name no longer exists. A reference that never resolves is an error at load; a target that disappears while the shell runs is a warning, and the Panel stays hidden until it returns ([ADR-0007 Shell UI Layer > Config directory and registry (2026-10-25)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#config-directory-and-registry-2026-10-25)). The one-frame skew between separate surfaces still applies ([TRE-REQ-001 Layer Surface Window > Animation](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#animation)).
 - [x] **Concave corners and join drawing: hit testing.** Settled: tre 0.5.9 (released 2026-10-27) ships `hit_shape="painted"` on path nodes and a region builder that keeps holes and concave notches, so the Frame uses `input_region="auto"` and no explicit-rectangle workaround. Findings and history: [Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md).
 
 
@@ -356,7 +364,7 @@ Raised by TEL's step 5 design (2026-11-01):
 - [x] A strip against a Bar attached to the Frame, and hiding a strip on its own: a strip and a Bar can share an edge, and a strip has all a Bar's abilities (maintainer, 2026-10-27). Open: the icon-to-Bar link.
 - [x] The Frame hidden or shown at runtime: yes; the reservers go while hidden and return when shown (maintainer, 2026-10-27).
 - [x] Shadows are excluded from the hit shape, for all shadows (maintainer, 2026-10-27). Open: whether tre already does this. #needs-verification
-- [x] A gradient border's tiling: the shell repeats stops; a native repeat is [TRE-REQ-006 Repeating Gradients](../80%20Engine%20Requests/TRE-REQ-006%20Repeating%20Gradients.md), kept for the future (maintainer, 2026-10-27).
+- [x] A gradient border's tiling: the shell repeats stops; a native repeat is [TRE-REQ-006 Repeating Gradients](../80%20Requests/TRE-REQ-006%20Repeating%20Gradients.md), kept for the future (maintainer, 2026-10-27).
 - [x] Named sides for `Thickness`: a block of named sides, `Thickness { Top: 8, Left: 24 }` (D7, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] `Inner_Border`, `Outer_Border`, `Edges` and the edge names are nested blocks; `Edges` holds `Top`, `Right`, `Bottom`, `Left` blocks (D21, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] Shadow tokens: `Elevation`, `Shadow` and `Shadow_Bleed` are accepted ([Style Schema > Shadow keys](../41%20TDL%20Reference/Style%20Schema.md#shadow-keys)); the Frame needs no bleed margin because the painter covers the output.
@@ -365,7 +373,7 @@ Raised by TEL's step 5 design (2026-11-01):
 ### [Panel](../40%20Specifications/Surfaces/Panel.md)
 
 
-- [x] Attachment geometry: `Attach`, `Gap` and `Align`, and how `Attach_To` treats a hidden or animating target (maintainer, 2026-10-27).
+- [x] Attachment geometry: `Attach`, `Gap` and `Alignment`, and how `Attach_To` treats a hidden or animating target (maintainer, 2026-10-27).
 - [x] One Panel per target; further Panels chain to the previous Panel; opening both is opt-in. A module in a Bar can be the target (maintainer, 2026-10-27).
 - [x] Hide and show: hidden, not closed (maintainer, 2026-10-27). Open: the window mechanics and the first-show flash.
 - [x] Where the position is saved: the registry, for floating Panels only (maintainer, 2026-10-27). Open: the key that turns saving on.
@@ -382,17 +390,17 @@ Raised by TEL's step 5 design (2026-11-01):
 
 All nine were answered on 2026-10-28.
 
-1. [x] **Parent:** the caller's surface; `Anchor_To` optional (maintainer, as recommended).
-2. [x] **Placement words:** `Attach`, `Align`, `Gap`, as the Panel (as recommended).
-3. [x] **Size:** `AUTO` by a headless measuring pass, a fixed `Size`, `Max_Size`; a content change while open closes and reopens (as recommended).
+1. [x] **Parent:** the caller's surface; `Attach_To` optional (maintainer, as recommended).
+2. [x] **Placement words:** `Attach`, `Alignment`, `Gap`, as the Panel (as recommended).
+3. [x] **Size:** `AUTO` by a headless measuring pass, a fixed `Width` and `Height`, `Max_Width` and `Max_Height`; a content change while open closes and reopens (as recommended).
 4. [x] **Opening without input:** a Popup opens in response to input; a shortcut-opened menu is an overlay Panel (as recommended).
 5. [x] **One open at a time,** except submenus (as recommended).
 6. [x] **Create on open, destroy on close** (as recommended).
 7. [x] **Clicks on other shell surfaces** close a focused Popup (as recommended).
 8. [x] **Tooltip behaviour:** keys `Close_On_Exit`, `Exit_Delay`, `Enter_Delay` and `Open_On_Enter`; the caller is the hovered module; a `Tooltip` key is opt-in for every module, built-in and custom; the same key works by hand on blocks and surfaces (maintainer, 2026-10-28). The key names were settled the same day (below). Open: how the shell reads a module's rectangle.
-9. [x] **Shadows:** the visual shape (border plus body size) is what the compositor places; the transparent shadow margin is ignored and is not part of the popup's size. tre sets the geometry to the whole surface today, so this is a workaround now and [TRE-REQ-007 Popup Body Geometry](../80%20Engine%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md) later (maintainer, 2026-10-28).
-- [x] Content larger than `Max_Size`: clamp and scroll (maintainer, 2026-10-28).
-- [x] The default `Max_Size`: `[300, 400]` (maintainer, 2026-10-28).
+9. [x] **Shadows:** the visual shape (border plus body size) is what the compositor places; the transparent shadow margin is ignored and is not part of the popup's size. tre sets the geometry to the whole surface today, so this is a workaround now and [TRE-REQ-007 Popup Body Geometry](../80%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md) later (maintainer, 2026-10-28).
+- [x] Content larger than `Max_Width` or `Max_Height`: clamp and scroll (maintainer, 2026-10-28).
+- [x] The default `Max_Width` and `Max_Height`: 300 and 400 (maintainer, 2026-10-28).
 - [x] The tooltip key: `Tooltip: true | false` on a Popup; `Tooltip: <file>` or an inline Popup on a module, and the same on a block or surface when written by hand (maintainer, 2026-10-28).
 - [x] The default delays: `Enter_Delay` 500 ms and `Exit_Delay` 200 ms (maintainer, 2026-10-28).
 
@@ -518,6 +526,48 @@ All nine were answered on 2026-10-28, as recommended.
 - [ ] Not asked: the `console` key.
 
 
+### [tess-dl Handover](../41%20TDL%20Reference/tess-dl%20Handover.md)
+
+
+1. [ ] Whether `tess-dl` publishes its docs as a site (the tre and Tesserae projects do) or keeps Markdown in the repository.
+2. [ ] Who edits the language text when a shell need changes it: the `tess-dl` session after a `TDL-REQ-###` (recommended), or the shell session directly.
+
+
+### [M0 Brief](M0%20Brief.md)
+
+
+1. [x] The code session waits for `tesserae-engine` 0.6.0 (maintainer, 2026-11-03).
+2. [x] `check` is syntax-only in M0; the schema comes with M1 (maintainer, 2026-11-03).
+3. [x] T9 results are written to a file under `tests/perf/` in the repository (maintainer, 2026-11-03: "add it to a file"), not only reported in chat.
+
+
+### [Testing Strategy](../60%20Quality/Testing%20Strategy.md)
+
+
+1. [ ] Which tolerance and which blocks get reference images.
+2. [ ] Whether the table-vs-docs test reads the vault directly in the maintainer's environment, or a copy under `tests/data/` that a script refreshes (recommended: the copy, so CI works).
+3. [ ] The headless sway job: recommend adopting tre's setup once the first `LayerWindow` is built.
+4. [ ] How tre exposes the accessibility tree to a test.
+5. [ ] A coverage target. Recommendation: none at first; report only.
+
+
+### [Shell Package Layout](../20%20Architecture/Shell%20Package%20Layout.md)
+
+
+1. [ ] The PyPI name `tesserae-shell`: register it when the first release nears; it is free today.
+2. [ ] Whether `services/` splits into its own library later (the D-Bus layer is useful beyond the shell); not now.
+3. [ ] A shipped-module folder layout: `modules/<name>/` with the TDL and Python files side by side, as user modules are ([Module File](../41%20TDL%20Reference/Module%20File.md)).
+4. [ ] Whether the import rules are enforced with `import-linter` or with a small test of our own.
+
+
+### [Performance Budgets](../60%20Quality/Performance%20Budgets.md)
+
+
+1. [ ] Accept the proposed values above, or change them.
+2. [ ] Whether the budgets are checked in automated tests (a headless idle-CPU test) or only measured by hand in v1; AGENTS > 12. Design Completeness Checklist lists testing through `window.simulate`.
+3. [ ] Which machine counts as the reference (the maintainer's AMD desktop, or a slower laptop).
+
+
 ### [Wayland Protocols](../40%20Specifications/Integration/Wayland%20Protocols.md)
 
 
@@ -547,14 +597,53 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 - [ ] The rule file's key names and a test of the rule (needs a backup of `kwinrulesrc` and permission).
 
 
+### [Plasma Coexistence](../40%20Specifications/Integration/Plasma%20Coexistence.md)
+
+
+1. [ ] Whether a second tray host sees items that register before it joins: the watcher's `RegisteredStatusNotifierItems` property lists them, so the host reads it at registration (proposed; test).
+2. [ ] The behaviour of an app that checks `IsStatusNotifierHostRegistered` when only the shell's host is present (test with plasmashell stopped, in a throwaway session).
+3. [ ] Whether the same owners hold on Plasma versions before 6.8 and on Fedora, KDE neon and Arch.
+4. [ ] Whether the shell should offer a `tesserae-shell doctor` command that prints the owners table for a bug report (recommended, post-v1).
+
+
+### [D-Bus Service Layer](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md)
+
+
+1. [ ] The 1 ms and 50 ms callback numbers are proposals; measure in the spike.
+2. [ ] Whether the hooks `on_service_lost` and `on_service_found` belong to the module contract or to the helper's subscription call (recommendation: the contract, so every module handles a service the same way).
+3. [ ] Whether the system bus connection is opened lazily (recommended) or at start.
+4. [ ] The Applications source for the launcher ([Roadmap](Roadmap.md)).
+
+
+### [Global Shortcuts](../40%20Specifications/Integration/Global%20Shortcuts.md)
+
+
+1. [ ] **Test permission.** A live test registers a throwaway component (`tesserae-shell-test`), sets a key, receives one press, then calls `unregister` and `cleanUp`. It writes a group to `~/.config/kglobalshortcutsrc`; the service rewrites that file. Recommendation: allow it, after a copy of the file to `/tmp`, in the testing phase and not before. This is the only test that proves a non-KDE client works.
+2. [ ] The exact meaning and values of the `u` flags beyond the three seen; the `GlobalShortcutLoading` values are in a header not read. #needs-verification
+3. [ ] Whether a component without a desktop file appears in System Settings with its friendly name.
+4. [ ] The TDL key for a Panel and a module action (`Shortcut`) and its value type; `Reveal_Key` is decided in name only ([Bar](../40%20Specifications/Surfaces/Bar.md)).
+5. [ ] Whether a held key should repeat the toggle (recommendation: no).
+6. [ ] The portal path as a second implementation, or only the commands (recommendation: commands only in v1, [Portals](../40%20Specifications/Integration/Portals.md)).
+
+
+### [Portals](../40%20Specifications/Integration/Portals.md)
+
+
+1. [ ] Whether `ReadAll` needs a registered app id (test with and without `Register`).
+2. [ ] Whether the KDE backend emits `SettingChanged` for the accent colour and scheme at once, and for a custom colour scheme.
+3. [ ] Whether tre has a reduced-motion switch to set, or the shell applies it alone.
+4. [ ] The `.desktop` file and the id for delivery; recorded for the Delivery notes.
+5. [ ] Whether the GlobalShortcuts portal is worth building for any v1 target (recommendation: no).
+
+
 ### [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)
 
 
-- [x] TEL's name: Tesserae Expression Language, `tel` in code. PyPI: `tesserae-expression-language`, else `tel` (taken on 2026-10-25), else `tess-el`.
+- [x] TEL's name: Tesserae Expression Language, `tel` in code (now `tess_el`, 2026-11-03). PyPI: `tesserae-expression-language`, else `tel` (taken on 2026-10-25), else `tess-el`.
 - [x] Redesign or extraction: a redesign starting from `expr.py`.
 - [x] Who owns structure: TDL owns `If` and `For`; TEL evaluates expressions (values) only (D11, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30); first answered 2026-10-25 as TEL owning both).
 - [x] TEL's repository and licence: [mindderivative/tess-el](https://github.com/mindderivative/tess-el), MIT (2026-10-25). Local project `~/Projects/pyDev/projects/tess-el`.
-- [ ] TEL's versioning and release process (the maintainer's).
+- [x] TEL's PyPI name and first release: `tesserae-el` 0.1.0, language version 0.1 (released 2026-11-02, reported by `tess-el`, checked on PyPI). The ongoing release process is the maintainer's.
 - [x] Statements and events: none in TEL. The maintainer told `tess-el` that TEL is an expression language only and that statements, events and handlers belong to the shell (2026-10-26, T15). Syntax and form are worked out in the TEL project (2026-10-25).
 - [ ] How the shell and any other user share TEL's releases without blocking each other.
 - [x] T17 to T20 are accepted requirements from ADR-0014 (maintainer, 2026-10-31). The `tess-el` session answered the shell's four questions on 2026-10-31 (see "TEL's Answers"). No request was filed.
@@ -629,7 +718,7 @@ The maintainer accepted the proposal as written on 2026-10-27; the names below a
 - [x] The `$group.name` reference form.
 - [x] The state, part and selector forms.
 - [x] Which keys are style and which are block layout properties: as proposed, with the split revisited when the blocks are specified.
-- [x] `Elevation` as a level number.
+- [x] `Elevation` as a level number. Superseded 2026-11-02: it is a percentage (D88). Open: the curve from the percentage to the shadow, and the values of `Max` (the design system).
 - [x] The JSON Schema generation from block declarations: [JSON Schema and Editor Support](../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md), [ADR-0011 JSON Schema for Shell Files](../30%20Decisions/ADR-0011%20JSON%20Schema%20for%20Shell%20Files.md).
 - [x] TDL forms for selectors (`Rule` blocks, D5), number keys (named levels and steps, D4) and unnamed list blocks (repeated named blocks, D4), [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30).
 - [x] The case of token references against Capitalised token keys: matched ignoring case (D16).
@@ -744,7 +833,7 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 - [x] Grid: tre has a grid (`display: "grid"`, `grid_template_columns`, `grid_template_rows`, `row_gap`, `column_gap`); the mapping of `Columns`, `Rows` and `Spacing` is in [Block Reference > Grid](../41%20TDL%20Reference/Block%20Reference.md#grid). Open: the text form of tre's track template.
 - [x] The default hit shape of Path and the shape blocks: `painted` (maintainer, 2026-10-27): the reason to use a shape is for the look and for the hit box to be the painted shape. tre 0.5.9 has `hit_shape` `box` (its default) or `painted`; the shell's shape blocks set `painted`. SVG and Canvas are not covered by `hit_shape` ([Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md)).
 - [x] How icons are found: the shipped SVG set (a JSON file), then the freedesktop icon theme, then the config `Icons` folder, then the locations a developer lists in the settings file (maintainer, 2026-11-01; [Block Reference > Icons (R7)](../41%20TDL%20Reference/Block%20Reference.md#icons-r7)).
-- [x] The state model: data in through `Text` and edits out through `On_Change`, with no two-way binding (R6, maintainer, 2026-11-01).
+- [x] The state model: data in through `Text` and edits out through `On_Changed`, with no two-way binding (R6, maintainer, 2026-11-01).
 - [x] Accessibility defaults for each block (roles, labels, keyboard operation) ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7): as in [Block Reference > Accessibility Defaults](../41%20TDL%20Reference/Block%20Reference.md#accessibility-defaults) (maintainer, 2026-11-01).
 
 
@@ -758,10 +847,10 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 
 ## Engine Requests
 
-### [TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)
+### [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)
 
 
-- [x] Confirm the absences listed under [What tre has today](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#what-tre-has-today) in the tre source. Done in [tre #195](https://github.com/mindderivative/tre/issues/195).
+- [x] Confirm the absences listed under [What tre has today](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#what-tre-has-today) in the tre source. Done in [tre #195](https://github.com/mindderivative/tre/issues/195).
 - [x] Choose the implementation path (I1, I2, I3). Spike recommends I2 ([tre #196](https://github.com/mindderivative/tre/issues/196)); the maintainer confirms.
 - [x] Check which of `wl_output` v4 and `xdg-output-unstable-v1` KWin exposes for stable output names. `wl_output` v4 gives names (spike).
 - [ ] Check whether `window.set(x=, y=, always_on_top=, skip_taskbar=)` does anything on Wayland. tre #195 reads the source: they call `set_outer_position` and `set_window_level`, which `winit` documents as unsupported on Wayland, and `skip_taskbar` is Windows only. So Option C cannot place or stack a bar under KWin. A test on a live session is still pending.
@@ -771,7 +860,7 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 - [x] Negative margins on KWin: accepted and honoured (spike).
 - [ ] Frame-callback behaviour for covered surfaces and KWin's own map and unmap effects on layer surfaces. The spike did not test frame callbacks under a fullscreen window.
 - [ ] Whether `reduced_motion` follows Plasma's animation speed. tre reads it from the settings portal (`org.freedesktop.appearance` `reduced-motion`); with Plasma 6.8 at speed factor 0.25 it reported 0, so it likely does not follow the factor. Unconfirmed. 0.5.8 also makes the OS reduced-motion and contrast preferences send live changes on a desktop whose portal only has GNOME's older keys (`enable-animations`, `high-contrast`) ([upgrade notes](https://mindderivative.github.io/tre/migrating-0.5/)).
-- [x] Phase 5 ([#205](https://github.com/mindderivative/tre/issues/205)) reviewed against this note on 2026-10-23: met on sway, with the gaps listed under [Phase 5 as built](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#phase-5-as-built-tre-205). [Margin drag](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#margin-drag) is updated for the relative-pointer drag.
+- [x] Phase 5 ([#205](https://github.com/mindderivative/tre/issues/205)) reviewed against this note on 2026-10-23: met on sway, with the gaps listed under [Phase 5 as built](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#phase-5-as-built-tre-205). [Margin drag](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#margin-drag) is updated for the relative-pointer drag.
 - [x] Review tre's scoping of phase 6 ([#206](https://github.com/mindderivative/tre/issues/206)): 6a done; 6b approved and built as `PopupWindow` ([tre #223](https://github.com/mindderivative/tre/issues/223)), in 0.5.8.
 - [ ] Margin drag ignores other surfaces' exclusive zones, so a widget can be dragged over a bar. Decide whether the shell clamps in the `moved` handler, or asks tre for an optional clamp to the usable area.
 - [x] `reduced_motion` on a `LayerWindow`: met headless in the hand-off; a live portal change on a layer surface was not run.
@@ -783,7 +872,7 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 - [x] Decide whether v1 targets wlroots-family compositors as well as KWin, which affects which compositors the acceptance tests cover. Both KWin and wlroots (maintainer, tre #195). Only sway and KWin tested.
 
 
-### [TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)
+### [TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)
 
 
 - [x] What `stop()` does to open windows: closes them all unconditionally, each hears `closed`, then `run()` returns (`tre`).
@@ -824,7 +913,7 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 - [ ] How Plasma's own panels get their shadow (plasma-framework / plasma-workspace source).
 - [ ] How Waybar, eww, Fabric, AGS/Astal, Quickshell shells and COSMIC do shadows.
 - [ ] How the Edge Shell prototype drew its shadows.
-- [ ] Whether tre can expose the surface for route A, and whether the engine accepts a shadow request (AGENTS > 6. Engine requests (tre / Tesserae)). Ask the `tre` session before writing a request.
+- [ ] Whether tre can expose the surface for route A, and whether the engine accepts a shadow request (AGENTS > 6. Requests Between Projects). Ask the `tre` session before writing a request.
 - [x] The memory cost of the larger transparent buffer for route B: 134 KB per buffer for a 32 px margin on a 320x140 body (see the performance test). Still to measure at Frame size, per [Surface Types > Performance budget](../40%20Specifications/Surfaces/Surface%20Types.md#performance-budget).
 
 

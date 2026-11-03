@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-31
+updated: 2026-11-02
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -111,7 +111,7 @@ The shell edits a file the user wrote, so it is careful (risk R-06 in the [Risk 
 
 ### References
 
-- A reference is by name: `Attach_To`, `Anchor_To`, a module call head, `Import:` paths for files, `Kind:` where a type is named by value. The registry resolves it ([Common Keys and Conventions > Names and references](../../41%20TDL%20Reference/Common%20Keys%20and%20Conventions.md#names-and-references)).
+- A reference is by name: `Attach_To`, a module call head, `Import:` paths for files, `Kind:` where a type is named by value. The registry resolves it ([Common Keys and Conventions > Names and references](../../41%20TDL%20Reference/Common%20Keys%20and%20Conventions.md#names-and-references)).
 - An unresolved reference is an error at load naming the file, the entry and the name. A target that disappears while running is a warning and the referring surface stays hidden until it returns ([ADR-0007 Shell UI Layer > Config directory and registry (2026-10-25)](../../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#config-directory-and-registry-2026-10-25), [Panel > Failure modes and recovery](../Surfaces/Panel.md#failure-modes-and-recovery)).
 - Python reaches a file's parsed TDL tree by file name, unique name or UID through `ctx.tdl(ref)` ([Module Context](../../42%20Python%20API/Module%20Context.md); renamed from `ctx.yaml` by D14); the registry resolves it.
 

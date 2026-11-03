@@ -37,7 +37,7 @@ Accepted 2026-10-25 by the maintainer in chat: **Option A**, one process owning 
 ## Consequences
 
 - Every service spec states its thread and how it crosses into the loop (AGENTS > 3. Layering principle). Blocking work (D-Bus, sockets, polling, disk) never runs on the loop thread.
-- A module that blocks the loop freezes all surfaces. 60 Quality must define a watchdog and crash recovery (restart the process, restore surfaces from configuration). #tech-debt until written.
+- A module that blocks the loop freezes all surfaces. [60 Quality](../60%20Quality/60%20Quality.md) must define a watchdog and crash recovery (restart the process, restore surfaces from configuration). #tech-debt until written.
 - The shell may run under a small supervisor that restarts it. Whether it is part of v1 is open.
 - No isolation between user modules ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) N7).
 

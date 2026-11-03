@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-02
 tags: [moc, architecture]
 ---
 
@@ -20,5 +20,6 @@ How Tesserae Shell is put together. The decisions behind it are the ADRs in [30 
 | [Process Model and Threading](Process%20Model%20and%20Threading.md) | One process, one loop; threads, hand-off, lifecycle, failure                                                       | draft  |
 | [Data Flow](Data%20Flow.md) | Loading, live data, hot reload, monitor hot-plug, input                                                            | draft  |
 | [Shell Structure](Shell%20Structure.md) | The maintainer's flow diagram in words: layers, layer windows, containers, modules, widgets; differences to settle | draft  |
+| [Shell Package Layout](Shell%20Package%20Layout.md) | The repository, the package and its sub-packages, the import rules, the dependencies and tooling | draft |
 
 All four are proposals built on accepted ADRs. They are marked where they add a proposal beyond an ADR. The maintainer decides what becomes `stable`.

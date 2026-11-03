@@ -5,7 +5,7 @@ type: design
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-11-01
+updated: 2026-11-02
 tags: [design, needs-verification]
 ---
 
@@ -116,7 +116,7 @@ Decided by the maintainer (2026-10-26); the full rules are in [Style, Theme and 
 - [x] Grid: tre has a grid (`display: "grid"`, `grid_template_columns`, `grid_template_rows`, `row_gap`, `column_gap`); the mapping of `Columns`, `Rows` and `Spacing` is in [Block Reference > Grid](../41%20TDL%20Reference/Block%20Reference.md#grid). Open: the text form of tre's track template.
 - [x] The default hit shape of Path and the shape blocks: `painted` (maintainer, 2026-10-27): the reason to use a shape is for the look and for the hit box to be the painted shape. tre 0.5.9 has `hit_shape` `box` (its default) or `painted`; the shell's shape blocks set `painted`. SVG and Canvas are not covered by `hit_shape` ([Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md)).
 - [x] How icons are found: the shipped SVG set (a JSON file), then the freedesktop icon theme, then the config `Icons` folder, then the locations a developer lists in the settings file (maintainer, 2026-11-01; [Block Reference > Icons (R7)](../41%20TDL%20Reference/Block%20Reference.md#icons-r7)).
-- [x] The state model: data in through `Text` and edits out through `On_Change`, with no two-way binding (R6, maintainer, 2026-11-01).
+- [x] The state model: data in through `Text` and edits out through `On_Changed`, with no two-way binding (R6, maintainer, 2026-11-01).
 - [x] Accessibility defaults for each block (roles, labels, keyboard operation) ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7): as in [Block Reference > Accessibility Defaults](../41%20TDL%20Reference/Block%20Reference.md#accessibility-defaults) (maintainer, 2026-11-01).
 
 ## Links

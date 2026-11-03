@@ -5,7 +5,7 @@ type: adr
 status: superseded
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-03
 tags: [adr, architecture]
 ---
 
@@ -50,11 +50,11 @@ Accepted 2026-10-25 by the maintainer in chat ("as recommended"): **Option A**. 
 
 ## Consequences
 
-- Tesserae needs a way to open a `LayerWindow` and a `PopupWindow` from a view and bind them to an `Output`. This is a request to the Tesserae project, carried upstream by the maintainer (AGENTS > 6. Engine requests (tre / Tesserae)). Written as [TRE-REQ-004 Tesserae Layer and Popup Windows](../80%20Engine%20Requests/TRE-REQ-004%20Tesserae%20Layer%20and%20Popup%20Windows.md) (`draft`).
+- Tesserae needs a way to open a `LayerWindow` and a `PopupWindow` from a view and bind them to an `Output`. This is a request to the Tesserae project, carried upstream by the maintainer (AGENTS > 6. Requests Between Projects). Written as [TRE-REQ-004 Tesserae Layer and Popup Windows](../80%20Requests/TRE-REQ-004%20Tesserae%20Layer%20and%20Popup%20Windows.md) (`draft`).
 - The Tesserae version is pinned together with the tre version (70 Delivery, to write).
 - Shell-only file types (a shell layout, a module manifest) get their own suffix in `41 TDL Reference/` (AGENTS > 9. Naming in the designed system).
 
 ## Links
 
-- [Tesserae overview](https://mindderivative.github.io/tesserae/) · [View language](https://mindderivative.github.io/tesserae/guide/view-language/)
+- [Tesserae overview](https://mindderivative.github.io/tess-ui/) · [View language](https://mindderivative.github.io/tess-ui/guide/view-language/)
 - [ADR-0001 Shell Surface Strategy](ADR-0001%20Shell%20Surface%20Strategy.md) · [ADR-0003 Process Model](ADR-0003%20Process%20Model.md) · [V1 Scope > Decisions to take](../10%20Vision/V1%20Scope.md#decisions-to-take)

@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [api, needs-verification]
 ---
 
@@ -67,7 +67,7 @@ clock = Module(meta={"TDL": "0.1", "TEL": "0.1", "TRE": "0.5.9", "Shell": "0.1",
 
 - Python and tre identifiers keep their own case (`name=`, `index=`); the builder maps them to the Capitalised TDL keys (`Name`, `Index`), as it maps `exclusive_zone` to `Exclusive_Zone`.
 - The root constructors (`Shell`, `Module`, `Style`, `Stylesheet`, `Theme`, `Settings`) each create the root block of that file type, so the file type is never a metadata key. A module's metadata `Name:` (its call name and the root of its path, `Root_Shell.Main.Top_Bar`) is set in `meta` the same way.
-- The constructors take the TDL keys in Python spelling and the TDL enum values as upper-case strings (`edge="TOP"`, `layer="OVERLAY"`, `align="START"`, `flex="HORIZONTAL"`); `Monitor`, `Bar` and `Panel` use the keys of [Shell File](../41%20TDL%20Reference/Shell%20File.md), [Bar](../40%20Specifications/Surfaces/Bar.md) and [Panel](../40%20Specifications/Surfaces/Panel.md) (`Edge`, `Width`, `Height`, `Alignment`, `Offset`, `Gap` for a Bar; `Offset`, `Margin`, `Padding` for a Panel; four-sided values in the order left, top, right, bottom). #needs-verification: the constructor signatures are a sketch.
+- The constructors take the TDL keys in Python spelling and the TDL enum values as upper-case strings (`edge="TOP"`, `layer="OVERLAY"`, `alignment="START"`, `flex="HORIZONTAL"`); `Monitor`, `Bar` and `Panel` use the keys of [Shell File](../41%20TDL%20Reference/Shell%20File.md), [Bar](../40%20Specifications/Surfaces/Bar.md) and [Panel](../40%20Specifications/Surfaces/Panel.md) (`Edge`, `Width`, `Height`, `Alignment`, `Offset`, `Gap` for a Bar; `Inset`, `Margin`, `Padding` for a Panel; four-sided values in the order left, top, right, bottom). #needs-verification: the constructor signatures are a sketch.
 - A module use is a head too (`Clock(name="main_clock")`). Python keys it `Clock@<uid>` as with a parsed use, and passes that key back to name the use in an action (D23, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 
 ## If and For (Decided Sketch)

@@ -1,17 +1,17 @@
 ---
-title: 80 Engine Requests
-aliases: [Engine Requests, TRE-REQ Index]
+title: 80 Requests
+aliases: [80 Engine Requests, Engine Requests, TRE-REQ Index]
 type: moc
 status: draft
 owner: phil
 created: 2026-10-18
-updated: 2026-11-02
+updated: 2026-11-03
 tags: [moc, engine-request]
 ---
 
-# 80 Engine Requests
+# 80 Requests
 
-Scoped requests for tre and Tesserae. Each is written here and carried upstream by the maintainer; none is filed from this vault (AGENTS > 6. Engine requests (tre / Tesserae)).
+Scoped requests between the projects. The prefix names the project that receives the request: `TRE-REQ`, `TEL-REQ`, `TDL-REQ`, `SHELL-REQ` and `TUIF-REQ`, each with a three-digit counter; tre sends no requests (AGENTS > 6. Requests Between Projects). Only `TRE-REQ` notes exist so far. Each is written here and carried upstream by the maintainer; none is filed from this vault (AGENTS > 6. Requests Between Projects).
 
 | Request                                 | Status                                                                 | Blocks                                                                                    | Decision                                                     |
 |-----------------------------------------|------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|--------------------------------------------------------------|
@@ -21,5 +21,6 @@ Scoped requests for tre and Tesserae. Each is written here and carried upstream 
 | [TRE-REQ-006 Repeating Gradients](TRE-REQ-006%20Repeating%20Gradients.md) | draft. Written 2026-10-27 for the future; not filed                    | Nothing: the shell repeats stops itself if it is declined                                 | [Frame > Thickness, radii, border, colours](../40%20Specifications/Surfaces/Frame.md#thickness-radii-border-colours)                      |
 | [TRE-REQ-007 Popup Body Geometry](TRE-REQ-007%20Popup%20Body%20Geometry.md) | draft. Written 2026-10-28 for the future; not filed                    | Nothing: the shell shifts `offset` by the shadow margin                                   | [Popup > Placement](../40%20Specifications/Surfaces/Popup.md#placement)                      |
 | [TRE-REQ-008 SMIL Animation in SVG Nodes](TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md) | review. Taken up by tre as [tre #245](https://github.com/mindderivative/tre/issues/245); built 2026-11-02 on the local branch `svg-smil-245` (not pushed, not released) | Nothing: v1 ships only the static `mdi` icons; the animated line set waits | [Block Reference > The Icon Set Files (2026-11-01)](../41%20TDL%20Reference/Block%20Reference.md#the-icon-set-files-2026-11-01) |
+| [TRE-REQ-009 Batch and Tree Building](TRE-REQ-009%20Batch%20and%20Tree%20Building.md) | review. Scoped by tre as #253 (Ready, not started), wanted in 0.5.10. Measured: about 1 µs per call, a 3,100-node tree builds in about 3.8 ms | Nothing: the shell builds per node if it is declined | [Layers and Components](../20%20Architecture/Layers%20and%20Components.md) |
 
 Not written: `TRE-REQ-002` (external-surface hand-off, ADR-0001 Option B). Write it only if TRE-REQ-001 proves infeasible.

@@ -33,7 +33,7 @@ From the [tre threading guide](https://mindderivative.github.io/tre/guide/thread
 | Module threads | A module's blocking work: D-Bus, sockets, polling, files, decoding                                                                                                                                                                                                                              | Never         | The shell's send entry point, which uses `call_soon`          |
 | Config watcher | Waiting for file changes; reading and parsing a changed file                                                                                                                                                                                                                                    | Never         | `call_soon` with a finished result                            |
 | Service thread | An `asyncio` event loop, shared by modules, holding the session and system bus connections (`dbus-fast`, [ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)); it also receives calls on the shell's own D-Bus interface ([IPC and CLI > Threading](../40%20Specifications/Runtime/IPC%20and%20CLI.md#threading), [ADR-0013 Control Interface](../30%20Decisions/ADR-0013%20Control%20Interface.md)) | Never         | The same send entry point                                     |
-| Signal watcher | Reads a socketpair fed by `signal.set_wakeup_fd` and calls `handle.stop()` on SIGTERM or SIGINT                                                                                                                                                                                                 | Never         | `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)) |
+| Signal watcher | Reads a socketpair fed by `signal.set_wakeup_fd` and calls `handle.stop()` on SIGTERM or SIGINT                                                                                                                                                                                                 | Never         | `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)) |
 | Watchdog       | Checks that the loop is still ticking                                                                                                                                                                                                                                                           | Never         | Logs, and asks the supervisor to restart if the loop is stuck |
 
 tre also runs its own threads internally (the layer surface connection, for example). They are tre's concern; the shell sees only the loop thread and its callbacks.
@@ -89,7 +89,7 @@ stateDiagram-v2
 - **Loading.** Read the config directory, parse, validate, follow imports, check or write the registry, resolve references, read outputs, build the model. Errors stop here with `file:line:column`.
 - **Running.** Modules start after the model is built, so a value that arrives before its surface exists is kept in the store.
 - **Reloading.** A watcher thread reads and parses a changed file; the loop applies it. A bad file leaves the old state and logs an error ([Data Flow > Hot reload](Data%20Flow.md#hot-reload)).
-- **Stopping.** A quit signal reaches a watcher thread through `signal.set_wakeup_fd`, which calls `LoopHandle.stop()`. `stop()` closes every window without a veto (each hears `closed` with reason `"stopped"`) and `run()` returns. The shell then calls each module's `stop`, joins its threads with a timeout, and writes the registry, on the main thread. Python signal handlers do not run on an idle loop, which is why the wakeup-fd path is used ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). Until that ships, ending the loop means closing every window.
+- **Stopping.** A quit signal reaches a watcher thread through `signal.set_wakeup_fd`, which calls `LoopHandle.stop()`. `stop()` closes every window without a veto (each hears `closed` with reason `"stopped"`) and `run()` returns. The shell then calls each module's `stop`, joins its threads with a timeout, and writes the registry, on the main thread. Python signal handlers do not run on an idle loop, which is why the wakeup-fd path is used ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). Until that ships, ending the loop means closing every window.
 - **No windows: stay idle** (decided 2026-10-26). If every monitor is set to "none", or no output is present, the shell does not exit; it waits and reacts when an output is added ([Data Flow > Monitor hot-plug](Data%20Flow.md#monitor-hot-plug)). What tre can do is in [No windows: what tre offers](#no-windows-what-tre-offers).
 
 ## No Windows: what Tre Offers
@@ -105,8 +105,8 @@ The `tre` session answered over the mailbox on 2026-10-26, from the 0.5.8 source
 | Suggested engine addition        | An opt-in keep-alive, for example `App.run(keep_alive=True)`: no error with zero windows, no exit when empty, output watch started at loop start. It needs a way to end the loop. A `LoopHandle` stop does not exist today; the loop ends only when every window closes. Rough size: about 60 to 100 lines plus tests and docs, low risk because it is opt-in |
 
 > [!WARNING]
-> **Blocked by [TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)**
-> Option A was chosen by the maintainer on 2026-10-26: the opt-in keep-alive and a `LoopHandle` stop. `tre` released it in 0.5.9 on 2026-10-27 as `App.run(keep_alive=True)` and `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). The stopgap B is no longer needed.
+> **Blocked by [TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)**
+> Option A was chosen by the maintainer on 2026-10-26: the opt-in keep-alive and a `LoopHandle` stop. `tre` released it in 0.5.9 on 2026-10-27 as `App.run(keep_alive=True)` and `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). The stopgap B is no longer needed.
 
 Options for the shell:
 
@@ -129,7 +129,7 @@ The shell also needs a clean way to **end the loop** on quit. Today that means c
 | A bad shell file on reload               | New state refused                                               | Keep the old state; log an error with position                                                         |
 | A bad module `.py` on reload             | New code refused                                                | Keep the old instance running; log the error ([ADR-0007 Shell UI Layer > Events and module reload (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26))                 |
 
-The loop cannot interrupt itself, so detecting a blocked loop needs a separate watchdog thread that reads a counter the loop bumps from a timer (`window.every`). A supervisor outside the process is the only way to recover from a hard hang. Both are proposals; 60 Quality owns the final design.
+The loop cannot interrupt itself, so detecting a blocked loop needs a separate watchdog thread that reads a counter the loop bumps from a timer (`window.every`). A supervisor outside the process is the only way to recover from a hard hang. Both are proposals; [60 Quality](../60%20Quality/60%20Quality.md) owns the final design.
 
 > [!CAUTION]
 > **Single point of failure**
@@ -137,8 +137,8 @@ The loop cannot interrupt itself, so detecting a blocked loop needs a separate w
 
 ## Performance Notes
 
-- A frame at 60 Hz is about 16.7 ms. `call_soon` callbacks and TEL evaluations share that time with layout and paint. Budgets are set in 60 Quality.
-- tre documents that an idle surface draws no frames and wakes the loop only for its own timers ([TRE-REQ-001 Layer Surface Window](../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)). On the unreleased keep-alive branch, `tre` measured 0.01 s of CPU in 5 s with zero windows, and reports one wake source it does not control: the D-Bus library's worker, about 2 wake-ups a second, behind the OS-preference watcher every tre app has. The shell's own D-Bus service thread ([ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)) adds its own idle cost, so the idle goal ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G4) should be measured with the service thread running. #needs-verification The shell must not add a timer that wakes the loop without a reason: a clock updates once a second, not every frame.
+- A frame at 60 Hz is about 16.7 ms. `call_soon` callbacks and TEL evaluations share that time with layout and paint. Budgets are set in [60 Quality](../60%20Quality/60%20Quality.md).
+- tre documents that an idle surface draws no frames and wakes the loop only for its own timers ([TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)). On the unreleased keep-alive branch, `tre` measured 0.01 s of CPU in 5 s with zero windows, and reports one wake source it does not control: the D-Bus library's worker, about 2 wake-ups a second, behind the OS-preference watcher every tre app has. The shell's own D-Bus service thread ([ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)) adds its own idle cost, so the idle goal ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G4) should be measured with the service thread running. #needs-verification The shell must not add a timer that wakes the loop without a reason: a clock updates once a second, not every frame.
 - The shared GIL means a CPU-heavy module thread slows the loop. Heavy work belongs in a subprocess or native code; the module contract says so ([42 Python API](../42%20Python%20API/42%20Python%20API.md), to write).
 
 ## Open Questions
@@ -148,7 +148,7 @@ The loop cannot interrupt itself, so detecting a blocked loop needs a separate w
 - [ ] **Registry I/O and the UID write** on the loop or a single writer thread ([ADR-0007 Shell UI Layer > Open items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)). Proposed in [Config Discovery and Registry > The registry file](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md#the-registry-file): one writer thread, one write per 500 ms.
 - [ ] **Supervisor** in v1 or later.
 - [x] **No windows** policy: stay idle (maintainer, 2026-10-26).
-- [x] **No windows mechanism.** Option A, chosen 2026-10-26 and released in tre 0.5.9 on 2026-10-27: `App.run(keep_alive=True)` and `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Engine%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). The shell requires tre 0.5.9 or later.
+- [x] **No windows mechanism.** Option A, chosen 2026-10-26 and released in tre 0.5.9 on 2026-10-27: `App.run(keep_alive=True)` and `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). The shell requires tre 0.5.9 or later.
 - [ ] **Where conversions run** (send or flush).
 
 ## Links

@@ -22,7 +22,7 @@ tags: [engine-request, spec/surface, integration/wayland, needs-verification]
 > **Surface specs depend on this request**
 > The engine blocker is gone: a tre release has `LayerWindow`. Every note under `40 Specifications/Surfaces/` links `[[TRE-REQ-001 Layer Surface Window]]` in `depends_on`. [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md) is accepted (Option A, 2026-10-25), so a surface spec carries no `Blocked by` callout for this request; it names any untested gap below that affects it.
 
-This note is carried to the tre project by the maintainer (AGENTS > 6. Engine requests (tre / Tesserae)).
+This note is carried to the tre project by the maintainer (AGENTS > 6. Requests Between Projects).
 
 ## Delivered (Tre #195 Closed)
 
@@ -470,4 +470,4 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 - [Prior Art - Linux Shell Surfaces](../90%20Research/Prior%20Art%20-%20Linux%20Shell%20Surfaces.md)
 - [wlr-layer-shell-unstable-v1](https://wayland.app/protocols/wlr-layer-shell-unstable-v1)
 - [tre Python API](https://mindderivative.github.io/tre/api/python/) · [Custom windowing](https://mindderivative.github.io/tre/design/custom-windowing/) · [Architecture](https://mindderivative.github.io/tre/architecture/)
-- [80 Engine Requests](80%20Engine%20Requests.md) · [Index](../00%20Home/Index.md)
+- [80 Requests](80%20Requests.md) · [Index](../00%20Home/Index.md)

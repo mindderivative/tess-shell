@@ -5,7 +5,7 @@ type: tdl-ref
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [tdl-ref, design]
 ---
 
@@ -17,9 +17,9 @@ tags: [tdl-ref, design]
 ## Principles
 
 1. **One name per concept.** `Corner_Radius` is the radius everywhere; a block never has its own spelling.
-2. **Capitalised keys.** Every key is Capitalised, and a key of several words Capitalises each word and joins them with `_` (`Border_Thickness`). Enum values are full upper case (`CENTER`, `START`, `AUTO`). The rule is in [TDL Language > Names and the Registry](TDL%20Language.md#names-and-the-registry); this note does not restate it.
+2. **Capitalised keys.** Every key is Capitalised, and a key of several words Capitalises each word and joins them with `_` (`Border_Width`). Enum values are full upper case (`CENTER`, `START`, `AUTO`). The rule is in [TDL Language > Names and the Registry](TDL%20Language.md#names-and-the-registry); this note does not restate it.
 3. **Pixels, not CSS units.** A number is logical pixels; the forms in [Common Keys and Conventions > Value forms](Common%20Keys%20and%20Conventions.md#value-forms) apply. No `px`, `em`, `rem` suffixes.
-4. **Flat first, groups where they pay.** The maintainer's Style example is flat (`Border_Thickness`, `Border_Color`); keep that. Groups appear only for repeated structures (a `Shadows` block of `Shadow` blocks, D4).
+4. **Flat first, groups where they pay.** The maintainer's Style example is flat (`Border_Width`, `Border_Color`); keep that. Groups appear only for repeated structures (a `Shadows` block of `Shadow` blocks, D4).
 5. **Tokens are referenced, never copied.** A theme defines a value once; styles and stylesheets name it.
 6. **The schema is generated from the blocks.** Each block and module declares its properties (type, default, choices, doc), parts and states in Python ([Building Blocks > Properties, parts and states](../50%20Design%20System/Building%20Blocks.md#properties-parts-and-states)); the shell builds the key lists, the validation errors and a JSON Schema that validates the parsed tree from those declarations, so the TDL reference ([TDL Language](TDL%20Language.md); folder 41 TDL Reference) and the code cannot drift ([JSON Schema and Editor Support](JSON%20Schema%20and%20Editor%20Support.md), [ADR-0011 JSON Schema for Shell Files](../30%20Decisions/ADR-0011%20JSON%20Schema%20for%20Shell%20Files.md)). The declaration form is proposed; Tesserae's mechanism is a model, not a dependency.
 
@@ -27,15 +27,15 @@ tags: [tdl-ref, design]
 
 Proposed set for v1. A key a block does not have is an error with the nearest names ([Style, Theme and Stylesheet Files > Errors specific to these files](Style%2C%20Theme%20and%20Stylesheet%20Files.md#errors-specific-to-these-files)).
 
-| Group  | Keys                                                                           | Notes                                                                                                   |
-|--------|--------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| Fill   | `Background`, `Foreground`, `Fill`, `Opacity`                                  | `Foreground` is text and icon colour; `Fill` is a shape's interior (from the maintainer's Icon example) |
-| Border | `Border` (bool), `Border_Thickness`, `Border_Color`, `Corner_Radius`           | Four-sided forms; `Border_Thickness` takes one number, four in the order left, top, right, bottom, or named sides; `Corner_Radius` takes one number, four from the top-left corner clockwise, or named corners |
-| Space  | `Padding`, `Margin`, `Spacing`                                                 | `Padding` and `Margin` are four-sided (left, top, right, bottom); `Spacing` is a number                 |
-| Text   | `Font_Family`, `Size`, `Weight`, `Line_Height`, `Align`, `Overflow`            | `Font_Family` is an ordered fallback list; `Size` is the text size in pixels                            |
-| Shadow | `Elevation`, `Shadows`, `Shadow_Bleed`                                          | See below                                                                                               |
-| Motion | `Transition`, `Duration`, `Easing`                                             | A property list plus timing; token names allowed                                                        |
-| State  | A state key (`Hovered`, `Pressed`, `Focused`, `Disabled`) holding style values | Overrides the base values while the state holds                                                         |
+| Group  | Keys                                                                               | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|--------|------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Fill   | `Background`, `Foreground`, `Fill`, `Opacity`                                      | `Foreground` is text and icon colour; `Fill` is a shape's interior (from the maintainer's Icon example)                                                                                                                                                                                                                                                                                                                                        |
+| Border | `Border { Width, Color }`, `Border_Width`, `Border_Color`, `Corner_Radius`         | `Border` is always a block; the boolean `Border: true` or `Border: false` does not exist. The flat `Border_Width` and `Border_Color` are the same two values written as plain keys. `Width` takes one number, four in the order left, top, right, bottom, or named sides. `Corner_Radius` takes one number, four from the top-left corner clockwise, or named corners. A border takes layout space: the content and the children sit inside it |
+| Space  | `Padding`, `Margin`, `Spacing`                                                     | `Padding` and `Margin` are four-sided (left, top, right, bottom); `Spacing` is a number                                                                                                                                                                                                                                                                                                                                                        |
+| Text   | `Font_Family`, `Font_Size`, `Font_Weight`, `Line_Height`, `Text_Align`, `Overflow` | `Font_Family` is an ordered fallback list; `Font_Size` is the text size in pixels                                                                                                                                                                                                                                                                                                                                                              |
+| Shadow | `Elevation`, `Shadows`, `Shadow_Bleed`                                             | See below                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Motion | `Transition`, `Duration`, `Easing`                                                 | A property list plus timing; token names allowed                                                                                                                                                                                                                                                                                                                                                                                               |
+| State  | A state key (`Hovered`, `Pressed`, `Focused`, `Disabled`) holding style values     | Overrides the base values while the state holds                                                                                                                                                                                                                                                                                                                                                                                                |
 
 `Padding` is transparent space inside an element, between its children and its four sides, and exists on every element that has `Children`. `Margin` is transparent space outside the element, around the element itself. `Spacing` is the distance between a layout's children. `Gap` is not a style key: it is the distance from a surface to what it is attached to, a surface key ([Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md), [TDL Language > Sizes (Shell Schema)](TDL%20Language.md#sizes-shell-schema)). A Bar has no `Margin`, a Panel positions itself with `Offset`, and a Frame's `Margin` adds to its total size; those rules belong to the surfaces and are not repeated here.
 
@@ -47,13 +47,13 @@ Decision behind them: shadows are drawn inside the surface with a transparent ma
 
 | Key            | Meaning                                                                                                                               |
 |----------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `Elevation`    | A level from the theme's elevation scale (`0` to `5`; `0` is no shadow); the theme turns it into shadow layers                                          |
+| `Elevation`    | A percentage: `0%` is no shadow and `100%` is a little above a reasonable amount, about 64 px of reach in the maintainer's tests (D88). The theme turns the percentage into shadow layers. The 64 px comes from tests on a different renderer, so the curve and the numbers are provisional until tre's shadow rendering is seen (D90) |
 | `Shadows`      | A block of repeated `Shadow` blocks that replaces the elevation, ordered by position: each `Shadow` has `Color`, `X`, `Y`, `Blur`, `Spread` (no unnamed block as a list item, D4, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)) |
 | `Shadow_Bleed` | The transparent margin around a surface body. `AUTO` (default) computes it from the shadow; a number or four-sided value overrides it |
 
 ```
 Panel {
-    Elevation: 2
+    Elevation: 20%
     Corner_Radius: 12
     Shadows {
         Shadow { Color: "#00000040", X: 0, Y: 2, Blur: 6, Spread: 0 }
@@ -71,13 +71,13 @@ A theme file holds token groups, each a Capitalised key (`Color`, `Type`, `Shape
 | Group       | Names (proposed)                                                                                                                                    | Holds                                                     |
 |-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
 | `Color`     | `Surface`, `Surface_Raised`, `On_Surface`, `On_Surface_Muted`, `Primary`, `On_Primary`, `Accent`, `Error`, `Warning`, `Success`, `Outline`, `Scrim` | Colour roles, not raw colours: a role says what it is for |
-| `Type`      | `Caption`, `Label`, `Body`, `Title`, `Display`; each with `Size`, `Weight`, `Line_Height` and optional `Font_Family`                                | The type scale                                            |
+| `Type`      | `Caption`, `Label`, `Body`, `Title`, `Display`; each with `Font_Size`, `Font_Weight`, `Line_Height` and optional `Font_Family`                      | The type scale                                            |
 | `Shape`     | `None`, `Small`, `Medium`, `Large`, `Full`                                                                                                          | Corner radii in pixels                                    |
-| `Space`     | `Step_1` to `Step_8`                                                                                                                                        | A spacing scale in pixels                                 |
-| `Elevation` | `Level_1` to `Level_5`                                                                                                                                        | Each level is a shadow list                               |
-| `Motion`    | `Duration.Short`, `Duration.Medium`, `Duration.Long`, `Easing.Standard`, `Easing.Emphasised`                                                        | Milliseconds and easing names; zero under reduced motion  |
+| `Space`     | `Step_1` to `Step_8`                                                                                                                                | A spacing scale in pixels                                 |
+| `Elevation` | `Max`, with an optional `Reach` (default 64) | The shadow list at 100%; the shell scales `X`, `Y`, `Blur` and `Spread` by the percentage (proposed) |
+| `Motion`    | `Duration.Short`, `Duration.Medium`, `Duration.Long`, `Easing.Standard`, `Easing.Emphasized`                                                        | Milliseconds and easing names; zero under reduced motion  |
 
-A token is referenced as `$group.name`, for example `$color.surface` or `$type.body.size`; the reference is lowercase and the style engine matches it to the theme's Capitalised keys (`On_Surface`) without regard to case (D16, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). The `$group.name` text is a plain string to TDL, resolved by the style engine by theme key; it is not a TDL variable and does not clash with TEL's delimiter. An unknown token is an error with the nearest names.
+A token is referenced as `$group.name`, for example `$color.surface` or `$type.body.font_size`; the reference is lowercase and the style engine matches it to the theme's Capitalised keys (`On_Surface`) without regard to case (D16, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). The `$group.name` text is a plain string to TDL, resolved by the style engine by theme key; it is not a TDL variable and does not clash with TEL's delimiter. An unknown token is an error with the nearest names.
 
 ```
 ---
@@ -97,17 +97,17 @@ Theme {
         Large: 16
     }
     Elevation {
-        Level_1 {
-            Shadows { Shadow { Color: "#00000033", X: 0, Y: 1, Blur: 3, Spread: 0 } }
-        }
-        Level_2 {
-            Shadows { Shadow { Color: "#00000040", X: 0, Y: 2, Blur: 6, Spread: 0 } }
+        Reach: 64
+        Max {
+            Shadows {
+                Shadow { Color: "#00000040", X: 0, Y: 16, Blur: 48, Spread: 0 }
+            }
         }
     }
 }
 ```
 
-A token name in a theme file (`On_Surface`) is a Capitalised key; the lowercase reference matches it ignoring case (D16). A theme file has a root block `Theme { }`, and `Name:` in its metadata block is required, as in every file (D39, [TDL Language > The Metadata Block](TDL%20Language.md#the-metadata-block)); unknown metadata is kept (D19). Scales use names, not numeric keys: `Level_1` to `Level_5` and `Step_1` to `Step_8` (D4).
+A token name in a theme file (`On_Surface`) is a Capitalised key; the lowercase reference matches it ignoring case (D16). A theme file has a root block `Theme { }`, and `Name:` in its metadata block is required, as in every file (D39, [TDL Language > The Metadata Block](TDL%20Language.md#the-metadata-block)); unknown metadata is kept (D19). Scales use names, not numeric keys: `Step_1` to `Step_8` (D4). Elevation is a percentage (D88), so it has no named levels.
 
 Light, dark, high contrast and reduced motion are modes of one theme: a `Modes` block (`Light`, `Dark`, `High_Contrast`, `Reduced_Motion`) overrides token values, and the shell picks the mode from the desktop ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7). Recommendation over one theme file per mode: tokens stay in one place and a missing override is easy to spot. Open.
 
@@ -135,7 +135,7 @@ Stylesheet {
     Rule {
         Selector: "Text"
         Foreground: $color.on_surface
-        Size: $type.body.size
+        Font_Size: $type.body.font_size
     }
     Rule {
         Selector: ".warning"
@@ -163,7 +163,7 @@ The maintainer accepted the proposal as written on 2026-10-27; the names below a
 - [x] The `$group.name` reference form.
 - [x] The state, part and selector forms.
 - [x] Which keys are style and which are block layout properties: as proposed, with the split revisited when the blocks are specified.
-- [x] `Elevation` as a level number.
+- [x] `Elevation` as a level number. Superseded 2026-11-02: it is a percentage (D88). Open: the curve from the percentage to the shadow, and the values of `Max` (the design system).
 - [x] The JSON Schema generation from block declarations: [JSON Schema and Editor Support](JSON%20Schema%20and%20Editor%20Support.md), [ADR-0011 JSON Schema for Shell Files](../30%20Decisions/ADR-0011%20JSON%20Schema%20for%20Shell%20Files.md).
 - [x] TDL forms for selectors (`Rule` blocks, D5), number keys (named levels and steps, D4) and unnamed list blocks (repeated named blocks, D4), [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30).
 - [x] The case of token references against Capitalised token keys: matched ignoring case (D16).

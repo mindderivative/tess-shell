@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -75,7 +75,7 @@ The new model is compared with the current one to decide what to change. Decided
 
 | Change                                                                                                                           | Result                                                                                                                                                                                                                                                                                      |
 |----------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| A tre layer-window property, written in the file as `Layer`, `Exclusive_Zone`, `Keyboard`, `Input_Region`, a Bar's `Edge`, `Width`, `Height`, `Max_Width`, `Max_Height`, `Min_Width`, `Min_Height`, `Alignment`, `Offset` and `Gap`, a Panel's `Offset` and `Margin`, a Frame's `Margin` | Set live in one commit ([TRE-REQ-001 Layer Surface Window > Proposed API](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#proposed-api)). The shell turns these keys into tre's `anchor`, `size` and margins itself; which of them can change on an open window and which need a new one follows that mapping, which is an open item ([ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30)). #needs-verification                                                                                                                                                                                                                            |
+| A tre layer-window property, written in the file as `Layer`, `Exclusive_Zone`, `Keyboard`, `Input_Region`, a Bar's `Edge`, `Width`, `Height`, `Max_Width`, `Max_Height`, `Min_Width`, `Min_Height`, `Alignment`, `Offset` and `Gap`, a Panel's `Inset` and `Margin`, a Frame's `Margin` | Set live in one commit ([TRE-REQ-001 Layer Surface Window > Proposed API](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#proposed-api)). The shell turns these keys into tre's `anchor`, `size` and margins itself; which of them can change on an open window and which need a new one follows that mapping, which is an open item ([ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30)). #needs-verification                                                                                                                                                                                                                            |
 | The namespace, or the output the surface sits on (a different `Monitor` block, or a `Monitor` selector that now matches another output) | The window is closed and created again; tre's `namespace` and `output` are constructor-only                                                                                                                                                                                                                           |
 | A node property, a style value, a token, a theme                                                                                 | Set on the nodes; tre redraws only what changed                                                                                                                                                                                                                                             |
 | A module's TDL only                                                                                                             | The module's layout is rebuilt; the module's `reload()` hook runs and the instance stays ([Module Contract > Lifecycle](../../42%20Python%20API/Module%20Contract.md#lifecycle))                                                                                                                                                          |
@@ -109,7 +109,7 @@ The new model is compared with the current one to decide what to change. Decided
 ## Integration
 
 - The watcher thread and its place among the threads: [Process Model and Threading > Threads](../../20%20Architecture/Process%20Model%20and%20Threading.md#threads).
-- tre: `set()` for live properties; closing and recreating a window for constructor-only ones ([TRE-REQ-001 Layer Surface Window](../../80%20Engine%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)).
+- tre: `set()` for live properties; closing and recreating a window for constructor-only ones ([TRE-REQ-001 Layer Surface Window](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)).
 - The registry and the UID write: [Config Discovery and Registry](Config%20Discovery%20and%20Registry.md).
 
 ## Design

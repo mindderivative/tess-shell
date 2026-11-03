@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-29
-updated: 2026-11-01
+updated: 2026-11-03
 tags: [tdl-ref, tdl, needs-verification]
 ---
 
@@ -13,6 +13,10 @@ tags: [tdl-ref, tdl, needs-verification]
 
 > [!NOTE]
 > The Tesserae Data Language (TDL) is a structure-only data language. It is its own project, like TEL, and until that project has a repository this note defines it (D25 in [ADR-0014 Shell File Language > Second-Sketch Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#second-sketch-decisions-2026-10-30)). TDL has no knowledge of bars or monitors: the shell and Tesserae UI each define the blocks and keys they accept on top of it. Expressions are TEL's ([ADR-0008 Tesserae Expression Language](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md)); TDL only marks where one starts. The decisions are the maintainer's (2026-10-29 and 2026-10-30); this note states them as rules and does not re-argue them.
+
+> [!NOTE]
+> **The language text moved to `tess-dl` (2026-11-02)**
+> The `tess-dl` project is the source of truth for TDL (D66, D92): `~/Projects/pyDev/projects/tess-dl/docs/language.md` (decisions in `docs/decisions.md`, G1 to G18). This note keeps what is the shell's: how a file is used as a shell file, the typed value forms, the name registry, monitors, sizes and the shell's acceptance criteria. The punctuation, lexical rules and syntax errors are there, not here ([tess-dl Handover](tess-dl%20Handover.md)).
 
 ## Two Layers
 
@@ -50,7 +54,7 @@ Shell {
         Width: EXPAND
         Height: 32
         Style {
-          Border { Color: "#1e1e1e", Thickness: [2, 2, 2, 2] }
+          Border { Color: "#1e1e1e", Width: [2, 2, 2, 2] }
           Background: "#1f1f1f"
           Corner_Radius: [8, 8, 8, 8]
         }
@@ -88,53 +92,33 @@ This is an illustration: the version values are made up, and the keys inside `Ba
 | `Stylesheet` | A stylesheet                                      | `<Name>_Stylesheet.tdl`    |
 | `Theme`      | A theme                                           | `<Name>_Theme.tdl`         |
 
-The root block is authoritative. A mismatch with the suffix is a load error that names both. A file has exactly one root block. The settings file `settings.tdl` has the root block `Settings` (D20 of the 2026-10-30 decisions, with the file-type key replaced by the root block).
+The root block is authoritative. A mismatch with the suffix is a load error that names both; the shell raises it as `shell-root-suffix` (D91), because the language does not look at file names. A file has exactly one root block. The settings file `settings.tdl` has the root block `Settings` (D20 of the 2026-10-30 decisions, with the file-type key replaced by the root block).
 
 ## Punctuation
 
-| Mark                  | Meaning                                                                                                                              |
-|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `---`                 | Opens and closes the metadata block                                                                                                  |
-| `#`                   | Starts a comment when it follows whitespace or starts a line; the comment runs to the end of the line                                |
-| `Name { ... }`        | A block. The word before the brace is the block's type (see "Names and the Registry")                                                |
-| `Key: value`          | A property                                                                                                                           |
-| `[a, b]`              | A list of values. A group of `Key: value` pairs is a block, never a list (D31)                                                       |
-| newline or `,`        | Separates entries. A trailing `,` is allowed and never required                                                                      |
-| `"..."` or `'...'`    | A string, with `\` character escapes                                                                                                 |
-| `rgba(0 0 0 0.5)`     | The colour constructor; values are separated by spaces                                                                               |
-| `{{ ... }}`           | An expression slot on one line, no quotes needed. TEL evaluates it                                                                   |
-
-Rules that follow from these:
-
-- A `#` after whitespace begins a comment and ends an unquoted value, so `TDL: 0.1   # note` is the value `0.1` and a comment. A `#` inside quotes is part of the string. `Color: "#ffffff"` is a colour; `Color: #fff` is an error that says to quote it (D36).
-- Spaces around `{` and after `:` are optional. A syntax word is special only where a key or keyword is expected (D1).
-- Nested blocks close with a space or a newline between the braces: `} }`, never `}}`. `{{` always opens a slot, so a block directly inside a block is written `{ {`.
-- An unquoted word is a string. An unquoted value runs to the end of the line, the next `,`, a closing brace or a comment; text that holds `,` or a brace is quoted.
-- A hex colour is quoted, because `#` starts a comment: `"#ffffff10"`, `"#ffffff"`.
-- **Where a slot ends (D54).** A slot starts at `{{` and ends at the first `}}` that is not inside a quoted string (single or double quotes, with `\` escapes). A `}}` meant for the expression is written `} }`, the same habit as closing nested blocks. The parser gives TEL only the inner text and the position where it starts. Everything between `{{` and the slot end is opaque to TDL: a `,`, `#`, `:` or single brace inside a slot does not end an unquoted value or start a comment, so `Text: {{ max(a, b) }}` and `Color: {{ hovered ? "#1e1e2e" : "#313244" }}` are one value each.
-- A block may be written on one line (`Params { format { Type: string } }`) and may be empty (`Spacer { }`) (D8).
-- A key starts with a letter. There are no numeric keys: scales use names such as `Level_1` and `Step_1`. A list holds values, not blocks: repeat a named block instead (`Shadows { Shadow { } Shadow { } }`) (D4).
-- A property key may appear once in a block. A repeat is an error naming both places (D9). Repeated block names are allowed.
+The punctuation of TDL (`---`, `#` comments, `Name { }` blocks, `Key: value`, lists, quoted strings, `rgba(...)` calls, `{{ }}` slots, escapes, line endings and the nesting limit) is defined by the `tess-dl` project in `~/Projects/pyDev/projects/tess-dl/docs/language.md`. It is not repeated here, so there is one definition ([tess-dl Handover](tess-dl%20Handover.md)).
 
 ## Values
 
-| Kind          | Forms                                                                                                                                     |
-|---------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| Length        | A whole number is pixels (`16`). A percentage is `<int>%` (`50%`). The keywords `AUTO` and `EXPAND` apply where a key allows them (D34). There is no unit suffix; a float is never a length |
-| Number        | A float is for values that are not lengths (`Opacity: 0.9`)                                                                               |
-| Colour        | `"#RRGGBB"`, `"#RRGGBBAA"`, or `rgba(r g b a)` with red, green and blue 0 to 255 and alpha 0.0 to 1.0                                      |
-| String        | An unquoted word, or `"..."` / `'...'`                                                                                                    |
-| Enum          | A full upper-case bare word: `LEFT`, `TOP`, `RIGHT`, `BOTTOM`, `OVERLAY`, `HORIZONTAL` (D33)                                              |
-| Boolean, null | `true`, `false` and `null` are lowercase bare words. The parser keeps them as strings; the key's declared type in the schema makes them a boolean or null (D2) |
-| Four-sided    | One number, a list of four in the order left, top, right, bottom, or a block of named sides: `Thickness { Left: 24, Top: 8 }` (D7, D50). Four corner radii run from the top-left corner clockwise                     |
-| List          | `[a, b, c]` or `[]`; an item may sit on its own line                                                                                      |
-| Expression    | `{{ ... }}`. A value that is exactly one slot keeps its type; text with a slot inside is a string                                         |
+| Kind          | Forms                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Length        | A whole number is pixels (`16`). A percentage is `<int>%` (`50%`). The keywords `AUTO` and `EXPAND` apply where a key allows them (D34). There is no unit suffix; a float is never a length                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Number        | A float is for values that are not lengths (`Opacity: 0.9`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Colour        | `"#RRGGBB"`, `"#RRGGBBAA"`, or `rgba(r g b a)` with red, green and blue 0 to 255 and alpha 0.0 to 1.0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| String        | An unquoted word, or `"..."` / `'...'`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Enum          | A full upper-case bare word: `LEFT`, `TOP`, `RIGHT`, `BOTTOM`, `OVERLAY`, `HORIZONTAL` (D33)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Boolean, null | `true`, `false` and `null` are lowercase bare words. The parser keeps them as strings; the key's declared type in the schema makes them a boolean or null (D2)                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Four-sided    | One number, a list of four in the order left, top, right, bottom, or a block of named sides: `Thickness { Left: 24, Top: 8 }` (D7, D50). A list of two or three items is an error with the slug `bad-sides` ([Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)); its hint says: "Use one number, four items (left, top, right, bottom) or named sides. CSS orders its sides top, right, bottom, left and accepts two or three items; this language does not." The order left, top, right, bottom matches Flutter, Qt and WPF and differs from CSS and SwiftUI #needs-verification. Four corner radii run from the top-left corner clockwise |
+| List          | `[a, b, c]` or `[]`; an item may sit on its own line                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Expression    | `{{ ... }}`. A value that is exactly one slot keeps its type; text with a slot inside is a string                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 A percentage plus pixels (tre's `calc(100% - 16)`) has no form in v1 (D6). A style token such as `$color.on_surface` is a plain string that the style engine resolves by theme key; it is not a variable, and matching ignores case (D16).
 
+The lexical kinds a file is read into (Word, String, Number, Percent, Call, List, Slot, Template) and their rules are in the `tess-dl` reference. The table above is the shell's typed view of those kinds.
+
 ## Names and the Registry
 
-- **Case.** Built-in syntax is Capitalised. A key of several words Capitalises each word and joins them with `_`: `Name`, `Children`, `Exclusive_Zone`, `Corner_Radius`, `Anchor_To`. There is one spelling per key (D32). Tre's names stay lowercase (`exclusive_zone`); the shell maps between them. Enum values are full upper case.
+- **Case.** Built-in syntax is Capitalised. A key of several words Capitalises each word and joins them with `_`: `Name`, `Children`, `Exclusive_Zone`, `Corner_Radius`, `Attach_To`. There is one spelling per key (D32). Tre's names stay lowercase (`exclusive_zone`); the shell maps between them. Enum values are full upper case.
 - **Unique names.** A `Name:` is unique across the shell. It uses letters, digits and `_` only, and starts with a letter, so `DP-1` is not a name. A dotted path of names (`Shell_Root.Main.Top_Bar`) is then valid in TDL and in a TEL expression (D28).
 - **A block's head is its type.** `Panel { Name: Unique_Panel_Name }` needs no `Kind:` or `Type:`. `Name:` is the unique name.
 - **One registry of names** holds the built-in blocks, the surface types and every module. They are treated the same way. The shell's built-in names:
@@ -185,30 +169,7 @@ A `Width` or `Height` is a number of pixels, a percentage, `AUTO` or `EXPAND`. `
 
 ## Errors
 
-Every error carries `file:line:column` from the shell's own TDL parser, which keeps a lossless tree (comments and layout survive the UID write). A TEL error inside a slot points into the file because the parser gives TEL the slot's start ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md), T17). The list below was accepted by the maintainer on 2026-10-30 (D52). New codes are added here as the parser is designed.
-
-Proposed form, copied from TEL's decided errors ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)): one base error class with a stable `code` slug on every error, a message, a hint that says what to write, and a 1-based `file`, `line` and `column`. Value and schema checks (unknown key, wrong type, enum case) belong to the shell's schema ([Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)), not to TDL.
-
-| Code                       | When                                                              | Hint                                           |
-|----------------------------|-------------------------------------------------------------------|------------------------------------------------|
-| `tdl-no-metadata`          | The file does not start with a `---` block                        | Start the file with `---`                      |
-| `tdl-metadata-unclosed`    | The metadata block has no closing `---`                           | Close the block with `---`                     |
-| `tdl-no-version`           | No `TDL:` in the metadata                                         | Add `TDL: <version>`                           |
-| `tdl-no-name`              | No `Name:` in the metadata                                        | Add `Name: <identifier>`                       |
-| `tdl-bad-name`             | A `Name:` with a character other than a letter, digit or `_`, or that starts with a digit | Use letters, digits and `_`            |
-| `tdl-no-root`              | No root block after the metadata                                  | Add one root block, for example `Shell { }`    |
-| `tdl-many-roots`           | More than one root block                                          | Keep one root block                            |
-| `tdl-root-suffix`          | The root block disagrees with the file suffix                     | Rename the file or change the root block       |
-| `tdl-unclosed-block`       | A `{` has no closing `}` before the end of the file               | Add the missing `}`                            |
-| `tdl-unexpected-close`     | A `}` with no open block                                          | Remove the extra `}`                           |
-| `tdl-double-close`         | `}}` where two blocks close                                       | Write `} }`                                    |
-| `tdl-unclosed-slot`        | A `{{` with no `}}` on the same line                              | Close the slot on the same line                |
-| `tdl-empty-slot`           | A `{{ }}` with nothing in it                                      | Put an expression in the slot                  |
-| `tdl-unclosed-string`      | A quote with no closing quote on the line                         | Close the string                               |
-| `tdl-bad-escape`           | A `\` followed by a character that is not an escape               | Use a valid escape or double the `\`           |
-| `tdl-duplicate-key`        | A property key twice in one block                                 | Remove one; the message names both places      |
-| `tdl-bare-hash`            | A value that starts with `#` outside quotes                       | Quote the colour: `"#ffffff"`                  |
-| `tdl-reserved-name`        | A block or module named `If`, `Else`, `For`, `In` or `Key`        | Choose another name                            |
+The syntax errors of the `tess_dl` library (22 codes, `tdl-` prefix, each with a message, a hint and a position) are defined in the `tess-dl` reference ("Errors" in `~/Projects/pyDev/projects/tess-dl/docs/language.md`, accepted by the maintainer on 2026-11-02, D52, D93). The shell adds its own errors for schema, names and loading, with the same `file:line:column` position: `shell-root-suffix` (the root block disagrees with the file suffix, D91), `bad-sides` (a four-sided list of two or three items), unknown keys, duplicate names and import cycles ([Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)).
 
 ## Editor Support
 
@@ -234,27 +195,23 @@ Decided on 2026-10-30 and removed from this list: the version pins are minimums 
 - [x] The names and slugs of TDL syntax errors: the list under "Errors" is accepted (D52).
 - [ ] The full list of shipped modules and their registry names: after the building blocks are worked out (D48, [V1 Widgets](../50%20Design%20System/V1%20Widgets.md)).
 - [ ] How a collapsed or hidden Bar keeps a layer surface: accepted in [Bar > Mapping to tre](../40%20Specifications/Surfaces/Bar.md#mapping-to-tre) (D61): the window keeps its size and slides by a negative margin. The protocol makes a 0 size without opposite anchors an error, so D46 stands (verified 2026-10-31).
-- [x] `Gap` is the distance to what a surface is attached to, and a layout's child spacing is `Spacing` (D49). The four-sided order is Left, Top, Right, Bottom (D50). A Bar's `Offset` is one number, a Panel's is four-sided (D51) ([ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30)).
+- [x] `Gap` is the distance to what a surface is attached to, and a layout's child spacing is `Spacing` (D49). The four-sided order is Left, Top, Right, Bottom (D50). A Bar's `Offset` is one number; a Panel's four-sided position is `Inset` (D51, D89) ([ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30)).
 
 ## Acceptance Criteria
 
-- A file without a `---` block or without `TDL:` is refused with an error that names the file.
-- A file with no root block, or more than one, is refused. A root block that disagrees with the suffix is a load error naming both.
+The language-level criteria (syntax errors, slots, comments, limits, the exact round trip) are cases in the `tess-dl` conformance corpus, which `tess-dl` owns (D92). These remain the shell's.
+
+- A root block that disagrees with the suffix is a load error naming both (`shell-root-suffix`).
 - `Panel { Name: p1 }` loads with no `Kind:` or `Type:`.
-- A `Name:` with a character other than a letter, digit or `_`, or one that starts with a digit, is an error that says so.
 - Two `Monitor` blocks under `Shell` load; two that name the same monitor are an error naming both places.
 - A name registered twice is a load error naming both; a user module of a shipped module's name overrides it.
 - `Index: default` applies to a monitor no other block names.
 - A metadata key the shell does not know is kept and ignored.
-- `}}` where a block closes inside a block is an error that says to write `} }`.
-- `Text: {{ max(a, b) }}` is one value: the `,` inside the slot does not end it.
-- `{{ {'a': {'b': 1}} }}` ends the slot at the first `}}` and TEL reports the leftover text; `{{ {'a': {'b': 1} } }}` evaluates to the dict, and `{{ '}}' }}` is the string `}}` because the `}}` is inside quotes.
-- A property key written twice in one block is an error naming both places.
-- `Color: #fff` is an error that says to quote the colour; `Color: "#fff"   # note` is the colour `#fff` and a comment.
 - `Edge: top` is an error that says enum values are upper case; `Edge: TOP` loads.
 - `true`, `false` and `null` are accepted where the schema declares a boolean or null, and refused (with the expected type) where it declares a string or number.
 - `Thickness { Top: 8, Left: 24 }`, `Thickness: 8` and `Thickness: [8, 8, 8, 8]` load to the same four-sided value shape.
 - A top Bar with `Height: EXPAND` resolves to its `Max_Height`, else its `Min_Height`, else 0 px.
+- `Margin: [8, 4]` and a three-item list are refused with `bad-sides`, and the hint tells the author to use one number, four items or named sides and says that CSS orders its sides top, right, bottom, left and accepts two or three; one number, four items and named sides load.
 
 ## Links
 

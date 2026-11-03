@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-02
 tags: [moc]
 ---
 
@@ -16,4 +16,4 @@ tags: [moc]
 | `Surfaces`    | [Surfaces](Surfaces/Surfaces.md) | Bar, Frame, Panel, Popup                                                                                              |
 | `Modules`     | [Modules](Modules/Modules.md) | Clock first; workspaces, tray, audio, network, battery, media, tasks to follow                                        |
 | `Runtime`     | [Runtime](Runtime/Runtime.md) | Expression language requirements; config loader, module lifecycle, IPC and CLI, hot reload, logging, errors to follow |
-| `Integration` | [Integration](Integration/Integration.md) | Wayland protocols (draft); KWin, Plasma, D-Bus, portals, shortcuts to write |
+| `Integration` | [Integration](Integration/Integration.md) | Wayland protocols, KWin, Plasma coexistence, D-Bus service layer, global shortcuts, portals (all draft) |
