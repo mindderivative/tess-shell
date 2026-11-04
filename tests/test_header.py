@@ -24,6 +24,7 @@ def test_pins_that_are_met_pass() -> None:
 def test_a_pin_above_the_installed_version_is_an_error() -> None:
     (f,) = check_header(doc("TRE: 0.7.0\n"), "a_Shell.tdl", INSTALLED)
     assert f.rule == "version-pin" and "TRE 0.7.0" in f.message and "0.6.1" in f.message
+    assert (f.line, f.column) == (4, 1)  # the pin's own key, not the top of the file
 
 
 def test_root_block_must_agree_with_the_suffix() -> None:

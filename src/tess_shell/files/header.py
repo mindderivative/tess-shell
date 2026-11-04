@@ -5,9 +5,10 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 
-from tess_dl import Document
+from tess_dl import Document, Property
 
 from tess_shell.schema.findings import Finding
+from tess_shell.schema.tree import position, value_text
 
 _ROOT_SUFFIX = {
     "Shell": "_Shell.tdl",
@@ -35,24 +36,24 @@ def check_header(document: Document, file: str, installed: Mapping[str, str]) ->
     """The minimum-version pins (``TEL``, ``TRE``, ``Shell``) and the root block against the
     file's suffix. ``installed`` maps ``TEL``, ``TRE`` and ``Shell`` to the running versions."""
     out: list[Finding] = []
-    for key, have in installed.items():
-        entry = document.metadata.get(key)
-        if entry is None:
+    for entry in document.metadata.entries:
+        if not isinstance(entry, Property) or entry.key not in installed:
             continue
-        text = getattr(entry, "text", None) or getattr(entry, "value", "")
-        need = parse_version(str(text))
-        if need > parse_version(have):
-            out.append(
-                Finding(
-                    file,
-                    1,
-                    1,
-                    "error",
-                    "version-pin",
-                    f"this file needs {key} {text} or newer; {have} is installed",
-                    f"upgrade {key}, or lower the pin in the metadata block",
-                )
+        text = value_text(entry.value)
+        if text is None or parse_version(text) <= parse_version(installed[entry.key]):
+            continue
+        line, column = position(entry.key_origin)
+        out.append(
+            Finding(
+                file,
+                line,
+                column,
+                "error",
+                "version-pin",
+                f"this file needs {entry.key} {text} or newer; {installed[entry.key]} is installed",
+                f"upgrade {entry.key}, or lower the pin in the metadata block",
             )
+        )
     suffix = next((s for s in _ROOT_SUFFIX.values() if file.endswith(s)), None)
     expected_root = next((r for r, s in _ROOT_SUFFIX.items() if s == suffix), None)
     root = document.root
