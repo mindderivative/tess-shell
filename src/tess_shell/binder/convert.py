@@ -67,6 +67,14 @@ def length(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) 
     raise _bad(value, "a length, a percentage, AUTO or EXPAND")
 
 
+def text_length(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """A text node's size: ``AUTO`` is tre's ``"fit-content"`` (Block Reference, Text)."""
+    if isinstance(value, Auto):
+        (name,) = names
+        return {name: "fit-content"}
+    return length(value, names)
+
+
 def bound(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
     """A bound (``Min_Width``): pixels or a percentage."""
     if isinstance(value, Length | Percent):
@@ -196,6 +204,7 @@ def font_family(value: Value, names: tuple[str, ...], choices: tuple[str, ...] =
 
 CONVERTERS: Mapping[str, Converter] = {
     "length": length,
+    "text_length": text_length,
     "bound": bound,
     "number": number,
     "whole": whole,

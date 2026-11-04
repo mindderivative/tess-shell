@@ -14,6 +14,7 @@ from tess_re import Window
 from tess_shell.binder.build import build
 from tess_shell.binder.convert import CONVERTERS
 from tess_shell.binder.model import (
+    Auto,
     Bool,
     Color,
     Enum,
@@ -34,7 +35,8 @@ def samples(row: KeyRow) -> list[Value]:
     if row.convert == "enum":
         return [Enum(c) for c in row.choices]
     return {
-        "length": [Length(10)],
+        "length": [Length(10), Auto()],
+        "text_length": [Length(10), Auto()],
         "bound": [Length(5)],
         "number": [Number(1)],
         "whole": [Number(2)],

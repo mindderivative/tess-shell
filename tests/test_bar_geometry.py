@@ -160,3 +160,37 @@ def test_expand_across_is_max_then_min_then_zero() -> None:
 def test_zero_size_is_not_created(spec: BarSpec) -> None:
     with pytest.raises(ZeroSize):
         geo(spec)
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [
+        BarSpec("TOP", Expand(), Length(32)),
+        BarSpec("TOP", Expand(), Length(32), gap=8),
+        BarSpec("BOTTOM", Length(560), Length(64), alignment="CENTER"),
+        BarSpec("TOP", Length(400), Length(32), alignment="START", offset=200),
+        BarSpec("TOP", Length(400), Length(32), alignment="END", offset=40),
+        BarSpec("TOP", Length(400), Length(32), alignment="CENTER", offset=50),
+        BarSpec("LEFT", Length(48), Expand()),
+        BarSpec("RIGHT", Length(48), Length(400), alignment="END", offset=10, gap=4),
+    ],
+)
+def test_the_engine_accepts_the_geometry(spec: BarSpec) -> None:
+    """A protocol-level refusal (invalid size, a zone on the wrong anchors) fails here."""
+    from tess_re import LayerWindow
+
+    g = geo(spec)
+    window = LayerWindow(
+        "tesserae-shell.bar.test",
+        layer="top",
+        anchor=g.anchor,
+        size=g.size,
+        margin=g.margin,
+        exclusive_zone=g.exclusive_zone,
+        exclusive_edge=g.exclusive_edge,  # type: ignore[arg-type]
+    )
+    assert set(window.get("anchor")) == set(g.anchor)  # tre keeps its own order
+    assert tuple(window.get("size")) == g.size
+    assert tuple(window.get("margin")) == g.margin
+    assert window.get("exclusive_zone") == g.exclusive_zone
+    assert window.get("exclusive_edge") == g.exclusive_edge

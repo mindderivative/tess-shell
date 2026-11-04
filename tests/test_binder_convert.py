@@ -29,6 +29,8 @@ GOOD: list[tuple[str, Value, tuple[str, ...], tuple[str, ...], dict[str, Any]]] 
     ("length", Percent(50), ("height",), (), {"height": "50%"}),
     ("length", Auto(), ("width",), (), {"width": "auto"}),
     ("length", Expand(), ("width",), (), {"flex_grow": 1, "align_self": "stretch"}),
+    ("text_length", Auto(), ("width",), (), {"width": "fit-content"}),
+    ("text_length", Length(9), ("width",), (), {"width": 9}),
     ("bound", Length(5), ("min_width",), (), {"min_width": 5}),
     ("bound", Percent(10), ("max_height",), (), {"max_height": "10%"}),
     ("number", Number(0.5), ("opacity",), (), {"opacity": 0.5}),

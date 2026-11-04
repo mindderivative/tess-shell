@@ -135,6 +135,8 @@ BLOCKS: Mapping[str, BlockRow] = {
         keys={
             **_COMMON,
             **_PADDING,
+            "Width": _k("width", "text_length"),
+            "Height": _k("height", "text_length"),
             "Text": _k("text", "text"),
             "Wrap": _k("wrap", "enum", "WORD", "NONE"),
             "Max_Lines": _k("max_lines", "whole"),
