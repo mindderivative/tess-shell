@@ -173,3 +173,12 @@ def test_no_compositor_exit_2(tmp_path: Path) -> None:
     )
     assert done.returncode == 2
     assert "layer-shell" in done.stderr
+
+
+def test_bad_shell_file_stops_run_with_exit_1(shell_factory, tmp_path: Path) -> None:  # type: ignore[no-untyped-def]
+    cfg = tmp_path / "cfg"
+    (cfg / "Shells").mkdir(parents=True)
+    (cfg / "Shells" / "Bad_Shell.tdl").write_text("---\nTDL: 0.1\nName: B\n---\nShell {\n")
+    shell = shell_factory(cfg)
+    assert shell.finish() == 1
+    assert "Shells/Bad_Shell.tdl:5:7" in shell.stderr

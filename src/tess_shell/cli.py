@@ -7,7 +7,6 @@ Heavy imports (the engine, Loguru, the loader) happen inside the commands that n
 from __future__ import annotations
 
 import argparse
-import importlib
 import json
 import sys
 from collections.abc import Sequence
@@ -117,6 +116,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     if command in _STUBS:
         print(f"tesserae-shell: '{command}' is not implemented in M0", file=sys.stderr)
         return ExitCode.CONFIG
-    if command == "check":
-        return importlib.import_module("tess_shell.app").check(options)  # type: ignore[no-any-return]
-    return importlib.import_module("tess_shell.app").run(options)  # type: ignore[no-any-return]
+    from tess_shell import app
+
+    return app.check(options) if command == "check" else app.run(options)

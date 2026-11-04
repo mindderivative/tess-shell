@@ -8,3 +8,4 @@
 - Loguru setup: console sink and a daily `log_YYYY-MM-DD.log` (directory 0o700, file 0o600), JSON option, midnight file swap, retention, console-only fallback.
 - Instance lock (`flock` on `$XDG_RUNTIME_DIR/tesserae-shell/lock`, exit 4 naming the holder's pid) and `$XDG_RUNTIME_DIR` checks (exit 2).
 - `tesserae-shell run`: pre-flight, settings, logging, instance lock, registry (`registry.json`, created and saved atomically), then the engine loop with `keep_alive`; SIGTERM and SIGINT stop it cleanly (exit 0), a second signal forces exit 130. Steps 7 to 12 of the start sequence that need later milestones are logged as not built.
+- `tesserae-shell check`: settings, then a syntax check of every `*_Shell.tdl`, `*_Module.tdl`, `*_Style.tdl`, `*_Theme.tdl` and `*_Stylesheet.tdl` under the search directories, with `file:line:column`, `--json`, exit 0, 1 or 2. `run` step 7 does the same scan.

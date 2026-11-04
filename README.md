@@ -6,6 +6,17 @@ Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launc
 
 Milestone M0 (the skeleton) is in progress: the package, the command line and tooling exist. The design is in `docs/`.
 
+## Commands
+
+```sh
+tesserae-shell version   # versions of the shell, tess_re, tess_el, tess_dl and Python
+tesserae-shell check     # validate settings.tdl and the syntax of every shell file
+tesserae-shell run       # start the shell (needs a Wayland compositor with layer-shell)
+```
+
+Global options: `--config-dir PATH`, `--json`, `--quiet`. Other subcommands named in the design
+report that they are not implemented yet.
+
 ## Development
 
 ```sh

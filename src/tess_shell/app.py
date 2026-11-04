@@ -6,6 +6,7 @@ resolve and compile step, the model, the surfaces and the modules are logged as 
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import threading
@@ -17,11 +18,13 @@ from typing import NoReturn
 from loguru import logger
 
 import tess_shell
+from tess_shell.config.discovery import discover
 from tess_shell.config.lock import InstanceLock
 from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir
 from tess_shell.config.registry import Registry, RegistryError
-from tess_shell.config.settings import LoggingSettings, load_settings
+from tess_shell.config.settings import LoggingSettings, Settings, load_settings
 from tess_shell.exit_codes import EnvironmentFailure, ExitCode, ShellError
+from tess_shell.files.loader import load_all
 from tess_shell.logging import (
     configure_logging,
     current_state,
@@ -50,6 +53,45 @@ def source_line(config: Path, finding: Finding) -> str | None:
 def print_findings(findings: list[Finding], config: Path) -> None:
     text, _ = render_findings(findings, lambda f: source_line(config, f))
     print(text, file=sys.stderr)
+
+
+MAX_FINDINGS = 50
+
+
+def scan(settings: Settings, config: Path) -> tuple[int, list[Finding]]:
+    """Discover and parse every shell file. Returns ``(files checked, findings)``."""
+    paths = discover(settings)
+    _, findings = load_all(paths, config)
+    return len(paths), sorted(findings, key=lambda f: f.sort_key)
+
+
+def check(options: Options) -> int:
+    """``tesserae-shell check``: settings, then every shell file, and nothing is created."""
+    config = config_dir(options.config_dir)
+    if not config.is_dir():
+        print(f"tesserae-shell: config directory does not exist: {config}", file=sys.stderr)
+        return int(ExitCode.ENVIRONMENT)
+    settings, findings = load_settings(config)
+    count = 0
+    if settings is not None:
+        count, findings = scan(settings, config)
+    if options.json:
+        shown = findings[:MAX_FINDINGS]
+        print(
+            json.dumps(
+                {
+                    "ok": not findings,
+                    "files": count,
+                    "errors": [f.to_dict() for f in shown],
+                    "omitted": len(findings) - len(shown),
+                }
+            )
+        )
+    elif findings:
+        print_findings(findings, config)
+    elif not options.quiet:
+        print(f"ok: {count} files checked")
+    return int(ExitCode.CONFIG if findings else ExitCode.OK)
 
 
 def _preflight() -> tuple[Path, bool]:
@@ -148,7 +190,14 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         log_finding(exc.finding)
         print_findings([exc.finding], cfg)
         return ExitCode.CONFIG
-    # 7. (check and load every shell file: added with `check`)
+    # 7. check and load every shell file
+    count, findings = scan(settings, cfg)
+    if findings:
+        for f in findings[:MAX_FINDINGS]:
+            log_finding(f)
+        print_findings(findings, cfg)
+        return ExitCode.CONFIG
+    logger.info(f"loaded {count} shell files")
     if settings.main_shell_path is None:
         logger.info(f"no {settings.main_shell} found; nothing to show")
     # 8. resolve and compile
