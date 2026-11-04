@@ -225,3 +225,63 @@ def test_a_misspelled_name_is_reported_at_its_line_and_column_with_the_nearest_n
     line = next(i for i, t in enumerate(text.splitlines(), 1) if "{{ tme }}" in t)
     column = text.splitlines()[line - 1].index("tme") + 1
     assert any(f"M.tdl:{line}:{column}:" in s and "time" in s for s in seen), seen
+
+
+COND = """
+Module {
+    Text {
+        Name: Face
+        Text: {{ a if flag else b }}
+    }
+}
+"""
+
+
+def test_a_conditional_slot_is_retracked_for_the_names_it_reads_now() -> None:
+    """TEL Integration AC 3: ``reads`` is replaced after each evaluation, so a send to the name the
+    slot reads now updates it, and a send to the name it no longer reads does not."""
+    module, findings = read_module(parse(COND, "Cond", "C.tdl"), "C.tdl")
+    assert module is not None and findings == []
+    shell, _ = read_shell(
+        parse(
+            SHELL.replace("Clock { Name: A }", "Cond { }").replace(
+                'Clock { Name: B, suffix: "?", size: 20 }', ""
+            ),
+            "S",
+            "S.tdl",
+        ),
+        "S.tdl",
+        lambda _: "",
+        {"Cond": module},
+    )
+    assert shell is not None
+    expanded = expand(
+        shell.monitors[0].surfaces[0].children, "P", {"Cond": module}, lambda p: p[-1], "Main"
+    )
+    store = ValueStore()
+    for use in expanded.uses:
+        store.add_use(use.module, use.key)
+    key = expanded.uses[0].key
+    store.send("Cond", key, "flag", True)
+    store.send("Cond", key, "a", "from a")
+    store.send("Cond", key, "b", "from b")
+    store.flush()
+    live = LiveTree(store, {u.key: u for u in expanded.uses})
+    view = build(live.resolve(expanded), Window(200, 40))
+    face = f"{key}/Face"
+    assert view.nodes[face].get("text") == "from a"
+
+    def send(name: str, value: object) -> None:
+        store.send("Cond", key, name, value)
+        view.update(live.apply_changes(store.flush()))
+
+    send("b", "b changed")  # not read while the flag is true
+    assert view.nodes[face].get("text") == "from a"
+    send("flag", False)  # now reads flag and b
+    assert view.nodes[face].get("text") == "b changed"
+    send("a", "a changed")  # no longer read
+    assert view.nodes[face].get("text") == "b changed"
+    send("b", "b again")
+    assert view.nodes[face].get("text") == "b again"
+    send("flag", True)  # back to a
+    assert view.nodes[face].get("text") == "a changed"
