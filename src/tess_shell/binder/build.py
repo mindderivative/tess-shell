@@ -173,8 +173,8 @@ def _plan(
         return None
     if isinstance(node, IfNode | ForNode):
         word = "If" if isinstance(node, IfNode) else "For"
-        hint = "repeaters and conditions come with M2"
-        errors.append(BindError(f"{word} is not supported yet", node.origin, hint))
+        hint = "the model resolves it to the blocks that show before binding"
+        errors.append(BindError(f"{word} was not resolved", node.origin, hint))
         return None
     index.nodes[path] = node.origin
     row: BlockRow | None = BLOCKS.get(node.kind)

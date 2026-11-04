@@ -197,12 +197,66 @@ def _scalar_block_keys(
     return out
 
 
-def _imports(ctx: _Ctx, entry: Property) -> list[m.Node | m.UseNode]:
+def _part(ctx: _Ctx, slot: tess_dl.Slot) -> m.SlotPart:
+    return m.SlotPart(slot.text, origin=ctx.origin(slot.text_origin))
+
+
+def _body(ctx: _Ctx, entries: tuple[tess_dl.Entry, ...]) -> tuple[Child, ...]:
+    """The blocks of an ``If`` or ``For`` body. A module call inside one is not built yet: it
+    would need a module use to appear and go away while the shell runs."""
+    out: list[Child] = []
+    for entry in entries:
+        if isinstance(entry, Block):
+            node = _block(ctx, entry)
+            if isinstance(node, m.UseNode):
+                ctx.not_built(entry.origin, "a module call inside If or For")
+            elif node is not None:
+                out.append(node)
+        elif isinstance(entry, tess_dl.If):
+            out.append(_if(ctx, entry))
+        elif isinstance(entry, tess_dl.For):
+            out.append(_for(ctx, entry))
+        elif isinstance(entry, Property):
+            what = "Import" if entry.key == "Import" else f"the key {entry.key}"
+            ctx.not_built(entry.key_origin, f"{what} inside If or For")
+    return tuple(out)
+
+
+def _if(ctx: _Ctx, entry: tess_dl.If) -> m.IfNode:
+    return m.IfNode(
+        condition=_part(ctx, entry.condition),
+        body=_body(ctx, entry.body),
+        else_body=None if entry.else_body is None else _body(ctx, entry.else_body),
+        origin=ctx.origin(entry.origin),
+    )
+
+
+def _for(ctx: _Ctx, entry: tess_dl.For) -> m.ForNode:
+    body = _body(ctx, entry.body)
+    head = next((n.kind for n in body if isinstance(n, m.Node)), "For")
+    if not _NAME.match(entry.variable):
+        ctx.add(
+            entry.origin,
+            "bad-name",
+            f"the loop variable {entry.variable!r} must be letters, digits and _",
+            "write For item In {{ items }} Key {{ item.id }}",
+        )
+    return m.ForNode(
+        variable=entry.variable,
+        items=_part(ctx, entry.items),
+        key=_part(ctx, entry.key),
+        name=head,
+        body=body,
+        origin=ctx.origin(entry.origin),
+    )
+
+
+def _imports(ctx: _Ctx, entry: Property) -> list[Child]:
     """``Import: Clock_Module.tdl`` or a list of them: each embeds that module, called with its
     defaults, at this position (Module File > Using a Module)."""
     value = entry.value
     items = list(value.items) if isinstance(value, tess_dl.List) else [value]
-    out: list[m.Node | m.UseNode] = []
+    out: list[Child] = []
     for item in items:
         text = item.value if isinstance(item, tess_dl.String) else getattr(item, "text", None)
         if not isinstance(text, str):
@@ -225,9 +279,9 @@ def _imports(ctx: _Ctx, entry: Property) -> list[m.Node | m.UseNode]:
 
 
 def _children(
-    ctx: _Ctx, holder: Block, child_types: Callable[[Block], m.Node | m.UseNode | None]
-) -> list[m.Node | m.UseNode]:
-    out: list[m.Node | m.UseNode] = []
+    ctx: _Ctx, holder: Block, child_types: Callable[[Block], Child | None]
+) -> list[Child]:
+    out: list[Child] = []
     for entry in holder.entries:
         if isinstance(entry, Block):
             node = child_types(entry)
@@ -242,10 +296,14 @@ def _children(
                 f"Children holds blocks, not the key {entry.key}",
                 "write a block such as FlexBox { }",
             )
-        elif isinstance(entry, tess_dl.If | tess_dl.For):
-            ctx.not_built(entry.origin, "If and For")
+        elif isinstance(entry, tess_dl.If):
+            out.append(_if(ctx, entry))
+        elif isinstance(entry, tess_dl.For):
+            out.append(_for(ctx, entry))
     return out
 
+
+Child = m.Node | m.UseNode | m.IfNode | m.ForNode
 
 _PARAM_KINDS = {"string": "text", "number": "number", "boolean": "bool"}
 
@@ -291,7 +349,7 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
     return m.UseNode(module.name, name=name, params=params, origin=ctx.origin(block.origin))
 
 
-def _block(ctx: _Ctx, block: Block) -> m.Node | m.UseNode | None:
+def _block(ctx: _Ctx, block: Block) -> Child | None:
     row = blocks.BLOCKS.get(block.type)
     if row is None and block.type in ctx.modules:
         return _use(ctx, block)
@@ -305,7 +363,7 @@ def _block(ctx: _Ctx, block: Block) -> m.Node | m.UseNode | None:
     style: dict[str, m.Value] = {}
     style_at: dict[str, tess_dl.Origin | None] = {}
     prop_at: dict[str, tess_dl.Origin | None] = {}
-    children: list[m.Node | m.UseNode] = []
+    children: list[Child] = []
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
@@ -397,7 +455,7 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
     name: str | None = None
     values: dict[str, m.Value] = {}
     style: dict[str, m.Value] = {}
-    children: list[m.Node | m.UseNode] = []
+    children: list[Child] = []
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
@@ -680,7 +738,7 @@ def read_module(
         ctx.add(root.origin, "bad-name", "a module's Name must be letters, digits and _", "")
         return None, ctx.findings
     params: dict[str, ParamDecl] = {}
-    children: list[m.Node | m.UseNode] = []
+    children: list[Child] = []
     for entry in root.entries:
         if isinstance(entry, Block):
             if entry.type == "Params":

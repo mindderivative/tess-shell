@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from tess_shell.binder.model import Node, Origin, UseNode, Value
+from tess_shell.binder.model import ForNode, IfNode, Node, Origin, UseNode, Value
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,7 +25,7 @@ class BarDef:
     max_width: float | None = None
     max_height: float | None = None
     style: Mapping[str, Value] = None  # type: ignore[assignment]
-    children: tuple[Node | UseNode, ...] = ()
+    children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,4 +66,4 @@ class ModuleDef:
     file: str
     origin: Origin
     params: Mapping[str, ParamDecl]
-    children: tuple[Node | UseNode, ...]
+    children: tuple[Node | UseNode | IfNode | ForNode, ...]

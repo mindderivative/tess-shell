@@ -128,11 +128,13 @@ def test_unknown_key_and_block_suggest_the_nearest_name() -> None:
 
 
 @pytest.mark.parametrize("repeater", [IfNode(origin=at(4)), ForNode(origin=at(4))])
-def test_if_and_for_are_refused_with_a_clear_message(repeater: IfNode | ForNode) -> None:
+def test_an_unresolved_if_or_for_is_refused_with_a_clear_message(
+    repeater: IfNode | ForNode,
+) -> None:
     with pytest.raises(BindFailed) as info:
         build([Node("Box", children=(repeater,))], Window(50, 50))
     (error,) = info.value.errors
-    assert "not supported yet" in error.message and error.origin.line == 4
+    assert "was not resolved" in error.message and error.origin.line == 4
 
 
 def test_a_key_written_in_the_block_and_in_its_style_is_an_error_naming_both() -> None:

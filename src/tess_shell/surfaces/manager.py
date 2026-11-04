@@ -109,6 +109,7 @@ class Surface:
     window: LayerWindow
     view: View | None
     live: LiveTree
+    expanded: Expanded
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -256,19 +257,36 @@ class SurfaceManager:
             if view is None:
                 logger.error(f"Bar {where} is empty: its contents did not bind")
             self._app.add_window(window)
-            self.surfaces.append(Surface(bar.name, output.name, window, view, live))
+            self.surfaces.append(
+                Surface(bar.name, output.name, window, view, live, planned.expanded)
+            )
             logger.info(
                 f"Bar {where}: anchor {','.join(geometry.anchor)} size {geometry.size} "
                 f"zone {geometry.exclusive_zone}"
             )
         return self.surfaces
 
+    def _rebuild(self, surface: Surface) -> None:
+        """A use with an If or For read something that changed: resolve the Bar's tree again and
+        let the keyed diff change only what differs."""
+        assert surface.view is not None
+        try:
+            surface.view.rebuild(surface.live.resolve(surface.expanded))
+            logger.debug(f"rebuilt Bar {surface.name}")
+        except BindFailed as failed:
+            for error in failed.errors:
+                logger.warning(f"{error.origin}: {error.message}; the Bar keeps what it shows")
+
     def on_change(self, changes: list[Change]) -> None:
         """Loop thread: the store changed. One ``apply`` per surface per turn."""
         for surface in self.surfaces:
             if surface.view is None:
                 continue
-            updates = surface.live.apply_changes(changes)
+            result = surface.live.apply_changes(changes)
+            if result.rebuild:
+                self._rebuild(surface)
+                continue
+            updates = result.updates
             for node_id, key, value in updates:
                 shown = getattr(value, "value", value)
                 logger.debug(f"update {node_id} {key} = {shown!r}")

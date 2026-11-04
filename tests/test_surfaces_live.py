@@ -206,3 +206,64 @@ def test_the_first_run_writes_the_uid_and_keeps_a_backup_outside_the_config(
             second.process.kill()
     assert shell_file.read_text() == after
     assert len(list(backups.glob("Main_Shell.tdl.*"))) == 1
+
+
+TODO_PY = """
+from tess_shell import Module
+
+
+class Todo(Module):
+    def start(self):
+        self.items = [{"id": 1, "title": "first"}, {"id": 2, "title": "second"}]
+        self.send()
+        self.ctx.on_tick("second", self.tick)
+
+    def send(self):
+        self.ctx.send("items", list(self.items))
+
+    def tick(self):
+        n = len(self.items) + 1
+        self.items.append({"id": n, "title": f"item {n}"})
+        self.send()
+"""
+
+TODO_TDL = """
+Module {
+    FlexBox {
+        Name: Row
+        Children {
+            For w In {{ items }} Key {{ w.id }} {
+                Text { Text: {{ w.title }}, Foreground: "#ffffff" }
+            }
+        }
+    }
+}
+"""
+
+
+def test_a_for_follows_a_modules_list_while_the_shell_runs(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    from tests.shell_samples import HEADER
+
+    body = BODY.replace('Text { Text: "14:05", Font_Size: 14, Foreground: "#ffffff" }', "Todo { }")
+    write_example(tmp_path, body)
+    folder = tmp_path / "Modules" / "Todo"
+    folder.mkdir(parents=True)
+    (folder / "Todo_Module.tdl").write_text(HEADER.replace("Main_Shell", "Todo") + TODO_TDL)
+    (folder / "Todo_Module.py").write_text(TODO_PY)
+    (tmp_path / "settings.tdl").write_text(
+        "---\nTDL: 0.1\nName: Settings\n---\nSettings { Logging { Level: DEBUG } }\n"
+    )
+    shell = start(private_sway, tmp_path)
+    try:
+        wait_for_count(shell, r"rebuilt Bar Top_Bar", 3, timeout=10)
+        shell.process.send_signal(signal.SIGTERM)
+        assert shell.finish() == 0
+    finally:
+        if shell.process.poll() is None:
+            shell.process.kill()
+    import re
+
+    assert "Traceback" not in shell.stderr
+    assert not re.search(r"^(ERROR|CRITICAL|WARNING)\s+\|", shell.stderr, re.M), shell.stderr

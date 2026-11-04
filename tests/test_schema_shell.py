@@ -125,10 +125,43 @@ def test_surfaces_and_forms_not_built_in_m1_are_refused(snippet: str, what: str)
     assert f.rule == "not-built" and what in f.message
 
 
-def test_if_and_for_in_children_are_refused() -> None:
-    body = BODY.replace("Spacer { }", "If {{ true }} { Spacer { } }")
-    fs = errors(body)
-    assert fs and all(f.rule in ("not-built", "unknown-key") for f in fs)
+def test_if_and_for_in_children_are_typed_with_their_slots_and_bodies() -> None:
+    body = BODY.replace(
+        "Spacer { }",
+        "If {{ a > 1 }} { Spacer { } } Else { Text { Text: no } }\n"
+        "For w In {{ items }} Key {{ w.id }} { Text { Text: {{ w.t }} } }",
+    )
+    shell, findings = read(body)
+    assert findings == [] and shell is not None
+    from tess_shell.binder import model as m
+
+    row = shell.monitors[0].surfaces[0].children[0]
+    assert isinstance(row, m.Node)
+    cond, loop = [c for c in row.children if isinstance(c, m.IfNode | m.ForNode)]
+    assert isinstance(cond, m.IfNode) and cond.condition is not None
+    assert cond.condition.text == " a > 1 " and len(cond.body) == 1 and cond.else_body is not None
+    assert isinstance(loop, m.ForNode)
+    assert (loop.variable, loop.name) == ("w", "Text")
+    assert loop.items is not None and loop.items.text == " items "
+    assert loop.key is not None and loop.key.text == " w.id "
+
+
+def test_a_module_call_inside_if_or_for_is_not_built() -> None:
+    from tess_shell.schema.shell import read_shell as rs
+
+    result = tess_dl.parse(
+        HEADER + BODY.replace("Spacer { }", "If {{ true }} { Clock { } }"),
+        path="Shells/Main_Shell.tdl",
+    )
+    assert result.document is not None
+    from tess_shell.schema.model import ModuleDef
+
+    clock = ModuleDef(
+        "Clock", "c", __import__("tess_shell.binder.model").binder.model.NO_ORIGIN, {}, ()
+    )
+    shell, findings = rs(result.document, "Shells/Main_Shell.tdl", lambda _: SVG, {"Clock": clock})
+    assert shell is None and findings[0].rule == "not-built"
+    assert "inside If or For" in findings[0].message
 
 
 def test_bar_keys_m1_does_not_build_are_warnings_not_errors() -> None:

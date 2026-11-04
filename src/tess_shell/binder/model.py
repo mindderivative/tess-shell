@@ -156,15 +156,27 @@ class UseNode:
 
 @dataclass(frozen=True, slots=True)
 class IfNode:
-    """Exists so the types are stable; M1 refuses it."""
+    """``If {{ cond }} { ... } Else { ... }``. The model picks the branch; the binder refuses an
+    unresolved one."""
 
+    condition: SlotPart | None = None
+    body: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
+    else_body: tuple[Node | UseNode | IfNode | ForNode, ...] | None = None
+    use: str = ""  # the key of the module use whose layout holds it; set by the model
     origin: Origin = _origin()
 
 
 @dataclass(frozen=True, slots=True)
 class ForNode:
-    """Exists so the types are stable; M1 refuses it."""
+    """``For w In {{ items }} Key {{ w.id }} { ... }``. ``name`` is what the entries are called
+    (``<name>_0001``): the head of the body's first block, else ``For``."""
 
+    variable: str = ""
+    items: SlotPart | None = None
+    key: SlotPart | None = None
+    name: str = "For"
+    body: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
+    use: str = ""
     origin: Origin = _origin()
 
 

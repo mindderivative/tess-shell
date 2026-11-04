@@ -20,7 +20,7 @@ MAX_DEPTH = 8
 
 @dataclass(slots=True)
 class Expanded:
-    nodes: list[m.Node] = field(default_factory=list)
+    nodes: list[m.Node | m.IfNode | m.ForNode] = field(default_factory=list)
     uses: list[Use] = field(default_factory=list)
     owner: dict[str, str] = field(default_factory=dict)  # node id -> use key
     errors: list[m.BindError] = field(default_factory=list)
@@ -52,23 +52,58 @@ class _Expander:
         path: str,
         use: Use | None,
         stack: tuple[str, ...],
-    ) -> list[m.Node]:
-        result: list[m.Node] = []
+        dynamic: bool = False,
+    ) -> list[m.Node | m.IfNode | m.ForNode]:
+        result: list[m.Node | m.IfNode | m.ForNode] = []
         for node in nodes:
             if isinstance(node, m.UseNode):
                 result.extend(self._use(node, path, stack))
             elif isinstance(node, m.Node):
-                result.append(self._node(node, path, use, stack))
+                result.append(self._node(node, path, use, stack, dynamic))
             else:
-                result.append(node)  # type: ignore[arg-type]  # If and For: the binder refuses them
+                result.append(self._structure(node, path, use, stack))
         return result
 
-    def _node(self, node: m.Node, path: str, use: Use | None, stack: tuple[str, ...]) -> m.Node:
+    def _structure(
+        self, node: m.IfNode | m.ForNode, path: str, use: Use | None, stack: tuple[str, ...]
+    ) -> m.Node | m.IfNode | m.ForNode:
+        """An ``If`` or ``For``: its blocks keep their names (given the use's prefix) and slots;
+        the model resolves which show, and gives each ``For`` entry its own ids."""
+        if use is None:
+            self.out.errors.append(
+                m.BindError("If and For outside a module are not built yet", node.origin)
+            )
+        if isinstance(node, m.IfNode):
+            else_body = (
+                None
+                if node.else_body is None
+                else tuple(self._walk(node.else_body, path, use, stack, dynamic=True))
+            )
+            return dataclasses.replace(
+                node,
+                body=tuple(self._walk(node.body, path, use, stack, dynamic=True)),
+                else_body=else_body,
+                use=use.key if use else "",
+            )
+        return dataclasses.replace(
+            node,
+            body=tuple(self._walk(node.body, path, use, stack, dynamic=True)),
+            use=use.key if use else "",
+        )
+
+    def _node(
+        self,
+        node: m.Node,
+        path: str,
+        use: Use | None,
+        stack: tuple[str, ...],
+        dynamic: bool = False,
+    ) -> m.Node:
         name = node.name
         if use is not None:
             if name is not None:
                 name = f"{use.key}/{name}"
-            elif _has_slot(node):
+            elif _has_slot(node) and not dynamic:
                 n = self._counts.get(use.key, 0)
                 self._counts[use.key] = n + 1
                 name = f"{use.key}/#{n}"
@@ -80,10 +115,12 @@ class _Expander:
                     self.out.errors.append(
                         m.BindError("a slot outside a module is not built yet", v.origin)
                     )
-        children = self._walk(node.children, path, use, stack)
+        children = self._walk(node.children, path, use, stack, dynamic)
         return dataclasses.replace(node, name=name, children=tuple(children))
 
-    def _use(self, call: m.UseNode, path: str, stack: tuple[str, ...]) -> list[m.Node]:
+    def _use(
+        self, call: m.UseNode, path: str, stack: tuple[str, ...]
+    ) -> list[m.Node | m.IfNode | m.ForNode]:
         module = self.modules[call.module]
         if call.module in stack or len(stack) >= MAX_DEPTH:
             chain = " -> ".join((*stack, call.module))

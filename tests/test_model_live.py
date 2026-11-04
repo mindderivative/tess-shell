@@ -124,7 +124,7 @@ def test_each_use_has_its_own_key_and_its_own_nodes() -> None:
 def test_a_send_changes_only_the_property_that_reads_it_in_one_apply() -> None:
     view, spy, live, store = setup()
     store.send("Clock", "Clock@A", "time", "10:01")
-    update = live.apply_changes(store.flush())
+    update = live.apply_changes(store.flush()).updates
     assert [(n, k) for n, k, _ in update] == [("Clock@A/Face", "Text")]
     assert view.update([(n, k, v) for n, k, v in update]) == []
     assert [len(c) for c in spy.calls] == [1]
@@ -135,14 +135,14 @@ def test_a_send_changes_only_the_property_that_reads_it_in_one_apply() -> None:
 def test_a_key_no_slot_reads_causes_no_node_call() -> None:
     view, spy, live, store = setup()
     store.send("Clock", None, "unused", 5)
-    assert live.apply_changes(store.flush()) == []
+    assert live.apply_changes(store.flush()).updates == []
     assert spy.calls == []
 
 
 def test_a_template_follows_the_key_it_reads_and_keeps_its_literal_parts() -> None:
     view, spy, live, store = setup()
     store.send("Clock", "Clock@B", "day", "Tue")
-    update = live.apply_changes(store.flush())
+    update = live.apply_changes(store.flush()).updates
     view.update(update)
     assert view.nodes["Clock@B/Day"].get("text") == "Today is Tue?"
     assert view.nodes["Clock@A/Day"].get("text") == "Today is Mon!"
@@ -151,7 +151,7 @@ def test_a_template_follows_the_key_it_reads_and_keeps_its_literal_parts() -> No
 def test_a_value_that_comes_out_the_same_makes_no_call() -> None:
     _, spy, live, store = setup()
     store.send("Clock", "Clock@A", "time", "10:00")
-    assert live.apply_changes(store.flush()) == []
+    assert live.apply_changes(store.flush()).updates == []
     assert spy.calls == []
 
 
@@ -159,14 +159,14 @@ def test_two_changes_in_one_turn_are_one_apply() -> None:
     view, spy, live, store = setup()
     store.send("Clock", None, "time", "10:05")
     store.send("Clock", None, "day", "Wed")
-    view.update(live.apply_changes(store.flush()))
+    view.update(live.apply_changes(store.flush()).updates)
     assert [len(c) for c in spy.calls] == [4]  # two uses, two nodes each, one call
 
 
 def test_a_slot_that_errors_keeps_its_last_value_and_logs() -> None:
     view, spy, live, store = setup()
     store.send("Clock", "Clock@A", "time", {"not": "text"})  # a dict where text is needed
-    update = live.apply_changes(store.flush())
+    update = live.apply_changes(store.flush()).updates
     assert update == []
     assert view.nodes["Clock@A/Face"].get("text") == "10:00"
     assert live.errors >= 1
@@ -192,7 +192,7 @@ def test_a_name_that_is_not_sent_yet_leaves_the_property_unset_then_fills_in() -
     assert view.nodes["Clock@A/Face"].get("text") == ""  # unset: the block default
     assert live.errors >= 1
     store.send("Clock", "Clock@A", "time", "09:59")
-    view.update(live.apply_changes(store.flush()))
+    view.update(live.apply_changes(store.flush()).updates)
     assert view.nodes["Clock@A/Face"].get("text") == "09:59"
 
 
@@ -273,7 +273,7 @@ def test_a_conditional_slot_is_retracked_for_the_names_it_reads_now() -> None:
 
     def send(name: str, value: object) -> None:
         store.send("Cond", key, name, value)
-        view.update(live.apply_changes(store.flush()))
+        view.update(live.apply_changes(store.flush()).updates)
 
     send("b", "b changed")  # not read while the flag is true
     assert view.nodes[face].get("text") == "from a"
