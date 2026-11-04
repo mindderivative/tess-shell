@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import os
 import re
+import stat
 from collections.abc import Mapping
 from pathlib import Path
+
+from tess_shell.exit_codes import EnvironmentFailure
 
 FOLDERS = ("Shells", "Modules", "Styles", "Themes", "Stylesheets", "Icons")
 
@@ -43,3 +46,26 @@ def expand_path(text: str) -> str:
     if leftover:
         raise PathError(f"the variable {leftover.group(0)} is not set")
     return expanded
+
+
+def check_runtime_dir(
+    environ: Mapping[str, str] | None = None, uid: int | None = None
+) -> tuple[Path, bool]:
+    """Validate ``$XDG_RUNTIME_DIR``. Returns ``(path, loose)``; ``loose`` is true when its mode
+    is not 0o700 (a warning, not a failure). Raises ``EnvironmentFailure`` otherwise."""
+    env = os.environ if environ is None else environ
+    uid = os.getuid() if uid is None else uid
+    raw = env.get("XDG_RUNTIME_DIR", "")
+    if not raw:
+        raise EnvironmentFailure("XDG_RUNTIME_DIR is not set")
+    if not os.path.isabs(raw):
+        raise EnvironmentFailure(f"XDG_RUNTIME_DIR is not an absolute path: {raw}")
+    try:
+        info = os.stat(raw)
+    except OSError as exc:
+        raise EnvironmentFailure(f"XDG_RUNTIME_DIR {raw} cannot be used: {exc.strerror}") from exc
+    if not stat.S_ISDIR(info.st_mode):
+        raise EnvironmentFailure(f"XDG_RUNTIME_DIR {raw} is not a directory")
+    if info.st_uid != uid:
+        raise EnvironmentFailure(f"XDG_RUNTIME_DIR {raw} is not owned by the current user")
+    return Path(raw), stat.S_IMODE(info.st_mode) != 0o700
