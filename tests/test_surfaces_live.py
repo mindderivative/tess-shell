@@ -30,6 +30,18 @@ def workspace_rect(sway: PrivateSway) -> dict[str, int]:
     return rect
 
 
+def reserved_rect(sway: PrivateSway, before: dict[str, int]) -> dict[str, int]:
+    """The workspace rectangle once sway has applied the Bar's zone (it follows the configure)."""
+    import time
+
+    deadline = time.monotonic() + 5
+    rect = workspace_rect(sway)
+    while rect == before and time.monotonic() < deadline:
+        time.sleep(0.05)
+        rect = workspace_rect(sway)
+    return rect
+
+
 def start(sway: PrivateSway, config: Path) -> Shell:
     return Shell(config, sway.env)
 
@@ -43,7 +55,7 @@ def test_the_bar_reserves_its_space_and_releases_it_on_stop(
     try:
         shell.wait_for("Bar Top_Bar on HEADLESS-1 configured 1280x32")
         shell.wait_for("step 11 (surfaces): 1 opened")
-        during = workspace_rect(private_sway)
+        during = reserved_rect(private_sway, before)
         assert during["y"] == before["y"] + 32
         assert during["height"] == before["height"] - 32
         assert during["width"] == before["width"]
@@ -65,7 +77,7 @@ def test_the_gap_is_reserved_too(private_sway: PrivateSway, tmp_path: Path) -> N
         shell.wait_for("Bar Top_Bar on HEADLESS-1 configured")
         # The zone is 40 (32 + the 8 px Gap). sway adds the margin to the zone and reserves 48;
         # the spec's "40" is unverified (Bar > Mapping to tre), so only the lower bound is pinned.
-        assert workspace_rect(private_sway)["y"] >= before["y"] + 40
+        assert reserved_rect(private_sway, before)["y"] >= before["y"] + 40
         shell.process.send_signal(signal.SIGTERM)
         assert shell.finish() == 0
     finally:
