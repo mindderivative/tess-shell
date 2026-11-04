@@ -5,6 +5,8 @@ Name: Clock
 ---
 
 Module {
+    Style: Clock_Style.tdl
+
     Params {
         # a strftime pattern; empty is chosen by hour_cycle
         format { Type: string, Default: "" }
@@ -16,7 +18,7 @@ Module {
 
     Text {
         Name: Face
+        Class: clock_text
         Text: {{ time }}
-        Style { Foreground: "#ffffff", Font_Size: 14 }
     }
 }

@@ -172,12 +172,24 @@ def test_the_shipped_clock_loads_with_the_real_module_file(tmp_path: Path) -> No
     path = shipped_dir() / "Clock" / "Clock_Module.tdl"
     result = tess_dl.parse(path.read_text(), path=str(path))
     assert result.document is not None
-    mod, findings = read_module(result.document, "Clock_Module.tdl")
-    assert (
-        mod is not None
-        and findings == []
-        and set(mod.params) == {"format", "hour_cycle", "timezone"}
+    from tess_shell.schema.shell import read_style
+
+    def style(text: str) -> object:
+        document = tess_dl.parse((path.parent / text).read_text(), path=text).document
+        assert document is not None
+        found, problems = read_style(document, text)
+        assert problems == []
+        return found
+
+    mod, findings = read_module(
+        result.document,
+        "Clock_Module.tdl",
+        None,
+        None,
+        style,  # type: ignore[arg-type]
     )
+    assert mod is not None and findings == []
+    assert set(mod.params) == {"format", "hour_cycle", "timezone"}
     rig = Rig(tmp_path)
     rig.store.add_use("Clock", "Clock@u1")
     params = {"format": "%H:%M", "hour_cycle": "desktop", "timezone": "Europe/Berlin"}

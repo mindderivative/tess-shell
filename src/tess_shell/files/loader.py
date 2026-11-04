@@ -11,8 +11,8 @@ from tess_dl import Document
 
 from tess_shell.files.header import check_header
 from tess_shell.schema.findings import Finding
-from tess_shell.schema.model import ModuleDef, ShellDef
-from tess_shell.schema.shell import read_shell
+from tess_shell.schema.model import ModuleDef, ShellDef, StyleDef
+from tess_shell.schema.shell import read_shell, read_style
 
 
 def display_name(path: Path, base: Path) -> str:
@@ -71,6 +71,32 @@ def load_module_document(
         return None, findings
     header = check_header(document, display_name(path, base), installed)
     return (None, header) if header else (document, [])
+
+
+def load_style_file(
+    path: Path, base: Path, installed: Mapping[str, str]
+) -> tuple[StyleDef | None, list[Finding]]:
+    """Stages 1 to 4 for a ``*_Style.tdl``. A file that cannot be read is ``style-not-found``."""
+    if not path.is_file():
+        return None, [
+            Finding(
+                display_name(path, base),
+                1,
+                1,
+                "error",
+                "style-not-found",
+                f"the style file {display_name(path, base)} does not exist",
+                "a path is relative to the module file that names it",
+            )
+        ]
+    document, findings = load_file(path, base)
+    if document is None:
+        return None, findings
+    name = display_name(path, base)
+    header = check_header(document, name, installed)
+    if header:
+        return None, header
+    return read_style(document, name)
 
 
 def load_shell_file(

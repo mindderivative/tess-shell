@@ -67,3 +67,22 @@ class ModuleDef:
     origin: Origin
     params: Mapping[str, ParamDecl]
     children: tuple[Node | UseNode | IfNode | ForNode, ...]
+    style_file: str = ""  # the style file the layout names (the files it depends on)
+
+
+@dataclass(frozen=True, slots=True)
+class ClassDef:
+    """``Classes { text_style { Kind: Text, ... } }``: values for the blocks of one type."""
+
+    kind: str
+    values: Mapping[str, Value]
+    origin: Origin
+
+
+@dataclass(frozen=True, slots=True)
+class StyleDef:
+    """A style file or a module's inline ``Style { }``: defaults per block type, and classes."""
+
+    file: str
+    defaults: Mapping[str, Mapping[str, Value]]
+    classes: Mapping[str, ClassDef]

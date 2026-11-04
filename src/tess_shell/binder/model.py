@@ -140,6 +140,7 @@ class Node:
     props: Mapping[str, Value] = field(default_factory=dict)  # by TDL key
     style: Mapping[str, Value] = field(default_factory=dict)  # the inline Style block
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
+    classes: tuple[str, ...] = ()  # ``Class:`` names; the schema folds them into ``style``
     origin: Origin = _origin()
 
 

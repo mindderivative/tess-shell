@@ -34,6 +34,7 @@ from tess_shell.files.loader import (
     load_file,
     load_module_document,
     load_shell_file,
+    load_style_file,
     register_module,
 )
 from tess_shell.logging import (
@@ -49,7 +50,7 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.options import Options
 from tess_shell.schema.findings import Finding, render_findings
 from tess_shell.schema.graph import module_cycles
-from tess_shell.schema.model import ShellDef
+from tess_shell.schema.model import ShellDef, StyleDef
 from tess_shell.schema.shell import read_module, read_module_params
 from tess_shell.signals import LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
@@ -129,6 +130,18 @@ def scan(settings: Settings, config: Path) -> Scan:
     def importer(file: Path) -> Callable[[str], str | None]:
         return lambda text: names_by_path.get((file.parent / text).resolve())
 
+    styles: dict[Path, StyleDef | None] = {}
+
+    def style_loader(module_path: Path) -> Callable[[str], StyleDef | None]:
+        def load(text: str) -> StyleDef | None:
+            path = (module_path.parent / text).resolve()
+            if path not in styles:
+                styles[path], found = load_style_file(path, config, versions)
+                findings.extend(found)
+            return styles[path]
+
+        return load
+
     # pass 2: the layouts, with every module known
     for name, mf in list(modules.items()):
         full, found = read_module(
@@ -136,6 +149,7 @@ def scan(settings: Settings, config: Path) -> Scan:
             display_name(mf.path, config),
             stubs,
             importer(mf.path),
+            style_loader(mf.path),
         )
         findings.extend(found)
         modules[name] = ModuleFile(full, mf.path, mf.shipped) if full else mf

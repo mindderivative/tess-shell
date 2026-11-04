@@ -19,11 +19,14 @@ from tess_shell.schema.findings import Finding, Severity, nearest
 from tess_shell.schema.model import (
     PARAM_TYPES,
     BarDef,
+    ClassDef,
     ModuleDef,
     MonitorDef,
     ParamDecl,
     ShellDef,
+    StyleDef,
 )
+from tess_shell.schema.style import apply_style
 from tess_shell.schema.tree import position
 from tess_shell.schema.values import ValueProblem, coerce, named_sides
 
@@ -39,7 +42,9 @@ class _Ctx:
         read_text: Callable[[str], str],
         modules: Mapping[str, ModuleDef] | None = None,
         import_module: Callable[[str], str | None] | None = None,
+        load_style: Callable[[str], StyleDef | None] | None = None,
     ) -> None:
+        self.load_style = load_style
         self.file = file
         self.read_text = read_text
         self.modules: Mapping[str, ModuleDef] = modules or {}
@@ -363,6 +368,7 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
     style: dict[str, m.Value] = {}
     style_at: dict[str, tess_dl.Origin | None] = {}
     prop_at: dict[str, tess_dl.Origin | None] = {}
+    classes: list[str] = []
     children: list[Child] = []
     for entry in block.entries:
         if isinstance(entry, Property):
@@ -370,8 +376,10 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
             if key == "Name":
                 name = ctx.name(entry)
             elif key == "Style":
-                ctx.not_built(entry.key_origin, "a Style file")
-            elif key == "Class" or key == "Tooltip" or key.startswith("On_"):
+                ctx.not_built(entry.key_origin, "a Style file on a block (a module has one)")
+            elif key == "Class":
+                classes.extend(_class_names(ctx, entry))
+            elif key == "Tooltip" or key.startswith("On_"):
                 ctx.not_built(entry.key_origin, key)
             elif key in prop_keys or key in style_keys:
                 kind = prop_keys.get(key) or style_keys[key]
@@ -425,8 +433,84 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
         props=props,
         style=style,
         children=tuple(children),
+        classes=tuple(classes),
         origin=ctx.origin(block.origin),
     )
+
+
+def _class_names(ctx: _Ctx, entry: Property) -> list[str]:
+    """``Class: text_style`` or ``Class: [a, b]``."""
+    value = entry.value
+    items = list(value.items) if isinstance(value, tess_dl.List) else [value]
+    names: list[str] = []
+    for item in items:
+        text = item.value if isinstance(item, tess_dl.String) else getattr(item, "text", None)
+        if isinstance(text, str) and _NAME.match(text):
+            names.append(text)
+        else:
+            ctx.add(entry.value_origin, "bad-name", "a class name is letters, digits and _", "")
+    return names
+
+
+def _style_def(ctx: _Ctx, block: Block) -> StyleDef:
+    """The body of ``Style { }``: ``Classes { name { Kind: Text, ... } }`` and, per block type,
+    default values (``Text { Font_Size: 16 }``)."""
+    defaults: dict[str, dict[str, m.Value]] = {}
+    classes: dict[str, ClassDef] = {}
+    known = ["Classes", *blocks.BLOCKS]
+    for entry in block.entries:
+        if isinstance(entry, Block) and entry.type == "Classes":
+            for cls in entry.entries:
+                if not isinstance(cls, Block):
+                    continue
+                kind_prop = next(
+                    (e for e in cls.entries if isinstance(e, Property) and e.key == "Kind"), None
+                )
+                kind = getattr(kind_prop.value, "text", None) if kind_prop is not None else None
+                if kind not in blocks.BLOCKS:
+                    ctx.add(
+                        (kind_prop.value_origin if kind_prop else cls.origin),
+                        "bad-value" if kind_prop else "missing-key",
+                        f"the class {cls.type} needs Kind: one of {', '.join(blocks.BLOCKS)}",
+                        "write Kind: Text",
+                    )
+                    continue
+                body = tess_dl.Block(
+                    cls.type,
+                    tuple(
+                        e for e in cls.entries if not (isinstance(e, Property) and e.key == "Kind")
+                    ),
+                )
+                values = _scalar_block_keys(ctx, body, blocks.BLOCKS[kind][1], kind)
+                classes[cls.type] = ClassDef(kind, values, ctx.origin(cls.origin))
+        elif isinstance(entry, Block) and entry.type in blocks.BLOCKS:
+            table = blocks.BLOCKS[entry.type][1]
+            defaults.setdefault(entry.type, {}).update(
+                _scalar_block_keys(ctx, entry, table, entry.type)
+            )
+        elif isinstance(entry, Block):
+            ctx.unknown(entry.origin, entry.type, known, "block in Style")
+        elif isinstance(entry, Property):
+            ctx.unknown(entry.key_origin, entry.key, known, "key in Style")
+    return StyleDef(ctx.file, defaults, classes)
+
+
+def read_style(document: Document, file: str) -> tuple[StyleDef | None, list[Finding]]:
+    """Type a parsed ``<Name>_Style.tdl`` (root block ``Style { }``)."""
+    ctx = _Ctx(file, lambda _: "")
+    root = document.root
+    if root.type != "Style":
+        ctx.add(
+            root.origin,
+            "style-root",
+            f"the root block is {root.type}, not Style",
+            "write Style { }",
+        )
+        return None, ctx.findings
+    style = _style_def(ctx, root)
+    if any(f.severity == "error" for f in ctx.findings):
+        return None, ctx.findings
+    return style, ctx.findings
 
 
 _BAR_KEYS: dict[str, str] = {
@@ -719,10 +803,11 @@ def read_module(
     file: str,
     modules: Mapping[str, ModuleDef] | None = None,
     import_module: Callable[[str], str | None] | None = None,
+    load_style: Callable[[str], StyleDef | None] | None = None,
 ) -> tuple[ModuleDef | None, list[Finding]]:
     """Type a parsed ``<Name>_Module.tdl``: ``Module { Params { } Children { } }``, or a single
     layout block written directly in the root (Module File > Structure)."""
-    ctx = _Ctx(file, lambda _: "", modules, import_module)
+    ctx = _Ctx(file, lambda _: "", modules, import_module, load_style)
     root = document.root
     if root.type != "Module":
         ctx.add(
@@ -739,6 +824,9 @@ def read_module(
         return None, ctx.findings
     params: dict[str, ParamDecl] = {}
     children: list[Child] = []
+    style: StyleDef | None = None
+    style_seen = False
+    style_file = ""
     for entry in root.entries:
         if isinstance(entry, Block):
             if entry.type == "Params":
@@ -746,14 +834,34 @@ def read_module(
             elif entry.type == "Children":
                 children.extend(_children(ctx, entry, lambda b: _block(ctx, b)))
             elif entry.type == "Style":
-                ctx.not_built(entry.origin, "a module Style block")
+                if style_seen:
+                    ctx.add(entry.origin, "style-duplicate", "a module has one Style", "")
+                style_seen = True
+                style = _style_def(ctx, entry)
             else:
                 node = _block(ctx, entry)
                 if node is not None:
                     children.append(node)
         elif isinstance(entry, Property):
             if entry.key == "Style":
-                ctx.not_built(entry.key_origin, "a module Style file")
+                text = getattr(entry.value, "text", None) or getattr(entry.value, "value", None)
+                if style_seen:
+                    ctx.add(entry.key_origin, "style-duplicate", "a module has one Style", "")
+                style_seen = True
+                if not isinstance(text, str):
+                    ctx.add(entry.value_origin, "bad-value", "Style names a file", "")
+                elif ctx.load_style is None:
+                    ctx.not_built(entry.key_origin, "a Style file here")
+                else:
+                    style_file = text
+                    style = ctx.load_style(text)
+                    if style is None:
+                        ctx.add(
+                            entry.value_origin,
+                            "style-not-found",
+                            f"the style file {text} could not be read",
+                            "a path is relative to the module file; the findings above say why",
+                        )
             elif entry.key == "Import":
                 ctx.not_built(entry.key_origin, "Import")
             else:
@@ -769,9 +877,15 @@ def read_module(
             "a module has one layout root",
             "write one block in Module { }",
         )
+    styled = apply_style(
+        tuple(children),
+        style,
+        lambda origin, rule, message, hint: ctx.add(origin, rule, message, hint),
+    )
     if any(f.severity == "error" for f in ctx.findings):
         return None, ctx.findings
-    return ModuleDef(name, file, ctx.origin(root.origin), params, tuple(children)), ctx.findings
+    definition = ModuleDef(name, file, ctx.origin(root.origin), params, styled, style_file)
+    return definition, ctx.findings
 
 
 def read_module_params(document: Document, file: str) -> ModuleDef | None:
