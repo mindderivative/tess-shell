@@ -2,7 +2,7 @@
 
 Not collected by pytest. Run from the repo root:
 
-    uv run python tests/perf/measure_idle.py [seconds]
+    uv run python tests/perf/measure_idle.py [seconds] [--bar]
 
 Starts a private headless sway, starts the shell, waits for ``running``, samples CPU time and
 context switches of the whole process (all threads) over the window, and writes
@@ -50,9 +50,15 @@ def threads(pid: int) -> int:
 
 
 def main() -> int:
-    duration = int(sys.argv[1]) if len(sys.argv) > 1 else 60
+    args = [a for a in sys.argv[1:] if a != "--bar"]
+    with_bar = "--bar" in sys.argv[1:]
+    duration = int(args[0]) if args else 60
     sway = PrivateSway().start()
     config = Path(tempfile.mkdtemp(prefix="tsh-cfg-"))
+    if with_bar:
+        from tests.shell_samples import write_example
+
+        write_example(config)
     process = subprocess.Popen(
         [sys.executable, "-m", "tess_shell", "run", "--config-dir", str(config)],
         env=sway.env,
@@ -61,15 +67,21 @@ def main() -> int:
     )
     assert process.stderr is not None
     ready = threading.Event()
+    bar_ready = threading.Event()
 
     def pump() -> None:
         assert process.stderr is not None
         for line in process.stderr:
             if "running" in line:
                 ready.set()
+            if "configured" in line:
+                bar_ready.set()
 
     threading.Thread(target=pump, daemon=True).start()
     try:
+        if with_bar and not bar_ready.wait(30):
+            print("the Bar was never configured", file=sys.stderr)
+            return 1
         if not ready.wait(30):
             print("the shell never reported running", file=sys.stderr)
             return 1
@@ -93,7 +105,9 @@ def main() -> int:
     ok = percent <= BUDGET_CPU_PERCENT and wakeups <= BUDGET_WAKEUPS
     uname = platform.uname()
     gil = "with the GIL" if getattr(sys, "_is_gil_enabled", lambda: True)() else "free-threaded"
-    text = f"""# Idle measurement of `tesserae-shell run`
+    title = " with the example Bar shown" if with_bar else ""
+    scene = "the example Bar (32 px, full width)" if with_bar else "no windows"
+    text = f"""# Idle measurement of `tesserae-shell run`{title}
 
 Reported, not enforced. Produced by `tests/perf/measure_idle.py`.
 
@@ -102,7 +116,7 @@ Reported, not enforced. Produced by `tests/perf/measure_idle.py`.
 | Date | {datetime.datetime.now().astimezone().isoformat(timespec="seconds")} |
 | Machine | {uname.system} {uname.release} {uname.machine} |
 | Python | {platform.python_version()} ({gil}) |
-| Compositor | private headless sway, pixman renderer, no windows |
+| Compositor | private headless sway, pixman renderer, {scene} |
 | Window | {elapsed:.1f} s after 3 s of settling |
 | Threads | {n_threads} |
 | CPU time | {cpu_seconds:.2f} s |
@@ -115,7 +129,7 @@ Result against the budgets: **{"within" if ok else "OVER"}** (reported, not enfo
 Wake-ups are counted as context switches, which over-counts (an involuntary switch is not a
 wake-up) and includes the Python signal-watcher and logging threads.
 """
-    (HERE / "idle-results.md").write_text(text)
+    (HERE / ("idle-results-bar.md" if with_bar else "idle-results.md")).write_text(text)
     print(text)
     return 0
 

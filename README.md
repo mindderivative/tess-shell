@@ -4,13 +4,13 @@ Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launc
 
 ## Status
 
-Milestone M0 (the skeleton) is built: `version`, `check` and `run` work. `run` starts, holds the single instance lock, keeps an idle event loop with no windows, and stops cleanly on SIGTERM or SIGINT. Windows, modules, the binder, D-Bus and hot reload come in later milestones. The design is in `docs/`.
+Milestone M0 (the skeleton) is built, and M1 (a static Bar) is built except the KWin checklist, which the maintainer runs by hand: `run` opens one `Bar` from `Main_Shell.tdl` on the matched monitor through `tess_dl`, the schema, the binder and tre, reserves its space, and stops cleanly on SIGTERM or SIGINT. Modules, themes, hot reload, `Import`, other surfaces and D-Bus come in later milestones. The design is in `docs/`.
 
 ## Commands
 
 ```sh
 tesserae-shell version   # versions of the shell, tess_re, tess_el, tess_dl and Python
-tesserae-shell check     # validate settings.tdl and the syntax of every shell file
+tesserae-shell check     # validate settings.tdl and every shell file (syntax, header, schema)
 tesserae-shell run       # start the shell (needs a Wayland compositor with layer-shell)
 ```
 
