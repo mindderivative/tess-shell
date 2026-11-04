@@ -14,3 +14,4 @@
 - M1 binder (`tess_shell.binder`): the typed tree and `BindError` (`model.py`).
 - M1 binder converters (`convert.py`): length, bound, number, whole, positive, bool, text, color, enum, wrap flag, sides, radius, font family, plus a colour parser; table-driven tests.
 - M1 binder tables (`tables.py`) for `Box`, `FlexBox`, `Text`, `Rectangle`, `Spacer` and `SVG`, guarded by a test that builds a node for every row on a headless tre window; `build.py` binds a typed tree through `Window.build`, collects every error with its `file:line:column`, translates tre's errors back to the key, refuses `If` and `For`, and returns a `View` with `dispose`.
+- M1 Bar geometry (`surfaces/bar.py`): `bar_geometry(spec, output, content)` computes tre's `anchor`, `size`, `margin`, `exclusive_zone` and `exclusive_edge` as a pure function; every row of the worked-examples table is a test, with `ZeroSize` for a Bar that is not created.

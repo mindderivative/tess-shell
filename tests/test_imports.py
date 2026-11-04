@@ -29,6 +29,8 @@ RULES: dict[str, set[str] | None] = {
     "options": set(),
     "signals": set(),
     "binder": {"tess_re", "tess_utils", "tess_shell.binder"},
+    "surfaces": set(),
+    "surfaces.bar": {"tess_shell.binder.model"},
     "app": ANY,
     "cli": ANY,
     "__main__": ANY,
@@ -58,7 +60,8 @@ def external_imports(path: Path) -> set[str]:
 
 def rule_for(path: Path) -> tuple[str, set[str] | None]:
     relative = path.relative_to(SRC)
-    key = relative.parts[0].removesuffix(".py")
+    dotted = ".".join(relative.with_suffix("").parts)
+    key = dotted if dotted in RULES else relative.parts[0].removesuffix(".py")
     assert key in RULES, f"{relative}: no import rule; add one to tests/test_imports.py"
     return key, RULES[key]
 
