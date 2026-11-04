@@ -7,6 +7,7 @@ from pathlib import Path
 
 import tess_dl
 from tess_re import LayerWindow
+from tess_re.snapshot import write_png
 
 from tess_shell.binder.build import build
 from tess_shell.schema.shell import read_shell
@@ -65,14 +66,15 @@ def test_the_example_matches_the_reference_image() -> None:
     rgba, width, height = snapshot()
     if os.environ.get("UPDATE_SNAPSHOTS"):
         REFERENCE.parent.mkdir(exist_ok=True)
-        REFERENCE.write_bytes(png.encode(rgba, width, height))
+        write_png(REFERENCE, rgba, width, height)
     expected, ewidth, eheight = png.decode(REFERENCE.read_bytes())
     assert (width, height) == (ewidth, eheight)
     # Anti-aliasing may differ a little between engine builds: a channel may move by 16 on at
-    # most 2 % of the pixels; a moved or missing element changes far more than that.
+    # most 0.2 % of the pixels (25 of 12,800); a moved element or a recoloured 16x16 icon changes
+    # hundreds.
     off = sum(
         1
         for i in range(0, len(rgba), 4)
         if max(abs(rgba[i + c] - expected[i + c]) for c in range(4)) > 16
     )
-    assert off <= width * height * 0.02, f"{off} of {width * height} pixels differ"
+    assert off <= width * height * 0.002, f"{off} of {width * height} pixels differ"

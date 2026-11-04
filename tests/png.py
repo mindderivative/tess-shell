@@ -1,4 +1,4 @@
-"""Write and read 8-bit RGBA PNGs with the standard library (filter 0 only), for snapshots."""
+"""Read the 8-bit RGBA PNGs that ``tess_re.snapshot.write_png`` writes (filter 0 only)."""
 
 from __future__ import annotations
 
@@ -6,24 +6,8 @@ import struct
 import zlib
 
 
-def _chunk(kind: bytes, data: bytes) -> bytes:
-    body = kind + data
-    return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body))
-
-
-def encode(rgba: bytes, width: int, height: int) -> bytes:
-    rows = b"".join(b"\x00" + rgba[y * width * 4 : (y + 1) * width * 4] for y in range(height))
-    header = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
-    return (
-        b"\x89PNG\r\n\x1a\n"
-        + _chunk(b"IHDR", header)
-        + _chunk(b"IDAT", zlib.compress(rows, 9))
-        + _chunk(b"IEND", b"")
-    )
-
-
 def decode(data: bytes) -> tuple[bytes, int, int]:
-    """Only what :func:`encode` writes: RGBA, 8 bits, no interlace, filter type 0."""
+    """Only what ``write_png`` writes: RGBA, 8 bits, no interlace, filter type 0."""
     assert data[:8] == b"\x89PNG\r\n\x1a\n"
     pos, idat, width, height = 8, b"", 0, 0
     while pos < len(data):
