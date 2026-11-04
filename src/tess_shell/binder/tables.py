@@ -28,7 +28,7 @@ class BlockRow:
     style: Mapping[str, KeyRow]  # accepted in the inline Style block
     fixed: Mapping[str, Any] = field(default_factory=dict)  # tre props always set
     defaults: Mapping[str, Any] = field(default_factory=dict)  # tre props set when absent
-    required: tuple[str, ...] = ()  # TDL keys that must be present
+    required: tuple[str | tuple[str, ...], ...] = ()  # keys that must be present; a tuple is any of
     child_props: Mapping[str, Any] = field(default_factory=dict)  # added to every child
     children_ok: bool = False
 
@@ -157,9 +157,10 @@ BLOCKS: Mapping[str, BlockRow] = {
         keys={
             **_COMMON,
             "Source": _k("svg", "text"),
+            "Icon": _k("svg", "text"),
             "Color": _k("svg_color", "color"),
         },
         style={"Foreground": _k("svg_color", "color"), "Opacity": _COMMON["Opacity"]},
-        required=("Source",),
+        required=(("Source", "Icon"),),
     ),
 }

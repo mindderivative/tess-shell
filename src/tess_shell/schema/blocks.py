@@ -103,12 +103,12 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
     "Rectangle": ({**COMMON, **SHAPE}, SHAPE),
     "Spacer": (COMMON, {}),
     "SVG": (
-        {**COMMON, "Source": "svg_source", "Color": "color"},
+        {**COMMON, "Source": "svg_source", "Icon": "icon", "Color": "color"},
         {"Foreground": "color", "Opacity": "number"},
     ),
 }
 
-REQUIRED: dict[str, tuple[str, ...]] = {"SVG": ("Source",)}
+REQUIRED: dict[str, tuple[str | tuple[str, ...], ...]] = {"SVG": (("Source", "Icon"),)}
 
 # Surface keys of a Bar that M1 reads but does not build: accepted with a warning.
 BAR_NOT_BUILT = (

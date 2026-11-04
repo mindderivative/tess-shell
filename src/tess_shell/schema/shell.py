@@ -20,6 +20,7 @@ from tess_shell.schema.model import (
     PARAM_TYPES,
     BarDef,
     ClassDef,
+    IconSource,
     ModuleDef,
     MonitorDef,
     ParamDecl,
@@ -43,8 +44,10 @@ class _Ctx:
         modules: Mapping[str, ModuleDef] | None = None,
         import_module: Callable[[str], str | None] | None = None,
         load_style: Callable[[str], StyleDef | None] | None = None,
+        icons: IconSource | None = None,
     ) -> None:
         self.load_style = load_style
+        self.icons = icons
         self.file = file
         self.read_text = read_text
         self.modules: Mapping[str, ModuleDef] = modules or {}
@@ -136,10 +139,32 @@ def slot_value(ctx: _Ctx, prop: Property) -> m.SlotValue | None:
     return m.SlotValue(tuple(parts), origin=ctx.origin(prop.key_origin))
 
 
+def _icon(ctx: _Ctx, prop: Property, slot: m.SlotValue | None) -> m.Value | None:
+    """``Icon: "mdi:account"``: the name becomes an SVG document read from the icon sets."""
+    value = prop.value
+    name = value.value if isinstance(value, tess_dl.String) else getattr(value, "text", None)
+    if slot is not None or not isinstance(name, str) or not name:
+        ctx.add(prop.value_origin, "bad-value", "Icon is an icon name", 'write Icon: "mdi:account"')
+        return None
+    found = ctx.icons.lookup(name) if ctx.icons is not None else None
+    if found is None:
+        close = ctx.icons.nearest(name) if ctx.icons is not None else []
+        hint = (
+            f"did you mean {', '.join(close)}?"
+            if close
+            else "icon sets are JSON files in the Icons folder of the config directory"
+        )
+        ctx.add(prop.value_origin, "icon-not-found", f"no icon named {name}", hint)
+        return None
+    return m.Text(found, origin=ctx.origin(prop.key_origin))
+
+
 def _typed(
     ctx: _Ctx, block: str, prop: Property, kind: str, read_text: bool = False
 ) -> m.Value | None:
     slot = slot_value(ctx, prop)
+    if kind == "icon":
+        return _icon(ctx, prop, slot)
     if slot is not None:
         if read_text:
             ctx.add(
@@ -417,9 +442,18 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
         elif isinstance(entry, tess_dl.If | tess_dl.For):
             ctx.not_built(entry.origin, "If and For")
     written = {e.key for e in block.entries if isinstance(e, Property)}
-    for key in blocks.REQUIRED.get(block.type, ()):
-        if key not in props and key not in written:
-            ctx.add(block.origin, "missing-key", f"{block.type} needs {key}", f"write {key}: ...")
+    for need in blocks.REQUIRED.get(block.type, ()):
+        options = (need,) if isinstance(need, str) else need
+        if not any(k in props or k in written for k in options):
+            wanted = " or ".join(options)
+            ctx.add(
+                block.origin,
+                "missing-key",
+                f"{block.type} needs {wanted}",
+                f"write {options[0]}: ...",
+            )
+    if block.type == "SVG" and "Source" in written and "Icon" in written:
+        ctx.add(block.origin, "bad-key", "an SVG has a Source or an Icon, not both", "keep one")
     for key in props.keys() & style.keys():
         ctx.add(
             style_at.get(key),
@@ -713,11 +747,12 @@ def read_shell(
     read_text: Callable[[str], str],
     modules: Mapping[str, ModuleDef] | None = None,
     import_module: Callable[[str], str | None] | None = None,
+    icons: IconSource | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Type a parsed shell file. ``read_text`` reads a file named in the shell file (an SVG's
     ``Source``) and raises ``OSError``; the schema does no I/O of its own. ``modules`` are the
     known module files by call name: a block with such a head is a module call."""
-    ctx = _Ctx(file, read_text, modules, import_module)
+    ctx = _Ctx(file, read_text, modules, import_module, None, icons)
     root = document.root
     if root.type != "Shell":
         ctx.add(
@@ -804,10 +839,11 @@ def read_module(
     modules: Mapping[str, ModuleDef] | None = None,
     import_module: Callable[[str], str | None] | None = None,
     load_style: Callable[[str], StyleDef | None] | None = None,
+    icons: IconSource | None = None,
 ) -> tuple[ModuleDef | None, list[Finding]]:
     """Type a parsed ``<Name>_Module.tdl``: ``Module { Params { } Children { } }``, or a single
     layout block written directly in the root (Module File > Structure)."""
-    ctx = _Ctx(file, lambda _: "", modules, import_module, load_style)
+    ctx = _Ctx(file, lambda _: "", modules, import_module, load_style, icons)
     root = document.root
     if root.type != "Module":
         ctx.add(

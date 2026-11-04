@@ -26,7 +26,7 @@ def test_same_keys_kinds_and_choices() -> None:
 
 def _kinds(table: dict[str, str], block: str) -> dict[str, str]:
     # the SVG source is text to the binder; the schema reads the file it names
-    return {k: ("text" if v == "svg_source" else v) for k, v in table.items()}
+    return {k: ("text" if v in ("svg_source", "icon") else v) for k, v in table.items()}
 
 
 def test_required_keys_agree() -> None:

@@ -28,6 +28,7 @@ from tess_shell.config.registry import Registry, RegistryError
 from tess_shell.config.settings import LoggingSettings, Settings, load_settings
 from tess_shell.config.uids import assign_uids
 from tess_shell.exit_codes import EnvironmentFailure, ExitCode, ShellError
+from tess_shell.files.icons import IconSets
 from tess_shell.files.loader import (
     ModuleFile,
     display_name,
@@ -110,6 +111,7 @@ def scan(settings: Settings, config: Path) -> Scan:
     findings: list[Finding] = []
     shells: dict[Path, ShellDef] = {}
     modules: dict[str, ModuleFile] = {}
+    icons = IconSets(settings.directories.get("Icons", ()))
     # pass 1: every module's name and params, so a layout can call any module in any order
     documents: dict[Path, Document] = {}
     for path in paths:
@@ -150,6 +152,7 @@ def scan(settings: Settings, config: Path) -> Scan:
             stubs,
             importer(mf.path),
             style_loader(mf.path),
+            icons,
         )
         findings.extend(found)
         modules[name] = ModuleFile(full, mf.path, mf.shipped) if full else mf
@@ -159,13 +162,17 @@ def scan(settings: Settings, config: Path) -> Scan:
     registry = {name: mf.definition for name, mf in modules.items()}
     for path in paths:
         if path.name.endswith("_Shell.tdl"):
-            shell, found = load_shell_file(path, config, versions, registry, importer(path))
+            shell, found = load_shell_file(path, config, versions, registry, importer(path), icons)
             if shell is not None:
                 shells[path] = shell
             findings.extend(found)
         elif not path.name.endswith("_Module.tdl"):
             _, found = load_file(path, config)
             findings.extend(found)
+    findings.extend(
+        Finding("Icons", 1, 1, "warning", "icon-set-invalid", problem, "the set is skipped")
+        for problem in icons.problems
+    )
     own = sum(1 for path in paths if not is_shipped(path))  # the user's files, not the shipped ones
     return Scan(own, sorted(findings, key=lambda f: f.sort_key), shells, modules)
 

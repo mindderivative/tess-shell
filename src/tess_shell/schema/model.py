@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Protocol
 
 from tess_shell.binder.model import ForNode, IfNode, Node, Origin, UseNode, Value
 
@@ -86,3 +87,11 @@ class StyleDef:
     file: str
     defaults: Mapping[str, Mapping[str, Value]]
     classes: Mapping[str, ClassDef]
+
+
+class IconSource(Protocol):
+    """Where an icon name becomes an SVG document (``files.icons.IconSets``)."""
+
+    def lookup(self, name: str) -> str | None: ...
+
+    def nearest(self, name: str) -> list[str]: ...

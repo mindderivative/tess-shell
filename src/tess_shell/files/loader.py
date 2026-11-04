@@ -11,7 +11,7 @@ from tess_dl import Document
 
 from tess_shell.files.header import check_header
 from tess_shell.schema.findings import Finding
-from tess_shell.schema.model import ModuleDef, ShellDef, StyleDef
+from tess_shell.schema.model import IconSource, ModuleDef, ShellDef, StyleDef
 from tess_shell.schema.shell import read_shell, read_style
 
 
@@ -105,6 +105,7 @@ def load_shell_file(
     installed: Mapping[str, str],
     modules: Mapping[str, ModuleDef] | None = None,
     import_module: Callable[[str], str | None] | None = None,
+    icons: IconSource | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Stages 1 to 4 for a ``*_Shell.tdl``: read, parse, header, schema. A file that fails an
     earlier stage is not checked further."""
@@ -119,7 +120,7 @@ def load_shell_file(
     def read_text(relative: str) -> str:
         return (path.parent / relative).read_text(encoding="utf-8")
 
-    shell, findings = read_shell(document, name, read_text, modules, import_module)
+    shell, findings = read_shell(document, name, read_text, modules, import_module, icons)
     return shell, findings
 
 

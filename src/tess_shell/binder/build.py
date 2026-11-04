@@ -214,9 +214,10 @@ def _plan(
             props.update(converted)
             for tre_name in converted:
                 index.props[(path, tre_name)] = value.origin
-    for key in row.required:
-        if key not in node.props and key not in node.style:
-            errors.append(BindError(f"{node.kind} needs {key}", node.origin))
+    for need in row.required:
+        options = (need,) if isinstance(need, str) else need
+        if not any(k in node.props or k in node.style for k in options):
+            errors.append(BindError(f"{node.kind} needs {' or '.join(options)}", node.origin))
     if node.children and not row.children_ok:
         errors.append(BindError(f"{node.kind} cannot have children", node.origin))
 

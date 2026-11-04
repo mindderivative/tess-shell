@@ -57,7 +57,7 @@ def cases() -> list[Any]:
         for scope, table in (("props", row.keys), ("style", row.style)):
             for key, key_row in table.items():
                 for value in samples(key_row):
-                    if block == "SVG" and key == "Source":
+                    if block == "SVG" and key in ("Source", "Icon"):
                         value = Text(SVG)
                     out.append(
                         pytest.param(
@@ -77,7 +77,9 @@ def test_every_convert_name_exists() -> None:
 @pytest.mark.parametrize(("block", "scope", "key", "value"), cases())
 def test_every_key_row_builds_a_node(block: str, scope: str, key: str, value: Value) -> None:
     window = Window(120, 60)
-    props: dict[str, Value] = {"Source": Text(SVG)} if block == "SVG" and key != "Source" else {}
+    props: dict[str, Value] = (
+        {"Source": Text(SVG)} if block == "SVG" and key not in ("Source", "Icon") else {}
+    )
     if scope == "props":
         props[key] = value
         node = Node(block, props=props)

@@ -282,7 +282,12 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
         entries = list(directories.get(folder, ()))
         default = config / folder
         if default.is_dir() and default not in entries:
-            entries.append(default)
+            # the config Icons folder comes first and the listed paths follow (Block Reference,
+            # Icons); for every other folder the listed paths come first
+            if folder == "Icons":
+                entries.insert(0, default)
+            else:
+                entries.append(default)
         search[folder] = tuple(entries)
 
     main_path: Path | None = None
