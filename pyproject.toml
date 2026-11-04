@@ -65,3 +65,7 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.mypy]
 strict = true
 files = ["src"]
+
+[tool.uv]
+# Stay on the system CPython (3.14.9, with the GIL); uv would otherwise pick the free-threaded build.
+python-preference = "only-system"
