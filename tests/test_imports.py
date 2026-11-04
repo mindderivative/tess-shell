@@ -35,6 +35,13 @@ RULES: dict[str, set[str] | None] = {
     "binder": {"tess_re", "tess_utils", "tess_shell.binder"},
     "surfaces": set(),
     "surfaces.bar": {"tess_shell.binder.model"},
+    "surfaces.manager": {
+        "tess_re",
+        "loguru",
+        "tess_shell.binder",
+        "tess_shell.schema.model",
+        "tess_shell.surfaces",
+    },
     "app": ANY,
     "cli": ANY,
     "__main__": ANY,
@@ -96,7 +103,7 @@ def test_only_app_and_cli_import_the_engine() -> None:
         for p in SOURCES
         if any(n.split(".")[0] == "tess_re" for n in external_imports(p))
     }
-    assert importers <= {"app", "binder"}, importers
+    assert importers <= {"app", "binder", "surfaces"}, importers
 
 
 def test_shell_modules_never_import_the_engine() -> None:

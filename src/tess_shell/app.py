@@ -36,6 +36,7 @@ from tess_shell.options import Options
 from tess_shell.schema.findings import Finding, render_findings
 from tess_shell.schema.model import ShellDef
 from tess_shell.signals import LoopStopper, SignalWatcher
+from tess_shell.surfaces.manager import SurfaceManager
 
 MIN_ENGINE = (0, 6, 0)
 MIN_PYTHON = (3, 14)
@@ -258,8 +259,13 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
     watcher = SignalWatcher(stopper.request, force)
     watcher.start()
     try:
-        for step, what in ((10, "model"), (11, "surfaces"), (12, "modules")):
-            logger.info(f"step {step} ({what}): not built in M0")
+        logger.info("step 10 (model): not built yet")
+        manager = SurfaceManager(app)
+        shell = result.shells.get(settings.main_shell_path) if settings.main_shell_path else None
+        if shell is not None:
+            manager.open_shell(shell)
+        logger.info(f"step 11 (surfaces): {len(manager.surfaces)} opened")
+        logger.info("step 12 (modules): not built yet")
         logger.info("running")
         try:
             app.run(keep_alive=True)
