@@ -4,7 +4,15 @@ Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launc
 
 ## Status
 
-The project is in its design phase. No product code exists yet. The complete design is being written first.
+Milestone M0 (the skeleton) is in progress: the package, the command line and tooling exist. The design is in `docs/`.
+
+## Development
+
+```sh
+export UV_PROJECT_ENVIRONMENT=$HOME/Projects/pyDev/pyEnvs/tess-shell
+uv sync
+uv run pytest
+```
 
 ## Documentation
 

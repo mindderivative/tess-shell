@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tesserae-shell"
+dynamic = ["version"]
+description = "Tesserae Shell: build desktop shells (bars, panels, docks, launchers, OSDs) from TDL files."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.14"
+authors = [{ name = "Mind Derivative" }]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+]
+dependencies = [
+    "tesserae-engine>=0.6.0,<0.7",
+    "tesserae-el>=0.1.2,<0.2",
+    "tesserae-dl>=0.1.1,<0.2",
+    "loguru>=0.7.3,<0.8",
+]
+
+[project.urls]
+Repository = "https://github.com/mindderivative/tess-shell"
+
+[project.scripts]
+tesserae-shell = "tess_shell.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10"]
+
+[tool.hatch.version]
+path = "src/tess_shell/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tess_shell"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/LICENSE", "/README.md", "/CHANGELOG.md", "/pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "tre: needs a Wayland compositor (started privately with sway)",
+    "perf: performance measurement",
+    "manual: needs a person",
+    "dbus: needs a session bus",
+    "compositor: needs the real compositor",
+]
+addopts = "-m 'not perf and not manual and not compositor and not dbus'"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+strict = true
+files = ["src"]
