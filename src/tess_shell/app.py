@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
 from importlib.metadata import version
 from pathlib import Path
@@ -17,6 +18,7 @@ from types import TracebackType
 from typing import NoReturn
 
 from loguru import logger
+from tess_dl import Document
 
 import tess_shell
 from tess_shell.config.discovery import discover, is_shipped
@@ -28,8 +30,9 @@ from tess_shell.config.uids import assign_uids
 from tess_shell.exit_codes import EnvironmentFailure, ExitCode, ShellError
 from tess_shell.files.loader import (
     ModuleFile,
+    display_name,
     load_file,
-    load_module_file,
+    load_module_document,
     load_shell_file,
     register_module,
 )
@@ -45,7 +48,9 @@ from tess_shell.modules.host import ModuleHost, report
 from tess_shell.modules.ticks import TimeSource
 from tess_shell.options import Options
 from tess_shell.schema.findings import Finding, render_findings
+from tess_shell.schema.graph import module_cycles
 from tess_shell.schema.model import ShellDef
+from tess_shell.schema.shell import read_module, read_module_params
 from tess_shell.signals import LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
 
@@ -104,18 +109,43 @@ def scan(settings: Settings, config: Path) -> Scan:
     findings: list[Finding] = []
     shells: dict[Path, ShellDef] = {}
     modules: dict[str, ModuleFile] = {}
+    # pass 1: every module's name and params, so a layout can call any module in any order
+    documents: dict[Path, Document] = {}
     for path in paths:
         if path.name.endswith("_Module.tdl"):
-            definition, found = load_module_file(path, config, versions)
+            document, found = load_module_document(path, config, versions)
             findings.extend(found)
-            if definition is not None:
+            if document is None:
+                continue
+            documents[path] = document
+            stub = read_module_params(document, display_name(path, config))
+            if stub is not None:
                 findings.extend(
-                    register_module(modules, ModuleFile(definition, path, is_shipped(path)), config)
+                    register_module(modules, ModuleFile(stub, path, is_shipped(path)), config)
                 )
+    stubs = {name: mf.definition for name, mf in modules.items()}
+    names_by_path = {mf.path.resolve(): name for name, mf in modules.items()}
+
+    def importer(file: Path) -> Callable[[str], str | None]:
+        return lambda text: names_by_path.get((file.parent / text).resolve())
+
+    # pass 2: the layouts, with every module known
+    for name, mf in list(modules.items()):
+        full, found = read_module(
+            documents[mf.path],
+            display_name(mf.path, config),
+            stubs,
+            importer(mf.path),
+        )
+        findings.extend(found)
+        modules[name] = ModuleFile(full, mf.path, mf.shipped) if full else mf
+        if full is None:
+            del modules[name]
+    findings.extend(module_cycles({n: mf.definition for n, mf in modules.items()}))
     registry = {name: mf.definition for name, mf in modules.items()}
     for path in paths:
         if path.name.endswith("_Shell.tdl"):
-            shell, found = load_shell_file(path, config, versions, registry)
+            shell, found = load_shell_file(path, config, versions, registry, importer(path))
             if shell is not None:
                 shells[path] = shell
             findings.extend(found)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -12,7 +12,7 @@ from tess_dl import Document
 from tess_shell.files.header import check_header
 from tess_shell.schema.findings import Finding
 from tess_shell.schema.model import ModuleDef, ShellDef
-from tess_shell.schema.shell import read_module, read_shell
+from tess_shell.schema.shell import read_shell
 
 
 def display_name(path: Path, base: Path) -> str:
@@ -62,18 +62,15 @@ def load_all(paths: list[Path], base: Path) -> tuple[list[Document], list[Findin
     return documents, findings
 
 
-def load_module_file(
+def load_module_document(
     path: Path, base: Path, installed: Mapping[str, str]
-) -> tuple[ModuleDef | None, list[Finding]]:
-    """Stages 1 to 4 for a ``*_Module.tdl``."""
+) -> tuple[Document | None, list[Finding]]:
+    """Stages 1 to 3 for a ``*_Module.tdl``: read, parse, header."""
     document, findings = load_file(path, base)
     if document is None:
         return None, findings
-    name = display_name(path, base)
-    header = check_header(document, name, installed)
-    if header:
-        return None, header
-    return read_module(document, name)
+    header = check_header(document, display_name(path, base), installed)
+    return (None, header) if header else (document, [])
 
 
 def load_shell_file(
@@ -81,6 +78,7 @@ def load_shell_file(
     base: Path,
     installed: Mapping[str, str],
     modules: Mapping[str, ModuleDef] | None = None,
+    import_module: Callable[[str], str | None] | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Stages 1 to 4 for a ``*_Shell.tdl``: read, parse, header, schema. A file that fails an
     earlier stage is not checked further."""
@@ -95,7 +93,7 @@ def load_shell_file(
     def read_text(relative: str) -> str:
         return (path.parent / relative).read_text(encoding="utf-8")
 
-    shell, findings = read_shell(document, name, read_text, modules)
+    shell, findings = read_shell(document, name, read_text, modules, import_module)
     return shell, findings
 
 

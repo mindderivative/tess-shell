@@ -38,10 +38,13 @@ class _Ctx:
         file: str,
         read_text: Callable[[str], str],
         modules: Mapping[str, ModuleDef] | None = None,
+        import_module: Callable[[str], str | None] | None = None,
     ) -> None:
         self.file = file
         self.read_text = read_text
         self.modules: Mapping[str, ModuleDef] = modules or {}
+        # the call name of the module file an ``Import:`` names (a path relative to this file)
+        self.import_module = import_module
         self.findings: list[Finding] = []
         self.names: dict[str, m.Origin] = {}
         self.selectors: dict[tuple[str, str], m.Origin] = {}
@@ -194,6 +197,33 @@ def _scalar_block_keys(
     return out
 
 
+def _imports(ctx: _Ctx, entry: Property) -> list[m.Node | m.UseNode]:
+    """``Import: Clock_Module.tdl`` or a list of them: each embeds that module, called with its
+    defaults, at this position (Module File > Using a Module)."""
+    value = entry.value
+    items = list(value.items) if isinstance(value, tess_dl.List) else [value]
+    out: list[m.Node | m.UseNode] = []
+    for item in items:
+        text = item.value if isinstance(item, tess_dl.String) else getattr(item, "text", None)
+        if not isinstance(text, str):
+            ctx.add(entry.value_origin, "bad-value", "Import names a file", "write a file name")
+            continue
+        if text.endswith("_Shell.tdl"):
+            ctx.not_built(item.origin or entry.value_origin, "Import of a shell file")
+            continue
+        found = ctx.import_module(text) if ctx.import_module is not None else None
+        if found is None:
+            ctx.add(
+                item.origin or entry.value_origin,
+                "import-not-found",
+                f"Import: {text} is not a module file",
+                "a path is relative to this file and names a _Module.tdl",
+            )
+            continue
+        out.append(m.UseNode(found, origin=ctx.origin(entry.key_origin)))
+    return out
+
+
 def _children(
     ctx: _Ctx, holder: Block, child_types: Callable[[Block], m.Node | m.UseNode | None]
 ) -> list[m.Node | m.UseNode]:
@@ -204,7 +234,7 @@ def _children(
             if node is not None:
                 out.append(node)
         elif isinstance(entry, Property) and entry.key == "Import":
-            ctx.not_built(entry.key_origin, "Import")
+            out.extend(_imports(ctx, entry))
         elif isinstance(entry, Property):
             ctx.add(
                 entry.key_origin,
@@ -540,11 +570,12 @@ def read_shell(
     file: str,
     read_text: Callable[[str], str],
     modules: Mapping[str, ModuleDef] | None = None,
+    import_module: Callable[[str], str | None] | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Type a parsed shell file. ``read_text`` reads a file named in the shell file (an SVG's
     ``Source``) and raises ``OSError``; the schema does no I/O of its own. ``modules`` are the
     known module files by call name: a block with such a head is a module call."""
-    ctx = _Ctx(file, read_text, modules)
+    ctx = _Ctx(file, read_text, modules, import_module)
     root = document.root
     if root.type != "Shell":
         ctx.add(
@@ -629,10 +660,11 @@ def read_module(
     document: Document,
     file: str,
     modules: Mapping[str, ModuleDef] | None = None,
+    import_module: Callable[[str], str | None] | None = None,
 ) -> tuple[ModuleDef | None, list[Finding]]:
     """Type a parsed ``<Name>_Module.tdl``: ``Module { Params { } Children { } }``, or a single
     layout block written directly in the root (Module File > Structure)."""
-    ctx = _Ctx(file, lambda _: "", modules)
+    ctx = _Ctx(file, lambda _: "", modules, import_module)
     root = document.root
     if root.type != "Module":
         ctx.add(
@@ -682,3 +714,19 @@ def read_module(
     if any(f.severity == "error" for f in ctx.findings):
         return None, ctx.findings
     return ModuleDef(name, file, ctx.origin(root.origin), params, tuple(children)), ctx.findings
+
+
+def read_module_params(document: Document, file: str) -> ModuleDef | None:
+    """A module's call name and params only, with no layout: the first of two passes, so a layout
+    can call any module whatever the order of the files (the findings are the second pass's)."""
+    ctx = _Ctx(file, lambda _: "")
+    root = document.root
+    name_entry = document.metadata.get("Name")
+    name = getattr(name_entry, "text", None) or getattr(name_entry, "value", None)
+    if root.type != "Module" or not isinstance(name, str) or not _NAME.match(name):
+        return None
+    params: dict[str, ParamDecl] = {}
+    for entry in root.entries:
+        if isinstance(entry, Block) and entry.type == "Params":
+            params = _param_decls(ctx, entry)
+    return ModuleDef(name, file, ctx.origin(root.origin), params, ())
