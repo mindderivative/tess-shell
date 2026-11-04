@@ -1,4 +1,4 @@
-"""Small helpers over the ``tess_dl`` tree, which has no accessors of its own in 0.1."""
+"""Small helpers over the public ``tess_dl`` tree, which has no accessors of its own in 0.1."""
 
 from __future__ import annotations
 

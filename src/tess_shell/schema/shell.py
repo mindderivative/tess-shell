@@ -1,0 +1,481 @@
+"""Check a parsed shell file against the M1 schema and type it (Validation and Errors, stage 4).
+
+Reads the public ``tess_dl`` tree and returns the typed model: monitors, Bars and the binder's
+:class:`~tess_shell.binder.model.Node` trees. Every problem is collected, one finding each, at
+the position of the offending key or value.
+"""
+
+from __future__ import annotations
+
+import re
+from collections.abc import Callable, Mapping
+
+import tess_dl
+from tess_dl import Block, Document, Property
+
+from tess_shell.binder import model as m
+from tess_shell.schema import blocks
+from tess_shell.schema.findings import Finding, Severity, nearest
+from tess_shell.schema.model import BarDef, MonitorDef, ShellDef
+from tess_shell.schema.tree import position
+from tess_shell.schema.values import ValueProblem, coerce, named_sides
+
+_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+_SURFACES = ("Bar", *blocks.OTHER_SURFACES)
+_NOT_BUILT = "not built in M1"
+
+
+class _Ctx:
+    def __init__(self, file: str, read_text: Callable[[str], str]) -> None:
+        self.file = file
+        self.read_text = read_text
+        self.findings: list[Finding] = []
+        self.names: dict[str, m.Origin] = {}
+        self.selectors: dict[tuple[str, str], m.Origin] = {}
+
+    def origin(self, o: tess_dl.Origin | None) -> m.Origin:
+        line, column = position(o)
+        return m.Origin(self.file, line, column)
+
+    def add(
+        self,
+        o: tess_dl.Origin | m.Origin | None,
+        rule: str,
+        message: str,
+        hint: str = "",
+        severity: Severity = "error",
+    ) -> None:
+        if isinstance(o, m.Origin):
+            line, column = o.line, o.column
+        else:
+            line, column = position(o)
+        self.findings.append(Finding(self.file, line, column, severity, rule, message, hint))
+
+    def problem(self, o: tess_dl.Origin | None, key: str, exc: ValueProblem) -> None:
+        self.add(o, exc.rule, f"{key}: {exc.message}", exc.hint)
+
+    def name(self, prop: Property) -> str | None:
+        value = prop.value
+        text = value.text if isinstance(value, tess_dl.Word) else None
+        if text is None or not _NAME.match(text):
+            self.add(
+                prop.value_origin,
+                "bad-name",
+                f"Name must be letters, digits and _, starting with a letter: {prop.value!r}",
+                "write a name such as Top_Bar",
+            )
+            return None
+        here = self.origin(prop.key_origin)
+        if text in self.names:
+            self.add(
+                prop.value_origin,
+                "name-duplicate",
+                f"the name {text} is used twice, first at {self.names[text]}",
+                "a Name is unique across the shell",
+            )
+        else:
+            self.names[text] = here
+        return text
+
+    def unknown(
+        self, origin: tess_dl.Origin | None, key: str, allowed: list[str], what: str
+    ) -> None:
+        close = nearest(key, allowed)
+        hint = (
+            f"did you mean {', '.join(close)}?"
+            if close
+            else f"allowed: {', '.join(sorted(allowed))}"
+        )
+        self.add(origin, "unknown-key", f"unknown {what} {key}", hint)
+
+    def not_built(
+        self, origin: tess_dl.Origin | None, what: str, severity: Severity = "error"
+    ) -> None:
+        self.add(origin, "not-built", f"{what} is {_NOT_BUILT}", "", severity)
+
+
+def _choices(block: str, key: str) -> tuple[str, ...]:
+    return blocks.CHOICES.get((block, key)) or blocks.CHOICES.get(("*", key)) or ()
+
+
+def _typed(
+    ctx: _Ctx, block: str, prop: Property, kind: str, read_text: bool = False
+) -> m.Value | None:
+    try:
+        return coerce(
+            kind,
+            prop.value,
+            ctx.origin(prop.key_origin),
+            _choices(block, prop.key),
+            ctx.read_text if read_text else None,
+        )
+    except ValueProblem as exc:
+        ctx.problem(prop.value_origin, prop.key, exc)
+        return None
+
+
+def _scalar_block_keys(
+    ctx: _Ctx, block: Block, table: Mapping[str, str], what: str
+) -> dict[str, m.Value]:
+    """The keys of an inline ``Style { }``; ``Border { Width, Color }`` is flattened (D78)."""
+    out: dict[str, m.Value] = {}
+    for entry in block.entries:
+        if isinstance(entry, Property):
+            kind = table.get(entry.key)
+            if kind is None:
+                ctx.unknown(entry.key_origin, entry.key, list(table), f"{what} key")
+                continue
+            value = _typed(ctx, what, entry, kind)
+            if value is not None:
+                out[entry.key] = value
+        elif isinstance(entry, Block):
+            if entry.type == "Border":
+                for sub in entry.entries:
+                    if isinstance(sub, Property) and sub.key in ("Width", "Color"):
+                        flat = f"Border_{sub.key}"
+                        if flat not in table:
+                            ctx.unknown(sub.key_origin, flat, list(table), f"{what} key")
+                            continue
+                        value = _typed(ctx, what, sub, table[flat])
+                        if value is not None:
+                            out[flat] = value
+                    elif isinstance(sub, Property):
+                        ctx.unknown(sub.key_origin, sub.key, ["Width", "Color"], "Border key")
+            elif entry.type in table and table[entry.type] == "sides":
+                try:
+                    out[entry.type] = named_sides(entry, ctx.origin(entry.origin))
+                except ValueProblem as exc:
+                    ctx.problem(entry.origin, entry.type, exc)
+            else:
+                ctx.unknown(entry.origin, entry.type, list(table), f"{what} key")
+        elif isinstance(entry, tess_dl.If | tess_dl.For):
+            ctx.not_built(entry.origin, "If and For")
+    return out
+
+
+def _children(
+    ctx: _Ctx, holder: Block, child_types: Callable[[Block], m.Node | None]
+) -> list[m.Node]:
+    out: list[m.Node] = []
+    for entry in holder.entries:
+        if isinstance(entry, Block):
+            node = child_types(entry)
+            if node is not None:
+                out.append(node)
+        elif isinstance(entry, Property) and entry.key == "Import":
+            ctx.not_built(entry.key_origin, "Import")
+        elif isinstance(entry, Property):
+            ctx.add(
+                entry.key_origin,
+                "unknown-key",
+                f"Children holds blocks, not the key {entry.key}",
+                "write a block such as FlexBox { }",
+            )
+        elif isinstance(entry, tess_dl.If | tess_dl.For):
+            ctx.not_built(entry.origin, "If and For")
+    return out
+
+
+def _block(ctx: _Ctx, block: Block) -> m.Node | None:
+    row = blocks.BLOCKS.get(block.type)
+    if row is None:
+        ctx.unknown(block.origin, block.type, list(blocks.BLOCKS), "block")
+        return None
+    prop_keys, style_keys = row
+    allowed = [*prop_keys, *style_keys, "Name", "Style", "Children"]
+    name: str | None = None
+    props: dict[str, m.Value] = {}
+    style: dict[str, m.Value] = {}
+    style_at: dict[str, tess_dl.Origin | None] = {}
+    prop_at: dict[str, tess_dl.Origin | None] = {}
+    children: list[m.Node] = []
+    for entry in block.entries:
+        if isinstance(entry, Property):
+            key = entry.key
+            if key == "Name":
+                name = ctx.name(entry)
+            elif key == "Style":
+                ctx.not_built(entry.key_origin, "a Style file")
+            elif key == "Class" or key == "Tooltip" or key.startswith("On_"):
+                ctx.not_built(entry.key_origin, key)
+            elif key in prop_keys or key in style_keys:
+                kind = prop_keys.get(key) or style_keys[key]
+                value = _typed(ctx, block.type, entry, kind, read_text=kind == "svg_source")
+                if value is not None:
+                    props[key] = value
+                    prop_at[key] = entry.key_origin
+            else:
+                ctx.unknown(entry.key_origin, key, allowed, f"key in {block.type}")
+        elif isinstance(entry, Block):
+            if entry.type == "Style":
+                for k, v in _scalar_block_keys(ctx, entry, style_keys, block.type).items():
+                    style[k] = v
+                for sub in entry.entries:
+                    if isinstance(sub, Property):
+                        style_at[sub.key] = sub.key_origin
+            elif entry.type == "Children":
+                if block.type not in ("Box", "FlexBox"):
+                    ctx.add(entry.origin, "bad-children", f"{block.type} cannot have children", "")
+                else:
+                    children = _children(ctx, entry, lambda b: _block(ctx, b))
+            elif entry.type in ("Padding", "Margin") and entry.type in prop_keys:
+                try:
+                    props[entry.type] = named_sides(entry, ctx.origin(entry.origin))
+                    prop_at[entry.type] = entry.origin
+                except ValueProblem as exc:
+                    ctx.problem(entry.origin, entry.type, exc)
+            elif entry.type == "Border" and "Border_Width" in {**prop_keys, **style_keys}:
+                flat = _scalar_block_keys(
+                    ctx, tess_dl.Block("Style", (entry,)), style_keys, block.type
+                )
+                props.update(flat)
+            else:
+                ctx.unknown(entry.origin, entry.type, allowed, f"block in {block.type}")
+        elif isinstance(entry, tess_dl.If | tess_dl.For):
+            ctx.not_built(entry.origin, "If and For")
+    written = {e.key for e in block.entries if isinstance(e, Property)}
+    for key in blocks.REQUIRED.get(block.type, ()):
+        if key not in props and key not in written:
+            ctx.add(block.origin, "missing-key", f"{block.type} needs {key}", f"write {key}: ...")
+    for key in props.keys() & style.keys():
+        ctx.add(
+            style_at.get(key),
+            "style-duplicate",
+            f"{key} is written both in the block ({ctx.origin(prop_at.get(key))}) and in its Style",
+            "keep one of the two",
+        )
+    return m.Node(
+        block.type,
+        name=name,
+        props=props,
+        style=style,
+        children=tuple(children),
+        origin=ctx.origin(block.origin),
+    )
+
+
+_BAR_KEYS: dict[str, str] = {
+    "Edge": "enum",
+    "Width": "length",
+    "Height": "length",
+    "Layer": "enum",
+    "Alignment": "enum",
+    "Offset": "number",
+    "Gap": "number",
+    "Reserve": "bool",
+    "Min_Width": "bound",
+    "Min_Height": "bound",
+    "Max_Width": "bound",
+    "Max_Height": "bound",
+}
+_BAR_CHOICES: dict[str, tuple[str, ...]] = {
+    "Edge": ("TOP", "BOTTOM", "LEFT", "RIGHT"),
+    "Layer": ("BOTTOM", "TOP", "OVERLAY"),
+    "Alignment": ("START", "CENTER", "END"),
+}
+
+
+def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
+    allowed = ["Name", "Style", "Children", *_BAR_KEYS, *blocks.BAR_NOT_BUILT]
+    name: str | None = None
+    values: dict[str, m.Value] = {}
+    style: dict[str, m.Value] = {}
+    children: list[m.Node] = []
+    for entry in block.entries:
+        if isinstance(entry, Property):
+            key = entry.key
+            if key == "Name":
+                name = ctx.name(entry)
+            elif key == "Style":
+                ctx.not_built(entry.key_origin, "a Style file")
+            elif key in blocks.BAR_NOT_BUILT:
+                ctx.not_built(entry.key_origin, f"the Bar key {key}", "warning")
+            elif key in _BAR_KEYS:
+                try:
+                    values[key] = coerce(
+                        _BAR_KEYS[key],
+                        entry.value,
+                        ctx.origin(entry.key_origin),
+                        _BAR_CHOICES.get(key, ()),
+                    )
+                except ValueProblem as exc:
+                    ctx.problem(entry.value_origin, key, exc)
+            else:
+                ctx.unknown(entry.key_origin, key, allowed, "key in Bar")
+        elif isinstance(entry, Block):
+            if entry.type == "Style":
+                style = _scalar_block_keys(ctx, entry, blocks.BAR_STYLE, "Bar")
+            elif entry.type == "Children":
+                children = _children(ctx, entry, lambda b: _block(ctx, b))
+            elif entry.type in blocks.BAR_NOT_BUILT:
+                ctx.not_built(entry.origin, f"the Bar key {entry.type}", "warning")
+            else:
+                ctx.unknown(entry.origin, entry.type, allowed, "block in Bar")
+        elif isinstance(entry, tess_dl.If | tess_dl.For):
+            ctx.not_built(entry.origin, "If and For")
+    if name is None and not any(isinstance(e, Property) and e.key == "Name" for e in block.entries):
+        ctx.add(block.origin, "missing-key", "a Bar needs a Name", "write Name: Top_Bar")
+    missing = [k for k in ("Edge", "Width", "Height") if k not in values]
+    for key in missing:
+        if not any(isinstance(e, Property) and e.key == key for e in block.entries):
+            ctx.add(block.origin, "missing-key", f"a Bar needs {key}", f"write {key}: ...")
+    if name is None or missing:
+        return None
+
+    def px(key: str) -> float | None:
+        v = values.get(key)
+        return v.px if isinstance(v, m.Length) else None
+
+    def num(key: str) -> float | None:
+        v = values.get(key)
+        return float(v.value) if isinstance(v, m.Number) else None
+
+    def word(key: str, default: str | None) -> str | None:
+        v = values.get(key)
+        return v.name if isinstance(v, m.Enum) else default
+
+    reserve = values.get("Reserve")
+    edge = word("Edge", "TOP")
+    assert edge is not None
+    return BarDef(
+        name=name,
+        origin=ctx.origin(block.origin),
+        edge=edge,
+        width=values["Width"],
+        height=values["Height"],
+        layer=word("Layer", "TOP") or "TOP",
+        alignment=word("Alignment", None),
+        offset=num("Offset"),
+        gap=num("Gap") or 0,
+        reserve=reserve.value if isinstance(reserve, m.Bool) else True,
+        min_width=px("Min_Width"),
+        min_height=px("Min_Height"),
+        max_width=px("Max_Width"),
+        max_height=px("Max_Height"),
+        style=style,
+        children=tuple(children),
+    )
+
+
+def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
+    allowed = ["Name", "Index", "Connector", "Description", "Children"]
+    name: str | None = None
+    index: int | str | None = None
+    connector: str | None = None
+    description: str | None = None
+    surfaces: list[BarDef] = []
+    saw_name = False
+    for entry in block.entries:
+        if isinstance(entry, Property):
+            key = entry.key
+            if key == "Name":
+                saw_name = True
+                name = ctx.name(entry)
+            elif key == "Index":
+                v = entry.value
+                if isinstance(v, tess_dl.Number) and isinstance(v.value, int) and v.value >= 0:
+                    index = v.value
+                elif isinstance(v, tess_dl.Word) and v.text == "default":
+                    index = "default"
+                else:
+                    ctx.add(
+                        entry.value_origin,
+                        "bad-value",
+                        "Index: a position (0, 1, ...) or default",
+                        "",
+                    )
+            elif key in ("Connector", "Description"):
+                v = entry.value
+                text = v.value if isinstance(v, tess_dl.String) else getattr(v, "text", None)
+                if text is None:
+                    ctx.add(entry.value_origin, "bad-value", f"{key} is text", "")
+                elif key == "Connector":
+                    connector = text
+                else:
+                    description = text
+            else:
+                ctx.unknown(entry.key_origin, key, allowed, "key in Monitor")
+        elif isinstance(entry, Block):
+            if entry.type == "Children":
+                for child in entry.entries:
+                    if isinstance(child, Block):
+                        if child.type == "Bar":
+                            bar = _bar(ctx, child)
+                            if bar is not None:
+                                surfaces.append(bar)
+                        elif child.type in blocks.OTHER_SURFACES:
+                            ctx.not_built(child.origin, f"{child.type}")
+                        else:
+                            ctx.unknown(child.origin, child.type, list(_SURFACES), "surface")
+                    elif isinstance(child, Property) and child.key == "Import":
+                        ctx.not_built(child.key_origin, "Import")
+                    elif isinstance(child, Property):
+                        ctx.unknown(child.key_origin, child.key, list(_SURFACES), "surface")
+                    elif isinstance(child, tess_dl.If | tess_dl.For):
+                        ctx.not_built(child.origin, "If and For")
+            else:
+                ctx.unknown(entry.origin, entry.type, allowed, "block in Monitor")
+    if not saw_name:
+        ctx.add(block.origin, "missing-key", "a Monitor needs a Name", "write Name: Main")
+    if name is None:
+        return None
+    here = ctx.origin(block.origin)
+    for kind, value in (
+        ("Index", None if index is None else str(index)),
+        ("Connector", connector),
+        ("Description", description),
+    ):
+        if value is None:
+            continue
+        previous = ctx.selectors.get((kind, value))
+        if previous is not None:
+            ctx.add(
+                block.origin,
+                "monitor-duplicate",
+                f"two Monitors select the same monitor ({kind}: {value}), "
+                f"the first is at {previous}",
+                "a monitor is named by one Monitor block",
+            )
+        else:
+            ctx.selectors[(kind, value)] = here
+    return MonitorDef(
+        name=name,
+        origin=here,
+        index=index,
+        connector=connector,
+        description=description,
+        surfaces=tuple(surfaces),
+    )
+
+
+def read_shell(
+    document: Document, file: str, read_text: Callable[[str], str]
+) -> tuple[ShellDef | None, list[Finding]]:
+    """Type a parsed shell file. ``read_text`` reads a file named in the shell file (an SVG's
+    ``Source``) and raises ``OSError``; the schema does no I/O of its own."""
+    ctx = _Ctx(file, read_text)
+    root = document.root
+    if root.type != "Shell":
+        ctx.add(
+            root.origin,
+            "shell-root",
+            f"the root block is {root.type}, not Shell",
+            "write Shell { }",
+        )
+        return None, ctx.findings
+    monitors: list[MonitorDef] = []
+    for entry in root.entries:
+        if isinstance(entry, Block):
+            if entry.type == "Monitor":
+                monitor = _monitor(ctx, entry)
+                if monitor is not None:
+                    monitors.append(monitor)
+            else:
+                ctx.unknown(entry.origin, entry.type, ["Monitor"], "block in Shell")
+        elif isinstance(entry, Property):
+            ctx.unknown(entry.key_origin, entry.key, ["Monitor"], "key in Shell")
+    name = document.metadata.get("Name")
+    shell_name = getattr(name, "text", None) or getattr(name, "value", "") or ""
+    if any(f.severity == "error" for f in ctx.findings):
+        return None, ctx.findings
+    return ShellDef(file, shell_name, tuple(monitors)), ctx.findings

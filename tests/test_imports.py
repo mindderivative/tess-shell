@@ -15,12 +15,16 @@ ANY = None  # no restriction
 # Allowed non-standard-library imports per module, by dotted path relative to ``tess_shell``.
 # A dotted entry allows that package and everything under it.
 RULES: dict[str, set[str] | None] = {
-    "schema": {"tess_shell.schema"},
-    "files": {"tess_dl", "tess_shell.schema", "tess_shell.files"},
+    "schema": {
+        "tess_dl",
+        "tess_shell.schema",
+        "tess_shell.binder.model",
+        "tess_shell.binder.convert",
+    },
+    "files": {"tess_dl", "tess_shell.schema", "tess_shell.config", "tess_shell.files"},
     "config": {
         "tess_dl",
         "tess_shell.schema",
-        "tess_shell.files",
         "tess_shell.config",
         "tess_shell.exit_codes",
     },
@@ -54,7 +58,8 @@ def external_imports(path: Path) -> set[str]:
         elif isinstance(node, ast.ImportFrom):
             assert node.level == 0, f"{path}: relative imports are not used here"
             assert node.module is not None
-            names.add(node.module)
+            # `from a.b import c` may import the module a.b.c: judge it as a.b.c
+            names.update(f"{node.module}.{alias.name}" for alias in node.names)
     return names
 
 

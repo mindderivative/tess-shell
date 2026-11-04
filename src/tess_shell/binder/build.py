@@ -101,7 +101,7 @@ def _plan(
             )
         )
     for scope, values, allowed in (
-        ("", node.props, row.keys),
+        ("", node.props, {**row.style, **row.keys}),  # a style key may be written on the block
         ("Style ", node.style, row.style),
     ):
         for key, value in values.items():

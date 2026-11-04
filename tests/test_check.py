@@ -85,3 +85,34 @@ def test_missing_config_dir_exits_2_and_creates_nothing(
     assert main(["check", "--config-dir", str(target)]) == 2
     assert f"config directory does not exist: {target}" in capsys.readouterr().err
     assert not target.exists()
+
+
+def test_the_m1_example_checks_clean(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    from tests.shell_samples import write_example
+
+    write_example(tmp_path)
+    assert main(["check", "--config-dir", str(tmp_path)]) == 0
+    assert capsys.readouterr().out.strip() == "ok: 1 files checked"
+
+
+def test_a_wrong_colour_is_reported_with_its_position(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from tests.shell_samples import BODY, write_example
+
+    write_example(tmp_path, BODY.replace('Fill: "#1f1f1f"', 'Fill: "blue"'))
+    assert main(["check", "--config-dir", str(tmp_path)]) == 1
+    err = capsys.readouterr().err
+    assert "Shells/Main_Shell.tdl:" in err and "error:" in err and "#RRGGBB" in err
+
+
+def test_a_schema_error_and_a_warning_are_both_printed_and_only_the_error_fails(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from tests.shell_samples import BODY, write_example
+
+    write_example(
+        tmp_path, BODY.replace("Height: 32\n", "Height: 32\n                Auto_Hide: false\n")
+    )
+    assert main(["check", "--config-dir", str(tmp_path)]) == 0
+    assert "warning: the Bar key Auto_Hide is not built in M1" in capsys.readouterr().err

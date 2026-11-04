@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import threading
+from dataclasses import dataclass
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
@@ -24,7 +25,7 @@ from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config
 from tess_shell.config.registry import Registry, RegistryError
 from tess_shell.config.settings import LoggingSettings, Settings, load_settings
 from tess_shell.exit_codes import EnvironmentFailure, ExitCode, ShellError
-from tess_shell.files.loader import load_all
+from tess_shell.files.loader import load_file, load_shell_file
 from tess_shell.logging import (
     configure_logging,
     current_state,
@@ -33,6 +34,7 @@ from tess_shell.logging import (
 )
 from tess_shell.options import Options
 from tess_shell.schema.findings import Finding, render_findings
+from tess_shell.schema.model import ShellDef
 from tess_shell.signals import LoopStopper, SignalWatcher
 
 MIN_ENGINE = (0, 6, 0)
@@ -58,11 +60,44 @@ def print_findings(findings: list[Finding], config: Path) -> None:
 MAX_FINDINGS = 50
 
 
-def scan(settings: Settings, config: Path) -> tuple[int, list[Finding]]:
-    """Discover and parse every shell file. Returns ``(files checked, findings)``."""
+def installed_versions() -> dict[str, str]:
+    """The versions a file's ``Shell:``, ``TRE:`` and ``TEL:`` pins are compared with."""
+    import tess_el
+
+    return {
+        "Shell": tess_shell.__version__,
+        "TRE": version("tesserae-engine"),
+        "TEL": tess_el.__version__,
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class Scan:
+    count: int
+    findings: list[Finding]
+    shells: dict[Path, ShellDef]
+
+    @property
+    def errors(self) -> list[Finding]:
+        return [f for f in self.findings if f.severity == "error"]
+
+
+def scan(settings: Settings, config: Path) -> Scan:
+    """Discover every shell file and check it: a ``*_Shell.tdl`` through stages 1 to 4, the other
+    types for syntax only. Warnings do not stop anything."""
     paths = discover(settings)
-    _, findings = load_all(paths, config)
-    return len(paths), sorted(findings, key=lambda f: f.sort_key)
+    versions = installed_versions()
+    findings: list[Finding] = []
+    shells: dict[Path, ShellDef] = {}
+    for path in paths:
+        if path.name.endswith("_Shell.tdl"):
+            shell, found = load_shell_file(path, config, versions)
+            if shell is not None:
+                shells[path] = shell
+        else:
+            _, found = load_file(path, config)
+        findings.extend(found)
+    return Scan(len(paths), sorted(findings, key=lambda f: f.sort_key), shells)
 
 
 def check(options: Options) -> int:
@@ -74,24 +109,27 @@ def check(options: Options) -> int:
     settings, findings = load_settings(config)
     count = 0
     if settings is not None:
-        count, findings = scan(settings, config)
+        result = scan(settings, config)
+        count, findings = result.count, result.findings
+    failed = any(f.severity == "error" for f in findings)
     if options.json:
         shown = findings[:MAX_FINDINGS]
         print(
             json.dumps(
                 {
-                    "ok": not findings,
+                    "ok": not failed,
                     "files": count,
                     "errors": [f.to_dict() for f in shown],
                     "omitted": len(findings) - len(shown),
                 }
             )
         )
-    elif findings:
-        print_findings(findings, config)
-    elif not options.quiet:
-        print(f"ok: {count} files checked")
-    return int(ExitCode.CONFIG if findings else ExitCode.OK)
+    else:
+        if findings:
+            print_findings(findings, config)
+        if not failed and not options.quiet:
+            print(f"ok: {count} files checked")
+    return int(ExitCode.CONFIG if failed else ExitCode.OK)
 
 
 def _preflight() -> tuple[Path, bool]:
@@ -194,13 +232,14 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         print_findings([exc.finding], cfg)
         return ExitCode.CONFIG
     # 7. check and load every shell file
-    count, findings = scan(settings, cfg)
-    if findings:
-        for f in findings[:MAX_FINDINGS]:
-            log_finding(f)
-        print_findings(findings, cfg)
+    result = scan(settings, cfg)
+    for f in result.findings[:MAX_FINDINGS]:
+        log_finding(f)
+    if result.findings:
+        print_findings(result.findings, cfg)
+    if result.errors:
         return ExitCode.CONFIG
-    logger.info(f"loaded {count} shell files")
+    logger.info(f"loaded {result.count} shell files")
     if settings.main_shell_path is None:
         logger.info(f"no {settings.main_shell} found; nothing to show")
     # 8. resolve and compile
