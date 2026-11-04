@@ -191,14 +191,13 @@ def radius(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) 
 
 
 def font_family(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
-    """tre takes one family name (a list is refused), so a list gives its first entry."""
+    """tre takes one string, so a list of families is joined with ``", "`` (the fallback order is
+    checked on a live compositor, in the KWin checklist)."""
     (name,) = names
     if isinstance(value, Text):
         return {name: value.value}
     if isinstance(value, Seq) and value.items and all(isinstance(i, Text) for i in value.items):
-        first = value.items[0]
-        assert isinstance(first, Text)
-        return {name: first.value}
+        return {name: ", ".join(i.value for i in value.items if isinstance(i, Text))}
     raise _bad(value, "a font family name or a list of names")
 
 

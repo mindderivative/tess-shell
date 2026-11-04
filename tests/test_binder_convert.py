@@ -67,7 +67,7 @@ GOOD: list[tuple[str, Value, tuple[str, ...], tuple[str, ...], dict[str, Any]]] 
         Seq((Text("Inter"), Text("Noto"))),
         ("font_family",),
         (),
-        {"font_family": "Inter"},
+        {"font_family": "Inter, Noto"},
     ),
 ]
 

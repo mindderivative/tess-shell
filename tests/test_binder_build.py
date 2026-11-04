@@ -135,11 +135,17 @@ def test_if_and_for_are_refused_with_a_clear_message(repeater: IfNode | ForNode)
     assert "not supported yet" in error.message and error.origin.line == 4
 
 
-def test_a_style_key_wins_over_the_same_key_as_a_property() -> None:
-    node = Node("Box", props={"Padding": Length(1)}, style={"Padding": Length(9)})
-    view = build([node], Window(50, 50))
-    (root,) = view.roots
-    assert root.get("padding_top") == 9
+def test_a_key_written_in_the_block_and_in_its_style_is_an_error_naming_both() -> None:
+    node = Node(
+        "Box",
+        props={"Padding": Length(1, origin=at(3))},
+        style={"Padding": Length(9, origin=at(6, 9))},
+    )
+    with pytest.raises(BindFailed) as info:
+        build([node], Window(50, 50))
+    (error,) = info.value.errors
+    assert (error.origin.line, error.origin.column) == (6, 9)
+    assert "Main_Shell.tdl:3:5" in error.hint
 
 
 def test_a_box_puts_every_child_in_the_same_cell() -> None:

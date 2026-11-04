@@ -92,6 +92,14 @@ def _plan(
         return None
 
     props: dict[str, Any] = {}
+    for key in node.props.keys() & node.style.keys():
+        errors.append(
+            BindError(
+                f"{key} is written both in the block and in its Style",
+                node.style[key].origin,
+                f"keep one; the other is at {node.props[key].origin}",
+            )
+        )
     for scope, values, allowed in (
         ("", node.props, row.keys),
         ("Style ", node.style, row.style),
