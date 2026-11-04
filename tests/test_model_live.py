@@ -7,7 +7,6 @@ from typing import Any
 import tess_dl
 from tess_re import Window
 
-from tess_shell.binder import model as m
 from tess_shell.binder.build import View, build
 from tess_shell.model.expand import expand
 from tess_shell.model.live import LiveTree
