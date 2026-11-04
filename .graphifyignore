@@ -1,0 +1,4 @@
+# Agent-harness plans and editor settings, not project content.
+.omp/
+.pi/
+.vscode/

@@ -12,3 +12,10 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+.coverage
+htmlcov/
+
+# Agent harness (plans, scratch) and the local code graph built by `graphify update .`
+.omp/
+.pi/
+graphify-out/
