@@ -46,17 +46,12 @@ def _claims(monitor: MonitorDef, outputs: Sequence[OutputLike]) -> int | None:
     return None
 
 
-def assign(
+def _resolve(
     monitors: Sequence[MonitorDef], outputs: Sequence[OutputLike]
-) -> list[tuple[MonitorDef, list[int]]]:
-    """Which outputs each monitor block applies to (indices into ``outputs``).
-
-    A block with a selector takes the output it names; a block that names an output another block
-    already took is skipped (the first wins). ``Index: default`` takes every output no other block
-    named. A block with no selector is ignored; a block that matches nothing gets an empty list.
-    """
+) -> tuple[list[tuple[MonitorDef, list[int]]], list[tuple[MonitorDef, MonitorDef, int]]]:
     result: list[tuple[MonitorDef, list[int]]] = []
-    taken: set[int] = set()
+    conflicts: list[tuple[MonitorDef, MonitorDef, int]] = []
+    taken: dict[int, MonitorDef] = {}
     defaults: list[MonitorDef] = []
     for monitor in monitors:
         has_selector = (
@@ -70,14 +65,37 @@ def assign(
         if not has_selector and monitor.index is None:
             continue
         found = _claims(monitor, outputs)
-        if found is None or found in taken:
+        if found is None:
             result.append((monitor, []))
             continue
-        taken.add(found)
+        if found in taken:
+            conflicts.append((monitor, taken[found], found))
+            result.append((monitor, []))
+            continue
+        taken[found] = monitor
         result.append((monitor, [found]))
     free = [i for i in range(len(outputs)) if i not in taken]
     result.extend((monitor, list(free)) for monitor in defaults)
-    return result
+    return result, conflicts
+
+
+def assign(
+    monitors: Sequence[MonitorDef], outputs: Sequence[OutputLike]
+) -> list[tuple[MonitorDef, list[int]]]:
+    """Which outputs each monitor block applies to (indices into ``outputs``).
+
+    A block with a selector takes the output it names; a block that names an output another block
+    already took gets none (the first wins). ``Index: default`` takes every output no other block
+    named. A block with no selector is ignored; a block that matches nothing gets an empty list.
+    """
+    return _resolve(monitors, outputs)[0]
+
+
+def conflicts(
+    monitors: Sequence[MonitorDef], outputs: Sequence[OutputLike]
+) -> list[tuple[MonitorDef, MonitorDef, int]]:
+    """Blocks that name an output an earlier block took: ``(loser, winner, output index)``."""
+    return _resolve(monitors, outputs)[1]
 
 
 @dataclass(slots=True)
@@ -126,6 +144,12 @@ class SurfaceManager:
         if not outputs:
             logger.warning("no outputs: no surface was opened")
             return []
+        for loser, winner, i in conflicts(shell.monitors, outputs):
+            logger.warning(
+                f"{loser.origin}: Monitor {loser.name} names {outputs[i].name}, which Monitor "
+                f"{winner.name} ({winner.origin}) already took; {winner.name} wins and "
+                f"{loser.name} opens nothing"
+            )
         for monitor, indices in assign(shell.monitors, outputs):
             if not indices:
                 logger.info(

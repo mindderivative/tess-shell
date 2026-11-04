@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from tess_shell.binder.model import NO_ORIGIN
 from tess_shell.schema.model import MonitorDef
-from tess_shell.surfaces.manager import assign
+from tess_shell.surfaces.manager import assign, conflicts
 
 
 @dataclass
@@ -54,3 +54,10 @@ def test_the_first_block_wins_when_two_name_the_same_output() -> None:
 
 def test_a_block_with_no_selector_is_ignored() -> None:
     assert result([mon("A")]) == {}
+
+
+def test_a_block_naming_a_taken_output_is_reported_as_a_conflict() -> None:
+    a, b = mon("A", index=0), mon("B", connector="DP-1")
+    assert [(lo.name, wi.name, i) for lo, wi, i in conflicts([a, b], OUTS)] == [("B", "A", 0)]
+    assert conflicts([a, mon("C", index=1)], OUTS) == []
+    assert conflicts([a, mon("D", index=9)], OUTS) == []

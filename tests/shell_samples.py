@@ -6,7 +6,10 @@ from pathlib import Path
 
 HEADER = "---\nTDL: 0.1\nShell: 0.1\nName: Main_Shell\n---\n"
 
-SVG = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4'><rect width='4' height='4'/></svg>"
+SVG = (
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4'>"
+    "<rect width='4' height='4' fill='currentColor'/></svg>"
+)
 
 BODY = """
 Shell {
