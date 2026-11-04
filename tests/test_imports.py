@@ -28,6 +28,13 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.config",
         "tess_shell.exit_codes",
     },
+    "model": {
+        "tess_el",
+        "loguru",
+        "tess_shell.binder.model",
+        "tess_shell.schema",
+        "tess_shell.model",
+    },
     "logging": {"loguru"},
     "exit_codes": set(),
     "options": set(),

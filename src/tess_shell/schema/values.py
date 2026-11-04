@@ -213,3 +213,90 @@ def named_sides(block: tess_dl.Block, origin: m.Origin) -> m.Sides:
                 raise _bad("a number", entry.value)
             sides[entry.key] = float(n)
     return m.Sides(sides["Left"], sides["Top"], sides["Right"], sides["Bottom"], origin=origin)
+
+
+def _py_kind(value: object) -> str:
+    return type(value).__name__
+
+
+def _py_number(value: object) -> int | float | None:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return None
+    return value
+
+
+def from_python(
+    kind: str, value: object, origin: m.Origin, choices: tuple[str, ...] = ()
+) -> m.Value:
+    """The typed value of an evaluated slot (a plain Python value), for the key's ``kind``.
+
+    Raises :class:`ValueProblem` when the value cannot be that kind.
+    """
+
+    def bad(expected: str) -> ValueProblem:
+        return ValueProblem("bad-value", f"expected {expected}, the slot gave a {_py_kind(value)}")
+
+    match kind:
+        case "text" | "svg_source":
+            if isinstance(value, str):
+                return m.Text(value, origin=origin)
+            raise bad("a string")
+        case "number" | "positive" | "whole":
+            n = _py_number(value)
+            if n is None or (kind == "whole" and isinstance(n, float)):
+                raise bad("a whole number" if kind == "whole" else "a number")
+            return m.Number(n, origin=origin)
+        case "bool" | "wrap_flag":
+            if isinstance(value, bool):
+                return m.Bool(value, origin=origin)
+            raise bad("true or false")
+        case "length" | "text_length" | "bound":
+            n = _py_number(value)
+            if n is not None:
+                if isinstance(n, float) and not n.is_integer():
+                    raise ValueProblem("bad-value", "a length is a whole number of pixels")
+                return m.Length(n, origin=origin)
+            if isinstance(value, str):
+                word = value.strip()
+                if word.endswith("%") and word[:-1].isdigit():
+                    return m.Percent(int(word[:-1]), origin=origin)
+                if kind != "bound" and word == "AUTO":
+                    return m.Auto(origin=origin)
+                if kind != "bound" and word == "EXPAND":
+                    return m.Expand(origin=origin)
+            raise bad("a number of pixels, a percentage, AUTO or EXPAND")
+        case "color":
+            if isinstance(value, str):
+                try:
+                    return convert.parse_color(value, origin)
+                except BindError as exc:
+                    raise ValueProblem("bad-value", exc.message, exc.hint) from exc
+            raise bad("a colour string")
+        case "enum":
+            if isinstance(value, str) and value in choices:
+                return m.Enum(value, origin=origin)
+            raise ValueProblem(
+                "bad-value",
+                f"expected one of {', '.join(choices)}, the slot gave {value!r}",
+                _upper_hint(value, choices) if isinstance(value, str) else "",
+            )
+        case "sides" | "radius":
+            n = _py_number(value)
+            if n is not None:
+                return m.Length(n, origin=origin)
+            if isinstance(value, list | tuple) and len(value) == 4:
+                nums = [_py_number(v) for v in value]
+                if all(x is not None for x in nums):
+                    good = [x for x in nums if x is not None]
+                    if kind == "sides":
+                        a, b, c, d = (float(x) for x in good)
+                        return m.Sides(a, b, c, d, origin=origin)
+                    return m.Seq(tuple(m.Length(x, origin=origin) for x in good), origin=origin)
+            raise bad("a number or a list of four numbers")
+        case "font_family":
+            if isinstance(value, str):
+                return m.Text(value, origin=origin)
+            if isinstance(value, list | tuple) and value and all(isinstance(v, str) for v in value):
+                return m.Seq(tuple(m.Text(v, origin=origin) for v in value), origin=origin)
+            raise bad("a font family name or a list of names")
+    raise AssertionError(f"unknown kind {kind}")  # a table bug
