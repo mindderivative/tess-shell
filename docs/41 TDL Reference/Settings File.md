@@ -2,10 +2,10 @@
 title: Settings File
 aliases: [settings.tdl, settings.yaml, Shell Settings, Config Directory Layout]
 type: tdl-ref
-status: draft
+status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-31
+updated: 2026-11-03
 tags: [tdl-ref, runtime]
 ---
 
@@ -54,7 +54,7 @@ The metadata block of every shell file is defined in [TDL Language > The Metadat
 | `Main_Shell`  | The shell file the shell starts from | A file name in the shells directory; default `Main_Shell.tdl`                                                                                                                       |
 | `Registry`    | Where the registry file lives        | An absolute path to a `registry.json` file; default `$HOME/.config/tesserae-shell/registry.json`. Same path rules as `Directories`                                                   |
 | `Logging`     | Global log settings                  | `Level`, `Directory` (default `logs/` in the config directory, same path rules) and `Retention` (optional, days); naming and rotation are in [Log files](#log-files) |
-| `Validation`  | Schema validation settings           | `Enabled` (default true); the cache location is [JSON Schema and Editor Support > The `jsonschema` Dependency: Runtime, Not Only Development](JSON%20Schema%20and%20Editor%20Support.md#the-jsonschema-dependency-runtime-not-only-development)                                                                                              |
+| `Validation`  | Schema validation settings           | `Enabled` (default true); there is no validation cache ([ADR-0020 Validation in Code](../30%20Decisions/ADR-0020%20Validation%20in%20Code.md))                                                                                              |
 
 Keys are Capitalised like every key in a shell file ([TDL Language > Names and the Registry](TDL%20Language.md#names-and-the-registry)). The key names are the agent's Capitalisation of the 2026-10-29 names; `Level`, `Directory`, `Retention` and `Enabled` follow the same rule.
 

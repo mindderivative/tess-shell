@@ -2,7 +2,7 @@
 title: Testing Strategy
 aliases: [Tests, Test Plan, Headless Testing]
 type: quality
-status: draft
+status: review
 owner: phil
 created: 2026-11-02
 updated: 2026-11-03

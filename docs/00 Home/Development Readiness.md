@@ -2,7 +2,7 @@
 title: Development Readiness
 aliases: [Readiness, Ready to Code, Milestone Plan]
 type: moc
-status: draft
+status: review
 owner: phil
 created: 2026-11-02
 updated: 2026-11-03
@@ -36,7 +36,7 @@ Status is the lowest status among the row's notes. "Needed for" names the first 
 ## What Already Exists to Build On
 
 - `tess_dl` is published: `tesserae-dl` 0.1.1 is on PyPI (checked 2026-11-03; the first release importing as `tess_dl`; 0.1.0 imported as `tdl`; Python 3.14 or later, no dependencies), with the language reference, the API and a conformance corpus in the `tess-dl` repository ([TDL Library API](../42%20Python%20API/TDL%20Library%20API.md)).
-- TEL 0.1.1 and tre 0.5.10 are on PyPI, with `Window.build`, `Window.apply` and `Node.set_children` ([TRE-REQ-009 Batch and Tree Building](../80%20Requests/TRE-REQ-009%20Batch%20and%20Tree%20Building.md)).
+- TEL 0.1.2 and tre 0.6.0 are on PyPI (imports `tess_el`, `tess_re`), with `Window.build`, `Window.apply` and `Node.set_children` ([TRE-REQ-009 Batch and Tree Building](../80%20Requests/TRE-REQ-009%20Batch%20and%20Tree%20Building.md)).
 - The `tess-shell` repository exists with the docs export and the sync tool; it holds no code, no `pyproject.toml` and no package yet.
 
 ## Proposed Milestones
@@ -46,7 +46,7 @@ Each milestone is a vertical slice that runs, so the design is tested early. The
 | # | Milestone | What works at the end | Needs |
 |---|---|---|---|
 | M0 | Skeleton | `tesserae-shell run`, `check`, `version`; config directory, logging, lock, start and stop with no windows; `pyproject.toml` with the dependencies; tests run headless | [Shell Start and Stop](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md), [Logging](../40%20Specifications/Runtime/Logging.md), [Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md), the package layout, the testing strategy |
-| M1 | A static Bar | One `Bar` on one monitor from a `.tdl` file: `tess_dl` parse, a minimal schema check, the binder with the table for `Box`, `FlexBox`, `Text`, `Rectangle`, `Svg`; a `LayerWindow`; the Clock as a fixed string | [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md) accepted, [Bar](../40%20Specifications/Surfaces/Bar.md), [Block Reference](../41%20TDL%20Reference/Block%20Reference.md), [Style Schema](../41%20TDL%20Reference/Style%20Schema.md) |
+| M1 | A static Bar ([M1 Brief](M1%20Brief.md)) | One `Bar` on one monitor from a `.tdl` file: `tess_dl` parse, a minimal schema check, the binder with the table for `Box`, `FlexBox`, `Text`, `Rectangle`, `Svg`; a `LayerWindow`; the Clock as a fixed string | [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md) accepted, [Bar](../40%20Specifications/Surfaces/Bar.md), [Block Reference](../41%20TDL%20Reference/Block%20Reference.md), [Style Schema](../41%20TDL%20Reference/Style%20Schema.md) |
 | M2 | Live and modular | TEL slots and tracked updates, the value store, the module contract (Clock updates every second), hot reload by keyed diff | [Module Contract](../42%20Python%20API/Module%20Contract.md), [Module Context](../42%20Python%20API/Module%20Context.md), [Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md), the shipped-module list |
 | M3 | More surfaces | `Panel`, `Popup`, `Frame`, multi-monitor and hot-plug, shadows | [Panel](../40%20Specifications/Surfaces/Panel.md), [Popup](../40%20Specifications/Surfaces/Popup.md), [Frame](../40%20Specifications/Surfaces/Frame.md), [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md) |
 | M4 | Services | The D-Bus service layer, then Workspaces, Battery, Network, Audio, Media, Tray one at a time | [D-Bus Service Layer](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md), the module specs |
@@ -69,7 +69,7 @@ Recommended order. Each item is small and unblocks code.
 
 ## The Staged Start (Accepted)
 
-[ADR-0016 Staged Development](../30%20Decisions/ADR-0016%20Staged%20Development.md) (accepted 2026-11-02) defers the rows that a milestone does not need to the milestone that does. M0 started on 2026-11-03 (maintainer: "Go for M0"). A new session in Oh My Pi, in the `tess-shell` project directory, writes the code from [M0 Brief](M0%20Brief.md). Each later milestone starts when its "Needs" notes are at `review`.
+[ADR-0016 Staged Development](../30%20Decisions/ADR-0016%20Staged%20Development.md) (accepted 2026-11-02) defers the rows that a milestone does not need to the milestone that does. M0 is built and pushed (maintainer, 2026-11-03): 97 tests pass and `run` idles at 0.017 % of one core ([M0 Brief > Result (2026-11-03)](M0%20Brief.md#result-2026-11-03)). M1 is next ([M1 Brief](M1%20Brief.md)). Each later milestone starts when its "Needs" notes are at `review`.
 
 ## Questions for the Maintainer
 

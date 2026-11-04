@@ -2,7 +2,7 @@
 title: M0 Brief
 aliases: [M0, Skeleton Brief, Shell M0]
 type: moc
-status: draft
+status: stable
 owner: phil
 created: 2026-11-03
 updated: 2026-11-03
@@ -12,7 +12,7 @@ tags: [moc, roadmap, brief]
 # M0 Brief
 
 > [!NOTE]
-> The brief for milestone M0, the skeleton: a `tess_shell` package that installs, answers `tesserae-shell version` and `check`, reads `settings.tdl`, starts logging, takes the instance lock, runs the start and stop sequences with no windows, and stops cleanly on a signal. The maintainer started M0 on 2026-11-03 ("Go for M0") and said a new session in Oh My Pi, in the `tess-shell` project directory, writes the code. This note is that session's starting point. The vault stays the design record; the code session does not edit it.
+> M0 is built and pushed (maintainer, 2026-11-03); the results are under "Result". The brief for milestone M0, the skeleton: a `tess_shell` package that installs, answers `tesserae-shell version` and `check`, reads `settings.tdl`, starts logging, takes the instance lock, runs the start and stop sequences with no windows, and stops cleanly on a signal. The maintainer started M0 on 2026-11-03 ("Go for M0") and said a new session in Oh My Pi, in the `tess-shell` project directory, writes the code. This note is that session's starting point. The vault stays the design record; the code session does not edit it.
 
 ## Goal and Definition of Done
 
@@ -46,12 +46,12 @@ Ranges, because the projects are 0.x and a minor release can break (maintainer, 
 
 | Package | Range | Import | State on 2026-11-03 |
 |---|---|---|---|
-| `tesserae-engine` | `>=0.6.0,<0.7` | `tess_re` | 0.6.0 is not on PyPI yet (tre says the release is in progress); PyPI has 0.5.10, which imports as `tre` |
+| `tesserae-engine` | `>=0.6.0,<0.7` | `tess_re` | 0.6.0 is on PyPI (checked 2026-11-03; it imports as `tess_re`, `import tre` no longer works) |
 | `tesserae-el` | `>=0.1.2,<0.2` | `tess_el` | 0.1.2 is on PyPI |
 | `tesserae-dl` | `>=0.1.1,<0.2` | `tess_dl` | 0.1.1 is on PyPI. 0.1.0 also exists and imports as `tdl`, so the lower bound matters |
-| `dbus-fast`, `loguru`, `jsonschema` | as in [Shell Package Layout](../20%20Architecture/Shell%20Package%20Layout.md) | | `dbus-fast` is not needed before M4; `jsonschema` is lazy |
+| `dbus-fast`, `loguru` | as in [Shell Package Layout](../20%20Architecture/Shell%20Package%20Layout.md) | | `dbus-fast` is not needed before M4. `jsonschema` is not a dependency ([ADR-0020 Validation in Code](../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)) |
 
-The code session waits for `tesserae-engine` 0.6.0 on PyPI (maintainer, 2026-11-03) and does not use the tre branch. Until it is published, the session may start on T1 and the tasks that do not import `tess_re` (the commands without `version`, config, logging, the lock, `check`). Import `tess_re` only where it is needed (`version`, and the loop in `run`), and mark tests that need it `tre`, so the rest builds and tests now.
+The code session waited for `tesserae-engine` 0.6.0 (maintainer, 2026-11-03); it is now on PyPI, so every task can proceed. Earlier advice to start on the tasks that do not import `tess_re` no longer matters. Import `tess_re` only where it is needed (`version`, and the loop in `run`), and mark tests that need it `tre`, so the rest builds and tests now.
 
 ## Tasks
 
@@ -94,6 +94,20 @@ do not edit docs/ or tools/; follow the import rules in 20 Architecture/Shell Pa
 ruff (line 100) and mypy must pass; report design gaps to the maintainer instead of guessing.
 ```
 
+## Result (2026-11-03)
+
+Built by the code session in `tess-shell` and pushed to `origin/main`. Checked against the repository on 2026-11-03:
+
+| Check | Result |
+|---|---|
+| Tests | 97 passed (`uv run pytest`) |
+| Tasks | T1 to T9 are in the history: skeleton and tooling, `version`, settings and config directory, Loguru, lock and runtime-directory checks, start and stop sequences with signals, `check` (syntax only), tests and the import-rules test, the idle measurement |
+| Idle cost of `run` over 60 s, headless sway, no windows, Python 3.14.9 with the GIL | 0.017 % of one core (budget at most 0.5 %); about 2.0 wake-ups per second (budget at most 5), counted as context switches, which over-counts ([Performance Budgets](../60%20Quality/Performance%20Budgets.md)) |
+| Engine | `tesserae-engine` 0.6.1 in the lock file (0.6.0 was the minimum) |
+| Python | The repository stays on the system Python with the GIL |
+
+Not checked by the vault session: the code itself, and the list of design gaps (see the open item below).
+
 ## Open Questions
 
 1. [x] The code session waits for `tesserae-engine` 0.6.0 (maintainer, 2026-11-03).
@@ -102,9 +116,9 @@ ruff (line 100) and mypy must pass; report design gaps to the maintainer instead
 
 ## Acceptance Criteria
 
-- [ ] Every item under "Goal and Definition of Done" is true on a clean checkout.
-- [ ] Each task T1 to T9 has at least one test or a recorded measurement.
-- [ ] No file outside the allowed list was changed.
+- [x] Every item under "Goal and Definition of Done" is true (tests and idle measurement above; the maintainer reports M0 built and pushed).
+- [x] Each task T1 to T9 has at least one test or a recorded measurement (`tests/` and `tests/perf/idle-results.md`).
+- [x] No file outside the allowed list was changed, as far as the history shows (the agent setup files are in the list).
 - [ ] A list of design gaps found is handed to the vault session.
 
 ## Links

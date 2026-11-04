@@ -2,7 +2,7 @@
 title: Shell Package Layout
 aliases: [Package Layout, Repository Layout, Dependencies]
 type: architecture
-status: draft
+status: review
 owner: phil
 created: 2026-11-02
 updated: 2026-11-03
@@ -65,7 +65,7 @@ tess_shell/
 ├── app.py               the start and stop sequences, the loop, signals
 ├── config/              discovery of the config directory, settings.tdl, the registry, paths
 ├── files/               loading with tdl: Import, name resolution, the UID write, file-type checks
-├── schema/              the keys and types of each file type; the JSON Schema generator; error codes of the shell
+├── schema/              the keys and types of each file type, checked in code ([[ADR-0020 Validation in Code]]); a later optional emitter of JSON Schema as plain JSON; error codes of the shell
 ├── model/               the shell model, the value store, TEL scope and compilation, If and For
 ├── binder/              the render binder (independent, below)
 ├── surfaces/            the surface manager: Bar, Panel, Popup, Frame, monitors, layer windows
@@ -78,15 +78,15 @@ tess_shell/
 
 ### The Binder Is Independent
 
-`tess_shell/binder/` follows [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md): it holds the block table, the key table, the converters and the links, it imports only `tess_re` and the standard library, and it receives a typed tree through plain classes defined in `binder/`. A test fails if `binder/` imports any other part of `tess_shell`. It can then become its own library without edits.
+`tess_shell/binder/` follows [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md): it holds the block table, the key table, the converters and the links, it imports only `tess_re`, `tess_utils` and the standard library, and it receives a typed tree through plain classes defined in `binder/`. A test fails if `binder/` imports any other part of `tess_shell`. It can then become its own library without edits.
 
 ### Import Rules
 
 | Package | May import | Must not import |
 |---|---|---|
-| `binder` | `tess_re`, the standard library | everything else in `tess_shell`, `tess_dl`, `tess_el` |
+| `binder` | `tess_re`, `tess_utils` (the vendored copy), the standard library | everything else in `tess_shell`, `tess_dl`, `tess_el` |
 | `files` | `tess_dl`, `config`, `schema` | `tess_re`, `surfaces`, `services` |
-| `schema` | the standard library | `tess_re`, `tess_dl` internals (it reads the public tree) |
+| `schema` | the standard library, `binder.model` (the typed tree classes only) | `tess_re`, `tess_dl` internals (it reads the public tree) |
 | `model` | `tess_el`, `schema`, `files` | `tess_re`, `surfaces`, `services` |
 | `surfaces` | `tess_re`, `binder`, `model`, `config` | `services`, `modules` internals |
 | `modules` | `model`, the module context, `services` through the context only | `tess_re`, `surfaces` ([Layers and Components > Dependency Rules](Layers%20and%20Components.md#dependency-rules) rule 3) |
@@ -94,20 +94,23 @@ tess_shell/
 | `ipc` | `services`, `app` hooks | `tess_re` |
 | `app`, `cli` | anything above | n/a |
 
-A module (user or shipped) never imports `tess_re` ([Layers and Components > Dependency Rules](Layers%20and%20Components.md#dependency-rules)). The rules are enforced by an import-linter style test, not by convention.
+Only the vendored `tess_utils` imports `PIL` (Pillow); no other `tess_shell` module does, and a test checks it ([ADR-0017 Shared Utilities](../30%20Decisions/ADR-0017%20Shared%20Utilities.md)). A module (user or shipped) never imports `tess_re` ([Layers and Components > Dependency Rules](Layers%20and%20Components.md#dependency-rules)). The rules are enforced by an import-linter style test, not by convention.
 
 ## Dependencies
 
 | Package | Import | Minimum | Why |
 |---|---|---|---|
-| `tesserae-engine` | `tess_re` | `>=0.6.0,<0.7`, the release that renames the import to `tess_re` (tre reported on 2026-11-03 that the release is in progress; 0.5.10, with `Window.build` and `Window.apply`, still imports as `tre`) | The renderer ([TRE-REQ-009 Batch and Tree Building](../80%20Requests/TRE-REQ-009%20Batch%20and%20Tree%20Building.md)) |
+| `tesserae-engine` | `tess_re` | `>=0.6.0,<0.7`, the release that renames the import to `tess_re` (on PyPI, checked 2026-11-03; 0.5.10, with `Window.build` and `Window.apply`, imports as `tre`) | The renderer ([TRE-REQ-009 Batch and Tree Building](../80%20Requests/TRE-REQ-009%20Batch%20and%20Tree%20Building.md)) |
 | `tesserae-el` | `tess_el` | `>=0.1.2,<0.2`, the first release with the import name `tess_el` (on PyPI, checked 2026-11-03) | Expressions ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)) |
 | `tesserae-dl` | `tess_dl` | `>=0.1.1,<0.2`, the first release with the import name `tess_dl` (on PyPI, checked 2026-11-03; 0.1.0 imported as `tdl`) | Reading and writing TDL ([TDL Library API](../42%20Python%20API/TDL%20Library%20API.md)) |
+| `tess-utils` | `tess_utils` | a tagged copy vendored under `src/tess_shell/_vendor/tess_utils/` ([ADR-0017 Shared Utilities > Distribution (Decided by the Maintainer 2026-11-03; Details Proposed)](../30%20Decisions/ADR-0017%20Shared%20Utilities.md#distribution-decided-by-the-maintainer-2026-11-03-details-proposed)) | Converters to tre's forms ([tess-utils Brief](../00%20Home/tess-utils%20Brief.md)) |
+| `Pillow` | `PIL` | `>=10.0` (the floor Tesserae UI declares), when the image blocks are built | Decoding PNG, JPEG, GIF and WebP, imported only by the vendored `tess_utils` ([Block Reference](../41%20TDL%20Reference/Block%20Reference.md) R8); listed here because a vendored copy brings no metadata |
 | `dbus-fast` | `dbus_fast` | per [ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md) | D-Bus |
 | `loguru` | `loguru` | per [Logging](../40%20Specifications/Runtime/Logging.md) | Logging |
-| `jsonschema` | `jsonschema` | per [JSON Schema and Editor Support](../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md); imported lazily | Editor schemas |
 
 Python 3.14 or later ([V1 Scope](../10%20Vision/V1%20Scope.md)); the dependencies' own minimums are as they state (tre requires 3.12 or later, TEL 3.14). The pins are ranges with the next minor as the upper bound, because the projects are 0.x and a minor release can break (maintainer, 2026-11-03, "as you recommend for now"); an exact pin is a release choice ([Roadmap > Working Mode: Fluid Dependencies](../00%20Home/Roadmap.md#working-mode-fluid-dependencies)).
+
+Each dependency needs a reason under [ADR-0019 Dependency Policy](../30%20Decisions/ADR-0019%20Dependency%20Policy.md): a library only where building the same would be a project of its own. The ADR's table reviews these.
 
 Dev dependencies (the TEL project's set): `pytest`, `ruff`, `mypy`, `hypothesis` where useful.
 

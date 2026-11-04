@@ -2,10 +2,10 @@
 title: Process Model and Threading
 aliases: [Threading, Event Loop Model]
 type: architecture
-status: draft
+status: review
 owner: phil
 created: 2026-10-25
-updated: 2026-10-26
+updated: 2026-11-03
 tags: [architecture, needs-verification]
 ---
 

@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-27
-updated: 2026-10-31
+updated: 2026-11-03
 tags: [tdl-ref, tooling, needs-verification]
 ---
 
@@ -13,6 +13,10 @@ tags: [tdl-ref, tooling, needs-verification]
 
 > [!NOTE]
 > The shell publishes JSON Schema files for its shell files. The shell validates the parsed tree against them at load and on hot reload. The schemas are generated from the block and module declarations, so the reference and the code cannot drift. [ADR-0011 JSON Schema for Shell Files](../30%20Decisions/ADR-0011%20JSON%20Schema%20for%20Shell%20Files.md) (accepted 2026-10-27) also relied on the YAML language server for completion and hover in editors; shell files are now TDL ([ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)), so the editor part is dropped. ADR-0011 stands for load-time and reload validation of the parsed tree (D12 in [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). There is no language server in v1, and a small TextMate grammar (syntax highlighting) ships with v1. The details below are proposed.
+
+> [!CAUTION]
+> **Run-time `jsonschema` replaced (2026-11-03)**
+> The shell validates in code and does not run `jsonschema` at run time ([ADR-0020 Validation in Code](../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)). The sections on the `jsonschema` dependency, its cache and the spike are kept as the record of why. JSON Schema files, if wanted by a tool, are emitted as plain JSON from the declarations.
 
 > [!IMPORTANT]
 > **Revised for TDL, 2026-10-30**

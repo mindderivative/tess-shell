@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-27
-updated: 2026-10-29
+updated: 2026-11-03
 tags: [adr, tooling, needs-verification]
 ---
 
@@ -49,6 +49,10 @@ Option A (maintainer, 2026-10-27). Decided the same day: draft-07 keywords; the 
 - A schema generation step and a `tesserae-shell schema` command are part of the runtime and delivery design.
 - Semantic checks stay in the shell, after the schema passes.
 - The format version in `shell:` selects the schema folder.
+
+## Update 2026-11-03
+
+Run-time validation with `jsonschema` is replaced by validation in code ([ADR-0020 Validation in Code](ADR-0020%20Validation%20in%20Code.md), accepted 2026-11-03). Schemas generated from the declarations, if produced for tools, are emitted as plain JSON; the shell does not load a validator library.
 
 ## Links
 

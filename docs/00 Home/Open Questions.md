@@ -73,6 +73,7 @@ The same notes as a plain list, with no JavaScript:
 - [Problem Statement](../10%20Vision/Problem%20Statement.md)
 - [Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md)
 - [Python Builder](../42%20Python%20API/Python%20Builder.md)
+- [Render Binder Design](../20%20Architecture/Render%20Binder%20Design.md)
 - [Risk Register](Risk%20Register.md)
 - [Settings File](../41%20TDL%20Reference/Settings%20File.md)
 - [Shadows on Layer Surfaces](../90%20Research/Shadows%20on%20Layer%20Surfaces.md)
@@ -531,6 +532,40 @@ All nine were answered on 2026-10-28, as recommended.
 
 1. [ ] Whether `tess-dl` publishes its docs as a site (the tre and Tesserae projects do) or keeps Markdown in the repository.
 2. [ ] Who edits the language text when a shell need changes it: the `tess-dl` session after a `TDL-REQ-###` (recommended), or the shell session directly.
+
+
+### [tess-utils Brief](tess-utils%20Brief.md)
+
+
+1. [x] Private repository (maintainer, 2026-11-03).
+2. [x] The shell's code session starts the build; any project may add (maintainer, 2026-11-03).
+3. [ ] Where the sync script lives (options A to D above; recommendation C).
+4. [x] Bundled by each PyPI-released project at release time, pulling the latest from `tess-utils` (maintainer, 2026-11-03).
+5. [ ] Whether "latest" means the latest tag (recommended) or `main`.
+6. [ ] Credentials for a CI release job, if one is ever used.
+7. [x] The "100+" was an example of where a project could go over a long time, not a present count (maintainer, 2026-11-03). A compiled extension is not wanted now; the dependency rule is [ADR-0019 Dependency Policy](../30%20Decisions/ADR-0019%20Dependency%20Policy.md): a library only for what would be a project of its own, otherwise a few lines of our own code.
+
+
+### [M1 Brief](M1%20Brief.md)
+
+
+1. [ ] Scope: the blocks `Box`, `FlexBox`, `Text`, `Rectangle`, `Spacer`, inline `Style` only, one Bar. Agree?
+2. [ ] The typed tree classes live in `binder/model.py` and `schema` imports them (the one new allowed import). Agree (recommended)?
+3. [ ] The binder builds each surface with `Window.build` only, which needs `tesserae-engine` 0.6.0 or later (already the M0 minimum). Agree?
+4. [ ] Theme tokens are resolved by the shell before binding, and M1 has none: literal values only. Agree?
+5. [ ] The Block Reference "tre" columns are corrected against tre by a test at T3, and I fix the notes from its output. Agree?
+6. [ ] Should M1 start only when M0 is done, or may the code session start T1 to T4 now, since they need no config or lifecycle code?
+
+
+### [Render Binder Design](../20%20Architecture/Render%20Binder%20Design.md)
+
+
+1. [ ] Whether `font_family` takes a list or a string in tre; test it.
+2. [ ] How `AUTO` and `EXPAND` map in tre for each block ([Block Reference](../41%20TDL%20Reference/Block%20Reference.md) sizes).
+3. [ ] Whether `fill` colours text in tre, by a snapshot test.
+4. [ ] Whether the binder resolves theme tokens itself (`$color.surface`) or the shell resolves them before binding (recommendation: the shell, so the binder sees literal values; tokens arrive with M2).
+5. [ ] The shape of `View` for `If` and `For` branches (M2).
+6. [ ] Whether the key table is hand-written or generated from the Block Reference with the test as a guard (recommendation: hand-written, guarded).
 
 
 ### [M0 Brief](M0%20Brief.md)

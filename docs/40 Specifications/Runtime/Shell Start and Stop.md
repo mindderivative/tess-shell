@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-11-02
+updated: 2026-11-03
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -137,7 +137,7 @@ A failure that stops the shell must also be readable without a console: the shel
 
 ## Performance Budget
 
-- Start is dominated by file parsing, validation and window creation. With a warm validation cache `jsonschema` is never imported ([JSON Schema and Editor Support > The `jsonschema` Dependency: Runtime, Not Only Development](../../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md#the-jsonschema-dependency-runtime-not-only-development)).
+- Start is dominated by file parsing, validation and window creation. Validation is in code and loads no JSON Schema library ([ADR-0020 Validation in Code](../../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)).
 - Budgets (time to first surface, time to ready, stop time) are set in `60 Quality/` and measured on this machine; none is measured yet.
 - Stop is bounded: 10 seconds in total (decided).
 

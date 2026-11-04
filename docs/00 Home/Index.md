@@ -64,6 +64,10 @@ Operating rules for agents: AGENTS.
 | [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md) | accepted (2026-10-29)  | TDL reference, Python Builder, JSON Schema tooling  |
 | [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md) | accepted (2026-11-02) | Layers and components, data flow, the binder |
 | [ADR-0016 Staged Development](../30%20Decisions/ADR-0016%20Staged%20Development.md) | accepted (2026-11-02) | Roadmap, development readiness |
+| [ADR-0017 Shared Utilities](../30%20Decisions/ADR-0017%20Shared%20Utilities.md) | accepted (2026-11-03) | Binder converters, Tesserae UI |
+| [ADR-0018 One Entry Form in tre](../30%20Decisions/ADR-0018%20One%20Entry%20Form%20in%20tre.md) | accepted (2026-11-03) | Requests to tre, the binder, Tesserae UI |
+| [ADR-0019 Dependency Policy](../30%20Decisions/ADR-0019%20Dependency%20Policy.md) | accepted (2026-11-03) | All dependency choices |
+| [ADR-0020 Validation in Code](../30%20Decisions/ADR-0020%20Validation%20in%20Code.md) | accepted (2026-11-03) | Validation, schema package, M1 T5 |
 | [ADR-0003 Process Model](../30%20Decisions/ADR-0003%20Process%20Model.md) | accepted (2026-10-25)  | Architecture, runtime, quality                     |
 | [ADR-0004 Plasma Coexistence](../30%20Decisions/ADR-0004%20Plasma%20Coexistence.md) | accepted (2026-10-25)  | Integration specs                                  |
 | [ADR-0005 Global Shortcuts](../30%20Decisions/ADR-0005%20Global%20Shortcuts.md) | accepted (2026-10-25)  | Launcher, integration specs                        |

@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-11-02
+updated: 2026-11-03
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -139,7 +139,7 @@ None directly. Error messages follow [Validation and Errors](Validation%20and%20
 
 ## Performance Budget
 
-- Discovery scans a few dozen files; parsing dominates. With the validation cache an unchanged file is not re-validated ([JSON Schema and Editor Support > The `jsonschema` Dependency: Runtime, Not Only Development](../../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md#the-jsonschema-dependency-runtime-not-only-development)).
+- Discovery scans a few dozen files; parsing dominates. Validation is in code and fast, so no validation cache is kept ([ADR-0020 Validation in Code](../../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)).
 - A registry write is off the loop and bounded by one write per 500 ms.
 - Budgets are set in `60 Quality/`.
 

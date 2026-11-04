@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-11-02
+updated: 2026-11-03
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -39,7 +39,7 @@ flowchart LR
 | 1. Read        | The file opens and is UTF-8 (a byte-order mark is allowed and dropped)                   | Standard library                                                 | The file, line 1                                                      |
 | 2. Parse       | TDL syntax; the tree is an ordered list of entries (head, properties, children) that keeps repeated names (D12); it holds only blocks, properties, lists and literal values; `{{ }}` slots are kept as text for stage 6 | The shell's TDL parser ([ADR-0014 Shell File Language](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md))        | The parser's own positions                                            |
 | 3. Header      | The loader reads the metadata block first, then the root block, which picks the schema (D12). The metadata block is present; `TDL:` is present with a known version; `Name:` is present and follows the name rules (letters, digits and `_`, starting with a letter); the minimum version pins (`TEL:`, `TRE:`, `Shell:`) are met; exactly one root block (`Shell`, `Module`, `Style`, `Stylesheet`, `Theme`); the root block agrees with the suffix; `UID:` well formed | The shell                                                        | The key's or the root block's node                                    |
-| 4. Schema      | The schema picked at stage 3 validates the metadata part and the block part (D12). Types, enums (upper case: `Edge: top` is refused with a hint to write `TOP`), required keys, unknown keys (the metadata block's other keys are kept and ignored), value forms (colour, four-sided in the order left, top, right, bottom, size) | `jsonschema`, draft-07 ([ADR-0011 JSON Schema for Shell Files](../../30%20Decisions/ADR-0011%20JSON%20Schema%20for%20Shell%20Files.md)) | The tree node at the error's path                                       |
+| 4. Schema      | The schema picked at stage 3 validates the metadata part and the block part (D12). Types, enums (upper case: `Edge: top` is refused with a hint to write `TOP`), required keys, unknown keys (the metadata block's other keys are kept and ignored), value forms (colour, four-sided in the order left, top, right, bottom, size) | The `schema` package, in code ([ADR-0020 Validation in Code](../../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)) | The tree node at the error's path                                       |
 | 5. Semantic    | Rules a schema cannot say (below)                                                        | The shell                                                        | The node at the offending key or value                                |
 | 6. Expressions | TEL compiles; every name it reads is known                                               | TEL                                                              | The slot's `Origin` (file, line, column) from the parser              |
 | 7. Modules     | The `.py` imports; it holds one `Module` class; `validate_use` accepts each use          | Python                                                           | The traceback line for the `.py`; the use's node for a rejected param |
@@ -141,7 +141,7 @@ A module reports a rejected param by raising `ValueError` in `validate_use` ([Mo
 
 ## Integration
 
-- `jsonschema` (lazy, with a pass cache keyed by content hash and schema version; it validates the tree the TDL parser produces, and [ADR-0011 JSON Schema for Shell Files](../../30%20Decisions/ADR-0011%20JSON%20Schema%20for%20Shell%20Files.md) is being rethought for TDL), the TDL parser, `difflib`, Loguru ([JSON Schema and Editor Support](../../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md), [Logging with Loguru](../../90%20Research/Logging%20with%20Loguru.md)).
+- The TDL parser (`tess_dl`), `difflib` for the nearest key names, and Loguru ([Logging with Loguru](../../90%20Research/Logging%20with%20Loguru.md)). No JSON Schema library is loaded ([ADR-0020 Validation in Code](../../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)).
 - Threads: stages 1 to 7 run on the config watcher thread or before the loop at start; the loop only receives a finished result or a finished report ([Process Model and Threading > Threads](../../20%20Architecture/Process%20Model%20and%20Threading.md#threads)).
 - TEL: the parser tells TEL where each `{{ }}` slot starts as an `Origin` (file, line, column, 1-based), so TEL errors point into the file and the shell adds no offset itself. A slot is on one line, so no indentation arithmetic is needed. This is the proposed requirement T17 in [Expression Language Requirements](Expression%20Language%20Requirements.md), not yet sent to the TEL project. #needs-verification
 
@@ -155,7 +155,7 @@ A plain-text error is readable by a screen reader in a terminal. An error that s
 
 ## Performance Budget
 
-- A cached file costs a hash. A changed file costs a parse and a validation; a few milliseconds per hundred entries on this machine ([JSON Schema and Editor Support > The `jsonschema` Dependency: Runtime, Not Only Development](../../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md#the-jsonschema-dependency-runtime-not-only-development)).
+- A changed file costs a parse and a validation in code; the checks are table-driven and take milliseconds at most for a shell of a few hundred entries (to measure, [Performance Budgets](../../60%20Quality/Performance%20Budgets.md)). There is no validation cache ([ADR-0020 Validation in Code](../../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)).
 - Collecting up to 50 errors adds nothing the user feels; the cap protects the log.
 
 ## Failure Modes and Recovery

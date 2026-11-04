@@ -2,10 +2,10 @@
 title: Runtime
 aliases: [Runtime Specs]
 type: moc
-status: draft
+status: review
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-03
 tags: [moc, spec/runtime]
 ---
 

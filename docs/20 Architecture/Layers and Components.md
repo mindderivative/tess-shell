@@ -51,7 +51,7 @@ flowchart TB
 
 | Layer | Owns                                                                                            | Never owns                                     | Spec                                    |
 |-------|-------------------------------------------------------------------------------------------------|------------------------------------------------|-----------------------------------------|
-| tre   | Frames, layout, paint, animation, input, layer surfaces, outputs, hit testing                   | Widgets, themes, file formats, shell meaning   | [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) |
+| tre   | Frames, layout, paint, animation, input, layer surfaces, outputs, hit testing                   | Widgets, themes, file formats, shell meaning, conversions between value formats ([ADR-0018 One Entry Form in tre](../30%20Decisions/ADR-0018%20One%20Entry%20Form%20in%20tre.md)) | [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md) |
 | TEL   | Expression syntax, evaluation, limits, name tracking, expression-level conditionals and comprehensions, error positions | Surfaces, modules, files, the registry, any UI | [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md) |
 | tdl   | Reading a TDL file into a lossless tree with positions and errors, and writing it back with an edit (the UID) | Blocks, keys, schemas, tre, TEL, files other than the text it is given | [TDL Library API](../42%20Python%20API/TDL%20Library%20API.md) |
 

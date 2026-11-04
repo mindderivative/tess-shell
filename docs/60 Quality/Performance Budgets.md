@@ -2,10 +2,10 @@
 title: Performance Budgets
 aliases: [Budgets, Performance Budget Ledger]
 type: quality
-status: draft
+status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-02
+updated: 2026-11-03
 tags: [quality, performance]
 ---
 
@@ -52,9 +52,9 @@ Recommendations, each with its reason. None is measured on the shell, because th
 
 | Budget | Proposed | Reason |
 |---|---|---|
-| Idle CPU, shell running, nothing animating | At most 0.5% of one core, averaged over 60 s | tre measured 0.0% idle for a window and 0.01 s in 5 s with none ([TRE-REQ-008 SMIL Animation in SVG Nodes > Built in tre (Reported 2026-11-02)](../80%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md#built-in-tre-reported-2026-11-02), [Process Model and Threading > Performance Notes](../20%20Architecture/Process%20Model%20and%20Threading.md#performance-notes)); the Python threads and one timer per second add the rest |
-| Idle wake-ups | At most 5 per second | tre reports about 2 per second from its OS-preference watcher; the Clock adds 1 per second; the D-Bus layer adds 0 without signals |
-| Time to first surface | Under 1.0 s from the process start on a warm cache | Steps 1 to 11 of the start sequence run before the surfaces open ([Shell Start and Stop > Start Sequence](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md#start-sequence)); a warm schema cache avoids importing `jsonschema` ([JSON Schema and Editor Support](../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md)) |
+| Idle CPU, shell running, nothing animating | At most 0.5% of one core, averaged over 60 s. Measured at M0 (headless sway, no windows): 0.017 % ([M0 Brief > Result (2026-11-03)](../00%20Home/M0%20Brief.md#result-2026-11-03)) | tre measured 0.0% idle for a window and 0.01 s in 5 s with none ([TRE-REQ-008 SMIL Animation in SVG Nodes > Built in tre (Reported 2026-11-02)](../80%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md#built-in-tre-reported-2026-11-02), [Process Model and Threading > Performance Notes](../20%20Architecture/Process%20Model%20and%20Threading.md#performance-notes)); the Python threads and one timer per second add the rest |
+| Idle wake-ups | At most 5 per second. Measured at M0: about 2.0 per second, counted as context switches | tre reports about 2 per second from its OS-preference watcher; the Clock adds 1 per second; the D-Bus layer adds 0 without signals |
+| Time to first surface | Under 1.0 s from the process start on a warm cache | Steps 1 to 11 of the start sequence run before the surfaces open ([Shell Start and Stop > Start Sequence](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md#start-sequence)); validation is in code and loads no JSON Schema library ([ADR-0020 Validation in Code](../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)) |
 | Time to ready | Under 2.0 s | Modules start at step 12 |
 | Hot reload apply, after the 200 ms debounce | Under 100 ms for a shell of 10 surfaces | The debounce is decided at 200 ms and "about 300 ms end to end" is the spec's acceptance ([Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md)) |
 | Resident memory of the default shell | To be set after the first build | The measured parts are per window (18 MiB for a bar, 177 MiB for a 4K overlay, 0.5.8); a total needs the real surface count |
@@ -73,7 +73,7 @@ These are inconsistencies between notes, found by the sweep. I have not edited t
 | 2 | Memory baselines mix tre versions: the Bar and Panel use 0.5.8, the Frame uses 0.5.9 shared-device numbers, and [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md) still says one shared device is open | Name the tre version beside every memory number |
 | 3 | [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md) calls 177 MiB "before later changes" but uses it as the budget | Re-measure on 0.5.9 before it is a budget |
 | 4 | The `jeepney` one-call cost is 20.0 ms in one place and 21.0 ms in others | Use one measured figure and say "about 20 ms" |
-| 5 | The `jsonschema` import costs 43 ms in one note and 57.5 ms in another | Two measurements; say which is which |
+| 5 | The `jsonschema` import cost was 43 ms in one note and 57.5 ms in another | Moot: `jsonschema` is no longer a run-time dependency ([ADR-0020 Validation in Code](../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)) |
 | 6 | [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md) says 30 Hz sampling suits the shell, but tre built none (display rate, no cap) | Already recorded; keep R-24 open until tre adds a cap |
 | 7 | Stop timeouts (3 s, 10 s) are decided but `Stop_Timeout` and `Module_Stop_Timeout` are only proposed | Accept the keys with the timeouts |
 | 8 | The KWin silent-script warning (5 s) is "proposed" in the body and decided in the list | Mark it decided |

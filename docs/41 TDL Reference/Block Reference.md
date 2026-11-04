@@ -16,6 +16,10 @@ tags: [tdl-ref, spec/widget, needs-verification]
 
 ## How to Read the Tables
 
+> [!WARNING]
+> **Checked against tre 0.5.10 (2026-11-03); 0.6.0 only renames the package**
+> A four-sided value is four tre properties (`padding_top` and so on), not one `padding`; colours are `(r, g, b, a)` tuples of 0 to 255 integers, not strings; a box's background is `fill`, its border `stroke_color` and `stroke_width`. Details and the other forms are in [Render Binder Design > What tre Accepts (Tested 2026-11-03)](../20%20Architecture/Render%20Binder%20Design.md#what-tre-accepts-tested-2026-11-03). The "tre" columns below are being checked against tre by a test at M1.
+
 - Keys follow [TDL Language > Names and the Registry](TDL%20Language.md#names-and-the-registry): Capitalised words joined by `_`, enum values in upper case. A key that has a tre property keeps tre's name where the shell has not chosen another (`Min_Width` for `min_width`), and the tre column names it.
 - A block is called by its head (`Text { }`). The properties below go inside it. Default `none` means the key is not set.
 - A key that is also a style key (`Padding`, `Margin`, `Spacing`, `Opacity`) is a shorthand: writing it on a block is the same as writing it in that block's inline `Style`, with the priority of inline style (proposed rule R2 below).
@@ -65,7 +69,7 @@ Every block has these.
 | `Position`                                        | `RELATIVE`, `ABSOLUTE`                         | `RELATIVE` | `position`                              | `ABSOLUTE` takes the block out of the layout and places it by `Left`, `Top`, `Right`, `Bottom`                                   |
 | `Left`, `Top`, `Right`, `Bottom`                  | A length                                      | none    | `left`, `top`, `right`, `bottom`           | Insets of an absolute block                                                                                                     |
 | `Z_Index`                                         | A whole number                                | 0       | `z_index`                                 | Paint order among siblings                                                                                                      |
-| `Margin`                                          | Four-sided, left, top, right, bottom           | 0       | `margin`                                  | Transparent space around the block. Also a style key                                                                            |
+| `Margin`                                          | Four-sided, left, top, right, bottom           | 0       | `margin_top`, `margin_right`, `margin_bottom`, `margin_left` | Transparent space around the block. Also a style key                                                                            |
 
 ### As a Child
 
@@ -143,7 +147,7 @@ Block-specific events are listed with the block. tre has no double-click and no 
 
 | Key       | Values                  | Default | tre                         | Meaning                                                           |
 |-----------|-------------------------|---------|-----------------------------|-------------------------------------------------------------------|
-| `Padding` | Four-sided              | 0       | `padding`                   | Transparent space between the children and the four sides (D42)   |
+| `Padding` | Four-sided              | 0       | `padding_top`, `padding_right`, `padding_bottom`, `padding_left` | Transparent space between the children and the four sides (D42)   |
 | `Children` | A block of blocks      | none    | children                    | The contents                                                      |
 
 Maps to a tre `box` with `display: "grid"`, one column and one row, and every child placed in cell (1, 1). Role none; `A11y_Hidden` false.
@@ -157,7 +161,7 @@ Maps to a tre `box` with `display: "grid"`, one column and one row, and every ch
 | `Align_Items`     | `START`, `CENTER`, `END`, `STRETCH`                              | `STRETCH`    | `align_items`              | Placement across the stacking direction                                    |
 | `Justify_Content` | `START`, `CENTER`, `END`, `SPACE_BETWEEN`, `SPACE_AROUND`, `SPACE_EVENLY` | `START` | `justify_content`      | Placement along the stacking direction                                     |
 | `Spacing`         | A number (pixels)                                                | 0            | `gap`                      | Space between the children (D49). Also a style key                         |
-| `Padding`         | Four-sided                                                       | 0            | `padding`                  | Space between the children and the four sides                              |
+| `Padding`         | Four-sided                                                       | 0            | `padding_top`, `padding_right`, `padding_bottom`, `padding_left` | Space between the children and the four sides                              |
 
 A vertical Bar is a FlexBox with `Flex: VERTICAL` (decided 2026-10-27). The defaults of the align and justify keys are CSS-like and tre's page does not state them #needs-verification.
 
@@ -171,7 +175,7 @@ A vertical Bar is a FlexBox with `Flex: VERTICAL` (decided 2026-10-27). The defa
 | `Auto_Flow`                      | `ROW`, `COLUMN`                                                    | `ROW`    | `grid_auto_flow`                          | Where an unplaced child goes                                                                  |
 | `Auto_Columns`, `Auto_Rows`      | A track size                                                       | `AUTO`   | `grid_auto_columns`, `grid_auto_rows`     | The size of tracks the template did not define                                                |
 | `Justify_Items`, `Align_Items`, `Align_Content` | `START`, `CENTER`, `END`, `STRETCH`                 | `STRETCH` | `justify_items`, `align_items`, `align_content` | Placement of items and of the tracks                                                  |
-| `Padding`                        | Four-sided                                                         | 0        | `padding`                                 | Space between the tracks and the four sides                                                   |
+| `Padding`                        | Four-sided                                                         | 0        | `padding_top`, `padding_right`, `padding_bottom`, `padding_left` | Space between the tracks and the four sides                                                   |
 
 The exact text form of tre's `grid_template_columns` is not on the page; the shell builds it from the list above #needs-verification. A child sets its cell with `Grid_Column` and `Grid_Row`.
 
@@ -184,7 +188,7 @@ The decided block set has no scrolling block, yet the List module needs one: tre
 | `Orientation`    | `VERTICAL`, `HORIZONTAL`              | `VERTICAL` | `orientation`    | The scrolling direction                                                   |
 | `Scroll_Snap`    | `NONE`, `START`, `CENTER`, `END`      | `NONE`     | `scroll_snap`    | Snap points                                                               |
 | `Scroll_Offset`  | A number (pixels)                     | 0          | `scroll_offset`  | The current offset; animatable                                            |
-| `Padding`        | Four-sided                            | 0          | `padding`        | Inside space                                                              |
+| `Padding`        | Four-sided                            | 0          | `padding_top`, `padding_right`, `padding_bottom`, `padding_left` | Inside space                                                              |
 | `On_Scroll`      | event                                 | none       | `scroll`         | Fires when the offset changes (`old_value`, `new_value`)                  |
 
 ### VirtualList (Later, R3)
@@ -201,7 +205,7 @@ For long lists (launcher results, tasks) where only visible entries are built. M
 | `Wrap`       | `WORD`, `NONE`                | `WORD`  | `wrap`                      | `NONE` keeps one line                                                                                 |
 | `Max_Lines`  | A whole number                | none    | `max_lines`                 | Truncates after this many lines                                                                       |
 | `Selectable` | true, false                   | false   | `selectable` (default false) | Lets the user select the text                                                                         |
-| `Padding`    | Four-sided                    | 0       | `padding`                   | Inset around the words (R6)                                                                           |
+| `Padding`    | Four-sided                    | 0       | `padding_top`, `padding_right`, `padding_bottom`, `padding_left` | Inset around the words (R6)                                                                           |
 | `On_Link`    | event                         | none    | `link` (`href`)             | A press and release on a link span                                                                    |
 
 Style keys: `Font_Family`, `Font_Size`, `Font_Weight`, `Line_Height`, `Text_Align`, `Overflow`, `Foreground` ([Style Schema > Style Keys](Style%20Schema.md#style-keys)). tre also has `font_style`, `letter_spacing`, `spans` (rich text) and `fill`; the shell has no key for `font_style` and `letter_spacing` yet, and rich text is post-v1 (R10). `Width: AUTO` is tre's `"fit-content"` for text. Role none; the block that shows the text carries the label. Label is a Text with `Wrap: NONE`; TextBox is a Text with `Wrap: WORD`.
@@ -316,7 +320,7 @@ Proposals R1 to R11 were decided by the maintainer in chat ("As recommended"), e
 | R5  | Event values              | `On_` is reserved for events; event names are added as blocks need them. An action is an `@action` method or a built-in shell action. The value form under Events is a proposal.                                                                                                                                          |
 | R6  | Input state and Padding   | Data in through `Text`, edits out through `On_Changed`; no two-way binding. `Padding` is on every block with `Children` and also on `Text` and `TextField` (this decides D59 of [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)).                                                                                                        |
 | R7  | Icons                     | Changed by the maintainer. Lookup order: (1) a shipped set of SVG icons in a JSON file, (2) the desktop's freedesktop icon theme, (3) the `Icons` folder in the shell's config directory, (4) the locations a developer lists in `settings.tdl`. See "Icons" below. The maintainer provides the JSON file.                |
-| R8  | Image decoding            | The shell decodes png, jpeg, gif and webp with an image library (a dependency to choose). An animated gif is stepped by the shell. Post-v1 for animation.                                                                                                                                                                 |
+| R8  | Image decoding            | The shell decodes png, jpeg, gif and webp with an image library (Pillow, chosen by the maintainer on 2026-11-03; the decoding helper lives in `tess_utils`, [ADR-0017 Shared Utilities](../30%20Decisions/ADR-0017%20Shared%20Utilities.md)). An animated gif is stepped by the shell. Post-v1 for animation.                                                                                                                                                                 |
 | R9  | A block handle for Python | A module can reach a block it names and call `focus()`, `capture_pointer()`, `release_pointer()`, `redraw()` and read `layout_width` and `layout_height`. To be written into [Module Context](../42%20Python%20API/Module%20Context.md).                                                                                                                          |
 | R10 | Rich text                 | tre's `spans` become repeated `Span` blocks inside a Text. Post-v1.                                                                                                                                                                                                                                                       |
 | R11 | v1 block set              | Box, FlexBox, Grid, Text, TextField (single line), Bitmap, SVG, Rectangle, Circle, Ring, Path and ScrollBox. The rest follow when a module needs them ([V1 Widgets](../50%20Design%20System/V1%20Widgets.md)).                                                                                                                                                   |

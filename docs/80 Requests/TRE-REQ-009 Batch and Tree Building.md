@@ -5,7 +5,7 @@ type: engine-request
 status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-02
+updated: 2026-11-03
 tags: [engine-request, design, performance, needs-verification]
 ---
 
@@ -21,6 +21,10 @@ tags: [engine-request, design, performance, needs-verification]
 > [!TIP]
 > **Released in tre 0.5.10 (2026-11-02)**
 > tre merged #253 (PR #254) and published 0.5.10 to PyPI. tre reports that the checks are all-or-nothing, depth is capped at 256 and nodes at 1,000,000, `add_child` is constant time (0.13, 0.09, 0.12 µs per call at 1,000, 5,000 and 20,000 siblings), and that `build` of 3,100 nodes took 5.3 ms against 4.9 ms per node, so the gain is the all-or-nothing check and fewer lines, not time. The shell has not run these calls yet. #needs-verification
+
+> [!TIP]
+> **In tre 0.6.0 under `tess_re`**
+> `Window.build`, `Window.apply` and `Node.set_children` are in tre 0.6.0, where the package is `tess_re` (checked 2026-11-03: `Window.build` and `Window.apply` exist).
 
 > [!TIP]
 > **Not blocking**
