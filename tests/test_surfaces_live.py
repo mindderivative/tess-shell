@@ -267,3 +267,8 @@ def test_a_for_follows_a_modules_list_while_the_shell_runs(
 
     assert "Traceback" not in shell.stderr
     assert not re.search(r"^(ERROR|CRITICAL|WARNING)\s+\|", shell.stderr, re.M), shell.stderr
+    # B1: each appended item creates exactly one node and touches no other (the others are kept)
+    stats = re.findall(
+        r"rebuilt Bar Top_Bar: (\d+) changed, (\d+) created, (\d+) removed", shell.stderr
+    )
+    assert len(stats) >= 3 and all(s == ("0", "1", "0") for s in stats), stats

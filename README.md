@@ -4,7 +4,14 @@ Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launc
 
 ## Status
 
-Milestone M0 (the skeleton) is built, and M1 (a static Bar) is built except the KWin checklist, which the maintainer runs by hand: `run` opens one `Bar` from `Main_Shell.tdl` on the matched monitor through `tess_dl`, the schema, the binder and tre, reserves its space, and stops cleanly on SIGTERM or SIGINT. Modules, themes, hot reload, `Import`, other surfaces and D-Bus come in later milestones. The design is in `docs/`.
+Milestones M0 (the skeleton), M1 (a static Bar) and M2 (live and modular) are built; the KWin checklists, which the maintainer runs by hand, are the open part. `run` opens a `Bar` from `Main_Shell.tdl` on the matched monitor through `tess_dl`, the schema, the binder and tre, reserves its space, and stops cleanly on SIGTERM or SIGINT. On top of that:
+
+- **Modules:** a `<Name>_Module.tdl` plus `<Name>_Module.py` in `Modules/<Name>/`; a use is written `Clock { format: "%H:%M" }` or `Import: <path>_Module.tdl`. The Python sends values with `ctx.send`; a `{{ }}` slot in the layout reads them, and only the node properties that changed are set. The shell ships a Clock (`format`, `hour_cycle`, `timezone`); a module of the same name in your `Modules/` folder overrides it.
+- **Structure and look:** `If`/`Else` and `For` (keyed lists) in a module's layout, style files (`Style: <Name>_Style.tdl` with `Classes`) and `SVG { Icon: "mdi:account" }` from Iconify-style JSON sets in the `Icons` folder.
+- **Hot reload:** saving a shell, module, style or icon file updates the running shell about 200 ms later, once; a file with an error changes nothing and is reported as `file:line:column`. `SIGHUP` reloads everything. `settings.tdl` keys: `Hot_Reload` (default true), `Reload_Debounce` (milliseconds, default 200); `Logging` applies at once, `Directories`, `Registry` and `Main_Shell` need a restart.
+- **Identity:** the first time the shell registers one of your files it adds a `UID:` line to its metadata, after copying the file to `$XDG_STATE_HOME/tesserae-shell/backups`.
+
+Not built yet: panels, popups, frames, themes and stylesheets, events and actions, services, shortcuts, an icon set shipped in the package. The design is in `docs/`.
 
 ## Commands
 
