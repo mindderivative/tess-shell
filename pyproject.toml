@@ -56,6 +56,7 @@ addopts = "-m 'not perf and not manual and not compositor and not dbus'"
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["tools", "docs", "graphify-out"]
 src = ["src", "tests"]
 
 [tool.ruff.lint]
