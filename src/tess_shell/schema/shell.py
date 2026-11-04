@@ -16,7 +16,14 @@ from tess_dl import Block, Document, Property
 from tess_shell.binder import model as m
 from tess_shell.schema import blocks
 from tess_shell.schema.findings import Finding, Severity, nearest
-from tess_shell.schema.model import BarDef, MonitorDef, ShellDef
+from tess_shell.schema.model import (
+    PARAM_TYPES,
+    BarDef,
+    ModuleDef,
+    MonitorDef,
+    ParamDecl,
+    ShellDef,
+)
 from tess_shell.schema.tree import position
 from tess_shell.schema.values import ValueProblem, coerce, named_sides
 
@@ -26,9 +33,15 @@ _NOT_BUILT = "not built in M1"
 
 
 class _Ctx:
-    def __init__(self, file: str, read_text: Callable[[str], str]) -> None:
+    def __init__(
+        self,
+        file: str,
+        read_text: Callable[[str], str],
+        modules: Mapping[str, ModuleDef] | None = None,
+    ) -> None:
         self.file = file
         self.read_text = read_text
+        self.modules: Mapping[str, ModuleDef] = modules or {}
         self.findings: list[Finding] = []
         self.names: dict[str, m.Origin] = {}
         self.selectors: dict[tuple[str, str], m.Origin] = {}
@@ -98,9 +111,37 @@ def _choices(block: str, key: str) -> tuple[str, ...]:
     return blocks.CHOICES.get((block, key)) or blocks.CHOICES.get(("*", key)) or ()
 
 
+def slot_value(ctx: _Ctx, prop: Property) -> m.SlotValue | None:
+    """A value written with ``{{ }}`` slots, or ``None`` for a plain value."""
+    value = prop.value
+    parts: list[str | m.SlotPart] = []
+    if isinstance(value, tess_dl.Slot):
+        parts.append(m.SlotPart(value.text, origin=ctx.origin(value.text_origin)))
+    elif isinstance(value, tess_dl.Template):
+        for part in value.parts:
+            if isinstance(part, str):
+                parts.append(part)
+            else:
+                parts.append(m.SlotPart(part.text, origin=ctx.origin(part.text_origin)))
+    else:
+        return None
+    return m.SlotValue(tuple(parts), origin=ctx.origin(prop.key_origin))
+
+
 def _typed(
     ctx: _Ctx, block: str, prop: Property, kind: str, read_text: bool = False
 ) -> m.Value | None:
+    slot = slot_value(ctx, prop)
+    if slot is not None:
+        if read_text:
+            ctx.add(
+                prop.value_origin,
+                "bad-value",
+                f"{prop.key} cannot hold a slot",
+                "write a file name",
+            )
+            return None
+        return slot
     try:
         return coerce(
             kind,
@@ -154,9 +195,9 @@ def _scalar_block_keys(
 
 
 def _children(
-    ctx: _Ctx, holder: Block, child_types: Callable[[Block], m.Node | None]
-) -> list[m.Node]:
-    out: list[m.Node] = []
+    ctx: _Ctx, holder: Block, child_types: Callable[[Block], m.Node | m.UseNode | None]
+) -> list[m.Node | m.UseNode]:
+    out: list[m.Node | m.UseNode] = []
     for entry in holder.entries:
         if isinstance(entry, Block):
             node = child_types(entry)
@@ -176,10 +217,56 @@ def _children(
     return out
 
 
-def _block(ctx: _Ctx, block: Block) -> m.Node | None:
+_PARAM_KINDS = {"string": "text", "number": "number", "boolean": "bool"}
+
+
+def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
+    """A call of a module: the head is its name, the keys are its params (Module File)."""
+    module = ctx.modules[block.type]
+    name: str | None = None
+    params: dict[str, m.Value] = {}
+    for entry in block.entries:
+        if isinstance(entry, Property):
+            key = entry.key
+            if key == "Name":
+                name = ctx.name(entry)
+            elif key in ("Style", "Class") or key.startswith("On_"):
+                ctx.not_built(entry.key_origin, f"{key} on a module call")
+            elif key in module.params:
+                decl = module.params[key]
+                if slot_value(ctx, entry) is not None:
+                    ctx.not_built(entry.value_origin, "a slot in a module param")
+                    continue
+                try:
+                    params[key] = coerce(
+                        _PARAM_KINDS[decl.type], entry.value, ctx.origin(entry.key_origin)
+                    )
+                except ValueProblem as exc:
+                    ctx.problem(entry.value_origin, key, exc)
+            else:
+                allowed = ["Name", *module.params]
+                ctx.unknown(entry.key_origin, key, allowed, f"param of {module.name}")
+        elif isinstance(entry, Block):
+            ctx.unknown(entry.origin, entry.type, ["Name", *module.params], f"key of {module.name}")
+        elif isinstance(entry, tess_dl.If | tess_dl.For):
+            ctx.not_built(entry.origin, "If and For")
+    for decl in module.params.values():
+        if decl.name not in params and decl.default is None:
+            ctx.add(
+                block.origin,
+                "missing-key",
+                f"{module.name} needs the param {decl.name}",
+                f"write {decl.name}: ...",
+            )
+    return m.UseNode(module.name, name=name, params=params, origin=ctx.origin(block.origin))
+
+
+def _block(ctx: _Ctx, block: Block) -> m.Node | m.UseNode | None:
     row = blocks.BLOCKS.get(block.type)
+    if row is None and block.type in ctx.modules:
+        return _use(ctx, block)
     if row is None:
-        ctx.unknown(block.origin, block.type, list(blocks.BLOCKS), "block")
+        ctx.unknown(block.origin, block.type, [*blocks.BLOCKS, *ctx.modules], "block")
         return None
     prop_keys, style_keys = row
     allowed = [*prop_keys, *style_keys, "Name", "Style", "Children"]
@@ -188,7 +275,7 @@ def _block(ctx: _Ctx, block: Block) -> m.Node | None:
     style: dict[str, m.Value] = {}
     style_at: dict[str, tess_dl.Origin | None] = {}
     prop_at: dict[str, tess_dl.Origin | None] = {}
-    children: list[m.Node] = []
+    children: list[m.Node | m.UseNode] = []
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
@@ -280,7 +367,7 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
     name: str | None = None
     values: dict[str, m.Value] = {}
     style: dict[str, m.Value] = {}
-    children: list[m.Node] = []
+    children: list[m.Node | m.UseNode] = []
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
@@ -449,11 +536,15 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
 
 
 def read_shell(
-    document: Document, file: str, read_text: Callable[[str], str]
+    document: Document,
+    file: str,
+    read_text: Callable[[str], str],
+    modules: Mapping[str, ModuleDef] | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Type a parsed shell file. ``read_text`` reads a file named in the shell file (an SVG's
-    ``Source``) and raises ``OSError``; the schema does no I/O of its own."""
-    ctx = _Ctx(file, read_text)
+    ``Source``) and raises ``OSError``; the schema does no I/O of its own. ``modules`` are the
+    known module files by call name: a block with such a head is a module call."""
+    ctx = _Ctx(file, read_text, modules)
     root = document.root
     if root.type != "Shell":
         ctx.add(
@@ -479,3 +570,115 @@ def read_shell(
     if any(f.severity == "error" for f in ctx.findings):
         return None, ctx.findings
     return ShellDef(file, shell_name, tuple(monitors)), ctx.findings
+
+
+def _param_decls(ctx: _Ctx, block: Block) -> dict[str, ParamDecl]:
+    out: dict[str, ParamDecl] = {}
+    for entry in block.entries:
+        if not isinstance(entry, Block):
+            if isinstance(entry, Property):
+                ctx.add(
+                    entry.key_origin,
+                    "bad-key",
+                    f"Params holds one block per param, not the key {entry.key}",
+                    "write text { Type: string }",
+                )
+            continue
+        if entry.type in out:
+            ctx.add(entry.origin, "name-duplicate", f"the param {entry.type} is declared twice")
+            continue
+        type_word: str | None = None
+        default: m.Value | None = None
+        default_prop: Property | None = None
+        for sub in entry.entries:
+            if isinstance(sub, Property) and sub.key == "Type":
+                type_word = sub.value.text if isinstance(sub.value, tess_dl.Word) else None
+                if type_word not in PARAM_TYPES:
+                    ctx.add(
+                        sub.value_origin,
+                        "bad-value",
+                        f"a param type is one of {', '.join(PARAM_TYPES)}",
+                        f"{', '.join(nearest(str(type_word), PARAM_TYPES))}?" if type_word else "",
+                    )
+                    type_word = None
+            elif isinstance(sub, Property) and sub.key == "Default":
+                default_prop = sub
+            elif isinstance(sub, Property):
+                ctx.unknown(sub.key_origin, sub.key, ["Type", "Default"], "key of a param")
+        if type_word is None:
+            if not any(isinstance(s, Property) and s.key == "Type" for s in entry.entries):
+                ctx.add(
+                    entry.origin,
+                    "missing-key",
+                    f"the param {entry.type} needs a Type",
+                    "write Type: string",
+                )
+            continue
+        if default_prop is not None:
+            try:
+                default = coerce(
+                    _PARAM_KINDS[type_word], default_prop.value, ctx.origin(default_prop.key_origin)
+                )
+            except ValueProblem as exc:
+                ctx.problem(default_prop.value_origin, "Default", exc)
+        out[entry.type] = ParamDecl(entry.type, type_word, default, ctx.origin(entry.origin))
+    return out
+
+
+def read_module(
+    document: Document,
+    file: str,
+    modules: Mapping[str, ModuleDef] | None = None,
+) -> tuple[ModuleDef | None, list[Finding]]:
+    """Type a parsed ``<Name>_Module.tdl``: ``Module { Params { } Children { } }``, or a single
+    layout block written directly in the root (Module File > Structure)."""
+    ctx = _Ctx(file, lambda _: "", modules)
+    root = document.root
+    if root.type != "Module":
+        ctx.add(
+            root.origin,
+            "module-root",
+            f"the root block is {root.type}, not Module",
+            "write Module { }",
+        )
+        return None, ctx.findings
+    name_entry = document.metadata.get("Name")
+    name = getattr(name_entry, "text", None) or getattr(name_entry, "value", None)
+    if not isinstance(name, str) or not _NAME.match(name):
+        ctx.add(root.origin, "bad-name", "a module's Name must be letters, digits and _", "")
+        return None, ctx.findings
+    params: dict[str, ParamDecl] = {}
+    children: list[m.Node | m.UseNode] = []
+    for entry in root.entries:
+        if isinstance(entry, Block):
+            if entry.type == "Params":
+                params = _param_decls(ctx, entry)
+            elif entry.type == "Children":
+                children.extend(_children(ctx, entry, lambda b: _block(ctx, b)))
+            elif entry.type == "Style":
+                ctx.not_built(entry.origin, "a module Style block")
+            else:
+                node = _block(ctx, entry)
+                if node is not None:
+                    children.append(node)
+        elif isinstance(entry, Property):
+            if entry.key == "Style":
+                ctx.not_built(entry.key_origin, "a module Style file")
+            elif entry.key == "Import":
+                ctx.not_built(entry.key_origin, "Import")
+            else:
+                ctx.unknown(
+                    entry.key_origin, entry.key, ["Params", "Children", "Style"], "key in Module"
+                )
+        elif isinstance(entry, tess_dl.If | tess_dl.For):
+            ctx.not_built(entry.origin, "If and For")
+    if len(children) != 1 and not any(f.severity == "error" for f in ctx.findings):
+        ctx.add(
+            root.origin,
+            "missing-key",
+            "a module has one layout root",
+            "write one block in Module { }",
+        )
+    if any(f.severity == "error" for f in ctx.findings):
+        return None, ctx.findings
+    return ModuleDef(name, file, ctx.origin(root.origin), params, tuple(children)), ctx.findings
