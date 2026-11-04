@@ -7,3 +7,4 @@
 - Config directory lookup (`--config-dir`, `$XDG_CONFIG_HOME`, `~/.config`) and `settings.tdl` reading: every key of the Settings File note, one finding per problem with `file:line:column`.
 - Loguru setup: console sink and a daily `log_YYYY-MM-DD.log` (directory 0o700, file 0o600), JSON option, midnight file swap, retention, console-only fallback.
 - Instance lock (`flock` on `$XDG_RUNTIME_DIR/tesserae-shell/lock`, exit 4 naming the holder's pid) and `$XDG_RUNTIME_DIR` checks (exit 2).
+- `tesserae-shell run`: pre-flight, settings, logging, instance lock, registry (`registry.json`, created and saved atomically), then the engine loop with `keep_alive`; SIGTERM and SIGINT stop it cleanly (exit 0), a second signal forces exit 130. Steps 7 to 12 of the start sequence that need later milestones are logged as not built.

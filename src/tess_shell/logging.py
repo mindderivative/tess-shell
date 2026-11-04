@@ -151,6 +151,7 @@ def configure_logging(
             colorize=sys.stderr.isatty(),
             diagnose=settings.diagnose,
             backtrace=False,
+            filter=lambda record: not record["extra"].get("file_only"),
         )
     if failure:
         logger.warning(failure)
@@ -161,7 +162,9 @@ def configure_logging(
 
 def log_finding(finding: Finding) -> None:
     location = f"{finding.file}:{finding.line}:{finding.column} {finding.rule}"
+    # file only: the command prints the findings itself, with source lines and hints
     logger.bind(
+        file_only=True,
         location=location,
         file=finding.file,
         line=finding.line,
@@ -169,6 +172,10 @@ def log_finding(finding: Finding) -> None:
         rule=finding.rule,
         severity=finding.severity,
     ).log(finding.severity.upper(), finding.message)
+
+
+def current_state() -> LogState | None:
+    return _state
 
 
 def shutdown_logging() -> None:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import difflib
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
@@ -47,3 +47,21 @@ def format_finding(finding: Finding, source_line: str | None = None) -> str:
     if finding.hint:
         out.append(f"    hint: {finding.hint}")
     return "\n".join(out)
+
+
+def render_findings(
+    findings: Iterable[Finding],
+    source_line: Callable[[Finding], str | None],
+    limit: int = 50,
+) -> tuple[str, int]:
+    """The printed form of the findings sorted by position, at most ``limit`` of them.
+
+    Returns ``(text, omitted)``; the text ends with ``... and N more`` when some were cut.
+    """
+    ordered = sorted(findings, key=lambda f: f.sort_key)
+    shown = ordered[:limit]
+    text = "\n".join(format_finding(f, source_line(f)) for f in shown)
+    omitted = len(ordered) - len(shown)
+    if omitted:
+        text += f"\n... and {omitted} more"
+    return text, omitted
