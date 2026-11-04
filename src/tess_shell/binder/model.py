@@ -106,7 +106,31 @@ class Seq:
     origin: Origin = _origin()
 
 
-Value = Length | Percent | Auto | Expand | Color | Enum | Bool | Number | Text | Sides | Seq
+@dataclass(frozen=True, slots=True)
+class SlotPart:
+    """One ``{{ }}`` slot: its source text and the origin of that text (not of the braces)."""
+
+    text: str
+    origin: Origin = _origin()
+
+
+@dataclass(frozen=True, slots=True)
+class SlotValue:
+    """A written value that holds slots. ``parts`` alternates literal text and slots; a value that
+    is exactly one slot keeps the type of its result. The model evaluates it and replaces it with a
+    typed value before binding: the binder refuses an unresolved one."""
+
+    parts: tuple[str | SlotPart, ...]
+    origin: Origin = _origin()
+
+    @property
+    def single(self) -> bool:
+        return len(self.parts) == 1 and isinstance(self.parts[0], SlotPart)
+
+
+Value = (
+    Length | Percent | Auto | Expand | Color | Enum | Bool | Number | Text | Sides | Seq | SlotValue
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,7 +139,18 @@ class Node:
     name: str | None = None  # the Name: value
     props: Mapping[str, Value] = field(default_factory=dict)  # by TDL key
     style: Mapping[str, Value] = field(default_factory=dict)  # the inline Style block
-    children: tuple[Node | IfNode | ForNode, ...] = ()
+    children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
+    origin: Origin = _origin()
+
+
+@dataclass(frozen=True, slots=True)
+class UseNode:
+    """A call of a module (``Clock { format: "%H:%M" }``). The model expands it into the module's
+    layout before binding; the binder refuses it."""
+
+    module: str
+    name: str | None = None
+    params: Mapping[str, Value] = field(default_factory=dict)
     origin: Origin = _origin()
 
 

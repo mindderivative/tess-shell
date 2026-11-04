@@ -23,3 +23,4 @@
 - M1 measurements: `tests/perf/measure_bind.py` (`bind-results.md`) and `measure_idle.py --bar` (`idle-results-bar.md`): 3,101 nodes bind in about 12.6 ms, the example in 0.03 ms; idle with the Bar shown is 0.000 % of one core and about 2.7 wake-ups per second.
 - A Monitor block that names an output an earlier block already took logs a warning naming both blocks at start; the first wins (D11).
 - A reference image of the M1 example (`tests/snapshots/m1_example.png`, 400x32) compared with a tolerance of 0.2 % of the pixels (a recoloured icon fails it); `UPDATE_SNAPSHOTS=1` regenerates it, written by `tess_re.snapshot.write_png`. The sample SVG now uses `currentColor`, so its `Color` is visible.
+- M2a binder: `SlotValue`, `SlotPart` and `UseNode` in the typed tree (the binder refuses them unevaluated), and `View.update` sets new typed values on named nodes through one `Window.apply`, skipping values a node already has.
