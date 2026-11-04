@@ -47,6 +47,17 @@ class _Index:
 
 
 @dataclass(slots=True)
+class Entry:
+    """One built node: its typed source, the tre node, the tre props it was given, and its
+    children. The tree of entries is what ``View.rebuild`` compares a new typed tree with."""
+
+    typed: Node
+    tre: TreNode | None
+    props: dict[str, Any]
+    children: list[Entry] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class View:
     """What was built: the attached roots and the named nodes."""
 
@@ -55,7 +66,33 @@ class View:
     nodes: dict[str, TreNode]
     kinds: dict[str, str] = field(default_factory=dict)  # node id -> block word
     applied: dict[str, dict[str, Any]] = field(default_factory=dict)  # node id -> tre props set
+    entries: list[Entry] = field(default_factory=list)
     disposed: bool = False
+
+    def rebuild(self, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> None:
+        """Make the view show ``nodes``, changing only what differs (Render Binder Design > The
+        Keyed Diff). Raises :class:`BindFailed` and changes nothing if any value is wrong."""
+        from tess_shell.binder.rebuild import rebuild
+
+        rebuild(self, nodes)
+
+    def reindex(self) -> None:
+        """Rebuild the id maps from the entries."""
+        self.nodes.clear()
+        self.kinds.clear()
+        self.applied.clear()
+        self.roots = [e.tre for e in self.entries if e.tre is not None]
+
+        def walk(entries: list[Entry]) -> None:
+            for e in entries:
+                name = e.typed.name
+                if name is not None and e.tre is not None:
+                    self.nodes[name] = e.tre
+                    self.kinds[name] = e.typed.kind
+                    self.applied[name] = e.props  # the same dict: an update changes both
+                walk(e.children)
+
+        walk(self.entries)
 
     def update(self, changes: Sequence[tuple[str, str, Value]]) -> list[BindError]:
         """Set new typed values on named nodes: ``(node id, TDL key, value)``.
@@ -249,12 +286,23 @@ def build(nodes: Sequence[Node | UseNode | IfNode | ForNode], window: Window) ->
             root.destroy()
         raise
     view = View(window, [], {})
-    for (_, index, _), _built in zip(plans, built, strict=True):
-        for node_id, (block_word, applied) in index.named.items():
-            view.kinds[node_id] = block_word
-            view.applied[node_id] = dict(applied)
-    for root, named in built:
+    typed_roots = [n for n in nodes if isinstance(n, Node)]
+    for node, (spec, _, _), (root, _named) in zip(typed_roots, plans, built, strict=True):
+        view.entries.append(make_entry(node, spec, root))
         window.root.add_child(root)
-        view.roots.append(root)
-        view.nodes.update(named)
+    view.reindex()
     return view
+
+
+def make_entry(node: Node, spec: dict[str, Any], tre: TreNode) -> Entry:
+    """The entry of a built node and, below it, of its children (the spec and the tre node mirror
+    the typed tree one to one)."""
+    kids = [c for c in node.children if isinstance(c, Node)]
+    specs = spec.get("children", [])
+    tre_kids = tre.children() if kids else []
+    return Entry(
+        node,
+        tre,
+        dict(spec["props"]),
+        [make_entry(c, sp, t) for c, sp, t in zip(kids, specs, tre_kids, strict=True)],
+    )
