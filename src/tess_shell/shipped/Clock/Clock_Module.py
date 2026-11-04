@@ -54,6 +54,9 @@ class Clock(Module):
             text = FALLBACK
         self.ctx.send("time", text, use=use)
 
+    def use_added(self, use: UseRecord) -> None:
+        self.show(use, datetime.now().astimezone())
+
     def tick(self) -> None:
         now = datetime.now().astimezone()
         for use in self.ctx.uses.values():

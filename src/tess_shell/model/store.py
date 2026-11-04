@@ -62,7 +62,9 @@ class ValueStore:
     _scheduled: bool = False
 
     def add_use(self, module: str, use: str) -> None:
-        self._uses.setdefault(module, []).append(use)
+        uses = self._uses.setdefault(module, [])
+        if use not in uses:
+            uses.append(use)
         self.values.setdefault(use, {})
 
     def remove_use(self, use: str) -> None:

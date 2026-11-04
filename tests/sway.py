@@ -28,6 +28,7 @@ class PrivateSway:
     def env(self) -> dict[str, str]:
         """An environment for a child process that should use this compositor."""
         env = {k: v for k, v in os.environ.items() if k not in ("WAYLAND_DISPLAY", "DISPLAY")}
+        env.pop("JOURNAL_STREAM", None)  # under systemd the console drops its timestamps
         env["XDG_RUNTIME_DIR"] = str(self.runtime)
         # the shell writes backups under the state directory: keep them out of the real one
         env["XDG_STATE_HOME"] = str(self.runtime / "state")

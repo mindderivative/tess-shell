@@ -28,6 +28,18 @@ def _key(node: Node, seen: dict[str, int]) -> str:
     return f"{node.kind}#{seen[node.kind]}"
 
 
+@dataclass(frozen=True, slots=True)
+class RebuildStats:
+    """What a rebuild did: nodes whose properties were set, nodes created, nodes removed."""
+
+    changed: int = 0
+    created: int = 0
+    removed: int = 0
+
+    def __str__(self) -> str:
+        return f"{self.changed} changed, {self.created} created, {self.removed} removed"
+
+
 @dataclass(slots=True)
 class _Plan:
     changes: list[tuple[TreNode, dict[str, Any]]] = field(default_factory=list)
@@ -85,7 +97,7 @@ def _destroy(entry: Entry) -> None:
         entry.tre.destroy()
 
 
-def rebuild(view: View, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> None:
+def rebuild(view: View, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> RebuildStats:
     errors: list[BindError] = []
     specs: list[dict[str, Any]] = []
     seen: dict[str, Origin] = {}
@@ -134,6 +146,7 @@ def rebuild(view: View, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> N
         _destroy(entry)
     view.entries = new_entries
     view.reindex()
+    return RebuildStats(len(plan.changes), len(plan.creates), len(plan.removed))
 
 
 def _spec_of(fresh: Entry, plan: _Plan) -> dict[str, Any]:

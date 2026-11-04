@@ -157,19 +157,28 @@ def hash_of(path: Path) -> str | None:
 
 class OwnWrites:
     """Remembers the hash of each file the shell wrote, so the watcher can drop the event that
-    write causes. A change by anyone else has a different hash and passes."""
+    write causes. A record is used once and expires after ``ttl`` seconds: a file that is later
+    saved with the same content by someone else is a change like any other."""
 
-    def __init__(self) -> None:
-        self._hashes: dict[Path, str] = {}
+    def __init__(self, ttl: float = 5.0) -> None:
+        self._hashes: dict[Path, tuple[str, float]] = {}
         self._lock = threading.Lock()
+        self._ttl = ttl
 
     def wrote(self, path: Path, content: bytes) -> None:
         import hashlib
 
         with self._lock:
-            self._hashes[path.resolve()] = hashlib.sha256(content).hexdigest()
+            self._hashes[path.resolve()] = (hashlib.sha256(content).hexdigest(), time.monotonic())
+
+    def clear(self) -> None:
+        with self._lock:
+            self._hashes.clear()
 
     def is_own(self, path: Path) -> bool:
         with self._lock:
-            expected = self._hashes.get(path.resolve())
-        return expected is not None and hash_of(path) == expected
+            record = self._hashes.pop(path.resolve(), None)
+        if record is None:
+            return False
+        expected, at = record
+        return time.monotonic() - at <= self._ttl and hash_of(path) == expected

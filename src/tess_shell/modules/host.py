@@ -13,6 +13,7 @@ import sys
 import traceback
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -28,6 +29,17 @@ from tess_shell.schema.findings import Finding
 from tess_shell.schema.model import ModuleDef
 
 PACKAGE = "tess_shell_user_modules"
+
+
+@dataclass(frozen=True, slots=True)
+class ModuleSource:
+    """Where a module comes from now: its definition, its Python, its UID, and every TDL file it
+    is made of (its own and its style file), so a change to one of them is known."""
+
+    definition: ModuleDef
+    py_path: Path
+    uid: str
+    tdl_paths: frozenset[Path]
 
 
 @dataclass(slots=True)
@@ -68,14 +80,21 @@ class ModuleHost:
     ) -> tuple[ModuleType | None, Finding | None]:
         name = f"{PACKAGE}.{definition.name}"
         spec = importlib.util.spec_from_file_location(name, py_path)
-        if spec is None or spec.loader is None:
+        if spec is None:
             return None, self._finding(definition, "module-import", f"cannot import {py_path}")
         module = importlib.util.module_from_spec(spec)
+        previous = sys.modules.get(name)
         sys.modules[name] = module
         try:
-            spec.loader.exec_module(module)
-        except Exception as exc:
-            sys.modules.pop(name, None)
+            # compiled from the source every time, never from a bytecode cache: a file saved twice
+            # in one second at the same size would otherwise load the old code
+            code = compile(py_path.read_text(encoding="utf-8"), str(py_path), "exec")
+            exec(code, module.__dict__)  # noqa: S102 - this is what loading a module is
+        except (Exception, SyntaxError) as exc:
+            if previous is not None:
+                sys.modules[name] = previous
+            else:
+                sys.modules.pop(name, None)
             line, _ = _where(exc, py_path)
             return None, Finding(
                 str(py_path),
@@ -197,6 +216,98 @@ class ModuleHost:
         for loaded in list(self.loaded.values()):
             out.extend(self.start(loaded))
         return out
+
+    # -- reload ---------------------------------------------------------------------------------
+
+    def _records(self, uses: list[Use]) -> dict[str, UseRecord]:
+        return {
+            u.key: UseRecord(u.key, u.name, u.key.split("@", 1)[1], u.monitor, dict(u.params))
+            for u in uses
+        }
+
+    def _sync_uses(self, loaded: LoadedModule, uses: list[Use]) -> list[Finding]:
+        """Bring ``ctx.uses`` to ``uses`` and tell the module: ``use_removed``, ``use_added`` and
+        ``validate_use`` for a use whose params changed."""
+        findings: list[Finding] = []
+        new = self._records(uses)
+        current = loaded.ctx.uses
+        assert isinstance(current, dict)
+        for key in [k for k in current if k not in new]:
+            record = current.pop(key)
+            found = self._call(loaded, "use_removed", partial(loaded.instance.use_removed, record))
+            if found is not None:
+                findings.append(found)
+        for key, record in new.items():
+            had = current.get(key)
+            current[key] = record
+            if had is not None and had.params == record.params:
+                continue
+            try:
+                loaded.instance.validate_use(record)
+            except ValueError as exc:
+                findings.append(
+                    self._finding(loaded.definition, "module-use", f"{record.name}: {exc}")
+                )
+            if had is None and loaded.state == "running":
+                found = self._call(loaded, "use_added", partial(loaded.instance.use_added, record))
+                if found is not None:
+                    findings.append(found)
+        loaded.uses = uses
+        return findings
+
+    def _replace(self, old: LoadedModule, src: ModuleSource, uses: list[Use]) -> list[Finding]:
+        """The module's Python changed: import the new code first; only if that works stop the old
+        instance (Module Contract > Lifecycle, code reload)."""
+        new, problems = self.load(src.definition, src.py_path, src.uid, uses)
+        if new is None:
+            self.loaded[src.definition.name] = old  # the old instance keeps running
+            return problems
+        if old.state == "running":
+            found = self._call(old, "stop", old.instance.stop)
+            if found is not None:
+                logger.error(f"{found.file}:{found.line}: {found.message}")
+        old.ctx.close()
+        old.state = "stopped"
+        logger.info(f"module {src.definition.name}: the code was replaced")
+        return [*problems, *self.start(new)]
+
+    def sync(
+        self,
+        sources: Mapping[str, ModuleSource],
+        uses_by_module: Mapping[str, list[Use]],
+        changed: set[Path],
+    ) -> list[Finding]:
+        """Bring the running modules to a new shell definition (Hot Reload > What is Applied
+        Live): a module no longer used is stopped; a new one is loaded and started; a changed
+        ``.py`` replaces the instance; a changed TDL file calls ``reload()`` and keeps it."""
+        findings: list[Finding] = []
+        resolved = {p.resolve() for p in changed}
+        for name in [n for n in self.loaded if n not in uses_by_module]:
+            gone = self.loaded.pop(name)
+            if gone.state == "running":
+                self._call(gone, "stop", gone.instance.stop)
+            gone.ctx.close()
+            gone.state = "stopped"
+            logger.info(f"module {name}: no longer used, stopped")
+        for name, uses in uses_by_module.items():
+            src = sources[name]
+            old = self.loaded.get(name)
+            if old is None:
+                loaded, problems = self.load(src.definition, src.py_path, src.uid, uses)
+                findings.extend(problems)
+                if loaded is not None:
+                    findings.extend(self.start(loaded))
+                continue
+            if src.py_path.resolve() in resolved or old.state == "failed":
+                findings.extend(self._replace(old, src, uses))
+                continue
+            old.definition = src.definition
+            findings.extend(self._sync_uses(old, uses))
+            if {p.resolve() for p in src.tdl_paths} & resolved and old.state == "running":
+                found = self._call(old, "reload", old.instance.reload)
+                if found is not None:
+                    findings.append(found)
+        return findings
 
     def stop_all(self) -> None:
         for loaded in self.loaded.values():

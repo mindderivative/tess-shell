@@ -155,6 +155,21 @@ def test_a_write_the_shell_made_itself_is_dropped_and_anyone_elses_passes(tmp_pa
         r.watcher.stop()
 
 
+def test_an_own_write_record_is_used_once_and_expires(tmp_path: Path) -> None:
+    own = OwnWrites(ttl=0.3)
+    target = tmp_path / "f.tdl"
+    target.write_bytes(b"same")
+    own.wrote(target, b"same")
+    assert own.is_own(target) is True
+    assert own.is_own(target) is False  # a later save with the same content is a change
+    own.wrote(target, b"same")
+    time.sleep(0.4)
+    assert own.is_own(target) is False  # too old to be the write that caused this event
+    own.wrote(target, b"same")
+    own.clear()
+    assert own.is_own(target) is False
+
+
 def test_stop_ends_the_thread_and_an_idle_watcher_makes_no_callback(tmp_path: Path) -> None:
     r = Rig(tmp_path)
     assert r.quiet(0.4) and r.calls == []

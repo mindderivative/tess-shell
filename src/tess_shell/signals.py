@@ -20,9 +20,15 @@ def _ignore(signum: int, frame: FrameType | None) -> None:
 
 
 class SignalWatcher:
-    def __init__(self, stop: Callable[[], None], force: Callable[[], NoReturn]) -> None:
+    def __init__(
+        self,
+        stop: Callable[[], None],
+        force: Callable[[], NoReturn],
+        reload: Callable[[], None] | None = None,
+    ) -> None:
         self._stop = stop
         self._force = force
+        self._reload = reload
         self._r, self._w = socket.socketpair()
         self._previous: dict[int, object] = {}
         self._old_fd = -1
@@ -33,7 +39,10 @@ class SignalWatcher:
         """Must be called from the main thread."""
         self._w.setblocking(False)
         self._old_fd = signal.set_wakeup_fd(self._w.fileno(), warn_on_full_buffer=False)
-        for sig in (signal.SIGTERM, signal.SIGINT):
+        wanted = [signal.SIGTERM, signal.SIGINT]
+        if self._reload is not None:
+            wanted.append(signal.SIGHUP)
+        for sig in wanted:
             self._previous[sig] = signal.signal(sig, _ignore)
         self._thread.start()
 
@@ -45,7 +54,11 @@ class SignalWatcher:
                 return
             if not data:
                 return
-            for _ in data:
+            for number in data:
+                if number == signal.SIGHUP:
+                    if self._reload is not None:
+                        self._reload()
+                    continue
                 if self._seen:
                     self._force()
                 self._seen = True

@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from tess_re import Node as TreNode
     from tess_re import Window
 
+    from tess_shell.binder.rebuild import RebuildStats
+
 _TRE_ERROR = re.compile(
     r"^build: (?P<path>spec(?:\.children\[\d+\])*)(?P<id>\.id)?: (?P<message>.*)$", re.DOTALL
 )
@@ -69,12 +71,12 @@ class View:
     entries: list[Entry] = field(default_factory=list)
     disposed: bool = False
 
-    def rebuild(self, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> None:
+    def rebuild(self, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> RebuildStats:
         """Make the view show ``nodes``, changing only what differs (Render Binder Design > The
         Keyed Diff). Raises :class:`BindFailed` and changes nothing if any value is wrong."""
         from tess_shell.binder.rebuild import rebuild
 
-        rebuild(self, nodes)
+        return rebuild(self, nodes)
 
     def reindex(self) -> None:
         """Rebuild the id maps from the entries."""

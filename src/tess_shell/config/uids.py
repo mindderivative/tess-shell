@@ -52,6 +52,7 @@ def assign_uids(
     uid_for: Callable[[str], str],
     backups: Path,
     now: datetime | None = None,
+    on_write: Callable[[Path, bytes], None] | None = None,
 ) -> tuple[dict[Path, str], list[Finding]]:
     """Give each file a UID. ``uid_for(key)`` returns the registry's UID for ``file:<path>``.
 
@@ -85,6 +86,8 @@ def assign_uids(
             edited = document.with_metadata("UID", uid)
             _backup(path, config, backups, now)
             _replace(path, edited.text)
+            if on_write is not None:
+                on_write(path, edited.text.encode("utf-8"))
         except (OSError, ValueError, tess_dl.TDLError) as exc:
             findings.append(
                 Finding(

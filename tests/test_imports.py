@@ -61,6 +61,8 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.schema.model",
         "tess_shell.surfaces",
     },
+    "scanner": ANY,
+    "reloader": ANY,
     "app": ANY,
     "cli": ANY,
     "__main__": ANY,

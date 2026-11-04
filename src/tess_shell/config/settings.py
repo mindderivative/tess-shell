@@ -18,7 +18,15 @@ LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
 FORMATS = ("TEXT", "JSON")
 DEFAULT_MAIN_SHELL = "Main_Shell.tdl"
 
-_ROOT_KEYS = ("Main_Shell", "Registry", "Directories", "Logging", "Validation")
+_ROOT_KEYS = (
+    "Main_Shell",
+    "Registry",
+    "Directories",
+    "Logging",
+    "Validation",
+    "Hot_Reload",
+    "Reload_Debounce",
+)
 _LOGGING_KEYS = (
     "Level",
     "Directory",
@@ -53,6 +61,8 @@ class Settings:
     directories: dict[str, tuple[Path, ...]] = field(default_factory=dict)
     logging: LoggingSettings = field(default_factory=LoggingSettings)
     validation_enabled: bool = True
+    hot_reload: bool = True
+    reload_debounce: float = 0.2  # seconds
 
 
 class _Reader:
@@ -245,6 +255,8 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     directories: dict[str, tuple[Path, ...]] = {}
     logging = LoggingSettings()
     validation = True
+    hot_reload = True
+    debounce = 0.2
     main_origin: Origin | None = None
     if root is not None:
         reader.unknown_keys(root, _ROOT_KEYS, "Settings")
@@ -255,6 +267,21 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
                 reader.error(ms.value_origin, "bad-value", "Main_Shell must be a file name", "")
             else:
                 main_shell, explicit, main_origin = text_, True, ms.value_origin
+        hr = find_property(root, "Hot_Reload")
+        if hr is not None and (flag := reader.boolean(hr)) is not None:
+            hot_reload = flag
+        rd = find_property(root, "Reload_Debounce")
+        if rd is not None:
+            v = rd.value
+            if isinstance(v, Number) and not isinstance(v.value, bool) and v.value >= 0:
+                debounce = v.value / 1000
+            else:
+                reader.error(
+                    rd.value_origin,
+                    "bad-value",
+                    "Reload_Debounce is a number of milliseconds, 0 or more",
+                    "",
+                )
         rg = find_property(root, "Registry")
         if rg is not None:
             p = reader.path(rg, rg.value)
@@ -315,6 +342,8 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             directories=search,
             logging=logging,
             validation_enabled=validation,
+            hot_reload=hot_reload,
+            reload_debounce=debounce,
         ),
         [],
     )
