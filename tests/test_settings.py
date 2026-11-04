@@ -128,10 +128,14 @@ def test_wrong_root_block(tmp_path: Path) -> None:
 
 def test_syntax_error_reported_alone_with_position(tmp_path: Path) -> None:
     write(tmp_path, "Settings {\n    Bogus: 1\n")
+    (f,) = load_bad(tmp_path)
+    assert (f.file, f.rule, f.line) == ("settings.tdl", "tdl-unclosed-block", 5)
+
+
+def test_block_written_as_property_is_one_error(tmp_path: Path) -> None:
+    write(tmp_path, "Settings {\n    Directories: x\n}\n")
     findings = load_bad(tmp_path)
-    assert [f.rule for f in findings] != ["unknown-key"]
-    assert all(f.file == "settings.tdl" and f.line >= 1 for f in findings)
-    assert not any(f.rule == "unknown-key" for f in findings)
+    assert [f.rule for f in findings] == ["bad-value"]
 
 
 def test_configured_directory_listed_before_default(tmp_path: Path) -> None:

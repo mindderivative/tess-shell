@@ -60,3 +60,34 @@ class SignalWatcher:
         self._w.close()  # the reader sees end of file and returns
         self._thread.join(timeout=2)
         self._r.close()
+
+
+class LoopStopper:
+    """Ask an event loop to stop, even when the request comes before the loop has started.
+
+    ``try_stop`` is ``LoopHandle.stop``: it returns False when no loop is running, and a stop is
+    not remembered. A callback queued before the loop starts is not drained until the loop is next
+    woken, so ``call_soon`` cannot cover the gap. Instead, retry in a thread of its own (so a
+    second signal can still be read) until the loop has started or has finished. Nothing runs
+    unless a stop was requested, so an idle shell holds no timer.
+    """
+
+    def __init__(self, try_stop: Callable[[], bool], interval: float = 0.05) -> None:
+        self._try_stop = try_stop
+        self._interval = interval
+        self.requested = threading.Event()
+        self.done = threading.Event()
+
+    def request(self) -> None:
+        self.requested.set()
+        if self._try_stop():
+            return
+        threading.Thread(target=self._retry, name="stop-retry", daemon=True).start()
+
+    def _retry(self) -> None:
+        while not self.done.wait(self._interval):
+            if self._try_stop():
+                return
+
+    def loop_finished(self) -> None:
+        self.done.set()

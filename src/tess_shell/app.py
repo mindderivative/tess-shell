@@ -33,7 +33,7 @@ from tess_shell.logging import (
 )
 from tess_shell.options import Options
 from tess_shell.schema.findings import Finding, render_findings
-from tess_shell.signals import SignalWatcher
+from tess_shell.signals import LoopStopper, SignalWatcher
 
 MIN_ENGINE = (0, 6, 0)
 MIN_PYTHON = (3, 14)
@@ -152,8 +152,11 @@ def run(options: Options) -> int:
         return int(exc.exit_code)
     except KeyboardInterrupt:
         return int(ExitCode.FORCED)
-    except Exception:
-        logger.opt(exception=True).critical("unexpected error")
+    except Exception as exc:
+        if current_state() is None:
+            print(f"tesserae-shell: unexpected error: {exc!r}", file=sys.stderr)
+        else:
+            logger.opt(exception=True).critical("unexpected error")
         return int(ExitCode.INTERNAL)
     finally:
         shutdown_logging()
@@ -207,31 +210,13 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
 
     app = tess_re.App()
     handle = app.thread_handle()
-    stop_requested = threading.Event()
-
-    loop_done = threading.Event()
-
-    def stop() -> None:
-        stop_requested.set()
-        if handle.stop():
-            return
-
-        # A stop is not remembered, and a callback queued before `run` starts is not drained until
-        # the loop is next woken, so `call_soon` cannot cover the gap. The signal arrived before
-        # the loop started: retry, only until it does, in a thread of its own so that a second
-        # signal can still be read. Nothing runs while the shell is idle.
-        def retry() -> None:
-            while not loop_done.wait(0.05):
-                if handle.stop():
-                    return
-
-        threading.Thread(target=retry, name="stop-retry", daemon=True).start()
+    stopper = LoopStopper(handle.stop)
 
     def force() -> NoReturn:
         shutdown_logging()
         os._exit(int(ExitCode.FORCED))
 
-    watcher = SignalWatcher(stop, force)
+    watcher = SignalWatcher(stopper.request, force)
     watcher.start()
     try:
         for step, what in ((10, "model"), (11, "surfaces"), (12, "modules")):
@@ -240,8 +225,8 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         try:
             app.run(keep_alive=True)
         finally:
-            loop_done.set()
-        if not stop_requested.is_set():
+            stopper.loop_finished()
+        if not stopper.requested.is_set():
             _fail("event loop ended without a stop request")
             return ExitCode.ENVIRONMENT
         # stop sequence: no modules and no D-Bus yet

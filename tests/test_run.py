@@ -130,10 +130,8 @@ def test_signal_right_after_starting_still_stops(shell_factory, tmp_path: Path) 
     shell.wait_for("starting")
     time.sleep(0.05)  # in practice this lands before or while the loop starts
     shell.process.send_signal(signal.SIGTERM)
-    code = shell.finish()
-    assert code in (0, 130)
-    if code == 0:
-        assert "stopped" in shell.log_text()
+    assert shell.finish() == 0  # one signal never forces an exit
+    assert "stopped" in shell.log_text()
 
 
 def test_invalid_settings_exit_1_with_position(shell_factory, tmp_path: Path) -> None:  # type: ignore[no-untyped-def]
