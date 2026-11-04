@@ -1,0 +1,103 @@
+"""The import rules of Shell Package Layout, checked on the source with ``ast``."""
+
+from __future__ import annotations
+
+import ast
+import sys
+from pathlib import Path
+
+import pytest
+
+SRC = Path(__file__).resolve().parent.parent / "src" / "tess_shell"
+STDLIB = sys.stdlib_module_names
+ANY = None  # no restriction
+
+# Allowed non-standard-library imports per module, by dotted path relative to ``tess_shell``.
+# A dotted entry allows that package and everything under it.
+RULES: dict[str, set[str] | None] = {
+    "schema": {"tess_shell.schema"},
+    "files": {"tess_dl", "tess_shell.schema", "tess_shell.files"},
+    "config": {
+        "tess_dl",
+        "tess_shell.schema",
+        "tess_shell.files",
+        "tess_shell.config",
+        "tess_shell.exit_codes",
+    },
+    "logging": {"loguru"},
+    "exit_codes": set(),
+    "options": set(),
+    "signals": set(),
+    "binder": {"tess_re", "tess_utils", "tess_shell.binder"},
+    "app": ANY,
+    "cli": ANY,
+    "__main__": ANY,
+    "__init__": ANY,
+}
+
+
+def external_imports(path: Path) -> set[str]:
+    """Imported module names, ignoring ``if TYPE_CHECKING:`` blocks."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    skipped: set[int] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.If) and "TYPE_CHECKING" in ast.unparse(node.test):
+            skipped.update(id(n) for child in node.body for n in ast.walk(child))
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if id(node) in skipped:
+            continue
+        if isinstance(node, ast.Import):
+            names.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            assert node.level == 0, f"{path}: relative imports are not used here"
+            assert node.module is not None
+            names.add(node.module)
+    return names
+
+
+def rule_for(path: Path) -> tuple[str, set[str] | None]:
+    relative = path.relative_to(SRC)
+    key = relative.parts[0].removesuffix(".py")
+    assert key in RULES, f"{relative}: no import rule; add one to tests/test_imports.py"
+    return key, RULES[key]
+
+
+def allowed(name: str, rule: set[str]) -> bool:
+    top = name.split(".")[0]
+    if top in STDLIB:
+        return True
+    return any(name == a or name.startswith(a + ".") for a in rule)
+
+
+SOURCES = sorted(p for p in SRC.rglob("*.py"))
+
+
+@pytest.mark.parametrize("path", SOURCES, ids=lambda p: str(p.relative_to(SRC)))
+def test_module_imports_follow_the_layout(path: Path) -> None:
+    key, rule = rule_for(path)
+    if rule is None:
+        return
+    bad = sorted(n for n in external_imports(path) if not allowed(n, rule))
+    assert not bad, f"{path.relative_to(SRC)} ({key}) may not import {bad}"
+
+
+def test_only_app_and_cli_import_the_engine() -> None:
+    importers = {
+        p.relative_to(SRC).parts[0].removesuffix(".py")
+        for p in SOURCES
+        if any(n.split(".")[0] == "tess_re" for n in external_imports(p))
+    }
+    assert importers <= {"app", "binder"}, importers
+
+
+def test_shell_modules_never_import_the_engine() -> None:
+    for path in (SRC / "modules").rglob("*.py") if (SRC / "modules").is_dir() else []:
+        assert not any(n.split(".")[0] == "tess_re" for n in external_imports(path)), path
+
+
+def test_only_tess_utils_imports_pillow() -> None:
+    for path in SOURCES:
+        if "tess_utils" in path.parts:
+            continue
+        assert not any(n.split(".")[0] == "PIL" for n in external_imports(path)), path
