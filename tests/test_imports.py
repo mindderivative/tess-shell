@@ -45,6 +45,7 @@ RULES: dict[str, set[str] | None] = {
     },
     # the shipped modules are module code: only the public names a module author may use
     "shipped": {"tess_shell.Module", "tess_shell.action"},
+    "watch": {"inotify_simple", "loguru"},
     "logging": {"loguru"},
     "exit_codes": set(),
     "options": set(),

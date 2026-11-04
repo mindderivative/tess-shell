@@ -23,6 +23,7 @@ dependencies = [
     "tesserae-el>=0.1.2,<0.2",
     "tesserae-dl>=0.1.1,<0.2",
     "loguru>=0.7.3,<0.8",
+    "inotify-simple>=2.0.1,<3",
 ]
 
 [project.urls]
@@ -69,3 +70,7 @@ files = ["src"]
 [tool.uv]
 # Stay on the system CPython (3.14.9, with the GIL); uv would otherwise pick the free-threaded build.
 python-preference = "only-system"
+
+[[tool.mypy.overrides]]
+module = "inotify_simple"
+ignore_missing_imports = true  # no stubs and no py.typed marker
