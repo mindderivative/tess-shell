@@ -167,3 +167,42 @@ def test_the_clock_ticks_each_second_from_the_wall_clock(
     seconds = [int(t[-2:]) for t in texts]
     steps = [(b - a) % 60 for a, b in zip(seconds, seconds[1:], strict=False)]
     assert steps == [1] * len(steps)  # every second, none skipped, none repeated
+
+
+def test_the_first_run_writes_the_uid_and_keeps_a_backup_outside_the_config(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    config = clock_config(tmp_path, "%H:%M")
+    shell_file = config / "Shells" / "Main_Shell.tdl"
+    before = shell_file.read_text()
+    shell = start(private_sway, config)
+    try:
+        shell.wait_for("step 12 (modules): started")
+        shell.process.send_signal(signal.SIGTERM)
+        assert shell.finish() == 0
+    finally:
+        if shell.process.poll() is None:
+            shell.process.kill()
+    after = shell_file.read_text()
+    (added,) = [line for line in after.splitlines() if line.startswith("UID: ")]
+    assert after.replace(added + "\n", "", 1) == before
+    backups = private_sway.runtime / "state" / "tesserae-shell" / "backups" / "Shells"
+    (backup,) = backups.glob("Main_Shell.tdl.*")
+    assert backup.read_text() == before
+    import json
+
+    entries = json.loads((config / "registry.json").read_text())["entries"]
+    assert entries["file:Shells/Main_Shell.tdl"]["uid"] == added.removeprefix("UID: ")
+    assert any(k.startswith("Main_Shell.Main.Top_Bar.Clock_") for k in entries)
+
+    # a second start adds no second line and no second backup
+    second = start(private_sway, config)
+    try:
+        second.wait_for("step 12 (modules): started")
+        second.process.send_signal(signal.SIGTERM)
+        assert second.finish() == 0
+    finally:
+        if second.process.poll() is None:
+            second.process.kill()
+    assert shell_file.read_text() == after
+    assert len(list(backups.glob("Main_Shell.tdl.*"))) == 1

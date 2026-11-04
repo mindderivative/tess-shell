@@ -21,9 +21,10 @@ from loguru import logger
 import tess_shell
 from tess_shell.config.discovery import discover, is_shipped
 from tess_shell.config.lock import InstanceLock
-from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir
+from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir, state_dir
 from tess_shell.config.registry import Registry, RegistryError
 from tess_shell.config.settings import LoggingSettings, Settings, load_settings
+from tess_shell.config.uids import assign_uids
 from tess_shell.exit_codes import EnvironmentFailure, ExitCode, ShellError
 from tess_shell.files.loader import (
     ModuleFile,
@@ -289,6 +290,15 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         module_defs = {name: mf.definition for name, mf in result.modules.items()}
         manager = SurfaceManager(app, module_defs, registry.uid_for, store)
         host = ModuleHost(store, ticks, cfg)
+        # a file the shell registers for the first time gets a UID in its metadata (G8)
+        own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
+        file_uids, uid_problems = assign_uids(
+            [*own_files, *result.shells],
+            cfg,
+            lambda key: registry.uid_for(key, "file"),
+            state_dir() / "backups",
+        )
+        report(uid_problems)
         # 10. model: expand the module calls, load and start each module that is used
         uses = manager.plan(shell) if shell is not None else []
         by_module: dict[str, list[Use]] = {}
@@ -296,7 +306,7 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             by_module.setdefault(use.module, []).append(use)
         for name, module_uses in by_module.items():
             mf = result.modules[name]
-            uid = registry.uid_for(f"module:{name}", "module")
+            uid = file_uids.get(mf.path) or registry.uid_for(f"module:{name}", "module")
             _, problems = host.load(mf.definition, mf.python, uid, module_uses)
             report(problems)
         report(host.start_all())

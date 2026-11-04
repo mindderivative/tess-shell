@@ -26,6 +26,17 @@ def config_dir(override: Path | None = None, environ: Mapping[str, str] | None =
     return Path.home() / ".config" / "tesserae-shell"
 
 
+def state_dir(environ: Mapping[str, str] | None = None) -> Path:
+    """Where the shell keeps what must outlive the config: ``$XDG_STATE_HOME/tesserae-shell``,
+    else ``~/.local/state/tesserae-shell``. Backups of files the shell edits live here, never in
+    the config folder."""
+    env = os.environ if environ is None else environ
+    xdg = env.get("XDG_STATE_HOME", "")
+    if xdg and os.path.isabs(xdg):
+        return Path(xdg) / "tesserae-shell"
+    return Path.home() / ".local" / "state" / "tesserae-shell"
+
+
 def ensure_config_dir(path: Path) -> None:
     """Create the config directory and its default folders."""
     path.mkdir(parents=True, exist_ok=True)

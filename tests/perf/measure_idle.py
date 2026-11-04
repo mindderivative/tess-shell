@@ -2,7 +2,7 @@
 
 Not collected by pytest. Run from the repo root:
 
-    uv run python tests/perf/measure_idle.py [seconds] [--bar]
+    uv run python tests/perf/measure_idle.py [seconds] [--bar | --clock]
 
 Starts a private headless sway, starts the shell, waits for ``running``, samples CPU time and
 context switches of the whole process (all threads) over the window, and writes
@@ -50,15 +50,22 @@ def threads(pid: int) -> int:
 
 
 def main() -> int:
-    args = [a for a in sys.argv[1:] if a != "--bar"]
-    with_bar = "--bar" in sys.argv[1:]
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    with_clock = "--clock" in sys.argv[1:]  # the Bar shows a Clock with a minute format
+    with_bar = "--bar" in sys.argv[1:] or with_clock
     duration = int(args[0]) if args else 60
     sway = PrivateSway().start()
     config = Path(tempfile.mkdtemp(prefix="tsh-cfg-"))
     if with_bar:
-        from tests.shell_samples import write_example
+        from tests.shell_samples import BODY, write_example
 
-        write_example(config)
+        text = BODY
+        if with_clock:
+            text = BODY.replace(
+                'Text { Text: "14:05", Font_Size: 14, Foreground: "#ffffff" }',
+                'Clock { format: "%H:%M" }',
+            )
+        write_example(config, text)
     process = subprocess.Popen(
         [sys.executable, "-m", "tess_shell", "run", "--config-dir", str(config)],
         env=sway.env,
@@ -106,7 +113,11 @@ def main() -> int:
     uname = platform.uname()
     gil = "with the GIL" if getattr(sys, "_is_gil_enabled", lambda: True)() else "free-threaded"
     title = " with the example Bar shown" if with_bar else ""
-    scene = "the example Bar (32 px, full width)" if with_bar else "no windows"
+    scene = "no windows"
+    if with_bar:
+        scene = "the example Bar (32 px, full width)"
+    if with_clock:
+        scene = "the example Bar with a Clock (format %H:%M, ticks once a minute)"
     text = f"""# Idle measurement of `tesserae-shell run`{title}
 
 Reported, not enforced. Produced by `tests/perf/measure_idle.py`.
@@ -129,7 +140,16 @@ Result against the budgets: **{"within" if ok else "OVER"}** (reported, not enfo
 Wake-ups are counted as context switches, which over-counts (an involuntary switch is not a
 wake-up) and includes the Python signal-watcher and logging threads.
 """
-    (HERE / ("idle-results-bar.md" if with_bar else "idle-results.md")).write_text(text)
+    (
+        HERE
+        / (
+            "idle-results-clock.md"
+            if with_clock
+            else "idle-results-bar.md"
+            if with_bar
+            else "idle-results.md"
+        )
+    ).write_text(text)
     print(text)
     return 0
 
