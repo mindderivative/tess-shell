@@ -4,7 +4,7 @@ Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launc
 
 ## Status
 
-Milestone M0 (the skeleton) is in progress: the package, the command line and tooling exist. The design is in `docs/`.
+Milestone M0 (the skeleton) is built: `version`, `check` and `run` work. `run` starts, holds the single instance lock, keeps an idle event loop with no windows, and stops cleanly on SIGTERM or SIGINT. Windows, modules, the binder, D-Bus and hot reload come in later milestones. The design is in `docs/`.
 
 ## Commands
 
