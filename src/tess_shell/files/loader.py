@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 
 import tess_dl
@@ -10,8 +11,8 @@ from tess_dl import Document
 
 from tess_shell.files.header import check_header
 from tess_shell.schema.findings import Finding
-from tess_shell.schema.model import ShellDef
-from tess_shell.schema.shell import read_shell
+from tess_shell.schema.model import ModuleDef, ShellDef
+from tess_shell.schema.shell import read_module, read_shell
 
 
 def display_name(path: Path, base: Path) -> str:
@@ -61,8 +62,25 @@ def load_all(paths: list[Path], base: Path) -> tuple[list[Document], list[Findin
     return documents, findings
 
 
-def load_shell_file(
+def load_module_file(
     path: Path, base: Path, installed: Mapping[str, str]
+) -> tuple[ModuleDef | None, list[Finding]]:
+    """Stages 1 to 4 for a ``*_Module.tdl``."""
+    document, findings = load_file(path, base)
+    if document is None:
+        return None, findings
+    name = display_name(path, base)
+    header = check_header(document, name, installed)
+    if header:
+        return None, header
+    return read_module(document, name)
+
+
+def load_shell_file(
+    path: Path,
+    base: Path,
+    installed: Mapping[str, str],
+    modules: Mapping[str, ModuleDef] | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Stages 1 to 4 for a ``*_Shell.tdl``: read, parse, header, schema. A file that fails an
     earlier stage is not checked further."""
@@ -77,5 +95,44 @@ def load_shell_file(
     def read_text(relative: str) -> str:
         return (path.parent / relative).read_text(encoding="utf-8")
 
-    shell, findings = read_shell(document, name, read_text)
+    shell, findings = read_shell(document, name, read_text, modules)
     return shell, findings
+
+
+@dataclass(frozen=True, slots=True)
+class ModuleFile:
+    """A module file that was read: its definition, where it is, and whether it ships with the
+    shell. Its Python is next to it, with the same name and the suffix ``.py``."""
+
+    definition: ModuleDef
+    path: Path
+    shipped: bool
+
+    @property
+    def python(self) -> Path:
+        return self.path.with_suffix(".py")
+
+
+def register_module(registry: dict[str, ModuleFile], new: ModuleFile, base: Path) -> list[Finding]:
+    """Add ``new`` to ``registry`` by its call name. A user module overrides a shipped one; two of
+    the same kind are an error naming both (TDL Language > Names and the Registry)."""
+    name = new.definition.name
+    have = registry.get(name)
+    if have is None or (have.shipped and not new.shipped):
+        registry[name] = new
+        return []
+    if new.shipped and not have.shipped:
+        return []
+    first = display_name(have.path, base)
+    origin = new.definition.origin
+    return [
+        Finding(
+            display_name(new.path, base),
+            origin.line,
+            origin.column,
+            "error",
+            "name-duplicate",
+            f"the module name {name} is already used by {first}",
+            "a name is registered once; a user module may share a shipped module's name",
+        )
+    ]

@@ -9,6 +9,7 @@ import json
 import os
 import stat
 import tempfile
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -89,6 +90,17 @@ class Registry:
                 "use a newer tesserae-shell",
             )
         return cls(path, loaded)
+
+    def uid_for(self, path: str, kind: str = "use") -> str:
+        """The UID of the entry at ``path`` (a dotted use path, or ``module:<Name>``), made on first
+        use as a UUIDv7 and kept in the registry (Config Discovery and Registry > Identity)."""
+        entries: dict[str, Any] = self.data["entries"]
+        entry = entries.get(path)
+        if isinstance(entry, dict) and isinstance(entry.get("uid"), str):
+            return str(entry["uid"])
+        uid = str(uuid.uuid7())
+        entries[path] = {"uid": uid, "kind": kind}
+        return uid
 
     def save(self) -> None:
         _atomic_write(self.path, self.data)

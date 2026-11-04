@@ -8,7 +8,7 @@ window.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
@@ -17,8 +17,12 @@ from loguru import logger
 from tess_shell.binder import convert
 from tess_shell.binder.build import View, build
 from tess_shell.binder.model import BindFailed, Color, Value
-from tess_shell.schema.model import BarDef, MonitorDef, ShellDef
-from tess_shell.surfaces.bar import BarSpec, ZeroSize, bar_geometry
+from tess_shell.model.expand import Expanded, expand
+from tess_shell.model.live import LiveTree
+from tess_shell.model.store import Change, ValueStore
+from tess_shell.model.uses import Use
+from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, ShellDef
+from tess_shell.surfaces.bar import BarSpec, Geometry, ZeroSize, bar_geometry
 
 if TYPE_CHECKING:
     from tess_re import App, LayerWindow, Output
@@ -104,6 +108,7 @@ class Surface:
     output: str
     window: LayerWindow
     view: View | None
+    live: LiveTree
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -134,12 +139,35 @@ def _spec(bar: BarDef) -> BarSpec:
     )
 
 
-class SurfaceManager:
-    def __init__(self, app: App) -> None:
-        self._app = app
-        self.surfaces: list[Surface] = []
+@dataclass(slots=True)
+class Planned:
+    bar: BarDef
+    output: Output
+    expanded: Expanded
+    geometry: Geometry
+    where: str
 
-    def open_shell(self, shell: ShellDef) -> list[Surface]:
+
+class SurfaceManager:
+    """Two steps, so the modules can start between them: :meth:`plan` expands each Bar and finds
+    the module uses; :meth:`build` evaluates the slots, binds and opens the windows."""
+
+    def __init__(
+        self,
+        app: App,
+        modules: Mapping[str, ModuleDef],
+        uid_of: Callable[[str], str],
+        store: ValueStore,
+    ) -> None:
+        self._app = app
+        self._modules = modules
+        self._uid_of = uid_of
+        self._store = store
+        self.surfaces: list[Surface] = []
+        self._planned: list[Planned] = []
+
+    def plan(self, shell: ShellDef) -> list[Use]:
+        """Match monitors to outputs, compute each Bar's geometry and expand its module calls."""
         outputs: list[Output] = list(self._app.outputs())
         if not outputs:
             logger.warning("no outputs: no surface was opened")
@@ -150,6 +178,7 @@ class SurfaceManager:
                 f"{winner.name} ({winner.origin}) already took; {winner.name} wins and "
                 f"{loser.name} opens nothing"
             )
+        uses: list[Use] = []
         for monitor, indices in assign(shell.monitors, outputs):
             if not indices:
                 logger.info(
@@ -158,53 +187,90 @@ class SurfaceManager:
                 continue
             for i in indices:
                 for bar in monitor.surfaces:
-                    self._open_bar(bar, outputs[i], monitor)
-        return self.surfaces
+                    where = f"{bar.name} on {outputs[i].name}"
+                    try:
+                        geometry = bar_geometry(_spec(bar), (outputs[i].width, outputs[i].height))
+                    except ZeroSize as exc:
+                        logger.warning(f"{bar.origin}: Bar {where} is not created: {exc}")
+                        continue
+                    for warning in geometry.warnings:
+                        logger.warning(f"{bar.origin}: Bar {where}: {warning}")
+                    suffix = f"@{outputs[i].name}" if len(indices) > 1 else ""
+                    path = f"{shell.name}.{monitor.name}{suffix}.{bar.name}"
+                    expanded = expand(
+                        bar.children, path, self._modules, self._uid_of, outputs[i].name
+                    )
+                    for use in expanded.uses:
+                        self._store.add_use(use.module, use.key)
+                    uses.extend(expanded.uses)
+                    self._planned.append(Planned(bar, outputs[i], expanded, geometry, where))
+        return uses
 
-    def _open_bar(self, bar: BarDef, output: Output, monitor: MonitorDef) -> None:
+    def build(self) -> list[Surface]:
+        """Evaluate the slots with the values the modules have sent so far, bind, and open."""
         from tess_re import LayerWindow
 
-        where = f"{bar.name} on {output.name}"
-        try:
-            geometry = bar_geometry(_spec(bar), (output.width, output.height))
-        except ZeroSize as exc:
-            logger.warning(f"{bar.origin}: Bar {where} is not created: {exc}")
-            return
-        for warning in geometry.warnings:
-            logger.warning(f"{bar.origin}: Bar {where}: {warning}")
-        layer = bar.layer.lower()
-        window = LayerWindow(
-            f"tesserae-shell.bar.{bar.name}",
-            layer=layer,  # type: ignore[arg-type]
-            anchor=geometry.anchor,
-            size=geometry.size,
-            margin=geometry.margin,
-            exclusive_zone=geometry.exclusive_zone,
-            exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
-            output=output,
-        )
-        fill = _bar_fill(dict(bar.style) if bar.style else None)
-        if fill is not None:
-            window.root.set(fill=fill)
-        window.on(
-            "configure",
-            lambda e, n=where: logger.info(f"Bar {n} configured {int(e.width)}x{int(e.height)}"),
-        )
-        window.on(
-            "closed", lambda e, n=where: logger.info(f"Bar {n} closed ({getattr(e, 'reason', '')})")
-        )
-        view: View | None = None
-        try:
-            view = build(list(bar.children), window)
-        except BindFailed as failed:
-            for error in failed.errors:
+        all_uses = {u.key: u for p in self._planned for u in p.expanded.uses}
+        for planned in self._planned:
+            bar, output, geometry, where = (
+                planned.bar,
+                planned.output,
+                planned.geometry,
+                planned.where,
+            )
+            window = LayerWindow(
+                f"tesserae-shell.bar.{bar.name}",
+                layer=bar.layer.lower(),  # type: ignore[arg-type]
+                anchor=geometry.anchor,
+                size=geometry.size,
+                margin=geometry.margin,
+                exclusive_zone=geometry.exclusive_zone,
+                exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
+                output=output,
+            )
+            fill = _bar_fill(dict(bar.style) if bar.style else None)
+            if fill is not None:
+                window.root.set(fill=fill)
+            window.on(
+                "configure",
+                lambda e, n=where: logger.info(
+                    f"Bar {n} configured {int(e.width)}x{int(e.height)}"
+                ),
+            )
+            window.on(
+                "closed",
+                lambda e, n=where: logger.info(f"Bar {n} closed ({getattr(e, 'reason', '')})"),
+            )
+            live = LiveTree(self._store, all_uses)
+            view: View | None = None
+            errors = list(planned.expanded.errors)
+            if not errors:
+                try:
+                    view = build(live.resolve(planned.expanded), window)
+                except BindFailed as failed:
+                    errors = failed.errors
+            for error in errors:
                 logger.error(
                     f"{error.origin}: {error.message}" + (f" ({error.hint})" if error.hint else "")
                 )
-            logger.error(f"Bar {where} is empty: its contents did not bind")
-        self._app.add_window(window)
-        self.surfaces.append(Surface(bar.name, output.name, window, view))
-        logger.info(
-            f"Bar {where}: anchor {','.join(geometry.anchor)} size {geometry.size} "
-            f"zone {geometry.exclusive_zone}"
-        )
+            if view is None:
+                logger.error(f"Bar {where} is empty: its contents did not bind")
+            self._app.add_window(window)
+            self.surfaces.append(Surface(bar.name, output.name, window, view, live))
+            logger.info(
+                f"Bar {where}: anchor {','.join(geometry.anchor)} size {geometry.size} "
+                f"zone {geometry.exclusive_zone}"
+            )
+        return self.surfaces
+
+    def on_change(self, changes: list[Change]) -> None:
+        """Loop thread: the store changed. One ``apply`` per surface per turn."""
+        for surface in self.surfaces:
+            if surface.view is None:
+                continue
+            updates = surface.live.apply_changes(changes)
+            for node_id, key, value in updates:
+                shown = getattr(value, "value", value)
+                logger.debug(f"update {node_id} {key} = {shown!r}")
+            for error in surface.view.update(updates):
+                logger.warning(f"{error.origin}: {error.message}")

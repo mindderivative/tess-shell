@@ -1,0 +1,22 @@
+---
+TDL: 0.1
+Shell: 0.1
+Name: Clock
+---
+
+Module {
+    Params {
+        # a strftime pattern; empty is chosen by hour_cycle
+        format { Type: string, Default: "" }
+        # desktop, 12 or 24
+        hour_cycle { Type: string, Default: desktop }
+        # an IANA zone such as Europe/Berlin; empty is the local zone
+        timezone { Type: string, Default: "" }
+    }
+
+    Text {
+        Name: Face
+        Text: {{ time }}
+        Style { Foreground: "#ffffff", Font_Size: 14 }
+    }
+}

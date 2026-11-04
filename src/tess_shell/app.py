@@ -19,19 +19,29 @@ from typing import NoReturn
 from loguru import logger
 
 import tess_shell
-from tess_shell.config.discovery import discover
+from tess_shell.config.discovery import discover, is_shipped
 from tess_shell.config.lock import InstanceLock
 from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir
 from tess_shell.config.registry import Registry, RegistryError
 from tess_shell.config.settings import LoggingSettings, Settings, load_settings
 from tess_shell.exit_codes import EnvironmentFailure, ExitCode, ShellError
-from tess_shell.files.loader import load_file, load_shell_file
+from tess_shell.files.loader import (
+    ModuleFile,
+    load_file,
+    load_module_file,
+    load_shell_file,
+    register_module,
+)
 from tess_shell.logging import (
     configure_logging,
     current_state,
     log_finding,
     shutdown_logging,
 )
+from tess_shell.model.store import ValueStore
+from tess_shell.model.uses import Use
+from tess_shell.modules.host import ModuleHost, report
+from tess_shell.modules.ticks import TimeSource
 from tess_shell.options import Options
 from tess_shell.schema.findings import Finding, render_findings
 from tess_shell.schema.model import ShellDef
@@ -77,6 +87,7 @@ class Scan:
     count: int
     findings: list[Finding]
     shells: dict[Path, ShellDef]
+    modules: dict[str, ModuleFile]
 
     @property
     def errors(self) -> list[Finding]:
@@ -84,21 +95,34 @@ class Scan:
 
 
 def scan(settings: Settings, config: Path) -> Scan:
-    """Discover every shell file and check it: a ``*_Shell.tdl`` through stages 1 to 4, the other
-    types for syntax only. Warnings do not stop anything."""
+    """Discover every shell file and check it: modules first, so a shell file can call them; a
+    ``*_Shell.tdl`` through stages 1 to 4, the other types for syntax only. Warnings do not stop
+    anything."""
     paths = discover(settings)
     versions = installed_versions()
     findings: list[Finding] = []
     shells: dict[Path, ShellDef] = {}
+    modules: dict[str, ModuleFile] = {}
+    for path in paths:
+        if path.name.endswith("_Module.tdl"):
+            definition, found = load_module_file(path, config, versions)
+            findings.extend(found)
+            if definition is not None:
+                findings.extend(
+                    register_module(modules, ModuleFile(definition, path, is_shipped(path)), config)
+                )
+    registry = {name: mf.definition for name, mf in modules.items()}
     for path in paths:
         if path.name.endswith("_Shell.tdl"):
-            shell, found = load_shell_file(path, config, versions)
+            shell, found = load_shell_file(path, config, versions, registry)
             if shell is not None:
                 shells[path] = shell
-        else:
+            findings.extend(found)
+        elif not path.name.endswith("_Module.tdl"):
             _, found = load_file(path, config)
-        findings.extend(found)
-    return Scan(len(paths), sorted(findings, key=lambda f: f.sort_key), shells)
+            findings.extend(found)
+    own = sum(1 for path in paths if not is_shipped(path))  # the user's files, not the shipped ones
+    return Scan(own, sorted(findings, key=lambda f: f.sort_key), shells, modules)
 
 
 def check(options: Options) -> int:
@@ -259,13 +283,32 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
     watcher = SignalWatcher(stopper.request, force)
     watcher.start()
     try:
-        logger.info("step 10 (model): not built yet")
-        manager = SurfaceManager(app)
+        store = ValueStore()
+        ticks = TimeSource()
         shell = result.shells.get(settings.main_shell_path) if settings.main_shell_path else None
-        if shell is not None:
-            manager.open_shell(shell)
+        module_defs = {name: mf.definition for name, mf in result.modules.items()}
+        manager = SurfaceManager(app, module_defs, registry.uid_for, store)
+        host = ModuleHost(store, ticks, cfg)
+        # 10. model: expand the module calls, load and start each module that is used
+        uses = manager.plan(shell) if shell is not None else []
+        by_module: dict[str, list[Use]] = {}
+        for use in uses:
+            by_module.setdefault(use.module, []).append(use)
+        for name, module_uses in by_module.items():
+            mf = result.modules[name]
+            uid = registry.uid_for(f"module:{name}", "module")
+            _, problems = host.load(mf.definition, mf.python, uid, module_uses)
+            report(problems)
+        report(host.start_all())
+        store.flush()  # what the modules sent while starting, before the first build
+        logger.info(f"step 10 (model): {len(uses)} module uses, {len(host.loaded)} modules")
+        # 11. surfaces
+        manager.build()
         logger.info(f"step 11 (surfaces): {len(manager.surfaces)} opened")
-        logger.info("step 12 (modules): not built yet")
+        store.on_change = manager.on_change
+        store.attach_loop(handle.call_soon)
+        ticks.start(handle.call_soon)
+        logger.info("step 12 (modules): started")
         logger.info("running")
         try:
             app.run(keep_alive=True)
@@ -274,8 +317,10 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         if not stopper.requested.is_set():
             _fail("event loop ended without a stop request")
             return ExitCode.ENVIRONMENT
-        # stop sequence: no modules and no D-Bus yet
+        # stop sequence: modules, then the time source (no D-Bus yet)
         logger.info("stopping")
+        host.stop_all()
+        ticks.close()
         try:
             registry.save()
         except OSError as exc:
