@@ -13,7 +13,9 @@ Milestones M0 (the skeleton), M1 (a static Bar) and M2 (live and modular) are bu
 
 - **Look:** a `Theme` file holds colour, type, shape, space, elevation and motion tokens, with `Light`, `Dark`, `High_Contrast` and `Reduced_Motion` modes; a style value `$color.surface` reads one. A `Stylesheet` holds `Rule { Selector: "Text" | ".class" | "#name", ... }` blocks. The shell ships a `Default` theme and stylesheet; `Appearance { Theme: ..., Stylesheets: [...], Follow_Desktop: true }` in `settings.tdl` names the ones in use, and the desktop's colour scheme, accent, contrast and reduced-motion settings (the Settings portal) pick the mode live. `Elevation: 20%` or `Shadows { Shadow { ... } }` on a Bar draws its shadow in a transparent margin; the reserved space does not change.
 
-Not built yet: panels, popups, frames, events and actions, `:state` and `::part` selectors, services, shortcuts, an icon set shipped in the package. The design is in `docs/`.
+- **Events:** `On_Click: open_it` (or `On_Click { Action: pick, Which: "b" }`) on a box, `Rectangle`, `Spacer` or `SVG` in a module's layout calls the module's `@action` method with an `Event`; the other events and the shell's own actions come with the Panel.
+
+Not built yet: panels, popups, frames, most events and actions, `:state` and `::part` selectors, services, shortcuts, an icon set shipped in the package. The design is in `docs/`.
 
 ## Commands
 
