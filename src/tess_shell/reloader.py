@@ -158,5 +158,6 @@ class Reloader:
         )
         self.reloads += 1
         ms = (time.monotonic() - started) * 1000
-        note = " with errors" if problems or sync_problems else ""
+        failed = any(f.severity == "error" for f in (*problems, *sync_problems))
+        note = " with errors" if failed else ""
         logger.info(f"reloaded{note} ({names}) in {ms:.0f} ms")
