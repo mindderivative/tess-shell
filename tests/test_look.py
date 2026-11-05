@@ -304,9 +304,34 @@ def test_state_and_part_selectors_are_skipped_with_a_warning() -> None:
     assert all(f.rule == "not-built" for f in findings)
 
 
-def test_a_rule_for_a_module_name_is_not_built() -> None:
-    s, findings = sheet('Stylesheet { Rule { Selector: "Clock", Foreground: "#fff" } }', {"Clock"})
-    assert s.rules == () and findings[0].rule == "not-built"
+def test_a_module_name_selector_styles_the_modules_root_blocks_only() -> None:
+    from tess_shell.model.look import apply_module_rules
+
+    s, findings = sheet(
+        'Stylesheet { Rule { Selector: "Clock", Foreground: "#ff00ff" }\n'
+        'Rule { Selector: "Text", Foreground: "#111111" } }',
+        {"Clock"},
+    )
+    assert findings == [] and [r.kind for r in s.rules] == ["module", "type"]
+    inner = text()
+    root = m.Node("FlexBox", children=(inner,))
+    (styled,) = apply_module_rules([root], "Clock", s.rules)
+    assert isinstance(styled, m.Node) and "Foreground" not in styled.style  # a FlexBox has none
+    (plain,) = apply_module_rules([text()], "Clock", s.rules)
+    assert fg(plain) == m.Color(0xFF, 0, 0xFF, 255)  # the root Text of the module
+    (other,) = apply_module_rules([text()], "Other", s.rules)
+    assert fg(other) is None  # a rule for Clock does not reach another module
+    (kept,) = apply_rules((inner,), s.rules)  # the type rule still reaches an inner block
+    assert fg(kept) == m.Color(0x11, 0x11, 0x11, 255)
+
+
+def test_a_name_selector_beats_a_module_selector_on_a_root_block() -> None:
+    from tess_shell.model.look import apply_module_rules
+
+    s, _ = sheet('Stylesheet { Rule { Selector: "Clock", Foreground: "#ff00ff" } }', {"Clock"})
+    kept = text(Foreground=m.Color(1, 2, 3, 255))  # the block's own style wins
+    (out,) = apply_module_rules([kept], "Clock", s.rules)
+    assert fg(out) == m.Color(1, 2, 3, 255)
 
 
 def test_the_stylesheet_may_use_tokens_and_the_theme_resolves_them() -> None:

@@ -8,12 +8,13 @@ updates a node by id. Slots are left in place; :mod:`tess_shell.model.live` eval
 from __future__ import annotations
 
 import dataclasses
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from tess_shell.binder import model as m
+from tess_shell.model.look import apply_module_rules
 from tess_shell.model.uses import Use, plain_param
-from tess_shell.schema.model import ModuleDef
+from tess_shell.schema.model import ModuleDef, Rule
 
 MAX_DEPTH = 8
 
@@ -36,7 +37,9 @@ class _Expander:
         modules: Mapping[str, ModuleDef],
         uid_of: Callable[[str], str],
         monitor: str,
+        rules: Sequence[Rule] = (),
     ) -> None:
+        self.rules = rules
         self.modules = modules
         self.uid_of = uid_of
         self.monitor = monitor
@@ -137,7 +140,8 @@ class _Expander:
         }
         use = Use(key, call.module, name, params, self.monitor, call.origin)
         self.out.uses.append(use)
-        return self._walk(module.children, name, use, (*stack, call.module))
+        roots = self._walk(module.children, name, use, (*stack, call.module))
+        return apply_module_rules(roots, call.module, self.rules)  # type: ignore[return-value]
 
 
 def expand(
@@ -146,8 +150,9 @@ def expand(
     modules: Mapping[str, ModuleDef],
     uid_of: Callable[[str], str],
     monitor: str,
+    rules: Sequence[Rule] = (),
 ) -> Expanded:
     """Expand the children of one surface. ``path`` is the surface's dotted name."""
-    expander = _Expander(modules, uid_of, monitor)
+    expander = _Expander(modules, uid_of, monitor, rules)
     expander.run(nodes, path)
     return expander.out

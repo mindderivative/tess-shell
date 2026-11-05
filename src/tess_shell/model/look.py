@@ -142,6 +142,8 @@ def _resolve_node(node: m.Node, look: Look | None, errors: list[m.BindError]) ->
 
 
 def _matches(rule: Rule, node: m.Node) -> bool:
+    if rule.kind == "module":
+        return False  # applied to a module's root blocks by :func:`apply_module_rules`
     if rule.kind == "type":
         return rule.target == node.kind
     if rule.kind == "class":
@@ -174,20 +176,33 @@ def _rules_child(node: Child, rules: Sequence[Rule]) -> Child:
         )
     if isinstance(node, m.ForNode):
         return dataclasses.replace(node, body=apply_rules(node.body, rules))
-    hits = sorted(
-        ((r.specificity, i, r) for i, r in enumerate(rules) if _matches(r, node)),
-        key=lambda t: (t[0], t[1]),
-    )
+    merged = _fold(node, [r for r in rules if _matches(r, node)])
+    return dataclasses.replace(node, style=merged, children=apply_rules(node.children, rules))
+
+
+def _fold(node: m.Node, hits: Sequence[Rule]) -> dict[str, m.Value]:
+    """``node.style`` with the keys of ``hits`` below it (a name beats a class beats a module
+    beats a type; of one weight the later rule wins; the block's own keys win over all)."""
+    ordered = sorted(enumerate(hits), key=lambda t: (t[1].specificity, t[0]))
     merged: dict[str, m.Value] = {}
-    for _, _, rule in hits:
+    for _, rule in ordered:
         for key, value in rule.values.items():
             if _allowed(node.kind, key):
                 merged[key] = value
     below = {k: v for k, v in merged.items() if k not in node.props and k not in node.style}
-    children = apply_rules(node.children, rules)
-    if not below:
-        return dataclasses.replace(node, children=children)
-    return dataclasses.replace(node, style={**below, **node.style}, children=children)
+    return {**below, **node.style}
+
+
+def apply_module_rules(roots: Sequence[Child], module: str, rules: Sequence[Rule]) -> list[Child]:
+    """The rules that name ``module`` applied to its root blocks, which is all they reach: an
+    inner block is styled by a type, class or name rule (D40)."""
+    mine = [r for r in rules if r.kind == "module" and r.target == module]
+    if not mine:
+        return list(roots)
+    return [
+        dataclasses.replace(root, style=_fold(root, mine)) if isinstance(root, m.Node) else root
+        for root in roots
+    ]
 
 
 # -- checking references before the shell runs ------------------------------------------------

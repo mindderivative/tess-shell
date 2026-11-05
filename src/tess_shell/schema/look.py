@@ -243,8 +243,9 @@ def _rule(ctx: _Ctx, block: Block, module_names: set[str]) -> Rule | None:
     )
     if kind == "type":
         if name in module_names:
-            ctx.not_built(selector.value_origin, f"a rule for the module {name}", "warning")
-            return None
+            # a module's name styles the module's root blocks at every use (D40)
+            values = _scalar_block_keys(ctx, body, STYLE_UNION, "Rule")
+            return Rule("module", name, values, ctx.origin(block.origin))
         if name not in blocks.BLOCKS:
             ctx.unknown(selector.value_origin, name, [*blocks.BLOCKS], "block in a selector")
             return None

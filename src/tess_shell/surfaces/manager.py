@@ -290,7 +290,7 @@ class SurfaceManager:
                     suffix = f"@{outputs[i].name}" if len(indices) > 1 else ""
                     path = f"{shell.name}.{monitor.name}{suffix}.{bar.name}"
                     children = apply_rules(bar.children, rules)
-                    expanded = expand(children, path, modules, self._uid_of, outputs[i].name)
+                    expanded = expand(children, path, modules, self._uid_of, outputs[i].name, rules)
                     uses.extend(expanded.uses)
                     planned.append(Planned(path, bar, outputs[i], expanded, geometry, where))
         return planned, uses

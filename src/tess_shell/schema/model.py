@@ -118,14 +118,14 @@ class ThemeDef:
 class Rule:
     """One ``Rule { Selector: "...", <style values> }`` of a stylesheet."""
 
-    kind: Literal["type", "class", "name"]
-    target: str  # the block word, the class name or the unique ``Name``
+    kind: Literal["type", "module", "class", "name"]
+    target: str  # the block word, the module's call name, the class name or the unique ``Name``
     values: Mapping[str, Value]
     origin: Origin
 
     @property
     def specificity(self) -> int:
-        return {"type": 1, "class": 10, "name": 100}[self.kind]
+        return {"type": 1, "module": 5, "class": 10, "name": 100}[self.kind]
 
 
 @dataclass(frozen=True, slots=True)
