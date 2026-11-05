@@ -147,7 +147,10 @@ class Reloader:
             uid = file_uids.get(mf.path) or self.registry.uid_for(f"module:{name}", "module")
             sources[name] = ModuleSource(mf.definition, mf.python, uid, frozenset(tdl))
         everything = {p for s in sources.values() for p in (s.py_path, *s.tdl_paths)}
-        report(self.host.sync(sources, by_module, everything if changed is None else changed))
+        sync_problems = self.host.sync(
+            sources, by_module, everything if changed is None else changed
+        )
+        report(sync_problems)
         self.store.flush()  # what modules sent while changing; the Bars below are resolved from it
         self.manager.apply(planned, module_defs, uses)
         self.settings = dataclasses.replace(
@@ -155,4 +158,5 @@ class Reloader:
         )
         self.reloads += 1
         ms = (time.monotonic() - started) * 1000
-        logger.info(f"reloaded ({names}) in {ms:.0f} ms")
+        note = " with errors" if problems or sync_problems else ""
+        logger.info(f"reloaded{note} ({names}) in {ms:.0f} ms")

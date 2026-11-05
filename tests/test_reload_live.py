@@ -218,6 +218,7 @@ def test_a_python_change_replaces_the_instance_and_a_bad_edit_keeps_the_old_one(
     run.write_py("from tess_shell import Module\nclass Probe(Module:\n    pass\n")
     run.wait("module-import|importing the Python failed")
     assert re.search(r"Probe_Module\.py:\d+", run.text())
+    run.wait(r"reloaded with errors \(Probe_Module\.py\)")
     assert run.count("probe stopped v2") == 0  # the working instance still runs
     assert run.stop() == 0
     assert run.count("probe stopped v2") == 1
