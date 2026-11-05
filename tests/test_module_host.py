@@ -200,3 +200,12 @@ def test_the_shipped_clock_loads_with_the_real_module_file(tmp_path: Path) -> No
     rig.store.flush()
     assert len(rig.store.values["Clock@u1"]["time"]) == 5
     rig.host.stop_all()
+
+
+def test_a_syntax_error_is_located_in_the_module_file_not_in_the_host(tmp_path: Path) -> None:
+    code = "from tess_shell import Module\nclass Bad(Module:\n    pass\n"
+    loaded, findings = Rig(tmp_path).load("Syn", code)
+    assert loaded is None
+    (f,) = findings
+    assert f.rule == "module-import" and f.file.endswith("Syn_Module.py") and f.line == 2
+    assert "SyntaxError" in f.message

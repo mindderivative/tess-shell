@@ -54,6 +54,8 @@ class LoadedModule:
 
 def _where(exc: BaseException, py_path: Path) -> tuple[int, str]:
     """The line in ``py_path`` where ``exc`` was raised, else the last frame."""
+    if isinstance(exc, SyntaxError) and exc.lineno:  # raised while compiling: no frame of its own
+        return exc.lineno, str(exc.filename or py_path)
     frames = traceback.extract_tb(exc.__traceback__)
     own = [f for f in frames if Path(f.filename) == py_path]
     frame = (own or frames)[-1] if frames else None
