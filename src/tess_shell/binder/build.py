@@ -70,6 +70,7 @@ class View:
     applied: dict[str, dict[str, Any]] = field(default_factory=dict)  # node id -> tre props set
     entries: list[Entry] = field(default_factory=list)
     disposed: bool = False
+    parent: TreNode | None = None  # where the roots are attached; ``window.root`` when None
 
     def rebuild(self, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> RebuildStats:
         """Make the view show ``nodes``, changing only what differs (Render Binder Design > The
@@ -262,9 +263,13 @@ def _translate(exc: ValueError, index: _Index, fallback: Origin) -> BindError:
     return BindError(m["message"], origin)
 
 
-def build(nodes: Sequence[Node | UseNode | IfNode | ForNode], window: Window) -> View:
-    """Bind ``nodes`` under ``window.root``. Raises :class:`BindFailed` and builds nothing if
-    any value is wrong."""
+def build(
+    nodes: Sequence[Node | UseNode | IfNode | ForNode],
+    window: Window,
+    parent: TreNode | None = None,
+) -> View:
+    """Bind ``nodes`` under ``parent`` (default ``window.root``). Raises :class:`BindFailed` and
+    builds nothing if any value is wrong."""
     errors: list[BindError] = []
     plans: list[tuple[dict[str, Any], _Index, Origin]] = []
     seen: dict[str, Origin] = {}
@@ -288,11 +293,11 @@ def build(nodes: Sequence[Node | UseNode | IfNode | ForNode], window: Window) ->
         for root, _ in built:
             root.destroy()
         raise
-    view = View(window, [], {})
+    view = View(window, [], {}, parent=parent)
     typed_roots = [n for n in nodes if isinstance(n, Node)]
     for node, (spec, _, _), (root, _named) in zip(typed_roots, plans, built, strict=True):
         view.entries.append(make_entry(node, spec, root))
-        window.root.add_child(root)
+        (parent or window.root).add_child(root)
     view.reindex()
     return view
 

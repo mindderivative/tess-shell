@@ -194,3 +194,55 @@ def test_the_engine_accepts_the_geometry(spec: BarSpec) -> None:
     assert tuple(window.get("margin")) == g.margin
     assert window.get("exclusive_zone") == g.exclusive_zone
     assert window.get("exclusive_edge") == g.exclusive_edge
+
+
+# -- the shadow margin (ADR-0010): the surface grows, the body keeps its place, the reserved space
+#    does not change ------------------------------------------------------------------------------
+
+
+def reserved(g: Geometry, edge: str) -> int:
+    """What a compositor reserves: the zone plus the margin on the Edge (KWin and sway add it)."""
+    return g.exclusive_zone + g.margin[("top", "right", "bottom", "left").index(edge)]
+
+
+@pytest.mark.parametrize("gap", [0, 8, 20])
+def test_a_shadow_does_not_change_the_reserved_space(gap: int) -> None:
+    plain = geo(BarSpec("TOP", Expand(), Length(32), gap=gap))
+    shadowed = geo(BarSpec("TOP", Expand(), Length(32), gap=gap, bleed=(33, 49, 65, 49)))
+    assert reserved(shadowed, "top") == reserved(plain, "top")
+
+
+def test_a_full_width_bar_grows_only_across_and_keeps_its_body_at_the_edge() -> None:
+    g = geo(BarSpec("TOP", Expand(), Length(32), bleed=(33, 49, 65, 49)))
+    assert g.anchor == ("top", "left", "right") and g.size == (0, 32 + 65)
+    assert g.body_margin == (0, 0, 65, 0)  # flush with the screen on three sides: no shadow there
+    assert g.margin == (0, 0, 0, 0) and g.exclusive_zone == 32
+
+
+def test_the_gap_shows_the_shadow_on_the_edge_side_up_to_the_gap() -> None:
+    g = geo(BarSpec("TOP", Expand(), Length(32), gap=8, bleed=(33, 49, 65, 49)))
+    assert g.body_margin == (8, 0, 65, 0)  # the shadow above shows in the 8 px Gap, no more
+    assert g.size == (0, 8 + 32 + 65) and g.margin == (0, 0, 0, 0)  # margin 8 - 8
+    assert g.exclusive_zone == 40 + 8
+
+
+def test_a_floating_bar_gets_the_same_margin_on_both_ends_so_it_stays_centred() -> None:
+    g = geo(BarSpec("BOTTOM", Length(560), Length(64), alignment="CENTER", bleed=(10, 30, 50, 20)))
+    assert g.size == (560 + 60, 64 + 10)  # the inner side (top) grows by its 10
+    assert g.body_margin[1] == g.body_margin[3] == 30  # the larger of 30 and 20, both sides
+
+
+def test_start_and_end_offsets_still_place_the_body() -> None:
+    start = geo(
+        BarSpec("TOP", Length(400), Length(32), alignment="START", offset=200, bleed=(0, 9, 20, 9))
+    )
+    assert start.margin[3] == 200 - 9  # the body's left edge is still 200 px in
+    end = geo(
+        BarSpec("TOP", Length(400), Length(32), alignment="END", offset=50, bleed=(0, 9, 20, 9))
+    )
+    assert end.margin[1] == -50 - 9
+
+
+def test_a_side_bar_grows_across_its_width() -> None:
+    g = geo(BarSpec("LEFT", Length(48), Expand(), bleed=(5, 40, 5, 12)))
+    assert g.size == (48 + 40, 0) and g.body_margin == (0, 40, 0, 0)

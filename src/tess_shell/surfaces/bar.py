@@ -38,6 +38,12 @@ class BarSpec:
     min_height: float | None = None
     max_width: float | None = None
     max_height: float | None = None
+    bleed: tuple[int, int, int, int] = (
+        0,
+        0,
+        0,
+        0,
+    )  # shadow margin wanted: top, right, bottom, left
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +54,12 @@ class Geometry:
     exclusive_zone: int
     exclusive_edge: str | None = None
     warnings: tuple[str, ...] = ()
+    body_margin: tuple[int, int, int, int] = (
+        0,
+        0,
+        0,
+        0,
+    )  # the transparent margin, top right bottom left
 
 
 def _clamp(value: float, low: float | None, high: float | None) -> float:
@@ -121,8 +133,21 @@ def bar_geometry(
             f"the Bar's length along its edge is 0; set a Min_{'Width' if horizontal else 'Height'}"
         )
     thick = round(thickness)
+    gap = round(spec.gap)
+    # The shadow margin (ADR-0010): the surface grows by it and the body keeps its place. A side
+    # flush with the screen shows no shadow: the Edge side gets at most the Gap, and an EXPAND
+    # length none along the Edge. A floating bar gets the same margin on both ends, so the
+    # compositor's centring still centres the body.
+    top, right, bottom, left = spec.bleed
+    want = {"top": top, "right": right, "bottom": bottom, "left": left}
+    inner = {"top": "bottom", "bottom": "top", "left": "right", "right": "left"}[edge]
+    eb = {side: 0 for side in _ORDER}
+    eb[edge] = min(want[edge], gap)
+    eb[inner] = want[inner]
+    if length is not None:
+        eb[start] = eb[end] = max(want[start], want[end])
     margins = {side: 0 for side in _ORDER}
-    margins[edge] = round(spec.gap)
+    margins[edge] = gap - eb[edge]
     warnings: list[str] = []
     exclusive_edge: str | None = None
 
@@ -133,27 +158,30 @@ def bar_geometry(
         if spec.alignment is not None or spec.offset is not None:
             warnings.append("Alignment and Offset have no effect on an EXPAND length")
     else:
-        along_size = round(length)
+        along_size = round(length) + eb[start] + eb[end]
         alignment = spec.alignment or "CENTER"
         offset = spec.offset or 0
         if alignment == "START":
             anchor = (edge, start)
-            margins[start] = round(offset)
+            margins[start] = round(offset) - eb[start]
             exclusive_edge = edge
         elif alignment == "END":
             anchor = (edge, end)
-            margins[end] = round(-offset)
+            margins[end] = round(-offset) - eb[end]
             exclusive_edge = edge
         elif offset == 0:
             anchor = (edge,)
         else:
             anchor = (edge, start)
-            margins[start] = round((out_along - length) / 2 + offset)
+            margins[start] = round((out_along - along_size) / 2 + offset)
             exclusive_edge = edge
 
     reserves = spec.layer == "TOP" and spec.reserve
-    zone = thick + margins[edge] if reserves else 0
-    size = (along_size, thick) if horizontal else (thick, along_size)
+    # The compositor reserves the zone plus the Edge margin; the margin shrank by ``eb[edge]`` and
+    # the zone grows by it, so the reserved space is the same with or without a shadow.
+    zone = thick + gap + eb[edge] if reserves else 0
+    across = thick + eb[edge] + eb[inner]
+    size = (along_size, across) if horizontal else (across, along_size)
     return Geometry(
         anchor=anchor,
         size=size,
@@ -161,4 +189,5 @@ def bar_geometry(
         exclusive_zone=zone,
         exclusive_edge=exclusive_edge,
         warnings=tuple(warnings),
+        body_margin=(eb["top"], eb["right"], eb["bottom"], eb["left"]),
     )

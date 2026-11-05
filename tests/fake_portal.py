@@ -16,8 +16,8 @@ from dbus_fast import Variant
 from dbus_fast.aio import MessageBus
 from dbus_fast.service import ServiceInterface, method, signal
 
-from tess_shell.look.portal import NAMESPACE, PATH, PORTAL
 from tess_shell.services.bus import ServiceThread
+from tess_shell.services.portal import NAMESPACE, PATH, PORTAL
 
 HAVE_DAEMON = shutil.which("dbus-daemon") is not None
 

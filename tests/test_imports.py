@@ -51,6 +51,7 @@ RULES: dict[str, set[str] | None] = {
     "options": set(),
     "signals": set(),
     "binder": {"tess_re", "tess_utils", "tess_shell.binder"},
+    "services": {"dbus_fast", "loguru", "tess_shell.services"},
     "surfaces": set(),
     "surfaces.bar": {"tess_shell.binder.model"},
     "surfaces.manager": {

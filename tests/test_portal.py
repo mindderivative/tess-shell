@@ -7,8 +7,8 @@ import time
 import pytest
 from dbus_fast import Variant
 
-from tess_shell.look.portal import Appearance, PortalReader, apply_key, parse
 from tess_shell.services.bus import ServiceThread
+from tess_shell.services.portal import Appearance, PortalReader, apply_key, parse
 from tests.fake_portal import HAVE_DAEMON, fake_portal, wait_for
 
 needs_daemon = pytest.mark.skipif(not HAVE_DAEMON, reason="dbus-daemon is not installed")

@@ -10,13 +10,14 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from loguru import logger
 
 from tess_shell.binder import convert
 from tess_shell.binder.build import View, build
 from tess_shell.binder.model import BindError, BindFailed, Color, Value
+from tess_shell.binder.shadow import style_bleed, style_shadows
 from tess_shell.model.expand import Expanded, expand
 from tess_shell.model.live import LiveTree
 from tess_shell.model.store import Change, ValueStore
@@ -26,6 +27,7 @@ from tess_shell.surfaces.bar import BarSpec, Geometry, ZeroSize, bar_geometry
 
 if TYPE_CHECKING:
     from tess_re import App, LayerWindow, Output
+    from tess_re import Node as TreNode
 
 
 class OutputLike(Protocol):
@@ -114,6 +116,8 @@ class Surface:
     expanded: Expanded
     geometry: Geometry
     fill: tuple[int, int, int, int] | None = None
+    body: TreNode | None = None  # the Bar's body: fill, shadows and the transparent margin
+    shadows: list[tuple[Any, ...]] | None = None
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -141,7 +145,31 @@ def _spec(bar: BarDef) -> BarSpec:
         min_height=bar.min_height,
         max_width=bar.max_width,
         max_height=bar.max_height,
+        bleed=style_bleed(bar.style, style_shadows(bar.style)),
     )
+
+
+def _body_props(bar: BarDef) -> tuple[tuple[int, int, int, int] | None, list[tuple[Any, ...]]]:
+    """The fill and the tre shadows of a Bar's body."""
+    style = dict(bar.style) if bar.style else None
+    shadows: list[tuple[Any, ...]] = convert.shadows(style_shadows(style), ("shadows",))["shadows"]
+    return _bar_fill(style), shadows
+
+
+def _body_style(
+    geometry: Geometry, fill: tuple[int, int, int, int] | None, shadows: list[tuple[Any, ...]]
+) -> dict[str, Any]:
+    top, right, bottom, left = geometry.body_margin
+    props: dict[str, Any] = {
+        "margin_top": top,
+        "margin_right": right,
+        "margin_bottom": bottom,
+        "margin_left": left,
+        "shadows": shadows,
+    }
+    if fill is not None:
+        props["fill"] = fill
+    return props
 
 
 @dataclass(slots=True)
@@ -251,9 +279,14 @@ class SurfaceManager:
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
             output=output,
         )
-        fill = _bar_fill(dict(bar.style) if bar.style else None)
-        if fill is not None:
-            window.root.set(fill=fill)
+        fill, shadows = _body_props(bar)
+        body = window.create(
+            "box",
+            flex_grow=1,
+            align_self="stretch",
+            **_body_style(geometry, fill, shadows),
+        )
+        window.root.add_child(body)
         window.on(
             "configure",
             lambda e, n=where: logger.info(f"Bar {n} configured {int(e.width)}x{int(e.height)}"),
@@ -267,7 +300,7 @@ class SurfaceManager:
         errors = list(planned.expanded.errors)
         if not errors:
             try:
-                view = build(live.resolve(planned.expanded), window)
+                view = build(live.resolve(planned.expanded), window, body)
             except BindFailed as failed:
                 errors = failed.errors
         _log_errors(errors)
@@ -289,6 +322,8 @@ class SurfaceManager:
             planned.expanded,
             geometry,
             fill,
+            body,
+            shadows,
         )
 
     # -- changes ------------------------------------------------------------------------------
@@ -371,7 +406,7 @@ class SurfaceManager:
             nodes = live.resolve(p.expanded)
             stats = "built"
             if s.view is None:
-                s.view = build(nodes, s.window)
+                s.view = build(nodes, s.window, s.body)
             else:
                 stats = str(s.view.rebuild(nodes))
         except BindFailed as failed:
@@ -379,10 +414,17 @@ class SurfaceManager:
             logger.error(f"Bar {p.where} keeps what it shows: the new contents did not bind")
             return
         s.live, s.expanded, s.name = live, p.expanded, p.bar.name
-        fill = _bar_fill(dict(p.bar.style) if p.bar.style else None)
-        if fill is not None and fill != s.fill:
-            s.window.root.set(fill=fill)
-            s.fill = fill
+        fill, shadows = _body_props(p.bar)
+        if s.body is not None and (
+            fill != s.fill
+            or shadows != s.shadows
+            or p.geometry.body_margin != s.geometry.body_margin
+        ):
+            props = _body_style(p.geometry, fill, shadows)
+            if fill is None and s.fill is not None:
+                props["fill"] = (0, 0, 0, 0)  # tre cannot unset a fill: transparent is the default
+            s.body.set(**props)
+            s.fill, s.shadows = fill, shadows
         if p.geometry != s.geometry:
             try:
                 s.window.set(

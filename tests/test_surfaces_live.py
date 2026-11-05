@@ -272,3 +272,25 @@ def test_a_for_follows_a_modules_list_while_the_shell_runs(
         r"rebuilt Bar Top_Bar: (\d+) changed, (\d+) created, (\d+) removed", shell.stderr
     )
     assert len(stats) >= 3 and all(s == ("0", "1", "0") for s in stats), stats
+
+
+def test_a_shadow_changes_neither_the_reserved_space_nor_the_body(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    """ADR-0010: the shadow lives in a transparent margin; sway reserves the same space."""
+    body = BODY.replace("Height: 32\n", "Height: 32\n                Gap: 8\n").replace(
+        'Style { Fill: "#1f1f1f" }', 'Style { Fill: "#1f1f1f", Elevation: 100% }'
+    )
+    write_example(tmp_path, body)
+    before = workspace_rect(private_sway)
+    shell = start(private_sway, tmp_path)
+    try:
+        shell.wait_for("Bar Top_Bar on HEADLESS-1 configured")
+        # Gap 8 + Height 32 reserved 48 without a shadow (D31); the same with one
+        assert reserved_rect(private_sway, before)["y"] == before["y"] + 48
+        assert "size (0, 105)" in shell.log_text()  # 8 (shadow in the Gap) + 32 + 65 below
+        shell.process.send_signal(signal.SIGTERM)
+        assert shell.finish() == 0
+    finally:
+        if shell.process.poll() is None:
+            shell.process.kill()

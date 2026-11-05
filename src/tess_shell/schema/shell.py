@@ -215,7 +215,7 @@ def _scalar_block_keys(
                             out[flat] = value
                     elif isinstance(sub, Property):
                         ctx.unknown(sub.key_origin, sub.key, ["Width", "Color"], "Border key")
-            elif entry.type in table and table[entry.type] == "sides":
+            elif entry.type in table and table[entry.type] in ("sides", "bleed"):
                 try:
                     out[entry.type] = named_sides(entry, ctx.origin(entry.origin))
                 except ValueProblem as exc:

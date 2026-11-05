@@ -265,3 +265,17 @@ def test_a_settings_change_applies_logging_and_reports_directories_as_a_restart(
     )
     run.wait("apply after a restart")
     assert run.stop() == 0
+
+
+def test_adding_an_elevation_grows_the_surface_but_not_the_reserved_zone(
+    live: Make, private_sway: PrivateSway
+) -> None:
+    run = live()
+    wait_for_y(private_sway, 32)
+    run.edit_shell('Style { Fill: "#1f1f1f" }', 'Style { Fill: "#1f1f1f", Elevation: 100% }')
+    run.wait(r"reloaded \(Main_Shell\.tdl\)")
+    assert "size (0, 97) zone 32" in run.text()  # 32 + 65 below the body; the zone is unchanged
+    assert workspace_rect(private_sway)["y"] == 32
+    run.edit_shell('Style { Fill: "#1f1f1f", Elevation: 100% }', 'Style { Fill: "#1f1f1f" }')
+    run.wait(r"size \(0, 32\) zone 32")
+    assert run.stop() == 0

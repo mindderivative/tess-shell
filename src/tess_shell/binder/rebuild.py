@@ -113,7 +113,7 @@ def rebuild(view: View, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> R
 
     plan = _Plan()
     window = view.window
-    new_entries = _diff(view.entries, typed, specs, window.root, plan)
+    new_entries = _diff(view.entries, typed, specs, view.parent or window.root, plan)
 
     built: list[tuple[Entry, TreNode]] = []
     try:

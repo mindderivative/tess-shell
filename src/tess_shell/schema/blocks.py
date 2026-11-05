@@ -130,5 +130,12 @@ BAR_NOT_BUILT = (
     "Padding",
     "Class",
 )
-BAR_STYLE: dict[str, str] = {"Background": "color", "Fill": "color", "Opacity": "number"}
+BAR_STYLE: dict[str, str] = {
+    "Background": "color",
+    "Fill": "color",
+    "Opacity": "number",
+    "Elevation": "elevation",
+    "Shadows": "shadows",
+    "Shadow_Bleed": "bleed",
+}
 OTHER_SURFACES = ("Frame", "Panel", "Popup")

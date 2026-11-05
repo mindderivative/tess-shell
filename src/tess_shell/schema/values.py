@@ -135,6 +135,10 @@ def coerce(
             return m.Enum(word, origin=origin)
         case "sides":
             return _sides(value, origin)
+        case "bleed":
+            if _word(value) == "AUTO":
+                return m.Auto(origin=origin)
+            return _sides(value, origin)
         case "elevation":
             if isinstance(value, tess_dl.Percent) and 0 <= value.value <= 100:
                 return m.Percent(value.value, origin=origin)

@@ -13,8 +13,19 @@ The reach was measured on tre 0.6.1 (``tests/test_binder_shadow.py``): a shadow 
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 
-from tess_shell.binder.model import Color, Origin, Shadow, Shadows
+from tess_shell.binder.model import (
+    Auto,
+    Color,
+    Length,
+    Origin,
+    Percent,
+    Shadow,
+    Shadows,
+    Sides,
+    Value,
+)
 
 DEFAULT_MAX = Shadows((Shadow(Color(0, 0, 0, 0x40), 0, 16, 48, 0),))
 
@@ -45,3 +56,32 @@ def bleed(shadows: Shadows) -> tuple[int, int, int, int]:
     # +1 pixel: tre's blur tail ends one pixel beyond ``blur`` on the long axis (measured)
     sides = tuple(math.ceil(side) + 1 if side > 0 else 0 for side in (top, right, bottom, left))
     return sides  # type: ignore[return-value]
+
+
+def style_shadows(style: Mapping[str, Value] | None, max_shadows: Shadows = DEFAULT_MAX) -> Shadows:
+    """The shadows a surface's style asks for: ``Shadows`` wins over ``Elevation`` (the schema
+    warns when both are written); neither is no shadow."""
+    if not style:
+        return Shadows(())
+    explicit = style.get("Shadows")
+    if isinstance(explicit, Shadows):
+        return explicit
+    level = style.get("Elevation")
+    if isinstance(level, Percent):
+        return scale(max_shadows, level.value, level.origin)
+    return Shadows(())
+
+
+def style_bleed(style: Mapping[str, Value] | None, shadows: Shadows) -> tuple[int, int, int, int]:
+    """The surface's transparent margin, in tre's order: ``Shadow_Bleed`` when it is a number or
+    four sides, else computed from ``shadows`` (``AUTO``, the default)."""
+    value = style.get("Shadow_Bleed") if style else None
+    if isinstance(value, Length):
+        n = math.ceil(max(value.px, 0))
+        return (n, n, n, n)
+    if isinstance(value, Sides):
+        side = [math.ceil(max(x, 0)) for x in (value.top, value.right, value.bottom, value.left)]
+        return (side[0], side[1], side[2], side[3])
+    if value is None or isinstance(value, Auto):
+        return bleed(shadows)
+    return bleed(shadows)
