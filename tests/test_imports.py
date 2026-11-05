@@ -41,6 +41,7 @@ RULES: dict[str, set[str] | None] = {
     "module": set(),
     "modules": {
         "loguru",
+        "tess_shell.binder.model",
         "tess_shell.module",
         "tess_shell.model",
         "tess_shell.modules",

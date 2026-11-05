@@ -138,8 +138,13 @@ class LiveTree:
                 if typed is not None:
                     table[key] = typed
         children = self._list(node.children, dataclasses.replace(here, use=use) if use else None)
+        handlers = (
+            {k: dataclasses.replace(h, use=use) for k, h in node.handlers.items()}
+            if use and node.handlers
+            else node.handlers
+        )
         return dataclasses.replace(
-            node, name=name, props=props, style=style, children=tuple(children)
+            node, name=name, props=props, style=style, children=tuple(children), handlers=handlers
         )
 
     def _slot(

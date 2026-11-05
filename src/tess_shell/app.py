@@ -239,6 +239,7 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         manager = SurfaceManager(app, module_defs, registry.uid_for, store, look)
         manager_box.append(manager)
         host = ModuleHost(store, ticks, cfg)
+        manager.sink = host.dispatch  # a click on a block reaches its module's @action
         # a file the shell registers for the first time gets a UID in its metadata (G8)
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         own_writes = OwnWrites()

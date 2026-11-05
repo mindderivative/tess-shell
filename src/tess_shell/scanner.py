@@ -240,7 +240,7 @@ def _check_look(
             )
     if theme is None:
         return out
-    tokens = effective_tokens(theme, Appearance())
+    tokens = effective_tokens(theme, Appearance(), themes.get(DEFAULT_THEME))
     for shell in shells.values():
         for monitor in shell.monitors:
             for bar in monitor.surfaces:
@@ -255,4 +255,4 @@ def build_look(result: Scan, settings: Settings, appearance: Appearance) -> Look
     error for a name it could not find, so the caller has already stopped on one."""
     theme = result.themes[settings.appearance.theme or DEFAULT_THEME]
     sheets = [result.stylesheets[name] for name in settings.appearance.stylesheets]
-    return make_look(theme, sheets, appearance)
+    return make_look(theme, sheets, appearance, result.themes.get(DEFAULT_THEME))

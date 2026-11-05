@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import difflib
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -18,6 +18,7 @@ from tess_shell.binder.model import (
     BindError,
     BindFailed,
     ForNode,
+    Handler,
     IfNode,
     Node,
     Origin,
@@ -49,6 +50,18 @@ class _Index:
     named: dict[str, tuple[str, dict[str, Any]]] = field(default_factory=dict)
 
 
+EVENTS: dict[str, str] = {"On_Click": "click"}  # the TDL event key -> tre's event name
+
+
+@dataclass(slots=True)
+class Wire:
+    """What a built node's listeners read: the current handlers (a reload replaces them without
+    touching the listeners) and the tre events that already have a listener."""
+
+    handlers: Mapping[str, Handler]
+    wired: set[str] = field(default_factory=set)
+
+
 @dataclass(slots=True)
 class Entry:
     """One built node: its typed source, the tre node, the tre props it was given, and its
@@ -58,6 +71,7 @@ class Entry:
     tre: TreNode | None
     props: dict[str, Any]
     children: list[Entry] = field(default_factory=list)
+    wire: Wire | None = None
 
 
 @dataclass(slots=True)
@@ -72,6 +86,7 @@ class View:
     entries: list[Entry] = field(default_factory=list)
     disposed: bool = False
     parent: TreNode | None = None  # where the roots are attached; ``window.root`` when None
+    sink: Callable[[Handler, str, Any], None] | None = None  # (handler, event key, tre event)
 
     def rebuild(self, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> RebuildStats:
         """Make the view show ``nodes``, changing only what differs (Render Binder Design > The
@@ -89,6 +104,7 @@ class View:
 
         def walk(entries: list[Entry]) -> None:
             for e in entries:
+                self._wire(e)
                 name = e.typed.name
                 if name is not None and e.tre is not None:
                     self.nodes[name] = e.tre
@@ -97,6 +113,27 @@ class View:
                 walk(e.children)
 
         walk(self.entries)
+
+    def _wire(self, entry: Entry) -> None:
+        """Give a node with handlers one tre listener per event; the listener looks the handler up
+        when the event arrives, so a reload that changes the handler needs no new listener."""
+        if entry.tre is None:
+            return
+        if entry.wire is None:
+            entry.wire = Wire(entry.typed.handlers)
+        wire = entry.wire
+        for key in wire.handlers:
+            tre_event = EVENTS.get(key)
+            if tre_event is None or key in wire.wired:
+                continue
+            wire.wired.add(key)
+
+            def listener(event: Any, key: str = key, wire: Wire = wire) -> None:
+                handler = wire.handlers.get(key)
+                if handler is not None and self.sink is not None:
+                    self.sink(handler, key, event)
+
+            entry.tre.on(tre_event, listener)
 
     def update(self, changes: Sequence[tuple[str, str, Value]]) -> list[BindError]:
         """Set new typed values on named nodes: ``(node id, TDL key, value)``.

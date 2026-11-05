@@ -179,6 +179,17 @@ Value = (
 
 
 @dataclass(frozen=True, slots=True)
+class Handler:
+    """An ``On_<Event>`` value: the action's name, its named arguments (plain values) and the key
+    of the module use the block belongs to (empty outside a module). The model fills ``use``."""
+
+    action: str
+    args: Mapping[str, object] = field(default_factory=dict)
+    use: str = ""
+    origin: Origin = _origin()
+
+
+@dataclass(frozen=True, slots=True)
 class Node:
     kind: str  # the block word: "Text", "FlexBox", "Rectangle"
     name: str | None = None  # the Name: value
@@ -186,6 +197,7 @@ class Node:
     style: Mapping[str, Value] = field(default_factory=dict)  # the inline Style block
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
     classes: tuple[str, ...] = ()  # ``Class:`` names; the schema folds them into ``style``
+    handlers: Mapping[str, Handler] = field(default_factory=dict)  # ``On_Click`` -> handler
     origin: Origin = _origin()
 
 

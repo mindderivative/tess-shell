@@ -139,3 +139,29 @@ BAR_STYLE: dict[str, str] = {
     "Shadow_Bleed": "bleed",
 }
 OTHER_SURFACES = ("Frame", "Panel", "Popup")
+
+
+# The twelve v1 events (Events and Actions), as the TDL keys. A block raises only the events its
+# pointer or focus handling supports: M1's blocks take a click and nothing else; the rest wait for
+# the surfaces and the value blocks that raise them.
+EVENT_KEYS = (
+    "On_Open",
+    "On_Close",
+    "On_Visible",
+    "On_Hidden",
+    "On_Focus",
+    "On_Unfocus",
+    "On_Toggle",
+    "On_Click",
+    "On_Anim_Start",
+    "On_Anim_End",
+    "On_Changed",
+    "On_Change",
+)
+# A tre text node takes no listener of its own (a click on it reaches the nearest box above it,
+# measured on tre 0.6.1), so a Text raises nothing: put the handler on the box around it.
+BLOCK_EVENTS: dict[str, tuple[str, ...]] = {
+    kind: ("On_Click",) for kind in ("Box", "FlexBox", "Rectangle", "Spacer", "SVG")
+}
+# the shell's own actions (Events and Actions > A Handler); built with the Panel
+BUILTIN_ACTIONS = ("Show", "Hide", "Toggle", "Close", "Call")

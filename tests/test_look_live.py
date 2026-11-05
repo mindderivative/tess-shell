@@ -101,3 +101,22 @@ def test_a_bad_token_in_the_bars_style_is_dropped_with_a_warning_not_a_crash() -
     (surface,) = manager.surfaces
     assert surface.fill is None  # no fill: the key kept its default
     assert surface.view is not None  # the Bar still shows
+
+
+def test_a_click_on_a_bars_block_reaches_the_managers_sink() -> None:
+    from tess_shell.binder.model import Handler
+
+    manager = themed()
+    seen: list[str] = []
+    manager.sink = lambda handler, key, raw: seen.append(f"{key}:{handler.action}")
+    (surface,) = manager.surfaces
+    assert surface.view is not None
+    box = Node(
+        "Rectangle",
+        name="Hit",
+        props={"Width": Length(10), "Height": Length(10)},
+        handlers={"On_Click": Handler("go")},
+    )
+    surface.view.rebuild([*[e.typed for e in surface.view.entries], box])
+    surface.view.window.simulate("click", node=surface.view.nodes["Hit"])
+    assert seen == ["On_Click:go"]

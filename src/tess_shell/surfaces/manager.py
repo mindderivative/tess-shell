@@ -17,7 +17,7 @@ from loguru import logger
 
 from tess_shell.binder import convert
 from tess_shell.binder.build import View, build
-from tess_shell.binder.model import BindError, BindFailed, Color, Value
+from tess_shell.binder.model import BindError, BindFailed, Color, Handler, Value
 from tess_shell.binder.shadow import DEFAULT_MAX, style_bleed, style_shadows
 from tess_shell.model.expand import Expanded, expand
 from tess_shell.model.live import LiveTree
@@ -223,14 +223,20 @@ class SurfaceManager:
         uid_of: Callable[[str], str],
         store: ValueStore,
         look: Look | None = None,
+        sink: Callable[[Handler, str, Any], None] | None = None,
     ) -> None:
         self._app = app
+        self.sink = sink
         self._look = look
         self._modules = modules
         self._uid_of = uid_of
         self._store = store
         self.surfaces: list[Surface] = []
         self._planned: list[Planned] = []
+
+    def _dispatch(self, handler: Handler, key: str, raw: Any) -> None:
+        if self.sink is not None:
+            self.sink(handler, key, raw)
 
     @property
     def look(self) -> Look:
@@ -341,6 +347,7 @@ class SurfaceManager:
         if not errors:
             try:
                 view = build(live.resolve(planned.expanded), window, body)
+                view.sink = self._dispatch
             except BindFailed as failed:
                 errors = failed.errors
         _log_errors(errors)
@@ -454,6 +461,7 @@ class SurfaceManager:
             stats = "built"
             if s.view is None:
                 s.view = build(nodes, s.window, s.body)
+                s.view.sink = self._dispatch
             else:
                 stats = str(s.view.rebuild(nodes))
         except BindFailed as failed:

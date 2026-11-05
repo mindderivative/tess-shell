@@ -332,3 +332,30 @@ def test_the_shipped_theme_and_stylesheet_load_and_agree() -> None:
         assert check_tokens([node], effective_tokens(t, Appearance())) == []
     assert {"color.accent", "color.surface", "elevation.max"} <= set(t.tokens)
     assert Path(base / "Themes" / "Default_Theme.tdl").is_file()
+
+
+# -- a partial theme falls back to the Default theme, token by token (D42) ---------------------
+
+
+def test_a_token_the_theme_lacks_comes_from_the_default_theme_in_the_current_look() -> None:
+    from tess_shell.config.discovery import shipped_dir
+
+    default = theme((shipped_dir() / "Themes" / "Default_Theme.tdl").read_text())
+    partial = theme(
+        HEADER
+        + 'Theme { Color { Surface: "#112233" } Modes { Light { Color { Surface: "#ffffff" } } } }'
+    )
+    dark = effective_tokens(partial, Appearance(scheme="dark"), default)
+    assert colour(dark, "color.surface") == "#112233"  # the theme's own
+    assert colour(dark, "color.on_surface") == "#E6E0E9"  # the Default's, dark
+    light = effective_tokens(partial, Appearance(scheme="light"), default)
+    assert colour(light, "color.surface") == "#ffffff"  # the theme's own light mode
+    assert colour(light, "color.on_surface") == "#1D1B20"  # the Default's light mode
+    assert "type.body.font_size" in dark and "elevation.max" in dark
+    assert "type.body.font_size" not in effective_tokens(partial, Appearance())  # no fallback given
+
+
+def test_a_token_neither_theme_defines_is_still_an_error() -> None:
+    node = text(Foreground=ref("color.nope", "color"))
+    found = check_tokens([node], effective_tokens(theme(), Appearance(), theme()))
+    assert [f.rule for f in found] == ["bad-token"]

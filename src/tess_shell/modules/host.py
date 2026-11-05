@@ -10,6 +10,7 @@ from __future__ import annotations
 import importlib.util
 import inspect
 import sys
+import time
 import traceback
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -20,9 +21,10 @@ from typing import Any
 
 from loguru import logger
 
+from tess_shell.binder import model as m
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
-from tess_shell.module import Module
+from tess_shell.module import Event, Module
 from tess_shell.modules.context import ModuleContext, UseRecord
 from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.findings import Finding
@@ -50,6 +52,24 @@ class LoadedModule:
     ctx: ModuleContext
     state: str = "created"  # created, running, failed, stopped
     uses: list[Use] = field(default_factory=list)
+
+
+SLOW_ACTION = 0.05  # seconds; a handler runs on the loop thread, so a slow one is logged
+
+
+def handlers_of(children: tuple[object, ...]) -> list[m.Handler]:
+    """Every handler in a layout, inside blocks, ``If`` and ``For`` too."""
+    found: list[m.Handler] = []
+    for node in children:
+        if isinstance(node, m.Node):
+            found.extend(node.handlers.values())
+            found.extend(handlers_of(node.children))
+        elif isinstance(node, m.IfNode):
+            found.extend(handlers_of(node.body))
+            found.extend(handlers_of(node.else_body or ()))
+        elif isinstance(node, m.ForNode):
+            found.extend(handlers_of(node.body))
+    return found
 
 
 def _where(exc: BaseException, py_path: Path) -> tuple[int, str]:
@@ -143,6 +163,27 @@ class ModuleHost:
                     definition, "module-classes", message, f"the layout file is {definition.file}"
                 )
             ]
+        actions = sorted(
+            name
+            for name, member in inspect.getmembers(classes[0], callable)
+            if getattr(member, "__tess_action__", False)
+        )
+        missing = [h for h in handlers_of(definition.children) if h.action not in actions]
+        if missing:
+            return None, [
+                Finding(
+                    h.origin.file,
+                    h.origin.line,
+                    h.origin.column,
+                    "error",
+                    "unknown-action",
+                    f"the module {definition.name} has no action {h.action}",
+                    f"its actions: {', '.join(actions)}"
+                    if actions
+                    else f"mark a method with @action in {py_path.name}",
+                )
+                for h in missing
+            ]
         records = {
             u.key: UseRecord(u.key, u.name, u.key.split("@", 1)[1], u.monitor, dict(u.params))
             for u in uses
@@ -169,6 +210,42 @@ class ModuleHost:
         loaded = LoadedModule(definition, py_path, instance, ctx, uses=uses)
         self.loaded[definition.name] = loaded
         return loaded, []
+
+    # -- events ---------------------------------------------------------------------------------
+
+    def dispatch(self, handler: m.Handler, key: str, raw: object) -> None:
+        """Loop thread: a node raised ``key``; call the module's action with an :class:`Event`.
+        A handler that raises is logged with the module, the event and the block's position, and
+        is not repeated; the shell keeps running."""
+        module = handler.use.split("@", 1)[0]
+        loaded = self.loaded.get(module)
+        if loaded is None or loaded.state != "running":
+            logger.debug(f"{key} for {module}, which is not running: ignored")
+            return
+        fn = getattr(loaded.instance, handler.action, None)
+        if not callable(fn) or not getattr(fn, "__tess_action__", False):
+            logger.error(f"{handler.origin}: {module} has no action {handler.action}")
+            return
+        event = Event(
+            key.removeprefix("On_").lower(),
+            handler.use,
+            handler.args,
+            x=getattr(raw, "window_x", None),
+            y=getattr(raw, "window_y", None),
+            button=getattr(raw, "button", None),
+        )
+        started = time.monotonic()
+        try:
+            fn(event)
+        except Exception:
+            logger.opt(exception=True).error(
+                f"{handler.origin}: {module}.{handler.action} raised on {key}"
+            )
+        took = time.monotonic() - started
+        if took > SLOW_ACTION:
+            logger.warning(
+                f"{handler.origin}: {module}.{handler.action} took {took * 1000:.0f} ms on the loop"
+            )
 
     # -- lifecycle ------------------------------------------------------------------------------
 

@@ -149,9 +149,21 @@ def _meta_name(document: Document, file: str) -> str | None:
     return None
 
 
-def effective_tokens(theme: ThemeDef, appearance: Appearance) -> dict[str, Token]:
-    """The theme's tokens for the desktop's current look: the base values, then the light or dark
-    mode, then high contrast, then reduced motion (which also sets every duration to 0)."""
+def effective_tokens(
+    theme: ThemeDef, appearance: Appearance, fallback: ThemeDef | None = None
+) -> dict[str, Token]:
+    """The theme's tokens for the desktop's current look. A token the theme lacks comes from
+    ``fallback`` (the ``Default`` theme), token by token, in the fallback's own current look
+    (D42)."""
+    tokens = _effective(theme, appearance)
+    if fallback is not None and fallback is not theme:
+        tokens = {**_effective(fallback, appearance), **tokens}
+    return tokens
+
+
+def _effective(theme: ThemeDef, appearance: Appearance) -> dict[str, Token]:
+    """One theme's tokens: the base values, then the light or dark mode, then high contrast, then
+    reduced motion (which also sets every duration to 0)."""
     tokens = dict(theme.tokens)
     order: list[str] = []
     if appearance.scheme in ("light", "dark"):

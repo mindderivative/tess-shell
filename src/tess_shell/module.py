@@ -6,11 +6,27 @@ constructor arguments.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import time
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from tess_shell.modules.context import ModuleContext, UseRecord
+
+
+@dataclass(frozen=True, slots=True)
+class Event:
+    """What an ``@action`` receives (Events and Actions > Python Contract): the event, where it
+    happened and when, the handler's named arguments and, for a click, the pointer position."""
+
+    name: str  # "click"
+    use: str  # the key of the module use whose block raised it
+    args: Mapping[str, object] = field(default_factory=dict)
+    time: float = field(default_factory=time.monotonic)
+    x: float | None = None  # pointer position in the window
+    y: float | None = None
+    button: str | None = None  # "primary", "secondary", ...
 
 
 class Module:
@@ -38,6 +54,6 @@ class Module:
 
 
 def action[F: Callable[..., Any]](fn: F) -> F:
-    """Mark a method as callable from a shell file (events arrive with M3)."""
+    """Mark a method as an action: ``On_Click: name`` calls it with an :class:`Event`."""
     fn.__tess_action__ = True  # type: ignore[attr-defined]
     return fn

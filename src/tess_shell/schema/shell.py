@@ -60,6 +60,7 @@ class _Ctx:
         # the call name of the module file an ``Import:`` names (a path relative to this file)
         self.import_module = import_module
         self.findings: list[Finding] = []
+        self.in_module = False  # a module's layout: a bare action name is one of its @actions
         self.names: dict[str, m.Origin] = {}
         self.selectors: dict[tuple[str, str], m.Origin] = {}
 
@@ -411,6 +412,7 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
     style_at: dict[str, tess_dl.Origin | None] = {}
     prop_at: dict[str, tess_dl.Origin | None] = {}
     classes: list[str] = []
+    handlers: dict[str, m.Handler] = {}
     children: list[Child] = []
     for entry in block.entries:
         if isinstance(entry, Property):
@@ -421,7 +423,11 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
                 ctx.not_built(entry.key_origin, "a Style file on a block (a module has one)")
             elif key == "Class":
                 classes.extend(_class_names(ctx, entry))
-            elif key == "Tooltip" or key.startswith("On_"):
+            elif key.startswith("On_"):
+                handler = _handler(ctx, block.type, key, entry.key_origin, entry.value)
+                if handler is not None:
+                    handlers[key] = handler
+            elif key == "Tooltip":
                 ctx.not_built(entry.key_origin, key)
             elif key in prop_keys or key in style_keys:
                 kind = prop_keys.get(key) or style_keys[key]
@@ -432,7 +438,11 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
             else:
                 ctx.unknown(entry.key_origin, key, allowed, f"key in {block.type}")
         elif isinstance(entry, Block):
-            if entry.type == "Style":
+            if entry.type.startswith("On_"):
+                handler = _handler(ctx, block.type, entry.type, entry.origin, entry)
+                if handler is not None:
+                    handlers[entry.type] = handler
+            elif entry.type == "Style":
                 for k, v in _scalar_block_keys(ctx, entry, style_keys, block.type).items():
                     style[k] = v
                 for sub in entry.entries:
@@ -501,8 +511,91 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
         style=style,
         children=tuple(children),
         classes=tuple(classes),
+        handlers=handlers,
         origin=ctx.origin(block.origin),
     )
+
+
+def _handler(
+    ctx: _Ctx,
+    block: str,
+    key: str,
+    origin: tess_dl.Origin | None,
+    value: tess_dl.Value | Block,
+) -> m.Handler | None:
+    """An ``On_<Event>`` value: a bare action name, or a block ``{ Action: name, arg: value }``
+    (Events and Actions > A Handler). An unknown event, an event this block cannot raise, a
+    built-in action that is not built yet, and (in a shell file) any other name are errors."""
+    if key not in blocks.EVENT_KEYS:
+        ctx.unknown(origin, key, list(blocks.EVENT_KEYS), "event key")
+        return None
+    if key not in blocks.BLOCK_EVENTS.get(block, ()):
+        raised = ", ".join(blocks.BLOCK_EVENTS.get(block, ()))
+        hint = f"it raises: {raised}" if raised else f"put {key} on the FlexBox or Box around it"
+        ctx.add(origin, "event-not-raised", f"a {block} does not raise {key}", hint)
+        return None
+    args: dict[str, object] = {}
+    if isinstance(value, Block):
+        action_prop = next(
+            (e for e in value.entries if isinstance(e, Property) and e.key == "Action"), None
+        )
+        if action_prop is None:
+            ctx.add(
+                value.origin,
+                "missing-key",
+                f"{key} needs an Action",
+                f"write {key} {{ Action: name }}",
+            )
+            return None
+        action_value, at = action_prop.value, action_prop.value_origin
+        for e in value.entries:
+            if not isinstance(e, Property) or e.key == "Action":
+                continue
+            plain = _plain(e.value)
+            if plain is None:
+                ctx.add(
+                    e.value_origin,
+                    "bad-value",
+                    f"{e.key}: an argument is a string, a number or true or false",
+                    "",
+                )
+                return None
+            args[e.key] = plain
+    else:
+        action_value, at = value, origin
+    name = action_value.text if isinstance(action_value, tess_dl.Word) else None
+    if name is None or not _NAME.match(name):
+        ctx.add(
+            at,
+            "bad-name",
+            f"{key} names an action: letters, digits and _",
+            f"write {key}: Open_Launcher",
+        )
+        return None
+    if name in blocks.BUILTIN_ACTIONS:
+        ctx.not_built(at, f"the built-in action {name}")
+        return None
+    if not ctx.in_module:
+        ctx.add(
+            at,
+            "unknown-action",
+            f"{key}: {name} is not an action a shell file can name",
+            f"a shell file names the built-in actions: {', '.join(blocks.BUILTIN_ACTIONS)}",
+        )
+        return None
+    return m.Handler(name, args, origin=ctx.origin(origin))
+
+
+def _plain(value: tess_dl.Value) -> object | None:
+    if isinstance(value, tess_dl.String):
+        return value.value
+    if isinstance(value, tess_dl.Number):
+        return value.value
+    if isinstance(value, tess_dl.Word) and value.text in ("true", "false"):
+        return value.text == "true"
+    if isinstance(value, tess_dl.Word):
+        return value.text
+    return None
 
 
 def _class_names(ctx: _Ctx, entry: Property) -> list[str]:
@@ -877,6 +970,7 @@ def read_module(
     """Type a parsed ``<Name>_Module.tdl``: ``Module { Params { } Children { } }``, or a single
     layout block written directly in the root (Module File > Structure)."""
     ctx = _Ctx(file, lambda _: "", modules, import_module, load_style, icons)
+    ctx.in_module = True
     root = document.root
     if root.type != "Module":
         ctx.add(

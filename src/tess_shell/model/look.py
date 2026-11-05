@@ -36,6 +36,7 @@ class Look:
     appearance: Appearance
     tokens: Mapping[str, Token]
     rules: tuple[Rule, ...] = ()
+    fallback: ThemeDef | None = None  # the Default theme, for a token the chosen one lacks
 
     @property
     def max_shadows(self) -> m.Shadows | None:
@@ -44,16 +45,22 @@ class Look:
 
     def with_appearance(self, appearance: Appearance) -> Look:
         """The same theme and rules for a new light or dark setting, accent or motion flag."""
-        return make_look(self.theme, self.sheets, appearance)
+        return make_look(self.theme, self.sheets, appearance, self.fallback)
 
 
-def make_look(theme: ThemeDef, sheets: Sequence[StylesheetDef], appearance: Appearance) -> Look:
+def make_look(
+    theme: ThemeDef,
+    sheets: Sequence[StylesheetDef],
+    appearance: Appearance,
+    fallback: ThemeDef | None = None,
+) -> Look:
     return Look(
         theme,
         tuple(sheets),
         appearance,
-        effective_tokens(theme, appearance),
+        effective_tokens(theme, appearance, fallback),
         tuple(rule for sheet in sheets for rule in sheet.rules),
+        fallback,
     )
 
 
