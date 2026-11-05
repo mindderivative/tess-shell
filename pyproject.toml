@@ -24,6 +24,7 @@ dependencies = [
     "tesserae-dl>=0.1.1,<0.2",
     "loguru>=0.7.3,<0.8",
     "inotify-simple>=2.0.1,<3",
+    "dbus-fast>=2.24,<4",
 ]
 
 [project.urls]
@@ -62,6 +63,10 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# dbus-fast reads D-Bus signatures from string annotations
+"tests/fake_portal.py" = ["F722", "F821", "E501", "UP037"]
 
 [tool.mypy]
 strict = true

@@ -40,3 +40,4 @@
 - Binder: a `Text` with no `Width` is sized to its content (`fit-content`); tre laid such a text out at width 0, so two texts in a row (two Clocks) overlapped. M1's single text hid it.
 - Reload: the log line says `reloaded with errors (...)` when a module's Python or layout failed to import and the old instance was kept.
 - M3a: `Elevation: N%` and `Shadows { Shadow { Color, X, Y, Blur, Spread } }` on FlexBox, Box and Rectangle (and in an inline Style); the default `Max` reaches 64 px, and `binder/shadow.py` computes the transparent margin a shadow needs (measured against tre 0.6.1: blur + spread +/- offset, plus one pixel).
+- M3a: the Settings portal reader (`look/portal.py`) on a `dbus` service thread (`services/bus.py`, dbus-fast): one `ReadAll` at start, then `SettingChanged` only; settings.tdl gains `Appearance { Theme, Stylesheets, Follow_Desktop }` (read; not applied yet).

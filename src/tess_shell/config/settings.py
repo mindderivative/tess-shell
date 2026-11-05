@@ -26,7 +26,9 @@ _ROOT_KEYS = (
     "Validation",
     "Hot_Reload",
     "Reload_Debounce",
+    "Appearance",
 )
+_APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop")
 _LOGGING_KEYS = (
     "Level",
     "Directory",
@@ -52,6 +54,13 @@ class LoggingSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class AppearanceSettings:
+    theme: str | None = None  # a theme's metadata Name; None: the shell's default theme
+    stylesheets: tuple[str, ...] = ()  # stylesheets' metadata Names, lowest priority first
+    follow_desktop: bool = True  # read the Settings portal (Portals > Configuration)
+
+
+@dataclass(frozen=True, slots=True)
 class Settings:
     config_dir: Path
     main_shell: str = DEFAULT_MAIN_SHELL
@@ -63,6 +72,7 @@ class Settings:
     validation_enabled: bool = True
     hot_reload: bool = True
     reload_debounce: float = 0.2  # seconds
+    appearance: AppearanceSettings = field(default_factory=AppearanceSettings)
 
 
 class _Reader:
@@ -185,6 +195,34 @@ def _logging(reader: _Reader, block: Block) -> LoggingSettings:
     return replace(LoggingSettings(), **{k: v for k, v in values.items() if v is not None})
 
 
+def _appearance(reader: _Reader, block: Block) -> AppearanceSettings:
+    reader.unknown_keys(block, _APPEARANCE_KEYS, "Appearance")
+    values: dict[str, Any] = {}
+    for prop in properties(block):
+        match prop.key:
+            case "Theme":
+                text_ = value_text(prop.value)
+                if text_ is None:
+                    reader.error(prop.value_origin, "bad-value", "Theme must be a theme's Name", "")
+                else:
+                    values["theme"] = text_
+            case "Stylesheets":
+                v = prop.value
+                names = [value_text(i) for i in (v.items if isinstance(v, List) else [v])]
+                if any(n is None for n in names):
+                    reader.error(
+                        prop.value_origin,
+                        "bad-value",
+                        "Stylesheets is a stylesheet Name or a list of them",
+                        "",
+                    )
+                else:
+                    values["stylesheets"] = tuple(n for n in names if n is not None)
+            case "Follow_Desktop":
+                values["follow_desktop"] = reader.boolean(prop)
+    return replace(AppearanceSettings(), **{k: v for k, v in values.items() if v is not None})
+
+
 def _directories(reader: _Reader, block: Block, config: Path) -> dict[str, tuple[Path, ...]]:
     reader.unknown_keys(block, FOLDERS, "Directories")
     result: dict[str, tuple[Path, ...]] = {}
@@ -257,6 +295,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     validation = True
     hot_reload = True
     debounce = 0.2
+    appearance = AppearanceSettings()
     main_origin: Origin | None = None
     if root is not None:
         reader.unknown_keys(root, _ROOT_KEYS, "Settings")
@@ -298,6 +337,8 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             directories = _directories(reader, blk, config)
         if (blk := reader.block(root, "Logging")) is not None:
             logging = _logging(reader, blk)
+        if (blk := reader.block(root, "Appearance")) is not None:
+            appearance = _appearance(reader, blk)
         if (blk := reader.block(root, "Validation")) is not None:
             reader.unknown_keys(blk, _VALIDATION_KEYS, "Validation")
             en = find_property(blk, "Enabled")
@@ -344,6 +385,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             validation_enabled=validation,
             hot_reload=hot_reload,
             reload_debounce=debounce,
+            appearance=appearance,
         ),
         [],
     )
