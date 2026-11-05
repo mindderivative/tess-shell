@@ -212,3 +212,29 @@ def test_dispose_removes_and_frees_the_subtree_and_is_idempotent() -> None:
         row.get("gap")
     view.dispose()
     assert view.nodes == {}
+
+
+def test_texts_in_a_row_take_their_own_width_and_do_not_overlap() -> None:
+    """tre gives a text with no width a layout width of 0, so two texts sat on top of each other."""
+    window = Window(300, 40)
+    row = Node(
+        "FlexBox",
+        name="Row",
+        props={"Spacing": Number(8)},
+        children=(
+            Node("Text", name="A", props={"Text": Text("12:34:56")}),
+            Node("Text", name="B", props={"Text": Text("12:34 Tokyo")}),
+        ),
+    )
+    view = build([row], window)
+    window.snapshot()
+    a, b = view.nodes["A"], view.nodes["B"]
+    assert a.get("layout_width") > 30 and b.get("layout_width") > 30
+    assert b.get("layout_x") >= a.get("layout_x") + a.get("layout_width") + 8 - 0.5
+
+
+def test_an_explicit_text_width_still_wins() -> None:
+    view = build(
+        [Node("Text", name="T", props={"Text": Text("x"), "Width": Length(77)})], Window(100, 40)
+    )
+    assert view.nodes["T"].get("width") == 77

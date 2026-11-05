@@ -142,7 +142,8 @@ BLOCKS: Mapping[str, BlockRow] = {
             "Max_Lines": _k("max_lines", "whole"),
         },
         style=_TEXT_STYLE,
-        defaults={"text": ""},
+        # tre lays out a text with no width at width 0 (two texts in a row overlap): fit content
+        defaults={"text": "", "width": "fit-content"},
     ),
     # Drawn as a rounded tre box, not a path: a path needs numeric sizes, and Width may be AUTO.
     "Rectangle": BlockRow(
