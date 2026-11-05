@@ -183,4 +183,13 @@ def test_check_resolves_icons_from_the_config_folder(
     )
     assert main(["check", "--config-dir", str(tmp_path)]) == 1
     err = capsys.readouterr().err
-    assert "no icon named dott" in err and "did you mean dot?" in err
+    assert "no icon named dott" in err and "did you mean dot" in err  # the shipped mdi adds to it
+
+
+def test_the_shipped_mdi_set_resolves_with_no_icons_folder() -> None:
+    from tess_shell.config.discovery import shipped_dir
+
+    shipped = IconSets([shipped_dir() / "Icons"])
+    assert "currentColor" in (shipped.lookup("mdi:account") or "")
+    assert shipped.lookup("account") == shipped.lookup("mdi:account")
+    assert (shipped_dir() / "Icons" / "MDI-LICENSE.txt").read_text().startswith("Pictogrammers")

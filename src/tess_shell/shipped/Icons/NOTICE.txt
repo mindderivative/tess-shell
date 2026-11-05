@@ -1,0 +1,9 @@
+mdi.json is the Material Design Icons set (prefix "mdi") by Pictogrammers,
+https://github.com/Templarian/MaterialDesign, in Iconify's JSON form. It is
+distributed under the Apache License 2.0; the licence text of the Pictogrammers
+Free License is in MDI-LICENSE.txt, and Apache 2.0 is at
+https://www.apache.org/licenses/LICENSE-2.0.
+
+As that licence says, some of the icons are redistributed under their respective
+licenses. A per-icon list of those icons is not part of this file; see the
+Pictogrammers repository.

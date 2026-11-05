@@ -13,7 +13,7 @@ from tess_dl import Document
 
 import tess_shell
 from tess_shell.appearance import Appearance
-from tess_shell.config.discovery import discover, is_shipped
+from tess_shell.config.discovery import discover, is_shipped, shipped_dir
 from tess_shell.config.settings import Settings
 from tess_shell.files.icons import IconSets
 from tess_shell.files.loader import (
@@ -87,7 +87,8 @@ def scan(settings: Settings, config: Path) -> Scan:
     findings: list[Finding] = []
     shells: dict[Path, ShellDef] = {}
     modules: dict[str, ModuleFile] = {}
-    icons = IconSets(settings.directories.get("Icons", ()))
+    # the shipped mdi set is searched last: a set of the same prefix in the user's folders wins
+    icons = IconSets([*settings.directories.get("Icons", ()), shipped_dir() / "Icons"])
     # pass 1: every module's name and params, so a layout can call any module in any order
     documents: dict[Path, Document] = {}
     for path in paths:
