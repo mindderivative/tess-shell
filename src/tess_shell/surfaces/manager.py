@@ -8,6 +8,7 @@ window.
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol
@@ -17,9 +18,10 @@ from loguru import logger
 from tess_shell.binder import convert
 from tess_shell.binder.build import View, build
 from tess_shell.binder.model import BindError, BindFailed, Color, Value
-from tess_shell.binder.shadow import style_bleed, style_shadows
+from tess_shell.binder.shadow import DEFAULT_MAX, style_bleed, style_shadows
 from tess_shell.model.expand import Expanded, expand
 from tess_shell.model.live import LiveTree
+from tess_shell.model.look import Look, apply_rules, resolve_style
 from tess_shell.model.store import Change, ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, ShellDef
@@ -118,6 +120,7 @@ class Surface:
     fill: tuple[int, int, int, int] | None = None
     body: TreNode | None = None  # the Bar's body: fill, shadows and the transparent margin
     shadows: list[tuple[Any, ...]] | None = None
+    planned: Planned | None = None  # what the surface was last planned from
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -129,7 +132,7 @@ def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | Non
     return None
 
 
-def _spec(bar: BarDef) -> BarSpec:
+def _spec(bar: BarDef, look: Look | None) -> BarSpec:
     from tess_shell.surfaces import bar as bar_module
 
     return bar_module.BarSpec(
@@ -145,14 +148,33 @@ def _spec(bar: BarDef) -> BarSpec:
         min_height=bar.min_height,
         max_width=bar.max_width,
         max_height=bar.max_height,
-        bleed=style_bleed(bar.style, style_shadows(bar.style)),
+        bleed=_bleed(bar, look),
     )
 
 
-def _body_props(bar: BarDef) -> tuple[tuple[int, int, int, int] | None, list[tuple[Any, ...]]]:
+def _bar_style(bar: BarDef, look: Look | None) -> dict[str, Value]:
+    """The Bar's own style with its token references resolved."""
+    errors: list[BindError] = []
+    style = resolve_style(bar.style or {}, look, errors)
+    _log_errors(errors)
+    return style
+
+
+def _bleed(bar: BarDef, look: Look | None) -> tuple[int, int, int, int]:
+    style = resolve_style(bar.style or {}, look)
+    return style_bleed(style, _shadows(style, look))
+
+
+def _shadows(style: dict[str, Value], look: Look | None) -> Any:
+    return style_shadows(style, (look.max_shadows if look else None) or DEFAULT_MAX)
+
+
+def _body_props(
+    bar: BarDef, look: Look | None
+) -> tuple[tuple[int, int, int, int] | None, list[tuple[Any, ...]]]:
     """The fill and the tre shadows of a Bar's body."""
-    style = dict(bar.style) if bar.style else None
-    shadows: list[tuple[Any, ...]] = convert.shadows(style_shadows(style), ("shadows",))["shadows"]
+    style = _bar_style(bar, look)
+    shadows: list[tuple[Any, ...]] = convert.shadows(_shadows(style, look), ("shadows",))["shadows"]
     return _bar_fill(style), shadows
 
 
@@ -200,20 +222,35 @@ class SurfaceManager:
         modules: Mapping[str, ModuleDef],
         uid_of: Callable[[str], str],
         store: ValueStore,
+        look: Look | None = None,
     ) -> None:
         self._app = app
+        self._look = look
         self._modules = modules
         self._uid_of = uid_of
         self._store = store
         self.surfaces: list[Surface] = []
         self._planned: list[Planned] = []
 
+    @property
+    def look(self) -> Look:
+        assert self._look is not None, "the manager was made without a look"
+        return self._look
+
     # -- planning: no side effect but logging -------------------------------------------------
 
     def _plan_bars(
-        self, shell: ShellDef, modules: Mapping[str, ModuleDef]
+        self, shell: ShellDef, modules: Mapping[str, ModuleDef], look: Look | None
     ) -> tuple[list[Planned], list[Use]]:
-        """Match monitors to outputs, compute each Bar's geometry and expand its module calls."""
+        """Match monitors to outputs, compute each Bar's geometry and expand its module calls.
+        The stylesheet's rules are folded into every block first, so ``#name`` selectors see the
+        names as written."""
+        rules = look.rules if look else ()
+        if rules:
+            modules = {
+                n: dataclasses.replace(d, children=apply_rules(d.children, rules))
+                for n, d in modules.items()
+            }
         outputs: list[Output] = list(self._app.outputs())
         if not outputs:
             logger.warning("no outputs: no surface was opened")
@@ -236,7 +273,9 @@ class SurfaceManager:
                 for bar in monitor.surfaces:
                     where = f"{bar.name} on {outputs[i].name}"
                     try:
-                        geometry = bar_geometry(_spec(bar), (outputs[i].width, outputs[i].height))
+                        geometry = bar_geometry(
+                            _spec(bar, look), (outputs[i].width, outputs[i].height)
+                        )
                     except ZeroSize as exc:
                         logger.warning(f"{bar.origin}: Bar {where} is not created: {exc}")
                         continue
@@ -244,13 +283,14 @@ class SurfaceManager:
                         logger.warning(f"{bar.origin}: Bar {where}: {warning}")
                     suffix = f"@{outputs[i].name}" if len(indices) > 1 else ""
                     path = f"{shell.name}.{monitor.name}{suffix}.{bar.name}"
-                    expanded = expand(bar.children, path, modules, self._uid_of, outputs[i].name)
+                    children = apply_rules(bar.children, rules)
+                    expanded = expand(children, path, modules, self._uid_of, outputs[i].name)
                     uses.extend(expanded.uses)
                     planned.append(Planned(path, bar, outputs[i], expanded, geometry, where))
         return planned, uses
 
     def plan(self, shell: ShellDef) -> list[Use]:
-        planned, uses = self._plan_bars(shell, self._modules)
+        planned, uses = self._plan_bars(shell, self._modules, self._look)
         for use in uses:
             self._store.add_use(use.module, use.key)
         self._planned = planned
@@ -279,7 +319,7 @@ class SurfaceManager:
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
             output=output,
         )
-        fill, shadows = _body_props(bar)
+        fill, shadows = _body_props(bar, self._look)
         body = window.create(
             "box",
             flex_grow=1,
@@ -295,7 +335,7 @@ class SurfaceManager:
             "closed",
             lambda e, n=where: logger.info(f"Bar {n} closed ({getattr(e, 'reason', '')})"),
         )
-        live = LiveTree(self._store, all_uses)
+        live = LiveTree(self._store, all_uses, look=self._look)
         view: View | None = None
         errors = list(planned.expanded.errors)
         if not errors:
@@ -324,6 +364,7 @@ class SurfaceManager:
             fill,
             body,
             shadows,
+            planned,
         )
 
     # -- changes ------------------------------------------------------------------------------
@@ -356,11 +397,11 @@ class SurfaceManager:
                 logger.warning(f"{error.origin}: {error.message}")
 
     def check(
-        self, shell: ShellDef, modules: Mapping[str, ModuleDef]
+        self, shell: ShellDef, modules: Mapping[str, ModuleDef], look: Look | None = None
     ) -> tuple[list[Planned], list[Use]] | None:
         """Plan ``shell`` for a reload without changing anything. ``None`` when a Bar's tree has
         an error that would leave it empty: the running state is kept."""
-        planned, uses = self._plan_bars(shell, modules)
+        planned, uses = self._plan_bars(shell, modules, look or self._look)
         failed = [p for p in planned if p.expanded.errors]
         for p in failed:
             _log_errors(p.expanded.errors)
@@ -369,13 +410,19 @@ class SurfaceManager:
         return planned, uses
 
     def apply(
-        self, planned: list[Planned], modules: Mapping[str, ModuleDef], store_uses: Sequence[Use]
+        self,
+        planned: list[Planned],
+        modules: Mapping[str, ModuleDef],
+        store_uses: Sequence[Use],
+        look: Look | None = None,
     ) -> None:
         """Make the running surfaces match ``planned`` (from :meth:`check`): a surface whose key,
         output, layer and exclusive edge are unchanged is kept, its tree rebuilt by the keyed diff
         and its geometry set live; the rest are closed or opened. All-or-nothing per surface: a
         tree that does not bind leaves that surface as it was."""
         self._modules = modules
+        if look is not None:
+            self._look = look
         all_uses = {u.key: u for p in planned for u in p.expanded.uses}
         old = {s.key: s for s in self.surfaces}
         out: list[Surface] = []
@@ -401,7 +448,7 @@ class SurfaceManager:
             self._store.remove_use(key)
 
     def _update(self, s: Surface, p: Planned, all_uses: Mapping[str, Use]) -> None:
-        live = LiveTree(self._store, all_uses)
+        live = LiveTree(self._store, all_uses, look=self._look)
         try:
             nodes = live.resolve(p.expanded)
             stats = "built"
@@ -413,30 +460,52 @@ class SurfaceManager:
             _log_errors(failed.errors)
             logger.error(f"Bar {p.where} keeps what it shows: the new contents did not bind")
             return
-        s.live, s.expanded, s.name = live, p.expanded, p.bar.name
-        fill, shadows = _body_props(p.bar)
+        s.live, s.expanded, s.name, s.planned = live, p.expanded, p.bar.name, p
+        self._sync_body(s, p.bar, p.geometry, p.where)
+        logger.info(f"Bar {p.where} reloaded: {stats}")
+
+    def _sync_body(self, s: Surface, bar: BarDef, geometry: Geometry, where: str) -> None:
+        """Bring a kept surface's body (fill, shadows, margin) and its window geometry to what the
+        Bar asks for; each is set only when it differs."""
+        fill, shadows = _body_props(bar, self._look)
         if s.body is not None and (
-            fill != s.fill
-            or shadows != s.shadows
-            or p.geometry.body_margin != s.geometry.body_margin
+            fill != s.fill or shadows != s.shadows or geometry.body_margin != s.geometry.body_margin
         ):
-            props = _body_style(p.geometry, fill, shadows)
+            props = _body_style(geometry, fill, shadows)
             if fill is None and s.fill is not None:
                 props["fill"] = (0, 0, 0, 0)  # tre cannot unset a fill: transparent is the default
             s.body.set(**props)
             s.fill, s.shadows = fill, shadows
-        if p.geometry != s.geometry:
+        if geometry != s.geometry:
             try:
                 s.window.set(
-                    anchor=p.geometry.anchor,
-                    size=p.geometry.size,
-                    margin=p.geometry.margin,
-                    exclusive_zone=p.geometry.exclusive_zone,
+                    anchor=geometry.anchor,
+                    size=geometry.size,
+                    margin=geometry.margin,
+                    exclusive_zone=geometry.exclusive_zone,
                 )
-                s.geometry = p.geometry
-                logger.info(
-                    f"Bar {p.where}: size {p.geometry.size} zone {p.geometry.exclusive_zone}"
-                )
+                s.geometry = geometry
+                logger.info(f"Bar {where}: size {geometry.size} zone {geometry.exclusive_zone}")
             except ValueError as exc:
-                logger.error(f"Bar {p.where}: {exc}; the geometry was not changed")
-        logger.info(f"Bar {p.where} reloaded: {stats}")
+                logger.error(f"Bar {where}: {exc}; the geometry was not changed")
+
+    # -- the desktop's look changed ------------------------------------------------------------
+
+    def set_look(self, look: Look) -> None:
+        """Loop thread: a new light or dark setting, accent or motion flag. Every token is read
+        again, so each surface is rebuilt by the keyed diff, which changes only what differs, and
+        a shadow that grew or shrank resizes its surface."""
+        self._look = look
+        a = look.appearance
+        logger.info(
+            f"look: scheme {a.scheme}, accent {a.accent}, high contrast {a.high_contrast}, "
+            f"reduced motion {a.reduced_motion}"
+        )
+        for s in self.surfaces:
+            p = s.planned
+            if p is None or s.view is None:
+                continue
+            s.live.look = look
+            self._rebuild(s)
+            geometry = bar_geometry(_spec(p.bar, look), (p.output.width, p.output.height))
+            self._sync_body(s, p.bar, geometry, p.where)

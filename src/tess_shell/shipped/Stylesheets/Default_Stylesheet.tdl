@@ -1,0 +1,19 @@
+---
+TDL: 0.1
+Name: Default
+---
+
+# The shell's own rules: text and icons take the theme's colours and the body type. Name it in
+# settings.tdl, Appearance { Stylesheets: [Default] }, or write your own.
+
+Stylesheet {
+    Rule {
+        Selector: "Text"
+        Foreground: $color.on_surface
+        Font_Size: $type.body.font_size
+    }
+    Rule {
+        Selector: "SVG"
+        Foreground: $color.on_surface
+    }
+}

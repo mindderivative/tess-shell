@@ -21,6 +21,7 @@ from loguru import logger
 
 from tess_shell.binder import model as m
 from tess_shell.model.expand import Expanded
+from tess_shell.model.look import Look, resolve
 from tess_shell.model.store import Change, ValueStore
 from tess_shell.model.uses import Use, UseScope
 from tess_shell.schema import blocks
@@ -84,6 +85,7 @@ class LiveTree:
     )
     conditions: dict[str, tess_el.Condition] = field(default_factory=dict)
     errors: int = 0
+    look: Look | None = None  # the theme tokens a ``$group.name`` reads
     _owner: Mapping[str, str] = field(default_factory=dict)
 
     # -- resolve ------------------------------------------------------------------------------
@@ -96,7 +98,12 @@ class LiveTree:
         self.reads.clear()
         self.structural.clear()
         self._owner = expanded.owner
-        return self._list(tuple(expanded.nodes), None)
+        nodes, problems = resolve(self._list(tuple(expanded.nodes), None), self.look)
+        for problem in problems:
+            self.errors += 1
+            hint = f" ({problem.hint})" if problem.hint else ""
+            logger.warning(f"{problem.origin}: {problem.message}{hint}")
+        return nodes
 
     def _scope(self, use: str) -> UseScope:
         return UseScope(self.uses[use].params, self.store.snapshot(use))

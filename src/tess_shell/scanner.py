@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib.metadata import version
 from pathlib import Path
 
@@ -12,6 +12,7 @@ import tess_el
 from tess_dl import Document
 
 import tess_shell
+from tess_shell.appearance import Appearance
 from tess_shell.config.discovery import discover, is_shipped
 from tess_shell.config.settings import Settings
 from tess_shell.files.icons import IconSets
@@ -22,11 +23,15 @@ from tess_shell.files.loader import (
     load_module_document,
     load_shell_file,
     load_style_file,
+    load_stylesheet_file,
+    load_theme_file,
     register_module,
 )
-from tess_shell.schema.findings import Finding, render_findings
+from tess_shell.model.look import Look, check_tokens, make_look
+from tess_shell.schema.findings import Finding, nearest, render_findings
 from tess_shell.schema.graph import module_cycles
-from tess_shell.schema.model import ShellDef, StyleDef
+from tess_shell.schema.look import effective_tokens
+from tess_shell.schema.model import ShellDef, StyleDef, StylesheetDef, ThemeDef
 from tess_shell.schema.shell import read_module, read_module_params
 
 
@@ -47,6 +52,7 @@ def print_findings(findings: list[Finding], config: Path) -> None:
 
 
 MAX_FINDINGS = 50
+DEFAULT_THEME = "Default"
 
 
 def installed_versions() -> dict[str, str]:
@@ -64,6 +70,8 @@ class Scan:
     findings: list[Finding]
     shells: dict[Path, ShellDef]
     modules: dict[str, ModuleFile]
+    themes: dict[str, ThemeDef] = field(default_factory=dict)
+    stylesheets: dict[str, StylesheetDef] = field(default_factory=dict)
 
     @property
     def errors(self) -> list[Finding]:
@@ -128,18 +136,123 @@ def scan(settings: Settings, config: Path) -> Scan:
             del modules[name]
     findings.extend(module_cycles({n: mf.definition for n, mf in modules.items()}))
     registry = {name: mf.definition for name, mf in modules.items()}
+    themes: dict[str, ThemeDef] = {}
+    stylesheets: dict[str, StylesheetDef] = {}
+    theme_shipped: dict[str, bool] = {}
+    sheet_shipped: dict[str, bool] = {}
+    for path in paths:
+        if path.name.endswith("_Theme.tdl"):
+            theme, found = load_theme_file(path, config, versions)
+            findings.extend(found)
+            if theme is not None:
+                findings.extend(_register(themes, theme_shipped, theme, path, config))
+        elif path.name.endswith("_Stylesheet.tdl"):
+            sheet, found = load_stylesheet_file(path, config, versions, set(registry))
+            findings.extend(found)
+            if sheet is not None:
+                findings.extend(_register(stylesheets, sheet_shipped, sheet, path, config))
     for path in paths:
         if path.name.endswith("_Shell.tdl"):
             shell, found = load_shell_file(path, config, versions, registry, importer(path), icons)
             if shell is not None:
                 shells[path] = shell
             findings.extend(found)
-        elif not path.name.endswith("_Module.tdl"):
+        elif path.name.endswith("_Style.tdl"):
             _, found = load_file(path, config)
             findings.extend(found)
     findings.extend(
         Finding("Icons", 1, 1, "warning", "icon-set-invalid", problem, "the set is skipped")
         for problem in icons.problems
     )
+    findings.extend(_check_look(settings, themes, stylesheets, shells, modules))
     own = sum(1 for path in paths if not is_shipped(path))  # the user's files, not the shipped ones
-    return Scan(own, sorted(findings, key=lambda f: f.sort_key), shells, modules)
+    return Scan(
+        own, sorted(findings, key=lambda f: f.sort_key), shells, modules, themes, stylesheets
+    )
+
+
+def _register[T: (ThemeDef, StylesheetDef)](
+    registry: dict[str, T], shipped: dict[str, bool], new: T, path: Path, base: Path
+) -> list[Finding]:
+    """By the metadata ``Name``: a user file overrides a shipped one, two user files are an
+    error. ``shipped`` remembers which registered files ship with the package."""
+    is_new_shipped = is_shipped(path)
+    have = registry.get(new.name)
+    if have is None or (shipped[new.name] and not is_new_shipped):
+        registry[new.name] = new
+        shipped[new.name] = is_new_shipped
+        return []
+    if is_new_shipped:
+        return []
+    return [
+        Finding(
+            display_name(path, base),
+            1,
+            1,
+            "error",
+            "name-duplicate",
+            f"the name {new.name} is already used by {have.file}",
+            "a name is registered once; a user file may share a shipped file's name",
+        )
+    ]
+
+
+def _check_look(
+    settings: Settings,
+    themes: dict[str, ThemeDef],
+    stylesheets: dict[str, StylesheetDef],
+    shells: dict[Path, ShellDef],
+    modules: dict[str, ModuleFile],
+) -> list[Finding]:
+    """The chosen theme and stylesheets exist, and every ``$token`` a layout names is in the
+    theme and of the kind its key reads."""
+    out: list[Finding] = []
+    chosen = settings.appearance.theme or DEFAULT_THEME
+    theme = themes.get(chosen)
+    if theme is None:
+        close = nearest(chosen, themes)
+        out.append(
+            Finding(
+                "settings.tdl",
+                1,
+                1,
+                "error",
+                "theme-not-found",
+                f"Appearance.Theme names '{chosen}', which no theme file has as its Name",
+                f"did you mean {', '.join(close)}?" if close else f"themes: {', '.join(themes)}",
+            )
+        )
+    for name in settings.appearance.stylesheets:
+        if name not in stylesheets:
+            close = nearest(name, stylesheets)
+            out.append(
+                Finding(
+                    "settings.tdl",
+                    1,
+                    1,
+                    "error",
+                    "stylesheet-not-found",
+                    f"Appearance.Stylesheets names '{name}', which no stylesheet has as its Name",
+                    f"did you mean {', '.join(close)}?"
+                    if close
+                    else f"stylesheets: {', '.join(stylesheets)}",
+                )
+            )
+    if theme is None:
+        return out
+    tokens = effective_tokens(theme, Appearance())
+    for shell in shells.values():
+        for monitor in shell.monitors:
+            for bar in monitor.surfaces:
+                out.extend(check_tokens(bar.children, tokens, bar.style))
+    for mf in modules.values():
+        out.extend(check_tokens(mf.definition.children, tokens))
+    return out
+
+
+def build_look(result: Scan, settings: Settings, appearance: Appearance) -> Look:
+    """The look the scan's theme and stylesheets give for ``appearance``. The scan reported an
+    error for a name it could not find, so the caller has already stopped on one."""
+    theme = result.themes[settings.appearance.theme or DEFAULT_THEME]
+    sheets = [result.stylesheets[name] for name in settings.appearance.stylesheets]
+    return make_look(theme, sheets, appearance)

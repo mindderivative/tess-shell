@@ -19,6 +19,7 @@ from typing import NoReturn
 from loguru import logger
 
 import tess_shell
+from tess_shell.appearance import Appearance
 from tess_shell.config.lock import InstanceLock
 from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir, state_dir
 from tess_shell.config.registry import Registry, RegistryError
@@ -37,7 +38,9 @@ from tess_shell.modules.host import ModuleHost, report
 from tess_shell.modules.ticks import TimeSource
 from tess_shell.options import Options
 from tess_shell.reloader import Reloader
-from tess_shell.scanner import MAX_FINDINGS, print_findings, scan
+from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
+from tess_shell.services.bus import ServiceThread
+from tess_shell.services.portal import PortalReader
 from tess_shell.signals import LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites, Watcher
@@ -211,7 +214,30 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         ticks = TimeSource()
         shell = result.shells.get(settings.main_shell_path) if settings.main_shell_path else None
         module_defs = {name: mf.definition for name, mf in result.modules.items()}
-        manager = SurfaceManager(app, module_defs, registry.uid_for, store)
+        # the desktop's look: one read of the Settings portal, on the D-Bus thread; a slow or
+        # missing portal gives the defaults and never delays the surfaces
+        service: ServiceThread | None = None
+        portal: PortalReader | None = None
+        appearance = Appearance()
+        manager_box: list[SurfaceManager] = []
+
+        def appearance_changed(new: Appearance) -> None:  # on the service thread
+            def apply() -> None:
+                manager_box[0].set_look(manager_box[0].look.with_appearance(new))
+
+            handle.call_soon(apply)
+
+        if settings.appearance.follow_desktop:
+            service = ServiceThread()
+            service.start()
+            portal = PortalReader(service, appearance_changed)
+            portal.start()
+            appearance = portal.first()
+        else:
+            logger.debug("Appearance.Follow_Desktop is false: the portal is not read")
+        look = build_look(result, settings, appearance)
+        manager = SurfaceManager(app, module_defs, registry.uid_for, store, look)
+        manager_box.append(manager)
         host = ModuleHost(store, ticks, cfg)
         # a file the shell registers for the first time gets a UID in its metadata (G8)
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
@@ -286,6 +312,10 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         logger.info("stopping")
         host.stop_all()
         ticks.close()
+        if portal is not None:
+            portal.stop()
+        if service is not None:
+            service.stop()
         try:
             registry.save()
         except OSError as exc:

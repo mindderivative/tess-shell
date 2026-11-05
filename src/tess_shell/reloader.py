@@ -27,7 +27,7 @@ from tess_shell.logging import configure_logging, log_finding
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.modules.host import ModuleHost, ModuleSource, report
-from tess_shell.scanner import Scan, print_findings, scan
+from tess_shell.scanner import Scan, build_look, print_findings, scan
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites
 
@@ -65,7 +65,9 @@ class Reloader:
         if fresh is None:
             self._reject(findings, "settings.tdl")
             return
-        running = dataclasses.replace(self.settings, main_shell_path=fresh.main_shell_path)
+        running = dataclasses.replace(
+            self.settings, main_shell_path=fresh.main_shell_path, appearance=fresh.appearance
+        )
         result = scan(running, self.cfg)
         if result.errors:
             self._reject(result.findings, f"{len(result.errors)} errors")
@@ -89,6 +91,8 @@ class Reloader:
             logger.warning("settings.tdl: Directories and Registry apply after a restart")
         if fresh.main_shell != old.main_shell:
             logger.warning("settings.tdl: Main_Shell applies after a restart")
+        if fresh.appearance.follow_desktop != old.appearance.follow_desktop:
+            logger.warning("settings.tdl: Appearance.Follow_Desktop applies after a restart")
         if fresh.logging != old.logging:
             configure_logging(fresh.logging, quiet=self.quiet, default_directory=self.cfg / "logs")
             logger.info("settings.tdl: the logging settings were applied")
@@ -120,7 +124,8 @@ class Reloader:
             logger.info("reload: there is no main shell file; nothing to show")
             return
         module_defs = {name: mf.definition for name, mf in result.modules.items()}
-        checked = self.manager.check(shell, module_defs)
+        look = build_look(result, fresh, self.manager.look.appearance)
+        checked = self.manager.check(shell, module_defs, look)
         if checked is None:
             logger.error("reload refused: a Bar's contents have errors; the shell keeps its state")
             return
@@ -152,9 +157,14 @@ class Reloader:
         )
         report(sync_problems)
         self.store.flush()  # what modules sent while changing; the Bars below are resolved from it
-        self.manager.apply(planned, module_defs, uses)
+        self.manager.apply(planned, module_defs, uses, look)
         self.settings = dataclasses.replace(
-            self.settings, logging=fresh.logging, main_shell_path=fresh.main_shell_path
+            self.settings,
+            logging=fresh.logging,
+            main_shell_path=fresh.main_shell_path,
+            appearance=dataclasses.replace(
+                fresh.appearance, follow_desktop=self.settings.appearance.follow_desktop
+            ),
         )
         self.reloads += 1
         ms = (time.monotonic() - started) * 1000

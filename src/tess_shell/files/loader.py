@@ -11,7 +11,15 @@ from tess_dl import Document
 
 from tess_shell.files.header import check_header
 from tess_shell.schema.findings import Finding
-from tess_shell.schema.model import IconSource, ModuleDef, ShellDef, StyleDef
+from tess_shell.schema.look import read_stylesheet, read_theme
+from tess_shell.schema.model import (
+    IconSource,
+    ModuleDef,
+    ShellDef,
+    StyleDef,
+    StylesheetDef,
+    ThemeDef,
+)
 from tess_shell.schema.shell import read_shell, read_style
 
 
@@ -97,6 +105,34 @@ def load_style_file(
     if header:
         return None, header
     return read_style(document, name)
+
+
+def load_theme_file(
+    path: Path, base: Path, installed: Mapping[str, str]
+) -> tuple[ThemeDef | None, list[Finding]]:
+    """Stages 1 to 4 for a ``*_Theme.tdl``."""
+    document, findings = load_file(path, base)
+    if document is None:
+        return None, findings
+    name = display_name(path, base)
+    header = check_header(document, name, installed)
+    if header:
+        return None, header
+    return read_theme(document, name)
+
+
+def load_stylesheet_file(
+    path: Path, base: Path, installed: Mapping[str, str], module_names: set[str]
+) -> tuple[StylesheetDef | None, list[Finding]]:
+    """Stages 1 to 4 for a ``*_Stylesheet.tdl``."""
+    document, findings = load_file(path, base)
+    if document is None:
+        return None, findings
+    name = display_name(path, base)
+    header = check_header(document, name, installed)
+    if header:
+        return None, header
+    return read_stylesheet(document, name, module_names)
 
 
 def load_shell_file(

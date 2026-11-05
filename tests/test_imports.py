@@ -17,6 +17,7 @@ ANY = None  # no restriction
 RULES: dict[str, set[str] | None] = {
     "schema": {
         "tess_dl",
+        "tess_shell.appearance",
         "tess_shell.schema",
         "tess_shell.binder.model",
         "tess_shell.binder.convert",
@@ -31,7 +32,9 @@ RULES: dict[str, set[str] | None] = {
     "model": {
         "tess_el",
         "loguru",
+        "tess_shell.appearance",
         "tess_shell.binder.model",
+        "tess_shell.binder.shadow",
         "tess_shell.schema",
         "tess_shell.model",
     },
@@ -51,7 +54,8 @@ RULES: dict[str, set[str] | None] = {
     "options": set(),
     "signals": set(),
     "binder": {"tess_re", "tess_utils", "tess_shell.binder"},
-    "services": {"dbus_fast", "loguru", "tess_shell.services"},
+    "appearance": set(),
+    "services": {"dbus_fast", "loguru", "tess_shell.services", "tess_shell.appearance"},
     "surfaces": set(),
     "surfaces.bar": {"tess_shell.binder.model"},
     "surfaces.manager": {

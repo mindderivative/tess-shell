@@ -1,0 +1,95 @@
+---
+TDL: 0.1
+Name: Default
+---
+
+# The shell's own theme. The tokens of the base block are the dark look, which is also what a
+# desktop with no colour-scheme preference gets; Modes override what differs. Every value is a
+# starting point: copy this file into your Themes folder, change its Name, and set
+# Appearance { Theme: <Name> } in settings.tdl.
+
+Theme {
+    Color {
+        Surface: "#1D1B20"
+        Surface_Raised: "#2B2930"
+        On_Surface: "#E6E0E9"
+        On_Surface_Muted: "#CAC4D0"
+        Primary: "#D0BCFF"
+        On_Primary: "#381E72"
+        Accent: DESKTOP
+        Error: "#F2B8B5"
+        Warning: "#F5C26B"
+        Success: "#9BD39B"
+        Outline: "#938F99"
+        Scrim: "#000000"
+    }
+
+    Type {
+        Caption { Font_Size: 12, Font_Weight: 400, Line_Height: 16 }
+        Label { Font_Size: 13, Font_Weight: 500, Line_Height: 18 }
+        Body { Font_Size: 14, Font_Weight: 400, Line_Height: 20 }
+        Title { Font_Size: 18, Font_Weight: 500, Line_Height: 24 }
+        Display { Font_Size: 28, Font_Weight: 400, Line_Height: 36 }
+    }
+
+    Shape {
+        None: 0
+        Small: 4
+        Medium: 8
+        Large: 16
+        Full: 999
+    }
+
+    Space {
+        Step_1: 2
+        Step_2: 4
+        Step_3: 8
+        Step_4: 12
+        Step_5: 16
+        Step_6: 24
+        Step_7: 32
+        Step_8: 48
+    }
+
+    Elevation {
+        Reach: 64
+        Max {
+            Shadows {
+                Shadow { Color: "#00000040", X: 0, Y: 16, Blur: 48, Spread: 0 }
+            }
+        }
+    }
+
+    Motion {
+        Duration { Short: 100, Medium: 200, Long: 400 }
+        Easing { Standard: standard, Emphasized: emphasized }
+    }
+
+    Modes {
+        Light {
+            Color {
+                Surface: "#FEF7FF"
+                Surface_Raised: "#F3EDF7"
+                On_Surface: "#1D1B20"
+                On_Surface_Muted: "#49454F"
+                Primary: "#6750A4"
+                On_Primary: "#FFFFFF"
+                Error: "#B3261E"
+                Warning: "#8A5A00"
+                Success: "#2E6B34"
+                Outline: "#79747E"
+            }
+        }
+        Dark { }
+        High_Contrast {
+            Color {
+                Surface: "#000000"
+                Surface_Raised: "#000000"
+                On_Surface: "#FFFFFF"
+                On_Surface_Muted: "#FFFFFF"
+                Outline: "#FFFFFF"
+            }
+        }
+        Reduced_Motion { }
+    }
+}

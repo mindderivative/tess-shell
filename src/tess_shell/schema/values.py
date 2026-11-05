@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 
 import tess_dl
@@ -58,6 +59,27 @@ def _upper_hint(word: str, choices: tuple[str, ...]) -> str:
         return f"enum values are upper case, write {word.upper()}"
     close = nearest(word, choices)
     return f"did you mean {', '.join(close)}?" if close else f"allowed: {', '.join(choices)}"
+
+
+_TOKEN = re.compile(r"^\$([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+)$")
+
+
+def token_ref(
+    value: tess_dl.Value, kind: str, choices: tuple[str, ...], origin: m.Origin
+) -> m.TokenRef | None:
+    """``$color.surface`` as a reference to a theme token; ``None`` when ``value`` is not written
+    that way. A ``$`` word of another shape is a ``bad-token``."""
+    word = _word(value)
+    if word is None or not word.startswith("$"):
+        return None
+    found = _TOKEN.match(word)
+    if found is None:
+        raise ValueProblem(
+            "bad-token",
+            f"{word} is not a token reference",
+            "write $group.name, such as $color.surface or $type.body.font_size",
+        )
+    return m.TokenRef(found.group(1).lower(), kind, choices, origin=origin)
 
 
 def coerce(

@@ -11,14 +11,16 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
+import threading
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, replace
-from typing import Any, Literal
+from dataclasses import replace
+from typing import Any
 
 from dbus_fast import DBusError, Variant
 from dbus_fast.aio import MessageBus
 from loguru import logger
 
+from tess_shell.appearance import Appearance, Scheme
 from tess_shell.services.bus import CALL_TIMEOUT, ServiceThread
 
 APP_ID = "io.github.mindderivative.TesseraeShell"
@@ -26,16 +28,7 @@ PORTAL = "org.freedesktop.portal.Desktop"
 PATH = "/org/freedesktop/portal/desktop"
 NAMESPACE = "org.freedesktop.appearance"
 
-Scheme = Literal["default", "dark", "light"]
 _SCHEMES: dict[int, Scheme] = {0: "default", 1: "dark", 2: "light"}
-
-
-@dataclass(frozen=True, slots=True)
-class Appearance:
-    scheme: Scheme = "default"  # no preference: the theme's default variant
-    accent: tuple[int, int, int] | None = None  # sRGB, 0 to 255
-    high_contrast: bool = False
-    reduced_motion: bool = False
 
 
 def _unwrap(value: Any) -> Any:
@@ -87,6 +80,9 @@ class PortalReader:
         self._on_change = on_change
         self._app_id = app_id
         self.current = Appearance()
+        self._known = Appearance()  # what the consumer has been told: the defaults, until told more
+        self._known_lock = threading.Lock()
+        self._gave_up = False  # ``first`` timed out: the consumer runs on the defaults
         self._first: concurrent.futures.Future[Appearance] | None = None
         self._task: concurrent.futures.Future[None] | None = None
         self._warned = False
@@ -103,6 +99,10 @@ class PortalReader:
         try:
             return self._first.result(timeout)
         except concurrent.futures.TimeoutError:
+            with self._known_lock:
+                if self._first.done():  # it arrived in the gap
+                    return self._first.result()
+                self._gave_up = True
             return Appearance()
 
     def stop(self) -> None:
@@ -112,27 +112,37 @@ class PortalReader:
     # -- on the service thread ----------------------------------------------------------------
 
     def _warn(self, message: str) -> None:
+        """One warning for all the trouble with the portal; the rest is debug (no retry loop)."""
         if not self._warned:
             self._warned = True
-            logger.warning(f"portal: {message}; using the default appearance")
+            logger.warning(f"portal: {message}")
         else:
             logger.debug(f"portal: {message}")
 
     def _settle(self, appearance: Appearance, *, initial: bool) -> None:
-        changed = appearance != self.current
-        self.current = appearance
-        if self._first is not None and not self._first.done():
-            self._first.set_result(appearance)
-        if changed or initial:
+        if appearance != self.current or initial:
             logger.debug(f"portal: appearance {appearance}")
-        if changed:
+        self.current = appearance
+        call = False
+        with self._known_lock:
+            first = self._first
+            if first is not None and not first.done() and not self._gave_up:
+                # a caller is waiting in ``first``: it gets this answer, not ``on_change``
+                self._known = appearance
+                first.set_result(appearance)
+            elif appearance != self._known:
+                self._known = appearance
+                if first is not None and not first.done():
+                    first.set_result(appearance)
+                call = True
+        if call:
             self._on_change(appearance)
 
     async def _run(self) -> None:
         try:
             bus = await self._service.session()
         except Exception as exc:
-            self._warn(f"the session bus is not reachable ({exc})")
+            self._warn(f"the session bus is not reachable ({exc}); using the default appearance")
             self._settle(Appearance(), initial=True)
             return
         await self._watch_owner(bus)
@@ -153,7 +163,9 @@ class PortalReader:
                 self._subscribed = True
             self._settle(parse(reply.get(NAMESPACE, {})), initial=first)
         except (DBusError, TimeoutError, OSError, AttributeError) as exc:
-            self._warn(f"the Settings portal is not available ({exc})")
+            self._warn(
+                f"the Settings portal is not available ({exc}); using the default appearance"
+            )
             self._settle(Appearance(), initial=first)
 
     _subscribed = False
@@ -171,7 +183,7 @@ class PortalReader:
             )
             await asyncio.wait_for(registry.call_register(self._app_id, {}), CALL_TIMEOUT)
         except Exception as exc:  # the reads continue without it
-            logger.warning(f"portal: Register failed ({exc}); reading the settings anyway")
+            self._warn(f"Register failed ({exc}); reading the settings anyway")
 
     def _setting_changed(self, namespace: str, key: str, value: Any) -> None:
         if namespace == NAMESPACE:

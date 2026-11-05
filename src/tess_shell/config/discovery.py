@@ -20,7 +20,7 @@ SKIPPED_ENDINGS = ("~", ".swp", ".tmp", ".bak")
 
 
 def shipped_dir() -> Path:
-    """The modules that ship with the shell, searched after the user's ``Modules`` folders."""
+    """What ships with the shell (modules, a theme, a stylesheet); searched after the user's."""
     return Path(__file__).resolve().parent.parent / "shipped"
 
 
@@ -30,12 +30,14 @@ def is_shipped(path: Path) -> bool:
 
 def discover(settings: Settings) -> list[Path]:
     """Every shell file under the search directories of each type, once, in a stable order.
-    The shipped modules come last, so a user module of the same name can override them."""
+    The shipped files come last, so a user file of the same name overrides them."""
     found: dict[Path, None] = {}
     for folder, suffix in SUFFIXES.items():
         roots = list(settings.directories.get(folder, ()))
         if folder == "Modules":
             roots.append(shipped_dir())
+        elif folder in ("Themes", "Stylesheets"):
+            roots.append(shipped_dir() / folder)
         for root in roots:
             for current, dirs, files in os.walk(root):
                 dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in SKIPPED_DIRS)

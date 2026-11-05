@@ -22,6 +22,7 @@ from tess_shell.binder.model import (
     Node,
     Origin,
     SlotValue,
+    TokenRef,
     UseNode,
     Value,
 )
@@ -152,6 +153,9 @@ def _suggest(word: str, choices: Sequence[str]) -> str:
 def _convert(key: str, row: KeyRow, value: Value, errors: list[BindError]) -> dict[str, Any] | None:
     if isinstance(value, SlotValue):
         errors.append(BindError(f"{key}: a slot was not evaluated", value.origin))
+        return None
+    if isinstance(value, TokenRef):
+        errors.append(BindError(f"{key}: the token ${value.path} was not resolved", value.origin))
         return None
     try:
         return CONVERTERS[row.convert](value, row.tre, row.choices)

@@ -29,7 +29,13 @@ from tess_shell.schema.model import (
 )
 from tess_shell.schema.style import apply_style
 from tess_shell.schema.tree import position
-from tess_shell.schema.values import ValueProblem, coerce, named_shadows, named_sides
+from tess_shell.schema.values import (
+    ValueProblem,
+    coerce,
+    named_shadows,
+    named_sides,
+    token_ref,
+)
 
 _NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 _SURFACES = ("Bar", *blocks.OTHER_SURFACES)
@@ -176,6 +182,12 @@ def _typed(
             return None
         return slot
     try:
+        if not read_text:
+            ref = token_ref(
+                prop.value, kind, _choices(block, prop.key), ctx.origin(prop.key_origin)
+            )
+            if ref is not None:
+                return ref
         return coerce(
             kind,
             prop.value,

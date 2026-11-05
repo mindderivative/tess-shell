@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Literal, Protocol
 
-from tess_shell.binder.model import ForNode, IfNode, Node, Origin, UseNode, Value
+import tess_dl
+
+from tess_shell.binder.model import ForNode, IfNode, Node, Origin, Shadows, UseNode, Value
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,6 +89,50 @@ class StyleDef:
     file: str
     defaults: Mapping[str, Mapping[str, Value]]
     classes: Mapping[str, ClassDef]
+
+
+@dataclass(frozen=True, slots=True)
+class Token:
+    """One theme token: the written value (read by the key that refers to it) or, for
+    ``Elevation.Max``, the shadow list."""
+
+    value: tess_dl.Value | Shadows
+    origin: Origin
+
+
+MODES = ("light", "dark", "high_contrast", "reduced_motion")
+
+
+@dataclass(frozen=True, slots=True)
+class ThemeDef:
+    """A ``<Name>_Theme.tdl``: tokens by lower-case dotted path (``color.on_surface``,
+    ``type.body.font_size``), and the modes that override some of them."""
+
+    name: str
+    file: str
+    tokens: Mapping[str, Token]
+    modes: Mapping[str, Mapping[str, Token]]
+
+
+@dataclass(frozen=True, slots=True)
+class Rule:
+    """One ``Rule { Selector: "...", <style values> }`` of a stylesheet."""
+
+    kind: Literal["type", "class", "name"]
+    target: str  # the block word, the class name or the unique ``Name``
+    values: Mapping[str, Value]
+    origin: Origin
+
+    @property
+    def specificity(self) -> int:
+        return {"type": 1, "class": 10, "name": 100}[self.kind]
+
+
+@dataclass(frozen=True, slots=True)
+class StylesheetDef:
+    name: str
+    file: str
+    rules: tuple[Rule, ...]
 
 
 class IconSource(Protocol):

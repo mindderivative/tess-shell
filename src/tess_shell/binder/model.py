@@ -127,6 +127,18 @@ class Shadows:
 
 
 @dataclass(frozen=True, slots=True)
+class TokenRef:
+    """``$color.surface``: a theme token, resolved by the model before binding (Style Schema >
+    Theme Tokens). ``path`` is lower case; ``kind`` is the key's value kind, so the token's written
+    value is read the way the key reads it."""
+
+    path: str
+    kind: str
+    choices: tuple[str, ...] = ()
+    origin: Origin = _origin()
+
+
+@dataclass(frozen=True, slots=True)
 class SlotPart:
     """One ``{{ }}`` slot: its source text and the origin of that text (not of the braces)."""
 
@@ -161,6 +173,7 @@ Value = (
     | Sides
     | Seq
     | Shadows
+    | TokenRef
     | SlotValue
 )
 

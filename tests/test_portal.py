@@ -7,8 +7,9 @@ import time
 import pytest
 from dbus_fast import Variant
 
+from tess_shell.appearance import Appearance
 from tess_shell.services.bus import ServiceThread
-from tess_shell.services.portal import Appearance, PortalReader, apply_key, parse
+from tess_shell.services.portal import PortalReader, apply_key, parse
 from tests.fake_portal import HAVE_DAEMON, fake_portal, wait_for
 
 needs_daemon = pytest.mark.skipif(not HAVE_DAEMON, reason="dbus-daemon is not installed")
@@ -76,11 +77,10 @@ def test_an_unchanged_value_does_not_call_back() -> None:
         reader = PortalReader(service, seen.append)
         try:
             reader.start()
-            first = reader.first(2.0)
-            assert wait_for(lambda: len(seen) == 1)  # the first answer is announced once
+            reader.first(2.0)  # the caller has the first answer: it is not announced again
             portal.set("color-scheme", Variant("u", 1))  # the value it already had
             time.sleep(0.2)
-            assert seen == [first]
+            assert seen == []
         finally:
             reader.stop()
             service.stop()
@@ -101,7 +101,9 @@ def test_no_portal_gives_the_defaults_with_one_warning_and_recovers() -> None:
             try:
                 reader.start()
                 assert reader.first(2.0) == Appearance()
-                assert sum("portal:" in x and "default appearance" in x for x in lines) == 1
+                assert (
+                    sum("portal:" in x for x in lines) == 1
+                )  # one warning, however much went wrong
                 portal.up()  # the portal service appears later
                 assert wait_for(lambda: bool(seen))
                 assert seen[-1].scheme == "dark"
