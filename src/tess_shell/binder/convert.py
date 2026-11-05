@@ -24,10 +24,12 @@ from tess_shell.binder.model import (
     Origin,
     Percent,
     Seq,
+    Shadows,
     Sides,
     Text,
     Value,
 )
+from tess_shell.binder.shadow import DEFAULT_MAX, scale
 
 Converted = dict[str, Any]
 Converter = Callable[[Value, tuple[str, ...], tuple[str, ...]], Converted]
@@ -201,6 +203,40 @@ def font_family(value: Value, names: tuple[str, ...], choices: tuple[str, ...] =
     raise _bad(value, "a font family name or a list of names")
 
 
+def _tre_shadows(value: Shadows) -> list[tuple[Any, ...]]:
+    return [
+        (
+            (s.color.r, s.color.g, s.color.b, s.color.a),
+            _num(s.x),
+            _num(s.y),
+            _num(s.blur),
+            _num(s.spread),
+        )
+        for s in value.items
+    ]
+
+
+def shadows(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """A list of shadows becomes tre's ``(color, dx, dy, blur, spread)`` tuples."""
+    (name,) = names
+    if isinstance(value, Shadows):
+        for s in value.items:
+            if s.blur < 0:
+                raise BindError("a shadow's blur cannot be negative", s.origin)
+        return {name: _tre_shadows(value)}
+    raise _bad(value, "shadows")
+
+
+def elevation(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """``Elevation: 20%`` with the default ``Max`` (a theme's ``Max`` is applied before binding
+    and arrives as :func:`shadows`)."""
+    if isinstance(value, Percent):
+        if not 0 <= value.value <= 100:
+            raise BindError("an elevation is 0% to 100%", value.origin)
+        return shadows(scale(DEFAULT_MAX, value.value, value.origin), names)
+    raise _bad(value, "a percentage")
+
+
 CONVERTERS: Mapping[str, Converter] = {
     "length": length,
     "text_length": text_length,
@@ -216,6 +252,8 @@ CONVERTERS: Mapping[str, Converter] = {
     "sides": sides,
     "radius": radius,
     "font_family": font_family,
+    "shadows": shadows,
+    "elevation": elevation,
 }
 
 

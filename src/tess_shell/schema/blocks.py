@@ -38,6 +38,8 @@ BOX_STYLE: dict[str, str] = {
     "Padding": "sides",
     "Margin": "sides",
     "Opacity": "number",
+    "Elevation": "elevation",
+    "Shadows": "shadows",
 }
 
 FLEX: dict[str, str] = {
@@ -68,6 +70,8 @@ SHAPE: dict[str, str] = {
     "Corner_Radius": "radius",
     "Margin": "sides",
     "Opacity": "number",
+    "Elevation": "elevation",
+    "Shadows": "shadows",
 }
 
 # (block, key) -> allowed words, for enum keys; a key not listed here is checked per block

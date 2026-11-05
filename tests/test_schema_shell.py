@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 import tess_dl
 
-from tess_shell.binder.model import Auto, Color, Enum, Expand, Length, Number, Text
+from tess_shell.binder.model import Auto, Color, Enum, Expand, Length, Node, Number, Text
 from tess_shell.schema.findings import Finding
 from tess_shell.schema.model import ShellDef
 from tests.shell_samples import BODY, HEADER, SVG
@@ -240,3 +240,50 @@ def test_the_root_must_be_shell() -> None:
 
     shell, findings = read_shell(result.document, "x", lambda p: "")
     assert shell is None and findings[0].rule == "shell-root"
+
+
+def _card(extra: str) -> str:
+    return BODY.replace(
+        'Rectangle { Width: 12, Height: 12, Fill: "#89b4fa", Corner_Radius: 6 }',
+        'Rectangle { Width: 12, Height: 12, Fill: "#89b4fa"\n' + extra + "\n}",
+    )
+
+
+def _rectangle(body: str) -> tuple[Node, list[Finding]]:
+    shell, findings = read(body)
+    assert shell is not None
+    return shell.monitors[0].surfaces[0].children[0].children[3], findings
+
+
+def test_a_shadows_block_and_an_elevation_are_typed() -> None:
+    from tess_shell.binder.model import Percent, Shadow, Shadows
+
+    rect, findings = _rectangle(_card('Shadows { Shadow { Color: "#00000040", Y: 2, Blur: 6 } }'))
+    assert findings == []
+    assert rect.props["Shadows"] == Shadows((Shadow(Color(0, 0, 0, 0x40), 0, 2, 6, 0),))
+    rect, findings = _rectangle(_card("Elevation: 20%"))
+    assert findings == [] and rect.props["Elevation"] == Percent(20)
+
+
+def test_elevation_and_shadows_together_warn_and_shadows_wins() -> None:
+    rect, findings = _rectangle(_card('Elevation: 20%\nShadows { Shadow { Color: "#000000" } }'))
+    assert "Elevation" not in rect.props and "Shadows" in rect.props
+    (warning,) = findings
+    assert warning.severity == "warning" and warning.rule == "shadow-both"
+
+
+@pytest.mark.parametrize(
+    ("extra", "needle"),
+    [
+        ("Elevation: 120%", "0% to 100%"),
+        ("Elevation: 5", "percentage"),
+        ("Shadows { Shadow { X: 1 } }", "needs a Color"),
+        ('Shadows { Shadow { Color: "#000000", Blur: -2 } }', "0 or more"),
+        ('Shadows { Shadow { Color: "#000000", Spred: 1 } }', "unknown Shadow key"),
+        ("Shadows { Rectangle { } }", "holds Shadow blocks"),
+    ],
+)
+def test_a_bad_shadow_is_reported_at_its_position(extra: str, needle: str) -> None:
+    found = errors(_card(extra))
+    assert any(needle in f.message for f in found), found
+    assert all(f.line > 0 for f in found)

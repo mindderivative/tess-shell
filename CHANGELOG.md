@@ -39,3 +39,4 @@
 - M2b measurements: `tests/perf/measure_reload.py` (`reload-results.md`): a saved `Height` is applied a median of 206 ms after the save (200 ms debounce plus about 5 ms to validate, diff and set); `idle-results-clock.md` is re-measured with the watcher thread running: no change in wake-ups attributable to it.
 - Binder: a `Text` with no `Width` is sized to its content (`fit-content`); tre laid such a text out at width 0, so two texts in a row (two Clocks) overlapped. M1's single text hid it.
 - Reload: the log line says `reloaded with errors (...)` when a module's Python or layout failed to import and the old instance was kept.
+- M3a: `Elevation: N%` and `Shadows { Shadow { Color, X, Y, Blur, Spread } }` on FlexBox, Box and Rectangle (and in an inline Style); the default `Max` reaches 64 px, and `binder/shadow.py` computes the transparent margin a shadow needs (measured against tre 0.6.1: blur + spread +/- offset, plus one pixel).

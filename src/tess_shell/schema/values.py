@@ -135,6 +135,16 @@ def coerce(
             return m.Enum(word, origin=origin)
         case "sides":
             return _sides(value, origin)
+        case "elevation":
+            if isinstance(value, tess_dl.Percent) and 0 <= value.value <= 100:
+                return m.Percent(value.value, origin=origin)
+            raise _bad("a percentage from 0% to 100%", value)
+        case "shadows":
+            raise ValueProblem(
+                "bad-value",
+                "Shadows is a block, not a value",
+                "write Shadows { Shadow { Color: ..., X: 0, Y: 2, Blur: 6, Spread: 0 } }",
+            )
         case "radius":
             n = _number(value)
             if n is not None:
@@ -213,6 +223,47 @@ def named_sides(block: tess_dl.Block, origin: m.Origin) -> m.Sides:
                 raise _bad("a number", entry.value)
             sides[entry.key] = float(n)
     return m.Sides(sides["Left"], sides["Top"], sides["Right"], sides["Bottom"], origin=origin)
+
+
+_SHADOW_KEYS = ("Color", "X", "Y", "Blur", "Spread")
+
+
+def named_shadows(block: tess_dl.Block, origin: m.Origin) -> m.Shadows:
+    """``Shadows { Shadow { Color: "#00000040", X: 0, Y: 2, Blur: 6, Spread: 0 } ... }``, first on
+    top. ``Color`` is required; the numbers default to 0."""
+    items: list[m.Shadow] = []
+    for entry in block.entries:
+        if not isinstance(entry, tess_dl.Block) or entry.type != "Shadow":
+            raise ValueProblem("bad-value", "Shadows holds Shadow blocks", "write Shadow { ... }")
+        found: dict[str, tess_dl.Value] = {}
+        for sub in entry.entries:
+            if not isinstance(sub, tess_dl.Property) or sub.key not in _SHADOW_KEYS:
+                raise ValueProblem(
+                    "unknown-key",
+                    f"unknown Shadow key {getattr(sub, 'key', getattr(sub, 'type', '?'))}",
+                    f"keys: {', '.join(_SHADOW_KEYS)}",
+                )
+            found[sub.key] = sub.value
+        if "Color" not in found:
+            raise ValueProblem("missing-key", "a Shadow needs a Color", 'write Color: "#00000040"')
+        numbers: dict[str, float] = {}
+        for key in _SHADOW_KEYS[1:]:
+            if key in found:
+                n = _number(found[key])
+                if n is None or (key == "Blur" and n < 0):
+                    raise _bad("a number" if key != "Blur" else "a number of 0 or more", found[key])
+                numbers[key] = float(n)
+        items.append(
+            m.Shadow(
+                _color(found["Color"], origin),
+                numbers.get("X", 0),
+                numbers.get("Y", 0),
+                numbers.get("Blur", 0),
+                numbers.get("Spread", 0),
+                origin=origin,
+            )
+        )
+    return m.Shadows(tuple(items), origin=origin)
 
 
 def _py_kind(value: object) -> str:

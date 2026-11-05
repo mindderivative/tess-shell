@@ -72,6 +72,8 @@ _BOX_STYLE: dict[str, KeyRow] = {
     "Padding": _PADDING["Padding"],
     "Margin": _COMMON["Margin"],
     "Opacity": _COMMON["Opacity"],
+    "Elevation": _k("shadows", "elevation"),
+    "Shadows": _k("shadows", "shadows"),
 }
 
 _FLEX: dict[str, KeyRow] = {
@@ -111,6 +113,8 @@ _SHAPE: dict[str, KeyRow] = {
     "Corner_Radius": _k("corner_radius", "radius"),
     "Margin": _COMMON["Margin"],
     "Opacity": _COMMON["Opacity"],
+    "Elevation": _k("shadows", "elevation"),
+    "Shadows": _k("shadows", "shadows"),
 }
 
 BLOCKS: Mapping[str, BlockRow] = {

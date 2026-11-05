@@ -107,6 +107,26 @@ class Seq:
 
 
 @dataclass(frozen=True, slots=True)
+class Shadow:
+    """One drop shadow (CSS ``box-shadow`` model): a colour, an offset, a blur and a spread."""
+
+    color: Color
+    x: float = 0
+    y: float = 0
+    blur: float = 0
+    spread: float = 0
+    origin: Origin = _origin()
+
+
+@dataclass(frozen=True, slots=True)
+class Shadows:
+    """Shadows, first on top. An empty list is no shadow."""
+
+    items: tuple[Shadow, ...]
+    origin: Origin = _origin()
+
+
+@dataclass(frozen=True, slots=True)
 class SlotPart:
     """One ``{{ }}`` slot: its source text and the origin of that text (not of the braces)."""
 
@@ -129,7 +149,19 @@ class SlotValue:
 
 
 Value = (
-    Length | Percent | Auto | Expand | Color | Enum | Bool | Number | Text | Sides | Seq | SlotValue
+    Length
+    | Percent
+    | Auto
+    | Expand
+    | Color
+    | Enum
+    | Bool
+    | Number
+    | Text
+    | Sides
+    | Seq
+    | Shadows
+    | SlotValue
 )
 
 

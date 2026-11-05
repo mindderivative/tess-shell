@@ -21,7 +21,10 @@ from tess_shell.binder.model import (
     Length,
     Node,
     Number,
+    Percent,
     Seq,
+    Shadow,
+    Shadows,
     Sides,
     Text,
     Value,
@@ -48,6 +51,12 @@ def samples(row: KeyRow) -> list[Value]:
         "sides": [Length(3), Sides(1, 2, 3, 4)],
         "radius": [Length(4), Seq((Length(1), Length(2), Length(3), Length(4)))],
         "font_family": [Text("Inter")],
+        "elevation": [Percent(25), Percent(100)],
+        "shadows": [
+            Shadows(
+                (Shadow(Color(0, 0, 0, 64), 0, 2, 6, 0), Shadow(Color(0, 0, 0, 32), 0, 8, 16, 2))
+            )
+        ],
     }[row.convert]
 
 
@@ -92,7 +101,8 @@ def test_every_key_row_builds_a_node(block: str, scope: str, key: str, value: Va
         key_row = table[key]
         converted = CONVERTERS[key_row.convert](value, key_row.tre, key_row.choices)
         for name, expected in converted.items():
-            assert root.get(name) == pytest.approx(expected)
+            got = root.get(name)
+            assert got == (expected if name == "shadows" else pytest.approx(expected))
     finally:
         view.dispose()
 

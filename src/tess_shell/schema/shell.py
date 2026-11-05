@@ -29,7 +29,7 @@ from tess_shell.schema.model import (
 )
 from tess_shell.schema.style import apply_style
 from tess_shell.schema.tree import position
-from tess_shell.schema.values import ValueProblem, coerce, named_sides
+from tess_shell.schema.values import ValueProblem, coerce, named_shadows, named_sides
 
 _NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 _SURFACES = ("Bar", *blocks.OTHER_SURFACES)
@@ -218,6 +218,11 @@ def _scalar_block_keys(
             elif entry.type in table and table[entry.type] == "sides":
                 try:
                     out[entry.type] = named_sides(entry, ctx.origin(entry.origin))
+                except ValueProblem as exc:
+                    ctx.problem(entry.origin, entry.type, exc)
+            elif entry.type in table and table[entry.type] == "shadows":
+                try:
+                    out[entry.type] = named_shadows(entry, ctx.origin(entry.origin))
                 except ValueProblem as exc:
                     ctx.problem(entry.origin, entry.type, exc)
             else:
@@ -432,6 +437,12 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
                     prop_at[entry.type] = entry.origin
                 except ValueProblem as exc:
                     ctx.problem(entry.origin, entry.type, exc)
+            elif entry.type == "Shadows" and "Shadows" in {**prop_keys, **style_keys}:
+                try:
+                    props["Shadows"] = named_shadows(entry, ctx.origin(entry.origin))
+                    prop_at["Shadows"] = entry.origin
+                except ValueProblem as exc:
+                    ctx.problem(entry.origin, "Shadows", exc)
             elif entry.type == "Border" and "Border_Width" in {**prop_keys, **style_keys}:
                 flat = _scalar_block_keys(
                     ctx, tess_dl.Block("Style", (entry,)), style_keys, block.type
@@ -454,6 +465,16 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
             )
     if block.type == "SVG" and "Source" in written and "Icon" in written:
         ctx.add(block.origin, "bad-key", "an SVG has a Source or an Icon, not both", "keep one")
+    if "Shadows" in props and "Elevation" in props:
+        ctx.add(
+            prop_at.get("Elevation"),
+            "shadow-both",
+            f"Elevation and Shadows are both written ({ctx.origin(prop_at.get('Shadows'))}); "
+            "Shadows wins",
+            "keep one of the two",
+            "warning",
+        )
+        del props["Elevation"]
     for key in props.keys() & style.keys():
         ctx.add(
             style_at.get(key),
