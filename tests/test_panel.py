@@ -275,3 +275,25 @@ def test_hide_and_show_are_idempotent() -> None:
     m.show(s)
     m.show(s)
     assert s.hidden is False
+
+
+def test_a_panels_style_sets_its_bodys_corner_radius_border_and_fill() -> None:
+    m = manager(
+        panel='Panel { Name: Card, Width: 200, Height: 80, Style { Background: "#102030", '
+        'Corner_Radius: 12, Border_Width: 2, Border_Color: "#ffffff" } }'
+    )
+    body = surface(m, "Card").body
+    assert body is not None
+    assert body.get("corner_radius") == (12, 12, 12, 12) or body.get("corner_radius") == 12
+    assert body.get("stroke_width") == 2 and body.get("stroke_color") == (255, 255, 255, 255)
+    assert body.get("fill") == (0x10, 0x20, 0x30, 255)
+
+
+def test_a_bar_style_still_refuses_a_corner_radius() -> None:
+    body = SHELL % ("", "")
+    shell, findings = read(
+        body.replace(
+            "Width: EXPAND, Height: 32,", "Width: EXPAND, Height: 32, Style { Corner_Radius: 4 },"
+        )
+    )
+    assert shell is None and any("Corner_Radius" in f.message for f in findings)

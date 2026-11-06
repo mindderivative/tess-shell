@@ -831,7 +831,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
                 ctx.unknown(entry.key_origin, key, allowed, "key in Panel")
         elif isinstance(entry, Block):
             if entry.type == "Style":
-                style = _scalar_block_keys(ctx, entry, blocks.BAR_STYLE, "Panel")
+                style = _scalar_block_keys(ctx, entry, blocks.PANEL_STYLE, "Panel")
             elif entry.type == "Children":
                 children = _children(ctx, entry, lambda b: _block(ctx, b))
             elif entry.type == "Inset":

@@ -195,3 +195,11 @@ PANEL_NOT_BUILT_ERROR = (
     "Exclusive_Zone",
 )
 PANEL_NOT_BUILT_WARNING = ("Animation", "Margin", "Padding", "Class")
+
+# A Panel's inline Style: the Bar's keys plus the corner radius and the border of its body
+PANEL_STYLE: dict[str, str] = {
+    **BAR_STYLE,
+    "Corner_Radius": "radius",
+    "Border_Width": "number",
+    "Border_Color": "color",
+}

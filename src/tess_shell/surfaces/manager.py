@@ -123,6 +123,7 @@ class Surface:
     body: TreNode | None = None  # the Bar's body: fill, shadows and the transparent margin
     shadows: list[tuple[Any, ...]] | None = None
     planned: Planned | None = None  # what the surface was last planned from
+    extra: dict[str, Any] | None = None  # corner radius and border of a Panel's body
     hidden: bool = False  # a Panel hidden by ``Hide`` (D44); a Bar is never hidden
     timer: Any = None  # the pending ``Hide_After`` timer of a Panel
 
@@ -221,8 +222,32 @@ def _body_props(
     return _bar_fill(style), shadows
 
 
+_EXTRA_KEYS = {
+    "Corner_Radius": ("corner_radius", "radius"),
+    "Border_Width": ("stroke_width", "number"),
+    "Border_Color": ("stroke_color", "color"),
+}
+
+
+def _body_extra(bar: BarDef | PanelDef, look: Look | None) -> dict[str, Any]:
+    """The tre properties a Panel's body takes from its style besides fill and shadows: the
+    corner radius and the border."""
+    if not isinstance(bar, PanelDef):
+        return {}
+    style = _bar_style(bar, look)
+    out: dict[str, Any] = {}
+    for key, (name, kind) in _EXTRA_KEYS.items():
+        value = style.get(key)
+        if value is not None:
+            out.update(convert.CONVERTERS[kind](value, (name,), ()))
+    return out
+
+
 def _body_style(
-    geometry: Geometry, fill: tuple[int, int, int, int] | None, shadows: list[tuple[Any, ...]]
+    geometry: Geometry,
+    fill: tuple[int, int, int, int] | None,
+    shadows: list[tuple[Any, ...]],
+    extra: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     top, right, bottom, left = geometry.body_margin
     props: dict[str, Any] = {
@@ -234,6 +259,7 @@ def _body_style(
     }
     if fill is not None:
         props["fill"] = fill
+    props.update(extra or {})
     return props
 
 
@@ -404,11 +430,12 @@ class SurfaceManager:
             output=output,
         )
         fill, shadows = _body_props(bar, self._look)
+        extra = _body_extra(bar, self._look)
         body = window.create(
             "box",
             flex_grow=1,
             align_self="stretch",
-            **_body_style(geometry, fill, shadows),
+            **_body_style(geometry, fill, shadows, extra),
         )
         window.root.add_child(body)
         window.on(
@@ -450,6 +477,7 @@ class SurfaceManager:
             body,
             shadows,
             planned,
+            extra,
             hidden,
         )
         if isinstance(bar, PanelDef):
@@ -644,14 +672,18 @@ class SurfaceManager:
         """Bring a kept surface's body (fill, shadows, margin) and its window geometry to what the
         Bar asks for; each is set only when it differs."""
         fill, shadows = _body_props(bar, self._look)
+        extra = _body_extra(bar, self._look)
         if s.body is not None and (
-            fill != s.fill or shadows != s.shadows or geometry.body_margin != s.geometry.body_margin
+            fill != s.fill
+            or shadows != s.shadows
+            or extra != (s.extra or {})
+            or geometry.body_margin != s.geometry.body_margin
         ):
-            props = _body_style(geometry, fill, shadows)
+            props = _body_style(geometry, fill, shadows, extra)
             if fill is None and s.fill is not None:
                 props["fill"] = (0, 0, 0, 0)  # tre cannot unset a fill: transparent is the default
             s.body.set(**props)
-            s.fill, s.shadows = fill, shadows
+            s.fill, s.shadows, s.extra = fill, shadows, extra
         if geometry != s.geometry:
             try:
                 s.window.set(
