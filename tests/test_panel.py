@@ -90,7 +90,6 @@ def test_the_defaults_are_the_top_layer_no_keyboard_whole_surface_shown() -> Non
         ("Panel { Name: P, Width: 10, Height: 10, Anchor: [TOP, TOP] }", "bad-value", "twice"),
         ("Panel { Name: P, Width: 10, Height: 10, Anchor: MIDDLE }", "bad-value", "TOP, BOTTOM"),
         ("Panel { Name: P, Width: AUTO, Height: 10 }", "not-built", "AUTO"),
-        ("Panel { Name: P, Width: 10, Height: 10, Attach_To: Top_Bar }", "not-built", "Attach_To"),
         ("Panel { Name: P, Width: 10, Height: 10, Movable: true }", "not-built", "Movable"),
         ("Panel { Name: P, Width: 10, Height: 10, Exclusive_Zone: 4 }", "not-built", "Exclusive"),
         (
@@ -131,7 +130,7 @@ def test_an_anchored_panel_takes_its_inset_as_tres_margin_in_tres_order() -> Non
     g = panel_geometry(spec(anchor=("TOP", "RIGHT"), inset=(1, 40, 24, 3)), OUT)
     assert g.anchor == ("top", "right") and g.size == (300, 200)
     assert g.margin == (40, 24, 0, 0)  # top, right, bottom, left; unanchored sides give none
-    assert g.exclusive_zone == 0 and g.body_margin == (0, 0, 0, 0)
+    assert g.exclusive_zone == -1 and g.body_margin == (0, 0, 0, 0)
 
 
 def test_an_inset_on_a_side_with_no_anchor_is_ignored_with_a_warning() -> None:

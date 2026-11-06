@@ -27,6 +27,7 @@ from tess_shell.schema.model import (
     ParamDecl,
     ShellDef,
     StyleDef,
+    use_names,
 )
 from tess_shell.schema.style import apply_style
 from tess_shell.schema.tree import position
@@ -107,6 +108,20 @@ class _Ctx:
             )
         else:
             self.names[text] = here
+        return text
+
+    def name_ref(self, prop: Property) -> str | None:
+        """A reference to a surface's ``Name`` (``Attach_To: Top_Bar``)."""
+        value = prop.value
+        text = value.text if isinstance(value, tess_dl.Word) else None
+        if text is None or not _NAME.match(text):
+            self.add(
+                prop.value_origin,
+                "bad-name",
+                f"{prop.key} is the Name of a surface: letters, digits and _",
+                f"write {prop.key}: Top_Bar",
+            )
+            return None
         return text
 
     def unknown(
@@ -800,11 +815,14 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
     name: str | None = None
     values: dict[str, m.Value] = {}
     anchors: tuple[str, ...] = ()
+    attach_to: str | None = None
+    written: set[str] = set()  # the keys the Panel wrote, for the Attach_To rules
     style: dict[str, m.Value] = {}
     children: list[Child] = []
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
+            written.add(key)
             if key == "Name":
                 name = ctx.name(entry)
             elif key == "Style":
@@ -815,6 +833,10 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
                 ctx.not_built(entry.key_origin, f"the Panel key {key}", "warning")
             elif key == "Anchor":
                 anchors = _anchors(ctx, entry)
+                written.add(key)
+            elif key == "Attach_To":
+                attach_to = ctx.name_ref(entry)
+                written.add(key)
             elif key == "Input_Region":
                 values[key] = _input_region(ctx, entry)  # type: ignore[assignment]
             elif key in blocks.PANEL_KEYS:
@@ -835,6 +857,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
             elif entry.type == "Children":
                 children = _children(ctx, entry, lambda b: _block(ctx, b))
             elif entry.type == "Inset":
+                written.add("Inset")
                 try:
                     values["Inset"] = named_sides(entry, ctx.origin(entry.origin))
                 except ValueProblem as exc:
@@ -863,6 +886,31 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
                 f"{type(v).__name__.upper()} as a Panel {key} is {_NOT_BUILT}",
                 "",
             )
+    if attach_to is not None:
+        if "Attach" not in written:
+            ctx.add(
+                block.origin,
+                "missing-key",
+                "a Panel with Attach_To needs Attach",
+                "write Attach: BOTTOM (the target's edge it meets: LEFT, RIGHT, TOP or BOTTOM)",
+            )
+        for key in blocks.PANEL_PLACED_KEYS:
+            if key in written:
+                ctx.add(
+                    block.origin,
+                    "attach-placed",
+                    f"a Panel with Attach_To is placed by its target, so {key} has no meaning",
+                    f"remove {key}, or remove Attach_To",
+                )
+    else:
+        for key in blocks.PANEL_ATTACH_KEYS:
+            if key in written:
+                ctx.add(
+                    block.origin,
+                    "attach-orphan",
+                    f"{key} is the placement against a target and needs Attach_To",
+                    "write Attach_To: <a surface's Name>",
+                )
     layer = values.get("Layer")
     if name is None or "Width" not in values or "Height" not in values:
         return None
@@ -881,6 +929,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
     hide = values.get("Hide_After")
     visible = values.get("Visible")
     region = values.get("Input_Region")
+    gap = values.get("Gap")
     return PanelDef(
         name=name,
         origin=ctx.origin(block.origin),
@@ -895,6 +944,10 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         hide_after=float(hide.value) if isinstance(hide, m.Number) else None,
         style=style,
         children=tuple(children),
+        attach_to=attach_to,
+        attach=word("Attach", "") or None,
+        gap=float(gap.value) if isinstance(gap, m.Number) else 0,
+        alignment=word("Alignment", "CENTER"),
     )
 
 
@@ -1062,11 +1115,77 @@ def read_shell(
                 ctx.unknown(entry.origin, entry.type, ["Monitor"], "block in Shell")
         elif isinstance(entry, Property):
             ctx.unknown(entry.key_origin, entry.key, ["Monitor"], "key in Shell")
+    _check_attach(ctx, monitors)
     name = document.metadata.get("Name")
     shell_name = getattr(name, "text", None) or getattr(name, "value", "") or ""
     if any(f.severity == "error" for f in ctx.findings):
         return None, ctx.findings
     return ShellDef(file, shell_name, tuple(monitors)), ctx.findings
+
+
+def _check_attach(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
+    """``Attach_To`` names a Bar, a Panel or a module used in a Bar, of the same Monitor; a Panel
+    has one target, a target has one attached Panel, and a chain of attached Panels ends at a
+    surface that is placed."""
+    home: dict[str, tuple[MonitorDef, BarDef | PanelDef]] = {}
+    places: dict[str, MonitorDef] = {}  # every name a Panel may attach to, and its Monitor
+    for monitor in monitors:
+        for surface in monitor.surfaces:
+            home[surface.name] = (monitor, surface)
+            places[surface.name] = monitor
+            if isinstance(surface, BarDef):
+                for use in use_names(surface.children):
+                    places[use] = monitor
+    taken: dict[str, PanelDef] = {}
+    for monitor in monitors:
+        for panel in monitor.surfaces:
+            if not isinstance(panel, PanelDef) or not panel.attach_to:
+                continue
+            target = panel.attach_to
+            if target == panel.name:
+                ctx.add(
+                    panel.origin, "attach-self", f"Panel {panel.name} is attached to itself", ""
+                )
+            elif target not in places:
+                ctx.add(
+                    panel.origin,
+                    "attach-unknown",
+                    f"Attach_To names {target}, which is no Bar, Panel or module used in a Bar",
+                    "the names here are: " + ", ".join(sorted(places)),
+                )
+            elif places[target] is not monitor:
+                ctx.add(
+                    panel.origin,
+                    "attach-other-monitor",
+                    f"{target} is on Monitor {places[target].name}, Panel {panel.name} on "
+                    f"{monitor.name}",
+                    "a Panel attaches to a surface of its own Monitor",
+                )
+            elif target in taken:
+                ctx.add(
+                    panel.origin,
+                    "attach-duplicate",
+                    f"{target} already has Panel {taken[target].name} attached "
+                    f"({taken[target].origin})",
+                    "a target has one attached Panel",
+                )
+            else:
+                taken[target] = panel
+    for monitor in monitors:
+        for panel in monitor.surfaces:
+            seen = {panel.name}
+            at = panel
+            while isinstance(at, PanelDef) and at.attach_to in home and at.attach_to not in seen:
+                seen.add(at.attach_to)
+                at = home[at.attach_to][1]
+            if isinstance(at, PanelDef) and at.attach_to in seen and at.attach_to in home:
+                ctx.add(
+                    panel.origin,
+                    "attach-cycle",
+                    f"Panel {panel.name} is attached in a circle: {' > '.join(sorted(seen))}",
+                    "a chain of attached Panels must end at a Bar or an anchored Panel",
+                )
+                break
 
 
 def _param_decls(ctx: _Ctx, block: Block) -> dict[str, ParamDecl]:

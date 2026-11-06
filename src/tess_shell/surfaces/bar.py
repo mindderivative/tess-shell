@@ -62,6 +62,63 @@ class Geometry:
     )  # the transparent margin, top right bottom left
 
 
+@dataclass(frozen=True, slots=True)
+class Rect:
+    """A rectangle in the output's logical pixels, origin at its top left corner."""
+
+    x: float
+    y: float
+    width: float
+    height: float
+
+    @property
+    def right(self) -> float:
+        return self.x + self.width
+
+    @property
+    def bottom(self) -> float:
+        return self.y + self.height
+
+
+def surface_rect(geometry: Geometry, output: tuple[int, int]) -> Rect:
+    """Where the whole surface sits on the output.
+
+    Layer-shell places a surface by its anchors and margins from the output's edges when its
+    exclusive zone is -1 (a Panel's), so a Panel attached to this surface can find the edge it
+    meets. A Bar that reserves a zone sits at the output's edge when it is the only one there;
+    a second Bar on the same edge is pushed in by the first, which this does not see.
+    """
+    anchors = set(geometry.anchor)
+    top, right, bottom, left = geometry.margin
+    spans: list[tuple[float, float]] = []
+    length: float
+    start: float
+    for low, high, size, out, m_low, m_high in (
+        ("left", "right", geometry.size[0], output[0], left, right),
+        ("top", "bottom", geometry.size[1], output[1], top, bottom),
+    ):
+        if low in anchors and high in anchors:
+            length = size or out - m_low - m_high
+            start = m_low
+        elif low in anchors:
+            length, start = size, m_low
+        elif high in anchors:
+            length, start = size, out - m_high - size
+        else:  # centred by the compositor, margins ignored
+            length, start = size, (out - size) / 2
+        spans.append((start, length))
+    (x, w), (y, h) = spans
+    return Rect(x, y, w, h)
+
+
+def body_rect(geometry: Geometry, output: tuple[int, int]) -> Rect:
+    """Where the body (the surface without its transparent margin) sits on the output."""
+    whole = surface_rect(geometry, output)
+    x, y, w, h = whole.x, whole.y, whole.width, whole.height
+    b_top, b_right, b_bottom, b_left = geometry.body_margin
+    return Rect(x + b_left, y + b_top, max(w - b_left - b_right, 0), max(h - b_top - b_bottom, 0))
+
+
 def input_region(
     geometry: Geometry, output: tuple[int, int]
 ) -> list[tuple[float, float, float, float]] | None:

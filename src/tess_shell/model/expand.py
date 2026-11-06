@@ -25,6 +25,8 @@ class Expanded:
     uses: list[Use] = field(default_factory=list)
     owner: dict[str, str] = field(default_factory=dict)  # node id -> use key
     errors: list[m.BindError] = field(default_factory=list)
+    # a use's ``Name`` -> the id of its root node, for a Panel attached to the module
+    targets: dict[str, str] = field(default_factory=dict)
 
 
 def _has_slot(node: m.Node) -> bool:
@@ -38,7 +40,9 @@ class _Expander:
         uid_of: Callable[[str], str],
         monitor: str,
         rules: Sequence[Rule] = (),
+        attach_targets: frozenset[str] = frozenset(),
     ) -> None:
+        self.attach_targets = attach_targets
         self.rules = rules
         self.modules = modules
         self.uid_of = uid_of
@@ -141,7 +145,26 @@ class _Expander:
         use = Use(key, call.module, name, params, self.monitor, call.origin)
         self.out.uses.append(use)
         roots = self._walk(module.children, name, use, (*stack, call.module))
-        return apply_module_rules(roots, call.module, self.rules)  # type: ignore[return-value]
+        roots = apply_module_rules(roots, call.module, self.rules)  # type: ignore[assignment]
+        if call.name in self.attach_targets:
+            self._mark_target(call, key, roots)
+        return roots
+
+    def _mark_target(
+        self, call: m.UseNode, key: str, roots: list[m.Node | m.IfNode | m.ForNode]
+    ) -> None:
+        """A Panel is attached to this use: its first root block gets an id, so the surface can
+        read where tre laid it out."""
+        for i, root in enumerate(roots):
+            if isinstance(root, m.Node):
+                name = root.name or f"{key}/#target"
+                self.out.owner[name] = key
+                self.out.targets[call.name or ""] = name
+                roots[i] = dataclasses.replace(root, name=name)
+                return
+        self.out.errors.append(
+            m.BindError(f"{call.module} has no root block a Panel could attach to", call.origin)
+        )
 
 
 def expand(
@@ -151,8 +174,10 @@ def expand(
     uid_of: Callable[[str], str],
     monitor: str,
     rules: Sequence[Rule] = (),
+    attach_targets: frozenset[str] = frozenset(),
 ) -> Expanded:
-    """Expand the children of one surface. ``path`` is the surface's dotted name."""
-    expander = _Expander(modules, uid_of, monitor, rules)
+    """Expand the children of one surface. ``path`` is the surface's dotted name.
+    ``attach_targets`` are the ``Name`` of the uses a Panel is attached to."""
+    expander = _Expander(modules, uid_of, monitor, rules, attach_targets)
     expander.run(nodes, path)
     return expander.out

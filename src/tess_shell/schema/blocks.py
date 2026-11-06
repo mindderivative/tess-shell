@@ -179,16 +179,20 @@ PANEL_KEYS: dict[str, str] = {
     "Input_Region": "input",
     "Visible": "bool",
     "Hide_After": "number",
+    "Attach": "enum",
+    "Gap": "number",
+    "Alignment": "enum",
 }
 PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),
     "Keyboard": ("NONE", "ON_DEMAND", "EXCLUSIVE"),
+    "Attach": ("LEFT", "RIGHT", "TOP", "BOTTOM"),
+    "Alignment": ("START", "CENTER", "END"),
 }
+# keys that only mean something with Attach_To, and keys that Attach_To replaces
+PANEL_ATTACH_KEYS = ("Attach", "Gap", "Alignment")
+PANEL_PLACED_KEYS = ("Anchor", "Inset")
 PANEL_NOT_BUILT_ERROR = (
-    "Attach_To",
-    "Attach",
-    "Alignment",
-    "Gap",
     "Open_With_Target",
     "Meld",
     "Movable",

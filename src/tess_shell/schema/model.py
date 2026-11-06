@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 import tess_dl
 
@@ -50,6 +50,11 @@ class PanelDef:
     hide_after: float | None = None  # milliseconds
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
+    # attached to a target by name (Panel > Attachment Geometry); Anchor and Inset then give way
+    attach_to: str | None = None
+    attach: str | None = None  # LEFT, RIGHT, TOP, BOTTOM: the target's edge the Panel meets
+    gap: float = 0  # pixels between the Panel and the target
+    alignment: str = "CENTER"  # START, CENTER, END along the shared edge
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,3 +167,15 @@ class IconSource(Protocol):
     def lookup(self, name: str) -> str | None: ...
 
     def nearest(self, name: str) -> list[str]: ...
+
+
+def use_names(children: Sequence[Any]) -> list[str]:
+    """The ``Name`` of every module use among ``children``, at any depth."""
+    found: list[str] = []
+    for child in children:
+        if isinstance(child, UseNode) and child.name:
+            found.append(child.name)
+        found.extend(use_names(getattr(child, "children", ()) or ()))
+        found.extend(use_names(getattr(child, "body", ()) or ()))
+        found.extend(use_names(getattr(child, "else_body", ()) or ()))
+    return found

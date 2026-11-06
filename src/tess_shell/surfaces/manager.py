@@ -26,8 +26,17 @@ from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, apply_rules, resolve_style
 from tess_shell.model.store import Change, ValueStore
 from tess_shell.model.uses import Use
-from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, PanelDef, ShellDef
-from tess_shell.surfaces.bar import BarSpec, Geometry, ZeroSize, bar_geometry, input_region
+from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, PanelDef, ShellDef, use_names
+from tess_shell.surfaces.bar import (
+    BarSpec,
+    Geometry,
+    Rect,
+    ZeroSize,
+    bar_geometry,
+    body_rect,
+    input_region,
+    surface_rect,
+)
 from tess_shell.surfaces.panel import PanelSpec, panel_geometry
 
 if TYPE_CHECKING:
@@ -161,15 +170,81 @@ def _spec(bar: BarDef, look: Look | None) -> BarSpec:
 
 def _panel_spec(panel: PanelDef, look: Look | None) -> PanelSpec:
     return PanelSpec(
-        panel.anchor, panel.inset, panel.width, panel.height, bleed=_bleed(panel, look)
+        panel.anchor,
+        panel.inset,
+        panel.width,
+        panel.height,
+        bleed=_bleed(panel, look),
+        attach=panel.attach if panel.attach_to else None,
+        gap=panel.gap,
+        alignment=panel.alignment,
     )
 
 
-def _geometry(bar: BarDef | PanelDef, look: Look | None, output: tuple[int, int]) -> Geometry:
-    """The geometry of a Bar or a Panel on ``output``; raises :class:`ZeroSize`."""
+def _geometry(
+    bar: BarDef | PanelDef,
+    look: Look | None,
+    output: tuple[int, int],
+    target: Rect | None = None,
+    clearance: Rect | None = None,
+) -> Geometry:
+    """The geometry of a Bar or a Panel on ``output``; raises :class:`ZeroSize`. ``target`` is the
+    rectangle an attached Panel meets, ``clearance`` the Bar around a module it meets."""
     if isinstance(bar, PanelDef):
-        return panel_geometry(_panel_spec(bar, look), output)
+        return panel_geometry(_panel_spec(bar, look), output, target, clearance)
     return bar_geometry(_spec(bar, look), output)
+
+
+def _place(
+    bars: Sequence[BarDef | PanelDef],
+    look: Look | None,
+    output: tuple[int, int],
+    hosts: Mapping[str, str] | None = None,
+    module_rect: Callable[[str], Rect | None] | None = None,
+) -> tuple[dict[str, Geometry], dict[str, str]]:
+    """The geometry of every surface of one Monitor on one output, by ``Name``, and the reason
+    for each one that gets none. A target is placed before the Panel attached to it, so a chain of
+    attached Panels resolves in order; a Panel whose target is not on this Monitor, or was not
+    created, is not created either. ``hosts`` maps the ``Name`` of a module used in a Bar to the
+    Bar; ``module_rect`` gives the module's laid-out rectangle on the output, or ``None`` before
+    the Bar has been laid out, when the Bar's own rectangle stands in for it."""
+    hosts = hosts or {}
+    geometries: dict[str, Geometry] = {}
+    failed: dict[str, str] = {}
+    rects: dict[str, Rect] = {}
+    pending = list(bars)
+    while pending:
+        progress = False
+        for bar in list(pending):
+            target = clearance = None
+            if isinstance(bar, PanelDef) and bar.attach_to:
+                holder = hosts.get(bar.attach_to, bar.attach_to)  # the surface that is placed first
+                if holder in failed:
+                    failed[bar.name] = f"its target {bar.attach_to} was not created"
+                    pending.remove(bar)
+                    progress = True
+                    continue
+                if holder not in rects:
+                    continue  # the target is placed later in this pass, or not at all
+                target = rects[holder]
+                if bar.attach_to in hosts:
+                    clearance = target
+                    target = (module_rect and module_rect(bar.attach_to)) or target
+            try:
+                geometries[bar.name] = _geometry(bar, look, output, target, clearance)
+            except ZeroSize as exc:
+                failed[bar.name] = str(exc)
+            else:
+                rects[bar.name] = body_rect(geometries[bar.name], output)
+            pending.remove(bar)
+            progress = True
+        if not progress:
+            for bar in pending:
+                failed[bar.name] = (
+                    f"its target {getattr(bar, 'attach_to', None)} is not on this Monitor"
+                )
+            break
+    return geometries, failed
 
 
 def _keyboard(bar: BarDef | PanelDef, hidden: bool = False) -> str:
@@ -273,6 +348,9 @@ class Planned:
     expanded: Expanded
     geometry: Geometry
     where: str
+    group: str = (
+        ""  # the Monitor and output the surface was planned for: attachment stays inside it
+    )
 
 
 def _handlers(nodes: Sequence[Any]) -> list[Handler]:
@@ -394,22 +472,54 @@ class SurfaceManager:
                 )
                 continue
             for i in indices:
+                group = f"{monitor.name}@{outputs[i].name}"
+                hosts = {
+                    use: surface.name
+                    for surface in monitor.surfaces
+                    if isinstance(surface, BarDef)
+                    for use in use_names(surface.children)
+                }
+                wanted = frozenset(
+                    p.attach_to
+                    for p in monitor.surfaces
+                    if isinstance(p, PanelDef) and p.attach_to in hosts
+                )
+                geometries, failed = _place(
+                    monitor.surfaces,
+                    look,
+                    (outputs[i].width, outputs[i].height),
+                    hosts,
+                    lambda label, group=group: self._module_rect(group, label),  # type: ignore[misc]
+                )
                 for bar in monitor.surfaces:
                     where = f"{bar.name} on {outputs[i].name}"
                     kind = _kind(bar)
-                    try:
-                        geometry = _geometry(bar, look, (outputs[i].width, outputs[i].height))
-                    except ZeroSize as exc:
-                        logger.warning(f"{bar.origin}: {kind} {where} is not created: {exc}")
+                    if bar.name in failed:
+                        logger.warning(
+                            f"{bar.origin}: {kind} {where} is not created: {failed[bar.name]}"
+                        )
                         continue
+                    geometry = geometries[bar.name]
                     for warning in geometry.warnings:
                         logger.warning(f"{bar.origin}: {kind} {where}: {warning}")
                     suffix = f"@{outputs[i].name}" if len(indices) > 1 else ""
                     path = f"{shell.name}.{monitor.name}{suffix}.{bar.name}"
                     children = apply_rules(bar.children, rules)
-                    expanded = expand(children, path, modules, self._uid_of, outputs[i].name, rules)
+                    expanded = expand(
+                        children, path, modules, self._uid_of, outputs[i].name, rules, wanted
+                    )
                     uses.extend(expanded.uses)
-                    planned.append(Planned(path, bar, outputs[i], expanded, geometry, where))
+                    planned.append(
+                        Planned(
+                            path,
+                            bar,
+                            outputs[i],
+                            expanded,
+                            geometry,
+                            where,
+                            group,
+                        )
+                    )
         panel_names = {
             surface.name
             for m in shell.monitors
@@ -465,10 +575,13 @@ class SurfaceManager:
             **_body_style(geometry, fill, shadows, extra),
         )
         window.root.add_child(body)
-        window.on(
-            "configure",
-            lambda e, n=where: logger.info(f"{kind} {n} configured {int(e.width)}x{int(e.height)}"),
-        )
+
+        def configured(e: Any, n: str = where) -> None:
+            logger.info(f"{kind} {n} configured {int(e.width)}x{int(e.height)}")
+            if kind == "Bar":
+                self._relayout_soon(window, planned.group)
+
+        window.on("configure", configured)
         window.on(
             "closed",
             lambda e, n=where: logger.info(f"{kind} {n} closed ({getattr(e, 'reason', '')})"),
@@ -610,12 +723,105 @@ class SurfaceManager:
 
         window.after(250, frames_so_far)
 
+    def _place_group(
+        self, group: str, look: Look | None
+    ) -> tuple[dict[str, Geometry], dict[str, str]]:
+        """Place every open surface of one Monitor and output again, with the modules' laid-out
+        rectangles as they are now."""
+        members = [s.planned for s in self.surfaces if s.planned and s.planned.group == group]
+        bars = [p.bar for p in members]
+        hosts = {
+            use: p.bar.name
+            for p in members
+            if isinstance(p.bar, BarDef)
+            for use in use_names(p.bar.children)
+        }
+        size = (members[0].output.width, members[0].output.height)
+        return _place(bars, look, size, hosts, lambda label: self._module_rect(group, label))
+
+    def _module_rect(self, group: str, label: str) -> Rect | None:
+        """Where tre laid out the root block of the module used under ``Name: label``, on the
+        output; ``None`` while its Bar has no tree or no layout yet."""
+        for t in self.surfaces:
+            if t.planned is None or t.planned.group != group or t.view is None:
+                continue
+            node_id = t.planned.expanded.targets.get(label)
+            node = t.view.nodes.get(node_id) if node_id else None
+            if node is None:
+                continue
+            x, y, w, h = (
+                float(node.get(k))
+                for k in ("layout_x", "layout_y", "layout_width", "layout_height")
+            )
+            if w <= 0 and h <= 0:
+                return None
+            origin = surface_rect(t.geometry, self._output_size(t))
+            return Rect(origin.x + x, origin.y + y, w, h)
+        return None
+
+    def _relayout_soon(self, window: Any, group: str) -> None:
+        """A Bar was laid out or rebuilt: once tre has drawn it, the Panels attached to its modules
+        are placed again from where the modules are."""
+        window.after(50, lambda: self._relayout_attached(group))
+
+    def _relayout_attached(self, group: str) -> None:
+        for t in list(self.surfaces):
+            if t.planned and t.planned.group == group and not t.hidden:
+                self._refresh_attached(t)
+
+    def _refresh_attached(self, s: Surface) -> None:
+        """A Panel attached to a module is placed again when it is shown, from where the module
+        is now: the module's width may have changed since the Bar was planned."""
+        p = s.planned
+        if p is None or not isinstance(p.bar, PanelDef) or not p.bar.attach_to:
+            return
+        geometry = self._place_group(p.group, self._look)[0].get(p.bar.name)
+        if geometry is None or geometry == p.geometry:
+            return
+        p.geometry = geometry
+        if s.window is not None:
+            self._sync_body(s, p.bar, geometry, p.where)
+            self.wake()  # this runs in the Bar's callback: tre draws another window only when woken
+
+    def _attached_to(self, s: Surface) -> list[Surface]:
+        """The open Panels attached to ``s`` (same Monitor and output)."""
+        if s.planned is None:
+            return []
+        return [
+            t
+            for t in self.surfaces
+            if t.planned is not None
+            and t.planned.group == s.planned.group
+            and isinstance(t.planned.bar, PanelDef)
+            and t.planned.bar.attach_to == s.name
+        ]
+
+    def _target_of(self, s: Surface) -> Surface | None:
+        """The surface ``s`` is attached to, if it is."""
+        if (
+            s.planned is None
+            or not isinstance(s.planned.bar, PanelDef)
+            or not s.planned.bar.attach_to
+        ):
+            return None
+        name = s.planned.bar.attach_to
+        return next(
+            (
+                t
+                for t in self.surfaces
+                if t.planned and t.planned.group == s.planned.group and t.name == name
+            ),
+            None,
+        )
+
     def hide(self, s: Surface) -> None:
         """Hide a Panel. KEEP (the default, D44): keep the surface, draw nothing, take no pointer
         and no keyboard; the tree and its state stay. CLOSE: destroy the window (the record, its
         place and what its modules know stay) and make a new one on show."""
         if s.hidden or s.planned is None or s.window is None:
             return
+        for attached in self._attached_to(s):  # a Panel does not stay open without its target
+            self.hide(attached)
         if s.timer is not None:
             s.timer.cancel()
             s.timer = None
@@ -638,6 +844,11 @@ class SurfaceManager:
         if not s.hidden:
             self._arm_hide_after(s)  # shown again: the timer starts over
             return
+        target = self._target_of(s)
+        if target is not None and target.hidden:
+            logger.info(f"Panel {s.planned.where} stays hidden: its target {target.name} is hidden")
+            return
+        self._refresh_attached(s)
         if s.window is not None:  # KEEP: the surface is still there
             bar = s.planned.bar
             s.hidden = False
@@ -803,6 +1014,8 @@ class SurfaceManager:
         s.live, s.expanded, s.name, s.planned = live, p.expanded, p.bar.name, p
         self._sync_body(s, p.bar, p.geometry, p.where)
         logger.info(f"{_kind(p.bar)} {p.where} reloaded: {stats}")
+        if isinstance(p.bar, BarDef) and s.window is not None:
+            self._relayout_soon(s.window, p.group)
 
     @staticmethod
     def _output_size(s: Surface) -> tuple[int, int]:
@@ -857,12 +1070,17 @@ class SurfaceManager:
             f"look: scheme {a.scheme}, accent {a.accent}, high contrast {a.high_contrast}, "
             f"reduced motion {a.reduced_motion}"
         )
+        placed = {
+            g: self._place_group(g, look)[0]
+            for g in {x.planned.group for x in self.surfaces if x.planned}
+        }
         for s in self.surfaces:
             p = s.planned
             if p is None or s.view is None:
                 continue
             s.live.look = look
             self._rebuild(s)
-            geometry = _geometry(p.bar, look, (p.output.width, p.output.height))
-            self._sync_body(s, p.bar, geometry, p.where)
+            geometry = placed[p.group].get(p.bar.name)
+            if geometry is not None:
+                self._sync_body(s, p.bar, geometry, p.where)
         self.wake()

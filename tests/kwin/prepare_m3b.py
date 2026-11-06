@@ -38,7 +38,22 @@ FlexBox {
     Style { Background: $color.primary, Corner_Radius: 4 }
     On_Click { Action: Show, Target: Volume_OSD }
     Children { Text { Text: "OSD", Font_Size: 13, Foreground: $color.on_primary } }
-}"""
+}
+FlexBox {
+    Name: Calendar_Button
+    Padding: 4
+    Style { Background: $color.primary, Corner_Radius: 4 }
+    On_Click { Action: Toggle, Target: Calendar }
+    Children { Text { Text: "Calendar", Font_Size: 13, Foreground: $color.on_primary } }
+}
+FlexBox {
+    Name: Note_Button
+    Padding: 4
+    Style { Background: $color.primary, Corner_Radius: 4 }
+    On_Click { Action: Toggle, Target: Note }
+    Children { Text { Text: "Note", Font_Size: 13, Foreground: $color.on_primary } }
+}
+Clock { Name: Clock_One }"""
 
 PANELS = """
             Panel {
@@ -70,6 +85,42 @@ PANELS = """
                     FlexBox {
                         Padding: 24
                         Children { Text { Text: "Launcher: press Escape to close", Font_Size: 18, Foreground: $color.on_surface } }
+                    }
+                }
+            }
+            Panel {
+                Name: Calendar
+                Layer: OVERLAY
+                Width: 200
+                Height: 120
+                Attach_To: Clock_One
+                Attach: BOTTOM
+                Gap: 8
+                Alignment: CENTER
+                Visible: false
+                Style { Background: $color.surface_raised, Corner_Radius: 8, Elevation: 20% }
+                Children {
+                    FlexBox {
+                        Padding: 12
+                        Children { Text { Text: "Under the clock", Font_Size: 14, Foreground: $color.on_surface } }
+                    }
+                }
+            }
+            Panel {
+                Name: Note
+                Layer: OVERLAY
+                Width: 140
+                Height: 60
+                Attach_To: Calendar
+                Attach: RIGHT
+                Gap: 6
+                Alignment: START
+                Visible: false
+                Style { Background: $color.surface_raised, Corner_Radius: 8, Elevation: 20% }
+                Children {
+                    FlexBox {
+                        Padding: 12
+                        Children { Text { Text: "Beside it", Font_Size: 14, Foreground: $color.on_surface } }
                     }
                 }
             }
