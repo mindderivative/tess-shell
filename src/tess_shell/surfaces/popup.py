@@ -228,13 +228,29 @@ class BodyLook:
         return props
 
 
+_WARNED: set[str] = set()  # the Popups already warned about a shadow
+
+
 def body_look(popup: PopupDef, look: Look | None) -> BodyLook:
     errors: list[BindError] = []
     style = resolve_style(popup.style or {}, look, errors)
     shadows = style_shadows(style, (look.max_shadows if look else None) or DEFAULT_MAX)
     fill = style.get("Fill") or style.get("Background")
+    bleed = style_bleed(style, shadows)
+    if any(bleed) or shadows:
+        # A popup's shadow needs a transparent margin, and tre can neither tell the compositor
+        # which part of the surface is the popup (it placed a shadowed popup about 30 px from the
+        # screen edge and off the caller's edge on KWin) nor leave the margin without input (it
+        # took clicks). So a popup draws no shadow until TRE-REQ-007; use a border for edge.
+        if popup.name not in _WARNED:
+            _WARNED.add(popup.name)
+            logger.warning(
+                f"{popup.origin}: Popup {popup.name} draws no shadow: tre cannot yet place a popup "
+                "by its body or keep its shadow margin from taking clicks (TRE-REQ-007)"
+            )
+        bleed, shadows = (0, 0, 0, 0), style_shadows({}, DEFAULT_MAX)
     return BodyLook(
-        style_bleed(style, shadows),
+        bleed,
         convert.color(fill, ("fill",))["fill"] if isinstance(fill, m.Color) else None,
         convert.shadows(shadows, ("shadows",))["shadows"],
         _border_props(style),
@@ -580,10 +596,19 @@ class Popups:
         popup = op.popup
         w.on("configure", lambda e, op=op: self._configured(op, e))
         w.on("closed", lambda e, op=op: self._closed(op, str(getattr(e, "reason", ""))))
+        if popup.focus:
+            # Escape ends a focused popup; tre's grab should do it, and on KWin it did not
+            w.root.on("key_down", lambda e, op=op: self._key(op, e))
         if popup.close_on_exit and op.body is not None:
             # the pointer crossing from the caller into the popup keeps a tooltip open
             op.body.on("pointer_enter", lambda _e, op=op: self._popup_enter(op))
             op.body.on("pointer_leave", lambda _e, op=op: self._popup_leave(op))
+
+    def _key(self, op: OpenPopup, event: Any) -> None:
+        key = getattr(event, "key", None)
+        logger.debug(f"Popup {op.where}: key {key}")
+        if key == "escape":
+            self.close(op, "escape")
 
     def _configured(self, op: OpenPopup, event: Any) -> None:
         x, y = int(getattr(event, "x", 0)), int(getattr(event, "y", 0))

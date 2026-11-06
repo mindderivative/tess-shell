@@ -384,7 +384,7 @@ def test_a_call_opens_the_popup_beside_the_calling_use_as_its_keys_ask(menu: Rig
     assert "Popup Menu on HDMI-A-1 opened beside Btn" in menu.log()
 
 
-def test_the_size_is_the_content_within_one_pixel_and_the_shadow_margin_is_added(
+def test_the_size_is_the_content_within_one_pixel_and_a_shadow_is_not_drawn(
     menu: Rig,
 ) -> None:
     op = menu.call()
@@ -400,14 +400,9 @@ def test_the_size_is_the_content_within_one_pixel_and_the_shadow_margin_is_added
     )[0]
     big = shadowed.call()
     big.window.advance(16)
-    inner = rect_of(big.view.nodes["Card"])
-    top, right, bottom, left = (  # 20 % elevation: the transparent margin around the body
-        int(big.body.get(f"margin_{side}")) for side in ("top", "right", "bottom", "left")
-    )
-    assert top > 0 and right > 0 and bottom > 0 and left > 0
-    assert (inner[0], inner[1]) == (left, top)  # the content starts after the margin
-    assert tuple(big.window.get("size")) == (inner[2] + left + right, inner[3] + top + bottom)
-    assert abs(inner[2] - card[2]) <= 1 and abs(inner[3] - card[3]) <= 1  # the same body
+    # no transparent margin: it took clicks and moved the popup off the screen edge on KWin
+    assert tuple(big.window.get("size")) == (card[2], card[3])
+    assert all(int(big.body.get(f"margin_{s}")) == 0 for s in ("top", "right", "bottom", "left"))
 
 
 def test_a_fixed_width_and_height_skip_the_measure_and_content_beyond_max_height_scrolls() -> None:
