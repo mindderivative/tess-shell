@@ -155,3 +155,18 @@ def test_a_state_rule_that_reaches_a_text_is_a_warning_in_the_scan(tmp_path: Pat
     (warning,) = [f for f in result.findings if f.rule == "state-never-applies"]
     assert warning.severity == "warning" and "Mine_Rules_Stylesheet.tdl" in warning.file
     assert "Text" in warning.message
+
+
+def test_check_reports_an_unknown_token_in_a_frames_colours(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    frame = (
+        "Frame { Name: F, Thickness: 8, Inner_Border { Width: 1, Color: $color.on_surfce },"
+        " Style { Background: $color.surfce } }\n            Bar {"
+    )
+    cfg = config(
+        tmp_path, BODY.replace("            Bar {", f"            {frame}", 1), "Theme: Mine"
+    )
+    assert main(["check", "--config-dir", str(cfg)]) == 1
+    err = capsys.readouterr().err
+    assert "no token named $color.surfce" in err and "no token named $color.on_surfce" in err

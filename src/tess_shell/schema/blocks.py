@@ -138,7 +138,43 @@ BAR_STYLE: dict[str, str] = {
     "Shadows": "shadows",
     "Shadow_Bleed": "bleed",
 }
-OTHER_SURFACES = ("Frame",)
+
+# A Frame's keys and kinds (Frame > Configuration). ``Thickness`` and ``Margin`` are also blocks of
+# named sides, the borders are blocks. Keys that ask for something not built are errors, so a
+# Frame never opens as something it was not asked to be.
+FRAME_KEYS: dict[str, str] = {
+    "Layer": "enum",
+    "Thickness": "sides",
+    "Margin": "sides",
+    "Corner_Radius": "radius",
+    "Inner_Radius": "radius",
+    "Visible": "bool",
+}
+FRAME_CHOICES: dict[str, tuple[str, ...]] = {"Layer": ("TOP",)}
+FRAME_NOT_BUILT_ERROR = (
+    "Edges",
+    "Children",
+    "Border_Tile",
+    "Meld",
+    "Exclusive_Zone",
+    "Keyboard",
+    "Input_Region",
+)
+FRAME_NOT_BUILT_WARNING = ("Padding", "Class")
+FRAME_BORDER_KEYS = ("Width", "Color")
+# A Frame's inline Style: the background, the shorthand for the inner border (``Border_Width``,
+# ``Border_Color`` or a ``Border { Width, Color }`` block, D78) and the opacity. Shadows are
+# accepted by the table so that they are reported as not built, not as unknown.
+FRAME_STYLE: dict[str, str] = {
+    "Background": "color",
+    "Border_Width": "number",
+    "Border_Color": "color",
+    "Opacity": "number",
+    "Elevation": "elevation",
+    "Shadows": "shadows",
+    "Shadow_Bleed": "bleed",
+}
+FRAME_STYLE_NOT_BUILT = ("Elevation", "Shadows", "Shadow_Bleed")
 
 
 # The twelve v1 events (Events and Actions), as the TDL keys. A block raises only the events its

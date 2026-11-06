@@ -37,6 +37,7 @@ from tess_shell.surfaces.bar import (
     input_region,
     surface_rect,
 )
+from tess_shell.surfaces.frame import FramePlan, Frames
 from tess_shell.surfaces.panel import PanelSpec, panel_geometry, px_size
 
 if TYPE_CHECKING:
@@ -66,6 +67,21 @@ def _claims(monitor: MonitorDef, outputs: Sequence[OutputLike]) -> int | None:
     return None
 
 
+def _has_selector(monitor: MonitorDef) -> bool:
+    return (
+        monitor.connector is not None
+        or monitor.description is not None
+        or isinstance(monitor.index, int)
+    )
+
+
+def is_default(monitor: MonitorDef) -> bool:
+    """``Index: default`` with no other selector: the block opens on every output no other block
+    named, so its surfaces' paths always carry the output, whatever the count is now (a second
+    screen plugged in must not rename, and so recreate, the first one's)."""
+    return monitor.index == "default" and not _has_selector(monitor)
+
+
 def _resolve(
     monitors: Sequence[MonitorDef], outputs: Sequence[OutputLike]
 ) -> tuple[list[tuple[MonitorDef, list[int]]], list[tuple[MonitorDef, MonitorDef, int]]]:
@@ -74,15 +90,10 @@ def _resolve(
     taken: dict[int, MonitorDef] = {}
     defaults: list[MonitorDef] = []
     for monitor in monitors:
-        has_selector = (
-            monitor.connector is not None
-            or monitor.description is not None
-            or isinstance(monitor.index, int)
-        )
-        if monitor.index == "default" and not has_selector:
+        if is_default(monitor):
             defaults.append(monitor)
             continue
-        if not has_selector and monitor.index is None:
+        if not _has_selector(monitor) and monitor.index is None:
             continue
         found = _claims(monitor, outputs)
         if found is None:
@@ -471,6 +482,16 @@ class SurfaceManager:
 
         self.popups = Popups(self)
         self._popup_plans: list[PopupPlan] = []  # from the last planning: set_plans commits them
+        self.frames = Frames(app, self.wake)  # the Frames: a painter and reservers each
+        self._frame_plans: list[FramePlan] = []  # the last planning: ``frames.sync`` opens them
+        self._shell: ShellDef | None = None  # the shell definition that is running
+        self._planned_shell: ShellDef | None = None  # the one last planned (a check, not yet run)
+        from tess_shell.surfaces.hotplug import OutputWatch  # it imports this module
+
+        self.hotplug = OutputWatch(self)
+        # a hot-plug re-plans the uses; the host brings the modules to them (the reloader's
+        # ``sync_uses``: the same path a reload takes). ``None`` where there are no modules.
+        self.sync_uses: Callable[[list[Use]], None] | None = None
 
     def wake(self) -> None:
         """Wake tre's loop after the shell changed a window. tre does not request a frame for a
@@ -499,22 +520,31 @@ class SurfaceManager:
     # -- planning: no side effect but logging -------------------------------------------------
 
     def _plan_bars(
-        self, shell: ShellDef, modules: Mapping[str, ModuleDef], look: Look | None
+        self,
+        shell: ShellDef,
+        modules: Mapping[str, ModuleDef],
+        look: Look | None,
+        outputs: Sequence[Output] | None = None,
     ) -> tuple[list[Planned], list[Use]]:
         """Match monitors to outputs, compute each Bar's geometry and expand its module calls.
         The stylesheet's rules are folded into every block first, so ``#name`` selectors see the
-        names as written."""
+        names as written. ``outputs`` is the list the hot-plug code tracks; without it the
+        outputs are read from the compositor, and the tracked list starts over from them."""
         self._shell_name = shell.name
+        self._planned_shell = shell
         rules = look.rules if look else ()
         if rules:
             modules = {
                 n: dataclasses.replace(d, children=apply_rules(d.children, rules))
                 for n, d in modules.items()
             }
-        outputs: list[Output] = list(self._app.outputs())
+        if outputs is None:
+            outputs = list(self._app.outputs())
+            self.hotplug.known = list(outputs)
         if not outputs:
             logger.warning("no outputs: no surface was opened")
             self._popup_plans = []
+            self._frame_plans = []
             return [], []
         for loser, winner, i in conflicts(shell.monitors, outputs):
             logger.warning(
@@ -562,7 +592,7 @@ class SurfaceManager:
                     geometry = geometries[bar.name]
                     for warning in geometry.warnings:
                         logger.warning(f"{bar.origin}: {kind} {where}: {warning}")
-                    suffix = f"@{outputs[i].name}" if len(indices) > 1 else ""
+                    suffix = f"@{outputs[i].name}" if is_default(monitor) else ""
                     path = f"{shell.name}.{monitor.name}{suffix}.{bar.name}"
                     children = apply_rules(bar.children, rules)
                     expanded = expand(
@@ -593,8 +623,12 @@ class SurfaceManager:
             for surface in m.surfaces
             if _kind(surface) == "Panel"
         }
+        frame_names = {f.name for m in shell.monitors for f in m.frames}
         for p in planned:
-            _check_targets(p.expanded, panel_names)
+            _check_targets(p.expanded, panel_names | frame_names)
+        self._frame_plans = self.frames.plan(
+            shell, outputs, assign(shell.monitors, outputs), look, is_default
+        )
         self._popup_plans, popup_uses = self.popups.plan(
             shell, modules, look, outputs, self._uid_of, assign, panel_names
         )
@@ -603,6 +637,7 @@ class SurfaceManager:
 
     def plan(self, shell: ShellDef) -> list[Use]:
         planned, uses = self._plan_bars(shell, self._modules, self._look)
+        self._shell = shell
         for use in uses:
             self._store.add_use(use.module, use.key)
         self._planned = planned
@@ -618,6 +653,7 @@ class SurfaceManager:
         self._all_uses = all_uses
         for planned in self._planned:
             self.surfaces.append(self._open(planned, all_uses))
+        self.frames.sync(self._frame_plans, self._look)
         return self.surfaces
 
     def _make_window(self, planned: Planned, live: LiveTree, hidden: bool = False) -> Surface:
@@ -1121,6 +1157,8 @@ class SurfaceManager:
             logger.warning(f"{handler.origin}: Close: the block is not in a Popup; nothing closed")
             return
         target = handler.args.get("Target")
+        if self.frames.run(handler.action, target):
+            return
         hits = [
             s
             for s in self.surfaces
@@ -1198,6 +1236,7 @@ class SurfaceManager:
         and its geometry set live; the rest are closed or opened. All-or-nothing per surface: a
         tree that does not bind leaves that surface as it was."""
         self._modules = modules
+        self._shell = self._planned_shell  # the shell ``check`` just planned
         if look is not None:
             self._look = look
         self.popups.set_plans(self._popup_plans)  # the plans of the check just made
@@ -1223,6 +1262,7 @@ class SurfaceManager:
         for s in old.values():
             self._close(s)
         self.surfaces = out
+        self.frames.sync(self._frame_plans, self._look)
         keep = {u.key for u in store_uses}
         for key in [k for k in self._store.values if k not in keep]:
             self._store.remove_use(key)
@@ -1230,11 +1270,16 @@ class SurfaceManager:
 
     def _close(self, s: Surface) -> None:
         self.popups.parent_closed(s)
+        s.generation += 1  # an animation that was running ends silent
+        s.trace = None
         if s.timer is not None:
             s.timer.cancel()
             s.timer = None
         if s.window is not None:
-            s.window.close()
+            try:
+                s.window.close()
+            except Exception:  # tre already closed it (its output went away): nothing to do
+                logger.debug(f"closing {s.name} on {s.output}: already gone", exc_info=True)
 
     def _update(self, s: Surface, p: Planned, all_uses: Mapping[str, Use]) -> None:
         live = LiveTree(self._store, all_uses, look=self._look)
@@ -1317,6 +1362,7 @@ class SurfaceManager:
         again, so each surface is rebuilt by the keyed diff, which changes only what differs, and
         a shadow that grew or shrank resizes its surface."""
         self._look = look
+        self.frames.set_look(look)
         a = look.appearance
         logger.info(
             f"look: scheme {a.scheme}, accent {a.accent}, high contrast {a.high_contrast}, "

@@ -20,6 +20,8 @@ from tess_shell.schema.model import (
     PARAM_TYPES,
     BarDef,
     ClassDef,
+    FrameBorder,
+    FrameDef,
     IconSource,
     ModuleDef,
     MonitorDef,
@@ -41,7 +43,7 @@ from tess_shell.schema.values import (
 )
 
 _NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
-_SURFACES = ("Bar", "Panel", "Popup", *blocks.OTHER_SURFACES)
+_SURFACES = ("Bar", "Frame", "Panel", "Popup")
 _NOT_BUILT = "not built in M1"
 
 
@@ -1291,6 +1293,216 @@ def _check_tooltips(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
                     )
 
 
+def _frame_sides(ctx: _Ctx, key: str, value: m.Value, origin: tess_dl.Origin | None) -> m.Value:
+    """Sides of a Frame (``Thickness``, ``Margin``): none below 0."""
+    sides = _sides_of(value)
+    if any(x < 0 for x in sides):
+        ctx.add(origin, "bad-value", f"{key} is 0 or more", "")
+    return value
+
+
+def _sides_of(value: m.Value | None) -> tuple[float, float, float, float]:
+    if isinstance(value, m.Length):
+        return (float(value.px),) * 4
+    if isinstance(value, m.Sides):
+        return (value.left, value.top, value.right, value.bottom)
+    return (0, 0, 0, 0)
+
+
+def _corners_of(value: m.Value | None) -> tuple[float, float, float, float]:
+    if isinstance(value, m.Length):
+        return (float(value.px),) * 4
+    if isinstance(value, m.Seq):
+        a, b, c, d = (float(x.px) for x in value.items if isinstance(x, m.Length))
+        return (a, b, c, d)
+    return (0, 0, 0, 0)
+
+
+def _frame_border(ctx: _Ctx, block: Block) -> FrameBorder | None:
+    """``Inner_Border { Width: 2, Color: "#ffffff22" }``; a colour may be a token."""
+    width: float | None = None
+    color: m.Value | None = None
+    for entry in block.entries:
+        if isinstance(entry, Property):
+            if entry.key == "Width":
+                try:
+                    value = coerce("number", entry.value, ctx.origin(entry.key_origin))
+                except ValueProblem as exc:
+                    ctx.problem(entry.value_origin, entry.key, exc)
+                    continue
+                assert isinstance(value, m.Number)
+                if value.value < 0:
+                    ctx.add(entry.value_origin, "bad-value", "Width is 0 or more", "")
+                else:
+                    width = float(value.value)
+            elif entry.key == "Color":
+                typed = _typed(ctx, "Frame", entry, "color")
+                if isinstance(typed, m.SlotValue):
+                    ctx.add(entry.value_origin, "bad-value", "a Frame has no slots", "")
+                else:
+                    color = typed
+            else:
+                ctx.unknown(
+                    entry.key_origin, entry.key, list(blocks.FRAME_BORDER_KEYS), "border key"
+                )
+        elif isinstance(entry, Block):
+            ctx.unknown(entry.origin, entry.type, list(blocks.FRAME_BORDER_KEYS), "border key")
+    if width is None:
+        ctx.add(block.origin, "missing-key", f"{block.type} needs a Width", "write Width: 2")
+        return None
+    if color is None:
+        ctx.add(
+            block.origin, "missing-key", f"{block.type} needs a Color", 'write Color: "#ffffff22"'
+        )
+        return None
+    return FrameBorder(width, color)
+
+
+def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
+    allowed = [
+        "Name",
+        "Style",
+        "Inner_Border",
+        "Outer_Border",
+        *blocks.FRAME_KEYS,
+        *blocks.FRAME_NOT_BUILT_ERROR,
+        *blocks.FRAME_NOT_BUILT_WARNING,
+    ]
+    name: str | None = None
+    values: dict[str, m.Value] = {}
+    style: dict[str, m.Value] = {}
+    borders: dict[str, FrameBorder] = {}
+    for entry in block.entries:
+        if isinstance(entry, Property):
+            key = entry.key
+            if key == "Name":
+                name = ctx.name(entry)
+            elif key == "Style":
+                ctx.not_built(entry.key_origin, "a Style file")
+            elif key in blocks.FRAME_NOT_BUILT_ERROR:
+                ctx.not_built(entry.key_origin, f"the Frame key {key}")
+            elif key in blocks.FRAME_NOT_BUILT_WARNING:
+                ctx.not_built(entry.key_origin, f"the Frame key {key}", "warning")
+            elif key in blocks.FRAME_KEYS:
+                try:
+                    value = coerce(
+                        blocks.FRAME_KEYS[key],
+                        entry.value,
+                        ctx.origin(entry.key_origin),
+                        blocks.FRAME_CHOICES.get(key, ()),
+                    )
+                except ValueProblem as exc:
+                    ctx.problem(entry.value_origin, key, exc)
+                    continue
+                if key in ("Thickness", "Margin"):
+                    _frame_sides(ctx, key, value, entry.value_origin)
+                elif key in ("Corner_Radius", "Inner_Radius") and any(
+                    x < 0 for x in _corners_of(value)
+                ):
+                    ctx.add(entry.value_origin, "bad-value", f"{key} is 0 or more", "")
+                values[key] = value
+            elif key in ("Inner_Border", "Outer_Border"):
+                ctx.add(
+                    entry.value_origin,
+                    "bad-value",
+                    f"{key} is a block with Width and Color",
+                    f'write {key} {{ Width: 1, Color: "#ffffff22" }}',
+                )
+            else:
+                ctx.unknown(entry.key_origin, key, allowed, "key in Frame")
+        elif isinstance(entry, Block):
+            kind = entry.type
+            if kind == "Style":
+                style = _scalar_block_keys(ctx, entry, blocks.FRAME_STYLE, "Frame")
+            elif kind in ("Thickness", "Margin"):
+                try:
+                    named = named_sides(entry, ctx.origin(entry.origin))
+                except ValueProblem as exc:
+                    ctx.problem(entry.origin, kind, exc)
+                    continue
+                values[kind] = _frame_sides(ctx, kind, named, entry.origin)
+            elif kind in ("Inner_Border", "Outer_Border"):
+                border = _frame_border(ctx, entry)
+                if border is not None:
+                    borders[kind] = border
+            elif kind in blocks.FRAME_NOT_BUILT_ERROR:
+                ctx.not_built(entry.origin, f"the Frame key {kind}")
+            elif kind in blocks.FRAME_NOT_BUILT_WARNING:
+                ctx.not_built(entry.origin, f"the Frame key {kind}", "warning")
+            else:
+                ctx.unknown(entry.origin, kind, allowed, "block in Frame")
+        elif isinstance(entry, tess_dl.If | tess_dl.For):
+            ctx.not_built(entry.origin, "If and For")
+    saw = {e.key for e in block.entries if isinstance(e, Property)} | {
+        e.type for e in block.entries if isinstance(e, Block)
+    }
+    if name is None and "Name" not in saw:
+        ctx.add(block.origin, "missing-key", "a Frame needs a Name", "write Name: Screen_Frame")
+    if "Thickness" not in saw:
+        ctx.add(block.origin, "missing-key", "a Frame needs a Thickness", "write Thickness: 8")
+    for key in blocks.FRAME_STYLE_NOT_BUILT:
+        if key in style:
+            ctx.not_built(getattr(style[key], "origin", None), f"{key} on a Frame")
+    for key, value in style.items():
+        if key not in blocks.FRAME_STYLE_NOT_BUILT and isinstance(value, m.SlotValue):
+            ctx.add(value.origin, "bad-value", "a Frame has no slots", "")
+    short = [k for k in ("Border_Width", "Border_Color") if k in style]
+    if short and "Inner_Border" in borders:
+        ctx.add(
+            block.origin,
+            "frame-border-twice",
+            f"the Frame has an Inner_Border and {short[0]} in its Style, which is shorthand for it",
+            "write the inner border once",
+        )
+    if "Border_Width" in style:
+        width = style["Border_Width"]
+        if isinstance(width, m.Number) and width.value >= 0:
+            color = style.get("Border_Color")
+            if color is None:
+                ctx.add(
+                    block.origin,
+                    "missing-key",
+                    "Border_Width in a Frame's Style needs a Border_Color",
+                    'write Border_Color: "#ffffff22"',
+                )
+            else:
+                borders.setdefault("Inner_Border", FrameBorder(float(width.value), color))
+        elif not isinstance(width, m.Number):
+            ctx.add(getattr(width, "origin", None), "bad-value", "Border_Width is a number", "")
+        else:
+            ctx.add(width.origin, "bad-value", "Border_Width is 0 or more", "")
+    elif "Border_Color" in style:
+        ctx.add(
+            block.origin,
+            "missing-key",
+            "Border_Color in a Frame's Style needs a Border_Width",
+            "write Border_Width: 1",
+        )
+    background = style.get("Background")
+    if background is not None and not isinstance(background, m.Color | m.TokenRef):
+        ctx.add(
+            getattr(background, "origin", None),
+            "bad-value",
+            "the Frame's Background is a colour or a token",
+            "a gradient is not built",
+        )
+    if name is None or "Thickness" not in values:
+        return None
+    visible = values.get("Visible")
+    return FrameDef(
+        name=name,
+        origin=ctx.origin(block.origin),
+        thickness=_sides_of(values["Thickness"]),
+        margin=_sides_of(values.get("Margin")),
+        outer_radius=_corners_of(values.get("Corner_Radius")),
+        inner_radius=_corners_of(values.get("Inner_Radius")),
+        inner_border=borders.get("Inner_Border"),
+        outer_border=borders.get("Outer_Border"),
+        visible=visible.value if isinstance(visible, m.Bool) else True,
+        style=style,
+    )
+
+
 def _anchors(ctx: _Ctx, entry: Property) -> tuple[str, ...]:
     """``Anchor: TOP`` or ``Anchor: [TOP, LEFT]``."""
     value = entry.value
@@ -1336,6 +1548,7 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
     description: str | None = None
     surfaces: list[BarDef | PanelDef] = []
     popups: list[PopupDef] = []
+    frames: list[FrameDef] = []
     saw_name = False
     for entry in block.entries:
         if isinstance(entry, Property):
@@ -1383,8 +1596,18 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
                             popup = _popup(ctx, child)
                             if popup is not None:
                                 popups.append(popup)
-                        elif child.type in blocks.OTHER_SURFACES:
-                            ctx.not_built(child.origin, f"{child.type}")
+                        elif child.type == "Frame":
+                            frame = _frame(ctx, child)
+                            if frame is not None and frames:
+                                ctx.add(
+                                    child.origin,
+                                    "frame-duplicate",
+                                    f"Monitor has a second Frame ({frame.name}); the first is "
+                                    f"{frames[0].name}",
+                                    "a Monitor has one Frame",
+                                )
+                            elif frame is not None:
+                                frames.append(frame)
                         else:
                             ctx.unknown(child.origin, child.type, list(_SURFACES), "surface")
                     elif isinstance(child, Property) and child.key == "Import":
@@ -1426,6 +1649,7 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
         description=description,
         surfaces=tuple(surfaces),
         popups=tuple(popups),
+        frames=tuple(frames),
     )
 
 
@@ -1484,12 +1708,20 @@ def _check_attach(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
                 for use in use_names(surface.children):
                     places[use] = monitor
     taken: dict[str, PanelDef] = {}
+    frames = {f.name for monitor in monitors for f in monitor.frames}
     for monitor in monitors:
         for panel in monitor.surfaces:
             if not isinstance(panel, PanelDef) or not panel.attach_to:
                 continue
             target = panel.attach_to
-            if target == panel.name:
+            if target in frames:
+                ctx.add(
+                    panel.origin,
+                    "not-built",
+                    f"Attach_To the Frame {target} (melding a Panel into a Frame) is {_NOT_BUILT}",
+                    "attach the Panel to a Bar, or place it with Anchor and Inset",
+                )
+            elif target == panel.name:
                 ctx.add(
                     panel.origin, "attach-self", f"Panel {panel.name} is attached to itself", ""
                 )

@@ -13,7 +13,7 @@ from __future__ import annotations
 import dataclasses
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -45,6 +45,8 @@ class Reloader:
     store: ValueStore
     own: OwnWrites
     call_soon: Callable[[Callable[[], None]], None]
+    scan: Scan | None = None  # the files that are running: what a hot-plug needs to start a module
+    file_uids: Mapping[Path, str] = dataclasses.field(default_factory=dict)
     reloads: int = 0
     _lock: threading.Lock = dataclasses.field(default_factory=threading.Lock)
 
@@ -84,6 +86,29 @@ class Reloader:
         logger.error(f"reload refused ({why}); the shell keeps what it shows")
 
     # -- the loop thread: apply ---------------------------------------------------------------
+
+    def _source(self, name: str) -> ModuleSource:
+        assert self.scan is not None
+        mf = self.scan.modules[name]
+        tdl = {mf.path}
+        if mf.definition.style_file:
+            tdl.add(mf.path.parent / mf.definition.style_file)
+        uid = self.file_uids.get(mf.path) or self.registry.uid_for(f"module:{name}", "module")
+        return ModuleSource(mf.definition, mf.python, uid, frozenset(tdl))
+
+    def sync_uses(self, uses: list[Use]) -> None:
+        """A monitor came or went (the manager re-planned): bring the modules to the new uses the
+        way a reload does, from the files that are running. No file changed, so no module is
+        replaced or told to ``reload``; a module with no use left is stopped, one with its first
+        use is started, and each use that came or went is told."""
+        if self.scan is None:
+            return
+        by_module: dict[str, list[Use]] = {}
+        for use in uses:
+            by_module.setdefault(use.module, []).append(use)
+        sources = {name: self._source(name) for name in by_module if name in self.scan.modules}
+        report(self.host.sync(sources, {n: u for n, u in by_module.items() if n in sources}, set()))
+        self.store.flush()
 
     def _settings_changes(self, fresh: Settings) -> None:
         old = self.settings
@@ -145,14 +170,8 @@ class Reloader:
         for use in uses:
             by_module.setdefault(use.module, []).append(use)
             self.store.add_use(use.module, use.key)
-        sources: dict[str, ModuleSource] = {}
-        for name in by_module:
-            mf = result.modules[name]
-            tdl = {mf.path}
-            if mf.definition.style_file:
-                tdl.add(mf.path.parent / mf.definition.style_file)
-            uid = file_uids.get(mf.path) or self.registry.uid_for(f"module:{name}", "module")
-            sources[name] = ModuleSource(mf.definition, mf.python, uid, frozenset(tdl))
+        self.scan, self.file_uids = result, file_uids
+        sources = {name: self._source(name) for name in by_module}
         everything = {p for s in sources.values() for p in (s.py_path, *s.tdl_paths)}
         sync_problems = self.host.sync(
             sources, by_module, everything if changed is None else changed

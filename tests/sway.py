@@ -6,6 +6,7 @@ touch the real session. Recipe from tre's ``tools/sway_live.sh``.
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -77,6 +78,26 @@ class PrivateSway:
         tail = (self.runtime / "sway.log").read_text(errors="replace")[-500:]
         self.stop()
         raise SwayUnavailable(f"sway did not start: {tail}")
+
+    def msg(self, *args: str) -> str:
+        """Run ``swaymsg`` against this compositor and return its stdout."""
+        done = subprocess.run(
+            ["swaymsg", *args], env=self.env, capture_output=True, text=True, check=True
+        )
+        return done.stdout
+
+    def output_names(self) -> list[str]:
+        return [o["name"] for o in json.loads(self.msg("-t", "get_outputs", "-r"))]
+
+    def create_output(self) -> str:
+        """Plug in a headless output (1920x1080, to the right of the others); returns its name."""
+        before = set(self.output_names())
+        self.msg("create_output")
+        (name,) = set(self.output_names()) - before
+        return name
+
+    def unplug(self, name: str) -> None:
+        self.msg("output", name, "unplug")
 
     def stop(self) -> None:
         proc = self.process

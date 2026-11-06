@@ -97,6 +97,33 @@ class PopupDef:
 
 
 @dataclass(frozen=True, slots=True)
+class FrameBorder:
+    """An ``Inner_Border { Width, Color }`` or ``Outer_Border``. ``color`` is a colour or a token
+    reference (resolved with the look); ``None`` takes the Frame's background."""
+
+    width: float
+    color: Value | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class FrameDef:
+    """A ``Frame { }`` (Frame > Configuration): a ring around the output. Lengths are logical
+    pixels; sides are left, top, right, bottom and corners top-left, top-right, bottom-right,
+    bottom-left. ``style`` holds the inline ``Style`` (``Background``, ``Opacity``)."""
+
+    name: str
+    origin: Origin
+    thickness: tuple[float, float, float, float]
+    margin: tuple[float, float, float, float] = (0, 0, 0, 0)
+    outer_radius: tuple[float, float, float, float] = (0, 0, 0, 0)  # ``Corner_Radius``
+    inner_radius: tuple[float, float, float, float] = (0, 0, 0, 0)
+    inner_border: FrameBorder | None = None
+    outer_border: FrameBorder | None = None
+    visible: bool = True
+    style: Mapping[str, Value] = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, slots=True)
 class MonitorDef:
     name: str
     origin: Origin
@@ -105,6 +132,7 @@ class MonitorDef:
     description: str | None
     surfaces: tuple[BarDef | PanelDef, ...] = ()
     popups: tuple[PopupDef, ...] = ()
+    frames: tuple[FrameDef, ...] = ()  # at most one
 
 
 @dataclass(frozen=True, slots=True)

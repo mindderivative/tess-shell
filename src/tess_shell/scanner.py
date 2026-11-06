@@ -254,6 +254,15 @@ def _check_look(
             for bar in monitor.surfaces:
                 out.extend(check_tokens(bar.children, tokens, bar.style))
                 stated.extend(check_states(bar.children, rules))
+            for frame in monitor.frames:
+                refs = dict(frame.style)
+                for label, border in (
+                    ("Inner_Border", frame.inner_border),
+                    ("Outer_Border", frame.outer_border),
+                ):
+                    if border is not None and border.color is not None:
+                        refs[f"{label}.Color"] = border.color
+                out.extend(check_tokens((), tokens, refs))
     for name, mf in modules.items():
         out.extend(check_tokens(mf.definition.children, tokens))
         stated.extend(check_states(mf.definition.children, rules, name))

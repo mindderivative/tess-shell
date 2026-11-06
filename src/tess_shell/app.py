@@ -299,8 +299,12 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             store,
             own_writes,
             handle.call_soon,
+            result,
+            file_uids,
         )
         reload_signal.append(lambda: reloader.trigger(None))
+        manager.sync_uses = reloader.sync_uses  # a monitor that comes or goes changes the uses
+        manager.hotplug.start()  # output_added, output_removed, output_updated
         files = None
         file_watcher: Watcher | None = None
         if settings.hot_reload:

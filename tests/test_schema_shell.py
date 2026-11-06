@@ -115,7 +115,6 @@ def test_two_monitors_selecting_the_same_monitor() -> None:
 @pytest.mark.parametrize(
     ("snippet", "what"),
     [
-        ("Frame { Name: P }", "Frame"),
         ("Import: Other_Shell.tdl", "Import"),
     ],
 )

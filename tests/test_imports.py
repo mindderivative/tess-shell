@@ -68,6 +68,20 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.schema.model",
         "tess_shell.surfaces",
     },
+    "surfaces.hotplug": {
+        "loguru",
+        "tess_shell.schema.model",
+        "tess_shell.surfaces",
+    },
+    "surfaces.ring": set(),
+    "surfaces.frame": {
+        "tess_re",
+        "loguru",
+        "tess_shell.binder",
+        "tess_shell.model",
+        "tess_shell.schema.model",
+        "tess_shell.surfaces",
+    },
     "surfaces.popup": {
         "tess_re",
         "loguru",

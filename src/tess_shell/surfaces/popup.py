@@ -348,12 +348,14 @@ class Popups:
     ) -> tuple[list[PopupPlan], list[Use]]:
         """Expand each Popup of each Monitor for each output the Monitor opens on. ``modules`` are
         the module definitions with the stylesheet's rules already folded in."""
+        from tess_shell.surfaces.manager import is_default  # it imports this module
+
         rules = look.rules if look else ()
         plans: list[PopupPlan] = []
         uses: list[Use] = []
         for monitor, indices in assign(shell.monitors, outputs):
             for i in indices:
-                suffix = f"@{outputs[i].name}" if len(indices) > 1 else ""
+                suffix = f"@{outputs[i].name}" if is_default(monitor) else ""
                 for popup in monitor.popups:
                     path = f"{shell.name}.{monitor.name}{suffix}.{popup.name}"
                     expanded = expand(
@@ -376,6 +378,11 @@ class Popups:
     def set_plans(self, plans: Sequence[PopupPlan]) -> None:
         """The plans of the running shell. An open Popup is closed: it was built from the old."""
         self.close_current("reloaded")
+        self.plans = {(p.group, p.popup.name): p for p in plans}
+
+    def merge_plans(self, plans: Sequence[PopupPlan]) -> None:
+        """The plans after a monitor came or went. An open Popup stays open: it keeps its own
+        plan, and closes with its parent surface when that closes."""
         self.plans = {(p.group, p.popup.name): p for p in plans}
 
     def uses(self) -> dict[str, Use]:
@@ -688,6 +695,9 @@ class Popups:
         cur = self.current
         if cur is not None and cur.parent is surface:
             self.close(cur, "its parent closed")
+        if self._hovered is not None and self._hovered[0] == surface.key:
+            self._hovered = None  # a tooltip waiting for its delay is not opened
+            self._cancel_enter()
 
     # -- dismissal by a click on the shell's own surfaces --------------------------------------
 
