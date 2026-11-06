@@ -25,7 +25,7 @@ from tess_shell.model.look import Look, apply_rules, resolve_style
 from tess_shell.model.store import Change, ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, ShellDef
-from tess_shell.surfaces.bar import BarSpec, Geometry, ZeroSize, bar_geometry
+from tess_shell.surfaces.bar import BarSpec, Geometry, ZeroSize, bar_geometry, input_region
 
 if TYPE_CHECKING:
     from tess_re import App, LayerWindow, Output
@@ -323,6 +323,7 @@ class SurfaceManager:
             margin=geometry.margin,
             exclusive_zone=geometry.exclusive_zone,
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
+            input_region=input_region(geometry, (output.width, output.height)),
             output=output,
         )
         fill, shadows = _body_props(bar, self._look)
@@ -472,6 +473,11 @@ class SurfaceManager:
         self._sync_body(s, p.bar, p.geometry, p.where)
         logger.info(f"Bar {p.where} reloaded: {stats}")
 
+    @staticmethod
+    def _output_size(s: Surface) -> tuple[int, int]:
+        assert s.planned is not None
+        return (s.planned.output.width, s.planned.output.height)
+
     def _sync_body(self, s: Surface, bar: BarDef, geometry: Geometry, where: str) -> None:
         """Bring a kept surface's body (fill, shadows, margin) and its window geometry to what the
         Bar asks for; each is set only when it differs."""
@@ -491,6 +497,7 @@ class SurfaceManager:
                     size=geometry.size,
                     margin=geometry.margin,
                     exclusive_zone=geometry.exclusive_zone,
+                    input_region=input_region(geometry, self._output_size(s)),
                 )
                 s.geometry = geometry
                 logger.info(f"Bar {where}: size {geometry.size} zone {geometry.exclusive_zone}")

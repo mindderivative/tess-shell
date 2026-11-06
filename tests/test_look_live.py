@@ -120,3 +120,18 @@ def test_a_click_on_a_bars_block_reaches_the_managers_sink() -> None:
     surface.view.rebuild([*[e.typed for e in surface.view.entries], box])
     surface.view.window.simulate("click", node=surface.view.nodes["Hit"])
     assert seen == ["On_Click:go"]
+
+
+def test_the_shadow_margin_takes_no_pointer_input_and_a_removed_shadow_gives_it_back() -> None:
+    manager = themed(Elevation=Percent(100))
+    (surface,) = manager.surfaces
+    # the theme's Max (Y 10, Blur 20): a 31 px margin below the 32 px body of a 400 px output
+    assert surface.window.get("input_region") == [(0, 0, 400, 32)]
+    plain = themed()
+    (flat,) = plain.surfaces
+    assert flat.window.get("input_region") is None
+    # the same surface with the elevation removed (what a reload does): the whole surface again
+    assert flat.planned is not None
+    manager._sync_body(surface, flat.planned.bar, flat.geometry, "test")
+    assert surface.window.get("input_region") is None
+    assert surface.window.get("size") == (0, 32)

@@ -62,6 +62,20 @@ class Geometry:
     )  # the transparent margin, top right bottom left
 
 
+def input_region(
+    geometry: Geometry, output: tuple[int, int]
+) -> list[tuple[float, float, float, float]] | None:
+    """The part of the surface that takes the pointer: the body, not its transparent shadow margin
+    (ADR-0010). ``None`` when there is no margin: the whole surface is the body. ``output`` is the
+    output's logical size, which a surface stretched between two edges (size 0) takes."""
+    top, right, bottom, left = geometry.body_margin
+    if not (top or right or bottom or left):
+        return None
+    width = geometry.size[0] or output[0]
+    height = geometry.size[1] or output[1]
+    return [(left, top, max(width - left - right, 0), max(height - top - bottom, 0))]
+
+
 def _clamp(value: float, low: float | None, high: float | None) -> float:
     if high is not None:
         value = min(value, high)

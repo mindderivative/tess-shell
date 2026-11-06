@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from tess_shell.binder.model import Auto, Expand, Length, Percent
-from tess_shell.surfaces.bar import BarSpec, Geometry, ZeroSize, bar_geometry
+from tess_shell.surfaces.bar import BarSpec, Geometry, ZeroSize, bar_geometry, input_region
 
 OUT = (1920, 1080)
 
@@ -246,3 +246,15 @@ def test_start_and_end_offsets_still_place_the_body() -> None:
 def test_a_side_bar_grows_across_its_width() -> None:
     g = geo(BarSpec("LEFT", Length(48), Expand(), bleed=(5, 40, 5, 12)))
     assert g.size == (48 + 40, 0) and g.body_margin == (0, 40, 0, 0)
+
+
+def test_the_input_region_is_the_body_and_not_the_shadow_margin() -> None:
+    plain = geo(BarSpec("TOP", Expand(), Length(32)))
+    assert input_region(plain, OUT) is None  # no margin: the whole surface takes the pointer
+    g = geo(BarSpec("TOP", Expand(), Length(32), gap=8, bleed=(33, 49, 65, 49)))
+    # surface 1920 x 105: the body is 32 px high, 8 px down (the Gap), flush left and right
+    assert input_region(g, OUT) == [(0, 8, 1920, 32)]
+    side = geo(BarSpec("LEFT", Length(48), Expand(), bleed=(5, 40, 5, 12)))
+    assert input_region(side, OUT) == [(0, 0, 48, 1080)]  # the margin is on its inner (right) side
+    floating = geo(BarSpec("TOP", Length(560), Length(32), bleed=(0, 30, 50, 30)))
+    assert input_region(floating, OUT) == [(30, 0, 560, 32)]
