@@ -32,13 +32,34 @@ class BarDef:
 
 
 @dataclass(frozen=True, slots=True)
+class PanelDef:
+    """A ``Panel { }`` (Panel > Configuration): placed by ``Layer``, ``Anchor``, ``Inset``,
+    ``Width`` and ``Height``. It has the fields of :class:`BarDef` the surface manager reads
+    (``name``, ``origin``, ``layer``, ``style``, ``children``) plus its own."""
+
+    name: str
+    origin: Origin
+    layer: str = "TOP"
+    anchor: tuple[str, ...] = ()  # TOP, BOTTOM, LEFT, RIGHT; empty is floating (centred)
+    inset: tuple[float, float, float, float] = (0, 0, 0, 0)  # left, top, right, bottom
+    width: Value = None  # type: ignore[assignment]
+    height: Value = None  # type: ignore[assignment]
+    keyboard: str = "NONE"
+    input: str = "WHOLE"  # WHOLE, NONE or AUTO (Input_Region)
+    visible: bool = True
+    hide_after: float | None = None  # milliseconds
+    style: Mapping[str, Value] = None  # type: ignore[assignment]
+    children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
 class MonitorDef:
     name: str
     origin: Origin
     index: int | str | None  # a position, "default", or None
     connector: str | None
     description: str | None
-    surfaces: tuple[BarDef, ...] = ()
+    surfaces: tuple[BarDef | PanelDef, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

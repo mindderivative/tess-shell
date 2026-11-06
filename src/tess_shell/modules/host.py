@@ -168,7 +168,9 @@ class ModuleHost:
             for name, member in inspect.getmembers(classes[0], callable)
             if getattr(member, "__tess_action__", False)
         )
-        missing = [h for h in handlers_of(definition.children) if h.action not in actions]
+        missing = [
+            h for h in handlers_of(definition.children) if not h.builtin and h.action not in actions
+        ]
         if missing:
             return None, [
                 Finding(

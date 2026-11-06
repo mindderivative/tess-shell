@@ -186,6 +186,7 @@ class Handler:
     action: str
     args: Mapping[str, object] = field(default_factory=dict)
     use: str = ""
+    builtin: bool = False  # a shell action (Show, Hide, Toggle): the shell runs it, not a module
     origin: Origin = _origin()
 
 

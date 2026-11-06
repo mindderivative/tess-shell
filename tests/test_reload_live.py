@@ -154,8 +154,8 @@ def test_saving_a_changed_bar_height_changes_the_reserved_zone_in_about_300_ms(
     live: Make, private_sway: PrivateSway
 ) -> None:
     run = live()
-    top = workspace_rect(private_sway)["y"]
-    wait_for_y(private_sway, 32)
+    wait_for_y(private_sway, 32)  # the zone of the 32 px Bar; the workspace starts at 0
+    top = 0
     saved = time.time()
     run.edit_shell("Height: 32", "Height: 48")
     run.wait(r"reloaded \(Main_Shell\.tdl\)")

@@ -9,6 +9,7 @@ window.
 from __future__ import annotations
 
 import dataclasses
+import difflib
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol
@@ -24,8 +25,9 @@ from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, apply_rules, resolve_style
 from tess_shell.model.store import Change, ValueStore
 from tess_shell.model.uses import Use
-from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, ShellDef
+from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, PanelDef, ShellDef
 from tess_shell.surfaces.bar import BarSpec, Geometry, ZeroSize, bar_geometry, input_region
+from tess_shell.surfaces.panel import PanelSpec, panel_geometry
 
 if TYPE_CHECKING:
     from tess_re import App, LayerWindow, Output
@@ -121,6 +123,8 @@ class Surface:
     body: TreNode | None = None  # the Bar's body: fill, shadows and the transparent margin
     shadows: list[tuple[Any, ...]] | None = None
     planned: Planned | None = None  # what the surface was last planned from
+    hidden: bool = False  # a Panel hidden by ``Hide`` (D44); a Bar is never hidden
+    timer: Any = None  # the pending ``Hide_After`` timer of a Panel
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -152,7 +156,46 @@ def _spec(bar: BarDef, look: Look | None) -> BarSpec:
     )
 
 
-def _bar_style(bar: BarDef, look: Look | None) -> dict[str, Value]:
+def _panel_spec(panel: PanelDef, look: Look | None) -> PanelSpec:
+    return PanelSpec(
+        panel.anchor, panel.inset, panel.width, panel.height, bleed=_bleed(panel, look)
+    )
+
+
+def _geometry(bar: BarDef | PanelDef, look: Look | None, output: tuple[int, int]) -> Geometry:
+    """The geometry of a Bar or a Panel on ``output``; raises :class:`ZeroSize`."""
+    if isinstance(bar, PanelDef):
+        return panel_geometry(_panel_spec(bar, look), output)
+    return bar_geometry(_spec(bar, look), output)
+
+
+def _keyboard(bar: BarDef | PanelDef, hidden: bool) -> str:
+    """tre's ``keyboard`` word: a Panel's ``Keyboard``, ``none`` for a Bar or a hidden Panel."""
+    if hidden or not isinstance(bar, PanelDef):
+        return "none"
+    return bar.keyboard.lower()
+
+
+def _kind(bar: BarDef | PanelDef) -> str:
+    return "Panel" if isinstance(bar, PanelDef) else "Bar"
+
+
+def _input_for(
+    bar: BarDef | PanelDef, geometry: Geometry, output: tuple[int, int], hidden: bool
+) -> Any:
+    """The ``input_region`` a surface has now: a Bar's body; a Panel's ``Input_Region`` (the body,
+    nothing, or ``auto``); nothing at all while a Panel is hidden (D44)."""
+    if hidden:
+        return []
+    if isinstance(bar, PanelDef):
+        if bar.input == "NONE":
+            return []
+        if bar.input == "AUTO":
+            return "auto"
+    return input_region(geometry, output)
+
+
+def _bar_style(bar: BarDef | PanelDef, look: Look | None) -> dict[str, Value]:
     """The Bar's own style with its token references resolved."""
     errors: list[BindError] = []
     style = resolve_style(bar.style or {}, look, errors)
@@ -160,7 +203,7 @@ def _bar_style(bar: BarDef, look: Look | None) -> dict[str, Value]:
     return style
 
 
-def _bleed(bar: BarDef, look: Look | None) -> tuple[int, int, int, int]:
+def _bleed(bar: BarDef | PanelDef, look: Look | None) -> tuple[int, int, int, int]:
     style = resolve_style(bar.style or {}, look)
     return style_bleed(style, _shadows(style, look))
 
@@ -170,7 +213,7 @@ def _shadows(style: dict[str, Value], look: Look | None) -> Any:
 
 
 def _body_props(
-    bar: BarDef, look: Look | None
+    bar: BarDef | PanelDef, look: Look | None
 ) -> tuple[tuple[int, int, int, int] | None, list[tuple[Any, ...]]]:
     """The fill and the tre shadows of a Bar's body."""
     style = _bar_style(bar, look)
@@ -197,11 +240,35 @@ def _body_style(
 @dataclass(slots=True)
 class Planned:
     key: str
-    bar: BarDef
+    bar: BarDef | PanelDef
     output: Output
     expanded: Expanded
     geometry: Geometry
     where: str
+
+
+def _handlers(nodes: Sequence[Any]) -> list[Handler]:
+    found: list[Handler] = []
+    for node in nodes:
+        if hasattr(node, "handlers"):
+            found.extend(node.handlers.values())
+        found.extend(_handlers(getattr(node, "children", ()) or ()))
+        found.extend(_handlers(getattr(node, "body", ()) or ()))
+        found.extend(_handlers(getattr(node, "else_body", ()) or ()))
+    return found
+
+
+def _check_targets(expanded: Expanded, panels: set[str]) -> None:
+    """A shell action names a Panel by its ``Name``; one that names nothing is an error at the
+    handler, with the nearest names."""
+    for h in _handlers(expanded.nodes):
+        target = h.args.get("Target")
+        if h.builtin and target not in panels:
+            close = difflib.get_close_matches(str(target), sorted(panels), n=3, cutoff=0.5)
+            hint = f"did you mean {', '.join(close)}?" if close else "write the Name of a Panel"
+            expanded.errors.append(
+                BindError(f"{h.action}: no Panel named {target}", h.origin, hint)
+            )
 
 
 def _log_errors(errors: Sequence[BindError]) -> None:
@@ -278,21 +345,28 @@ class SurfaceManager:
             for i in indices:
                 for bar in monitor.surfaces:
                     where = f"{bar.name} on {outputs[i].name}"
+                    kind = _kind(bar)
                     try:
-                        geometry = bar_geometry(
-                            _spec(bar, look), (outputs[i].width, outputs[i].height)
-                        )
+                        geometry = _geometry(bar, look, (outputs[i].width, outputs[i].height))
                     except ZeroSize as exc:
-                        logger.warning(f"{bar.origin}: Bar {where} is not created: {exc}")
+                        logger.warning(f"{bar.origin}: {kind} {where} is not created: {exc}")
                         continue
                     for warning in geometry.warnings:
-                        logger.warning(f"{bar.origin}: Bar {where}: {warning}")
+                        logger.warning(f"{bar.origin}: {kind} {where}: {warning}")
                     suffix = f"@{outputs[i].name}" if len(indices) > 1 else ""
                     path = f"{shell.name}.{monitor.name}{suffix}.{bar.name}"
                     children = apply_rules(bar.children, rules)
                     expanded = expand(children, path, modules, self._uid_of, outputs[i].name, rules)
                     uses.extend(expanded.uses)
                     planned.append(Planned(path, bar, outputs[i], expanded, geometry, where))
+        panel_names = {
+            surface.name
+            for m in shell.monitors
+            for surface in m.surfaces
+            if _kind(surface) == "Panel"
+        }
+        for p in planned:
+            _check_targets(p.expanded, panel_names)
         return planned, uses
 
     def plan(self, shell: ShellDef) -> list[Use]:
@@ -315,15 +389,18 @@ class SurfaceManager:
         from tess_re import LayerWindow
 
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
+        kind = _kind(bar)
+        hidden = isinstance(bar, PanelDef) and not bar.visible
         window = LayerWindow(
-            f"tesserae-shell.bar.{bar.name}",
+            f"tesserae-shell.{kind.lower()}.{bar.name}",
             layer=bar.layer.lower(),  # type: ignore[arg-type]
             anchor=geometry.anchor,
             size=geometry.size,
             margin=geometry.margin,
             exclusive_zone=geometry.exclusive_zone,
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
-            input_region=input_region(geometry, (output.width, output.height)),
+            keyboard=_keyboard(bar, hidden),  # type: ignore[arg-type]
+            input_region=_input_for(bar, geometry, (output.width, output.height), hidden),
             output=output,
         )
         fill, shadows = _body_props(bar, self._look)
@@ -336,11 +413,11 @@ class SurfaceManager:
         window.root.add_child(body)
         window.on(
             "configure",
-            lambda e, n=where: logger.info(f"Bar {n} configured {int(e.width)}x{int(e.height)}"),
+            lambda e, n=where: logger.info(f"{kind} {n} configured {int(e.width)}x{int(e.height)}"),
         )
         window.on(
             "closed",
-            lambda e, n=where: logger.info(f"Bar {n} closed ({getattr(e, 'reason', '')})"),
+            lambda e, n=where: logger.info(f"{kind} {n} closed ({getattr(e, 'reason', '')})"),
         )
         live = LiveTree(self._store, all_uses, look=self._look)
         view: View | None = None
@@ -353,13 +430,13 @@ class SurfaceManager:
                 errors = failed.errors
         _log_errors(errors)
         if view is None:
-            logger.error(f"Bar {where} is empty: its contents did not bind")
+            logger.error(f"{kind} {where} is empty: its contents did not bind")
         self._app.add_window(window)
         logger.info(
-            f"Bar {where}: anchor {','.join(geometry.anchor)} size {geometry.size} "
-            f"zone {geometry.exclusive_zone}"
+            f"{kind} {where}: anchor {','.join(geometry.anchor) or 'none'} size {geometry.size} "
+            f"zone {geometry.exclusive_zone}" + (" (hidden)" if hidden else "")
         )
-        return Surface(
+        surface = Surface(
             planned.key,
             bar.name,
             output.name,
@@ -373,7 +450,88 @@ class SurfaceManager:
             body,
             shadows,
             planned,
+            hidden,
         )
+        if isinstance(bar, PanelDef):
+            self._panel_events(surface, bar)
+            if hidden:
+                window.root.set(visible=False)  # nothing is drawn while hidden (D44)
+            else:
+                self._arm_hide_after(surface)
+        return surface
+
+    # -- Panel: hide, show, Hide_After, Escape (D44) -------------------------------------------
+
+    def _panel_events(self, s: Surface, panel: PanelDef) -> None:
+        """Escape hides a Panel that takes the keyboard."""
+
+        def on_key(event: Any) -> None:
+            current = s.planned.bar if s.planned else panel
+            if (
+                getattr(event, "key", None) == "escape"
+                and isinstance(current, PanelDef)
+                and current.keyboard != "NONE"
+                and not s.hidden
+            ):
+                self.hide(s)
+
+        s.window.root.on("key_down", on_key)  # a key bubbles up from the focused node
+
+    def _arm_hide_after(self, s: Surface) -> None:
+        """(Re)start the ``Hide_After`` timer: showing a Panel again resets it."""
+        if s.timer is not None:
+            s.timer.cancel()
+            s.timer = None
+        panel = s.planned.bar if s.planned else None
+        if isinstance(panel, PanelDef) and panel.hide_after is not None and not s.hidden:
+            s.timer = s.window.after(panel.hide_after, lambda: self.hide(s))
+
+    def hide(self, s: Surface) -> None:
+        """Hidden is not closed: the root draws nothing, the surface takes no pointer and no
+        keyboard; its tree, state and place are kept."""
+        if s.hidden or s.planned is None:
+            return
+        s.hidden = True
+        if s.timer is not None:
+            s.timer.cancel()
+            s.timer = None
+        s.window.root.set(visible=False)
+        s.window.set(input_region=[], keyboard="none")
+        logger.info(f"Panel {s.planned.where} hidden")
+
+    def show(self, s: Surface) -> None:
+        if s.planned is None:
+            return
+        bar, out = s.planned.bar, self._output_size(s)
+        was_hidden = s.hidden
+        s.hidden = False
+        s.window.root.set(visible=True)
+        s.window.set(
+            input_region=_input_for(bar, s.geometry, out, False),
+            keyboard=_keyboard(bar, False),
+        )
+        self._arm_hide_after(s)
+        if was_hidden:
+            logger.info(f"Panel {s.planned.where} shown")
+
+    def run_builtin(self, handler: Handler) -> None:
+        """A shell action (``Show``, ``Hide``, ``Toggle``) on the Panel it names."""
+        target = handler.args.get("Target")
+        hits = [
+            s
+            for s in self.surfaces
+            if s.name == target and s.planned and _kind(s.planned.bar) == "Panel"
+        ]
+        if not hits:
+            logger.warning(f"{handler.origin}: {handler.action}: Panel {target} is not open")
+            return
+        for s in hits:
+            if handler.action == "Show":
+                self.show(s)
+            elif handler.action == "Hide":
+                self.hide(s)
+            else:
+                (self.hide if not s.hidden else self.show)(s)
 
     # -- changes ------------------------------------------------------------------------------
 
@@ -467,18 +625,22 @@ class SurfaceManager:
                 stats = str(s.view.rebuild(nodes))
         except BindFailed as failed:
             _log_errors(failed.errors)
-            logger.error(f"Bar {p.where} keeps what it shows: the new contents did not bind")
+            logger.error(
+                f"{_kind(p.bar)} {p.where} keeps what it shows: the new contents did not bind"
+            )
             return
         s.live, s.expanded, s.name, s.planned = live, p.expanded, p.bar.name, p
         self._sync_body(s, p.bar, p.geometry, p.where)
-        logger.info(f"Bar {p.where} reloaded: {stats}")
+        logger.info(f"{_kind(p.bar)} {p.where} reloaded: {stats}")
 
     @staticmethod
     def _output_size(s: Surface) -> tuple[int, int]:
         assert s.planned is not None
         return (s.planned.output.width, s.planned.output.height)
 
-    def _sync_body(self, s: Surface, bar: BarDef, geometry: Geometry, where: str) -> None:
+    def _sync_body(
+        self, s: Surface, bar: BarDef | PanelDef, geometry: Geometry, where: str
+    ) -> None:
         """Bring a kept surface's body (fill, shadows, margin) and its window geometry to what the
         Bar asks for; each is set only when it differs."""
         fill, shadows = _body_props(bar, self._look)
@@ -497,12 +659,14 @@ class SurfaceManager:
                     size=geometry.size,
                     margin=geometry.margin,
                     exclusive_zone=geometry.exclusive_zone,
-                    input_region=input_region(geometry, self._output_size(s)),
+                    input_region=_input_for(bar, geometry, self._output_size(s), s.hidden),
                 )
                 s.geometry = geometry
-                logger.info(f"Bar {where}: size {geometry.size} zone {geometry.exclusive_zone}")
+                logger.info(
+                    f"{_kind(bar)} {where}: size {geometry.size} zone {geometry.exclusive_zone}"
+                )
             except ValueError as exc:
-                logger.error(f"Bar {where}: {exc}; the geometry was not changed")
+                logger.error(f"{_kind(bar)} {where}: {exc}; the geometry was not changed")
 
     # -- the desktop's look changed ------------------------------------------------------------
 
@@ -522,5 +686,5 @@ class SurfaceManager:
                 continue
             s.live.look = look
             self._rebuild(s)
-            geometry = bar_geometry(_spec(p.bar, look), (p.output.width, p.output.height))
+            geometry = _geometry(p.bar, look, (p.output.width, p.output.height))
             self._sync_body(s, p.bar, geometry, p.where)

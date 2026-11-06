@@ -15,7 +15,9 @@ Milestones M0 (the skeleton), M1 (a static Bar) and M2 (live and modular) are bu
 
 - **Events:** `On_Click: open_it` (or `On_Click { Action: pick, Which: "b" }`) on a box, `Rectangle`, `Spacer` or `SVG` in a module's layout calls the module's `@action` method with an `Event`; the other events and the shell's own actions come with the Panel.
 
-Not built yet: panels, popups, frames, most events and actions, `:state` and `::part` selectors, services, shortcuts. The design is in `docs/`.
+- **Panels:** `Panel { Name: Volume_OSD, Layer: OVERLAY, Anchor: [BOTTOM], Inset: [0, 0, 0, 80], Width: 260, Height: 60, Input_Region: [], Hide_After: 1500 }` opens an anchored or centred surface; `Visible: false` starts it hidden, `On_Click { Action: Toggle, Target: Volume_OSD }` on a block shows and hides it, and Escape hides one that takes the keyboard. Attaching to a Bar, moving, sliding and saved positions are not built yet.
+
+Not built yet: popups, frames, panel attachment, most events and actions, `:state` and `::part` selectors, services, shortcuts. The design is in `docs/`.
 
 ## Commands
 

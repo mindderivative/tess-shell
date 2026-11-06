@@ -138,7 +138,7 @@ BAR_STYLE: dict[str, str] = {
     "Shadows": "shadows",
     "Shadow_Bleed": "bleed",
 }
-OTHER_SURFACES = ("Frame", "Panel", "Popup")
+OTHER_SURFACES = ("Frame", "Popup")
 
 
 # The twelve v1 events (Events and Actions), as the TDL keys. A block raises only the events its
@@ -165,3 +165,33 @@ BLOCK_EVENTS: dict[str, tuple[str, ...]] = {
 }
 # the shell's own actions (Events and Actions > A Handler); built with the Panel
 BUILTIN_ACTIONS = ("Show", "Hide", "Toggle", "Close", "Call")
+BUILTIN_BUILT = ("Show", "Hide", "Toggle")  # Close and Call come with the Popup
+
+# A Panel's keys and kinds (Panel > Configuration); the placement keys the shell does not build
+# yet are errors, so a Panel never opens somewhere it was not asked to.
+PANEL_KEYS: dict[str, str] = {
+    "Layer": "enum",
+    "Anchor": "anchor",
+    "Inset": "sides",
+    "Width": "length",
+    "Height": "length",
+    "Keyboard": "enum",
+    "Input_Region": "input",
+    "Visible": "bool",
+    "Hide_After": "number",
+}
+PANEL_CHOICES: dict[str, tuple[str, ...]] = {
+    "Layer": ("BOTTOM", "TOP", "OVERLAY"),
+    "Keyboard": ("NONE", "ON_DEMAND", "EXCLUSIVE"),
+}
+PANEL_NOT_BUILT_ERROR = (
+    "Attach_To",
+    "Attach",
+    "Alignment",
+    "Gap",
+    "Open_With_Target",
+    "Meld",
+    "Movable",
+    "Exclusive_Zone",
+)
+PANEL_NOT_BUILT_WARNING = ("Animation", "Margin", "Padding", "Class")

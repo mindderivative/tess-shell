@@ -23,6 +23,7 @@ from tess_shell.schema.model import (
     IconSource,
     ModuleDef,
     MonitorDef,
+    PanelDef,
     ParamDecl,
     ShellDef,
     StyleDef,
@@ -38,7 +39,7 @@ from tess_shell.schema.values import (
 )
 
 _NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
-_SURFACES = ("Bar", *blocks.OTHER_SURFACES)
+_SURFACES = ("Bar", "Panel", *blocks.OTHER_SURFACES)
 _NOT_BUILT = "not built in M1"
 
 
@@ -573,8 +574,19 @@ def _handler(
         )
         return None
     if name in blocks.BUILTIN_ACTIONS:
-        ctx.not_built(at, f"the built-in action {name}")
-        return None
+        if name not in blocks.BUILTIN_BUILT:
+            ctx.not_built(at, f"the built-in action {name}")
+            return None
+        target = args.get("Target")
+        if not isinstance(target, str):
+            ctx.add(
+                at,
+                "missing-key",
+                f"the action {name} needs a Target, the Name of a Panel",
+                f"write {key} {{ Action: {name}, Target: Launcher }}",
+            )
+            return None
+        return m.Handler(name, args, builtin=True, origin=ctx.origin(origin))
     if not ctx.in_module:
         ctx.add(
             at,
@@ -776,13 +788,160 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
     )
 
 
+def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
+    allowed = [
+        "Name",
+        "Style",
+        "Children",
+        *blocks.PANEL_KEYS,
+        *blocks.PANEL_NOT_BUILT_ERROR,
+        *blocks.PANEL_NOT_BUILT_WARNING,
+    ]
+    name: str | None = None
+    values: dict[str, m.Value] = {}
+    anchors: tuple[str, ...] = ()
+    style: dict[str, m.Value] = {}
+    children: list[Child] = []
+    for entry in block.entries:
+        if isinstance(entry, Property):
+            key = entry.key
+            if key == "Name":
+                name = ctx.name(entry)
+            elif key == "Style":
+                ctx.not_built(entry.key_origin, "a Style file")
+            elif key in blocks.PANEL_NOT_BUILT_ERROR:
+                ctx.not_built(entry.key_origin, f"the Panel key {key}")
+            elif key in blocks.PANEL_NOT_BUILT_WARNING:
+                ctx.not_built(entry.key_origin, f"the Panel key {key}", "warning")
+            elif key == "Anchor":
+                anchors = _anchors(ctx, entry)
+            elif key == "Input_Region":
+                values[key] = _input_region(ctx, entry)  # type: ignore[assignment]
+            elif key in blocks.PANEL_KEYS:
+                try:
+                    values[key] = coerce(
+                        blocks.PANEL_KEYS[key],
+                        entry.value,
+                        ctx.origin(entry.key_origin),
+                        blocks.PANEL_CHOICES.get(key, ()),
+                    )
+                except ValueProblem as exc:
+                    ctx.problem(entry.value_origin, key, exc)
+            else:
+                ctx.unknown(entry.key_origin, key, allowed, "key in Panel")
+        elif isinstance(entry, Block):
+            if entry.type == "Style":
+                style = _scalar_block_keys(ctx, entry, blocks.BAR_STYLE, "Panel")
+            elif entry.type == "Children":
+                children = _children(ctx, entry, lambda b: _block(ctx, b))
+            elif entry.type == "Inset":
+                try:
+                    values["Inset"] = named_sides(entry, ctx.origin(entry.origin))
+                except ValueProblem as exc:
+                    ctx.problem(entry.origin, "Inset", exc)
+            elif entry.type in blocks.PANEL_NOT_BUILT_ERROR:
+                ctx.not_built(entry.origin, f"the Panel key {entry.type}")
+            elif entry.type in blocks.PANEL_NOT_BUILT_WARNING:
+                ctx.not_built(entry.origin, f"the Panel key {entry.type}", "warning")
+            else:
+                ctx.unknown(entry.origin, entry.type, allowed, "block in Panel")
+        elif isinstance(entry, tess_dl.If | tess_dl.For):
+            ctx.not_built(entry.origin, "If and For")
+    if name is None and not any(isinstance(e, Property) and e.key == "Name" for e in block.entries):
+        ctx.add(block.origin, "missing-key", "a Panel needs a Name", "write Name: Launcher")
+    for key in ("Width", "Height"):
+        if key not in values and not any(
+            isinstance(e, Property) and e.key == key for e in block.entries
+        ):
+            ctx.add(block.origin, "missing-key", f"a Panel needs {key}", f"write {key}: 300")
+    for key in ("Width", "Height"):
+        v = values.get(key)
+        if isinstance(v, m.Auto | m.Expand):
+            ctx.add(
+                v.origin,
+                "not-built",
+                f"{type(v).__name__.upper()} as a Panel {key} is {_NOT_BUILT}",
+                "",
+            )
+    layer = values.get("Layer")
+    if name is None or "Width" not in values or "Height" not in values:
+        return None
+
+    def word(key: str, default: str) -> str:
+        v = values.get(key)
+        return v.name if isinstance(v, m.Enum) else default
+
+    inset = values.get("Inset")
+    if isinstance(inset, m.Length):
+        sides = (inset.px,) * 4
+    elif isinstance(inset, m.Sides):
+        sides = (inset.left, inset.top, inset.right, inset.bottom)
+    else:
+        sides = (0, 0, 0, 0)
+    hide = values.get("Hide_After")
+    visible = values.get("Visible")
+    region = values.get("Input_Region")
+    return PanelDef(
+        name=name,
+        origin=ctx.origin(block.origin),
+        layer=layer.name if isinstance(layer, m.Enum) else "TOP",
+        anchor=anchors,
+        inset=sides,
+        width=values["Width"],
+        height=values["Height"],
+        keyboard=word("Keyboard", "NONE"),
+        input=region.value if isinstance(region, m.Text) else "WHOLE",
+        visible=visible.value if isinstance(visible, m.Bool) else True,
+        hide_after=float(hide.value) if isinstance(hide, m.Number) else None,
+        style=style,
+        children=tuple(children),
+    )
+
+
+def _anchors(ctx: _Ctx, entry: Property) -> tuple[str, ...]:
+    """``Anchor: TOP`` or ``Anchor: [TOP, LEFT]``."""
+    value = entry.value
+    items = list(value.items) if isinstance(value, tess_dl.List) else [value]
+    out: list[str] = []
+    for item in items:
+        word = item.text if isinstance(item, tess_dl.Word) else None
+        if word not in ("TOP", "BOTTOM", "LEFT", "RIGHT"):
+            ctx.add(
+                entry.value_origin,
+                "bad-value",
+                "Anchor is TOP, BOTTOM, LEFT or RIGHT, one or a list",
+                "write Anchor: [TOP, LEFT]",
+            )
+            return ()
+        if word in out:
+            ctx.add(entry.value_origin, "bad-value", f"Anchor names {word} twice", "")
+            return ()
+        out.append(word)
+    return tuple(out)
+
+
+def _input_region(ctx: _Ctx, entry: Property) -> m.Text | None:
+    """``Input_Region: []`` is nothing (clicks pass through), ``AUTO`` the drawn shapes; leaving
+    the key out is the whole surface. Rectangles are not built yet."""
+    value = entry.value
+    if isinstance(value, tess_dl.List) and not value.items:
+        return m.Text("NONE", origin=ctx.origin(entry.key_origin))
+    if isinstance(value, tess_dl.Word) and value.text == "AUTO":
+        return m.Text("AUTO", origin=ctx.origin(entry.key_origin))
+    if isinstance(value, tess_dl.List):
+        ctx.not_built(entry.value_origin, "Input_Region rectangles")
+    else:
+        ctx.add(entry.value_origin, "bad-value", "Input_Region is [] or AUTO", "")
+    return None
+
+
 def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
     allowed = ["Name", "Index", "Connector", "Description", "Children"]
     name: str | None = None
     index: int | str | None = None
     connector: str | None = None
     description: str | None = None
-    surfaces: list[BarDef] = []
+    surfaces: list[BarDef | PanelDef] = []
     saw_name = False
     for entry in block.entries:
         if isinstance(entry, Property):
@@ -822,6 +981,10 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
                             bar = _bar(ctx, child)
                             if bar is not None:
                                 surfaces.append(bar)
+                        elif child.type == "Panel":
+                            panel = _panel(ctx, child)
+                            if panel is not None:
+                                surfaces.append(panel)
                         elif child.type in blocks.OTHER_SURFACES:
                             ctx.not_built(child.origin, f"{child.type}")
                         else:

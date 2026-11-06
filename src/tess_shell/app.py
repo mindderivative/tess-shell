@@ -20,6 +20,7 @@ from loguru import logger
 
 import tess_shell
 from tess_shell.appearance import Appearance
+from tess_shell.binder.model import Handler
 from tess_shell.config.lock import InstanceLock
 from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir, state_dir
 from tess_shell.config.registry import Registry, RegistryError
@@ -239,7 +240,15 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         manager = SurfaceManager(app, module_defs, registry.uid_for, store, look)
         manager_box.append(manager)
         host = ModuleHost(store, ticks, cfg)
-        manager.sink = host.dispatch  # a click on a block reaches its module's @action
+
+        def route(handler: Handler, key: str, raw: object) -> None:
+            # a shell action (Show, Hide, Toggle) is the manager's; any other name is an @action
+            if handler.builtin:
+                manager.run_builtin(handler)
+            else:
+                host.dispatch(handler, key, raw)
+
+        manager.sink = route
         # a file the shell registers for the first time gets a UID in its metadata (G8)
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         own_writes = OwnWrites()

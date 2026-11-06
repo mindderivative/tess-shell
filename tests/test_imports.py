@@ -59,6 +59,7 @@ RULES: dict[str, set[str] | None] = {
     "services": {"dbus_fast", "loguru", "tess_shell.services", "tess_shell.appearance"},
     "surfaces": set(),
     "surfaces.bar": {"tess_shell.binder.model"},
+    "surfaces.panel": {"tess_shell.binder.model", "tess_shell.surfaces.bar"},
     "surfaces.manager": {
         "tess_re",
         "loguru",
