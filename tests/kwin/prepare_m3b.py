@@ -129,6 +129,12 @@ def main() -> None:
         f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3b/panels_keep\n",
     )
     script(
+        "probe-hide.sh",
+        "# Which way of hiding a layer surface repaints? Click a button to hide a card, again to\n"
+        "# show it; each toggle prints a frame time or NO FRAME. Ctrl+C stops it.\n"
+        f"exec {BIN}/python {REPO}/tests/kwin/probe_hide.py\n",
+    )
+    script(
         "check.sh",
         "export XDG_STATE_HOME=/tmp/tess-kwin-m3b/state\n"
         f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3b/panels\n"

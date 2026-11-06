@@ -360,3 +360,27 @@ def test_keep_mode_escape_hides_without_closing() -> None:
     assert s.window is not None
     s.window.simulate("key_down", node=s.window.root, key="escape")
     assert s.hidden is True and s.window is not None
+
+
+def test_the_manager_wakes_tres_loop_after_it_changes_a_window() -> None:
+    """tre does not draw a window changed during another window's callback until the loop wakes;
+    a queued no-op is the wake (tests/kwin/probe_hide.py measures it)."""
+    woken: list[object] = []
+
+    class Handle:
+        def call_soon(self, fn: object) -> None:
+            woken.append(fn)
+
+    class WakingApp(StubApp):
+        def thread_handle(self) -> Handle:
+            return Handle()
+
+    m = manager(hide_mode="KEEP")
+    m._app = WakingApp()  # type: ignore[assignment]
+    s = surface(m, "Launcher")
+    m.show(s)
+    m.hide(s)
+    assert len(woken) == 2  # one wake per show and per hide
+    m.on_change([])
+    m.set_look(m.look)
+    assert len(woken) == 4

@@ -299,6 +299,10 @@ def _check_targets(expanded: Expanded, panels: set[str]) -> None:
             )
 
 
+def _nothing() -> None:
+    return None
+
+
 def _log_errors(errors: Sequence[BindError]) -> None:
     for error in errors:
         logger.error(
@@ -330,7 +334,22 @@ class SurfaceManager:
         self._store = store
         self.surfaces: list[Surface] = []
         self._planned: list[Planned] = []
+        self._handle: Any = None
         self._all_uses: Mapping[str, Use] = {}
+
+    def wake(self) -> None:
+        """Wake tre's loop after the shell changed a window. tre does not request a frame for a
+        window whose node was changed during a callback of another window (a click on the Bar
+        changing a Panel; a theme change touching every window): the change waits for the next
+        wake, and a Panel could stay stale for as long as that takes. A queued no-op is a wake
+        (measured on tre 0.6.1, ``tests/kwin/probe_hide.py``)."""
+        handle = getattr(self, "_handle", None)
+        if handle is None:
+            thread_handle = getattr(self._app, "thread_handle", None)
+            if thread_handle is None:  # a stub app in a test
+                return
+            handle = self._handle = thread_handle()
+        handle.call_soon(_nothing)
 
     def _dispatch(self, handler: Handler, key: str, raw: Any) -> None:
         logger.debug(f"{key} -> {handler.action} {dict(handler.args)} ({handler.origin})")
@@ -607,6 +626,7 @@ class SurfaceManager:
             window.set(input_region=[], keyboard="none")
             self._trace(s, "hidden")
             logger.info(f"Panel {s.planned.where} hidden (surface kept)")
+            self.wake()
             return
         s.window, s.view, s.body = None, None, None
         window.close()
@@ -629,6 +649,7 @@ class SurfaceManager:
             self._arm_hide_after(s)
             self._trace(s, "shown")
             logger.info(f"Panel {s.planned.where} shown (surface kept)")
+            self.wake()
             return
         fresh = self._make_window(s.planned, LiveTree(self._store, self._all_uses, look=self._look))
         assert fresh.window is not None
@@ -689,6 +710,7 @@ class SurfaceManager:
                 logger.debug(f"update {node_id} {key} = {shown!r}")
             for error in surface.view.update(updates):
                 logger.warning(f"{error.origin}: {error.message}")
+        self.wake()
 
     def check(
         self, shell: ShellDef, modules: Mapping[str, ModuleDef], look: Look | None = None
@@ -741,6 +763,7 @@ class SurfaceManager:
         keep = {u.key for u in store_uses}
         for key in [k for k in self._store.values if k not in keep]:
             self._store.remove_use(key)
+        self.wake()
 
     @staticmethod
     def _close(s: Surface) -> None:
@@ -842,3 +865,4 @@ class SurfaceManager:
             self._rebuild(s)
             geometry = _geometry(p.bar, look, (p.output.width, p.output.height))
             self._sync_body(s, p.bar, geometry, p.where)
+        self.wake()

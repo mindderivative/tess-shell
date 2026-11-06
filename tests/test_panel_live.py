@@ -147,6 +147,9 @@ def test_the_kept_surface_route_draws_a_frame_after_every_show_and_hide_on_sway(
     assert log.count("Launcher on HEADLESS-1 shown (surface kept)") == 2
     assert log.count("Launcher on HEADLESS-1 hidden (surface kept)") == 1
     assert log.count("Launcher on HEADLESS-1 configured 600x400") == 1  # one surface throughout
+    import re
+
     for label in ("shown", "hidden"):
-        assert f"after it was {label}" in log
-        assert "frames drawn 250 ms after it was " + label in log
+        delays = [int(m) for m in re.findall(rf"a frame (\d+) ms after it was {label}", log)]
+        assert delays, f"no frame was drawn after it was {label}:\n{log}"
+        assert max(delays) < 100, f"{label}: a frame only after {delays} ms"
