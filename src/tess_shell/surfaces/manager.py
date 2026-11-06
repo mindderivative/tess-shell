@@ -587,6 +587,15 @@ class SurfaceManager:
 
         s.window.on("frame", on_frame)
 
+        def frames_so_far(where: str = s.planned.where, window: Any = s.window) -> None:
+            try:
+                count = window.frame_stats()["frames"]
+            except Exception:  # the window may be gone by now
+                return
+            logger.debug(f"Panel {where}: {count} frames drawn 250 ms after it was shown")
+
+        s.window.after(250, frames_so_far)
+
     def run_builtin(self, handler: Handler) -> None:
         """A shell action (``Show``, ``Hide``, ``Toggle``) on the Panel it names."""
         target = handler.args.get("Target")
