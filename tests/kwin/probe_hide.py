@@ -187,5 +187,21 @@ if AUTO:
             controls.after(3000 + round_ * 4000 + i * 600, card.toggle)  # show
     controls.after(9500, handle.stop)
 
+# the event loop blocks the main thread in the engine, so Ctrl+C needs the shell's signal watcher
+from tess_shell.signals import SignalWatcher  # noqa: E402
+
+
+def force() -> None:
+    import os
+
+    os._exit(130)
+
+
+watcher = SignalWatcher(handle.stop, force)  # type: ignore[arg-type]
+watcher.start()
 say("click a method's button to hide its card, again to show it; Ctrl+C to stop")
-app.run(keep_alive=True)
+try:
+    app.run(keep_alive=True)
+finally:
+    watcher.close()
+say("stopped")
