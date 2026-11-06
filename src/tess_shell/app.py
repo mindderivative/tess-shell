@@ -237,7 +237,9 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         else:
             logger.debug("Appearance.Follow_Desktop is false: the portal is not read")
         look = build_look(result, settings, appearance)
-        manager = SurfaceManager(app, module_defs, registry.uid_for, store, look)
+        manager = SurfaceManager(
+            app, module_defs, registry.uid_for, store, look, hide_mode=settings.debug.panel_hide
+        )
         manager_box.append(manager)
         host = ModuleHost(store, ticks, cfg)
 

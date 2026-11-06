@@ -3,24 +3,26 @@ TDL: 0.1
 Name: Default
 ---
 
-# The shell's own theme. The tokens of the base block are the dark look, which is also what a
-# desktop with no colour-scheme preference gets; Modes override what differs. Every value is a
-# starting point: copy this file into your Themes folder, change its Name, and set
-# Appearance { Theme: <Name> } in settings.tdl.
+# The shell's own theme: a dark blue-grey with steel blue (#4682B4) as its accent. The tokens of
+# the base block are the dark look, which is also what a desktop with no colour-scheme preference
+# gets; Modes override what differs (a light variant, high contrast). Every value is a starting
+# point: copy this file into your Themes folder, change its Name, and set
+# Appearance { Theme: <Name> } in settings.tdl. To follow the desktop's accent colour instead of
+# steel blue, write Accent: DESKTOP.
 
 Theme {
     Color {
-        Surface: "#1D1B20"
-        Surface_Raised: "#2B2930"
-        On_Surface: "#E6E0E9"
-        On_Surface_Muted: "#CAC4D0"
-        Primary: "#D0BCFF"
-        On_Primary: "#381E72"
-        Accent: DESKTOP
-        Error: "#F2B8B5"
-        Warning: "#F5C26B"
-        Success: "#9BD39B"
-        Outline: "#938F99"
+        Surface: "#12171D"
+        Surface_Raised: "#1B222B"
+        On_Surface: "#E4EAF1"
+        On_Surface_Muted: "#9FAEBF"
+        Primary: "#5B97C9"
+        On_Primary: "#08121C"
+        Accent: "#4682B4"
+        Error: "#F2958C"
+        Warning: "#E6BB6A"
+        Success: "#8CCB9A"
+        Outline: "#55657A"
         Scrim: "#000000"
     }
 
@@ -55,7 +57,7 @@ Theme {
         Reach: 64
         Max {
             Shadows {
-                Shadow { Color: "#00000040", X: 0, Y: 16, Blur: 48, Spread: 0 }
+                Shadow { Color: "#00000066", X: 0, Y: 16, Blur: 48, Spread: 0 }
             }
         }
     }
@@ -68,16 +70,16 @@ Theme {
     Modes {
         Light {
             Color {
-                Surface: "#FEF7FF"
-                Surface_Raised: "#F3EDF7"
-                On_Surface: "#1D1B20"
-                On_Surface_Muted: "#49454F"
-                Primary: "#6750A4"
+                Surface: "#F4F7FA"
+                Surface_Raised: "#FFFFFF"
+                On_Surface: "#16202B"
+                On_Surface_Muted: "#4A5967"
+                Primary: "#2F6B9A"
                 On_Primary: "#FFFFFF"
                 Error: "#B3261E"
                 Warning: "#8A5A00"
                 Success: "#2E6B34"
-                Outline: "#79747E"
+                Outline: "#7A8896"
             }
         }
         Dark { }
@@ -87,6 +89,9 @@ Theme {
                 Surface_Raised: "#000000"
                 On_Surface: "#FFFFFF"
                 On_Surface_Muted: "#FFFFFF"
+                Primary: "#8CC4F2"
+                On_Primary: "#000000"
+                Accent: "#8CC4F2"
                 Outline: "#FFFFFF"
             }
         }

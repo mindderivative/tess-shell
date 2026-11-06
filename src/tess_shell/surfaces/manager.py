@@ -127,6 +127,7 @@ class Surface:
     extra: dict[str, Any] | None = None  # corner radius and border of a Panel's body
     hidden: bool = False  # a Panel with no window now (D44, revised); a Bar is never hidden
     timer: Any = None  # the pending ``Hide_After`` timer of a Panel
+    trace: Any = None  # (label, start, frames left to log): the first frames after a change
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -171,9 +172,9 @@ def _geometry(bar: BarDef | PanelDef, look: Look | None, output: tuple[int, int]
     return bar_geometry(_spec(bar, look), output)
 
 
-def _keyboard(bar: BarDef | PanelDef) -> str:
-    """tre's ``keyboard`` word: a Panel's ``Keyboard``, ``none`` for a Bar."""
-    if not isinstance(bar, PanelDef):
+def _keyboard(bar: BarDef | PanelDef, hidden: bool = False) -> str:
+    """tre's ``keyboard`` word: a Panel's ``Keyboard``, ``none`` for a Bar or a hidden Panel."""
+    if hidden or not isinstance(bar, PanelDef):
         return "none"
     return bar.keyboard.lower()
 
@@ -182,9 +183,13 @@ def _kind(bar: BarDef | PanelDef) -> str:
     return "Panel" if isinstance(bar, PanelDef) else "Bar"
 
 
-def _input_for(bar: BarDef | PanelDef, geometry: Geometry, output: tuple[int, int]) -> Any:
+def _input_for(
+    bar: BarDef | PanelDef, geometry: Geometry, output: tuple[int, int], hidden: bool = False
+) -> Any:
     """The ``input_region`` of a surface: a Bar's body; a Panel's ``Input_Region`` (the body,
-    nothing, or ``auto``)."""
+    nothing, or ``auto``); nothing while a Panel is hidden with its surface kept."""
+    if hidden:
+        return []
     if isinstance(bar, PanelDef):
         if bar.input == "NONE":
             return []
@@ -314,8 +319,10 @@ class SurfaceManager:
         store: ValueStore,
         look: Look | None = None,
         sink: Callable[[Handler, str, Any], None] | None = None,
+        hide_mode: str = "CLOSE",
     ) -> None:
         self._app = app
+        self.hide_mode = hide_mode  # CLOSE (the primary route) or KEEP (D44)
         self.sink = sink
         self._look = look
         self._modules = modules
@@ -411,7 +418,7 @@ class SurfaceManager:
             self.surfaces.append(self._open(planned, all_uses))
         return self.surfaces
 
-    def _make_window(self, planned: Planned, live: LiveTree) -> Surface:
+    def _make_window(self, planned: Planned, live: LiveTree, hidden: bool = False) -> Surface:
         """Create the window of a Bar or a Panel and bind its tree. The window is not added to the
         app yet; the caller does that (at start, or when a hidden Panel is shown)."""
         from tess_re import LayerWindow
@@ -426,8 +433,8 @@ class SurfaceManager:
             margin=geometry.margin,
             exclusive_zone=geometry.exclusive_zone,
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
-            keyboard=_keyboard(bar),  # type: ignore[arg-type]
-            input_region=_input_for(bar, geometry, (output.width, output.height)),
+            keyboard=_keyboard(bar, hidden),  # type: ignore[arg-type]
+            input_region=_input_for(bar, geometry, (output.width, output.height), hidden),
             output=output,
         )
         fill, shadows = _body_props(bar, self._look)
@@ -486,9 +493,9 @@ class SurfaceManager:
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
         kind = _kind(bar)
         live = LiveTree(self._store, all_uses, look=self._look)
-        if isinstance(bar, PanelDef) and not bar.visible:
+        if isinstance(bar, PanelDef) and not bar.visible and self.hide_mode == "CLOSE":
             # a hidden Panel has no surface at all: nothing to go stale, nothing for the
-            # compositor to hold, and no flash when it is first shown (D44, revised)
+            # compositor to hold, and no flash when it is first shown (D44, the primary route)
             logger.info(f"{kind} {where}: anchor {','.join(geometry.anchor) or 'none'} (hidden)")
             return Surface(
                 planned.key,
@@ -503,16 +510,22 @@ class SurfaceManager:
                 planned=planned,
                 hidden=True,
             )
-        surface = self._make_window(planned, live)
+        keep_hidden = isinstance(bar, PanelDef) and not bar.visible  # KEEP: a mapped, empty surface
+        surface = self._make_window(planned, live, keep_hidden)
         assert surface.window is not None
         self._app.add_window(surface.window)
         logger.info(
             f"{kind} {where}: anchor {','.join(geometry.anchor) or 'none'} size {geometry.size} "
-            f"zone {geometry.exclusive_zone}"
+            f"zone {geometry.exclusive_zone}" + (" (hidden, surface kept)" if keep_hidden else "")
         )
         if isinstance(bar, PanelDef):
             self._panel_events(surface)
-            self._arm_hide_after(surface)
+            self._watch_frames(surface)
+            if keep_hidden:
+                surface.hidden = True
+                surface.window.root.set(visible=False)
+            else:
+                self._arm_hide_after(surface)
         return surface
 
     # -- Panel: hide, show, Hide_After, Escape (D44, revised) -------------------------------------
@@ -547,9 +560,41 @@ class SurfaceManager:
         if s.window is not None and isinstance(panel, PanelDef) and panel.hide_after is not None:
             s.timer = s.window.after(panel.hide_after, lambda: self.hide(s))
 
+    def _watch_frames(self, s: Surface) -> None:
+        """Log the first frames a Panel draws after a show or a hide (DEBUG): what tells a late
+        event from a late repaint on a real compositor."""
+        assert s.window is not None and s.planned is not None
+        where = s.planned.where
+
+        def on_frame(event: Any) -> None:
+            trace = s.trace
+            if trace is None:
+                return
+            label, started, left = trace
+            ms = (time.monotonic() - started) * 1000
+            logger.debug(f"Panel {where}: a frame {ms:.0f} ms after it was {label}")
+            s.trace = (label, started, left - 1) if left > 1 else None
+
+        s.window.on("frame", on_frame)
+
+    def _trace(self, s: Surface, label: str) -> None:
+        assert s.window is not None and s.planned is not None
+        s.trace = (label, time.monotonic(), 3)
+        where, window = s.planned.where, s.window
+
+        def frames_so_far() -> None:
+            try:
+                count = window.frame_stats()["frames"]
+            except Exception:  # the window may be gone by now
+                return
+            logger.debug(f"Panel {where}: {count} frames drawn 250 ms after it was {label}")
+
+        window.after(250, frames_so_far)
+
     def hide(self, s: Surface) -> None:
-        """Hidden is not closed for the module: the Panel record, its place and what its modules
-        know stay; the window is destroyed and made again when it is shown."""
+        """Hide a Panel. CLOSE (primary): destroy its window; the record, its place and what its
+        modules know stay, and showing makes a new window. KEEP (the first version, D44): keep the
+        surface, draw nothing, take no pointer and no keyboard."""
         if s.hidden or s.planned is None or s.window is None:
             return
         if s.timer is not None:
@@ -557,6 +602,12 @@ class SurfaceManager:
             s.timer = None
         window = s.window
         s.hidden = True
+        if self.hide_mode == "KEEP":
+            window.root.set(visible=False)
+            window.set(input_region=[], keyboard="none")
+            self._trace(s, "hidden")
+            logger.info(f"Panel {s.planned.where} hidden (surface kept)")
+            return
         s.window, s.view, s.body = None, None, None
         window.close()
         logger.info(f"Panel {s.planned.where} hidden (window closed)")
@@ -567,7 +618,18 @@ class SurfaceManager:
         if not s.hidden:
             self._arm_hide_after(s)  # shown again: the timer starts over
             return
-        started = time.monotonic()
+        if s.window is not None:  # KEEP: the surface is still there
+            bar = s.planned.bar
+            s.hidden = False
+            s.window.root.set(visible=True)
+            s.window.set(
+                input_region=_input_for(bar, s.geometry, self._output_size(s)),
+                keyboard=_keyboard(bar),
+            )
+            self._arm_hide_after(s)
+            self._trace(s, "shown")
+            logger.info(f"Panel {s.planned.where} shown (surface kept)")
+            return
         fresh = self._make_window(s.planned, LiveTree(self._store, self._all_uses, look=self._look))
         assert fresh.window is not None
         s.window, s.view, s.body = fresh.window, fresh.view, fresh.body
@@ -575,26 +637,10 @@ class SurfaceManager:
         s.expanded, s.geometry, s.hidden = s.planned.expanded, s.planned.geometry, False
         self._app.add_window(s.window)
         self._panel_events(s)
+        self._watch_frames(s)
         self._arm_hide_after(s)
+        self._trace(s, "shown")
         logger.info(f"Panel {s.planned.where} shown (window created)")
-        frames = [0]
-
-        def on_frame(event: Any, where: str = s.planned.where) -> None:
-            frames[0] += 1
-            if frames[0] == 1:
-                ms = (time.monotonic() - started) * 1000
-                logger.debug(f"Panel {where}: first frame {ms:.0f} ms after it was shown")
-
-        s.window.on("frame", on_frame)
-
-        def frames_so_far(where: str = s.planned.where, window: Any = s.window) -> None:
-            try:
-                count = window.frame_stats()["frames"]
-            except Exception:  # the window may be gone by now
-                return
-            logger.debug(f"Panel {where}: {count} frames drawn 250 ms after it was shown")
-
-        s.window.after(250, frames_so_far)
 
     def run_builtin(self, handler: Handler) -> None:
         """A shell action (``Show``, ``Hide``, ``Toggle``) on the Panel it names."""
@@ -706,7 +752,7 @@ class SurfaceManager:
 
     def _update(self, s: Surface, p: Planned, all_uses: Mapping[str, Use]) -> None:
         live = LiveTree(self._store, all_uses, look=self._look)
-        if s.hidden:  # no window to change: the next show builds from the new definition
+        if s.hidden and s.window is None:  # the next show builds from the new definition
             s.live, s.expanded, s.name, s.planned, s.geometry = (
                 live,
                 p.expanded,
@@ -767,7 +813,7 @@ class SurfaceManager:
                     size=geometry.size,
                     margin=geometry.margin,
                     exclusive_zone=geometry.exclusive_zone,
-                    input_region=_input_for(bar, geometry, self._output_size(s)),
+                    input_region=_input_for(bar, geometry, self._output_size(s), s.hidden),
                 )
                 s.geometry = geometry
                 logger.info(

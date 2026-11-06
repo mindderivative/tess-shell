@@ -27,7 +27,10 @@ _ROOT_KEYS = (
     "Hot_Reload",
     "Reload_Debounce",
     "Appearance",
+    "Debug",
 )
+_DEBUG_KEYS = ("Panel_Hide",)
+_PANEL_HIDE = ("CLOSE", "KEEP")
 _APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop")
 _LOGGING_KEYS = (
     "Level",
@@ -61,6 +64,15 @@ class AppearanceSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class DebugSettings:
+    """Switches for finding a fault; not part of the design (D44)."""
+
+    # how a Panel is hidden: CLOSE destroys its window and makes a new one on show (the default);
+    # KEEP leaves the surface mapped and draws nothing (the first version, kept to be debugged)
+    panel_hide: str = "CLOSE"
+
+
+@dataclass(frozen=True, slots=True)
 class Settings:
     config_dir: Path
     main_shell: str = DEFAULT_MAIN_SHELL
@@ -73,6 +85,7 @@ class Settings:
     hot_reload: bool = True
     reload_debounce: float = 0.2  # seconds
     appearance: AppearanceSettings = field(default_factory=AppearanceSettings)
+    debug: DebugSettings = field(default_factory=DebugSettings)
 
 
 class _Reader:
@@ -296,6 +309,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     hot_reload = True
     debounce = 0.2
     appearance = AppearanceSettings()
+    debug = DebugSettings()
     main_origin: Origin | None = None
     if root is not None:
         reader.unknown_keys(root, _ROOT_KEYS, "Settings")
@@ -339,6 +353,11 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             logging = _logging(reader, blk)
         if (blk := reader.block(root, "Appearance")) is not None:
             appearance = _appearance(reader, blk)
+        if (blk := reader.block(root, "Debug")) is not None:
+            reader.unknown_keys(blk, _DEBUG_KEYS, "Debug")
+            hide = find_property(blk, "Panel_Hide")
+            if hide is not None and (word := reader.enum(hide, _PANEL_HIDE)) is not None:
+                debug = DebugSettings(panel_hide=word)
         if (blk := reader.block(root, "Validation")) is not None:
             reader.unknown_keys(blk, _VALIDATION_KEYS, "Validation")
             en = find_property(blk, "Enabled")
@@ -386,6 +405,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             hot_reload=hot_reload,
             reload_debounce=debounce,
             appearance=appearance,
+            debug=debug,
         ),
         [],
     )

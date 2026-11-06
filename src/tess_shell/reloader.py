@@ -91,6 +91,8 @@ class Reloader:
             logger.warning("settings.tdl: Directories and Registry apply after a restart")
         if fresh.main_shell != old.main_shell:
             logger.warning("settings.tdl: Main_Shell applies after a restart")
+        if fresh.debug != old.debug:
+            logger.warning("settings.tdl: Debug applies after a restart")
         if fresh.appearance.follow_desktop != old.appearance.follow_desktop:
             logger.warning("settings.tdl: Appearance.Follow_Desktop applies after a restart")
         if fresh.logging != old.logging:

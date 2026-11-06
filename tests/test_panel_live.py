@@ -107,25 +107,46 @@ app.run(keep_alive=True)
 """
 
 
-def test_a_hidden_panel_gets_a_new_window_each_time_it_is_shown_on_a_real_compositor(
-    private_sway: PrivateSway, tmp_path: Path
-) -> None:
+def run_script(sway: PrivateSway, cfg: Path, script: str) -> str:
     import subprocess
     import sys
 
-    cfg = tmp_path / "cfg"
     body = BODY.replace("            Bar {", f"            {LAUNCHER}\n            Bar {{", 1)
     write_example(cfg, body)
     done = subprocess.run(
-        [sys.executable, "-c", SCRIPT, str(cfg)],
-        env=private_sway.env,
+        [sys.executable, "-c", script, str(cfg)],
+        env=sway.env,
         capture_output=True,
         text=True,
         timeout=30,
     )
-    log = done.stderr
-    assert done.returncode == 0, log
+    assert done.returncode == 0, done.stderr
+    return done.stderr
+
+
+def test_a_hidden_panel_gets_a_new_window_each_time_it_is_shown_on_a_real_compositor(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    log = run_script(private_sway, tmp_path / "cfg", SCRIPT)
     assert log.count("Panel Launcher on HEADLESS-1 shown (window created)") == 2
     assert log.count("Panel Launcher on HEADLESS-1 hidden (window closed)") == 1
     assert log.count("Panel Launcher on HEADLESS-1 configured 600x400") == 2  # a new surface each
-    assert log.count("Panel Launcher on HEADLESS-1: first frame") == 2  # and each one drew
+    assert log.count("Panel Launcher on HEADLESS-1: a frame") >= 2  # and each one drew
+
+
+def test_the_kept_surface_route_draws_a_frame_after_every_show_and_hide_on_sway(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    """The first hide route (D44, ``Debug { Panel_Hide: KEEP }``): on sway it repaints at once.
+    The fault the maintainer saw on KWin is not reproduced here."""
+    script = SCRIPT.replace("assert panel.window is None\n", "").replace(
+        "ValueStore(), build_look(result, settings, Appearance())",
+        "ValueStore(), build_look(result, settings, Appearance()), hide_mode='KEEP'",
+    )
+    log = run_script(private_sway, tmp_path / "cfg", script)
+    assert log.count("Launcher on HEADLESS-1 shown (surface kept)") == 2
+    assert log.count("Launcher on HEADLESS-1 hidden (surface kept)") == 1
+    assert log.count("Launcher on HEADLESS-1 configured 600x400") == 1  # one surface throughout
+    for label in ("shown", "hidden"):
+        assert f"after it was {label}" in log
+        assert "frames drawn 250 ms after it was " + label in log

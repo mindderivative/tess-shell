@@ -372,10 +372,10 @@ def test_a_token_the_theme_lacks_comes_from_the_default_theme_in_the_current_loo
     )
     dark = effective_tokens(partial, Appearance(scheme="dark"), default)
     assert colour(dark, "color.surface") == "#112233"  # the theme's own
-    assert colour(dark, "color.on_surface") == "#E6E0E9"  # the Default's, dark
+    assert colour(dark, "color.on_surface") == "#E4EAF1"  # the Default's, dark
     light = effective_tokens(partial, Appearance(scheme="light"), default)
     assert colour(light, "color.surface") == "#ffffff"  # the theme's own light mode
-    assert colour(light, "color.on_surface") == "#1D1B20"  # the Default's light mode
+    assert colour(light, "color.on_surface") == "#16202B"  # the Default's light mode
     assert "type.body.font_size" in dark and "elevation.max" in dark
     assert "type.body.font_size" not in effective_tokens(partial, Appearance())  # no fallback given
 

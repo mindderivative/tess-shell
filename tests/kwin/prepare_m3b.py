@@ -107,6 +107,15 @@ def main() -> None:
     body = body.replace("            Bar {", PANELS + "            Bar {", 1)
     write_example(cfg, body)
     (cfg / "settings.tdl").write_text(SETTINGS)
+    keep = ROOT / "panels_keep"  # the same config, with the first hide route (D44)
+    shutil.rmtree(keep, ignore_errors=True)
+    shutil.copytree(cfg, keep)
+    (keep / "settings.tdl").write_text(
+        SETTINGS.replace(
+            "  Appearance { Stylesheets: [Default] }\n",
+            "  Appearance { Stylesheets: [Default] }\n  Debug { Panel_Hide: KEEP }\n",
+        )
+    )
     script(
         "run.sh",
         "# Usage: run.sh    (Ctrl+C or kill -TERM stops it)\n"
@@ -114,9 +123,16 @@ def main() -> None:
         f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3b/panels\n",
     )
     script(
+        "run-keep.sh",
+        "# The first hide route: a hidden Panel keeps its surface (Debug { Panel_Hide: KEEP }).\n"
+        "export XDG_STATE_HOME=/tmp/tess-kwin-m3b/state\n"
+        f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3b/panels_keep\n",
+    )
+    script(
         "check.sh",
         "export XDG_STATE_HOME=/tmp/tess-kwin-m3b/state\n"
-        f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3b/panels\n",
+        f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3b/panels\n"
+        f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3b/panels_keep\n",
     )
     print(f"wrote {ROOT}")
 

@@ -185,7 +185,7 @@ class StubApp:
         pass
 
 
-def manager(handlers: str = "", panel: str = LAUNCHER) -> SurfaceManager:
+def manager(handlers: str = "", panel: str = LAUNCHER, hide_mode: str = "CLOSE") -> SurfaceManager:
     shell, findings = read(SHELL % (handlers, panel))
     assert shell is not None, findings
     doc = tess_dl.parse(THEME, path="T_Theme.tdl").document
@@ -193,7 +193,14 @@ def manager(handlers: str = "", panel: str = LAUNCHER) -> SurfaceManager:
     theme, _ = read_theme(doc, "T_Theme.tdl")
     assert theme is not None
     look = make_look(theme, [], Appearance())
-    m = SurfaceManager(StubApp(), {}, lambda key: key, ValueStore(), look)  # type: ignore[arg-type]
+    m = SurfaceManager(
+        StubApp(),  # type: ignore[arg-type]
+        {},
+        lambda key: key,
+        ValueStore(),
+        look,
+        hide_mode=hide_mode,
+    )
     m.plan(shell)
     m.build()
     return m
@@ -310,3 +317,46 @@ def test_a_bar_style_still_refuses_a_corner_radius() -> None:
         )
     )
     assert shell is None and any("Corner_Radius" in f.message for f in findings)
+
+
+# -- the first version, kept to be debugged (D44): the surface stays and draws nothing ---------
+
+
+def test_keep_mode_opens_a_hidden_panel_as_a_mapped_empty_surface() -> None:
+    s = surface(manager(hide_mode="KEEP"), "Launcher")
+    assert s.hidden is True and s.window is not None and s.view is not None
+    assert s.window.root.get("visible") is False
+    assert s.window.get("input_region") == [] and s.window.get("keyboard") == "none"
+
+
+def test_keep_mode_show_and_hide_keep_the_same_window_and_tree() -> None:
+    m = manager(hide_mode="KEEP")
+    s = surface(m, "Launcher")
+    window, view = s.window, s.view
+    m.show(s)
+    assert s.hidden is False and s.window is window and s.view is view
+    assert s.window.root.get("visible") is True  # type: ignore[union-attr]
+    assert s.window.get("keyboard") == "exclusive"  # type: ignore[union-attr]
+    assert s.window.get("input_region") is None  # type: ignore[union-attr]
+    m.hide(s)
+    assert s.hidden is True and s.window is window  # nothing was destroyed
+    assert window.root.get("visible") is False  # type: ignore[union-attr]
+    assert window.get("input_region") == [] and window.get("keyboard") == "none"  # type: ignore[union-attr]
+
+
+def test_keep_mode_a_reload_leaves_a_hidden_panel_hidden_with_no_input() -> None:
+    m = manager(hide_mode="KEEP")
+    s = surface(m, "Launcher")
+    assert s.planned is not None
+    m._update(s, s.planned, m._all_uses)
+    assert s.hidden is True and s.window is not None
+    assert s.window.get("input_region") == []
+
+
+def test_keep_mode_escape_hides_without_closing() -> None:
+    m = manager(hide_mode="KEEP")
+    s = surface(m, "Launcher")
+    m.show(s)
+    assert s.window is not None
+    s.window.simulate("key_down", node=s.window.root, key="escape")
+    assert s.hidden is True and s.window is not None
