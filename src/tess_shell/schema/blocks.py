@@ -138,7 +138,7 @@ BAR_STYLE: dict[str, str] = {
     "Shadows": "shadows",
     "Shadow_Bleed": "bleed",
 }
-OTHER_SURFACES = ("Frame", "Popup")
+OTHER_SURFACES = ("Frame",)
 
 
 # The twelve v1 events (Events and Actions), as the TDL keys. A block raises only the events its
@@ -163,9 +163,18 @@ EVENT_KEYS = (
 BLOCK_EVENTS: dict[str, tuple[str, ...]] = {
     kind: ("On_Click",) for kind in ("Box", "FlexBox", "Rectangle", "Spacer", "SVG")
 }
+BLOCK_EVENTS["Panel"] = (
+    "On_Open",
+    "On_Close",
+    "On_Visible",
+    "On_Hidden",
+    "On_Toggle",
+    "On_Anim_Start",
+    "On_Anim_End",
+)
 # the shell's own actions (Events and Actions > A Handler); built with the Panel
 BUILTIN_ACTIONS = ("Show", "Hide", "Toggle", "Close", "Call")
-BUILTIN_BUILT = ("Show", "Hide", "Toggle")  # Close and Call come with the Popup
+BUILTIN_BUILT = ("Show", "Hide", "Toggle", "Close")  # Call is not built yet
 
 # A Panel's keys and kinds (Panel > Configuration); the placement keys the shell does not build
 # yet are errors, so a Panel never opens somewhere it was not asked to.
@@ -182,6 +191,7 @@ PANEL_KEYS: dict[str, str] = {
     "Attach": "enum",
     "Gap": "number",
     "Alignment": "enum",
+    "Movable": "bool",
 }
 PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),
@@ -195,10 +205,21 @@ PANEL_PLACED_KEYS = ("Anchor", "Inset")
 PANEL_NOT_BUILT_ERROR = (
     "Open_With_Target",
     "Meld",
-    "Movable",
     "Exclusive_Zone",
 )
-PANEL_NOT_BUILT_WARNING = ("Animation", "Margin", "Padding", "Class")
+PANEL_NOT_BUILT_WARNING = ("Margin", "Padding", "Class")
+# ``Animation { Type, Duration }`` (Panel > Configuration): how a Panel comes and goes
+PANEL_ANIMATION_TYPES = ("SLIDE", "FADE", "NONE")
+# the events a Panel raises itself (Events and Actions): before and after its show and hide
+PANEL_EVENTS = (
+    "On_Open",
+    "On_Close",
+    "On_Visible",
+    "On_Hidden",
+    "On_Toggle",
+    "On_Anim_Start",
+    "On_Anim_End",
+)
 
 # A Panel's inline Style: the Bar's keys plus the corner radius and the border of its body
 PANEL_STYLE: dict[str, str] = {
@@ -207,3 +228,31 @@ PANEL_STYLE: dict[str, str] = {
     "Border_Width": "number",
     "Border_Color": "color",
 }
+
+# A Popup's keys and kinds (Popup > Configuration). ``Attach_To`` (a popup opened with no module
+# caller) and ``Animation`` are not built; ``Tooltip`` on a Popup is a flag (a block's ``Tooltip``
+# is a Popup block or a Popup's name, read by the schema).
+POPUP_KEYS: dict[str, str] = {
+    "Attach": "enum",
+    "Alignment": "enum",
+    "Gap": "number",
+    "Adjust": "adjust",
+    "Width": "length",
+    "Height": "length",
+    "Max_Width": "bound",
+    "Max_Height": "bound",
+    "Focus": "bool",
+    "Tooltip": "bool",
+    "Open_On_Enter": "bool",
+    "Enter_Delay": "number",
+    "Close_On_Exit": "bool",
+    "Exit_Delay": "number",
+}
+POPUP_CHOICES: dict[str, tuple[str, ...]] = {
+    "Attach": ("LEFT", "RIGHT", "TOP", "BOTTOM"),
+    "Alignment": ("START", "CENTER", "END"),
+}
+POPUP_ADJUST = ("FLIP_X", "FLIP_Y", "SLIDE_X", "SLIDE_Y", "RESIZE_X", "RESIZE_Y")
+POPUP_NOT_BUILT = ("Attach_To", "Animation")
+# a Popup's body takes the Panel's inline Style keys
+POPUP_STYLE: dict[str, str] = PANEL_STYLE

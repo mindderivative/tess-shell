@@ -132,3 +132,26 @@ def test_a_good_themed_config_checks_clean(
     )
     assert main(["check", "--config-dir", str(config(tmp_path, body, "Theme: Mine"))]) == 0
     assert "ok:" in capsys.readouterr().out
+
+
+STATE_SHEET = """---
+TDL: 0.1
+Name: Mine_Rules
+---
+Stylesheet {
+    Rule { Selector: "FlexBox:hovered", Background: "#334455" }
+    Rule { Selector: "Text:hovered", Foreground: "#ffffff" }
+}
+"""
+
+
+def test_a_state_rule_that_reaches_a_text_is_a_warning_in_the_scan(tmp_path: Path) -> None:
+    cfg = config(tmp_path, appearance="Theme: Mine, Stylesheets: [Mine_Rules]")
+    (cfg / "Stylesheets" / "Mine_Rules_Stylesheet.tdl").write_text(STATE_SHEET)
+    settings, _ = load_settings(cfg)
+    assert settings is not None
+    result = scan(settings, cfg)
+    assert result.errors == []
+    (warning,) = [f for f in result.findings if f.rule == "state-never-applies"]
+    assert warning.severity == "warning" and "Mine_Rules_Stylesheet.tdl" in warning.file
+    assert "Text" in warning.message

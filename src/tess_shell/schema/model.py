@@ -3,12 +3,21 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol
 
 import tess_dl
 
-from tess_shell.binder.model import ForNode, IfNode, Node, Origin, Shadows, UseNode, Value
+from tess_shell.binder.model import (
+    ForNode,
+    Handler,
+    IfNode,
+    Node,
+    Origin,
+    Shadows,
+    UseNode,
+    Value,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +64,36 @@ class PanelDef:
     attach: str | None = None  # LEFT, RIGHT, TOP, BOTTOM: the target's edge the Panel meets
     gap: float = 0  # pixels between the Panel and the target
     alignment: str = "CENTER"  # START, CENTER, END along the shared edge
+    movable: bool = False  # the pointer can move it; the position is saved (Panel > Position)
+    animation: str = "NONE"  # SLIDE, FADE or NONE: how it appears and disappears
+    duration: float = 200  # milliseconds of the animation
+    handlers: Mapping[str, Handler] = field(default_factory=dict)  # ``On_Open`` -> handler
+
+
+@dataclass(frozen=True, slots=True)
+class PopupDef:
+    """A ``Popup { }`` (Popup > Configuration), or the inline popup of a ``Tooltip { }``
+    (``name`` empty). ``Tooltip: true`` has already set the defaults it implies: the schema
+    stores what each key means after that."""
+
+    name: str
+    origin: Origin
+    attach: str = "BOTTOM"  # the anchor's edge the popup meets: TOP, BOTTOM, LEFT, RIGHT
+    alignment: str = "START"  # START, CENTER, END along that edge
+    gap: float = 0  # pixels between the anchor and the popup's body
+    adjust: tuple[str, ...] = ("flip_y", "slide_x")  # tre's constraint adjustments
+    width: Value = None  # type: ignore[assignment]  # a Length or Auto
+    height: Value = None  # type: ignore[assignment]
+    max_width: float = 300
+    max_height: float = 400
+    focus: bool = True  # tre's grab: the popup takes the keyboard and pointer
+    tooltip: bool = False
+    open_on_enter: bool = False
+    enter_delay: float = 500  # milliseconds
+    close_on_exit: bool = False
+    exit_delay: float = 200
+    style: Mapping[str, Value] = None  # type: ignore[assignment]
+    children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,6 +104,7 @@ class MonitorDef:
     connector: str | None
     description: str | None
     surfaces: tuple[BarDef | PanelDef, ...] = ()
+    popups: tuple[PopupDef, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,6 +188,7 @@ class Rule:
     target: str  # the block word, the module's call name, the class name or the unique ``Name``
     values: Mapping[str, Value]
     origin: Origin
+    state: str = ""  # ``hovered`` or ``pressed`` for ``"Button:hovered"``; empty for a base rule
 
     @property
     def specificity(self) -> int:

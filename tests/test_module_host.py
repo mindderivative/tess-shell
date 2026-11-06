@@ -189,16 +189,23 @@ def test_the_shipped_clock_loads_with_the_real_module_file(tmp_path: Path) -> No
         style,  # type: ignore[arg-type]
     )
     assert mod is not None and findings == []
-    assert set(mod.params) == {"format", "hour_cycle", "timezone"}
+    assert set(mod.params) == {"format", "locale", "hour_cycle", "timezone", "tooltip_format"}
     rig = Rig(tmp_path)
     rig.store.add_use("Clock", "Clock@u1")
-    params = {"format": "%H:%M", "hour_cycle": "desktop", "timezone": "Europe/Berlin"}
+    params = {
+        "format": "%H:%M",
+        "locale": "",
+        "hour_cycle": "desktop",
+        "timezone": "Europe/Berlin",
+        "tooltip_format": "%Y",
+    }
     u = Use("Clock@u1", "Clock", "S.M.B.Clock_1", params, "Main", NO_ORIGIN)
     loaded, problems = rig.host.load(mod, path.with_suffix(".py"), "uid", [u])
     assert loaded is not None and problems == []
     assert rig.host.start(loaded) == []
     rig.store.flush()
     assert len(rig.store.values["Clock@u1"]["time"]) == 5
+    assert len(rig.store.values["Clock@u1"]["tooltip"]) == 4  # tooltip_format: the year
     rig.host.stop_all()
 
 

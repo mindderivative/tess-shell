@@ -238,7 +238,13 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             logger.debug("Appearance.Follow_Desktop is false: the portal is not read")
         look = build_look(result, settings, appearance)
         manager = SurfaceManager(
-            app, module_defs, registry.uid_for, store, look, hide_mode=settings.debug.panel_hide
+            app,
+            module_defs,
+            registry.uid_for,
+            store,
+            look,
+            hide_mode=settings.debug.panel_hide,
+            positions=registry,
         )
         manager_box.append(manager)
         host = ModuleHost(store, ticks, cfg)
@@ -251,6 +257,7 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
                 host.dispatch(handler, key, raw)
 
         manager.sink = route
+        host.popups = manager.popups  # ctx.popup() opens a Popup of the surfaces
         # a file the shell registers for the first time gets a UID in its metadata (G8)
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         own_writes = OwnWrites()

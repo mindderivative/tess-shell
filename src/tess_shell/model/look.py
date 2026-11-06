@@ -132,6 +132,7 @@ def _resolve_node(node: m.Node, look: Look | None, errors: list[m.BindError]) ->
         node,
         props=resolve_style(node.props, look, errors),
         style=resolve_style(node.style, look, errors),
+        states={s: resolve_style(v, look, errors) for s, v in node.states.items()},
         children=tuple(
             _resolve_node(c, look, errors) for c in node.children if isinstance(c, m.Node)
         ),
@@ -176,21 +177,46 @@ def _rules_child(node: Child, rules: Sequence[Rule]) -> Child:
         )
     if isinstance(node, m.ForNode):
         return dataclasses.replace(node, body=apply_rules(node.body, rules))
-    merged = _fold(node, [r for r in rules if _matches(r, node)])
-    return dataclasses.replace(node, style=merged, children=apply_rules(node.children, rules))
+    hits = [r for r in rules if _matches(r, node)]
+    return dataclasses.replace(
+        node,
+        style=_fold(node, hits),
+        states=_fold_states(node, hits),
+        children=apply_rules(node.children, rules),
+    )
 
 
-def _fold(node: m.Node, hits: Sequence[Rule]) -> dict[str, m.Value]:
-    """``node.style`` with the keys of ``hits`` below it (a name beats a class beats a module
-    beats a type; of one weight the later rule wins; the block's own keys win over all)."""
+def _merge(kind: str, hits: Sequence[Rule]) -> dict[str, m.Value]:
+    """The keys a block of ``kind`` takes from ``hits``: a name beats a class beats a module beats
+    a type; of one weight the later rule wins."""
     ordered = sorted(enumerate(hits), key=lambda t: (t[1].specificity, t[0]))
     merged: dict[str, m.Value] = {}
     for _, rule in ordered:
         for key, value in rule.values.items():
-            if _allowed(node.kind, key):
+            if _allowed(kind, key):
                 merged[key] = value
+    return merged
+
+
+def _fold(node: m.Node, hits: Sequence[Rule]) -> dict[str, m.Value]:
+    """``node.style`` with the keys of ``hits`` below it (a name beats a class beats a module
+    beats a type; of one weight the later rule wins; the block's own keys win over all). A rule
+    with a state does not belong here: see :func:`_fold_states`."""
+    merged = _merge(node.kind, [r for r in hits if not r.state])
     below = {k: v for k, v in merged.items() if k not in node.props and k not in node.style}
     return {**below, **node.style}
+
+
+def _fold_states(node: m.Node, hits: Sequence[Rule]) -> Mapping[str, Mapping[str, m.Value]]:
+    """``node.states`` with the state rules among ``hits`` added, a state at a time, by the same
+    precedence as the base style. A state value is not held back by the block's own style: it is
+    the look while the state holds, on top of whatever the block shows otherwise."""
+    states = {s: dict(v) for s, v in node.states.items()}
+    for state in m.STATES:
+        merged = _merge(node.kind, [r for r in hits if r.state == state])
+        if merged:
+            states[state] = {**merged, **states.get(state, {})}
+    return states if states else node.states
 
 
 def apply_module_rules(roots: Sequence[Child], module: str, rules: Sequence[Rule]) -> list[Child]:
@@ -200,7 +226,9 @@ def apply_module_rules(roots: Sequence[Child], module: str, rules: Sequence[Rule
     if not mine:
         return list(roots)
     return [
-        dataclasses.replace(root, style=_fold(root, mine)) if isinstance(root, m.Node) else root
+        dataclasses.replace(root, style=_fold(root, mine), states=_fold_states(root, mine))
+        if isinstance(root, m.Node)
+        else root
         for root in roots
     ]
 
@@ -232,7 +260,7 @@ def check_tokens(
     found: list[Finding] = []
     tables: list[Mapping[str, m.Value]] = [extra] if extra else []
     for node in _walk(children):
-        tables.extend((node.props, node.style))
+        tables.extend((node.props, node.style, *node.states.values()))
     for table in tables:
         for key, value in table.items():
             if not isinstance(value, m.TokenRef):
@@ -252,4 +280,35 @@ def check_tokens(
                         exc.hint,
                     )
                 )
+    return found
+
+
+def check_states(
+    children: Sequence[Child], rules: Sequence[Rule], module: str = ""
+) -> list[Finding]:
+    """A warning for each state style the rules give a block that tre sends no pointer events (a
+    ``Text``): the state would never hold, so the rule does nothing there. ``module`` is the
+    call name when ``children`` are a module's layout."""
+    if not any(r.state for r in rules):
+        return []
+    ruled: Sequence[Child] = apply_rules(tuple(children), rules)
+    if module:
+        ruled = apply_module_rules(ruled, module, rules)
+    found: list[Finding] = []
+    for node in _walk(ruled):
+        if not node.states or node.kind not in m.NO_POINTER_BLOCKS:
+            continue
+        for state, values in node.states.items():
+            o = next(iter(values.values())).origin if values else node.origin
+            found.append(
+                Finding(
+                    o.file,
+                    o.line,
+                    o.column,
+                    "warning",
+                    "state-never-applies",
+                    f"a :{state} style reaches a {node.kind}, which tre sends no pointer events",
+                    "put the state rule on the Box or FlexBox around the text",
+                )
+            )
     return found

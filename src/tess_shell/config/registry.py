@@ -9,6 +9,7 @@ import json
 import os
 import stat
 import tempfile
+import threading
 import uuid
 from pathlib import Path
 from typing import Any
@@ -104,3 +105,59 @@ class Registry:
 
     def save(self) -> None:
         _atomic_write(self.path, self.data)
+
+    # -- a Panel's saved position (Panel > Position and Attachment) -------------------------------
+
+    def position(self, key: str) -> dict[str, float] | None:
+        """The saved position of the Panel at ``key``: the ``Inset`` of each side it is anchored
+        to (``left``, ``top``, ``right``, ``bottom``), or ``None`` when it was never moved."""
+        entry = self.data["entries"].get(key)
+        saved = entry.get("position") if isinstance(entry, dict) else None
+        if not isinstance(saved, dict):
+            return None
+        return {
+            side: float(v)
+            for side, v in saved.items()
+            if side in ("left", "top", "right", "bottom") and isinstance(v, int | float)
+        }
+
+    def set_position(self, key: str, position: dict[str, float]) -> None:
+        """Remember where the user left a Panel and write the registry, off the loop thread: the
+        text is made here, so the loop's own changes to the registry cannot race the writer."""
+        entries: dict[str, Any] = self.data["entries"]
+        entry = entries.get(key)
+        if not isinstance(entry, dict):
+            entry = entries[key] = {"uid": str(uuid.uuid7()), "kind": "panel"}
+        entry["position"] = dict(position)
+        text = json.dumps(self.data, indent=2) + "\n"
+        with Registry._lock:
+            self._pending = text  # a newer text replaces one not written yet
+            if self._writing:
+                return
+            self._writing = True
+        threading.Thread(target=self._writer, daemon=True).start()
+
+    _lock = threading.Lock()
+    _pending: str | None = None
+    _writing = False
+
+    def _writer(self) -> None:
+        """Write the latest text, and again if a newer one arrived meanwhile."""
+        while True:
+            with Registry._lock:
+                text, self._pending = self._pending, None
+                if text is None:
+                    self._writing = False
+                    return
+            tmp: Path | None = None
+            try:
+                fd, tmp_name = tempfile.mkstemp(prefix=f".{self.path.name}.", dir=self.path.parent)
+                tmp = Path(tmp_name)
+                with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                    fh.write(text)
+                    fh.flush()
+                    os.fsync(fh.fileno())
+                os.replace(tmp, self.path)
+            except OSError:
+                if tmp is not None:
+                    tmp.unlink(missing_ok=True)

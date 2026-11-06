@@ -90,7 +90,6 @@ def test_the_defaults_are_the_top_layer_no_keyboard_whole_surface_shown() -> Non
         ("Panel { Name: P, Width: 10, Height: 10, Anchor: [TOP, TOP] }", "bad-value", "twice"),
         ("Panel { Name: P, Width: 10, Height: 10, Anchor: MIDDLE }", "bad-value", "TOP, BOTTOM"),
         ("Panel { Name: P, Width: AUTO, Height: 10 }", "not-built", "AUTO"),
-        ("Panel { Name: P, Width: 10, Height: 10, Movable: true }", "not-built", "Movable"),
         ("Panel { Name: P, Width: 10, Height: 10, Exclusive_Zone: 4 }", "not-built", "Exclusive"),
         (
             "Panel { Name: P, Width: 10, Height: 10, Input_Region: [[0, 0, 4, 4]] }",
@@ -108,7 +107,7 @@ def test_a_bad_panel_is_reported_at_its_key(snippet: str, rule: str, needle: str
 
 
 def test_a_cosmetic_key_not_built_is_a_warning_not_an_error() -> None:
-    shell, findings = read(SHELL % ("", "Panel { Name: P, Width: 10, Height: 10, Animation { } }"))
+    shell, findings = read(SHELL % ("", "Panel { Name: P, Width: 10, Height: 10, Margin: 4 }"))
     assert shell is not None
     assert [f.severity for f in findings] == ["warning"]
 
@@ -184,14 +183,20 @@ class StubApp:
         pass
 
 
-def manager(handlers: str = "", panel: str = LAUNCHER, hide_mode: str = "CLOSE") -> SurfaceManager:
+def manager(
+    handlers: str = "",
+    panel: str = LAUNCHER,
+    hide_mode: str = "CLOSE",
+    appearance: Appearance | None = None,
+    positions: object | None = None,
+) -> SurfaceManager:
     shell, findings = read(SHELL % (handlers, panel))
     assert shell is not None, findings
     doc = tess_dl.parse(THEME, path="T_Theme.tdl").document
     assert doc is not None
     theme, _ = read_theme(doc, "T_Theme.tdl")
     assert theme is not None
-    look = make_look(theme, [], Appearance())
+    look = make_look(theme, [], appearance or Appearance())
     m = SurfaceManager(
         StubApp(),  # type: ignore[arg-type]
         {},
@@ -199,6 +204,7 @@ def manager(handlers: str = "", panel: str = LAUNCHER, hide_mode: str = "CLOSE")
         ValueStore(),
         look,
         hide_mode=hide_mode,
+        positions=positions,  # type: ignore[arg-type]
     )
     m.plan(shell)
     m.build()

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 
 from loguru import logger
 
@@ -26,6 +26,16 @@ class UseRecord:
     params: Mapping[str, Any]
 
 
+class PopupPort(Protocol):
+    """What the shell offers a module for its Popups (the surface manager's ``Popups``)."""
+
+    def call(
+        self, module: str, use: str | None, name: str, data: Mapping[str, Any] | None
+    ) -> None: ...
+
+    def close_named(self, name: str | None = None) -> None: ...
+
+
 class ModuleContext:
     def __init__(
         self,
@@ -35,8 +45,11 @@ class ModuleContext:
         uses: Mapping[str, UseRecord],
         send: Callable[[str | None, str, object], None],
         ticks: TimeSource,
+        popups: Callable[[], PopupPort | None] | None = None,
     ) -> None:
         self.name = name
+        self.caller: UseRecord | None = None  # the use whose block raised the event being handled
+        self._popups = popups
         self.uid = uid
         self.config = config
         self.uses = uses
@@ -50,6 +63,37 @@ class ModuleContext:
         safe, coalesced, never blocks."""
         use_key = use.key if isinstance(use, UseRecord) else use
         self._send(use_key, key, value)
+
+    def popup(
+        self,
+        name: str,
+        data: Mapping[str, Any] | None = None,
+        use: UseRecord | str | None = None,
+    ) -> None:
+        """Open the Popup ``name`` beside the use that called (``ctx.caller``, set while an
+        ``@action`` runs; or ``use``), or close it when it is the open one. Loop thread only. A
+        Popup that does not exist, or a use on no open surface, is logged with the module and
+        the name; nothing is raised."""
+        key = use.key if isinstance(use, UseRecord) else use
+        if key is None and self.caller is not None:
+            key = self.caller.key
+        if key is None:
+            self.log.error(
+                f"ctx.popup({name!r}) needs the use that calls it: call it from an @action, "
+                "or pass use="
+            )
+            return
+        port = self._popups() if self._popups else None
+        if port is None:
+            self.log.error(f"ctx.popup({name!r}): the shell has no surfaces to open it on")
+            return
+        port.call(self.name, key, name, data)
+
+    def close_popup(self, name: str | None = None) -> None:
+        """Close the open Popup (the one called ``name``, if given). Loop thread only."""
+        port = self._popups() if self._popups else None
+        if port is not None:
+            port.close_named(name)
 
     def on_tick(self, unit: str, fn: Callable[[], None]) -> Subscription:
         """Call ``fn`` at the start of each ``"second"`` or ``"minute"``, on the loop thread."""

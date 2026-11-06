@@ -37,7 +37,7 @@ from tess_shell.surfaces.bar import (
     input_region,
     surface_rect,
 )
-from tess_shell.surfaces.panel import PanelSpec, panel_geometry
+from tess_shell.surfaces.panel import PanelSpec, panel_geometry, px_size
 
 if TYPE_CHECKING:
     from tess_re import App, LayerWindow, Output
@@ -137,6 +137,7 @@ class Surface:
     hidden: bool = False  # a Panel with no window now (D44, revised); a Bar is never hidden
     timer: Any = None  # the pending ``Hide_After`` timer of a Panel
     trace: Any = None  # (label, start, frames left to log): the first frames after a change
+    generation: int = 0  # counts shows and hides, so an animation that was replaced stays silent
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -187,12 +188,47 @@ def _geometry(
     output: tuple[int, int],
     target: Rect | None = None,
     clearance: Rect | None = None,
+    saved: Mapping[str, float] | None = None,
 ) -> Geometry:
     """The geometry of a Bar or a Panel on ``output``; raises :class:`ZeroSize`. ``target`` is the
-    rectangle an attached Panel meets, ``clearance`` the Bar around a module it meets."""
+    rectangle an attached Panel meets, ``clearance`` the Bar around a module it meets, ``saved``
+    where the user left a Movable Panel."""
     if isinstance(bar, PanelDef):
+        bar = _movable(bar, output, saved)
         return panel_geometry(_panel_spec(bar, look), output, target, clearance)
     return bar_geometry(_spec(bar, look), output)
+
+
+def _movable(
+    panel: PanelDef, output: tuple[int, int], saved: Mapping[str, float] | None
+) -> PanelDef:
+    """A Movable Panel is moved by tre changing the margins of the edges it is anchored to, so a
+    floating one is anchored top and left, where it starts centred (or at its ``Inset``) until it
+    is moved. The saved position replaces the ``Inset`` of each side it is anchored to, and is
+    kept on the output."""
+    if not panel.movable:
+        return panel
+    anchors = panel.anchor or ("TOP", "LEFT")
+    left, top, right, bottom = panel.inset
+    width, height = px_size(panel.width, output[0]), px_size(panel.height, output[1])
+    if not panel.anchor and not (left or top):
+        left, top = (output[0] - width) / 2, (output[1] - height) / 2
+    sides = {"left": left, "top": top, "right": right, "bottom": bottom}
+    sides.update({k: v for k, v in (saved or {}).items() if k in anchors_lower(anchors)})
+    for side, room in (
+        ("left", output[0] - width),
+        ("right", output[0] - width),
+        ("top", output[1] - height),
+        ("bottom", output[1] - height),
+    ):
+        sides[side] = min(max(sides[side], 0), max(room, 0))
+    return dataclasses.replace(
+        panel, anchor=anchors, inset=(sides["left"], sides["top"], sides["right"], sides["bottom"])
+    )
+
+
+def anchors_lower(anchors: Sequence[str]) -> set[str]:
+    return {a.lower() for a in anchors}
 
 
 def _place(
@@ -201,6 +237,7 @@ def _place(
     output: tuple[int, int],
     hosts: Mapping[str, str] | None = None,
     module_rect: Callable[[str], Rect | None] | None = None,
+    saved: Mapping[str, Mapping[str, float]] | None = None,
 ) -> tuple[dict[str, Geometry], dict[str, str]]:
     """The geometry of every surface of one Monitor on one output, by ``Name``, and the reason
     for each one that gets none. A target is placed before the Panel attached to it, so a chain of
@@ -231,7 +268,9 @@ def _place(
                     clearance = target
                     target = (module_rect and module_rect(bar.attach_to)) or target
             try:
-                geometries[bar.name] = _geometry(bar, look, output, target, clearance)
+                geometries[bar.name] = _geometry(
+                    bar, look, output, target, clearance, (saved or {}).get(bar.name)
+                )
             except ZeroSize as exc:
                 failed[bar.name] = str(exc)
             else:
@@ -299,6 +338,8 @@ def _body_props(
     return _bar_fill(style), shadows
 
 
+SLIDE_DISTANCE = 24  # pixels a slide travels (Panel > Animation)
+
 _EXTRA_KEYS = {
     "Corner_Radius": ("corner_radius", "radius"),
     "Border_Width": ("stroke_width", "number"),
@@ -340,6 +381,14 @@ def _body_style(
     return props
 
 
+class PositionStore(Protocol):
+    """Where a Movable Panel was left: its ``Inset`` for each side it is anchored to."""
+
+    def position(self, key: str) -> dict[str, float] | None: ...
+
+    def set_position(self, key: str, position: dict[str, float]) -> None: ...
+
+
 @dataclass(slots=True)
 class Planned:
     key: str
@@ -369,7 +418,7 @@ def _check_targets(expanded: Expanded, panels: set[str]) -> None:
     handler, with the nearest names."""
     for h in _handlers(expanded.nodes):
         target = h.args.get("Target")
-        if h.builtin and target not in panels:
+        if h.builtin and h.action != "Close" and target not in panels:
             close = difflib.get_close_matches(str(target), sorted(panels), n=3, cutoff=0.5)
             hint = f"did you mean {', '.join(close)}?" if close else "write the Name of a Panel"
             expanded.errors.append(
@@ -402,9 +451,13 @@ class SurfaceManager:
         look: Look | None = None,
         sink: Callable[[Handler, str, Any], None] | None = None,
         hide_mode: str = "KEEP",
+        positions: PositionStore | None = None,
     ) -> None:
         self._app = app
+        self._positions = positions  # where the user left each Movable Panel (the registry)
+        self._shell_name = ""
         self.hide_mode = hide_mode  # KEEP (the default) or CLOSE (D44)
+        self._depth = 0  # how deep Panel event handlers have called one another
         self.sink = sink
         self._look = look
         self._modules = modules
@@ -414,6 +467,10 @@ class SurfaceManager:
         self._planned: list[Planned] = []
         self._handle: Any = None
         self._all_uses: Mapping[str, Use] = {}
+        from tess_shell.surfaces.popup import PopupPlan, Popups  # popup.py imports this module
+
+        self.popups = Popups(self)
+        self._popup_plans: list[PopupPlan] = []  # from the last planning: set_plans commits them
 
     def wake(self) -> None:
         """Wake tre's loop after the shell changed a window. tre does not request a frame for a
@@ -447,6 +504,7 @@ class SurfaceManager:
         """Match monitors to outputs, compute each Bar's geometry and expand its module calls.
         The stylesheet's rules are folded into every block first, so ``#name`` selectors see the
         names as written."""
+        self._shell_name = shell.name
         rules = look.rules if look else ()
         if rules:
             modules = {
@@ -456,6 +514,7 @@ class SurfaceManager:
         outputs: list[Output] = list(self._app.outputs())
         if not outputs:
             logger.warning("no outputs: no surface was opened")
+            self._popup_plans = []
             return [], []
         for loser, winner, i in conflicts(shell.monitors, outputs):
             logger.warning(
@@ -490,6 +549,7 @@ class SurfaceManager:
                     (outputs[i].width, outputs[i].height),
                     hosts,
                     lambda label, group=group: self._module_rect(group, label),  # type: ignore[misc]
+                    self._saved(group, monitor.surfaces),
                 )
                 for bar in monitor.surfaces:
                     where = f"{bar.name} on {outputs[i].name}"
@@ -506,7 +566,14 @@ class SurfaceManager:
                     path = f"{shell.name}.{monitor.name}{suffix}.{bar.name}"
                     children = apply_rules(bar.children, rules)
                     expanded = expand(
-                        children, path, modules, self._uid_of, outputs[i].name, rules, wanted
+                        children,
+                        path,
+                        modules,
+                        self._uid_of,
+                        outputs[i].name,
+                        rules,
+                        wanted,
+                        bool(monitor.popups),
                     )
                     uses.extend(expanded.uses)
                     planned.append(
@@ -528,6 +595,10 @@ class SurfaceManager:
         }
         for p in planned:
             _check_targets(p.expanded, panel_names)
+        self._popup_plans, popup_uses = self.popups.plan(
+            shell, modules, look, outputs, self._uid_of, assign, panel_names
+        )
+        uses.extend(popup_uses)
         return planned, uses
 
     def plan(self, shell: ShellDef) -> list[Use]:
@@ -535,6 +606,7 @@ class SurfaceManager:
         for use in uses:
             self._store.add_use(use.module, use.key)
         self._planned = planned
+        self.popups.set_plans(self._popup_plans)
         return uses
 
     # -- opening ------------------------------------------------------------------------------
@@ -542,6 +614,7 @@ class SurfaceManager:
     def build(self) -> list[Surface]:
         """Evaluate the slots with the values the modules have sent so far, bind, and open."""
         all_uses = {u.key: u for p in self._planned for u in p.expanded.uses}
+        all_uses.update(self.popups.uses())
         self._all_uses = all_uses
         for planned in self._planned:
             self.surfaces.append(self._open(planned, all_uses))
@@ -568,37 +641,41 @@ class SurfaceManager:
         )
         fill, shadows = _body_props(bar, self._look)
         extra = _body_extra(bar, self._look)
+        handle = {"window_region": "drag_margin"} if getattr(bar, "movable", False) else {}
         body = window.create(
             "box",
             flex_grow=1,
             align_self="stretch",
+            **handle,
             **_body_style(geometry, fill, shadows, extra),
         )
         window.root.add_child(body)
-
-        def configured(e: Any, n: str = where) -> None:
-            logger.info(f"{kind} {n} configured {int(e.width)}x{int(e.height)}")
-            if kind == "Bar":
-                self._relayout_soon(window, planned.group)
-
-        window.on("configure", configured)
+        window.on(
+            "configure",
+            lambda e, n=where: logger.info(f"{kind} {n} configured {int(e.width)}x{int(e.height)}"),
+        )
         window.on(
             "closed",
             lambda e, n=where: logger.info(f"{kind} {n} closed ({getattr(e, 'reason', '')})"),
         )
-        for pointer in ("pointer_down", "pointer_up"):  # a trace: where a click's time goes
-            window.root.on(
-                pointer,
-                lambda e, n=where, k=kind, p=pointer: logger.debug(
-                    f"{k} {n} {p} at {getattr(e, 'window_x', None)},{getattr(e, 'window_y', None)}"
-                ),
+
+        def pointer_trace(e: Any, n: str = where, k: str = kind, p: str = "") -> None:
+            logger.debug(
+                f"{k} {n} {p} at {getattr(e, 'window_x', None)},{getattr(e, 'window_y', None)}"
             )
+            if p == "pointer_down":  # tre gives a click on another window to that window
+                self.popups.surface_pointer_down()
+
+        for pointer in ("pointer_down", "pointer_up"):  # a trace: where a click's time goes
+            window.root.on(pointer, lambda e, p=pointer: pointer_trace(e, p=p))
         view: View | None = None
         errors = list(planned.expanded.errors)
         if not errors:
             try:
                 view = build(live.resolve(planned.expanded), window, body)
                 view.sink = self._dispatch
+                self._watch_targets(view, planned)
+                self.popups.watch(view, planned)
             except BindFailed as failed:
                 errors = failed.errors
         _log_errors(errors)
@@ -658,6 +735,7 @@ class SurfaceManager:
                 surface.window.root.set(visible=False)
             else:
                 self._arm_hide_after(surface)
+                surface.window.after(1, lambda: self._fire(surface, "On_Visible"))
         return surface
 
     # -- Panel: hide, show, Hide_After, Escape (D44) ----------------------------------------------
@@ -682,6 +760,24 @@ class SurfaceManager:
                 self.hide(s)
 
         s.window.root.on("key_down", on_key)  # a key bubbles up from the focused node
+        s.window.on("moved", lambda event: self._moved(s, tuple(event.margin)))
+
+    def _moved(self, s: Surface, margin: tuple[int, int, int, int]) -> None:
+        """tre moved a Movable Panel by its margins and the button went up: the margins are the
+        position. Each anchored side's ``Inset`` is its margin plus the transparent margin of the
+        shadow, and is saved (Panel > Position and Attachment)."""
+        if s.planned is None:
+            return
+        top, right, bottom, left = margin
+        b_top, b_right, b_bottom, b_left = s.geometry.body_margin
+        inset = {"left": left + b_left, "top": top + b_top, "right": right + b_right,
+                 "bottom": bottom + b_bottom}
+        position = {k: float(v) for k, v in inset.items() if k in s.geometry.anchor}
+        s.geometry = dataclasses.replace(s.geometry, margin=margin)
+        s.planned.geometry = s.geometry
+        logger.info(f"Panel {s.planned.where} moved to {position}")
+        if self._positions is not None:
+            self._positions.set_position(self._position_key(s.planned.group, s.name), position)
 
     def _arm_hide_after(self, s: Surface) -> None:
         """(Re)start the ``Hide_After`` timer: showing a Panel again resets it."""
@@ -737,7 +833,25 @@ class SurfaceManager:
             for use in use_names(p.bar.children)
         }
         size = (members[0].output.width, members[0].output.height)
-        return _place(bars, look, size, hosts, lambda label: self._module_rect(group, label))
+        saved = self._saved(group, bars)
+        return _place(bars, look, size, hosts, lambda label: self._module_rect(group, label), saved)
+
+    def _position_key(self, group: str, name: str) -> str:
+        return f"position:{self._shell_name}.{group}.{name}"
+
+    def _saved(
+        self, group: str, bars: Sequence[BarDef | PanelDef]
+    ) -> dict[str, dict[str, float]]:
+        """Where the user left each Movable Panel of this Monitor and output."""
+        if self._positions is None:
+            return {}
+        found: dict[str, dict[str, float]] = {}
+        for bar in bars:
+            if isinstance(bar, PanelDef) and bar.movable:
+                position = self._positions.position(self._position_key(group, bar.name))
+                if position:
+                    found[bar.name] = position
+        return found
 
     def _module_rect(self, group: str, label: str) -> Rect | None:
         """Where tre laid out the root block of the module used under ``Name: label``, on the
@@ -759,10 +873,14 @@ class SurfaceManager:
             return Rect(origin.x + x, origin.y + y, w, h)
         return None
 
-    def _relayout_soon(self, window: Any, group: str) -> None:
-        """A Bar was laid out or rebuilt: once tre has drawn it, the Panels attached to its modules
-        are placed again from where the modules are."""
-        window.after(50, lambda: self._relayout_attached(group))
+    def _watch_targets(self, view: View, planned: Planned) -> None:
+        """A Panel attached to a module follows it: tre's ``layout`` event says when the module's
+        root block was first laid out or changed size (only a node with a listener is watched), and
+        the Panel is placed again from where the block is now."""
+        for node_id in planned.expanded.targets.values():
+            node = view.nodes.get(node_id)
+            if node is not None:
+                node.on("layout", lambda _e, g=planned.group: self._relayout_attached(g))
 
     def _relayout_attached(self, group: str) -> None:
         for t in list(self.surfaces):
@@ -817,26 +935,38 @@ class SurfaceManager:
     def hide(self, s: Surface) -> None:
         """Hide a Panel. KEEP (the default, D44): keep the surface, draw nothing, take no pointer
         and no keyboard; the tree and its state stay. CLOSE: destroy the window (the record, its
-        place and what its modules know stay) and make a new one on show."""
+        place and what its modules know stay) and make a new one on show. With an ``Animation``
+        the Panel leaves first and is hidden when the animation ends."""
         if s.hidden or s.planned is None or s.window is None:
             return
         for attached in self._attached_to(s):  # a Panel does not stay open without its target
             self.hide(attached)
+        self.popups.parent_closed(s)  # a Popup does not stay open without its parent
         if s.timer is not None:
             s.timer.cancel()
             s.timer = None
-        window = s.window
+        self._fire(s, "On_Close")  # before: the request is made
         s.hidden = True
+        if self.hide_mode == "KEEP":  # a hiding Panel takes no input, whatever its animation
+            s.window.set(input_region=[], keyboard="none")
+        self._leave(s, lambda: self._finish_hide(s))
+
+    def _finish_hide(self, s: Surface) -> None:
+        """The Panel has left: draw nothing (KEEP) or destroy the window (CLOSE)."""
+        window = s.window
+        if window is None or s.planned is None:
+            return
         if self.hide_mode == "KEEP":
-            window.root.set(visible=False)
-            window.set(input_region=[], keyboard="none")
+            window.set(margin=s.geometry.margin)  # back at rest for the next show; ends any slide
+            window.root.set(opacity=1.0, visible=False)
             self._trace(s, "hidden")
             logger.info(f"Panel {s.planned.where} hidden (surface kept)")
             self.wake()
-            return
-        s.window, s.view, s.body = None, None, None
-        window.close()
-        logger.info(f"Panel {s.planned.where} hidden (window closed)")
+        else:
+            s.window, s.view, s.body = None, None, None
+            window.close()
+            logger.info(f"Panel {s.planned.where} hidden (window closed)")
+        self._fire(s, "On_Hidden")  # after: it is hidden
 
     def show(self, s: Surface) -> None:
         if s.planned is None:
@@ -849,7 +979,8 @@ class SurfaceManager:
             logger.info(f"Panel {s.planned.where} stays hidden: its target {target.name} is hidden")
             return
         self._refresh_attached(s)
-        if s.window is not None:  # KEEP: the surface is still there
+        self._fire(s, "On_Open")  # before: the request is made
+        if s.window is not None:  # KEEP: the surface is still there (or it is still leaving)
             bar = s.planned.bar
             s.hidden = False
             s.window.root.set(visible=True)
@@ -860,6 +991,7 @@ class SurfaceManager:
             self._arm_hide_after(s)
             self._trace(s, "shown")
             logger.info(f"Panel {s.planned.where} shown (surface kept)")
+            self._enter(s)
             self.wake()
             return
         fresh = self._make_window(s.planned, LiveTree(self._store, self._all_uses, look=self._look))
@@ -873,9 +1005,121 @@ class SurfaceManager:
         self._arm_hide_after(s)
         self._trace(s, "shown")
         logger.info(f"Panel {s.planned.where} shown (window created)")
+        self._enter(s)
+
+    # -- Panel: animation (Panel > Configuration, Animation) -------------------------------------
+    #
+    # SLIDE moves the surface's margin a short way toward the edge it grows from (its attached
+    # target, or its anchored edge) while its opacity runs 0 to 1, so it never covers its
+    # neighbour; FADE is the opacity alone. tre runs both in the engine, one small commit per step
+    # and no Python until the end. With the desktop's reduced-motion setting on, nothing moves.
+
+    def _animated(self, s: Surface) -> bool:
+        panel = s.planned.bar if s.planned else None
+        if not isinstance(panel, PanelDef) or panel.animation == "NONE" or s.window is None:
+            return False
+        return not (self._look is not None and self._look.appearance.reduced_motion)
+
+    @staticmethod
+    def _slide_from(panel: PanelDef, geometry: Geometry) -> tuple[int, int] | None:
+        """The margin a slide starts from: its index in tre's (top, right, bottom, left) order and
+        the signed distance from the resting margin, or ``None`` when there is nothing to slide
+        along (a centred floating Panel)."""
+        d = SLIDE_DISTANCE
+        if panel.attach_to:
+            return {"BOTTOM": (0, -d), "TOP": (0, d), "RIGHT": (3, -d), "LEFT": (3, d)}.get(
+                panel.attach or "BOTTOM"
+            )
+        for edge, index in (("top", 0), ("bottom", 2), ("left", 3), ("right", 1)):
+            if edge in geometry.anchor:
+                return (index, -d)  # closer to its edge: a smaller margin
+        return None
+
+    def _move(self, s: Surface, toward_rest: bool, done: Callable[[], None]) -> None:
+        """Run the animation: in (``toward_rest``) or out; ``done`` runs when it ends, unless
+        another show or hide replaced it first."""
+        assert s.window is not None and s.planned is not None
+        panel = s.planned.bar
+        assert isinstance(panel, PanelDef)
+        window, ms = s.window, int(panel.duration)
+        s.generation += 1
+        generation = s.generation
+        slide = self._slide_from(panel, s.geometry) if panel.animation == "SLIDE" else None
+        self._fire(s, "On_Anim_Start")
+        logger.debug(
+            f"Panel {s.planned.where} {panel.animation.lower()} {'in' if toward_rest else 'out'}, "
+            f"{ms} ms"
+        )
+
+        def ended() -> None:
+            if s.generation == generation:
+                self._fire(s, "On_Anim_End")
+                done()
+
+        easing = (0.0, 0.0, 0.2, 1.0) if toward_rest else (0.4, 0.0, 1.0, 1.0)
+        if slide is not None:
+            index, away = slide
+            rest = s.geometry.margin
+            far = tuple(v + away if i == index else v for i, v in enumerate(rest))
+            if toward_rest and window.get("margin") == rest:
+                window.set(margin=far)  # start from the far side, unless a hide left it midway
+            window.animate(
+                ("margin_top", "margin_right", "margin_bottom", "margin_left")[index],
+                (rest if toward_rest else far)[index],
+                ms,
+                easing,
+            )
+        if toward_rest and window.root.get("opacity") == 1.0:
+            window.root.set(opacity=0.0)
+        window.root.animate("opacity", 1.0 if toward_rest else 0.0, ms, easing, ended)
+        self.wake()  # tre draws this window's animation only once its loop is awake (TRE-REQ-012)
+
+    def _enter(self, s: Surface) -> None:
+        """The Panel is shown: slide or fade it in, then it is visible."""
+        if self._animated(s):
+            self._move(s, True, lambda: self._fire(s, "On_Visible"))
+            return
+        s.generation += 1  # a hide that was still leaving is cancelled
+        if s.window is not None:
+            s.window.set(margin=s.geometry.margin)
+            s.window.root.set(opacity=1.0)
+            s.window.after(1, lambda: self._fire(s, "On_Visible") if not s.hidden else None)
+
+    def _leave(self, s: Surface, done: Callable[[], None]) -> None:
+        if self._animated(s):
+            self._move(s, False, done)
+        else:
+            s.generation += 1
+            done()
+
+    # -- Panel: its own events (Events and Actions) ------------------------------------------------
+
+    def _fire(self, s: Surface, key: str) -> None:
+        """Run the handler a Panel wrote for ``key``. A shell file can name only the shell's own
+        actions (Show, Hide, Toggle); a handler that shows a Panel that shows this one again is
+        stopped after a few turns and logged, not left to loop."""
+        panel = s.planned.bar if s.planned else None
+        handler = panel.handlers.get(key) if isinstance(panel, PanelDef) else None
+        if handler is None:
+            return
+        if self._depth >= 8:
+            logger.error(
+                f"{handler.origin}: {key} on Panel {s.name} calls itself in a loop; stopped"
+            )
+            return
+        self._depth += 1
+        try:
+            self.run_builtin(handler)
+        except Exception:
+            logger.exception(f"{handler.origin}: {key} on Panel {s.name} raised")
+        finally:
+            self._depth -= 1
 
     def run_builtin(self, handler: Handler) -> None:
         """A shell action (``Show``, ``Hide``, ``Toggle``) on the Panel it names."""
+        if handler.action == "Close":  # a Popup's own blocks close it (Popups); this one is not
+            logger.warning(f"{handler.origin}: Close: the block is not in a Popup; nothing closed")
+            return
         target = handler.args.get("Target")
         hits = [
             s
@@ -891,6 +1135,7 @@ class SurfaceManager:
             elif handler.action == "Hide":
                 self.hide(s)
             else:
+                self._fire(s, "On_Toggle")  # before: the request is made
                 (self.hide if not s.hidden else self.show)(s)
 
     # -- changes ------------------------------------------------------------------------------
@@ -901,6 +1146,9 @@ class SurfaceManager:
         assert surface.view is not None
         try:
             stats = surface.view.rebuild(surface.live.resolve(surface.expanded))
+            if surface.planned is not None:
+                self._watch_targets(surface.view, surface.planned)
+                self.popups.watch(surface.view, surface.planned)
             logger.debug(f"rebuilt Bar {surface.name}: {stats}")
         except BindFailed as failed:
             for error in failed.errors:
@@ -921,6 +1169,7 @@ class SurfaceManager:
                 logger.debug(f"update {node_id} {key} = {shown!r}")
             for error in surface.view.update(updates):
                 logger.warning(f"{error.origin}: {error.message}")
+        self.popups.on_change(changes)
         self.wake()
 
     def check(
@@ -930,6 +1179,7 @@ class SurfaceManager:
         an error that would leave it empty: the running state is kept."""
         planned, uses = self._plan_bars(shell, modules, look or self._look)
         failed = [p for p in planned if p.expanded.errors]
+        failed.extend(p for p in self._popup_plans if p.expanded.errors)  # type: ignore[misc]
         for p in failed:
             _log_errors(p.expanded.errors)
         if failed:
@@ -950,7 +1200,9 @@ class SurfaceManager:
         self._modules = modules
         if look is not None:
             self._look = look
+        self.popups.set_plans(self._popup_plans)  # the plans of the check just made
         all_uses = {u.key: u for p in planned for u in p.expanded.uses}
+        all_uses.update(self.popups.uses())
         self._all_uses = all_uses
         old = {s.key: s for s in self.surfaces}
         out: list[Surface] = []
@@ -976,8 +1228,8 @@ class SurfaceManager:
             self._store.remove_use(key)
         self.wake()
 
-    @staticmethod
-    def _close(s: Surface) -> None:
+    def _close(self, s: Surface) -> None:
+        self.popups.parent_closed(s)
         if s.timer is not None:
             s.timer.cancel()
             s.timer = None
@@ -1005,6 +1257,8 @@ class SurfaceManager:
                 s.view.sink = self._dispatch
             else:
                 stats = str(s.view.rebuild(nodes))
+                self._watch_targets(s.view, p)
+                self.popups.watch(s.view, p)
         except BindFailed as failed:
             _log_errors(failed.errors)
             logger.error(
@@ -1014,8 +1268,6 @@ class SurfaceManager:
         s.live, s.expanded, s.name, s.planned = live, p.expanded, p.bar.name, p
         self._sync_body(s, p.bar, p.geometry, p.where)
         logger.info(f"{_kind(p.bar)} {p.where} reloaded: {stats}")
-        if isinstance(p.bar, BarDef) and s.window is not None:
-            self._relayout_soon(s.window, p.group)
 
     @staticmethod
     def _output_size(s: Surface) -> tuple[int, int]:

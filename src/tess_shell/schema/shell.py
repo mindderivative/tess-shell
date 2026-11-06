@@ -25,6 +25,7 @@ from tess_shell.schema.model import (
     MonitorDef,
     PanelDef,
     ParamDecl,
+    PopupDef,
     ShellDef,
     StyleDef,
     use_names,
@@ -40,7 +41,7 @@ from tess_shell.schema.values import (
 )
 
 _NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
-_SURFACES = ("Bar", "Panel", *blocks.OTHER_SURFACES)
+_SURFACES = ("Bar", "Panel", "Popup", *blocks.OTHER_SURFACES)
 _NOT_BUILT = "not built in M1"
 
 
@@ -63,6 +64,7 @@ class _Ctx:
         self.import_module = import_module
         self.findings: list[Finding] = []
         self.in_module = False  # a module's layout: a bare action name is one of its @actions
+        self.in_popup = False  # the blocks of a Popup: Close closes the Popup that holds them
         self.names: dict[str, m.Origin] = {}
         self.selectors: dict[tuple[str, str], m.Origin] = {}
 
@@ -377,11 +379,14 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
     module = ctx.modules[block.type]
     name: str | None = None
     params: dict[str, m.Value] = {}
+    tooltip: m.TooltipRef | None = None
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
             if key == "Name":
                 name = ctx.name(entry)
+            elif key == "Tooltip":
+                tooltip = _tooltip_name(ctx, entry, f"a use of {module.name}")
             elif key in ("Style", "Class") or key.startswith("On_"):
                 ctx.not_built(entry.key_origin, f"{key} on a module call")
             elif key in module.params:
@@ -398,6 +403,8 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
             else:
                 allowed = ["Name", *module.params]
                 ctx.unknown(entry.key_origin, key, allowed, f"param of {module.name}")
+        elif isinstance(entry, Block) and entry.type == "Tooltip":
+            tooltip = _tooltip_block(ctx, entry)
         elif isinstance(entry, Block):
             ctx.unknown(entry.origin, entry.type, ["Name", *module.params], f"key of {module.name}")
         elif isinstance(entry, tess_dl.If | tess_dl.For):
@@ -410,7 +417,9 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
                 f"{module.name} needs the param {decl.name}",
                 f"write {decl.name}: ...",
             )
-    return m.UseNode(module.name, name=name, params=params, origin=ctx.origin(block.origin))
+    return m.UseNode(
+        module.name, name=name, params=params, tooltip=tooltip, origin=ctx.origin(block.origin)
+    )
 
 
 def _block(ctx: _Ctx, block: Block) -> Child | None:
@@ -430,6 +439,7 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
     classes: list[str] = []
     handlers: dict[str, m.Handler] = {}
     children: list[Child] = []
+    tooltip: m.TooltipRef | None = None
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
@@ -444,7 +454,7 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
                 if handler is not None:
                     handlers[key] = handler
             elif key == "Tooltip":
-                ctx.not_built(entry.key_origin, key)
+                tooltip = _tooltip_name(ctx, entry, f"a {block.type}", block.type)
             elif key in prop_keys or key in style_keys:
                 kind = prop_keys.get(key) or style_keys[key]
                 value = _typed(ctx, block.type, entry, kind, read_text=kind == "svg_source")
@@ -458,6 +468,8 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
                 handler = _handler(ctx, block.type, entry.type, entry.origin, entry)
                 if handler is not None:
                     handlers[entry.type] = handler
+            elif entry.type == "Tooltip":
+                tooltip = _tooltip_block(ctx, entry, block.type)
             elif entry.type == "Style":
                 for k, v in _scalar_block_keys(ctx, entry, style_keys, block.type).items():
                     style[k] = v
@@ -528,6 +540,7 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
         children=tuple(children),
         classes=tuple(classes),
         handlers=handlers,
+        tooltip=tooltip,
         origin=ctx.origin(block.origin),
     )
 
@@ -592,6 +605,8 @@ def _handler(
         if name not in blocks.BUILTIN_BUILT:
             ctx.not_built(at, f"the built-in action {name}")
             return None
+        if name == "Close":
+            return _close(ctx, key, args, at, origin)
         target = args.get("Target")
         if not isinstance(target, str):
             ctx.add(
@@ -611,6 +626,34 @@ def _handler(
         )
         return None
     return m.Handler(name, args, origin=ctx.origin(origin))
+
+
+def _close(
+    ctx: _Ctx,
+    key: str,
+    args: dict[str, object],
+    at: tess_dl.Origin | None,
+    origin: tess_dl.Origin | None,
+) -> m.Handler | None:
+    """``Close``: closes the Popup that holds the block, so it takes no ``Target`` and means
+    something only in a Popup's blocks (or in a module's layout, which a Popup may use)."""
+    if "Target" in args:
+        ctx.add(
+            at,
+            "bad-key",
+            "Close takes no Target: it closes the Popup that holds the block",
+            "remove Target",
+        )
+        return None
+    if not (ctx.in_popup or ctx.in_module):
+        ctx.add(
+            at,
+            "close-outside-popup",
+            f"{key}: Close closes the Popup that holds the block, and this block is in none",
+            "write it in a Popup's Children; Hide closes a Panel",
+        )
+        return None
+    return m.Handler("Close", args, builtin=True, origin=ctx.origin(origin))
 
 
 def _plain(value: tess_dl.Value) -> object | None:
@@ -819,12 +862,18 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
     written: set[str] = set()  # the keys the Panel wrote, for the Attach_To rules
     style: dict[str, m.Value] = {}
     children: list[Child] = []
+    handlers: dict[str, m.Handler] = {}
+    animation = ("NONE", 200.0)
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
             written.add(key)
             if key == "Name":
                 name = ctx.name(entry)
+            elif key.startswith("On_"):
+                handler = _handler(ctx, "Panel", key, entry.key_origin, entry.value)
+                if handler is not None:
+                    handlers[key] = handler
             elif key == "Style":
                 ctx.not_built(entry.key_origin, "a Style file")
             elif key in blocks.PANEL_NOT_BUILT_ERROR:
@@ -856,6 +905,12 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
                 style = _scalar_block_keys(ctx, entry, blocks.PANEL_STYLE, "Panel")
             elif entry.type == "Children":
                 children = _children(ctx, entry, lambda b: _block(ctx, b))
+            elif entry.type.startswith("On_"):
+                handler = _handler(ctx, "Panel", entry.type, entry.origin, entry)
+                if handler is not None:
+                    handlers[entry.type] = handler
+            elif entry.type == "Animation":
+                animation = _animation(ctx, entry)
             elif entry.type == "Inset":
                 written.add("Inset")
                 try:
@@ -911,6 +966,14 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
                     f"{key} is the placement against a target and needs Attach_To",
                     "write Attach_To: <a surface's Name>",
                 )
+    movable = values.get("Movable")
+    if isinstance(movable, m.Bool) and movable.value and attach_to is not None:
+        ctx.add(
+            block.origin,
+            "movable-attached",
+            "a Panel placed by Attach_To cannot also be Movable",
+            "only a Panel placed by Anchor and Inset (or floating) has a position to save",
+        )
     layer = values.get("Layer")
     if name is None or "Width" not in values or "Height" not in values:
         return None
@@ -948,7 +1011,284 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         attach=word("Attach", "") or None,
         gap=float(gap.value) if isinstance(gap, m.Number) else 0,
         alignment=word("Alignment", "CENTER"),
+        movable=movable.value if isinstance(movable, m.Bool) else False,
+        animation=animation[0],
+        duration=float(animation[1]),
+        handlers=handlers,
     )
+
+
+def _animation(ctx: _Ctx, block: Block) -> tuple[str, float]:
+    """``Animation { Type: SLIDE, Duration: 200 }``: the type defaults to SLIDE, the duration to
+    200 ms (Panel > Configuration); ``NONE`` or a duration of 0 is no animation."""
+    kind, duration = "SLIDE", 200.0
+    for entry in block.entries:
+        if isinstance(entry, Property) and entry.key == "Type":
+            try:
+                value = coerce(
+                    "enum", entry.value, ctx.origin(entry.key_origin), blocks.PANEL_ANIMATION_TYPES
+                )
+            except ValueProblem as exc:
+                ctx.problem(entry.value_origin, "Type", exc)
+                continue
+            if isinstance(value, m.Enum):
+                kind = value.name
+        elif isinstance(entry, Property) and entry.key == "Duration":
+            try:
+                value = coerce("number", entry.value, ctx.origin(entry.key_origin), ())
+            except ValueProblem as exc:
+                ctx.problem(entry.value_origin, "Duration", exc)
+                continue
+            if isinstance(value, m.Number):
+                duration = float(value.value)
+        else:
+            key = entry.key if isinstance(entry, Property) else getattr(entry, "type", "?")
+            ctx.unknown(
+                getattr(entry, "key_origin", None) or getattr(entry, "origin", None),
+                key,
+                ["Type", "Duration"],
+                "key in Animation",
+            )
+    return ("NONE", 0.0) if kind == "NONE" or duration <= 0 else (kind, duration)
+
+
+def _tooltip_hosts(ctx: _Ctx, origin: tess_dl.Origin | None, kind: str | None) -> bool:
+    """A Tooltip opens when the pointer enters its block, so the block must raise pointer events;
+    a Text raises none (tre: it takes no listener)."""
+    if kind is None or kind in blocks.BLOCK_EVENTS:
+        return True
+    ctx.add(
+        origin,
+        "event-not-raised",
+        f"a {kind} raises no pointer events, so it cannot have a Tooltip",
+        "put the Tooltip on the FlexBox or Box around it",
+    )
+    return False
+
+
+def _tooltip_name(
+    ctx: _Ctx, entry: Property, what: str, kind: str | None = None
+) -> m.TooltipRef | None:
+    """``Tooltip: Clock_Tooltip``: the ``Name`` of a Popup of the shell, which opens as this
+    block's or use's tooltip. A file name (``Clock_Tooltip.tdl``) is not built."""
+    if not _tooltip_hosts(ctx, entry.key_origin, kind):
+        return None
+    value = entry.value
+    text = value.value if isinstance(value, tess_dl.String) else getattr(value, "text", None)
+    if isinstance(text, str) and text.endswith(".tdl"):
+        ctx.not_built(entry.value_origin, f"Tooltip: {text} (a Popup in a file)")
+        return None
+    if not isinstance(text, str) or not _NAME.match(text):
+        ctx.add(
+            entry.value_origin,
+            "bad-name",
+            "Tooltip is the Name of a Popup, or an inline Tooltip { } block",
+            "write Tooltip: Clock_Tooltip",
+        )
+        return None
+    if ctx.in_module:
+        ctx.not_built(
+            entry.value_origin,
+            f"naming a Popup in {what} inside a module (a module does not know the shell's "
+            "Popups; write the Tooltip { } block)",
+        )
+        return None
+    return m.TooltipRef(name=text, origin=ctx.origin(entry.key_origin))
+
+
+def _tooltip_block(ctx: _Ctx, block: Block, kind: str | None = None) -> m.TooltipRef | None:
+    """``Tooltip { Children { ... } }``: an inline Popup that is a tooltip."""
+    if not _tooltip_hosts(ctx, block.origin, kind):
+        return None
+    popup = _popup(ctx, block, inline=True)
+    return None if popup is None else m.TooltipRef(popup=popup, origin=ctx.origin(block.origin))
+
+
+def _adjust(ctx: _Ctx, entry: Property) -> tuple[str, ...] | None:
+    """``Adjust: [FLIP_Y, SLIDE_X]`` or one word: what the compositor may do to keep the popup
+    on screen; ``[]`` asks for nothing."""
+    value = entry.value
+    items = list(value.items) if isinstance(value, tess_dl.List) else [value]
+    out: list[str] = []
+    for item in items:
+        word = item.text if isinstance(item, tess_dl.Word) else None
+        if word not in blocks.POPUP_ADJUST:
+            ctx.add(
+                entry.value_origin,
+                "bad-value",
+                f"Adjust is {', '.join(blocks.POPUP_ADJUST)}, one or a list",
+                "write Adjust: [FLIP_Y, SLIDE_X]",
+            )
+            return None
+        if word.lower() in out:
+            ctx.add(entry.value_origin, "bad-value", f"Adjust names {word} twice", "")
+            return None
+        out.append(word.lower())
+    return tuple(out)
+
+
+def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
+    """A ``Popup { }`` of a Monitor, or the ``Tooltip { }`` block of a block or use (``inline``:
+    it has no ``Name`` and is a tooltip by being one)."""
+    what = "Tooltip" if inline else "Popup"
+    allowed = [
+        "Style",
+        "Children",
+        *(k for k in blocks.POPUP_KEYS if not (inline and k == "Tooltip")),
+        *blocks.POPUP_NOT_BUILT,
+        *(() if inline else ("Name",)),
+    ]
+    name: str | None = None
+    values: dict[str, m.Value] = {}
+    adjust: tuple[str, ...] | None = None
+    written: set[str] = set()
+    style: dict[str, m.Value] = {}
+    children: list[Child] = []
+    for entry in block.entries:
+        if isinstance(entry, Property):
+            key = entry.key
+            written.add(key)
+            if key == "Name" and not inline:
+                name = ctx.name(entry)
+            elif key == "Style":
+                ctx.not_built(entry.key_origin, "a Style file")
+            elif key in blocks.POPUP_NOT_BUILT:
+                ctx.not_built(entry.key_origin, f"the {what} key {key}")
+            elif key == "Adjust":
+                adjust = _adjust(ctx, entry)
+            elif key in blocks.POPUP_KEYS and not (inline and key == "Tooltip"):
+                try:
+                    values[key] = coerce(
+                        blocks.POPUP_KEYS[key],
+                        entry.value,
+                        ctx.origin(entry.key_origin),
+                        blocks.POPUP_CHOICES.get(key, ()),
+                    )
+                except ValueProblem as exc:
+                    ctx.problem(entry.value_origin, key, exc)
+            else:
+                ctx.unknown(entry.key_origin, key, allowed, f"key in {what}")
+        elif isinstance(entry, Block):
+            if entry.type == "Style":
+                style = _scalar_block_keys(ctx, entry, blocks.POPUP_STYLE, what)
+            elif entry.type == "Children":
+                before = ctx.in_popup
+                ctx.in_popup = True
+                try:
+                    children = _children(ctx, entry, lambda b: _block(ctx, b))
+                finally:
+                    ctx.in_popup = before
+            elif entry.type in blocks.POPUP_NOT_BUILT:
+                ctx.not_built(entry.origin, f"the {what} key {entry.type}")
+            else:
+                ctx.unknown(entry.origin, entry.type, allowed, f"block in {what}")
+        elif isinstance(entry, tess_dl.If | tess_dl.For):
+            ctx.not_built(entry.origin, "If and For")
+    if not inline and name is None and "Name" not in written:
+        ctx.add(block.origin, "missing-key", "a Popup needs a Name", "write Name: Tray_Menu")
+    for key in ("Width", "Height"):
+        v = values.get(key)
+        if isinstance(v, m.Percent | m.Expand):
+            ctx.add(
+                v.origin,
+                "not-built",
+                f"{type(v).__name__.upper()} as a {what} {key} is {_NOT_BUILT}",
+                "write pixels or AUTO",
+            )
+    for key in ("Max_Width", "Max_Height"):
+        v = values.get(key)
+        if isinstance(v, m.Percent):
+            ctx.add(v.origin, "not-built", f"a percentage as {key} is {_NOT_BUILT}", "write pixels")
+    if (name is None and not inline) or any(
+        isinstance(values.get(k), m.Percent | m.Expand) for k in ("Width", "Height")
+    ):
+        return None
+
+    def flag(key: str, default: bool) -> bool:
+        v = values.get(key)
+        return v.value if isinstance(v, m.Bool) else default
+
+    def num(key: str, default: float) -> float:
+        v = values.get(key)
+        return float(v.value) if isinstance(v, m.Number) else default
+
+    def bound(key: str, default: float) -> float:
+        v = values.get(key)
+        return v.px if isinstance(v, m.Length) else default
+
+    def word(key: str, default: str) -> str:
+        v = values.get(key)
+        return v.name if isinstance(v, m.Enum) else default
+
+    tooltip = inline or flag("Tooltip", False)  # a tooltip: no focus, opens and closes on hover
+    return PopupDef(
+        name=name or "",
+        origin=ctx.origin(block.origin),
+        attach=word("Attach", "BOTTOM"),
+        alignment=word("Alignment", "START"),
+        gap=num("Gap", 0),
+        adjust=("flip_y", "slide_x") if adjust is None else adjust,
+        width=values.get("Width") or m.Auto(),
+        height=values.get("Height") or m.Auto(),
+        max_width=bound("Max_Width", 300),
+        max_height=bound("Max_Height", 400),
+        focus=flag("Focus", not tooltip),
+        tooltip=tooltip,
+        open_on_enter=flag("Open_On_Enter", tooltip),
+        enter_delay=num("Enter_Delay", 500),
+        close_on_exit=flag("Close_On_Exit", tooltip),
+        exit_delay=num("Exit_Delay", 200),
+        style=style,
+        children=tuple(children),
+    )
+
+
+def _tooltip_refs(children: tuple[Child, ...]) -> list[tuple[m.TooltipRef, bool]]:
+    """Every Tooltip written in ``children`` at any depth, with whether it names a Popup."""
+    found: list[tuple[m.TooltipRef, bool]] = []
+    for node in children:
+        if isinstance(node, m.Node | m.UseNode) and node.tooltip is not None:
+            found.append((node.tooltip, node.tooltip.name is not None))
+        if isinstance(node, m.Node):
+            found.extend(_tooltip_refs(node.children))
+            if node.tooltip is not None and node.tooltip.popup is not None:
+                found.extend(_tooltip_refs(node.tooltip.popup.children))
+        elif isinstance(node, m.UseNode) and node.tooltip and node.tooltip.popup is not None:
+            found.extend(_tooltip_refs(node.tooltip.popup.children))
+        elif isinstance(node, m.IfNode):
+            found.extend(_tooltip_refs(node.body))
+            found.extend(_tooltip_refs(node.else_body or ()))
+        elif isinstance(node, m.ForNode):
+            found.extend(_tooltip_refs(node.body))
+    return found
+
+
+def _check_tooltips(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
+    """``Tooltip: Name`` names a Popup of the same Monitor that opens on enter (a Popup with
+    ``Tooltip: true``, or ``Open_On_Enter: true``)."""
+    for monitor in monitors:
+        popups = {p.name: p for p in monitor.popups}
+        trees: list[tuple[Child, ...]] = [s.children for s in monitor.surfaces]
+        trees.extend(p.children for p in monitor.popups)
+        for tree in trees:
+            for ref, by_name in _tooltip_refs(tree):
+                if not by_name:
+                    continue
+                target = popups.get(ref.name or "")
+                if target is None:
+                    ctx.add(
+                        ref.origin,
+                        "tooltip-unknown",
+                        f"Tooltip names {ref.name}, which is no Popup of Monitor {monitor.name}",
+                        "the Popups here are: " + (", ".join(sorted(popups)) or "none"),
+                    )
+                elif not target.open_on_enter:
+                    ctx.add(
+                        ref.origin,
+                        "tooltip-not-hover",
+                        f"Popup {target.name} is used as a Tooltip but does not open on enter",
+                        f"write Tooltip: true (or Open_On_Enter: true) in {target.name}",
+                    )
 
 
 def _anchors(ctx: _Ctx, entry: Property) -> tuple[str, ...]:
@@ -995,6 +1335,7 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
     connector: str | None = None
     description: str | None = None
     surfaces: list[BarDef | PanelDef] = []
+    popups: list[PopupDef] = []
     saw_name = False
     for entry in block.entries:
         if isinstance(entry, Property):
@@ -1038,6 +1379,10 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
                             panel = _panel(ctx, child)
                             if panel is not None:
                                 surfaces.append(panel)
+                        elif child.type == "Popup":
+                            popup = _popup(ctx, child)
+                            if popup is not None:
+                                popups.append(popup)
                         elif child.type in blocks.OTHER_SURFACES:
                             ctx.not_built(child.origin, f"{child.type}")
                         else:
@@ -1080,6 +1425,7 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
         connector=connector,
         description=description,
         surfaces=tuple(surfaces),
+        popups=tuple(popups),
     )
 
 
@@ -1116,6 +1462,7 @@ def read_shell(
         elif isinstance(entry, Property):
             ctx.unknown(entry.key_origin, entry.key, ["Monitor"], "key in Shell")
     _check_attach(ctx, monitors)
+    _check_tooltips(ctx, monitors)
     name = document.metadata.get("Name")
     shell_name = getattr(name, "text", None) or getattr(name, "value", "") or ""
     if any(f.severity == "error" for f in ctx.findings):

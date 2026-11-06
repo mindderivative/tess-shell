@@ -25,7 +25,7 @@ from tess_shell.binder import model as m
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.module import Event, Module
-from tess_shell.modules.context import ModuleContext, UseRecord
+from tess_shell.modules.context import ModuleContext, PopupPort, UseRecord
 from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.findings import Finding
 from tess_shell.schema.model import ModuleDef
@@ -88,6 +88,7 @@ class ModuleHost:
         self.ticks = ticks
         self.config_root = config_root
         self.loaded: dict[str, LoadedModule] = {}
+        self.popups: PopupPort | None = None  # set by the app once the surfaces exist
 
     def _finding(
         self, definition: ModuleDef, rule: str, message: str, hint: str = "", line: int = 0
@@ -197,6 +198,7 @@ class ModuleHost:
             records,
             lambda use, key, value: self.store.send(definition.name, use, key, value),
             self.ticks,
+            lambda: self.popups,
         )
         instance = classes[0].__new__(classes[0])
         instance.ctx = ctx
@@ -237,12 +239,15 @@ class ModuleHost:
             button=getattr(raw, "button", None),
         )
         started = time.monotonic()
+        loaded.ctx.caller = loaded.ctx.uses.get(handler.use)  # what ctx.popup() calls from
         try:
             fn(event)
         except Exception:
             logger.opt(exception=True).error(
                 f"{handler.origin}: {module}.{handler.action} raised on {key}"
             )
+        finally:
+            loaded.ctx.caller = None
         took = time.monotonic() - started
         if took > SLOW_ACTION:
             logger.warning(

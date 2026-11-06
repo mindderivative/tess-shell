@@ -270,3 +270,41 @@ def test_a_panel_attached_to_a_module_follows_the_module_and_clears_the_bar(
         if shell.process.poll() is None:
             shell.process.kill()
     assert "| ERROR " not in "".join(shell.seen)
+
+
+FADING = (
+    "Panel { Name: Fader, Layer: OVERLAY, Anchor: [TOP, LEFT], Inset: [100, 100, 0, 0], "
+    "Width: 120, Height: 60, Hide_After: 400, Animation { Type: FADE, Duration: 400 }, "
+    'Style { Fill: "#ff0000" } }'
+)
+
+
+def test_the_engine_runs_a_fade_out_and_the_panel_is_gone_when_it_ends(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    import subprocess
+
+    def look() -> tuple[int, int, int, int] | None:
+        shot = subprocess.run(
+            ["grim", "-t", "ppm", "-"], env=private_sway.env, capture_output=True, check=True
+        ).stdout
+        return _rect_of(shot, (255, 0, 0))
+
+    shell = start(private_sway, tmp_path, FADING, hide="KEEP")  # KEEP also sets DEBUG logging
+    try:
+        shell.wait_for("Panel Fader on HEADLESS-1 configured")
+        shell.wait_for("running")
+        time.sleep(0.2)
+        assert look() == (100, 100, 219, 159)  # shown, fully opaque
+        shell.wait_for("Panel Fader on HEADLESS-1 fade out, 400 ms")
+        shell.wait_for("Panel Fader on HEADLESS-1 hidden (surface kept)")
+        began = next(x for x in shell.seen if "fade out, 400 ms" in x)
+        ended = next(x for x in shell.seen if "hidden (surface kept)" in x)
+        assert 0.35 < stamp(ended) - stamp(began) < 0.9  # the engine took the duration
+        time.sleep(0.3)
+        assert look() is None  # nothing of it is left on the screen
+        finish(shell)
+    finally:
+        if shell.process.poll() is None:
+            shell.process.kill()
+    assert "| ERROR " not in "".join(shell.seen)

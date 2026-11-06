@@ -27,7 +27,7 @@ from tess_shell.files.loader import (
     load_theme_file,
     register_module,
 )
-from tess_shell.model.look import Look, check_tokens, make_look
+from tess_shell.model.look import Look, check_states, check_tokens, make_look
 from tess_shell.schema.findings import Finding, nearest, render_findings
 from tess_shell.schema.graph import module_cycles
 from tess_shell.schema.look import effective_tokens
@@ -242,12 +242,22 @@ def _check_look(
     if theme is None:
         return out
     tokens = effective_tokens(theme, Appearance(), themes.get(DEFAULT_THEME))
+    rules = [
+        r
+        for name in settings.appearance.stylesheets
+        if name in stylesheets
+        for r in stylesheets[name].rules
+    ]
+    stated: list[Finding] = []  # a rule reaches many blocks: the warning is one per rule
     for shell in shells.values():
         for monitor in shell.monitors:
             for bar in monitor.surfaces:
                 out.extend(check_tokens(bar.children, tokens, bar.style))
-    for mf in modules.values():
+                stated.extend(check_states(bar.children, rules))
+    for name, mf in modules.items():
         out.extend(check_tokens(mf.definition.children, tokens))
+        stated.extend(check_states(mf.definition.children, rules, name))
+    out.extend({(f.file, f.line, f.column, f.message): f for f in stated}.values())
     return out
 
 

@@ -20,6 +20,17 @@ MAX_DEPTH = 8
 
 
 @dataclass(slots=True)
+class ExpandedTooltip:
+    """A tooltip of a block or a use: what was written (an inline Popup or a Popup's ``Name``)
+    and, for an inline one, its content expanded in the scope of the use that holds it, so a
+    slot in it reads that use's values."""
+
+    ref: m.TooltipRef
+    nodes: list[m.Node | m.IfNode | m.ForNode] = field(default_factory=list)
+    use: str = ""  # the key of the use that holds it; empty in a shell file
+
+
+@dataclass(slots=True)
 class Expanded:
     nodes: list[m.Node | m.IfNode | m.ForNode] = field(default_factory=list)
     uses: list[Use] = field(default_factory=list)
@@ -27,6 +38,10 @@ class Expanded:
     errors: list[m.BindError] = field(default_factory=list)
     # a use's ``Name`` -> the id of its root node, for a Panel attached to the module
     targets: dict[str, str] = field(default_factory=dict)
+    # a use's key -> the id of its first root block: the rectangle a Popup opens beside
+    roots: dict[str, str] = field(default_factory=dict)
+    # a node id (a block's, or a use's first root block) -> the tooltip it opens on hover
+    tooltips: dict[str, ExpandedTooltip] = field(default_factory=dict)
 
 
 def _has_slot(node: m.Node) -> bool:
@@ -41,8 +56,10 @@ class _Expander:
         monitor: str,
         rules: Sequence[Rule] = (),
         attach_targets: frozenset[str] = frozenset(),
+        mark_roots: bool = False,
     ) -> None:
         self.attach_targets = attach_targets
+        self.mark_roots = mark_roots
         self.rules = rules
         self.modules = modules
         self.uid_of = uid_of
@@ -122,8 +139,45 @@ class _Expander:
                     self.out.errors.append(
                         m.BindError("a slot outside a module is not built yet", v.origin)
                     )
+        if node.tooltip is not None:
+            name = self._tooltip(node, name, path, use, stack, dynamic)
         children = self._walk(node.children, path, use, stack, dynamic)
-        return dataclasses.replace(node, name=name, children=tuple(children))
+        return dataclasses.replace(node, name=name, children=tuple(children), tooltip=None)
+
+    def _tooltip(
+        self,
+        node: m.Node,
+        name: str | None,
+        path: str,
+        use: Use | None,
+        stack: tuple[str, ...],
+        dynamic: bool,
+    ) -> str | None:
+        """A block with a ``Tooltip``: it gets an id (the surface finds its tre node by it) and
+        the tooltip's own content is expanded in the scope of the use that holds the block."""
+        assert node.tooltip is not None
+        if dynamic:
+            self.out.errors.append(
+                m.BindError("a Tooltip inside If or For is not built yet", node.tooltip.origin)
+            )
+            return name
+        if name is None:
+            owner = use.key if use is not None else path
+            n = self._counts.get(f"tip:{owner}", 0)
+            self._counts[f"tip:{owner}"] = n + 1
+            name = f"{owner}/#tip{n}"
+            if use is not None:
+                self.out.owner[name] = use.key
+        self._register_tooltip(name, node.tooltip, path, use, stack)
+        return name
+
+    def _register_tooltip(
+        self, node_id: str, ref: m.TooltipRef, path: str, use: Use | None, stack: tuple[str, ...]
+    ) -> None:
+        nodes: list[m.Node | m.IfNode | m.ForNode] = []
+        if ref.popup is not None:
+            nodes = self._walk(ref.popup.children, path, use, stack)
+        self.out.tooltips[node_id] = ExpandedTooltip(ref, nodes, use.key if use else "")
 
     def _use(
         self, call: m.UseNode, path: str, stack: tuple[str, ...]
@@ -148,6 +202,10 @@ class _Expander:
         roots = apply_module_rules(roots, call.module, self.rules)  # type: ignore[assignment]
         if call.name in self.attach_targets:
             self._mark_target(call, key, roots)
+        if self.mark_roots:
+            self._first_root(call, key, roots, "root", "a Popup could open beside")
+        if call.tooltip is not None:
+            self._mark_tooltip(call, key, roots, name, use, (*stack, call.module))
         return roots
 
     def _mark_target(
@@ -155,16 +213,46 @@ class _Expander:
     ) -> None:
         """A Panel is attached to this use: its first root block gets an id, so the surface can
         read where tre laid it out."""
+        name = self._first_root(call, key, roots, "target", "a Panel could attach to")
+        if name is not None:
+            self.out.targets[call.name or ""] = name
+
+    def _mark_tooltip(
+        self,
+        call: m.UseNode,
+        key: str,
+        roots: list[m.Node | m.IfNode | m.ForNode],
+        path: str,
+        use: Use,
+        stack: tuple[str, ...],
+    ) -> None:
+        """A tooltip on this use: the use's first root block is what the pointer enters, and the
+        tooltip's content is expanded in this use's scope."""
+        assert call.tooltip is not None
+        name = self._first_root(call, key, roots, "tooltip", "a Tooltip could open on")
+        if name is not None:
+            self._register_tooltip(name, call.tooltip, path, use, stack)
+
+    def _first_root(
+        self,
+        call: m.UseNode,
+        key: str,
+        roots: list[m.Node | m.IfNode | m.ForNode],
+        suffix: str,
+        purpose: str,
+    ) -> str | None:
+        """The id of the use's first root block, given one if it has none."""
         for i, root in enumerate(roots):
             if isinstance(root, m.Node):
-                name = root.name or f"{key}/#target"
+                name = root.name or f"{key}/#{suffix}"
                 self.out.owner[name] = key
-                self.out.targets[call.name or ""] = name
+                self.out.roots[key] = name
                 roots[i] = dataclasses.replace(root, name=name)
-                return
+                return name
         self.out.errors.append(
-            m.BindError(f"{call.module} has no root block a Panel could attach to", call.origin)
+            m.BindError(f"{call.module} has no root block {purpose}", call.origin)
         )
+        return None
 
 
 def expand(
@@ -175,9 +263,11 @@ def expand(
     monitor: str,
     rules: Sequence[Rule] = (),
     attach_targets: frozenset[str] = frozenset(),
+    mark_roots: bool = False,
 ) -> Expanded:
     """Expand the children of one surface. ``path`` is the surface's dotted name.
-    ``attach_targets`` are the ``Name`` of the uses a Panel is attached to."""
-    expander = _Expander(modules, uid_of, monitor, rules, attach_targets)
+    ``attach_targets`` are the ``Name`` of the uses a Panel is attached to; ``mark_roots`` gives
+    every use's first root block an id (``Expanded.roots``), for a Popup to open beside."""
+    expander = _Expander(modules, uid_of, monitor, rules, attach_targets, mark_roots)
     expander.run(nodes, path)
     return expander.out

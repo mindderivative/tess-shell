@@ -294,14 +294,164 @@ def test_a_bad_rule_is_reported(body: str, needle: str) -> None:
     assert any(needle in f.message + f.hint for f in findings), findings
 
 
-def test_state_and_part_selectors_are_skipped_with_a_warning() -> None:
+def test_part_and_unbuilt_state_selectors_are_skipped_with_a_warning_that_says_why() -> None:
     s, findings = sheet(
-        'Stylesheet { Rule { Selector: "Text:hovered", Foreground: "#fff" }\n'
+        'Stylesheet { Rule { Selector: "Text:focused", Foreground: "#fff" }\n'
+        'Rule { Selector: "Text:disabled", Foreground: "#fff" }\n'
         'Rule { Selector: "Text::label", Foreground: "#fff" } }'
     )
     assert s.rules == ()
-    assert [f.severity for f in findings] == ["warning", "warning"]
+    assert [f.severity for f in findings] == ["warning"] * 3
     assert all(f.rule == "not-built" for f in findings)
+    assert "no block can take focus" in findings[0].message
+    assert "no block has an Enabled key" in findings[1].message
+    assert "no block has named parts" in findings[2].message
+
+
+def test_an_unknown_state_is_an_error_that_names_the_four_states() -> None:
+    result = tess_dl.parse(
+        HEADER + 'Stylesheet { Rule { Selector: "Text:hover", Foreground: "#fff" } }',
+        path="S_Stylesheet.tdl",
+    )
+    assert result.document is not None
+    found, findings = read_stylesheet(result.document, "S_Stylesheet.tdl", set())
+    assert found is None
+    (error,) = [f for f in findings if f.severity == "error"]
+    assert "':hover' is not a style state" in error.message
+    assert all(s in error.hint for s in (":hovered", ":pressed", ":focused", ":disabled"))
+
+
+# -- state selectors (D39) ----------------------------------------------------------------------
+
+STATES = """
+Stylesheet {
+    Rule { Selector: "Text", Foreground: "#111111" }
+    Rule { Selector: "FlexBox:hovered", Background: "#010101" }
+    Rule { Selector: "FlexBox:pressed", Background: "#020202" }
+    Rule { Selector: ".card:hovered", Background: "#0a0a0a", Border_Width: 2 }
+    Rule { Selector: "#main:hovered", Background: "#646464" }
+}
+"""
+
+
+def box(name: str | None = None, classes: tuple[str, ...] = (), **style: m.Value) -> m.Node:
+    return m.Node("FlexBox", name=name, style=dict(style), classes=classes)
+
+
+def hover_bg(node: object) -> m.Value | None:
+    assert isinstance(node, m.Node)
+    return node.states.get("hovered", {}).get("Background")
+
+
+def test_a_state_selector_is_read_with_its_state() -> None:
+    s, findings = sheet(STATES)
+    assert findings == []
+    assert [(r.kind, r.target, r.state) for r in s.rules] == [
+        ("type", "Text", ""),
+        ("type", "FlexBox", "hovered"),
+        ("type", "FlexBox", "pressed"),
+        ("class", "card", "hovered"),
+        ("name", "main", "hovered"),
+    ]
+
+
+def test_a_state_rule_has_the_specificity_of_its_base_selector() -> None:
+    s, _ = sheet(STATES)
+    assert [r.specificity for r in s.rules[1:]] == [1, 1, 10, 100]
+
+
+def test_a_state_rule_fills_the_states_and_leaves_the_base_style_alone() -> None:
+    s, _ = sheet(STATES)
+    (out,) = apply_rules((box(),), s.rules)
+    assert isinstance(out, m.Node) and out.style == {}
+    assert out.states["hovered"] == {"Background": m.Color(1, 1, 1, 255)}
+    assert out.states["pressed"] == {"Background": m.Color(2, 2, 2, 255)}
+
+
+def test_state_rules_fold_name_over_class_over_type_and_the_later_wins_a_tie() -> None:
+    s, _ = sheet(STATES)
+    plain, card, named = apply_rules(
+        (box(), box(classes=("card",)), box(name="main", classes=("card",))), s.rules
+    )
+    assert hover_bg(plain) == m.Color(1, 1, 1, 255)
+    assert hover_bg(card) == m.Color(10, 10, 10, 255)
+    assert hover_bg(named) == m.Color(100, 100, 100, 255)
+    assert isinstance(card, m.Node) and card.states["hovered"]["Border_Width"] == m.Number(2)
+    again, _ = sheet(
+        'Stylesheet { Rule { Selector: "FlexBox:hovered", Background: "#111111" }\n'
+        'Rule { Selector: "FlexBox:hovered", Background: "#222222" } }'
+    )
+    (later,) = apply_rules((box(),), again.rules)
+    assert hover_bg(later) == m.Color(0x22, 0x22, 0x22, 255)
+
+
+def test_a_state_value_is_not_held_back_by_the_blocks_own_style() -> None:
+    s, _ = sheet(STATES)
+    (out,) = apply_rules((box(Background=m.Color(9, 9, 9, 255)),), s.rules)
+    assert isinstance(out, m.Node) and out.style["Background"] == m.Color(9, 9, 9, 255)
+    assert hover_bg(out) == m.Color(1, 1, 1, 255)  # the state is the look while it holds
+
+
+def test_a_state_key_the_block_does_not_take_is_skipped() -> None:
+    s, _ = sheet(STATES)
+    (out,) = apply_rules((m.Node("Spacer", classes=("card",)),), s.rules)
+    assert isinstance(out, m.Node) and out.states == {}
+
+
+def test_a_state_rule_reaches_blocks_inside_other_blocks() -> None:
+    s, _ = sheet(STATES)
+    (outer,) = apply_rules((m.Node("Box", children=(box(),)),), s.rules)
+    assert isinstance(outer, m.Node) and hover_bg(outer.children[0]) == m.Color(1, 1, 1, 255)
+
+
+def test_a_module_name_state_rule_styles_the_modules_root_block() -> None:
+    from tess_shell.model.look import apply_module_rules
+
+    s, findings = sheet(
+        'Stylesheet { Rule { Selector: "Clock:hovered", Background: "#ff00ff" } }', {"Clock"}
+    )
+    assert findings == [] and [(r.kind, r.state) for r in s.rules] == [("module", "hovered")]
+    (root,) = apply_module_rules([box()], "Clock", s.rules)
+    assert hover_bg(root) == m.Color(255, 0, 255, 255)
+    (other,) = apply_module_rules([box()], "Other", s.rules)
+    assert isinstance(other, m.Node) and other.states == {}
+
+
+def test_tokens_in_a_state_rule_resolve_like_those_in_the_base_style() -> None:
+    s, _ = sheet(
+        'Stylesheet { Rule { Selector: "FlexBox", Background: $color.surface }\n'
+        'Rule { Selector: "FlexBox:hovered", Background: $color.primary, Elevation: 50% } }'
+    )
+    (styled,) = apply_rules((box(),), s.rules)
+    look = make_look(theme(), [s], Appearance(scheme="dark"))
+    (out,), errors = resolve([styled], look)  # type: ignore[list-item]
+    assert errors == []
+    assert out.style["Background"] == m.Color(0x10, 0x10, 0x10, 255)
+    assert out.states["hovered"]["Background"] == m.Color(0x67, 0x50, 0xA4, 255)
+    assert "Shadows" in out.states["hovered"]  # an Elevation becomes Shadows, as in the base
+
+
+def test_a_token_that_is_missing_in_a_state_rule_is_reported_before_the_shell_runs() -> None:
+    s, _ = sheet('Stylesheet { Rule { Selector: "FlexBox:hovered", Background: $color.nope } }')
+    (styled,) = apply_rules((box(),), s.rules)
+    found = check_tokens([styled], effective_tokens(theme(), Appearance()))
+    assert [f.rule for f in found] == ["bad-token"]
+    (_,), errors = resolve([styled], make_look(theme(), [s], Appearance()))  # type: ignore[list-item]
+    assert len(errors) == 1 and "color.nope" in errors[0].message
+
+
+def test_a_state_rule_that_reaches_a_text_is_a_warning_before_the_shell_runs() -> None:
+    from tess_shell.model.look import check_states
+
+    s, _ = sheet(
+        'Stylesheet { Rule { Selector: "Text:hovered", Foreground: "#fff" }\n'
+        'Rule { Selector: "FlexBox:hovered", Background: "#fff" } }'
+    )
+    found = check_states([box(), text()], s.rules)
+    assert [(f.rule, f.severity) for f in found] == [("state-never-applies", "warning")]
+    assert "Text" in found[0].message and "FlexBox" in found[0].hint
+    assert found[0].file == "Stylesheets/T_Stylesheet.tdl"  # it points at the rule
+    assert check_states([text()], ()) == []
 
 
 def test_a_module_name_selector_styles_the_modules_root_blocks_only() -> None:

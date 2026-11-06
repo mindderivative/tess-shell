@@ -202,6 +202,12 @@ _SELECTOR = re.compile(
     r"^(?P<head>[#.]?)(?P<name>[A-Za-z][A-Za-z0-9_]*)(?P<part>::[A-Za-z_]+)?(?P<state>:[A-Za-z_]+)?$"
 )
 
+# the states a rule can name that no block can be in yet, and why
+_STATES_NOT_BUILT = {
+    "focused": "no block can take focus yet",
+    "disabled": "no block has an Enabled key, so none can be disabled yet",
+}
+
 # every style key of every block, with its kind; the kinds agree across blocks
 STYLE_UNION: dict[str, str] = {k: v for row in blocks.BLOCKS.values() for k, v in row[1].items()}
 
@@ -231,9 +237,32 @@ def _rule(ctx: _Ctx, block: Block, module_names: set[str]) -> Rule | None:
             'a selector is "Text", ".class", "#name", with an optional ":state" or "::part"',
         )
         return None
-    if found["part"] or found["state"]:
-        what = found["part"] or found["state"]
-        ctx.not_built(selector.value_origin, f"the selector part {what}", "warning")
+    if found["part"]:
+        ctx.add(
+            selector.value_origin,
+            "not-built",
+            f"the selector part {found['part']} is not built: no block has named parts yet",
+            "the rule is skipped",
+            "warning",
+        )
+        return None
+    state = (found["state"] or ":")[1:]
+    if state in _STATES_NOT_BUILT:
+        ctx.add(
+            selector.value_origin,
+            "not-built",
+            f"the state :{state} is not built: {_STATES_NOT_BUILT[state]}",
+            "the rule is skipped",
+            "warning",
+        )
+        return None
+    if state and state not in m.STATES:
+        ctx.add(
+            selector.value_origin,
+            "bad-selector",
+            f"':{state}' is not a style state",
+            "the states are :hovered, :pressed, :focused and :disabled",
+        )
         return None
     head, name = found["head"], found["name"]
     kind = {"": "type", ".": "class", "#": "name"}[head]
@@ -245,7 +274,7 @@ def _rule(ctx: _Ctx, block: Block, module_names: set[str]) -> Rule | None:
         if name in module_names:
             # a module's name styles the module's root blocks at every use (D40)
             values = _scalar_block_keys(ctx, body, STYLE_UNION, "Rule")
-            return Rule("module", name, values, ctx.origin(block.origin))
+            return Rule("module", name, values, ctx.origin(block.origin), state)
         if name not in blocks.BLOCKS:
             ctx.unknown(selector.value_origin, name, [*blocks.BLOCKS], "block in a selector")
             return None
@@ -262,7 +291,7 @@ def _rule(ctx: _Ctx, block: Block, module_names: set[str]) -> Rule | None:
                     else f"keys: {', '.join(table)}",
                 )
     values = _scalar_block_keys(ctx, body, STYLE_UNION, "Rule")
-    return Rule(kind, name, values, ctx.origin(block.origin))  # type: ignore[arg-type]
+    return Rule(kind, name, values, ctx.origin(block.origin), state)  # type: ignore[arg-type]
 
 
 def read_stylesheet(

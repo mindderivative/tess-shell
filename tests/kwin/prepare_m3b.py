@@ -142,6 +142,127 @@ PANELS = """
 """
 
 
+def btn(name: str, label: str, action: str, target: str) -> str:
+    return f"""FlexBox {{
+    Name: {name}
+    Padding: 4
+    Style {{ Background: $color.primary, Corner_Radius: 4 }}
+    On_Click {{ Action: {action}, Target: {target} }}
+    Children {{ Text {{ Text: "{label}", Font_Size: 13, Foreground: $color.on_primary }} }}
+}}"""
+
+
+MOTION_BUTTONS = "\n".join(
+    [
+        btn("Drawer_Button", "Drawer", "Toggle", "Drawer"),
+        btn("Fade_Button", "Fade", "Toggle", "Fader"),
+        btn("Side_Button", "Side", "Toggle", "Side_Slide"),
+        btn("Quick_Button", "Quick", "Toggle", "Quick"),
+    ]
+)
+
+
+def card(name: str, text: str, extra: str, width: int = 220, height: int = 70) -> str:
+    return f"""            Panel {{
+                Name: {name}
+                Layer: OVERLAY
+                Width: {width}
+                Height: {height}
+{extra}
+                Style {{ Background: $color.surface_raised, Corner_Radius: 10, Elevation: 20% }}
+                Children {{
+                    FlexBox {{
+                        Padding: 14
+                        Children {{ Text {{ Text: "{text}", Font_Size: 14, Foreground: $color.on_surface }} }}
+                    }}
+                }}
+            }}
+"""
+
+
+def dot(name: str, colour: str, inset: str) -> str:
+    return f"""            Panel {{
+                Name: {name}
+                Layer: OVERLAY
+                Anchor: [TOP, RIGHT]
+                Inset: [0, {inset}, 24, 0]
+                Width: 120
+                Height: 30
+                Input_Region: []
+                Visible: false
+                Style {{ Background: "{colour}", Corner_Radius: 6 }}
+                Children {{ FlexBox {{ Padding: 6 }} }}
+            }}
+"""
+
+
+MOTION = (
+    card(
+        "Drawer",
+        "Drawer: slides down from the Bar",
+        "                Attach_To: Top_Bar\n                Attach: BOTTOM\n                Alignment: START\n"
+        "                Gap: 8\n                Visible: false\n"
+        "                Animation { Type: SLIDE, Duration: 300 }\n"
+        "                On_Open { Action: Show, Target: Opening }\n"
+        "                On_Visible { Action: Show, Target: Visible_Now }\n"
+        "                On_Close { Action: Hide, Target: Opening }\n"
+        "                On_Hidden { Action: Hide, Target: Visible_Now }",
+    )
+    + dot("Opening", "#d65a5a", "60")
+    + dot("Visible_Now", "#5ab86e", "100")
+    + card(
+        "Fader",
+        "Fader: fades in and out",
+        "                Anchor: [TOP, RIGHT]\n                Inset: [0, 160, 24, 0]\n"
+        "                Visible: false\n                Animation { Type: FADE, Duration: 400 }",
+    )
+    + card(
+        "Side_Slide",
+        "Side: slides in from the left edge",
+        "                Anchor: [LEFT]\n                Inset: [0, 0, 0, 0]\n"
+        "                Visible: false\n                Animation { Type: SLIDE, Duration: 300 }",
+        height=200,
+    )
+    + card(
+        "Quick",
+        "Quick: no animation",
+        "                Anchor: [BOTTOM]\n                Inset: [0, 0, 0, 60]\n"
+        "                Visible: false",
+    )
+    + """            Panel {
+                Name: Pin
+                Layer: BOTTOM
+                Width: 200
+                Height: 80
+                Movable: true
+                Style { Background: $color.surface_raised, Corner_Radius: 12, Elevation: 30% }
+                Children {
+                    FlexBox {
+                        Padding: 14
+                        Children { Text { Text: "Drag me (I remember where)", Font_Size: 14, Foreground: $color.on_surface } }
+                    }
+                }
+            }
+"""
+)
+
+
+HOVER = """---
+TDL: 0.1
+Name: Hover
+---
+Stylesheet {
+    Rule { Selector: "#Drawer_Button:hovered", Background: $color.accent }
+    Rule {
+        Selector: "#Drawer_Button:pressed"
+        Background: $color.warning
+        Border_Width: 2
+        Border_Color: $color.on_surface
+    }
+}
+"""
+
+
 def script(name: str, text: str) -> None:
     path = ROOT / name
     path.write_text("#!/usr/bin/env bash\n" + text)
@@ -167,6 +288,26 @@ def main() -> None:
             "  Appearance { Stylesheets: [Default] }\n  Debug { Panel_Hide: KEEP }\n",
         )
     )
+    motion = ROOT / "motion"
+    shutil.rmtree(motion, ignore_errors=True)
+    mbody = BODY.replace(LABEL, MOTION_BUTTONS).replace(
+        'Style { Fill: "#1f1f1f" }', "Style { Fill: $color.surface }"
+    )
+    mbody = mbody.replace("            Bar {", MOTION + "            Bar {", 1)
+    write_example(motion, mbody)
+    (motion / "settings.tdl").write_text(
+        SETTINGS.replace("Stylesheets: [Default]", "Stylesheets: [Default, Hover]")
+    )
+    (motion / "Stylesheets").mkdir()
+    (motion / "Stylesheets" / "Hover_Stylesheet.tdl").write_text(HOVER)
+    script(
+        "run-motion.sh",
+        "# Animation, Panel events and Movable.  Usage: run-motion.sh   (Ctrl+C stops it)\n"
+        "export XDG_STATE_HOME=/tmp/tess-kwin-m3b/state\n"
+        "# the saved position of the Pin lives in /tmp/tess-kwin-m3b/motion/registry.json;\n"
+        "# delete that file to forget it\n"
+        f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3b/motion\n",
+    )
     script(
         "run.sh",
         "# Usage: run.sh    (Ctrl+C or kill -TERM stops it)\n"
@@ -189,7 +330,8 @@ def main() -> None:
         "check.sh",
         "export XDG_STATE_HOME=/tmp/tess-kwin-m3b/state\n"
         f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3b/panels\n"
-        f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3b/panels_keep\n",
+        f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3b/panels_keep\n"
+        f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3b/motion\n",
     )
     print(f"wrote {ROOT}")
 

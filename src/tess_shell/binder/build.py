@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 
 from tess_shell.binder.convert import CONVERTERS
 from tess_shell.binder.model import (
+    NO_POINTER_BLOCKS,
     BindError,
     BindFailed,
     ForNode,
@@ -53,13 +54,122 @@ class _Index:
 EVENTS: dict[str, str] = {"On_Click": "click"}  # the TDL event key -> tre's event name
 
 
+# tre's pointer events that move a node between its style states, and what each does to the wire
+_STATE_EVENTS = (
+    ("pointer_enter", "enter"),
+    ("pointer_leave", "leave"),
+    ("pointer_down", "down"),
+    ("pointer_up", "up"),
+    ("pointer_cancel", "cancel"),
+)
+
+
 @dataclass(slots=True)
 class Wire:
     """What a built node's listeners read: the current handlers (a reload replaces them without
-    touching the listeners) and the tre events that already have a listener."""
+    touching the listeners), the tre events that already have a listener and the node's style
+    states.
+
+    ``states`` holds the converted tre properties of each state (``hovered``, ``pressed``). While
+    the pointer is over the node ``hovered`` shows; while a button is down on it ``pressed`` shows
+    on top. ``saved`` remembers the value each forced property had before a state took it, so
+    the end of the state puts it back exactly. A listener never stops an event.
+    """
 
     handlers: Mapping[str, Handler]
     wired: set[str] = field(default_factory=set)
+    states: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
+    tre: TreNode | None = None
+    window: Window | None = None
+    hovered: bool = False
+    pressed: bool = False
+    shown: dict[str, Any] = field(default_factory=dict)  # the properties a state forces now
+    saved: dict[str, Any] = field(default_factory=dict)  # their values before it did
+    hooks: dict[str, list[Callable[[], None]]] = field(default_factory=dict)
+
+    def listen(self) -> None:
+        """Listen for what moves the node between its states, once. These listeners only read the
+        pointer: none stops the event, so a click still bubbles and reaches ``On_Click``."""
+        if self.tre is None:
+            return
+        for event, action in _STATE_EVENTS:
+            key = f"state:{event}"
+            if key not in self.wired:
+                self.wired.add(key)
+                self.tre.on(event, self._listener(action))
+
+    def _listener(self, action: str) -> Callable[[Any], None]:
+        do: Callable[[], None] = getattr(self, action)
+        return lambda _event: do()
+
+    def add_hook(self, event: str, fn: Callable[[], None]) -> None:
+        """Call ``fn`` after the node's ``enter``, ``leave``, ``down`` or ``up`` (``cancel`` calls
+        the ``up`` hooks). A node takes one tre listener per event, so anything that needs the
+        pointer on a built node goes through here."""
+        if event not in ("enter", "leave", "down", "up"):
+            raise ValueError(f"no hook for {event}")
+        self.hooks.setdefault(event, []).append(fn)
+        self.listen()
+
+    def _run(self, event: str) -> None:
+        for fn in self.hooks.get(event, ()):
+            fn()
+
+    def enter(self) -> None:
+        self.hovered = True
+        self.refresh()
+        self._run("enter")
+
+    def leave(self) -> None:
+        self.hovered = self.pressed = False
+        self.refresh()
+        self._run("leave")
+
+    def down(self) -> None:
+        self.hovered = self.pressed = True  # a press is over the node, whatever enter said
+        self.refresh()
+        self._run("down")
+
+    def up(self) -> None:
+        self.pressed = False
+        self.refresh()
+        self._run("up")
+
+    def cancel(self) -> None:
+        """The press became a move or resize of the window: no up or click follows."""
+        self.up()
+
+    def wanted(self) -> dict[str, Any]:
+        """The properties the current state forces: hovered's, with pressed's on top."""
+        out: dict[str, Any] = {}
+        if self.hovered or self.pressed:
+            out.update(self.states.get("hovered", {}))
+        if self.pressed:
+            out.update(self.states.get("pressed", {}))
+        return out
+
+    def refresh(self) -> None:
+        """Make the node show what the current state asks and nothing it no longer asks."""
+        tre, window = self.tre, self.window
+        if tre is None or window is None:
+            return
+        wanted = self.wanted()
+        changes: dict[str, Any] = {n: self.saved.pop(n) for n in self.shown if n not in wanted}
+        for name, value in wanted.items():
+            if name not in self.saved:
+                self.saved[name] = tre.get(name)
+            if name not in self.shown or self.shown[name] != value:
+                changes[name] = value
+        self.shown = wanted
+        if changes:
+            window.apply([(tre, changes)])
+
+    def restate(self, states: Mapping[str, Mapping[str, Any]], base: Mapping[str, Any]) -> None:
+        """A reload changed the state styles (``states``) and, for some properties a state holds,
+        the base value (``base``): keep the node in the state it is in, with the new look."""
+        self.saved.update({n: v for n, v in base.items() if n in self.saved})
+        self.states = states
+        self.refresh()
 
 
 @dataclass(slots=True)
@@ -72,6 +182,7 @@ class Entry:
     props: dict[str, Any]
     children: list[Entry] = field(default_factory=list)
     wire: Wire | None = None
+    states: dict[str, dict[str, Any]] = field(default_factory=dict)  # tre props per style state
 
 
 @dataclass(slots=True)
@@ -84,6 +195,7 @@ class View:
     kinds: dict[str, str] = field(default_factory=dict)  # node id -> block word
     applied: dict[str, dict[str, Any]] = field(default_factory=dict)  # node id -> tre props set
     entries: list[Entry] = field(default_factory=list)
+    wires: dict[str, Wire] = field(default_factory=dict)  # node id -> its wire
     disposed: bool = False
     parent: TreNode | None = None  # where the roots are attached; ``window.root`` when None
     sink: Callable[[Handler, str, Any], None] | None = None  # (handler, event key, tre event)
@@ -100,6 +212,7 @@ class View:
         self.nodes.clear()
         self.kinds.clear()
         self.applied.clear()
+        self.wires.clear()
         self.roots = [e.tre for e in self.entries if e.tre is not None]
 
         def walk(entries: list[Entry]) -> None:
@@ -110,6 +223,8 @@ class View:
                     self.nodes[name] = e.tre
                     self.kinds[name] = e.typed.kind
                     self.applied[name] = e.props  # the same dict: an update changes both
+                    if e.wire is not None:
+                        self.wires[name] = e.wire
                 walk(e.children)
 
         walk(self.entries)
@@ -120,8 +235,11 @@ class View:
         if entry.tre is None:
             return
         if entry.wire is None:
-            entry.wire = Wire(entry.typed.handlers)
+            entry.wire = Wire(entry.typed.handlers, tre=entry.tre, window=self.window)
         wire = entry.wire
+        wire.states = entry.states
+        if wire.states:
+            wire.listen()
         for key in wire.handlers:
             tre_event = EVENTS.get(key)
             if tre_event is None or key in wire.wired:
@@ -164,6 +282,13 @@ class View:
                 continue
             have = self.applied.setdefault(node_id, {})
             fresh = {n: v for n, v in converted.items() if n not in have or have[n] != v}
+            wire = self.wires.get(node_id)
+            if wire is not None and wire.saved:
+                # a state holds some of these: the base value waits under it
+                held = {n: v for n, v in fresh.items() if n in wire.saved}
+                wire.saved.update(held)
+                have.update(held)
+                fresh = {n: v for n, v in fresh.items() if n not in held}
             if fresh:
                 by_node.setdefault(node_id, {}).update(fresh)
         if by_node:
@@ -207,6 +332,41 @@ def _convert(key: str, row: KeyRow, value: Value, errors: list[BindError]) -> di
     except BindError as exc:
         errors.append(BindError(f"{key}: {exc.message}", exc.origin, exc.hint))
         return None
+
+
+def convert_states(node: Node, errors: list[BindError]) -> dict[str, dict[str, Any]]:
+    """The tre properties of each of ``node``'s style states, by the table row that converts the
+    same key in the base style. An empty state is left out."""
+    row = BLOCKS.get(node.kind)
+    out: dict[str, dict[str, Any]] = {}
+    if row is None:
+        return out
+    for state, values in node.states.items():
+        props: dict[str, Any] = {}
+        for key, value in values.items():
+            key_row = row.style.get(key)
+            if key_row is None:
+                hint = _suggest(key, list(row.style))
+                errors.append(
+                    BindError(
+                        f"unknown key {key} in the {state} style of {node.kind}", value.origin, hint
+                    )
+                )
+                continue
+            converted = _convert(key, key_row, value, errors)
+            if converted is not None:
+                props.update(converted)
+        if props:
+            out[state] = props
+    return out
+
+
+def entry_states(node: Node) -> dict[str, dict[str, Any]]:
+    """What a built node listens for: its converted state styles, none for a kind tre sends no
+    pointer events (a ``Text``)."""
+    if node.kind in NO_POINTER_BLOCKS:
+        return {}
+    return convert_states(node, [])
 
 
 def _plan(
@@ -266,6 +426,7 @@ def _plan(
             props.update(converted)
             for tre_name in converted:
                 index.props[(path, tre_name)] = value.origin
+    convert_states(node, errors)  # a state style is checked like the base style
     for need in row.required:
         options = (need,) if isinstance(need, str) else need
         if not any(k in node.props or k in node.style for k in options):
@@ -362,4 +523,5 @@ def make_entry(node: Node, spec: dict[str, Any], tre: TreNode) -> Entry:
         tre,
         dict(spec["props"]),
         [make_entry(c, sp, t) for c, sp, t in zip(kids, specs, tre_kids, strict=True)],
+        states=entry_states(node),
     )

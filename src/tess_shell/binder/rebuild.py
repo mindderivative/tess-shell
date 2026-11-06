@@ -14,7 +14,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from tess_shell.binder.build import Entry, View, _Index, _plan, make_entry
+from tess_shell.binder.build import Entry, View, Wire, _Index, _plan, entry_states, make_entry
 from tess_shell.binder.model import BindError, BindFailed, ForNode, IfNode, Node, Origin, UseNode
 
 if TYPE_CHECKING:
@@ -46,6 +46,10 @@ class _Plan:
     creates: list[tuple[Entry, dict[str, Any]]] = field(default_factory=list)
     removed: list[Entry] = field(default_factory=list)
     parents: list[tuple[TreNode, list[Entry]]] = field(default_factory=list)
+    # a kept node's wire, its new state styles and the base values a state is holding for it
+    restates: list[tuple[Wire, dict[str, dict[str, Any]], dict[str, Any]]] = field(
+        default_factory=list
+    )
 
 
 def _diff(
@@ -74,10 +78,15 @@ def _diff(
             del by_key[key]
             assert kept.tre is not None
             changed = {n: v for n, v in props.items() if n not in kept.props or kept.props[n] != v}
+            states = entry_states(node)
+            if kept.wire is not None and (states or kept.wire.states):
+                # what a state holds is not set under it; the wire keeps the new value for the end
+                held = {n: changed.pop(n) for n in list(changed) if n in kept.wire.saved}
+                plan.restates.append((kept.wire, states, held))
             if changed:
                 plan.changes.append((kept.tre, changed))
             kids = [c for c in node.children if isinstance(c, Node)]
-            entry = Entry(node, kept.tre, dict(props), [], kept.wire)
+            entry = Entry(node, kept.tre, dict(props), [], kept.wire, states)
             if entry.wire is not None:
                 entry.wire.handlers = node.handlers
             entry.children = _diff(kept.children, kids, spec.get("children", []), kept.tre, plan)
@@ -86,7 +95,7 @@ def _diff(
         if kept is not None:
             del by_key[key]
             plan.removed.append(kept)
-        fresh = Entry(node, None, dict(props), [])
+        fresh = Entry(node, None, dict(props), [], states=entry_states(node))
         plan.creates.append((fresh, spec))
         result.append(fresh)
     plan.removed.extend(by_key.values())
@@ -137,6 +146,8 @@ def rebuild(view: View, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> R
             tre.destroy()
         raise
 
+    for wire, states, held in plan.restates:
+        wire.restate(states, held)  # a node keeps the state the pointer has it in, restyled
     for fresh, tre in built:
         sub = make_entry(fresh.typed, _spec_of(fresh, plan), tre)
         fresh.tre, fresh.children = tre, sub.children

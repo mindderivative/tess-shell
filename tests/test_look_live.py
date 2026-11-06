@@ -135,3 +135,66 @@ def test_the_shadow_margin_takes_no_pointer_input_and_a_removed_shadow_gives_it_
     manager._sync_body(surface, flat.planned.bar, flat.geometry, "test")
     assert surface.window.get("input_region") is None
     assert surface.window.get("size") == (0, 32)
+
+
+# -- state selectors on a real Bar ------------------------------------------------------------
+
+
+def hoverable(appearance: Appearance) -> SurfaceManager:
+    """A Bar with a FlexBox named Btn; the sheet gives it a hovered and a pressed colour."""
+    doc = tess_dl.parse(THEME, path="T_Theme.tdl").document
+    assert doc is not None
+    theme, _ = read_theme(doc, "T_Theme.tdl")
+    sheet_doc = tess_dl.parse(
+        "---\nTDL: 0.1\nName: S\n---\nStylesheet {\n"
+        '  Rule { Selector: "FlexBox", Background: $color.surface }\n'
+        '  Rule { Selector: "#Btn:hovered", Background: $color.primary }\n'
+        '  Rule { Selector: "#Btn:pressed", Background: $color.on_surface }\n}',
+        path="S_Stylesheet.tdl",
+    ).document
+    assert doc is not None and sheet_doc is not None
+    sheet, findings = read_stylesheet(sheet_doc, "S_Stylesheet.tdl", set())
+    assert sheet is not None and findings == [] and theme is not None
+    bar = BarDef(
+        "Top_Bar",
+        origin=Text("x").origin,
+        edge="TOP",
+        width=Expand(),
+        height=Length(32),
+        children=(Node("FlexBox", name="Btn", props={"Width": Length(20), "Height": Length(20)}),),
+    )
+    shell = ShellDef("S", "S", (MonitorDef("M", bar.origin, 0, None, None, (bar,)),))
+    look = make_look(theme, [sheet], appearance)
+    manager = SurfaceManager(StubApp(), {}, lambda key: key, ValueStore(), look)  # type: ignore[arg-type]
+    manager.plan(shell)
+    manager.build()
+    return manager
+
+
+def test_a_hover_and_press_rule_from_a_stylesheet_colours_a_block_of_a_bar() -> None:
+    manager = hoverable(Appearance(scheme="dark"))
+    (surface,) = manager.surfaces
+    assert surface.view is not None
+    btn, window = surface.view.nodes["Btn"], surface.view.window
+    assert btn.get("fill") == (0x10, 0x10, 0x10, 255)  # $color.surface
+    window.simulate("pointer_enter", node=btn)
+    assert btn.get("fill") == (0x67, 0x50, 0xA4, 255)  # $color.primary
+    window.simulate("pointer_down", node=btn)
+    assert btn.get("fill") == (0xEE, 0xEE, 0xEE, 255)  # $color.on_surface
+    window.simulate("pointer_up", node=btn)
+    assert btn.get("fill") == (0x67, 0x50, 0xA4, 255)
+    window.simulate("pointer_leave")
+    assert btn.get("fill") == (0x10, 0x10, 0x10, 255)
+
+
+def test_a_new_desktop_look_restyles_a_block_that_is_hovered() -> None:
+    manager = hoverable(Appearance(scheme="dark"))
+    (surface,) = manager.surfaces
+    assert surface.view is not None
+    btn, window = surface.view.nodes["Btn"], surface.view.window
+    window.simulate("pointer_enter", node=btn)
+    manager.set_look(manager.look.with_appearance(Appearance(scheme="light")))
+    assert surface.view.nodes["Btn"] is btn  # a diff, not a new node
+    assert btn.get("fill") == (0x67, 0x50, 0xA4, 255)  # hovered still; Primary is the same
+    window.simulate("pointer_leave")
+    assert btn.get("fill") == (0xFF, 0xFF, 0xFF, 255)  # the light $color.surface, not the dark one

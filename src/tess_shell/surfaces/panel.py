@@ -29,7 +29,7 @@ class PanelSpec:
     alignment: str = "CENTER"
 
 
-def _size(value: Value, output: int) -> float:
+def px_size(value: Value, output: int) -> float:
     if isinstance(value, Length):
         return value.px
     if isinstance(value, Percent):
@@ -56,7 +56,7 @@ def attached_geometry(
     target module) the Panel meets the clearance's edge instead of the target's, so it never covers
     the Bar, and slides along the target."""
     edge = clearance or target
-    width, height = _size(spec.width, output[0]), _size(spec.height, output[1])
+    width, height = px_size(spec.width, output[0]), px_size(spec.height, output[1])
     if width <= 0 or height <= 0:
         raise ZeroSize("an attached Panel needs a Width and a Height above 0")
     match spec.attach:
@@ -123,7 +123,7 @@ def panel_geometry(
         ("width", ("left", "right"), spec.width, output[0]),
         ("height", ("top", "bottom"), spec.height, output[1]),
     ):
-        length = _size(value, out)
+        length = px_size(value, out)
         stretched = low in anchors and high in anchors
         if length <= 0 and not stretched:
             raise ZeroSize(

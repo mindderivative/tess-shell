@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -177,6 +178,14 @@ Value = (
     | SlotValue
 )
 
+# The style states a stylesheet rule can name after a colon (``Button:hovered``), weakest first: a
+# pressed block that is also hovered shows both, the pressed values on top.
+STATES = ("hovered", "pressed")
+
+# Blocks that tre sends no pointer events: a listener on a ``text`` node is accepted and never
+# called (a click goes to the box around it), so a state style cannot apply to one.
+NO_POINTER_BLOCKS = ("Text",)
+
 
 @dataclass(frozen=True, slots=True)
 class Handler:
@@ -191,6 +200,18 @@ class Handler:
 
 
 @dataclass(frozen=True, slots=True)
+class TooltipRef:
+    """A ``Tooltip`` written on a block or a module use (Popup > Tooltips): an inline Popup
+    (``popup``, a ``schema.model.PopupDef``; typed loosely because the schema imports this
+    module) or the ``Name`` of a Popup of the shell (``name``). The model moves it out of the
+    tree into ``Expanded.tooltips``; the binder never sees one."""
+
+    popup: Any = None
+    name: str | None = None
+    origin: Origin = _origin()
+
+
+@dataclass(frozen=True, slots=True)
 class Node:
     kind: str  # the block word: "Text", "FlexBox", "Rectangle"
     name: str | None = None  # the Name: value
@@ -199,6 +220,10 @@ class Node:
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
     classes: tuple[str, ...] = ()  # ``Class:`` names; the schema folds them into ``style``
     handlers: Mapping[str, Handler] = field(default_factory=dict)  # ``On_Click`` -> handler
+    # State styles by state name (``hovered``, ``pressed``): the values a stylesheet rule gives the
+    # block while the pointer is over it or presses it, on top of the base style
+    states: Mapping[str, Mapping[str, Value]] = field(default_factory=dict)
+    tooltip: TooltipRef | None = None
     origin: Origin = _origin()
 
 
@@ -210,6 +235,7 @@ class UseNode:
     module: str
     name: str | None = None
     params: Mapping[str, Value] = field(default_factory=dict)
+    tooltip: TooltipRef | None = None
     origin: Origin = _origin()
 
 

@@ -1,9 +1,12 @@
 """The Clock: the time as a string, once a minute, or once a second when a format shows seconds
-(Clock Module). One instance serves every use; each use has its own format and zone."""
+(Clock Module). One instance serves every use; each use has its own format, zone and locale, and
+sends the text of its tooltip too (the layout's ``Tooltip`` shows it on hover)."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import locale
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -30,7 +33,62 @@ def render(params: Mapping[str, Any], now: datetime) -> str:
     return now.astimezone(zone).strftime(pattern(params))
 
 
+def render_tooltip(params: Mapping[str, Any], now: datetime) -> str:
+    zone = ZoneInfo(params["timezone"]) if params["timezone"] else None
+    return now.astimezone(zone).strftime(str(params["tooltip_format"]))
+
+
+def installed(name: str) -> str | None:
+    """The spelling of the locale ``name`` (``de_DE``) this system has installed for time names,
+    or ``None``: ``de_DE.UTF-8``, ``de_DE.utf8`` and ``de_DE`` are tried in that order."""
+    previous = locale.setlocale(locale.LC_TIME)
+    try:
+        for candidate in (f"{name}.UTF-8", f"{name}.utf8", name):
+            try:
+                locale.setlocale(locale.LC_TIME, candidate)
+            except locale.Error:
+                continue
+            return candidate
+        return None
+    finally:
+        locale.setlocale(locale.LC_TIME, previous)
+
+
+@contextmanager
+def time_names(spelling: str | None) -> Iterator[None]:
+    """Month and day names, and ``%p``, in ``spelling`` (from :func:`installed`) while the block
+    runs. The C library keeps one such setting for the whole process, so it is put back at once;
+    the Clock runs on the loop thread, one use after another."""
+    if spelling is None:
+        yield
+        return
+    previous = locale.setlocale(locale.LC_TIME)
+    locale.setlocale(locale.LC_TIME, spelling)
+    try:
+        yield
+    finally:
+        locale.setlocale(locale.LC_TIME, previous)
+
+
 class Clock(Module):
+    def __init__(self) -> None:
+        self._spellings: dict[str, str | None] = {}  # locale name -> its installed spelling
+
+    def spelling(self, name: str) -> str | None:
+        """The installed spelling of ``name``; a locale this system lacks is warned about once and
+        the Clock uses the process's own names instead (Clock Module > Configuration, ``locale``).
+        Empty follows the desktop, which is the process's locale until KDE's is read."""
+        if not name:
+            return None
+        if name not in self._spellings:
+            found = self._spellings[name] = installed(name)
+            if found is None:
+                self.ctx.log.warning(
+                    f"locale {name!r} is not installed (see `locale -a`): the Clock shows the "
+                    "default month and day names"
+                )
+        return self._spellings[name]
+
     def start(self) -> None:
         self.tick()
         self.ctx.on_tick("minute", self.tick)
@@ -46,13 +104,24 @@ class Clock(Module):
             raise ValueError(f"timezone: unknown zone {use.params['timezone']!r}") from None
         except ValueError as exc:
             raise ValueError(f"format: {exc}") from None
+        try:
+            render_tooltip(use.params, datetime.now())
+        except ValueError as exc:
+            raise ValueError(f"tooltip_format: {exc}") from None
+        self.spelling(use.params["locale"])  # warns once when it is not installed
 
     def show(self, use: UseRecord, now: datetime) -> None:
-        try:
-            text = render(use.params, now)
-        except Exception:
-            text = FALLBACK
+        with time_names(self.spelling(use.params["locale"])):
+            try:
+                text = render(use.params, now)
+            except Exception:
+                text = FALLBACK
+            try:
+                tooltip = render_tooltip(use.params, now)
+            except Exception:
+                tooltip = FALLBACK
         self.ctx.send("time", text, use=use)
+        self.ctx.send("tooltip", tooltip, use=use)
 
     def use_added(self, use: UseRecord) -> None:
         self.show(use, datetime.now().astimezone())
