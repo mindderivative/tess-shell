@@ -323,10 +323,10 @@ class SurfaceManager:
         store: ValueStore,
         look: Look | None = None,
         sink: Callable[[Handler, str, Any], None] | None = None,
-        hide_mode: str = "CLOSE",
+        hide_mode: str = "KEEP",
     ) -> None:
         self._app = app
-        self.hide_mode = hide_mode  # CLOSE (the primary route) or KEEP (D44)
+        self.hide_mode = hide_mode  # KEEP (the default) or CLOSE (D44)
         self.sink = sink
         self._look = look
         self._modules = modules
@@ -514,7 +514,7 @@ class SurfaceManager:
         live = LiveTree(self._store, all_uses, look=self._look)
         if isinstance(bar, PanelDef) and not bar.visible and self.hide_mode == "CLOSE":
             # a hidden Panel has no surface at all: nothing to go stale, nothing for the
-            # compositor to hold, and no flash when it is first shown (D44, the primary route)
+            # compositor to hold, and no flash when it is first shown (D44, CLOSE)
             logger.info(f"{kind} {where}: anchor {','.join(geometry.anchor) or 'none'} (hidden)")
             return Surface(
                 planned.key,
@@ -547,13 +547,13 @@ class SurfaceManager:
                 self._arm_hide_after(surface)
         return surface
 
-    # -- Panel: hide, show, Hide_After, Escape (D44, revised) -------------------------------------
+    # -- Panel: hide, show, Hide_After, Escape (D44) ----------------------------------------------
     #
-    # tre 0.6.1 cannot unmap a layer surface, and a surface left mapped but drawing nothing was
-    # not repainted reliably on KWin (the maintainer's check, 2026-11-05): a hidden Panel kept
-    # showing and a shown one stayed empty. So hiding closes the window and showing makes a new
-    # one from the same Panel record; the tree is built again from the current values, and what a
-    # module knows lives in the module.
+    # tre 0.6.1 cannot unmap a layer surface. KEEP (the default) leaves it mapped and drawing
+    # nothing. That needed ``wake()``: a node changed in one window during a callback of another
+    # was not drawn until something else woke tre's loop, so a shown Panel stayed empty and a
+    # hidden one stayed on screen (TRE-REQ-012). CLOSE avoids it by making a new window on show;
+    # what a module knows lives in the module.
 
     def _panel_events(self, s: Surface) -> None:
         """Escape hides a Panel that takes the keyboard."""
@@ -611,9 +611,9 @@ class SurfaceManager:
         window.after(250, frames_so_far)
 
     def hide(self, s: Surface) -> None:
-        """Hide a Panel. CLOSE (primary): destroy its window; the record, its place and what its
-        modules know stay, and showing makes a new window. KEEP (the first version, D44): keep the
-        surface, draw nothing, take no pointer and no keyboard."""
+        """Hide a Panel. KEEP (the default, D44): keep the surface, draw nothing, take no pointer
+        and no keyboard; the tree and its state stay. CLOSE: destroy the window (the record, its
+        place and what its modules know stay) and make a new one on show."""
         if s.hidden or s.planned is None or s.window is None:
             return
         if s.timer is not None:

@@ -150,20 +150,20 @@ def test_multiple_problems_all_collected(tmp_path: Path) -> None:
     assert len(load_bad(tmp_path)) == 2
 
 
-def test_debug_panel_hide_defaults_to_close_and_takes_keep(tmp_path: Path) -> None:
+def test_debug_panel_hide_defaults_to_keep_and_takes_close(tmp_path: Path) -> None:
     from tess_shell.config.settings import DebugSettings
 
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\nSettings { Debug { Panel_Hide: KEEP } }\n"
+        "---\nTDL: 0.1\nName: S\n---\nSettings { Debug { Panel_Hide: CLOSE } }\n"
     )
     settings, findings = load_settings(tmp_path)
     assert findings == [] and settings is not None
-    assert settings.debug == DebugSettings(panel_hide="KEEP")
-    assert load_settings(tmp_path / "none")[0].debug.panel_hide == "CLOSE"  # type: ignore[union-attr]
+    assert settings.debug == DebugSettings(panel_hide="CLOSE")
+    assert load_settings(tmp_path / "none")[0].debug.panel_hide == "KEEP"  # type: ignore[union-attr]
 
 
 def test_debug_panel_hide_refuses_another_word_and_a_misspelt_key(tmp_path: Path) -> None:
-    for text, needle in (("Panel_Hide: KEPT", "CLOSE"), ("Panel_Hid: KEEP", "Panel_Hide")):
+    for text, needle in (("Panel_Hide: KEPT", "KEEP"), ("Panel_Hid: KEEP", "Panel_Hide")):
         (tmp_path / "settings.tdl").write_text(
             f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ {text} }} }}\n"
         )

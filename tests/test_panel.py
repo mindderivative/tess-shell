@@ -384,3 +384,7 @@ def test_the_manager_wakes_tres_loop_after_it_changes_a_window() -> None:
     m.on_change([])
     m.set_look(m.look)
     assert len(woken) == 4
+
+
+def test_the_default_hide_route_is_the_kept_surface() -> None:
+    assert SurfaceManager(StubApp(), {}, lambda k: k, ValueStore()).hide_mode == "KEEP"  # type: ignore[arg-type]

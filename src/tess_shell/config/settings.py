@@ -65,11 +65,12 @@ class AppearanceSettings:
 
 @dataclass(frozen=True, slots=True)
 class DebugSettings:
-    """Switches for finding a fault; not part of the design (D44)."""
+    """Switches for finding a fault (D44)."""
 
-    # how a Panel is hidden: CLOSE destroys its window and makes a new one on show (the default);
-    # KEEP leaves the surface mapped and draws nothing (the first version, kept to be debugged)
-    panel_hide: str = "CLOSE"
+    # how a Panel is hidden: KEEP, the default (maintainer, 2026-11-06), leaves the surface mapped
+    # and draws nothing, so a hidden Panel keeps its tree and state; it needs the shell's wake after
+    # a change (TRE-REQ-012). CLOSE destroys the window and makes a new one on show.
+    panel_hide: str = "KEEP"
 
 
 @dataclass(frozen=True, slots=True)
