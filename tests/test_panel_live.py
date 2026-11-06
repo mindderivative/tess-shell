@@ -66,11 +66,66 @@ def test_a_panel_with_visible_false_opens_hidden_and_the_shell_stops_cleanly(
         shell.wait_for("Panel Launcher on HEADLESS-1")
         shell.wait_for("running")
         text = "".join(shell.seen)
-        assert "Panel Launcher on HEADLESS-1: anchor none size (600, 400)" in text
-        assert "(hidden)" in text and "Panel Launcher on HEADLESS-1 hidden" not in text
+        assert "Panel Launcher on HEADLESS-1: anchor none (hidden)" in text
+        assert "Panel Launcher on HEADLESS-1 configured" not in text  # no surface was made
         time.sleep(0.3)
         finish(shell)
     finally:
         if shell.process.poll() is None:
             shell.process.kill()
     assert "| ERROR " not in "".join(shell.seen)
+
+
+SCRIPT = """
+import sys
+from pathlib import Path
+import tess_re
+from tess_shell.appearance import Appearance
+from tess_shell.config.settings import load_settings
+from tess_shell.model.store import ValueStore
+from tess_shell.scanner import build_look, scan
+from tess_shell.surfaces.manager import SurfaceManager
+
+cfg = Path(sys.argv[1])
+settings, _ = load_settings(cfg)
+result = scan(settings, cfg)
+app = tess_re.App()
+handle = app.thread_handle()
+manager = SurfaceManager(
+    app, {}, lambda key: key, ValueStore(), build_look(result, settings, Appearance())
+)
+manager.plan(next(iter(result.shells.values())))
+manager.build()
+bar = next(s for s in manager.surfaces if s.name == "Top_Bar")
+panel = next(s for s in manager.surfaces if s.name == "Launcher")
+assert panel.window is None
+bar.window.after(300, lambda: manager.show(panel))
+bar.window.after(900, lambda: manager.hide(panel))
+bar.window.after(1500, lambda: manager.show(panel))
+bar.window.after(2300, handle.stop)
+app.run(keep_alive=True)
+"""
+
+
+def test_a_hidden_panel_gets_a_new_window_each_time_it_is_shown_on_a_real_compositor(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    import subprocess
+    import sys
+
+    cfg = tmp_path / "cfg"
+    body = BODY.replace("            Bar {", f"            {LAUNCHER}\n            Bar {{", 1)
+    write_example(cfg, body)
+    done = subprocess.run(
+        [sys.executable, "-c", SCRIPT, str(cfg)],
+        env=private_sway.env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    log = done.stderr
+    assert done.returncode == 0, log
+    assert log.count("Panel Launcher on HEADLESS-1 shown (window created)") == 2
+    assert log.count("Panel Launcher on HEADLESS-1 hidden (window closed)") == 1
+    assert log.count("Panel Launcher on HEADLESS-1 configured 600x400") == 2  # a new surface each
+    assert log.count("Panel Launcher on HEADLESS-1: first frame") == 2  # and each one drew

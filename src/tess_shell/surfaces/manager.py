@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 import difflib
+import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol
@@ -114,7 +115,7 @@ class Surface:
     name: str
     output: str
     layer: str
-    window: LayerWindow
+    window: LayerWindow | None  # None while a Panel is hidden
     view: View | None
     live: LiveTree
     expanded: Expanded
@@ -124,7 +125,7 @@ class Surface:
     shadows: list[tuple[Any, ...]] | None = None
     planned: Planned | None = None  # what the surface was last planned from
     extra: dict[str, Any] | None = None  # corner radius and border of a Panel's body
-    hidden: bool = False  # a Panel hidden by ``Hide`` (D44); a Bar is never hidden
+    hidden: bool = False  # a Panel with no window now (D44, revised); a Bar is never hidden
     timer: Any = None  # the pending ``Hide_After`` timer of a Panel
 
 
@@ -170,9 +171,9 @@ def _geometry(bar: BarDef | PanelDef, look: Look | None, output: tuple[int, int]
     return bar_geometry(_spec(bar, look), output)
 
 
-def _keyboard(bar: BarDef | PanelDef, hidden: bool) -> str:
-    """tre's ``keyboard`` word: a Panel's ``Keyboard``, ``none`` for a Bar or a hidden Panel."""
-    if hidden or not isinstance(bar, PanelDef):
+def _keyboard(bar: BarDef | PanelDef) -> str:
+    """tre's ``keyboard`` word: a Panel's ``Keyboard``, ``none`` for a Bar."""
+    if not isinstance(bar, PanelDef):
         return "none"
     return bar.keyboard.lower()
 
@@ -181,13 +182,9 @@ def _kind(bar: BarDef | PanelDef) -> str:
     return "Panel" if isinstance(bar, PanelDef) else "Bar"
 
 
-def _input_for(
-    bar: BarDef | PanelDef, geometry: Geometry, output: tuple[int, int], hidden: bool
-) -> Any:
-    """The ``input_region`` a surface has now: a Bar's body; a Panel's ``Input_Region`` (the body,
-    nothing, or ``auto``); nothing at all while a Panel is hidden (D44)."""
-    if hidden:
-        return []
+def _input_for(bar: BarDef | PanelDef, geometry: Geometry, output: tuple[int, int]) -> Any:
+    """The ``input_region`` of a surface: a Bar's body; a Panel's ``Input_Region`` (the body,
+    nothing, or ``auto``)."""
     if isinstance(bar, PanelDef):
         if bar.input == "NONE":
             return []
@@ -326,8 +323,10 @@ class SurfaceManager:
         self._store = store
         self.surfaces: list[Surface] = []
         self._planned: list[Planned] = []
+        self._all_uses: Mapping[str, Use] = {}
 
     def _dispatch(self, handler: Handler, key: str, raw: Any) -> None:
+        logger.debug(f"{key} -> {handler.action} {dict(handler.args)} ({handler.origin})")
         if self.sink is not None:
             self.sink(handler, key, raw)
 
@@ -407,16 +406,18 @@ class SurfaceManager:
     def build(self) -> list[Surface]:
         """Evaluate the slots with the values the modules have sent so far, bind, and open."""
         all_uses = {u.key: u for p in self._planned for u in p.expanded.uses}
+        self._all_uses = all_uses
         for planned in self._planned:
             self.surfaces.append(self._open(planned, all_uses))
         return self.surfaces
 
-    def _open(self, planned: Planned, all_uses: Mapping[str, Use]) -> Surface:
+    def _make_window(self, planned: Planned, live: LiveTree) -> Surface:
+        """Create the window of a Bar or a Panel and bind its tree. The window is not added to the
+        app yet; the caller does that (at start, or when a hidden Panel is shown)."""
         from tess_re import LayerWindow
 
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
         kind = _kind(bar)
-        hidden = isinstance(bar, PanelDef) and not bar.visible
         window = LayerWindow(
             f"tesserae-shell.{kind.lower()}.{bar.name}",
             layer=bar.layer.lower(),  # type: ignore[arg-type]
@@ -425,8 +426,8 @@ class SurfaceManager:
             margin=geometry.margin,
             exclusive_zone=geometry.exclusive_zone,
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
-            keyboard=_keyboard(bar, hidden),  # type: ignore[arg-type]
-            input_region=_input_for(bar, geometry, (output.width, output.height), hidden),
+            keyboard=_keyboard(bar),  # type: ignore[arg-type]
+            input_region=_input_for(bar, geometry, (output.width, output.height)),
             output=output,
         )
         fill, shadows = _body_props(bar, self._look)
@@ -446,7 +447,13 @@ class SurfaceManager:
             "closed",
             lambda e, n=where: logger.info(f"{kind} {n} closed ({getattr(e, 'reason', '')})"),
         )
-        live = LiveTree(self._store, all_uses, look=self._look)
+        for pointer in ("pointer_down", "pointer_up"):  # a trace: where a click's time goes
+            window.root.on(
+                pointer,
+                lambda e, n=where, k=kind, p=pointer: logger.debug(
+                    f"{k} {n} {p} at {getattr(e, 'window_x', None)},{getattr(e, 'window_y', None)}"
+                ),
+            )
         view: View | None = None
         errors = list(planned.expanded.errors)
         if not errors:
@@ -458,12 +465,7 @@ class SurfaceManager:
         _log_errors(errors)
         if view is None:
             logger.error(f"{kind} {where} is empty: its contents did not bind")
-        self._app.add_window(window)
-        logger.info(
-            f"{kind} {where}: anchor {','.join(geometry.anchor) or 'none'} size {geometry.size} "
-            f"zone {geometry.exclusive_zone}" + (" (hidden)" if hidden else "")
-        )
-        surface = Surface(
+        return Surface(
             planned.key,
             bar.name,
             output.name,
@@ -478,28 +480,59 @@ class SurfaceManager:
             shadows,
             planned,
             extra,
-            hidden,
+        )
+
+    def _open(self, planned: Planned, all_uses: Mapping[str, Use]) -> Surface:
+        bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
+        kind = _kind(bar)
+        live = LiveTree(self._store, all_uses, look=self._look)
+        if isinstance(bar, PanelDef) and not bar.visible:
+            # a hidden Panel has no surface at all: nothing to go stale, nothing for the
+            # compositor to hold, and no flash when it is first shown (D44, revised)
+            logger.info(f"{kind} {where}: anchor {','.join(geometry.anchor) or 'none'} (hidden)")
+            return Surface(
+                planned.key,
+                bar.name,
+                output.name,
+                bar.layer,
+                None,
+                None,
+                live,
+                planned.expanded,
+                geometry,
+                planned=planned,
+                hidden=True,
+            )
+        surface = self._make_window(planned, live)
+        assert surface.window is not None
+        self._app.add_window(surface.window)
+        logger.info(
+            f"{kind} {where}: anchor {','.join(geometry.anchor) or 'none'} size {geometry.size} "
+            f"zone {geometry.exclusive_zone}"
         )
         if isinstance(bar, PanelDef):
-            self._panel_events(surface, bar)
-            if hidden:
-                window.root.set(visible=False)  # nothing is drawn while hidden (D44)
-            else:
-                self._arm_hide_after(surface)
+            self._panel_events(surface)
+            self._arm_hide_after(surface)
         return surface
 
-    # -- Panel: hide, show, Hide_After, Escape (D44) -------------------------------------------
+    # -- Panel: hide, show, Hide_After, Escape (D44, revised) -------------------------------------
+    #
+    # tre 0.6.1 cannot unmap a layer surface, and a surface left mapped but drawing nothing was
+    # not repainted reliably on KWin (the maintainer's check, 2026-11-05): a hidden Panel kept
+    # showing and a shown one stayed empty. So hiding closes the window and showing makes a new
+    # one from the same Panel record; the tree is built again from the current values, and what a
+    # module knows lives in the module.
 
-    def _panel_events(self, s: Surface, panel: PanelDef) -> None:
+    def _panel_events(self, s: Surface) -> None:
         """Escape hides a Panel that takes the keyboard."""
+        assert s.window is not None
 
         def on_key(event: Any) -> None:
-            current = s.planned.bar if s.planned else panel
+            current = s.planned.bar if s.planned else None
             if (
                 getattr(event, "key", None) == "escape"
                 and isinstance(current, PanelDef)
                 and current.keyboard != "NONE"
-                and not s.hidden
             ):
                 self.hide(s)
 
@@ -511,36 +544,48 @@ class SurfaceManager:
             s.timer.cancel()
             s.timer = None
         panel = s.planned.bar if s.planned else None
-        if isinstance(panel, PanelDef) and panel.hide_after is not None and not s.hidden:
+        if s.window is not None and isinstance(panel, PanelDef) and panel.hide_after is not None:
             s.timer = s.window.after(panel.hide_after, lambda: self.hide(s))
 
     def hide(self, s: Surface) -> None:
-        """Hidden is not closed: the root draws nothing, the surface takes no pointer and no
-        keyboard; its tree, state and place are kept."""
-        if s.hidden or s.planned is None:
+        """Hidden is not closed for the module: the Panel record, its place and what its modules
+        know stay; the window is destroyed and made again when it is shown."""
+        if s.hidden or s.planned is None or s.window is None:
             return
-        s.hidden = True
         if s.timer is not None:
             s.timer.cancel()
             s.timer = None
-        s.window.root.set(visible=False)
-        s.window.set(input_region=[], keyboard="none")
-        logger.info(f"Panel {s.planned.where} hidden")
+        window = s.window
+        s.hidden = True
+        s.window, s.view, s.body = None, None, None
+        window.close()
+        logger.info(f"Panel {s.planned.where} hidden (window closed)")
 
     def show(self, s: Surface) -> None:
         if s.planned is None:
             return
-        bar, out = s.planned.bar, self._output_size(s)
-        was_hidden = s.hidden
-        s.hidden = False
-        s.window.root.set(visible=True)
-        s.window.set(
-            input_region=_input_for(bar, s.geometry, out, False),
-            keyboard=_keyboard(bar, False),
-        )
+        if not s.hidden:
+            self._arm_hide_after(s)  # shown again: the timer starts over
+            return
+        started = time.monotonic()
+        fresh = self._make_window(s.planned, LiveTree(self._store, self._all_uses, look=self._look))
+        assert fresh.window is not None
+        s.window, s.view, s.body = fresh.window, fresh.view, fresh.body
+        s.live, s.fill, s.shadows, s.extra = fresh.live, fresh.fill, fresh.shadows, fresh.extra
+        s.expanded, s.geometry, s.hidden = s.planned.expanded, s.planned.geometry, False
+        self._app.add_window(s.window)
+        self._panel_events(s)
         self._arm_hide_after(s)
-        if was_hidden:
-            logger.info(f"Panel {s.planned.where} shown")
+        logger.info(f"Panel {s.planned.where} shown (window created)")
+        frames = [0]
+
+        def on_frame(event: Any, where: str = s.planned.where) -> None:
+            frames[0] += 1
+            if frames[0] == 1:
+                ms = (time.monotonic() - started) * 1000
+                logger.debug(f"Panel {where}: first frame {ms:.0f} ms after it was shown")
+
+        s.window.on("frame", on_frame)
 
     def run_builtin(self, handler: Handler) -> None:
         """A shell action (``Show``, ``Hide``, ``Toggle``) on the Panel it names."""
@@ -618,6 +663,7 @@ class SurfaceManager:
         if look is not None:
             self._look = look
         all_uses = {u.key: u for p in planned for u in p.expanded.uses}
+        self._all_uses = all_uses
         old = {s.key: s for s in self.surfaces}
         out: list[Surface] = []
         for p in planned:
@@ -632,21 +678,40 @@ class SurfaceManager:
                 out.append(s)
                 continue
             if s is not None:
-                s.window.close()
+                self._close(s)
             out.append(self._open(p, all_uses))
         for s in old.values():
-            s.window.close()
+            self._close(s)
         self.surfaces = out
         keep = {u.key for u in store_uses}
         for key in [k for k in self._store.values if k not in keep]:
             self._store.remove_use(key)
 
+    @staticmethod
+    def _close(s: Surface) -> None:
+        if s.timer is not None:
+            s.timer.cancel()
+            s.timer = None
+        if s.window is not None:
+            s.window.close()
+
     def _update(self, s: Surface, p: Planned, all_uses: Mapping[str, Use]) -> None:
         live = LiveTree(self._store, all_uses, look=self._look)
+        if s.hidden:  # no window to change: the next show builds from the new definition
+            s.live, s.expanded, s.name, s.planned, s.geometry = (
+                live,
+                p.expanded,
+                p.bar.name,
+                p,
+                p.geometry,
+            )
+            logger.info(f"{_kind(p.bar)} {p.where} reloaded (hidden)")
+            return
         try:
             nodes = live.resolve(p.expanded)
             stats = "built"
             if s.view is None:
+                assert s.window is not None
                 s.view = build(nodes, s.window, s.body)
                 s.view.sink = self._dispatch
             else:
@@ -671,6 +736,8 @@ class SurfaceManager:
     ) -> None:
         """Bring a kept surface's body (fill, shadows, margin) and its window geometry to what the
         Bar asks for; each is set only when it differs."""
+        if s.window is None:
+            return
         fill, shadows = _body_props(bar, self._look)
         extra = _body_extra(bar, self._look)
         if s.body is not None and (
@@ -691,7 +758,7 @@ class SurfaceManager:
                     size=geometry.size,
                     margin=geometry.margin,
                     exclusive_zone=geometry.exclusive_zone,
-                    input_region=_input_for(bar, geometry, self._output_size(s), s.hidden),
+                    input_region=_input_for(bar, geometry, self._output_size(s)),
                 )
                 s.geometry = geometry
                 logger.info(

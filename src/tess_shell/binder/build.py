@@ -129,9 +129,17 @@ class View:
             wire.wired.add(key)
 
             def listener(event: Any, key: str = key, wire: Wire = wire) -> None:
-                handler = wire.handlers.get(key)
-                if handler is not None and self.sink is not None:
-                    self.sink(handler, key, event)
+                # tre's click bubbles to every ancestor's listener; a clickable inside a clickable
+                # takes its click alone (as Material 3 expects), so the event stops here, even
+                # when the handler raises
+                try:
+                    handler = wire.handlers.get(key)
+                    if handler is not None and self.sink is not None:
+                        self.sink(handler, key, event)
+                finally:
+                    stop = getattr(event, "stop", None)
+                    if stop is not None:
+                        stop()
 
             entry.tre.on(tre_event, listener)
 

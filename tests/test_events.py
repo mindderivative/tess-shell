@@ -183,3 +183,27 @@ def test_a_reload_replaces_the_handler_without_a_second_listener() -> None:
 
 def test_definition_helper_still_loads_modules_without_handlers() -> None:
     assert definition("Plain").children  # the M2 module layout is unchanged
+
+
+def test_a_click_on_a_clickable_inside_a_clickable_takes_it_alone() -> None:
+    window = Window(width=200, height=100)
+    seen: list[str] = []
+    inner = Node(
+        "Rectangle",
+        name="Inner",
+        props={"Width": Length(20), "Height": Length(20)},
+        handlers={"On_Click": Handler("inner", use="B@1")},
+    )
+    outer = Node(
+        "FlexBox",
+        name="Outer",
+        props={"Width": Length(100), "Height": Length(60)},
+        children=(inner,),
+        handlers={"On_Click": Handler("outer", use="B@1")},
+    )
+    view = build([outer], window)
+    view.sink = lambda h, key, raw: seen.append(h.action)
+    window.simulate("click", node=view.nodes["Inner"])
+    assert seen == ["inner"]  # the outer box did not hear it
+    window.simulate("click", node=view.nodes["Outer"])
+    assert seen == ["inner", "outer"]

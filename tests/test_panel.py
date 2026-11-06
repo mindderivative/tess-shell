@@ -203,33 +203,44 @@ def surface(m: SurfaceManager, name: str) -> Surface:
     return next(s for s in m.surfaces if s.name == name)
 
 
-def test_a_panel_with_visible_false_opens_hidden_and_takes_nothing() -> None:
+def test_a_panel_with_visible_false_has_no_window_at_all() -> None:
     s = surface(manager(), "Launcher")
-    assert s.hidden is True
-    assert s.window.get("input_region") == [] and s.window.get("keyboard") == "none"
-    assert s.window.get("layer") == "overlay"
+    assert s.hidden is True and s.window is None and s.view is None and s.body is None
 
 
-def test_show_gives_back_the_keyboard_and_the_surface_and_hide_takes_them_away() -> None:
+def test_show_makes_the_window_and_hide_destroys_it_and_the_tree_comes_back() -> None:
     m = manager()
     s = surface(m, "Launcher")
     m.show(s)
-    assert s.hidden is False
-    assert s.window.get("keyboard") == "exclusive" and s.window.get("input_region") is None
-    assert s.view is not None and "Inside" in s.view.nodes  # the same tree, nothing rebuilt
+    assert s.hidden is False and s.window is not None
+    assert s.window.get("keyboard") == "exclusive" and s.window.get("layer") == "overlay"
+    assert s.window.get("input_region") is None  # the whole surface: no shadow margin here
+    assert s.view is not None and "Inside" in s.view.nodes
+    first = s.window
     m.hide(s)
-    assert s.hidden is True and s.window.get("keyboard") == "none"
-    assert s.window.get("input_region") == []
-    assert "Inside" in s.view.nodes  # hidden is not closed: the tree is kept
+    assert s.hidden is True and s.window is None and s.view is None
+    m.show(s)
+    assert s.window is not None and s.window is not first  # a new window each time
+    assert s.view is not None and "Inside" in s.view.nodes  # the same tree, built again
+
+
+def test_a_hidden_panel_is_not_touched_by_a_reload_and_shows_the_new_definition() -> None:
+    m = manager()
+    s = surface(m, "Launcher")
+    assert s.planned is not None
+    m._update(s, s.planned, m._all_uses)  # what a reload does to a hidden Panel
+    assert s.hidden is True and s.window is None  # still no window
+    m.show(s)
+    assert s.window is not None
 
 
 def test_an_osd_with_an_empty_input_region_passes_clicks_even_when_shown() -> None:
     m = manager(panel="Panel { Name: Osd, Width: 100, Height: 40, Input_Region: [] }")
     s = surface(m, "Osd")
-    assert s.hidden is False and s.window.get("input_region") == []
+    assert s.window is not None and s.window.get("input_region") == []
     m.hide(s)
     m.show(s)
-    assert s.window.get("input_region") == []  # shown again: still click-through
+    assert s.window is not None and s.window.get("input_region") == []  # still click-through
 
 
 def test_a_click_on_a_blocks_show_hide_and_toggle_handler_reaches_the_panel() -> None:
@@ -259,10 +270,12 @@ def test_escape_hides_a_panel_that_takes_the_keyboard_and_not_one_that_does_not(
     m = manager()
     s = surface(m, "Launcher")
     m.show(s)
+    assert s.window is not None
     s.window.simulate("key_down", node=s.window.root, key="escape")
-    assert s.hidden is True
+    assert s.hidden is True and s.window is None
     m2 = manager(panel="Panel { Name: Quiet, Width: 100, Height: 40 }")
     q = surface(m2, "Quiet")
+    assert q.window is not None
     q.window.simulate("key_down", node=q.window.root, key="escape")
     assert q.hidden is False  # Keyboard: NONE never sees the key
 
