@@ -572,7 +572,6 @@ class Popups:
             + f", anchor {anchor} gravity {gravity} offset {offset}, "
             f"{'focus' if popup.focus else 'no focus'}"
         )
-        self._m.wake()
         return op
 
     def _build_content(
@@ -653,7 +652,6 @@ class Popups:
         except Exception:  # the window may be gone already
             logger.debug(f"Popup {op.where}: close raised", exc_info=True)
         self._free(op)
-        self._m.wake()
 
     def close_current(self, why: str) -> None:
         if self.current is not None:

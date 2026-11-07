@@ -276,9 +276,6 @@ class Frames:
         self._look: Look | None = None
         self.states: dict[str, FrameState] = {}
 
-    def _wake(self) -> None:
-        self._m.wake()
-
     # -- planning: no side effect but logging ---------------------------------------------------
 
     def plan(
@@ -413,7 +410,6 @@ class Frames:
                     st.size = plan.size  # the output changed: draw for it until tre configures
                 st.plan = plan
             self._reconcile(st)
-        self._wake()
 
     def set_look(self, look: Look) -> None:
         """The theme or the accent changed: every token is read again, the ring is redrawn in
@@ -480,8 +476,6 @@ class Frames:
                     self._m._fire(host.surface, "On_Toggle")  # before: the request is made
                 show = host.surface.hidden if action == "Toggle" else action == "Show"
                 self._meld_to(st, host, show)
-        if found:
-            self._wake()
         return found
 
     # -- windows --------------------------------------------------------------------------------
@@ -868,7 +862,6 @@ class Frames:
                 )
             else:
                 m._fire(surface, "On_Hidden")
-            m.wake()
             return
         turning = host.anim is not None
         if show:
@@ -929,7 +922,6 @@ class Frames:
                 m._fire(surface, "On_Visible")
             else:
                 m._fire(surface, "On_Hidden")
-            m.wake()
 
         prop, away = host.away
         if kind == "SLIDE":
@@ -938,7 +930,7 @@ class Frames:
         else:
             host.svg.animate("opacity", paint.opacity if show else 0.0, ms, easing, done)
             host.mover.animate("opacity", 1.0 if show else 0.0, ms, easing)
-        m.wake()  # tre draws this window's animation only once its loop is awake (TRE-REQ-012)
+        m.start_wake()  # tre draws this window's animation only once its loop is awake
 
     def _drop_hosts(self, st: FrameState) -> None:
         for host in list(st.hosts.values()):

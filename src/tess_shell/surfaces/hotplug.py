@@ -114,7 +114,6 @@ class OutputWatch:
         keep = {u.key for u in uses}
         for key in [k for k in m._store.values if k not in keep]:
             m._store.remove_use(key)
-        m.wake()
 
     def _reconcile(self, planned: list[Planned]) -> None:
         m = self._m

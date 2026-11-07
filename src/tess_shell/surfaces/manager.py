@@ -493,12 +493,12 @@ class SurfaceManager:
         # ``sync_uses``: the same path a reload takes). ``None`` where there are no modules.
         self.sync_uses: Callable[[list[Use]], None] | None = None
 
-    def wake(self) -> None:
-        """Wake tre's loop after the shell changed a window. tre does not request a frame for a
-        window whose node was changed during a callback of another window (a click on the Bar
-        changing a Panel; a theme change touching every window): the change waits for the next
-        wake, and a Panel could stay stale for as long as that takes. A queued no-op is a wake
-        (measured on tre 0.6.1, ``tests/kwin/probe_hide.py``)."""
+    def start_wake(self) -> None:
+        """Wake tre's loop after the shell started an animation from a timer. tre 0.6.2 draws a
+        change made to one window in a listener or timer of another at once (#264, TRE-REQ-012:
+        the shell's old wake after every change is gone), but a window whose own timer starts an
+        animation still draws nothing until something wakes the loop (1 frame in 3 s, then 170
+        after a ``call_soon``, measured on tre 0.6.3). A queued no-op is a wake."""
         handle = getattr(self, "_handle", None)
         if handle is None:
             thread_handle = getattr(self._app, "thread_handle", None)
@@ -803,11 +803,11 @@ class SurfaceManager:
 
     # -- Panel: hide, show, Hide_After, Escape (D44) ----------------------------------------------
     #
-    # tre 0.6.1 cannot unmap a layer surface. KEEP (the default) leaves it mapped and drawing
-    # nothing. That needed ``wake()``: a node changed in one window during a callback of another
-    # was not drawn until something else woke tre's loop, so a shown Panel stayed empty and a
-    # hidden one stayed on screen (TRE-REQ-012). CLOSE avoids it by making a new window on show;
-    # what a module knows lives in the module.
+    # tre cannot unmap a layer surface. KEEP (the default) leaves it mapped and drawing nothing.
+    # Until tre 0.6.2 that needed a wake after every change, because a node changed in one window
+    # during a callback of another was not drawn until something else woke the loop
+    # (TRE-REQ-012, fixed in #264). CLOSE makes a new window on show; what a module knows lives
+    # in the module.
 
     def _panel_events(self, s: Surface) -> None:
         """Escape hides a Panel that takes the keyboard."""
@@ -964,7 +964,6 @@ class SurfaceManager:
         p.geometry = geometry
         if s.window is not None:
             self._sync_body(s, p.bar, geometry, p.where)
-            self.wake()  # this runs in the Bar's callback: tre draws another window only when woken
 
     def _attached_to(self, s: Surface) -> list[Surface]:
         """The open Panels attached to ``s`` (same Monitor and output)."""
@@ -1026,7 +1025,6 @@ class SurfaceManager:
             window.root.set(opacity=1.0, visible=False)
             self._trace(s, "hidden")
             logger.info(f"Panel {s.planned.where} hidden (surface kept)")
-            self.wake()
         else:
             s.window, s.view, s.body = None, None, None
             window.close()
@@ -1057,7 +1055,6 @@ class SurfaceManager:
             self._trace(s, "shown")
             logger.info(f"Panel {s.planned.where} shown (surface kept)")
             self._enter(s)
-            self.wake()
             return
         fresh = self._make_window(s.planned, LiveTree(self._store, self._all_uses, look=self._look))
         assert fresh.window is not None
@@ -1137,7 +1134,7 @@ class SurfaceManager:
         if toward_rest and window.root.get("opacity") == 1.0:
             window.root.set(opacity=0.0)
         window.root.animate("opacity", 1.0 if toward_rest else 0.0, ms, easing, ended)
-        self.wake()  # tre draws this window's animation only once its loop is awake (TRE-REQ-012)
+        self.start_wake()  # tre draws this window's animation only once its loop is awake
 
     def _enter(self, s: Surface) -> None:
         """The Panel is shown: slide or fade it in, then it is visible."""
@@ -1237,7 +1234,6 @@ class SurfaceManager:
             for error in surface.view.update(updates):
                 logger.warning(f"{error.origin}: {error.message}")
         self.popups.on_change(changes)
-        self.wake()
 
     def check(
         self, shell: ShellDef, modules: Mapping[str, ModuleDef], look: Look | None = None
@@ -1299,7 +1295,6 @@ class SurfaceManager:
         keep = {u.key for u in store_uses}
         for key in [k for k in self._store.values if k not in keep]:
             self._store.remove_use(key)
-        self.wake()
 
     def _close(self, s: Surface) -> None:
         self.popups.parent_closed(s)
@@ -1414,4 +1409,3 @@ class SurfaceManager:
             geometry = placed[p.group].get(p.bar.name)
             if geometry is not None:
                 self._sync_body(s, p.bar, geometry, p.where)
-        self.wake()
