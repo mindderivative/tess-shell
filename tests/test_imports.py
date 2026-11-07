@@ -73,7 +73,8 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.schema.model",
         "tess_shell.surfaces",
     },
-    "surfaces.ring": set(),
+    "surfaces.outline": set(),
+    "surfaces.ring": {"tess_shell.surfaces.outline"},
     "surfaces.frame": {
         "tess_re",
         "loguru",

@@ -120,6 +120,7 @@ class OutputWatch:
         m = self._m
         all_uses = {u.key: u for p in planned for u in p.expanded.uses}
         all_uses.update(m.popups.uses())
+        all_uses.update(m._frame_uses())
         m._all_uses = all_uses
         old = {s.key: s for s in m.surfaces}
         kept: dict[str, Surface] = {}

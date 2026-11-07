@@ -17,7 +17,11 @@ prints, labelled, what the Frame costs:
 * then, unless ``--auto``, it stays open so the work area can be checked by eye: maximise a
   window; it must stop inside the ring on all four sides. Ctrl+C stops it.
 
-Options: ``--output=NAME`` (default: tre's choice), ``--thickness=N`` (default 24),
+``--melds=N`` (0 to 8) melds N bodies of 100 x 40 px into the opening (top and bottom at the start,
+centre and end, left and right at the centre), the way a hosted Panel is drawn, and prints what the
+one-contour path costs: the time to build it, its size, the number of ``warning`` events tre sent
+the painter (a 256-rectangle input-region cap shows up there) and the cost of the painter's last
+frame. Options: ``--output=NAME`` (default: tre's choice), ``--thickness=N`` (default 24),
 ``--only=painter|reservers`` (measure one kind alone, to split the cost), ``--auto`` (stop after
 the report; for a private compositor), ``--settle=S`` (seconds before the first sample, 2).
 """
@@ -33,7 +37,7 @@ from typing import Any
 
 import tess_re
 
-from tess_shell.surfaces.ring import RingSpec, ring
+from tess_shell.surfaces.ring import MeldSpec, RingSpec, ring
 
 ARGS = {a.split("=", 1)[0]: (a.split("=", 1) + [""])[1] for a in sys.argv[1:]}
 OUTPUT = ARGS.get("--output") or None
@@ -41,6 +45,7 @@ THICKNESS = int(ARGS.get("--thickness") or 24)
 ONLY = ARGS.get("--only") or None
 AUTO = "--auto" in ARGS
 SETTLE = float(ARGS.get("--settle") or 2)
+MELDS = int(ARGS.get("--melds") or 0)  # bodies melded into the opening, 0 to 8
 IDLE_CPU = 5.0
 IDLE_FRAMES = 3.0
 TICK = os.sysconf("SC_CLK_TCK")
@@ -145,15 +150,37 @@ say(
 baseline = memory("before any window")
 
 windows: dict[str, Any] = {}
+results: dict[str, Any] = {}
 if ONLY != "reservers":
+    _PLACES = (
+        ("top", "START"),
+        ("top", "CENTER"),
+        ("top", "END"),
+        ("bottom", "START"),
+        ("bottom", "CENTER"),
+        ("bottom", "END"),
+        ("left", "CENTER"),
+        ("right", "CENTER"),
+    )
+    melds = tuple(
+        MeldSpec(side, 100, 40, alignment, (8, 8, 8, 8)) for side, alignment in _PLACES[:MELDS]
+    )
+    t0 = time.perf_counter()
     shape = ring(
         RingSpec(
             thickness=(THICKNESS, THICKNESS, THICKNESS, THICKNESS),
             inner_radius=(THICKNESS, THICKNESS, THICKNESS, THICKNESS),
             outer_border=1,
             inner_border=1,
+            melds=melds,
         ),
         SIZE,
+    )
+    built_ms = (time.perf_counter() - t0) * 1000
+    say(
+        f"ring with {MELDS} melds: built in {built_ms:.2f} ms; path data "
+        f"{len(shape.fill) + len(shape.inner_border) + len(shape.outer_border)} characters; "
+        f"{sum(1 for b in shape.bodies if b is not None)} bodies placed; {shape.warnings}"
     )
     painter = tess_re.LayerWindow(
         "tesserae-shell.frame.measure",
@@ -183,6 +210,9 @@ if ONLY != "reservers":
         )
         painter.root.add_child(node)
     windows["painter"] = painter
+    warnings: list[str] = []
+    painter.on("warning", lambda e: warnings.append(f"{e.key}: {e.message}"))
+    results["warnings"] = warnings
 if ONLY != "painter":
     zone = THICKNESS + 2
     for side, anchors, size in (
@@ -205,7 +235,6 @@ for window in windows.values():
     app.add_window(window)
 
 main = next(iter(windows.values()))
-results: dict[str, Any] = {}
 
 
 def frames() -> dict[str, int]:
@@ -248,6 +277,10 @@ def sample_cpu() -> None:
 
 def sample_frames() -> None:
     after = frames()
+    if "painter" in windows:
+        last = windows["painter"].frame_stats().get("last")
+        say(f"painter's last frame: {last}")
+        say(f"painter warnings (an input-region cap would be here): {results['warnings']}")
     drawn = {k: after[k] - results["frames0"][k] for k in after}
     say(f"frames drawn in {IDLE_FRAMES:.0f} s of idle: {drawn}  (a static ring should draw none)")
     memory("after the idle samples")

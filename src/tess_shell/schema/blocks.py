@@ -149,10 +149,10 @@ FRAME_KEYS: dict[str, str] = {
     "Corner_Radius": "radius",
     "Inner_Radius": "radius",
     "Visible": "bool",
+    "Padding": "sides",
 }
 FRAME_CHOICES: dict[str, tuple[str, ...]] = {"Layer": ("TOP",)}
 FRAME_NOT_BUILT_ERROR = (
-    "Edges",
     "Children",
     "Border_Tile",
     "Meld",
@@ -160,7 +160,10 @@ FRAME_NOT_BUILT_ERROR = (
     "Keyboard",
     "Input_Region",
 )
-FRAME_NOT_BUILT_WARNING = ("Padding", "Class")
+FRAME_NOT_BUILT_WARNING = ("Class",)
+# an ``Edges`` entry: its own thickness, padding and the strip's children
+EDGE_SIDES = ("Left", "Top", "Right", "Bottom")
+EDGE_KEYS: dict[str, str] = {"Thickness": "number", "Padding": "sides"}
 FRAME_BORDER_KEYS = ("Width", "Color")
 # A Frame's inline Style: the background, the shorthand for the inner border (``Border_Width``,
 # ``Border_Color`` or a ``Border { Width, Color }`` block, D78) and the opacity. Shadows are
@@ -228,6 +231,7 @@ PANEL_KEYS: dict[str, str] = {
     "Gap": "number",
     "Alignment": "enum",
     "Movable": "bool",
+    "Meld": "bool",
 }
 PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),
@@ -240,8 +244,20 @@ PANEL_ATTACH_KEYS = ("Attach", "Gap", "Alignment")
 PANEL_PLACED_KEYS = ("Anchor", "Inset")
 PANEL_NOT_BUILT_ERROR = (
     "Open_With_Target",
-    "Meld",
     "Exclusive_Zone",
+)
+# keys of a Panel with ``Meld: true`` (hosted in its Frame's surface) that are not built
+PANEL_MELD_NOT_BUILT = ("Hide_After", "Movable", "Keyboard", "Input_Region", "Animation")
+# style keys a melded Panel does not use: it is drawn in the Frame's colour and border
+PANEL_MELD_IGNORED_STYLE = (
+    "Background",
+    "Fill",
+    "Opacity",
+    "Elevation",
+    "Shadows",
+    "Shadow_Bleed",
+    "Border_Width",
+    "Border_Color",
 )
 PANEL_NOT_BUILT_WARNING = ("Margin", "Padding", "Class")
 # ``Animation { Type, Duration }`` (Panel > Configuration): how a Panel comes and goes

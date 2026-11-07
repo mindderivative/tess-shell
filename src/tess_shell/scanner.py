@@ -263,6 +263,12 @@ def _check_look(
                     if border is not None and border.color is not None:
                         refs[f"{label}.Color"] = border.color
                 out.extend(check_tokens((), tokens, refs))
+                for edge in frame.edges.values():
+                    out.extend(check_tokens(edge.children, tokens))
+                    stated.extend(check_states(edge.children, rules))
+                for panel in frame.melds:
+                    out.extend(check_tokens(panel.children, tokens, panel.style))
+                    stated.extend(check_states(panel.children, rules))
     for name, mf in modules.items():
         out.extend(check_tokens(mf.definition.children, tokens))
         stated.extend(check_states(mf.definition.children, rules, name))

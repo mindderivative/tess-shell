@@ -7,6 +7,7 @@ the position of the offending key or value.
 
 from __future__ import annotations
 
+import dataclasses
 import re
 from collections.abc import Callable, Mapping
 
@@ -20,6 +21,7 @@ from tess_shell.schema.model import (
     PARAM_TYPES,
     BarDef,
     ClassDef,
+    EdgeDef,
     FrameBorder,
     FrameDef,
     IconSource,
@@ -912,6 +914,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
                 if handler is not None:
                     handlers[entry.type] = handler
             elif entry.type == "Animation":
+                written.add("Animation")
                 animation = _animation(ctx, entry)
             elif entry.type == "Inset":
                 written.add("Inset")
@@ -922,6 +925,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
             elif entry.type in blocks.PANEL_NOT_BUILT_ERROR:
                 ctx.not_built(entry.origin, f"the Panel key {entry.type}")
             elif entry.type in blocks.PANEL_NOT_BUILT_WARNING:
+                written.add(entry.type)
                 ctx.not_built(entry.origin, f"the Panel key {entry.type}", "warning")
             else:
                 ctx.unknown(entry.origin, entry.type, allowed, "block in Panel")
@@ -977,6 +981,10 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
             "only a Panel placed by Anchor and Inset (or floating) has a position to save",
         )
     layer = values.get("Layer")
+    melded = values.get("Meld")
+    is_meld = isinstance(melded, m.Bool) and melded.value
+    if is_meld:
+        _check_meld(ctx, block, written, attach_to, handlers, style)
     if name is None or "Width" not in values or "Height" not in values:
         return None
 
@@ -1010,6 +1018,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         style=style,
         children=tuple(children),
         attach_to=attach_to,
+        meld=is_meld,
         attach=word("Attach", "") or None,
         gap=float(gap.value) if isinstance(gap, m.Number) else 0,
         alignment=word("Alignment", "CENTER"),
@@ -1018,6 +1027,54 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         duration=float(animation[1]),
         handlers=handlers,
     )
+
+
+def _check_meld(
+    ctx: _Ctx,
+    block: Block,
+    written: set[str],
+    attach_to: str | None,
+    handlers: Mapping[str, m.Handler],
+    style: Mapping[str, m.Value],
+) -> None:
+    """A Panel with ``Meld: true`` is drawn inside the Frame it is attached to (Frame > Hosted
+    Melding). A ``Margin`` stops the meld; what only a window of its own can do is not built."""
+    if attach_to is None:
+        ctx.add(
+            block.origin,
+            "meld-target",
+            "Meld: true needs Attach_To naming a Frame",
+            "write Attach_To: <the Name of a Frame of this Monitor>",
+        )
+    if "Margin" in written:
+        ctx.add(
+            block.origin,
+            "meld-margin",
+            "a Margin on the Frame-facing side stops the meld: the Panel would not grow out of "
+            "the Frame",
+            "remove the Margin to meld, or Meld to keep a separate Panel",
+        )
+    for key in blocks.PANEL_MELD_NOT_BUILT:
+        if key in written:
+            ctx.not_built(block.origin, f"{key} on a Panel with Meld: true")
+    if handlers:
+        ctx.not_built(block.origin, "events (On_*) on a Panel with Meld: true")
+    if "Layer" in written:
+        ctx.not_built(
+            block.origin,
+            "Layer on a Panel with Meld: true (it is in the Frame's surface)",
+            "warning",
+        )
+    for key in blocks.PANEL_MELD_IGNORED_STYLE:
+        if key in style:
+            ctx.add(
+                getattr(style[key], "origin", None) or block.origin,
+                "not-built",
+                f"{key} on a Panel with Meld: true is ignored: the Panel is drawn in the Frame's "
+                "colour and border",
+                "",
+                "warning",
+            )
 
 
 def _animation(ctx: _Ctx, block: Block) -> tuple[str, float]:
@@ -1272,6 +1329,9 @@ def _check_tooltips(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
         popups = {p.name: p for p in monitor.popups}
         trees: list[tuple[Child, ...]] = [s.children for s in monitor.surfaces]
         trees.extend(p.children for p in monitor.popups)
+        for frame in monitor.frames:  # strips and melded Panels are content too
+            trees.extend(e.children for e in frame.edges.values())
+            trees.extend(p.children for p in frame.melds)
         for tree in trees:
             for ref, by_name in _tooltip_refs(tree):
                 if not by_name:
@@ -1364,6 +1424,7 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         "Style",
         "Inner_Border",
         "Outer_Border",
+        "Edges",
         *blocks.FRAME_KEYS,
         *blocks.FRAME_NOT_BUILT_ERROR,
         *blocks.FRAME_NOT_BUILT_WARNING,
@@ -1372,6 +1433,7 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
     values: dict[str, m.Value] = {}
     style: dict[str, m.Value] = {}
     borders: dict[str, FrameBorder] = {}
+    edges: dict[str, EdgeDef] = {}
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
@@ -1379,6 +1441,10 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
                 name = ctx.name(entry)
             elif key == "Style":
                 ctx.not_built(entry.key_origin, "a Style file")
+            elif key == "Edges":
+                ctx.add(
+                    entry.value_origin, "bad-value", "Edges is a block", "write Edges { Top { } }"
+                )
             elif key in blocks.FRAME_NOT_BUILT_ERROR:
                 ctx.not_built(entry.key_origin, f"the Frame key {key}")
             elif key in blocks.FRAME_NOT_BUILT_WARNING:
@@ -1394,7 +1460,7 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
                 except ValueProblem as exc:
                     ctx.problem(entry.value_origin, key, exc)
                     continue
-                if key in ("Thickness", "Margin"):
+                if key in ("Thickness", "Margin", "Padding"):
                     _frame_sides(ctx, key, value, entry.value_origin)
                 elif key in ("Corner_Radius", "Inner_Radius") and any(
                     x < 0 for x in _corners_of(value)
@@ -1414,7 +1480,9 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
             kind = entry.type
             if kind == "Style":
                 style = _scalar_block_keys(ctx, entry, blocks.FRAME_STYLE, "Frame")
-            elif kind in ("Thickness", "Margin"):
+            elif kind == "Edges":
+                edges = _edges(ctx, entry)
+            elif kind in ("Thickness", "Margin", "Padding"):
                 try:
                     named = named_sides(entry, ctx.origin(entry.origin))
                 except ValueProblem as exc:
@@ -1488,6 +1556,25 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         )
     if name is None or "Thickness" not in values:
         return None
+    thickness = _sides_of(values["Thickness"])
+    for side, edge in edges.items():
+        index = ("left", "top", "right", "bottom").index(side)
+        total = edge.thickness if edge.thickness is not None else thickness[index]
+        if edge.children and total <= 0:
+            ctx.add(
+                edge.origin,
+                "frame-strip-thickness",
+                f"the {side} strip has Children but no thickness",
+                "write Thickness in the strip, or a Thickness for that side of the Frame",
+            )
+    if "Padding" in values and not any(e.children for e in edges.values()):
+        ctx.add(
+            block.origin,
+            "not-built",
+            "Padding has no effect: no side of the Frame is a strip",
+            "",
+            "warning",
+        )
     visible = values.get("Visible")
     return FrameDef(
         name=name,
@@ -1500,7 +1587,81 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         outer_border=borders.get("Outer_Border"),
         visible=visible.value if isinstance(visible, m.Bool) else True,
         style=style,
+        padding=_sides_of(values.get("Padding")),
+        edges=edges,
     )
+
+
+def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
+    """``Edges { Top { Thickness: 32, Padding: 4, Children { ... } } }``: a side with its own
+    thickness, and a strip when it has ``Children``."""
+    out: dict[str, EdgeDef] = {}
+    for entry in block.entries:
+        if not isinstance(entry, Block) or entry.type not in blocks.EDGE_SIDES:
+            origin = getattr(entry, "origin", None) or getattr(entry, "key_origin", None)
+            ctx.unknown(
+                origin,
+                getattr(entry, "type", getattr(entry, "key", "?")),
+                list(blocks.EDGE_SIDES),
+                "side in Edges",
+            )
+            continue
+        side = entry.type.lower()
+        if side in out:
+            ctx.add(entry.origin, "frame-edge-duplicate", f"Edges names {entry.type} twice", "")
+            continue
+        thickness: float | None = None
+        padding: tuple[float, float, float, float] | None = None
+        children: list[Child] = []
+        for sub in entry.entries:
+            if isinstance(sub, Property):
+                if sub.key == "Thickness":
+                    try:
+                        value = coerce("number", sub.value, ctx.origin(sub.key_origin))
+                    except ValueProblem as exc:
+                        ctx.problem(sub.value_origin, sub.key, exc)
+                        continue
+                    assert isinstance(value, m.Number)
+                    if value.value < 0:
+                        ctx.add(sub.value_origin, "bad-value", "Thickness is 0 or more", "")
+                    else:
+                        thickness = float(value.value)
+                elif sub.key == "Padding":
+                    try:
+                        value = coerce("sides", sub.value, ctx.origin(sub.key_origin))
+                    except ValueProblem as exc:
+                        ctx.problem(sub.value_origin, sub.key, exc)
+                        continue
+                    _frame_sides(ctx, "Padding", value, sub.value_origin)
+                    padding = _sides_of(value)
+                else:
+                    ctx.unknown(
+                        sub.key_origin,
+                        sub.key,
+                        ["Thickness", "Padding", "Children"],
+                        f"key in {entry.type}",
+                    )
+            elif isinstance(sub, Block):
+                if sub.type == "Children":
+                    children = _children(ctx, sub, lambda b: _block(ctx, b))
+                elif sub.type == "Padding":
+                    try:
+                        named = named_sides(sub, ctx.origin(sub.origin))
+                    except ValueProblem as exc:
+                        ctx.problem(sub.origin, "Padding", exc)
+                        continue
+                    padding = _sides_of(_frame_sides(ctx, "Padding", named, sub.origin))
+                else:
+                    ctx.unknown(
+                        sub.origin,
+                        sub.type,
+                        ["Thickness", "Padding", "Children"],
+                        f"key in {entry.type}",
+                    )
+            elif isinstance(sub, tess_dl.If | tess_dl.For):
+                ctx.not_built(sub.origin, "If and For")
+        out[side] = EdgeDef(side, ctx.origin(entry.origin), thickness, padding, tuple(children))
+    return out
 
 
 def _anchors(ctx: _Ctx, entry: Property) -> tuple[str, ...]:
@@ -1622,6 +1783,7 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
         ctx.add(block.origin, "missing-key", "a Monitor needs a Name", "write Name: Main")
     if name is None:
         return None
+    surfaces, frames = _host_melds(ctx, surfaces, frames)
     here = ctx.origin(block.origin)
     for kind, value in (
         ("Index", None if index is None else str(index)),
@@ -1651,6 +1813,33 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
         popups=tuple(popups),
         frames=tuple(frames),
     )
+
+
+def _host_melds(
+    ctx: _Ctx, surfaces: list[BarDef | PanelDef], frames: list[FrameDef]
+) -> tuple[list[BarDef | PanelDef], list[FrameDef]]:
+    """A Panel with ``Meld: true`` is drawn inside its Frame's surface, so it moves from the
+    Monitor's surfaces to the ``melds`` of the Frame it names."""
+    kept: list[BarDef | PanelDef] = []
+    hosted: dict[str, list[PanelDef]] = {}
+    for surface in surfaces:
+        if not (isinstance(surface, PanelDef) and surface.meld):
+            kept.append(surface)
+            continue
+        if any(f.name == surface.attach_to for f in frames):
+            hosted.setdefault(surface.attach_to or "", []).append(surface)
+        else:
+            ctx.add(
+                surface.origin,
+                "meld-target",
+                f"Panel {surface.name} has Meld: true but Attach_To {surface.attach_to} is no "
+                "Frame of this Monitor",
+                "a Panel melds into a Frame of its own Monitor",
+            )
+    return kept, [
+        dataclasses.replace(f, melds=tuple(hosted[f.name])) if f.name in hosted else f
+        for f in frames
+    ]
 
 
 def read_shell(

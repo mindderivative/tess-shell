@@ -482,7 +482,7 @@ class SurfaceManager:
 
         self.popups = Popups(self)
         self._popup_plans: list[PopupPlan] = []  # from the last planning: set_plans commits them
-        self.frames = Frames(app, self.wake)  # the Frames: a painter and reservers each
+        self.frames = Frames(self)  # the Frames: a painter, reservers, strips and melded Panels
         self._frame_plans: list[FramePlan] = []  # the last planning: ``frames.sync`` opens them
         self._shell: ShellDef | None = None  # the shell definition that is running
         self._planned_shell: ShellDef | None = None  # the one last planned (a check, not yet run)
@@ -624,16 +624,42 @@ class SurfaceManager:
             if _kind(surface) == "Panel"
         }
         frame_names = {f.name for m in shell.monitors for f in m.frames}
+        melded = {p.name for m in shell.monitors for f in m.frames for p in f.melds}
         for p in planned:
-            _check_targets(p.expanded, panel_names | frame_names)
+            _check_targets(p.expanded, panel_names | frame_names | melded)
+
+        def expand_hosted(children: Any, path: str, output: str, popups: bool) -> Expanded:
+            return expand(
+                apply_rules(children, rules),
+                path,
+                modules,
+                self._uid_of,
+                output,
+                rules,
+                frozenset(),
+                popups,
+            )
+
         self._frame_plans = self.frames.plan(
-            shell, outputs, assign(shell.monitors, outputs), look, is_default
+            shell, outputs, assign(shell.monitors, outputs), look, is_default, expand_hosted
         )
+        for fp in self._frame_plans:
+            uses.extend(fp.uses())
+            for hp in fp.hosts:
+                _check_targets(hp.planned.expanded, panel_names | frame_names | melded)
         self._popup_plans, popup_uses = self.popups.plan(
             shell, modules, look, outputs, self._uid_of, assign, panel_names
         )
         uses.extend(popup_uses)
         return planned, uses
+
+    def _frame_uses(self) -> dict[str, Use]:
+        """The module uses of the strips and melded Panels of the last planning."""
+        return {u.key: u for fp in self._frame_plans for u in fp.uses()}
+
+    def every_surface(self) -> list[Surface]:
+        """The Bars and Panels, and the strips and melded Panels hosted in a Frame's painter."""
+        return [*self.surfaces, *self.frames.host_surfaces()]
 
     def plan(self, shell: ShellDef) -> list[Use]:
         planned, uses = self._plan_bars(shell, self._modules, self._look)
@@ -650,6 +676,7 @@ class SurfaceManager:
         """Evaluate the slots with the values the modules have sent so far, bind, and open."""
         all_uses = {u.key: u for p in self._planned for u in p.expanded.uses}
         all_uses.update(self.popups.uses())
+        all_uses.update(self._frame_uses())
         self._all_uses = all_uses
         for planned in self._planned:
             self.surfaces.append(self._open(planned, all_uses))
@@ -806,8 +833,12 @@ class SurfaceManager:
             return
         top, right, bottom, left = margin
         b_top, b_right, b_bottom, b_left = s.geometry.body_margin
-        inset = {"left": left + b_left, "top": top + b_top, "right": right + b_right,
-                 "bottom": bottom + b_bottom}
+        inset = {
+            "left": left + b_left,
+            "top": top + b_top,
+            "right": right + b_right,
+            "bottom": bottom + b_bottom,
+        }
         position = {k: float(v) for k, v in inset.items() if k in s.geometry.anchor}
         s.geometry = dataclasses.replace(s.geometry, margin=margin)
         s.planned.geometry = s.geometry
@@ -875,9 +906,7 @@ class SurfaceManager:
     def _position_key(self, group: str, name: str) -> str:
         return f"position:{self._shell_name}.{group}.{name}"
 
-    def _saved(
-        self, group: str, bars: Sequence[BarDef | PanelDef]
-    ) -> dict[str, dict[str, float]]:
+    def _saved(self, group: str, bars: Sequence[BarDef | PanelDef]) -> dict[str, dict[str, float]]:
         """Where the user left each Movable Panel of this Monitor and output."""
         if self._positions is None:
             return {}
@@ -1194,7 +1223,7 @@ class SurfaceManager:
 
     def on_change(self, changes: list[Change]) -> None:
         """Loop thread: the store changed. One ``apply`` per surface per turn."""
-        for surface in self.surfaces:
+        for surface in self.every_surface():
             if surface.view is None:
                 continue
             result = surface.live.apply_changes(changes)
@@ -1218,6 +1247,9 @@ class SurfaceManager:
         planned, uses = self._plan_bars(shell, modules, look or self._look)
         failed = [p for p in planned if p.expanded.errors]
         failed.extend(p for p in self._popup_plans if p.expanded.errors)  # type: ignore[misc]
+        failed.extend(
+            h.planned for fp in self._frame_plans for h in fp.hosts if h.planned.expanded.errors
+        )
         for p in failed:
             _log_errors(p.expanded.errors)
         if failed:
@@ -1242,6 +1274,7 @@ class SurfaceManager:
         self.popups.set_plans(self._popup_plans)  # the plans of the check just made
         all_uses = {u.key: u for p in planned for u in p.expanded.uses}
         all_uses.update(self.popups.uses())
+        all_uses.update(self._frame_uses())
         self._all_uses = all_uses
         old = {s.key: s for s in self.surfaces}
         out: list[Surface] = []

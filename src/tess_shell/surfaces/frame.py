@@ -10,13 +10,23 @@ Per Frame and output there are up to five windows, all on the ``top`` layer:
   across it, 1 px thick, transparent, taking no input, with the side's total (thickness, borders
   and margin) as ``exclusive_zone``. They push maximised windows inside the ring.
 
+The painter also *hosts* content (Frame > What a Frame Holds, Option A): a **strip** is a side's
+``Children`` laid out in a box in that side's band (top and bottom strips own the corner squares
+and run the full width, left and right strips run between them and lay their children out
+vertically), and a **melded Panel** (``Meld: true``, ``Attach_To`` the Frame) is a body grown from
+a side into the opening, drawn as part of the ring's one contour with a fillet at each join. Each
+hosted box is bound like a Bar's tree and is a :class:`~tess_shell.surfaces.manager.Surface`
+whose window is the painter, so module uses get live values, the manager's change, reload and
+look paths reach it, and popups and tooltips can hang off it.
+
 :class:`Frames` keeps them keyed like the other surfaces; :meth:`Frames.sync` brings the open
-windows to a plan (start, reload, hot-plug) and changes a zone, a radius or a colour live, without
-making the painter again.
+windows to a plan (start, reload, hot-plug) and changes a zone, a radius, a colour or a strip
+live, without making the painter again.
 """
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -24,14 +34,30 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 
 from tess_shell.binder import convert
-from tess_shell.binder.model import BindError, Color, Number, Value
+from tess_shell.binder.build import build
+from tess_shell.binder.model import (
+    BindError,
+    BindFailed,
+    Color,
+    Expand,
+    Length,
+    Number,
+    Seq,
+    Value,
+)
+from tess_shell.model.expand import Expanded
+from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, resolve_style
-from tess_shell.schema.model import FrameBorder, FrameDef, MonitorDef, ShellDef
-from tess_shell.surfaces.ring import Ring, RingSpec, ring
+from tess_shell.schema.model import BarDef, FrameBorder, FrameDef, MonitorDef, PanelDef, ShellDef
+from tess_shell.surfaces.bar import Geometry
+from tess_shell.surfaces.panel import px_size
+from tess_shell.surfaces.ring import MeldSpec, Ring, RingSpec, Sides, padded, ring
 
 if TYPE_CHECKING:
-    from tess_re import App, LayerWindow, Output
+    from tess_re import LayerWindow, Output
     from tess_re import Node as TreNode
+
+    from tess_shell.surfaces.manager import Planned, Surface, SurfaceManager
 
 RGBA = tuple[int, int, int, int]
 SIDES = ("left", "top", "right", "bottom")
@@ -43,6 +69,7 @@ _ANCHORS = {
 }
 _SIZES = {"left": (1, 0), "top": (0, 1), "right": (1, 0), "bottom": (0, 1)}
 _EMPTY = "M0,0 L0,0 Z"
+_DIRECTION = {"left": "vertical", "right": "vertical", "top": "horizontal", "bottom": "horizontal"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,15 +114,79 @@ def resolve_paint(frame: FrameDef, look: Look | None) -> tuple[Paint, list[BindE
     )
 
 
-def ring_spec(frame: FrameDef) -> RingSpec:
+def _thickness(frame: FrameDef) -> Sides:
+    """The fill band of each side: the Frame's ``Thickness`` and, for a side with an ``Edges``
+    entry that gives its own, that."""
+    out = list(frame.thickness)
+    for i, side in enumerate(SIDES):
+        edge = frame.edges.get(side)
+        if edge is not None and edge.thickness is not None:
+            out[i] = edge.thickness
+    return out[0], out[1], out[2], out[3]
+
+
+def ring_spec(frame: FrameDef, melds: tuple[MeldSpec, ...] = ()) -> RingSpec:
     return RingSpec(
-        thickness=frame.thickness,
+        thickness=_thickness(frame),
         margin=frame.margin,
         outer_radius=frame.outer_radius,
         inner_radius=frame.inner_radius,
         outer_border=frame.outer_border.width if frame.outer_border else 0,
         inner_border=frame.inner_border.width if frame.inner_border else 0,
+        melds=melds,
     )
+
+
+def meld_spec(panel: PanelDef, output: tuple[int, int], look: Look | None) -> MeldSpec:
+    """The body a melded Panel asks for: its ``Width`` and ``Height``, the side it grows from
+    (``Attach``), ``Alignment`` along it and the ``Corner_Radius`` of its style."""
+    style = resolve_style(panel.style or {}, look)
+    radius = style.get("Corner_Radius")
+    corners: tuple[float, float, float, float] = (0, 0, 0, 0)
+    if isinstance(radius, Length):
+        r = float(radius.px)
+        corners = (r, r, r, r)
+    elif isinstance(radius, Seq) and len(radius.items) == 4:
+        a, b, c, d = (float(x.px) if isinstance(x, Length) else 0.0 for x in radius.items)
+        corners = (a, b, c, d)
+    return MeldSpec(
+        side=(panel.attach or "TOP").lower(),
+        width=px_size(panel.width, output[0]),
+        height=px_size(panel.height, output[1]),
+        alignment=panel.alignment,
+        radius=corners,
+    )
+
+
+_TEXT_INPUT_KINDS = ("TextInput",)  # no such block yet: the painter's keyboard stays "none"
+
+
+def wants_keyboard(expanded: Expanded) -> bool:
+    """Whether a hosted tree holds a text input (Frame > What a Frame Holds: the painter then
+    takes the keyboard ``on_demand``)."""
+
+    def walk(nodes: Sequence[Any]) -> bool:
+        for node in nodes:
+            if getattr(node, "kind", None) in _TEXT_INPUT_KINDS:
+                return True
+            for attr in ("children", "body", "else_body"):
+                if walk(getattr(node, attr, None) or ()):
+                    return True
+        return False
+
+    return walk(expanded.nodes)
+
+
+@dataclass(slots=True)
+class HostPlan:
+    """Content hosted in the painter: a strip or a melded Panel."""
+
+    key: str
+    name: str  # a strip: ``<Frame>.<Side>``; a melded Panel: its ``Name``
+    kind: str  # "strip" or "meld"
+    side: str  # left, top, right, bottom
+    planned: Planned
+    padding: Sides = (0, 0, 0, 0)
 
 
 @dataclass(slots=True)
@@ -109,10 +200,27 @@ class FramePlan:
     size: tuple[int, int]  # the output's logical size
     ring: Ring
     paint: Paint
+    hosts: list[HostPlan] = field(default_factory=list)
+    melds: list[tuple[str, MeldSpec]] = field(default_factory=list)  # every melded Panel
 
     @property
     def where(self) -> str:
         return f"{self.frame.name} on {self.output.name}"
+
+    def uses(self) -> list[Any]:
+        return [u for h in self.hosts for u in h.planned.expanded.uses]
+
+    def ring_for(self, size: tuple[float, float], hidden: frozenset[str]) -> Ring:
+        """The ring at ``size`` with the melded Panels not in ``hidden``."""
+        melds = tuple(spec for name, spec in self.melds if name not in hidden)
+        return ring(ring_spec(self.frame, melds), size)
+
+
+@dataclass(slots=True)
+class HostState:
+    plan: HostPlan
+    surface: Surface
+    container: TreNode
 
 
 @dataclass(slots=True)
@@ -125,17 +233,23 @@ class FrameState:
     reservers: dict[str, LayerWindow] = field(default_factory=dict)
     zones: dict[str, int] = field(default_factory=dict)  # the zone each reserver holds
     drawn: Any = None  # what the nodes were last set to, so an equal draw sets nothing
+    hosts: dict[str, HostState] = field(default_factory=dict)
+    hidden_melds: set[str] = field(default_factory=set)  # melded Panels hidden now
+    shape: Ring | None = None  # the ring as last drawn
+    keyboard: str = "none"
 
 
 class Frames:
-    """The Frames of the shell. ``wake`` is called after the windows were changed from outside
-    their own callbacks (``SurfaceManager.wake``)."""
+    """The Frames of the shell. They share the manager's value store, look, dispatcher and
+    popups, so what a strip or a melded Panel holds behaves like what a Bar holds."""
 
-    def __init__(self, app: App, wake: Callable[[], None]) -> None:
-        self._app = app
-        self._wake = wake
+    def __init__(self, manager: SurfaceManager) -> None:
+        self._m = manager
         self._look: Look | None = None
         self.states: dict[str, FrameState] = {}
+
+    def _wake(self) -> None:
+        self._m.wake()
 
     # -- planning: no side effect but logging ---------------------------------------------------
 
@@ -146,38 +260,93 @@ class Frames:
         assigned: Sequence[tuple[MonitorDef, list[int]]],
         look: Look | None,
         by_output: Callable[[MonitorDef], bool],
+        expand: Callable[[tuple[Any, ...], str, str, bool], Expanded],
     ) -> list[FramePlan]:
         """The Frame of each Monitor on each output it applies to. ``by_output`` says whether a
-        Monitor's keys carry the output (the same rule as its Bars' keys). A radius the ring
-        cannot hold is reduced and a warning names it; a token that does not resolve is logged."""
+        Monitor's keys carry the output (the same rule as its Bars' keys); ``expand`` expands the
+        children of a strip or a melded Panel (``children, path, output name, has popups``). A
+        radius the ring cannot hold is reduced and a warning names it; a token that does not
+        resolve is logged."""
+        from tess_shell.surfaces.manager import Planned
+
         plans: list[FramePlan] = []
         for monitor, indices in assigned:
             for frame in monitor.frames:
                 for i in indices:
                     output = outputs[i]
                     suffix = f"@{output.name}" if by_output(monitor) else ""
+                    prefix = f"{shell.name}.{monitor.name}{suffix}"
                     size = (output.width, output.height)
-                    shape = ring(ring_spec(frame), size)
+                    melds = [(p.name, meld_spec(p, size, look)) for p in frame.melds]
                     paint, errors = resolve_paint(frame, look)
-                    where = f"{frame.name} on {output.name}"
-                    for warning in shape.warnings:
+                    plan = FramePlan(
+                        f"{prefix}.{frame.name}",
+                        frame,
+                        output,
+                        f"{monitor.name}@{output.name}",
+                        size,
+                        ring(ring_spec(frame), size),  # replaced below, once the hosts are known
+                        paint,
+                        melds=melds,
+                    )
+                    hidden = frozenset(p.name for p in frame.melds if not p.visible)
+                    plan.ring = plan.ring_for(size, hidden)
+                    where = plan.where
+                    for warning in plan.ring.warnings:
                         logger.warning(f"{frame.origin}: Frame {where}: {warning}")
                     for error in errors:
                         logger.error(
                             f"{error.origin}: {error.message}"
                             + (f" ({error.hint})" if error.hint else "")
                         )
-                    plans.append(
-                        FramePlan(
-                            f"{shell.name}.{monitor.name}{suffix}.{frame.name}",
-                            frame,
-                            output,
-                            f"{monitor.name}@{output.name}",
-                            size,
-                            shape,
-                            paint,
-                        )
+                    geometry = Geometry(
+                        ("top", "right", "bottom", "left"), (0, 0), (0, 0, 0, 0), -1
                     )
+                    has_popups = bool(monitor.popups)
+                    for side in SIDES:
+                        edge = frame.edges.get(side)
+                        if edge is None or not edge.children:
+                            continue
+                        key = f"{plan.key}.{side.capitalize()}"
+                        bar = BarDef(
+                            f"{frame.name}.{side.capitalize()}",
+                            edge.origin,
+                            side.upper(),
+                            Expand(),
+                            Length(0),
+                            style={},
+                            children=edge.children,
+                        )
+                        expanded = expand(edge.children, key, output.name, has_popups)
+                        planned = Planned(
+                            key,
+                            bar,
+                            output,
+                            expanded,
+                            geometry,
+                            f"{bar.name} on {output.name}",
+                            plan.group,
+                        )
+                        pad = edge.padding if edge.padding is not None else frame.padding
+                        plan.hosts.append(HostPlan(key, bar.name, "strip", side, planned, pad))
+                    for panel in frame.melds:
+                        key = f"{prefix}.{panel.name}"
+                        expanded = expand(panel.children, key, output.name, has_popups)
+                        planned = Planned(
+                            key,
+                            panel,
+                            output,
+                            expanded,
+                            geometry,
+                            f"{panel.name} on {output.name}",
+                            plan.group,
+                        )
+                        plan.hosts.append(
+                            HostPlan(
+                                key, panel.name, "meld", (panel.attach or "TOP").lower(), planned
+                            )
+                        )
+                    plans.append(plan)
         return plans
 
     # -- opening, reloading, hot-plug -----------------------------------------------------------
@@ -185,8 +354,9 @@ class Frames:
     def sync(self, plans: Sequence[FramePlan], look: Look | None = None) -> None:
         """Make the open Frames match ``plans``: close the windows of a Frame that is gone (or
         that moved to another output), open a new one, and bring a kept one to the new ring and
-        zones by ``set``, adding or closing a reserver when a side gains or loses its thickness.
-        A Frame hidden at run time stays hidden unless its ``Visible`` changed in the file."""
+        zones by ``set``, adding or closing a reserver when a side gains or loses its thickness,
+        and its strips and melded Panels by the keyed diff. A Frame hidden at run time stays
+        hidden unless its ``Visible`` changed in the file; so does a melded Panel."""
         if look is not None:
             self._look = look
         wanted = {p.key: p for p in plans}
@@ -199,9 +369,15 @@ class Frames:
                 st = None
             if st is None:
                 st = self.states[key] = FrameState(plan, hidden=not plan.frame.visible)
+                st.hidden_melds = {p.name for p in plan.frame.melds if not p.visible}
             else:
                 if plan.frame.visible != st.plan.frame.visible:
                     st.hidden = not plan.frame.visible
+                before = {p.name: p.visible for p in st.plan.frame.melds}
+                for p in plan.frame.melds:
+                    if p.name not in before or before[p.name] != p.visible:
+                        (st.hidden_melds.discard if p.visible else st.hidden_melds.add)(p.name)
+                st.hidden_melds &= {p.name for p in plan.frame.melds}
                 if plan.size != st.plan.size:
                     st.size = plan.size  # the output changed: draw for it until tre configures
                 st.plan = plan
@@ -209,38 +385,71 @@ class Frames:
         self._wake()
 
     def set_look(self, look: Look) -> None:
-        """The theme or the accent changed: every token is read again and the ring is redrawn
-        in place. The caller wakes tre's loop (``SurfaceManager.set_look`` does, once)."""
+        """The theme or the accent changed: every token is read again, the ring is redrawn in
+        place and what the strips and melded Panels hold is rebuilt by the keyed diff. The caller
+        wakes tre's loop (``SurfaceManager.set_look`` does, once)."""
         self._look = look
         for st in self.states.values():
             paint, errors = resolve_paint(st.plan.frame, look)
             for error in errors:
                 logger.error(f"{error.origin}: {error.message}")
             st.plan.paint = paint
+            size = st.plan.size
+            st.plan.melds = [
+                (p.name, meld_spec(p, size, look)) for p in st.plan.frame.melds
+            ]  # a token may have changed a body's radius
             self._draw(st)
+            for host in st.hosts.values():
+                if host.surface.view is not None:
+                    host.surface.live.look = look
+                    self._m._rebuild(host.surface)
 
     def names(self) -> set[str]:
-        """The ``Name`` of every Frame (the target of ``Show``, ``Hide`` and ``Toggle``)."""
-        return {st.plan.frame.name for st in self.states.values()}
+        """The ``Name`` of every Frame and melded Panel (the target of ``Show``, ``Hide`` and
+        ``Toggle``)."""
+        out: set[str] = set()
+        for st in self.states.values():
+            out.add(st.plan.frame.name)
+            out.update(p.name for p in st.plan.frame.melds)
+        return out
+
+    def host_surfaces(self) -> list[Surface]:
+        """The open strips and melded Panels, as surfaces whose window is a painter."""
+        return [h.surface for st in self.states.values() for h in st.hosts.values()]
 
     def run(self, action: str, target: object) -> bool:
-        """``Show``, ``Hide`` or ``Toggle`` on the Frame named ``target``; ``False`` when no Frame
-        has that name. Hiding closes every window of the Frame, so its zones are released and
-        windows use the whole output; showing makes them again."""
-        hits = [st for st in self.states.values() if st.plan.frame.name == target]
-        for st in hits:
-            hide = not st.hidden if action == "Toggle" else action == "Hide"
-            if hide != st.hidden:
-                st.hidden = hide
-                logger.info(f"Frame {st.plan.where} {'hidden' if hide else 'shown'}")
-                self._reconcile(st)
-        if hits:
+        """``Show``, ``Hide`` or ``Toggle`` on the Frame or melded Panel named ``target``;
+        ``False`` when none has that name. Hiding a Frame closes every window of it, so its zones
+        are released and windows use the whole output; showing makes them again. Hiding a melded
+        Panel takes its body out of the ring's contour; the ring closes up where it was."""
+        found = False
+        for st in self.states.values():
+            if st.plan.frame.name == target:
+                found = True
+                hide = not st.hidden if action == "Toggle" else action == "Hide"
+                if hide != st.hidden:
+                    st.hidden = hide
+                    logger.info(f"Frame {st.plan.where} {'hidden' if hide else 'shown'}")
+                    self._reconcile(st)
+            elif any(p.name == target for p in st.plan.frame.melds):
+                found = True
+                hidden = target in st.hidden_melds
+                hide = not hidden if action == "Toggle" else action == "Hide"
+                if hide != hidden:
+                    (st.hidden_melds.add if hide else st.hidden_melds.discard)(str(target))
+                    logger.info(
+                        f"Panel {target} on {st.plan.output.name} {'hidden' if hide else 'shown'}"
+                        " (melded)"
+                    )
+                    self._draw(st)
+        if found:
             self._wake()
-        return bool(hits)
+        return found
 
     # -- windows --------------------------------------------------------------------------------
 
     def _close(self, st: FrameState) -> None:
+        self._drop_hosts(st)
         painter, reservers = st.painter, list(st.reservers.values())
         st.painter, st.nodes, st.reservers, st.zones, st.drawn = None, [], {}, {}, None
         for window in (painter, *reservers):
@@ -263,6 +472,8 @@ class Frames:
         if st.painter is None:
             self._open_painter(st)
         self._draw(st)
+        self._reconcile_hosts(st)
+        self._set_keyboard(st)
         for side, zone in zip(SIDES, plan.ring.totals, strict=True):
             window = st.reservers.get(side)
             if zone == 0:
@@ -297,6 +508,7 @@ class Frames:
         )
         st.size = plan.size
         st.nodes = []
+        st.keyboard = "none"
         for _ in range(3):
             node = window.create(
                 "path",
@@ -325,11 +537,16 @@ class Frames:
         def closed(event: Any, st: FrameState = st, window: Any = window) -> None:
             logger.info(f"Frame {where} painter closed ({getattr(event, 'reason', '')})")
             if st.painter is window:
+                self._drop_hosts(st)
                 st.painter = None  # a later sync makes it again
+
+        def pointer_down(event: Any) -> None:
+            self._m.popups.surface_pointer_down()  # tre gives a click on a surface to the surface
 
         window.on("configure", configure)
         window.on("closed", closed)
-        self._app.add_window(window)
+        window.root.on("pointer_down", pointer_down)
+        self._m._app.add_window(window)
         logger.info(
             f"Frame {where}: painter {plan.size[0]}x{plan.size[1]}, zones "
             + ",".join(str(z) for z in plan.ring.totals)
@@ -358,17 +575,31 @@ class Frames:
                 st.zones.pop(side, None)
 
         window.on("closed", closed)
-        self._app.add_window(window)
+        self._m._app.add_window(window)
         logger.info(f"Frame {where}: {side} reserver, zone {zone}")
 
+    def _set_keyboard(self, st: FrameState) -> None:
+        """``on_demand`` when a strip or melded Panel holds a text input, else ``none``."""
+        if st.painter is None:
+            return
+        mode = (
+            "on_demand"
+            if any(wants_keyboard(h.plan.planned.expanded) for h in st.hosts.values())
+            else "none"
+        )
+        if mode != st.keyboard:
+            st.painter.set(keyboard=mode)
+            st.keyboard = mode
+            logger.info(f"Frame {st.plan.where}: painter keyboard {mode}")
+
     def _draw(self, st: FrameState) -> None:
-        """Set the ring's three nodes to the plan's ring and colours; nothing when equal."""
+        """Set the ring's three nodes to the ring and colours, and each hosted box to its place;
+        nothing is set that is equal to what was set before."""
         if st.painter is None:
             return
         plan = st.plan
-        shape = plan.ring
-        if st.size != plan.size:
-            shape = ring(ring_spec(plan.frame), st.size)  # the surface's own size
+        shape = plan.ring_for(st.size, frozenset(st.hidden_melds))
+        st.shape = shape
         paint = plan.paint
         bands = (
             (shape.outer_border, paint.outer),
@@ -376,17 +607,151 @@ class Frames:
             (shape.inner_border, paint.inner),
         )
         key = (st.size, paint.opacity, bands)
-        if key == st.drawn:
+        if key != st.drawn:
+            for node, (data, color) in zip(st.nodes, bands, strict=True):
+                props: dict[str, Any] = {
+                    "width": st.size[0],
+                    "height": st.size[1],
+                    "opacity": paint.opacity,
+                }
+                if data and color is not None:
+                    props.update(data=data, fill=color, visible=True)
+                else:
+                    props["visible"] = False
+                node.set(**props)
+            st.drawn = key
+        for host in st.hosts.values():
+            self._place(st, host.plan, host.container, host.surface)
+
+    # -- strips and melded Panels ---------------------------------------------------------------
+
+    def _rect(self, st: FrameState, hp: HostPlan) -> tuple[float, float, float, float] | None:
+        """Where a hosted box sits in the painter: a strip's band less its padding; a melded
+        Panel's body. ``None`` for a hidden or unplaced one."""
+        shape = st.shape
+        if shape is None:
+            return None
+        if hp.kind == "strip":
+            r = padded(shape.bands[SIDES.index(hp.side)], hp.padding)
+            return (r.x0, r.y0, r.width, r.height)
+        visible = [name for name, _ in st.plan.melds if name not in st.hidden_melds]
+        if hp.name not in visible or not shape.bodies:
+            return None
+        body = shape.bodies[visible.index(hp.name)]
+        return None if body is None else (body.x0, body.y0, body.width, body.height)
+
+    def _place(self, st: FrameState, hp: HostPlan, container: TreNode, surface: Surface) -> None:
+        rect = self._rect(st, hp)
+        if rect is None or rect[2] <= 0 or rect[3] <= 0:
+            if not surface.hidden:
+                self._m.popups.parent_closed(surface)
+                container.set(visible=False)
+                surface.hidden = True
             return
-        for node, (data, color) in zip(st.nodes, bands, strict=True):
-            props: dict[str, Any] = {
-                "width": st.size[0],
-                "height": st.size[1],
-                "opacity": paint.opacity,
-            }
-            if data and color is not None:
-                props.update(data=data, fill=color, visible=True)
+        x, y, w, h = rect
+        container.set(left=x, top=y, width=w, height=h, visible=True)
+        surface.hidden = False
+
+    def _drop_hosts(self, st: FrameState) -> None:
+        for host in list(st.hosts.values()):
+            self._drop_host(st, host)
+
+    def _drop_host(self, st: FrameState, host: HostState) -> None:
+        st.hosts.pop(host.plan.key, None)
+        self._m.popups.parent_closed(host.surface)
+        if host.surface.view is not None:
+            host.surface.view.dispose()
+        host.surface.view = None
+        try:
+            host.container.destroy()
+        except Exception:  # the window is gone: so is the node
+            logger.debug("hosted box already destroyed", exc_info=True)
+
+    def _reconcile_hosts(self, st: FrameState) -> None:
+        """Bring the strips and melded Panels to the plan: those no longer planned are dropped, new
+        ones are built, kept ones have their tree rebuilt by the keyed diff."""
+        if st.painter is None:
+            return
+        wanted = {h.key: h for h in st.plan.hosts}
+        for key in [k for k in st.hosts if k not in wanted]:
+            self._drop_host(st, st.hosts[key])
+        for key, hp in wanted.items():
+            host = st.hosts.get(key)
+            if host is None:
+                self._open_host(st, hp)
             else:
-                props["visible"] = False
-            node.set(**props)
-        st.drawn = key
+                self._update_host(st, host, hp)
+        self._draw(st)
+
+    def _open_host(self, st: FrameState, hp: HostPlan) -> None:
+        from tess_shell.surfaces.manager import Surface
+
+        assert st.painter is not None
+        m, planned = self._m, hp.planned
+        container = st.painter.create(
+            "box",
+            position="absolute",
+            left=0,
+            top=0,
+            width=0,
+            height=0,
+            visible=False,
+            **({"flex_direction": _DIRECTION[hp.side]} if hp.kind == "strip" else {}),
+        )
+        st.painter.root.add_child(container)
+        live = LiveTree(m._store, m._all_uses, look=m._look)
+        surface = Surface(
+            planned.key,
+            hp.name,
+            planned.output.name,
+            "TOP",
+            st.painter,
+            None,
+            live,
+            planned.expanded,
+            planned.geometry,
+            body=container,
+            planned=planned,
+            hidden=True,
+        )
+        host = HostState(hp, surface, container)
+        st.hosts[hp.key] = host
+        errors = list(planned.expanded.errors)
+        if not errors:
+            try:
+                surface.view = build(live.resolve(planned.expanded), st.painter, container)
+                surface.view.sink = m._dispatch
+                m.popups.watch(surface.view, planned)
+            except BindFailed as failed:
+                errors = failed.errors
+        for error in errors:
+            logger.error(
+                f"{error.origin}: {error.message}" + (f" ({error.hint})" if error.hint else "")
+            )
+        what = "strip" if hp.kind == "strip" else "melded Panel"
+        if surface.view is None:
+            logger.error(f"Frame {st.plan.where}: {what} {hp.name} is empty: it did not bind")
+        else:
+            logger.info(f"Frame {st.plan.where}: {what} {hp.name} built")
+
+    def _update_host(self, st: FrameState, host: HostState, hp: HostPlan) -> None:
+        assert st.painter is not None
+        m, planned = self._m, hp.planned
+        surface = host.surface
+        live = LiveTree(m._store, m._all_uses, look=m._look)
+        try:
+            nodes = live.resolve(planned.expanded)
+            if surface.view is None:
+                surface.view = build(nodes, st.painter, host.container)
+                surface.view.sink = m._dispatch
+            else:
+                surface.view.rebuild(nodes)
+            m.popups.watch(surface.view, planned)
+        except BindFailed as failed:
+            for error in failed.errors:
+                logger.error(f"{error.origin}: {error.message}")
+            logger.error(f"Frame {st.plan.where}: {hp.name} keeps what it shows")
+            host.plan = dataclasses.replace(hp, planned=host.plan.planned)
+            return
+        surface.live, surface.expanded, surface.planned = live, planned.expanded, planned
+        host.plan = hp

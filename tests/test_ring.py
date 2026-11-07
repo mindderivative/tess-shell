@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 import tess_re
 
-from tess_shell.surfaces.ring import RingSpec, ring, totals
+from tess_shell.surfaces.ring import MeldSpec, RingSpec, ring, totals
 
 W, H = 400, 300
 RED, BLUE, GREEN = (255, 0, 0, 255), (0, 0, 255, 255), (0, 255, 0, 255)
@@ -216,3 +216,139 @@ def test_mirrored_specs_draw_mirrored_pixels() -> None:
     for y in range(0, H, 7):
         for x in range(W):
             assert left.px(x, y) == right.px(W - 1 - x, y)
+
+
+# -- melded bodies (hosted melding) ----------------------------------------------------------------
+
+
+def melded(*melds: MeldSpec, **kw: object) -> Drawn:
+    spec = RingSpec(
+        thickness=(20, 20, 20, 20),
+        inner_radius=(10, 10, 10, 10),
+        melds=melds,
+        **kw,  # type: ignore[arg-type]
+    )
+    return Drawn(spec)
+
+
+def test_a_meld_grows_a_body_out_of_the_ring_into_the_opening() -> None:
+    d = melded(MeldSpec("top", 100, 40, "CENTER"))
+    assert d.ring.bodies[0] is not None
+    body = d.ring.bodies[0]
+    assert (body.x0, body.y0, body.x1, body.y1) == (150, 20, 250, 60)
+    assert d.px(200, 40) == BLUE and d.px(200, 59) == BLUE  # the body is part of the ring
+    assert d.px(200, 61) == NONE and d.px(140, 40) == NONE  # the opening is round it
+    assert d.click(200, 40) == ["fill"]
+    assert d.click(200, 90) == [] and d.click(120, 40) == []
+
+
+def test_the_join_is_a_fillet_with_the_inner_radius_and_no_seam() -> None:
+    d = melded(MeldSpec("top", 100, 40, "CENTER"))
+    # the arc's centre is (140, 30), radius 10: the corner of the notch (149, 21) is filled
+    assert d.px(149, 21) == BLUE and d.px(145, 25) == NONE  # the corner is filled, the arc round
+    assert d.px(140, 30) == NONE and d.px(135, 35) == NONE
+    # the fill is one piece: the band above the join and the body below it are all painted
+    assert all(d.px(x, 19) == BLUE for x in range(W))
+    assert all(d.px(x, 45) == BLUE for x in range(150, 250))
+
+
+def test_the_bodys_own_corners_take_its_radius_and_the_corners_on_the_frame_do_not() -> None:
+    d = melded(MeldSpec("top", 100, 40, "CENTER", radius=(0, 0, 8, 8)))
+    assert d.px(150, 59) == NONE and d.px(249, 59) == NONE  # rounded off
+    assert d.px(158, 59) == BLUE and d.px(241, 59) == BLUE
+    assert d.px(150, 21) == BLUE  # the join stays whole
+
+
+def test_a_body_flush_with_a_corner_removes_that_corner_of_the_opening() -> None:
+    d = melded(MeldSpec("top", 100, 40, "START"))
+    body = d.ring.bodies[0]
+    assert body is not None and (body.x0, body.x1) == (20, 120)
+    assert d.px(21, 21) == BLUE and d.px(21, 59) == BLUE  # no notch beside the body
+    assert d.px(21, 61) == BLUE  # the opening's new corner, below the body, is rounded
+    assert d.px(40, 80) == NONE and d.px(19, 100) == BLUE  # the left side of the ring goes on
+    end = melded(MeldSpec("top", 100, 40, "END")).ring.bodies[0]
+    assert end is not None and (end.x0, end.x1) == (280, 380)
+
+
+@pytest.mark.parametrize(
+    ("side", "probe", "outside"),
+    [
+        ("right", (370, 150), (330, 150)),
+        ("bottom", (200, 270), (200, 220)),
+        ("left", (30, 150), (70, 150)),
+    ],
+)
+def test_a_body_grows_from_each_side(
+    side: str, probe: tuple[int, int], outside: tuple[int, int]
+) -> None:
+    d = melded(MeldSpec(side, 40, 40, "CENTER"))
+    assert d.px(*probe) == BLUE and d.px(*outside) == NONE
+
+
+def test_the_inner_border_follows_the_body() -> None:
+    d = melded(MeldSpec("top", 100, 40, "CENTER"), inner_border=2)
+    assert d.px(200, 59) == BLUE and d.px(200, 60) == GREEN and d.px(200, 61) == GREEN
+    assert d.px(200, 62) == NONE
+    assert d.px(148, 40) == GREEN and d.px(147, 40) == NONE  # beside the body
+    assert d.px(149, 40) == GREEN
+    assert d.click(200, 61) == ["inner"]
+
+
+def test_a_gap_too_narrow_for_the_border_leaves_the_border_out_with_a_warning() -> None:
+    d = melded(MeldSpec("top", 357, 40, "CENTER"), inner_border=2)  # 2 px of opening each side
+    assert any("too narrow" in w for w in d.ring.warnings)
+    assert d.px(200, 40) == BLUE
+
+
+def test_a_second_body_that_overlaps_the_first_is_not_drawn() -> None:
+    d = melded(MeldSpec("top", 100, 80, "START"), MeldSpec("left", 80, 100, "START"))
+    first, second = d.ring.bodies
+    assert first is not None and second is None
+    assert any("overlaps" in w for w in d.ring.warnings)
+
+
+def test_two_bodies_on_different_sides_both_grow() -> None:
+    d = melded(MeldSpec("top", 100, 40, "CENTER"), MeldSpec("bottom", 100, 40, "CENTER"))
+    assert all(b is not None for b in d.ring.bodies)
+    assert d.px(200, 40) == BLUE and d.px(200, 260) == BLUE and d.px(200, 150) == NONE
+
+
+def test_a_body_on_a_side_with_no_thickness_is_not_drawn() -> None:
+    spec = RingSpec(thickness=(20, 0, 20, 20), melds=(MeldSpec("top", 100, 40),))
+    shaped = ring(spec, (W, H))
+    assert shaped.bodies == (None,) and any("no thickness" in w for w in shaped.warnings)
+
+
+def test_a_body_larger_than_the_opening_is_clamped_to_it() -> None:
+    d = melded(MeldSpec("top", 1000, 1000, "CENTER"))
+    body = d.ring.bodies[0]
+    assert body is not None and (body.x0, body.x1, body.y1) == (20, 380, 280)
+
+
+def test_the_reserved_zones_do_not_change_with_a_meld() -> None:
+    plain = ring(RingSpec(thickness=(20, 20, 20, 20)), (W, H)).totals
+    with_meld = ring(
+        RingSpec(thickness=(20, 20, 20, 20), melds=(MeldSpec("top", 100, 40),)), (W, H)
+    ).totals
+    assert plain == with_meld == (20, 20, 20, 20)
+
+
+# -- strips: where the bands are -----------------------------------------------------------------
+
+
+def test_top_and_bottom_bands_own_the_corners_and_the_sides_run_between_them() -> None:
+    shaped = ring(RingSpec(thickness=(10, 20, 30, 40), margin=(4, 4, 4, 4)), (W, H))
+    left, top, right, bottom = shaped.bands
+    assert (top.x0, top.y0, top.x1, top.y1) == (4, 4, W - 4, 24)  # the full width
+    assert (bottom.x0, bottom.y0, bottom.x1, bottom.y1) == (4, H - 44, W - 4, H - 4)
+    assert (left.x0, left.y0, left.x1, left.y1) == (4, 24, 14, H - 44)  # between them
+    assert (right.x0, right.y0, right.x1, right.y1) == (W - 34, 24, W - 4, H - 44)
+
+
+def test_a_strips_padding_is_taken_off_its_band() -> None:
+    from tess_shell.surfaces.ring import padded
+
+    shaped = ring(RingSpec(thickness=(10, 20, 30, 40)), (W, H))
+    inner = padded(shaped.bands[1], (3, 4, 5, 6))
+    assert (inner.x0, inner.y0, inner.x1, inner.y1) == (3, 4, W - 5, 14)
+    assert padded(shaped.bands[1], (0, 30, 0, 0)).height == 0  # never negative

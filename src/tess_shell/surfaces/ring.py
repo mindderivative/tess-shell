@@ -18,8 +18,26 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from tess_shell.surfaces import outline
+from tess_shell.surfaces.outline import Vertex
+
 Sides = tuple[float, float, float, float]  # left, top, right, bottom
 Corners = tuple[float, float, float, float]  # top-left, top-right, bottom-right, bottom-left
+
+
+@dataclass(frozen=True, slots=True)
+class MeldSpec:
+    """A Panel hosted in the Frame's surface (Frame > Hosted Melding): a body of ``width`` by
+    ``height`` pixels that grows from the inner edge of ``side`` into the opening, ``alignment``
+    START, CENTER or END along that side. ``radius`` rounds the body's corners (top-left,
+    top-right, bottom-right, bottom-left); the two on the Frame's side are not rounded, the join
+    uses the Frame's inner radius."""
+
+    side: str  # left, top, right, bottom
+    width: float
+    height: float
+    alignment: str = "CENTER"
+    radius: Corners = (0, 0, 0, 0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +51,7 @@ class RingSpec:
     inner_radius: Corners = (0, 0, 0, 0)
     outer_border: float = 0
     inner_border: float = 0
+    melds: tuple[MeldSpec, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +79,12 @@ class Ring:
     fill: str
     inner_border: str
     warnings: tuple[str, ...] = ()
+    outer: Rect4 = None  # type: ignore[assignment]  # the fill band's outside (inside the margin)
+    opening: Rect4 = None  # type: ignore[assignment]  # the fill band's inside (before the border)
+    bodies: tuple[Rect4 | None, ...] = ()  # each meld's body, or None when it was not placed
+    bands: tuple[Rect4, Rect4, Rect4, Rect4] = None  # type: ignore[assignment]
+    # the fill band of each side (left, top, right, bottom). The top and bottom bands own the
+    # corner squares and run the width of the ring; the left and right bands run between them
 
 
 def _whole(values: Sides) -> tuple[int, int, int, int]:
@@ -239,13 +264,174 @@ def ring(spec: RingSpec, size: tuple[float, float]) -> Ring:
             f"Inner_Radius {_list(want_inner)} is larger than the opening allows; "
             f"it was reduced to {_list(r3)}"
         )
+    fill = _band(c1, r1, c2 if opening else None, r2)
+    inner = _band(c2, r2, c3, r3) if iw and opening and any(closed) else ""
+    bodies: tuple[Rect4 | None, ...] = ()
+    if spec.melds:
+        bodies = _place_melds(spec.melds, c2, closed, warnings)
+        if opening and any(b is not None for b in bodies):
+            outer = contour(c1, r1, True)
+            fill, inner = _melded_bands(outer, c2, r2, iw, bodies, spec.melds, warnings)
     return Ring(
         totals=totals(spec),
         outer_border=_band(c0, r0, c1, r1) if ow and any(closed) else "",
-        fill=_band(c1, r1, c2 if opening else None, r2),
-        inner_border=_band(c2, r2, c3, r3) if iw and opening and any(closed) else "",
+        fill=fill,
+        inner_border=inner,
         warnings=tuple(warnings),
+        outer=c1,
+        opening=c2,
+        bodies=bodies,
+        bands=(
+            Rect4(c1.x0, c1.y0 + thick[1], c1.x0 + thick[0], max(c1.y1 - thick[3], c1.y0)),
+            Rect4(c1.x0, c1.y0, c1.x1, min(c1.y0 + thick[1], c1.y1)),
+            Rect4(c1.x1 - thick[2], c1.y0 + thick[1], c1.x1, max(c1.y1 - thick[3], c1.y0)),
+            Rect4(c1.x0, max(c1.y1 - thick[3], c1.y0), c1.x1, c1.y1),
+        ),
     )
+
+
+_SIDES = ("left", "top", "right", "bottom")
+
+
+def _body_rect(spec: MeldSpec, c2: Rect4) -> Rect4:
+    """Where a meld's body sits: against ``spec.side`` of the opening ``c2``, clamped to it."""
+    across = spec.side in ("left", "right")  # the side runs along y
+    along = min(spec.height if across else spec.width, c2.height if across else c2.width)
+    depth = min(spec.width if across else spec.height, c2.width if across else c2.height)
+    lo, hi = (c2.y0, c2.y1) if across else (c2.x0, c2.x1)
+    start = {"START": lo, "CENTER": (lo + hi - along) / 2, "END": hi - along}[spec.alignment]
+    if spec.side == "top":
+        return Rect4(start, c2.y0, start + along, c2.y0 + depth)
+    if spec.side == "bottom":
+        return Rect4(start, c2.y1 - depth, start + along, c2.y1)
+    if spec.side == "left":
+        return Rect4(c2.x0, start, c2.x0 + depth, start + along)
+    return Rect4(c2.x1 - depth, start, c2.x1, start + along)
+
+
+def _overlap(a: Rect4, b: Rect4) -> bool:
+    return a.x0 < b.x1 - 1e-6 and b.x0 < a.x1 - 1e-6 and a.y0 < b.y1 - 1e-6 and b.y0 < a.y1 - 1e-6
+
+
+def _place_melds(
+    melds: tuple[MeldSpec, ...], c2: Rect4, closed: tuple[bool, ...], warnings: list[str]
+) -> tuple[Rect4 | None, ...]:
+    """The body of each meld, or ``None`` when its side is open or it would overlap one placed
+    before it. Sizes are whole pixels."""
+    placed: list[Rect4 | None] = []
+    for i, spec in enumerate(melds):
+        if not closed[_SIDES.index(spec.side)]:
+            warnings.append(
+                f"meld {i}: the {spec.side} side has no thickness, so nothing is melded"
+            )
+            placed.append(None)
+            continue
+        body = _body_rect(spec, c2)
+        body = Rect4(*(math.floor(v + 0.5) for v in (body.x0, body.y0, body.x1, body.y1)))
+        if body.width <= 0 or body.height <= 0:
+            warnings.append(f"meld {i}: nothing is left of the opening to meld into")
+            placed.append(None)
+        elif any(o is not None and _overlap(o, body) for o in placed):
+            warnings.append(f"meld {i}: it overlaps another meld and is not drawn")
+            placed.append(None)
+        else:
+            placed.append(body)
+    return tuple(placed)
+
+
+def _quadrant_radius(c2: Rect4, radii: Corners, x: float, y: float) -> float:
+    left = x <= (c2.x0 + c2.x1) / 2
+    top = y <= (c2.y0 + c2.y1) / 2
+    return radii[0] if left and top else radii[1] if top else radii[3] if left else radii[2]
+
+
+def _opening_outline(
+    c2: Rect4,
+    r2: Corners,
+    iw: float,
+    bodies: tuple[Rect4 | None, ...],
+    melds: tuple[MeldSpec, ...],
+) -> list[Vertex]:
+    """The fill band's inner contour: the opening ``c2`` with each body cut out of it, clockwise.
+    A vertex that turns out convex takes the inner radius of its quadrant (the join of a meld uses
+    the Frame's inner radius); a reflex one, a body's own corner, takes its radius less the
+    border (the border band follows the contour, so the visible corner has the body's radius)."""
+    by_side: dict[str, list[tuple[Rect4, MeldSpec]]] = {s: [] for s in _SIDES}
+    for body, spec in zip(bodies, melds, strict=True):
+        if body is not None:
+            by_side[spec.side].append((body, spec))
+
+    def own(spec: MeldSpec, corner: int) -> float:
+        return max(float(spec.radius[corner]) - iw, 0.0)
+
+    pts: list[Vertex] = [Vertex(c2.x0, c2.y0)]
+    for b, sp in sorted(by_side["top"], key=lambda t: t[0].x0):
+        pts += [
+            Vertex(b.x0, b.y0),
+            Vertex(b.x0, b.y1, tag=own(sp, 3)),
+            Vertex(b.x1, b.y1, tag=own(sp, 2)),
+            Vertex(b.x1, b.y0),
+        ]
+    pts.append(Vertex(c2.x1, c2.y0))
+    for b, sp in sorted(by_side["right"], key=lambda t: t[0].y0):
+        pts += [
+            Vertex(b.x1, b.y0),
+            Vertex(b.x0, b.y0, tag=own(sp, 0)),
+            Vertex(b.x0, b.y1, tag=own(sp, 3)),
+            Vertex(b.x1, b.y1),
+        ]
+    pts.append(Vertex(c2.x1, c2.y1))
+    for b, sp in sorted(by_side["bottom"], key=lambda t: -t[0].x0):
+        pts += [
+            Vertex(b.x1, b.y1),
+            Vertex(b.x1, b.y0, tag=own(sp, 1)),
+            Vertex(b.x0, b.y0, tag=own(sp, 0)),
+            Vertex(b.x0, b.y1),
+        ]
+    pts.append(Vertex(c2.x0, c2.y1))
+    for b, sp in sorted(by_side["left"], key=lambda t: -t[0].y0):
+        pts += [
+            Vertex(b.x0, b.y1),
+            Vertex(b.x1, b.y1, tag=own(sp, 2)),
+            Vertex(b.x1, b.y0, tag=own(sp, 1)),
+            Vertex(b.x0, b.y0),
+        ]
+    pts = outline.simplify(pts)
+    sized: list[Vertex] = []
+    for i, v in enumerate(pts):
+        if outline.is_convex(pts, i):
+            r = _quadrant_radius(c2, r2, v.x, v.y)
+        else:
+            r = v.tag or 0.0
+        sized.append(Vertex(v.x, v.y, r, v.tag))
+    return outline.clamp(sized)
+
+
+def _melded_bands(
+    outer: str,
+    c2: Rect4,
+    r2: Corners,
+    iw: float,
+    bodies: tuple[Rect4 | None, ...],
+    melds: tuple[MeldSpec, ...],
+    warnings: list[str],
+) -> tuple[str, str]:
+    """The fill band and the inner border band when bodies are melded into the opening."""
+    shape = _opening_outline(c2, r2, iw, bodies, melds)
+    fill = outer + " " + outline.path(shape, clockwise=False)
+    if not iw:
+        return fill, ""
+    inside = outline.erode(shape, iw)
+    if inside is None:
+        warnings.append("a melded body is too narrow for the inner border: the border is left out")
+        return fill, ""
+    return fill, outline.path(shape, True) + " " + outline.path(inside, False)
+
+
+def padded(band: Rect4, padding: Sides) -> Rect4:
+    """The content area of a strip: its band less the padding (left, top, right, bottom), never
+    negative."""
+    return _inset(band, *padding)
 
 
 def _grow(radii: Corners, by: float) -> Corners:

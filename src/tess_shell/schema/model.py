@@ -61,6 +61,7 @@ class PanelDef:
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
     # attached to a target by name (Panel > Attachment Geometry); Anchor and Inset then give way
     attach_to: str | None = None
+    meld: bool = False  # drawn inside the Frame it is attached to (hosted melding)
     attach: str | None = None  # LEFT, RIGHT, TOP, BOTTOM: the target's edge the Panel meets
     gap: float = 0  # pixels between the Panel and the target
     alignment: str = "CENTER"  # START, CENTER, END along the shared edge
@@ -106,6 +107,19 @@ class FrameBorder:
 
 
 @dataclass(frozen=True, slots=True)
+class EdgeDef:
+    """One entry of a Frame's ``Edges { }``: a side with its own ``Thickness`` (``None`` keeps
+    the Frame's) and, when ``children`` is not empty, a strip that holds them. ``padding`` is the
+    strip's (``None`` takes the Frame's)."""
+
+    side: str  # left, top, right, bottom
+    origin: Origin
+    thickness: float | None = None
+    padding: tuple[float, float, float, float] | None = None
+    children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
 class FrameDef:
     """A ``Frame { }`` (Frame > Configuration): a ring around the output. Lengths are logical
     pixels; sides are left, top, right, bottom and corners top-left, top-right, bottom-right,
@@ -121,6 +135,9 @@ class FrameDef:
     outer_border: FrameBorder | None = None
     visible: bool = True
     style: Mapping[str, Value] = None  # type: ignore[assignment]
+    padding: tuple[float, float, float, float] = (0, 0, 0, 0)  # of every strip (left, top, ...)
+    edges: Mapping[str, EdgeDef] = field(default_factory=dict)  # ``left``, ``top``, ... -> strip
+    melds: tuple[PanelDef, ...] = ()  # Panels with ``Meld: true`` attached to this Frame
 
 
 @dataclass(frozen=True, slots=True)

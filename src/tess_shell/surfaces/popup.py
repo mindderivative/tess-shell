@@ -439,7 +439,7 @@ class Popups:
 
     def _holder(self, use: str) -> tuple[Surface, str] | None:
         """The open surface that holds ``use`` and the id of the use's first root block."""
-        for s in self._m.surfaces:
+        for s in self._m.every_surface():
             if s.window is None or s.view is None or s.hidden:
                 continue
             node_id = s.expanded.roots.get(use)
@@ -762,7 +762,7 @@ class Popups:
 
     def hover(self, surface_key: str, block: str, entered: bool) -> None:
         """The pointer entered or left ``block`` of a surface that has a tooltip on it."""
-        surface = next((s for s in self._m.surfaces if s.key == surface_key), None)
+        surface = next((s for s in self._m.every_surface() if s.key == surface_key), None)
         tip = surface.expanded.tooltips.get(block) if surface else None
         if surface is None or tip is None or surface.window is None:
             return
@@ -809,7 +809,7 @@ class Popups:
             return
         if self.current is not None:  # a focused Popup, or another tooltip, is open
             return
-        surface = next((s for s in self._m.surfaces if s.key == surface_key), None)
+        surface = next((s for s in self._m.every_surface() if s.key == surface_key), None)
         if surface is None or surface.window is None or surface.hidden:
             return
         use = surface.expanded.owner.get(block, "")
