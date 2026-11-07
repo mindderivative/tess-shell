@@ -229,3 +229,33 @@ def test_opacity_applies_to_the_ring() -> None:
 def test_a_show_for_a_name_that_is_no_frame_is_left_to_the_panels() -> None:
     manager, _ = started("Frame { Name: F, Thickness: 8 }")
     assert manager.frames.run("Show", "Nope") is False
+
+
+def test_the_painters_keyboard_is_none_by_default_and_on_demand_when_the_frame_asks() -> None:
+    manager, _ = started("Frame { Name: F, Thickness: 8 }")
+    assert only(manager).painter.get("keyboard") == "none"
+    manager, _ = started("Frame { Name: F, Thickness: 8, Keyboard: ON_DEMAND }")
+    assert only(manager).painter.get("keyboard") == "on_demand"
+    assert only(manager).painter.get("input_region") == "auto"
+
+
+def test_a_reload_changes_the_painters_keyboard_live_without_a_new_painter() -> None:
+    manager, app = started("Frame { Name: F, Thickness: 8 }")
+    painter = only(manager).painter
+    reload(manager, "Frame { Name: F, Thickness: 8, Keyboard: ON_DEMAND }")
+    assert only(manager).painter is painter and painter.get("keyboard") == "on_demand"
+    reload(manager, "Frame { Name: F, Thickness: 8 }")
+    assert painter.get("keyboard") == "none" and len(app.windows) == 5
+
+
+def test_keys_the_painter_receives_are_logged_at_debug() -> None:
+    from loguru import logger
+
+    seen: list[str] = []
+    sink = logger.add(lambda m: seen.append(str(m)), level="DEBUG")
+    try:
+        manager, _ = started("Frame { Name: F, Thickness: 8, Keyboard: ON_DEMAND }")
+        only(manager).painter.simulate("key_down", key="a")
+    finally:
+        logger.remove(sink)
+    assert any("painter key" in line and "'a'" in line for line in seen)

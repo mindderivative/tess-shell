@@ -220,7 +220,11 @@ def test_two_monitors_each_have_a_frame_and_unplugging_one_closes_only_its_windo
         sway("create_output")
         seen(shell, "Frame F on HEADLESS-2: bottom reserver, zone 40")
         deadline = time.monotonic() + 6
-        while len(rects()) < 2 and time.monotonic() < deadline:
+        while time.monotonic() < deadline:  # sway applies a zone a little after the configure
+            found = rects()
+            second = found.get("HEADLESS-2")
+            if second and (second["width"], second["height"]) == (1920 - 40, 1080 - 60):
+                break
             time.sleep(0.05)
         second = rects()["HEADLESS-2"]
         assert (second["width"], second["height"]) == (1920 - 40, 1080 - 60)

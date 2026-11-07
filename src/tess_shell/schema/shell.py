@@ -1076,8 +1076,6 @@ def _check_meld(
     for key in blocks.PANEL_MELD_NOT_BUILT:
         if key in written:
             ctx.not_built(block.origin, f"{key} on a Panel with Meld: true")
-    if handlers:
-        ctx.not_built(block.origin, "events (On_*) on a Panel with Meld: true")
     if "Layer" in written:
         ctx.not_built(
             block.origin,
@@ -1595,6 +1593,7 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
             "warning",
         )
     visible = values.get("Visible")
+    keyboard = values.get("Keyboard")
     return FrameDef(
         name=name,
         origin=ctx.origin(block.origin),
@@ -1607,6 +1606,7 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         visible=visible.value if isinstance(visible, m.Bool) else True,
         style=style,
         padding=_sides_of(values.get("Padding")),
+        keyboard=keyboard.name if isinstance(keyboard, m.Enum) else "NONE",
         edges=edges,
     )
 

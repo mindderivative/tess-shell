@@ -150,14 +150,19 @@ FRAME_KEYS: dict[str, str] = {
     "Inner_Radius": "radius",
     "Visible": "bool",
     "Padding": "sides",
+    # the painter's keyboard mode (opt-in): EXCLUSIVE would take every key of the desktop, so
+    # only NONE and ON_DEMAND (the compositor gives the painter focus on a click) are offered
+    "Keyboard": "enum",
 }
-FRAME_CHOICES: dict[str, tuple[str, ...]] = {"Layer": ("TOP",)}
+FRAME_CHOICES: dict[str, tuple[str, ...]] = {
+    "Layer": ("TOP",),
+    "Keyboard": ("NONE", "ON_DEMAND"),
+}
 FRAME_NOT_BUILT_ERROR = (
     "Children",
     "Border_Tile",
     "Meld",
     "Exclusive_Zone",
-    "Keyboard",
     "Input_Region",
 )
 FRAME_NOT_BUILT_WARNING = ("Class",)
@@ -250,7 +255,7 @@ PANEL_NOT_BUILT_ERROR = (
     "Exclusive_Zone",
 )
 # keys of a Panel with ``Meld: true`` (hosted in its Frame's surface) that are not built
-PANEL_MELD_NOT_BUILT = ("Hide_After", "Movable", "Keyboard", "Input_Region", "Animation")
+PANEL_MELD_NOT_BUILT = ("Movable", "Keyboard", "Input_Region")
 # style keys a melded Panel does not use: it is drawn in the Frame's colour and border
 PANEL_MELD_IGNORED_STYLE = (
     "Background",

@@ -224,7 +224,16 @@ class FramePlan:
 class HostState:
     plan: HostPlan
     surface: Surface
-    container: TreNode
+    container: TreNode  # the box the tree is bound under
+    # a melded Panel only: ``clip`` (clips to the body and its joins) holds ``mover`` (the node
+    # an animation translates or fades) which holds ``layer`` (the body drawn as the full ring,
+    # visible while it animates) and the ``container``
+    clip: TreNode | None = None
+    mover: TreNode | None = None
+    layer: list[TreNode] = field(default_factory=list)
+    layer_key: Any = None
+    anim: str | None = None  # "in" (showing) or "out" (hiding) while an animation runs
+    away: tuple[str, float] = ("translate_y", 0.0)  # the property and value of "not shown"
 
 
 @dataclass(slots=True)
@@ -239,7 +248,8 @@ class FrameState:
     drawn: Any = None  # what the nodes were last set to, so an equal draw sets nothing
     hosts: dict[str, HostState] = field(default_factory=dict)
     hidden_melds: set[str] = field(default_factory=set)  # melded Panels hidden now
-    shape: Ring | None = None  # the ring as last drawn
+    shape: Ring | None = None  # the ring as last drawn, without the melded bodies that animate
+    full: Ring | None = None  # the ring with every melded Panel that is shown or on its way
     keyboard: str = "none"
 
 
@@ -381,6 +391,9 @@ class Frames:
                 for p in plan.frame.melds:
                     if p.name not in before or before[p.name] != p.visible:
                         (st.hidden_melds.discard if p.visible else st.hidden_melds.add)(p.name)
+                        for host in st.hosts.values():  # the file decides: no animation goes on
+                            if host.plan.name == p.name and host.anim:
+                                self._snap(host)
                 st.hidden_melds &= {p.name for p in plan.frame.melds}
                 if plan.size != st.plan.size:
                     st.size = plan.size  # the output changed: draw for it until tre configures
@@ -437,15 +450,22 @@ class Frames:
                     self._reconcile(st)
             elif any(p.name == target for p in st.plan.frame.melds):
                 found = True
-                hidden = target in st.hidden_melds
-                hide = not hidden if action == "Toggle" else action == "Hide"
-                if hide != hidden:
+                host = next(
+                    (
+                        h
+                        for h in st.hosts.values()
+                        if h.plan.kind == "meld" and h.plan.name == target
+                    ),
+                    None,
+                )
+                if host is None:  # the Frame is hidden: nothing is drawn, so nothing to move
+                    hide = target not in st.hidden_melds if action == "Toggle" else action == "Hide"
                     (st.hidden_melds.add if hide else st.hidden_melds.discard)(str(target))
-                    logger.info(
-                        f"Panel {target} on {st.plan.output.name} {'hidden' if hide else 'shown'}"
-                        " (melded)"
-                    )
-                    self._draw(st)
+                    continue
+                if action == "Toggle":
+                    self._m._fire(host.surface, "On_Toggle")  # before: the request is made
+                show = host.surface.hidden if action == "Toggle" else action == "Show"
+                self._meld_to(st, host, show)
         if found:
             self._wake()
         return found
@@ -547,9 +567,13 @@ class Frames:
         def pointer_down(event: Any) -> None:
             self._m.popups.surface_pointer_down()  # tre gives a click on a surface to the surface
 
+        def key_down(event: Any) -> None:
+            logger.debug(f"Frame {where} painter key {getattr(event, 'key', None)!r}")
+
         window.on("configure", configure)
         window.on("closed", closed)
         window.root.on("pointer_down", pointer_down)
+        window.root.on("key_down", key_down)  # a key bubbles up from the focused node
         self._m._app.add_window(window)
         logger.info(
             f"Frame {where}: painter {plan.size[0]}x{plan.size[1]}, zones "
@@ -583,12 +607,14 @@ class Frames:
         logger.info(f"Frame {where}: {side} reserver, zone {zone}")
 
     def _set_keyboard(self, st: FrameState) -> None:
-        """``on_demand`` when a strip or melded Panel holds a text input, else ``none``."""
+        """``on_demand`` when the Frame asks for it (``Keyboard: ON_DEMAND``) or a strip or melded
+        Panel holds a text input (Frame > What a Frame Holds), else ``none``."""
         if st.painter is None:
             return
         mode = (
             "on_demand"
-            if any(wants_keyboard(h.plan.planned.expanded) for h in st.hosts.values())
+            if st.plan.frame.keyboard == "ON_DEMAND"
+            or any(wants_keyboard(h.plan.planned.expanded) for h in st.hosts.values())
             else "none"
         )
         if mode != st.keyboard:
@@ -602,8 +628,11 @@ class Frames:
         if st.painter is None:
             return
         plan = st.plan
-        shape = plan.ring_for(st.size, frozenset(st.hidden_melds))
+        moving = {h.plan.name for h in st.hosts.values() if h.anim}
+        shape = plan.ring_for(st.size, frozenset(st.hidden_melds | moving))
         st.shape = shape
+        # the bodies of the Panels that animate are in ``full`` only, drawn by their own layer
+        st.full = plan.ring_for(st.size, frozenset(st.hidden_melds)) if moving else shape
         paint = plan.paint
         bands = (
             (shape.outer_border, paint.outer),
@@ -625,7 +654,10 @@ class Frames:
                 node.set(**props)
             st.drawn = key
         for host in st.hosts.values():
-            self._place(st, host.plan, host.container, host.surface)
+            if host.plan.kind == "meld":
+                self._place_meld(st, host)
+            else:
+                self._place(st, host.plan, host.container, host.surface)
 
     # -- strips and melded Panels ---------------------------------------------------------------
 
@@ -638,10 +670,11 @@ class Frames:
         if hp.kind == "strip":
             r = padded(shape.bands[SIDES.index(hp.side)], hp.padding)
             return (r.x0, r.y0, r.width, r.height)
+        full = st.full or shape
         visible = [name for name, _ in st.plan.melds if name not in st.hidden_melds]
-        if hp.name not in visible or not shape.bodies:
+        if hp.name not in visible or not full.bodies:
             return None
-        body = shape.bodies[visible.index(hp.name)]
+        body = full.bodies[visible.index(hp.name)]
         return None if body is None else (body.x0, body.y0, body.width, body.height)
 
     def _place(self, st: FrameState, hp: HostPlan, container: TreNode, surface: Surface) -> None:
@@ -656,18 +689,237 @@ class Frames:
         container.set(left=x, top=y, width=w, height=h, visible=True)
         surface.hidden = False
 
+    # -- a melded Panel: placement, show, hide and the animation ---------------------------------
+    #
+    # At rest a shown body is part of the ring's one contour. While it animates it is not: the
+    # ring is drawn without it and the body is drawn by a *layer* (the full ring's fill and inner
+    # border, the same colours) inside a clip box that covers the body and its two joins, starting
+    # at the opening's edge. tre animates the layer's ``translate`` (SLIDE) or ``opacity`` (FADE)
+    # in the engine, so the body slides out from behind the band, its joins last, with no Python
+    # per frame; when the animation ends the ring is drawn with the body again and the layer is
+    # hidden. (Animating the path's ``data`` was measured and is not usable: tre resamples both
+    # contours by length into 48-point polylines, so the corners chamfer and the notch smears.)
+
+    def _clip_rect(self, st: FrameState, host: HostState) -> tuple[float, ...] | None:
+        """The clip box of a melded Panel: its body and its two joins plus the border, from the
+        opening's edge, as ``(x, y, w, h, depth)``; ``None`` when the body is not placed."""
+        rect = self._rect(st, host.plan)
+        full = st.full or st.shape
+        if rect is None or full is None:
+            return None
+        x, y, w, h = rect
+        r = (
+            max(st.plan.frame.inner_radius) + st.plan.frame.inner_border.width + 2
+            if (st.plan.frame.inner_border)
+            else max(st.plan.frame.inner_radius) + 2
+        )
+        b = (st.plan.frame.inner_border.width if st.plan.frame.inner_border else 0) + 1
+        o = full.opening
+        side = host.plan.side
+        if side == "top":
+            return (x - r, o.y0, w + 2 * r, y + h + b - o.y0, h)
+        if side == "bottom":
+            return (x - r, y - b, w + 2 * r, o.y1 - y + b, h)
+        if side == "left":
+            return (o.x0, y - r, x + w + b - o.x0, h + 2 * r, w)
+        return (x - b, y - r, o.x1 - x + b, h + 2 * r, w)
+
+    def _place_meld(self, st: FrameState, host: HostState) -> None:
+        """Put a melded Panel's clip box, content and layer where the ring says."""
+        surface = host.surface
+        clip = self._clip_rect(st, host)
+        assert host.clip is not None and host.mover is not None
+        if clip is None or st.full is None or st.shape is None:
+            if not surface.hidden:
+                self._m.popups.parent_closed(surface)
+                surface.hidden = True
+            host.clip.set(visible=False)
+            if host.layer_key is not None:
+                for node in host.layer:
+                    node.set(visible=False)
+                host.layer_key = None
+            return
+        cx, cy, cw, ch, depth = clip
+        rect = self._rect(st, host.plan)
+        assert rect is not None
+        x, y, w, h = rect
+        host.clip.set(left=cx, top=cy, width=cw, height=ch, visible=True)
+        host.mover.set(width=cw, height=ch)
+        host.container.set(left=x - cx, top=y - cy, width=w, height=h, visible=True)
+        # where "not shown" is: the body moved back toward the edge it grows from
+        side = host.plan.side
+        away = {
+            "top": ("translate_y", -depth - 2),
+            "bottom": ("translate_y", depth + 2),
+            "left": ("translate_x", -depth - 2),
+            "right": ("translate_x", depth + 2),
+        }[side]
+        host.away = away
+        paint = st.plan.paint
+        key = (st.full.fill, st.full.inner_border, paint, (cx, cy), st.size)
+        if host.anim:
+            if key != host.layer_key:
+                for node, (data, color) in zip(
+                    host.layer,
+                    ((st.full.fill, paint.fill), (st.full.inner_border, paint.inner)),
+                    strict=True,
+                ):
+                    if data and color is not None:
+                        node.set(
+                            data=data,
+                            fill=color,
+                            left=-cx,
+                            top=-cy,
+                            width=st.size[0],
+                            height=st.size[1],
+                            opacity=paint.opacity,
+                            visible=True,
+                        )
+                    else:
+                        node.set(visible=False)
+                host.layer_key = key
+        elif host.layer_key is not None:
+            for node in host.layer:
+                node.set(visible=False)
+            host.layer_key = None
+        surface.hidden = host.anim == "out"
+
+    def _snap(self, host: HostState) -> None:
+        """Stop an animation where it is and put the layer back to rest."""
+        host.anim = None
+        host.surface.generation += 1
+        if host.mover is not None:
+            host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
+
+    def _reduced(self) -> bool:
+        look = self._m._look
+        return bool(look is not None and look.appearance.reduced_motion)
+
+    def _timer(self, host: HostState, st: FrameState) -> None:
+        """(Re)start the ``Hide_After`` timer of a shown melded Panel."""
+        surface = host.surface
+        if surface.timer is not None:
+            surface.timer.cancel()
+            surface.timer = None
+        panel = surface.planned.bar if surface.planned else None
+        if st.painter is not None and isinstance(panel, PanelDef) and panel.hide_after is not None:
+            surface.timer = st.painter.after(
+                int(panel.hide_after), lambda: self._meld_to(st, host, False)
+            )
+
+    def _meld_to(self, st: FrameState, host: HostState, show: bool) -> None:
+        """Show or hide a melded Panel (idempotent). A hide while it is showing turns round from
+        where it is, and the other way."""
+        surface, m = host.surface, self._m
+        panel = surface.planned.bar if surface.planned else None
+        if not isinstance(panel, PanelDef) or st.painter is None:
+            return
+        name = host.plan.name
+        if show:
+            if host.anim == "in":
+                return
+            if host.anim is None and name not in st.hidden_melds:
+                self._timer(host, st)  # shown again: the timer starts over
+                return
+        else:
+            if host.anim == "out" or (host.anim is None and name in st.hidden_melds):
+                return
+        if surface.timer is not None:
+            surface.timer.cancel()
+            surface.timer = None
+        m._fire(surface, "On_Open" if show else "On_Close")  # before: the request is made
+        kind = panel.animation
+        instant = kind == "NONE" or self._reduced()
+        logger.info(
+            f"Panel {name} on {st.plan.output.name} {'shown' if show else 'hiding'} (melded"
+            f"{'' if instant else ', ' + kind.lower()})"
+        )
+        surface.generation += 1
+        gen = surface.generation
+        if instant:
+            host.anim = None
+            if host.mover is not None:
+                host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
+            (st.hidden_melds.discard if show else st.hidden_melds.add)(name)
+            surface.hidden = not show
+            self._draw(st)
+            if not show:
+                m.popups.parent_closed(surface)
+            if show:
+                self._timer(host, st)
+                st.painter.after(
+                    1, lambda: m._fire(surface, "On_Visible") if not surface.hidden else None
+                )
+            else:
+                m._fire(surface, "On_Hidden")
+            m.wake()
+            return
+        # animated: the ring is drawn without the body and the layer draws it
+        turning = host.anim is not None
+        start_from_rest = not turning
+        if show:
+            st.hidden_melds.discard(name)
+            host.anim = "in"
+            surface.hidden = False
+        else:
+            host.anim = "out"
+            surface.hidden = True
+            m.popups.parent_closed(surface)
+        self._draw(st)
+        assert host.mover is not None
+        prop, away = host.away
+        if kind == "SLIDE":
+            if show and start_from_rest:
+                host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
+                host.mover.set(**{prop: away})
+            ends = {prop: 0.0 if show else away}
+        else:  # FADE
+            if show and start_from_rest:
+                host.mover.set(translate_x=0, translate_y=0, opacity=0.0)
+            ends = {"opacity": 1.0 if show else 0.0}
+        ms = int(panel.duration)
+        easing = (0.0, 0.0, 0.2, 1.0) if show else (0.4, 0.0, 1.0, 1.0)
+        m._fire(surface, "On_Anim_Start")
+
+        def done() -> None:
+            if surface.generation != gen or host.anim is None:
+                return
+            m._fire(surface, "On_Anim_End")
+            host.anim = None
+            host.mover.set(translate_x=0, translate_y=0, opacity=1.0)  # type: ignore[union-attr]
+            if not show:
+                st.hidden_melds.add(name)
+            self._draw(st)  # the body is part of the ring again (or gone from it)
+            if show:
+                self._timer(host, st)
+                m._fire(surface, "On_Visible")
+            else:
+                m._fire(surface, "On_Hidden")
+            m.wake()
+
+        for property_, end in ends.items():
+            host.mover.animate(
+                property_, end, ms, easing, done if property_ == next(iter(ends)) else None
+            )
+        m.wake()  # tre draws this window's animation only once its loop is awake (TRE-REQ-012)
+
     def _drop_hosts(self, st: FrameState) -> None:
         for host in list(st.hosts.values()):
             self._drop_host(st, host)
 
     def _drop_host(self, st: FrameState, host: HostState) -> None:
         st.hosts.pop(host.plan.key, None)
+        host.anim = None
+        host.surface.generation += 1  # an animation that was running ends silent
+        if host.surface.timer is not None:
+            host.surface.timer.cancel()
+            host.surface.timer = None
         self._m.popups.parent_closed(host.surface)
         if host.surface.view is not None:
             host.surface.view.dispose()
         host.surface.view = None
         try:
-            host.container.destroy()
+            (host.clip or host.container).destroy()
         except Exception:  # the window is gone: so is the node
             logger.debug("hosted box already destroyed", exc_info=True)
 
@@ -702,7 +954,40 @@ class Frames:
             visible=False,
             **({"flex_direction": _DIRECTION[hp.side]} if hp.kind == "strip" else {}),
         )
-        st.painter.root.add_child(container)
+        clip = mover = None
+        layer: list[TreNode] = []
+        if hp.kind == "meld":
+            clip = st.painter.create(
+                "box",
+                position="absolute",
+                left=0,
+                top=0,
+                width=0,
+                height=0,
+                visible=False,
+                clip_children=True,
+            )
+            mover = st.painter.create("box", position="absolute", left=0, top=0, width=0, height=0)
+            for _ in range(2):  # the body as the full ring draws it: fill, then inner border
+                node = st.painter.create(
+                    "path",
+                    data=_EMPTY,
+                    position="absolute",
+                    a11y_hidden=True,
+                    visible=False,
+                    hit_testable=False,  # the sliding body takes no click until it has arrived
+                    left=0,
+                    top=0,
+                    width=0,
+                    height=0,
+                )
+                mover.add_child(node)
+                layer.append(node)
+            mover.add_child(container)
+            clip.add_child(mover)
+            st.painter.root.add_child(clip)
+        else:
+            st.painter.root.add_child(container)
         live = LiveTree(m._store, m._all_uses, look=m._look)
         surface = Surface(
             planned.key,
@@ -718,7 +1003,7 @@ class Frames:
             planned=planned,
             hidden=True,
         )
-        host = HostState(hp, surface, container)
+        host = HostState(hp, surface, container, clip, mover, layer)
         st.hosts[hp.key] = host
         errors = list(planned.expanded.errors)
         if not errors:
@@ -737,6 +1022,12 @@ class Frames:
             logger.error(f"Frame {st.plan.where}: {what} {hp.name} is empty: it did not bind")
         else:
             logger.info(f"Frame {st.plan.where}: {what} {hp.name} built")
+        if hp.kind == "meld" and hp.name not in st.hidden_melds:
+            # shown at start: Hide_After counts from now, On_Visible follows the first frame
+            self._timer(host, st)
+            st.painter.after(
+                1, lambda: m._fire(surface, "On_Visible") if not surface.hidden else None
+            )
 
     def _update_host(self, st: FrameState, host: HostState, hp: HostPlan) -> None:
         assert st.painter is not None

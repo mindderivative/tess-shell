@@ -154,7 +154,6 @@ def test_a_second_inner_border_is_refused() -> None:
         "Border_Tile: true",
         "Meld: true",
         "Exclusive_Zone: 4",
-        "Keyboard: ON_DEMAND",
         "Input_Region: AUTO",
         "Style { Elevation: 20% }",
         'Style { Shadows { Shadow { Color: "#000" } } }',
@@ -257,12 +256,9 @@ def test_a_panel_with_meld_moves_into_its_frame_and_leaves_the_monitors_surfaces
     ("change", "rule"),
     [
         ("Margin: 4", "meld-margin"),
-        ("Hide_After: 100", "not-built"),
         ("Movable: true", "not-built"),
         ("Keyboard: ON_DEMAND", "not-built"),
         ("Input_Region: AUTO", "not-built"),
-        ("Animation { Type: SLIDE }", "not-built"),
-        ("On_Open { Action: Hide, Target: Tab }", "not-built"),
     ],
 )
 def test_what_a_melded_panel_cannot_do_is_refused(change: str, rule: str) -> None:
@@ -325,3 +321,29 @@ def frame_of_meld():  # type: ignore[no-untyped-def]
     shell, findings = read(with_frame("Frame { Name: F, Thickness: 12 }\n" + MELD))
     assert shell is not None, findings
     return shell.monitors[0].frames[0].melds[0]
+
+
+def test_the_frames_keyboard_is_none_or_on_demand_and_defaults_to_none() -> None:
+    assert frame_of("Frame { Name: F, Thickness: 8 }").keyboard == "NONE"
+    assert frame_of("Frame { Name: F, Thickness: 8, Keyboard: ON_DEMAND }").keyboard == "ON_DEMAND"
+    assert frame_of("Frame { Name: F, Thickness: 8, Keyboard: NONE }").keyboard == "NONE"
+    (f,) = problems("Frame { Name: F, Thickness: 8, Keyboard: EXCLUSIVE }")
+    assert f.rule == "bad-value" and "NONE, ON_DEMAND" in f.message
+
+
+def test_a_melded_panel_takes_hide_after_animation_and_events() -> None:
+    panel = MELD.replace(
+        "Style {",
+        "Hide_After: 1500, Animation { Type: FADE, Duration: 250 },"
+        " On_Hidden { Action: Show, Target: Tab }, Style {",
+    )
+    shell, findings = read(with_frame("Frame { Name: F, Thickness: 12 }\n" + panel))
+    assert shell is not None and [f for f in findings if f.severity == "error"] == []
+    tab = shell.monitors[0].frames[0].melds[0]
+    assert (tab.hide_after, tab.animation, tab.duration) == (1500.0, "FADE", 250.0)
+    assert list(tab.handlers) == ["On_Hidden"]
+
+
+def test_a_melded_panels_animation_is_checked_like_a_panels() -> None:
+    bad = MELD.replace("Style {", "Animation { Type: SPIN }, Style {")
+    assert problems("Frame { Name: F, Thickness: 12 }\n" + bad)

@@ -94,7 +94,8 @@ def pixels(manager: SurfaceManager) -> Any:
 def box(manager: SurfaceManager, name: str) -> tuple[float, float, float, float]:
     host = next(h for h in only(manager).hosts.values() if h.plan.name == name)
     c = host.container
-    return (c.get("left"), c.get("top"), c.get("width"), c.get("height"))
+    dx, dy = (host.clip.get("left"), host.clip.get("top")) if host.clip is not None else (0, 0)
+    return (c.get("left") + dx, c.get("top") + dy, c.get("width"), c.get("height"))
 
 
 BG = 'Style { Background: "#0000ff" }'

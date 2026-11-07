@@ -171,3 +171,37 @@ def test_a_popup_opens_beside_a_module_in_a_strip(
     finally:
         if shell.process.poll() is None:
             shell.process.kill()
+
+
+def test_a_melded_panel_slides_back_into_the_frame_on_hide_after(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    frame = 'Frame { Name: F, Thickness: 30, Style { Background: "#0000ff" } }'
+    tab = (
+        "Panel { Name: Tab, Meld: true, Attach_To: F, Attach: BOTTOM, Alignment: CENTER, "
+        "Length: 200, Depth: 50, Hide_After: 1200, Animation { Type: SLIDE, Duration: 300 } }"
+    )
+    shell = run_shell(private_sway, tmp_path, f"{BEHIND}\n{frame}\n{tab}")
+    try:
+        usable(private_sway, 30, 30, 30, 30)  # the zones do not change with the body
+        time.sleep(0.3)
+        x, y = OUT[0] // 2, OUT[1] - 30 - 25  # inside the body, in the opening
+        assert pixel(screenshot(private_sway), x, y) == BLUE
+        deadline = time.monotonic() + 6
+        while time.monotonic() < deadline:
+            while not shell.lines.empty():
+                shell.seen.append(shell.lines.get())
+            if any("Panel Tab on HEADLESS-1 hiding" in line for line in shell.seen):
+                break
+            time.sleep(0.05)
+        else:
+            pytest.fail("the Hide_After timer never hid the Panel:\n" + "".join(shell.seen))
+        time.sleep(0.7)  # the 300 ms slide is over
+        assert pixel(screenshot(private_sway), x, y) == MAGENTA  # the opening shows what is behind
+        assert pixel(screenshot(private_sway), x, OUT[1] - 10) == BLUE  # the band is whole
+        rect = usable(private_sway, 30, 30, 30, 30)
+        assert (rect["x"], rect["y"]) == (30, 30)
+        stop(shell)
+    finally:
+        if shell.process.poll() is None:
+            shell.process.kill()

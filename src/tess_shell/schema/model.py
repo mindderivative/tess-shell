@@ -137,6 +137,7 @@ class FrameDef:
     outer_border: FrameBorder | None = None
     visible: bool = True
     style: Mapping[str, Value] = None  # type: ignore[assignment]
+    keyboard: str = "NONE"  # the painter's keyboard mode: NONE or ON_DEMAND
     padding: tuple[float, float, float, float] = (0, 0, 0, 0)  # of every strip (left, top, ...)
     edges: Mapping[str, EdgeDef] = field(default_factory=dict)  # ``left``, ``top``, ... -> strip
     melds: tuple[PanelDef, ...] = ()  # Panels with ``Meld: true`` attached to this Frame

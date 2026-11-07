@@ -69,7 +69,8 @@ def left_children() -> str:
 def dock(side: str, alignment: str) -> str:
     return (
         f"Panel {{ Name: Dock, Meld: true, Attach_To: Screen_Frame, Attach: {side}, "
-        f"Alignment: {alignment}, Length: 320, Depth: 56, Style {{ Corner_Radius: 12 }}, "
+        f"Alignment: {alignment}, Length: 320, Depth: 56, Animation {{ Type: SLIDE, Duration: 300 }}, "
+        "Style { Corner_Radius: 12 }, "
         "Children { FlexBox { Padding: 8, Spacing: 8, Children { "
         'Text { Text: "Docked: part of the frame", Font_Size: 14, Foreground: "#cdd6f4" } '
         "} } } }"
@@ -80,13 +81,16 @@ def frame(variant: str) -> tuple[str, RingSpec]:
     if variant == "a":
         thick, pad, top_t, side = (40, 34, 8, 8), "[8, 3, 8, 3]", 34, ("BOTTOM", "CENTER")
         border = 2
+        keyboard = ""
     else:
         thick, pad, top_t, side = (48, 44, 8, 8), "[12, 6, 12, 6]", 44, ("RIGHT", "START")
         border = 3
+        keyboard = "Keyboard: ON_DEMAND"
     text = f"""            Frame {{
                 Name: Screen_Frame
                 Thickness {{ Left: {thick[0]}, Top: {thick[1]}, Right: {thick[2]}, Bottom: {thick[3]} }}
                 Inner_Radius: 14
+                {keyboard}
                 Inner_Border {{ Width: {border}, Color: "#89b4fa" }}
                 Padding: {pad}
                 Style {{ Background: "#1e1e2e" }}
@@ -176,8 +180,16 @@ Variant A (thickness left 40, top 34, right 8, bottom 8, a 2 px blue inner borde
   [ ] a melded Panel "Dock" (320 x 56) hangs from the bottom band, centred, in the ring's colour
       with the blue border following it, and a fillet (radius 14) at each join, no seam. Its
       text "Docked: part of the frame" is inside it.
-  [ ] clicking the Dock button hides Dock (the bottom band closes up) and again shows it; the
-      reserved space does not change (a maximised window stays {a.totals[3]} px from the bottom).
+  [ ] clicking the Dock button hides Dock and again shows it, and the reserved space does not
+      change (a maximised window stays {a.totals[3]} px from the bottom). It ANIMATES (300 ms):
+      the body slides out of the bottom band (hiding: back into it), its two joins appearing
+      last as it arrives; no pop at the start or at the end of the 300 ms; no seam between the
+      body and the band at rest (look at the join with a magnifier); the border line follows it.
+  [ ] click the Dock button again while it is still moving (twice quickly): it turns round
+      from where it is, without a jump.
+  [ ] while it slides, the part that is out takes no click (a click there reaches the window
+      below; KWin's region follows tre's painted shape, which the sliding layer is not in);
+      at rest a click on Dock does not reach the window below.
   [ ] a click in the opening, beside Dock and in the rounded notches 3 px or more inside the
       opening, reaches the window under it; a click on the strips, the ring or Dock does not.
   [ ] the Clock updates (it is a module in a strip with live values).
@@ -185,13 +197,23 @@ Toggle (variant B: left 48, top 44, a 3 px border, Dock on the RIGHT at the star
   [ ] after toggle-strips.sh the ring changes within about a second: maximised windows stop
       {b.totals[0]} px from the left, {b.totals[1]} from the top, {b.totals[2]} from the right and {b.totals[3]} from the bottom; the top strip is
       44 high; Dock now hangs from the right band at its top end, 56 deep and 320 along.
+  [ ] Keyboard: variant B has `Keyboard: ON_DEMAND` on the Frame, variant A none. The log shows
+      "painter keyboard on_demand" after the toggle (and "none" back in A) with no new painter
+      window ("painter 1920x1080" appears once). With the DEBUG log, click the ring (the
+      compositor gives the painter keyboard focus), press keys: lines
+      "Frame ... painter key 'a'" appear. Without a mouse: Alt+Tab to the painter is up to KWin
+      (a layer surface with on_demand focus can be focused from the keyboard by KWin's own
+      shortcuts if it has any); say what you found.
   [ ] the strips' modules were not restarted (the clock keeps its second hand: no flash, one reload).
   [ ] toggle-strips.sh again returns to variant A.
 Stop (Ctrl+C)
   [ ] every ring, strip and zone is gone at once.
 
+Reduced motion: switch Plasma's animation speed to "instant" (or the portal's reduced motion):
+  [ ] Dock then appears and disappears at once.
+
 Not built (each is a clear error or warning at load, not a silent no-op): strip expand, contract
-and peek, a Bar melded to the Frame, a Panel's own window melded to the Frame (without Meld), a
+and peek, a Bar melded to the Frame, a Panel's own window melded to the Frame (without Meld), an
 Edges Visible key, a gradient background, a Frame shadow, fullscreen hiding.
 """
 
