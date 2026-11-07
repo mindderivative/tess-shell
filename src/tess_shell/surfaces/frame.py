@@ -413,8 +413,7 @@ class Frames:
 
     def set_look(self, look: Look) -> None:
         """The theme or the accent changed: every token is read again, the ring is redrawn in
-        place and what the strips and melded Panels hold is rebuilt by the keyed diff. The caller
-        wakes tre's loop (``SurfaceManager.set_look`` does, once)."""
+        place and what the strips and melded Panels hold is rebuilt by the keyed diff."""
         self._look = look
         for st in self.states.values():
             paint, errors = resolve_paint(st.plan.frame, look)
@@ -930,7 +929,6 @@ class Frames:
         else:
             host.svg.animate("opacity", paint.opacity if show else 0.0, ms, easing, done)
             host.mover.animate("opacity", 1.0 if show else 0.0, ms, easing)
-        m.start_wake()  # tre draws this window's animation only once its loop is awake
 
     def _drop_hosts(self, st: FrameState) -> None:
         for host in list(st.hosts.values()):

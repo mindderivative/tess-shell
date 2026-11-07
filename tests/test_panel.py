@@ -367,36 +367,5 @@ def test_keep_mode_escape_hides_without_closing() -> None:
     assert s.hidden is True and s.window is not None
 
 
-def test_only_an_animation_started_from_a_timer_wakes_tres_loop() -> None:
-    """tre 0.6.2 draws a change made in another window's callback at once, so showing and hiding
-    wake nothing; a window whose own timer starts an animation still draws nothing until the loop
-    is woken (measured on 0.6.3), so an animation start queues a no-op."""
-    woken: list[object] = []
-
-    class Handle:
-        def call_soon(self, fn: object) -> None:
-            woken.append(fn)
-
-    class WakingApp(StubApp):
-        def thread_handle(self) -> Handle:
-            return Handle()
-
-    plain = manager(hide_mode="KEEP")
-    plain._app = WakingApp()  # type: ignore[assignment]
-    s = surface(plain, "Launcher")
-    plain.show(s)
-    plain.hide(s)
-    plain.on_change([])
-    plain.set_look(plain.look)
-    assert woken == []  # no animation: nothing to wake
-    fading = manager(
-        panel=LAUNCHER.replace("Visible: false,", "Visible: false, Animation { Duration: 100 },"),
-        hide_mode="KEEP",
-    )
-    fading._app = WakingApp()  # type: ignore[assignment]
-    fading.show(surface(fading, "Launcher"))
-    assert len(woken) == 1
-
-
 def test_the_default_hide_route_is_the_kept_surface() -> None:
     assert SurfaceManager(StubApp(), {}, lambda k: k, ValueStore()).hide_mode == "KEEP"  # type: ignore[arg-type]

@@ -68,8 +68,8 @@ class DebugSettings:
     """Switches for finding a fault (D44)."""
 
     # how a Panel is hidden: KEEP, the default (maintainer, 2026-11-06), leaves the surface mapped
-    # and draws nothing, so a hidden Panel keeps its tree and state; it needs the shell's wake after
-    # a change (TRE-REQ-012). CLOSE destroys the window and makes a new one on show.
+    # and draws nothing, so a hidden Panel keeps its tree and state. CLOSE destroys the window and
+    # makes a new one on show.
     panel_hide: str = "KEEP"
 
 

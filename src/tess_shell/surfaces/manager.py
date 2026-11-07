@@ -437,10 +437,6 @@ def _check_targets(expanded: Expanded, panels: set[str]) -> None:
             )
 
 
-def _nothing() -> None:
-    return None
-
-
 def _log_errors(errors: Sequence[BindError]) -> None:
     for error in errors:
         logger.error(
@@ -492,20 +488,6 @@ class SurfaceManager:
         # a hot-plug re-plans the uses; the host brings the modules to them (the reloader's
         # ``sync_uses``: the same path a reload takes). ``None`` where there are no modules.
         self.sync_uses: Callable[[list[Use]], None] | None = None
-
-    def start_wake(self) -> None:
-        """Wake tre's loop after the shell started an animation from a timer. tre 0.6.2 draws a
-        change made to one window in a listener or timer of another at once (#264, TRE-REQ-012:
-        the shell's old wake after every change is gone), but a window whose own timer starts an
-        animation still draws nothing until something wakes the loop (1 frame in 3 s, then 170
-        after a ``call_soon``, measured on tre 0.6.3). A queued no-op is a wake."""
-        handle = getattr(self, "_handle", None)
-        if handle is None:
-            thread_handle = getattr(self._app, "thread_handle", None)
-            if thread_handle is None:  # a stub app in a test
-                return
-            handle = self._handle = thread_handle()
-        handle.call_soon(_nothing)
 
     def _dispatch(self, handler: Handler, key: str, raw: Any) -> None:
         logger.debug(f"{key} -> {handler.action} {dict(handler.args)} ({handler.origin})")
@@ -804,10 +786,9 @@ class SurfaceManager:
     # -- Panel: hide, show, Hide_After, Escape (D44) ----------------------------------------------
     #
     # tre cannot unmap a layer surface. KEEP (the default) leaves it mapped and drawing nothing.
-    # Until tre 0.6.2 that needed a wake after every change, because a node changed in one window
-    # during a callback of another was not drawn until something else woke the loop
-    # (TRE-REQ-012, fixed in #264). CLOSE makes a new window on show; what a module knows lives
-    # in the module.
+    # CLOSE makes a new window on show; what a module knows lives in the module. (Before tre 0.6.2
+    # KEEP needed a wake after every change, TRE-REQ-012; before 0.6.4 an animation started from a
+    # timer needed one too. Both are fixed in tre and the shell no longer wakes the loop.)
 
     def _panel_events(self, s: Surface) -> None:
         """Escape hides a Panel that takes the keyboard."""
@@ -1134,7 +1115,6 @@ class SurfaceManager:
         if toward_rest and window.root.get("opacity") == 1.0:
             window.root.set(opacity=0.0)
         window.root.animate("opacity", 1.0 if toward_rest else 0.0, ms, easing, ended)
-        self.start_wake()  # tre draws this window's animation only once its loop is awake
 
     def _enter(self, s: Surface) -> None:
         """The Panel is shown: slide or fade it in, then it is visible."""
