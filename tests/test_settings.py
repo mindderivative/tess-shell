@@ -171,11 +171,11 @@ def test_debug_panel_hide_refuses_another_word_and_a_misspelt_key(tmp_path: Path
         assert settings is None and needle in findings[0].message + findings[0].hint
 
 
-def test_debug_frame_join_defaults_to_smil_and_takes_each_option(tmp_path: Path) -> None:
+def test_debug_frame_join_defaults_to_param_and_takes_each_option(tmp_path: Path) -> None:
     from tess_shell.config.settings import DebugSettings
     from tess_shell.surfaces.join import JOINS
 
-    assert load_settings(tmp_path / "none")[0].debug.frame_join == "SMIL"  # type: ignore[union-attr]
+    assert load_settings(tmp_path / "none")[0].debug.frame_join == "PARAM"  # type: ignore[union-attr]
     for word in JOINS:
         (tmp_path / "settings.tdl").write_text(
             f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ Frame_Join: {word} }} }}\n"

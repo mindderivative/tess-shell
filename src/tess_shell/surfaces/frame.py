@@ -710,10 +710,11 @@ class Frames:
     # At rest a shown body is part of the ring's one contour (one ``path`` node, painted hit
     # shape). While it animates, the ring nodes are drawn without it and a *join* (``join.py``,
     # chosen by ``Debug { Frame_Join }``) draws the body with its fillets growing out of the band,
-    # on tre's own clock. The default join is the SMIL morph: an ``svg`` holding the contour at
-    # depth 0 and at full depth with the same commands, an ``<animate attributeName="d">`` between
-    # them sampled at ``svg_time``. The body's content moves with it (``translate`` of the mover
-    # node, on the same clock and easing) inside the clip box, which is the body at rest. When it
+    # on tre's own clock. The default join is PARAM (a path template whose depth and fillet radius
+    # tre animates); SMIL is an ``svg`` holding the contour at depth 0 and at full depth with the
+    # same commands, an ``<animate attributeName="d">`` between them sampled at ``svg_time``. The
+    # body's content moves with it (``translate`` of the mover node, on the same clock and easing)
+    # inside the clip box, which is the body at rest. When it
     # ends the ring nodes take the body back and the join stops drawing; the two renderings agree
     # to the pixel (tests/test_frame_anim.py). A join that ``ghost``s (the SMIL svg takes no
     # input) has the ring nodes drawn at alpha 1 meanwhile so they keep the ring's click shape.

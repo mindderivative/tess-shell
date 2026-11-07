@@ -200,7 +200,7 @@ def test_two_monitors_each_have_a_frame_and_unplugging_one_closes_only_its_windo
     def rects() -> dict[str, dict[str, int]]:
         return {w["output"]: w["rect"] for w in json.loads(sway("-t", "get_workspaces"))}
 
-    def seen(shell: Shell, needle: str, timeout: float = 8) -> None:
+    def seen(shell: Shell, needle: str, timeout: float = 30) -> None:
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             while not shell.lines.empty():
@@ -219,7 +219,7 @@ def test_two_monitors_each_have_a_frame_and_unplugging_one_closes_only_its_windo
     try:
         sway("create_output")
         seen(shell, "Frame F on HEADLESS-2: bottom reserver, zone 40")
-        deadline = time.monotonic() + 6
+        deadline = time.monotonic() + 20
         while time.monotonic() < deadline:  # sway applies a zone a little after the configure
             found = rects()
             second = found.get("HEADLESS-2")

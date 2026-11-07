@@ -459,7 +459,7 @@ class SurfaceManager:
         sink: Callable[[Handler, str, Any], None] | None = None,
         hide_mode: str = "KEEP",
         positions: PositionStore | None = None,
-        join_mode: str = "SMIL",
+        join_mode: str = "PARAM",
     ) -> None:
         self._app = app
         self._positions = positions  # where the user left each Movable Panel (the registry)

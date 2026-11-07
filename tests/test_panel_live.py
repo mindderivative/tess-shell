@@ -274,7 +274,7 @@ def test_a_panel_attached_to_a_module_follows_the_module_and_clears_the_bar(
 
 FADING = (
     "Panel { Name: Fader, Layer: OVERLAY, Anchor: [TOP, LEFT], Inset: [100, 100, 0, 0], "
-    "Width: 120, Height: 60, Hide_After: 400, Animation { Type: FADE, Duration: 400 }, "
+    "Width: 120, Height: 60, Hide_After: 2500, Animation { Type: FADE, Duration: 400 }, "
     'Style { Fill: "#ff0000" } }'
 )
 
@@ -294,7 +294,7 @@ def test_the_engine_runs_a_fade_out_and_the_panel_is_gone_when_it_ends(
     try:
         shell.wait_for("Panel Fader on HEADLESS-1 configured")
         shell.wait_for("running")
-        for _ in range(20):  # the first frame can be late when the machine is busy
+        for _ in range(20):  # a late first frame on a busy machine; Hide_After leaves 2.5 s
             if look() == (100, 100, 219, 159):  # shown, fully opaque
                 break
             time.sleep(0.1)

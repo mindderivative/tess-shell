@@ -252,7 +252,7 @@ Join options (the Dock's join while it slides): Debug {{ Frame_Join }} in settin
 {", ".join(JOINS)}; a change needs a restart ("Debug applies after a restart" in the log). Run
   /tmp/tess-kwin-m3c/run-strips-join.sh OPTION     for each of the five, variant A then B (toggle-strips.sh)
 and use the Dock button, at your display's scale (1.0, and 1.5 if you can), watching the left and right joins
-and the far edge. The reference is SMIL (the default). For each option write what you see; the
+and the far edge. The default is PARAM (the maintainer's choice); SMIL is the reference the others are measured against. For each option write what you see; the
 points to look at, per option:
   [ ] START: the first frames: no pop (the body grows out of the band edge, the border is
       continuous with the band's); no frame in which the border has a gap, a corner or a step.

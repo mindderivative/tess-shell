@@ -73,10 +73,11 @@ class DebugSettings:
     # makes a new one on show.
     panel_hide: str = "KEEP"
     # how the join of a melded Panel animates while it slides (the Frame's join options, all built
-    # so they can be compared): SMIL, the default, morphs the one contour in an svg; CONCAVE moves
-    # boxes with concave corners; SHADER draws the join in a shader; STRUCTURE morphs path data
-    # command by command; PARAM animates the numbers of a path template. A restart applies it.
-    frame_join: str = "SMIL"
+    # so they can be compared): PARAM, the default (the maintainer's choice after the KWin
+    # comparison), animates the numbers of a path template; SMIL morphs the one contour in an svg;
+    # CONCAVE moves boxes with concave corners; SHADER draws the join in a shader; STRUCTURE morphs
+    # path data command by command. A restart applies it.
+    frame_join: str = "PARAM"
 
 
 @dataclass(frozen=True, slots=True)
