@@ -79,7 +79,7 @@ def advance(manager: SurfaceManager, ms: int) -> None:
 def test_a_shown_body_slides_out_from_the_edge_and_reaches_the_ring_contour() -> None:
     m = started()
     # at rest it is part of the ring's one contour
-    assert px(m)(60, 50) == BLUE and not host(m).layer[0].get("visible")
+    assert px(m)(60, 50) == BLUE and not host(m).svg.get("visible")
     act(m, "Hide")
     advance(m, 1)
     at = px(m)
@@ -91,7 +91,7 @@ def test_a_shown_body_slides_out_from_the_edge_and_reaches_the_ring_contour() ->
     at = px(m)
     assert at(60, 50) == NONE and at(60, 25) == NONE and at(60, 10) == BLUE
     assert host(m).anim is None and "Tab" in only(m).hidden_melds
-    assert not host(m).layer[0].get("visible")
+    assert not host(m).svg.get("visible")
 
 
 def test_showing_slides_the_body_out_and_ends_in_the_single_contour() -> None:
@@ -267,10 +267,84 @@ def test_a_click_cannot_reach_the_body_while_it_slides() -> None:
     act(m, "Show")
     advance(m, 200)
     h = host(m)
-    assert all(n.get("hit_testable") is False for n in h.layer)
+    assert h.svg.get("hit_testable") is False
     advance(m, 400)
     st = only(m)
     hits: list[str] = []
     h.clip.on("pointer_down", lambda e: hits.append("body"))
     st.painter.simulate("pointer_down", x=60, y=50)
     assert hits == ["body"]  # at rest the body takes the click: the Panel's box under it
+
+
+def test_a_strips_blocks_are_never_drawn_over_by_a_body_that_animates_beneath() -> None:
+    """Variant B of the KWin demo: the Dock grows out of the right band at its top end, under the
+    top strip's rightmost block. The ring and the morph are drawn below the strips."""
+    frame = (
+        "Frame { Name: F, Thickness: [20, 30, 24, 20], Inner_Radius: 14,"
+        ' Style { Background: "#0000ff" },'
+        ' Inner_Border { Width: 2, Color: "#00ff00" }, Edges { Top { Children { FlexBox {'
+        " Width: 100%, Justify_Content: END, Children { Rectangle { Name: Edge, Width: 40,"
+        ' Height: 20, Fill: "#ff0000" } } } } } } }'
+    )
+    dock = (
+        "Panel { Name: Tab, Meld: true, Attach_To: F, Attach: RIGHT, Alignment: START, Length: 120,"
+        " Depth: 60, Animation { Type: SLIDE, Duration: 400 }, Visible: false,"
+        " Style { Corner_Radius: 10 },"
+        ' Children { Rectangle { Name: Dot, Width: 20, Height: 20, Fill: "#ffff00" } } }'
+    )
+    app, store = StubApp(), ValueStore()
+    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+    manager.plan(shell_of(frame, dock))
+    manager.build()
+    st = only(manager)
+    st.painter.resize(*app.size)
+    act(manager, "Show")
+    block = [
+        (x, y) for x in range(362, 398) for y in range(2, 18)
+    ]  # inside the 40 x 20 block at the right end
+    for step in (1, 60, 60, 60, 60, 60, 60, 60):
+        advance(manager, step)
+        at = px(manager)
+        assert all(at(x, y) == (255, 0, 0, 255) for x, y in block), "the strip block was drawn over"
+    assert host(manager).anim is None
+
+
+def test_the_ring_and_the_morph_are_below_the_strips_and_the_content_above_both() -> None:
+    m = started(visible="Visible: false")
+    h = host(m)
+    st = only(m)
+    assert st.nodes[1].get("z_index") < h.svg.get("z_index") < h.clip.get("z_index")
+
+
+def test_while_sliding_the_ring_nodes_keep_the_shape_that_takes_clicks_at_alpha_one() -> None:
+    m = started(visible="Visible: false")
+    st = only(m)
+    act(m, "Show")
+    advance(m, 100)
+    assert st.nodes[1].get("fill")[3] == 1 and st.nodes[2].get("fill")[3] == 1
+    advance(m, 400)
+    assert st.nodes[1].get("fill")[3] == 255 and not host(m).svg.get("visible")
+
+
+def test_a_turn_round_retargets_the_svg_clock_from_where_it_is() -> None:
+    m = started(visible="Visible: false")
+    act(m, "Show")
+    advance(m, 200)
+    mid = host(m).svg.get("svg_time")
+    act(m, "Hide")
+    advance(m, 1)
+    assert abs(host(m).svg.get("svg_time") - mid) < 0.05  # no jump
+    advance(m, 450)
+    assert host(m).anim is None and "Tab" in only(m).hidden_melds
+
+
+def test_the_rest_contour_and_the_last_morph_frame_agree_at_a_fractional_scale() -> None:
+    m = started(visible="Visible: false")
+    act(m, "Show")
+    advance(m, 399)
+    st = only(m)
+    before, w, _ = st.painter.snapshot(scale=1.5)
+    advance(m, 50)
+    after, _, _ = st.painter.snapshot(scale=1.5)
+    differing = sum(1 for i in range(0, len(before), 4) if before[i : i + 4] != after[i : i + 4])
+    assert differing <= 60, f"{differing} device pixels changed at the swap"

@@ -17,7 +17,10 @@ prints, labelled, what the Frame costs:
 * then, unless ``--auto``, it stays open so the work area can be checked by eye: maximise a
   window; it must stop inside the ring on all four sides. Ctrl+C stops it.
 
-``--melds=N`` (0 to 8) melds N bodies of 100 x 40 px into the opening (top and bottom at the start,
+``--morph`` plays the first melded body's grow-out and retreat (an ``svg`` whose ``d`` morphs,
+driven by ``svg_time`` in the engine) in a loop for 3 s after the idle samples and prints the cost
+of the frames drawn meanwhile (``frame_stats()['recent']``), next to the same for a node that only
+translates; it needs a painter (``--melds`` defaults to 1). ``--melds=N`` (0 to 8) melds N bodies of 100 x 40 px into the opening (top and bottom at the start,
 centre and end, left and right at the centre), the way a hosted Panel is drawn, and prints what the
 one-contour path costs: the time to build it, its size, the number of ``warning`` events tre sent
 the painter (a 256-rectangle input-region cap shows up there) and the cost of the painter's last
@@ -45,7 +48,8 @@ THICKNESS = int(ARGS.get("--thickness") or 24)
 ONLY = ARGS.get("--only") or None
 AUTO = "--auto" in ARGS
 SETTLE = float(ARGS.get("--settle") or 2)
-MELDS = int(ARGS.get("--melds") or 0)  # bodies melded into the opening, 0 to 8
+MORPH = "--morph" in ARGS  # play the first body's grow-out in a loop for 3 s and report the frames
+MELDS = int(ARGS.get("--melds") or (1 if MORPH else 0))  # bodies melded into the opening, 0 to 8
 IDLE_CPU = 5.0
 IDLE_FRAMES = 3.0
 TICK = os.sysconf("SC_CLK_TCK")
@@ -284,6 +288,9 @@ def sample_frames() -> None:
     drawn = {k: after[k] - results["frames0"][k] for k in after}
     say(f"frames drawn in {IDLE_FRAMES:.0f} s of idle: {drawn}  (a static ring should draw none)")
     memory("after the idle samples")
+    if MORPH and "painter" in windows:
+        run_morph()
+        return
     say()
     say(
         f"work area: with the zones reserved ({THICKNESS + 2} px on each side with a reserver),"
@@ -293,6 +300,93 @@ def sample_frames() -> None:
         handle.stop()
     else:
         say("Ctrl+C stops the measurement.")
+
+
+def stats_line(label: str, window: Any) -> None:
+    recent = window.frame_stats()["recent"]
+    say(
+        f"{label}: {recent['count']} frames, {recent['fps']:.0f} fps; cpu_ms mean "
+        f"{recent['cpu_ms']['mean']:.2f} p95 {recent['cpu_ms']['p95']:.2f} max "
+        f"{recent['cpu_ms']['max']:.2f}; total_ms mean {recent['total_ms']['mean']:.1f} p95 "
+        f"{recent['total_ms']['p95']:.1f}; stages {recent['stage_ms']}"
+    )
+
+
+def run_morph() -> None:
+    """Loop the body's svg morph, then a plain translate of a box, for 3 s each."""
+    painter = windows["painter"]
+    f0, b0 = shape.morph({0: 0.0})  # type: ignore[misc]
+    f1, b1 = shape.morph({0: 1.0})  # type: ignore[misc]
+    w, h = SIZE
+    document = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
+        f'<path fill="#14181e" d="{f0}"><animate attributeName="d" values="{f0};{f1}" dur="1s" '
+        'fill="freeze"/></path>'
+        f'<path fill="#89b4fa" d="{b0}"><animate attributeName="d" values="{b0};{b1}" dur="1s" '
+        'fill="freeze"/></path></svg>'
+    )
+    node = painter.create(
+        "svg",
+        svg=document,
+        position="absolute",
+        left=0,
+        top=0,
+        width=w,
+        height=h,
+        hit_testable=False,
+    )
+    painter.root.add_child(node)
+    state = {"on": True, "end": time.monotonic() + 3.0}
+    painter.frame_stats(reset=True)
+
+    def loop(forward: bool = True) -> None:
+        if time.monotonic() > state["end"]:
+            stats_line("svg morph (the ring's contour with a growing body)", painter)
+            plain()
+            return
+        node.animate(
+            "svg_time",
+            1.0 if forward else 0.0,
+            300,
+            (0.4, 0.0, 0.2, 1.0),
+            lambda: loop(not forward),
+        )
+
+    def plain() -> None:
+        node.set(visible=False)
+        box = painter.create(
+            "box",
+            position="absolute",
+            left=100,
+            top=100,
+            width=100,
+            height=40,
+            fill=(255, 0, 0, 255),
+        )
+        painter.root.add_child(box)
+        painter.frame_stats(reset=True)
+        end = time.monotonic() + 3.0
+
+        def back(forward: bool = True) -> None:
+            if time.monotonic() > end:
+                stats_line("a box that only translates", painter)
+                say()
+                say("Ctrl+C stops the measurement." if not AUTO else "done")
+                if AUTO:
+                    handle.stop()
+                return
+            box.animate(
+                "translate_y",
+                40.0 if forward else 0.0,
+                300,
+                (0.4, 0.0, 0.2, 1.0),
+                lambda: back(not forward),
+            )
+
+        back()
+
+    say("morphing for 3 s ...")
+    loop()
 
 
 main.after(int(SETTLE * 1000), sample_idle_memory)

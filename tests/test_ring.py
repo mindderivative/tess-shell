@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import pytest
 import tess_re
 
@@ -352,3 +354,162 @@ def test_a_strips_padding_is_taken_off_its_band() -> None:
     inner = padded(shaped.bands[1], (3, 4, 5, 6))
     assert (inner.x0, inner.y0, inner.x1, inner.y1) == (3, 4, W - 5, 14)
     assert padded(shaped.bands[1], (0, 30, 0, 0)).height == 0  # never negative
+
+
+# -- curves that are curves, borders sealed to the fill, and the morph of a growing body ----------
+
+FILL, BORDER = (30, 30, 46, 255), (137, 180, 250, 255)
+
+
+def paths(
+    layers: list[tuple[str, tuple[int, int, int, int]]], scale: float = 1.0
+) -> tuple[bytes, int]:
+    window = tess_re.LayerWindow(
+        "test.frame", layer="top", anchor=("top", "left"), size=(W, H), exclusive_zone=-1
+    )
+    for data, colour in layers:
+        window.root.add_child(
+            window.create(
+                "path",
+                data=data,
+                fill=colour,
+                position="absolute",
+                left=0,
+                top=0,
+                width=W,
+                height=H,
+            )
+        )
+    rgba, width, _ = window.snapshot(scale=scale)
+    return rgba, width
+
+
+def svg(
+    layers: list[tuple[str, tuple[int, int, int, int]]], scale: float = 1.0
+) -> tuple[bytes, int]:
+    body = "".join(f'<path fill="rgb({c[0]},{c[1]},{c[2]})" d="{d}"/>' for d, c in layers if d)
+    window = tess_re.LayerWindow(
+        "test.frame", layer="top", anchor=("top", "left"), size=(W, H), exclusive_zone=-1
+    )
+    window.root.add_child(
+        window.create(
+            "svg",
+            svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
+            f'viewBox="0 0 {W} {H}">{body}</svg>',
+            position="absolute",
+            left=0,
+            top=0,
+            width=W,
+            height=H,
+        )
+    )
+    rgba, width, _ = window.snapshot(scale=scale)
+    return rgba, width
+
+
+def at(image: tuple[bytes, int], x: float, y: float, scale: float = 1.0) -> Pixel:
+    rgba, width = image
+    i = (int(y * scale) * width + int(x * scale)) * 4
+    return tuple(rgba[i : i + 4])  # type: ignore[return-value]
+
+
+MELDED = RingSpec(
+    thickness=(20, 20, 20, 20),
+    inner_radius=(14, 14, 14, 14),
+    inner_border=2,
+    seal_inner=True,
+    melds=(MeldSpec("top", 100, 40, "CENTER", (8, 8, 8, 8)),),
+)
+
+
+def test_a_join_fillet_is_a_curve_not_a_chamfer() -> None:
+    """The join at the top-left of a body: radius 14, arc centre (136, 34). Sampled at 4x, the
+    middle of the arc is 0.29 r (4.1 px) farther out than the chord a chamfer would draw."""
+    shaped = ring(MELDED, (W, H))
+    layers = [(shaped.fill, FILL), (shaped.inner_border, BORDER)]
+    image = paths(layers, 4.0)
+    cx, cy, r = 150 - 14, 20 + 14, 14
+    k = 2**-0.5
+    mid = (
+        cx + r * k,
+        cy - r * k,
+    )  # the middle of the arc; the solid is beyond it, away from (cx, cy)
+    out = (k, -k)
+
+    def probe(d: float) -> Pixel:  # d px along the normal, positive into the fill
+        return at(image, mid[0] + out[0] * d, mid[1] + out[1] * d, 4.0)
+
+    assert probe(1.5) == FILL  # a chamfer's chord is 4 px the other way: this would be border
+    assert probe(-1.0) == BORDER and probe(-1.9) == BORDER  # the 2 px border follows the curve
+    assert probe(-4.0)[3] == 0  # and then the opening
+
+
+def test_the_inner_border_is_sealed_to_the_fill_so_the_desktop_does_not_show_through() -> None:
+    """Where the fill's edge and the border's outer edge meet on one line, two anti-aliased edges
+    each cover part of a pixel and the desktop shows through the rest (alpha ~190 along a curve).
+    With the fill running under the border the seam pixels are opaque."""
+
+    def seam_alpha(sealed: bool) -> int:
+        spec = RingSpec(
+            thickness=(20, 20, 20, 20),
+            inner_radius=(14, 14, 14, 14),
+            inner_border=2,
+            seal_inner=sealed,
+            melds=MELDED.melds,
+        )
+        shaped = ring(spec, (W, H))
+        image = paths([(shaped.fill, FILL), (shaped.inner_border, BORDER)])
+        cx, cy, r = 136.0, 34.0, 14.0  # the join's arc, on the opening's contour
+        low = 255
+        for k in range(1, 18):
+            angle = math.radians(5 * k)  # 5 to 85 degrees round the quarter circle
+            low = min(low, at(image, cx + r * math.cos(angle), cy - r * math.sin(angle))[3])
+        return low
+
+    assert seam_alpha(False) < 235
+    assert seam_alpha(True) >= 250
+
+
+def test_the_svg_of_the_ring_at_full_depth_matches_the_path_to_the_pixel_at_every_scale() -> None:
+    shaped = ring(MELDED, (W, H))
+    assert shaped.morph is not None
+    fill, border = shaped.morph({0: 1.0})
+    layers = [(fill, FILL), (border, BORDER)]
+    for scale in (1.0, 1.25, 1.5):
+        a, b = paths(layers, scale), svg(layers, scale)
+        assert a == b, f"the svg and the path differ at scale {scale}"
+
+
+def test_the_ring_at_depth_zero_is_the_ring_without_the_body() -> None:
+    shaped = ring(MELDED, (W, H))
+    assert shaped.morph is not None
+    fill, border = shaped.morph({0: 0.0})
+    plain = ring(
+        RingSpec(
+            thickness=MELDED.thickness,
+            inner_radius=MELDED.inner_radius,
+            inner_border=2,
+            seal_inner=True,
+        ),
+        (W, H),
+    )
+    a = paths([(fill, FILL), (border, BORDER)])
+    b = paths([(plain.fill, FILL), (plain.inner_border, BORDER)])
+    differing = sum(1 for i in range(0, len(a[0]), 4) if a[0][i : i + 4] != b[0][i : i + 4])
+    assert differing <= 8
+
+
+def test_both_ends_of_the_morph_have_the_same_commands_and_every_frame_is_their_blend() -> None:
+    import re
+
+    shaped = ring(MELDED, (W, H))
+    assert shaped.morph is not None
+    f0, b0 = shaped.morph({0: 0.0})
+    f1, b1 = shaped.morph({0: 1.0})
+    half_f, half_b = shaped.morph({0: 0.5})
+    for lo, hi, mid in ((f0, f1, half_f), (b0, b1, half_b)):
+        assert re.sub(r"[-\d.,]+", "#", lo) == re.sub(r"[-\d.,]+", "#", hi)  # same commands
+        low = [float(n) for n in re.findall(r"-?\d+\.?\d*", lo)]
+        high = [float(n) for n in re.findall(r"-?\d+\.?\d*", hi)]
+        half = [float(n) for n in re.findall(r"-?\d+\.?\d*", mid)]
+        assert all(abs(m - (a + b) / 2) < 0.01 for a, b, m in zip(low, high, half, strict=True))

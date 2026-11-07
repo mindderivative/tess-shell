@@ -39,10 +39,12 @@ Module {
     }
     FlexBox {
         Padding: 4
+        Align_Items: CENTER
+        Justify_Content: CENTER
         Style { Background: $color.primary, Corner_Radius: 4 }
         On_Click: open_it
         Children {
-            Text { Text: {{ params.label }}, Font_Size: 13, Foreground: $color.on_primary }
+            Text { Text: {{ params.label }}, Width: AUTO, Height: AUTO, Font_Size: 13, Foreground: $color.on_primary }
         }
     }
 }

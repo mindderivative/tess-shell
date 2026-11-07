@@ -259,3 +259,18 @@ def test_keys_the_painter_receives_are_logged_at_debug() -> None:
     finally:
         logger.remove(sink)
     assert any("painter key" in line and "'a'" in line for line in seen)
+
+
+def test_an_opaque_border_is_sealed_to_the_fill_and_a_translucent_one_is_not() -> None:
+    from tess_shell.surfaces.frame import Paint, ring_spec
+    from tests.test_frame_schema import frame_of
+
+    frame = frame_of("Frame { Name: F, Thickness: 8 }")
+    opaque = Paint(fill=(0, 0, 0, 255), inner=(255, 255, 255, 255), outer=(255, 0, 0, 255))
+    spec = ring_spec(frame, (), opaque)
+    assert spec.seal_inner and spec.seal_outer
+    soft = Paint(fill=(0, 0, 0, 255), inner=(255, 255, 255, 0x22), outer=(255, 0, 0, 255))
+    assert not ring_spec(frame, (), soft).seal_inner  # the fill would show under half the border
+    fading = Paint(fill=(0, 0, 0, 255), inner=(255, 255, 255, 255), opacity=0.5)
+    assert not ring_spec(frame, (), fading).seal_inner  # and under a Frame that is translucent
+    assert not ring_spec(frame).seal_inner

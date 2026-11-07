@@ -51,7 +51,8 @@ TOP_CHILDREN = "\n".join(
 def left_children() -> str:
     block = 'Rectangle {{ Name: {n}, Width: 16, Height: 40, Fill: "{c}", Corner_Radius: 3 }}'
     toggle = (
-        "FlexBox { Name: Dock_Toggle, Width: 32, Height: 22, Padding: 3, "
+        "FlexBox { Name: Dock_Toggle, Width: 32, Height: 22, Padding: 3, Align_Items: CENTER, "
+        "Justify_Content: CENTER, "
         'Style { Background: "#89b4fa", Corner_Radius: 4 }, '
         "On_Click { Action: Toggle, Target: Dock }, Children { "
         'Text { Text: "Dock", Width: AUTO, Height: AUTO, Font_Size: 11, Foreground: "#1e1e2e" } } }'
@@ -66,13 +67,21 @@ def left_children() -> str:
     )
 
 
+def dock_size(side: str) -> tuple[int, int]:
+    """(Length, Depth): a text that fits a 56 px band on the bottom needs more room on the side."""
+    return (320, 56) if side in ("TOP", "BOTTOM") else (240, 150)
+
+
 def dock(side: str, alignment: str) -> str:
+    length, depth = dock_size(side)
     return (
         f"Panel {{ Name: Dock, Meld: true, Attach_To: Screen_Frame, Attach: {side}, "
-        f"Alignment: {alignment}, Length: 320, Depth: 56, Animation {{ Type: SLIDE, Duration: 300 }}, "
+        f"Alignment: {alignment}, Length: {length}, Depth: {depth}, Animation {{ Type: SLIDE, Duration: 300 }}, "
         "Style { Corner_Radius: 12 }, "
-        "Children { FlexBox { Padding: 8, Spacing: 8, Children { "
-        'Text { Text: "Docked: part of the frame", Font_Size: 14, Foreground: "#cdd6f4" } '
+        "Children { FlexBox { Width: 100%, Height: 100%, Padding: 8, Align_Items: CENTER, "
+        "Justify_Content: CENTER, Children { "
+        'Text { Text: "Docked: part of the frame", Width: AUTO, Height: AUTO, Font_Size: 14, '
+        'Foreground: "#cdd6f4" } '
         "} } } }"
     )
 
@@ -99,7 +108,7 @@ def frame(variant: str) -> tuple[str, RingSpec]:
                         Thickness: {top_t}
                         Children {{
                             FlexBox {{
-                                Width: 100%, Height: 100%, Spacing: 8
+                                Width: 100%, Height: 100%, Spacing: 8, Align_Items: CENTER
                                 Children {{
 {TOP_CHILDREN}
                                 }}
@@ -122,7 +131,11 @@ def frame(variant: str) -> tuple[str, RingSpec]:
             {dock(*side)}"""
     across = side[0] in ("BOTTOM", "TOP")  # the side runs along x: Length is the width
     meld = MeldSpec(
-        side[0].lower(), 320 if across else 56, 56 if across else 320, side[1], (12, 12, 12, 12)
+        side[0].lower(),
+        dock_size(side[0])[0] if across else dock_size(side[0])[1],
+        dock_size(side[0])[1] if across else dock_size(side[0])[0],
+        side[1],
+        (12, 12, 12, 12),
     )
     spec = RingSpec(
         thickness=(thick[0], top_t, thick[2], thick[3]),
@@ -182,21 +195,38 @@ Variant A (thickness left 40, top 34, right 8, bottom 8, a 2 px blue inner borde
       text "Docked: part of the frame" is inside it.
   [ ] clicking the Dock button hides Dock and again shows it, and the reserved space does not
       change (a maximised window stays {a.totals[3]} px from the bottom). It ANIMATES (300 ms):
-      the body slides out of the bottom band (hiding: back into it), its two joins appearing
-      last as it arrives; no pop at the start or at the end of the 300 ms; no seam between the
-      body and the band at rest (look at the join with a magnifier); the border line follows it.
+      the body grows out of the bottom band (hiding: back into it) AND ITS TWO JOINS GROW WITH IT:
+      watch the fillets: at the first frames they are tiny and round, they grow to radius 14
+      as the body comes out; there is never a 90 degree corner and no chamfer. Where the body
+      ends the contour does not jump (no pop at the start or the end of the 300 ms). The text
+      slides with the body and stays inside it.
+  [ ] the one that goes wrong most easily: click Dock repeatedly, and turn the shell's Frame
+      off and on, while it moves; nothing is left behind (no stale blue shape, no missing band).
   [ ] click the Dock button again while it is still moving (twice quickly): it turns round
       from where it is, without a jump.
-  [ ] while it slides, the part that is out takes no click (a click there reaches the window
-      below; KWin's region follows tre's painted shape, which the sliding layer is not in);
-      at rest a click on Dock does not reach the window below.
+  [ ] while it moves, a click on the body's own box reaches the Dock; a click in the part of the
+      opening it has not reached yet reaches the window below (the morph is an svg, which takes
+      no input: the ring under it keeps the shape that took clicks before the move); at rest a
+      click on Dock does not reach the window below.
+  [ ] SMOOTHNESS AT REST at 1x, from a normal viewing distance and then with a magnifier: the
+      join fillets and the corners of the opening are round, not stepped; the 2 px border
+      follows the curve with an even thickness and no light hairline between it and the dark
+      band (that seam is now sealed: the band runs under an opaque border). Say what you see: a
+      curve of radius 14 at 1x has at most a one-pixel anti-aliased edge.
   [ ] a click in the opening, beside Dock and in the rounded notches 3 px or more inside the
       opening, reaches the window under it; a click on the strips, the ring or Dock does not.
   [ ] the Clock updates (it is a module in a strip with live values).
+  [ ] VARIANT B check below (the overlap that was reported): in B the Dock is on the RIGHT band
+      at its top end, under the top strip's "Right edge" button. While the Dock opens and closes
+      the button is never covered: it stays whole and its text stays readable at every frame.
+  [ ] CENTRING: the text of Menu, Tall, Hover me, Dock (left strip) and of the Dock panel is
+      centred in its box, across and along (the boxes use Align_Items and Justify_Content CENTER
+      with a Text that is Width and Height AUTO). The clock's text is at the top of its box: in
+      tre 0.6.1 a Text with no size is not measured (fixed in 0.6.2): say how far it is off.
 Toggle (variant B: left 48, top 44, a 3 px border, Dock on the RIGHT at the start)
   [ ] after toggle-strips.sh the ring changes within about a second: maximised windows stop
       {b.totals[0]} px from the left, {b.totals[1]} from the top, {b.totals[2]} from the right and {b.totals[3]} from the bottom; the top strip is
-      44 high; Dock now hangs from the right band at its top end, 56 deep and 320 along.
+      44 high; Dock now hangs from the right band at its top end, 150 deep and 240 along.
   [ ] Keyboard: variant B has `Keyboard: ON_DEMAND` on the Frame, variant A none. The log shows
       "painter keyboard on_demand" after the toggle (and "none" back in A) with no new painter
       window ("painter 1920x1080" appears once). With the DEBUG log, click the ring (the

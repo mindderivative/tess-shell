@@ -187,20 +187,26 @@ def script(name: str, text: str) -> None:
 CHECK = r"""# Reads the newest log of a scratch config and says what the hot-plug did.
 # Usage: check-hotplug.sh [hotplug | hotplug-index]
 name=${1:-hotplug}
-log=$(ls -t /tmp/tess-kwin-m3c/$name/logs/log_*.log 2>/dev/null | head -n 1)
-[ -n "$log" ] || { echo "no log under /tmp/tess-kwin-m3c/$name/logs: run the shell first"; exit 2; }
+root=${TESS_KWIN_ROOT:-/tmp/tess-kwin-m3c}
+log=$(ls -t $root/$name/logs/log_*.log 2>/dev/null | head -n 1)
+[ -n "$log" ] || { echo "no log under $root/$name/logs: run the shell first"; exit 2; }
 echo "== log: $log"
 echo "== what the shell saw and did"
 grep -E "output .* (added|removed|changed)|Bar .* (is opened|closed|configured)|Panel .* (is opened|closed|configured|moved)|monitor .* matches no output|no outputs" "$log"
 echo "== the module's life cycle (probe.log)"
-cat /tmp/tess-kwin-m3c/probe.log 2>/dev/null || echo "(none)"
+cat $root/probe.log 2>/dev/null || echo "(none)"
 echo "== verdicts"
 fail=0
 check() { if eval "$2"; then echo "PASS $1"; else echo "FAIL $1"; fail=1; fi; }
 check "Main_Bar opened exactly once (never recreated by a plug or unplug of the other screen)" \
   '[ "$(grep -c "Bar Main_Bar on HDMI-A-1 configured" "$log")" = 1 ]'
-check "Main_Bar never closed" '! grep -q "Bar Main_Bar on HDMI-A-1 closed" "$log"'
-check "Main_Dock never closed" '! grep -q "Panel Main_Dock on HDMI-A-1 closed" "$log"'
+# the shell's own shutdown logs "closed (stopped)" for every window: only a close before it counts
+check "the run contains an unplug and a plug (output removed, output added)" \
+  'grep -qE "output [^ ]+ removed" "$log" && grep -qE "output [^ ]+ added" "$log"'
+check "Main_Bar never closed (apart from the shell's own stop at the end)" \
+  '! grep "Bar Main_Bar on HDMI-A-1 closed" "$log" | grep -qv "closed (stopped)"'
+check "Main_Dock never closed (apart from the shell's own stop at the end)" \
+  '! grep "Panel Main_Dock on HDMI-A-1 closed" "$log" | grep -qv "closed (stopped)"'
 check "no error in the log" '! grep -q "| ERROR " "$log"'
 exit $fail
 """
