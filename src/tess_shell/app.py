@@ -245,6 +245,7 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             look,
             hide_mode=settings.debug.panel_hide,
             positions=registry,
+            join_mode=settings.debug.frame_join,
         )
         manager_box.append(manager)
         host = ModuleHost(store, ticks, cfg)

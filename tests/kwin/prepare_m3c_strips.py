@@ -8,6 +8,11 @@ config and scripts under ``/tmp/tess-kwin-m3c`` and starts nothing. It does not 
 * ``run-strips.sh``: run the shell: one Frame on HDMI-A-1 with a top strip (menu buttons that
   open Popups, a Clock), a left strip (coloured blocks and a button that toggles the Panel) and a
   Panel melded into the bottom of the Frame.
+* ``run-strips-join.sh OPTION``: the same shell, with ``Debug { Frame_Join: OPTION }`` (SMIL,
+  CONCAVE, SHADER, STRUCTURE or PARAM): the way the Dock's join is drawn while it slides, so the
+  five can be compared by eye on KWin (a restart applies a change).
+* ``compare-join.sh [--join=OPTION] ...``: ``tests/kwin/compare_join.py --live`` on HDMI-A-1:
+  the cost of each option in one table (frame time while sliding, frames drawn at idle, memory).
 * ``toggle-strips.sh``: switch the saved shell file between variant A and B (a hot reload).
 * ``check-strips.sh``: the file is valid.
 * ``checklist-strips.txt``: the lines to check by eye, with the numbers this setup should show.
@@ -24,6 +29,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
+from tess_shell.surfaces.join import JOINS  # noqa: E402
 from tess_shell.surfaces.ring import MeldSpec, RingSpec, ring  # noqa: E402
 from tests.kwin.prepare_m3b_popups import BUTTON_PY, BUTTON_TDL, POPUPS, button  # noqa: E402
 from tests.shell_samples import HEADER, SVG  # noqa: E402
@@ -35,6 +41,8 @@ SETTINGS = (
     "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default] }\n}\n"
 )
+
+SETTINGS_JOIN = SETTINGS.replace("Settings {\n", "Settings {\n  Debug { Frame_Join: @JOIN@ }\n")
 
 TOP_CHILDREN = "\n".join(
     [
@@ -177,6 +185,7 @@ Setup: uv run python tests/kwin/prepare_m3c_strips.py   (already done if you rea
   /tmp/tess-kwin-m3c/run-strips.sh      run the shell with the Frame (Ctrl+C stops it)
   /tmp/tess-kwin-m3c/toggle-strips.sh   variant A <-> B (a saved edit: hot reload)
   /tmp/tess-kwin-m3c/check-strips.sh    the file is valid
+  /tmp/tess-kwin-m3c/run-strips-join.sh OPTION   the same, with one way of drawing the Dock's join
 Send the newest file in /tmp/tess-kwin-m3c/strips/logs/ if anything below is off.
 Cost: /tmp/tess-kwin-m3c/measure.sh --output=HDMI-A-1 --only=painter --melds=0|4|8
       (what the one-contour path and its input region cost; send the printed block)
@@ -239,6 +248,33 @@ Toggle (variant B: left 48, top 44, a 3 px border, Dock on the RIGHT at the star
 Stop (Ctrl+C)
   [ ] every ring, strip and zone is gone at once.
 
+Join options (the Dock's join while it slides): Debug {{ Frame_Join }} in settings.tdl, one of
+{", ".join(JOINS)}; a change needs a restart ("Debug applies after a restart" in the log). Run
+  /tmp/tess-kwin-m3c/run-strips-join.sh OPTION     for each of the five, variant A then B (toggle-strips.sh)
+and use the Dock button, at your display's scale (1.0, and 1.5 if you can), watching the left and right joins
+and the far edge. The reference is SMIL (the default). For each option write what you see; the
+points to look at, per option:
+  [ ] START: the first frames: no pop (the body grows out of the band edge, the border is
+      continuous with the band's); no frame in which the border has a gap, a corner or a step.
+  [ ] MIDDLE: the fillets are round at every frame (no 90 degree corner, no chamfer, no
+      polygon look), grow from tiny to radius 14, and the 2 px border keeps an even thickness
+      round them (CONCAVE: the border is thinner on the fillet in the first frames; say how much).
+  [ ] END (the last frame and the one after it): no pop when the animation hands over to the ring.
+  [ ] HIDING is the same movement backwards; click Dock again while it moves: it turns round
+      without a jump.
+  [ ] variant B (Dock flush with the band's top end): the corner next to the top band is the
+      Frame's own and never shows a notch or a stray arc while the body is small (CONCAVE and SHADER
+      draw over the ring, so they may show the opening's rounded corner until the body covers it:
+      say whether you see it).
+  [ ] a click in the notch of a join, while it moves and at rest, reaches the window below.
+  [ ] the edge at 1x and at 1.5x is as smooth as at rest (SHADER has analytic edges at every scale;
+      the others are anti-aliased paths and boxes). Say which one you would pick, and why.
+  [ ] frames at idle: with the Dock at rest the log shows no frames (DEBUG: "frames"), and the CPU
+      is idle (top): none of the options may keep the painter drawing after the animation.
+  [ ] the cost: /tmp/tess-kwin-m3c/compare-join.sh   (prints the table for all five on HDMI-A-1;
+      add --join=SHADER for one). Send the printed block; it also writes PNG sheets (headless
+      renders) to /tmp/join-compare.
+
 Reduced motion: switch Plasma's animation speed to "instant" (or the portal's reduced motion):
   [ ] Dock then appears and disappears at once.
 
@@ -280,6 +316,28 @@ def main() -> None:
         f"echo a > {f}\n"
         "cp /tmp/tess-kwin-m3c/strips/variants/a.tdl /tmp/tess-kwin-m3c/strips/Shells/Main_Shell.tdl\n"
         f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3c/strips\n",
+    )
+    (ROOT / "settings-join.tdl.in").write_text(SETTINGS_JOIN)
+    script(
+        "run-strips-join.sh",
+        "# The Frame with strips and a melded Panel, with one way of drawing the join while the\n"
+        "# Panel slides.  Usage: run-strips-join.sh SMIL|CONCAVE|SHADER|STRUCTURE|PARAM\n"
+        f'opt="${{1:-}}"\ncase "$opt" in {"|".join(JOINS)}) ;;\n'
+        f'  *) echo "usage: run-strips-join.sh {"|".join(JOINS)}" >&2; exit 2 ;;\nesac\n'
+        "export XDG_STATE_HOME=/tmp/tess-kwin-m3c/state\n"
+        'sed "s/@JOIN@/$opt/" /tmp/tess-kwin-m3c/settings-join.tdl.in'
+        " > /tmp/tess-kwin-m3c/strips/settings.tdl\n"
+        f"echo a > {f}\n"
+        "cp /tmp/tess-kwin-m3c/strips/variants/a.tdl /tmp/tess-kwin-m3c/strips/Shells/Main_Shell.tdl\n"
+        'echo "Frame_Join: $opt"\n'
+        f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3c/strips\n",
+    )
+    script(
+        "compare-join.sh",
+        "# Cost of each way of drawing the join on HDMI-A-1 (opens the Frame once per option on the\n"
+        "# real desktop, a few seconds each).  Usage: compare-join.sh [--join=OPTION] [--seconds=N]\n"
+        f"cd {REPO}\n"
+        f'exec {BIN}/python {REPO}/tests/kwin/compare_join.py --live --output=HDMI-A-1 "$@"\n',
     )
     script(
         "check-strips.sh",

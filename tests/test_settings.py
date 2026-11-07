@@ -169,3 +169,42 @@ def test_debug_panel_hide_refuses_another_word_and_a_misspelt_key(tmp_path: Path
         )
         settings, findings = load_settings(tmp_path)
         assert settings is None and needle in findings[0].message + findings[0].hint
+
+
+def test_debug_frame_join_defaults_to_smil_and_takes_each_option(tmp_path: Path) -> None:
+    from tess_shell.config.settings import DebugSettings
+    from tess_shell.surfaces.join import JOINS
+
+    assert load_settings(tmp_path / "none")[0].debug.frame_join == "SMIL"  # type: ignore[union-attr]
+    for word in JOINS:
+        (tmp_path / "settings.tdl").write_text(
+            f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ Frame_Join: {word} }} }}\n"
+        )
+        settings, findings = load_settings(tmp_path)
+        assert findings == [] and settings is not None
+        assert settings.debug == DebugSettings(frame_join=word)
+
+
+def test_debug_takes_panel_hide_and_frame_join_together(tmp_path: Path) -> None:
+    from tess_shell.config.settings import DebugSettings
+
+    (tmp_path / "settings.tdl").write_text(
+        "---\nTDL: 0.1\nName: S\n---\n"
+        "Settings { Debug { Panel_Hide: CLOSE, Frame_Join: SHADER } }\n"
+    )
+    settings, findings = load_settings(tmp_path)
+    assert findings == [] and settings is not None
+    assert settings.debug == DebugSettings(panel_hide="CLOSE", frame_join="SHADER")
+
+
+def test_debug_frame_join_refuses_another_word_and_a_lower_case_one(tmp_path: Path) -> None:
+    for text, needle in (
+        ("Frame_Join: MORPH", "SMIL"),
+        ("Frame_Join: shader", "upper case, write SHADER"),
+        ("Frame_Joins: SMIL", "Frame_Join"),
+    ):
+        (tmp_path / "settings.tdl").write_text(
+            f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ {text} }} }}\n"
+        )
+        settings, findings = load_settings(tmp_path)
+        assert settings is None and needle in findings[0].message + findings[0].hint

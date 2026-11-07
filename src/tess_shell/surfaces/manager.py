@@ -459,11 +459,13 @@ class SurfaceManager:
         sink: Callable[[Handler, str, Any], None] | None = None,
         hide_mode: str = "KEEP",
         positions: PositionStore | None = None,
+        join_mode: str = "SMIL",
     ) -> None:
         self._app = app
         self._positions = positions  # where the user left each Movable Panel (the registry)
         self._shell_name = ""
         self.hide_mode = hide_mode  # KEEP (the default) or CLOSE (D44)
+        self.join_mode = join_mode  # how a melded Panel's join animates (surfaces/join.py)
         self._depth = 0  # how deep Panel event handlers have called one another
         self.sink = sink
         self._look = look

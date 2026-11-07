@@ -184,13 +184,17 @@ def collapse(
     edges: dict[int, Edge],
     s: dict[int, float],
     shift: dict[int, float] | None = None,
+    grow: dict[int, float] | None = None,
 ) -> list[Vertex]:
     """The outline with each melded body at ``s[body]`` (1 for a body not named). ``shift`` moves
-    a body's edge coordinate (an eroded outline's band edge is the border's width away)."""
+    a body's edge coordinate (an eroded outline's band edge is the border's width away). ``grow``
+    is the fraction the radii have reached where it differs from the depth's (the parametric
+    path keeps the two apart); by default it is ``s``."""
     out: list[Vertex] = []
     for v, cx in zip(vertices, convex, strict=True):
         f = s.get(v.body, 1.0)
-        if v.body < 0 or f == 1.0:
+        g = (s if grow is None else grow).get(v.body, 1.0)
+        if v.body < 0 or (f == 1.0 and g == 1.0):
             out.append(v)
             continue
         side, e = edges[v.body]
@@ -201,9 +205,9 @@ def collapse(
                 y = e + f * (y - e)
             else:
                 x = e + f * (x - e)
-            r = r if cx else f * r  # a convex one is the opening's own corner (a flush body)
+            r = r if cx else g * r  # a convex one is the opening's own corner (a flush body)
         else:  # a join on the band edge: its fillet grows with the body
-            r = f * r
+            r = g * r
         out.append(Vertex(x, y, r, v.tag, v.body))
     return out
 

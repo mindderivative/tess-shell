@@ -267,6 +267,15 @@ def test_a_settings_change_applies_logging_and_reports_directories_as_a_restart(
     assert run.stop() == 0
 
 
+def test_changing_the_frame_join_is_reported_as_a_restart(live: Make) -> None:
+    run = live()
+    (run.cfg / "settings.tdl").write_text(
+        SETTINGS.format(extra="").replace("Settings {", "Settings { Debug { Frame_Join: SHADER }")
+    )
+    run.wait("Debug applies after a restart")
+    assert run.stop() == 0
+
+
 def test_adding_an_elevation_grows_the_surface_but_not_the_reserved_zone(
     live: Make, private_sway: PrivateSway
 ) -> None:

@@ -16,8 +16,9 @@ corner. The contours are rounded rectangles (circular arcs), so a corner's radiu
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Protocol
 
 from tess_shell.surfaces import outline
 from tess_shell.surfaces.outline import Vertex
@@ -76,6 +77,66 @@ class Rect4:
         return self.y1 - self.y0
 
 
+class Morph(Protocol):
+    """The contour with each melded body part of the way out: ``morph({body: s})`` gives
+    ``(fill, inner_border)`` path data with the same commands for every ``s``; ``radius`` is the
+    fraction the fillets have reached where it differs from ``s`` (the default is the same)."""
+
+    def __call__(
+        self, s: Mapping[int, float], radius: Mapping[int, float] | None = None
+    ) -> tuple[str, str]: ...
+
+
+@dataclass(frozen=True, slots=True)
+class BodyGeo:
+    """One melded body as pieces: where it grows from and how its two ends are shaped, in the
+    painter's logical pixels (what the joins built of boxes or of a shader need).
+
+    ``rect`` is the body at full depth and ``edge`` the coordinate of the band edge it grows from
+    (``rect.y0`` on top, ``rect.y1`` at the bottom, ``rect.x0`` on the left, ``rect.x1`` on the
+    right). The ends are ``lo`` and ``hi`` along the side (left to right, or top to bottom). A
+    *free* end has a ``join`` fillet where the body meets the band, which grows with the body, and
+    a ``far`` corner of the body's own that grows with it. A *flush* end is against the opening's
+    own corner: no join, and ``far`` is the constant radius of the fillet where the body's far
+    edge meets the band's side, which travels with the far edge."""
+
+    side: str
+    rect: Rect4
+    edge: float
+    far: tuple[float, float]
+    join: tuple[float, float]
+    flush: tuple[bool, bool]
+    border: float = 0.0  # the inner border's width where it is drawn, else 0
+    seal: float = 0.0  # how far the fill runs under an opaque border
+
+    @property
+    def span(self) -> tuple[float, float]:
+        """The body's ends along the side: ``lo`` and ``hi`` in the painter's x (top and bottom)
+        or y (left and right)."""
+        r = self.rect
+        return (r.x0, r.x1) if self.side in ("top", "bottom") else (r.y0, r.y1)
+
+    @property
+    def depth(self) -> float:
+        """How far the body reaches from the band edge at full size."""
+        r = self.rect
+        return r.height if self.side in ("top", "bottom") else r.width
+
+    @property
+    def toward(self) -> tuple[float, float]:
+        """The unit vector from the band edge into the opening, in the painter's pixels."""
+        return {"top": (0.0, 1.0), "bottom": (0.0, -1.0), "left": (1.0, 0.0), "right": (-1.0, 0.0)}[
+            self.side
+        ]
+
+    def at(self, a: float, t: float) -> tuple[float, float]:
+        """The painter's point at ``a`` along the side and ``t`` away from the band edge."""
+        dx, dy = self.toward
+        if self.side in ("top", "bottom"):
+            return a, self.edge + t * dy
+        return self.edge + t * dx, a
+
+
 @dataclass(frozen=True, slots=True)
 class Ring:
     """The result: what each side reserves, the three bands, and what had to be reduced."""
@@ -91,7 +152,8 @@ class Ring:
     # how the contour looks with each melded body at a fraction of its depth: ``morph({body: s})``
     # gives ``(fill, inner_border)`` path data with the same commands for every ``s`` (None when no
     # body is placed); the bodies not named are at 1
-    morph: Callable[[Mapping[int, float]], tuple[str, str]] | None = None
+    morph: Morph | None = None
+    geometry: tuple[BodyGeo | None, ...] = ()  # each body as pieces; None where it is not placed
     bands: tuple[Rect4, Rect4, Rect4, Rect4] = None  # type: ignore[assignment]
     # the fill band of each side (left, top, right, bottom). The top and bottom bands own the
     # corner squares and run the width of the ring; the left and right bands run between them
@@ -284,11 +346,12 @@ def ring(spec: RingSpec, size: tuple[float, float]) -> Ring:
     fill = _band(c1, r1, hole if opening else None, r_hole)
     inner = _band(c2, r2, c3, r3) if iw and opening and any(closed) else ""
     bodies: tuple[Rect4 | None, ...] = ()
-    morph = None
+    morph: Morph | None = None
+    geometry: tuple[BodyGeo | None, ...] = ()
     if spec.melds:
         bodies = _place_melds(spec.melds, c2, closed, warnings)
         if opening and any(b is not None for b in bodies):
-            morph = _melded(c1, r1, c2, r2, iw, iv, bodies, spec.melds, warnings)
+            morph, geometry = _melded(c1, r1, c2, r2, iw, iv, bodies, spec.melds, warnings)
             fill, inner = morph({})
     outer_hole = c1
     r_outer_hole = r1
@@ -305,6 +368,7 @@ def ring(spec: RingSpec, size: tuple[float, float]) -> Ring:
         opening=c2,
         bodies=bodies,
         morph=morph,
+        geometry=geometry,
         bands=(
             Rect4(c1.x0, c1.y0 + thick[1], c1.x0 + thick[0], max(c1.y1 - thick[3], c1.y0)),
             Rect4(c1.x0, c1.y0, c1.x1, min(c1.y0 + thick[1], c1.y1)),
@@ -455,10 +519,10 @@ def _melded(
     bodies: tuple[Rect4 | None, ...],
     melds: tuple[MeldSpec, ...],
     warnings: list[str],
-) -> Callable[[Mapping[int, float]], tuple[str, str]]:
+) -> tuple[Morph, tuple[BodyGeo | None, ...]]:
     """The fill band and the inner border band when bodies are melded into the opening, as a
-    function of how far each body has grown (see :mod:`tess_shell.surfaces.outline`). The fill runs
-    ``iv`` under the border."""
+    function of how far each body has grown (see :mod:`tess_shell.surfaces.outline`), and each
+    body as pieces. The fill runs ``iv`` under the border."""
     shape = _opening_outline(c2, r2, iw, bodies, melds)
     dirs = outline.directions(shape)
     convex = outline.convex_flags(shape)
@@ -476,25 +540,72 @@ def _melded(
     outer_dirs = outline.directions(outer_rect)
     outer = outline.cubic_path(outer_rect, outer_dirs, True)
 
-    def at(s: Mapping[int, float]) -> tuple[str, str]:
+    def at(s: Mapping[int, float], radius: Mapping[int, float] | None = None) -> tuple[str, str]:
         f = dict(s)
+        g = None if radius is None else dict(radius)
 
         def shifted(d: float) -> dict[int, float]:
             return {i: d * inward[side] for i, (side, _) in edges.items()}
 
-        now = outline.collapse(shape, convex, edges, f)
+        now = outline.collapse(shape, convex, edges, f, grow=g)
         hole = (
-            outline.collapse(sealed, convex, edges, f, shifted(iv)) if sealed is not None else now
+            outline.collapse(sealed, convex, edges, f, shifted(iv), g)
+            if sealed is not None
+            else now
         )
         fill = outer + " " + outline.cubic_path(hole, dirs, clockwise=False)
         if inside is None:
             return fill, ""
-        eroded = outline.collapse(inside, convex, edges, f, shifted(iw))
+        eroded = outline.collapse(inside, convex, edges, f, shifted(iw), g)
         return fill, (
             outline.cubic_path(now, dirs, True) + " " + outline.cubic_path(eroded, dirs, False)
         )
 
-    return at
+    pieces = tuple(
+        _geometry(shape, convex, k, b, edges[k], iw if inside is not None else 0.0, iv)
+        if b is not None
+        else None
+        for k, b in enumerate(bodies)
+    )
+    return at, pieces
+
+
+def _geometry(
+    shape: list[Vertex],
+    convex: list[bool],
+    k: int,
+    body: Rect4,
+    edge: tuple[str, float],
+    border: float,
+    seal: float,
+) -> BodyGeo | None:
+    """Body ``k`` as pieces, from its vertices in the full outline; ``None`` when it does not have
+    the two far corners (a body as deep as the opening)."""
+    side, e = edge
+    along = 0 if side in ("top", "bottom") else 1
+    mine = [(v, cx) for v, cx in zip(shape, convex, strict=True) if v.body == k]
+    far = sorted((v for v, _ in mine if v.tag is not None), key=lambda v: v.at[along])
+    joins = [v for v, _ in mine if v.tag is None]
+    if len(far) != 2:
+        return None
+    radii: list[float] = []
+    flush: list[bool] = []
+    fillets: list[float] = []
+    for v in far:
+        match = [j for j in joins if abs(j.at[along] - v.at[along]) < 1e-6]
+        flush.append(not match)
+        fillets.append(match[0].radius if match else 0.0)
+        radii.append(v.radius)
+    return BodyGeo(
+        side,
+        body,
+        e,
+        (radii[0], radii[1]),
+        (fillets[0], fillets[1]),
+        (flush[0], flush[1]),
+        border,
+        seal,
+    )
 
 
 def padded(band: Rect4, padding: Sides) -> Rect4:

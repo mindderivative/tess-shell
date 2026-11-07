@@ -1,5 +1,6 @@
 """A melded Panel's show and hide: SLIDE, FADE, events, Hide_After and turning round, run
-headless with ``Window.advance`` (the animation is tre's, in the engine)."""
+headless with ``Window.advance`` (the animation is tre's, in the engine). Every test runs once
+for each way of drawing the join (``Debug { Frame_Join }``): they must all do the same."""
 
 from __future__ import annotations
 
@@ -10,6 +11,7 @@ import pytest
 from tess_shell.appearance import Appearance
 from tess_shell.binder.model import Handler
 from tess_shell.model.store import ValueStore
+from tess_shell.surfaces.join import JOINS, nodes_of
 from tess_shell.surfaces.manager import SurfaceManager
 from tests.test_frame import StubApp, look, only
 from tests.test_frame_strips import BG, BLUE, NONE, module, shell_of
@@ -19,6 +21,19 @@ RING = (
     f'Inner_Border {{ Width: 2, Color: "#00ff00" }}, {BG} }}'
 )
 GREEN = (0, 255, 0, 255)
+CURRENT = {"join": "SMIL"}  # the join option the running test draws with
+
+
+@pytest.fixture(autouse=True, params=JOINS)
+def join_option(request: pytest.FixtureRequest) -> Any:
+    CURRENT["join"] = request.param
+    yield request.param
+    CURRENT["join"] = "SMIL"
+
+
+def drawn(h: Any) -> bool:
+    """Whether the host's join still has a node on show."""
+    return any(n.get("visible") for n in nodes_of(h.join))
 
 
 def tab(extra: str = "", animation: str = "Animation { Type: SLIDE, Duration: 400 }") -> str:
@@ -35,12 +50,20 @@ def started(
     animation: str = "Animation { Type: SLIDE, Duration: 400 }",
     visible: str = "",
     reduced: bool = False,
+    join: str | None = None,
 ) -> SurfaceManager:
     app, store = StubApp(), ValueStore()
     theme_look = look()
     if reduced:
         theme_look = theme_look.with_appearance(Appearance(scheme="dark", reduced_motion=True))
-    manager = SurfaceManager(app, module(), lambda key: key[-1], store, theme_look)  # type: ignore[arg-type]
+    manager = SurfaceManager(
+        app,
+        module(),
+        lambda key: key[-1],
+        store,
+        theme_look,
+        join_mode=join or CURRENT["join"],  # type: ignore[arg-type]
+    )
     manager.sink = lambda handler, key, raw: manager.run_builtin(handler)
     manager.plan(shell_of(RING, tab(f"{visible} {extra}", animation)))
     manager.build()
@@ -79,7 +102,7 @@ def advance(manager: SurfaceManager, ms: int) -> None:
 def test_a_shown_body_slides_out_from_the_edge_and_reaches_the_ring_contour() -> None:
     m = started()
     # at rest it is part of the ring's one contour
-    assert px(m)(60, 50) == BLUE and not host(m).svg.get("visible")
+    assert px(m)(60, 50) == BLUE and not drawn(host(m))
     act(m, "Hide")
     advance(m, 1)
     at = px(m)
@@ -91,7 +114,7 @@ def test_a_shown_body_slides_out_from_the_edge_and_reaches_the_ring_contour() ->
     at = px(m)
     assert at(60, 50) == NONE and at(60, 25) == NONE and at(60, 10) == BLUE
     assert host(m).anim is None and "Tab" in only(m).hidden_melds
-    assert not host(m).svg.get("visible")
+    assert not drawn(host(m))
 
 
 def test_showing_slides_the_body_out_and_ends_in_the_single_contour() -> None:
@@ -267,7 +290,8 @@ def test_a_click_cannot_reach_the_body_while_it_slides() -> None:
     act(m, "Show")
     advance(m, 200)
     h = host(m)
-    assert h.svg.get("hit_testable") is False
+    if CURRENT["join"] == "SMIL":
+        assert h.join.svg.get("hit_testable") is False
     advance(m, 400)
     st = only(m)
     hits: list[str] = []
@@ -313,7 +337,9 @@ def test_the_ring_and_the_morph_are_below_the_strips_and_the_content_above_both(
     m = started(visible="Visible: false")
     h = host(m)
     st = only(m)
-    assert st.nodes[1].get("z_index") < h.svg.get("z_index") < h.clip.get("z_index")
+    act(m, "Show")
+    advance(m, 50)
+    assert st.nodes[1].get("z_index") < nodes_of(h.join)[0].get("z_index") < h.clip.get("z_index")
 
 
 def test_while_sliding_the_ring_nodes_keep_the_shape_that_takes_clicks_at_alpha_one() -> None:
@@ -321,19 +347,23 @@ def test_while_sliding_the_ring_nodes_keep_the_shape_that_takes_clicks_at_alpha_
     st = only(m)
     act(m, "Show")
     advance(m, 100)
-    assert st.nodes[1].get("fill")[3] == 1 and st.nodes[2].get("fill")[3] == 1
+    ghosted = host(m).join.ghost  # only the join that cannot take clicks needs it
+    assert st.nodes[1].get("fill")[3] == (1 if ghosted else 255)
+    assert st.nodes[2].get("fill")[3] == (1 if ghosted else 255)
     advance(m, 400)
-    assert st.nodes[1].get("fill")[3] == 255 and not host(m).svg.get("visible")
+    assert st.nodes[1].get("fill")[3] == 255 and not drawn(host(m))
 
 
 def test_a_turn_round_retargets_the_svg_clock_from_where_it_is() -> None:
     m = started(visible="Visible: false")
     act(m, "Show")
     advance(m, 200)
-    mid = host(m).svg.get("svg_time")
+    if CURRENT["join"] == "SMIL":
+        mid = host(m).join.svg.get("svg_time")
     act(m, "Hide")
     advance(m, 1)
-    assert abs(host(m).svg.get("svg_time") - mid) < 0.05  # no jump
+    if CURRENT["join"] == "SMIL":
+        assert abs(host(m).join.svg.get("svg_time") - mid) < 0.05  # no jump
     advance(m, 450)
     assert host(m).anim is None and "Tab" in only(m).hidden_melds
 
@@ -341,10 +371,17 @@ def test_a_turn_round_retargets_the_svg_clock_from_where_it_is() -> None:
 def test_the_rest_contour_and_the_last_morph_frame_agree_at_a_fractional_scale() -> None:
     m = started(visible="Visible: false")
     act(m, "Show")
-    advance(m, 399)
+    advance(m, 1)  # a shader's animation starts on the frame after the request
+    advance(m, 398)
     st = only(m)
     before, w, _ = st.painter.snapshot(scale=1.5)
     advance(m, 50)
     after, _, _ = st.painter.snapshot(scale=1.5)
-    differing = sum(1 for i in range(0, len(before), 4) if before[i : i + 4] != after[i : i + 4])
-    assert differing <= 60, f"{differing} device pixels changed at the swap"
+    # a pixel that changes by more than 40 levels is a pop; the edge anti-aliasing of a shader
+    # or of boxes differs a little from the path's, which stays under that
+    differing = sum(
+        1
+        for i in range(0, len(before), 4)
+        if max(abs(before[i + k] - after[i + k]) for k in range(4)) > 40
+    )
+    assert differing <= 30, f"{differing} device pixels changed at the swap"

@@ -50,6 +50,7 @@ from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, resolve_style
 from tess_shell.schema.model import BarDef, FrameBorder, FrameDef, MonitorDef, PanelDef, ShellDef
 from tess_shell.surfaces.bar import Geometry
+from tess_shell.surfaces.join import Join, JoinRun, make_join
 from tess_shell.surfaces.panel import px_size
 from tess_shell.surfaces.ring import MeldSpec, Ring, RingSpec, Sides, padded, ring
 
@@ -69,8 +70,7 @@ _ANCHORS = {
 }
 _SIZES = {"left": (1, 0), "top": (0, 1), "right": (1, 0), "bottom": (0, 1)}
 _EMPTY = "M0,0 L0,0 Z"
-_EMPTY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>'
-# the painter's children, bottom to top: the ring, the svg of a body that animates, the content of
+# the painter's children, bottom to top: the ring, the join of a body that animates, the content of
 # strips and melded Panels (a strip's blocks are never drawn over by the ring or a morph)
 _Z_MORPH = 1
 _Z_CONTENT = 2
@@ -240,11 +240,11 @@ class HostState:
     surface: Surface
     container: TreNode  # the box the tree is bound under
     # a melded Panel only: ``clip`` (clips to the body) holds ``mover`` (the node an animation
-    # translates or fades) which holds the ``container``; ``svg`` draws the ring's contour while
-    # the body animates (see "a melded Panel" below)
+    # translates or fades) which holds the ``container``; ``join`` draws the body and its fillets
+    # while it animates (see "a melded Panel" below and ``surfaces/join.py``)
     clip: TreNode | None = None
     mover: TreNode | None = None
-    svg: TreNode | None = None
+    join: Join | None = None
     anim: str | None = None  # "in" (showing) or "out" (hiding) while an animation runs
     kind: str = "NONE"  # the animation that runs: SLIDE or FADE
     away: tuple[str, float] = ("translate_y", 0.0)  # the property and value of "not shown"
@@ -638,13 +638,16 @@ class Frames:
         moving = {h.plan.name for h in st.hosts.values() if h.anim}
         shape = plan.ring_for(st.size, frozenset(st.hidden_melds | moving))
         st.shape = shape
-        # the bodies of the Panels that animate are in ``full`` only, drawn by their own svg
+        # the bodies of the Panels that animate are in ``full`` only, drawn by their own join
         st.full = plan.ring_for(st.size, frozenset(st.hidden_melds)) if moving else shape
         paint = plan.paint
-        sliding = any(h.anim and h.kind == "SLIDE" for h in st.hosts.values())
+        sliding = any(
+            h.anim and h.kind == "SLIDE" and h.join is not None and h.join.ghost
+            for h in st.hosts.values()
+        )
 
         def ghost(color: RGBA | None) -> RGBA | None:
-            """Under a sliding body's svg the ring nodes are only the shape that takes clicks."""
+            """Under a sliding body's join the ring nodes are only the shape that takes clicks."""
             return (color[0], color[1], color[2], 1) if sliding and color is not None else color
 
         bands = (
@@ -705,17 +708,16 @@ class Frames:
     # -- a melded Panel: placement, show, hide and the animation ---------------------------------
     #
     # At rest a shown body is part of the ring's one contour (one ``path`` node, painted hit
-    # shape). While it animates, the ring nodes are drawn without it (their colour at alpha 1, so
-    # they still take the ring's clicks) and an ``svg`` node draws the ring with the body in it:
-    # the document holds the contour at depth 0 and at full depth with the same commands (lines
-    # and cubic Beziers, a degenerate cubic where a fillet has radius 0), and an ``<animate
-    # attributeName="d">`` between them is sampled by tre's own clock (``svg_time``, eased by
-    # ``animate``): the body grows out of the band edge and its joins grow with it, drawn by tre
-    # with no Python per frame. The body's content moves with it (``translate`` of the mover node,
-    # on the same clock and easing). When it ends the ring nodes take the body back and the svg
-    # is hidden; the two renderings agree to the pixel (tests/test_frame_anim.py). The svg takes
-    # no input (``hit_testable=False``): the ring nodes under it and the body's own box do.
-    # FADE draws the ring without the body, and the ring with it in the svg, faded in or out.
+    # shape). While it animates, the ring nodes are drawn without it and a *join* (``join.py``,
+    # chosen by ``Debug { Frame_Join }``) draws the body with its fillets growing out of the band,
+    # on tre's own clock. The default join is the SMIL morph: an ``svg`` holding the contour at
+    # depth 0 and at full depth with the same commands, an ``<animate attributeName="d">`` between
+    # them sampled at ``svg_time``. The body's content moves with it (``translate`` of the mover
+    # node, on the same clock and easing) inside the clip box, which is the body at rest. When it
+    # ends the ring nodes take the body back and the join stops drawing; the two renderings agree
+    # to the pixel (tests/test_frame_anim.py). A join that ``ghost``s (the SMIL svg takes no
+    # input) has the ring nodes drawn at alpha 1 meanwhile so they keep the ring's click shape.
+    # FADE draws the ring without the body, and the join draws it faded in or out.
 
     def _clip_rect(
         self, st: FrameState, host: HostState
@@ -724,7 +726,7 @@ class Frames:
         return self._rect(st, host.plan)
 
     def _place_meld(self, st: FrameState, host: HostState) -> None:
-        """Put a melded Panel's clip box, content and svg where the ring says."""
+        """Put a melded Panel's clip box and content where the ring says."""
         surface = host.surface
         rect = self._clip_rect(st, host)
         assert host.clip is not None and host.mover is not None
@@ -733,8 +735,8 @@ class Frames:
                 self._m.popups.parent_closed(surface)
                 surface.hidden = True
             host.clip.set(visible=False)
-            if host.svg is not None:
-                host.svg.set(visible=False)
+            if host.join is not None:
+                host.join.stop()
             return
         x, y, w, h = rect
         host.clip.set(left=x, top=y, width=w, height=h, visible=True)
@@ -755,8 +757,8 @@ class Frames:
         host.surface.generation += 1
         if host.mover is not None:
             host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
-        if host.svg is not None:
-            host.svg.set(visible=False, opacity=1.0)
+        if host.join is not None:
+            host.join.stop()
 
     def _reduced(self) -> bool:
         look = self._m._look
@@ -774,11 +776,9 @@ class Frames:
                 int(panel.hide_after), lambda: self._meld_to(st, host, False)
             )
 
-    def _morph_document(
-        self, st: FrameState, host: HostState, kind: str
-    ) -> tuple[str, bool] | None:
-        """The svg document of the ring with this body in it, and whether it morphs. ``None``
-        when the body is not placed."""
+    def _join_run(self, st: FrameState, host: HostState, kind: str, show: bool) -> JoinRun | None:
+        """What the join draws for this body's slide or fade. ``None`` when the body is not
+        placed."""
         full = st.full
         if full is None or full.morph is None:
             return None
@@ -789,33 +789,15 @@ class Frames:
         if index >= len(full.bodies) or full.bodies[index] is None:
             return None
         paint = st.plan.paint
-        # the other bodies that animate are left out: each draws its own svg
+        # the other bodies that animate are left out: each draws its own join
         others = {
             names.index(h.plan.name): 0.0
             for h in st.hosts.values()
             if h is not host and h.anim and h.plan.name in names
         }
-        end = full.morph({**others, index: 1.0})
-        start = full.morph({**others, index: 0.0})
-        w, h = st.size
-        parts: list[str] = []
-        for (d1, color), d0 in zip(
-            ((end[0], paint.fill), (end[1], paint.inner)), (start[0], start[1]), strict=True
-        ):
-            if not d1 or color is None:
-                continue
-            fill = f"rgb({color[0]},{color[1]},{color[2]})"
-            alpha = f' fill-opacity="{color[3] / 255:.4f}"' if color[3] != 255 else ""
-            if kind == "SLIDE":
-                body = f'<animate attributeName="d" values="{d0};{d1}" dur="1s" fill="freeze"/>'
-                parts.append(f'<path fill="{fill}"{alpha} d="{d0}">{body}</path>')
-            else:
-                parts.append(f'<path fill="{fill}"{alpha} d="{d1}"/>')
-        document = (
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="{w:g}" height="{h:g}" '
-            f'viewBox="0 0 {w:g} {h:g}">{"".join(parts)}</svg>'
+        return JoinRun(
+            kind, show, st.size, full, index, others, paint.fill, paint.inner, paint.opacity
         )
-        return document, kind == "SLIDE"
 
     def _meld_to(self, st: FrameState, host: HostState, show: bool) -> None:
         """Show or hide a melded Panel (idempotent). A hide while it is showing turns round from
@@ -870,37 +852,27 @@ class Frames:
             surface.hidden = True
             m.popups.parent_closed(surface)
         host.anim, host.kind = ("in" if show else "out"), kind
-        self._draw(st)  # the ring nodes are drawn without the body; the svg draws it
-        assert host.mover is not None and host.svg is not None
-        paint = st.plan.paint
+        self._draw(st)  # the ring nodes are drawn without the body; the join draws it
+        assert host.mover is not None and host.join is not None
         if not turning:
-            made = self._morph_document(st, host, kind)
-            if made is None:  # not placed: nothing to animate
+            run = self._join_run(st, host, kind, show)
+            drawn = run is not None and host.join.begin(run)
+            if run is not None and not drawn:
+                logger.warning(
+                    f"Panel {name} on {st.plan.output.name}: the {self._m.join_mode} join cannot"
+                    " draw this body, so it is shown or hidden at once"
+                )
+            if not drawn:  # not placed or not drawable: no animation
                 host.anim = None
                 (st.hidden_melds.discard if show else st.hidden_melds.add)(name)
                 self._draw(st)
                 return
-            document, morphs = made
-            w, h = st.size
-            props: dict[str, Any] = {
-                "svg": document,
-                "left": 0,
-                "top": 0,
-                "width": w,
-                "height": h,
-                "visible": True,
-            }
             prop, away = host.away
             host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
             if kind == "SLIDE":
-                props.update(svg_time=0.0 if show else 1.0, opacity=paint.opacity)
                 host.mover.set(**{prop: away if show else 0.0})
             else:
-                faded = 0.0 if show else paint.opacity
-                props["opacity"] = faded
                 host.mover.set(opacity=0.0 if show else 1.0)
-            host.svg.set(**props)
-            del morphs
         ms = int(panel.duration)
         easing = (0.0, 0.0, 0.2, 1.0) if show else (0.4, 0.0, 1.0, 1.0)
         m._fire(surface, "On_Anim_Start")
@@ -910,12 +882,12 @@ class Frames:
                 return
             m._fire(surface, "On_Anim_End")
             host.anim = None
-            assert host.mover is not None and host.svg is not None
+            assert host.mover is not None and host.join is not None
             host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
             if not show:
                 st.hidden_melds.add(name)
             self._draw(st)  # the body is part of the ring's one contour again (or gone from it)
-            host.svg.set(visible=False, opacity=1.0)
+            host.join.stop()
             if show:
                 self._timer(host, st)
                 m._fire(surface, "On_Visible")
@@ -923,11 +895,10 @@ class Frames:
                 m._fire(surface, "On_Hidden")
 
         prop, away = host.away
+        host.join.play(show, ms, easing, done)
         if kind == "SLIDE":
-            host.svg.animate("svg_time", 1.0 if show else 0.0, ms, easing, done)
             host.mover.animate(prop, 0.0 if show else away, ms, easing)
         else:
-            host.svg.animate("opacity", paint.opacity if show else 0.0, ms, easing, done)
             host.mover.animate("opacity", 1.0 if show else 0.0, ms, easing)
 
     def _drop_hosts(self, st: FrameState) -> None:
@@ -945,7 +916,9 @@ class Frames:
         if host.surface.view is not None:
             host.surface.view.dispose()
         host.surface.view = None
-        for node in (host.svg, host.clip or host.container):
+        if host.join is not None:
+            host.join.destroy()
+        for node in (host.clip or host.container,):
             try:
                 if node is not None:
                     node.destroy()
@@ -983,7 +956,7 @@ class Frames:
             visible=False,
             **({"flex_direction": _DIRECTION[hp.side]} if hp.kind == "strip" else {}),
         )
-        clip = mover = svg = None
+        clip = mover = join = None
         if hp.kind == "meld":
             clip = st.painter.create(
                 "box",
@@ -997,22 +970,9 @@ class Frames:
                 z_index=_Z_CONTENT,
             )
             mover = st.painter.create("box", position="absolute", left=0, top=0, width=0, height=0)
-            svg = st.painter.create(
-                "svg",
-                svg=_EMPTY_SVG,
-                position="absolute",
-                left=0,
-                top=0,
-                width=1,
-                height=1,
-                visible=False,
-                hit_testable=False,  # tre cannot hit-test an svg by what it paints: it takes none
-                a11y_hidden=True,
-                z_index=_Z_MORPH,
-            )
+            join = make_join(m.join_mode, st.painter, _Z_MORPH)
             mover.add_child(container)
             clip.add_child(mover)
-            st.painter.root.add_child(svg)
             st.painter.root.add_child(clip)
         else:
             container.set(z_index=_Z_CONTENT)
@@ -1032,7 +992,7 @@ class Frames:
             planned=planned,
             hidden=True,
         )
-        host = HostState(hp, surface, container, clip, mover, svg)
+        host = HostState(hp, surface, container, clip, mover, join)
         st.hosts[hp.key] = host
         errors = list(planned.expanded.errors)
         if not errors:

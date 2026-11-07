@@ -74,6 +74,13 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.surfaces",
     },
     "surfaces.outline": set(),
+    # the joins of a melded Panel (Frame > Comparing the Join Options): nodes come from the painter
+    # they are given; only the shader join builds an engine object of its own
+    "surfaces.join": {"tess_shell.surfaces"},
+    "surfaces.join_concave": {"tess_shell.surfaces"},
+    "surfaces.join_param": {"tess_shell.surfaces"},
+    "surfaces.join_shader": {"tess_re", "tess_shell.surfaces"},
+    "surfaces.join_structure": {"tess_shell.surfaces"},
     "surfaces.ring": {"tess_shell.surfaces.outline"},
     "surfaces.frame": {
         "tess_re",

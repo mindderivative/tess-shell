@@ -29,8 +29,9 @@ _ROOT_KEYS = (
     "Appearance",
     "Debug",
 )
-_DEBUG_KEYS = ("Panel_Hide",)
+_DEBUG_KEYS = ("Panel_Hide", "Frame_Join")
 _PANEL_HIDE = ("CLOSE", "KEEP")
+_FRAME_JOIN = ("SMIL", "CONCAVE", "SHADER", "STRUCTURE", "PARAM")
 _APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop")
 _LOGGING_KEYS = (
     "Level",
@@ -71,6 +72,11 @@ class DebugSettings:
     # and draws nothing, so a hidden Panel keeps its tree and state. CLOSE destroys the window and
     # makes a new one on show.
     panel_hide: str = "KEEP"
+    # how the join of a melded Panel animates while it slides (the Frame's join options, all built
+    # so they can be compared): SMIL, the default, morphs the one contour in an svg; CONCAVE moves
+    # boxes with concave corners; SHADER draws the join in a shader; STRUCTURE morphs path data
+    # command by command; PARAM animates the numbers of a path template. A restart applies it.
+    frame_join: str = "SMIL"
 
 
 @dataclass(frozen=True, slots=True)
@@ -356,9 +362,12 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             appearance = _appearance(reader, blk)
         if (blk := reader.block(root, "Debug")) is not None:
             reader.unknown_keys(blk, _DEBUG_KEYS, "Debug")
-            hide = find_property(blk, "Panel_Hide")
-            if hide is not None and (word := reader.enum(hide, _PANEL_HIDE)) is not None:
-                debug = DebugSettings(panel_hide=word)
+            hide, join = find_property(blk, "Panel_Hide"), find_property(blk, "Frame_Join")
+            hide_word = None if hide is None else reader.enum(hide, _PANEL_HIDE)
+            join_word = None if join is None else reader.enum(join, _FRAME_JOIN)
+            debug = DebugSettings(
+                panel_hide=hide_word or debug.panel_hide, frame_join=join_word or debug.frame_join
+            )
         if (blk := reader.block(root, "Validation")) is not None:
             reader.unknown_keys(blk, _VALIDATION_KEYS, "Validation")
             en = find_property(blk, "Enabled")

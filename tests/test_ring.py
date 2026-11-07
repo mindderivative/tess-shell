@@ -513,3 +513,86 @@ def test_both_ends_of_the_morph_have_the_same_commands_and_every_frame_is_their_
         high = [float(n) for n in re.findall(r"-?\d+\.?\d*", hi)]
         half = [float(n) for n in re.findall(r"-?\d+\.?\d*", mid)]
         assert all(abs(m - (a + b) / 2) < 0.01 for a, b, m in zip(low, high, half, strict=True))
+
+
+def test_the_radius_fraction_follows_the_depth_unless_it_is_given_apart() -> None:
+    shaped = ring(MELDED, (W, H))
+    assert shaped.morph is not None
+    assert shaped.morph({0: 0.5}) == shaped.morph({0: 0.5}, {0: 0.5})
+    assert shaped.morph({0: 0.0}, {0: 1.0}) != shaped.morph({0: 0.0})
+    assert shaped.morph({0: 1.0}, {0: 1.0}) == shaped.morph({})  # at rest: the ring's own contour
+
+
+@pytest.mark.parametrize(
+    ("alignment", "flush"),
+    [("START", (True, False)), ("CENTER", (False, False)), ("END", (False, True))],
+)
+def test_a_body_is_described_as_pieces_with_its_flush_ends(
+    alignment: str, flush: tuple[bool, bool]
+) -> None:
+    spec = RingSpec(
+        thickness=(20, 20, 20, 20),
+        inner_radius=(8, 8, 8, 8),
+        inner_border=2,
+        melds=(MeldSpec("top", 120, 40, alignment, (6, 6, 6, 6)),),
+    )
+    geo = ring(spec, (W, H)).geometry[0]
+    assert geo is not None
+    assert geo.side == "top" and geo.flush == flush and geo.border == 2
+    assert geo.depth == 40 and geo.edge == 20 and geo.span[1] - geo.span[0] == 120
+    for end in (0, 1):
+        # a free end has a join (the Frame's inner radius 8 plus the border 2) and a body corner
+        # of the body's radius less the border; a flush end has the opening's own corner as its
+        # far fillet and no join
+        assert geo.join[end] == (0 if flush[end] else 10)
+        assert geo.far[end] == (10 if flush[end] else 4)
+
+
+@pytest.mark.parametrize(
+    ("side", "expected"),
+    [
+        ("top", (150.0, 30.0)),
+        ("bottom", (150.0, 270.0)),
+        ("left", (30.0, 150.0)),
+        ("right", (370.0, 150.0)),
+    ],
+)
+def test_a_pieces_points_are_given_along_the_side_and_away_from_the_edge(
+    side: str, expected: tuple[float, float]
+) -> None:
+    spec = RingSpec(
+        thickness=(20, 20, 20, 20),
+        melds=(MeldSpec(side, 100, 40, "CENTER", (0, 0, 0, 0)),),
+    )
+    geo = ring(spec, (W, H)).geometry[0]
+    assert geo is not None
+    along = {"top": 150.0, "bottom": 150.0, "left": 150.0, "right": 150.0}[side]
+    assert geo.at(along, 10.0) == expected
+    assert geo.toward == {"top": (0, 1), "bottom": (0, -1), "left": (1, 0), "right": (-1, 0)}[side]
+
+
+def test_the_parametric_template_is_the_morph_for_every_depth_and_radius() -> None:
+    """``join_param.template`` written as path data with ``{d}`` and ``{r}`` holes is, to tre, the
+    contour of ``Ring.morph`` at those fractions."""
+    import re
+
+    from tess_shell.surfaces.join_param import template
+
+    shaped = ring(MELDED, (W, H))
+    assert shaped.morph is not None
+    for index in (0, 1):  # the fill band and the inner border
+        data = template(
+            shaped.morph({0: 0.0}, {0: 0.0})[index],
+            shaped.morph({0: 1.0}, {0: 0.0})[index],
+            shaped.morph({0: 0.0}, {0: 1.0})[index],
+        )
+        window = tess_re.Window(width=W, height=H)
+        node = window.create("path", data=data, params={"d": 0.0, "r": 0.0}, width=W, height=H)
+        for d, r in ((0.0, 0.0), (1.0, 1.0), (0.3, 0.0), (0.0, 0.8), (0.6, 0.25), (1.0, 0.4)):
+            node.set(params={"d": d, "r": r})
+            got = [float(n) for n in re.findall(r"-?\d+\.?\d*", node.get("data"))]
+            want = [
+                float(n) for n in re.findall(r"-?\d+\.?\d*", shaped.morph({0: d}, {0: r})[index])
+            ]
+            assert len(got) == len(want)
+            assert all(abs(a - b) < 0.01 for a, b in zip(got, want, strict=True)), (d, r)
