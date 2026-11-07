@@ -48,7 +48,7 @@ class StructureJoin:
 
     def begin(self, run: JoinRun) -> bool:
         self._kind, self._opacity = run.kind, run.opacity
-        collapsed, full = run.morph(0.0), run.morph(1.0)
+        collapsed, full = run.start(), run.morph(1.0)
         colours = (run.fill, run.border)
         self._ends = [(collapsed[i], full[i]) for i in range(2)]
         for node, (d0, d1), colour in zip(self.nodes, self._ends, colours, strict=True):

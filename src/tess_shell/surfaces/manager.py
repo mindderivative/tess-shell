@@ -609,6 +609,9 @@ class SurfaceManager:
         }
         frame_names = {f.name for m in shell.monitors for f in m.frames}
         melded = {p.name for m in shell.monitors for f in m.frames for p in f.melds}
+        melded |= {
+            e.name for m in shell.monitors for f in m.frames for e in f.edges.values() if e.name
+        }
         for p in planned:
             _check_targets(p.expanded, panel_names | frame_names | melded)
 

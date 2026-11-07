@@ -15,6 +15,11 @@ config and scripts under ``/tmp/tess-kwin-m3c`` and starts nothing. It does not 
   the cost of each option in one table (frame time while sliding, frames drawn at idle, memory).
 * ``toggle-strips.sh``: switch the saved shell file between variant A and B (a hot reload).
 * ``check-strips.sh``: the file is valid.
+* ``run-peek.sh [OPTION]``, ``toggle-peek.sh``, ``check-peek.sh``: variant C, the Peek demo, in
+  its own config directory ``/tmp/tess-kwin-m3c/peek``: the Dock rests as a 24 px tab and the left
+  strip as a 6 px sliver; the pointer on either brings it out after a delay, leaving sends it
+  back; ``OPTION`` is a ``Frame_Join``; ``toggle-peek.sh`` saves the shell file again as C with a
+  changed delay and back (a hot reload that keeps the state).
 * ``checklist-strips.txt``: the lines to check by eye, with the numbers this setup should show.
 
 The state directory is ``/tmp/tess-kwin-m3c/state``, never the real one.
@@ -154,7 +159,102 @@ def frame(variant: str) -> tuple[str, RingSpec]:
     return text, spec
 
 
+PEEK_DOCK = (
+    "Panel { Name: Dock, Meld: true, Attach_To: Screen_Frame, Attach: BOTTOM, Alignment: CENTER, "
+    "Length: 320, Depth: 56, Peek { Size: 24, Enter_Delay: @ENTER@, Exit_Delay: 300 }, "
+    "Animation { Type: SLIDE, Duration: 300 }, Style { Corner_Radius: 12 }, "
+    "Children { FlexBox { Width: 100%, Height: 100%, Padding: 8, Align_Items: CENTER, "
+    "Justify_Content: CENTER, Children { "
+    'Text { Text: "Docked: part of the frame", Width: AUTO, Height: AUTO, Font_Size: 14, '
+    'Foreground: "#cdd6f4" } } } } }'
+)
+
+
+def toggle(name: str, label: str, target: str) -> str:
+    return (
+        f"FlexBox {{ Name: {name}, Width: 44, Height: 22, Padding: 3, Align_Items: CENTER, "
+        "Justify_Content: CENTER, "
+        'Style { Background: "#89b4fa", Corner_Radius: 4 }, '
+        f"On_Click {{ Action: Toggle, Target: {target} }}, Children {{ "
+        f'Text {{ Text: "{label}", Width: AUTO, Height: AUTO, Font_Size: 11, '
+        'Foreground: "#1e1e2e" } } }'
+    )
+
+
+def peek_frame(enter: int = 150) -> tuple[str, RingSpec]:
+    """Variant C: the top strip stays (with two buttons that Toggle the others: the keyboard
+    way in), the left strip rests as a 6 px sliver and comes out to 56, the Dock as a 24 px tab."""
+    top = "\n".join([*TOP_CHILDREN.split("\n"), toggle("Dock_Toggle", "Dock", "Dock")]) + (
+        "\n" + toggle("Left_Toggle", "Left", "Left_Strip")
+    )
+    left = left_children().rsplit("\n", 1)[0]  # the blocks, without variant A's Dock button
+    thick = (6, 34, 8, 8)
+    text = f"""            Frame {{
+                Name: Screen_Frame
+                Thickness {{ Left: {thick[0]}, Top: {thick[1]}, Right: {thick[2]}, Bottom: {thick[3]} }}
+                Inner_Radius: 14
+                Keyboard: ON_DEMAND
+                Inner_Border {{ Width: 2, Color: "#89b4fa" }}
+                Padding: [8, 3, 8, 3]
+                Style {{ Background: "#1e1e2e" }}
+                Edges {{
+                    Top {{
+                        Thickness: 34
+                        Children {{
+                            FlexBox {{
+                                Width: 100%, Height: 100%, Spacing: 8, Align_Items: CENTER
+                                Children {{
+{top}
+                                }}
+                            }}
+                        }}
+                    }}
+                    Left {{
+                        Name: Left_Strip
+                        Thickness: 56
+                        Padding: 6
+                        Peek {{ Size: {thick[0]}, Enter_Delay: {enter}, Exit_Delay: 300 }}
+                        Children {{
+                            FlexBox {{
+                                Flex: VERTICAL, Width: 100%, Spacing: 6, Align_Items: CENTER
+                                Children {{
+{left}
+                                }}
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+            {PEEK_DOCK.replace("@ENTER@", str(enter))}"""
+    spec = RingSpec(
+        thickness=thick,
+        inner_radius=(14, 14, 14, 14),
+        inner_border=2,
+        melds=(MeldSpec("bottom", 320, 24, "CENTER", (12, 12, 12, 12)),),
+    )
+    return text, spec
+
+
 def shell_text(variant: str) -> str:
+    if variant == "c" or variant == "c2":
+        return (
+            HEADER
+            + f"""
+Shell {{
+    Monitor {{
+        Name: Main
+        Connector: "HDMI-A-1"
+        Children {{
+{POPUPS}{peek_frame(150 if variant == "c" else 400)[0]}
+        }}
+    }}
+}}
+"""
+        )
+    return _shell_text(variant)
+
+
+def _shell_text(variant: str) -> str:
     return (
         HEADER
         + f"""
@@ -175,6 +275,61 @@ def script(name: str, text: str) -> None:
     path = ROOT / name
     path.write_text("#!/usr/bin/env bash\n" + text)
     path.chmod(0o755)
+
+
+def peek_checklist() -> str:
+    c = ring(peek_frame()[1], (1920, 1080))
+    return f"""Peek (variant C, its own config: /tmp/tess-kwin-m3c/peek; HDMI-A-1)
+Setup (nothing else needs to run):
+  /tmp/tess-kwin-m3c/check-peek.sh          the file is valid
+  /tmp/tess-kwin-m3c/run-peek.sh [OPTION]   run it (Ctrl+C stops); OPTION is a Frame_Join
+  /tmp/tess-kwin-m3c/toggle-peek.sh         save the file again with Enter_Delay 400 / 150 (hot reload)
+Variant C: the top strip (34 px, Menu, Tall, ... plus buttons Dock and Left) stays; the Dock is
+a melded Panel at the bottom, 320 x 56, with Peek {{ Size: 24, Enter_Delay: 150, Exit_Delay: 300 }};
+the LEFT strip (three coloured blocks) has Thickness 56 and Peek {{ Size: 6 }}: it rests as a 6 px
+sliver. Tell me what you see, line by line.
+  [ ] AT REST the Dock is a 24 px TAB hanging up from the bottom band at the centre (320 wide): the
+      ring's own colour, the blue border following it, a fillet at each join and rounded far
+      corners, no text in it. The left edge is a thin 6 px sliver of the Frame's colour with the
+      border beside it: no blocks. Say how each looks at 1x (and 1.5x).
+  [ ] RESERVED SPACE: a maximised window stops {c.totals[0]} px from the left, {c.totals[1]} from the top, {c.totals[2]} from the
+      right and {c.totals[3]} from the bottom, and does not move at any point below (zones are the same in
+      every state).
+  [ ] HOVER THE TAB: put the pointer on the tab and keep it still. After about 150 ms the Dock
+      raises to 56 px in 300 ms: the contour of the whole body moves (the two join fillets and the
+      far corners grow, they do not stay as a box sliding), the border follows, and the text slides
+      in with it, clipped inside. No pop at the start or at the end.
+  [ ] LEAVE: move the pointer away. After about 300 ms it goes back to the tab the same way
+      (joins shrinking back), and the text disappears with it.
+  [ ] FAST IN AND OUT: sweep the pointer across the tab in less than 150 ms: nothing moves. With
+      the Dock out, leave and come back in less than 300 ms: it stays out; no flicker.
+  [ ] TURN ROUND: leave while it is still coming out (after the 150 ms): after the 300 ms it turns
+      round from where it is, without a jump; the same coming back while it goes in.
+  [ ] MOVING FROM THE TAB INTO THE BODY (down the tab, over the text) never counts as leaving.
+  [ ] CLICKS: a click on the tab does not reach the window below; a click beside the tab, in the
+      opening, reaches it; a click in the 40 px above the tab while it is at rest reaches it.
+  [ ] HOVER THE LEFT SLIVER (the thin band at the left edge, below the top strip): after about
+      150 ms the left strip pushes out over the window to 56 px wide, the blocks slide in with
+      it, the opening's rounded corners at its two ends move with its edge. With a MAXIMISED
+      window behind it the window is not resized or moved: the strip is drawn over it. Leave: back
+      after about 300 ms.
+  [ ] KEYBOARD WAY IN, no pointer: the top strip's buttons "Dock" and "Left" Toggle the Panel and the
+      strip by Name (click them, or Tab/Enter to a focused painter with Keyboard: ON_DEMAND): "Dock"
+      brings the body fully out and again back to the TAB (not away); "Left" the strip out and
+      back to the sliver. Say what you found about reaching the buttons from the keyboard alone.
+  [ ] Show/Hide leave the pointer alone: with the Dock out by the button and the pointer far away
+      it stays out (no hover), a second click sends it back to the tab.
+  [ ] The log (DEBUG) shows "Panel Dock on HDMI-A-1 shown (melded, slide)" when it comes out and
+      "hiding" when it goes back, and "strip Left_Strip ... (peek, slide)" for the strip.
+  [ ] REDUCED MOTION (Plasma animation speed "instant"): both switch at once, the delays stay.
+  [ ] toggle-peek.sh: after it the Dock needs about 400 ms of hover; a Dock that was out stays out
+      across the reload; a Frame that is hot-reloaded does not close its painter.
+  [ ] run-peek.sh SMIL / STRUCTURE / PARAM do the same by the same contour. SHADER and CONCAVE log
+      ONE warning that they cannot draw a Panel that peeks and use PARAM; the left strip is drawn
+      by the option itself (say if it looks different).
+  [ ] a Popup from a strip button (Menu on the top strip) opens and closes as before; one that
+      hangs off the left strip keeps it out while the Popup is open.
+"""
 
 
 def checklist() -> str:
@@ -278,10 +433,56 @@ points to look at, per option:
 Reduced motion: switch Plasma's animation speed to "instant" (or the portal's reduced motion):
   [ ] Dock then appears and disappears at once.
 
-Not built (each is a clear error or warning at load, not a silent no-op): strip expand, contract
-and peek, a Bar melded to the Frame, a Panel's own window melded to the Frame (without Meld), an
+@PEEK@
+Not built (each is a clear error or warning at load, not a silent no-op): strip expand and
+contract (a peek is built), a Bar melded to the Frame, a Panel's own window melded to the Frame (without Meld), an
 Edges Visible key, a gradient background, a Frame shadow, fullscreen hiding.
 """
+
+
+def prepare_peek() -> None:
+    """The Peek demo (variant C) in its own config directory, so the strips demo is untouched."""
+    peek = ROOT / "peek"
+    shutil.rmtree(peek, ignore_errors=True)
+    (peek / "Shells").mkdir(parents=True)
+    (peek / "Shells" / "dot.svg").write_text(SVG)
+    (peek / "settings.tdl").write_text(SETTINGS)
+    module = peek / "Modules" / "Menu_Button"
+    module.mkdir(parents=True)
+    (module / "Menu_Button_Module.tdl").write_text(BUTTON_TDL)
+    (module / "Menu_Button_Module.py").write_text(BUTTON_PY)
+    (peek / "variants").mkdir()
+    for v in ("c", "c2"):
+        (peek / "variants" / f"{v}.tdl").write_text(shell_text(v))
+    shutil.copy(peek / "variants" / "c.tdl", peek / "Shells" / "Main_Shell.tdl")
+    flag = ROOT / "state-flags"
+    flag.mkdir(exist_ok=True)
+    (flag / "peek").write_text("c")
+    f = "/tmp/tess-kwin-m3c/state-flags/peek"
+    script(
+        "run-peek.sh",
+        "# The Peek demo (variant C).  Usage: run-peek.sh [SMIL|CONCAVE|SHADER|STRUCTURE|PARAM]\n"
+        "export XDG_STATE_HOME=/tmp/tess-kwin-m3c/state\n"
+        f'opt="${{1:-}}"\nif [ -n "$opt" ]; then\n  case "$opt" in {"|".join(JOINS)}) ;;\n'
+        f'    *) echo "usage: run-peek.sh [{"|".join(JOINS)}]" >&2; exit 2 ;;\n  esac\n'
+        '  sed "s/@JOIN@/$opt/" /tmp/tess-kwin-m3c/settings-join.tdl.in'
+        " > /tmp/tess-kwin-m3c/peek/settings.tdl\n"
+        '  echo "Frame_Join: $opt"\nfi\n'
+        f"echo c > {f}\n"
+        "cp /tmp/tess-kwin-m3c/peek/variants/c.tdl /tmp/tess-kwin-m3c/peek/Shells/Main_Shell.tdl\n"
+        f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3c/peek\n",
+    )
+    script(
+        "toggle-peek.sh",
+        f'v=$(cat {f})\nif [ "$v" = c ]; then v=c2; else v=c; fi\necho $v > {f}\n'
+        "cp /tmp/tess-kwin-m3c/peek/variants/$v.tdl /tmp/tess-kwin-m3c/peek/Shells/Main_Shell.tdl\n"
+        'echo "peek: variant $v (c: Enter_Delay 150, c2: 400)"\n',
+    )
+    script(
+        "check-peek.sh",
+        "export XDG_STATE_HOME=/tmp/tess-kwin-m3c/state\n"
+        f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3c/peek\n",
+    )
 
 
 def main() -> None:
@@ -344,7 +545,8 @@ def main() -> None:
         "export XDG_STATE_HOME=/tmp/tess-kwin-m3c/state\n"
         f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3c/strips\n",
     )
-    (ROOT / "checklist-strips.txt").write_text(checklist())
+    prepare_peek()
+    (ROOT / "checklist-strips.txt").write_text(checklist().replace("@PEEK@", peek_checklist()))
     print(f"wrote {ROOT} (read checklist-strips.txt)")
 
 

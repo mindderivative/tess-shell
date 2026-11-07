@@ -86,7 +86,12 @@ class ParamJoin:
 
     def begin(self, run: JoinRun) -> bool:
         self._kind, self._opacity = run.kind, run.opacity
-        base, deep, grown = run.morph(0.0, 0.0), run.morph(1.0, 0.0), run.morph(0.0, 1.0)
+        if run.low is not None:
+            # a peek blends two whole contours (the tab's and the body's, each with its own
+            # fillets): the fillets are not a separate fraction
+            base, deep, grown = run.low, run.morph(1.0), run.low
+        else:
+            base, deep, grown = run.morph(0.0, 0.0), run.morph(1.0, 0.0), run.morph(0.0, 1.0)
         full = run.morph(1.0)
         colours = (run.fill, run.border)
         for i, node in enumerate(self.nodes):

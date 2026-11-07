@@ -49,6 +49,14 @@ class JoinRun:
     fill: RGBA | None  # the colours of the fill band and the inner border; None is not drawn
     border: RGBA | None
     opacity: float  # the Frame's own opacity
+    # a peek: the contour the body starts from (the fill band's and the inner border's path data
+    # with the body at its tab), in place of the body collapsed onto the band edge; it has the
+    # same commands as the full contour, so every frame is their blend
+    low: tuple[str, str] | None = None
+
+    def start(self) -> tuple[str, str]:
+        """The contour at the start of a show (the end of a hide): collapsed, or the tab."""
+        return self.low if self.low is not None else self.morph(0.0)
 
     def morph(self, s: float, radius: float | None = None) -> tuple[str, str]:
         """The fill band's and the inner border's path data with this body at ``s``."""
@@ -139,7 +147,7 @@ class SmilJoin:
         self._opacity = 1.0
 
     def _document(self, run: JoinRun) -> str:
-        end, start = run.morph(1.0), run.morph(0.0)
+        end, start = run.morph(1.0), run.start()
         w, h = run.size
         parts: list[str] = []
         for (d1, color), d0 in zip(

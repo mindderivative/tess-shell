@@ -41,6 +41,18 @@ class BarDef:
 
 
 @dataclass(frozen=True, slots=True)
+class PeekDef:
+    """A ``Peek { Size, Enter_Delay, Exit_Delay }`` (Frame > Strip: Expand, Contract, Peek): a
+    melded Panel or a strip that rests as a sliver and comes out when the pointer stays on it.
+    ``size`` is the pixels that show at rest, the delays are milliseconds."""
+
+    size: float = 24
+    enter_delay: float = 150
+    exit_delay: float = 300
+    origin: Origin | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class PanelDef:
     """A ``Panel { }`` (Panel > Configuration): placed by ``Layer``, ``Anchor``, ``Inset``,
     ``Width`` and ``Height``. It has the fields of :class:`BarDef` the surface manager reads
@@ -69,6 +81,7 @@ class PanelDef:
     alignment: str = "CENTER"  # START, CENTER, END along the shared edge
     movable: bool = False  # the pointer can move it; the position is saved (Panel > Position)
     animation: str = "NONE"  # SLIDE, FADE or NONE: how it appears and disappears
+    peek: PeekDef | None = None  # melded only: rests as a tab of ``Size`` pixels (see PeekDef)
     duration: float = 200  # milliseconds of the animation
     handlers: Mapping[str, Handler] = field(default_factory=dict)  # ``On_Open`` -> handler
 
@@ -119,6 +132,8 @@ class EdgeDef:
     thickness: float | None = None
     padding: tuple[float, float, float, float] | None = None
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
+    name: str | None = None  # the target of Show, Hide and Toggle (a strip with ``Peek`` only)
+    peek: PeekDef | None = None  # the strip rests as a ``Size`` sliver; ``thickness`` is its full
 
 
 @dataclass(frozen=True, slots=True)

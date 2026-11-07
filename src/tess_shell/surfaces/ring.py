@@ -15,6 +15,7 @@ corner. The contours are rounded rectangles (circular arcs), so a corner's radiu
 
 from __future__ import annotations
 
+import dataclasses
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -40,6 +41,17 @@ class MeldSpec:
     height: float
     alignment: str = "CENTER"
     radius: Corners = (0, 0, 0, 0)
+
+    @property
+    def depth(self) -> float:
+        """How far the body reaches from the Frame's edge."""
+        return self.width if self.side in ("left", "right") else self.height
+
+    def shallow(self, depth: float) -> MeldSpec:
+        """The same body ``depth`` pixels deep (the tab of a peeking Panel)."""
+        if self.side in ("left", "right"):
+            return dataclasses.replace(self, width=depth)
+        return dataclasses.replace(self, height=depth)
 
 
 @dataclass(frozen=True, slots=True)

@@ -29,6 +29,7 @@ from tess_shell.schema.model import (
     MonitorDef,
     PanelDef,
     ParamDecl,
+    PeekDef,
     PopupDef,
     ShellDef,
     StyleDef,
@@ -868,12 +869,20 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
     children: list[Child] = []
     handlers: dict[str, m.Handler] = {}
     animation = ("NONE", 200.0)
+    peek: PeekDef | None = None
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
             written.add(key)
             if key == "Name":
                 name = ctx.name(entry)
+            elif key == "Peek":
+                ctx.add(
+                    entry.value_origin,
+                    "bad-value",
+                    "Peek is a block",
+                    "write Peek { Size: 24, Enter_Delay: 150, Exit_Delay: 300 }",
+                )
             elif key.startswith("On_"):
                 handler = _handler(ctx, "Panel", key, entry.key_origin, entry.value)
                 if handler is not None:
@@ -916,6 +925,9 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
             elif entry.type == "Animation":
                 written.add("Animation")
                 animation = _animation(ctx, entry)
+            elif entry.type == "Peek":
+                written.add("Peek")
+                peek = _peek(ctx, entry)
             elif entry.type == "Inset":
                 written.add("Inset")
                 try:
@@ -1002,6 +1014,24 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
     layer = values.get("Layer")
     if is_meld:
         _check_meld(ctx, block, written, attach_to, handlers, style)
+        depth = values.get("Depth")
+        if peek is not None and isinstance(depth, m.Length) and peek.size >= depth.px:
+            ctx.add(
+                peek.origin or block.origin,
+                "peek-size",
+                f"Peek Size {peek.size:g} is not smaller than the Depth {depth.px:g}",
+                "the tab is part of the body: write a Size below the Depth",
+            )
+            peek = None
+    elif peek is not None:
+        ctx.add(
+            peek.origin or block.origin,
+            "peek-window",
+            "Peek is for a Panel with Meld: true or a strip; a Panel in a window of its own has "
+            "no peek",
+            "write Meld: true and Attach_To: <a Frame>, or remove Peek",
+        )
+        peek = None
     if name is None or any(k not in values for k in size_keys):
         return None
 
@@ -1044,6 +1074,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         movable=movable.value if isinstance(movable, m.Bool) else False,
         animation=animation[0],
         duration=float(animation[1]),
+        peek=peek,
         handlers=handlers,
     )
 
@@ -1126,6 +1157,41 @@ def _animation(ctx: _Ctx, block: Block) -> tuple[str, float]:
                 "key in Animation",
             )
     return ("NONE", 0.0) if kind == "NONE" or duration <= 0 else (kind, duration)
+
+
+def _peek(ctx: _Ctx, block: Block) -> PeekDef:
+    """``Peek { Size: 24, Enter_Delay: 150, Exit_Delay: 300 }``: pixels that show at rest (1 or
+    more) and the milliseconds the pointer stays before it comes out and after it leaves before it
+    goes back (0 or more)."""
+    values = {"Size": 24.0, "Enter_Delay": 150.0, "Exit_Delay": 300.0}
+    for entry in block.entries:
+        if isinstance(entry, Property) and entry.key in values:
+            try:
+                value = coerce("number", entry.value, ctx.origin(entry.key_origin), ())
+            except ValueProblem as exc:
+                ctx.problem(entry.value_origin, entry.key, exc)
+                continue
+            assert isinstance(value, m.Number)
+            number = float(value.value)
+            if entry.key == "Size" and number < 1:
+                ctx.add(
+                    entry.value_origin, "bad-value", "Size is 1 or more pixels", "write Size: 24"
+                )
+            elif entry.key != "Size" and number < 0:
+                ctx.add(entry.value_origin, "bad-value", f"{entry.key} is 0 or more", "")
+            else:
+                values[entry.key] = number
+        else:
+            key = entry.key if isinstance(entry, Property) else getattr(entry, "type", "?")
+            ctx.unknown(
+                getattr(entry, "key_origin", None) or getattr(entry, "origin", None),
+                key,
+                list(values),
+                "key in Peek",
+            )
+    return PeekDef(
+        values["Size"], values["Enter_Delay"], values["Exit_Delay"], ctx.origin(block.origin)
+    )
 
 
 def _tooltip_hosts(ctx: _Ctx, origin: tess_dl.Origin | None, kind: str | None) -> bool:
@@ -1577,6 +1643,15 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
     for side, edge in edges.items():
         index = ("left", "top", "right", "bottom").index(side)
         total = edge.thickness if edge.thickness is not None else thickness[index]
+        if edge.peek is not None and edge.peek.size >= total:
+            ctx.add(
+                edge.peek.origin or edge.origin,
+                "peek-size",
+                f"Peek Size {edge.peek.size:g} is not smaller than the {side} strip's thickness "
+                f"{total:g}",
+                "the strip rests as a sliver of Size pixels and comes out to its Thickness: write "
+                "a Thickness above the Size",
+            )
         if edge.children and total <= 0:
             ctx.add(
                 edge.origin,
@@ -1632,9 +1707,14 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
         thickness: float | None = None
         padding: tuple[float, float, float, float] | None = None
         children: list[Child] = []
+        edge_name: str | None = None
+        peek: PeekDef | None = None
+        keys = ["Name", "Thickness", "Padding", "Children", "Peek"]
         for sub in entry.entries:
             if isinstance(sub, Property):
-                if sub.key == "Thickness":
+                if sub.key == "Name":
+                    edge_name = ctx.name(sub)
+                elif sub.key == "Thickness":
                     try:
                         value = coerce("number", sub.value, ctx.origin(sub.key_origin))
                     except ValueProblem as exc:
@@ -1654,15 +1734,12 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
                     _frame_sides(ctx, "Padding", value, sub.value_origin)
                     padding = _sides_of(value)
                 else:
-                    ctx.unknown(
-                        sub.key_origin,
-                        sub.key,
-                        ["Thickness", "Padding", "Children"],
-                        f"key in {entry.type}",
-                    )
+                    ctx.unknown(sub.key_origin, sub.key, keys, f"key in {entry.type}")
             elif isinstance(sub, Block):
                 if sub.type == "Children":
                     children = _children(ctx, sub, lambda b: _block(ctx, b))
+                elif sub.type == "Peek":
+                    peek = _peek(ctx, sub)
                 elif sub.type == "Padding":
                     try:
                         named = named_sides(sub, ctx.origin(sub.origin))
@@ -1671,15 +1748,30 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
                         continue
                     padding = _sides_of(_frame_sides(ctx, "Padding", named, sub.origin))
                 else:
-                    ctx.unknown(
-                        sub.origin,
-                        sub.type,
-                        ["Thickness", "Padding", "Children"],
-                        f"key in {entry.type}",
-                    )
+                    ctx.unknown(sub.origin, sub.type, keys, f"key in {entry.type}")
             elif isinstance(sub, tess_dl.If | tess_dl.For):
                 ctx.not_built(sub.origin, "If and For")
-        out[side] = EdgeDef(side, ctx.origin(entry.origin), thickness, padding, tuple(children))
+        if peek is not None and not children:
+            ctx.add(
+                peek.origin or entry.origin,
+                "peek-empty",
+                f"Peek on {entry.type} needs Children: a strip with nothing in it has nothing to "
+                "reveal",
+                "write Children { ... } in the strip, or remove Peek",
+            )
+            peek = None
+        if edge_name is not None and peek is None:
+            ctx.add(
+                entry.origin,
+                "not-built",
+                f"Name on {entry.type} is the target of Show, Hide and Toggle, which act on a "
+                "strip with Peek only (hiding a plain strip is not built)",
+                "write a Peek block in the strip, or remove Name",
+            )
+            edge_name = None
+        out[side] = EdgeDef(
+            side, ctx.origin(entry.origin), thickness, padding, tuple(children), edge_name, peek
+        )
     return out
 
 

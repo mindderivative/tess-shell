@@ -27,6 +27,7 @@ live, without making the painter again.
 from __future__ import annotations
 
 import dataclasses
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -52,7 +53,7 @@ from tess_shell.schema.model import BarDef, FrameBorder, FrameDef, MonitorDef, P
 from tess_shell.surfaces.bar import Geometry
 from tess_shell.surfaces.join import Join, JoinRun, make_join
 from tess_shell.surfaces.panel import px_size
-from tess_shell.surfaces.ring import MeldSpec, Ring, RingSpec, Sides, padded, ring
+from tess_shell.surfaces.ring import MeldSpec, Rect4, Ring, RingSpec, Sides, padded, ring
 
 if TYPE_CHECKING:
     from tess_re import LayerWindow, Output
@@ -61,6 +62,7 @@ if TYPE_CHECKING:
     from tess_shell.surfaces.manager import Planned, Surface, SurfaceManager
 
 RGBA = tuple[int, int, int, int]
+Box = tuple[float, float, float, float]  # x, y, width, height in the painter's logical pixels
 SIDES = ("left", "top", "right", "bottom")
 _ANCHORS = {
     "left": ("left", "top", "bottom"),
@@ -74,6 +76,7 @@ _EMPTY = "M0,0 L0,0 Z"
 # strips and melded Panels (a strip's blocks are never drawn over by the ring or a morph)
 _Z_MORPH = 1
 _Z_CONTENT = 2
+STRIP_PEEK_MS = 200  # how long a peeking strip takes to come out and go back
 _DIRECTION = {"left": "vertical", "right": "vertical", "top": "horizontal", "bottom": "horizontal"}
 
 
@@ -121,13 +124,69 @@ def resolve_paint(frame: FrameDef, look: Look | None) -> tuple[Paint, list[BindE
 
 def _thickness(frame: FrameDef) -> Sides:
     """The fill band of each side: the Frame's ``Thickness`` and, for a side with an ``Edges``
-    entry that gives its own, that."""
+    entry that gives its own, that. A strip with ``Peek`` rests as a sliver of its ``Size``: that
+    is what the side holds and reserves; the rest of its ``Thickness`` is a body that comes out
+    over the windows (see ``strip_body``)."""
     out = list(frame.thickness)
     for i, side in enumerate(SIDES):
         edge = frame.edges.get(side)
-        if edge is not None and edge.thickness is not None:
+        if edge is not None and edge.peek is not None:
+            out[i] = edge.peek.size
+        elif edge is not None and edge.thickness is not None:
             out[i] = edge.thickness
     return out[0], out[1], out[2], out[3]
+
+
+def _commands(path: str) -> str:
+    """The commands of path data, without the numbers: two contours blend only if they match."""
+    return re.sub(r"-?\d+(?:\.\d+)?", "", path)
+
+
+def _extend(band: Rect4, side: str, by: float) -> Rect4:
+    """``band`` grown ``by`` pixels away from the edge ``side`` (into the opening)."""
+    if side == "top":
+        return Rect4(band.x0, band.y0, band.x1, band.y1 + by)
+    if side == "bottom":
+        return Rect4(band.x0, band.y0 - by, band.x1, band.y1)
+    if side == "left":
+        return Rect4(band.x0, band.y0, band.x1 + by, band.y1)
+    return Rect4(band.x0 - by, band.y0, band.x1, band.y1)
+
+
+def strip_name(frame: FrameDef, side: str) -> str:
+    """What a strip is called in logs and as the target of Show, Hide and Toggle: its ``Name``
+    or ``<Frame>.<Side>``."""
+    edge = frame.edges.get(side)
+    if edge is not None and edge.name:
+        return edge.name
+    return f"{frame.name}.{side.capitalize()}"
+
+
+def strip_thickness(frame: FrameDef, side: str) -> float:
+    """The full thickness of a strip: its own ``Thickness`` or the Frame's for that side."""
+    edge = frame.edges.get(side)
+    if edge is not None and edge.thickness is not None:
+        return edge.thickness
+    return frame.thickness[SIDES.index(side)]
+
+
+_WHOLE_SIDE = 1_000_000.0  # a body this long is clamped to the opening: it runs edge to edge
+
+
+def strip_body(frame: FrameDef, side: str) -> MeldSpec:
+    """The part of a peeking strip beyond its sliver, as a melded body that runs the whole side
+    (both ends flush with the opening's corners) and is ``Thickness - Size`` deep: the ring draws
+    it and the join animates it like any melded Panel."""
+    edge = frame.edges[side]
+    assert edge.peek is not None
+    depth = max(strip_thickness(frame, side) - edge.peek.size, 1.0)
+    along_x = side in ("top", "bottom")
+    return MeldSpec(
+        side=side,
+        width=_WHOLE_SIDE if along_x else depth,
+        height=depth if along_x else _WHOLE_SIDE,
+        alignment="START",
+    )
 
 
 def _opaque(color: RGBA | None, paint: Paint) -> bool:
@@ -195,16 +254,28 @@ def wants_keyboard(expanded: Expanded) -> bool:
     return walk(expanded.nodes)
 
 
+@dataclass(frozen=True, slots=True)
+class PeekPlan:
+    """A ``Peek`` as planned: the pixels at rest (a tab of a melded Panel, the sliver of a strip),
+    the pixels of the whole (the Panel's ``Depth``, the strip's ``Thickness``) and the delays."""
+
+    size: float
+    full: float
+    enter_delay: float
+    exit_delay: float
+
+
 @dataclass(slots=True)
 class HostPlan:
     """Content hosted in the painter: a strip or a melded Panel."""
 
     key: str
-    name: str  # a strip: ``<Frame>.<Side>``; a melded Panel: its ``Name``
+    name: str  # a strip: ``<Frame>.<Side>`` or its ``Name``; a melded Panel: its ``Name``
     kind: str  # "strip" or "meld"
     side: str  # left, top, right, bottom
     planned: Planned
     padding: Sides = (0, 0, 0, 0)
+    peek: PeekPlan | None = None
 
 
 @dataclass(slots=True)
@@ -219,7 +290,9 @@ class FramePlan:
     ring: Ring
     paint: Paint
     hosts: list[HostPlan] = field(default_factory=list)
-    melds: list[tuple[str, MeldSpec]] = field(default_factory=list)  # every melded Panel
+    # every melded Panel, then the body of every peeking strip (named like its host)
+    melds: list[tuple[str, MeldSpec]] = field(default_factory=list)
+    peeks: dict[str, PeekPlan] = field(default_factory=dict)  # by host name
 
     @property
     def where(self) -> str:
@@ -228,9 +301,39 @@ class FramePlan:
     def uses(self) -> list[Any]:
         return [u for h in self.hosts for u in h.planned.expanded.uses]
 
-    def ring_for(self, size: tuple[float, float], hidden: frozenset[str]) -> Ring:
-        """The ring at ``size`` with the melded Panels not in ``hidden``."""
-        melds = tuple(spec for name, spec in self.melds if name not in hidden)
+    def rest_tab(self, name: str, visible: bool) -> bool:
+        """Whether a melded Panel rests as a tab (it has a ``Peek`` and is ``Visible``)."""
+        return visible and name in self.peeks and name in {p.name for p in self.frame.melds}
+
+    def rest_sets(self) -> tuple[frozenset[str], frozenset[str]]:
+        """Where each melded body is at start: the names hidden (a ``Visible: false`` Panel, the
+        body of a strip that peeks) and the names at rest as a tab."""
+        panels = {p.name: p for p in self.frame.melds}
+        strips = {name for name, _ in self.melds if name not in panels}
+        hidden = {n for n, p in panels.items() if not p.visible} | strips
+        tabs = {n for n, p in panels.items() if self.rest_tab(n, p.visible)}
+        return frozenset(hidden), frozenset(tabs)
+
+    def refresh_melds(self, look: Look | None) -> None:
+        """Take the bodies of the Panels again from ``look`` (a token may have changed a radius);
+        the bodies of the strips stay."""
+        panels = {p.name for p in self.frame.melds}
+        kept = [(n, spec) for n, spec in self.melds if n not in panels]
+        self.melds = kept + [(p.name, meld_spec(p, self.size, look)) for p in self.frame.melds]
+
+    def ring_for(
+        self,
+        size: tuple[float, float],
+        hidden: frozenset[str],
+        tabs: frozenset[str] = frozenset(),
+    ) -> Ring:
+        """The ring at ``size`` with the melded bodies not in ``hidden``, those in ``tabs`` only
+        as deep as their peek (a tab), the others at full depth."""
+        melds = tuple(
+            spec.shallow(self.peeks[name].size) if name in tabs and name in self.peeks else spec
+            for name, spec in self.melds
+            if name not in hidden
+        )
         return ring(ring_spec(self.frame, melds, self.paint), size)
 
 
@@ -248,6 +351,10 @@ class HostState:
     anim: str | None = None  # "in" (showing) or "out" (hiding) while an animation runs
     kind: str = "NONE"  # the animation that runs: SLIDE or FADE
     away: tuple[str, float] = ("translate_y", 0.0)  # the property and value of "not shown"
+    # a peek: whether the pointer is on the host (its ``clip``) and the delays that wait to act
+    inside: bool = False
+    enter_timer: Any = None
+    exit_timer: Any = None
 
 
 @dataclass(slots=True)
@@ -261,7 +368,9 @@ class FrameState:
     zones: dict[str, int] = field(default_factory=dict)  # the zone each reserver holds
     drawn: Any = None  # what the nodes were last set to, so an equal draw sets nothing
     hosts: dict[str, HostState] = field(default_factory=dict)
-    hidden_melds: set[str] = field(default_factory=set)  # melded Panels hidden now
+    hidden_melds: set[str] = field(default_factory=set)  # melded bodies hidden now (a strip's at
+    # rest: it is the sliver that shows)
+    tab_melds: set[str] = field(default_factory=set)  # melded Panels at rest as a tab
     shape: Ring | None = None  # the ring as last drawn, without the melded bodies that animate
     full: Ring | None = None  # the ring with every melded Panel that is shown or on its way
     keyboard: str = "none"
@@ -275,6 +384,7 @@ class Frames:
         self._m = manager
         self._look: Look | None = None
         self.states: dict[str, FrameState] = {}
+        self._warned: set[str] = set()  # join options already warned about
 
     # -- planning: no side effect but logging ---------------------------------------------------
 
@@ -302,8 +412,9 @@ class Frames:
                     suffix = f"@{output.name}" if by_output(monitor) else ""
                     prefix = f"{shell.name}.{monitor.name}{suffix}"
                     size = (output.width, output.height)
-                    melds = [(p.name, meld_spec(p, size, look)) for p in frame.melds]
+                    panels = [(p.name, meld_spec(p, size, look)) for p in frame.melds]
                     paint, errors = resolve_paint(frame, look)
+                    peeks, bodies = self._peeks(frame, panels, output.name)
                     plan = FramePlan(
                         f"{prefix}.{frame.name}",
                         frame,
@@ -312,10 +423,10 @@ class Frames:
                         size,
                         ring(ring_spec(frame), size),  # replaced below, once the hosts are known
                         paint,
-                        melds=melds,
+                        melds=bodies + panels,
+                        peeks=peeks,
                     )
-                    hidden = frozenset(p.name for p in frame.melds if not p.visible)
-                    plan.ring = plan.ring_for(size, hidden)
+                    plan.ring = plan.ring_for(size, *plan.rest_sets())
                     where = plan.where
                     for warning in plan.ring.warnings:
                         logger.warning(f"{frame.origin}: Frame {where}: {warning}")
@@ -334,7 +445,7 @@ class Frames:
                             continue
                         key = f"{plan.key}.{side.capitalize()}"
                         bar = BarDef(
-                            f"{frame.name}.{side.capitalize()}",
+                            strip_name(frame, side),
                             edge.origin,
                             side.upper(),
                             Expand(),
@@ -353,7 +464,17 @@ class Frames:
                             plan.group,
                         )
                         pad = edge.padding if edge.padding is not None else frame.padding
-                        plan.hosts.append(HostPlan(key, bar.name, "strip", side, planned, pad))
+                        plan.hosts.append(
+                            HostPlan(
+                                key,
+                                bar.name,
+                                "strip",
+                                side,
+                                planned,
+                                pad,
+                                peeks.get(bar.name),
+                            )
+                        )
                     for panel in frame.melds:
                         key = f"{prefix}.{panel.name}"
                         expanded = expand(panel.children, key, output.name, has_popups)
@@ -368,11 +489,61 @@ class Frames:
                         )
                         plan.hosts.append(
                             HostPlan(
-                                key, panel.name, "meld", (panel.attach or "TOP").lower(), planned
+                                key,
+                                panel.name,
+                                "meld",
+                                (panel.attach or "TOP").lower(),
+                                planned,
+                                peek=peeks.get(panel.name),
                             )
                         )
                     plans.append(plan)
         return plans
+
+    @staticmethod
+    def _peeks(
+        frame: FrameDef, panels: list[tuple[str, MeldSpec]], output: str
+    ) -> tuple[dict[str, PeekPlan], list[tuple[str, MeldSpec]]]:
+        """The peek of each melded Panel and strip that has one, and the bodies of the strips
+        (first, so that on a side they share a strip that is out covers a Panel). A Panel's Size
+        is checked against its Depth here: a percentage is known only now."""
+        peeks: dict[str, PeekPlan] = {}
+        depth = {name: spec.depth for name, spec in panels}
+        for panel in frame.melds:
+            peek = panel.peek
+            if peek is None:
+                continue
+            if peek.size >= depth[panel.name]:
+                logger.error(
+                    f"{peek.origin or panel.origin}: Panel {panel.name} on {output}: Peek Size "
+                    f"{peek.size:g} is not smaller than its Depth {depth[panel.name]:g}: "
+                    "it has no peek here"
+                )
+                continue
+            peeks[panel.name] = PeekPlan(
+                peek.size, depth[panel.name], peek.enter_delay, peek.exit_delay
+            )
+        bodies: list[tuple[str, MeldSpec]] = []
+        for side in SIDES:
+            edge = frame.edges.get(side)
+            if edge is None or edge.peek is None or not edge.children:
+                continue
+            name = strip_name(frame, side)
+            peeks[name] = PeekPlan(
+                edge.peek.size,
+                strip_thickness(frame, side),
+                edge.peek.enter_delay,
+                edge.peek.exit_delay,
+            )
+            bodies.append((name, strip_body(frame, side)))
+            for panel in frame.melds:
+                if (panel.attach or "TOP").lower() == side:
+                    logger.warning(
+                        f"{panel.origin}: Panel {panel.name} melds into the {side} side, which "
+                        f"has the peeking strip {name}: the Panel is covered while the strip "
+                        "is out"
+                    )
+        return peeks, bodies
 
     # -- opening, reloading, hot-plug -----------------------------------------------------------
 
@@ -394,18 +565,37 @@ class Frames:
                 st = None
             if st is None:
                 st = self.states[key] = FrameState(plan, hidden=not plan.frame.visible)
-                st.hidden_melds = {p.name for p in plan.frame.melds if not p.visible}
+                hidden, tabs = plan.rest_sets()
+                st.hidden_melds, st.tab_melds = set(hidden), set(tabs)
             else:
                 if plan.frame.visible != st.plan.frame.visible:
                     st.hidden = not plan.frame.visible
                 before = {p.name: p.visible for p in st.plan.frame.melds}
                 for p in plan.frame.melds:
                     if p.name not in before or before[p.name] != p.visible:
-                        (st.hidden_melds.discard if p.visible else st.hidden_melds.add)(p.name)
-                        for host in st.hosts.values():  # the file decides: no animation goes on
+                        # the file decides: nothing is left as the run left it
+                        st.hidden_melds.discard(p.name)
+                        st.tab_melds.discard(p.name)
+                        if not p.visible:
+                            st.hidden_melds.add(p.name)
+                        elif plan.rest_tab(p.name, True):
+                            st.tab_melds.add(p.name)
+                        for host in st.hosts.values():
                             if host.plan.name == p.name and host.anim:
                                 self._snap(host)
-                st.hidden_melds &= {p.name for p in plan.frame.melds}
+                hidden, _ = plan.rest_sets()
+                for name in hidden - {n for n, _ in st.plan.melds}:  # a strip that peeks, new
+                    st.hidden_melds.add(name)
+                names = {n for n, _ in plan.melds}
+                st.hidden_melds &= names
+                st.tab_melds &= {p.name for p in plan.frame.melds if p.name in plan.peeks}
+                for host in st.hosts.values():  # a Panel that lost its Peek is shown, not a tab
+                    if (
+                        host.plan.peek is not None
+                        and host.plan.name not in plan.peeks
+                        and host.anim
+                    ):
+                        self._snap(host)
                 if plan.size != st.plan.size:
                     st.size = plan.size  # the output changed: draw for it until tre configures
                 st.plan = plan
@@ -420,10 +610,7 @@ class Frames:
             for error in errors:
                 logger.error(f"{error.origin}: {error.message}")
             st.plan.paint = paint
-            size = st.plan.size
-            st.plan.melds = [
-                (p.name, meld_spec(p, size, look)) for p in st.plan.frame.melds
-            ]  # a token may have changed a body's radius
+            st.plan.refresh_melds(look)  # a token may have changed a body's radius
             self._draw(st)
             for host in st.hosts.values():
                 if host.surface.view is not None:
@@ -437,6 +624,7 @@ class Frames:
         for st in self.states.values():
             out.add(st.plan.frame.name)
             out.update(p.name for p in st.plan.frame.melds)
+            out.update(n for n in st.plan.peeks)  # a strip that peeks has a ``Name``
         return out
 
     def host_surfaces(self) -> list[Surface]:
@@ -457,25 +645,31 @@ class Frames:
                     st.hidden = hide
                     logger.info(f"Frame {st.plan.where} {'hidden' if hide else 'shown'}")
                     self._reconcile(st)
-            elif any(p.name == target for p in st.plan.frame.melds):
+            elif any(h.name == target and (h.kind == "meld" or h.peek) for h in st.plan.hosts):
                 found = True
-                host = next(
-                    (
-                        h
-                        for h in st.hosts.values()
-                        if h.plan.kind == "meld" and h.plan.name == target
-                    ),
-                    None,
-                )
+                host = next((h for h in st.hosts.values() if h.plan.name == target), None)
                 if host is None:  # the Frame is hidden: nothing is drawn, so nothing to move
-                    hide = target not in st.hidden_melds if action == "Toggle" else action == "Hide"
-                    (st.hidden_melds.add if hide else st.hidden_melds.discard)(str(target))
+                    name = str(target)
+                    out = name not in st.hidden_melds and name not in st.tab_melds
+                    hide = out if action == "Toggle" else action == "Hide"
+                    self._set_rest(st, name, hide)
                     continue
                 if action == "Toggle":
                     self._m._fire(host.surface, "On_Toggle")  # before: the request is made
                 show = host.surface.hidden if action == "Toggle" else action == "Show"
                 self._meld_to(st, host, show)
         return found
+
+    def _set_rest(self, st: FrameState, name: str, hide: bool) -> None:
+        """Put a melded body at rest at once: out (``hide`` false), or hidden or a tab."""
+        st.hidden_melds.discard(name)
+        st.tab_melds.discard(name)
+        if hide:
+            panel = next((p for p in st.plan.frame.melds if p.name == name), None)
+            if panel is not None and st.plan.rest_tab(name, panel.visible):
+                st.tab_melds.add(name)
+            else:
+                st.hidden_melds.add(name)
 
     # -- windows --------------------------------------------------------------------------------
 
@@ -636,10 +830,20 @@ class Frames:
             return
         plan = st.plan
         moving = {h.plan.name for h in st.hosts.values() if h.anim}
-        shape = plan.ring_for(st.size, frozenset(st.hidden_melds | moving))
+        tab_moving = {n for n in moving if self._rest_is_tab(st, n)}  # they keep their tab
+        shape = plan.ring_for(
+            st.size,
+            frozenset(st.hidden_melds | (moving - tab_moving)),
+            frozenset(st.tab_melds | tab_moving),
+        )
         st.shape = shape
-        # the bodies of the Panels that animate are in ``full`` only, drawn by their own join
-        st.full = plan.ring_for(st.size, frozenset(st.hidden_melds)) if moving else shape
+        # the bodies of the Panels that animate are in ``full`` only (at full depth), drawn by
+        # their own join; a tab at rest is as deep as its peek
+        st.full = (
+            plan.ring_for(st.size, frozenset(st.hidden_melds), frozenset(st.tab_melds - moving))
+            if moving
+            else shape
+        )
         paint = plan.paint
         sliding = any(
             h.anim and h.kind == "SLIDE" and h.join is not None and h.join.ghost
@@ -670,7 +874,7 @@ class Frames:
                 node.set(**props)
             st.drawn = key
         for host in st.hosts.values():
-            if host.plan.kind == "meld":
+            if host.clip is not None:
                 self._place_meld(st, host)
             else:
                 self._place(st, host.plan, host.container, host.surface)
@@ -720,18 +924,53 @@ class Frames:
     # input) has the ring nodes drawn at alpha 1 meanwhile so they keep the ring's click shape.
     # FADE draws the ring without the body, and the join draws it faded in or out.
 
-    def _clip_rect(
+    def _rest_is_tab(self, st: FrameState, name: str) -> bool:
+        """Whether ``name`` is a melded Panel that rests as a tab: it has a ``Peek`` and is
+        ``Visible`` in the plan now."""
+        panel = next((p for p in st.plan.frame.melds if p.name == name), None)
+        return panel is not None and st.plan.rest_tab(name, panel.visible)
+
+    def _geometry(
         self, st: FrameState, host: HostState
-    ) -> tuple[float, float, float, float] | None:
-        """The clip box of a melded Panel: its body at rest. ``None`` when it is not placed."""
-        return self._rect(st, host.plan)
+    ) -> tuple[Box, Box, tuple[str, float]] | None:
+        """Where a hosted body sits in the painter: its clip box (the visible part: at rest a tab
+        or a sliver, else the whole), its content box relative to the clip, and the translation
+        that puts the content out of the clip. ``None`` when it is hidden or not placed."""
+        hp = host.plan
+        if hp.kind == "strip":
+            if st.shape is None or hp.peek is None:
+                return None
+            base = st.shape.bands[SIDES.index(hp.side)]
+            band = _extend(base, hp.side, hp.peek.full - hp.peek.size)
+            clip = base if hp.name in st.hidden_melds and not host.anim else band
+            inner = padded(band, hp.padding)
+            by = hp.peek.full
+            box = (inner.x0 - clip.x0, inner.y0 - clip.y0, inner.width, inner.height)
+            away = {
+                "top": ("translate_y", -by),
+                "bottom": ("translate_y", by),
+                "left": ("translate_x", -by),
+                "right": ("translate_x", by),
+            }[hp.side]
+            return (clip.x0, clip.y0, clip.width, clip.height), box, away
+        rect = self._rect(st, hp)
+        if rect is None:
+            return None
+        x, y, w, h = rect
+        away = {
+            "top": ("translate_y", -h),
+            "bottom": ("translate_y", h),
+            "left": ("translate_x", -w),
+            "right": ("translate_x", w),
+        }[hp.side]
+        return rect, (0, 0, w, h), away
 
     def _place_meld(self, st: FrameState, host: HostState) -> None:
-        """Put a melded Panel's clip box and content where the ring says."""
+        """Put a melded Panel's (or a peeking strip's) clip box and content where the ring says."""
         surface = host.surface
-        rect = self._clip_rect(st, host)
         assert host.clip is not None and host.mover is not None
-        if rect is None or st.full is None or st.shape is None:
+        geometry = self._geometry(st, host)
+        if geometry is None or st.full is None or st.shape is None:
             if not surface.hidden:
                 self._m.popups.parent_closed(surface)
                 surface.hidden = True
@@ -739,23 +978,20 @@ class Frames:
             if host.join is not None:
                 host.join.stop()
             return
-        x, y, w, h = rect
+        (x, y, w, h), (ix, iy, iw, ih), host.away = geometry
+        name = host.plan.name
+        # a tab or a sliver shows no content: it is clipped away but would still take clicks
+        resting = host.anim is None and (name in st.hidden_melds or name in st.tab_melds)
         host.clip.set(left=x, top=y, width=w, height=h, visible=True)
         host.mover.set(width=w, height=h)
-        host.container.set(left=0, top=0, width=w, height=h, visible=True)
-        side = host.plan.side
-        host.away = {
-            "top": ("translate_y", -h),
-            "bottom": ("translate_y", h),
-            "left": ("translate_x", -w),
-            "right": ("translate_x", w),
-        }[side]
-        surface.hidden = host.anim == "out"
+        host.container.set(left=ix, top=iy, width=iw, height=ih, visible=not resting)
+        surface.hidden = host.anim == "out" or resting
 
     def _snap(self, host: HostState) -> None:
         """Stop an animation where it is and put the node back to rest."""
         host.anim = None
         host.surface.generation += 1
+        self._cancel_hover(host)
         if host.mover is not None:
             host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
         if host.join is not None:
@@ -773,13 +1009,82 @@ class Frames:
             surface.timer = None
         panel = surface.planned.bar if surface.planned else None
         if st.painter is not None and isinstance(panel, PanelDef) and panel.hide_after is not None:
-            surface.timer = st.painter.after(
-                int(panel.hide_after), lambda: self._meld_to(st, host, False)
-            )
+            surface.timer = st.painter.after(int(panel.hide_after), lambda: self._expire(st, host))
 
-    def _join_run(self, st: FrameState, host: HostState, kind: str, show: bool) -> JoinRun | None:
-        """What the join draws for this body's slide or fade. ``None`` when the body is not
-        placed."""
+    def _expire(self, st: FrameState, host: HostState) -> None:
+        """``Hide_After`` ran out. With the pointer on a peeking Panel it waits: leaving brings
+        the Panel back after ``Exit_Delay`` anyway."""
+        host.surface.timer = None
+        if host.inside and host.plan.peek is not None:
+            return
+        self._meld_to(st, host, False)
+
+    # -- peek: the pointer on the tab or the sliver ------------------------------------------------
+    #
+    # The host's ``clip`` box is the visible part (a tab, a sliver, or the whole body while it is
+    # out or on its way), so tre's ``pointer_enter`` and ``pointer_leave`` on it (they fire for the
+    # box and everything in it, and not between the box and its own children) say whether the
+    # pointer is on the Panel. Each waits its delay on a timer of the painter; a quick in and out
+    # cancels the timer that had not run yet, so nothing flickers.
+
+    @staticmethod
+    def _cancel_hover(host: HostState) -> None:
+        for attr in ("enter_timer", "exit_timer"):
+            timer = getattr(host, attr)
+            if timer is not None:
+                timer.cancel()
+                setattr(host, attr, None)
+
+    def _is_out(self, st: FrameState, host: HostState) -> bool:
+        """Whether the body is out, or coming out, rather than at rest or going back."""
+        name = host.plan.name
+        return host.anim == "in" or (
+            host.anim is None and name not in st.hidden_melds and name not in st.tab_melds
+        )
+
+    def _hover(self, st: FrameState, host: HostState, inside: bool) -> None:
+        peek = host.plan.peek
+        if peek is None or st.painter is None:
+            return
+        host.inside = inside
+        self._cancel_hover(host)
+        out = self._is_out(st, host)
+        if inside and not out:
+            host.enter_timer = self._after(st, peek.enter_delay, lambda: self._enter(st, host))
+        elif not inside and out:
+            host.exit_timer = self._after(st, peek.exit_delay, lambda: self._exit(st, host))
+
+    @staticmethod
+    def _after(st: FrameState, ms: float, call: Callable[[], None]) -> Any:
+        """``call`` after ``ms`` on the painter's clock. Never in the event that asks for it, so a
+        leave and an enter in one turn of the loop (the pointer crossing from the tab to the
+        body) cancel each other whatever the delay."""
+        assert st.painter is not None
+        return st.painter.after(max(int(ms), 1), call)
+
+    def _enter(self, st: FrameState, host: HostState) -> None:
+        host.enter_timer = None
+        if host.inside:
+            self._meld_to(st, host, True)
+
+    def _exit(self, st: FrameState, host: HostState) -> None:
+        host.exit_timer = None
+        if host.inside:
+            return
+        popup = self._m.popups.current
+        peek = host.plan.peek
+        if popup is not None and popup.parent is host.surface and peek is not None:
+            # a Popup that hangs off it is open (the pointer is in the Popup, a window of its own):
+            # going back would close it, so wait and look again
+            host.exit_timer = self._after(st, peek.exit_delay, lambda: self._exit(st, host))
+            return
+        self._meld_to(st, host, False)
+
+    def _join_run(
+        self, st: FrameState, host: HostState, kind: str, show: bool, tab: bool
+    ) -> JoinRun | None:
+        """What the join draws for this body's slide or fade (for a peek, between the tab and the
+        whole body). ``None`` when the body is not placed or its tab cannot be blended with it."""
         full = st.full
         if full is None or full.morph is None:
             return None
@@ -796,43 +1101,77 @@ class Frames:
             for h in st.hosts.values()
             if h is not host and h.anim and h.plan.name in names
         }
+        low = None
+        if tab:
+            moving = {h.plan.name for h in st.hosts.values() if h.anim}
+            small = st.plan.ring_for(
+                st.size,
+                frozenset(st.hidden_melds),
+                frozenset((st.tab_melds - moving) | {host.plan.name}),
+            )
+            if small.morph is None or index >= len(small.bodies) or small.bodies[index] is None:
+                return None
+            low = small.morph(others)
+            end = full.morph({**others, index: 1.0})
+            if any(_commands(a) != _commands(b) for a, b in zip(low, end, strict=True)):
+                logger.warning(
+                    f"Panel {host.plan.name} on {st.plan.output.name}: its tab and its body do not"
+                    " have the same contour (the border does not fit the tab), so it is shown or"
+                    " hidden at once"
+                )
+                return None
         return JoinRun(
-            kind, show, st.size, full, index, others, paint.fill, paint.inner, paint.opacity
+            kind, show, st.size, full, index, others, paint.fill, paint.inner, paint.opacity, low
         )
 
+    def _motion(self, st: FrameState, host: HostState) -> tuple[str, int]:
+        """The animation of a body and its duration in milliseconds: a Panel's ``Animation``, a
+        peeking strip's slide."""
+        panel = host.surface.planned.bar if host.surface.planned else None
+        if isinstance(panel, PanelDef):
+            return panel.animation, int(panel.duration)
+        return "SLIDE", STRIP_PEEK_MS
+
     def _meld_to(self, st: FrameState, host: HostState, show: bool) -> None:
-        """Show or hide a melded Panel (idempotent). A hide while it is showing turns round from
-        where it is, and the other way."""
+        """Show or hide a melded Panel or a peeking strip (idempotent). A hide while it is showing
+        turns round from where it is, and the other way. Hiding goes back to the rest: the tab of
+        a peeking Panel, else nothing (or the sliver of a strip)."""
         surface, m = host.surface, self._m
-        panel = surface.planned.bar if surface.planned else None
-        if not isinstance(panel, PanelDef) or st.painter is None:
+        if st.painter is None:
             return
         name = host.plan.name
+        tab = self._rest_is_tab(st, name)
+        resting = name in st.hidden_melds or name in st.tab_melds
         if show:
             if host.anim == "in":
                 return
-            if host.anim is None and name not in st.hidden_melds:
+            if host.anim is None and not resting:
                 self._timer(host, st)  # shown again: the timer starts over
                 return
         else:
-            if host.anim == "out" or (host.anim is None and name in st.hidden_melds):
+            if host.anim == "out" or (host.anim is None and resting):
                 return
         if surface.timer is not None:
             surface.timer.cancel()
             surface.timer = None
         m._fire(surface, "On_Open" if show else "On_Close")  # before: the request is made
-        kind = panel.animation
-        instant = kind == "NONE" or self._reduced()
+        kind, ms = self._motion(st, host)
+        if tab and kind != "NONE":
+            kind = "SLIDE"  # a tab and a body are one contour: the depth is what moves
+        instant = kind == "NONE" or ms <= 0 or self._reduced()
+        what = "Panel" if host.plan.kind == "meld" else "strip"
+        detail = ("melded" if host.plan.kind == "meld" else "peek") + (
+            "" if instant else f", {kind.lower()}"
+        )
         logger.info(
-            f"Panel {name} on {st.plan.output.name} {'shown' if show else 'hiding'} (melded"
-            f"{'' if instant else ', ' + kind.lower()})"
+            f"{what} {name} on {st.plan.output.name} {'shown' if show else 'hiding'} ({detail})"
         )
         surface.generation += 1
         gen = surface.generation
         if instant:
             if host.anim:
                 self._snap(host)
-            (st.hidden_melds.discard if show else st.hidden_melds.add)(name)
+            self._set_rest(st, name, not show)
             surface.hidden = not show
             self._draw(st)
             if not show:
@@ -848,6 +1187,7 @@ class Frames:
         turning = host.anim is not None
         if show:
             st.hidden_melds.discard(name)
+            st.tab_melds.discard(name)
             surface.hidden = False
         else:
             surface.hidden = True
@@ -856,16 +1196,16 @@ class Frames:
         self._draw(st)  # the ring nodes are drawn without the body; the join draws it
         assert host.mover is not None and host.join is not None
         if not turning:
-            run = self._join_run(st, host, kind, show)
+            run = self._join_run(st, host, kind, show, tab)
             drawn = run is not None and host.join.begin(run)
             if run is not None and not drawn:
                 logger.warning(
-                    f"Panel {name} on {st.plan.output.name}: the {self._m.join_mode} join cannot"
+                    f"{what} {name} on {st.plan.output.name}: the {self._m.join_mode} join cannot"
                     " draw this body, so it is shown or hidden at once"
                 )
             if not drawn:  # not placed or not drawable: no animation
                 host.anim = None
-                (st.hidden_melds.discard if show else st.hidden_melds.add)(name)
+                self._set_rest(st, name, not show)
                 self._draw(st)
                 return
             prop, away = host.away
@@ -874,7 +1214,6 @@ class Frames:
                 host.mover.set(**{prop: away if show else 0.0})
             else:
                 host.mover.set(opacity=0.0 if show else 1.0)
-        ms = int(panel.duration)
         easing = (0.0, 0.0, 0.2, 1.0) if show else (0.4, 0.0, 1.0, 1.0)
         m._fire(surface, "On_Anim_Start")
 
@@ -886,7 +1225,7 @@ class Frames:
             assert host.mover is not None and host.join is not None
             host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
             if not show:
-                st.hidden_melds.add(name)
+                self._set_rest(st, name, True)
             self._draw(st)  # the body is part of the ring's one contour again (or gone from it)
             host.join.stop()
             if show:
@@ -902,6 +1241,21 @@ class Frames:
         else:
             host.mover.animate("opacity", 1.0 if show else 0.0, ms, easing)
 
+    def _join_mode(self, hp: HostPlan) -> str:
+        """How this host's join is drawn. A Panel that peeks starts its join from a tab, which
+        the shader and the boxes (they draw a body from nothing, over the ring) cannot, so it
+        takes PARAM; the warning is given once per option."""
+        mode = self._m.join_mode
+        if hp.kind == "meld" and hp.peek is not None and mode in ("SHADER", "CONCAVE"):
+            if mode not in self._warned:
+                self._warned.add(mode)
+                logger.warning(
+                    f"Debug {{ Frame_Join: {mode} }} cannot draw a Panel that peeks (a body that "
+                    "starts as deep as its tab, not from nothing): PARAM draws it"
+                )
+            return "PARAM"
+        return mode
+
     def _drop_hosts(self, st: FrameState) -> None:
         for host in list(st.hosts.values()):
             self._drop_host(st, host)
@@ -910,6 +1264,7 @@ class Frames:
         st.hosts.pop(host.plan.key, None)
         host.anim = None
         host.surface.generation += 1  # an animation that was running ends silent
+        self._cancel_hover(host)
         if host.surface.timer is not None:
             host.surface.timer.cancel()
             host.surface.timer = None
@@ -936,6 +1291,13 @@ class Frames:
             self._drop_host(st, st.hosts[key])
         for key, hp in wanted.items():
             host = st.hosts.get(key)
+            if (
+                host is not None
+                and host.plan.kind == "strip"
+                and (host.plan.peek is None) != (hp.peek is None)
+            ):
+                self._drop_host(st, host)  # it gains or loses its clip box and join
+                host = None
             if host is None:
                 self._open_host(st, hp)
             else:
@@ -958,7 +1320,7 @@ class Frames:
             **({"flex_direction": _DIRECTION[hp.side]} if hp.kind == "strip" else {}),
         )
         clip = mover = join = None
-        if hp.kind == "meld":
+        if hp.kind == "meld" or hp.peek is not None:
             clip = st.painter.create(
                 "box",
                 position="absolute",
@@ -971,7 +1333,7 @@ class Frames:
                 z_index=_Z_CONTENT,
             )
             mover = st.painter.create("box", position="absolute", left=0, top=0, width=0, height=0)
-            join = make_join(m.join_mode, st.painter, _Z_MORPH)
+            join = make_join(self._join_mode(hp), st.painter, _Z_MORPH)
             mover.add_child(container)
             clip.add_child(mover)
             st.painter.root.add_child(clip)
@@ -995,6 +1357,9 @@ class Frames:
         )
         host = HostState(hp, surface, container, clip, mover, join)
         st.hosts[hp.key] = host
+        if clip is not None:  # a peek may come with a reload: ``_hover`` looks at the plan
+            clip.on("pointer_enter", lambda: self._hover(st, host, True))
+            clip.on("pointer_leave", lambda: self._hover(st, host, False))
         errors = list(planned.expanded.errors)
         if not errors:
             try:
@@ -1012,7 +1377,7 @@ class Frames:
             logger.error(f"Frame {st.plan.where}: {what} {hp.name} is empty: it did not bind")
         else:
             logger.info(f"Frame {st.plan.where}: {what} {hp.name} built")
-        if hp.kind == "meld" and hp.name not in st.hidden_melds:
+        if hp.kind == "meld" and hp.name not in st.hidden_melds | st.tab_melds:
             # shown at start: Hide_After counts from now, On_Visible follows the first frame
             self._timer(host, st)
             st.painter.after(
