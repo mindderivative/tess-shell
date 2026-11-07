@@ -62,31 +62,13 @@ GRAB_DENIED_MS = 150  # a focused popup dismissed this soon after it opened lost
 SWALLOW_MS = 1000  # how long the click that closed a popup is still its own
 
 
-def placement(
-    attach: str, alignment: str, gap: float, bleed: Bleed
-) -> tuple[str, str, tuple[int, int]]:
+def placement(attach: str, alignment: str, gap: float) -> tuple[str, str, tuple[int, int]]:
     """tre's ``anchor``, ``gravity`` and ``offset`` for a popup whose body must meet the anchor
-    rectangle's ``attach`` edge ``gap`` pixels away, aligned along it by ``alignment``.
-
-    tre places the whole surface, shadow margin (``bleed``) included, so the offset shifts the
-    surface by the margin on the side that meets the anchor and on the aligned side: the body,
-    not the margin, lands where the table says (Popup > Placement, TRE-REQ-007).
+    rectangle's ``attach`` edge ``gap`` pixels away, aligned along it by ``alignment``. The
+    compositor places the body (the popup's ``geometry``), so a shadow margin needs no allowance.
     """
     anchor, gravity = ANCHORS[(attach, alignment)]
-    top, right, bottom, left = bleed
-    ox = oy = 0.0
-    if attach == "BOTTOM":
-        oy = gap - top
-    elif attach == "TOP":
-        oy = bottom - gap
-    elif attach == "RIGHT":
-        ox = gap - left
-    else:
-        ox = right - gap
-    if attach in ("BOTTOM", "TOP"):
-        ox = {"START": -left, "END": right, "CENTER": (right - left) / 2}[alignment]
-    else:
-        oy = {"START": -top, "END": bottom, "CENTER": (bottom - top) / 2}[alignment]
+    ox, oy = {"BOTTOM": (0, gap), "TOP": (0, -gap), "RIGHT": (gap, 0), "LEFT": (-gap, 0)}[attach]
     return anchor, gravity, (round(ox), round(oy))
 
 
@@ -99,7 +81,6 @@ def choose_attach(
     anchor: Rect,
     size: tuple[int, int],
     gap: float,
-    bleed: Bleed,
     output: tuple[int, int],
 ) -> str:
     """The side of the anchor to open on: ``attach``, or its opposite when the popup would leave
@@ -107,28 +88,25 @@ def choose_attach(
     menu opens upward with no setting).
 
     The compositor would flip it too (``flip_y`` or ``flip_x`` in ``adjust``), but it flips the
-    anchor and the gravity and not the offset (measured on sway), so a gap and a shadow margin
-    that the offset puts right on one side land wrong on the other. Choosing the side here makes
+    anchor and the gravity and not the offset (measured on sway), so a gap that the offset puts
+    right on one side lands wrong on the other. Choosing the side here makes
     the offset right for the side the popup opens on; the compositor still has ``adjust`` as a
-    safety net. ``anchor`` is in the output's coordinates, ``size`` is the whole surface.
+    safety net. ``anchor`` is in the output's coordinates, ``size`` is the body.
     """
     axis_flip = "flip_y" if attach in ("BOTTOM", "TOP") else "flip_x"
     if axis_flip not in adjust:
         return attach
-    top, right, bottom, left = bleed
     width, height = size
     if attach in ("BOTTOM", "TOP"):
-        low, extent, near, far = anchor.y, output[1], top, bottom
-        high, length = anchor.bottom, height
+        low, extent, high, length = anchor.y, output[1], anchor.bottom, height
     else:
-        low, extent, near, far = anchor.x, output[0], left, right
-        high, length = anchor.right, width
+        low, extent, high, length = anchor.x, output[0], anchor.right, width
 
     def fits(side: str) -> bool:
         if side in ("BOTTOM", "RIGHT"):  # after the anchor's far edge
-            start = high + gap - near
+            start = high + gap
         else:  # before the anchor's near edge
-            start = low - gap + far - length
+            start = low - gap - length
         return start >= 0 and start + length <= extent
 
     if fits(attach) or not fits(OPPOSITE[attach]):
@@ -228,27 +206,12 @@ class BodyLook:
         return props
 
 
-_WARNED: set[str] = set()  # the Popups already warned about a shadow
-
-
 def body_look(popup: PopupDef, look: Look | None) -> BodyLook:
     errors: list[BindError] = []
     style = resolve_style(popup.style or {}, look, errors)
     shadows = style_shadows(style, (look.max_shadows if look else None) or DEFAULT_MAX)
     fill = style.get("Fill") or style.get("Background")
     bleed = style_bleed(style, shadows)
-    if any(bleed) or shadows:
-        # A popup's shadow needs a transparent margin, and tre can neither tell the compositor
-        # which part of the surface is the popup (it placed a shadowed popup about 30 px from the
-        # screen edge and off the caller's edge on KWin) nor leave the margin without input (it
-        # took clicks). So a popup draws no shadow until TRE-REQ-007; use a border for edge.
-        if popup.name not in _WARNED:
-            _WARNED.add(popup.name)
-            logger.warning(
-                f"{popup.origin}: Popup {popup.name} draws no shadow: tre cannot yet place a popup "
-                "by its body or keep its shadow margin from taking clicks (TRE-REQ-007)"
-            )
-        bleed, shadows = (0, 0, 0, 0), style_shadows({}, DEFAULT_MAX)
     return BodyLook(
         bleed,
         convert.color(fill, ("fill",))["fill"] if isinstance(fill, m.Color) else None,
@@ -507,16 +470,18 @@ class Popups:
         parent = surface_rect(
             surface.geometry, (surface.planned.output.width, surface.planned.output.height)
         )
+        # tre 0.6.3 takes the popup proper as ``geometry``: the compositor places, flips and slides
+        # the body and ignores the transparent shadow margin around it (TRE-REQ-007), so the
+        # placement is that of a popup with no margin
         attach = choose_attach(
             popup.attach,
             popup.adjust,
             Rect(parent.x + rect.x, parent.y + rect.y, rect.width, rect.height),
-            surface_size,
+            (width, height),
             popup.gap,
-            shape.bleed,
             (surface.planned.output.width, surface.planned.output.height),
         )
-        anchor, gravity, offset = placement(attach, popup.alignment, popup.gap, shape.bleed)
+        anchor, gravity, offset = placement(attach, popup.alignment, popup.gap)
         factory = self._create or PopupWindow
         anchor_rect = (
             round(rect.x),
@@ -533,6 +498,8 @@ class Popups:
             "offset": offset,
             "grab": popup.focus,
         }
+        if any(shape.bleed):
+            kwargs["geometry"] = (left, top, width, height)
         try:
             window = factory(surface.window, **kwargs)
         except (ValueError, RuntimeError) as exc:  # a bad size, or no compositor

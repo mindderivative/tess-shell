@@ -227,26 +227,24 @@ def test_a_bad_tooltip_is_an_error_at_load(
 def test_attach_and_alignment_map_to_tres_anchor_and_gravity_as_the_spec_table_says(
     attach: str, alignment: str, anchor: str, gravity: str
 ) -> None:
-    assert placement(attach, alignment, 0, (0, 0, 0, 0))[:2] == (anchor, gravity)
+    assert placement(attach, alignment, 0)[:2] == (anchor, gravity)
     assert ANCHORS[(attach, alignment)] == (anchor, gravity)
 
 
 @pytest.mark.parametrize(
     ("attach", "alignment", "offset"),
     [
-        ("BOTTOM", "START", (-11, 4 - 8)),  # body 4 below the anchor: the top margin is 8
-        ("BOTTOM", "END", (13, 4 - 8)),
-        ("BOTTOM", "CENTER", (1, 4 - 8)),  # centred: half the difference of the side margins
-        ("TOP", "START", (-11, 14 - 4)),  # body 4 above the anchor: the bottom margin is 14
-        ("RIGHT", "START", (4 - 11, -8)),
-        ("LEFT", "END", (13 - 4, 14)),
+        ("BOTTOM", "START", (0, 4)),
+        ("BOTTOM", "END", (0, 4)),
+        ("TOP", "START", (0, -4)),
+        ("RIGHT", "START", (4, 0)),
+        ("LEFT", "END", (-4, 0)),
     ],
 )
-def test_the_offset_is_the_gap_less_the_shadow_margin_so_the_body_meets_the_anchor(
+def test_the_offset_is_the_gap_away_from_the_anchor_on_the_attached_side(
     attach: str, alignment: str, offset: tuple[int, int]
 ) -> None:
-    # a margin of 8 above, 13 right, 14 below and 11 left
-    assert placement(attach, alignment, 4, (8, 13, 14, 11))[2] == offset
+    assert placement(attach, alignment, 4)[2] == offset
 
 
 ANCHOR = Rect(100, 700, 60, 20)  # a module at the bottom of a 720 px high output
@@ -255,7 +253,7 @@ SIZE = (120, 80)
 
 def test_a_popup_with_no_room_below_opens_above_and_one_with_room_opens_where_asked() -> None:
     out = (1000, 720)
-    args = ((), SIZE, 4, (0, 0, 0, 0), out)
+    args = ((), SIZE, 4, out)
     assert choose_attach("BOTTOM", ("flip_y", "slide_x"), ANCHOR, *args[1:]) == "TOP"
     assert choose_attach("BOTTOM", ("flip_y",), Rect(100, 100, 60, 20), *args[1:]) == "BOTTOM"
     assert choose_attach("TOP", ("flip_y",), Rect(100, 10, 60, 20), *args[1:]) == "BOTTOM"
@@ -264,16 +262,9 @@ def test_a_popup_with_no_room_below_opens_above_and_one_with_room_opens_where_as
 
 def test_without_a_flip_in_adjust_or_with_no_room_either_way_the_side_is_kept() -> None:
     out = (1000, 720)
-    assert choose_attach("BOTTOM", ("slide_x",), ANCHOR, SIZE, 4, (0, 0, 0, 0), out) == "BOTTOM"
+    assert choose_attach("BOTTOM", ("slide_x",), ANCHOR, SIZE, 4, out) == "BOTTOM"
     tall = (120, 800)  # taller than the output: neither side fits
-    assert choose_attach("BOTTOM", ("flip_y",), ANCHOR, tall, 4, (0, 0, 0, 0), out) == "BOTTOM"
-
-
-def test_the_shadow_margin_counts_in_whether_it_fits() -> None:
-    out = (1000, 720)
-    near = Rect(100, 600, 60, 20)  # 100 px to the bottom: an 80 px body fits, with 24 of margin not
-    assert choose_attach("BOTTOM", ("flip_y",), near, SIZE, 0, (0, 0, 0, 0), out) == "BOTTOM"
-    assert choose_attach("BOTTOM", ("flip_y",), near, (120, 104), 0, (0, 0, 24, 0), out) == "TOP"
+    assert choose_attach("BOTTOM", ("flip_y",), ANCHOR, tall, 4, out) == "BOTTOM"
 
 
 # -- a running manager (real windows, no compositor) -------------------------------------------
@@ -384,7 +375,7 @@ def test_a_call_opens_the_popup_beside_the_calling_use_as_its_keys_ask(menu: Rig
     assert "Popup Menu on HDMI-A-1 opened beside Btn" in menu.log()
 
 
-def test_the_size_is_the_content_within_one_pixel_and_a_shadow_is_not_drawn(
+def test_the_size_is_the_content_within_one_pixel_and_a_shadow_margin_is_outside_the_body(
     menu: Rig,
 ) -> None:
     op = menu.call()
@@ -395,14 +386,19 @@ def test_the_size_is_the_content_within_one_pixel_and_a_shadow_is_not_drawn(
 
     shadowed = list(
         rig(
-            f"Popup {{ Name: Menu, Style {{ Elevation: 20% }}, Children {{ {CARD} }} }}",
+            f"Popup {{ Name: Menu, Gap: 4, Style {{ Elevation: 20% }}, Children {{ {CARD} }} }}",
         )
     )[0]
     big = shadowed.call()
     big.window.advance(16)
-    # no transparent margin: it took clicks and moved the popup off the screen edge on KWin
-    assert tuple(big.window.get("size")) == (card[2], card[3])
-    assert all(int(big.body.get(f"margin_{s}")) == 0 for s in ("top", "right", "bottom", "left"))
+    top, right, bottom, left = (  # 20 % elevation: the transparent margin around the body
+        int(big.body.get(f"margin_{side}")) for side in ("top", "right", "bottom", "left")
+    )
+    assert top > 0 and right > 0 and bottom > 0 and left > 0
+    assert tuple(big.window.get("size")) == (card[2] + left + right, card[3] + top + bottom)
+    # the compositor places the body alone: the popup proper is handed to tre as its geometry
+    assert tuple(big.window.get("geometry")) == (left, top, card[2], card[3])
+    assert tuple(big.window.get("offset")) == (0, 4)  # the gap, with no margin arithmetic
 
 
 def test_a_fixed_width_and_height_skip_the_measure_and_content_beyond_max_height_scrolls() -> None:

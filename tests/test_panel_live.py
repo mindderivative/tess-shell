@@ -294,8 +294,12 @@ def test_the_engine_runs_a_fade_out_and_the_panel_is_gone_when_it_ends(
     try:
         shell.wait_for("Panel Fader on HEADLESS-1 configured")
         shell.wait_for("running")
-        time.sleep(0.2)
-        assert look() == (100, 100, 219, 159)  # shown, fully opaque
+        for _ in range(20):  # the first frame can be late when the machine is busy
+            if look() == (100, 100, 219, 159):  # shown, fully opaque
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError(f"the Panel was not drawn: {look()}")
         shell.wait_for("Panel Fader on HEADLESS-1 fade out, 400 ms")
         shell.wait_for("Panel Fader on HEADLESS-1 hidden (surface kept)")
         began = next(x for x in shell.seen if "fade out, 400 ms" in x)
