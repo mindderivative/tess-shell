@@ -62,6 +62,8 @@ class PanelDef:
     # attached to a target by name (Panel > Attachment Geometry); Anchor and Inset then give way
     attach_to: str | None = None
     meld: bool = False  # drawn inside the Frame it is attached to (hosted melding)
+    depth: Value = None  # type: ignore[assignment]  # melded: the extent away from the Frame's edge
+    length: Value = None  # type: ignore[assignment]  # melded: the extent along the Frame's edge
     attach: str | None = None  # LEFT, RIGHT, TOP, BOTTOM: the target's edge the Panel meets
     gap: float = 0  # pixels between the Panel and the target
     alignment: str = "CENTER"  # START, CENTER, END along the shared edge

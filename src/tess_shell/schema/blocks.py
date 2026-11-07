@@ -232,6 +232,9 @@ PANEL_KEYS: dict[str, str] = {
     "Alignment": "enum",
     "Movable": "bool",
     "Meld": "bool",
+    # a melded Panel's size: ``Depth`` perpendicular to the Frame's edge, ``Length`` along it
+    "Depth": "length",
+    "Length": "length",
 }
 PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),

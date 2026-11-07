@@ -26,8 +26,8 @@ FRAME = (
     'Rectangle { Name: B, Width: 12, Height: 30, Fill: "#00ff00" } } } } }'
 )
 TAB = (
-    "Panel { Name: Tab, Meld: true, Attach_To: F, Attach: BOTTOM, Alignment: END, Width: 200, "
-    'Height: 50, Children { Rectangle { Name: Chip, Width: 30, Height: 30, Fill: "#00ff00" } } }'
+    "Panel { Name: Tab, Meld: true, Attach_To: F, Attach: BOTTOM, Alignment: END, Length: 200, "
+    'Depth: 50, Children { Rectangle { Name: Chip, Width: 30, Height: 30, Fill: "#00ff00" } } }'
 )
 
 

@@ -239,8 +239,8 @@ def test_the_painters_keyboard_is_none_unless_a_hosted_tree_holds_a_text_input()
 # -- melded Panels --------------------------------------------------------------------------------
 
 TAB = (
-    "Panel { Name: Tab, Meld: true, Attach_To: F, Attach: TOP, Alignment: START, Width: 120, "
-    'Height: 40, Children { Rectangle { Name: Dot, Width: 20, Height: 20, Fill: "#ff0000" } } }'
+    "Panel { Name: Tab, Meld: true, Attach_To: F, Attach: TOP, Alignment: START, Length: 120, "
+    'Depth: 40, Children { Rectangle { Name: Dot, Width: 20, Height: 20, Fill: "#ff0000" } } }'
 )
 RING = f"Frame {{ Name: F, Thickness: 20, Inner_Radius: 8, {BG} }}"
 
@@ -290,10 +290,15 @@ def test_a_reload_changes_a_melded_panels_size_and_side_without_a_new_painter() 
     reload(
         manager,
         RING,
-        TAB.replace("Height: 40", "Height: 80").replace("Attach: TOP", "Attach: LEFT"),
+        TAB.replace("Depth: 40", "Depth: 80").replace("Attach: TOP", "Attach: LEFT"),
     )
     assert only(manager).painter is painter and len(app.windows) == 5
-    assert box(manager, "Tab") == (20, 20, 120, 80)  # on the left: Width is the depth, Height along
+    assert box(manager, "Tab") == (
+        20,
+        20,
+        80,
+        120,
+    )  # on the left: Depth 80 across, Length 120 along
 
 
 def test_the_hosted_content_of_a_melded_panel_follows_the_look() -> None:

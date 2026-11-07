@@ -69,7 +69,7 @@ def left_children() -> str:
 def dock(side: str, alignment: str) -> str:
     return (
         f"Panel {{ Name: Dock, Meld: true, Attach_To: Screen_Frame, Attach: {side}, "
-        f"Alignment: {alignment}, Width: 320, Height: 56, Style {{ Corner_Radius: 12 }}, "
+        f"Alignment: {alignment}, Length: 320, Depth: 56, Style {{ Corner_Radius: 12 }}, "
         "Children { FlexBox { Padding: 8, Spacing: 8, Children { "
         'Text { Text: "Docked: part of the frame", Font_Size: 14, Foreground: "#cdd6f4" } '
         "} } } }"
@@ -116,11 +116,15 @@ def frame(variant: str) -> tuple[str, RingSpec]:
                 }}
             }}
             {dock(*side)}"""
+    across = side[0] in ("BOTTOM", "TOP")  # the side runs along x: Length is the width
+    meld = MeldSpec(
+        side[0].lower(), 320 if across else 56, 56 if across else 320, side[1], (12, 12, 12, 12)
+    )
     spec = RingSpec(
         thickness=(thick[0], top_t, thick[2], thick[3]),
         inner_radius=(14, 14, 14, 14),
         inner_border=border,
-        melds=(MeldSpec(side[0].lower(), 320, 56, side[1], (12, 12, 12, 12)),),
+        melds=(meld,),
     )
     return text, spec
 

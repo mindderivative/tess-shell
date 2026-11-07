@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from tess_shell.binder.model import Color, TokenRef
+from tess_shell.binder.model import Color, Length, TokenRef
 from tess_shell.schema.findings import Finding
 from tess_shell.schema.model import FrameDef
 from tests.shell_samples import BODY
@@ -238,8 +238,8 @@ def test_a_wrong_edges_block_is_an_error(edges: str) -> None:
 # -- melded Panels --------------------------------------------------------------------------------
 
 MELD = (
-    "Panel { Name: Tab, Meld: true, Attach_To: F, Attach: TOP, Alignment: START, Width: 120,"
-    " Height: 40, Style { Corner_Radius: 8 }, Children { Spacer { Name: T } } }"
+    "Panel { Name: Tab, Meld: true, Attach_To: F, Attach: TOP, Alignment: START, Length: 120,"
+    " Depth: 40, Style { Corner_Radius: 8 }, Children { Spacer { Name: T } } }"
 )
 
 
@@ -268,7 +268,7 @@ def test_a_panel_with_meld_moves_into_its_frame_and_leaves_the_monitors_surfaces
 def test_what_a_melded_panel_cannot_do_is_refused(change: str, rule: str) -> None:
     body = with_frame(
         "Frame { Name: F, Thickness: 12 }\n"
-        + MELD.replace(" Width: 120,", f" {change}, Width: 120,")
+        + MELD.replace(" Length: 120,", f" {change}, Length: 120,")
     )
     shell, findings = read(body)
     errors = [f for f in findings if f.severity == "error"]
@@ -292,7 +292,7 @@ def test_a_melded_panels_own_colour_and_border_are_ignored_with_a_warning() -> N
 
 
 def test_a_panel_attached_to_a_frame_without_meld_is_still_not_built() -> None:
-    plain = MELD.replace("Meld: true, ", "")
+    plain = MELD.replace("Meld: true, ", "").replace("Length", "Width").replace("Depth", "Height")
     (f,) = problems("Frame { Name: F, Thickness: 12 }\n" + plain)
     assert f.rule == "not-built" and "Frame F" in f.message
 
@@ -300,3 +300,28 @@ def test_a_panel_attached_to_a_frame_without_meld_is_still_not_built() -> None:
 def test_a_melded_panel_attached_to_a_bar_is_refused() -> None:
     body = MELD.replace("Attach_To: F", "Attach_To: Top_Bar")
     assert "meld-target" in {f.rule for f in problems("Frame { Name: F, Thickness: 12 }\n" + body)}
+
+
+def test_a_melded_panel_is_sized_by_depth_and_length_not_width_and_height() -> None:
+    tab = frame_of_meld()
+    assert (tab.depth, tab.length) == (Length(40), Length(120))
+    assert tab.width is None and tab.height is None
+    wrong = MELD.replace("Length: 120,", "Width: 120,").replace("Depth: 40,", "Height: 40,")
+    fs = problems("Frame { Name: F, Thickness: 12 }\n" + wrong)
+    assert {f.rule for f in fs} == {"missing-key", "meld-size"}
+    assert any("Depth and Length" in f.hint for f in fs if f.rule == "meld-size")
+
+
+def test_depth_and_length_on_a_panel_without_meld_are_errors() -> None:
+    plain = (
+        "Panel { Name: P, Layer: OVERLAY, Width: 100, Height: 50, Depth: 4, Length: 5,"
+        " Anchor: [TOP] }"
+    )
+    fs = problems(plain)
+    assert [f.rule for f in fs] == ["meld-size-orphan"] * 2
+
+
+def frame_of_meld():  # type: ignore[no-untyped-def]
+    shell, findings = read(with_frame("Frame { Name: F, Thickness: 12 }\n" + MELD))
+    assert shell is not None, findings
+    return shell.monitors[0].frames[0].melds[0]

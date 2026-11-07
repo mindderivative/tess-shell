@@ -138,8 +138,12 @@ def ring_spec(frame: FrameDef, melds: tuple[MeldSpec, ...] = ()) -> RingSpec:
 
 
 def meld_spec(panel: PanelDef, output: tuple[int, int], look: Look | None) -> MeldSpec:
-    """The body a melded Panel asks for: its ``Width`` and ``Height``, the side it grows from
-    (``Attach``), ``Alignment`` along it and the ``Corner_Radius`` of its style."""
+    """The body a melded Panel asks for: its ``Depth`` (away from the Frame's edge) and ``Length``
+    (along it), the side it grows from (``Attach``), ``Alignment`` along it and the
+    ``Corner_Radius`` of its style. On a top or bottom side the length runs along x."""
+    side = (panel.attach or "TOP").lower()
+    along_x = side in ("top", "bottom")
+    depth, length = panel.depth, panel.length
     style = resolve_style(panel.style or {}, look)
     radius = style.get("Corner_Radius")
     corners: tuple[float, float, float, float] = (0, 0, 0, 0)
@@ -151,8 +155,8 @@ def meld_spec(panel: PanelDef, output: tuple[int, int], look: Look | None) -> Me
         corners = (a, b, c, d)
     return MeldSpec(
         side=(panel.attach or "TOP").lower(),
-        width=px_size(panel.width, output[0]),
-        height=px_size(panel.height, output[1]),
+        width=px_size(length if along_x else depth, output[0]),
+        height=px_size(depth if along_x else length, output[1]),
         alignment=panel.alignment,
         radius=corners,
     )

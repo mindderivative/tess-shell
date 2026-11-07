@@ -933,12 +933,31 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
             ctx.not_built(entry.origin, "If and For")
     if name is None and not any(isinstance(e, Property) and e.key == "Name" for e in block.entries):
         ctx.add(block.origin, "missing-key", "a Panel needs a Name", "write Name: Launcher")
-    for key in ("Width", "Height"):
+    melded = values.get("Meld")
+    is_meld = isinstance(melded, m.Bool) and melded.value
+    size_keys = ("Depth", "Length") if is_meld else ("Width", "Height")
+    for key in size_keys:
         if key not in values and not any(
             isinstance(e, Property) and e.key == key for e in block.entries
         ):
             ctx.add(block.origin, "missing-key", f"a Panel needs {key}", f"write {key}: 300")
-    for key in ("Width", "Height"):
+    for key in ("Width", "Height") if is_meld else ("Depth", "Length"):
+        if key in written:
+            hint = (
+                "a melded Panel is sized by Depth (away from the Frame's edge) and Length "
+                "(along it); write Depth and Length"
+                if is_meld
+                else "Depth and Length size a Panel with Meld: true; write Width and Height"
+            )
+            ctx.add(
+                block.origin,
+                "meld-size" if is_meld else "meld-size-orphan",
+                f"{key} is not a size of this Panel"
+                if is_meld
+                else f"{key} only sizes a Panel with Meld: true",
+                hint,
+            )
+    for key in size_keys:
         v = values.get(key)
         if isinstance(v, m.Auto | m.Expand):
             ctx.add(
@@ -981,11 +1000,9 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
             "only a Panel placed by Anchor and Inset (or floating) has a position to save",
         )
     layer = values.get("Layer")
-    melded = values.get("Meld")
-    is_meld = isinstance(melded, m.Bool) and melded.value
     if is_meld:
         _check_meld(ctx, block, written, attach_to, handlers, style)
-    if name is None or "Width" not in values or "Height" not in values:
+    if name is None or any(k not in values for k in size_keys):
         return None
 
     def word(key: str, default: str) -> str:
@@ -1009,8 +1026,10 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         layer=layer.name if isinstance(layer, m.Enum) else "TOP",
         anchor=anchors,
         inset=sides,
-        width=values["Width"],
-        height=values["Height"],
+        width=values.get("Width"),  # type: ignore[arg-type]
+        height=values.get("Height"),  # type: ignore[arg-type]
+        depth=values.get("Depth"),  # type: ignore[arg-type]
+        length=values.get("Length"),  # type: ignore[arg-type]
         keyboard=word("Keyboard", "NONE"),
         input=region.value if isinstance(region, m.Text) else "WHOLE",
         visible=visible.value if isinstance(visible, m.Bool) else True,
