@@ -500,6 +500,8 @@ class Popups:
         }
         if any(shape.bleed):
             kwargs["geometry"] = (left, top, width, height)
+            # a click in the shadow margin reaches the window below (tre 0.6.5, TRE-REQ-014)
+            kwargs["input_region"] = "geometry"
         try:
             window = factory(surface.window, **kwargs)
         except (ValueError, RuntimeError) as exc:  # a bad size, or no compositor

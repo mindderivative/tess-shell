@@ -398,6 +398,9 @@ def test_the_size_is_the_content_within_one_pixel_and_a_shadow_margin_is_outside
     assert tuple(big.window.get("size")) == (card[2] + left + right, card[3] + top + bottom)
     # the compositor places the body alone: the popup proper is handed to tre as its geometry
     assert tuple(big.window.get("geometry")) == (left, top, card[2], card[3])
+    # and only the body takes the pointer: a click in the shadow margin reaches the window below
+    assert big.window.get("input_region") == [(left, top, card[2], card[3])]
+    assert op.window.get("input_region") is None  # no margin, no region: the whole surface
     assert tuple(big.window.get("offset")) == (0, 4)  # the gap, with no margin arithmetic
 
 
