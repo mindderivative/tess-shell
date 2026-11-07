@@ -79,6 +79,7 @@ def run_live(window: Any, name: str, start: Callable[[], None], seconds: float =
     app = tess_re.App()
     handle = app.thread_handle()
     app.add_window(window)
+
     def kick() -> None:
         start()
         handle.call_soon(lambda: None)  # wake tre's loop (TRE-REQ-012: fixed in tre 0.6.2)

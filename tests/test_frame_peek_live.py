@@ -49,7 +49,7 @@ def test_a_peeking_panel_rests_as_a_tab_comes_out_on_show_and_goes_back(
         x, floor = OUT[0] // 2, OUT[1] - 30
         time.sleep(0.4)
         first = screenshot(private_sway)
-        assert pixel(first, x, floor - 7) == BLUE  # in the tab: 14 px above the band
+        assert pixel(first, x + 40, floor - 7) == BLUE  # in the tab: 14 px above the band
         assert pixel(first, x, floor - 20) == MAGENTA  # above it: the opening, what is behind
         assert pixel(first, x, OUT[1] - 10) == BLUE  # the band is whole
         # Trigger hides after 1.5 s and its On_Hidden shows the Panel: the body comes out
@@ -63,7 +63,7 @@ def test_a_peeking_panel_rests_as_a_tab_comes_out_on_show_and_goes_back(
         # Hide_After (2.5 s from when it was out) sends it back to the tab, not away
         until(
             private_sway,
-            lambda s: pixel(s, x, floor - 40) == MAGENTA and pixel(s, x, floor - 7) == BLUE,
+            lambda s: pixel(s, x, floor - 40) == MAGENTA and pixel(s, x + 40, floor - 7) == BLUE,
             "the tab again after Hide_After",
         )
         text = "".join(shell.seen)
@@ -100,19 +100,74 @@ def test_the_kwin_peek_demo_builds_and_rests_as_a_tab_and_a_sliver(
     shell = Shell(tmp_path, private_sway.env)
     shell.wait_for("running")
     try:
-        rect = usable(private_sway, 8, 36, 10, 10)  # the sliver + border, 34 + border, 8 + border
-        assert (rect["x"], rect["y"]) == (8, 36)
+        rect = usable(private_sway, 12, 36, 14, 16)  # sides 10, 34, 12, 14 and the 2 px border
+        assert (rect["x"], rect["y"]) == (12, 36)
         time.sleep(0.8)
         shot = screenshot(private_sway)
-        mid = OUT[0] // 2 + (40 - 8) // 2  # the Dock is centred in the opening
-        floor = OUT[1] - 8
-        assert pixel(shot, mid, floor - 12) != pixel(shot, mid, floor - 60)  # a tab, not a body
-        assert pixel(shot, 3, 300) == pixel(shot, mid, floor - 4)  # the sliver: the Frame colour
-        assert pixel(shot, 20, 300) != pixel(shot, 3, 300)  # beside it, the opening
+        mid = (10 + OUT[0] - 12) // 2 + 40  # the Dock is centred in the opening; 40 px off its dots
+        floor = OUT[1] - 14
+        frame_colour = pixel(shot, 3, 300)  # the left sliver is the Frame's colour
+        assert pixel(shot, mid, floor - 12) == frame_colour  # the Dock: a 24 px tab ...
+        assert pixel(shot, mid, floor - 60) != frame_colour  # ... not a body
+        assert pixel(shot, 20, 300) != frame_colour  # beside the sliver, the opening
+        assert pixel(shot, 30, floor - 5) == frame_colour  # Tray: a 14 px tab at the bottom left
+        assert pixel(shot, 30, floor - 30) != frame_colour
+        assert pixel(shot, OUT[0] - 18, 60) == frame_colour  # Notes: a 12 px tab on the right band
+        assert pixel(shot, OUT[0] - 40, 60) != frame_colour  # slid from the right, not the top
         text = "".join(shell.seen)
         while not shell.lines.empty():
             text += shell.lines.get()
         assert "strip Left_Strip built" in text and "melded Panel Dock built" in text
+        assert "melded Panel Notes built" in text and "melded Panel Tray built" in text
+        stop(shell)
+    finally:
+        if shell.process.poll() is None:
+            shell.process.kill()
+
+
+def test_the_handle_is_drawn_on_the_tab_and_travels_with_the_body_on_sway(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    """A CLICK peek's chevron on the real compositor: on the middle of the 20 px tab at rest, on the
+    far strip of the body once a ``Show`` has brought it out, and back on the tab after
+    ``Hide_After`` (the chevron's direction is checked headless: this is the live pixels)."""
+    frame = 'Frame { Name: F, Thickness: 30, Style { Background: "#0000ff" } }'
+    tab = (
+        "Panel { Name: Tab, Meld: true, Attach_To: F, Attach: BOTTOM, Alignment: CENTER, "
+        "Length: 200, Depth: 60, Peek { Size: 20, Trigger: CLICK }, Hide_After: 3500, "
+        "Animation { Type: SLIDE, Duration: 300 } }"
+    )
+    shell = run_shell(private_sway, tmp_path, f"{BEHIND}\n{frame}\n{TRIGGER}\n{tab}")
+    try:
+        usable(private_sway, 30, 30, 30, 30)
+        x, floor = OUT[0] // 2, OUT[1] - 30
+
+        def handle_rows(shot: tuple[int, int, bytes], y0: int, y1: int) -> list[int]:
+            """The rows in ``y0..y1`` where the handle's colour (blue shifted to green) is."""
+            return [
+                y
+                for y in range(y0, y1)
+                for dx in range(-8, 9)
+                if pixel(shot, x + dx, y) not in (BLUE, MAGENTA)
+            ]
+
+        time.sleep(0.5)
+        rest = handle_rows(screenshot(private_sway), floor - 20, floor - 1)
+        assert rest and 8 <= floor - sum(rest) / len(rest) <= 14  # on the middle of the tab
+        until(
+            private_sway,
+            lambda s: bool(handle_rows(s, floor - 55, floor - 45)),
+            "the handle on the far strip of the whole body (60 px) after the Show",
+        )
+        assert not handle_rows(screenshot(private_sway), floor - 20, floor - 8)  # left the tab
+        until(
+            private_sway,
+            lambda s: (
+                bool(handle_rows(s, floor - 20, floor - 1))
+                and not handle_rows(s, floor - 55, floor - 45)
+            ),
+            "the handle back on the tab after Hide_After",
+        )
         stop(shell)
     finally:
         if shell.process.poll() is None:

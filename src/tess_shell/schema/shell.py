@@ -1015,12 +1015,32 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
     if is_meld:
         _check_meld(ctx, block, written, attach_to, handlers, style)
         depth = values.get("Depth")
+        if peek is not None and peek.slide_from is not None:
+            attach_word = word_of(values.get("Attach"))
+            align_word = word_of(values.get("Alignment")) or "CENTER"
+            corner = blocks.PEEK_CORNER_EDGE.get((attach_word or "", align_word))
+            if peek.slide_from not in (attach_word, corner):
+                ctx.add(
+                    peek.origin or block.origin,
+                    "peek-slide-from",
+                    f"Slide_From: {peek.slide_from} is not an edge this Panel touches "
+                    f"({attach_word}" + (f" and {corner}" if corner else "") + ")",
+                    "a Panel slides out of the edge it is attached to or, in a corner "
+                    "(Alignment: START or END), of the other edge it touches"
+                    if corner
+                    else "Alignment: CENTER touches one edge only; remove Slide_From, or align the "
+                    "Panel to START or END to put it in a corner",
+                )
+                peek = None
+            elif peek.slide_from != attach_word:
+                depth = values.get("Length")  # the Panel slides along what was its length
         if peek is not None and isinstance(depth, m.Length) and peek.size >= depth.px:
             ctx.add(
                 peek.origin or block.origin,
                 "peek-size",
-                f"Peek Size {peek.size:g} is not smaller than the Depth {depth.px:g}",
-                "the tab is part of the body: write a Size below the Depth",
+                f"Peek Size {peek.size:g} is not smaller than the "
+                f"{'Depth' if depth is values.get('Depth') else 'Length'} {depth.px:g}",
+                "the tab is part of the body: write a Size below the extent it slides along",
             )
             peek = None
     elif peek is not None:
@@ -1159,13 +1179,58 @@ def _animation(ctx: _Ctx, block: Block) -> tuple[str, float]:
     return ("NONE", 0.0) if kind == "NONE" or duration <= 0 else (kind, duration)
 
 
-def _peek(ctx: _Ctx, block: Block) -> PeekDef:
-    """``Peek { Size: 24, Enter_Delay: 150, Exit_Delay: 300 }``: pixels that show at rest (1 or
-    more) and the milliseconds the pointer stays before it comes out and after it leaves before it
-    goes back (0 or more)."""
+_PEEK_WORDS = {
+    "Trigger": blocks.PEEK_TRIGGERS,
+    "Handle": blocks.PEEK_HANDLES,
+    "Slide_From": blocks.PEEK_EDGES,
+}
+
+
+def word_of(value: m.Value | None) -> str | None:
+    """The name of an enum value, or ``None``."""
+    return value.name if isinstance(value, m.Enum) else None
+
+
+def _peek(ctx: _Ctx, block: Block, strip: bool = False) -> PeekDef:
+    """``Peek { Size: 24, Enter_Delay: 150, Exit_Delay: 300, Trigger: HOVER, Handle: AUTO,
+    Slide_From: TOP }``: pixels that show at rest (1 or more), the milliseconds the pointer stays
+    before it comes out and after it leaves before it goes back (0 or more; they apply to
+    ``HOVER``), what opens it, the icon on its tab and, for a Panel in a Frame corner, the edge it
+    slides out of (checked against ``Attach`` and ``Alignment`` by the Panel)."""
     values = {"Size": 24.0, "Enter_Delay": 150.0, "Exit_Delay": 300.0}
+    words: dict[str, str] = {}
+    written: set[str] = set()
+    allowed = [*values, "Trigger", "Handle", *([] if strip else ["Slide_From"])]
     for entry in block.entries:
-        if isinstance(entry, Property) and entry.key in values:
+        if isinstance(entry, Property) and entry.key in _PEEK_WORDS and entry.key in allowed:
+            if isinstance(entry.value, tess_dl.List):
+                ctx.add(
+                    entry.value_origin,
+                    "not-built",
+                    f"a list of values for {entry.key} is not built: a Peek takes one",
+                    f"write {entry.key}: {_PEEK_WORDS[entry.key][0]} (one of "
+                    f"{', '.join(_PEEK_WORDS[entry.key])})",
+                )
+                continue
+            try:
+                value = coerce(
+                    "enum", entry.value, ctx.origin(entry.key_origin), _PEEK_WORDS[entry.key]
+                )
+            except ValueProblem as exc:
+                ctx.problem(entry.value_origin, entry.key, exc)
+                continue
+            assert isinstance(value, m.Enum)
+            words[entry.key] = value.name
+        elif isinstance(entry, Property) and entry.key == "Slide_From" and strip:
+            ctx.add(
+                entry.key_origin,
+                "peek-slide-from",
+                "Slide_From is for a Panel in a Frame corner; a strip runs the whole side",
+                "remove Slide_From",
+            )
+        elif isinstance(entry, Property) and entry.key in values:
+            if entry.key != "Size":
+                written.add(entry.key)
             try:
                 value = coerce("number", entry.value, ctx.origin(entry.key_origin), ())
             except ValueProblem as exc:
@@ -1186,11 +1251,27 @@ def _peek(ctx: _Ctx, block: Block) -> PeekDef:
             ctx.unknown(
                 getattr(entry, "key_origin", None) or getattr(entry, "origin", None),
                 key,
-                list(values),
+                allowed,
                 "key in Peek",
             )
+    trigger = words.get("Trigger", "HOVER")
+    if trigger != "HOVER" and written:
+        ctx.add(
+            block.origin,
+            "not-built",
+            f"{', '.join(sorted(written))} apply to Trigger: HOVER only and have no effect with "
+            f"Trigger: {trigger}",
+            "remove them, or write Trigger: HOVER",
+            "warning",
+        )
     return PeekDef(
-        values["Size"], values["Enter_Delay"], values["Exit_Delay"], ctx.origin(block.origin)
+        values["Size"],
+        values["Enter_Delay"],
+        values["Exit_Delay"],
+        ctx.origin(block.origin),
+        trigger,
+        words.get("Handle", "AUTO"),
+        words.get("Slide_From"),
     )
 
 
@@ -1739,7 +1820,7 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
                 if sub.type == "Children":
                     children = _children(ctx, sub, lambda b: _block(ctx, b))
                 elif sub.type == "Peek":
-                    peek = _peek(ctx, sub)
+                    peek = _peek(ctx, sub, strip=True)
                 elif sub.type == "Padding":
                     try:
                         named = named_sides(sub, ctx.origin(sub.origin))

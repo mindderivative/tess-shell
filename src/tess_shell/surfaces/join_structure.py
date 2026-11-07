@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from tess_shell.surfaces.join import Easing, JoinRun
+from tess_shell.surfaces.join import Easing, JoinRun, blend
 
 if TYPE_CHECKING:
     from tess_re import LayerWindow
@@ -79,6 +79,13 @@ class StructureJoin:
                 node.animate("data", d1 if show else d0, ms, easing, callback)
             else:
                 node.animate("opacity", self._opacity if show else 0.0, ms, easing, callback)
+
+    def seek(self, p: float) -> None:
+        if self._kind != "SLIDE":
+            return
+        for node, (d0, d1) in zip(self.nodes, self._ends, strict=True):
+            if node.get("visible"):
+                node.set(data=blend(d0, d1, p))
 
     def stop(self) -> None:
         for node in self.nodes:

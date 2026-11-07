@@ -161,13 +161,25 @@ def frame(variant: str) -> tuple[str, RingSpec]:
 
 PEEK_DOCK = (
     "Panel { Name: Dock, Meld: true, Attach_To: Screen_Frame, Attach: BOTTOM, Alignment: CENTER, "
-    "Length: 320, Depth: 56, Peek { Size: 24, Enter_Delay: @ENTER@, Exit_Delay: 300 }, "
+    "Length: 320, Depth: 56, Peek { Size: 24, Trigger: HOVER, Enter_Delay: @ENTER@, Exit_Delay: 300 }, "
     "Animation { Type: SLIDE, Duration: 300 }, Style { Corner_Radius: 12 }, "
     "Children { FlexBox { Width: 100%, Height: 100%, Padding: 8, Align_Items: CENTER, "
     "Justify_Content: CENTER, Children { "
     'Text { Text: "Docked: part of the frame", Width: AUTO, Height: AUTO, Font_Size: 14, '
     'Foreground: "#cdd6f4" } } } } }'
 )
+
+
+def peek_panel(name: str, attach: str, alignment: str, length: int, depth: int, peek: str) -> str:
+    return (
+        f"Panel {{ Name: {name}, Meld: true, Attach_To: Screen_Frame, Attach: {attach}, "
+        f"Alignment: {alignment}, Length: {length}, Depth: {depth}, {peek}, "
+        "Animation { Type: SLIDE, Duration: 300 }, Style { Corner_Radius: 12 }, "
+        "Children { FlexBox { Width: 100%, Height: 100%, Padding: 8, Align_Items: CENTER, "
+        "Justify_Content: CENTER, Children { "
+        f'Text {{ Text: "{name}: part of the frame", Width: AUTO, Height: AUTO, Font_Size: 14, '
+        'Foreground: "#cdd6f4" } } } } }'
+    )
 
 
 def toggle(name: str, label: str, target: str) -> str:
@@ -182,13 +194,20 @@ def toggle(name: str, label: str, target: str) -> str:
 
 
 def peek_frame(enter: int = 150) -> tuple[str, RingSpec]:
-    """Variant C: the top strip stays (with two buttons that Toggle the others: the keyboard
-    way in), the left strip rests as a 6 px sliver and comes out to 56, the Dock as a 24 px tab."""
-    top = "\n".join([*TOP_CHILDREN.split("\n"), toggle("Dock_Toggle", "Dock", "Dock")]) + (
-        "\n" + toggle("Left_Toggle", "Left", "Left_Strip")
-    )
+    """Variant C, the Peek demo. The top strip stays, with buttons that Toggle the others (the way
+    in without a pointer). The Dock rests as a 24 px tab at the bottom and opens on HOVER (dots);
+    Notes is a top-right corner Panel that slides out of the RIGHT edge, opens on CLICK (a chevron);
+    Tray at the bottom left opens by DRAG (a bar); the left strip rests as a 10 px sliver, opens by
+    DRAG (a bar) and comes out to 56."""
+    toggles = [
+        toggle("Dock_Toggle", "Dock", "Dock"),
+        toggle("Left_Toggle", "Left", "Left_Strip"),
+        toggle("Notes_Toggle", "Notes", "Notes"),
+        toggle("Tray_Toggle", "Tray", "Tray"),
+    ]
+    top = "\n".join([*TOP_CHILDREN.split("\n"), *toggles])
     left = left_children().rsplit("\n", 1)[0]  # the blocks, without variant A's Dock button
-    thick = (6, 34, 8, 8)
+    thick = (10, 34, 12, 14)  # wide enough for each handle: 8 px dots and bar, 12 px chevron
     text = f"""            Frame {{
                 Name: Screen_Frame
                 Thickness {{ Left: {thick[0]}, Top: {thick[1]}, Right: {thick[2]}, Bottom: {thick[3]} }}
@@ -213,7 +232,7 @@ def peek_frame(enter: int = 150) -> tuple[str, RingSpec]:
                         Name: Left_Strip
                         Thickness: 56
                         Padding: 6
-                        Peek {{ Size: {thick[0]}, Enter_Delay: {enter}, Exit_Delay: 300 }}
+                        Peek {{ Size: {thick[0]}, Trigger: DRAG }}
                         Children {{
                             FlexBox {{
                                 Flex: VERTICAL, Width: 100%, Spacing: 6, Align_Items: CENTER
@@ -225,12 +244,18 @@ def peek_frame(enter: int = 150) -> tuple[str, RingSpec]:
                     }}
                 }}
             }}
-            {PEEK_DOCK.replace("@ENTER@", str(enter))}"""
+            {PEEK_DOCK.replace("@ENTER@", str(enter))}
+            {peek_panel("Notes", "TOP", "END", 220, 90, "Peek { Size: 12, Trigger: CLICK, Slide_From: RIGHT }")}
+            {peek_panel("Tray", "BOTTOM", "START", 200, 60, "Peek { Size: 14, Trigger: DRAG }")}"""
     spec = RingSpec(
         thickness=thick,
         inner_radius=(14, 14, 14, 14),
         inner_border=2,
-        melds=(MeldSpec("bottom", 320, 24, "CENTER", (12, 12, 12, 12)),),
+        melds=(
+            MeldSpec("bottom", 320, 24, "CENTER", (12, 12, 12, 12)),
+            MeldSpec("right", 12, 90, "START", (12, 12, 12, 12)),
+            MeldSpec("bottom", 200, 14, "START", (12, 12, 12, 12)),
+        ),
     )
     return text, spec
 
@@ -284,14 +309,23 @@ Setup (nothing else needs to run):
   /tmp/tess-kwin-m3c/check-peek.sh          the file is valid
   /tmp/tess-kwin-m3c/run-peek.sh [OPTION]   run it (Ctrl+C stops); OPTION is a Frame_Join
   /tmp/tess-kwin-m3c/toggle-peek.sh         save the file again with Enter_Delay 400 / 150 (hot reload)
-Variant C: the top strip (34 px, Menu, Tall, ... plus buttons Dock and Left) stays; the Dock is
-a melded Panel at the bottom, 320 x 56, with Peek {{ Size: 24, Enter_Delay: 150, Exit_Delay: 300 }};
-the LEFT strip (three coloured blocks) has Thickness 56 and Peek {{ Size: 6 }}: it rests as a 6 px
-sliver. Tell me what you see, line by line.
+Variant C: the top strip (34 px, Menu, Tall, ... plus buttons Dock, Left, Notes and Tray) stays.
+Four things peek (the Frame is 10 left, 34 top, 12 right, 14 bottom so each handle fits its side):
+  Dock   melded Panel at the bottom centre, 320 x 56:  Peek {{ Size: 24, Trigger: HOVER }}   (3 dots)
+  Notes  melded Panel in the TOP-RIGHT corner, 220 wide x 90 high, Slide_From: RIGHT: it slides out
+         of the right band, its tab is 12 px wide at the right edge:  Peek {{ Size: 12, Trigger: CLICK }}   (chevron)
+  Tray   melded Panel at the bottom left, 200 x 60:  Peek {{ Size: 14, Trigger: DRAG }}   (a bar)
+  Left   the left strip (three coloured blocks), Thickness 56:  Peek {{ Size: 10, Trigger: DRAG }}   (a bar)
+Tell me what you see, line by line.
   [ ] AT REST the Dock is a 24 px TAB hanging up from the bottom band at the centre (320 wide): the
       ring's own colour, the blue border following it, a fillet at each join and rounded far
-      corners, no text in it. The left edge is a thin 6 px sliver of the Frame's colour with the
-      border beside it: no blocks. Say how each looks at 1x (and 1.5x).
+      corners, no text in it, three small dots side by side at the middle of the tab. Notes is a
+      12 px tab on the right band at its top end with a chevron pointing LEFT (into the
+      opening, away from the Frame). Tray is a 14 px tab at the bottom left with a short bar. The
+      left edge is a 10 px sliver with the border beside it and a bar
+      along the edge, no blocks. Say how each icon looks at 1x (and 1.5x): size, colour (the border
+      blue at 60 %), whether it is too small or too faint, and whether any needs a minimum other
+      than 8 px (dots, bar) and 12 px (chevron).
   [ ] RESERVED SPACE: a maximised window stops {c.totals[0]} px from the left, {c.totals[1]} from the top, {c.totals[2]} from the
       right and {c.totals[3]} from the bottom, and does not move at any point below (zones are the same in
       every state).
@@ -308,25 +342,40 @@ sliver. Tell me what you see, line by line.
   [ ] MOVING FROM THE TAB INTO THE BODY (down the tab, over the text) never counts as leaving.
   [ ] CLICKS: a click on the tab does not reach the window below; a click beside the tab, in the
       opening, reaches it; a click in the 40 px above the tab while it is at rest reaches it.
-  [ ] HOVER THE LEFT SLIVER (the thin band at the left edge, below the top strip): after about
-      150 ms the left strip pushes out over the window to 56 px wide, the blocks slide in with
-      it, the opening's rounded corners at its two ends move with its edge. With a MAXIMISED
-      window behind it the window is not resized or moved: the strip is drawn over it. Leave: back
-      after about 300 ms.
-  [ ] KEYBOARD WAY IN, no pointer: the top strip's buttons "Dock" and "Left" Toggle the Panel and the
-      strip by Name (click them, or Tab/Enter to a focused painter with Keyboard: ON_DEMAND): "Dock"
-      brings the body fully out and again back to the TAB (not away); "Left" the strip out and
-      back to the sliver. Say what you found about reaching the buttons from the keyboard alone.
+  [ ] HOVER DOES NOTHING ON THE OTHERS: the pointer resting on the Notes tab, the Tray tab or the
+      left sliver for two seconds opens nothing (only the icon brightens while the pointer is on it).
+  [ ] CLICK (Notes): a click on its tab slides it out of the RIGHT edge (not down from the top): the
+      contour grows leftwards from the right band, the border follows, the chevron moves with the far
+      edge and TURNS during the slide to point RIGHT (towards the Frame) when it is out. A second
+      click on the chevron, at the left edge of the open body, slides it back and the chevron turns
+      LEFT again. A click inside the open body away from the chevron does nothing to it.
+  [ ] DRAG (Tray): press on the tab and drag UP: the body follows the pointer exactly (the far edge
+      under the pointer, fillets and border following, the bar moving with the edge). Release past
+      the half (28 px of 46) and it finishes opening; release before and it goes back. A press that
+      moves under 4 px is a click and toggles. Dragging the open body's bar down closes it the same
+      way. The press may leave the tab while dragging (the pointer is captured).
+  [ ] DRAG (the left strip): press on its sliver and drag RIGHT: the strip's edge follows the pointer
+      over a maximised window (the window is not resized or moved), the blocks slide in with it;
+      release at 50 % of 46 px or more and it stays out, else it goes back. Reserved space does not
+      change at any point.
+  [ ] KEYBOARD WAY IN, no pointer: the top strip's buttons "Dock", "Left", "Notes" and "Tray" Toggle
+      the Panel and the strip by Name (click them, or Tab/Enter to a focused painter with Keyboard:
+      ON_DEMAND): each brings the body fully out and again back to the TAB (not away). Say what you
+      found about reaching the buttons from the keyboard alone (it is not built: D102).
   [ ] Show/Hide leave the pointer alone: with the Dock out by the button and the pointer far away
       it stays out (no hover), a second click sends it back to the tab.
   [ ] The log (DEBUG) shows "Panel Dock on HDMI-A-1 shown (melded, slide)" when it comes out and
       "hiding" when it goes back, and "strip Left_Strip ... (peek, slide)" for the strip.
-  [ ] REDUCED MOTION (Plasma animation speed "instant"): both switch at once, the delays stay.
+  [ ] REDUCED MOTION (Plasma animation speed "instant"): all switch at once, the delays stay; a
+      dragged one still follows the pointer, and a release settles at once; the chevron flips at once.
   [ ] toggle-peek.sh: after it the Dock needs about 400 ms of hover; a Dock that was out stays out
       across the reload; a Frame that is hot-reloaded does not close its painter.
-  [ ] run-peek.sh SMIL / STRUCTURE / PARAM do the same by the same contour. SHADER and CONCAVE log
-      ONE warning that they cannot draw a Panel that peeks and use PARAM; the left strip is drawn
-      by the option itself (say if it looks different).
+  [ ] run-peek.sh SMIL / STRUCTURE / PARAM do the same by the same contour, also while dragging.
+      SHADER and CONCAVE log ONE warning per reason (a Panel that peeks; a drag) and use PARAM for the
+      Panels and for the dragged left strip.
+  [ ] MINIMUMS: edit peek/Shells/Main_Shell.tdl and set the Dock's Size to 7 (no dots), the Notes
+      Size to 11 (no chevron), the Frame's right Thickness to 10 (Notes' chevron goes, its tab stays):
+      each handle disappears and the log (DEBUG) says "has no ... handle". "Handle: NONE" removes one.
   [ ] a Popup from a strip button (Menu on the top strip) opens and closes as before; one that
       hangs off the left strip keeps it out while the Popup is open.
 """

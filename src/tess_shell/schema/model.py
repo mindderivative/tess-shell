@@ -50,6 +50,9 @@ class PeekDef:
     enter_delay: float = 150
     exit_delay: float = 300
     origin: Origin | None = None
+    trigger: str = "HOVER"  # HOVER, CLICK or DRAG: what opens it
+    handle: str = "AUTO"  # AUTO, NONE, DOTS, BAR or CHEVRON: the icon on the tab
+    slide_from: str | None = None  # a corner Panel only: TOP, RIGHT, BOTTOM or LEFT; None is Attach
 
 
 @dataclass(frozen=True, slots=True)

@@ -134,6 +134,11 @@ class ParamJoin:
                 node.animate("opacity", self._opacity if show else 0.0, ms, easing)
         self._timer = self._painter.after(ms, done)
 
+    def seek(self, p: float) -> None:
+        for i, node in enumerate(self.nodes):
+            if node.get("visible") and self._templated[i]:
+                node.set(params={"d": p, "r": p})
+
     def stop(self) -> None:
         if self._timer is not None:
             self._timer.cancel()

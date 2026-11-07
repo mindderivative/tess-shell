@@ -49,9 +49,18 @@ from tess_shell.binder.model import (
 from tess_shell.model.expand import Expanded
 from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, resolve_style
-from tess_shell.schema.model import BarDef, FrameBorder, FrameDef, MonitorDef, PanelDef, ShellDef
+from tess_shell.schema.model import (
+    BarDef,
+    FrameBorder,
+    FrameDef,
+    MonitorDef,
+    PanelDef,
+    PeekDef,
+    ShellDef,
+)
+from tess_shell.surfaces import handle as handles
 from tess_shell.surfaces.bar import Geometry
-from tess_shell.surfaces.join import Join, JoinRun, make_join
+from tess_shell.surfaces.join import Join, JoinRun, Seekable, make_join
 from tess_shell.surfaces.panel import px_size
 from tess_shell.surfaces.ring import MeldSpec, Rect4, Ring, RingSpec, Sides, padded, ring
 
@@ -76,6 +85,9 @@ _EMPTY = "M0,0 L0,0 Z"
 # strips and melded Panels (a strip's blocks are never drawn over by the ring or a morph)
 _Z_MORPH = 1
 _Z_CONTENT = 2
+_Z_HANDLE = 3  # the icon on a tab: above the ring, the join and the content
+DRAG_SLOP = 4.0  # pixels a press may move and still be a click (the Edge Shell's value)
+DRAG_OPENS = 0.5  # a drag released at this fraction of the way or more opens it (the Edge Shell's)
 STRIP_PEEK_MS = 200  # how long a peeking strip takes to come out and go back
 _DIRECTION = {"left": "vertical", "right": "vertical", "top": "horizontal", "bottom": "horizontal"}
 
@@ -210,12 +222,28 @@ def ring_spec(
     )
 
 
+def slide_side(panel: PanelDef) -> tuple[str, str]:
+    """The side a melded Panel grows from and its alignment along that side. A Panel in a corner
+    with ``Peek { Slide_From }`` naming the other edge it touches grows from that edge: the body is
+    the same rectangle in the corner, and slides along its other extent (its ``Length`` becomes the
+    depth). Aligned START or END along ``Attach``, the Panel is against the opening's corner, so
+    the end it is aligned to says which end of the new side it sits at."""
+    side = (panel.attach or "TOP").lower()
+    peek = panel.peek
+    if peek is None or peek.slide_from is None or peek.slide_from.lower() == side:
+        return side, panel.alignment
+    new = peek.slide_from.lower()
+    return new, "START" if side in ("top", "left") else "END"
+
+
 def meld_spec(panel: PanelDef, output: tuple[int, int], look: Look | None) -> MeldSpec:
     """The body a melded Panel asks for: its ``Depth`` (away from the Frame's edge) and ``Length``
-    (along it), the side it grows from (``Attach``), ``Alignment`` along it and the
-    ``Corner_Radius`` of its style. On a top or bottom side the length runs along x."""
-    side = (panel.attach or "TOP").lower()
-    along_x = side in ("top", "bottom")
+    (along it), the side it grows from (``Attach``, or ``Slide_From`` of a corner Panel),
+    ``Alignment`` along it and the ``Corner_Radius`` of its style. On a top or bottom side the
+    length runs along x."""
+    attached = (panel.attach or "TOP").lower()
+    along_x = attached in ("top", "bottom")
+    side, alignment = slide_side(panel)
     depth, length = panel.depth, panel.length
     style = resolve_style(panel.style or {}, look)
     radius = style.get("Corner_Radius")
@@ -227,10 +255,10 @@ def meld_spec(panel: PanelDef, output: tuple[int, int], look: Look | None) -> Me
         a, b, c, d = (float(x.px) if isinstance(x, Length) else 0.0 for x in radius.items)
         corners = (a, b, c, d)
     return MeldSpec(
-        side=(panel.attach or "TOP").lower(),
+        side=side,
         width=px_size(length if along_x else depth, output[0]),
         height=px_size(depth if along_x else length, output[1]),
-        alignment=panel.alignment,
+        alignment=alignment,
         radius=corners,
     )
 
@@ -263,6 +291,8 @@ class PeekPlan:
     full: float
     enter_delay: float
     exit_delay: float
+    trigger: str = "HOVER"  # HOVER, CLICK or DRAG
+    handle: str | None = None  # the icon drawn on the tab: DOTS, BAR or CHEVRON; None draws none
 
 
 @dataclass(slots=True)
@@ -337,6 +367,40 @@ class FramePlan:
         return ring(ring_spec(self.frame, melds, self.paint), size)
 
 
+@dataclass(frozen=True, slots=True)
+class Axis:
+    """Where a peeking body slides, in the painter's pixels: ``(ox, oy)`` is the point on the near
+    edge (the Frame's band edge for a Panel, the screen-side edge of a strip's band) at the middle
+    of the body along it, ``(nx, ny)`` the unit vector into the opening, ``size`` the depth of the
+    tab or sliver and ``full`` the depth of the whole."""
+
+    side: str
+    ox: float
+    oy: float
+    nx: float
+    ny: float
+    size: float
+    full: float
+
+    def depth_of(self, x: float, y: float) -> float:
+        """How far the painter's point is from the near edge, along the slide."""
+        return (x - self.ox) * self.nx + (y - self.oy) * self.ny
+
+    def point(self, depth: float) -> tuple[float, float]:
+        return self.ox + self.nx * depth, self.oy + self.ny * depth
+
+
+@dataclass(slots=True)
+class Drag:
+    """A press on a peek whose ``Trigger`` is DRAG, until the button goes up."""
+
+    start: float  # the depth of the pointer at the press
+    p0: float  # how far out the body was then: 0 at its tab, 1 out
+    p: float = 0.0  # how far out it follows the pointer now
+    moved: bool = False  # the pointer has gone past DRAG_SLOP
+    began: bool = False  # the join is drawing it
+
+
 @dataclass(slots=True)
 class HostState:
     plan: HostPlan
@@ -355,6 +419,9 @@ class HostState:
     inside: bool = False
     enter_timer: Any = None
     exit_timer: Any = None
+    handle: handles.Handle | None = None  # the icon on the tab (Peek { Handle })
+    axis: Axis | None = None  # where it slides, as last placed
+    drag: Drag | None = None
 
 
 @dataclass(slots=True)
@@ -374,6 +441,8 @@ class FrameState:
     shape: Ring | None = None  # the ring as last drawn, without the melded bodies that animate
     full: Ring | None = None  # the ring with every melded Panel that is shown or on its way
     keyboard: str = "none"
+    # the whole bodies of the melded Panels that peek, for the plan and size they were made for
+    full_rects: tuple[Any, ...] = ()
 
 
 class Frames:
@@ -492,13 +561,33 @@ class Frames:
                                 key,
                                 panel.name,
                                 "meld",
-                                (panel.attach or "TOP").lower(),
+                                slide_side(panel)[0],
                                 planned,
                                 peek=peeks.get(panel.name),
                             )
                         )
                     plans.append(plan)
         return plans
+
+    @staticmethod
+    def _handle_kind(
+        frame: FrameDef, name: str, peek: PeekDef, side: str, output: str
+    ) -> str | None:
+        """The handle a peek draws: what ``Handle`` and ``Trigger`` say, or ``None`` when it is
+        ``NONE`` or does not fit (the tab or the side is thinner than the handle's minimum: one
+        DEBUG line, not an error)."""
+        kind = handles.resolve(peek.handle, peek.trigger)
+        if kind is None:
+            return None
+        thickness = _thickness(frame)[SIDES.index(side)]
+        if not handles.fits(kind, peek.size, thickness):
+            logger.debug(
+                f"Frame {frame.name} on {output}: {name} has no {kind.lower()} handle: its tab "
+                f"({peek.size:g} px) or the {side} side ({thickness:g} px) is thinner than "
+                f"{handles.MIN_THICKNESS[kind]:g} px"
+            )
+            return None
+        return kind
 
     @staticmethod
     def _peeks(
@@ -521,7 +610,12 @@ class Frames:
                 )
                 continue
             peeks[panel.name] = PeekPlan(
-                peek.size, depth[panel.name], peek.enter_delay, peek.exit_delay
+                peek.size,
+                depth[panel.name],
+                peek.enter_delay,
+                peek.exit_delay,
+                peek.trigger,
+                Frames._handle_kind(frame, panel.name, peek, slide_side(panel)[0], output),
             )
         bodies: list[tuple[str, MeldSpec]] = []
         for side in SIDES:
@@ -534,10 +628,12 @@ class Frames:
                 strip_thickness(frame, side),
                 edge.peek.enter_delay,
                 edge.peek.exit_delay,
+                edge.peek.trigger,
+                Frames._handle_kind(frame, name, edge.peek, side, output),
             )
             bodies.append((name, strip_body(frame, side)))
             for panel in frame.melds:
-                if (panel.attach or "TOP").lower() == side:
+                if slide_side(panel)[0] == side:
                     logger.warning(
                         f"{panel.origin}: Panel {panel.name} melds into the {side} side, which "
                         f"has the peeking strip {name}: the Panel is covered while the strip "
@@ -977,6 +1073,8 @@ class Frames:
             host.clip.set(visible=False)
             if host.join is not None:
                 host.join.stop()
+            host.axis = None
+            self._place_handle(st, host)
             return
         (x, y, w, h), (ix, iy, iw, ih), host.away = geometry
         name = host.plan.name
@@ -986,10 +1084,100 @@ class Frames:
         host.mover.set(width=w, height=h)
         host.container.set(left=ix, top=iy, width=iw, height=ih, visible=not resting)
         surface.hidden = host.anim == "out" or resting
+        host.axis = self._axis(st, host)
+        self._place_handle(st, host)
+
+    # -- the handle: the icon on a tab or a sliver ----------------------------------------------
+
+    def _full_rect(self, st: FrameState, name: str) -> Rect4 | None:
+        """The whole body of the melded Panel ``name`` (not its tab), from the ring with every
+        other body left out; kept for the plan and size it was made for."""
+        if not st.full_rects or st.full_rects[0] is not st.plan or st.full_rects[1] != st.size:
+            st.full_rects = (st.plan, st.size, {})
+        cache: dict[str, Rect4 | None] = st.full_rects[2]
+        if name not in cache:
+            alone = st.plan.ring_for(
+                st.size, frozenset(n for n, _ in st.plan.melds if n != name), frozenset()
+            )
+            cache[name] = alone.bodies[0] if alone.bodies else None
+        return cache[name]
+
+    def _axis(self, st: FrameState, host: HostState) -> Axis | None:
+        """The slide of a peeking host: from its near edge into the opening, ``Size`` px at rest and
+        the whole depth out."""
+        hp = host.plan
+        peek = hp.peek
+        if peek is None or st.shape is None:
+            return None
+        side = hp.side
+        if hp.kind == "strip":
+            r = st.shape.bands[SIDES.index(side)]
+            full = peek.full
+        else:
+            body = self._full_rect(st, hp.name)
+            if body is None:
+                return None
+            r = body
+            full = body.height if side in ("top", "bottom") else body.width
+        edge = {"top": r.y0, "bottom": r.y1, "left": r.x0, "right": r.x1}[side]
+        cx, cy = (r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2
+        ox, oy = (cx, edge) if side in ("top", "bottom") else (edge, cy)
+        nx, ny = handles.TOWARD[side]
+        return Axis(side, ox, oy, nx, ny, peek.size, full)
+
+    def _handle_colour(self, st: FrameState) -> RGBA:
+        """The handle's colour: the Frame's inner border, else its outer, else a light or dark
+        that shows on the fill."""
+        paint = st.plan.paint
+        for colour in (paint.inner, paint.outer):
+            if colour is not None and colour[3] > 0:
+                return colour
+        fill = paint.fill
+        light = fill is None or (0.299 * fill[0] + 0.587 * fill[1] + 0.114 * fill[2]) < 140
+        return (235, 235, 235, 255) if light else (30, 30, 30, 255)
+
+    def _rest_state(self, st: FrameState, host: HostState) -> str:
+        """``tab`` (a Panel's tab or a strip's sliver), ``hidden`` (a Panel with nothing showing)
+        or ``out``."""
+        name = host.plan.name
+        if name in st.tab_melds or (host.plan.kind == "strip" and name in st.hidden_melds):
+            return "tab"
+        return "hidden" if name in st.hidden_melds else "out"
+
+    def _place_handle(self, st: FrameState, host: HostState) -> None:
+        """Make, change or remove the host's handle and put it where the state says: at the middle
+        of the tab, or of the far strip of the body when it is out. While it slides the holder is
+        at the tab and its ``translate`` is animated (see ``_run``)."""
+        peek = host.plan.peek
+        want = peek.handle if peek is not None else None
+        have = host.handle
+        if have is not None and (want is None or (have.kind, have.side) != (want, host.plan.side)):
+            have.destroy()
+            host.handle = have = None
+        if want is None or st.painter is None:
+            return
+        if have is None:
+            have = host.handle = handles.make(
+                st.painter, want, host.plan.side, _Z_HANDLE, self._handle_colour(st)
+            )
+        axis = host.axis
+        state = self._rest_state(st, host)
+        if axis is None or (state == "hidden" and host.anim is None):
+            have.holder.set(visible=False)
+            return
+        out = state == "out" and host.anim is None
+        fade = host.anim is not None and host.kind == "FADE"
+        depth = axis.size / 2 + (axis.full - axis.size) * (1.0 if out or fade else 0.0)
+        have.place(*axis.point(depth))
+        have.holder.set(visible=True)
+        have.paint(self._handle_colour(st))
+        if host.anim is None or fade:
+            have.seek(1.0 if out or fade else 0.0, 0.0, 0.0)
 
     def _snap(self, host: HostState) -> None:
         """Stop an animation where it is and put the node back to rest."""
         host.anim = None
+        host.drag = None
         host.surface.generation += 1
         self._cancel_hover(host)
         if host.mover is not None:
@@ -1015,7 +1203,10 @@ class Frames:
         """``Hide_After`` ran out. With the pointer on a peeking Panel it waits: leaving brings
         the Panel back after ``Exit_Delay`` anyway."""
         host.surface.timer = None
-        if host.inside and host.plan.peek is not None:
+        peek = host.plan.peek
+        if host.inside and peek is not None:
+            if peek.trigger != "HOVER":
+                self._timer(host, st)  # leaving does not send it back: look again later
             return
         self._meld_to(st, host, False)
 
@@ -1047,6 +1238,10 @@ class Frames:
         if peek is None or st.painter is None:
             return
         host.inside = inside
+        if host.handle is not None:
+            host.handle.hover(inside)  # the icon brightens while the pointer is on the tab
+        if peek.trigger != "HOVER":
+            return  # a click or a drag opens it: the pointer being there does nothing
         self._cancel_hover(host)
         out = self._is_out(st, host)
         if inside and not out:
@@ -1079,6 +1274,159 @@ class Frames:
             host.exit_timer = self._after(st, peek.exit_delay, lambda: self._exit(st, host))
             return
         self._meld_to(st, host, False)
+
+    # -- peek: a click, or a press and a drag ----------------------------------------------------
+    #
+    # ``Trigger: CLICK``: a click on the tab (or on the far strip of the body when it is out, where
+    # the handle is) toggles it. ``Trigger: DRAG``: a press there captures the pointer; once it has
+    # moved ``DRAG_SLOP`` px the join starts drawing the body and every ``pointer_move`` puts it at
+    # the pointer's progress along the slide (``Join.seek``, the contour, the content and the
+    # handle together); the button going up finishes the move to the nearer end, from where it is,
+    # on tre's clock. A press that does not move is a click. The pointer events are input, not
+    # per-frame work: nothing runs between them.
+
+    def _in_zone(self, st: FrameState, host: HostState, x: float, y: float) -> bool:
+        """Whether a press at the painter's point grabs the peek: anywhere on the tab at rest, the
+        far strip of the body (``Size`` px, where the handle is) when it is out, either while it
+        moves."""
+        axis, peek = host.axis, host.plan.peek
+        if axis is None or peek is None:
+            return False
+        state = self._rest_state(st, host)
+        if state == "hidden" and host.anim is None:
+            return False
+        if state == "tab" and host.anim is None:
+            return True
+        depth = axis.depth_of(x, y)
+        far = depth >= axis.full - axis.size
+        return far if host.anim is None else (far or depth <= axis.size)
+
+    @staticmethod
+    def _primary(event: Any) -> bool:
+        return getattr(event, "button", None) in (None, "primary")
+
+    def _click(self, st: FrameState, host: HostState, event: Any) -> None:
+        peek = host.plan.peek
+        if peek is None or peek.trigger != "CLICK" or not self._primary(event):
+            return
+        if event.window_x is None or not self._in_zone(st, host, event.window_x, event.window_y):
+            return
+        self._meld_to(st, host, not self._is_out(st, host))
+
+    def _press(self, st: FrameState, host: HostState, event: Any) -> None:
+        peek, axis = host.plan.peek, host.axis
+        if peek is None or peek.trigger != "DRAG" or axis is None or not self._primary(event):
+            return
+        if host.anim is not None or event.window_x is None:
+            return  # a body that moves is not grabbed; let it arrive
+        if not self._in_zone(st, host, event.window_x, event.window_y):
+            return
+        if host.clip is not None:
+            host.clip.capture_pointer()
+        out = self._rest_state(st, host) == "out"
+        host.drag = Drag(axis.depth_of(event.window_x, event.window_y), 1.0 if out else 0.0)
+        host.drag.p = host.drag.p0
+
+    def _move(self, st: FrameState, host: HostState, event: Any) -> None:
+        drag, axis = host.drag, host.axis
+        if drag is None or axis is None or event.window_x is None:
+            return
+        delta = axis.depth_of(event.window_x, event.window_y) - drag.start
+        if not drag.moved and abs(delta) < DRAG_SLOP:
+            return
+        drag.moved = True
+        if not drag.began:
+            if not self._drag_begin(st, host):
+                host.drag = None
+                return
+        span = max(axis.full - axis.size, 1.0)
+        drag.p = min(max(drag.p0 + delta / span, 0.0), 1.0)
+        self._seek(host, drag.p)
+
+    def _release(self, st: FrameState, host: HostState, event: Any) -> None:
+        drag, host.drag = host.drag, None
+        if drag is None or not self._primary(event):
+            return
+        if not drag.moved or not drag.began:
+            self._meld_to(st, host, drag.p0 == 0.0)  # it did not move: a click toggles it
+            return
+        self._drag_end(st, host, drag)
+
+    def _seek(self, host: HostState, p: float) -> None:
+        """Put the body ``p`` of the way out at once: the contour, the content and the handle."""
+        axis = host.axis
+        assert host.mover is not None and axis is not None
+        if isinstance(host.join, Seekable):
+            host.join.seek(p)
+        prop, away = host.away
+        host.mover.set(**{prop: away * (1.0 - p)})
+        if host.handle is not None:
+            far = axis.full - axis.size
+            host.handle.seek(p, axis.nx * far * p, axis.ny * far * p)
+
+    def _drag_begin(self, st: FrameState, host: HostState) -> bool:
+        """The first move of a drag: the join starts drawing the body, from its tab (it opens) or
+        from fully out (it is pulled back). ``False`` when it cannot be drawn."""
+        drag, surface = host.drag, host.surface
+        assert drag is not None and host.join is not None
+        if not isinstance(host.join, Seekable):
+            logger.error(f"{host.plan.name}: the {self._m.join_mode} join cannot follow a drag")
+            return False
+        name, show = host.plan.name, drag.p0 == 0.0
+        tab = self._rest_is_tab(st, name)
+        if surface.timer is not None:
+            surface.timer.cancel()
+            surface.timer = None
+        self._cancel_hover(host)
+        surface.generation += 1
+        if show:
+            st.hidden_melds.discard(name)
+            st.tab_melds.discard(name)
+            surface.hidden = False
+        else:
+            surface.hidden = True
+            self._m.popups.parent_closed(surface)
+        host.anim, host.kind = ("in" if show else "out"), "SLIDE"
+        self._draw(st)
+        what = "Panel" if host.plan.kind == "meld" else "strip"
+        if not self._begin_motion(st, host, "SLIDE", show, tab, what):
+            host.anim = None
+            self._set_rest(st, name, show)  # back where it was
+            self._draw(st)
+            return False
+        drag.began = True
+        return True
+
+    def _drag_end(self, st: FrameState, host: HostState, drag: Drag) -> None:
+        """The button went up: finish at the nearer end (``DRAG_OPENS``), from where it is."""
+        surface, m, name = host.surface, self._m, host.plan.name
+        final = drag.p >= DRAG_OPENS
+        changed = final != (drag.p0 == 1.0)  # it ends somewhere else than it started
+        surface.generation += 1
+        gen = surface.generation
+        panel = surface.planned.bar if surface.planned else None
+        ms = int(panel.duration) if isinstance(panel, PanelDef) else STRIP_PEEK_MS
+        if self._reduced() or ms <= 0:
+            self._snap(host)
+            self._set_rest(st, name, not final)
+            surface.hidden = not final
+            self._draw(st)
+            if changed:
+                m._fire(surface, "On_Open" if final else "On_Close")
+            if final:
+                self._timer(host, st)
+            else:
+                m.popups.parent_closed(surface)
+            if changed:
+                m._fire(surface, "On_Visible" if final else "On_Hidden")
+            return
+        if changed:
+            m._fire(surface, "On_Open" if final else "On_Close")
+            m._fire(surface, "On_Anim_Start")
+        surface.hidden = not final
+        remaining = abs((1.0 if final else 0.0) - drag.p)
+        easing = (0.0, 0.0, 0.2, 1.0) if final else (0.4, 0.0, 1.0, 1.0)
+        self._run(st, host, final, max(int(ms * remaining), 1), easing, gen, changed)
 
     def _join_run(
         self, st: FrameState, host: HostState, kind: str, show: bool, tab: bool
@@ -1194,33 +1542,66 @@ class Frames:
             m.popups.parent_closed(surface)
         host.anim, host.kind = ("in" if show else "out"), kind
         self._draw(st)  # the ring nodes are drawn without the body; the join draws it
-        assert host.mover is not None and host.join is not None
-        if not turning:
-            run = self._join_run(st, host, kind, show, tab)
-            drawn = run is not None and host.join.begin(run)
-            if run is not None and not drawn:
-                logger.warning(
-                    f"{what} {name} on {st.plan.output.name}: the {self._m.join_mode} join cannot"
-                    " draw this body, so it is shown or hidden at once"
-                )
-            if not drawn:  # not placed or not drawable: no animation
-                host.anim = None
-                self._set_rest(st, name, not show)
-                self._draw(st)
-                return
-            prop, away = host.away
-            host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
-            if kind == "SLIDE":
-                host.mover.set(**{prop: away if show else 0.0})
-            else:
-                host.mover.set(opacity=0.0 if show else 1.0)
+        if not turning and not self._begin_motion(st, host, kind, show, tab, what):
+            self._set_rest(st, name, not show)  # not placed or not drawable: no animation
+            self._draw(st)
+            return
         easing = (0.0, 0.0, 0.2, 1.0) if show else (0.4, 0.0, 1.0, 1.0)
         m._fire(surface, "On_Anim_Start")
+        self._run(st, host, show, ms, easing, gen, True)
+
+    def _begin_motion(
+        self, st: FrameState, host: HostState, kind: str, show: bool, tab: bool, what: str
+    ) -> bool:
+        """Draw the start of a slide or fade: the join at its start state (the tab or nothing for
+        a show, fully out for a hide), the content and the handle where they begin. ``False``
+        (and the animation cleared) when the join cannot draw this body."""
+        assert host.mover is not None and host.join is not None
+        run = self._join_run(st, host, kind, show, tab)
+        drawn = run is not None and host.join.begin(run)
+        if run is not None and not drawn:
+            logger.warning(
+                f"{what} {host.plan.name} on {st.plan.output.name}: the {self._m.join_mode} join"
+                " cannot draw this body, so it is shown or hidden at once"
+            )
+        if not drawn:
+            host.anim = None
+            return False
+        prop, away = host.away
+        host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
+        if kind == "SLIDE":
+            host.mover.set(**{prop: away if show else 0.0})
+            axis = host.axis
+            if host.handle is not None and axis is not None:
+                far = axis.full - axis.size
+                p = 0.0 if show else 1.0
+                host.handle.seek(p, axis.nx * far * p, axis.ny * far * p)
+        else:
+            host.mover.set(opacity=0.0 if show else 1.0)
+        return True
+
+    def _run(
+        self,
+        st: FrameState,
+        host: HostState,
+        show: bool,
+        ms: int,
+        easing: tuple[float, float, float, float],
+        gen: int,
+        events: bool,
+    ) -> None:
+        """Animate a body that is drawn by its join to its end (out for ``show``, else back to its
+        rest) from where it is, and settle it there: the ring takes the body, the join stops,
+        ``Hide_After`` starts and, with ``events``, ``On_Anim_End`` and ``On_Visible`` or
+        ``On_Hidden`` fire."""
+        surface, m, name = host.surface, self._m, host.plan.name
+        assert host.mover is not None and host.join is not None
 
         def done() -> None:
             if surface.generation != gen or host.anim is None:
                 return
-            m._fire(surface, "On_Anim_End")
+            if events:
+                m._fire(surface, "On_Anim_End")
             host.anim = None
             assert host.mover is not None and host.join is not None
             host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
@@ -1230,14 +1611,18 @@ class Frames:
             host.join.stop()
             if show:
                 self._timer(host, st)
-                m._fire(surface, "On_Visible")
-            else:
-                m._fire(surface, "On_Hidden")
+            if events:
+                m._fire(surface, "On_Visible" if show else "On_Hidden")
 
         prop, away = host.away
         host.join.play(show, ms, easing, done)
-        if kind == "SLIDE":
+        if host.kind == "SLIDE":
             host.mover.animate(prop, 0.0 if show else away, ms, easing)
+            axis = host.axis
+            if host.handle is not None and axis is not None:
+                far = axis.full - axis.size
+                p = 1.0 if show else 0.0
+                host.handle.animate(p, axis.nx * far * p, axis.ny * far * p, ms, easing)
         else:
             host.mover.animate("opacity", 1.0 if show else 0.0, ms, easing)
 
@@ -1246,15 +1631,22 @@ class Frames:
         the shader and the boxes (they draw a body from nothing, over the ring) cannot, so it
         takes PARAM; the warning is given once per option."""
         mode = self._m.join_mode
-        if hp.kind == "meld" and hp.peek is not None and mode in ("SHADER", "CONCAVE"):
-            if mode not in self._warned:
-                self._warned.add(mode)
-                logger.warning(
-                    f"Debug {{ Frame_Join: {mode} }} cannot draw a Panel that peeks (a body that "
-                    "starts as deep as its tab, not from nothing): PARAM draws it"
-                )
-            return "PARAM"
-        return mode
+        if mode not in ("SHADER", "CONCAVE") or hp.peek is None:
+            return mode
+        if hp.kind == "meld":
+            why = (
+                "cannot draw a Panel that peeks (a body that starts as deep as its tab, not from "
+                "nothing)"
+            )
+        elif hp.peek.trigger == "DRAG":
+            why = "cannot follow a drag (its pieces are moved by animations, not set)"
+        else:
+            return mode
+        key = f"{mode} {why}"
+        if key not in self._warned:
+            self._warned.add(key)
+            logger.warning(f"Debug {{ Frame_Join: {mode} }} {why}: PARAM draws it")
+        return "PARAM"
 
     def _drop_hosts(self, st: FrameState) -> None:
         for host in list(st.hosts.values()):
@@ -1264,7 +1656,11 @@ class Frames:
         st.hosts.pop(host.plan.key, None)
         host.anim = None
         host.surface.generation += 1  # an animation that was running ends silent
+        host.drag = None
         self._cancel_hover(host)
+        if host.handle is not None:
+            host.handle.destroy()
+            host.handle = None
         if host.surface.timer is not None:
             host.surface.timer.cancel()
             host.surface.timer = None
@@ -1360,6 +1756,10 @@ class Frames:
         if clip is not None:  # a peek may come with a reload: ``_hover`` looks at the plan
             clip.on("pointer_enter", lambda: self._hover(st, host, True))
             clip.on("pointer_leave", lambda: self._hover(st, host, False))
+            clip.on("pointer_down", lambda e: self._press(st, host, e))
+            clip.on("pointer_move", lambda e: self._move(st, host, e))
+            clip.on("pointer_up", lambda e: self._release(st, host, e))
+            clip.on("click", lambda e: self._click(st, host, e))
         errors = list(planned.expanded.errors)
         if not errors:
             try:

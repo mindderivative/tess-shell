@@ -268,6 +268,23 @@ PANEL_MELD_IGNORED_STYLE = (
     "Border_Color",
 )
 PANEL_NOT_BUILT_WARNING = ("Margin", "Padding", "Class")
+# ``Peek { Size, Enter_Delay, Exit_Delay, Trigger, Handle, Slide_From }`` (Frame > Peek Triggers and
+# Handles): what opens a peek, the icon on its tab and, for a Panel in a Frame corner, its edge
+PEEK_TRIGGERS = ("HOVER", "CLICK", "DRAG")
+PEEK_HANDLES = ("AUTO", "NONE", "DOTS", "BAR", "CHEVRON")
+PEEK_EDGES = ("TOP", "RIGHT", "BOTTOM", "LEFT")
+# the second edge a melded Panel touches in a corner: (``Attach``, ``Alignment``) -> edge. A Panel
+# aligned CENTER touches one edge only
+PEEK_CORNER_EDGE = {
+    ("TOP", "START"): "LEFT",
+    ("TOP", "END"): "RIGHT",
+    ("BOTTOM", "START"): "LEFT",
+    ("BOTTOM", "END"): "RIGHT",
+    ("LEFT", "START"): "TOP",
+    ("LEFT", "END"): "BOTTOM",
+    ("RIGHT", "START"): "TOP",
+    ("RIGHT", "END"): "BOTTOM",
+}
 # ``Animation { Type, Duration }`` (Panel > Configuration): how a Panel comes and goes
 PANEL_ANIMATION_TYPES = ("SLIDE", "FADE", "NONE")
 # the events a Panel raises itself (Events and Actions): before and after its show and hide

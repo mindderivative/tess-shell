@@ -122,3 +122,128 @@ def test_an_unknown_key_in_a_strip_lists_name_and_peek() -> None:
     body = with_frame(f"Frame {{ Name: F, Thickness: 6, Edges {{ Top {{ Peak: 6, {KID} }} }} }}")
     (f,) = problems_of(body)
     assert "Peak" in f.message and "Peek" in f.hint
+
+
+# -- Trigger, Handle, Slide_From ------------------------------------------------------------------
+
+
+def corner_panel(peek: str, attach: str = "TOP", alignment: str = "END") -> str:
+    return (
+        f"Panel {{ Name: Tab, Meld: true, Attach_To: F, Attach: {attach}, "
+        f"Alignment: {alignment}, Length: 120, Depth: 40, {peek} }}"
+    )
+
+
+def read_corner(peek: str, attach: str = "TOP", alignment: str = "END") -> PanelDef:
+    body = with_frame("Frame { Name: F, Thickness: 12 }\n" + corner_panel(peek, attach, alignment))
+    shell, findings = read(body)
+    assert shell is not None and [f for f in findings if f.severity == "error"] == [], findings
+    return shell.monitors[0].frames[0].melds[0]
+
+
+def test_trigger_handle_and_slide_from_default_to_hover_auto_and_the_attached_edge() -> None:
+    peek = read_corner("Peek { }").peek
+    assert peek is not None
+    assert (peek.trigger, peek.handle, peek.slide_from) == ("HOVER", "AUTO", None)
+    peek = read_corner("Peek { Trigger: DRAG, Handle: CHEVRON, Slide_From: RIGHT, Size: 10 }").peek
+    assert peek is not None
+    assert (peek.trigger, peek.handle, peek.slide_from) == ("DRAG", "CHEVRON", "RIGHT")
+
+
+@pytest.mark.parametrize("trigger", ["HOVER", "CLICK", "DRAG"])
+@pytest.mark.parametrize("handle", ["AUTO", "NONE", "DOTS", "BAR", "CHEVRON"])
+def test_every_trigger_and_handle_word_is_taken(trigger: str, handle: str) -> None:
+    peek = read_corner(f"Peek {{ Trigger: {trigger}, Handle: {handle} }}").peek
+    assert peek is not None and (peek.trigger, peek.handle) == (trigger, handle)
+
+
+def test_a_list_of_triggers_is_a_clear_not_built_error_with_the_one_value_form() -> None:
+    body = "Frame { Name: F, Thickness: 12 }\n" + corner_panel("Peek { Trigger: [HOVER, DRAG] }")
+    (f,) = problems(body)
+    assert f.rule == "not-built" and "list" in f.message and "Trigger: HOVER" in f.hint
+
+
+def test_a_bad_trigger_or_handle_word_names_the_choices() -> None:
+    for written in ("Trigger: TAP", "Handle: ARROW"):
+        (f,) = problems(
+            "Frame { Name: F, Thickness: 12 }\n" + corner_panel(f"Peek {{ {written} }}")
+        )
+        assert f.rule == "bad-value" and ("HOVER" in f.message or "DOTS" in f.message)
+
+
+@pytest.mark.parametrize(
+    ("attach", "alignment", "ok", "bad"),
+    [
+        ("TOP", "END", ("TOP", "RIGHT"), ("LEFT", "BOTTOM")),
+        ("TOP", "START", ("TOP", "LEFT"), ("RIGHT", "BOTTOM")),
+        ("BOTTOM", "END", ("BOTTOM", "RIGHT"), ("LEFT", "TOP")),
+        ("LEFT", "START", ("LEFT", "TOP"), ("RIGHT", "BOTTOM")),
+        ("RIGHT", "END", ("RIGHT", "BOTTOM"), ("LEFT", "TOP")),
+    ],
+)
+def test_slide_from_is_the_attached_edge_or_the_other_edge_of_the_corner(
+    attach: str, alignment: str, ok: tuple[str, ...], bad: tuple[str, ...]
+) -> None:
+    for edge in ok:
+        assert read_corner(f"Peek {{ Slide_From: {edge} }}", attach, alignment).peek is not None
+    for edge in bad:
+        body = "Frame { Name: F, Thickness: 12 }\n" + corner_panel(
+            f"Peek {{ Slide_From: {edge} }}", attach, alignment
+        )
+        (f,) = problems(body)
+        assert f.rule == "peek-slide-from" and edge in f.message
+
+
+def test_a_centred_panel_touches_one_edge_so_slide_from_must_be_it() -> None:
+    assert read_corner("Peek { Slide_From: TOP }", "TOP", "CENTER").peek is not None
+    body = "Frame { Name: F, Thickness: 12 }\n" + corner_panel(
+        "Peek { Slide_From: RIGHT }", "TOP", "CENTER"
+    )
+    (f,) = problems(body)
+    assert f.rule == "peek-slide-from" and "CENTER" in f.hint
+
+
+def test_with_slide_from_the_size_is_checked_against_the_extent_it_slides_along() -> None:
+    assert read_corner("Peek { Size: 60, Slide_From: RIGHT }").peek is not None  # Length 120
+    body = "Frame { Name: F, Thickness: 12 }\n" + corner_panel("Peek { Size: 60 }")
+    assert "peek-size" in {f.rule for f in problems(body)}  # the Depth is 40
+    body = "Frame { Name: F, Thickness: 12 }\n" + corner_panel(
+        "Peek { Size: 130, Slide_From: RIGHT }"
+    )
+    (f,) = problems(body)
+    assert f.rule == "peek-size" and "Length" in f.message
+
+
+def test_a_strip_has_no_slide_from_it_runs_the_whole_side() -> None:
+    body = with_frame(
+        f"Frame {{ Name: F, Thickness: 6, Edges {{ Top {{ Thickness: 34, {KID}, "
+        "Peek { Slide_From: TOP } } } }"
+    )
+    (f,) = problems_of(body)
+    assert f.rule == "peek-slide-from" and "strip" in f.message
+    edge = strip(f"Thickness: 34, {KID}, Peek {{ Trigger: DRAG, Handle: BAR }}")
+    assert edge.peek is not None and (edge.peek.trigger, edge.peek.handle) == ("DRAG", "BAR")
+
+
+def test_enter_and_exit_delay_with_click_or_drag_are_a_warning_not_an_error() -> None:
+    def written(trigger: str) -> str:
+        return with_frame(
+            "Frame { Name: F, Thickness: 12 }\n"
+            + corner_panel(f"Peek {{ Trigger: {trigger}, Exit_Delay: 100 }}")
+        )
+
+    for trigger in ("CLICK", "DRAG"):
+        shell, findings = read(written(trigger))
+        assert shell is not None
+        assert any(f.severity == "warning" and "Exit_Delay" in f.message for f in findings)
+    assert not [f for f in read(written("HOVER"))[1] if f.severity == "warning"]
+
+
+def test_size_is_not_a_hover_delay_and_never_warns() -> None:
+    for trigger in ("CLICK", "DRAG"):
+        body = with_frame(
+            "Frame { Name: F, Thickness: 12 }\n"
+            + corner_panel(f"Peek {{ Trigger: {trigger}, Size: 10 }}")
+        )
+        shell, findings = read(body)
+        assert shell is not None and not [f for f in findings if f.severity == "warning"]

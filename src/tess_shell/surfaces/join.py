@@ -20,9 +20,10 @@ At the end of the animation the Frame draws the ring with the body in it again a
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, runtime_checkable
 
 from tess_shell.surfaces.ring import Ring
 
@@ -88,6 +89,32 @@ class Join(Protocol):
     def destroy(self) -> None:
         """Remove the join's nodes."""
         ...
+
+
+@runtime_checkable
+class Seekable(Protocol):
+    """A join that can be put at any progress at once, which a drag needs (``p`` from 0, the body
+    at its start, to 1, fully out): PARAM, SMIL and STRUCTURE. SHADER and CONCAVE cannot (their
+    pieces are moved by animations, not set), so a Panel that is dragged takes PARAM."""
+
+    def seek(self, p: float) -> None:
+        """Draw the body ``p`` of the way from its start to fully out, at once."""
+        ...
+
+
+_NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+
+
+def blend(a: str, b: str, t: float) -> str:
+    """Path data between ``a`` and ``b`` (the same commands): every number ``t`` of the way."""
+    numbers = iter(_NUMBER.findall(b))
+
+    def mix(match: re.Match[str]) -> str:
+        v0, v1 = float(match.group()), float(next(numbers))
+        text = f"{v0 + (v1 - v0) * t:.3f}".rstrip("0").rstrip(".")
+        return text if text not in ("", "-0") else "0"
+
+    return _NUMBER.sub(mix, a)
 
 
 def make_join(name: str, painter: LayerWindow, z_index: int) -> Join:
@@ -189,6 +216,10 @@ class SmilJoin:
             self.svg.animate("svg_time", 1.0 if show else 0.0, ms, easing, done)
         else:
             self.svg.animate("opacity", self._opacity if show else 0.0, ms, easing, done)
+
+    def seek(self, p: float) -> None:
+        if self._kind == "SLIDE":
+            self.svg.set(svg_time=p)
 
     def stop(self) -> None:
         self.svg.set(visible=False, opacity=1.0)
