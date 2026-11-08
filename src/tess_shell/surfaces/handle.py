@@ -29,15 +29,18 @@ Easing = tuple[float, float, float, float]
 # the thinnest tab (and side) that draws each handle, in pixels (maintainer, 2026-11-07, as
 # recommended; to be tuned on KWin)
 MIN_THICKNESS = {"DOTS": 8.0, "BAR": 8.0, "CHEVRON": 8.0}
-DOT = 3.0  # a dot's diameter and the gap between two (the Edge Shell's 3 px dots with 3 px gaps)
-DOT_GAP = 3.0
-BAR_LENGTH = 24.0  # along the edge
-BAR_THICKNESS = 3.0
-# the maintainer's chevron (tess_shell_chevron.svg, 2026-11-08): a filled triangle 22 px wide and
-# 6.73 px high, its Inkscape transform flattened: base (1.0, 7.37)-(23.0, 7.37), apex (12.0, 0.63)
+# The maintainer's three icons (tess_shell_dots.svg, _bar.svg, _chevron.svg, made for Tesserae
+# Shell;
+# flattened copies with the same numbers ship in ``shipped/Handles``, and a test keeps the two
+# equal). Each is drawn in its own box, in pixels: the holder is that box.
+ICON_BOX = {"DOTS": (24.0, 8.0), "BAR": (22.0, 4.0), "CHEVRON": (24.0, 8.0)}  # (along, across)
+DOT_RADIUS = 3.0  # three filled circles of diameter 6, centres 8 px apart along the box's middle
+DOT_CENTRES = (4.0, 12.0, 20.0)
+BAR_RX, BAR_RY = 1.5, 1.0  # the bar's elliptical corners (Inkscape squashed its circular arcs)
+# the chevron: a filled triangle 22 px wide and 6.73 px high, its Inkscape transform flattened:
+# base (1.0, 7.37)-(23.0, 7.37), apex (12.0, 0.63)
 CHEVRON_HALF = 11.0  # half the chevron's width along the edge
 CHEVRON_RISE = 3.365  # half its height: the apex is this far from the midline, away or towards
-PAD = 2.0  # room round the drawing inside the holder, so its anti-aliased edge is not clipped
 REST_OPACITY = 0.6  # a handle is dimmer than its colour until the pointer is on the tab
 # the direction into the opening from each side, in the painter's pixels
 TOWARD = {"top": (0.0, 1.0), "bottom": (0.0, -1.0), "left": (1.0, 0.0), "right": (-1.0, 0.0)}
@@ -90,15 +93,30 @@ def chevron_data(side: str, width: float, height: float) -> str:
 
 
 def size_of(kind: str, side: str) -> tuple[float, float]:
-    """The holder's width and height for ``kind`` on ``side`` (the drawing and ``PAD`` round it)."""
-    if kind == "DOTS":
-        length, thick = 3 * DOT + 2 * DOT_GAP, DOT
-    elif kind == "BAR":
-        length, thick = BAR_LENGTH, BAR_THICKNESS
-    else:
-        length, thick = 2 * CHEVRON_HALF, 2 * CHEVRON_RISE
-    length, thick = length + 2 * PAD, thick + 2 * PAD
+    """The holder's width and height for ``kind`` on ``side``: the icon's box, turned on a left or
+    right side."""
+    length, thick = ICON_BOX[kind]
     return (length, thick) if side in ("top", "bottom") else (thick, length)
+
+
+def bar_data(side: str) -> str:
+    """The bar's path: a rounded bar over its whole box, elliptical corners (``BAR_RX`` along the
+    edge, ``BAR_RY`` across it); on a left or right side the same shape with x and y swapped."""
+    length, thick = ICON_BOX["BAR"]
+    rx, ry = BAR_RX, BAR_RY
+    if side in ("top", "bottom"):
+        return (
+            f"M{_num(rx)},0 H{_num(length - rx)} A{_num(rx)},{_num(ry)} 0 0 1 {_num(length)},"
+            f"{_num(ry)} V{_num(thick - ry)} A{_num(rx)},{_num(ry)} 0 0 1 {_num(length - rx)},"
+            f"{_num(thick)} H{_num(rx)} A{_num(rx)},{_num(ry)} 0 0 1 0,{_num(thick - ry)} "
+            f"V{_num(ry)} A{_num(rx)},{_num(ry)} 0 0 1 {_num(rx)},0 Z"
+        )
+    return (
+        f"M0,{_num(rx)} V{_num(length - rx)} A{_num(ry)},{_num(rx)} 0 0 0 {_num(ry)},"
+        f"{_num(length)} H{_num(thick - ry)} A{_num(ry)},{_num(rx)} 0 0 0 {_num(thick)},"
+        f"{_num(length - rx)} V{_num(rx)} A{_num(ry)},{_num(rx)} 0 0 0 {_num(thick - ry)},0 "
+        f"H{_num(ry)} A{_num(ry)},{_num(rx)} 0 0 0 0,{_num(rx)} Z"
+    )
 
 
 @dataclass(slots=True)
@@ -167,11 +185,11 @@ def make(painter: LayerWindow, kind: str, side: str, z_index: int, colour: RGBA)
     painter.root.add_child(holder)
     parts: list[TreNode] = []
     chevron = None
-    if kind == "CHEVRON":
-        chevron = painter.create(
+    if kind == "CHEVRON" or kind == "BAR":
+        path = painter.create(
             "path",
-            data=chevron_data(side, width, height),
-            params={"p": 0.0},
+            data=chevron_data(side, width, height) if kind == "CHEVRON" else bar_data(side),
+            **({"params": {"p": 0.0}} if kind == "CHEVRON" else {}),
             fill=colour,
             position="absolute",
             left=0,
@@ -181,24 +199,23 @@ def make(painter: LayerWindow, kind: str, side: str, z_index: int, colour: RGBA)
             hit_testable=False,
             a11y_hidden=True,
         )
-        parts.append(chevron)
+        parts.append(path)
+        chevron = path if kind == "CHEVRON" else None
     else:
         along = side in ("top", "bottom")
-        count = 3 if kind == "DOTS" else 1
-        length, thick = (DOT, DOT) if kind == "DOTS" else (BAR_LENGTH, BAR_THICKNESS)
-        for i in range(count):
-            offset = PAD + i * (DOT + DOT_GAP)
-            w, h = (length, thick) if along else (thick, length)
+        across = ICON_BOX["DOTS"][1] / 2
+        for centre in DOT_CENTRES:
+            x, y = (centre, across) if along else (across, centre)
             parts.append(
                 painter.create(
                     "box",
                     position="absolute",
-                    left=offset if along else PAD,
-                    top=PAD if along else offset,
-                    width=w,
-                    height=h,
+                    left=x - DOT_RADIUS,
+                    top=y - DOT_RADIUS,
+                    width=2 * DOT_RADIUS,
+                    height=2 * DOT_RADIUS,
                     fill=colour,
-                    corner_radius=min(w, h) / 2,
+                    corner_radius=DOT_RADIUS,
                     hit_testable=False,
                     a11y_hidden=True,
                 )

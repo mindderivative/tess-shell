@@ -319,13 +319,13 @@ Four things peek (the Frame is 10 left, 34 top, 12 right, 14 bottom so each hand
 Tell me what you see, line by line.
   [ ] AT REST the Dock is a 24 px TAB hanging up from the bottom band at the centre (320 wide): the
       ring's own colour, the blue border following it, a fillet at each join and rounded far
-      corners, no text in it, three small dots side by side at the middle of the tab. Notes is a
+      corners, no text in it, three 6 px dots 2 px apart (the maintainer's icon, 24 x 8 box) at the middle of the tab. Notes is a
       12 px tab on the right band at its top end with the maintainer's chevron (a wide flat filled
       triangle, 22 x 6.7 px) pointing LEFT (apex into the
-      opening, away from the Frame). Tray is a 14 px tab at the bottom left with a short bar. The
+      opening, away from the Frame). Tray is a 14 px tab at the bottom left with the maintainer's bar (22 x 4 px, rounded ends). The
       left edge is a 10 px sliver with the border beside it and a bar
       along the edge, no blocks. Say how each icon looks at 1x (and 1.5x): size, colour (the border
-      blue at 60 %), whether it is too small or too faint, and whether any needs a minimum other
+      blue at 60 %), whether it is too small or too faint (the dots and the bar are 60 % of the border blue until the pointer is on the tab; with 6 px dots is 60 % now too faint or fine?), and whether any needs a minimum other
       than 8 px (dots, bar, chevron). The chevron has no area at the middle of its turn: during the
       slide it shrinks to nothing and grows back the other way: say if that looks wrong.
   [ ] RESERVED SPACE: a maximised window stops {c.totals[0]} px from the left, {c.totals[1]} from the top, {c.totals[2]} from the

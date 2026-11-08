@@ -1,0 +1,5 @@
+tess_shell_chevron.svg, tess_shell_dots.svg and tess_shell_bar.svg are the handle icons of a
+peek (Frame > Peek Triggers and Handles): made by the maintainer for Tesserae Shell. These are
+flattened copies of his Inkscape files (transforms applied, one user unit = one pixel, fill
+"currentColor"); the shell draws them as nodes (surfaces/handle.py) and a test keeps the numbers
+equal.

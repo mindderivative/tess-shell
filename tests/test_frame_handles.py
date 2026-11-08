@@ -96,16 +96,16 @@ def test_the_dots_are_three_dots_side_by_side_on_the_middle_of_the_tab() -> None
     pts = ink(m)
     assert pts, "nothing was drawn"
     xs = sorted({x for x, _ in pts})
-    # three separate groups of columns (a dot is 3 px wide, the gap 3 px), centred on x = 80
+    # three separate groups of columns (a dot is 6 px wide, the gap 2 px), centred on x = 80
     groups = [g for g in _runs(xs)]
     assert len(groups) == 3, groups
     assert (
-        70 <= groups[0][0]
-        and groups[2][-1] <= 90
+        69 <= groups[0][0]
+        and groups[2][-1] <= 91
         and abs((groups[0][0] + groups[2][-1]) / 2 - 80) <= 1.5
     )
     ys = [y for _, y in pts]
-    assert 23 <= min(ys) and max(ys) <= 29 and abs((min(ys) + max(ys)) / 2 - 26) <= 1.5
+    assert 22 <= min(ys) and max(ys) <= 30 and abs((min(ys) + max(ys)) / 2 - 26) <= 1.5
 
 
 def _runs(values: list[int]) -> list[list[int]]:
@@ -122,8 +122,8 @@ def test_the_bar_is_one_short_bar_and_a_hover_icon_is_not_a_bar() -> None:
     m = started(extra=peek("DRAG"))
     pts = ink(m)
     xs = sorted({x for x, _ in pts})
-    assert len(_runs(xs)) == 1 and 20 <= xs[-1] - xs[0] + 1 <= 26  # one run, about 24 px
-    assert max(y for _, y in pts) - min(y for _, y in pts) <= 4  # 3 px thick
+    assert len(_runs(xs)) == 1 and 21 <= xs[-1] - xs[0] + 1 <= 23  # one run, 22 px
+    assert max(y for _, y in pts) - min(y for _, y in pts) <= 4  # 4 px thick
 
 
 def test_the_handle_has_the_colour_of_the_frames_border_dimmed_until_the_pointer_is_on_it() -> None:
@@ -629,7 +629,7 @@ def test_the_dots_of_a_left_edge_tab_stand_in_a_column() -> None:
     at = px(m)
     pts = [(x, y) for x in range(21, 31) for y in range(28, 52) if at(x, y) != BLUE]
     assert len(_runs(sorted({y for _, y in pts}))) == 3  # three dots one above the other
-    assert max(x for x, _ in pts) - min(x for x, _ in pts) <= 4
+    assert max(x for x, _ in pts) - min(x for x, _ in pts) <= 7
 
 
 @pytest.mark.parametrize(
@@ -750,3 +750,43 @@ def test_the_handle_goes_with_the_panel_when_it_is_fully_hidden() -> None:
     act(m, "Hide")
     advance(m, 450)
     assert host(m).handle.holder.get("visible") is False
+
+
+# -- the shipped icons ---------------------------------------------------------------------------
+
+
+def test_the_shipped_handle_icons_have_the_geometry_handle_py_draws() -> None:
+    import re
+    import xml.etree.ElementTree as ET
+
+    from tess_shell.config.discovery import shipped_dir
+
+    ns = "{http://www.w3.org/2000/svg}"
+    folder = shipped_dir() / "Handles"
+    assert (folder / "NOTICE.txt").read_text().count("maintainer") >= 1
+
+    def load(name: str) -> ET.Element:
+        root = ET.parse(folder / f"tess_shell_{name}.svg").getroot()
+        assert (float(root.get("width", 0)), float(root.get("height", 0))) == handles.ICON_BOX[
+            name.upper()
+        ]
+        assert root.get("viewBox") == f"0 0 {root.get('width')} {root.get('height')}"
+        assert all(e.get("fill") == "currentColor" for e in root)
+        return root
+
+    dots = load("dots")
+    circles = dots.findall(f"{ns}circle")
+    drawn = [(float(c.get("cx", 0)), float(c.get("cy", 0)), float(c.get("r", 0))) for c in circles]
+    middle = handles.ICON_BOX["DOTS"][1] / 2
+    assert drawn == [(x, middle, handles.DOT_RADIUS) for x in handles.DOT_CENTRES]
+    bar = load("bar").find(f"{ns}path")
+    assert bar is not None and bar.get("d") == handles.bar_data("top")
+    assert re.search(rf"A{handles.BAR_RX:g},{handles.BAR_RY:g} ", bar.get("d", ""))
+    chevron = load("chevron").find(f"{ns}path")
+    assert chevron is not None
+    nums = [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?", chevron.get("d", ""))]
+    assert nums == [1.0, 7.37, 23.0, 12.0, 0.63]  # base left, base right x, apex
+    cx, cy = handles.ICON_BOX["CHEVRON"][0] / 2, handles.ICON_BOX["CHEVRON"][1] / 2
+    assert (cx - handles.CHEVRON_HALF, cx + handles.CHEVRON_HALF) == (1.0, 23.0)
+    assert abs(cy + handles.CHEVRON_RISE - 7.37) < 0.01
+    assert abs(cy - handles.CHEVRON_RISE - 0.63) < 0.01
