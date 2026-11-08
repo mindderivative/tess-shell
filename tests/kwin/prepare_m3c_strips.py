@@ -44,7 +44,7 @@ CFG = ROOT / "strips"
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 SETTINGS = (
     "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
-    "  Appearance { Stylesheets: [Default] }\n}\n"
+    "  Appearance { Stylesheets: [Default], Follow_Desktop: true }\n}\n"
 )
 
 SETTINGS_JOIN = SETTINGS.replace("Settings {\n", "Settings {\n  Debug { Frame_Join: @JOIN@ }\n")
@@ -62,19 +62,19 @@ TOP_CHILDREN = "\n".join(
 
 
 def left_children() -> str:
-    block = 'Rectangle {{ Name: {n}, Width: 16, Height: 40, Fill: "{c}", Corner_Radius: 3 }}'
+    block = "Rectangle {{ Name: {n}, Width: 16, Height: 40, Fill: {c}, Corner_Radius: 3 }}"
     toggle = (
         "FlexBox { Name: Dock_Toggle, Width: 32, Height: 22, Padding: 3, Align_Items: CENTER, "
         "Justify_Content: CENTER, "
-        'Style { Background: "#89b4fa", Corner_Radius: 4 }, '
+        "Style { Background: $color.primary, Corner_Radius: 4 }, "
         "On_Click { Action: Toggle, Target: Dock }, Children { "
-        'Text { Text: "Dock", Width: AUTO, Height: AUTO, Font_Size: 11, Foreground: "#1e1e2e" } } }'
+        'Text { Text: "Dock", Width: AUTO, Height: AUTO, Font_Size: 11, Foreground: $color.on_primary } } }'
     )
     return "\n".join(
         [
-            block.format(n="Left_A", c="#f38ba8"),
-            block.format(n="Left_B", c="#a6e3a1"),
-            block.format(n="Left_C", c="#f9e2af"),
+            block.format(n="Left_A", c="$color.error"),
+            block.format(n="Left_B", c="$color.success"),
+            block.format(n="Left_C", c="$color.warning"),
             toggle,
         ]
     )
@@ -94,7 +94,7 @@ def dock(side: str, alignment: str) -> str:
         "Children { FlexBox { Width: 100%, Height: 100%, Padding: 8, Align_Items: CENTER, "
         "Justify_Content: CENTER, Children { "
         'Text { Text: "Docked: part of the frame", Width: AUTO, Height: AUTO, Font_Size: 14, '
-        'Foreground: "#cdd6f4" } '
+        "Foreground: $color.on_surface } "
         "} } } }"
     )
 
@@ -113,9 +113,9 @@ def frame(variant: str) -> tuple[str, RingSpec]:
                 Thickness {{ Left: {thick[0]}, Top: {thick[1]}, Right: {thick[2]}, Bottom: {thick[3]} }}
                 Inner_Radius: 14
                 {keyboard}
-                Inner_Border {{ Width: {border}, Color: "#89b4fa" }}
+                Inner_Border {{ Width: {border}, Color: $color.primary }}
                 Padding: {pad}
-                Style {{ Background: "#1e1e2e" }}
+                Style {{ Background: $color.surface }}
                 Edges {{
                     Top {{
                         Thickness: {top_t}
@@ -159,26 +159,51 @@ def frame(variant: str) -> tuple[str, RingSpec]:
     return text, spec
 
 
-PEEK_DOCK = (
-    "Panel { Name: Dock, Meld: true, Attach_To: Screen_Frame, Attach: BOTTOM, Alignment: CENTER, "
-    "Length: 320, Depth: 56, Peek { Size: 24, Trigger: HOVER, Enter_Delay: @ENTER@, Exit_Delay: 300 }, "
-    "Animation { Type: SLIDE, Duration: 300 }, Style { Corner_Radius: 12 }, "
-    "Children { FlexBox { Width: 100%, Height: 100%, Padding: 8, Align_Items: CENTER, "
-    "Justify_Content: CENTER, Children { "
-    'Text { Text: "Docked: part of the frame", Width: AUTO, Height: AUTO, Font_Size: 14, '
-    'Foreground: "#cdd6f4" } } } } }'
-)
+def body(label: str, button: str, target: str) -> str:
+    """The content of a peeking Panel: its text and a labelled button (a FlexBox with an On_Click)
+    that Toggles ``target``, a visible Panel or strip: it proves a click inside an open body reaches
+    its own action and does not toggle the peek."""
+    return (
+        "Children { FlexBox { Width: 100%, Height: 100%, Padding: 8, Spacing: 12, "
+        "Align_Items: CENTER, Justify_Content: CENTER, Children { "
+        f'Text {{ Text: "{label}", Width: AUTO, Height: AUTO, Font_Size: 14, '
+        "Foreground: $color.on_surface }, "
+        f"FlexBox {{ Name: {button.replace(' ', '_')}_Button, Width: 96, Height: 24, Padding: 3, "
+        "Align_Items: CENTER, Justify_Content: CENTER, "
+        "Style { Background: $color.primary, Corner_Radius: 4 }, "
+        f"On_Click {{ Action: Toggle, Target: {target} }}, Children {{ "
+        f'Text {{ Text: "{button}", Width: AUTO, Height: AUTO, Font_Size: 11, '
+        "Foreground: $color.on_primary } } } } } }"
+    )
 
 
-def peek_panel(name: str, attach: str, alignment: str, length: int, depth: int, peek: str) -> str:
+def peek_dock(enter: int = 150, size: int = 24) -> str:
+    return (
+        "Panel { Name: Dock, Meld: true, Attach_To: Screen_Frame, Attach: BOTTOM, "
+        "Alignment: CENTER, Length: 320, Depth: 56, "
+        f"Peek {{ Size: {size}, Trigger: HOVER, Enter_Delay: {enter}, Exit_Delay: 300 }}, "
+        "Animation { Type: SLIDE, Duration: 300 }, Style { Corner_Radius: 12 }, "
+        + body("Docked: part of the frame", "Toggle Left", "Left_Strip")
+        + " }"
+    )
+
+
+def peek_panel(
+    name: str,
+    attach: str,
+    alignment: str,
+    length: int,
+    depth: int,
+    peek: str,
+    button: str,
+    target: str,
+) -> str:
     return (
         f"Panel {{ Name: {name}, Meld: true, Attach_To: Screen_Frame, Attach: {attach}, "
         f"Alignment: {alignment}, Length: {length}, Depth: {depth}, {peek}, "
         "Animation { Type: SLIDE, Duration: 300 }, Style { Corner_Radius: 12 }, "
-        "Children { FlexBox { Width: 100%, Height: 100%, Padding: 8, Align_Items: CENTER, "
-        "Justify_Content: CENTER, Children { "
-        f'Text {{ Text: "{name}: part of the frame", Width: AUTO, Height: AUTO, Font_Size: 14, '
-        'Foreground: "#cdd6f4" } } } } }'
+        + body(f"{name}: part of the frame", button, target)
+        + " }"
     )
 
 
@@ -186,19 +211,20 @@ def toggle(name: str, label: str, target: str) -> str:
     return (
         f"FlexBox {{ Name: {name}, Width: 44, Height: 22, Padding: 3, Align_Items: CENTER, "
         "Justify_Content: CENTER, "
-        'Style { Background: "#89b4fa", Corner_Radius: 4 }, '
+        "Style { Background: $color.primary, Corner_Radius: 4 }, "
         f"On_Click {{ Action: Toggle, Target: {target} }}, Children {{ "
         f'Text {{ Text: "{label}", Width: AUTO, Height: AUTO, Font_Size: 11, '
-        'Foreground: "#1e1e2e" } } }'
+        "Foreground: $color.on_primary } } }"
     )
 
 
-def peek_frame(enter: int = 150) -> tuple[str, RingSpec]:
+def peek_frame(enter: int = 150, size: int | None = None) -> tuple[str, RingSpec]:
     """Variant C, the Peek demo. The top strip stays, with buttons that Toggle the others (the way
     in without a pointer). The Dock rests as a 24 px tab at the bottom and opens on HOVER (dots);
     Notes is a top-right corner Panel that slides out of the RIGHT edge, opens on CLICK (a chevron);
     Tray at the bottom left opens by DRAG (a bar); the left strip rests as a 10 px sliver, opens by
     DRAG (a bar) and comes out to 56."""
+    tab = {"dock": size or 24, "notes": size or 12, "tray": size or 14, "left": size or 10}
     toggles = [
         toggle("Dock_Toggle", "Dock", "Dock"),
         toggle("Left_Toggle", "Left", "Left_Strip"),
@@ -207,15 +233,15 @@ def peek_frame(enter: int = 150) -> tuple[str, RingSpec]:
     ]
     top = "\n".join([*TOP_CHILDREN.split("\n"), *toggles])
     left = left_children().rsplit("\n", 1)[0]  # the blocks, without variant A's Dock button
-    thick = (10, 34, 12, 14)  # wide enough for each handle: 8 px for dots, bar and chevron
+    thick = (tab["left"], 34, 12, 14)  # wide enough for each handle: 8 px for dots, bar and chevron
     text = f"""            Frame {{
                 Name: Screen_Frame
                 Thickness {{ Left: {thick[0]}, Top: {thick[1]}, Right: {thick[2]}, Bottom: {thick[3]} }}
                 Inner_Radius: 14
                 Keyboard: ON_DEMAND
-                Inner_Border {{ Width: 2, Color: "#89b4fa" }}
+                Inner_Border {{ Width: 2, Color: $color.primary }}
                 Padding: [8, 3, 8, 3]
-                Style {{ Background: "#1e1e2e" }}
+                Style {{ Background: $color.surface }}
                 Edges {{
                     Top {{
                         Thickness: 34
@@ -232,7 +258,7 @@ def peek_frame(enter: int = 150) -> tuple[str, RingSpec]:
                         Name: Left_Strip
                         Thickness: 56
                         Padding: 6
-                        Peek {{ Size: {thick[0]}, Trigger: DRAG }}
+                        Peek {{ Size: {tab["left"]}, Trigger: DRAG }}
                         Children {{
                             FlexBox {{
                                 Flex: VERTICAL, Width: 100%, Spacing: 6, Align_Items: CENTER
@@ -244,9 +270,9 @@ def peek_frame(enter: int = 150) -> tuple[str, RingSpec]:
                     }}
                 }}
             }}
-            {PEEK_DOCK.replace("@ENTER@", str(enter))}
-            {peek_panel("Notes", "TOP", "END", 220, 90, "Peek { Size: 12, Trigger: CLICK, Slide_From: RIGHT }")}
-            {peek_panel("Tray", "BOTTOM", "START", 200, 60, "Peek { Size: 14, Trigger: DRAG }")}"""
+            {peek_dock(enter, tab["dock"])}
+            {peek_panel("Notes", "TOP", "END", 220, 90, f"Peek {{ Size: {tab['notes']}, Trigger: CLICK, Slide_From: RIGHT }}", "Toggle Dock", "Dock")}
+            {peek_panel("Tray", "BOTTOM", "START", 200, 60, f"Peek {{ Size: {tab['tray']}, Trigger: DRAG }}", "Toggle Notes", "Notes")}"""
     spec = RingSpec(
         thickness=thick,
         inner_radius=(14, 14, 14, 14),
@@ -261,7 +287,7 @@ def peek_frame(enter: int = 150) -> tuple[str, RingSpec]:
 
 
 def shell_text(variant: str) -> str:
-    if variant == "c" or variant == "c2":
+    if variant in ("c", "c2", "ct"):
         return (
             HEADER
             + f"""
@@ -270,7 +296,7 @@ Shell {{
         Name: Main
         Connector: "HDMI-A-1"
         Children {{
-{POPUPS}{peek_frame(150 if variant == "c" else 400)[0]}
+{POPUPS}{peek_frame(400 if variant == "c2" else 150, 7 if variant == "ct" else None)[0]}
         }}
     }}
 }}
@@ -309,6 +335,7 @@ Setup (nothing else needs to run):
   /tmp/tess-kwin-m3c/check-peek.sh          the file is valid
   /tmp/tess-kwin-m3c/run-peek.sh [OPTION]   run it (Ctrl+C stops); OPTION is a Frame_Join
   /tmp/tess-kwin-m3c/toggle-peek.sh         save the file again with Enter_Delay 400 / 150 (hot reload)
+  /tmp/tess-kwin-m3c/toggle-thin.sh         every Peek Size 7 (handles vanish) / back to 24, 12, 14, 10
 Variant C: the top strip (34 px, Menu, Tall, ... plus buttons Dock, Left, Notes and Tray) stays.
 Four things peek (the Frame is 10 left, 34 top, 12 right, 14 bottom so each handle fits its side):
   Dock   melded Panel at the bottom centre, 320 x 56:  Peek {{ Size: 24, Trigger: HOVER }}   (3 dots)
@@ -375,9 +402,18 @@ Tell me what you see, line by line.
   [ ] run-peek.sh SMIL / STRUCTURE / PARAM do the same by the same contour, also while dragging.
       SHADER and CONCAVE log ONE warning per reason (a Panel that peeks; a drag) and use PARAM for the
       Panels and for the dragged left strip.
-  [ ] MINIMUMS: edit peek/Shells/Main_Shell.tdl and set the Dock's Size to 7 (no dots), the Notes
-      Size to 7 (no chevron), the Frame's right Thickness to 7 (Notes' chevron goes, its tab stays):
-      each handle disappears and the log (DEBUG) says "has no ... handle". "Handle: NONE" removes one.
+  [ ] MINIMUMS: run /tmp/tess-kwin-m3c/toggle-thin.sh (a saved edit: every Peek Size becomes 7, the
+      left sliver too): the dots, both bars and the chevron all disappear, the tabs stay (7 px) and still
+      work, and the log (DEBUG) says "has no ... handle" four times. Run it again: Sizes 24/12/14/10
+      and the handles are back. (Edit "Handle: NONE" into a Peek by hand to remove one icon.)
+  [ ] BUTTONS IN A BODY: each open Panel holds a labelled button: Dock "Toggle Left" (hover it out
+      first), Notes "Toggle Dock" (click it out), Tray "Toggle Notes" (drag it out). Click the
+      button away from the Panel's far strip: it Toggles its target (the left strip, the Dock, Notes)
+      and the Panel itself stays out; the pointer leaving Dock does not close it while you click.
+  [ ] THEME: switch Plasma between Light and Dark (System Settings > Colors): the Frame, the border,
+      the Panels, the strip's blocks, the button colours, the text and the handles all change at once,
+      also while a Panel is out (a slide in flight finishes at once). Settings has
+      Appearance {{ Stylesheets: [Default], Follow_Desktop: true }}.
   [ ] a Popup from a strip button (Menu on the top strip) opens and closes as before; one that
       hangs off the left strip keeps it out while the Popup is open.
 """
@@ -503,7 +539,7 @@ def prepare_peek() -> None:
     (module / "Menu_Button_Module.tdl").write_text(BUTTON_TDL)
     (module / "Menu_Button_Module.py").write_text(BUTTON_PY)
     (peek / "variants").mkdir()
-    for v in ("c", "c2"):
+    for v in ("c", "c2", "ct"):
         (peek / "variants" / f"{v}.tdl").write_text(shell_text(v))
     shutil.copy(peek / "variants" / "c.tdl", peek / "Shells" / "Main_Shell.tdl")
     flag = ROOT / "state-flags"
@@ -528,6 +564,12 @@ def prepare_peek() -> None:
         f'v=$(cat {f})\nif [ "$v" = c ]; then v=c2; else v=c; fi\necho $v > {f}\n'
         "cp /tmp/tess-kwin-m3c/peek/variants/$v.tdl /tmp/tess-kwin-m3c/peek/Shells/Main_Shell.tdl\n"
         'echo "peek: variant $v (c: Enter_Delay 150, c2: 400)"\n',
+    )
+    script(
+        "toggle-thin.sh",
+        f'v=$(cat {f})\nif [ "$v" = ct ]; then v=c; else v=ct; fi\necho $v > {f}\n'
+        "cp /tmp/tess-kwin-m3c/peek/variants/$v.tdl /tmp/tess-kwin-m3c/peek/Shells/Main_Shell.tdl\n"
+        'echo "peek: variant $v (ct: every Peek Size 7, c: 24/12/14/10; a saved edit, hot reload)"\n',
     )
     script(
         "check-peek.sh",

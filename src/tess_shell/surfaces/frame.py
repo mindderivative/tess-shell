@@ -707,6 +707,9 @@ class Frames:
                 logger.error(f"{error.origin}: {error.message}")
             st.plan.paint = paint
             st.plan.refresh_melds(look)  # a token may have changed a body's radius
+            for host in st.hosts.values():
+                if host.anim:  # a join in flight holds the old colours: let it arrive at once
+                    self._settle(st, host)
             self._draw(st)
             for host in st.hosts.values():
                 if host.surface.view is not None:
@@ -1184,6 +1187,16 @@ class Frames:
             host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
         if host.join is not None:
             host.join.stop()
+
+    def _settle(self, st: FrameState, host: HostState) -> None:
+        """End a running animation where it was heading, at once, silent: the ring takes the body
+        (or lets it go) and the join stops."""
+        show = host.anim == "in"
+        self._snap(host)
+        self._set_rest(st, host.plan.name, not show)
+        host.surface.hidden = not show
+        if show:
+            self._timer(host, st)
 
     def _reduced(self) -> bool:
         look = self._m._look
