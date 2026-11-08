@@ -207,7 +207,7 @@ def peek_frame(enter: int = 150) -> tuple[str, RingSpec]:
     ]
     top = "\n".join([*TOP_CHILDREN.split("\n"), *toggles])
     left = left_children().rsplit("\n", 1)[0]  # the blocks, without variant A's Dock button
-    thick = (10, 34, 12, 14)  # wide enough for each handle: 8 px dots and bar, 12 px chevron
+    thick = (10, 34, 12, 14)  # wide enough for each handle: 8 px for dots, bar and chevron
     text = f"""            Frame {{
                 Name: Screen_Frame
                 Thickness {{ Left: {thick[0]}, Top: {thick[1]}, Right: {thick[2]}, Bottom: {thick[3]} }}
@@ -320,12 +320,14 @@ Tell me what you see, line by line.
   [ ] AT REST the Dock is a 24 px TAB hanging up from the bottom band at the centre (320 wide): the
       ring's own colour, the blue border following it, a fillet at each join and rounded far
       corners, no text in it, three small dots side by side at the middle of the tab. Notes is a
-      12 px tab on the right band at its top end with a chevron pointing LEFT (into the
+      12 px tab on the right band at its top end with the maintainer's chevron (a wide flat filled
+      triangle, 22 x 6.7 px) pointing LEFT (apex into the
       opening, away from the Frame). Tray is a 14 px tab at the bottom left with a short bar. The
       left edge is a 10 px sliver with the border beside it and a bar
       along the edge, no blocks. Say how each icon looks at 1x (and 1.5x): size, colour (the border
       blue at 60 %), whether it is too small or too faint, and whether any needs a minimum other
-      than 8 px (dots, bar) and 12 px (chevron).
+      than 8 px (dots, bar, chevron). The chevron has no area at the middle of its turn: during the
+      slide it shrinks to nothing and grows back the other way: say if that looks wrong.
   [ ] RESERVED SPACE: a maximised window stops {c.totals[0]} px from the left, {c.totals[1]} from the top, {c.totals[2]} from the
       right and {c.totals[3]} from the bottom, and does not move at any point below (zones are the same in
       every state).
@@ -374,7 +376,7 @@ Tell me what you see, line by line.
       SHADER and CONCAVE log ONE warning per reason (a Panel that peeks; a drag) and use PARAM for the
       Panels and for the dragged left strip.
   [ ] MINIMUMS: edit peek/Shells/Main_Shell.tdl and set the Dock's Size to 7 (no dots), the Notes
-      Size to 11 (no chevron), the Frame's right Thickness to 10 (Notes' chevron goes, its tab stays):
+      Size to 7 (no chevron), the Frame's right Thickness to 7 (Notes' chevron goes, its tab stays):
       each handle disappears and the log (DEBUG) says "has no ... handle". "Handle: NONE" removes one.
   [ ] a Popup from a strip button (Menu on the top strip) opens and closes as before; one that
       hangs off the left strip keeps it out while the Popup is open.

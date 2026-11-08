@@ -28,15 +28,16 @@ Easing = tuple[float, float, float, float]
 
 # the thinnest tab (and side) that draws each handle, in pixels (maintainer, 2026-11-07, as
 # recommended; to be tuned on KWin)
-MIN_THICKNESS = {"DOTS": 8.0, "BAR": 8.0, "CHEVRON": 12.0}
+MIN_THICKNESS = {"DOTS": 8.0, "BAR": 8.0, "CHEVRON": 8.0}
 DOT = 3.0  # a dot's diameter and the gap between two (the Edge Shell's 3 px dots with 3 px gaps)
 DOT_GAP = 3.0
 BAR_LENGTH = 24.0  # along the edge
 BAR_THICKNESS = 3.0
-CHEVRON_HALF = 6.0  # half the chevron's width along the edge
-CHEVRON_RISE = 3.5  # how far the apex is from the line through the ends, away or towards
-CHEVRON_STROKE = 2.0
-PAD = 2.0  # room round the drawing inside the holder, so a stroke is not clipped
+# the maintainer's chevron (tess_shell_chevron.svg, 2026-11-08): a filled triangle 22 px wide and
+# 6.73 px high, its Inkscape transform flattened: base (1.0, 7.37)-(23.0, 7.37), apex (12.0, 0.63)
+CHEVRON_HALF = 11.0  # half the chevron's width along the edge
+CHEVRON_RISE = 3.365  # half its height: the apex is this far from the midline, away or towards
+PAD = 2.0  # room round the drawing inside the holder, so its anti-aliased edge is not clipped
 REST_OPACITY = 0.6  # a handle is dimmer than its colour until the pointer is on the tab
 # the direction into the opening from each side, in the painter's pixels
 TOWARD = {"top": (0.0, 1.0), "bottom": (0.0, -1.0), "left": (1.0, 0.0), "right": (-1.0, 0.0)}
@@ -85,7 +86,7 @@ def chevron_data(side: str, width: float, height: float) -> str:
     for along, depth in spec:
         x0, y0 = cx + along * ux + depth * nx, cy + along * uy + depth * ny
         points.append(f"{_hole(x0, -2 * depth * nx)},{_hole(y0, -2 * depth * ny)}")
-    return f"M{points[0]} L{points[1]} L{points[2]}"
+    return f"M{points[0]} L{points[1]} L{points[2]} Z"
 
 
 def size_of(kind: str, side: str) -> tuple[float, float]:
@@ -122,7 +123,7 @@ class Handle:
             return
         self.colour = colour
         for node in self.parts:
-            node.set(stroke_color=colour) if node is self.chevron else node.set(fill=colour)
+            node.set(fill=colour)
 
     def seek(self, p: float, dx: float, dy: float) -> None:
         """At once: the chevron at ``p``, the holder ``(dx, dy)`` from where it was placed."""
@@ -171,8 +172,7 @@ def make(painter: LayerWindow, kind: str, side: str, z_index: int, colour: RGBA)
             "path",
             data=chevron_data(side, width, height),
             params={"p": 0.0},
-            stroke_color=colour,
-            stroke_width=CHEVRON_STROKE,
+            fill=colour,
             position="absolute",
             left=0,
             top=0,

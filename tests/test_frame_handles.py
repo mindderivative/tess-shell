@@ -58,6 +58,20 @@ def ink(m: Any, x0: int = 62, y0: int = 21, x1: int = 98, y1: int = 31) -> list[
     return [(x, y) for x in range(x0, x1) for y in range(y0, min(y1, edge - 2)) if at(x, y) != BLUE]
 
 
+def lean(points: list[tuple[int, int]]) -> float:
+    """Which way a filled triangle points, from its pixels: the centroid's offset from the middle
+    of its rows. Negative: the base is on top and the apex points down (away from a top Frame);
+    positive: the apex points up (towards it). A 22 x 6.7 px triangle leans about 1.1 px."""
+    ys = [y for _, y in points]
+    assert ys, "no handle pixels"
+    return sum(ys) / len(ys) - (min(ys) + max(ys)) / 2
+
+
+def rows(points: list[tuple[int, int]]) -> int:
+    ys = [y for _, y in points]
+    return max(ys) - min(ys) + 1 if ys else 0
+
+
 def centre_y(points: list[tuple[int, int]], x0: int, x1: int) -> float:
     ys = [y for x, y in points if x0 <= x < x1]
     assert ys, "no handle pixels there"
@@ -159,8 +173,8 @@ def test_a_handle_does_not_take_clicks_the_tab_does() -> None:
         ("HOVER", 8, True),
         ("DRAG", 7, False),
         ("DRAG", 8, True),
-        ("CLICK", 11, False),
-        ("CLICK", 12, True),
+        ("CLICK", 7, False),
+        ("CLICK", 8, True),
     ],
 )
 def test_a_handle_is_drawn_only_on_a_tab_at_least_as_thick_as_its_minimum(
@@ -186,7 +200,7 @@ def test_a_side_thinner_than_the_handle_draws_none() -> None:
 
 
 def test_the_minimums_are_named_constants() -> None:
-    assert handles.MIN_THICKNESS == {"DOTS": 8.0, "BAR": 8.0, "CHEVRON": 12.0}
+    assert handles.MIN_THICKNESS == {"DOTS": 8.0, "BAR": 8.0, "CHEVRON": 8.0}
 
 
 # -- the chevron turns with the slide ------------------------------------------------------------
@@ -196,18 +210,18 @@ def test_the_chevron_points_away_from_the_frame_at_rest_and_towards_it_when_out(
     m = started(extra=peek("CLICK"))
     rest = ink(m)
     # the top Frame: away is down. The apex is the middle column, the ends the outer ones
-    assert centre_y(rest, 79, 82) > centre_y(rest, 72, 75) + 2
+    assert lean(rest) < -0.5  # apex down, away from the top Frame
     click(m, ON_TAB)
     advance(m, 450)
     assert is_out(m)
     out = ink(m, 62, 47, 98, 61)
-    assert centre_y(out, 79, 82) < centre_y(out, 72, 75) - 2  # towards the Frame: up
-    assert 50 <= centre_y(out, 62, 98) <= 56  # on the far strip of the body, 12 px of it
+    assert lean(out) > 0.5  # towards the Frame: apex up
+    assert 50 <= centre_y(out, 62, 98) <= 57  # on the far strip of the body, 12 px of it
     click(m, FAR)
     advance(m, 450)
     assert at_rest(m)
     back = ink(m)
-    assert centre_y(back, 79, 82) > centre_y(back, 72, 75) + 2
+    assert lean(back) < -0.5
 
 
 def test_the_chevron_changes_during_the_slide_not_before_and_not_after() -> None:
@@ -218,9 +232,10 @@ def test_the_chevron_changes_during_the_slide_not_before_and_not_after() -> None
     for _ in range(14):
         advance(m, 25)
         pts = ink(m, 62, 21, 98, 61)
-        seen.append(centre_y(pts, 79, 82) - centre_y(pts, 72, 75))
-    assert seen[0] > 0 > seen[-1], seen  # away, then towards
-    assert all(b <= a + 0.5 for a, b in zip(seen, seen[1:], strict=False))  # one way only
+        seen.append(lean(pts) if len(pts) > 6 else 0.0)  # a flat triangle has no pixels to lean
+    assert seen[0] < -0.2 and seen[-1] > 0.5, seen  # away, then towards
+    turned = next(i for i, v in enumerate(seen) if v > 0.5)
+    assert all(v > -0.5 for v in seen[turned:])  # and it does not turn back
     advance(m, 100)
     assert host(m).anim is None
 
@@ -247,8 +262,8 @@ def test_the_chevron_at_the_middle_of_a_drag_is_between_the_two() -> None:
     sim(m, "pointer_down", ON_TAB)
     sim(m, "pointer_move", (60, 40))  # 14 of 28 px: half way
     pts = ink(m, 62, 21, 98, 61)
-    assert abs(centre_y(pts, 79, 82) - centre_y(pts, 72, 75)) < 1.5  # a flat chevron
-    assert abs(centre_y(pts, 62, 98) - 40) <= 2.5  # at the middle of the way
+    assert rows(pts) <= 2  # a flat triangle: a line at most 2 rows thick, if anything
+    assert not pts or abs(centre_y(pts, 62, 98) - 40) <= 2.5  # at the middle of the way
 
 
 def test_reduced_motion_flips_the_chevron_at_once_with_the_state() -> None:
@@ -256,11 +271,11 @@ def test_reduced_motion_flips_the_chevron_at_once_with_the_state() -> None:
     click(m, ON_TAB)
     assert is_out(m) and host(m).anim is None
     out = ink(m, 62, 47, 98, 61)
-    assert centre_y(out, 79, 82) < centre_y(out, 72, 75) - 2
+    assert lean(out) > 0.5
     click(m, FAR)
     assert at_rest(m)
     back = ink(m)
-    assert centre_y(back, 79, 82) > centre_y(back, 72, 75) + 2
+    assert lean(back) < -0.5
 
 
 # -- CLICK ---------------------------------------------------------------------------------------
@@ -692,9 +707,11 @@ def test_a_strip_can_peek_by_drag_with_a_bar() -> None:
 
 
 def test_a_strips_sliver_thinner_than_the_handle_draws_none() -> None:
-    m = strip_started("CLICK", size=8)
-    assert next(iter(only(m).hosts.values())).handle is None  # 8 px: no chevron (12)
-    assert next(iter(only(strip_started("HOVER", size=8)).hosts.values())).handle is not None
+    m = strip_started("CLICK", size=7)
+    assert next(iter(only(m).hosts.values())).handle is None  # 7 px: under the 8 px minimum
+    for trigger in ("HOVER", "DRAG", "CLICK"):
+        host_ = next(iter(only(strip_started(trigger, size=8)).hosts.values()))
+        assert host_.handle is not None
 
 
 # -- reload --------------------------------------------------------------------------------------
@@ -712,7 +729,7 @@ def test_a_reload_changes_the_trigger_and_the_handle_and_keeps_the_state() -> No
     assert host(m).handle.kind == "CHEVRON" and host(m).plan.peek.trigger == "CLICK"
     assert is_out(m)
     out = ink(m, 62, 47, 98, 61)
-    assert out and centre_y(out, 79, 82) < centre_y(out, 72, 75) - 2  # towards the Frame
+    assert out and lean(out) > 0.5  # towards the Frame
     apply(m, ring_text, panel(peek("CLICK", "NONE")))
     assert host(m).handle is None and is_out(m)
     assert not ink(m, 62, 47, 98, 61)
