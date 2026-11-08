@@ -4,7 +4,7 @@ Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launc
 
 ## Status
 
-Milestones M0 (the skeleton), M1 (a static Bar) and M2 (live and modular) are built, and M3a (the look: themes, stylesheets, the desktop's light/dark setting, shadows) is built; the KWin checklists, which the maintainer runs by hand, are the open part. `run` opens a `Bar` from `Main_Shell.tdl` on the matched monitor through `tess_dl`, the schema, the binder and tre, reserves its space, and stops cleanly on SIGTERM or SIGINT. On top of that:
+Milestones M0 (the skeleton), M1 (a static Bar), M2 (live and modular) and M3 (more surfaces: the look, `Panel`, `Popup`, the `Frame` with strips, melding and peek, monitor hot-plug) are built and accepted on KWin. `run` opens a `Bar` from `Main_Shell.tdl` on the matched monitor through `tess_dl`, the schema, the binder and tre, reserves its space, and stops cleanly on SIGTERM or SIGINT. On top of that:
 
 - **Modules:** a `<Name>_Module.tdl` plus `<Name>_Module.py` in `Modules/<Name>/`; a use is written `Clock { format: "%H:%M" }` or `Import: <path>_Module.tdl`. The Python sends values with `ctx.send`; a `{{ }}` slot in the layout reads them, and only the node properties that changed are set. The shell ships a Clock (`format`, `locale`, `hour_cycle`, `timezone`, `tooltip_format`); a module of the same name in your `Modules/` folder overrides it.
 - **Structure and look:** `If`/`Else` and `For` (keyed lists) in a module's layout, style files (`Style: <Name>_Style.tdl` with `Classes`) and `SVG { Icon: "mdi:account" }`: the `mdi` set ships in the package, and Iconify-style JSON sets in the `Icons` folder come first.
