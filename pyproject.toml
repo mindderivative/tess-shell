@@ -42,6 +42,9 @@ path = "src/tess_shell/__init__.py"
 [tool.hatch.build.targets.wheel]
 packages = ["src/tess_shell"]
 
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "hatch_build.py"
+
 [tool.hatch.build.targets.sdist]
 include = ["/src", "/LICENSE", "/README.md", "/CHANGELOG.md", "/pyproject.toml"]
 
@@ -58,7 +61,7 @@ addopts = "-m 'not perf and not manual and not compositor and not dbus'"
 
 [tool.ruff]
 line-length = 100
-extend-exclude = ["tools", "docs", "graphify-out"]
+extend-exclude = ["tools", "docs", "graphify-out", "src/tess_shell/_vendor"]
 src = ["src", "tests"]
 
 [tool.ruff.lint]

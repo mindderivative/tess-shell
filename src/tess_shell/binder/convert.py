@@ -1,17 +1,20 @@
 """Converters: a typed value to what tre takes, one form per kind of value (ADR-0018).
 
-Pure functions over :mod:`tess_shell.binder.model`, standard library only, so they can move to
-``tess_utils`` unchanged. Each takes the value and the tre property names of the key's row and
-returns ``{tre property: tre value}``, or raises :class:`BindError` at the value's origin.
-The parsers at the end turn written forms into typed values; the schema will use them.
+Pure functions over :mod:`tess_shell.binder.model`. The forms that several Tesserae projects share
+(a colour's written forms, four-sided values and their order, corner radii, enum words) belong to
+``tess_utils`` (the carried compiled file, ``tess_shell._vendor``); what is left here wraps them in
+the shell's typed values and raises :class:`BindError` at the value's origin. Each converter takes
+the value and the tre property names of the key's row and returns
+``{tre property: tre value}``. The parsers at the end turn written forms into typed values; the
+schema uses them.
 """
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from tess_shell._vendor import tess_utils
 from tess_shell.binder.model import (
     Auto,
     BindError,
@@ -144,7 +147,10 @@ def enum(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) ->
             value.origin,
             hint=_nearest_hint(value.name, choices),
         )
-    return {name: value.name.lower()}
+    try:
+        return {name: tess_utils.to_tre_word(value.name)}
+    except ValueError as exc:
+        raise BindError(str(exc), value.origin) from None
 
 
 def wrap_flag(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
@@ -160,15 +166,22 @@ def sides(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
     if len(names) != 4:
         raise ValueError("a sides row names four tre properties")  # a table bug
     if isinstance(value, Length | Number):
-        one = value.px if isinstance(value, Length) else value.value
-        left = top = right = bottom = float(one)
+        written: float | tuple[float, float, float, float] = (
+            value.px if isinstance(value, Length) else value.value
+        )
     elif isinstance(value, Sides):
-        left, top, right, bottom = value.left, value.top, value.right, value.bottom
+        written = (value.left, value.top, value.right, value.bottom)
     else:
         raise _bad(value, "a number or four sides")
-    if min(left, top, right, bottom) < 0:
+    try:
+        left_top_right_bottom = tess_utils.expand_sides(written)
+    except ValueError as exc:
+        raise BindError(str(exc), value.origin) from None
+    if min(left_top_right_bottom) < 0:
         raise BindError("a side cannot be negative", value.origin)
-    return dict(zip(names, (_num(top), _num(right), _num(bottom), _num(left)), strict=True))
+    return dict(
+        zip(names, (_num(x) for x in tess_utils.to_tre_order(left_top_right_bottom)), strict=True)
+    )
 
 
 def radius(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
@@ -180,15 +193,15 @@ def radius(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) 
             raise BindError("a radius cannot be negative", value.origin)
         return {name: _num(one)}
     if isinstance(value, Seq) and len(value.items) == 4:
-        corners = []
+        numbers: list[float] = []
         for item in value.items:
             if not isinstance(item, Length | Number):
                 raise _bad(item, "a number")
             n = item.px if isinstance(item, Length) else item.value
             if n < 0:
                 raise BindError("a radius cannot be negative", item.origin)
-            corners.append(_num(n))
-        return {name: tuple(corners)}
+            numbers.append(n)
+        return {name: tuple(_num(x) for x in tess_utils.expand_radius(numbers))}
     raise _bad(value, "one number or four")
 
 
@@ -266,36 +279,16 @@ def _nearest_hint(word: str, choices: tuple[str, ...]) -> str:
 
 # --- parsers: written form to typed value ------------------------------------------------
 
-_HEX = re.compile(r"^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8}|[0-9a-fA-F]{3}|[0-9a-fA-F]{4})$")
-_RGBA = re.compile(r"^rgba?\(\s*([^)]*)\)$")
-
 
 def parse_color(written: str, origin: Origin) -> Color:
-    """``#RRGGBB``, ``#RRGGBBAA``, ``#RGB``, ``#RGBA``, ``rgba(r g b a)`` (alpha 0.0 to 1.0)."""
-    text_ = written.strip()
-    if m := _HEX.match(text_):
-        digits = m.group(1)
-        if len(digits) in (3, 4):
-            digits = "".join(c * 2 for c in digits)
-        channels = [int(digits[i : i + 2], 16) for i in range(0, len(digits), 2)]
-        if len(channels) == 3:
-            channels.append(255)
-        r, g, b, a = channels
-        return Color(r, g, b, a, origin=origin)
-    if m := _RGBA.match(text_):
-        parts = m.group(1).replace(",", " ").split()
-        try:
-            if len(parts) not in (3, 4):
-                raise ValueError
-            r, g, b = (int(p) for p in parts[:3])
-            alpha = float(parts[3]) if len(parts) == 4 else 1.0
-        except ValueError:
-            raise BindError(f"not a colour: {written!r}", origin) from None
-        if not (0 <= r <= 255 and 0 <= g <= 255 and 0 <= b <= 255 and 0.0 <= alpha <= 1.0):
-            raise BindError(f"colour channel out of range in {written!r}", origin)
-        return Color(r, g, b, round(alpha * 255), origin=origin)
-    raise BindError(
-        f"not a colour: {written!r}",
-        origin,
-        hint='write "#RRGGBB", "#RRGGBBAA" or "rgba(r g b a)"',
-    )
+    """``#RRGGBB``, ``#RRGGBBAA``, ``#RGB``, ``#RGBA``, ``rgb(r g b)``, ``rgba(r g b a)`` (alpha 0.0
+    to 1.0) or ``transparent``; the reading is ``tess_utils.parse_color``'s."""
+    try:
+        r, g, b, a = tess_utils.parse_color(written)
+    except ValueError as exc:
+        raise BindError(
+            str(exc),
+            origin,
+            hint='write "#RRGGBB", "#RRGGBBAA" or "rgba(r g b a)"',
+        ) from None
+    return Color(r, g, b, a, origin=origin)

@@ -1,0 +1,10 @@
+{
+  "package": "tess_utils",
+  "tag": "v0.1.1",
+  "version": "0.1.1",
+  "source": "local build /home/phil/Projects/pyDev/projects/tess-utils/build/so",
+  "files": {
+    "tess_utils.cpython-314-x86_64-linux-gnu.so": "70e9856e35c8d3e527d31095db152923e5bc5111735222ecfcb3896e06ec947d",
+    "tess_utils.pyi": "5901982e782433505478a31daea08c56ee45607099d6399d9c21161260a7baac"
+  }
+}
