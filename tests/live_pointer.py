@@ -45,9 +45,9 @@ class VirtualPointer:
         self.process.stdin.flush()
         assert self.process.stdout.readline().strip() == "done"
 
-    def move(self, x: int, y: int) -> None:
+    def move(self, x: int, y: int, settle: float = 0.05) -> None:
         self._send(f"move {x} {y} {self.size[0]} {self.size[1]}")
-        time.sleep(0.05)
+        time.sleep(settle)
 
     def down(self) -> None:
         self._send("down")

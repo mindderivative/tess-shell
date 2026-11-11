@@ -492,8 +492,22 @@ class RingShader:
         self._s[name] = target
 
     def seek_body(self, name: str, p: float) -> None:
-        if name in self._slots and name in self._lows:
+        """Put ``name`` at ``p`` in the frame of the pointer event that asked. An ``animate`` would
+        not do: it starts on the next tick and is asked again by every pointer move (125 a second
+        on KWin), so the value stays where it was until the pointer stops and the contour lags
+        behind the content, which moves by plain properties. ``set`` applies at once and
+        the write to the node makes the window draw. It stops animations that are running, so when
+        another body slides the 1 ms ``animate`` is all that is left."""
+        if name not in self._slots or name not in self._lows:
+            return
+        if self._animating - {name} or self._shader is None or self.node is None:
             self._move(name, p, 1)
+            return
+        key = f"bs{self._slots.index(name)}"
+        self._sent[key] = p
+        self._s[name] = p
+        self._shader.set(uniforms=self._sent)
+        self.node.set(shader=self._shader)
 
     def end_body(self, name: str) -> None:
         """``name`` is at rest (or gone): an animation that is still running jumps to where it was

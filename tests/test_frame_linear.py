@@ -958,3 +958,31 @@ def test_the_shader_ring_keeps_a_painted_path_under_it_for_the_input_region() ->
     advance(m, 450)
     assert ghost.get("data") != before  # the body is out: the contour has it
     assert ghost_only(st)
+
+
+def test_a_drag_puts_the_contour_where_the_pointer_is_in_the_frame_of_every_move() -> None:
+    """``Join.seek`` on every pointer move: the shader's uniform is the drag's progress after one
+    frame, as it is the content's translate, and the contour's far edge is where the path build
+    has it, whatever the rate of the moves (an ``animate`` of 1 ms asked again by each move never
+    got to start, so the contour stayed where the drag began while the content went on: the KWin
+    report 'the content moves up and the panel lags behind')."""
+    rows: dict[str, list[tuple[float, float, int]]] = {}
+    for blend in ("SRGB", "LINEAR"):
+        m = started(RING, tab(peek=DRAG_PEEK), blend=blend)
+        st = only(m)
+        st.painter.simulate("pointer_down", x=60, y=26)
+        advance(m, 20)
+        out = []
+        for y in (32, 33, 34, 36, 38, 39, 40, 43, 46, 44, 41):  # a few moves per frame too
+            st.painter.simulate("pointer_move", x=60, y=y)
+            if y in (33, 39, 44):  # no frame between this move and the next
+                continue
+            advance(m, 16)
+            drag = host(m).drag
+            assert drag is not None
+            progress = st.linear.progress("Tab") if st.linear else drag.p
+            out.append((drag.p, progress, far_row(m)))
+        rows[blend] = out
+    for (p, u, edge), (_, _, want) in zip(rows["LINEAR"], rows["SRGB"], strict=True):
+        assert u == pytest.approx(p, abs=1e-6), rows["LINEAR"]
+        assert abs(edge - want) <= 1, (edge, want)

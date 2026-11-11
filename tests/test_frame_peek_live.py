@@ -12,6 +12,7 @@ where that is not there."""
 from __future__ import annotations
 
 import re
+import threading
 import time
 from pathlib import Path
 
@@ -165,3 +166,76 @@ def test_every_peek_trigger_works_with_a_real_pointer_and_the_same_with_either_b
     ]
     assert got["SRGB"] == want, got
     assert got["LINEAR"] == want, got
+
+
+def edge_and_dot(shot: tuple[int, int, bytes]) -> tuple[int | None, int | None]:
+    """The row of the contour's far edge (the border's colour) at x = 100 and of the content's
+    first row (Tray's dot, #89dceb) in the Tray body's columns."""
+
+    def near(p: tuple[int, int, int], c: tuple[int, int, int], d: int) -> bool:
+        return all(abs(a - b) < d for a, b in zip(p, c, strict=True))
+
+    edge = next(
+        (y for y in range(950, 1075) if near(pixel(shot, 100, y), (0x89, 0xB4, 0xFA), 12)), None
+    )
+    for y in range(950, 1075):
+        if any(near(pixel(shot, x, y), (0x89, 0xDC, 0xEB), 6) for x in range(10, 211, 2)):
+            return edge, y
+    return edge, None
+
+
+@pytest.mark.parametrize("blend", ["SRGB", "LINEAR"])
+def test_dragging_the_tray_the_contour_and_the_content_move_together(
+    private_sway: PrivateSway, tmp_path: Path, blend: str
+) -> None:
+    """The pointer moves up the Tray tab a pixel every 2 ms (KWin delivers moves that fast) while
+    the screen is grabbed over and over: the contour's far edge follows the pointer (8 px above
+    it, as the tab's grip is) and the distance between the content and the edge is what it is
+    when everything is still, to 2 px, every time (the KWin report: the content went up and the
+    panel lagged behind)."""
+    (tmp_path / "Shells").mkdir(parents=True, exist_ok=True)
+    body = f"\nShell {{ Monitor {{ Name: Main, Index: 0, Children {{ {FRAME} }} }} }}\n"
+    (tmp_path / "Shells" / "Main_Shell.tdl").write_text(HEADER + body)
+    (tmp_path / "settings.tdl").write_text(
+        "---\nTDL: 0.1\nName: S\n---\n"
+        f"Settings {{ Logging {{ Level: DEBUG }} Debug {{ Frame_Blend: {blend} }} }}\n"
+    )
+    private_sway.msg("output", "*", "resolution", f"{OUT[0]}x{OUT[1]}")
+    private_sway.msg("output", "*", "scale", "1")
+    time.sleep(0.4)
+    shell = Shell(tmp_path, private_sway.env)
+    pointer = live_pointer.VirtualPointer(private_sway.env, *OUT)
+    state = {"y": 1050, "go": True}
+
+    def feed() -> None:
+        while state["y"] > 1000 and state["go"]:
+            state["y"] -= 1
+            pointer.move(100, state["y"], 0.002)
+        state["go"] = False
+
+    log: list[tuple[int, int | None, int | None]] = []
+    try:
+        shell.wait_for("painter configured", timeout=30)
+        time.sleep(1.0)
+        pointer.move(100, 1058, 0.2)
+        pointer.down()
+        pointer.move(100, 1050, 0.2)
+        thread = threading.Thread(target=feed)
+        thread.start()
+        while state["go"]:
+            at = state["y"]
+            edge, dot = edge_and_dot(screenshot(private_sway))
+            log.append((at, edge, dot))
+        thread.join()
+        pointer.up()
+    finally:
+        pointer.close()
+        stop(shell)
+    seen = [(at, e, d) for at, e, d in log if e is not None and d is not None]
+    assert len(seen) > 20, log
+    for at, e, d in seen:
+        if e < 1010:  # fully out: the content has stopped, the edge is at its end
+            continue
+        expect = 2 + (e - 1004) * 11 / 36  # the content's row less the edge's, when still
+        assert abs((d - e) - expect) <= 2, (blend, at, e, d, expect)
+    assert min(e for _, e, _ in seen) <= 1010, "the body did not follow the pointer"
