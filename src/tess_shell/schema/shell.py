@@ -52,6 +52,8 @@ _IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp")
 
 def _absolute(text: str) -> str:
     return os.path.abspath(os.path.expanduser(text))
+
+
 _SURFACES = ("Bar", "Frame", "Panel", "Popup")
 _NOT_BUILT = "not built in M1"
 

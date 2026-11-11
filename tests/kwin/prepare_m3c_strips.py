@@ -12,9 +12,9 @@ config and scripts under ``/tmp/tess-kwin-m3c`` and starts nothing. It does not 
   CONCAVE, SHADER, STRUCTURE or PARAM): the way the Dock's join is drawn while it slides, so the
   five can be compared by eye on KWin (a restart applies a change).
 * ``run-strips-linear.sh [SRGB|LINEAR]``: the same shell, with ``Debug { Frame_Blend: ... }``
-  (default ``SRGB``: the ring as paths, tre blends their edges in sRGB; ``LINEAR``: the ring and
-  its bodies in one shader that blends in linear light, TRE-REQ-015 option 2): does the border
-  read as 2 px on a curve as on a straight? ``run-peek-linear.sh [SRGB|LINEAR]`` is the Peek demo
+  (default ``LINEAR``: the ring, its borders and its bodies in one shader that blends in linear
+  light, TRE-REQ-015 option 2; ``SRGB``: paths, whose anti-aliased edges tre blends in sRGB): does
+  the border read as 2 px on a curve as on a straight? ``run-peek-linear.sh [SRGB|LINEAR]`` is the Peek demo
   with it. A restart applies a change.
 * ``compare-join.sh [--join=OPTION] [--blend=SRGB|LINEAR] ...``: ``tests/kwin/compare_join.py
   --live`` on HDMI-A-1: the cost of each option in one table (frame time while sliding, frames
@@ -537,7 +537,7 @@ Edges Visible key, a gradient background, a Frame shadow, fullscreen hiding.
 
 def blend_checklist() -> str:
     return """Blend: Debug { Frame_Blend: SRGB | LINEAR } in settings.tdl (TRE-REQ-015, option 2)
-SRGB (the default) draws the ring and its borders as paths: tre blends the anti-aliased edge of a
+SRGB draws the ring and its borders as paths: tre blends the anti-aliased edge of a
 path in sRGB, so a light 2 px border on the dark ring looks thinner on a curve than on a straight
 (1.69 of 2.00 at 1x, 1.79 at 1.5x, measured as summed linear light). LINEAR draws the ring, the
 borders and every melded body in ONE shader that mixes the colours in linear light itself. A
@@ -613,8 +613,8 @@ def prepare_peek() -> None:
     script(
         "run-peek-linear.sh",
         "# The Peek demo (variant C), the ring blended in sRGB (paths) or in linear light (one\n"
-        "# shader).  Usage: run-peek-linear.sh [SRGB|LINEAR]   (default SRGB)\n"
-        'opt="${1:-SRGB}"\ncase "$opt" in SRGB|LINEAR) ;;\n'
+        "# shader).  Usage: run-peek-linear.sh [SRGB|LINEAR]   (default LINEAR)\n"
+        'opt="${1:-LINEAR}"\ncase "$opt" in SRGB|LINEAR) ;;\n'
         '  *) echo "usage: run-peek-linear.sh [SRGB|LINEAR]" >&2; exit 2 ;;\nesac\n'
         "export XDG_STATE_HOME=/tmp/tess-kwin-m3c/state\n"
         'sed "s/@BLEND@/$opt/" /tmp/tess-kwin-m3c/settings-blend.tdl.in'
@@ -695,8 +695,8 @@ def main() -> None:
     script(
         "run-strips-linear.sh",
         "# The Frame with strips and a melded Panel, the ring blended in sRGB (paths) or in linear\n"
-        "# light (one shader).  Usage: run-strips-linear.sh [SRGB|LINEAR]   (default SRGB)\n"
-        'opt="${1:-SRGB}"\ncase "$opt" in SRGB|LINEAR) ;;\n'
+        "# light (one shader).  Usage: run-strips-linear.sh [SRGB|LINEAR]   (default LINEAR)\n"
+        'opt="${1:-LINEAR}"\ncase "$opt" in SRGB|LINEAR) ;;\n'
         '  *) echo "usage: run-strips-linear.sh [SRGB|LINEAR]" >&2; exit 2 ;;\nesac\n'
         "export XDG_STATE_HOME=/tmp/tess-kwin-m3c/state\n"
         'sed "s/@BLEND@/$opt/" /tmp/tess-kwin-m3c/settings-blend.tdl.in'

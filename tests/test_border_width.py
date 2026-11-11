@@ -205,7 +205,7 @@ def test_the_live_border_on_a_private_sway_has_the_exact_coverage_round_the_corn
         "Frame { Name: F, Thickness: 24, Inner_Radius: 14, "
         'Inner_Border { Width: 2, Color: "#00ff00" }, Style { Background: "#0000ff" } }'
     )
-    shell = run_shell(private_sway, tmp_path, f"{BEHIND}\n{frame}")
+    shell = run_shell(private_sway, tmp_path, f"{BEHIND}\n{frame}", blend="SRGB")
     try:
         usable(private_sway, 26, 26, 26, 26)
         time.sleep(0.6)

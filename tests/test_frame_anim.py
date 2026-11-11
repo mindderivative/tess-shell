@@ -62,7 +62,8 @@ def started(
         lambda key: key[-1],
         store,
         theme_look,
-        join_mode=join or CURRENT["join"],  # type: ignore[arg-type]
+        join_mode=join or CURRENT["join"],  # type: ignore[arg-type],
+        blend_mode="SRGB",
     )
     manager.sink = lambda handler, key, raw: manager.run_builtin(handler)
     manager.plan(shell_of(RING, tab(f"{visible} {extra}", animation)))
@@ -208,7 +209,7 @@ def test_reduced_motion_makes_it_instant() -> None:
 @pytest.mark.parametrize("side", ["bottom", "left", "right"])
 def test_a_body_slides_out_of_each_edge(side: str) -> None:
     app, store = StubApp(), ValueStore()
-    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look(), blend_mode="SRGB")  # type: ignore[arg-type]
     panel = tab("Visible: false").replace("Attach: TOP", f"Attach: {side.upper()}")
     manager.plan(shell_of(RING, panel))
     manager.build()
@@ -248,7 +249,7 @@ def test_a_panels_own_event_handler_runs_the_shells_action() -> None:
         " Length: 80, Depth: 30, Visible: false, Animation { Type: NONE } }"
     )
     app, store = StubApp(), ValueStore()
-    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look(), blend_mode="SRGB")  # type: ignore[arg-type]
     manager.sink = lambda handler, key, raw: manager.run_builtin(handler)
     manager.plan(shell_of(RING, tab("On_Hidden { Action: Show, Target: Other }") + other))
     manager.build()
@@ -317,7 +318,7 @@ def test_a_strips_blocks_are_never_drawn_over_by_a_body_that_animates_beneath() 
         ' Children { Rectangle { Name: Dot, Width: 20, Height: 20, Fill: "#ffff00" } } }'
     )
     app, store = StubApp(), ValueStore()
-    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look(), blend_mode="SRGB")  # type: ignore[arg-type]
     manager.plan(shell_of(frame, dock))
     manager.build()
     st = only(manager)

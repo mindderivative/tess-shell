@@ -179,8 +179,10 @@ def view_box(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()
     """``View_Box: [min_x, min_y, width, height]``: the region of a path's data that is drawn."""
     (name,) = names
     if isinstance(value, Seq) and len(value.items) == 4:
-        nums = [i.value if isinstance(i, Number) else i.px if isinstance(i, Length) else None
-                for i in value.items]
+        nums = [
+            i.value if isinstance(i, Number) else i.px if isinstance(i, Length) else None
+            for i in value.items
+        ]
         if all(n is not None for n in nums):
             x, y, w, h = (n for n in nums if n is not None)
             if w <= 0 or h <= 0:

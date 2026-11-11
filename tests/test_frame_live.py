@@ -28,12 +28,17 @@ BEHIND = (
 )
 
 
-def run_shell(sway: PrivateSway, cfg: Path, children: str, index: str = "0") -> Shell:
+def run_shell(
+    sway: PrivateSway, cfg: Path, children: str, index: str = "0", blend: str | None = None
+) -> Shell:
     shells = cfg / "Shells"
     shells.mkdir(parents=True, exist_ok=True)
     body = f"\nShell {{ Monitor {{ Name: Main, Index: {index}, Children {{ {children} }} }} }}\n"
     (shells / "Main_Shell.tdl").write_text(HEADER + body)
-    (cfg / "settings.tdl").write_text(SETTINGS)
+    text = SETTINGS
+    if blend is not None:  # the default is LINEAR; a test of the path build says SRGB
+        text = text.replace("Settings {", f"Settings {{ Debug {{ Frame_Blend: {blend} }}", 1)
+    (cfg / "settings.tdl").write_text(text)
     shell = Shell(cfg, sway.env)
     shell.wait_for("running")
     return shell

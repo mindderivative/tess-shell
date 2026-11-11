@@ -64,7 +64,7 @@ def look() -> Any:
 
 def started(frame: str, extra: str = "") -> tuple[SurfaceManager, StubApp, ValueStore]:
     app, store = StubApp(), ValueStore()
-    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look(), blend_mode="SRGB")  # type: ignore[arg-type]
     for use in manager.plan(shell_of(frame, extra)):
         store.add_use(use.module, use.key)
     manager.build()
@@ -219,7 +219,7 @@ def test_hiding_the_frame_drops_the_strips_and_showing_builds_them_again() -> No
 
 def test_a_strip_with_a_module_use_starts_the_module_through_the_planned_uses() -> None:
     app, store = StubApp(), ValueStore()
-    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look(), blend_mode="SRGB")  # type: ignore[arg-type]
     uses = manager.plan(
         shell_of(
             "Frame { Name: F, Thickness: 30, Edges { Left { Children { Label { Name: A } } } } }"

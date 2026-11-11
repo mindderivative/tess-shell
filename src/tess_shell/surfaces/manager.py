@@ -470,7 +470,7 @@ class SurfaceManager:
         hide_mode: str = "KEEP",
         positions: PositionStore | None = None,
         join_mode: str = "PARAM",
-        blend_mode: str = "SRGB",
+        blend_mode: str = "LINEAR",
     ) -> None:
         self._app = app
         self._positions = positions  # where the user left each Movable Panel (the registry)

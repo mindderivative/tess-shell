@@ -320,9 +320,7 @@ def _down(node: Child, hits: Sequence[Rule]) -> Child:
         )
     if not isinstance(node, m.Node):
         return node
-    folded = dataclasses.replace(
-        node, style=_fold(node, hits), states=_fold_states(node, hits)
-    )
+    folded = dataclasses.replace(node, style=_fold(node, hits), states=_fold_states(node, hits))
     rest = [
         dataclasses.replace(
             r, values={k: v for k, v in r.values.items() if not _allowed(node.kind, k)}

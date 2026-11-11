@@ -59,7 +59,8 @@ def started(
         lambda key: key[-1],
         store,
         theme_look,
-        join_mode=join,  # type: ignore[arg-type]
+        join_mode=join,  # type: ignore[arg-type],
+        blend_mode="SRGB",
     )
     manager.sink = lambda handler, key, raw: manager.run_builtin(handler)
     manager.plan(shell_of(frame, panel(extra, animation, more=more)))
@@ -555,7 +556,7 @@ def test_a_reload_that_flips_visible_is_decided_by_the_file() -> None:
 
 def test_a_new_output_size_keeps_the_state_and_redraws() -> None:
     app, store = StubApp(), ValueStore()
-    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+    manager = SurfaceManager(app, module(), lambda key: key[-1], store, look(), blend_mode="SRGB")  # type: ignore[arg-type]
     manager.sink = lambda handler, key, raw: manager.run_builtin(handler)
     manager.plan(shell_of(RING, panel()))
     manager.build()
@@ -659,7 +660,7 @@ def test_a_tab_peeks_out_of_each_side(
     side: str, tab: tuple[int, int], body_only: tuple[int, int], leave: tuple[int, int]
 ) -> None:
     app, store = StubApp(), ValueStore()
-    m = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+    m = SurfaceManager(app, module(), lambda key: key[-1], store, look(), blend_mode="SRGB")  # type: ignore[arg-type]
     m.sink = lambda handler, key, raw: m.run_builtin(handler)
     m.plan(shell_of(RING, panel().replace("Attach: TOP", f"Attach: {side}")))
     m.build()

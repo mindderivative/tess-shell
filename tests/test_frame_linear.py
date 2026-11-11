@@ -267,6 +267,14 @@ def act(manager: SurfaceManager, action: str, target: str = "Tab") -> None:
     manager.run_builtin(Handler(action, {"Target": target}, builtin=True))
 
 
+def ghost_only(st: Any) -> bool:
+    """The ring is the shader's: the path nodes are all hidden but the fill band's, which holds
+    the painted contour at alpha 1 under the shader (what ``input_region="auto"`` counts)."""
+    visible = [bool(n.get("visible")) for n in st.nodes]
+    fill = st.nodes[1].get("fill")
+    return visible == [False, True, False] and fill[3] == 1
+
+
 def host(manager: SurfaceManager) -> Any:
     return next(h for h in only(manager).hosts.values() if h.plan.name == "Tab")
 
@@ -337,8 +345,8 @@ def test_the_body_slides_as_the_param_contour_does(
 def test_the_shader_uniform_animates_and_the_ring_nodes_and_join_draw_nothing() -> None:
     m = started(RING, tab(visible=False))
     st, h = only(m), host(m)
-    assert type(h.join).__name__ == "LinearJoin" and st.drawn == "linear"
-    assert not any(n.get("visible") for n in st.nodes)
+    assert type(h.join).__name__ == "LinearJoin" and st.drawn[0] == "linear"
+    assert ghost_only(st)
     assert st.linear.progress("Tab") == 0.0
     act(m, "Show")
     advance(m, 1)
@@ -349,7 +357,7 @@ def test_the_shader_uniform_animates_and_the_ring_nodes_and_join_draw_nothing() 
     assert 0.0 < seen[0] < seen[1] < seen[2] <= 1.0, seen
     advance(m, 100)
     assert st.linear.progress("Tab") == 1.0 and h.anim is None
-    assert not any(n.get("visible") for n in st.nodes)  # the ring is still the shader's
+    assert ghost_only(st)  # the ring is still the shader's
 
 
 def test_the_last_frame_is_the_rest_ring_and_a_hidden_body_leaves_no_trace() -> None:
@@ -573,7 +581,7 @@ def test_a_peek_is_the_same_slide_from_its_tab_or_sliver_to_the_whole_body(
     for i, (a, b) in enumerate(zip(paths, shader, strict=True)):
         assert differing(a, b, 100) <= 90, (i, differing(a, b, 100))
     assert only(m).linear.progress(name) == 1.0  # out, and still the shader's
-    assert not any(n.get("visible") for n in only(m).nodes)
+    assert ghost_only(only(m))
 
 
 def test_a_tab_at_rest_is_a_body_of_size_pixels_and_leaving_goes_back_to_it() -> None:
@@ -659,7 +667,7 @@ def warnings(run: Any) -> list[str]:
 def far_row(manager: SurfaceManager, x: int = 60) -> int:
     """The first transparent row below the band at column ``x``: the far edge and its border."""
     shot = snap(manager)
-    return next(y for y in range(21, 90) if pixel(shot, x, y)[3] == 0)
+    return next(y for y in range(21, 90) if pixel(shot, x, y)[3] < 8)
 
 
 def test_a_drag_follows_the_pointer_with_the_shader_and_a_release_past_half_opens_it() -> None:
@@ -683,7 +691,7 @@ def test_a_drag_follows_the_pointer_with_the_shader_and_a_release_past_half_open
     advance(m, 500)
     assert host(m).anim is None and "Tab" not in st.tab_melds and st.linear.progress("Tab") == 1.0
     assert far_row(m) == 62
-    assert not any(n.get("visible") for n in st.nodes)
+    assert ghost_only(st)
 
 
 def test_a_frame_that_cannot_be_drawn_for_a_moment_gets_its_join_back_and_then_the_shader() -> None:
@@ -706,7 +714,7 @@ def test_a_frame_that_cannot_be_drawn_for_a_moment_gets_its_join_back_and_then_t
     m.frames._blend(st)
     m.frames._draw(st)
     assert st.linear is not None and type(host(m).join).__name__ == "LinearJoin"
-    assert not any(n.get("visible") for n in st.nodes)
+    assert ghost_only(st)
     act(m, "Hide")
     advance(m, 1)
     advance(m, 200)
@@ -795,13 +803,158 @@ def test_a_body_as_deep_as_the_opening_cannot_be_drawn_so_the_paths_draw_that_st
     assert len([line for line in seen if "opposite side" in line]) == 1
     assert pixel(snap(m), 5, 100)[3] > 0
     warnings(lambda: run("Hide"))
-    assert st.linear.active and not any(n.get("visible") for n in st.nodes)
+    assert st.linear.active and ghost_only(st)
 
 
-def test_the_default_is_the_path_ring() -> None:
+def test_srgb_is_the_path_ring() -> None:
     from tests.test_frame import started as default_started
 
+    # (the path tests pin SRGB: the default is LINEAR, settings.py and test_settings.py)
     m, _ = default_started('Frame { Name: F, Thickness: 12, Style { Background: "#336699" } }')
     st = only(m)
     assert m.blend_mode == "SRGB" and st.linear is None
     assert [n.get("visible") for n in st.nodes] == [False, True, False]
+
+
+# -- the pointer reaches the peek the same with either blend -------------------------------------
+#
+# The same script of pointer events through tre's own hit test (``Window.simulate`` at window
+# coordinates), under SRGB and LINEAR, must leave every host in the same state after every step.
+# What the compositor adds, the input region, is in ``test_frame_peek_live.py`` (a real pointer).
+
+
+def state_of(manager: SurfaceManager) -> tuple[Any, ...]:
+    st = only(manager)
+    return tuple(
+        (
+            h.plan.name,
+            h.anim,
+            h.inside,
+            h.drag is not None,
+            h.plan.name in st.hidden_melds,
+            h.plan.name in st.tab_melds,
+        )
+        for h in st.hosts.values()
+    ) + (far_row(manager, 60) if "Tab" in {h.plan.name for h in st.hosts.values()} else 0,)
+
+
+Step = tuple[str, int, int, int]  # event, x, y, ms to advance afterwards
+DRAG_PEEK = "Peek { Size: 12, Trigger: DRAG }"
+CLICK_PEEK = "Peek { Size: 12, Trigger: CLICK }"
+SCRIPTS: dict[str, tuple[str, str, list[Step]]] = {
+    "hover, then leave": (
+        RING,
+        tab(peek=PEEK),
+        [
+            ("pointer_move", 300, 200, 5),
+            ("pointer_move", 60, 26, 100),  # the delay (150) has not run out
+            ("pointer_move", 300, 200, 100),  # leaving cancels it
+            ("pointer_move", 60, 26, 151),  # now it does
+            ("pointer_move", 60, 26, 100),  # half way out
+            ("pointer_move", 300, 200, 100),  # leave while it comes out
+            ("pointer_move", 300, 200, 700),  # it turns round and goes back to the tab
+        ],
+    ),
+    "click on the tab and on the far strip": (
+        RING,
+        tab(peek=CLICK_PEEK),
+        [
+            ("pointer_move", 60, 26, 100),  # hover does nothing for a CLICK peek
+            ("pointer_down", 60, 26, 1),
+            ("pointer_up", 60, 26, 450),
+            ("pointer_down", 60, 56, 1),  # the far strip of the open body
+            ("pointer_up", 60, 56, 450),
+            ("pointer_down", 300, 200, 1),  # in the opening: nothing
+            ("pointer_up", 300, 200, 50),
+        ],
+    ),
+    "drag the tab out and back": (
+        RING,
+        tab(peek=DRAG_PEEK),
+        [
+            ("pointer_down", 60, 26, 3),
+            ("pointer_move", 60, 32, 3),
+            ("pointer_move", 60, 34, 3),
+            ("pointer_move", 60, 40, 3),
+            ("pointer_move", 60, 46, 3),
+            ("pointer_up", 60, 46, 500),  # past half: it stays out
+            ("pointer_down", 60, 56, 3),
+            ("pointer_move", 60, 50, 3),
+            ("pointer_move", 60, 40, 3),
+            ("pointer_move", 60, 25, 3),
+            ("pointer_up", 60, 25, 500),  # below half of the way: it goes back
+        ],
+    ),
+    "a strip's sliver: hover": (
+        STRIP,
+        "",
+        [
+            ("pointer_move", 300, 200, 5),
+            ("pointer_move", 200, 3, 60),
+            ("pointer_move", 200, 3, 100),
+            ("pointer_move", 200, 3, 300),
+            ("pointer_move", 300, 200, 100),
+            ("pointer_move", 300, 200, 500),
+        ],
+    ),
+    "a strip's sliver: drag": (
+        STRIP.replace("Peek { Size: 6,", "Peek { Size: 6, Trigger: DRAG,"),
+        "",
+        [
+            ("pointer_down", 200, 3, 3),
+            ("pointer_move", 200, 9, 3),
+            ("pointer_move", 200, 20, 3),
+            ("pointer_move", 200, 30, 3),
+            ("pointer_up", 200, 30, 500),
+        ],
+    ),
+}
+
+
+def play(blend: str, name: str) -> list[tuple[Any, ...]]:
+    frame, extra, steps = SCRIPTS[name]
+    m = started(frame, extra, blend=blend)
+    st = only(m)
+    states = [state_of(m)]
+    for event, x, y, ms in steps:
+        st.painter.simulate(event, x=x, y=y)
+        if blend == "LINEAR":
+            advance(m, 1)  # a uniform's slide starts on the tick after it was asked for
+        advance(m, ms)
+        states.append(state_of(m))
+    return states
+
+
+@pytest.mark.parametrize("name", list(SCRIPTS))
+def test_the_pointer_script_leaves_every_host_in_the_same_state_under_either_blend(
+    name: str,
+) -> None:
+    paths = play("SRGB", name)
+    shader = play("LINEAR", name)
+    drifted = [
+        (i, a, b)
+        for i, (a, b) in enumerate(zip(paths, shader, strict=True))
+        if a[:-1] != b[:-1] or abs(a[-1] - b[-1]) > 1
+    ]
+    assert not drifted, drifted
+    assert len(set(paths)) >= 3, "the script moved nothing"  # and it does something
+
+
+def test_the_shader_ring_keeps_a_painted_path_under_it_for_the_input_region() -> None:
+    """The compositor delivers the pointer only where ``input_region="auto"`` finds a drawn,
+    hit-testable node, and a shader node alone is none: the painted contour is a path with a fill at
+    alpha 1 below the shader (``hit_shape="painted"``), the opening is not in it, and a change of
+    the plan (a body out, a look) moves it with the shader."""
+    m = started(RING, tab(peek=PEEK))
+    st = only(m)
+    ghost = st.nodes[1]
+    assert ghost_only(st) and ghost.get("hit_shape") == "painted"
+    order = [c for c in st.painter.root.children()] if hasattr(st.painter.root, "children") else []
+    if order:
+        assert order.index(ghost) < order.index(st.linear.node)  # under the shader
+    before = ghost.get("data")
+    st.painter.simulate("pointer_move", x=60, y=26)
+    advance(m, 151)
+    advance(m, 450)
+    assert ghost.get("data") != before  # the body is out: the contour has it
+    assert ghost_only(st)

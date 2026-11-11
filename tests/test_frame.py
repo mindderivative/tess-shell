@@ -58,7 +58,7 @@ def look() -> Any:
 
 def started(frame: str, app: StubApp | None = None) -> tuple[SurfaceManager, StubApp]:
     app = app or StubApp()
-    manager = SurfaceManager(app, {}, lambda key: key, ValueStore(), look())  # type: ignore[arg-type]
+    manager = SurfaceManager(app, {}, lambda key: key, ValueStore(), look(), blend_mode="SRGB")  # type: ignore[arg-type]
     manager.plan(shell_of(frame))
     manager.build()
     return manager, app

@@ -579,7 +579,9 @@ def corner_started(attach: str, alignment: str, peek_text: str, join: str = "PAR
         'Children { Rectangle { Name: Dot, Width: 20, Height: 20, Fill: "#ff0000" } } }'
     )
     app = StubApp()
-    m = SurfaceManager(app, module(), lambda key: key[-1], ValueStore(), look(), join_mode=join)  # type: ignore[arg-type]
+    m = SurfaceManager(
+        app, module(), lambda key: key[-1], ValueStore(), look(), join_mode=join, blend_mode="SRGB"
+    )  # type: ignore[arg-type]
     m.sink = lambda handler, key, raw: m.run_builtin(handler)
     m.plan(shell_of(RING, text))
     m.build()

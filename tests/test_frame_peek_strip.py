@@ -40,7 +40,8 @@ def started(text: str | None = None, join: str = "PARAM") -> SurfaceManager:
         lambda key: key[-1],
         store,
         look(),
-        join_mode=join,  # type: ignore[arg-type]
+        join_mode=join,  # type: ignore[arg-type],
+        blend_mode="SRGB",
     )
     manager.sink = lambda handler, key, raw: manager.run_builtin(handler)
     manager.plan(shell_of(text or frame()))
@@ -228,7 +229,7 @@ def test_reduced_motion_switches_at_once() -> None:
     from tess_shell.appearance import Appearance
 
     quiet = look().with_appearance(Appearance(scheme="dark", reduced_motion=True))
-    m = SurfaceManager(app, module(), lambda key: key[-1], store, quiet)  # type: ignore[arg-type]
+    m = SurfaceManager(app, module(), lambda key: key[-1], store, quiet, blend_mode="SRGB")  # type: ignore[arg-type]
     m.sink = lambda handler, key, raw: m.run_builtin(handler)
     m.plan(shell_of(frame()))
     m.build()
@@ -299,7 +300,7 @@ def test_a_peeking_strip_and_a_melded_panel_on_the_same_side_warn() -> None:
             "Length: 60, Depth: 20, Children { Spacer { } } }"
         )
         app, store = StubApp(), ValueStore()
-        m = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+        m = SurfaceManager(app, module(), lambda key: key[-1], store, look(), blend_mode="SRGB")  # type: ignore[arg-type]
         m.plan(shell_of(frame(), panel))
         m.build()
     finally:

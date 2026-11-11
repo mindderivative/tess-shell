@@ -185,10 +185,10 @@ def test_debug_frame_join_defaults_to_param_and_takes_each_option(tmp_path: Path
         assert settings.debug == DebugSettings(frame_join=word)
 
 
-def test_debug_frame_blend_defaults_to_srgb_and_takes_linear(tmp_path: Path) -> None:
+def test_debug_frame_blend_defaults_to_linear_and_takes_srgb(tmp_path: Path) -> None:
     from tess_shell.config.settings import DebugSettings
 
-    assert load_settings(tmp_path / "none")[0].debug.frame_blend == "SRGB"  # type: ignore[union-attr]
+    assert load_settings(tmp_path / "none")[0].debug.frame_blend == "LINEAR"  # type: ignore[union-attr]
     for word in ("SRGB", "LINEAR"):
         (tmp_path / "settings.tdl").write_text(
             f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ Frame_Blend: {word} }} }}\n"

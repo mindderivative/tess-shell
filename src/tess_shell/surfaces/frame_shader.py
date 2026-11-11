@@ -22,7 +22,11 @@ distance fields and composites them in linear light:
   place and sides, its depth and radii at the start and at the end of its slide, and ``s``, how
   far along it is, which tre animates with ``Shader.animate`` (no Python per frame; PARAM's contour
   has the same shape at every ``s``, and the same easing);
-* ``hit_path`` is the painted contour, so a click in the opening goes through.
+* ``hit_path`` is the painted contour, so a click in the opening goes through. A shader node with
+  no paint of its own is not "drawn" to ``input_region="auto"``, which would leave the painter
+  with no input at all (the compositor never delivers a pointer: no hover, click or drag works);
+  the Frame therefore keeps one path node of that contour under the shader, filled at alpha 1 and
+  hidden by the opaque shader above it, as the ring nodes under a ghosting join always were.
 
 The colours are given as linear-light uniforms (``linear``) and the result is encoded once, so the
 shader does a handful of ``pow`` for each pixel and a window that is still draws nothing. A change
@@ -235,6 +239,9 @@ class RingShader:
         self._ctx: tuple[Any, ...] | None = None
         self._shape: tuple[Any, ...] | None = None
         self.active = False  # the node draws the ring now (the state fits and it is visible)
+        # the painted contour as path data: the click shape (``hit_path``), and what the Frame's
+        # ghost path node draws so that ``input_region="auto"`` counts the ring (see ``Frames``)
+        self.hit = ""
         self._make()
 
     # -- the node and its shader -----------------------------------------------------------------
@@ -378,6 +385,7 @@ class RingShader:
         values["base_c"] = _corners((base[0], base[1], base[2], base[3]))
         self._apply(values)
         shape = (size, self._hit(ring, colours))
+        self.hit = shape[1]
         if shape != self._shape or not self.active:
             self.node.set(width=size[0], height=size[1], hit_path=shape[1], visible=True)
             self._shape = shape

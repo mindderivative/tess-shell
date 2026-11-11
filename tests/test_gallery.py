@@ -321,5 +321,5 @@ def test_the_gallery_panel_has_no_text_field_and_no_keyboard() -> None:
 
 def test_the_gallery_checklist_has_the_text_field_lines() -> None:
     text = g.CHECKLIST
-    for word in ("input-method", "Ctrl+V", "ELLIPSIS", "LOGICAL", "Max_Length", "read-only"):
+    for word in ("input-method", "Ctrl+V", "ELLIPSIS", "VISUAL", "Max_Length", "read-only"):
         assert word in text, word

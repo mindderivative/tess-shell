@@ -279,7 +279,7 @@ def test_changing_the_frame_join_is_reported_as_a_restart(live: Make) -> None:
 def test_changing_the_frame_blend_is_reported_as_a_restart(live: Make) -> None:
     run = live()
     (run.cfg / "settings.tdl").write_text(
-        SETTINGS.format(extra="").replace("Settings {", "Settings { Debug { Frame_Blend: LINEAR }")
+        SETTINGS.format(extra="").replace("Settings {", "Settings { Debug { Frame_Blend: SRGB }")
     )
     run.wait("Debug applies after a restart")
     assert run.stop() == 0

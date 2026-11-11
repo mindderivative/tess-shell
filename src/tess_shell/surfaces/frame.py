@@ -92,7 +92,7 @@ _EMPTY = "M0,0 L0,0 Z"
 _Z_MORPH = 1
 _Z_CONTENT = 2
 _Z_HANDLE = 3  # the icon on a tab: above the ring, the join and the content
-_LINEAR = "linear"  # ``FrameState.drawn`` while the ring shader draws the ring
+_LINEAR = "linear"  # the first item of ``FrameState.drawn`` while the ring shader draws the ring
 DRAG_SLOP = 4.0  # pixels a press may move and still be a click (the Edge Shell's value)
 DRAG_OPENS = 0.5  # a drag released at this fraction of the way or more opens it (the Edge Shell's)
 STRIP_PEEK_MS = 200  # how long a peeking strip takes to come out and go back
@@ -1075,15 +1075,33 @@ class Frames:
         if why is not None:
             self._warn_blend(st, why)
             linear.hide()
-            if st.drawn == _LINEAR:
+            if isinstance(st.drawn, tuple) and st.drawn[0] == _LINEAR:
                 st.drawn = None
             return
         paint = st.plan.paint
         linear.draw(st.size, full, names, moving, (paint.outer, paint.fill, paint.inner))
-        if st.drawn != _LINEAR:
-            for node in st.nodes:
-                node.set(visible=False)
-            st.drawn = _LINEAR
+        # ``input_region="auto"`` counts a path with a fill and takes no account of a shader node's
+        # ``hit_path``: without one the painter has an empty input region and the compositor never
+        # gives it the pointer (no hover, click or drag, even though the headless hit test, which
+        # does follow ``hit_path``, passes). So the fill band's node holds the painted contour at
+        # alpha 1 under the shader (opaque over it) and takes the region.
+        colour = next((c for c in (paint.fill, paint.inner, paint.outer) if c is not None), None)
+        ghost = (*(colour or (0, 0, 0, 255))[:3], 1)
+        key = (_LINEAR, st.size, linear.hit, ghost)
+        if key != st.drawn:
+            for i, node in enumerate(st.nodes):
+                if i == 1:
+                    node.set(
+                        data=linear.hit,
+                        fill=ghost,
+                        width=st.size[0],
+                        height=st.size[1],
+                        opacity=1.0,
+                        visible=True,
+                    )
+                else:
+                    node.set(visible=False)
+            st.drawn = key
 
     # -- strips and melded Panels ---------------------------------------------------------------
 

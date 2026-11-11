@@ -32,7 +32,7 @@ PANEL = (
 
 def themed() -> SurfaceManager:
     app, store = StubApp(), ValueStore()
-    m = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+    m = SurfaceManager(app, module(), lambda key: key[-1], store, look(), blend_mode="SRGB")  # type: ignore[arg-type]
     m.sink = lambda handler, key, raw: m.run_builtin(handler)
     m.plan(shell_of(FRAME, PANEL))
     m.build()
@@ -138,7 +138,7 @@ def test_a_button_in_an_open_body_runs_its_action_and_does_not_toggle_the_peek(
         "Animation { Type: NONE } }"
     )
     app, store = StubApp(), ValueStore()
-    m = SurfaceManager(app, module(), lambda key: key[-1], store, look())  # type: ignore[arg-type]
+    m = SurfaceManager(app, module(), lambda key: key[-1], store, look(), blend_mode="SRGB")  # type: ignore[arg-type]
     m.sink = lambda handler, key, raw: m.run_builtin(handler)
     m.plan(shell_of(frame, one + two))
     m.build()

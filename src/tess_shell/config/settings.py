@@ -79,11 +79,12 @@ class DebugSettings:
     # CONCAVE moves boxes with concave corners; SHADER draws the join in a shader; STRUCTURE morphs
     # path data command by command. A restart applies it.
     frame_join: str = "PARAM"
-    # how the Frame's ring is blended: SRGB, the default, draws the bands as paths and tre blends
-    # their anti-aliased edges in sRGB (a light line on a dark ground looks thinner on a curve);
-    # LINEAR draws the ring in one fill shader that blends in linear light (TRE-REQ-015, option 2).
-    # A restart applies it.
-    frame_blend: str = "SRGB"
+    # how the Frame's ring is blended: LINEAR, the default (maintainer, 2026-11-12), draws the ring
+    # in one fill shader that blends in linear light, so a light border reads as wide on a curve as
+    # on a straight (TRE-REQ-015, option 2); SRGB draws the bands as paths and tre blends their
+    # anti-aliased edges in sRGB (a light line on a dark ground looks thinner on a curve). A
+    # Frame the shader cannot draw falls back to paths with one warning. A restart applies it.
+    frame_blend: str = "LINEAR"
 
 
 @dataclass(frozen=True, slots=True)

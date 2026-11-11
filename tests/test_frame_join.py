@@ -41,6 +41,7 @@ def scene(
         store,
         look(),
         join_mode=join,
+        blend_mode="SRGB",
     )
     manager.sink = lambda handler, key, raw: manager.run_builtin(handler)
     panel = (
@@ -206,6 +207,7 @@ def test_a_body_across_the_whole_opening_has_two_flush_ends(join: str) -> None:
         store,
         look(),
         join_mode=join,
+        blend_mode="SRGB",
     )
     panel = (
         "Panel { Name: Tab, Meld: true, Attach_To: F, Attach: TOP, Alignment: START, "

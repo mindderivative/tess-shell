@@ -217,7 +217,9 @@ class _Expander:
         self.out.tooltips[node_id] = ExpandedTooltip(ref, nodes, use.key if use else "")
 
     def _forward(
-        self, call: m.UseNode, children: tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...],
+        self,
+        call: m.UseNode,
+        children: tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...],
         outer: Use | None,
     ) -> tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...]:
         """The module's layout with what is written on its call placed on its root block: the
