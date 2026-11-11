@@ -346,16 +346,16 @@ wheels = [
 
 [[package]]
 name = "tesserae-engine"
-version = "0.6.5"
+version = "0.6.6"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d1/f2/8269140eb567681d1fe9ec0851b59714d9d261f47861adbdf2855f3d0844/tesserae_engine-0.6.5.tar.gz", hash = "sha256:aec11536776374ddee04b3788cc187b94ef01081d904c5fcde7a3c95d6f3f9ed", size = 2827692, upload-time = "2026-11-07T20:10:27.759Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/b9/99451ca1a28759fbd7f019851285866d7176f88539466638db38139d9b9b/tesserae_engine-0.6.6.tar.gz", hash = "sha256:76b5ee7186a2ff442b4d9fe9b4dff47302f1a5782f4e199be5746a0c1e26974d", size = 2833043, upload-time = "2026-11-11T05:24:55.936Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/34/21b2becdadbb369fff3ec6459c29194d3434152263608d9a8d445a2e0500/tesserae_engine-0.6.5-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:5a819f2b664a76d9ef4950608e58067622bcaf699ccc748e59ba1373069217b0", size = 10431306, upload-time = "2026-11-07T20:10:09.803Z" },
-    { url = "https://files.pythonhosted.org/packages/11/2e/faf718205c00238a69e5368019f78df82ef16f4fce53917941aa302f7603/tesserae_engine-0.6.5-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:a53eddb0b8a64f33a09e0522f894c6b7111fa61025c764cbaccef9d68005b78f", size = 15854228, upload-time = "2026-11-07T20:10:12.684Z" },
-    { url = "https://files.pythonhosted.org/packages/18/dd/23d06d556b589acc70f7394ffe0f897549ebb3a10ac4f5f7059d7916435f/tesserae_engine-0.6.5-cp314-cp314-win_amd64.whl", hash = "sha256:c6965a404fd288214a61ad2ffc9c8db3b6e1716ad900efc4b34bec58176b16aa", size = 10926344, upload-time = "2026-11-07T20:10:15.477Z" },
-    { url = "https://files.pythonhosted.org/packages/42/e7/83df43d90f82488adb9e3aadf84ac9f38346b8644b871d0ef0e3151bb6ce/tesserae_engine-0.6.5-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:f4ef5f16bd3af31ca9929d9857cce395d0639369d0b1ece1579e97d0206d042f", size = 15864047, upload-time = "2026-11-07T20:10:18.804Z" },
-    { url = "https://files.pythonhosted.org/packages/22/b5/0401b720634f270b05e0b7b7e2a0423be5406d8d5d6bcdad325fb0d72a49/tesserae_engine-0.6.5-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:99dbba2c7eb46fb7f87d54b866c2a7de84f54d2ef2cc9fa9c73d1119d237848d", size = 15854916, upload-time = "2026-11-07T20:10:21.82Z" },
-    { url = "https://files.pythonhosted.org/packages/97/3b/c88403e7adb7fea093ad3fadd9246d0478fff74216cf264e646432370b79/tesserae_engine-0.6.5-cp315-cp315t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:176603c671a5a25cf2371301c22ba0dbadcedd7f7b50aef2b9b0127ae4aae9c5", size = 15864094, upload-time = "2026-11-07T20:10:25.087Z" },
+    { url = "https://files.pythonhosted.org/packages/10/d9/8238793749c07bba64e6eb0a565c52119364ae0bc6f51689a376ace1c39c/tesserae_engine-0.6.6-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:d56da5d03bef51e5bd11cb21b79409f9cf6a54db4f362d999633e1c35cdfd60e", size = 10442415, upload-time = "2026-11-11T05:24:37.843Z" },
+    { url = "https://files.pythonhosted.org/packages/66/07/17df8079dad0228af5c66b722681779774426ba07d251519546475a7381a/tesserae_engine-0.6.6-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:e4649909715e9566414483160a86ab7e90206c432aa2939efdf747def2dc4707", size = 15858328, upload-time = "2026-11-11T05:24:40.814Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/ef/d50fe351e554e05de90d6ac2fea8d1b11d977cde39cce6ddd1aad41dcd20/tesserae_engine-0.6.6-cp314-cp314-win_amd64.whl", hash = "sha256:d8ef82b9a144d075a05fe5fabb2939b4df72cee367218533ffc40bed5cf0b04d", size = 10931492, upload-time = "2026-11-11T05:24:43.848Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/00/850a6e5dc415058861faea04f7cd4324b3ba56ae8b552b84646a380e8e84/tesserae_engine-0.6.6-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:303858106cc7841b9dcba6e6be216b17e196341448470ef9c6d2d7415abc1127", size = 15878825, upload-time = "2026-11-11T05:24:47.067Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/49/f564e0f7c151e1ebdb93bcd7042b9dbe9b75a3c22677625c14b431ed638f/tesserae_engine-0.6.6-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:e6162e94fca518a35a67d701e99dba7ebef679d4e9924c31bf5aa748381f88e1", size = 15859857, upload-time = "2026-11-11T05:24:49.92Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/f4/e5575ca66280b35f66e3300811d7730cde4a4a8c45c2ffcdf7b690181f2c/tesserae_engine-0.6.6-cp315-cp315t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:de7eaa40a613eb75ea7aa80752a49e2809decc8771c8f025db119e18f8649d25", size = 15878906, upload-time = "2026-11-11T05:24:53.14Z" },
 ]
 
 [[package]]
@@ -384,7 +384,7 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7.3,<0.8" },
     { name = "tesserae-dl", specifier = ">=0.1.1,<0.2" },
     { name = "tesserae-el", specifier = ">=0.1.2,<0.2" },
-    { name = "tesserae-engine", specifier = ">=0.6.5,<0.7" },
+    { name = "tesserae-engine", specifier = ">=0.6.6,<0.7" },
 ]
 
 [package.metadata.requires-dev]
