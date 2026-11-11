@@ -95,6 +95,14 @@ Stylesheet {
     }
     Rule { Selector: ".list_item:disabled", Opacity: 0.5 }
 
+    Rule { Selector: ".workspace:hovered", Background: $color.surface_raised }
+    Rule {
+        Selector: ".workspace:selected"
+        Background: $color.surface_raised
+        Border_Width: 2
+        Border_Color: $color.primary
+    }
+
     Rule { Selector: "MenuItem:hovered", Background: $color.outline }
     Rule { Selector: "MenuItem:pressed", Background: $color.primary }
     Rule { Selector: "MenuItem:disabled", Opacity: 0.5 }

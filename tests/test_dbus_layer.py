@@ -433,7 +433,13 @@ def test_no_module_can_request_a_bus_name_through_the_helper(rig: Rig) -> None:
     # what a module is promised: no call that takes a name, exports an object or owns anything
     assert get_protocol_members(api.ModuleDBus) == {"available", "close", "session", "system"}
     assert get_protocol_members(api.Bus) == {"proxy", "run", "run_blocking", "state"}
-    assert get_protocol_members(api.Proxy) == {"call", "get", "on_property_changed", "on_signal"}
+    assert get_protocol_members(api.Proxy) == {
+        "call",
+        "get",
+        "on_property_changed",
+        "on_signal",
+        "set",
+    }
     # and what it gets is no more than that: no attribute that reaches the connection
     mod = rig.module()
     bus = mod.dbus.session()
@@ -729,3 +735,102 @@ def test_match_key_rules() -> None:
         "type='signal',sender='org.x',path='/p',interface='org.x.I',member='Sig',arg0='arg'"
     )
     assert MatchKey(None, None, "i", "m").rule() == "type='signal',interface='i',member='m'"
+
+
+# -- M5b additions: set, optional services, the log level of an absent service ------------------
+
+
+def test_set_writes_a_property_and_the_cache_follows_the_services_signal(rig: Rig) -> None:
+    other = rig.bus.service("org.test.Writable")
+    obj = other.add("/w", "org.test.Writable", properties={"Level": ("i", 1)}, writable=["Level"])
+    other.up()
+    mod = rig.module()
+    proxy = mod.dbus.session().proxy("org.test.Writable", "/w", "org.test.Writable")
+    proxy.on_property_changed(mod.changes.append)
+    assert wait_for(lambda: mod.changes == [{"Level": 1}])
+    run(rig, proxy.set("Level", 7, "i"))
+    assert obj.sets == [("Level", 7)]
+    assert wait_for(lambda: mod.changes[-1] == {"Level": 7})
+    assert run(rig, proxy.get("Level")) == 7
+    # a property the service does not let a client write is an error, not a crash
+    ro = rig.module("Other").dbus.session().proxy(NAME, PATH, IFACE)
+    with pytest.raises(ServiceError):
+        run(rig, ro.set("Percentage", 1.0, "d"))
+
+
+def test_an_optional_service_is_left_out_of_available_and_logs_at_debug(rig: Rig) -> None:
+    mod = rig.module()
+    bus = mod.dbus.session()
+    bus.proxy(NAME, PATH, IFACE).on_property_changed(mod.changes.append)
+    bus.proxy("org.test.Optional", "/o", "org.test.Optional", optional=True).on_property_changed(
+        mod.changes.append
+    )
+    assert wait_for(
+        lambda: mod.available()[-1:] == [True]
+    )  # the absent optional one does not count
+    assert mod.dbus.available
+    assert bus.state("org.test.Optional") is ServiceState.UNAVAILABLE
+    assert rig.warnings == []
+    other = rig.bus.service("org.test.Optional")
+    other.add("/o", "org.test.Optional", properties={"V": ("i", 1)})
+    other.up()
+    assert rig.pump.wait(lambda: mod.hooks.found)  # the hooks still come for it
+    assert mod.hooks.found[-1][0] == "org.test.Optional"
+    other.down()
+    assert rig.pump.wait(lambda: mod.hooks.lost)
+    assert mod.dbus.available  # the optional service leaving changes nothing for the module
+    assert rig.warnings == []  # and it is an info line, not a warning
+
+
+def test_a_required_service_that_leaves_is_one_warning_and_one_that_is_absent_is_info(
+    rig: Rig,
+) -> None:
+    mod = rig.module()
+    bus = mod.dbus.session()
+    bus.proxy(NAME, PATH, IFACE).on_property_changed(mod.changes.append)
+    bus.proxy("org.test.Nobody", "/n", "org.test.Nobody").on_property_changed(mod.changes.append)
+    assert wait_for(lambda: bus.state(NAME) is ServiceState.AVAILABLE)
+    assert wait_for(lambda: bus.state("org.test.Nobody") is ServiceState.UNAVAILABLE)
+    time.sleep(0.1)
+    assert rig.warnings == []  # absent at the start: not a warning (the first read says so at info)
+    rig.fake.down()
+    assert rig.pump.wait(lambda: mod.hooks.lost)
+    assert wait_for(lambda: sum("left the session bus" in w for w in rig.warnings) == 1)
+    rig.fake.up()
+    assert rig.pump.wait(lambda: mod.hooks.found)
+    rig.fake.down()  # again within the minute: the rate limit holds
+    assert rig.pump.wait(lambda: len(mod.hooks.lost) >= 2)
+    assert sum("left the session bus" in w for w in rig.warnings) == 1
+
+
+def test_a_new_use_gets_the_current_available_from_the_context() -> None:
+    from tess_shell.modules.context import ModuleContext, UseRecord
+    from tess_shell.modules.ticks import TimeSource
+
+    with fake_bus() as bus:
+        fake = bus.service(NAME)
+        fake.add(PATH, IFACE, properties={"Percentage": ("d", 5.0)})
+        fake.up()
+        service = ServiceThread(bus.address)
+        service.start()
+        layer = Layer(service, Pump().call_soon)
+        sent: list[tuple[str | None, str, object]] = []
+        ctx = ModuleContext(
+            "M",
+            "uid",
+            {},
+            {},
+            lambda use, key, value: sent.append((use, key, value)),
+            TimeSource(),
+            dbus=lambda: layer,
+        )
+        try:
+            ctx.dbus.session().proxy(NAME, PATH, IFACE)
+            assert sent[0] == (None, "available", False)  # a layout can read it from the start
+            assert wait_for(lambda: ctx.dbus.available)
+            record = UseRecord("M@u2", "S.M.B.M_2", "u2", "Main", {})
+            ctx.send_available(record)
+            assert sent[-1] == ("M@u2", "available", True)
+        finally:
+            ctx.close()
+            service.stop()

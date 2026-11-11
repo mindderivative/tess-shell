@@ -22,6 +22,7 @@ from collections import deque
 from collections.abc import Callable, Coroutine, Mapping, Sequence
 from typing import Any
 
+from dbus_fast import Variant
 from loguru import logger
 
 from tess_shell.services.api import (
@@ -99,13 +100,13 @@ class Layer:
         )
         return (len(pool), percentile(pool, 0.5), percentile(pool, 0.99), max(pool, default=0.0))
 
-    def warn_limited(self, key: tuple[str, str, str], message: str) -> None:
+    def warn_limited(self, key: tuple[str, str, str], message: str, level: str = "WARNING") -> None:
         """A warning, at most one per ``key`` in :data:`WARN_EVERY` seconds; the rest are debug."""
         now = self._clock()
         last = self._warned.get(key)
         if last is None or now - last >= WARN_EVERY:
             self._warned[key] = now
-            logger.warning(message)
+            logger.log(level, message)
         else:
             logger.debug(message)
 
@@ -169,9 +170,11 @@ class Layer:
         signature: str,
         args: Sequence[Any],
         timeout: float,
+        unavailable_level: str = "WARNING",
     ) -> list[Any]:
         """A call on behalf of a module: the failures set the service's state and are warned
-        about at a limited rate (one per service a minute for each kind)."""
+        about at a limited rate (one per service a minute for each kind). A service with no owner
+        is logged at ``unavailable_level``."""
         bus = self.service.bus(service.kind)
         try:
             reply = await bus.call(
@@ -181,6 +184,7 @@ class Layer:
             self.warn_limited(
                 (service.kind, service.name, "unavailable"),
                 f"dbus: {exc} ({service.kind} bus); its modules show their empty state",
+                unavailable_level,
             )
             service.mark_unavailable()
             raise
@@ -242,7 +246,12 @@ class _Service:
 
     def _owner_changed(self, old: str | None, new: str | None) -> None:
         if new is None:
-            logger.info(f"dbus: {self.name} left the {self.kind} bus")
+            needed = any(not h.is_optional(self.kind, self.name) for h in self.listeners)
+            self.layer.warn_limited(
+                (self.kind, self.name, "left"),
+                f"dbus: {self.name} left the {self.kind} bus",
+                "WARNING" if needed else "INFO",
+            )
             for cache in self._caches():
                 cache.loaded = False
             self._set(ServiceState.UNAVAILABLE, "lost")
@@ -326,8 +335,18 @@ class _Cache:
 
     async def _load(self) -> None:
         self.reads += 1
+        # a service that is simply not there is expected on some desktops (KWin on sway): an info
+        # line, or a debug line when every user of it can do without
+        quiet = all(h.is_optional(self.service.kind, self.service.name) for h in self.users)
         reply = await self.layer.call(
-            self.service, self.path, PROPERTIES, "GetAll", "s", [self.interface], CALL_TIMEOUT
+            self.service,
+            self.path,
+            PROPERTIES,
+            "GetAll",
+            "s",
+            [self.interface],
+            CALL_TIMEOUT,
+            unavailable_level="DEBUG" if quiet else "INFO",
         )
         self.values = dict(reply[0]) if reply else {}
         self.loaded = True
@@ -466,6 +485,28 @@ class _Proxy:
             return None
         return reply[0] if len(reply) == 1 else tuple(reply)
 
+    async def set(
+        self,
+        prop: str,
+        value: Any,
+        signature: str,
+        *,
+        interface: str | None = None,
+        timeout: float = CALL_TIMEOUT,
+    ) -> None:
+        iface = self._interface(interface)
+        helper, kind, layer = self._bus.helper, self._bus.kind, self._bus.helper.layer
+        service = await layer.attach(helper, kind, self.name)
+        await layer.call(
+            service,
+            self.path,
+            PROPERTIES,
+            "Set",
+            "ssv",
+            [iface, prop, Variant(signature, value)],
+            timeout,
+        )
+
     def on_property_changed(
         self, callback: PropertyCallback, *, interface: str | None = None, initial: bool = True
     ) -> _Subscription:
@@ -513,8 +554,10 @@ class _Bus:
         self.helper = helper
         self.kind: BusKind = kind
 
-    def proxy(self, name: str, path: str, interface: str | None = None) -> _Proxy:
-        self.helper.use(self.kind, name)
+    def proxy(
+        self, name: str, path: str, interface: str | None = None, *, optional: bool = False
+    ) -> _Proxy:
+        self.helper.use(self.kind, name, optional)
         return _Proxy(self, name, path, interface)
 
     def state(self, name: str) -> ServiceState:
@@ -554,6 +597,7 @@ class _ModuleDBus:
         self.states: dict[tuple[BusKind, str], ServiceState] = {}
         self._buses = {"session": _Bus(self, "session"), "system": _Bus(self, "system")}
         self._used: set[tuple[BusKind, str]] = set()
+        self._optional: set[tuple[BusKind, str]] = set()
         self._published: bool | None = None
         self._subscriptions: list[_Subscription] = []
         self._closed = False
@@ -562,7 +606,14 @@ class _ModuleDBus:
 
     @property
     def available(self) -> bool:
-        return all(s is ServiceState.AVAILABLE for s in list(self.states.values()))
+        return all(
+            s is ServiceState.AVAILABLE
+            for key, s in list(self.states.items())
+            if key not in self._optional
+        )
+
+    def is_optional(self, kind: BusKind, name: str) -> bool:
+        return (kind, name) in self._optional
 
     def session(self) -> _Bus:
         return self._buses["session"]
@@ -572,11 +623,13 @@ class _ModuleDBus:
 
     # -- loop thread ----------------------------------------------------------------------------
 
-    def use(self, kind: BusKind, name: str) -> None:
+    def use(self, kind: BusKind, name: str, optional: bool = False) -> None:
         """The module made a proxy: watch the name (once per module)."""
         if (kind, name) in self._used or self._closed:
             return
         self._used.add((kind, name))
+        if optional:
+            self._optional.add((kind, name))
         self.states.setdefault((kind, name), ServiceState.UNAVAILABLE)  # until it is read
 
         async def attach() -> None:

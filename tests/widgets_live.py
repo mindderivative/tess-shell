@@ -7,7 +7,7 @@ pytest."""
 from __future__ import annotations
 
 import tempfile
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,8 +24,9 @@ from tess_shell.model.store import ValueStore
 from tess_shell.modules.host import ModuleHost
 from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.look import read_stylesheet, read_theme
-from tess_shell.schema.model import ModuleDef
-from tess_shell.schema.shell import read_module, read_module_params, read_shell
+from tess_shell.schema.model import ModuleDef, StyleDef
+from tess_shell.schema.shell import read_module, read_module_params, read_shell, read_style
+from tess_shell.services.api import DBusPort
 from tess_shell.surfaces.manager import SurfaceManager
 from tests.shell_samples import HEADER
 from tests.test_panel import StubApp
@@ -50,6 +51,8 @@ STANDARD = (
     "MenuItem",
     "TextInput",
     "TextEditor",
+    "Battery",
+    "Workspaces",
 )
 THEME = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text()
 DEFAULT_SHEET = (SHIPPED / "Stylesheets" / "Default_Stylesheet.tdl").read_text()
@@ -125,6 +128,22 @@ class Widgets:
         return self.view.nodes[found[index]]
 
 
+def _style_loader(name: str) -> Callable[[str], StyleDef | None]:
+    """The ``Style: <file>`` of a shipped module, read from its folder."""
+
+    def load(text: str) -> StyleDef | None:
+        path = SHIPPED / name / text
+        if not path.is_file():
+            return None
+        doc = tess_dl.parse(path.read_text(), path=str(path)).document
+        assert doc is not None
+        style, findings = read_style(doc, str(path))
+        assert style is not None, findings
+        return style
+
+    return load
+
+
 def _defs(driver: str, extra: dict[str, str]) -> dict[str, ModuleDef]:
     texts: dict[str, str] = {
         name: (SHIPPED / name / f"{name}_Module.tdl").read_text() for name in STANDARD
@@ -143,7 +162,7 @@ def _defs(driver: str, extra: dict[str, str]) -> dict[str, ModuleDef]:
     for name, text in texts.items():
         doc = tess_dl.parse(text, path=f"Modules/{name}_Module.tdl").document
         assert doc is not None
-        found, findings = read_module(doc, f"{name}.tdl", stubs, None, None, icons)
+        found, findings = read_module(doc, f"{name}.tdl", stubs, None, _style_loader(name), icons)
         assert found is not None, findings
         defs[name] = found
     return defs
@@ -159,6 +178,7 @@ def running(
     appearance: Appearance | None = None,
     popups: str = "",
     driver_py: str = DRIVER_PY,
+    dbus: DBusPort | None = None,
 ) -> Iterator[Widgets]:
     """The shell of ``tests.test_popup`` with ``children`` in its Bar, every standard module and a
     ``Driver`` module (layout ``driver``, Python ``driver_py``) loaded by a real module host."""
@@ -197,6 +217,7 @@ def running(
 
         manager.sink = route
         host.popups = manager.popups
+        host.dbus = dbus
         live = Widgets(manager, host, store)
         sink = logger.add(lambda message: live.lines.append(str(message).rstrip()), level="DEBUG")
         try:

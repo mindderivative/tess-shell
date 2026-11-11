@@ -32,6 +32,9 @@ class PrivateSway:
         env.pop("JOURNAL_STREAM", None)  # under systemd the console drops its timestamps
         # never the real session bus: the shell reads the desktop's settings portal from it
         env.pop("DBUS_SESSION_BUS_ADDRESS", None)
+        # nor the real system bus (UPower, NetworkManager): a socket that is not there, until a test
+        # gives the shell a private one
+        env["DBUS_SYSTEM_BUS_ADDRESS"] = f"unix:path={self.runtime}/no-system-bus"
         env["XDG_RUNTIME_DIR"] = str(self.runtime)
         # the shell writes backups under the state directory: keep them out of the real one
         env["XDG_STATE_HOME"] = str(self.runtime / "state")

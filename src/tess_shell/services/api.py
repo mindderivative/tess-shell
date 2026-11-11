@@ -91,6 +91,20 @@ class Proxy(Protocol):
         :class:`ServiceTimeout`, :class:`ServiceUnavailable` or :class:`ServiceError`."""
         ...
 
+    async def set(
+        self,
+        prop: str,
+        value: Any,
+        signature: str,
+        *,
+        interface: str | None = None,
+        timeout: float = CALL_TIMEOUT,
+    ) -> None:
+        """Write a property (``org.freedesktop.DBus.Properties.Set``); ``signature`` is the D-Bus
+        type of the value. The cache follows from the service's ``PropertiesChanged``, not from
+        this call. Raises as :meth:`call` does."""
+        ...
+
     def on_property_changed(
         self, callback: PropertyCallback, *, interface: str | None = None, initial: bool = True
     ) -> Subscription:
@@ -109,11 +123,15 @@ class Proxy(Protocol):
 
 
 class Bus(Protocol):
-    def proxy(self, name: str, path: str, interface: str | None = None) -> Proxy:
+    def proxy(
+        self, name: str, path: str, interface: str | None = None, *, optional: bool = False
+    ) -> Proxy:
         """A proxy for the object ``path`` of the service ``name``. The layer watches ``name`` from
         now on (a well-known name): when its owner goes away the module gets
         ``on_service_lost(name)`` and ``available`` false, and ``on_service_found(name)`` with
-        ``available`` true when an owner returns."""
+        ``available`` true when an owner returns. An ``optional`` service (a value the module can
+        do without) still gets the hooks, but does not count in ``available``, and its absence is
+        only a debug line in the log."""
         ...
 
     def state(self, name: str) -> ServiceState:

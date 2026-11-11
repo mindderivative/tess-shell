@@ -413,6 +413,7 @@ class ModuleHost:
                     self._finding(loaded.definition, "module-use", f"{record.name}: {exc}")
                 )
             if had is None and loaded.state == "running":
+                loaded.ctx.send_available(record)  # the layer sent it to the uses that existed
                 found = self._call(loaded, "use_added", partial(loaded.instance.use_added, record))
                 if found is not None:
                     findings.append(found)

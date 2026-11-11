@@ -105,13 +105,23 @@ class ModuleContext:
     @property
     def dbus(self) -> ModuleDBus:
         """The D-Bus helper (D-Bus Service Layer): ``ctx.dbus.session()`` and ``.system()`` give a
-        bus with ``proxy(name, path)``. Nothing connects until a proxy is used."""
+        bus with ``proxy(name, path)``. Nothing connects until a proxy is used. The first use
+        sends ``available`` false at once; the layer sends the real value when it has read the
+        module's services."""
         if self._dbus is None:
             port = self._dbus_port() if self._dbus_port else None
             if port is None:
                 raise RuntimeError("the shell has no D-Bus service layer")
             self._dbus = port.for_module(self.name, lambda key, value: self.send(key, value), self)
+            # a layout that reads ``available`` has a value before the layer has read a service
+            self.send("available", False)
         return self._dbus
+
+    def send_available(self, use: UseRecord) -> None:
+        """Give a use that appeared after the layer sent ``available`` its current value (the
+        host calls it for each new use of a module that has used ``ctx.dbus``)."""
+        if self._dbus is not None:
+            self.send("available", self._dbus.available, use=use)
 
     def set_service_hooks(self, lost: Callable[[str], None], found: Callable[[str], None]) -> None:
         """The module's ``on_service_lost`` and ``on_service_found`` (set by the host)."""

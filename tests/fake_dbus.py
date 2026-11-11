@@ -179,7 +179,7 @@ def _count(signature: str) -> int:
     return len(SignatureTree(signature).types)
 
 
-def _property(name: str, sig: str, writable: bool) -> Any:
+def _property(name: str, sig: str, writable: bool, log: list[tuple[str, Any]]) -> Any:
     from dbus_fast import PropertyAccess
 
     def getter(self: Any) -> Any:
@@ -197,6 +197,8 @@ def _property(name: str, sig: str, writable: bool) -> Any:
 
         def setter(self: Any, value: Any) -> None:
             self._values[name] = value
+            log.append((name, value))
+            self.emit_properties_changed({name: value})
 
         setter.__signature__ = inspect.Signature(  # type: ignore[attr-defined]
             [
@@ -226,7 +228,10 @@ class FakeObject:
         properties: Mapping[str, tuple[str, Any]] | None = None,
         methods: Mapping[str, tuple[Sequence[str], str, Callable[..., Any]]] | None = None,
         signals: Mapping[str, str] | None = None,
+        writable: Sequence[str] = (),
     ) -> None:
+        self.writable = frozenset(writable)  # properties a client may set (Properties.Set)
+        self.sets: list[tuple[str, Any]] = []  # what clients set
         self.service = service
         self.path = path
         self.interface = interface
@@ -242,7 +247,7 @@ class FakeObject:
         gone)."""
         ns: dict[str, Any] = {}
         for name, sig in self.signatures.items():
-            ns[name] = _property(name, sig, writable=False)
+            ns[name] = _property(name, sig, writable=name in self.writable, log=self.sets)
         for name, (ins, out, handler) in self._methods.items():
             ns[name] = _method(name, ins, out, self._recorded(name, handler))
         for name, sig in self._signals.items():
@@ -313,8 +318,9 @@ class FakeService:
         properties: Mapping[str, tuple[str, Any]] | None = None,
         methods: Mapping[str, tuple[Sequence[str], str, Callable[..., Any]]] | None = None,
         signals: Mapping[str, str] | None = None,
+        writable: Sequence[str] = (),
     ) -> FakeObject:
-        obj = FakeObject(self, path, interface, properties, methods, signals)
+        obj = FakeObject(self, path, interface, properties, methods, signals, writable)
         self.objects.append(obj)
         return obj
 
