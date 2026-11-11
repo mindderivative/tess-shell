@@ -14,6 +14,10 @@ ring still takes clicks. The way the join is drawn is chosen by ``Debug { Frame_
 * ``STRUCTURE`` (``join_structure``): path ``data`` with ``morph="structure"``.
 * ``PARAM`` (``join_param``): a path template with ``{expression}`` holes and ``animate_param``.
 
+``Debug { Frame_Blend: LINEAR }`` (``frame_shader``) draws the whole ring, bodies included, in one
+shader that blends in linear light; its join (``LinearJoin``) animates a uniform of that shader
+(it is PARAM's shape, with the same easing) and has no nodes of its own.
+
 At the end of the animation the Frame draws the ring with the body in it again and calls
 :meth:`Join.stop`, so every option ends in the same pixels: the ring's single contour.
 """
@@ -25,7 +29,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol, runtime_checkable
 
-from tess_shell.surfaces.ring import Ring
+from tess_shell.surfaces.ring import BodyGeo, Ring
 
 if TYPE_CHECKING:
     from tess_re import LayerWindow
@@ -54,6 +58,8 @@ class JoinRun:
     # with the body at its tab), in place of the body collapsed onto the band edge; it has the
     # same commands as the full contour, so every frame is their blend
     low: tuple[str, str] | None = None
+    # the same for a join that works from the body's geometry, not from path data
+    low_geo: BodyGeo | None = None
 
     def start(self) -> tuple[str, str]:
         """The contour at the start of a show (the end of a hide): collapsed, or the tab."""

@@ -7,10 +7,17 @@ Run from the repo root with the project's environment:
     uv run python tests/kwin/compare_join.py --live --sway        # + cost on a private headless sway
     uv run python tests/kwin/compare_join.py --live               # + cost on the compositor you are on
     uv run python tests/kwin/compare_join.py --live --join=SHADER --output=HDMI-A-1 --seconds=4
+    uv run python tests/kwin/compare_join.py --live --sway --join=PARAM --blend=LINEAR   # the shader ring
 
 (``/tmp/tess-kwin-m3c/compare-join.sh`` runs the second form on KWin; ``prepare_m3c_strips.py``
 writes it.) It prints one table per question and starts nothing on the desktop unless ``--live``
 is given without ``--sway``.
+
+``--blend=LINEAR`` runs every option with ``Debug { Frame_Blend: LINEAR }`` (the ring and its
+bodies drawn by one shader that blends in linear light, ``surfaces/frame_shader.py``): the join is
+then the shader's, which has PARAM's shape, so use it with ``--join=PARAM`` (the other options
+fall back to paths with a warning). Run the same line with ``--blend=SRGB`` (the default) to compare
+the cost.
 
 What it does, for the options named by ``--join`` (default all):
 
@@ -51,6 +58,7 @@ FRAME = (
     'Inner_Border { Width: 2, Color: "#89b4fa" }, Style { Background: "#1e1e2e" } }'
 )
 MS = 300  # the slide
+BLEND = "SRGB"  # ``--blend``: how the Frame's ring is blended in every scene
 CODE = {  # the files that are each option's own code (SMIL's is the class in join.py)
     "SMIL": ("src/tess_shell/surfaces/join.py", "class SmilJoin"),
     "CONCAVE": ("src/tess_shell/surfaces/join_concave.py", None),
@@ -98,7 +106,15 @@ def headless_scene(join: str, alignment: str, visible: bool = False) -> Any:
     from tests.test_frame_strips import shell_of
 
     app = StubApp()
-    manager = SurfaceManager(app, {}, lambda key: key[-1], ValueStore(), look(), join_mode=join)  # type: ignore[arg-type]
+    manager = SurfaceManager(
+        app,  # type: ignore[arg-type]
+        {},
+        lambda key: key[-1],
+        ValueStore(),
+        look(),
+        join_mode=join,
+        blend_mode=BLEND,
+    )
     manager.sink = lambda handler, key, raw: manager.run_builtin(handler)
     manager.plan(shell_of(FRAME, panel(alignment, visible=visible)))
     manager.build()
@@ -304,7 +320,9 @@ def memory() -> dict[str, float]:
     return {"rss_mib": kb("status") / 1024, "pss_mib": kb("smaps_rollup") / 1024}
 
 
-def live_child(join: str, output: str | None, seconds: float, idle: float = 2.0) -> None:
+def live_child(
+    join: str, output: str | None, seconds: float, idle: float = 2.0, blend: str = "SRGB"
+) -> None:
     """Open the Frame with ``join`` on the compositor and print one ``RESULT {...}`` line."""
     import tess_re
 
@@ -317,7 +335,15 @@ def live_child(join: str, output: str | None, seconds: float, idle: float = 2.0)
     chosen = next((o for o in app.outputs() if output in (None, o.name)), None)
     if chosen is None:
         sys.exit(f"no output {output}")
-    manager = SurfaceManager(app, {}, lambda key: key[-1], ValueStore(), look(), join_mode=join)  # type: ignore[arg-type]
+    manager = SurfaceManager(
+        app,  # type: ignore[arg-type]
+        {},
+        lambda key: key[-1],
+        ValueStore(),
+        look(),
+        join_mode=join,
+        blend_mode=blend,
+    )
     manager.sink = lambda handler, key, raw: manager.run_builtin(handler)
     manager.plan(shell_of(FRAME, panel(visible=True)))
     manager.build()
@@ -326,6 +352,7 @@ def live_child(join: str, output: str | None, seconds: float, idle: float = 2.0)
     painter = st.painter
     result: dict[str, Any] = {
         "join": join,
+        "blend": blend,
         "output": f"{chosen.name} {chosen.width}x{chosen.height}",
         "scale": chosen.scale_factor,
     }
@@ -380,6 +407,7 @@ def live_run(
     seconds: float,
     env: dict[str, str],
     idle: float = 2.0,
+    blend: str = "SRGB",
 ) -> list[dict[str, Any]]:
     results = []
     for join in options:
@@ -389,6 +417,7 @@ def live_run(
             f"--child={join}",
             f"--seconds={seconds}",
             f"--idle={idle}",
+            f"--blend={blend}",
         ]
         if output:
             cmd.append(f"--output={output}")
@@ -409,7 +438,7 @@ def live_table(results: list[dict[str, Any]]) -> None:
         before, after = r["idle_before"], r["idle_after"]
         rows.append(
             [
-                r["join"],
+                r["join"] + (f" {r['blend']}" if r.get("blend", "SRGB") != "SRGB" else ""),
                 f"{r['scale']:g}",
                 str(r["frames"]),
                 f"{r['fps']:.0f}",
@@ -444,7 +473,8 @@ def live_table(results: list[dict[str, Any]]) -> None:
         stages = {
             k: round(v, 2) for k, v in r["stages"].items() if k in ("layout", "draw", "present")
         }
-        print(f"  {r['join']:10} {stages}  redraws {r.get('redraws')}")
+        label = r["join"] + (f" {r['blend']}" if r.get("blend", "SRGB") != "SRGB" else "")
+        print(f"  {label:17} {stages}  redraws {r.get('redraws')}")
 
 
 def main() -> None:
@@ -460,17 +490,28 @@ def main() -> None:
     ap.add_argument("--out", default="/tmp/join-compare", help="where the PNG sheets go")
     ap.add_argument("--no-headless", action="store_true", help="skip frames, hits and size")
     ap.add_argument("--idle", type=float, default=2.0, help="with --live: seconds of idle to count")
+    ap.add_argument(
+        "--blend",
+        default="SRGB",
+        choices=["SRGB", "LINEAR"],
+        help="Debug { Frame_Blend } of every run",
+    )
     ap.add_argument("--child", default=None, help=argparse.SUPPRESS)
     args = ap.parse_args()
+    global BLEND
+    BLEND = args.blend
     if args.child:
-        live_child(args.child, args.output, args.seconds, args.idle)
+        live_child(args.child, args.output, args.seconds, args.idle, args.blend)
         return
     options: list[str] = list(JOINS) if args.join == "all" else [args.join.upper()]
     for o in options:
         if o not in JOINS:
             sys.exit(f"unknown option {o}; one of {', '.join(JOINS)}")
     scales = tuple(float(s) for s in args.scales.split(","))
-    print(f"tesserae-engine {version('tesserae-engine')}, options: {', '.join(options)}")
+    print(
+        f"tesserae-engine {version('tesserae-engine')}, options: {', '.join(options)}, "
+        f"Frame_Blend: {args.blend}"
+    )
     if not args.no_headless:
         # the headless renders never open a window (only App.run does): nothing is shown
         headless_frames(options, Path(args.out), scales)
@@ -479,7 +520,9 @@ def main() -> None:
     if not args.live:
         return
     if not args.sway:
-        live_table(live_run(options, args.output, args.seconds, dict(os.environ), args.idle))
+        live_table(
+            live_run(options, args.output, args.seconds, dict(os.environ), args.idle, args.blend)
+        )
         return
     from tests.sway import PrivateSway
 
@@ -490,7 +533,11 @@ def main() -> None:
             sway.msg("output", "*", "scale", f"{scale:g}")
             time.sleep(0.5)
             print(f"\n== private sway, output scale {scale:g}")
-            live_table(live_run(options, sway.output_names()[0], args.seconds, sway.env, args.idle))
+            live_table(
+                live_run(
+                    options, sway.output_names()[0], args.seconds, sway.env, args.idle, args.blend
+                )
+            )
     finally:
         sway.stop()
 

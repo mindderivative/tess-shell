@@ -10,6 +10,10 @@ Per Frame and output there are up to five windows, all on the ``top`` layer:
   across it, 1 px thick, transparent, taking no input, with the side's total (thickness, borders
   and margin) as ``exclusive_zone``. They push maximised windows inside the ring.
 
+With ``Debug { Frame_Blend: LINEAR }`` the three path nodes are replaced by one shader node that
+blends the bands in linear light (:mod:`tess_shell.surfaces.frame_shader`); a Frame it cannot draw
+keeps the paths.
+
 The painter also *hosts* content (Frame > What a Frame Holds, Option A): a **strip** is a side's
 ``Children`` laid out in a box in that side's band (top and bottom strips own the corner squares
 and run the full width, left and right strips run between them and lay their children out
@@ -60,6 +64,7 @@ from tess_shell.schema.model import (
 )
 from tess_shell.surfaces import handle as handles
 from tess_shell.surfaces.bar import Geometry
+from tess_shell.surfaces.frame_shader import MAX_BODIES, LinearJoin, RingShader, too_large
 from tess_shell.surfaces.join import Join, JoinRun, Seekable, make_join
 from tess_shell.surfaces.panel import px_size
 from tess_shell.surfaces.ring import MeldSpec, Rect4, Ring, RingSpec, Sides, padded, ring
@@ -86,6 +91,7 @@ _EMPTY = "M0,0 L0,0 Z"
 _Z_MORPH = 1
 _Z_CONTENT = 2
 _Z_HANDLE = 3  # the icon on a tab: above the ring, the join and the content
+_LINEAR = "linear"  # ``FrameState.drawn`` while the ring shader draws the ring
 DRAG_SLOP = 4.0  # pixels a press may move and still be a click (the Edge Shell's value)
 DRAG_OPENS = 0.5  # a drag released at this fraction of the way or more opens it (the Edge Shell's)
 STRIP_PEEK_MS = 200  # how long a peeking strip takes to come out and go back
@@ -438,6 +444,7 @@ class FrameState:
     hidden_melds: set[str] = field(default_factory=set)  # melded bodies hidden now (a strip's at
     # rest: it is the sliver that shows)
     tab_melds: set[str] = field(default_factory=set)  # melded Panels at rest as a tab
+    linear: RingShader | None = None  # Frame_Blend: LINEAR: the ring as one shader, else None
     shape: Ring | None = None  # the ring as last drawn, without the melded bodies that animate
     full: Ring | None = None  # the ring with every melded Panel that is shown or on its way
     keyboard: str = "none"
@@ -710,6 +717,7 @@ class Frames:
             for host in st.hosts.values():
                 if host.anim:  # a join in flight holds the old colours: let it arrive at once
                     self._settle(st, host)
+            self._blend(st)  # a token may have made a colour translucent
             self._draw(st)
             for host in st.hosts.values():
                 if host.surface.view is not None:
@@ -776,6 +784,7 @@ class Frames:
         self._drop_hosts(st)
         painter, reservers = st.painter, list(st.reservers.values())
         st.painter, st.nodes, st.reservers, st.zones, st.drawn = None, [], {}, {}, None
+        st.linear = None
         for window in (painter, *reservers):
             if window is not None:
                 self._shut(st, window)
@@ -795,6 +804,7 @@ class Frames:
             return
         if st.painter is None:
             self._open_painter(st)
+        self._blend(st)
         self._draw(st)
         self._reconcile_hosts(st)
         self._set_keyboard(st)
@@ -832,6 +842,7 @@ class Frames:
         )
         st.size = plan.size
         st.nodes = []
+        st.linear = None
         st.keyboard = "none"
         for _ in range(3):
             node = window.create(
@@ -944,39 +955,147 @@ class Frames:
             else shape
         )
         paint = plan.paint
-        sliding = any(
-            h.anim and h.kind == "SLIDE" and h.join is not None and h.join.ghost
-            for h in st.hosts.values()
-        )
+        if st.linear is not None:
+            self._draw_linear(st, st.full, moving)
+        if st.linear is None or not st.linear.active:
+            sliding = any(
+                h.anim and h.kind == "SLIDE" and h.join is not None and h.join.ghost
+                for h in st.hosts.values()
+            )
 
-        def ghost(color: RGBA | None) -> RGBA | None:
-            """Under a sliding body's join the ring nodes are only the shape that takes clicks."""
-            return (color[0], color[1], color[2], 1) if sliding and color is not None else color
+            def ghost(color: RGBA | None) -> RGBA | None:
+                """Under a sliding body's join the ring nodes are only the shape that takes
+                clicks."""
+                return (color[0], color[1], color[2], 1) if sliding and color is not None else color
 
-        bands = (
-            (shape.outer_border, paint.outer),
-            (shape.fill, ghost(paint.fill)),
-            (shape.inner_border, ghost(paint.inner)),
-        )
-        key = (st.size, paint.opacity, bands)
-        if key != st.drawn:
-            for node, (data, color) in zip(st.nodes, bands, strict=True):
-                props: dict[str, Any] = {
-                    "width": st.size[0],
-                    "height": st.size[1],
-                    "opacity": paint.opacity,
-                }
-                if data and color is not None:
-                    props.update(data=data, fill=color, visible=True)
-                else:
-                    props["visible"] = False
-                node.set(**props)
-            st.drawn = key
+            bands = (
+                (shape.outer_border, paint.outer),
+                (shape.fill, ghost(paint.fill)),
+                (shape.inner_border, ghost(paint.inner)),
+            )
+            key = (st.size, paint.opacity, bands)
+            if key != st.drawn:
+                for node, (data, color) in zip(st.nodes, bands, strict=True):
+                    props: dict[str, Any] = {
+                        "width": st.size[0],
+                        "height": st.size[1],
+                        "opacity": paint.opacity,
+                    }
+                    if data and color is not None:
+                        props.update(data=data, fill=color, visible=True)
+                    else:
+                        props["visible"] = False
+                    node.set(**props)
+                st.drawn = key
         for host in st.hosts.values():
             if host.clip is not None:
                 self._place_meld(st, host)
             else:
                 self._place(st, host.plan, host.container, host.surface)
+
+    # -- the ring as a shader: Debug { Frame_Blend: LINEAR } --------------------------------------
+    #
+    # One shader node replaces the three path nodes (``frame_shader``): the bands are blended in
+    # linear light, so an anti-aliased edge between the fill and the border has the brightness of
+    # its coverage. It draws the ring with every melded body in it (a body that animates is a
+    # uniform of the shader that tre moves) and takes the clicks by the painted contour. A Frame
+    # it cannot draw (see ``_blend_reason``) keeps the paths, and says why once.
+
+    def _blend_reason(self, st: FrameState) -> str | None:
+        """Why this Frame cannot be drawn by the shader, or ``None``. What cannot be decided from
+        the plan and the colours (a body the field cannot describe) is checked at each draw."""
+        plan = st.plan
+        if self._m.join_mode != "PARAM":
+            return (
+                f"Debug {{ Frame_Join: {self._m.join_mode} }} is not PARAM: the shader draws the "
+                "join itself, with PARAM's shape"
+            )
+        paint = plan.paint
+        if paint.opacity < 1.0:
+            return f"its Opacity is {paint.opacity:g}, below 1 (only opaque colours are blended)"
+        for what, colour in (
+            ("Background", paint.fill),
+            ("Outer_Border", paint.outer),
+            ("Inner_Border", paint.inner),
+        ):
+            if colour is not None and colour[3] < 255:
+                return f"its {what} colour is translucent (only opaque colours are blended)"
+        for panel in plan.frame.melds:
+            if panel.animation == "FADE":
+                return f"Panel {panel.name} has Animation: FADE (the shader slides a body)"
+        if len(plan.melds) > MAX_BODIES:
+            return f"it has {len(plan.melds)} melded bodies (the shader draws {MAX_BODIES})"
+        if too_large(plan.size, float(getattr(plan.output, "scale_factor", 1.0))):
+            return "the painter is larger than a shader node can be (8192 physical px)"
+        return None
+
+    def _warn_blend(self, st: FrameState, reason: str) -> None:
+        key = f"{st.plan.key} {reason}"
+        if key not in self._warned:
+            self._warned.add(key)
+            logger.warning(
+                f"Frame {st.plan.where}: Debug {{ Frame_Blend: LINEAR }} draws it with paths: "
+                f"{reason}"
+            )
+
+    def _blend(self, st: FrameState) -> None:
+        """Bring the Frame to what ``Debug { Frame_Blend }`` and the plan allow: make the shader
+        (and give every melded host its join) or let it go (and give the hosts the join of
+        ``Frame_Join`` back). Idempotent; the next ``_draw`` paints."""
+        if st.painter is None or self._m.blend_mode != "LINEAR":
+            return
+        reason = self._blend_reason(st)
+        names = [name for name, _ in st.plan.melds]
+        if reason is None:
+            if st.linear is None:
+                st.linear = RingShader(st.painter, names)
+                st.drawn = None
+                logger.info(f"Frame {st.plan.where}: ring drawn in linear light")
+                self._swap_joins(st)
+            else:
+                st.linear.configure(names)
+            return
+        self._warn_blend(st, reason)
+        if st.linear is not None:
+            linear, st.linear = st.linear, None
+            self._swap_joins(st)
+            linear.destroy()
+            st.drawn = None
+
+    def _make_join(self, st: FrameState, hp: HostPlan) -> Join:
+        assert st.painter is not None
+        if st.linear is not None:
+            return LinearJoin(st.painter, st.linear, hp.name)
+        return make_join(self._join_mode(hp), st.painter, _Z_MORPH)
+
+    def _swap_joins(self, st: FrameState) -> None:
+        """Give each host that has a join the one the Frame draws with now."""
+        for host in st.hosts.values():
+            if host.join is None:
+                continue
+            if host.anim:
+                self._snap(host)
+            host.join.destroy()
+            host.join = self._make_join(st, host.plan)
+
+    def _draw_linear(self, st: FrameState, full: Ring, moving: set[str]) -> None:
+        """Paint the ring with the shader, or hide it when it cannot draw this ring."""
+        linear = st.linear
+        assert linear is not None
+        names = [name for name, _ in st.plan.melds if name not in st.hidden_melds]
+        why = linear.reason(full, names)
+        if why is not None:
+            self._warn_blend(st, why)
+            linear.hide()
+            if st.drawn == _LINEAR:
+                st.drawn = None
+            return
+        paint = st.plan.paint
+        linear.draw(st.size, full, names, moving, (paint.outer, paint.fill, paint.inner))
+        if st.drawn != _LINEAR:
+            for node in st.nodes:
+                node.set(visible=False)
+            st.drawn = _LINEAR
 
     # -- strips and melded Panels ---------------------------------------------------------------
 
@@ -1463,6 +1582,7 @@ class Frames:
             if h is not host and h.anim and h.plan.name in names
         }
         low = None
+        low_geo = None
         if tab:
             moving = {h.plan.name for h in st.hosts.values() if h.anim}
             small = st.plan.ring_for(
@@ -1473,6 +1593,7 @@ class Frames:
             if small.morph is None or index >= len(small.bodies) or small.bodies[index] is None:
                 return None
             low = small.morph(others)
+            low_geo = small.geometry[index] if index < len(small.geometry) else None
             end = full.morph({**others, index: 1.0})
             if any(_commands(a) != _commands(b) for a, b in zip(low, end, strict=True)):
                 logger.warning(
@@ -1482,7 +1603,17 @@ class Frames:
                 )
                 return None
         return JoinRun(
-            kind, show, st.size, full, index, others, paint.fill, paint.inner, paint.opacity, low
+            kind,
+            show,
+            st.size,
+            full,
+            index,
+            others,
+            paint.fill,
+            paint.inner,
+            paint.opacity,
+            low,
+            low_geo,
         )
 
     def _motion(self, st: FrameState, host: HostState) -> tuple[str, int]:
@@ -1742,7 +1873,7 @@ class Frames:
                 z_index=_Z_CONTENT,
             )
             mover = st.painter.create("box", position="absolute", left=0, top=0, width=0, height=0)
-            join = make_join(self._join_mode(hp), st.painter, _Z_MORPH)
+            join = self._make_join(st, hp)
             mover.add_child(container)
             clip.add_child(mover)
             st.painter.root.add_child(clip)

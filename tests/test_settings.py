@@ -185,6 +185,45 @@ def test_debug_frame_join_defaults_to_param_and_takes_each_option(tmp_path: Path
         assert settings.debug == DebugSettings(frame_join=word)
 
 
+def test_debug_frame_blend_defaults_to_srgb_and_takes_linear(tmp_path: Path) -> None:
+    from tess_shell.config.settings import DebugSettings
+
+    assert load_settings(tmp_path / "none")[0].debug.frame_blend == "SRGB"  # type: ignore[union-attr]
+    for word in ("SRGB", "LINEAR"):
+        (tmp_path / "settings.tdl").write_text(
+            f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ Frame_Blend: {word} }} }}\n"
+        )
+        settings, findings = load_settings(tmp_path)
+        assert findings == [] and settings is not None
+        assert settings.debug == DebugSettings(frame_blend=word)
+        assert settings.debug.frame_join == "PARAM" and settings.debug.panel_hide == "KEEP"
+
+
+def test_debug_frame_blend_goes_with_the_other_debug_keys(tmp_path: Path) -> None:
+    from tess_shell.config.settings import DebugSettings
+
+    (tmp_path / "settings.tdl").write_text(
+        "---\nTDL: 0.1\nName: S\n---\n"
+        "Settings { Debug { Panel_Hide: CLOSE, Frame_Join: SMIL, Frame_Blend: LINEAR } }\n"
+    )
+    settings, findings = load_settings(tmp_path)
+    assert findings == [] and settings is not None
+    assert settings.debug == DebugSettings("CLOSE", "SMIL", "LINEAR")
+
+
+def test_debug_frame_blend_refuses_another_word_and_a_lower_case_one(tmp_path: Path) -> None:
+    for text, needle in (
+        ("Frame_Blend: GAMMA", "SRGB"),
+        ("Frame_Blend: linear", "upper case, write LINEAR"),
+        ("Frame_Blends: LINEAR", "Frame_Blend"),
+    ):
+        (tmp_path / "settings.tdl").write_text(
+            f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ {text} }} }}\n"
+        )
+        settings, findings = load_settings(tmp_path)
+        assert settings is None and needle in findings[0].message + findings[0].hint
+
+
 def test_debug_takes_panel_hide_and_frame_join_together(tmp_path: Path) -> None:
     from tess_shell.config.settings import DebugSettings
 

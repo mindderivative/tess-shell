@@ -460,12 +460,16 @@ class SurfaceManager:
         hide_mode: str = "KEEP",
         positions: PositionStore | None = None,
         join_mode: str = "PARAM",
+        blend_mode: str = "SRGB",
     ) -> None:
         self._app = app
         self._positions = positions  # where the user left each Movable Panel (the registry)
         self._shell_name = ""
         self.hide_mode = hide_mode  # KEEP (the default) or CLOSE (D44)
         self.join_mode = join_mode  # how a melded Panel's join animates (surfaces/join.py)
+        # how the Frame's ring is drawn: SRGB, with paths (tre blends their edges in sRGB), or
+        # LINEAR, with one shader that blends in linear light (surfaces/frame_shader.py)
+        self.blend_mode = blend_mode
         self._depth = 0  # how deep Panel event handlers have called one another
         self.sink = sink
         self._look = look

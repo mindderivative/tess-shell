@@ -11,8 +11,14 @@ config and scripts under ``/tmp/tess-kwin-m3c`` and starts nothing. It does not 
 * ``run-strips-join.sh OPTION``: the same shell, with ``Debug { Frame_Join: OPTION }`` (SMIL,
   CONCAVE, SHADER, STRUCTURE or PARAM): the way the Dock's join is drawn while it slides, so the
   five can be compared by eye on KWin (a restart applies a change).
-* ``compare-join.sh [--join=OPTION] ...``: ``tests/kwin/compare_join.py --live`` on HDMI-A-1:
-  the cost of each option in one table (frame time while sliding, frames drawn at idle, memory).
+* ``run-strips-linear.sh [SRGB|LINEAR]``: the same shell, with ``Debug { Frame_Blend: ... }``
+  (default ``SRGB``: the ring as paths, tre blends their edges in sRGB; ``LINEAR``: the ring and
+  its bodies in one shader that blends in linear light, TRE-REQ-015 option 2): does the border
+  read as 2 px on a curve as on a straight? ``run-peek-linear.sh [SRGB|LINEAR]`` is the Peek demo
+  with it. A restart applies a change.
+* ``compare-join.sh [--join=OPTION] [--blend=SRGB|LINEAR] ...``: ``tests/kwin/compare_join.py
+  --live`` on HDMI-A-1: the cost of each option in one table (frame time while sliding, frames
+  drawn at idle, memory).
 * ``toggle-strips.sh``: switch the saved shell file between variant A and B (a hot reload).
 * ``check-strips.sh``: the file is valid.
 * ``run-peek.sh [OPTION]``, ``toggle-peek.sh``, ``check-peek.sh``: variant C, the Peek demo, in
@@ -48,6 +54,7 @@ SETTINGS = (
 )
 
 SETTINGS_JOIN = SETTINGS.replace("Settings {\n", "Settings {\n  Debug { Frame_Join: @JOIN@ }\n")
+SETTINGS_BLEND = SETTINGS.replace("Settings {\n", "Settings {\n  Debug { Frame_Blend: @BLEND@ }\n")
 
 TOP_CHILDREN = "\n".join(
     [
@@ -520,10 +527,54 @@ points to look at, per option:
 Reduced motion: switch Plasma's animation speed to "instant" (or the portal's reduced motion):
   [ ] Dock then appears and disappears at once.
 
+@BLEND@
 @PEEK@
 Not built (each is a clear error or warning at load, not a silent no-op): strip expand and
 contract (a peek is built), a Bar melded to the Frame, a Panel's own window melded to the Frame (without Meld), an
 Edges Visible key, a gradient background, a Frame shadow, fullscreen hiding.
+"""
+
+
+def blend_checklist() -> str:
+    return """Blend: Debug { Frame_Blend: SRGB | LINEAR } in settings.tdl (TRE-REQ-015, option 2)
+SRGB (the default) draws the ring and its borders as paths: tre blends the anti-aliased edge of a
+path in sRGB, so a light 2 px border on the dark ring looks thinner on a curve than on a straight
+(1.69 of 2.00 at 1x, 1.79 at 1.5x, measured as summed linear light). LINEAR draws the ring, the
+borders and every melded body in ONE shader that mixes the colours in linear light itself. A
+restart applies a change ("Debug applies after a restart"). Run, at your display's scale (1.0 and,
+if you can, 1.5), for each of SRGB and LINEAR:
+  /tmp/tess-kwin-m3c/run-strips-linear.sh SRGB|LINEAR    variant A of the strips demo (Dock at the bottom;
+                                                          toggle-strips.sh for variant B, the right band)
+  /tmp/tess-kwin-m3c/run-peek-linear.sh SRGB|LINEAR      the Peek demo (variant C)
+What LINEAR can fix: an edge between two colours the shader paints itself, here the border's outer
+edge (against the dark ring). The border's INNER edge is against what is behind the Frame, which
+the compositor blends in sRGB whatever the shader writes, so a curve over a dark desktop is
+expected to read about 94 % of a straight at 1x and 96 % at 1.5x (paths: 84 % and 90 %), not 100 %.
+Tell me what you see, line by line.
+  [ ] the log (DEBUG) shows "ring drawn in linear light" once with LINEAR (and nothing of the sort
+      with SRGB), and no line "draws it with paths".
+  [ ] BORDER ON CURVES (the point of it): look at the 2 px blue border at the four opening corners, at
+      the Dock's two joins and its far corners, and at the Dock's far corners when it is a Panel with
+      a radius, SRGB then LINEAR, at 1x and at 1.5x (a magnifier helps). Does it read as 2 px on the
+      curve as on the straight? Which of the two looks better, and by how much (none, a little, clearly)?
+      Does anything look worse (too bold, a bright fringe on the desktop side, a darker one)?
+  [ ] AT REST the ring is the same: positions of every edge, the colours, the strip areas, the
+      margins; no hairline between the ring and the border, nothing shifted by a pixel anywhere
+      (flip between the two runs).
+  [ ] The DOCK SLIDE (the Dock button): the same movement as PARAM: the joins are round at every
+      frame, grow with the body, no pop at the start or the end of the 300 ms, turning round without a
+      jump; the left strip's blocks and the text slide with it.
+  [ ] PEEK (run-peek-linear.sh): the Dock's tab (24 px), Notes (click), Tray (drag, the body follows
+      the pointer exactly) and the left sliver (drag) look and move as with SRGB; the handles are on
+      top of the ring.
+  [ ] THEME: switch Plasma between Light and Dark: the ring, the border and the content change at
+      once, also with a Panel out; a slide in flight finishes at once.
+  [ ] CLICKS: a click in the opening, in the notch of a join (also while it slides) and in the margin
+      reaches the window below; a click on the ring, the border or the Dock does not.
+  [ ] IDLE: with nothing moving the log shows no frames drawn (DEBUG "frames"), and the CPU is idle.
+  [ ] COST: /tmp/tess-kwin-m3c/compare-join.sh --join=PARAM --blend=SRGB  and  --blend=LINEAR (print both
+      tables, the ring is one full-screen shader that redraws while a body slides).
+  [ ] a reload (toggle-strips.sh) changes the ring within a second and the painter is not made again.
 """
 
 
@@ -555,6 +606,20 @@ def prepare_peek() -> None:
         '  sed "s/@JOIN@/$opt/" /tmp/tess-kwin-m3c/settings-join.tdl.in'
         " > /tmp/tess-kwin-m3c/peek/settings.tdl\n"
         '  echo "Frame_Join: $opt"\nfi\n'
+        f"echo c > {f}\n"
+        "cp /tmp/tess-kwin-m3c/peek/variants/c.tdl /tmp/tess-kwin-m3c/peek/Shells/Main_Shell.tdl\n"
+        f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3c/peek\n",
+    )
+    script(
+        "run-peek-linear.sh",
+        "# The Peek demo (variant C), the ring blended in sRGB (paths) or in linear light (one\n"
+        "# shader).  Usage: run-peek-linear.sh [SRGB|LINEAR]   (default SRGB)\n"
+        'opt="${1:-SRGB}"\ncase "$opt" in SRGB|LINEAR) ;;\n'
+        '  *) echo "usage: run-peek-linear.sh [SRGB|LINEAR]" >&2; exit 2 ;;\nesac\n'
+        "export XDG_STATE_HOME=/tmp/tess-kwin-m3c/state\n"
+        'sed "s/@BLEND@/$opt/" /tmp/tess-kwin-m3c/settings-blend.tdl.in'
+        " > /tmp/tess-kwin-m3c/peek/settings.tdl\n"
+        'echo "Frame_Blend: $opt"\n'
         f"echo c > {f}\n"
         "cp /tmp/tess-kwin-m3c/peek/variants/c.tdl /tmp/tess-kwin-m3c/peek/Shells/Main_Shell.tdl\n"
         f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3c/peek\n",
@@ -626,6 +691,21 @@ def main() -> None:
         'echo "Frame_Join: $opt"\n'
         f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3c/strips\n",
     )
+    (ROOT / "settings-blend.tdl.in").write_text(SETTINGS_BLEND)
+    script(
+        "run-strips-linear.sh",
+        "# The Frame with strips and a melded Panel, the ring blended in sRGB (paths) or in linear\n"
+        "# light (one shader).  Usage: run-strips-linear.sh [SRGB|LINEAR]   (default SRGB)\n"
+        'opt="${1:-SRGB}"\ncase "$opt" in SRGB|LINEAR) ;;\n'
+        '  *) echo "usage: run-strips-linear.sh [SRGB|LINEAR]" >&2; exit 2 ;;\nesac\n'
+        "export XDG_STATE_HOME=/tmp/tess-kwin-m3c/state\n"
+        'sed "s/@BLEND@/$opt/" /tmp/tess-kwin-m3c/settings-blend.tdl.in'
+        " > /tmp/tess-kwin-m3c/strips/settings.tdl\n"
+        f"echo a > {f}\n"
+        "cp /tmp/tess-kwin-m3c/strips/variants/a.tdl /tmp/tess-kwin-m3c/strips/Shells/Main_Shell.tdl\n"
+        'echo "Frame_Blend: $opt"\n'
+        f"exec {BIN}/tesserae-shell run --config-dir /tmp/tess-kwin-m3c/strips\n",
+    )
     script(
         "compare-join.sh",
         "# Cost of each way of drawing the join on HDMI-A-1 (opens the Frame once per option on the\n"
@@ -639,7 +719,9 @@ def main() -> None:
         f"{BIN}/tesserae-shell check --config-dir /tmp/tess-kwin-m3c/strips\n",
     )
     prepare_peek()
-    (ROOT / "checklist-strips.txt").write_text(checklist().replace("@PEEK@", peek_checklist()))
+    (ROOT / "checklist-strips.txt").write_text(
+        checklist().replace("@BLEND@", blend_checklist()).replace("@PEEK@", peek_checklist())
+    )
     print(f"wrote {ROOT} (read checklist-strips.txt)")
 
 

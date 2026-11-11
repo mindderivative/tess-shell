@@ -83,6 +83,8 @@ RULES: dict[str, set[str] | None] = {
     "surfaces.join_shader": {"tess_re", "tess_shell.surfaces"},
     "surfaces.join_structure": {"tess_shell.surfaces"},
     "surfaces.ring": {"tess_shell.surfaces.outline"},
+    # the Frame's ring as one shader that blends in linear light (Debug { Frame_Blend: LINEAR })
+    "surfaces.frame_shader": {"tess_re", "tess_shell.surfaces"},
     "surfaces.frame": {
         "tess_re",
         "loguru",

@@ -29,9 +29,10 @@ _ROOT_KEYS = (
     "Appearance",
     "Debug",
 )
-_DEBUG_KEYS = ("Panel_Hide", "Frame_Join")
+_DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend")
 _PANEL_HIDE = ("CLOSE", "KEEP")
 _FRAME_JOIN = ("SMIL", "CONCAVE", "SHADER", "STRUCTURE", "PARAM")
+_FRAME_BLEND = ("SRGB", "LINEAR")
 _APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop")
 _LOGGING_KEYS = (
     "Level",
@@ -78,6 +79,11 @@ class DebugSettings:
     # CONCAVE moves boxes with concave corners; SHADER draws the join in a shader; STRUCTURE morphs
     # path data command by command. A restart applies it.
     frame_join: str = "PARAM"
+    # how the Frame's ring is blended: SRGB, the default, draws the bands as paths and tre blends
+    # their anti-aliased edges in sRGB (a light line on a dark ground looks thinner on a curve);
+    # LINEAR draws the ring in one fill shader that blends in linear light (TRE-REQ-015, option 2).
+    # A restart applies it.
+    frame_blend: str = "SRGB"
 
 
 @dataclass(frozen=True, slots=True)
@@ -364,10 +370,14 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
         if (blk := reader.block(root, "Debug")) is not None:
             reader.unknown_keys(blk, _DEBUG_KEYS, "Debug")
             hide, join = find_property(blk, "Panel_Hide"), find_property(blk, "Frame_Join")
+            blend = find_property(blk, "Frame_Blend")
             hide_word = None if hide is None else reader.enum(hide, _PANEL_HIDE)
             join_word = None if join is None else reader.enum(join, _FRAME_JOIN)
+            blend_word = None if blend is None else reader.enum(blend, _FRAME_BLEND)
             debug = DebugSettings(
-                panel_hide=hide_word or debug.panel_hide, frame_join=join_word or debug.frame_join
+                panel_hide=hide_word or debug.panel_hide,
+                frame_join=join_word or debug.frame_join,
+                frame_blend=blend_word or debug.frame_blend,
             )
         if (blk := reader.block(root, "Validation")) is not None:
             reader.unknown_keys(blk, _VALIDATION_KEYS, "Validation")

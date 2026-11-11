@@ -150,6 +150,31 @@ class BodyGeo:
 
 
 @dataclass(frozen=True, slots=True)
+class Contours:
+    """The rounded rectangles behind the bands, as numbers: what a painter that draws the ring as
+    distance fields instead of path data needs (the linear-light shader, ``frame_shader``). Each is
+    a rectangle and its corner radii. The outer border is the band from ``outer`` to
+    ``outer_hole``, the fill from ``fill`` to ``hole`` and the inner border from ``opening`` to
+    ``inside``; ``outer_hole`` and ``hole`` are the seals (the fill runs ``inner_seal`` under the
+    inner border, the outer border ``outer_seal`` under the fill). ``outer_drawn`` and
+    ``inner_drawn`` say whether the ring has those bands at all. With melded bodies the opening is
+    not a rounded rectangle: ``opening`` is the opening they are cut out of and the inner border
+    and the seal are offsets of its contour by ``inner_width`` and ``inner_seal``."""
+
+    outer: tuple[Rect4, Corners]
+    outer_hole: tuple[Rect4, Corners]
+    fill: tuple[Rect4, Corners]
+    opening: tuple[Rect4, Corners]
+    hole: tuple[Rect4, Corners]
+    inside: tuple[Rect4, Corners]
+    inner_width: float = 0.0
+    inner_seal: float = 0.0
+    outer_seal: float = 0.0
+    outer_drawn: bool = False
+    inner_drawn: bool = False
+
+
+@dataclass(frozen=True, slots=True)
 class Ring:
     """The result: what each side reserves, the three bands, and what had to be reduced."""
 
@@ -169,6 +194,7 @@ class Ring:
     bands: tuple[Rect4, Rect4, Rect4, Rect4] = None  # type: ignore[assignment]
     # the fill band of each side (left, top, right, bottom). The top and bottom bands own the
     # corner squares and run the width of the ring; the left and right bands run between them
+    contours: Contours = None  # type: ignore[assignment]  # the bands as rectangles and radii
 
 
 def _whole(values: Sides) -> tuple[int, int, int, int]:
@@ -370,9 +396,25 @@ def ring(spec: RingSpec, size: tuple[float, float]) -> Ring:
     if ov:
         outer_hole = _inset(c1, *(ov if c else 0 for c in closed))
         r_outer_hole = _grow(r1, -ov)
+    outer_drawn = bool(ow and any(closed))
+    mid = (c1.x0 + c1.width / 2, c1.y0 + c1.height / 2)
+    nothing = Rect4(mid[0], mid[1], mid[0], mid[1])  # no opening: a hole that is a point
+    contours = Contours(
+        outer=(c0, r0),
+        outer_hole=(outer_hole, r_outer_hole),
+        fill=(c1, r1),
+        opening=(c2, r2),
+        hole=(hole, r_hole) if opening else (nothing, (0.0, 0.0, 0.0, 0.0)),
+        inside=(c3, r3),
+        inner_width=float(iw) if inner else 0.0,
+        inner_seal=float(iv),
+        outer_seal=ov if outer_drawn else 0.0,
+        outer_drawn=outer_drawn,
+        inner_drawn=bool(inner),
+    )
     return Ring(
         totals=totals(spec),
-        outer_border=_band(c0, r0, outer_hole, r_outer_hole) if ow and any(closed) else "",
+        outer_border=_band(c0, r0, outer_hole, r_outer_hole) if outer_drawn else "",
         fill=fill,
         inner_border=inner,
         warnings=tuple(warnings),
@@ -387,6 +429,7 @@ def ring(spec: RingSpec, size: tuple[float, float]) -> Ring:
             Rect4(c1.x1 - thick[2], c1.y0 + thick[1], c1.x1, max(c1.y1 - thick[3], c1.y0)),
             Rect4(c1.x0, max(c1.y1 - thick[3], c1.y0), c1.x1, c1.y1),
         ),
+        contours=contours,
     )
 
 
