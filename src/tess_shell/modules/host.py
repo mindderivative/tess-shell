@@ -30,6 +30,7 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.blocks import BUILTIN_ACTIONS
 from tess_shell.schema.findings import Finding, nearest
 from tess_shell.schema.model import ModuleDef
+from tess_shell.services.api import DBusPort
 
 PACKAGE = "tess_shell_user_modules"
 
@@ -101,6 +102,7 @@ class ModuleHost:
         self.config_root = config_root
         self.loaded: dict[str, LoadedModule] = {}
         self.popups: PopupPort | None = None  # set by the app once the surfaces exist
+        self.dbus: DBusPort | None = None  # set by the app: the D-Bus service layer
 
     def _finding(
         self, definition: ModuleDef, rule: str, message: str, hint: str = "", line: int = 0
@@ -222,6 +224,7 @@ class ModuleHost:
             lambda use, key, value: self.store.send(definition.name, use, key, value),
             self.ticks,
             lambda: self.popups,
+            lambda: self.dbus,
         )
         instance = classes[0].__new__(classes[0])
         instance.ctx = ctx
@@ -234,6 +237,7 @@ class ModuleHost:
                     str(py_path), line, 1, "error", "module-init", f"{type(exc).__name__}: {exc}"
                 )
             ]
+        ctx.set_service_hooks(instance.on_service_lost, instance.on_service_found)
         loaded = LoadedModule(definition, py_path, instance, ctx, uses=uses)
         self.loaded[definition.name] = loaded
         return loaded, []

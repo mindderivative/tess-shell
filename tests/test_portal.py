@@ -128,3 +128,33 @@ def test_a_slow_portal_does_not_hold_first_beyond_its_timeout() -> None:
         finally:
             reader.stop()
             service.stop()
+
+
+@needs_daemon
+def test_the_reader_follows_a_restart_of_the_bus_daemon() -> None:
+    import asyncio
+
+    seen: list[Appearance] = []
+    with fake_portal() as (address, portal):
+        service = ServiceThread(address)
+        service.start()
+
+        async def quick(_seconds: float) -> None:  # the back-off of the layer, shortened
+            await asyncio.sleep(0.02)
+
+        service.session._sleep = quick
+        reader = PortalReader(service, seen.append)
+        try:
+            reader.start()
+            assert reader.first(2.0).scheme == "dark"
+            portal.values["color-scheme"] = Variant("u", 2)  # changed while the bus is down
+            portal.service.daemon.restart()
+            portal.up()  # the portal service reconnects to the new daemon
+            assert wait_for(lambda: any(a.scheme == "light" for a in seen), 10)
+            assert portal.settings.calls.count("ReadAll") == 2  # read again once, then signals
+            assert portal.registry.ids.count("io.github.mindderivative.TesseraeShell") == 2
+            portal.set("reduced-motion", Variant("u", 1))  # and the signal rule is back
+            assert wait_for(lambda: seen[-1].reduced_motion)
+        finally:
+            reader.stop()
+            service.stop()

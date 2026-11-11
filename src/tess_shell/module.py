@@ -60,6 +60,14 @@ class Module:
     def use_removed(self, use: UseRecord) -> None:
         """A surface showing this module went away."""
 
+    def on_service_lost(self, name: str) -> None:
+        """A well-known name this module made a proxy for lost its owner (``ctx.dbus``): show the
+        empty state. Called on the loop thread; ``available`` was sent as false just before."""
+
+    def on_service_found(self, name: str) -> None:
+        """A well-known name this module made a proxy for has an owner again: its properties were
+        read again (``on_property_changed`` callbacks got them). Called on the loop thread."""
+
 
 def action[F: Callable[..., Any]](fn: F) -> F:
     """Mark a method as an action: ``On_Click: name`` calls it with an :class:`Event`."""

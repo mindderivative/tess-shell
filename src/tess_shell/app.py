@@ -41,6 +41,7 @@ from tess_shell.options import Options
 from tess_shell.reloader import Reloader
 from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
 from tess_shell.services.bus import ServiceThread
+from tess_shell.services.layer import Layer
 from tess_shell.services.portal import PortalReader
 from tess_shell.signals import LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
@@ -217,7 +218,11 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         module_defs = {name: mf.definition for name, mf in result.modules.items()}
         # the desktop's look: one read of the Settings portal, on the D-Bus thread; a slow or
         # missing portal gives the defaults and never delays the surfaces
-        service: ServiceThread | None = None
+        # the D-Bus service thread: one thread, started now, that connects to nothing until a
+        # module or the portal reader uses a bus
+        service = ServiceThread()
+        service.start()
+        layer = Layer(service, handle.call_soon)
         portal: PortalReader | None = None
         appearance = Appearance()
         manager_box: list[SurfaceManager] = []
@@ -229,8 +234,6 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             handle.call_soon(apply)
 
         if settings.appearance.follow_desktop:
-            service = ServiceThread()
-            service.start()
             portal = PortalReader(service, appearance_changed)
             portal.start()
             appearance = portal.first()
@@ -260,6 +263,7 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
 
         manager.sink = route
         host.popups = manager.popups  # ctx.popup() opens a Popup of the surfaces
+        host.dbus = layer  # ctx.dbus: the D-Bus service layer
         # a file the shell registers for the first time gets a UID in its metadata (G8)
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         own_writes = OwnWrites()
@@ -340,8 +344,7 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         ticks.close()
         if portal is not None:
             portal.stop()
-        if service is not None:
-            service.stop()
+        service.stop()
         try:
             registry.save()
         except OSError as exc:

@@ -69,8 +69,6 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
-# dbus-fast reads D-Bus signatures from string annotations
-"tests/fake_portal.py" = ["F722", "F821", "E501", "UP037"]
 # the checklist generators embed whole TDL files in strings
 "tests/kwin/*" = ["E501"]
 

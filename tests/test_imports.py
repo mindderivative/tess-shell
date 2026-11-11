@@ -46,6 +46,7 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.model",
         "tess_shell.modules",
         "tess_shell.schema",
+        "tess_shell.services.api",
     },
     # the shipped modules are module code: only the public names a module author may use
     "shipped": {"tess_shell.Module", "tess_shell.action"},

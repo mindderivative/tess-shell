@@ -16,17 +16,19 @@ from collections.abc import Callable, Mapping
 from dataclasses import replace
 from typing import Any
 
-from dbus_fast import DBusError, Variant
-from dbus_fast.aio import MessageBus
+from dbus_fast import Message, Variant
 from loguru import logger
 
 from tess_shell.appearance import Appearance, Scheme
-from tess_shell.services.bus import CALL_TIMEOUT, ServiceThread
+from tess_shell.services.api import CALL_TIMEOUT, ServiceError, ServiceUnavailable
+from tess_shell.services.bus import MatchKey, ServiceThread
 
 APP_ID = "io.github.mindderivative.TesseraeShell"
 PORTAL = "org.freedesktop.portal.Desktop"
 PATH = "/org/freedesktop/portal/desktop"
 NAMESPACE = "org.freedesktop.appearance"
+SETTINGS = "org.freedesktop.portal.Settings"
+REGISTRY = "org.freedesktop.host.portal.Registry"
 
 _SCHEMES: dict[int, Scheme] = {0: "default", 1: "dark", 2: "light"}
 
@@ -86,6 +88,7 @@ class PortalReader:
         self._first: concurrent.futures.Future[Appearance] | None = None
         self._task: concurrent.futures.Future[None] | None = None
         self._warned = False
+        self._reads: set[asyncio.Future[None]] = set()
 
     def start(self) -> None:
         """Begin on the service thread: register, read once, then listen."""
@@ -139,73 +142,75 @@ class PortalReader:
             self._on_change(appearance)
 
     async def _run(self) -> None:
+        bus = self._service.session
+        undo: list[Callable[[], None]] = []
         try:
-            bus = await self._service.session()
-        except Exception as exc:
-            self._warn(f"the session bus is not reachable ({exc}); using the default appearance")
-            self._settle(Appearance(), initial=True)
-            return
-        await self._watch_owner(bus)
-        await self._read(bus, first=True)
-        await asyncio.Event().wait()  # signals do the rest
+            try:
+                # the portal service came back (or a new one took the name, or the bus did):
+                # register and read again; the rule for its signal survives a reconnect
+                undo.append(await bus.watch(PORTAL, self._owner_changed))
+                key = MatchKey(PORTAL, PATH, SETTINGS, "SettingChanged")
+                undo.append(await bus.subscribe(key, self._setting_changed))
+            except Exception as exc:
+                logger.debug(f"portal: cannot watch the portal ({exc})")
+            await self._read(first=True)
+            await asyncio.Event().wait()  # signals do the rest
+        finally:
+            for fn in undo:
+                fn()
 
-    async def _proxy(self, bus: MessageBus, interface: str) -> Any:
-        intro = await asyncio.wait_for(bus.introspect(PORTAL, PATH), CALL_TIMEOUT)
-        return bus.get_proxy_object(PORTAL, PATH, intro).get_interface(interface)
-
-    async def _read(self, bus: MessageBus, *, first: bool) -> None:
+    async def _read(self, *, first: bool) -> None:
+        bus = self._service.session
         try:
-            await self._register(bus)
-            settings = await self._proxy(bus, "org.freedesktop.portal.Settings")
-            reply = await asyncio.wait_for(settings.call_read_all([NAMESPACE]), CALL_TIMEOUT)
-            if not self._subscribed:
-                settings.on_setting_changed(self._setting_changed)
-                self._subscribed = True
-            self._settle(parse(reply.get(NAMESPACE, {})), initial=first)
-        except (DBusError, TimeoutError, OSError, AttributeError) as exc:
+            await self._register()
+            reply = await bus.call(
+                PORTAL, PATH, SETTINGS, "ReadAll", "as", [[NAMESPACE]], timeout=CALL_TIMEOUT
+            )
+            self._settle(parse(reply[0].get(NAMESPACE, {})), initial=first)
+        except ServiceUnavailable as exc:
+            if exc.service == f"{bus.kind} bus":
+                self._warn(f"the {bus.kind} bus is {exc.detail}; using the default appearance")
+            else:
+                self._warn(
+                    f"the Settings portal is not available ({exc}); using the default appearance"
+                )
+            self._settle(Appearance(), initial=first)
+        except (ServiceError, TimeoutError, OSError, AttributeError, IndexError) as exc:
             self._warn(
                 f"the Settings portal is not available ({exc}); using the default appearance"
             )
             self._settle(Appearance(), initial=first)
 
-    _subscribed = False
     _registered = False
 
-    async def _register(self, bus: MessageBus) -> None:
+    async def _register(self) -> None:
         """An unsandboxed app registers its id once, before any other portal call."""
         if self._registered:
             return
         self._registered = True
         try:
-            intro = await asyncio.wait_for(bus.introspect(PORTAL, PATH), CALL_TIMEOUT)
-            registry: Any = bus.get_proxy_object(PORTAL, PATH, intro).get_interface(
-                "org.freedesktop.host.portal.Registry"
+            await self._service.session.call(
+                PORTAL,
+                PATH,
+                REGISTRY,
+                "Register",
+                "sa{sv}",
+                [self._app_id, {}],
+                timeout=CALL_TIMEOUT,
             )
-            await asyncio.wait_for(registry.call_register(self._app_id, {}), CALL_TIMEOUT)
+        except ServiceUnavailable:
+            pass  # nobody there (or no bus): the read that follows says so, once
         except Exception as exc:  # the reads continue without it
             self._warn(f"Register failed ({exc}); reading the settings anyway")
 
-    def _setting_changed(self, namespace: str, key: str, value: Any) -> None:
+    def _setting_changed(self, message: Message) -> None:
+        namespace, key, value = message.body
         if namespace == NAMESPACE:
             self._settle(apply_key(self.current, key, value), initial=False)
 
-    async def _watch_owner(self, bus: MessageBus) -> None:
-        """The portal service came back (or a new one took the name): register and read again."""
-        try:
-            intro = await asyncio.wait_for(
-                bus.introspect("org.freedesktop.DBus", "/org/freedesktop/DBus"), CALL_TIMEOUT
-            )
-            dbus: Any = bus.get_proxy_object(
-                "org.freedesktop.DBus", "/org/freedesktop/DBus", intro
-            ).get_interface("org.freedesktop.DBus")
-        except Exception as exc:
-            logger.debug(f"portal: cannot watch the bus names ({exc})")
-            return
-
-        def owner_changed(name: str, old: str, new: str) -> None:
-            if name == PORTAL and new:
-                self._registered = False
-                self._subscribed = False
-                asyncio.ensure_future(self._read(bus, first=False))
-
-        dbus.on_name_owner_changed(owner_changed)
+    def _owner_changed(self, old: str | None, new: str | None) -> None:
+        if new is not None:
+            self._registered = False
+            task = asyncio.ensure_future(self._read(first=False))
+            self._reads.add(task)
+            task.add_done_callback(self._reads.discard)
