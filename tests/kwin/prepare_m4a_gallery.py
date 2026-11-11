@@ -561,7 +561,11 @@ Row   Look
       (that is what CLIP is for).
 19    The TextEditors. WORD wraps the paragraph at the box width, by word; type more than 4 lines:
       the box scrolls down to the caret. NONE keeps the paragraph on one line and scrolls sideways.
-      Up and Down in a wrapped line move by LOGICAL line, not by wrapped line (a known tre limit, expected).
+      tre 0.6.7 keys in a wrapped editor: Up and Down move one VISUAL row (the column is kept), Home
+      and End go to the start and end of the row, Page Up and Page Down move by the rows shown, Shift
+      extends the selection, Ctrl+Left/Right move by word, Ctrl+Home/End go to the start/end of the
+      whole text, Insert toggles overwrite (a block caret), a double click selects a word and a
+      triple click the string up to the spaces. Say what differs from this.
 20    Switch Plasma's colour scheme light to dark and back with the Panel open: the fields' fill, outline,
       text, caret, selection and the hints follow it at once, and what you typed is still there. The
       log shows no ERROR or WARNING line for the whole run.

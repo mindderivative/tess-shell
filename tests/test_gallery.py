@@ -286,7 +286,8 @@ def test_the_editors_take_enter_as_a_new_line_and_echo_never_says_submit() -> No
         w = panel_of(r).window
         w.simulate("pointer_down", node=ed.inp)
         w.simulate("pointer_up", node=ed.inp)
-        w.simulate("key_down", key="end")  # the end of the paragraph
+        # tre 0.6.7: End is the end of the visual row in a wrapped editor; Ctrl+End the whole text
+        w.simulate("key_down", key="end", ctrl=True)
         w.simulate("key_down", key="enter")
         assert str(ed.inp.get("text")) == before + "\n"
         assert "submit" not in echo(r) and echo(r).startswith("changed:")
