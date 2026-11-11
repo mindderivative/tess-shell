@@ -18,7 +18,12 @@ def test_same_blocks() -> None:
 
 def test_same_keys_kinds_and_choices() -> None:
     for name, row in TABLES.items():
-        props, style = _schema(name) if name != "TextField" else blocks.FIELD_BOX
+        if name == "TextField":
+            props, style = blocks.FIELD_BOX
+        elif name == "Marquee":
+            props, style = blocks.MARQUEE_BOX
+        else:
+            props, style = _schema(name)
         assert {k: v.convert for k, v in row.keys.items()} == _kinds(props, name), name
         assert {k: v.convert for k, v in row.style.items()} == _kinds(style, name), name
         for scope_table, schema_table in ((row.keys, props), (row.style, style)):

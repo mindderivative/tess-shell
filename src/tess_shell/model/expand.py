@@ -10,11 +10,13 @@ from __future__ import annotations
 import dataclasses
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from typing import Any
 
 from tess_shell.binder import model as m
 from tess_shell.model.field import compose
 from tess_shell.model.look import apply_module_rules
-from tess_shell.model.uses import Use, plain_param
+from tess_shell.model.marquee import compose as compose_marquee
+from tess_shell.model.uses import PARAM_BLANKS, PARAM_SLOT_KINDS, Use, plain_param
 from tess_shell.schema import blocks
 from tess_shell.schema.model import ModuleDef, Rule
 
@@ -46,6 +48,20 @@ class Expanded:
     tooltips: dict[str, ExpandedTooltip] = field(default_factory=dict)
 
 
+def _has_content(children: Sequence[Any]) -> bool:
+    """Whether a module's layout has a ``Content`` marker."""
+    for c in children:
+        if isinstance(c, m.Node):
+            if c.kind == m.CONTENT or _has_content(c.children):
+                return True
+        elif isinstance(c, m.IfNode):
+            if _has_content(c.body) or _has_content(c.else_body or ()):
+                return True
+        elif isinstance(c, m.ForNode) and _has_content(c.body):
+            return True
+    return False
+
+
 def _has_slot(node: m.Node) -> bool:
     return any(isinstance(v, m.SlotValue) for v in (*node.props.values(), *node.style.values()))
 
@@ -72,6 +88,9 @@ class _Expander:
         self.monitor = monitor
         self.out = Expanded()
         self._counts: dict[str, int] = {}
+        # the content written on the calls being expanded, innermost last: a ``Content`` marker of
+        # a module's layout is replaced by the top one
+        self._content: list[list[m.Node | m.IfNode | m.ForNode]] = []
 
     def run(self, nodes: tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...], path: str) -> None:
         self.out.nodes = self._walk(nodes, path, None, ())
@@ -88,6 +107,8 @@ class _Expander:
         for node in nodes:
             if isinstance(node, m.UseNode):
                 result.extend(self._use(node, path, stack, use))
+            elif isinstance(node, m.Node) and node.kind == m.CONTENT:
+                result.extend(self._content[-1] if self._content else ())
             elif isinstance(node, m.Node):
                 result.append(self._node(node, path, use, stack, dynamic))
             else:
@@ -129,7 +150,8 @@ class _Expander:
         stack: tuple[str, ...],
         dynamic: bool = False,
     ) -> m.Node:
-        node = compose(node)  # a TextField becomes its box, size text and text input
+        # a TextField becomes its box, size text and text input; a Marquee its box and its text
+        node = compose_marquee(compose(node))
         name = node.name
         if use is not None:
             if name is not None:
@@ -149,7 +171,11 @@ class _Expander:
         if node.tooltip is not None:
             name = self._tooltip(node, name, path, use, stack, dynamic)
         children = self._walk(node.children, path, use, stack, dynamic)
-        return dataclasses.replace(node, name=name, children=tuple(children), tooltip=None)
+        # the block's slots and handlers read the scope of the use it was written in
+        owner = use.key if use is not None else ""
+        return dataclasses.replace(
+            node, name=name, children=tuple(children), tooltip=None, owner=owner
+        )
 
     def _tooltip(
         self,
@@ -194,10 +220,12 @@ class _Expander:
         self, call: m.UseNode, children: tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...],
         outer: Use | None,
     ) -> tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...]:
-        """The module's layout with the handlers written on its call placed on its root block (a
-        root that is itself a module call passes them on). A handler names an action of the
-        module that holds the call (``outer``), or of the module a ``Call`` names. A root block
-        that cannot raise an event is an error at the handler."""
+        """The module's layout with what is written on its call placed on its root block: the
+        handlers (a handler names an action of the module that holds the call, ``outer``, or of
+        the module a ``Call`` names) and the common block keys the module does not declare
+        (``Width``, ``Enabled``, ``Position``: Standard Modules > Rules That Hold for Every
+        Module). A root block that cannot raise an event, or has no such key, is an error at it;
+        a root that is itself a module call passes both on."""
         handlers = {
             k: dataclasses.replace(h, use=outer.key if outer else "", forwarded=True)
             for k, h in call.handlers.items()
@@ -205,7 +233,8 @@ class _Expander:
         root = children[0] if children else None
         if isinstance(root, m.UseNode):
             merged = {**root.handlers, **handlers}
-            return (dataclasses.replace(root, handlers=merged), *children[1:])
+            common = {**root.common, **call.common}
+            return (dataclasses.replace(root, handlers=merged, common=common), *children[1:])
         if not isinstance(root, m.Node):
             self.out.errors.append(
                 m.BindError(f"{call.module} has no root block to raise an event", call.origin)
@@ -225,7 +254,27 @@ class _Expander:
                     hint,
                 )
             )
-        return (dataclasses.replace(root, handlers={**root.handlers, **taken}), *children[1:])
+        props = dict(root.props)
+        style = dict(root.style)
+        table = blocks.table(root.kind)
+        for key, value in call.common.items():
+            if table is not None and key not in table[0] and key not in table[1]:
+                self.out.errors.append(
+                    m.BindError(
+                        f"{call.module} cannot take {key}: its root block is a {root.kind}",
+                        value.origin,
+                        f"a {root.kind} has: {', '.join(sorted({*table[0], *table[1]}))}",
+                    )
+                )
+                continue
+            props[key] = value
+            style.pop(key, None)  # the call's key replaces the layout's, wherever it was written
+        hidden = props.get("A11y_Hidden")
+        if "Label" in call.common and "A11y_Hidden" not in call.common:
+            if isinstance(hidden, m.Bool) and hidden.value:  # decorative unless it has a Label
+                props["A11y_Hidden"] = m.Bool(False, origin=hidden.origin)
+        placed = dataclasses.replace(root, props=props, style=style)
+        return (dataclasses.replace(placed, handlers={**root.handlers, **taken}), *children[1:])
 
     def _use(
         self, call: m.UseNode, path: str, stack: tuple[str, ...], outer: Use | None = None
@@ -240,17 +289,51 @@ class _Expander:
         label = call.name or f"{call.module}_{count}"
         name = f"{path}.{label}"
         key = f"{call.module}@{self.uid_of(name)}"
-        params = {
-            p.name: plain_param(call.params.get(p.name, p.default))  # type: ignore[arg-type]
-            for p in module.params.values()
-        }
-        use = Use(key, call.module, name, params, self.monitor, call.origin)
+        params: dict[str, Any] = {}
+        slots: dict[str, tuple[m.SlotValue, str]] = {}
+        for p in module.params.values():
+            written = call.params.get(p.name, p.default)
+            if isinstance(written, m.SlotValue):
+                if outer is None and not self.popup_depth:
+                    self.out.errors.append(
+                        m.BindError("a slot outside a module is not built yet", written.origin)
+                    )
+                slots[p.name] = (written, PARAM_SLOT_KINDS[p.type])
+                written = p.default
+            params[p.name] = PARAM_BLANKS[p.type] if written is None else plain_param(written)
+        use = Use(
+            key,
+            call.module,
+            name,
+            params,
+            self.monitor,
+            call.origin,
+            slots,
+            outer.key if outer is not None else "",
+        )
         self.out.uses.append(use)
-        layout = self._forward(call, module.children, outer) if call.handlers else module.children
+        # the content on the call is the caller's: its slots read the caller's scope
+        if call.children and not _has_content(module.children):
+            self.out.errors.append(
+                m.BindError(
+                    f"{call.module} has no place for Children: its layout has no Content block",
+                    call.origin,
+                )
+            )
+        content = self._walk(call.children, path, outer, stack) if call.children else []
+        layout = (
+            self._forward(call, module.children, outer)
+            if call.handlers or call.common
+            else module.children
+        )
         # the module's rules reach its root block as written, before a TextField is split in its
         # parts (its text keys go to the text input)
         layout = tuple(apply_module_rules(layout, call.module, self.rules))
-        roots = self._walk(layout, name, use, (*stack, call.module))
+        self._content.append(content)
+        try:
+            roots = self._walk(layout, name, use, (*stack, call.module))
+        finally:
+            self._content.pop()
         if call.name in self.attach_targets:
             self._mark_target(call, key, roots)
         if self.mark_roots:
@@ -295,6 +378,9 @@ class _Expander:
         """The id of the use's first root block, given one if it has none."""
         for i, root in enumerate(roots):
             if isinstance(root, m.Node):
+                if suffix == "tooltip" and root.kind in m.NO_POINTER_BLOCKS:
+                    # a text takes no pointer: a box around it is what the pointer enters
+                    root = m.Node("FlexBox", children=(root,), origin=root.origin)
                 name = root.name or f"{key}/#{suffix}"
                 self.out.owner[name] = key
                 self.out.roots[key] = name

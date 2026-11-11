@@ -1,4 +1,4 @@
-__all__ = ['__version__', 'parse_color', 'expand_sides', 'to_tre_order', 'expand_radius', 'to_tre_word']
+__all__ = ['__version__', 'parse_color', 'expand_sides', 'to_tre_order', 'expand_radius', 'to_tre_word', 'decode_image']
 
 __version__: str
 Color = tuple[int, int, int, int]
@@ -12,3 +12,4 @@ Radii = tuple[float, float, float, float]
 
 def expand_radius(value: object) -> Radii: ...
 def to_tre_word(name: object) -> str: ...
+def decode_image(data: object, max_side: object = 4096) -> tuple[int, int, bytes]: ...

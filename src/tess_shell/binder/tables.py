@@ -32,6 +32,7 @@ class BlockRow:
     required: tuple[str | tuple[str, ...], ...] = ()  # keys that must be present; a tuple is any of
     child_props: Mapping[str, Any] = field(default_factory=dict)  # added to every child
     children_ok: bool = False
+    post: str = ""  # a function of ``binder.shapes.POSTS`` that completes the converted props
 
 
 def _k(tre: str | tuple[str, ...], convert: str, *choices: str) -> KeyRow:
@@ -43,6 +44,33 @@ def _four(prefix: str) -> tuple[str, ...]:
 
 
 ALIGN = ("START", "CENTER", "END", "STRETCH")
+ROLES = (
+    "BUTTON",
+    "CHECKBOX",
+    "RADIO",
+    "SWITCH",
+    "SLIDER",
+    "PROGRESSBAR",
+    "LINK",
+    "TEXTBOX",
+    "TAB",
+    "TABLIST",
+    "TABPANEL",
+    "MENU",
+    "MENUITEM",
+    "DIALOG",
+    "ALERT",
+    "LIST",
+    "LISTITEM",
+    "TREE",
+    "TREEITEM",
+    "HEADING",
+    "IMG",
+    "GROUP",
+    "NONE",
+    "SEPARATOR",
+)
+EASINGS = ("STANDARD", "EMPHASIZED", "LINEAR")
 
 _COMMON: dict[str, KeyRow] = {
     "Visible": _k("visible", "bool"),
@@ -62,11 +90,41 @@ _COMMON: dict[str, KeyRow] = {
     "Label": _k("label", "text"),
     "A11y_Hidden": _k("a11y_hidden", "bool"),
     "Opacity": _k("opacity", "number"),
+    "Position": _k("position", "enum", "RELATIVE", "ABSOLUTE"),
+    "Left": _k("left", "length"),
+    "Top": _k("top", "length"),
+    "Right": _k("right", "length"),
+    "Bottom": _k("bottom", "length"),
+    "Translate_X": _k("translate_x", "number"),
+    "Translate_Y": _k("translate_y", "number"),
+    "Scale": _k("scale", "positive"),
+    "Rotation": _k("rotation_deg", "number"),
+    "Clip_Children": _k("clip_children", "bool"),
+    "Role": _k("role", "enum", *ROLES),
+    "Description": _k("description", "text"),
+    "Live": _k("live", "enum", "POLITE", "ASSERTIVE"),
+    # accessibility state, set by a module (a shell file may not write it: the schema says so)
+    "Value": _k("value", "a11y_value"),
+    "Value_Min": _k("value_min", "number"),
+    "Value_Max": _k("value_max", "number"),
+    "Value_Step": _k("value_step", "number"),
+    "Checked": _k("checked", "bool"),
+    "Selected": _k("selected", "bool"),
+    "Expanded": _k("expanded", "bool"),
+}
+
+# the motion keys have no tre property: the binder animates a change of a listed key
+# (``binder.motion``)
+_MOTION: dict[str, KeyRow] = {
+    "Transition": _k((), "transition"),
+    "Duration": _k((), "duration"),
+    "Easing": _k((), "enum", *EASINGS),
 }
 
 _PADDING = {"Padding": _k(_four("padding"), "sides")}
 
 _BOX_STYLE: dict[str, KeyRow] = {
+    **_MOTION,
     "Background": _k("fill", "color"),
     "Border_Width": _k("stroke_width", "number"),
     "Border_Color": _k("stroke_color", "color"),
@@ -96,6 +154,7 @@ _FLEX: dict[str, KeyRow] = {
 }
 
 _TEXT_STYLE: dict[str, KeyRow] = {
+    **_MOTION,
     "Foreground": _k("fill", "color"),
     "Font_Family": _k("font_family", "font_family"),
     "Font_Size": _k("font_size", "positive"),
@@ -109,6 +168,7 @@ _TEXT_STYLE: dict[str, KeyRow] = {
 }
 
 _SHAPE: dict[str, KeyRow] = {
+    **_MOTION,
     "Fill": _k("fill", "color"),
     "Border_Width": _k("stroke_width", "number"),
     "Border_Color": _k("stroke_color", "color"),
@@ -118,6 +178,21 @@ _SHAPE: dict[str, KeyRow] = {
     "Elevation": _k("shadows", "elevation"),
     "Shadows": _k("shadows", "shadows"),
 }
+
+# a Circle or a Ring is sized by ``Diameter``: the block takes no Width or Height. A shape's keys
+# are the fill and the border of a path; the stroke is centred on the outline
+_COMMON_NO_SIZE: dict[str, KeyRow] = {
+    k: v for k, v in _COMMON.items() if k not in ("Width", "Height")
+}
+_CIRCLE: dict[str, KeyRow] = {
+    **_MOTION,
+    "Fill": _k("fill", "color"),
+    "Border_Width": _k("stroke_width", "number"),
+    "Border_Color": _k("stroke_color", "color"),
+    "Margin": _COMMON["Margin"],
+    "Opacity": _COMMON["Opacity"],
+}
+_RING: dict[str, KeyRow] = {k: v for k, v in _CIRCLE.items() if k != "Fill"}
 
 _ROWS: dict[str, BlockRow] = {
     # A Box is a one-cell grid: every child sits in cell (1, 1) (Block Reference, R1).
@@ -144,8 +219,9 @@ _ROWS: dict[str, BlockRow] = {
             "Width": _k("width", "text_length"),
             "Height": _k("height", "text_length"),
             "Text": _k("text", "text"),
+            "Selectable": _k("selectable", "bool"),
             "Wrap": _k("wrap", "enum", "WORD", "NONE"),
-            "Max_Lines": _k("max_lines", "whole"),
+            "Max_Lines": _k("max_lines", "max_length"),
         },
         style=_TEXT_STYLE,
         defaults={"text": ""},
@@ -166,8 +242,84 @@ _ROWS: dict[str, BlockRow] = {
             "Icon": _k("svg", "text"),
             "Color": _k("svg_color", "color"),
         },
-        style={"Foreground": _k("svg_color", "color"), "Opacity": _COMMON["Opacity"]},
+        style={**_MOTION, "Foreground": _k("svg_color", "color"), "Opacity": _COMMON["Opacity"]},
         required=(("Source", "Icon"),),
+    ),
+    # an image: tre takes pixels, so ``Source`` is a file the shell decodes (``binder.images``);
+    # tre sizes an image by its ``width`` and ``height`` only (it has no natural size), so a Fit of
+    # NONE sizes it by its pixels (``binder.shapes``)
+    "Bitmap": BlockRow(
+        "image",
+        keys={
+            **_COMMON,
+            "Source": _k(("rgba", "pixel_width", "pixel_height"), "image"),
+            "Fit": _k("fit", "fit", "FILL", "CONTAIN", "COVER", "NONE"),
+        },
+        style={**_MOTION, "Opacity": _COMMON["Opacity"]},
+        required=("Source",),
+        defaults={"fit": "contain"},
+        post="bitmap",
+    ),
+    # the shapes are tre paths whose data the shell writes from ``Diameter`` and the border; their
+    # hit shape is what is painted (Block Reference > Shapes)
+    "Circle": BlockRow(
+        "path",
+        keys={**_COMMON_NO_SIZE, "Diameter": _k(("width", "height"), "diameter"), **_CIRCLE},
+        style=_CIRCLE,
+        required=("Diameter",),
+        defaults={"hit_shape": "painted"},
+        post="circle",
+    ),
+    "Ring": BlockRow(
+        "path",
+        keys={**_COMMON_NO_SIZE, "Diameter": _k(("width", "height"), "diameter"), **_RING},
+        style=_RING,
+        required=("Diameter",),
+        defaults={"hit_shape": "painted", "stroke_width": 2},
+        fixed={"fill": (0, 0, 0, 0)},
+        post="ring",
+    ),
+    "Path": BlockRow(
+        "path",
+        keys={
+            **_COMMON,
+            **_CIRCLE,
+            "Data": _k("data", "text"),
+            "View_Box": _k("view_box", "view_box"),
+            "Trim_Start": _k("trim_start", "unit"),
+            "Trim_End": _k("trim_end", "unit"),
+            "Hit_Shape": _k("hit_shape", "enum", "PAINTED", "BOX"),
+        },
+        style=_CIRCLE,
+        required=("Data",),
+        defaults={"hit_shape": "painted"},
+    ),
+    # a Marquee is two nodes (``model.marquee``): a box that clips, and the text it moves
+    "Marquee": BlockRow(
+        "box",
+        keys={
+            **_COMMON,
+            "Speed": _k((), "positive"),
+            "Pause": _k((), "pause"),
+            "Direction": _k((), "enum", "LEFT", "RIGHT"),
+            "Loop": _k((), "enum", "RESTART", "BOUNCE"),
+            "Animated": _k((), "bool"),
+        },
+        style={"Opacity": _COMMON["Opacity"], **_MOTION},
+        # the box may be narrower than its text (it clips and the text scrolls)
+        defaults={"clip_children": True, "min_width": 0},
+        children_ok=True,
+    ),
+    "Marquee.text": BlockRow(
+        "text",
+        keys={"Text": _k("text", "text")},
+        style={
+            k: v
+            for k, v in _TEXT_STYLE.items()
+            if k not in ("Overflow", "Padding", "Text_Align", *_MOTION)
+        },
+        fixed={"wrap": "none", "flex_shrink": 0, "overflow": "clip"},
+        defaults={"text": ""},
     ),
 }
 

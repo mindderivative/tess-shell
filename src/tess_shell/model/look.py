@@ -127,11 +127,38 @@ def resolve(nodes: Sequence[m.Node], look: Look | None) -> tuple[list[m.Node], l
     return [_resolve_node(n, look, errors) for n in nodes], errors
 
 
+def _motion(
+    node: m.Node, props: dict[str, m.Value], style: dict[str, m.Value], look: Look | None
+) -> None:
+    """The motion a block asks for, as it is with this look: a ``Transition`` with no ``Duration``
+    takes the theme's medium duration (200 ms without a theme), and under reduced motion every
+    duration is 0 and a Marquee does not scroll (Accessibility > Rules, 7)."""
+    reduced = look is not None and look.appearance.reduced_motion
+    if "Transition" in props or "Transition" in style:
+        table = props if "Duration" in props else style
+        if "Duration" not in table:
+            origin = (props.get("Transition") or style["Transition"]).origin
+            medium: m.Value = m.Number(200, origin=origin)
+            if look is not None:
+                try:
+                    medium = _ref_value(m.TokenRef("motion.duration.medium", "number"), look.tokens)
+                except TokenProblem:
+                    pass  # a theme with no motion tokens: the default stands
+            table["Duration"] = medium
+        if reduced:
+            table["Duration"] = m.Number(0, origin=table["Duration"].origin)
+    if reduced and node.kind == m.MARQUEE:
+        props["Animated"] = m.Bool(False, origin=node.origin)
+
+
 def _resolve_node(node: m.Node, look: Look | None, errors: list[m.BindError]) -> m.Node:
+    props = resolve_style(node.props, look, errors)
+    style = resolve_style(node.style, look, errors)
+    _motion(node, props, style, look)
     return dataclasses.replace(
         node,
-        props=resolve_style(node.props, look, errors),
-        style=resolve_style(node.style, look, errors),
+        props=props,
+        style=style,
         states={s: resolve_style(v, look, errors) for s, v in node.states.items()},
         children=tuple(
             _resolve_node(c, look, errors) for c in node.children if isinstance(c, m.Node)
@@ -174,7 +201,10 @@ def apply_rules(
 
 def _rules_child(node: Child, rules: Sequence[Rule], module: str) -> Child:
     if isinstance(node, m.UseNode):
-        return node
+        if not node.children:
+            return node
+        # the blocks written on a call (``Children { }``) are styled like any others
+        return dataclasses.replace(node, children=apply_rules(node.children, rules, module))
     if isinstance(node, m.IfNode):
         return dataclasses.replace(
             node,
@@ -269,17 +299,46 @@ def _fold_states(
 
 
 def apply_module_rules(roots: Sequence[Child], module: str, rules: Sequence[Rule]) -> list[Child]:
-    """The rules that name ``module`` applied to its root blocks, which is all they reach: an
-    inner block is styled by a type, class or name rule (D40)."""
+    """The rules that name ``module`` applied to its root blocks. A key the root block does not
+    take passes to the first block inside it that does, along the first child of each (so
+    ``Icon { Foreground: ... }`` colours the SVG a FlexBox holds, and ``Badge { Foreground }`` its
+    digits); an inner block is otherwise styled by a type, class or name rule (D40)."""
     mine = [r for r in rules if r.kind == "module" and r.target == module and not r.part]
     if not mine:
         return list(roots)
-    return [
-        dataclasses.replace(root, style=_fold(root, mine), states=_fold_states(root, mine))
-        if isinstance(root, m.Node)
-        else root
-        for root in roots
+    return [_down(root, mine) if isinstance(root, m.Node) else root for root in roots]
+
+
+def _down(node: Child, hits: Sequence[Rule]) -> Child:
+    """``node`` with the keys of ``hits`` it takes folded in; what it does not take goes on to its
+    first child (to both branches of an ``If``)."""
+    if isinstance(node, m.IfNode):
+        return dataclasses.replace(
+            node,
+            body=_down_first(node.body, hits),
+            else_body=None if node.else_body is None else _down_first(node.else_body, hits),
+        )
+    if not isinstance(node, m.Node):
+        return node
+    folded = dataclasses.replace(
+        node, style=_fold(node, hits), states=_fold_states(node, hits)
+    )
+    rest = [
+        dataclasses.replace(
+            r, values={k: v for k, v in r.values.items() if not _allowed(node.kind, k)}
+        )
+        for r in hits
     ]
+    rest = [r for r in rest if r.values]
+    if rest and node.children:
+        return dataclasses.replace(folded, children=_down_first(node.children, rest))
+    return folded
+
+
+def _down_first(children: tuple[Child, ...], hits: Sequence[Rule]) -> tuple[Child, ...]:
+    if not children:
+        return children
+    return (_down(children[0], hits), *children[1:])
 
 
 # -- checking references before the shell runs ------------------------------------------------

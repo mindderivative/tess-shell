@@ -775,6 +775,9 @@ class Popups:
                 if cur.popup.focus or cur.block is None:
                     return  # a focused Popup is open: a tooltip never opens over it
                 self.close(cur, "the pointer moved to another block")
+            wire = surface.view.wires.get(block) if surface.view is not None else None
+            if wire is not None and wire.tooltip_gate is not None and not wire.tooltip_gate():
+                return  # the block says its tooltip has nothing to add now (a Marquee that scrolls)
             found = self._tooltip_plan(surface, block, tip)
             if found is None:
                 return

@@ -54,7 +54,7 @@ RULES: dict[str, set[str] | None] = {
     "exit_codes": set(),
     "options": set(),
     "signals": set(),
-    "binder": {"tess_re", "tess_shell._vendor.tess_utils", "tess_shell.binder"},
+    "binder": {"tess_re", "loguru", "tess_shell._vendor.tess_utils", "tess_shell.binder"},
     "_vendor": set(),
     "appearance": set(),
     "services": {"dbus_fast", "loguru", "tess_shell.services", "tess_shell.appearance"},

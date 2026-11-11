@@ -25,6 +25,8 @@ from tess_shell.binder.model import (
     Origin,
     UseNode,
 )
+from tess_shell.binder.motion import Motion, motion_of
+from tess_shell.binder.motion import start as start_motion
 
 if TYPE_CHECKING:
     from tess_re import Node as TreNode
@@ -59,6 +61,8 @@ class _Plan:
     restates: list[tuple[Wire, dict[str, dict[str, Any]], dict[str, Any]]] = field(
         default_factory=list
     )
+    # a kept node's changes that ease, with the transition it asks for
+    animations: list[tuple[TreNode, dict[str, Any], Motion]] = field(default_factory=list)
 
 
 def _diff(
@@ -95,10 +99,15 @@ def _diff(
                 # what a state holds is not set under it; the wire keeps the new value for the end
                 held = {n: changed.pop(n) for n in list(changed) if n in kept.wire.saved}
                 plan.restates.append((kept.wire, states, held))
+            motion = motion_of(node)
+            if motion is not None:
+                eased = {n: changed.pop(n) for n in list(changed) if n in motion.props}
+                if eased:
+                    plan.animations.append((kept.tre, eased, motion))
             if changed:
                 plan.changes.append((kept.tre, changed))
             kids = [c for c in node.children if isinstance(c, Node)]
-            entry = Entry(node, kept.tre, dict(props), [], kept.wire, states)
+            entry = Entry(node, kept.tre, dict(props), [], kept.wire, states, motion)
             if entry.wire is not None:
                 entry.wire.handlers = node.handlers
             entry.children = _diff(kept.children, kids, spec.get("children", []), kept.tre, plan)
@@ -107,7 +116,9 @@ def _diff(
         if kept is not None:
             del by_key[key]
             plan.removed.append(kept)
-        fresh = Entry(node, None, dict(props), [], states=entry_states(node))
+        fresh = Entry(
+            node, None, dict(props), [], states=entry_states(node), motion=motion_of(node)
+        )
         plan.creates.append((fresh, spec))
         result.append(fresh)
     plan.removed.extend(by_key.values())
@@ -158,6 +169,10 @@ def rebuild(view: View, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> R
             tre.destroy()
         raise
 
+    for tre, eased, motion in plan.animations:
+        left = start_motion(tre, eased, motion)
+        if left:  # tre could not ease these: they jump
+            tre.set(**left)
     for wire, states, held in plan.restates:
         wire.restate(states, held)  # a node keeps the state the pointer has it in, restyled
     for fresh, tre in built:

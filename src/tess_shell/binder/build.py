@@ -14,10 +14,14 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from tess_shell.binder.convert import CONVERTERS
+from tess_shell.binder.marquee import MarqueeRunner
 from tess_shell.binder.model import (
+    DECORATIVE,
     FIELD,
     FIELD_INPUT,
     FIELD_LINE,
+    MARQUEE,
+    MARQUEE_TEXT,
     NO_POINTER_BLOCKS,
     BindError,
     BindFailed,
@@ -31,6 +35,10 @@ from tess_shell.binder.model import (
     UseNode,
     Value,
 )
+from tess_shell.binder.motion import Motion, motion_of
+from tess_shell.binder.motion import check as check_motion
+from tess_shell.binder.motion import start as start_motion
+from tess_shell.binder.shapes import POSTS
 from tess_shell.binder.tables import BLOCKS, BlockRow, KeyRow
 
 if TYPE_CHECKING:
@@ -104,6 +112,8 @@ class Wire:
     # wire that shows the box's hover and press (the text input's style states follow the box)
     focus_target: TreNode | None = None
     mirror: Wire | None = None
+    # a Marquee's box: whether its tooltip may open now (it shows the whole text that is cut)
+    tooltip_gate: Callable[[], bool] | None = None
 
     @property
     def blocked(self) -> bool:
@@ -252,6 +262,7 @@ class Entry:
     children: list[Entry] = field(default_factory=list)
     wire: Wire | None = None
     states: dict[str, dict[str, Any]] = field(default_factory=dict)  # tre props per style state
+    motion: Motion | None = None  # what eases when a value of the node changes
 
 
 def field_input(box: Entry) -> Entry | None:
@@ -273,6 +284,8 @@ class View:
     applied: dict[str, dict[str, Any]] = field(default_factory=dict)  # node id -> tre props set
     entries: list[Entry] = field(default_factory=list)
     wires: dict[str, Wire] = field(default_factory=dict)  # node id -> its wire
+    motions: dict[str, Motion] = field(default_factory=dict)  # node id -> its transition
+    runners: dict[TreNode, MarqueeRunner] = field(default_factory=dict)  # a Marquee's box -> scroll
     disposed: bool = False
     parent: TreNode | None = None  # where the roots are attached; ``window.root`` when None
     sink: Callable[[Handler, str, Any], None] | None = None  # (handler, event key, tre event)
@@ -290,6 +303,7 @@ class View:
         self.kinds.clear()
         self.applied.clear()
         self.wires.clear()
+        self.motions.clear()
         self.roots = [e.tre for e in self.entries if e.tre is not None]
 
         def walk(entries: list[Entry]) -> None:
@@ -302,10 +316,45 @@ class View:
                     self.applied[name] = e.props  # the same dict: an update changes both
                     if e.wire is not None:
                         self.wires[name] = e.wire
+                    if e.motion is not None:
+                        self.motions[name] = e.motion
                 walk(e.children)
 
         walk(self.entries)
         self._sync(self.entries)
+        self._marquees()
+
+    def _marquees(self) -> None:
+        """Keep one scroll runner per Marquee, configured from its block, and let each measure and
+        begin, change or end its scroll if what decides it changed."""
+        live: dict[TreNode, MarqueeRunner] = {}
+        fresh: list[MarqueeRunner] = []
+
+        def walk(entries: list[Entry]) -> None:
+            for e in entries:
+                if e.typed.kind == MARQUEE and e.tre is not None and e.children:
+                    text = e.children[0].tre
+                    if text is not None:
+                        runner = self.runners.get(e.tre)
+                        if runner is None:
+                            runner = MarqueeRunner(self.window, e.tre, text)
+                            fresh.append(runner)
+                        runner.text = text
+                        live[e.tre] = runner
+                        runner.configure(e.typed, e.wire.blocked if e.wire else False)
+                        if e.wire is not None:
+                            e.wire.tooltip_gate = runner.tooltip_gate
+                walk(e.children)
+
+        walk(self.entries)
+        for box, runner in self.runners.items():
+            if box not in live:
+                runner.stop()
+        self.runners = live
+        for runner in live.values():
+            runner.refresh()
+        for runner in fresh:  # the first layout of a new surface may come after the build
+            self.window.after(100, runner.refresh)
 
     def _wire(self, entry: Entry) -> None:
         """Give a node with handlers or state styles its tre listeners; a listener looks the
@@ -409,7 +458,8 @@ class View:
             own = bool(e.props.get("disabled"))
             if e.wire is not None:
                 # a text input is a part of its field: it shows ``disabled`` when the field is
-                e.wire.sync(own, inherited, bool(e.typed.part) or e.typed.kind == FIELD_INPUT)
+                part = bool(e.typed.part) or e.typed.kind in (FIELD_INPUT, MARQUEE_TEXT)
+                e.wire.sync(own, inherited, part)
                 self._ensure_click(e)
             self._sync(e.children, inherited or own)
 
@@ -480,23 +530,55 @@ class View:
             if fresh:
                 by_node.setdefault(node_id, {}).update(fresh)
         if by_node:
+            eased: dict[str, dict[str, Any]] = {}
+            for node_id, props in by_node.items():
+                motion = self.motions.get(node_id)
+                if motion is not None and any(n in motion.props for n in props):
+                    eased[node_id] = {n: v for n, v in props.items() if n in motion.props}
             try:
-                self.window.apply([(self.nodes[i], props) for i, props in by_node.items()])
+                self.window.apply(
+                    [
+                        (self.nodes[i], {n: v for n, v in p.items() if n not in eased.get(i, ())})
+                        for i, p in by_node.items()
+                    ]
+                )
             except ValueError as exc:
                 for node_id in by_node:
                     errors.append(BindError(f"{node_id}: {exc}", Origin("<tre>", 1, 1)))
                 return errors
             for node_id, props in by_node.items():
                 self.applied[node_id].update(props)
+            for node_id, props in eased.items():
+                left = start_motion(self.nodes[node_id], props, self.motions[node_id])
+                if left:  # tre could not ease these: they jump
+                    self.nodes[node_id].set(**left)
             if any("disabled" in props for props in by_node.values()):
                 self._sync(self.entries)  # a block above may have been disabled or enabled
+                self._marquees()
+            else:
+                for node_id in by_node:
+                    runner = self._runner_of(node_id)
+                    if runner is not None:
+                        runner.refresh()
         return errors
+
+    def _runner_of(self, node_id: str) -> MarqueeRunner | None:
+        """The scroll of the Marquee that the node ``node_id`` is, or is the text of."""
+        kind = self.kinds.get(node_id)
+        tre = self.nodes.get(node_id)
+        if tre is None or kind not in (MARQUEE, MARQUEE_TEXT):
+            return None
+        box = tre if kind == MARQUEE else tre.parent()
+        return self.runners.get(box) if box is not None else None
 
     def dispose(self) -> None:
         """Free the whole subtree. Safe to call twice."""
         if self.disposed:
             return
         self.disposed = True
+        for runner in self.runners.values():
+            runner.stop()
+        self.runners.clear()
         for root in self.roots:
             root.destroy()
         self.roots.clear()
@@ -618,6 +700,7 @@ def _plan(
             for tre_name in converted:
                 index.props[(path, tre_name)] = value.origin
     convert_states(node, errors)  # a state style is checked like the base style
+    errors.extend(check_motion(node))
     for need in row.required:
         options = (need,) if isinstance(need, str) else need
         if not any(k in node.props or k in node.style for k in options):
@@ -629,6 +712,12 @@ def _plan(
         props.setdefault(name, default)
     props.update(row.fixed)
     props.update(extra)
+    if node.kind == "Spacer":  # no pointer events unless it has a click to run
+        props.setdefault("hit_testable", "On_Click" in node.handlers)
+    if node.kind in DECORATIVE:  # an image or a shape is not announced unless it has a Label
+        props.setdefault("a11y_hidden", "label" not in props)
+    if row.post:
+        POSTS[row.post](props, node)
 
     spec: dict[str, Any] = {"kind": row.tre_kind, "props": props}
     block_word = node.kind
@@ -715,4 +804,5 @@ def make_entry(node: Node, spec: dict[str, Any], tre: TreNode) -> Entry:
         dict(spec["props"]),
         [make_entry(c, sp, t) for c, sp, t in zip(kids, specs, tre_kids, strict=True)],
         states=entry_states(node),
+        motion=motion_of(node),
     )

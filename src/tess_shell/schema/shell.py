@@ -8,6 +8,7 @@ the position of the offending key or value.
 from __future__ import annotations
 
 import dataclasses
+import os
 import re
 from collections.abc import Callable, Mapping, Sequence
 
@@ -46,6 +47,11 @@ from tess_shell.schema.values import (
 )
 
 _NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+_IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp")
+
+
+def _absolute(text: str) -> str:
+    return os.path.abspath(os.path.expanduser(text))
 _SURFACES = ("Bar", "Frame", "Panel", "Popup")
 _NOT_BUILT = "not built in M1"
 
@@ -59,9 +65,12 @@ class _Ctx:
         import_module: Callable[[str], str | None] | None = None,
         load_style: Callable[[str], StyleDef | None] | None = None,
         icons: IconSource | None = None,
+        resolve_path: Callable[[str], str] | None = None,
     ) -> None:
         self.load_style = load_style
         self.icons = icons
+        # a path written in this file (an image's ``Source``, a ``path`` param) as an absolute one
+        self.resolve_path = resolve_path or _absolute
         self.file = file
         self.read_text = read_text
         self.modules: Mapping[str, ModuleDef] = modules or {}
@@ -223,22 +232,39 @@ def _icon(ctx: _Ctx, prop: Property, slot: m.SlotValue | None) -> m.Value | None
     return m.Text(found, origin=ctx.origin(prop.key_origin))
 
 
+def _image(ctx: _Ctx, prop: Property, slot: m.SlotValue | None) -> m.Value | None:
+    """``Source: cover.png``: the path of an image file, written relative to this file and kept
+    absolute. A slot gives a path as it is (a module sends absolute ones). The file is read when
+    the Bitmap is built; one that is missing here is a warning, since it may exist by then."""
+    if slot is not None:
+        return slot
+    value = prop.value
+    name = value.value if isinstance(value, tess_dl.String) else getattr(value, "text", None)
+    if not isinstance(name, str) or not name:
+        ctx.add(prop.value_origin, "bad-value", f"{prop.key} is the path of an image file", "")
+        return None
+    path = ctx.resolve_path(name)
+    if not os.path.isfile(path):
+        ctx.add(
+            prop.value_origin,
+            "image-not-found",
+            f"no image file at {path}",
+            "the path is relative to this file; the Bitmap shows the error image",
+            "warning",
+        )
+    return m.Text(path, origin=ctx.origin(prop.key_origin))
+
+
 def _typed(
     ctx: _Ctx, block: str, prop: Property, kind: str, read_text: bool = False
 ) -> m.Value | None:
     slot = slot_value(ctx, prop)
     if kind == "icon":
         return _icon(ctx, prop, slot)
+    if kind == "image":
+        return _image(ctx, prop, slot)
     if slot is not None:
-        if read_text:
-            ctx.add(
-                prop.value_origin,
-                "bad-value",
-                f"{prop.key} cannot hold a slot",
-                "write a file name",
-            )
-            return None
-        return slot
+        return slot  # a slot of an SVG's Source gives the document, not a file name
     try:
         if not read_text:
             ref = token_ref(
@@ -410,7 +436,88 @@ def _children(
 
 Child = m.Node | m.UseNode | m.IfNode | m.ForNode
 
-_PARAM_KINDS = {"string": "text", "number": "number", "boolean": "bool"}
+_PARAM_KINDS = {
+    "string": "text",
+    "number": "number",
+    "boolean": "bool",
+    "path": "text",
+    "icon": "text",
+}
+_FALLBACK_ICON = "mdi:image-broken-variant"
+
+
+def _param_value(ctx: _Ctx, module: str, decl: ParamDecl, entry: Property) -> m.Value | None:
+    """The value a call gives a param. A ``{{ }}`` slot is kept (the model evaluates it in the scope
+    of the place that wrote the call); a ``path`` becomes absolute; an ``icon`` becomes the SVG
+    document of the named icon or file, or the absolute path of a bitmap file."""
+    slot = slot_value(ctx, entry)
+    if slot is not None:
+        if decl.type == "icon":
+            ctx.not_built(entry.value_origin, "a slot in a param of type icon (write the name)")
+            return None
+        return slot
+    origin = ctx.origin(entry.key_origin)
+    try:
+        value = coerce(_PARAM_KINDS[decl.type], entry.value, origin)
+    except ValueProblem as exc:
+        ctx.problem(entry.value_origin, entry.key, exc)
+        return None
+    if decl.type == "path" and isinstance(value, m.Text) and value.value:
+        return m.Text(ctx.resolve_path(value.value), origin=origin)
+    if decl.type == "icon" and isinstance(value, m.Text) and value.value:
+        return _icon_param(ctx, entry, value.value, origin)
+    return value
+
+
+def _icon_param(ctx: _Ctx, entry: Property, name: str, origin: m.Origin) -> m.Value | None:
+    """An icon param: ``Icon: "mdi:home"``, ``Icon: logo.svg`` or ``Icon: logo.png``. A name that no
+    icon set has is a warning, and the call shows the ``image-broken-variant`` icon (Standard
+    Modules > Icon, Failure)."""
+    lower = name.lower()
+    if name.startswith("#"):  # a colour: the Placeholder of an Image is a colour or an icon
+        return m.Text(name, origin=origin)
+    if lower.endswith(".svg"):
+        try:
+            return m.Text(ctx.read_text(name), origin=origin)
+        except OSError as exc:
+            ctx.add(
+                entry.value_origin,
+                "bad-value",
+                f"cannot read '{name}': {exc.strerror}",
+                "the path is relative to this file",
+            )
+            return None
+    if lower.endswith(_IMAGE_SUFFIXES):
+        return m.Text(ctx.resolve_path(name), origin=origin)
+    found = ctx.icons.lookup(name) if ctx.icons is not None else None
+    if found is None:
+        close = ctx.icons.nearest(name) if ctx.icons is not None else []
+        ctx.add(
+            entry.value_origin,
+            "icon-not-found",
+            f"no icon named {name}",
+            f"did you mean {', '.join(close)}?" if close else "the call shows a broken-image icon",
+            "warning",
+        )
+        found = ctx.icons.lookup(_FALLBACK_ICON) if ctx.icons is not None else None
+    return m.Text(found or "", origin=origin)
+
+
+def _content(ctx: _Ctx, block: Block) -> m.Node | None:
+    """``Content { }`` in a module's layout: where the blocks written in ``Children { }`` on a
+    call of the module go (Standard Modules > Expander)."""
+    if not ctx.in_module:
+        ctx.add(
+            block.origin,
+            "content-outside-module",
+            "Content marks where a module puts the Children written on its call, and this block is "
+            "not in a module's layout",
+            "write it in a module file",
+        )
+        return None
+    if block.entries:
+        ctx.add(block.origin, "bad-key", "Content takes no keys and no blocks", "write Content { }")
+    return m.Node(m.CONTENT, origin=ctx.origin(block.origin))
 
 
 def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
@@ -418,7 +525,9 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
     module = ctx.modules[block.type]
     name: str | None = None
     params: dict[str, m.Value] = {}
+    common: dict[str, m.Value] = {}
     handlers: dict[str, m.Handler] = {}
+    children: list[Child] = []
     tooltip: m.TooltipRef | None = None
     for entry in block.entries:
         if isinstance(entry, Property):
@@ -427,6 +536,8 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
                 name = ctx.name(entry)
             elif key == "Tooltip":
                 tooltip = _tooltip_name(ctx, entry, f"a use of {module.name}")
+                if tooltip is not None and tooltip.description is not None:
+                    common["Description"] = tooltip.description
             elif key.startswith("On_"):
                 # the module's root block raises it; the model checks that it can (the layout is
                 # not read yet when a call is, so the module's root block is not known here)
@@ -436,21 +547,22 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
             elif key in ("Style", "Class"):
                 ctx.not_built(entry.key_origin, f"{key} on a module call")
             elif key in module.params:
-                decl = module.params[key]
-                if slot_value(ctx, entry) is not None:
-                    ctx.not_built(entry.value_origin, "a slot in a module param")
-                    continue
-                try:
-                    params[key] = coerce(
-                        _PARAM_KINDS[decl.type], entry.value, ctx.origin(entry.key_origin)
-                    )
-                except ValueProblem as exc:
-                    ctx.problem(entry.value_origin, key, exc)
+                value = _param_value(ctx, module.name, module.params[key], entry)
+                if value is not None:
+                    params[key] = value
+            elif key in blocks.COMMON and key not in blocks.A11Y_STATE:
+                # a common block key the module does not declare: its root block takes it
+                typed = _typed(ctx, module.name, entry, blocks.COMMON[key])
+                if typed is not None:
+                    common[key] = typed
             else:
-                allowed = ["Name", *module.params]
+                common_keys = (k for k in blocks.COMMON if k not in blocks.A11Y_STATE)
+                allowed = ["Name", *module.params, *common_keys]
                 ctx.unknown(entry.key_origin, key, allowed, f"param of {module.name}")
         elif isinstance(entry, Block) and entry.type == "Tooltip":
             tooltip = _tooltip_block(ctx, entry)
+        elif isinstance(entry, Block) and entry.type == "Children":
+            children = _children(ctx, entry, lambda b: _block(ctx, b))
         elif isinstance(entry, Block) and entry.type.startswith("On_"):
             handler = _handler(ctx, "", entry.type, entry.origin, entry)
             if handler is not None:
@@ -473,11 +585,15 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
         params=params,
         tooltip=tooltip,
         handlers=handlers,
+        common=common,
+        children=tuple(children),
         origin=ctx.origin(block.origin),
     )
 
 
 def _block(ctx: _Ctx, block: Block) -> Child | None:
+    if block.type == m.CONTENT:
+        return _content(ctx, block)
     row = blocks.BLOCKS.get(block.type)
     if row is None and block.type in ctx.modules:
         return _use(ctx, block)
@@ -496,6 +612,7 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
     handlers: dict[str, m.Handler] = {}
     children: list[Child] = []
     tooltip: m.TooltipRef | None = None
+    described: m.Value | None = None  # a string Tooltip is also the accessible description
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
@@ -513,8 +630,19 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
                     handlers[key] = handler
             elif key == "Tooltip":
                 tooltip = _tooltip_name(ctx, entry, f"a {block.type}", block.type)
+                if tooltip is not None and tooltip.description is not None:
+                    described = tooltip.description
             elif key in prop_keys or key in style_keys:
                 if block.type == m.FIELD and not _field_key(ctx, entry):
+                    continue
+                if key in blocks.A11Y_STATE and not ctx.in_module:
+                    ctx.add(
+                        entry.key_origin,
+                        "state-by-module",
+                        f"{key} is accessibility state, set by the module that has it, not "
+                        "written in a shell file",
+                        "write it in a module's layout",
+                    )
                     continue
                 kind = prop_keys.get(key) or style_keys[key]
                 value = _typed(ctx, block.type, entry, kind, read_text=kind == "svg_source")
@@ -577,6 +705,8 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
         _field_checks(ctx, props, style, prop_at, style_at, handlers)
     if block.type == "SVG" and "Source" in written and "Icon" in written:
         ctx.add(block.origin, "bad-key", "an SVG has a Source or an Icon, not both", "keep one")
+    if described is not None and "Description" not in props and "Description" in prop_keys:
+        props["Description"] = described
     if "Shadows" in props and "Elevation" in props:
         ctx.add(
             prop_at.get("Elevation"),
@@ -1496,6 +1626,8 @@ def _tooltip_name(
     if not _tooltip_hosts(ctx, entry.key_origin, kind):
         return None
     value = entry.value
+    if isinstance(value, tess_dl.String | tess_dl.Template | tess_dl.Slot):
+        return _tooltip_text(ctx, entry)  # a quoted string is the text of a one-line tooltip
     text = value.value if isinstance(value, tess_dl.String) else getattr(value, "text", None)
     if isinstance(text, str) and text.endswith(".tdl"):
         ctx.not_built(entry.value_origin, f"Tooltip: {text} (a Popup in a file)")
@@ -1516,6 +1648,63 @@ def _tooltip_name(
         )
         return None
     return m.TooltipRef(name=text, origin=ctx.origin(entry.key_origin))
+
+
+def _tooltip_text(ctx: _Ctx, entry: Property) -> m.TooltipRef | None:
+    """``Tooltip: "Save the file"``: the short form of an inline tooltip Popup that holds the text
+    on one line (Standard Modules > Tooltip). The text may hold ``{{ }}`` slots in a module. It is
+    also the block's accessible description (Accessibility, rule 11)."""
+    o = ctx.origin(entry.key_origin)
+    slot = slot_value(ctx, entry)
+    value: m.Value
+    if slot is not None:
+        value = slot
+    elif isinstance(entry.value, tess_dl.String) and entry.value.value:
+        value = m.Text(entry.value.value, origin=o)
+    else:
+        ctx.add(entry.value_origin, "bad-value", "a Tooltip text is a string that is not empty", "")
+        return None
+
+    def token(path: str, kind: str) -> m.TokenRef:
+        return m.TokenRef(path, kind, origin=o)
+
+    label = m.Node(
+        "Text",
+        props={
+            "Text": value,
+            "Width": m.Auto(origin=o),
+            "Height": m.Auto(origin=o),
+            "Wrap": m.Enum("NONE", origin=o),
+        },
+        style={
+            "Font_Size": token("type.body.font_size", "positive"),
+            "Foreground": token("color.on_surface", "color"),
+        },
+        origin=o,
+    )
+    body = m.Node(
+        "FlexBox", props={"Padding": m.Sides(12, 8, 12, 8, origin=o)}, children=(label,), origin=o
+    )
+    popup = PopupDef(
+        name="",
+        origin=o,
+        attach="BOTTOM",
+        alignment="CENTER",
+        gap=4,
+        width=m.Auto(origin=o),
+        height=m.Auto(origin=o),
+        focus=False,
+        tooltip=True,
+        open_on_enter=True,
+        close_on_exit=True,
+        style={
+            "Background": token("color.surface_raised", "color"),
+            "Corner_Radius": token("shape.medium", "radius"),
+            "Elevation": m.Percent(20, origin=o),
+        },
+        children=(body,),
+    )
+    return m.TooltipRef(popup=popup, description=value, origin=o)
 
 
 def _tooltip_block(ctx: _Ctx, block: Block, kind: str | None = None) -> m.TooltipRef | None:
@@ -2240,11 +2429,13 @@ def read_shell(
     modules: Mapping[str, ModuleDef] | None = None,
     import_module: Callable[[str], str | None] | None = None,
     icons: IconSource | None = None,
+    resolve_path: Callable[[str], str] | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Type a parsed shell file. ``read_text`` reads a file named in the shell file (an SVG's
-    ``Source``) and raises ``OSError``; the schema does no I/O of its own. ``modules`` are the
-    known module files by call name: a block with such a head is a module call."""
-    ctx = _Ctx(file, read_text, modules, import_module, None, icons)
+    ``Source``) and raises ``OSError``; the schema does no I/O of its own. ``resolve_path`` makes
+    a path written in the file (an image's ``Source``) absolute. ``modules`` are the known module
+    files by call name: a block with such a head is a module call."""
+    ctx = _Ctx(file, read_text, modules, import_module, None, icons, resolve_path)
     root = document.root
     if root.type != "Shell":
         ctx.add(
@@ -2407,10 +2598,16 @@ def read_module(
     import_module: Callable[[str], str | None] | None = None,
     load_style: Callable[[str], StyleDef | None] | None = None,
     icons: IconSource | None = None,
+    read_text: Callable[[str], str] | None = None,
+    resolve_path: Callable[[str], str] | None = None,
 ) -> tuple[ModuleDef | None, list[Finding]]:
     """Type a parsed ``<Name>_Module.tdl``: ``Module { Params { } Children { } }``, or a single
-    layout block written directly in the root (Module File > Structure)."""
-    ctx = _Ctx(file, lambda _: "", modules, import_module, load_style, icons)
+    layout block written directly in the root (Module File > Structure). ``read_text`` and
+    ``resolve_path`` are as for :func:`read_shell`: a module that calls another with an icon or an
+    image file names it relative to its own file."""
+    ctx = _Ctx(
+        file, read_text or (lambda _: ""), modules, import_module, load_style, icons, resolve_path
+    )
     ctx.in_module = True
     root = document.root
     if root.type != "Module":

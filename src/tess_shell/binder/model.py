@@ -192,9 +192,21 @@ FIELD_LINE = "TextField.line"
 FIELD_SIZE = "TextField.size"
 FIELD_INPUT = "TextField.input"
 
+# A Marquee is built as two nodes (``model.marquee``): a box that clips and the text it moves
+MARQUEE = "Marquee"
+MARQUEE_TEXT = "Marquee.text"
+
+# The marker of a module's layout where the content written on a use goes (Standard Modules >
+# Expander): ``Expander { Children { ... } }``. Only a module file may hold one.
+CONTENT = "Content"
+
 # Blocks that tre sends no pointer events: a listener on a ``text`` node is accepted and never
 # called (a click goes to the box around it), so a state style cannot apply to one.
-NO_POINTER_BLOCKS = ("Text",)
+NO_POINTER_BLOCKS = ("Text", MARQUEE_TEXT)
+
+# Blocks that are only decoration unless they have a ``Label``: hidden from assistive technology
+# (Block Reference > Accessibility Defaults)
+DECORATIVE = ("SVG", "Bitmap", "Circle", "Ring", "Path")
 
 
 @dataclass(frozen=True, slots=True)
@@ -230,6 +242,8 @@ class TooltipRef:
 
     popup: Any = None
     name: str | None = None
+    # ``Tooltip: "text"``: the text, which is also the block's accessible description
+    description: Value | None = None
     origin: Origin = _origin()
 
 
@@ -248,6 +262,10 @@ class Node:
     tooltip: TooltipRef | None = None
     # ``Part: track`` in a module's layout: the name a stylesheet addresses as ``Slider::track``
     part: str | None = None
+    # the key of the module use whose scope the block's slots and handlers read: the use whose
+    # layout the block stands in, or, for the content written on a call (``Children { }``), the
+    # place that wrote the call. Empty is no module (a shell file); ``None`` is set by the expander
+    owner: str | None = field(default=None, compare=False)
     origin: Origin = _origin()
 
 
@@ -262,6 +280,13 @@ class UseNode:
     tooltip: TooltipRef | None = None
     # ``On_Changed`` and the like written on the call: the module's root block raises them
     handlers: Mapping[str, Handler] = field(default_factory=dict)
+    # the common block keys written on the call (``Width``, ``Enabled``, ``Position`` ...) that
+    # the module does not declare as params: the module's root block takes them (Standard Modules
+    # > Rules That Hold for Every Module)
+    common: Mapping[str, Value] = field(default_factory=dict)
+    # ``Children { }`` written on the call: the module's ``Content`` marker shows them, expanded
+    # in the scope of the place that wrote them
+    children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
     origin: Origin = _origin()
 
 

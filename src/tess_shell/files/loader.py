@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -156,7 +157,12 @@ def load_shell_file(
     def read_text(relative: str) -> str:
         return (path.parent / relative).read_text(encoding="utf-8")
 
-    shell, findings = read_shell(document, name, read_text, modules, import_module, icons)
+    def resolve_path(relative: str) -> str:
+        return os.path.abspath(path.parent / os.path.expanduser(relative))
+
+    shell, findings = read_shell(
+        document, name, read_text, modules, import_module, icons, resolve_path
+    )
     return shell, findings
 
 

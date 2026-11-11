@@ -3,9 +3,14 @@ TDL: 0.1
 Name: Default
 ---
 
-# The shell's own rules: text and icons take the theme's colours and the body type. Name it in
-# settings.tdl, Appearance { Stylesheets: [Default] }, or write your own.
+# The shell's own rules: text and icons take the theme's colours and the body type, and the
+# standard modules their look (the parts of a ProgressBar, the pill of a Badge, the faint state of a
+# disabled widget). Name it in settings.tdl, Appearance { Stylesheets: [Default] }, or write your
+# own; a rule of yours that comes later wins over one of these of the same weight.
 
+# Standard modules: the parts of a ProgressBar are a pill-shaped track and fill, a Badge is a pill in
+# the error colour whose digits take the module's Foreground, and a disabled display widget is faint
+# (Accessibility, rule 8: more than colour tells a state).
 Stylesheet {
     Rule {
         Selector: "Text"
@@ -16,4 +21,19 @@ Stylesheet {
         Selector: "SVG"
         Foreground: $color.on_surface
     }
+
+    Rule { Selector: "ProgressBar::track", Fill: $color.outline, Corner_Radius: $shape.full }
+    Rule { Selector: "ProgressBar::fill", Fill: $color.primary, Corner_Radius: $shape.full }
+    Rule { Selector: "ProgressBar::fill:disabled", Fill: $color.on_surface_muted }
+
+    Rule { Selector: "Badge::dot", Background: $color.error }
+    Rule { Selector: "Badge", Foreground: $color.on_primary }
+
+    Rule { Selector: "Label:disabled", Opacity: 0.5 }
+    Rule { Selector: "TextBox:disabled", Opacity: 0.5 }
+    Rule { Selector: "Marquee_Text:disabled", Opacity: 0.5 }
+    Rule { Selector: "Icon:disabled", Opacity: 0.5 }
+    Rule { Selector: "Image:disabled", Opacity: 0.5 }
+    Rule { Selector: "ProgressBar:disabled", Opacity: 0.5 }
+    Rule { Selector: "Badge:disabled", Opacity: 0.5 }
 }

@@ -126,6 +126,43 @@ def coerce(
                 what = "a whole number, 0 or more" if low == 0 else "a whole number, 1 or more"
                 raise _bad(what, value)
             return m.Number(n, origin=origin)
+        case "pause" | "duration":
+            n = _number(value)
+            if n is None or n < 0:
+                raise _bad("a time in milliseconds, 0 or more", value)
+            return m.Number(n, origin=origin)
+        case "unit":
+            n = _number(value)
+            if n is None or not 0 <= n <= 1:
+                raise _bad("a number from 0.0 to 1.0", value)
+            return m.Number(n, origin=origin)
+        case "diameter":
+            n = _number(value)
+            if n is None or isinstance(n, float) or n <= 0:
+                raise _bad("a whole number of pixels above 0", value)
+            return m.Length(n, origin=origin)
+        case "view_box":
+            if isinstance(value, tess_dl.List) and len(value.items) == 4:
+                nums = [_number(i) for i in value.items]
+                if all(x is not None for x in nums):
+                    return m.Seq(
+                        tuple(m.Number(x, origin=origin) for x in nums if x is not None),
+                        origin=origin,
+                    )
+            raise _bad("four numbers, [min_x, min_y, width, height]", value)
+        case "a11y_value":
+            n = _number(value)
+            if n is not None:
+                return m.Number(n, origin=origin)
+            return coerce("text", value, origin)
+        case "transition":
+            listed = value.items if isinstance(value, tess_dl.List) else (value,)
+            words = [_word(i) for i in listed]
+            if not words or any(w is None for w in words):
+                raise _bad("a key name or a list of key names, such as [Width, Opacity]", value)
+            return m.Seq(tuple(m.Text(w, origin=origin) for w in words if w), origin=origin)
+        case "fit":
+            return coerce("enum", value, origin, choices)
         case "selection":
             if (
                 isinstance(value, tess_dl.List)
@@ -350,6 +387,43 @@ def from_python(
             if n is None or isinstance(n, float) or n < low:
                 raise bad("a whole number, 0 or more" if low == 0 else "a whole number, 1 or more")
             return m.Number(n, origin=origin)
+        case "pause" | "duration" | "unit":
+            n = _py_number(value)
+            if n is None or n < 0 or (kind == "unit" and n > 1):
+                raise bad("a number from 0.0 to 1.0" if kind == "unit" else "a time of 0 or more")
+            return m.Number(n, origin=origin)
+        case "diameter":
+            n = _py_number(value)
+            if n is None or isinstance(n, float) or n <= 0:
+                raise bad("a whole number of pixels above 0")
+            return m.Length(n, origin=origin)
+        case "view_box":
+            if isinstance(value, list | tuple) and len(value) == 4:
+                nums = [_py_number(v) for v in value]
+                if all(x is not None for x in nums):
+                    return m.Seq(
+                        tuple(m.Number(x, origin=origin) for x in nums if x is not None),
+                        origin=origin,
+                    )
+            raise bad("four numbers")
+        case "a11y_value":
+            n = _py_number(value)
+            if n is not None:
+                return m.Number(n, origin=origin)
+            if isinstance(value, str):
+                return m.Text(value, origin=origin)
+            raise bad("a number or a string")
+        case "transition":
+            names = [value] if isinstance(value, str) else value
+            if isinstance(names, list | tuple) and names and all(isinstance(v, str) for v in names):
+                return m.Seq(tuple(m.Text(v, origin=origin) for v in names), origin=origin)
+            raise bad("a key name or a list of key names")
+        case "fit":
+            return from_python("enum", value, origin, choices)
+        case "image":
+            if isinstance(value, str):
+                return m.Text(value, origin=origin)
+            raise bad("the path of an image file")
         case "selection":
             if isinstance(value, list | tuple) and len(value) == 2:
                 ends = [_py_number(v) for v in value]

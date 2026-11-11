@@ -6,6 +6,7 @@ tre name or form fails here, not for a user.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -32,6 +33,16 @@ from tess_shell.binder.model import (
 from tess_shell.binder.tables import BLOCKS, KeyRow
 
 SVG = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4'><rect width='4' height='4'/></svg>"
+PNG = str(Path(__file__).parent / "fixtures" / "png.png")
+
+# the keys a block needs to be built at all
+REQUIRED_PROPS: dict[str, dict[str, Value]] = {
+    "SVG": {"Source": Text(SVG)},
+    "Bitmap": {"Source": Text(PNG)},
+    "Circle": {"Diameter": Length(10)},
+    "Ring": {"Diameter": Length(10)},
+    "Path": {"Data": Text("M0,0 L8,8")},
+}
 
 
 def samples(row: KeyRow) -> list[Value]:
@@ -56,6 +67,15 @@ def samples(row: KeyRow) -> list[Value]:
         "radius": [Length(4), Seq((Length(1), Length(2), Length(3), Length(4)))],
         "font_family": [Text("Inter")],
         "elevation": [Percent(25), Percent(100)],
+        "image": [Text(PNG)],
+        "a11y_value": [Number(3), Text("three")],
+        "view_box": [Seq((Number(0), Number(0), Number(10), Number(10)))],
+        "unit": [Number(0), Number(0.5), Number(1)],
+        "pause": [Number(0), Number(1500)],
+        "duration": [Number(0), Number(200)],
+        "transition": [Seq((Text("Opacity"),))],
+        "diameter": [Length(12)],
+        "fit": [Enum("FILL"), Enum("CONTAIN"), Enum("COVER"), Enum("NONE")],
         "shadows": [
             Shadows(
                 (Shadow(Color(0, 0, 0, 64), 0, 2, 6, 0), Shadow(Color(0, 0, 0, 32), 0, 8, 16, 2))
@@ -72,6 +92,10 @@ def cases() -> list[Any]:
                 for value in samples(key_row):
                     if block == "SVG" and key in ("Source", "Icon"):
                         value = Text(SVG)
+                    if block == "Bitmap" and key == "Source":
+                        value = Text(PNG)
+                    if block == "Path" and key == "Data":
+                        value = Text("M0,0 L8,8")
                     out.append(
                         pytest.param(
                             block, scope, key, value, id=f"{block}.{scope}.{key}.{value!r:.40}"
@@ -90,9 +114,11 @@ def test_every_convert_name_exists() -> None:
 @pytest.mark.parametrize(("block", "scope", "key", "value"), cases())
 def test_every_key_row_builds_a_node(block: str, scope: str, key: str, value: Value) -> None:
     window = Window(120, 60)
-    props: dict[str, Value] = (
-        {"Source": Text(SVG)} if block == "SVG" and key not in ("Source", "Icon") else {}
-    )
+    props: dict[str, Value] = {
+        k: v for k, v in REQUIRED_PROPS.get(block, {}).items() if k != key and k != "Icon"
+    }
+    if block == "SVG" and key == "Icon":
+        props = {}
     if scope == "props":
         props[key] = value
         node = Node(block, props=props)
@@ -114,7 +140,7 @@ def test_every_key_row_builds_a_node(block: str, scope: str, key: str, value: Va
 @pytest.mark.parametrize("block", sorted(BLOCKS))
 def test_every_block_row_builds_a_node(block: str) -> None:
     row = BLOCKS[block]
-    props: dict[str, Value] = {"Source": Text(SVG)} if block == "SVG" else {}
+    props: dict[str, Value] = dict(REQUIRED_PROPS.get(block, {}))
     window = Window(120, 60)
     view = build([Node(block, props=props)], window)
     try:

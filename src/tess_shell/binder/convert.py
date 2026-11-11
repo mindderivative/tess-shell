@@ -15,6 +15,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from tess_shell._vendor import tess_utils
+from tess_shell.binder.images import IMAGES
 from tess_shell.binder.model import (
     Auto,
     BindError,
@@ -88,12 +89,15 @@ def bound(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
 
 
 def number(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
-    (name,) = names
+    """A number; a key with no tre property of its own (``names`` empty: the shell's) is checked
+    and gives nothing."""
     if isinstance(value, Number) and not isinstance(value.value, bool):
-        return {name: value.value}
-    if isinstance(value, Length):
-        return {name: _num(value.px)}
-    raise _bad(value, "a number")
+        found: int | float = value.value
+    elif isinstance(value, Length):
+        found = _num(value.px)
+    else:
+        raise _bad(value, "a number")
+    return {names[0]: found} if names else {}
 
 
 def whole(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
@@ -107,15 +111,16 @@ def whole(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
 
 def positive(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
     result = number(value, names)
-    if next(iter(result.values())) <= 0:
+    if not isinstance(value, Number | Length):
+        raise _bad(value, "a number")
+    if (value.value if isinstance(value, Number) else value.px) <= 0:
         raise BindError("must be greater than 0", value.origin)
     return result
 
 
 def boolean(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
-    (name,) = names
     if isinstance(value, Bool):
-        return {name: value.value}
+        return {names[0]: value.value} if names else {}
     raise _bad(value, "true or false")
 
 
@@ -145,6 +150,100 @@ def lines(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
     if n < 1:
         raise BindError("must be 1 or more", value.origin)
     return {name: "\n".join(["x"] * n)}
+
+
+def image(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """A Bitmap's ``Source``: the path of an image file. tre takes its pixels, so the file is
+    decoded here (cached by path and modification time); a file that cannot be had shows the error
+    image (:mod:`tess_shell.binder.images`)."""
+    if not isinstance(value, Text):
+        raise _bad(value, "the path of an image file")
+    if not value.value:
+        raise BindError("the path of an image file is empty", value.origin)
+    pixels = IMAGES.load(value.value)
+    rgba, width, height = names
+    return {rgba: pixels.rgba, width: pixels.width, height: pixels.height}
+
+
+def a11y_value(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """The accessible value of a block: a number or a string (tre's ``value``)."""
+    (name,) = names
+    if isinstance(value, Number) and not isinstance(value.value, bool):
+        return {name: value.value}
+    if isinstance(value, Text):
+        return {name: value.value}
+    raise _bad(value, "a number or a string")
+
+
+def view_box(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """``View_Box: [min_x, min_y, width, height]``: the region of a path's data that is drawn."""
+    (name,) = names
+    if isinstance(value, Seq) and len(value.items) == 4:
+        nums = [i.value if isinstance(i, Number) else i.px if isinstance(i, Length) else None
+                for i in value.items]
+        if all(n is not None for n in nums):
+            x, y, w, h = (n for n in nums if n is not None)
+            if w <= 0 or h <= 0:
+                raise BindError("a view box has a width and a height above 0", value.origin)
+            return {name: (_num(x), _num(y), _num(w), _num(h))}
+    raise _bad(value, "[min_x, min_y, width, height]")
+
+
+def unit(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """A number from 0.0 to 1.0 (``Trim_Start``, ``Trim_End``)."""
+    result = number(value, names)
+    n = value.value if isinstance(value, Number) else value.px if isinstance(value, Length) else 0
+    if not 0 <= n <= 1:
+        raise BindError("a trim is 0.0 to 1.0", value.origin)
+    return result
+
+
+def pause(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """A time in milliseconds, 0 or more."""
+    result = number(value, names)
+    n = value.value if isinstance(value, Number) else value.px if isinstance(value, Length) else 0
+    if n < 0:
+        raise BindError("a time of 0 or more milliseconds", value.origin)
+    return result
+
+
+def duration(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """``Duration``: a time in milliseconds, 0 or more. The shell's own key: it gives tre nothing
+    (:mod:`tess_shell.binder.motion` reads it)."""
+    return pause(value, ())
+
+
+def transition(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """``Transition: [Width, Opacity]``: the keys whose change animates (a word or a list of
+    words, written as text)."""
+    items = value.items if isinstance(value, Seq) else (value,)
+    if items and all(isinstance(i, Text) for i in items):
+        return {}
+    raise _bad(value, "a key name or a list of key names")
+
+
+def diameter(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """A Circle's or a Ring's ``Diameter``: a whole number of pixels, above 0; it is both the
+    width and the height."""
+    px: float | None = None
+    if isinstance(value, Length):
+        px = value.px
+    elif isinstance(value, Number) and not isinstance(value.value, bool):
+        px = value.value
+    if px is None:
+        raise _bad(value, "a number of pixels")
+    if px <= 0:
+        raise BindError("a diameter is above 0", value.origin)
+    return {name: _num(px) for name in names}
+
+
+def fit(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """A Bitmap's ``Fit``. tre has FILL, CONTAIN and COVER; NONE is the image at its natural size,
+    which is CONTAIN in a box of that size (:mod:`tess_shell.binder.shapes`)."""
+    (name,) = names
+    if isinstance(value, Enum) and value.name == "NONE":
+        return {name: "contain"}
+    return enum(value, names, choices)
 
 
 def selection(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
@@ -178,8 +277,8 @@ def color(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
 
 
 def enum(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
-    """An upper-case enum word becomes tre's lower-case word."""
-    (name,) = names
+    """An upper-case enum word becomes tre's lower-case word; a key with no tre property of its
+    own (``names`` empty) is checked and gives nothing."""
     if not isinstance(value, Enum):
         raise _bad(value, "one of " + ", ".join(choices) if choices else "an enum word")
     if choices and value.name not in choices:
@@ -188,8 +287,10 @@ def enum(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) ->
             value.origin,
             hint=_nearest_hint(value.name, choices),
         )
+    if not names:
+        return {}
     try:
-        return {name: tess_utils.to_tre_word(value.name)}
+        return {names[0]: tess_utils.to_tre_word(value.name)}
     except ValueError as exc:
         raise BindError(str(exc), value.origin) from None
 
@@ -311,6 +412,15 @@ CONVERTERS: Mapping[str, Converter] = {
     "max_length": max_length,
     "lines": lines,
     "selection": selection,
+    "image": image,
+    "a11y_value": a11y_value,
+    "view_box": view_box,
+    "unit": unit,
+    "pause": pause,
+    "duration": duration,
+    "transition": transition,
+    "diameter": diameter,
+    "fit": fit,
     "text": text,
     "color": color,
     "enum": enum,

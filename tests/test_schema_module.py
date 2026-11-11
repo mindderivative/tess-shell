@@ -169,6 +169,8 @@ def test_an_unknown_head_lists_modules_among_the_names_that_fit() -> None:
     assert "Clock" in findings[0].hint
 
 
-def test_a_slot_in_a_param_is_not_built() -> None:
+def test_a_slot_in_a_param_is_kept_for_the_model() -> None:
+    """The schema keeps the slot; the model evaluates it in the scope of the call's place (a module,
+    or a Popup); a slot in a shell file's own block is refused there (tests/test_param_slots.py)."""
     result, findings = shell(SHELL.replace('format: "%H:%M:%S"', "format: {{ x }}"))
-    assert result is None and findings[0].rule == "not-built"
+    assert result is not None and findings == []

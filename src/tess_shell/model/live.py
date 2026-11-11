@@ -12,7 +12,7 @@ or rebuild and :meth:`LiveTree.apply_changes` when the store reports changes.
 from __future__ import annotations
 
 import dataclasses
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -69,6 +69,13 @@ def _touches(reads: frozenset[str] | set[str], key: str) -> bool:
     return any(r == key or r.startswith(key + ".") for r in reads)
 
 
+def _plain(value: m.Value) -> Any:
+    """The Python value of an evaluated param (a string, a number or a boolean)."""
+    if isinstance(value, m.Text | m.Number | m.Bool):
+        return value.value
+    raise TypeError(f"not a param value: {value!r}")
+
+
 def _pos(origin: m.Origin) -> tess_el.Origin:
     return tess_el.Origin(origin.file, origin.line, origin.column)
 
@@ -85,6 +92,11 @@ class LiveTree:
         default_factory=dict
     )
     conditions: dict[str, tess_el.Condition] = field(default_factory=dict)
+    # params written as slots on a call: what each use's params hold now (over its declared
+    # defaults), and the links that keep them current; a link's ``use`` is the scope it reads
+    # (the use that holds the call) and its ``node_id`` the use whose param it feeds
+    dynamic_params: dict[str, dict[str, Any]] = field(default_factory=dict)
+    param_links: list[Link] = field(default_factory=list)
     errors: int = 0
     look: Look | None = None  # the theme tokens a ``$group.name`` reads
     # a Popup's content: the ``caller`` record its slots read (Events and Actions > caller.data)
@@ -101,6 +113,7 @@ class LiveTree:
         self.reads.clear()
         self.structural.clear()
         self._owner = expanded.owner
+        self._params(expanded.uses)
         nodes, problems = resolve(self._list(tuple(expanded.nodes), None), self.look)
         for problem in problems:
             self.errors += 1
@@ -110,7 +123,57 @@ class LiveTree:
 
     def _scope(self, use: str) -> UseScope:
         shell = {"caller": self.caller} if self.caller is not None else None
-        return UseScope(self.uses[use].params, self.store.snapshot(use), shell)
+        params = self.uses[use].params
+        if use in self.dynamic_params:
+            params = {**params, **self.dynamic_params[use]}
+        return UseScope(params, self.store.snapshot(use), shell)
+
+    # -- params written as slots ----------------------------------------------------------------
+
+    def _params(self, uses: Sequence[Use]) -> None:
+        """Evaluate the params the calls of ``uses`` wrote as slots, outer calls first, so a
+        param that reads another call's param finds it. A Popup's own blocks read ``caller``."""
+        self.param_links.clear()
+        self.dynamic_params.clear()
+        for use in uses:
+            for name, (slot, kind) in use.slots.items():
+                link = self._compile(use.outer, use.key, "params", name, kind, slot)
+                if link is None:
+                    continue
+                scope = (
+                    None
+                    if use.outer
+                    else MapScope({"caller": self.caller} if self.caller is not None else {})
+                )
+                typed = self._evaluate(link, scope)
+                if typed is None:
+                    continue  # the declared default stays; the reason was logged
+                link.last = typed
+                self.dynamic_params.setdefault(use.key, {})[name] = _plain(typed)
+                if use.outer:
+                    self.param_links.append(link)
+
+    def _refresh_params(self, changes: Sequence[Change]) -> list[Change]:
+        """The changes of the keys ``changes`` make to the params of calls that read them: each
+        becomes a change of ``params`` of the use it feeds, which in turn may feed another."""
+        queue = list(changes)
+        extra: list[Change] = []
+        i = 0
+        while i < len(queue):
+            change = queue[i]
+            i += 1
+            for link in self.param_links:
+                if link.use != change.use or not _touches(link.reads, change.key):
+                    continue
+                typed = self._evaluate(link)
+                if typed is None or typed == link.last:
+                    continue
+                link.last = typed
+                self.dynamic_params.setdefault(link.node_id, {})[link.key] = _plain(typed)
+                fed = Change(link.node_id, "params")
+                queue.append(fed)
+                extra.append(fed)
+        return extra
 
     def _list(
         self, nodes: tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...], ctx: _Ctx | None
@@ -126,10 +189,19 @@ class LiveTree:
         return out
 
     def _node(self, node: m.Node, ctx: _Ctx | None) -> m.Node:
-        use = ctx.use if ctx else self._owner.get(node.name or "", "")
+        if node.owner is not None:  # the use the block was written in (the caller, for content)
+            use = node.owner
+        else:
+            use = ctx.use if ctx else self._owner.get(node.name or "", "")
         # a block of a Popup in a shell file has no module: its slots read ``caller`` alone
         popup_scope = MapScope({"caller": self.caller}) if self.caller is not None else None
         here = ctx or _Ctx(use, scope=None if use else popup_scope)
+        if node.owner is not None and ctx is not None and ctx.use != use:
+            # a module's layout inside another's, or the caller's content inside a module's: the
+            # scope of the use the block was written in, not of the layout around it
+            here = _Ctx(
+                use, scope=None if use else popup_scope, prefix=ctx.prefix, dynamic=ctx.dynamic
+            )
         name = f"{here.prefix}{node.name}" if node.name and here.prefix else node.name
         props = dict(node.props)
         style = dict(node.style)
@@ -339,6 +411,8 @@ class LiveTree:
         try:
             if link.single:
                 value = results[0]
+                if value is None:  # ``{{ x if y else None }}``: the key is left as it is
+                    return None
             else:
                 value = "".join(r if isinstance(r, str) else str(r) for r in results)
             return from_python(link.kind, value, link.origin, link.choices)
@@ -354,7 +428,7 @@ class LiveTree:
         """What the changed keys mean: the ``View.update`` entries for the links they touch, or
         ``rebuild`` when a use with an ``If`` or ``For`` read one of them."""
         by_use: dict[str, set[str]] = {}
-        for change in changes:
+        for change in [*changes, *self._refresh_params(changes)]:
             by_use.setdefault(change.use, set()).add(change.key)
         out: list[tuple[str, str, m.Value]] = []
         rebuild = False

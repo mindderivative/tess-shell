@@ -56,3 +56,7 @@ uv run pytest
 The design documentation is in [`docs/`](docs/README.md). Start at [Home](docs/00%20Home/Home.md) for the current status, decisions and open questions.
 
 `docs/` is generated from the maintainer's design notes (an Obsidian vault) by [`tools/sync_docs.py`](tools/sync_docs.py). Edits made in `docs/` are overwritten the next time the tool runs.
+
+## Display widgets (M4b)
+
+Label, TextBox, ProgressBar, Badge, Marquee_Text, Icon, Image and Expander ship as standard modules; `Tooltip: "text"` is the short form of a tooltip. Colours come from the Default stylesheet (`Appearance { Stylesheets: [Default] }`). The gallery: `uv run python tests/kwin/prepare_m4b_gallery.py`, then `/tmp/tess-kwin-m4b/run.sh`.

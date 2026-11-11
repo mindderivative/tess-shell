@@ -1,10 +1,10 @@
 {
   "package": "tess_utils",
-  "tag": "v0.1.1",
-  "version": "0.1.1",
-  "source": "mindderivative/tess-utils release v0.1.1",
+  "tag": "v0.2.0",
+  "version": "0.2.0",
+  "source": "local build /home/phil/Projects/pyDev/projects/tess-utils/build/so",
   "files": {
-    "tess_utils.cpython-314-x86_64-linux-gnu.so": "a43c5b9373b711d696de45526d64a6ffc44a599926a8cb0b63d37bf0e9fea4f8",
-    "tess_utils.pyi": "5901982e782433505478a31daea08c56ee45607099d6399d9c21161260a7baac"
+    "tess_utils.cpython-314-x86_64-linux-gnu.so": "a648ca2a81ad2b22bf775fbac2e27463a087c32e40b3eebb0879d9904854286e",
+    "tess_utils.pyi": "27446bd767ce8acb90b040ce8a18213244e8f44213fecb63987d72c637718405"
   }
 }

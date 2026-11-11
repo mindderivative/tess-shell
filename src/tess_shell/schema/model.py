@@ -180,12 +180,16 @@ class ShellDef:
     monitors: tuple[MonitorDef, ...]
 
 
-PARAM_TYPES = ("string", "number", "boolean")
+# ``path`` is the path of a file, written relative to the file that names it and kept absolute;
+# ``icon`` is an icon name or the path of an icon file, read when the call is (an SVG document, or
+# the absolute path of a bitmap)
+PARAM_TYPES = ("string", "number", "boolean", "path", "icon")
 
 
 @dataclass(frozen=True, slots=True)
 class ParamDecl:
-    """A param a module accepts (Module File > Params): ``string``, ``number`` or ``boolean``."""
+    """A param a module accepts (Module File > Params): ``string``, ``number``, ``boolean``, or
+    ``path`` and ``icon`` (strings the shell reads from the file system: see ``PARAM_TYPES``)."""
 
     name: str
     type: str

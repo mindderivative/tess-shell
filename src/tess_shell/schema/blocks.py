@@ -7,11 +7,48 @@ declaration with the binder's tables, so the two cannot drift.
 
 from __future__ import annotations
 
-from tess_shell.binder.model import FIELD, FIELD_INPUT, FIELD_LINE, FIELD_SIZE
+from tess_shell.binder.model import FIELD, FIELD_INPUT, FIELD_LINE, FIELD_SIZE, MARQUEE_TEXT
 
 ALIGN = ("START", "CENTER", "END", "STRETCH")
 JUSTIFY = ("START", "CENTER", "END", "SPACE_BETWEEN", "SPACE_AROUND", "SPACE_EVENLY")
+# the accessibility roles tre knows (its node reference); the Block Reference lists the common ones
+ROLES = (
+    "BUTTON",
+    "CHECKBOX",
+    "RADIO",
+    "SWITCH",
+    "SLIDER",
+    "PROGRESSBAR",
+    "LINK",
+    "TEXTBOX",
+    "TAB",
+    "TABLIST",
+    "TABPANEL",
+    "MENU",
+    "MENUITEM",
+    "DIALOG",
+    "ALERT",
+    "LIST",
+    "LISTITEM",
+    "TREE",
+    "TREEITEM",
+    "HEADING",
+    "IMG",
+    "GROUP",
+    "NONE",
+    "SEPARATOR",
+)
+EASINGS = ("STANDARD", "EMPHASIZED", "LINEAR")
 
+A11Y_STATE: dict[str, str] = {
+    "Value": "a11y_value",
+    "Value_Min": "number",
+    "Value_Max": "number",
+    "Value_Step": "number",
+    "Checked": "bool",
+    "Selected": "bool",
+    "Expanded": "bool",
+}
 # key -> kind
 COMMON: dict[str, str] = {
     "Visible": "bool",
@@ -31,9 +68,36 @@ COMMON: dict[str, str] = {
     "Label": "text",
     "A11y_Hidden": "bool",
     "Opacity": "number",
+    # placement and transform (Block Reference > Size, Placement and Order, Transform and Clip)
+    "Position": "enum",
+    "Left": "length",
+    "Top": "length",
+    "Right": "length",
+    "Bottom": "length",
+    "Translate_X": "number",
+    "Translate_Y": "number",
+    "Scale": "positive",
+    "Rotation": "number",
+    "Clip_Children": "bool",
+    # accessibility (Block Reference > Accessibility; Accessibility > Rules)
+    "Role": "enum",
+    "Description": "text",
+    "Live": "enum",
+    # the state a module sets on the block that has it (Block Reference > Accessibility: "set by
+    # the block that has them, not written by the author"): a shell file may not write these
+    **A11Y_STATE,
+}
+
+# the motion keys (Style Schema > Style Keys, Motion): a change of one of the ``Transition`` keys
+# animates over ``Duration`` with ``Easing``
+MOTION_STYLE: dict[str, str] = {
+    "Transition": "transition",
+    "Duration": "duration",
+    "Easing": "enum",
 }
 
 BOX_STYLE: dict[str, str] = {
+    **MOTION_STYLE,
     "Background": "color",
     "Border_Width": "number",
     "Border_Color": "color",
@@ -54,6 +118,7 @@ FLEX: dict[str, str] = {
 }
 
 TEXT_STYLE: dict[str, str] = {
+    **MOTION_STYLE,
     "Foreground": "color",
     "Font_Family": "font_family",
     "Font_Size": "positive",
@@ -67,6 +132,7 @@ TEXT_STYLE: dict[str, str] = {
 }
 
 SHAPE: dict[str, str] = {
+    **MOTION_STYLE,
     "Fill": "color",
     "Border_Width": "number",
     "Border_Color": "color",
@@ -76,6 +142,26 @@ SHAPE: dict[str, str] = {
     "Elevation": "elevation",
     "Shadows": "shadows",
 }
+
+# the type keys of a Marquee's text (it is one line, cut or scrolled, and has no padding of its own)
+MARQUEE_TEXT_STYLE: dict[str, str] = {
+    k: v
+    for k, v in TEXT_STYLE.items()
+    if k not in ("Overflow", "Padding", "Text_Align", *MOTION_STYLE)
+}
+
+# a Circle or a Ring takes its size from ``Diameter``, so Width and Height are not its keys
+COMMON_NO_SIZE: dict[str, str] = {k: v for k, v in COMMON.items() if k not in ("Width", "Height")}
+CIRCLE_STYLE: dict[str, str] = {
+    **MOTION_STYLE,
+    "Fill": "color",
+    "Border_Width": "number",
+    "Border_Color": "color",
+    "Margin": "sides",
+    "Opacity": "number",
+}
+# a Ring is a Circle with no fill: its thickness is ``Border_Width``
+RING_STYLE: dict[str, str] = {k: v for k, v in CIRCLE_STYLE.items() if k != "Fill"}
 
 # (block, key) -> allowed words, for enum keys; a key not listed here is checked per block
 CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
@@ -95,6 +181,14 @@ CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     # a stylesheet rule's value is checked against every block that takes the key; a block takes
     # the words of its own row (a Text has no SCROLL: the fold skips the rule there)
     ("Rule", "Overflow"): ("CLIP", "ELLIPSIS", "SCROLL"),
+    ("*", "Position"): ("RELATIVE", "ABSOLUTE"),
+    ("*", "Role"): ROLES,
+    ("*", "Live"): ("POLITE", "ASSERTIVE"),
+    ("*", "Easing"): EASINGS,
+    ("Bitmap", "Fit"): ("FILL", "CONTAIN", "COVER", "NONE"),
+    ("Path", "Hit_Shape"): ("PAINTED", "BOX"),
+    ("Marquee", "Direction"): ("LEFT", "RIGHT"),
+    ("Marquee", "Loop"): ("RESTART", "BOUNCE"),
 }
 
 # block -> (property keys, style keys); a style key is also accepted written on the block
@@ -111,8 +205,9 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
             "Width": "text_length",
             "Height": "text_length",
             "Text": "text",
+            "Selectable": "bool",
             "Wrap": "enum",
-            "Max_Lines": "whole",
+            "Max_Lines": "max_length",
         },
         TEXT_STYLE,
     ),
@@ -120,7 +215,41 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
     "Spacer": (COMMON, {}),
     "SVG": (
         {**COMMON, "Source": "svg_source", "Icon": "icon", "Color": "color"},
-        {"Foreground": "color", "Opacity": "number"},
+        {**MOTION_STYLE, "Foreground": "color", "Opacity": "number"},
+    ),
+    # Graphics (Block Reference > Bitmap, Shapes): a bitmap's pixels come from a file the shell
+    # decodes; the shapes are tre paths, hit where they are painted
+    "Bitmap": (
+        {**COMMON, "Source": "image", "Fit": "fit"},
+        {**MOTION_STYLE, "Opacity": "number"},
+    ),
+    "Circle": ({**COMMON_NO_SIZE, "Diameter": "diameter", **CIRCLE_STYLE}, CIRCLE_STYLE),
+    "Ring": ({**COMMON_NO_SIZE, "Diameter": "diameter", **RING_STYLE}, RING_STYLE),
+    "Path": (
+        {
+            **COMMON,
+            **CIRCLE_STYLE,
+            "Data": "text",
+            "View_Box": "view_box",
+            "Trim_Start": "unit",
+            "Trim_End": "unit",
+            "Hit_Shape": "enum",
+        },
+        CIRCLE_STYLE,
+    ),
+    # a long text that scrolls when it is wider than its box (Standard Modules > Marquee text);
+    # ``model.field.compose_marquee`` splits it into a clipping box and the text it moves
+    "Marquee": (
+        {
+            **COMMON,
+            "Text": "text",
+            "Speed": "positive",
+            "Pause": "pause",
+            "Direction": "enum",
+            "Loop": "enum",
+            "Animated": "bool",
+        },
+        {**MARQUEE_TEXT_STYLE, "Opacity": "number", **MOTION_STYLE},
     ),
     "TextField": (
         {
@@ -210,16 +339,41 @@ INTERNAL: dict[str, tuple[dict[str, str], dict[str, str]]] = {
         {"Font_Family": "font_family", "Font_Size": "positive", "Font_Weight": "whole"},
     ),
     FIELD_INPUT: (_FIELD_INPUT_PROPS, _FIELD_INPUT_STYLE),
+    # a Marquee is its clipping box and the text it moves (``model.marquee``)
+    MARQUEE_TEXT: (
+        {"Text": "text"},
+        MARQUEE_TEXT_STYLE,
+    ),
 }
+# the key tables of the box of a composed Marquee (kind ``Marquee`` after the split)
+MARQUEE_BOX: tuple[dict[str, str], dict[str, str]] = (
+    {
+        **COMMON,
+        "Speed": "positive",
+        "Pause": "pause",
+        "Direction": "enum",
+        "Loop": "enum",
+        "Animated": "bool",
+    },
+    {"Opacity": "number", **MOTION_STYLE},
+)
 # the key tables of the box of a composed TextField (kind ``TextField`` after the split)
 FIELD_BOX: tuple[dict[str, str], dict[str, str]] = (_FIELD_BOX_PROPS, BOX_STYLE)
 
 
 def table(kind: str) -> tuple[dict[str, str], dict[str, str]] | None:
-    """The (property keys, style keys) of a block, or of an internal kind of the TextField."""
+    """The (property keys, style keys) of a block, or of an internal kind of the TextField or
+    the Marquee."""
     return BLOCKS.get(kind) or INTERNAL.get(kind)
 
-REQUIRED: dict[str, tuple[str | tuple[str, ...], ...]] = {"SVG": (("Source", "Icon"),)}
+
+REQUIRED: dict[str, tuple[str | tuple[str, ...], ...]] = {
+    "SVG": (("Source", "Icon"),),
+    "Bitmap": ("Source",),
+    "Circle": ("Diameter",),
+    "Ring": ("Diameter",),
+    "Path": ("Data",),
+}
 
 # Surface keys of a Bar that M1 reads but does not build: accepted with a warning.
 BAR_NOT_BUILT = (
@@ -315,7 +469,9 @@ EVENT_KEYS = (
 # A tre text node takes no listener of its own (a click on it reaches the nearest box above it,
 # measured on tre 0.6.1), so a Text raises nothing: put the handler on the box around it.
 BLOCK_EVENTS: dict[str, tuple[str, ...]] = {
-    kind: ("On_Click",) for kind in ("Box", "FlexBox", "Rectangle", "Spacer", "SVG")
+    kind: ("On_Click",)
+    for kind in ("Box", "FlexBox", "Rectangle", "Spacer", "SVG", "Bitmap", "Circle", "Ring", "Path")
+    + ("Marquee",)
 }
 # the text events are raised by the text input inside the composition; ``On_Click`` by its box
 BLOCK_EVENTS[FIELD] = ("On_Click", *FIELD_EVENTS)

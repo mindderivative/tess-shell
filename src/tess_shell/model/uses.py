@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from tess_shell.binder import model as m
@@ -17,6 +17,17 @@ class Use:
     params: Mapping[str, Any]  # plain Python values, defaults merged
     monitor: str
     origin: m.Origin
+    # params written as ``{{ }}`` slots on the call, each with the kind it is read as: the model
+    # evaluates them in the scope of the use that holds the call (``outer``, empty in a Popup's
+    # own blocks) and ``params`` above keeps the default until it has
+    slots: Mapping[str, tuple[m.SlotValue, str]] = field(default_factory=dict, compare=False)
+    outer: str = ""
+
+
+# the kind a slot of a param of each type is read as
+PARAM_SLOT_KINDS = {"string": "text", "number": "number", "boolean": "bool", "path": "text"}
+# what a param that has no default and is given a slot holds until the slot has a value
+PARAM_BLANKS: Mapping[str, Any] = {"string": "", "number": 0, "boolean": False, "path": ""}
 
 
 def plain_param(value: m.Value) -> Any:

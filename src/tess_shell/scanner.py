@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -121,8 +122,20 @@ def scan(settings: Settings, config: Path) -> Scan:
 
         return load
 
+    def file_readers(
+        module_path: Path,
+    ) -> tuple[Callable[[str], str], Callable[[str], str]]:
+        def read_text(relative: str) -> str:
+            return (module_path.parent / relative).read_text(encoding="utf-8")
+
+        def resolve_path(relative: str) -> str:
+            return os.path.abspath(module_path.parent / os.path.expanduser(relative))
+
+        return read_text, resolve_path
+
     # pass 2: the layouts, with every module known
     for name, mf in list(modules.items()):
+        read_text, resolve_path = file_readers(mf.path)
         full, found = read_module(
             documents[mf.path],
             display_name(mf.path, config),
@@ -130,6 +143,8 @@ def scan(settings: Settings, config: Path) -> Scan:
             importer(mf.path),
             style_loader(mf.path),
             icons,
+            read_text,
+            resolve_path,
         )
         findings.extend(found)
         modules[name] = ModuleFile(full, mf.path, mf.shipped) if full else mf
