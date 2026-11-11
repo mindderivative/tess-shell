@@ -45,6 +45,7 @@ def samples(row: KeyRow) -> list[Value]:
         "whole": [Number(2)],
         "positive": [Number(1.5)],
         "bool": [Bool(True), Bool(False)],
+        "enabled": [Bool(True), Bool(False)],
         "text": [Text("x")],
         "color": [Color(1, 2, 3, 255)],
         "wrap_flag": [Bool(True), Bool(False)],

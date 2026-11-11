@@ -119,7 +119,7 @@ def coerce(
             if n is None or isinstance(n, float):
                 raise _bad("a whole number", value)
             return m.Number(n, origin=origin)
-        case "bool" | "wrap_flag":
+        case "bool" | "wrap_flag" | "enabled":
             word = _word(value)
             if word in ("true", "false"):
                 return m.Bool(word == "true", origin=origin)
@@ -323,7 +323,7 @@ def from_python(
             if n is None or (kind == "whole" and isinstance(n, float)):
                 raise bad("a whole number" if kind == "whole" else "a number")
             return m.Number(n, origin=origin)
-        case "bool" | "wrap_flag":
+        case "bool" | "wrap_flag" | "enabled":
             if isinstance(value, bool):
                 return m.Bool(value, origin=origin)
             raise bad("true or false")

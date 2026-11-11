@@ -31,21 +31,51 @@ def plain_param(value: m.Value) -> Any:
 
 
 class UseScope:
-    """What a module's slots can read: ``params`` and the values its Python sent (TEL Integration >
-    The Scope). Implements ``tess_el.Scope``; every value is plain data."""
+    """What a module's slots can read: ``params``, what the shell supplies (``caller`` in a
+    Popup's content) and the values its Python sent (TEL Integration > The Scope). Implements
+    ``tess_el.Scope``; every value is plain data."""
 
-    __slots__ = ("_params", "_values")
+    __slots__ = ("_params", "_shell", "_values")
 
-    def __init__(self, params: Mapping[str, Any], values: Mapping[str, Any]) -> None:
+    def __init__(
+        self,
+        params: Mapping[str, Any],
+        values: Mapping[str, Any],
+        shell: Mapping[str, Any] | None = None,
+    ) -> None:
         self._params = dict(params)
         self._values = values
+        self._shell = shell or {}
 
     def lookup(self, name: str) -> Any:
         if name == "params":
             return self._params
+        if name in self._shell:
+            return self._shell[name]
         if name in self._values:
             return self._values[name]
         raise KeyError(name)
 
     def names(self) -> list[str]:
-        return ["params", *self._values]
+        return ["params", *self._shell, *self._values]
+
+
+class MapScope:
+    """A scope of named plain values: what a block of a Popup's shell file (no module, so no
+    ``params``) reads, and what a handler's argument slot reads on top of a use's scope."""
+
+    __slots__ = ("_base", "_values")
+
+    def __init__(self, values: Mapping[str, Any], base: Any | None = None) -> None:
+        self._values = values
+        self._base = base
+
+    def lookup(self, name: str) -> Any:
+        if name in self._values:
+            return self._values[name]
+        if self._base is not None:
+            return self._base.lookup(name)
+        raise KeyError(name)
+
+    def names(self) -> list[str]:
+        return [*self._values, *(self._base.names() if self._base is not None else [])]

@@ -203,6 +203,7 @@ class ModuleDef:
     params: Mapping[str, ParamDecl]
     children: tuple[Node | UseNode | IfNode | ForNode, ...]
     style_file: str = ""  # the style file the layout names (the files it depends on)
+    parts: tuple[str, ...] = ()  # the ``Part:`` names the layout declares, in order
 
 
 @dataclass(frozen=True, slots=True)
@@ -254,10 +255,18 @@ class Rule:
     target: str  # the block word, the module's call name, the class name or the unique ``Name``
     values: Mapping[str, Value]
     origin: Origin
-    state: str = ""  # ``hovered`` or ``pressed`` for ``"Button:hovered"``; empty for a base rule
+    state: str = ""  # ``hovered``, ``pressed`` or ``disabled`` for ``"Button:hovered"``; else empty
+    # ``"Slider::track"``: the module's part the rule styles (kind ``module`` only); empty is the
+    # block itself
+    part: str = ""
 
     @property
     def specificity(self) -> int:
+        """A name beats a class beats a module beats a type. A part rule (``Slider::track``)
+        names one block of the module, so it beats a class or a type rule on that block, and a
+        ``#name`` rule on it still beats the part rule."""
+        if self.part:
+            return 20
         return {"type": 1, "module": 5, "class": 10, "name": 100}[self.kind]
 
 

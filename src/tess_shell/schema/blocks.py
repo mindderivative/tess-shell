@@ -13,6 +13,7 @@ JUSTIFY = ("START", "CENTER", "END", "SPACE_BETWEEN", "SPACE_AROUND", "SPACE_EVE
 # key -> kind
 COMMON: dict[str, str] = {
     "Visible": "bool",
+    "Enabled": "enabled",
     "Width": "length",
     "Height": "length",
     "Min_Width": "bound",
@@ -218,7 +219,7 @@ BLOCK_EVENTS["Panel"] = (
 )
 # the shell's own actions (Events and Actions > A Handler); built with the Panel
 BUILTIN_ACTIONS = ("Show", "Hide", "Toggle", "Close", "Call")
-BUILTIN_BUILT = ("Show", "Hide", "Toggle", "Close")  # Call is not built yet
+BUILTIN_BUILT = ("Show", "Hide", "Toggle", "Close", "Call")
 
 # A Panel's keys and kinds (Panel > Configuration); the placement keys the shell does not build
 # yet are errors, so a Panel never opens somewhere it was not asked to.

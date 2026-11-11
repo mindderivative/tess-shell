@@ -57,9 +57,13 @@ class _Expander:
         rules: Sequence[Rule] = (),
         attach_targets: frozenset[str] = frozenset(),
         mark_roots: bool = False,
+        in_popup: bool = False,
     ) -> None:
         self.attach_targets = attach_targets
         self.mark_roots = mark_roots
+        # inside a Popup's content a slot may read ``caller`` (Events and Actions > caller.data),
+        # so a block of a shell file may hold one; elsewhere a slot needs a module's scope
+        self.popup_depth = 1 if in_popup else 0
         self.rules = rules
         self.modules = modules
         self.uid_of = uid_of
@@ -133,7 +137,7 @@ class _Expander:
                 name = f"{use.key}/#{n}"
             if name is not None:
                 self.out.owner[name] = use.key
-        elif _has_slot(node):
+        elif _has_slot(node) and not self.popup_depth:
             for v in (*node.props.values(), *node.style.values()):
                 if isinstance(v, m.SlotValue):
                     self.out.errors.append(
@@ -176,7 +180,11 @@ class _Expander:
     ) -> None:
         nodes: list[m.Node | m.IfNode | m.ForNode] = []
         if ref.popup is not None:
-            nodes = self._walk(ref.popup.children, path, use, stack)
+            self.popup_depth += 1
+            try:
+                nodes = self._walk(ref.popup.children, path, use, stack)
+            finally:
+                self.popup_depth -= 1
         self.out.tooltips[node_id] = ExpandedTooltip(ref, nodes, use.key if use else "")
 
     def _use(
@@ -264,10 +272,12 @@ def expand(
     rules: Sequence[Rule] = (),
     attach_targets: frozenset[str] = frozenset(),
     mark_roots: bool = False,
+    in_popup: bool = False,
 ) -> Expanded:
     """Expand the children of one surface. ``path`` is the surface's dotted name.
     ``attach_targets`` are the ``Name`` of the uses a Panel is attached to; ``mark_roots`` gives
-    every use's first root block an id (``Expanded.roots``), for a Popup to open beside."""
-    expander = _Expander(modules, uid_of, monitor, rules, attach_targets, mark_roots)
+    every use's first root block an id (``Expanded.roots``), for a Popup to open beside;
+    ``in_popup`` says the children are a Popup's content, where a slot may read ``caller``."""
+    expander = _Expander(modules, uid_of, monitor, rules, attach_targets, mark_roots, in_popup)
     expander.run(nodes, path)
     return expander.out

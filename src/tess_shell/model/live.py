@@ -20,14 +20,14 @@ import tess_el
 from loguru import logger
 
 from tess_shell.binder import model as m
+from tess_shell.model import args
+from tess_shell.model.args import TEL_LANGUAGE
 from tess_shell.model.expand import Expanded
 from tess_shell.model.look import Look, resolve
 from tess_shell.model.store import Change, ValueStore
-from tess_shell.model.uses import Use, UseScope
+from tess_shell.model.uses import MapScope, Use, UseScope
 from tess_shell.schema import blocks
 from tess_shell.schema.values import ValueProblem, from_python
-
-TEL_LANGUAGE = "0.1"
 
 
 @dataclass(slots=True)
@@ -61,6 +61,7 @@ class _Ctx:
     scope: Any | None = None  # a TEL scope of an entry; None is the use's own scope
     prefix: str = ""  # prepended to the ids inside a For entry
     dynamic: bool = False  # inside an If or For: no fast-path links
+    entries: tuple[Any, ...] = ()  # the For entries around the block, outermost first
 
 
 def _touches(reads: frozenset[str] | set[str], key: str) -> bool:
@@ -86,6 +87,8 @@ class LiveTree:
     conditions: dict[str, tess_el.Condition] = field(default_factory=dict)
     errors: int = 0
     look: Look | None = None  # the theme tokens a ``$group.name`` reads
+    # a Popup's content: the ``caller`` record its slots read (Events and Actions > caller.data)
+    caller: Mapping[str, Any] | None = None
     _owner: Mapping[str, str] = field(default_factory=dict)
 
     # -- resolve ------------------------------------------------------------------------------
@@ -106,7 +109,8 @@ class LiveTree:
         return nodes
 
     def _scope(self, use: str) -> UseScope:
-        return UseScope(self.uses[use].params, self.store.snapshot(use))
+        shell = {"caller": self.caller} if self.caller is not None else None
+        return UseScope(self.uses[use].params, self.store.snapshot(use), shell)
 
     def _list(
         self, nodes: tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...], ctx: _Ctx | None
@@ -123,7 +127,9 @@ class LiveTree:
 
     def _node(self, node: m.Node, ctx: _Ctx | None) -> m.Node:
         use = ctx.use if ctx else self._owner.get(node.name or "", "")
-        here = ctx or _Ctx(use)
+        # a block of a Popup in a shell file has no module: its slots read ``caller`` alone
+        popup_scope = MapScope({"caller": self.caller}) if self.caller is not None else None
+        here = ctx or _Ctx(use, scope=None if use else popup_scope)
         name = f"{here.prefix}{node.name}" if node.name and here.prefix else node.name
         props = dict(node.props)
         style = dict(node.style)
@@ -132,17 +138,21 @@ class LiveTree:
                 if not isinstance(value, m.SlotValue):
                     continue
                 del table[key]
-                if not use:
+                if not use and here.scope is None:
                     continue
                 typed = self._slot(node, name, scope, key, value, here)
                 if typed is not None:
                     table[key] = typed
         children = self._list(node.children, dataclasses.replace(here, use=use) if use else None)
-        handlers = (
-            {k: dataclasses.replace(h, use=use) for k, h in node.handlers.items()}
-            if use and node.handlers
-            else node.handlers
-        )
+        handlers = node.handlers
+        if node.handlers and (use or here.entries):
+            handlers = {
+                k: dataclasses.replace(h, use=use or h.use, entries=here.entries)
+                for k, h in node.handlers.items()
+            }
+        for handler in handlers.values():
+            for exc in args.check(handler):  # a typo in an argument is found at load
+                self._report(exc)
         return dataclasses.replace(
             node, name=name, props=props, style=style, children=tuple(children), handlers=handlers
         )
@@ -282,7 +292,9 @@ class LiveTree:
         out: list[m.Node] = []
         for entry in result.entries:
             prefix = f"{here.prefix}for{node.origin.line}.{node.origin.column}/{entry.name}/"
-            inner = dataclasses.replace(here, scope=entry.scope(base), prefix=prefix)
+            inner = dataclasses.replace(
+                here, scope=entry.scope(base), prefix=prefix, entries=(*here.entries, entry)
+            )
             roots = self._list(node.body, inner)
             for i, root in enumerate(roots):
                 if root.name is None:  # an entry's blocks are matched by the entry's name

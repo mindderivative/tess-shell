@@ -72,6 +72,7 @@ class _Ctx:
         self.in_popup = False  # the blocks of a Popup: Close closes the Popup that holds them
         self.names: dict[str, m.Origin] = {}
         self.selectors: dict[tuple[str, str], m.Origin] = {}
+        self.parts: dict[str, m.Origin] = {}  # a module's ``Part:`` names, where each was written
 
     def origin(self, o: tess_dl.Origin | None) -> m.Origin:
         line, column = position(o)
@@ -115,6 +116,39 @@ class _Ctx:
             )
         else:
             self.names[text] = here
+        return text
+
+    def part(self, prop: Property) -> str | None:
+        """``Part: track``: the name a stylesheet addresses as ``Slider::track``. It belongs to a
+        module's layout and is unique in the module."""
+        value = prop.value
+        text = value.text if isinstance(value, tess_dl.Word) else None
+        if not self.in_module:
+            self.add(
+                prop.key_origin,
+                "part-outside-module",
+                "Part names a part of a module, and this block is not in a module's layout",
+                "a stylesheet addresses a part as Module::part; write it in a module file",
+            )
+            return None
+        if text is None or not _NAME.match(text):
+            self.add(
+                prop.value_origin,
+                "bad-name",
+                f"Part must be letters, digits and _, starting with a letter: {prop.value!r}",
+                "write a name such as track",
+            )
+            return None
+        here = self.origin(prop.key_origin)
+        if text in self.parts:
+            self.add(
+                prop.value_origin,
+                "part-duplicate",
+                f"the part {text} is declared twice, first at {self.parts[text]}",
+                "a part names one block of the module",
+            )
+            return None
+        self.parts[text] = here
         return text
 
     def name_ref(self, prop: Property) -> str | None:
@@ -435,8 +469,9 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
         ctx.unknown(block.origin, block.type, [*blocks.BLOCKS, *ctx.modules], "block")
         return None
     prop_keys, style_keys = row
-    allowed = [*prop_keys, *style_keys, "Name", "Style", "Children"]
+    allowed = [*prop_keys, *style_keys, "Name", "Part", "Style", "Children"]
     name: str | None = None
+    part: str | None = None
     props: dict[str, m.Value] = {}
     style: dict[str, m.Value] = {}
     style_at: dict[str, tess_dl.Origin | None] = {}
@@ -450,6 +485,8 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
             key = entry.key
             if key == "Name":
                 name = ctx.name(entry)
+            elif key == "Part":
+                part = ctx.part(entry)
             elif key == "Style":
                 ctx.not_built(entry.key_origin, "a Style file on a block (a module has one)")
             elif key == "Class":
@@ -546,6 +583,7 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
         classes=tuple(classes),
         handlers=handlers,
         tooltip=tooltip,
+        part=part,
         origin=ctx.origin(block.origin),
     )
 
@@ -569,6 +607,7 @@ def _handler(
         ctx.add(origin, "event-not-raised", f"a {block} does not raise {key}", hint)
         return None
     args: dict[str, object] = {}
+    slots: dict[str, m.SlotValue] = {}
     if isinstance(value, Block):
         action_prop = next(
             (e for e in value.entries if isinstance(e, Property) and e.key == "Action"), None
@@ -583,14 +622,34 @@ def _handler(
             return None
         action_value, at = action_prop.value, action_prop.value_origin
         for e in value.entries:
+            if isinstance(e, Block):
+                if e.type == "Data":
+                    ctx.not_built(
+                        e.origin,
+                        "Data on an action (a Popup gets its caller.data from a module's "
+                        "ctx.popup(name, data=...); a block that opens a Popup is M4c)",
+                    )
+                else:
+                    ctx.add(
+                        e.origin,
+                        "bad-value",
+                        f"{e.type}: an argument is written Name: value, not as a block",
+                        "",
+                    )
+                return None
             if not isinstance(e, Property) or e.key == "Action":
+                continue
+            slot = slot_value(ctx, e)
+            if slot is not None:
+                slots[e.key] = slot
                 continue
             plain = _plain(e.value)
             if plain is None:
                 ctx.add(
                     e.value_origin,
                     "bad-value",
-                    f"{e.key}: an argument is a string, a number or true or false",
+                    f"{e.key}: an argument is a string, a number, true or false, or a "
+                    "{{ }} slot",
                     "",
                 )
                 return None
@@ -609,6 +668,17 @@ def _handler(
     if name in blocks.BUILTIN_ACTIONS:
         if name not in blocks.BUILTIN_BUILT:
             ctx.not_built(at, f"the built-in action {name}")
+            return None
+        if name == "Call":
+            return _call(ctx, key, args, slots, at, origin)
+        if slots:
+            ctx.add(
+                at,
+                "bad-value",
+                f"{name} takes literal arguments: a {{{{ }}}} slot is for the arguments of Call "
+                "and of a module's own action",
+                "",
+            )
             return None
         if name == "Close":
             return _close(ctx, key, args, at, origin)
@@ -630,7 +700,61 @@ def _handler(
             f"a shell file names the built-in actions: {', '.join(blocks.BUILTIN_ACTIONS)}",
         )
         return None
-    return m.Handler(name, args, origin=ctx.origin(origin))
+    return m.Handler(name, args, slots=slots, origin=ctx.origin(origin))
+
+
+_CALL_TARGET = re.compile(
+    r"^(?P<module>[A-Za-z][A-Za-z0-9_]*)\.(?P<action>[A-Za-z_][A-Za-z0-9_]*)$"
+)
+
+
+def _call(
+    ctx: _Ctx,
+    key: str,
+    args: dict[str, object],
+    slots: dict[str, m.SlotValue],
+    at: tess_dl.Origin | None,
+    origin: tess_dl.Origin | None,
+) -> m.Handler | None:
+    """``Call``: ``On_Click { Action: Call, Target: "Clock.cycle_format", Format: "24h" }`` runs the
+    ``@action`` ``cycle_format`` of the module ``Clock`` with the other keys as its arguments
+    (Events and Actions > Call). The module must be one the shell knows; whether it has the
+    action is checked when its Python is loaded (the module host)."""
+    target = args.pop("Target", None)
+    if "Target" in slots:
+        ctx.add(at, "bad-value", "Call's Target is written out: Module.action, not a slot", "")
+        return None
+    if not isinstance(target, str):
+        ctx.add(
+            at,
+            "missing-key",
+            "the action Call needs a Target, the module and its action",
+            f'write {key} {{ Action: Call, Target: "Clock.cycle_format" }}',
+        )
+        return None
+    found = _CALL_TARGET.match(target)
+    if found is None:
+        ctx.add(
+            at,
+            "bad-value",
+            f"Call's Target is Module.action, found '{target}'",
+            'write Target: "Clock.cycle_format"',
+        )
+        return None
+    module = found["module"]
+    known = list(ctx.modules or ())
+    if module not in known:
+        close = nearest(module, known)
+        ctx.add(
+            at,
+            "unknown-module",
+            f"Call: no module named {module}",
+            f"did you mean {', '.join(close)}?"
+            if close
+            else (f"the modules: {', '.join(sorted(known))}" if known else "no module is defined"),
+        )
+        return None
+    return m.Handler(found["action"], args, module=module, slots=slots, origin=ctx.origin(origin))
 
 
 def _close(
@@ -2289,7 +2413,9 @@ def read_module(
     )
     if any(f.severity == "error" for f in ctx.findings):
         return None, ctx.findings
-    definition = ModuleDef(name, file, ctx.origin(root.origin), params, styled, style_file)
+    definition = ModuleDef(
+        name, file, ctx.origin(root.origin), params, styled, style_file, tuple(ctx.parts)
+    )
     return definition, ctx.findings
 
 

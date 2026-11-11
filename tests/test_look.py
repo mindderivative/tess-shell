@@ -294,18 +294,25 @@ def test_a_bad_rule_is_reported(body: str, needle: str) -> None:
     assert any(needle in f.message + f.hint for f in findings), findings
 
 
-def test_part_and_unbuilt_state_selectors_are_skipped_with_a_warning_that_says_why() -> None:
-    s, findings = sheet(
-        'Stylesheet { Rule { Selector: "Text:focused", Foreground: "#fff" }\n'
-        'Rule { Selector: "Text:disabled", Foreground: "#fff" }\n'
-        'Rule { Selector: "Text::label", Foreground: "#fff" } }'
-    )
+def test_the_focused_state_is_skipped_with_a_warning_that_says_why() -> None:
+    s, findings = sheet('Stylesheet { Rule { Selector: "Text:focused", Foreground: "#fff" } }')
     assert s.rules == ()
-    assert [f.severity for f in findings] == ["warning"] * 3
-    assert all(f.rule == "not-built" for f in findings)
-    assert "no block can take focus" in findings[0].message
-    assert "no block has an Enabled key" in findings[1].message
-    assert "no block has named parts" in findings[2].message
+    (f,) = findings
+    assert f.severity == "warning" and f.rule == "not-built"
+    assert "no block can take focus" in f.message
+
+
+def test_disabled_and_a_part_of_a_module_are_built() -> None:
+    s, findings = sheet(
+        'Stylesheet { Rule { Selector: "Text:disabled", Foreground: "#fff" }\n'
+        'Rule { Selector: "Clock::face", Foreground: "#fff" } }',
+        {"Clock"},
+    )
+    assert findings == []
+    assert [(r.kind, r.target, r.state, r.part) for r in s.rules] == [
+        ("type", "Text", "disabled", ""),
+        ("module", "Clock", "", "face"),
+    ]
 
 
 def test_an_unknown_state_is_an_error_that_names_the_four_states() -> None:

@@ -179,8 +179,10 @@ Value = (
 )
 
 # The style states a stylesheet rule can name after a colon (``Button:hovered``), weakest first: a
-# pressed block that is also hovered shows both, the pressed values on top.
-STATES = ("hovered", "pressed")
+# pressed block that is also hovered shows both, the pressed values on top, and a disabled block
+# shows its ``disabled`` values over everything (it takes no pointer, so it is never hovered or
+# pressed while it is disabled).
+STATES = ("hovered", "pressed", "disabled")
 
 # Blocks that tre sends no pointer events: a listener on a ``text`` node is accepted and never
 # called (a click goes to the box around it), so a state style cannot apply to one.
@@ -196,6 +198,15 @@ class Handler:
     args: Mapping[str, object] = field(default_factory=dict)
     use: str = ""
     builtin: bool = False  # a shell action (Show, Hide, Toggle): the shell runs it, not a module
+    # ``Call``: the module whose ``@action`` runs, when it is not the block's own (empty: the
+    # module of ``use``)
+    module: str = ""
+    # arguments written as ``{{ }}`` slots: evaluated when the event fires (Events and Actions >
+    # Call), with ``event`` in scope, the module's values and the enclosing ``For`` variables
+    slots: Mapping[str, SlotValue] = field(default_factory=dict, compare=False)
+    # the ``For`` entries around the block, outermost first (set by the model): what a slot in
+    # ``slots`` reads the loop variables from
+    entries: tuple[Any, ...] = field(default=(), compare=False)
     origin: Origin = _origin()
 
 
@@ -224,6 +235,8 @@ class Node:
     # block while the pointer is over it or presses it, on top of the base style
     states: Mapping[str, Mapping[str, Value]] = field(default_factory=dict)
     tooltip: TooltipRef | None = None
+    # ``Part: track`` in a module's layout: the name a stylesheet addresses as ``Slider::track``
+    part: str | None = None
     origin: Origin = _origin()
 
 

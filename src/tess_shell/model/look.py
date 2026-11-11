@@ -20,7 +20,7 @@ from tess_shell.binder.shadow import scale
 from tess_shell.schema import blocks
 from tess_shell.schema.findings import Finding, nearest
 from tess_shell.schema.look import effective_tokens
-from tess_shell.schema.model import Rule, StylesheetDef, ThemeDef, Token
+from tess_shell.schema.model import ModuleDef, Rule, StylesheetDef, ThemeDef, Token
 from tess_shell.schema.values import ValueProblem, coerce
 
 Child = m.Node | m.UseNode | m.IfNode | m.ForNode
@@ -157,32 +157,44 @@ def _allowed(kind: str, key: str) -> bool:
     return row is not None and (key in row[0] or key in row[1])
 
 
-def apply_rules(children: tuple[Child, ...], rules: Sequence[Rule]) -> tuple[Child, ...]:
+def apply_rules(
+    children: tuple[Child, ...], rules: Sequence[Rule], module: str = ""
+) -> tuple[Child, ...]:
     """Fold the matching rules into each block's ``style``. A name beats a class beats a type; of
     two rules of one weight the later wins. A key the block already has (written on it, or from
-    its own style) is not touched, and a key the block does not take is skipped."""
+    its own style) is not touched, and a key the block does not take is skipped.
+
+    ``module`` is the call name when ``children`` are a module's layout: a block that declares
+    ``Part: track`` there also takes the rules of ``Module::track`` (and ``Module::track:hovered``),
+    which weigh more than a class or type rule on that block (:attr:`Rule.specificity`)."""
     if not rules:
         return children
-    return tuple(_rules_child(c, rules) for c in children)
+    return tuple(_rules_child(c, rules, module) for c in children)
 
 
-def _rules_child(node: Child, rules: Sequence[Rule]) -> Child:
+def _rules_child(node: Child, rules: Sequence[Rule], module: str) -> Child:
     if isinstance(node, m.UseNode):
         return node
     if isinstance(node, m.IfNode):
         return dataclasses.replace(
             node,
-            body=apply_rules(node.body, rules),
-            else_body=None if node.else_body is None else apply_rules(node.else_body, rules),
+            body=apply_rules(node.body, rules, module),
+            else_body=(
+                None if node.else_body is None else apply_rules(node.else_body, rules, module)
+            ),
         )
     if isinstance(node, m.ForNode):
-        return dataclasses.replace(node, body=apply_rules(node.body, rules))
+        return dataclasses.replace(node, body=apply_rules(node.body, rules, module))
     hits = [r for r in rules if _matches(r, node)]
+    if module and node.part:
+        hits += [
+            r for r in rules if r.part == node.part and r.kind == "module" and r.target == module
+        ]
     return dataclasses.replace(
         node,
         style=_fold(node, hits),
         states=_fold_states(node, hits),
-        children=apply_rules(node.children, rules),
+        children=apply_rules(node.children, rules, module),
     )
 
 
@@ -222,7 +234,7 @@ def _fold_states(node: m.Node, hits: Sequence[Rule]) -> Mapping[str, Mapping[str
 def apply_module_rules(roots: Sequence[Child], module: str, rules: Sequence[Rule]) -> list[Child]:
     """The rules that name ``module`` applied to its root blocks, which is all they reach: an
     inner block is styled by a type, class or name rule (D40)."""
-    mine = [r for r in rules if r.kind == "module" and r.target == module]
+    mine = [r for r in rules if r.kind == "module" and r.target == module and not r.part]
     if not mine:
         return list(roots)
     return [
@@ -286,12 +298,12 @@ def check_tokens(
 def check_states(
     children: Sequence[Child], rules: Sequence[Rule], module: str = ""
 ) -> list[Finding]:
-    """A warning for each state style the rules give a block that tre sends no pointer events (a
-    ``Text``): the state would never hold, so the rule does nothing there. ``module`` is the
-    call name when ``children`` are a module's layout."""
+    """A warning for each ``:hovered`` or ``:pressed`` style the rules give a block that tre sends
+    no pointer events (a ``Text``): the state would never hold, so the rule does nothing there.
+    ``module`` is the call name when ``children`` are a module's layout."""
     if not any(r.state for r in rules):
         return []
-    ruled: Sequence[Child] = apply_rules(tuple(children), rules)
+    ruled: Sequence[Child] = apply_rules(tuple(children), rules, module)
     if module:
         ruled = apply_module_rules(ruled, module, rules)
     found: list[Finding] = []
@@ -299,6 +311,8 @@ def check_states(
         if not node.states or node.kind not in m.NO_POINTER_BLOCKS:
             continue
         for state, values in node.states.items():
+            if state == "disabled":  # it needs no pointer: a Text can be disabled
+                continue
             o = next(iter(values.values())).origin if values else node.origin
             found.append(
                 Finding(
@@ -311,4 +325,36 @@ def check_states(
                     "put the state rule on the Box or FlexBox around the text",
                 )
             )
+    return found
+
+
+def check_parts(modules: Mapping[str, ModuleDef], rules: Sequence[Rule]) -> list[Finding]:
+    """An error for each ``Module::part`` rule that names a part the module's layout does not
+    declare (with the nearest part names): the rule would style nothing."""
+    found: list[Finding] = []
+    for rule in rules:
+        if not rule.part or rule.kind != "module":
+            continue
+        module = modules.get(rule.target)
+        if module is None or rule.part in module.parts:
+            continue
+        close = nearest(rule.part, module.parts)
+        o = rule.origin
+        found.append(
+            Finding(
+                o.file,
+                o.line,
+                o.column,
+                "error",
+                "unknown-part",
+                f"{rule.target} has no part {rule.part}",
+                f"did you mean {', '.join(close)}?"
+                if close
+                else (
+                    f"its parts: {', '.join(module.parts)}"
+                    if module.parts
+                    else f"{rule.target} declares no parts: write Part: {rule.part} on a block"
+                ),
+            )
+        )
     return found

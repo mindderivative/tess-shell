@@ -153,6 +153,15 @@ def enum(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) ->
         raise BindError(str(exc), value.origin) from None
 
 
+def enabled(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """``Enabled: false`` is tre's ``disabled: true`` (an accessibility state only: the shell stops
+    the pointer itself, see :class:`~tess_shell.binder.build.Wire`)."""
+    (name,) = names
+    if isinstance(value, Bool):
+        return {name: not value.value}
+    raise _bad(value, "true or false")
+
+
 def wrap_flag(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
     """``Wrap: true`` is tre's ``flex_wrap: "wrap"``."""
     (name,) = names
@@ -262,6 +271,7 @@ CONVERTERS: Mapping[str, Converter] = {
     "color": color,
     "enum": enum,
     "wrap_flag": wrap_flag,
+    "enabled": enabled,
     "sides": sides,
     "radius": radius,
     "font_family": font_family,

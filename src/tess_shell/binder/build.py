@@ -51,9 +51,6 @@ class _Index:
     named: dict[str, tuple[str, dict[str, Any]]] = field(default_factory=dict)
 
 
-EVENTS: dict[str, str] = {"On_Click": "click"}  # the TDL event key -> tre's event name
-
-
 # tre's pointer events that move a node between its style states, and what each does to the wire
 _STATE_EVENTS = (
     ("pointer_enter", "enter"),
@@ -70,10 +67,18 @@ class Wire:
     touching the listeners), the tre events that already have a listener and the node's style
     states.
 
-    ``states`` holds the converted tre properties of each state (``hovered``, ``pressed``). While
-    the pointer is over the node ``hovered`` shows; while a button is down on it ``pressed`` shows
-    on top. ``saved`` remembers the value each forced property had before a state took it, so
-    the end of the state puts it back exactly. A listener never stops an event.
+    ``states`` holds the converted tre properties of each state (``hovered``, ``pressed``,
+    ``disabled``). While the pointer is over the node ``hovered`` shows; while a button is down on
+    it ``pressed`` shows on top; while the block is disabled ``disabled`` shows over both.
+    ``saved`` remembers the value each forced property had before a state took it, so the end of
+    the state puts it back exactly. A state listener never stops an event.
+
+    A disabled block (``Enabled: false``, ``disabled``) and every block under one is *blocked*:
+    tre only sets the accessibility state, so the shell stops the pointer itself (Block Reference
+    > State). A blocked node takes no ``hovered`` or ``pressed`` state, runs none of its hooks
+    (so no tooltip opens over it) and swallows the ``click`` that reaches it: its ``On_Click``
+    does not run and no block behind or above it hears that click. The ``pointer_down`` and
+    ``pointer_up`` still bubble (a Popup is dismissed by a press anywhere on the surface).
     """
 
     handlers: Mapping[str, Handler]
@@ -86,6 +91,14 @@ class Wire:
     shown: dict[str, Any] = field(default_factory=dict)  # the properties a state forces now
     saved: dict[str, Any] = field(default_factory=dict)  # their values before it did
     hooks: dict[str, list[Callable[[], None]]] = field(default_factory=dict)
+    disabled: bool = False  # the block's own ``Enabled: false``
+    inherited: bool = False  # a block above it is disabled
+    part: bool = False  # the node is a module's named part (``Part: track``)
+
+    @property
+    def blocked(self) -> bool:
+        """The pointer does nothing here: the block, or one above it, is disabled."""
+        return self.disabled or self.inherited
 
     def listen(self) -> None:
         """Listen for what moves the node between its states, once. These listeners only read the
@@ -116,36 +129,68 @@ class Wire:
             fn()
 
     def enter(self) -> None:
+        if self.blocked:
+            return
         self.hovered = True
         self.refresh()
         self._run("enter")
 
     def leave(self) -> None:
+        if self.blocked:  # a node that became blocked was already cleared and told
+            return
         self.hovered = self.pressed = False
         self.refresh()
         self._run("leave")
 
     def down(self) -> None:
+        if self.blocked:
+            return
         self.hovered = self.pressed = True  # a press is over the node, whatever enter said
         self.refresh()
         self._run("down")
 
     def up(self) -> None:
+        if self.blocked:
+            return
         self.pressed = False
         self.refresh()
         self._run("up")
+
+    def sync(self, disabled: bool, inherited: bool, part: bool) -> None:
+        """The node's ``Enabled`` and that of the blocks above it, as they are now. A node that
+        becomes blocked while the pointer is on it is cleared at once (its stored pre-state values
+        come back) and its ``leave`` and ``up`` hooks run, so a pending tooltip is cancelled.
+        Becoming enabled again changes nothing but the look: the state is taken up again with the
+        next pointer event (tre sends no event for a pointer that is already there)."""
+        was = self.blocked
+        was_hovered, was_pressed = self.hovered, self.pressed
+        self.disabled, self.inherited, self.part = disabled, inherited, part
+        newly = self.blocked and not was
+        if newly:
+            self.hovered = self.pressed = False
+        self.refresh()
+        if newly:
+            if was_pressed:
+                self._run("up")
+            if was_hovered:
+                self._run("leave")
 
     def cancel(self) -> None:
         """The press became a move or resize of the window: no up or click follows."""
         self.up()
 
     def wanted(self) -> dict[str, Any]:
-        """The properties the current state forces: hovered's, with pressed's on top."""
+        """The properties the current state forces: hovered's, with pressed's on top and, when
+        the block is disabled, disabled's over both. A part of a module takes ``disabled`` when
+        the module is disabled, not only when the part itself is (Style Schema > Stylesheet
+        Selectors, ``Slider::handle:disabled``)."""
         out: dict[str, Any] = {}
         if self.hovered or self.pressed:
             out.update(self.states.get("hovered", {}))
         if self.pressed:
             out.update(self.states.get("pressed", {}))
+        if self.disabled or (self.part and self.inherited):
+            out.update(self.states.get("disabled", {}))
         return out
 
     def refresh(self) -> None:
@@ -228,38 +273,62 @@ class View:
                 walk(e.children)
 
         walk(self.entries)
+        self._sync(self.entries)
 
     def _wire(self, entry: Entry) -> None:
-        """Give a node with handlers one tre listener per event; the listener looks the handler up
-        when the event arrives, so a reload that changes the handler needs no new listener."""
+        """Give a node with handlers or state styles its tre listeners; a listener looks the
+        handler up when the event arrives, so a reload that changes the handler needs no new
+        listener."""
         if entry.tre is None:
             return
         if entry.wire is None:
             entry.wire = Wire(entry.typed.handlers, tre=entry.tre, window=self.window)
         wire = entry.wire
         wire.states = entry.states
-        if wire.states:
+        if any(state != "disabled" for state in wire.states):  # ``disabled`` needs no pointer
             wire.listen()
-        for key in wire.handlers:
-            tre_event = EVENTS.get(key)
-            if tre_event is None or key in wire.wired:
-                continue
-            wire.wired.add(key)
+        self._ensure_click(entry)
 
-            def listener(event: Any, key: str = key, wire: Wire = wire) -> None:
-                # tre's click bubbles to every ancestor's listener; a clickable inside a clickable
-                # takes its click alone (as Material 3 expects), so the event stops here, even
-                # when the handler raises
-                try:
-                    handler = wire.handlers.get(key)
-                    if handler is not None and self.sink is not None:
-                        self.sink(handler, key, event)
-                finally:
-                    stop = getattr(event, "stop", None)
-                    if stop is not None:
-                        stop()
+    def _sync(self, entries: list[Entry], inherited: bool = False) -> None:
+        """Tell every wire whether its block, or one above it, is disabled (``Enabled: false`` is
+        tre's ``disabled`` in the node's properties). A disabled block gets a ``click`` listener
+        whatever its handlers, to swallow the click."""
+        for e in entries:
+            own = bool(e.props.get("disabled"))
+            if e.wire is not None:
+                e.wire.sync(own, inherited, bool(e.typed.part))
+                self._ensure_click(e)
+            self._sync(e.children, inherited or own)
 
-            entry.tre.on(tre_event, listener)
+    def _ensure_click(self, entry: Entry) -> None:
+        """The one ``click`` listener of a node that has an ``On_Click`` or is disabled. It
+        stops the event: tre's click bubbles to every ancestor's listener, and a clickable inside
+        a clickable takes its click alone (as Material 3 expects), even when the handler raises.
+        A disabled node swallows the click without running anything."""
+        wire = entry.wire
+        if entry.tre is None or wire is None or "On_Click" in wire.wired:
+            return
+        if "On_Click" not in wire.handlers and not wire.disabled:
+            return
+        wire.wired.add("On_Click")
+
+        def listener(event: Any, wire: Wire = wire) -> None:
+            stop = getattr(event, "stop", None)
+            if wire.blocked:
+                if stop is not None:
+                    stop()
+                return
+            handler = wire.handlers.get("On_Click")
+            if handler is None:  # the node was disabled once and has no handler now
+                return
+            try:
+                if self.sink is not None:
+                    self.sink(handler, "On_Click", event)
+            finally:
+                if stop is not None:
+                    stop()
+
+        entry.tre.on("click", listener)
 
     def update(self, changes: Sequence[tuple[str, str, Value]]) -> list[BindError]:
         """Set new typed values on named nodes: ``(node id, TDL key, value)``.
@@ -300,6 +369,8 @@ class View:
                 return errors
             for node_id, props in by_node.items():
                 self.applied[node_id].update(props)
+            if any("disabled" in props for props in by_node.values()):
+                self._sync(self.entries)  # a block above may have been disabled or enabled
         return errors
 
     def dispose(self) -> None:
@@ -362,11 +433,12 @@ def convert_states(node: Node, errors: list[BindError]) -> dict[str, dict[str, A
 
 
 def entry_states(node: Node) -> dict[str, dict[str, Any]]:
-    """What a built node listens for: its converted state styles, none for a kind tre sends no
-    pointer events (a ``Text``)."""
+    """What a built node shows and listens for: its converted state styles. A kind tre sends no
+    pointer events (a ``Text``) has no ``hovered`` or ``pressed``; its ``disabled`` still shows."""
+    states = convert_states(node, [])
     if node.kind in NO_POINTER_BLOCKS:
-        return {}
-    return convert_states(node, [])
+        return {s: v for s, v in states.items() if s == "disabled"}
+    return states
 
 
 def _plan(

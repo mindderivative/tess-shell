@@ -203,10 +203,7 @@ _SELECTOR = re.compile(
 )
 
 # the states a rule can name that no block can be in yet, and why
-_STATES_NOT_BUILT = {
-    "focused": "no block can take focus yet",
-    "disabled": "no block has an Enabled key, so none can be disabled yet",
-}
+_STATES_NOT_BUILT = {"focused": "no block can take focus yet (keyboard focus is M6)"}
 
 # every style key of every block, with its kind; the kinds agree across blocks
 STYLE_UNION: dict[str, str] = {k: v for row in blocks.BLOCKS.values() for k, v in row[1].items()}
@@ -237,13 +234,26 @@ def _rule(ctx: _Ctx, block: Block, module_names: set[str]) -> Rule | None:
             'a selector is "Text", ".class", "#name", with an optional ":state" or "::part"',
         )
         return None
-    if found["part"]:
+    part = (found["part"] or "::")[2:]
+    if part and found["head"]:
         ctx.add(
             selector.value_origin,
             "not-built",
-            f"the selector part {found['part']} is not built: no block has named parts yet",
-            "the rule is skipped",
+            f"the selector part ::{part} after a {'class' if found['head'] == '.' else '#name'} "
+            "is not built: a part is addressed through its module's name",
+            f'write "<Module>::{part}", with the module\'s own name; the rule is skipped',
             "warning",
+        )
+        return None
+    if part and found["name"] not in (module_names or ()):
+        close = nearest(found["name"], sorted(module_names or ()))
+        ctx.add(
+            selector.value_origin,
+            "bad-selector",
+            f"::{part} is a part of a module and {found['name']} is no module",
+            f"did you mean {', '.join(close)}?"
+            if close
+            else "a part selector names a module: Slider::track",
         )
         return None
     state = (found["state"] or ":")[1:]
@@ -272,9 +282,10 @@ def _rule(ctx: _Ctx, block: Block, module_names: set[str]) -> Rule | None:
     )
     if kind == "type":
         if name in module_names:
-            # a module's name styles the module's root blocks at every use (D40)
+            # a module's name styles the module's root blocks at every use (D40); with a part it
+            # styles that part's block (``Slider::track``)
             values = _scalar_block_keys(ctx, body, STYLE_UNION, "Rule")
-            return Rule("module", name, values, ctx.origin(block.origin), state)
+            return Rule("module", name, values, ctx.origin(block.origin), state, part)
         if name not in blocks.BLOCKS:
             ctx.unknown(selector.value_origin, name, [*blocks.BLOCKS], "block in a selector")
             return None

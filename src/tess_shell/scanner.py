@@ -27,7 +27,7 @@ from tess_shell.files.loader import (
     load_theme_file,
     register_module,
 )
-from tess_shell.model.look import Look, check_states, check_tokens, make_look
+from tess_shell.model.look import Look, check_parts, check_states, check_tokens, make_look
 from tess_shell.schema.findings import Finding, nearest, render_findings
 from tess_shell.schema.graph import module_cycles
 from tess_shell.schema.look import effective_tokens
@@ -273,6 +273,7 @@ def _check_look(
         out.extend(check_tokens(mf.definition.children, tokens))
         stated.extend(check_states(mf.definition.children, rules, name))
     out.extend({(f.file, f.line, f.column, f.message): f for f in stated}.values())
+    out.extend(check_parts({name: mf.definition for name, mf in modules.items()}, rules))
     return out
 
 

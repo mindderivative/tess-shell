@@ -458,9 +458,13 @@ def test_a_use_on_no_open_surface_has_no_parent_and_the_call_says_so(menu: Rig) 
     assert "ctx.popup('Menu'): the use Btn@nowhere is on no open surface" in menu.log()
 
 
-def test_data_is_accepted_but_warned_about_because_nothing_reads_it_yet(menu: Rig) -> None:
-    assert menu.call(data={"items": [1]}) is not None
-    assert "data is accepted but not read yet" in menu.log()
+def test_data_is_accepted_and_read_by_the_popups_content_as_caller_data() -> None:
+    from tests.test_caller_data import FROM_CALLER
+
+    (r,) = list(rig(FROM_CALLER))
+    op = r.call(data={"Title": "Hello", "items": ["a", "b"]})
+    assert op is not None and "not read yet" not in r.log()
+    assert op.view.nodes["Heading"].get("text") == "Hello"
 
 
 def test_a_close_action_in_the_popup_closes_it_when_its_block_is_clicked() -> None:

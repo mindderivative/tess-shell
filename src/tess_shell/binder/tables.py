@@ -9,6 +9,7 @@ written in ``Style`` it wins over the property (Block Reference, R2).
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -45,6 +46,7 @@ ALIGN = ("START", "CENTER", "END", "STRETCH")
 
 _COMMON: dict[str, KeyRow] = {
     "Visible": _k("visible", "bool"),
+    "Enabled": _k("disabled", "enabled"),
     "Width": _k("width", "length"),
     "Height": _k("height", "length"),
     "Min_Width": _k("min_width", "bound"),
@@ -117,7 +119,7 @@ _SHAPE: dict[str, KeyRow] = {
     "Shadows": _k("shadows", "shadows"),
 }
 
-BLOCKS: Mapping[str, BlockRow] = {
+_ROWS: dict[str, BlockRow] = {
     # A Box is a one-cell grid: every child sits in cell (1, 1) (Block Reference, R1).
     "Box": BlockRow(
         "box",
@@ -167,4 +169,11 @@ BLOCKS: Mapping[str, BlockRow] = {
         style={"Foreground": _k("svg_color", "color"), "Opacity": _COMMON["Opacity"]},
         required=(("Source", "Icon"),),
     ),
+}
+
+# every node is built with ``disabled`` set, so a reload that drops ``Enabled: false`` sets it back
+# in place instead of replacing the node (tre cannot unset a property)
+BLOCKS: Mapping[str, BlockRow] = {
+    name: dataclasses.replace(row, defaults={"disabled": False, **row.defaults})
+    for name, row in _ROWS.items()
 }

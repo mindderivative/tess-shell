@@ -177,6 +177,7 @@ class Reloader:
             sources, by_module, everything if changed is None else changed
         )
         report(sync_problems)
+        report(self.host.check_calls(self.manager.planned_handlers(planned)))
         self.store.flush()  # what modules sent while changing; the Bars below are resolved from it
         self.manager.apply(planned, module_defs, uses, look)
         self.settings = dataclasses.replace(

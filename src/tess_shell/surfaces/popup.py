@@ -26,6 +26,7 @@ from tess_shell.binder import model as m
 from tess_shell.binder.build import View, Wire, build
 from tess_shell.binder.model import BindError, BindFailed, Handler
 from tess_shell.binder.shadow import DEFAULT_MAX, style_bleed, style_shadows
+from tess_shell.model import args
 from tess_shell.model.expand import Expanded, ExpandedTooltip, expand
 from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, apply_rules, resolve_style
@@ -235,13 +236,36 @@ class PopupPlan:
 @dataclass(frozen=True, slots=True)
 class Caller:
     """What called a Popup (Module Context > Calling a popup): the module, the use, the surface
-    that holds it, the anchor rectangle in that surface's coordinates and the ``data`` passed."""
+    that holds it, the anchor rectangle in that surface's coordinates and the ``data`` passed (a
+    plain copy: it does not follow later changes). ``block`` is the id of the block the Popup
+    opens beside."""
 
     module: str
     use: str
     surface: str
     rect: Rect
     data: Mapping[str, Any] | None = None
+    block: str = ""
+
+    def record(self, use: Use | None) -> dict[str, Any]:
+        """What a slot in the Popup's content reads as ``caller`` (Popup > What the Popup Knows,
+        Events and Actions > caller.data): the module, the use (its key, uid, name, monitor and
+        params), the anchor rectangle, ``data`` (an empty mapping when none was passed) and
+        ``source``, the opening block's id."""
+        r = self.rect
+        return {
+            "module": self.module,
+            "use": {
+                "key": self.use,
+                "uid": self.use.split("@", 1)[1] if "@" in self.use else "",
+                "name": use.name if use is not None else "",
+                "monitor": use.monitor if use is not None else "",
+                "params": dict(use.params) if use is not None else {},
+            },
+            "rect": {"x": r.x, "y": r.y, "width": r.width, "height": r.height},
+            "data": dict(self.data or {}),
+            "source": self.block,
+        }
 
 
 @dataclass(slots=True)
@@ -261,6 +285,7 @@ class OpenPopup:
     placed: tuple[int, int] | None = None
     attach: str = ""  # the side of the anchor it was asked to open on
     block: str | None = None  # the block of a tooltip's surface the pointer must be on
+    record: Mapping[str, Any] | None = None  # the ``caller`` its content's slots read
 
     @property
     def popup(self) -> PopupDef:
@@ -328,6 +353,7 @@ class Popups:
                         uid_of,
                         outputs[i].name,
                         rules,
+                        in_popup=True,
                     )
                     _check_close_targets(expanded, panels)
                     uses.extend(expanded.uses)
@@ -379,11 +405,11 @@ class Popups:
                 f"{surface.planned.group} ({hint})"
             )
             return
-        if data:
-            logger.warning(
-                f"{module}: ctx.popup({name!r}): data is accepted but not read yet: a Popup "
-                "cannot read caller.data (not built)"
-            )
+        try:
+            copy = args.copy_plain(data or {}, "data")
+        except ValueError as exc:
+            logger.error(f"{module}: ctx.popup({name!r}): {exc}; the Popup was not opened")
+            return
         current = self.current
         if current is not None and current.plan is plan and current.caller.use == use:
             self.close(current, "toggled")
@@ -392,7 +418,7 @@ class Popups:
             self._swallow = None
             logger.debug(f"Popup {name}: the click that closed it is not a call to open it again")
             return
-        self.open(plan, surface, node_id, use, module, None, data)
+        self.open(plan, surface, node_id, use, module, None, copy)
 
     def close_named(self, name: str | None = None) -> None:
         """``ctx.close_popup(name)``: close the open Popup (the named one, if a name is given)."""
@@ -449,7 +475,9 @@ class Popups:
         shape = body_look(popup, look)
         for error in shape.errors:
             logger.warning(f"{error.origin}: {error.message}")
-        live = LiveTree(self._m._store, self._m._all_uses, look=look)
+        caller = Caller(module, use, surface.key, rect, data, node_id)
+        record = caller.record(self._m._all_uses.get(use))
+        live = LiveTree(self._m._store, self._m._all_uses, look=look, caller=record)
         nodes = live.resolve(expanded or plan.expanded)
         try:
             size = measure(self._meter_window(), nodes, popup, shape.border)
@@ -509,7 +537,6 @@ class Popups:
             return None
         body = window.create("box", flex_grow=1, align_self="stretch", **shape.props())
         window.root.add_child(body)
-        caller = Caller(module, use, surface.key, rect, data)
         op = OpenPopup(
             plan,
             window,
@@ -522,6 +549,7 @@ class Popups:
             body,
             size=surface_size,
             attach=attach,
+            record=record,
         )
         try:
             op.view = self._build_content(window, body, nodes, size.scrolls)
@@ -823,7 +851,7 @@ class Popups:
             else:
                 self._m.run_builtin(handler)
             return
-        self._m._dispatch(handler, key, raw)
+        self._m._dispatch(handler, key, raw, op.record)
 
     def on_change(self, changes: Sequence[Any]) -> None:
         """The store changed: the open Popup shows the new values (its size stays)."""

@@ -281,6 +281,7 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             uid = file_uids.get(mf.path) or registry.uid_for(f"module:{name}", "module")
             _, problems = host.load(mf.definition, mf.python, uid, module_uses)
             report(problems)
+        report(host.check_calls(manager.planned_handlers()))  # every Call names a loaded action
         report(host.start_all())
         store.flush()  # what the modules sent while starting, before the first build
         logger.info(f"step 10 (model): {len(uses)} module uses, {len(host.loaded)} modules")

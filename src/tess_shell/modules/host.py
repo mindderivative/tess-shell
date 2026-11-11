@@ -12,7 +12,7 @@ import inspect
 import sys
 import time
 import traceback
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
@@ -27,7 +27,8 @@ from tess_shell.model.uses import Use
 from tess_shell.module import Event, Module
 from tess_shell.modules.context import ModuleContext, PopupPort, UseRecord
 from tess_shell.modules.ticks import TimeSource
-from tess_shell.schema.findings import Finding
+from tess_shell.schema.blocks import BUILTIN_ACTIONS
+from tess_shell.schema.findings import Finding, nearest
 from tess_shell.schema.model import ModuleDef
 
 PACKAGE = "tess_shell_user_modules"
@@ -70,6 +71,15 @@ def handlers_of(children: tuple[object, ...]) -> list[m.Handler]:
         elif isinstance(node, m.ForNode):
             found.extend(handlers_of(node.body))
     return found
+
+
+def actions_of(cls: type) -> list[str]:
+    """The names of the methods of ``cls`` marked ``@action``, sorted."""
+    return sorted(
+        name
+        for name, member in inspect.getmembers(cls, callable)
+        if getattr(member, "__tess_action__", False)
+    )
 
 
 def _where(exc: BaseException, py_path: Path) -> tuple[int, str]:
@@ -164,13 +174,24 @@ class ModuleHost:
                     definition, "module-classes", message, f"the layout file is {definition.file}"
                 )
             ]
-        actions = sorted(
-            name
-            for name, member in inspect.getmembers(classes[0], callable)
-            if getattr(member, "__tess_action__", False)
-        )
+        actions = actions_of(classes[0])
+        clash = [a for a in actions if a in BUILTIN_ACTIONS]
+        if clash:
+            return None, [
+                self._finding(
+                    definition,
+                    "action-clash",
+                    f"the module {definition.name} has an action named like a built-in action "
+                    f"({', '.join(clash)})",
+                    f"the built-in actions are {', '.join(BUILTIN_ACTIONS)}: rename the method",
+                )
+            ]
+        # a handler of this layout names an action of this module, unless it is a ``Call`` of
+        # another one (checked by ``check_calls`` once every module is loaded)
         missing = [
-            h for h in handlers_of(definition.children) if not h.builtin and h.action not in actions
+            h
+            for h in handlers_of(definition.children)
+            if not h.builtin and h.action not in actions and h.module in ("", definition.name)
         ]
         if missing:
             return None, [
@@ -215,13 +236,60 @@ class ModuleHost:
         self.loaded[definition.name] = loaded
         return loaded, []
 
+    def check_calls(self, handlers: Sequence[m.Handler]) -> list[Finding]:
+        """The ``Call`` handlers among ``handlers`` (the shell's, once the modules are loaded):
+        each names a module that is loaded and an ``@action`` it has. A finding for each that does
+        not, at the handler, with the nearest names (Events and Actions > Call)."""
+        out: list[Finding] = []
+        for h in handlers:
+            if not h.module or h.builtin:
+                continue
+            o = h.origin
+            loaded = self.loaded.get(h.module)
+            if loaded is None:
+                out.append(
+                    Finding(
+                        o.file,
+                        o.line,
+                        o.column,
+                        "error",
+                        "call-module-not-loaded",
+                        f"Call: the module {h.module} is not loaded, so {h.action} cannot run",
+                        "a module loads when a Bar, Panel, Popup or Frame uses it; or its Python "
+                        "failed to load (see the errors above)",
+                    )
+                )
+                continue
+            actions = actions_of(type(loaded.instance))
+            if h.action not in actions:
+                close = nearest(h.action, actions)
+                out.append(
+                    Finding(
+                        o.file,
+                        o.line,
+                        o.column,
+                        "error",
+                        "unknown-action",
+                        f"Call: the module {h.module} has no action {h.action}",
+                        f"did you mean {', '.join(close)}?"
+                        if close
+                        else (
+                            f"its actions: {', '.join(actions)}"
+                            if actions
+                            else f"mark a method with @action in {loaded.py_path.name}"
+                        ),
+                    )
+                )
+        return out
+
     # -- events ---------------------------------------------------------------------------------
 
     def dispatch(self, handler: m.Handler, key: str, raw: object) -> None:
         """Loop thread: a node raised ``key``; call the module's action with an :class:`Event`.
         A handler that raises is logged with the module, the event and the block's position, and
-        is not repeated; the shell keeps running."""
-        module = handler.use.split("@", 1)[0]
+        is not repeated; the shell keeps running. A ``Call`` names its module; any other action
+        is one of the module that holds the block."""
+        module = handler.module or handler.use.split("@", 1)[0]
         loaded = self.loaded.get(module)
         if loaded is None or loaded.state != "running":
             logger.debug(f"{key} for {module}, which is not running: ignored")

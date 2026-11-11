@@ -21,11 +21,12 @@ from tess_shell.binder import convert
 from tess_shell.binder.build import View, build
 from tess_shell.binder.model import BindError, BindFailed, Color, Handler, Value
 from tess_shell.binder.shadow import DEFAULT_MAX, style_bleed, style_shadows
+from tess_shell.model import args
 from tess_shell.model.expand import Expanded, expand
 from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, apply_rules, resolve_style
 from tess_shell.model.store import Change, ValueStore
-from tess_shell.model.uses import Use
+from tess_shell.model.uses import Use, UseScope
 from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, PanelDef, ShellDef, use_names
 from tess_shell.surfaces.bar import (
     BarSpec,
@@ -495,10 +496,33 @@ class SurfaceManager:
         # ``sync_uses``: the same path a reload takes). ``None`` where there are no modules.
         self.sync_uses: Callable[[list[Use]], None] | None = None
 
-    def _dispatch(self, handler: Handler, key: str, raw: Any) -> None:
+    def _dispatch(
+        self, handler: Handler, key: str, raw: Any, caller: Mapping[str, Any] | None = None
+    ) -> None:
+        """A block raised ``key``: evaluate the arguments written as slots (the event fires now,
+        so they read the values as they are now; ``caller`` is the record of the Popup the block
+        is in) and hand the handler to the sink. A slot that fails is logged at its position and
+        the action does not run."""
+        if handler.slots:
+            try:
+                resolved = args.evaluate(handler, self._arg_scope(handler, key, raw, caller))
+            except args.ArgError as exc:
+                hint = f" ({exc.hint})" if exc.hint else ""
+                logger.error(
+                    f"{exc.origin}: {exc.message}{hint}; {handler.action} did not run on {key}"
+                )
+                return
+            handler = dataclasses.replace(handler, args=resolved, slots={})
         logger.debug(f"{key} -> {handler.action} {dict(handler.args)} ({handler.origin})")
         if self.sink is not None:
             self.sink(handler, key, raw)
+
+    def _arg_scope(
+        self, handler: Handler, key: str, raw: Any, caller: Mapping[str, Any] | None
+    ) -> Any:
+        use = self._all_uses.get(handler.use) if handler.use else None
+        base = UseScope(use.params, self._store.snapshot(use.key)) if use is not None else None
+        return args.scope_for(args.event_record(key, raw), base, handler.entries, caller)
 
     @property
     def look(self) -> Look:
@@ -523,7 +547,7 @@ class SurfaceManager:
         rules = look.rules if look else ()
         if rules:
             modules = {
-                n: dataclasses.replace(d, children=apply_rules(d.children, rules))
+                n: dataclasses.replace(d, children=apply_rules(d.children, rules, n))
                 for n, d in modules.items()
             }
         if outputs is None:
@@ -643,6 +667,19 @@ class SurfaceManager:
         )
         uses.extend(popup_uses)
         return planned, uses
+
+    def planned_handlers(self, planned: Sequence[Planned] | None = None) -> list[Handler]:
+        """Every handler of the last planning: the Bars and Panels (``planned``, or the ones
+        :meth:`plan` made), the Popups, the tooltips and the Frames' strips and melded Panels."""
+        expanded = [p.expanded for p in (self._planned if planned is None else planned)]
+        expanded.extend(p.expanded for p in self._popup_plans)
+        expanded.extend(h.planned.expanded for fp in self._frame_plans for h in fp.hosts)
+        found: list[Handler] = []
+        for e in expanded:
+            found.extend(_handlers(e.nodes))
+            for tip in e.tooltips.values():
+                found.extend(_handlers(tip.nodes))
+        return found
 
     def _frame_uses(self) -> dict[str, Use]:
         """The module uses of the strips and melded Panels of the last planning."""
