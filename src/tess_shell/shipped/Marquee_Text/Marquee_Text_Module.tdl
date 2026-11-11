@@ -9,7 +9,8 @@ Name: Marquee_Text
 # text (no Python per frame), one leg at `Speed` pixels a second, waiting `Pause` milliseconds at each
 # end. `Loop` is RESTART (jump back to the start) or BOUNCE (scroll back); `Direction` is LEFT or
 # RIGHT. Disabled, or under reduced motion, it does not scroll: a text that does not fit ends with an
-# ellipsis and the tooltip shows the whole text. The whole text is also the accessible name.
+# ellipsis and the tooltip shows the whole text (the module sets `Tooltip_When_Disabled`, so the
+# tooltip opens although the block is disabled). The whole text is also the accessible name.
 Module {
     Params {
         Text { Type: string, Default: "" }
@@ -26,6 +27,7 @@ Module {
         Pause: {{ params.Pause }}
         Direction: {{ params.Direction }}
         Loop: {{ params.Loop }}
-        Tooltip: "{{ params.Text }}"
+        Tooltip: {{ params.Text }}
+        Tooltip_When_Disabled: true
     }
 }

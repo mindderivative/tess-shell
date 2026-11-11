@@ -68,3 +68,12 @@ def _kinds(table: dict[str, str], block: str) -> dict[str, str]:
 def test_required_keys_agree() -> None:
     for name, row in TABLES.items():
         assert row.required == blocks.REQUIRED.get(name, ())
+
+
+def test_tooltip_when_disabled_is_a_common_bool_key_that_gives_tre_nothing() -> None:
+    from tess_shell.binder.tables import BLOCKS
+
+    assert blocks.COMMON["Tooltip_When_Disabled"] == "bool"
+    for name, row in BLOCKS.items():
+        if "Visible" in row.keys:
+            assert row.keys["Tooltip_When_Disabled"].tre == (), name

@@ -357,3 +357,34 @@ def test_a_tooltip_never_opens_over_a_disabled_block_and_opens_over_an_enabled_o
         assert (r.popups.current is not None) is opens
         while _SINKS:  # the rig's log sink: tests/test_popup.py removes them in its own fixture
             logger.remove(_SINKS.pop())
+
+
+def test_a_disabled_block_that_says_so_opens_its_tooltip_after_the_enter_delay() -> None:
+    from tests.test_popup import _SINKS, rig
+
+    tip = (
+        "Popup { Name: Tip, Tooltip: true, "
+        "Children { FlexBox { Name: Card, Width: 40, Height: 20 } } }"
+    )
+    for extra, opens in (
+        ("Tooltip_When_Disabled: true, ", True),
+        ("Tooltip_When_Disabled: false, ", False),
+    ):
+        head = "FlexBox { Name: Tipped, Enabled: false, "
+        children = head + extra + "Width: 30, Height: 20, Tooltip: Tip }"
+        (r,) = list(rig(tip, children))
+        node = r.bar.view.nodes["Tipped"]
+        r.bar.window.simulate("pointer_enter", node=node)
+        assert (r.popups._enter_timer is not None) is opens
+        r.advance(100)
+        assert r.popups.current is None  # not before the Enter_Delay
+        r.advance(500)
+        assert (r.popups.current is not None) is opens
+        # the block stays disabled: no hovered look, no click
+        wire = r.bar.view.wires["Tipped"]
+        assert wire.hovered is False and wire.blocked
+        r.bar.window.simulate("pointer_leave", node=node)
+        r.advance(400)
+        assert r.popups.current is None
+        while _SINKS:
+            logger.remove(_SINKS.pop())

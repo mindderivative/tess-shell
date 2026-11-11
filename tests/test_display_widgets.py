@@ -5,6 +5,7 @@ Expander, the Circle, Ring and Path blocks, the Tooltip string and Spacer (Stand
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from tess_shell.appearance import Appearance
 from tess_shell.binder.images import IMAGES
@@ -55,7 +56,9 @@ def test_progressbar_fill_eases_over_the_medium_duration_and_not_under_reduced_m
         assert 0 < fill.get("layout_width") < 160  # on its way
         w.advance(500)
         assert fill.get("width") == "100%"
-    with running("Driver { }", driver=driver, driver_py=code, appearance=Appearance(reduced_motion=True)) as w:
+    with running(
+        "Driver { }", driver=driver, driver_py=code, appearance=Appearance(reduced_motion=True)
+    ) as w:
         w.send("v", 100)
         w.advance(16)
         assert w.of_use("ProgressBar", "Fill").get("width") == "100%"
@@ -90,6 +93,35 @@ def test_marquee_is_static_with_an_ellipsis_under_reduced_motion_and_when_disabl
             assert runner.text.get("overflow") == "ellipsis"
             w.advance(5000)
             assert runner.text.get("translate_x") == 0
+
+
+def test_a_disabled_marquee_opens_a_tooltip_with_the_whole_text() -> None:
+    text = "a very long text that does not fit in a hundred pixels"
+    with running(f'Marquee_Text {{ Text: "{text}", Width: 100, Enabled: false }}') as w:
+        (tip,) = w.bar.expanded.tooltips.items()
+        block = tip[0]
+        node = w.view.nodes[block]
+        assert w.view.wires[block].tip_blocked is True
+        w.window.simulate("pointer_enter", node=node)
+        w.advance(600)
+        op = w.manager.popups.current
+        assert op is not None and op.view is not None
+        texts: list[str] = []
+
+        def walk(node: Any) -> None:
+            if node.get("kind") == "text":
+                texts.append(node.get("text"))
+            for child in node.children():
+                walk(child)
+
+        walk(op.window.root)
+        assert text in texts
+    # a Marquee that fits has nothing to add: no tooltip even enabled-or-not
+    with running('Marquee_Text { Text: "fits", Width: 100, Enabled: false }') as w:
+        (block,) = w.bar.expanded.tooltips
+        w.window.simulate("pointer_enter", node=w.view.nodes[block])
+        w.advance(600)
+        assert w.manager.popups.current is None
 
 
 def test_expander_opens_and_closes_with_size_and_fade_and_rests() -> None:
@@ -128,7 +160,9 @@ def test_image_shows_each_format_and_the_error_image_for_a_bad_file() -> None:
     for name in ("png.png", "jpeg.jpg", "gif.gif", "webp.webp"):
         with running(f'Image {{ Source: "{FIX / name}", Name: I }}') as w:
             assert w.warnings() == [], name
-            (bitmap,) = [n for k, n in w.view.nodes.items() if w.view.kinds[k] == "Bitmap"] or [None]
+            (bitmap,) = [n for k, n in w.view.nodes.items() if w.view.kinds[k] == "Bitmap"] or [
+                None
+            ]
     before = IMAGES.decoded
     for name in ("bad.png", "not_an_image.txt"):
         with running(f'Image {{ Source: "{FIX / name}" }}') as w:
@@ -137,7 +171,7 @@ def test_image_shows_each_format_and_the_error_image_for_a_bad_file() -> None:
 
 
 def test_shapes_are_paths_hit_where_painted() -> None:
-    body = "Circle { Diameter: 20, Fill: \"#ff0000\" } Ring { Diameter: 20, Border_Color: \"#00ff00\" }"
+    body = 'Circle { Diameter: 20, Fill: "#ff0000" } Ring { Diameter: 20, Border_Color: "#00ff00" }'
     with running(body) as w:
         assert w.warnings() == []
     # the block tables build a path with the painted hit shape (Block Reference > Shapes)

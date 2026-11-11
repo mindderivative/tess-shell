@@ -816,8 +816,8 @@ class Popups:
                 continue
             if not any(isinstance(getattr(h, "__self__", None), _Hover) for h in _hooks(wire)):
                 hover = _Hover(self, planned.key, block)
-                wire.add_hook("enter", hover.enter)
-                wire.add_hook("leave", hover.leave)
+                wire.add_hook("enter", hover.enter, always=True)
+                wire.add_hook("leave", hover.leave, always=True)
 
     def _tooltip_plan(
         self, surface: Surface, block: str, tip: ExpandedTooltip

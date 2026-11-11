@@ -128,6 +128,10 @@ class Wire:
     mirror: Wire | None = None
     # a Marquee's box: whether its tooltip may open now (it shows the whole text that is cut)
     tooltip_gate: Callable[[], bool] | None = None
+    # ``Tooltip_When_Disabled: true``: the pointer hooks added with ``always`` (the tooltip's) also
+    # run while the block is blocked; nothing else about the block changes
+    tip_blocked: bool = False
+    always: dict[str, list[Callable[[], None]]] = field(default_factory=dict)
 
     @property
     def blocked(self) -> bool:
@@ -154,21 +158,30 @@ class Wire:
 
         return listener
 
-    def add_hook(self, event: str, fn: Callable[[], None]) -> None:
+    def add_hook(self, event: str, fn: Callable[[], None], always: bool = False) -> None:
         """Call ``fn`` after the node's ``enter``, ``leave``, ``down`` or ``up`` (``cancel`` calls
         the ``up`` hooks). A node takes one tre listener per event, so anything that needs the
         pointer on a built node goes through here."""
         if event not in ("enter", "leave", "down", "up"):
             raise ValueError(f"no hook for {event}")
         self.hooks.setdefault(event, []).append(fn)
+        if always:
+            self.always.setdefault(event, []).append(fn)
         self.listen()
 
     def _run(self, event: str) -> None:
         for fn in self.hooks.get(event, ()):
             fn()
 
+    def _run_blocked(self, event: str) -> None:
+        """A blocked block that opted in to its tooltip runs only the tooltip's hooks."""
+        if self.tip_blocked:
+            for fn in self.always.get(event, ()):
+                fn()
+
     def enter(self) -> None:
         if self.blocked:
+            self._run_blocked("enter")
             return
         self.hovered = True
         self.refresh()
@@ -176,6 +189,7 @@ class Wire:
 
     def leave(self) -> None:
         if self.blocked:  # a node that became blocked was already cleared and told
+            self._run_blocked("leave")
             return
         self.hovered = self.pressed = False
         self.refresh()
@@ -464,6 +478,8 @@ class View:
         wire = entry.wire
         wire.states = entry.states
         wire.motion = entry.motion
+        flag = entry.typed.props.get("Tooltip_When_Disabled")
+        wire.tip_blocked = bool(getattr(flag, "value", False))
         if entry.typed.kind == FIELD_INPUT:
             self._ensure_field_events(entry)  # its states follow its box, which listens
         else:
