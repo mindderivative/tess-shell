@@ -57,7 +57,12 @@ def test_a_bare_name_and_a_block_form_are_typed() -> None:
         ("On_Click { Action: Call, Target: Clock }", "bad-value", "Module.action"),
         ('On_Click { Action: Call, Target: "Clock.cycle_format" }', "unknown-module", "no module"),
         ('On_Click { Action: Call, Target: "Btn.go", Who: [1] }', "bad-value", "argument"),
-        ("On_Click { Action: Show, Target: P, Data { A: 1 } }", "not-built", "Data"),
+        ("On_Click { Action: Show, Target: P, Data { A: [1] } }", "bad-value", "Data.A"),
+        (
+            'On_Click { Action: Call, Target: "Btn.go", Data { A: 1 } }',
+            "bad-value",
+            "belongs on Show",
+        ),
         ("On_Click { Action: Show, Target: P, Who: {{ params.x }} }", "bad-value", "literal"),
         ("On_Click { Action: Close, Target: Menu }", "bad-key", "no Target"),
         ("On_Click: Show", "missing-key", "Target"),

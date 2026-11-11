@@ -437,7 +437,11 @@ def _check_targets(expanded: Expanded, panels: set[str]) -> None:
         target = h.args.get("Target")
         if h.builtin and h.action != "Close" and target not in panels:
             close = difflib.get_close_matches(str(target), sorted(panels), n=3, cutoff=0.5)
-            hint = f"did you mean {', '.join(close)}?" if close else "write the Name of a Panel"
+            hint = (
+                f"did you mean {', '.join(close)}?"
+                if close
+                else "write the Name of a Panel (or of a Popup, for Show and Toggle)"
+            )
             expanded.errors.append(
                 BindError(f"{h.action}: no Panel named {target}", h.origin, hint)
             )
@@ -645,8 +649,10 @@ class SurfaceManager:
         melded |= {
             e.name for m in shell.monitors for f in m.frames for e in f.edges.values() if e.name
         }
+        popup_names = {p.name for m in shell.monitors for p in m.popups}
+        targets = panel_names | frame_names | melded | popup_names
         for p in planned:
-            _check_targets(p.expanded, panel_names | frame_names | melded)
+            _check_targets(p.expanded, targets)
 
         def expand_hosted(children: Any, path: str, output: str, popups: bool) -> Expanded:
             return expand(
@@ -666,9 +672,9 @@ class SurfaceManager:
         for fp in self._frame_plans:
             uses.extend(fp.uses())
             for hp in fp.hosts:
-                _check_targets(hp.planned.expanded, panel_names | frame_names | melded)
+                _check_targets(hp.planned.expanded, targets)
         self._popup_plans, popup_uses = self.popups.plan(
-            shell, modules, look, outputs, self._uid_of, assign, panel_names
+            shell, modules, look, outputs, self._uid_of, assign, targets
         )
         uses.extend(popup_uses)
         return planned, uses
@@ -1211,8 +1217,9 @@ class SurfaceManager:
         finally:
             self._depth -= 1
 
-    def run_builtin(self, handler: Handler) -> None:
-        """A shell action (``Show``, ``Hide``, ``Toggle``) on the Panel it names."""
+    def run_builtin(self, handler: Handler, raw: Any = None) -> None:
+        """A shell action (``Show``, ``Hide``, ``Toggle``) on the Panel or the Popup it names;
+        ``raw`` is the event of the block that raised it (a Popup opens beside that block)."""
         if handler.action == "Close":  # a Popup's own blocks close it (Popups); this one is not
             logger.warning(f"{handler.origin}: Close: the block is not in a Popup; nothing closed")
             return
@@ -1225,6 +1232,8 @@ class SurfaceManager:
             if s.name == target and s.planned and _kind(s.planned.bar) == "Panel"
         ]
         if not hits:
+            if self.popups.run_named(handler, raw):
+                return
             logger.warning(f"{handler.origin}: {handler.action}: Panel {target} is not open")
             return
         for s in hits:

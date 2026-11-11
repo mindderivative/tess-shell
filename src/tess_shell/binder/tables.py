@@ -111,6 +111,14 @@ _COMMON: dict[str, KeyRow] = {
     "Checked": _k("checked", "bool"),
     "Selected": _k("selected", "bool"),
     "Expanded": _k("expanded", "bool"),
+    # what makes a module's block a control (``binder.controls``); they give tre nothing
+    "Toggles": _k((), "bool"),
+    "Selection_Mode": _k((), "enum", "NONE", "SINGLE"),
+    "Chosen": _k((), "text"),
+    "Slides": _k((), "enum", "NONE", "HORIZONTAL", "VERTICAL"),
+    "Key": _k((), "text"),
+    "Menu_Item": _k((), "bool"),
+    "Opens": _k((), "text"),
 }
 
 # the motion keys have no tre property: the binder animates a change of a listed key
@@ -209,6 +217,18 @@ _ROWS: dict[str, BlockRow] = {
         keys={**_COMMON, **_FLEX, **_PADDING},
         style={**_BOX_STYLE, "Spacing": _FLEX["Spacing"]},
         fixed={"display": "flex"},
+        children_ok=True,
+    ),
+    # a clipped viewport that the wheel scrolls; it scrolls its one child
+    "ScrollBox": BlockRow(
+        "scroll_view",
+        keys={
+            **_COMMON,
+            "Orientation": _k("orientation", "enum", "VERTICAL", "HORIZONTAL"),
+            "Scroll_Offset": _k("scroll_offset", "number"),
+        },
+        style={**_MOTION, "Opacity": _COMMON["Opacity"]},
+        defaults={"orientation": "vertical"},
         children_ok=True,
     ),
     "Text": BlockRow(

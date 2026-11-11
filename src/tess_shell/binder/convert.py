@@ -260,9 +260,8 @@ def selection(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = (
 
 
 def text(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
-    (name,) = names
     if isinstance(value, Text):
-        return {name: value.value}
+        return {names[0]: value.value} if names else {}
     raise _bad(value, "a string")
 
 

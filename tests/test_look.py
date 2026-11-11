@@ -505,7 +505,20 @@ def test_the_shipped_theme_and_stylesheet_load_and_agree() -> None:
     t = theme((base / "Themes" / "Default_Theme.tdl").read_text())
     result = tess_dl.parse((base / "Stylesheets" / "Default_Stylesheet.tdl").read_text())
     assert result.document is not None
-    shipped = {"Label", "TextBox", "ProgressBar", "Badge", "Marquee_Text", "Icon", "Image"}
+    shipped = {
+        "Label",
+        "TextBox",
+        "ProgressBar",
+        "Badge",
+        "Marquee_Text",
+        "Icon",
+        "Image",
+        "Button",
+        "Toggle",
+        "Checkbox",
+        "Slider",
+        "MenuItem",
+    }
     s, findings = read_stylesheet(result.document, "Default_Stylesheet.tdl", shipped)
     assert s is not None and findings == []
     for rule in s.rules:  # every token the shipped sheet names exists in the shipped theme

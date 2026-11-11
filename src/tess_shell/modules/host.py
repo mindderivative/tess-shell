@@ -310,6 +310,7 @@ class ModuleHost:
             old=getattr(raw, "old_value", None),
             new=getattr(raw, "new_value", None),
             text=getattr(raw, "text", None),
+            value=getattr(raw, "value", None),
         )
         started = time.monotonic()
         loaded.ctx.caller = loaded.ctx.uses.get(handler.use)  # what ctx.popup() calls from

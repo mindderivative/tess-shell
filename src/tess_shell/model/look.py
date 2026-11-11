@@ -407,7 +407,7 @@ def check_states(
         if not node.states or node.kind not in m.NO_POINTER_BLOCKS:
             continue
         for state, values in node.states.items():
-            if state == "disabled":  # it needs no pointer: a Text can be disabled
+            if state in m.FLAG_STATES:  # these need no pointer: a Text can be disabled or chosen
                 continue
             o = next(iter(values.values())).origin if values else node.origin
             found.append(

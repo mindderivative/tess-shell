@@ -41,6 +41,13 @@ STANDARD = (
     "Icon",
     "Image",
     "Expander",
+    "Button",
+    "Toggle",
+    "Checkbox",
+    "Slider",
+    "List",
+    "Menu",
+    "MenuItem",
     "TextInput",
     "TextEditor",
 )
@@ -57,6 +64,10 @@ class Driver(Module):
     @action
     def pressed(self, event):
         self.seen.append(("pressed", event.use, dict(event.args)))
+
+    @action
+    def changed(self, event):
+        self.seen.append(("changed", event.use, event.old, event.new, event.value))
 """
 
 
@@ -180,7 +191,7 @@ def running(
 
         def route(handler: m.Handler, key: str, raw: object) -> None:
             if handler.builtin:
-                manager.run_builtin(handler)
+                manager.run_builtin(handler, raw)
             else:
                 host.dispatch(handler, key, raw)
 

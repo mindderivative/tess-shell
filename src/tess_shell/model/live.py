@@ -373,6 +373,9 @@ class LiveTree:
             for i, root in enumerate(roots):
                 if root.name is None:  # an entry's blocks are matched by the entry's name
                     root = dataclasses.replace(root, name=f"{prefix}#{i}")
+                if "Key" not in root.props:  # the entry's key, which a list chooses it by
+                    key = m.Text(str(entry.key), origin=root.origin)
+                    root = dataclasses.replace(root, props={**root.props, "Key": key})
                 out.append(root)
         return out
 

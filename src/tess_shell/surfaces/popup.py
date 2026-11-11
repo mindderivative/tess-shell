@@ -42,6 +42,11 @@ if TYPE_CHECKING:
 
 Bleed = tuple[int, int, int, int]  # top, right, bottom, left: tre's margin order
 
+# Events and Actions > Menu and submenus: how long the pointer rests on an item before its submenu
+# opens, and on another item before the open submenu closes
+OPEN_REST_MS = 250
+CLOSE_REST_MS = 300
+
 # Popup > Placement: (Attach, Alignment) -> (tre anchor, tre gravity)
 ANCHORS: dict[tuple[str, str], tuple[str, str]] = {
     ("BOTTOM", "START"): ("bottom_left", "bottom_right"),
@@ -286,6 +291,12 @@ class OpenPopup:
     attach: str = ""  # the side of the anchor it was asked to open on
     block: str | None = None  # the block of a tooltip's surface the pointer must be on
     record: Mapping[str, Any] | None = None  # the ``caller`` its content's slots read
+    # a submenu: the Popup it hangs off and the block of that Popup it opened from; ``sub`` is the
+    # one submenu this Popup has open (one at a time: opening another closes it)
+    parent_op: OpenPopup | None = None
+    item: str = ""
+    sub: OpenPopup | None = None
+    rest: Any = None  # the pending hover timer of a menu item (opens a submenu, closes one)
 
     @property
     def popup(self) -> PopupDef:
@@ -353,6 +364,7 @@ class Popups:
                         uid_of,
                         outputs[i].name,
                         rules,
+                        mark_roots=True,  # a module inside the Popup can open a submenu beside it
                         in_popup=True,
                     )
                     _check_close_targets(expanded, panels)
@@ -381,7 +393,8 @@ class Popups:
 
     def call(self, module: str, use: str | None, name: str, data: Mapping[str, Any] | None) -> None:
         """``ctx.popup(name, data)``: open the Popup beside the calling use, or close it when it
-        is the open one (a toggle). Errors are logged, never raised into the module."""
+        is the open one (a toggle). A use inside an open Popup opens a submenu of that Popup.
+        Errors are logged, never raised into the module."""
         found = self._holder(use) if use else None
         if found is None or use is None:
             logger.error(
@@ -389,7 +402,26 @@ class Popups:
                 "Popup has no parent"
             )
             return
-        surface, node_id = found
+        surface, node_id, parent = found
+        how = f"ctx.popup({name!r})"
+        self.request(module, use, surface, node_id, None, name, data, "toggle", parent, how)
+
+    def request(
+        self,
+        module: str,
+        use: str,
+        surface: Surface,
+        node_id: str,
+        node: TreNode | None,
+        name: str,
+        data: Mapping[str, Any] | None,
+        mode: str,
+        parent: OpenPopup | None = None,
+        how: str = "",
+    ) -> None:
+        """Open the Popup ``name`` beside a block (``mode`` ``show``: only when it is not open
+        from there, ``toggle``: or close it). ``node_id`` names the block, ``node`` is the block
+        when it has no id. ``parent`` is the Popup the block is in: the new one is its submenu."""
         assert surface.planned is not None
         plan = self.plans.get((surface.planned.group, name))
         if plan is None:
@@ -401,24 +433,26 @@ class Popups:
                 else ("the Popups here: " + (", ".join(names) or "none"))
             )
             logger.error(
-                f"{module}: ctx.popup({name!r}): no Popup named {name} on Monitor "
+                f"{module}: {how or 'Show ' + name}: no Popup named {name} on Monitor "
                 f"{surface.planned.group} ({hint})"
             )
             return
         try:
             copy = args.copy_plain(data or {}, "data")
         except ValueError as exc:
-            logger.error(f"{module}: ctx.popup({name!r}): {exc}; the Popup was not opened")
+            logger.error(f"{module}: {how or 'Show ' + name}: {exc}; the Popup was not opened")
             return
-        current = self.current
-        if current is not None and current.plan is plan and current.caller.use == use:
-            self.close(current, "toggled")
+        who = use or node_id
+        current = parent.sub if parent is not None else self.current
+        if current is not None and current.plan is plan and current.caller.use == who:
+            if mode == "toggle":
+                self.close(current, "toggled")
             return
-        if self._swallow == (name, use):  # the click that closed this popup was this one
+        if self._swallow == (name, who):  # the click that closed this popup was this one
             self._swallow = None
             logger.debug(f"Popup {name}: the click that closed it is not a call to open it again")
             return
-        self.open(plan, surface, node_id, use, module, None, copy)
+        self.open(plan, surface, node_id, who, module, None, copy, parent, node)
 
     def close_named(self, name: str | None = None) -> None:
         """``ctx.close_popup(name)``: close the open Popup (the named one, if a name is given)."""
@@ -426,21 +460,39 @@ class Popups:
         if cur is not None and (name is None or cur.popup.name == name):
             self.close(cur, "closed by a call")
 
-    def _holder(self, use: str) -> tuple[Surface, str] | None:
-        """The open surface that holds ``use`` and the id of the use's first root block."""
+    def _holder(self, use: str) -> tuple[Surface, str, OpenPopup | None] | None:
+        """The open surface (or open Popup, for a submenu) that holds ``use``, the id of the
+        use's first root block, and the Popup the use is in (``None`` on a surface)."""
+        for op in self.chain():
+            node_id = op.plan.expanded.roots.get(use)
+            if node_id is not None and op.view is not None and not op.closing:
+                return op.parent, node_id, op
         for s in self._m.every_surface():
             if s.window is None or s.view is None or s.hidden:
                 continue
             node_id = s.expanded.roots.get(use)
             if node_id is not None:
-                return s, node_id
+                return s, node_id, None
         return None
+
+    def chain(self) -> list[OpenPopup]:
+        """The open Popup and its submenus, outermost first."""
+        out: list[OpenPopup] = []
+        op = self.current
+        while op is not None:
+            out.append(op)
+            op = op.sub
+        return out
 
     # -- opening ------------------------------------------------------------------------------
 
     def rect_of(self, surface: Surface, node_id: str) -> Rect | None:
         """Where tre laid out the block ``node_id`` of ``surface``, in the surface's window."""
-        node = surface.view.nodes.get(node_id) if surface.view else None
+        return self.rect_of_node(surface.view.nodes.get(node_id) if surface.view else None)
+
+    @staticmethod
+    def rect_of_node(node: TreNode | None) -> Rect | None:
+        """Where tre laid out ``node``, in its window."""
         if node is None:
             return None
         x, y, w, h = (
@@ -459,15 +511,25 @@ class Popups:
         module: str,
         expanded: Expanded | None = None,
         data: Mapping[str, Any] | None = None,
+        parent: OpenPopup | None = None,
+        node: TreNode | None = None,
     ) -> OpenPopup | None:
-        """Open ``plan`` beside the block ``node_id`` of ``surface``. ``expanded`` is the content
-        when it is not the plan's own (an inline tooltip)."""
+        """Open ``plan`` beside the block ``node_id`` of ``surface`` (or the block ``node``, which
+        has no id). ``expanded`` is the content when it is not the plan's own (an inline tooltip).
+        With a ``parent`` Popup the block is one of its blocks and the new Popup is its submenu:
+        it opens to the right of the block (the compositor flips it to the left when there is no
+        room) and any other submenu of the parent closes."""
         from tess_re import PopupWindow
 
         popup, where = plan.popup, f"{plan.popup.name or 'tooltip'} on {plan.output.name}"
-        self.close_current("replaced")
+        if parent is None:
+            self.close_current("replaced")
+        elif parent.sub is not None:
+            self.close(parent.sub, "replaced")
         assert surface.window is not None and surface.planned is not None
-        rect = self.rect_of(surface, node_id)
+        holder = parent.view if parent is not None else surface.view
+        found = node if node is not None else (holder.nodes.get(node_id) if holder else None)
+        rect = self.rect_of_node(found)
         if rect is None:
             logger.warning(f"Popup {where}: the caller has no laid-out rectangle yet; not opened")
             return None
@@ -495,20 +557,24 @@ class Popups:
         width = max(math.ceil(size.width), 1)
         height = max(math.ceil(size.height), 1)
         surface_size = (width + left + right, height + top + bottom)
-        parent = surface_rect(
+        parent_rect = surface_rect(
             surface.geometry, (surface.planned.output.width, surface.planned.output.height)
         )
         # tre 0.6.3 takes the popup proper as ``geometry``: the compositor places, flips and slides
         # the body and ignores the transparent shadow margin around it (TRE-REQ-007), so the
         # placement is that of a popup with no margin
-        attach = choose_attach(
-            popup.attach,
-            popup.adjust,
-            Rect(parent.x + rect.x, parent.y + rect.y, rect.width, rect.height),
-            (width, height),
-            popup.gap,
-            (surface.planned.output.width, surface.planned.output.height),
-        )
+        if parent is None:
+            attach = choose_attach(
+                popup.attach,
+                popup.adjust,
+                Rect(parent_rect.x + rect.x, parent_rect.y + rect.y, rect.width, rect.height),
+                (width, height),
+                popup.gap,
+                (surface.planned.output.width, surface.planned.output.height),
+            )
+        else:  # beside the item: the compositor flips it to the left when the right is full
+            attach = "RIGHT"
+        adjust = popup.adjust if parent is None else ("flip_x", "slide_y")
         anchor, gravity, offset = placement(attach, popup.alignment, popup.gap)
         factory = self._create or PopupWindow
         anchor_rect = (
@@ -522,7 +588,7 @@ class Popups:
             "anchor_rect": anchor_rect,
             "anchor": anchor,
             "gravity": gravity,
-            "constraint_adjustment": popup.adjust,
+            "constraint_adjustment": adjust,
             "offset": offset,
             "grab": popup.focus,
         }
@@ -531,7 +597,7 @@ class Popups:
             # a click in the shadow margin reaches the window below (tre 0.6.5, TRE-REQ-014)
             kwargs["input_region"] = "geometry"
         try:
-            window = factory(surface.window, **kwargs)
+            window = factory(parent.window if parent is not None else surface.window, **kwargs)
         except (ValueError, RuntimeError) as exc:  # a bad size, or no compositor
             logger.error(f"Popup {where} is not opened: {exc}")
             return None
@@ -550,6 +616,8 @@ class Popups:
             size=surface_size,
             attach=attach,
             record=record,
+            parent_op=parent,
+            item=node_id,
         )
         try:
             op.view = self._build_content(window, body, nodes, size.scrolls)
@@ -559,8 +627,16 @@ class Popups:
             window.close()
             return None
         op.view.sink = lambda h, k, raw, op=op: self._dispatch(op, h, k, raw)
+        op.view.menu_sink = lambda event, block, opens, op=op: self.menu_event(
+            op, event, block, opens
+        )
         self._listen(op)
-        self.current = op
+        if parent is not None:
+            parent.sub = op
+            if parent.view is not None:
+                parent.view.set_expanded(node_id, True)
+        else:
+            self.current = op
         self._m._app.add_window(window)
         logger.info(
             f"Popup {where} opened beside {module} {use}: body {width}x{height} "
@@ -641,14 +717,28 @@ class Popups:
         if op.timer is not None:
             op.timer.cancel()
             op.timer = None
-        if self.current is op:
-            self.current = None
+        self._unlink(op, why)
         logger.info(f"Popup {op.where} closing ({why})")
         try:
             op.window.close()
         except Exception:  # the window may be gone already
             logger.debug(f"Popup {op.where}: close raised", exc_info=True)
         self._free(op)
+
+    def _unlink(self, op: OpenPopup, why: str) -> None:
+        """``op`` is closing: its submenu closes first (xdg-shell wants the innermost popup to go
+        first; tre does not close a submenu with its parent), and its parent forgets it."""
+        if op.rest is not None:
+            op.rest.cancel()
+            op.rest = None
+        if op.sub is not None:
+            self.close(op.sub, "its parent closed")
+        if op.parent_op is not None and op.parent_op.sub is op:
+            op.parent_op.sub = None
+            if op.parent_op.view is not None:
+                op.parent_op.view.set_expanded(op.item, False)
+        if self.current is op:
+            self.current = None
 
     def close_current(self, why: str) -> None:
         if self.current is not None:
@@ -665,9 +755,7 @@ class Popups:
         if op.timer is not None:
             op.timer.cancel()
             op.timer = None
-        was_open = self.current is op
-        if was_open:
-            self.current = None
+        self._unlink(op, reason)
         self._free(op)
         op.closing = True
         logger.info(f"Popup {op.where} closed ({reason})")
@@ -843,6 +931,103 @@ class Popups:
     def _hovered_block(self) -> str | None:
         return self._hovered[1] if self._hovered else None
 
+    # -- Show, Toggle and Hide on a Popup, and the menus -------------------------------------
+
+    def owner_of(self, node: TreNode) -> tuple[Surface, OpenPopup | None] | None:
+        """The surface that holds the block ``node`` and, when the block is in an open Popup, that
+        Popup (``None`` on a surface)."""
+        top = node
+        while (above := top.parent()) is not None:
+            top = above
+        for op in self.chain():
+            if op.window.root == top:
+                return op.parent, op
+        for s in self._m.every_surface():
+            if s.window is not None and s.window.root == top:
+                return s, None
+        return None
+
+    def run_named(self, handler: Handler, raw: Any) -> bool:
+        """``Show``, ``Toggle`` or ``Hide`` whose Target is a Popup of the Monitor: ``Show`` and
+        ``Toggle`` open it beside the block that raised the event, with the ``Data`` of the
+        handler as ``caller.data`` (``Toggle`` closes it when it is open from there); ``Hide``
+        closes it. Returns False when no Popup has that name (the caller reports it)."""
+        name = handler.args.get("Target")
+        if not any(n == name for _, n in self.plans):
+            return False
+        node = getattr(raw, "current", None) or getattr(raw, "target", None)
+        found = self.owner_of(node) if node is not None else None
+        if found is None:
+            logger.warning(
+                f"{handler.origin}: {handler.action} {name}: the block that raised the event is "
+                "on no open surface; the Popup is not opened"
+            )
+            return True
+        surface, parent = found
+        if handler.action == "Hide":
+            cur = self.current
+            if cur is not None and cur.popup.name == name:
+                self.close(cur, "hidden")
+            return True
+        data = {k[5:]: v for k, v in handler.args.items() if k.startswith("Data.")}
+        use = self._m._all_uses.get(handler.use)
+        self.request(
+            use.module if use is not None else "",
+            handler.use,
+            surface,
+            "",
+            node,
+            str(name),
+            data,
+            "show" if handler.action == "Show" else "toggle",
+            parent,
+            f"{handler.action} {name}",
+        )
+        return True
+
+    def menu_event(self, op: OpenPopup, event: str, block: str, opens: str) -> None:
+        """A menu item of the open Popup ``op`` (the block ``block``; ``opens`` is the Popup its
+        submenu is, or empty) saw the pointer enter or leave or was clicked (Events and Actions >
+        Menu and submenus): a submenu opens on a click and after the pointer rests on its item
+        for ``OPEN_REST_MS``; the one that is open closes when the pointer rests on another item
+        of the same menu for ``CLOSE_REST_MS``; a click on an item that opens nothing closes
+        every level once its action has run."""
+        if op.closing or op.view is None:
+            return
+        if op.rest is not None:
+            op.rest.cancel()
+            op.rest = None
+        window = op.window
+        if event == "enter":
+            if opens:
+                if op.sub is None or op.sub.item != block:
+                    op.rest = window.after(OPEN_REST_MS, lambda: self._open_item(op, block, opens))
+            elif op.sub is not None:
+                op.rest = window.after(CLOSE_REST_MS, lambda: self._close_sub(op))
+        elif event == "click":
+            if opens:
+                self._open_item(op, block, opens)
+            else:
+                root = op
+                while root.parent_op is not None:
+                    root = root.parent_op
+                # after the item's own handler, which runs next in the same click
+                window.after(1, lambda: self.close(root, "an item was chosen"))
+
+    def _open_item(self, op: OpenPopup, block: str, opens: str) -> None:
+        op.rest = None
+        if op.closing or op.view is None:
+            return
+        use = block.split("/", 1)[0]
+        self.request(
+            "MenuItem", use, op.parent, block, None, opens, {}, "show", op, f"submenu {opens}"
+        )
+
+    def _close_sub(self, op: OpenPopup) -> None:
+        op.rest = None
+        if op.sub is not None and not op.closing:
+            self.close(op.sub, "the pointer rested on another item")
+
     # -- the content's events and values ------------------------------------------------------
 
     def _dispatch(self, op: OpenPopup, handler: Handler, key: str, raw: Any) -> None:
@@ -851,28 +1036,30 @@ class Popups:
         if handler.builtin:
             if handler.action == "Close":
                 self.close(op, "closed by its content")
+            elif handler.slots:  # the Data of Show: evaluated now, then the shell runs it
+                self._m._dispatch(handler, key, raw, op.record)
             else:
-                self._m.run_builtin(handler)
+                self._m.run_builtin(handler, raw)
             return
         self._m._dispatch(handler, key, raw, op.record)
 
     def on_change(self, changes: Sequence[Any]) -> None:
         """The store changed: the open Popup shows the new values (its size stays)."""
-        op = self.current
-        if op is None or op.view is None or op.closing:
-            return
-        result = op.live.apply_changes(list(changes))
-        if result.rebuild:
-            try:
-                op.view.rebuild(op.live.resolve(op.plan.expanded))
-            except BindFailed as failed:
-                for error in failed.errors:
-                    logger.warning(
-                        f"{error.origin}: {error.message}; the Popup keeps what it shows"
-                    )
-            return
-        for error in op.view.update(result.updates):
-            logger.warning(f"{error.origin}: {error.message}")
+        for op in self.chain():
+            if op.view is None or op.closing:
+                continue
+            result = op.live.apply_changes(list(changes))
+            if result.rebuild:
+                try:
+                    op.view.rebuild(op.live.resolve(op.plan.expanded))
+                except BindFailed as failed:
+                    for error in failed.errors:
+                        logger.warning(
+                            f"{error.origin}: {error.message}; the Popup keeps what it shows"
+                        )
+                continue
+            for error in op.view.update(result.updates):
+                logger.warning(f"{error.origin}: {error.message}")
 
 
 def _hooks(wire: Wire) -> list[Callable[[], None]]:

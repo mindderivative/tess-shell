@@ -179,10 +179,14 @@ Value = (
 )
 
 # The style states a stylesheet rule can name after a colon (``Button:hovered``), weakest first: a
-# pressed block that is also hovered shows both, the pressed values on top, and a disabled block
-# shows its ``disabled`` values over everything (it takes no pointer, so it is never hovered or
-# pressed while it is disabled).
-STATES = ("hovered", "pressed", "disabled")
+# checked or chosen block shows its values under the pointer's, a pressed block that is also
+# hovered shows both, the pressed values on top, and a disabled block shows its ``disabled``
+# values over everything (it takes no pointer, so it is never hovered or pressed while it is
+# disabled).
+STATES = ("checked", "selected", "hovered", "pressed", "disabled")
+# the states that do not come from the pointer: a control sets ``checked`` and ``selected`` (a
+# Toggle that is on, the chosen entry of a list), ``disabled`` is ``Enabled: false``
+FLAG_STATES = ("checked", "selected", "disabled")
 
 # A TextField is built as four nodes (``model.field``): its box, a line box in the box's cell, a
 # text in the line that gives it the height of the field's lines, and the text input over the

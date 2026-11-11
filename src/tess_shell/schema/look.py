@@ -271,7 +271,7 @@ def _rule(ctx: _Ctx, block: Block, module_names: set[str]) -> Rule | None:
             selector.value_origin,
             "bad-selector",
             f"':{state}' is not a style state",
-            "the states are :hovered, :pressed, :focused and :disabled",
+            "the states are :hovered, :pressed, :checked, :selected, :focused and :disabled",
         )
         return None
     head, name = found["head"], found["name"]

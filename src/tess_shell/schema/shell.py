@@ -665,7 +665,7 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
                     if isinstance(sub, Property):
                         style_at[sub.key] = sub.key_origin
             elif entry.type == "Children":
-                if block.type not in ("Box", "FlexBox"):
+                if block.type not in ("Box", "FlexBox", "ScrollBox"):
                     ctx.add(entry.origin, "bad-children", f"{block.type} cannot have children", "")
                 else:
                     children = _children(ctx, entry, lambda b: _block(ctx, b))
@@ -811,6 +811,15 @@ def _handler(
         hint = f"it raises: {raised}" if raised else f"put {key} on the FlexBox or Box around it"
         ctx.add(origin, "event-not-raised", f"a {block} does not raise {key}", hint)
         return None
+    if key == "On_Changed" and block in blocks.CONTROL_KINDS:
+        if not ctx.in_module:
+            ctx.add(
+                origin,
+                "event-not-raised",
+                f"a {block} does not raise On_Changed: only a module that is a control does",
+                "put On_Changed on the call of a Toggle, Checkbox, Slider or List",
+            )
+            return None
     args: dict[str, object] = {}
     slots: dict[str, m.SlotValue] = {}
     if isinstance(value, Block):
@@ -829,18 +838,15 @@ def _handler(
         for e in value.entries:
             if isinstance(e, Block):
                 if e.type == "Data":
-                    ctx.not_built(
-                        e.origin,
-                        "Data on an action (a Popup gets its caller.data from a module's "
-                        "ctx.popup(name, data=...); a block that opens a Popup is M4c)",
-                    )
-                else:
-                    ctx.add(
-                        e.origin,
-                        "bad-value",
-                        f"{e.type}: an argument is written Name: value, not as a block",
-                        "",
-                    )
+                    if not _data_block(ctx, e, args, slots):
+                        return None
+                    continue
+                ctx.add(
+                    e.origin,
+                    "bad-value",
+                    f"{e.type}: an argument is written Name: value, not as a block",
+                    "",
+                )
                 return None
             if not isinstance(e, Property) or e.key == "Action":
                 continue
@@ -870,18 +876,27 @@ def _handler(
             f"write {key}: Open_Launcher",
         )
         return None
+    if any(k.startswith(DATA) for k in (*args, *slots)) and name not in ("Show", "Toggle"):
+        ctx.add(
+            at,
+            "bad-value",
+            f"Data is the data a Popup gets as caller.data: it belongs on Show or Toggle, "
+            f"not on {name}",
+            "",
+        )
+        return None
     if name in blocks.BUILTIN_ACTIONS:
         if name not in blocks.BUILTIN_BUILT:
             ctx.not_built(at, f"the built-in action {name}")
             return None
         if name == "Call":
             return _call(ctx, key, args, slots, at, origin)
-        if slots:
+        if any(not k.startswith(DATA) for k in slots):
             ctx.add(
                 at,
                 "bad-value",
                 f"{name} takes literal arguments: a {{{{ }}}} slot is for the arguments of Call "
-                "and of a module's own action",
+                "and of a module's own action (and for the Data of Show and Toggle)",
                 "",
             )
             return None
@@ -896,7 +911,7 @@ def _handler(
                 f"write {key} {{ Action: {name}, Target: Launcher }}",
             )
             return None
-        return m.Handler(name, args, builtin=True, origin=ctx.origin(origin))
+        return m.Handler(name, args, builtin=True, slots=slots, origin=ctx.origin(origin))
     if not ctx.in_module:
         ctx.add(
             at,
@@ -906,6 +921,40 @@ def _handler(
         )
         return None
     return m.Handler(name, args, slots=slots, origin=ctx.origin(origin))
+
+
+# the arguments of a ``Data { Key: value }`` block are kept as ``Data.Key``: Show and Toggle give
+# them to the Popup they open as ``caller.data`` (Events and Actions > caller.data)
+DATA = "Data."
+
+
+def _data_block(
+    ctx: _Ctx, block: Block, args: dict[str, object], slots: dict[str, m.SlotValue]
+) -> bool:
+    for e in block.entries:
+        if not isinstance(e, Property):
+            ctx.add(
+                e.origin,
+                "bad-value",
+                "Data holds Name: value entries: text, numbers, true or false, or a {{ }} slot",
+                "",
+            )
+            return False
+        slot = slot_value(ctx, e)
+        if slot is not None:
+            slots[DATA + e.key] = slot
+            continue
+        plain = _plain(e.value)
+        if plain is None:
+            ctx.add(
+                e.value_origin,
+                "bad-value",
+                f"Data.{e.key}: a string, a number, true or false, or a {{{{ }}}} slot",
+                "",
+            )
+            return False
+        args[DATA + e.key] = plain
+    return True
 
 
 _CALL_TARGET = re.compile(

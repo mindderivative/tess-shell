@@ -13,6 +13,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from tess_shell.binder import controls
 from tess_shell.binder.convert import CONVERTERS
 from tess_shell.binder.marquee import MarqueeRunner
 from tess_shell.binder.model import (
@@ -20,6 +21,7 @@ from tess_shell.binder.model import (
     FIELD,
     FIELD_INPUT,
     FIELD_LINE,
+    FLAG_STATES,
     MARQUEE,
     MARQUEE_TEXT,
     NO_POINTER_BLOCKS,
@@ -50,6 +52,8 @@ if TYPE_CHECKING:
 _TRE_ERROR = re.compile(
     r"^build: (?P<path>spec(?:\.children\[\d+\])*)(?P<id>\.id)?: (?P<message>.*)$", re.DOTALL
 )
+# the tre properties a control takes from outside: a change of one reaches the control
+CONTROL_PROPS = frozenset({"checked", "selected", "value", "value_min", "value_max", "value_step"})
 _TRE_PROP = re.compile(r"node property `(?P<prop>\w+)`")
 
 
@@ -105,6 +109,16 @@ class Wire:
     disabled: bool = False  # the block's own ``Enabled: false``
     inherited: bool = False  # a block above it is disabled
     part: bool = False  # the node is a module's named part (``Part: track``)
+    # the flag states (``:checked``, ``:selected``): the block's own, which a control owns (or,
+    # for a block with no control, the ``Checked`` and ``Selected`` it was built with), and those
+    # of the module root above it that a part shows too
+    checked: bool = False
+    selected: bool = False
+    owned: bool = False  # a control sets ``checked`` and ``selected``, not the block's props
+    in_checked: bool = False
+    in_selected: bool = False
+    motion: Motion | None = None  # what eases when a state takes or gives back a property
+    event: Any = None  # the tre event that moved the node into its latest pointer state
     # a TextField's text input: told when the field becomes blocked or free (it must stop taking
     # keys, not only clicks)
     on_block: Callable[[bool], None] | None = None
@@ -133,7 +147,12 @@ class Wire:
 
     def _listener(self, action: str) -> Callable[[Any], None]:
         do: Callable[[], None] = getattr(self, action)
-        return lambda _event: do()
+
+        def listener(event: Any) -> None:
+            self.event = event  # a hook reads where the pointer was
+            do()
+
+        return listener
 
     def add_hook(self, event: str, fn: Callable[[], None]) -> None:
         """Call ``fn`` after the node's ``enter``, ``leave``, ``down`` or ``up`` (``cancel`` calls
@@ -176,7 +195,14 @@ class Wire:
         self.refresh()
         self._run("up")
 
-    def sync(self, disabled: bool, inherited: bool, part: bool) -> None:
+    def sync(
+        self,
+        disabled: bool,
+        inherited: bool,
+        part: bool,
+        in_checked: bool = False,
+        in_selected: bool = False,
+    ) -> None:
         """The node's ``Enabled`` and that of the blocks above it, as they are now. A node that
         becomes blocked while the pointer is on it is cleared at once (its stored pre-state values
         come back) and its ``leave`` and ``up`` hooks run, so a pending tooltip is cancelled.
@@ -185,6 +211,7 @@ class Wire:
         was = self.blocked
         was_hovered, was_pressed = self.hovered, self.pressed
         self.disabled, self.inherited, self.part = disabled, inherited, part
+        self.in_checked, self.in_selected = in_checked, in_selected
         newly = self.blocked and not was
         if newly:
             self.hovered = self.pressed = False
@@ -219,6 +246,10 @@ class Wire:
         the module is disabled, not only when the part itself is (Style Schema > Stylesheet
         Selectors, ``Slider::handle:disabled``)."""
         out: dict[str, Any] = {}
+        if self.checked or (self.part and self.in_checked):
+            out.update(self.states.get("checked", {}))
+        if self.selected or (self.part and self.in_selected):
+            out.update(self.states.get("selected", {}))
         if self.hovered or self.pressed:
             out.update(self.states.get("hovered", {}))
         if self.pressed:
@@ -241,7 +272,25 @@ class Wire:
                 changes[name] = value
         self.shown = wanted
         if changes:
-            window.apply([(tre, changes)])
+            eased: dict[str, Any] = {}
+            if self.motion is not None:  # a state change eases what the block lists in Transition
+                eased = {n: v for n, v in changes.items() if n in self.motion.props}
+            if eased:
+                changes = {n: v for n, v in changes.items() if n not in eased}
+            if changes:
+                window.apply([(tre, changes)])
+            if eased and self.motion is not None:
+                left = start_motion(tre, eased, self.motion)
+                if left:
+                    window.apply([(tre, left)])
+
+    def set_flags(self, checked: bool | None = None, selected: bool | None = None) -> None:
+        """A control gave the block a new ``checked`` or ``selected``."""
+        if checked is not None:
+            self.checked = checked
+        if selected is not None:
+            self.selected = selected
+        self.refresh()
 
     def restate(self, states: Mapping[str, Mapping[str, Any]], base: Mapping[str, Any]) -> None:
         """A reload changed the state styles (``states``) and, for some properties a state holds,
@@ -286,6 +335,11 @@ class View:
     wires: dict[str, Wire] = field(default_factory=dict)  # node id -> its wire
     motions: dict[str, Motion] = field(default_factory=dict)  # node id -> its transition
     runners: dict[TreNode, MarqueeRunner] = field(default_factory=dict)  # a Marquee's box -> scroll
+    controls: dict[TreNode, controls.Control] = field(default_factory=dict)  # a control's block
+    # the values of keys that give tre nothing (``Chosen``), as a slot last set them: by node id
+    dynamic: dict[str, dict[str, Value]] = field(default_factory=dict)
+    # a Popup's view: told when a menu row (node id, ``Opens``) is entered, left or clicked
+    menu_sink: Callable[[str, str, str], None] | None = None
     disposed: bool = False
     parent: TreNode | None = None  # where the roots are attached; ``window.root`` when None
     sink: Callable[[Handler, str, Any], None] | None = None  # (handler, event key, tre event)
@@ -304,6 +358,7 @@ class View:
         self.applied.clear()
         self.wires.clear()
         self.motions.clear()
+        self.dynamic.clear()  # a rebuild resolved every slot: the typed props are current
         self.roots = [e.tre for e in self.entries if e.tre is not None]
 
         def walk(entries: list[Entry]) -> None:
@@ -321,8 +376,50 @@ class View:
                 walk(e.children)
 
         walk(self.entries)
+        self._controls()
         self._sync(self.entries)
         self._marquees()
+
+    def set_expanded(self, node_id: str, open_: bool) -> None:
+        """The accessibility state ``expanded`` of a menu row whose submenu opened or closed."""
+        node = self.nodes.get(node_id)
+        if node is not None and node.get("expanded") is not None:
+            node.set(expanded=open_)
+
+    def resync(self) -> None:
+        """A control changed a flag state of a block: its parts and its entries show it."""
+        self._sync(self.entries)
+
+    def _controls(self) -> None:
+        """Keep one control per block that has one (``Toggles``, ``Slides``, ``Selection_Mode``):
+        a new block gets one, a kept block is told what it is now, a block that is gone loses
+        its control. The first of the block's entries that carries a control key wins."""
+        live: dict[TreNode, controls.Control] = {}
+
+        def walk(entries: list[Entry]) -> None:
+            for e in entries:
+                if e.tre is not None and controls.kind_of(e):
+                    ctl = self.controls.get(e.tre)
+                    if ctl is None:
+                        ctl = controls.make(self, e)
+                    if ctl is not None:
+                        live[e.tre] = ctl
+                walk(e.children)
+
+        walk(self.entries)
+        for tre, ctl in self.controls.items():
+            if tre not in live:
+                ctl.stop()
+        self.controls = live
+
+        def configure(entries: list[Entry]) -> None:
+            for e in entries:
+                ctl = live.get(e.tre) if e.tre is not None else None
+                if ctl is not None:
+                    ctl.configure(e)
+                configure(e.children)
+
+        configure(self.entries)
 
     def _marquees(self) -> None:
         """Keep one scroll runner per Marquee, configured from its block, and let each measure and
@@ -366,10 +463,11 @@ class View:
             entry.wire = Wire(entry.typed.handlers, tre=entry.tre, window=self.window)
         wire = entry.wire
         wire.states = entry.states
+        wire.motion = entry.motion
         if entry.typed.kind == FIELD_INPUT:
             self._ensure_field_events(entry)  # its states follow its box, which listens
         else:
-            if any(state != "disabled" for state in wire.states):  # ``disabled`` needs no pointer
+            if any(state not in FLAG_STATES for state in wire.states):  # no pointer needed
                 wire.listen()
             self._ensure_click(entry)
             if entry.typed.kind == FIELD:
@@ -450,18 +548,32 @@ class View:
 
             tre.on(event, listener)
 
-    def _sync(self, entries: list[Entry], inherited: bool = False) -> None:
+    def _sync(
+        self,
+        entries: list[Entry],
+        inherited: bool = False,
+        flags: Mapping[str, tuple[bool, bool]] | None = None,
+    ) -> None:
         """Tell every wire whether its block, or one above it, is disabled (``Enabled: false`` is
-        tre's ``disabled`` in the node's properties). A disabled block gets a ``click`` listener
-        whatever its handlers, to swallow the click."""
+        tre's ``disabled`` in the node's properties), and what ``checked`` and ``selected`` the
+        module root above a part holds (``flags``: module use -> its nearest block's two flags). A
+        disabled block gets a ``click`` listener whatever its handlers, to swallow the click."""
+        flags = flags or {}
         for e in entries:
             own = bool(e.props.get("disabled"))
+            owner = e.typed.owner or ""
+            seen = flags.get(owner, (False, False))
+            mine = seen
             if e.wire is not None:
+                if not e.wire.owned:  # no control: the flags are the block's own props
+                    e.wire.checked = bool(e.props.get("checked"))
+                    e.wire.selected = bool(e.props.get("selected"))
                 # a text input is a part of its field: it shows ``disabled`` when the field is
                 part = bool(e.typed.part) or e.typed.kind in (FIELD_INPUT, MARQUEE_TEXT)
-                e.wire.sync(own, inherited, part)
+                e.wire.sync(own, inherited, part, *seen)
                 self._ensure_click(e)
-            self._sync(e.children, inherited or own)
+                mine = (seen[0] or e.wire.checked, seen[1] or e.wire.selected)
+            self._sync(e.children, inherited or own, {**flags, owner: mine} if owner else flags)
 
     def _ensure_click(self, entry: Entry) -> None:
         """The one ``click`` listener of a node that has an ``On_Click`` or is disabled. It
@@ -471,9 +583,10 @@ class View:
         wire = entry.wire
         if entry.tre is None or wire is None or "On_Click" in wire.wired:
             return
-        if "On_Click" not in wire.handlers and not wire.disabled:
+        if "On_Click" not in wire.handlers and not wire.disabled and entry.tre not in self.controls:
             return
         wire.wired.add("On_Click")
+        tre = entry.tre
 
         def listener(event: Any, wire: Wire = wire) -> None:
             stop = getattr(event, "stop", None)
@@ -482,10 +595,13 @@ class View:
                     stop()
                 return
             handler = wire.handlers.get("On_Click")
-            if handler is None:  # the node was disabled once and has no handler now
+            ctl = self.controls.get(tre)
+            if handler is None and ctl is None:  # the node was disabled once, and has no handler
                 return
             try:
-                if self.sink is not None:
+                if ctl is not None:  # the control first: the handler sees the new state
+                    ctl.clicked(event)
+                if handler is not None and self.sink is not None:
                     self.sink(handler, "On_Click", event)
             finally:
                 if stop is not None:
@@ -502,6 +618,7 @@ class View:
         """
         errors: list[BindError] = []
         by_node: dict[str, dict[str, Any]] = {}
+        touched: set[str] = set()  # nodes whose control reads something that changed
         for node_id, key, value in changes:
             kind = self.kinds.get(node_id)
             row = BLOCKS.get(kind) if kind else None
@@ -512,6 +629,9 @@ class View:
             converted = _convert(key, key_row, value, errors)
             if converted is None:
                 continue
+            if not key_row.tre:  # a key that gives tre nothing: a control reads it
+                self.dynamic.setdefault(node_id, {})[key] = value
+                touched.add(node_id)
             have = self.applied.setdefault(node_id, {})
             fresh = {n: v for n, v in converted.items() if n not in have or have[n] != v}
             if kind == FIELD_INPUT and "text" in fresh:
@@ -552,6 +672,7 @@ class View:
                 left = start_motion(self.nodes[node_id], props, self.motions[node_id])
                 if left:  # tre could not ease these: they jump
                     self.nodes[node_id].set(**left)
+            touched.update(i for i, p in by_node.items() if p.keys() & CONTROL_PROPS)
             if any("disabled" in props for props in by_node.values()):
                 self._sync(self.entries)  # a block above may have been disabled or enabled
                 self._marquees()
@@ -560,6 +681,13 @@ class View:
                     runner = self._runner_of(node_id)
                     if runner is not None:
                         runner.refresh()
+        for node_id in touched:
+            node = self.nodes.get(node_id)
+            ctl = self.controls.get(node) if node is not None else None
+            if ctl is not None:
+                ctl.sync()
+        if touched:
+            self._sync(self.entries)
         return errors
 
     def _runner_of(self, node_id: str) -> MarqueeRunner | None:
@@ -579,6 +707,9 @@ class View:
         for runner in self.runners.values():
             runner.stop()
         self.runners.clear()
+        for ctl in self.controls.values():
+            ctl.stop()
+        self.controls.clear()
         for root in self.roots:
             root.destroy()
         self.roots.clear()
@@ -638,7 +769,7 @@ def entry_states(node: Node) -> dict[str, dict[str, Any]]:
     pointer events (a ``Text``) has no ``hovered`` or ``pressed``; its ``disabled`` still shows."""
     states = convert_states(node, [])
     if node.kind in NO_POINTER_BLOCKS:
-        return {s: v for s, v in states.items() if s == "disabled"}
+        return {s: v for s, v in states.items() if s in FLAG_STATES}
     return states
 
 
@@ -707,6 +838,14 @@ def _plan(
             errors.append(BindError(f"{node.kind} needs {' or '.join(options)}", node.origin))
     if node.children and not row.children_ok:
         errors.append(BindError(f"{node.kind} cannot have children", node.origin))
+    if node.kind == "ScrollBox" and len(node.children) > 1:
+        errors.append(
+            BindError(
+                "a ScrollBox scrolls one child",
+                node.origin,
+                "put the entries in a FlexBox and the FlexBox in the ScrollBox",
+            )
+        )
 
     for name, default in row.defaults.items():
         props.setdefault(name, default)

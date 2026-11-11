@@ -60,3 +60,7 @@ The design documentation is in [`docs/`](docs/README.md). Start at [Home](docs/0
 ## Display widgets (M4b)
 
 Label, TextBox, ProgressBar, Badge, Marquee_Text, Icon, Image and Expander ship as standard modules; `Tooltip: "text"` is the short form of a tooltip. Colours come from the Default stylesheet (`Appearance { Stylesheets: [Default] }`). The gallery: `uv run python tests/kwin/prepare_m4b_gallery.py`, then `/tmp/tess-kwin-m4b/run.sh`.
+
+## Interactive widgets (M4c)
+
+Button, Toggle, Checkbox, Slider, List, Menu and MenuItem ship as standard modules and `ScrollBox` is a block. They are operated by the pointer (keys and focus are M6); `Enabled: false` shows `:disabled` and ignores the pointer. A Toggle, a Checkbox, a Slider or a List raises `On_Changed` (`event.old`, `event.new`, `event.value`) when the user changes it and never when a module sets `Checked`, `Value` or `Selected`. A Menu is the content of a `Popup`; a Button opens it with `On_Click { Action: Show, Target: File_Menu, Data { Id: 7 } }` and a `MenuItem { Submenu: Share_Menu }` opens another Popup beside it. The gallery: `uv run python tests/kwin/prepare_m4c_gallery.py`, then `/tmp/tess-kwin-m4c-widgets/run.sh`.

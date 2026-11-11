@@ -254,7 +254,7 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         def route(handler: Handler, key: str, raw: object) -> None:
             # a shell action (Show, Hide, Toggle) is the manager's; any other name is an @action
             if handler.builtin:
-                manager.run_builtin(handler)
+                manager.run_builtin(handler, raw)
             else:
                 host.dispatch(handler, key, raw)
 

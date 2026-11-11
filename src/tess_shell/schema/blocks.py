@@ -48,9 +48,23 @@ A11Y_STATE: dict[str, str] = {
     "Checked": "bool",
     "Selected": "bool",
     "Expanded": "bool",
+    # what makes a module's block a control (``binder.controls``): like the state above, only a
+    # module's layout writes them. ``Toggles`` flips ``Checked`` on a click and raises On_Changed;
+    # ``Selection_Mode`` makes the block's children the entries of a list (``Key`` names an entry,
+    # ``Chosen`` is the chosen entry's key); ``Slides`` makes the block a slider along its axis
+    "Toggles": "bool",
+    "Selection_Mode": "enum",
+    "Chosen": "text",
+    "Slides": "enum",
+    # a menu item (``binder.controls``): ``Menu_Item`` makes the block take the pointer as one,
+    # ``Opens`` names the Popup its submenu is (empty: it opens nothing)
+    "Menu_Item": "bool",
+    "Opens": "text",
 }
 # key -> kind
 COMMON: dict[str, str] = {
+    # the name of an entry of a list (a ``For`` entry has its repeater's key unless it writes one)
+    "Key": "text",
     "Visible": "bool",
     "Enabled": "enabled",
     "Width": "length",
@@ -187,6 +201,9 @@ CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     ("*", "Easing"): EASINGS,
     ("Bitmap", "Fit"): ("FILL", "CONTAIN", "COVER", "NONE"),
     ("Path", "Hit_Shape"): ("PAINTED", "BOX"),
+    ("*", "Selection_Mode"): ("NONE", "SINGLE"),
+    ("*", "Slides"): ("NONE", "HORIZONTAL", "VERTICAL"),
+    ("ScrollBox", "Orientation"): ("VERTICAL", "HORIZONTAL"),
     ("Marquee", "Direction"): ("LEFT", "RIGHT"),
     ("Marquee", "Loop"): ("RESTART", "BOUNCE"),
 }
@@ -212,6 +229,12 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
         TEXT_STYLE,
     ),
     "Rectangle": ({**COMMON, **SHAPE}, SHAPE),
+    # a clipped viewport that scrolls its one content child by the wheel (Block Reference >
+    # ScrollBox): it scrolls its one child; ``Scroll_Snap`` and ``On_Scroll`` are not built
+    "ScrollBox": (
+        {**COMMON, "Orientation": "enum", "Scroll_Offset": "number"},
+        {**MOTION_STYLE, "Opacity": "number"},
+    ),
     "Spacer": (COMMON, {}),
     "SVG": (
         {**COMMON, "Source": "svg_source", "Icon": "icon", "Color": "color"},
@@ -470,9 +493,26 @@ EVENT_KEYS = (
 # measured on tre 0.6.1), so a Text raises nothing: put the handler on the box around it.
 BLOCK_EVENTS: dict[str, tuple[str, ...]] = {
     kind: ("On_Click",)
-    for kind in ("Box", "FlexBox", "Rectangle", "Spacer", "SVG", "Bitmap", "Circle", "Ring", "Path")
+    for kind in (
+        "Box",
+        "FlexBox",
+        "Rectangle",
+        "ScrollBox",
+        "Spacer",
+        "SVG",
+        "Bitmap",
+        "Circle",
+        "Ring",
+        "Path",
+    )
     + ("Marquee",)
 }
+# a control raises ``On_Changed`` (the user flipped it, chose an entry or moved it): only a block
+# of a module's layout that has one of ``CONTROL_KEYS``
+CONTROL_KEYS = ("Toggles", "Selection_Mode", "Slides")
+CONTROL_KINDS = ("Box", "FlexBox", "Rectangle", "ScrollBox")
+for _kind in CONTROL_KINDS:
+    BLOCK_EVENTS[_kind] = (*BLOCK_EVENTS[_kind], "On_Changed")
 # the text events are raised by the text input inside the composition; ``On_Click`` by its box
 BLOCK_EVENTS[FIELD] = ("On_Click", *FIELD_EVENTS)
 BLOCK_EVENTS["Panel"] = (

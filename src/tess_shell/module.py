@@ -28,10 +28,13 @@ class Event:
     y: float | None = None
     button: str | None = None  # "primary", "secondary", ...
     # a text field's ``On_Changed``: the text before and after the user's edit; its
-    # ``On_Text_Commit``: the text that was committed (typed, pasted or from an input method)
-    old: str | None = None
-    new: str | None = None
+    # ``On_Text_Commit``: the text that was committed (typed, pasted or from an input method). A
+    # control's ``On_Changed`` (Toggle, Checkbox: true or false; Slider: a number; List: the
+    # chosen entry's key) has the same ``old`` and ``new`` and ``value`` (the new one)
+    old: str | bool | float | None = None
+    new: str | bool | float | None = None
     text: str | None = None
+    value: str | bool | float | None = None
 
 
 class Module:

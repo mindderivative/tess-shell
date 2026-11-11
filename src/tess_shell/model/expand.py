@@ -242,8 +242,11 @@ class _Expander:
             return children
         raised = blocks.BLOCK_EVENTS.get(root.kind, ())
         taken: dict[str, m.Handler] = {}
+        controls = any(k in root.props for k in blocks.CONTROL_KEYS)
         for key, handler in handlers.items():
-            if key in raised:
+            if key in raised and (
+                key != "On_Changed" or controls or root.kind not in blocks.CONTROL_KINDS
+            ):
                 taken[key] = handler
                 continue
             hint = f"it raises: {', '.join(raised)}" if raised else "it raises no event"
