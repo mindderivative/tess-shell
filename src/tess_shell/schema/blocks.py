@@ -7,6 +7,8 @@ declaration with the binder's tables, so the two cannot drift.
 
 from __future__ import annotations
 
+from tess_shell.binder.model import FIELD, FIELD_INPUT, FIELD_LINE, FIELD_SIZE
+
 ALIGN = ("START", "CENTER", "END", "STRETCH")
 JUSTIFY = ("START", "CENTER", "END", "SPACE_BETWEEN", "SPACE_AROUND", "SPACE_EVENLY")
 
@@ -84,6 +86,15 @@ CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     ("Text", "Wrap"): ("WORD", "NONE"),
     ("Text", "Text_Align"): ("START", "CENTER", "END"),
     ("Text", "Overflow"): ("CLIP", "ELLIPSIS"),
+    # a TextField: ``Wrap`` is for a multi-line field and ``Overflow`` for a single-line one
+    # (``Wrap: CHAR`` is not built, ``TextField.input`` is the text input inside the composition)
+    ("TextField", "Wrap"): ("WORD", "NONE"),
+    ("TextField", "Overflow"): ("SCROLL", "ELLIPSIS", "CLIP"),
+    ("TextField.input", "Wrap"): ("WORD", "NONE"),
+    ("TextField.input", "Overflow"): ("SCROLL", "ELLIPSIS", "CLIP"),
+    # a stylesheet rule's value is checked against every block that takes the key; a block takes
+    # the words of its own row (a Text has no SCROLL: the fold skips the rule there)
+    ("Rule", "Overflow"): ("CLIP", "ELLIPSIS", "SCROLL"),
 }
 
 # block -> (property keys, style keys); a style key is also accepted written on the block
@@ -111,7 +122,102 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
         {**COMMON, "Source": "svg_source", "Icon": "icon", "Color": "color"},
         {"Foreground": "color", "Opacity": "number"},
     ),
+    "TextField": (
+        {
+            **COMMON,
+            "Padding": "sides",
+            "Text": "text",
+            "Placeholder": "text",
+            "Multiline": "bool",
+            "Selection": "selection",
+            "Show_Whitespace": "bool",
+            "Wrap": "enum",
+            "Lines": "lines",
+            "Read_Only": "bool",
+            "Max_Length": "max_length",
+            "Password": "bool",
+        },
+        {
+            **BOX_STYLE,
+            "Foreground": "color",
+            "Font_Family": "font_family",
+            "Font_Size": "positive",
+            "Font_Weight": "whole",
+            "Overflow": "enum",
+            "Placeholder_Foreground": "color",
+        },
+    ),
 }
+
+# A TextField is a composition (tre's advice for a field): a box that paints the background and
+# the border, around a text input, with a text node that gives the box the height of its lines.
+# ``model.field.compose`` splits the block into these typed nodes before binding (the box, a line
+# box in its cell that holds the size text and, over it, the text input); they are the kinds the
+# binder builds and the model addresses slots to. The words have a dot, so no file can name one.
+FIELD_BOX_KEYS = frozenset(
+    {*COMMON, "Padding", *BOX_STYLE} - {"Label"},
+)
+FIELD_INPUT_KEYS = frozenset(
+    {
+        "Text",
+        "Placeholder",
+        "Multiline",
+        "Selection",
+        "Show_Whitespace",
+        "Wrap",
+        "Read_Only",
+        "Max_Length",
+        "Password",
+        "Label",
+        "Foreground",
+        "Font_Family",
+        "Font_Size",
+        "Font_Weight",
+        "Overflow",
+        "Placeholder_Foreground",
+    }
+)
+FIELD_SIZE_KEYS = frozenset({"Lines", "Font_Family", "Font_Size", "Font_Weight"})
+FIELD_EVENTS = ("On_Changed", "On_Submit", "On_Text_Commit")
+_FIELD_INPUT_PROPS: dict[str, str] = {
+    "Text": "text",
+    "Placeholder": "text",
+    "Multiline": "bool",
+    "Selection": "selection",
+    "Show_Whitespace": "bool",
+    "Wrap": "enum",
+    "Read_Only": "bool",
+    "Max_Length": "max_length",
+    "Password": "bool",
+    "Label": "text",
+}
+_FIELD_INPUT_STYLE: dict[str, str] = {
+    "Foreground": "color",
+    "Font_Family": "font_family",
+    "Font_Size": "positive",
+    "Font_Weight": "whole",
+    "Overflow": "enum",
+    "Placeholder_Foreground": "color",
+}
+_FIELD_BOX_PROPS: dict[str, str] = {
+    k: v for k, v in {**COMMON, "Padding": "sides"}.items() if k != "Label"
+}
+# the kinds the model and the binder meet after the composition: key tables per kind
+INTERNAL: dict[str, tuple[dict[str, str], dict[str, str]]] = {
+    FIELD_LINE: ({"Align_Self": "enum"}, {}),
+    FIELD_SIZE: (
+        {"Lines": "lines"},
+        {"Font_Family": "font_family", "Font_Size": "positive", "Font_Weight": "whole"},
+    ),
+    FIELD_INPUT: (_FIELD_INPUT_PROPS, _FIELD_INPUT_STYLE),
+}
+# the key tables of the box of a composed TextField (kind ``TextField`` after the split)
+FIELD_BOX: tuple[dict[str, str], dict[str, str]] = (_FIELD_BOX_PROPS, BOX_STYLE)
+
+
+def table(kind: str) -> tuple[dict[str, str], dict[str, str]] | None:
+    """The (property keys, style keys) of a block, or of an internal kind of the TextField."""
+    return BLOCKS.get(kind) or INTERNAL.get(kind)
 
 REQUIRED: dict[str, tuple[str | tuple[str, ...], ...]] = {"SVG": (("Source", "Icon"),)}
 
@@ -186,7 +292,8 @@ FRAME_STYLE: dict[str, str] = {
 FRAME_STYLE_NOT_BUILT = ("Elevation", "Shadows", "Shadow_Bleed")
 
 
-# The twelve v1 events (Events and Actions), as the TDL keys. A block raises only the events its
+# The v1 events (Events and Actions; the text field's ``On_Submit`` and ``On_Text_Commit``, D80, are
+# in Block Reference > TextField), as the TDL keys. A block raises only the events its
 # pointer or focus handling supports: M1's blocks take a click and nothing else; the rest wait for
 # the surfaces and the value blocks that raise them.
 EVENT_KEYS = (
@@ -202,12 +309,16 @@ EVENT_KEYS = (
     "On_Anim_End",
     "On_Changed",
     "On_Change",
+    "On_Submit",
+    "On_Text_Commit",
 )
 # A tre text node takes no listener of its own (a click on it reaches the nearest box above it,
 # measured on tre 0.6.1), so a Text raises nothing: put the handler on the box around it.
 BLOCK_EVENTS: dict[str, tuple[str, ...]] = {
     kind: ("On_Click",) for kind in ("Box", "FlexBox", "Rectangle", "Spacer", "SVG")
 }
+# the text events are raised by the text input inside the composition; ``On_Click`` by its box
+BLOCK_EVENTS[FIELD] = ("On_Click", *FIELD_EVENTS)
 BLOCK_EVENTS["Panel"] = (
     "On_Open",
     "On_Close",

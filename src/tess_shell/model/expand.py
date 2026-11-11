@@ -12,8 +12,10 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from tess_shell.binder import model as m
+from tess_shell.model.field import compose
 from tess_shell.model.look import apply_module_rules
 from tess_shell.model.uses import Use, plain_param
+from tess_shell.schema import blocks
 from tess_shell.schema.model import ModuleDef, Rule
 
 MAX_DEPTH = 8
@@ -85,7 +87,7 @@ class _Expander:
         result: list[m.Node | m.IfNode | m.ForNode] = []
         for node in nodes:
             if isinstance(node, m.UseNode):
-                result.extend(self._use(node, path, stack))
+                result.extend(self._use(node, path, stack, use))
             elif isinstance(node, m.Node):
                 result.append(self._node(node, path, use, stack, dynamic))
             else:
@@ -127,6 +129,7 @@ class _Expander:
         stack: tuple[str, ...],
         dynamic: bool = False,
     ) -> m.Node:
+        node = compose(node)  # a TextField becomes its box, size text and text input
         name = node.name
         if use is not None:
             if name is not None:
@@ -187,8 +190,45 @@ class _Expander:
                 self.popup_depth -= 1
         self.out.tooltips[node_id] = ExpandedTooltip(ref, nodes, use.key if use else "")
 
+    def _forward(
+        self, call: m.UseNode, children: tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...],
+        outer: Use | None,
+    ) -> tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...]:
+        """The module's layout with the handlers written on its call placed on its root block (a
+        root that is itself a module call passes them on). A handler names an action of the
+        module that holds the call (``outer``), or of the module a ``Call`` names. A root block
+        that cannot raise an event is an error at the handler."""
+        handlers = {
+            k: dataclasses.replace(h, use=outer.key if outer else "", forwarded=True)
+            for k, h in call.handlers.items()
+        }
+        root = children[0] if children else None
+        if isinstance(root, m.UseNode):
+            merged = {**root.handlers, **handlers}
+            return (dataclasses.replace(root, handlers=merged), *children[1:])
+        if not isinstance(root, m.Node):
+            self.out.errors.append(
+                m.BindError(f"{call.module} has no root block to raise an event", call.origin)
+            )
+            return children
+        raised = blocks.BLOCK_EVENTS.get(root.kind, ())
+        taken: dict[str, m.Handler] = {}
+        for key, handler in handlers.items():
+            if key in raised:
+                taken[key] = handler
+                continue
+            hint = f"it raises: {', '.join(raised)}" if raised else "it raises no event"
+            self.out.errors.append(
+                m.BindError(
+                    f"{call.module} does not raise {key}: its root block is a {root.kind}",
+                    handler.origin,
+                    hint,
+                )
+            )
+        return (dataclasses.replace(root, handlers={**root.handlers, **taken}), *children[1:])
+
     def _use(
-        self, call: m.UseNode, path: str, stack: tuple[str, ...]
+        self, call: m.UseNode, path: str, stack: tuple[str, ...], outer: Use | None = None
     ) -> list[m.Node | m.IfNode | m.ForNode]:
         module = self.modules[call.module]
         if call.module in stack or len(stack) >= MAX_DEPTH:
@@ -206,8 +246,11 @@ class _Expander:
         }
         use = Use(key, call.module, name, params, self.monitor, call.origin)
         self.out.uses.append(use)
-        roots = self._walk(module.children, name, use, (*stack, call.module))
-        roots = apply_module_rules(roots, call.module, self.rules)  # type: ignore[assignment]
+        layout = self._forward(call, module.children, outer) if call.handlers else module.children
+        # the module's rules reach its root block as written, before a TextField is split in its
+        # parts (its text keys go to the text input)
+        layout = tuple(apply_module_rules(layout, call.module, self.rules))
+        roots = self._walk(layout, name, use, (*stack, call.module))
         if call.name in self.attach_targets:
             self._mark_target(call, key, roots)
         if self.mark_roots:

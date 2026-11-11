@@ -51,6 +51,7 @@ from tess_shell.binder.model import (
     Value,
 )
 from tess_shell.model.expand import Expanded
+from tess_shell.model.field import holds_text_field
 from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, resolve_style
 from tess_shell.schema.model import (
@@ -269,23 +270,10 @@ def meld_spec(panel: PanelDef, output: tuple[int, int], look: Look | None) -> Me
     )
 
 
-_TEXT_INPUT_KINDS = ("TextInput",)  # no such block yet: the painter's keyboard stays "none"
-
-
 def wants_keyboard(expanded: Expanded) -> bool:
-    """Whether a hosted tree holds a text input (Frame > What a Frame Holds: the painter then
+    """Whether a hosted tree holds a text field (Frame > What a Frame Holds: the painter then
     takes the keyboard ``on_demand``)."""
-
-    def walk(nodes: Sequence[Any]) -> bool:
-        for node in nodes:
-            if getattr(node, "kind", None) in _TEXT_INPUT_KINDS:
-                return True
-            for attr in ("children", "body", "else_body"):
-                if walk(getattr(node, attr, None) or ()):
-                    return True
-        return False
-
-    return walk(expanded.nodes)
+    return holds_text_field(expanded.nodes)
 
 
 @dataclass(frozen=True, slots=True)

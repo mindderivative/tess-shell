@@ -70,7 +70,14 @@ def event_record(key: str, raw: object) -> dict[str, Any]:
     """The event as a slot reads it (``event.name``, ``event.x``): plain values only; a field the
     event does not have is left out."""
     record: dict[str, Any] = {"name": key.removeprefix("On_").lower()}
-    for name, attr in (("x", "window_x"), ("y", "window_y"), ("button", "button")):
+    for name, attr in (
+        ("x", "window_x"),
+        ("y", "window_y"),
+        ("button", "button"),
+        ("old", "old_value"),
+        ("new", "new_value"),
+        ("text", "text"),
+    ):
         value = getattr(raw, attr, None)
         if isinstance(value, bool | int | float | str):
             record[name] = value

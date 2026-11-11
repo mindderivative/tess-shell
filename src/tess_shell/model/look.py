@@ -190,42 +190,79 @@ def _rules_child(node: Child, rules: Sequence[Rule], module: str) -> Child:
         hits += [
             r for r in rules if r.part == node.part and r.kind == "module" and r.target == module
         ]
+    # a TextField in a module has the part ``placeholder``: ``TextInput::placeholder`` colours the
+    # hint text, so its ``Foreground`` is the field's ``Placeholder_Foreground``
+    hint = [
+        r
+        for r in rules
+        if module
+        and node.kind == m.FIELD
+        and r.part == PLACEHOLDER_PART
+        and r.kind == "module"
+        and r.target == module
+    ]
     return dataclasses.replace(
         node,
-        style=_fold(node, hits),
-        states=_fold_states(node, hits),
+        style=_fold(node, hits, hint),
+        states=_fold_states(node, hits, hint),
         children=apply_rules(node.children, rules, module),
     )
 
 
+# the part every TextField of a module has: the hint shown while the field is empty
+PLACEHOLDER_PART = "placeholder"
+
+
 def _merge(kind: str, hits: Sequence[Rule]) -> dict[str, m.Value]:
     """The keys a block of ``kind`` takes from ``hits``: a name beats a class beats a module beats
-    a type; of one weight the later rule wins."""
+    a type; of one weight the later rule wins. A word the block's key does not take (``SCROLL`` for
+    a Text's ``Overflow``) is skipped: one rule serves every block that has the key."""
     ordered = sorted(enumerate(hits), key=lambda t: (t[1].specificity, t[0]))
     merged: dict[str, m.Value] = {}
     for _, rule in ordered:
         for key, value in rule.values.items():
-            if _allowed(kind, key):
-                merged[key] = value
+            if not _allowed(kind, key):
+                continue
+            words = blocks.CHOICES.get((kind, key))
+            if words and isinstance(value, m.Enum) and value.name not in words:
+                continue
+            merged[key] = value
     return merged
 
 
-def _fold(node: m.Node, hits: Sequence[Rule]) -> dict[str, m.Value]:
+def _placeholder(kind: str, hint: Sequence[Rule], state: str) -> dict[str, m.Value]:
+    """What the ``::placeholder`` rules (``hint``) give a TextField in ``state`` (``""`` is the
+    base look): the part has the text colour and nothing else."""
+    merged = _merge(kind, [r for r in hint if r.state == state])
+    value = merged.get("Foreground")
+    return {} if value is None else {"Placeholder_Foreground": value}
+
+
+def _fold(node: m.Node, hits: Sequence[Rule], hint: Sequence[Rule] = ()) -> dict[str, m.Value]:
     """``node.style`` with the keys of ``hits`` below it (a name beats a class beats a module
     beats a type; of one weight the later rule wins; the block's own keys win over all). A rule
-    with a state does not belong here: see :func:`_fold_states`."""
-    merged = _merge(node.kind, [r for r in hits if not r.state])
+    with a state does not belong here: see :func:`_fold_states`. ``hint`` are a TextField's
+    ``::placeholder`` rules, which sit below the rest."""
+    merged = {
+        **_placeholder(node.kind, hint, ""),
+        **_merge(node.kind, [r for r in hits if not r.state]),
+    }
     below = {k: v for k, v in merged.items() if k not in node.props and k not in node.style}
     return {**below, **node.style}
 
 
-def _fold_states(node: m.Node, hits: Sequence[Rule]) -> Mapping[str, Mapping[str, m.Value]]:
+def _fold_states(
+    node: m.Node, hits: Sequence[Rule], hint: Sequence[Rule] = ()
+) -> Mapping[str, Mapping[str, m.Value]]:
     """``node.states`` with the state rules among ``hits`` added, a state at a time, by the same
     precedence as the base style. A state value is not held back by the block's own style: it is
     the look while the state holds, on top of whatever the block shows otherwise."""
     states = {s: dict(v) for s, v in node.states.items()}
     for state in m.STATES:
-        merged = _merge(node.kind, [r for r in hits if r.state == state])
+        merged = {
+            **_placeholder(node.kind, hint, state),
+            **_merge(node.kind, [r for r in hits if r.state == state]),
+        }
         if merged:
             states[state] = {**merged, **states.get(state, {})}
     return states if states else node.states

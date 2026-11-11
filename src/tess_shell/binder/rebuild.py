@@ -15,7 +15,16 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from tess_shell.binder.build import Entry, View, Wire, _Index, _plan, entry_states, make_entry
-from tess_shell.binder.model import BindError, BindFailed, ForNode, IfNode, Node, Origin, UseNode
+from tess_shell.binder.model import (
+    FIELD_INPUT,
+    BindError,
+    BindFailed,
+    ForNode,
+    IfNode,
+    Node,
+    Origin,
+    UseNode,
+)
 
 if TYPE_CHECKING:
     from tess_re import Node as TreNode
@@ -78,6 +87,9 @@ def _diff(
             del by_key[key]
             assert kept.tre is not None
             changed = {n: v for n, v in props.items() if n not in kept.props or kept.props[n] != v}
+            if node.kind == FIELD_INPUT and "text" in changed:
+                if kept.tre.get("text") == changed["text"]:
+                    del changed["text"]  # the user typed it: setting it again moves the caret
             states = entry_states(node)
             if kept.wire is not None and (states or kept.wire.states):
                 # what a state holds is not set under it; the wire keeps the new value for the end

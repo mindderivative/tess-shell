@@ -171,6 +171,80 @@ _ROWS: dict[str, BlockRow] = {
     ),
 }
 
+# A TextField is four tre nodes (the model splits the block before binding, ``model.field``): the
+# box paints the background and the border and holds the padding; the line box sits in its cell
+# (centred, or filling it for a multi-line field); the text node in the line gives it the height of
+# the field's lines (a text input has no height of its own); the text input, over the line, edits.
+# The text input and the text node take the same font, so they agree on the height of a line.
+_FONT: dict[str, KeyRow] = {
+    "Font_Family": _TEXT_STYLE["Font_Family"],
+    "Font_Size": _TEXT_STYLE["Font_Size"],
+    "Font_Weight": _TEXT_STYLE["Font_Weight"],
+}
+_FIELD_BOX_KEYS: dict[str, KeyRow] = {k: v for k, v in _COMMON.items() if k != "Label"}
+_FIELD_CHILD = {"grid_column": 1, "grid_row": 1}
+_ROWS["TextField"] = BlockRow(
+    "box",
+    keys={**_FIELD_BOX_KEYS, **_PADDING},
+    style=_BOX_STYLE,
+    fixed={"display": "grid", "grid_template_columns": "1fr", "grid_template_rows": "1fr"},
+    # a field with no Width is as wide as a field usually is; tre lays an unset width out at 0
+    defaults={"width": 200},
+    child_props=_FIELD_CHILD,
+    children_ok=True,
+)
+_ROWS["TextField.line"] = BlockRow(
+    "box",
+    keys={"Align_Self": _COMMON["Align_Self"]},
+    style={},
+    children_ok=True,
+)
+_ROWS["TextField.size"] = BlockRow(
+    "text",
+    keys={"Lines": _k("text", "lines")},
+    style=_FONT,
+    fixed={
+        "fill": (0, 0, 0, 0),
+        "hit_testable": False,
+        "a11y_hidden": True,
+        "wrap": "none",
+        "overflow": "clip",
+    },
+    defaults={"text": "x"},
+)
+_ROWS["TextField.input"] = BlockRow(
+    "text_input",
+    # over the line box, exactly as large: it is not in the flow, so the size text sets the height
+    fixed={"position": "absolute", "left": 0, "top": 0, "right": 0, "bottom": 0},
+    keys={
+        "Text": _k("text", "text"),
+        "Placeholder": _k("placeholder", "text"),
+        "Multiline": _k("multiline", "bool"),
+        "Selection": _k("selection", "selection"),
+        "Show_Whitespace": _k("show_whitespace", "bool"),
+        "Wrap": _k("wrap", "enum", "WORD", "NONE"),
+        "Read_Only": _k("read_only", "bool"),
+        "Max_Length": _k("max_length", "max_length"),
+        "Password": _k("obscured", "bool"),
+        "Label": _COMMON["Label"],
+    },
+    style={
+        "Foreground": _TEXT_STYLE["Foreground"],
+        **_FONT,
+        "Overflow": _k("overflow", "enum", "SCROLL", "ELLIPSIS", "CLIP"),
+        "Placeholder_Foreground": _k("placeholder_fill", "color"),
+    },
+    defaults={
+        "text": "",
+        "placeholder": "",
+        "multiline": False,
+        "show_whitespace": False,
+        "read_only": False,
+        "max_length": None,
+        "obscured": False,
+    },
+)
+
 # every node is built with ``disabled`` set, so a reload that drops ``Enabled: false`` sets it back
 # in place instead of replacing the node (tre cannot unset a property)
 BLOCKS: Mapping[str, BlockRow] = {

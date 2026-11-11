@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import dataclasses
 import re
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 
 import tess_dl
 from tess_dl import Block, Document, Property
@@ -418,6 +418,7 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
     module = ctx.modules[block.type]
     name: str | None = None
     params: dict[str, m.Value] = {}
+    handlers: dict[str, m.Handler] = {}
     tooltip: m.TooltipRef | None = None
     for entry in block.entries:
         if isinstance(entry, Property):
@@ -426,7 +427,13 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
                 name = ctx.name(entry)
             elif key == "Tooltip":
                 tooltip = _tooltip_name(ctx, entry, f"a use of {module.name}")
-            elif key in ("Style", "Class") or key.startswith("On_"):
+            elif key.startswith("On_"):
+                # the module's root block raises it; the model checks that it can (the layout is
+                # not read yet when a call is, so the module's root block is not known here)
+                handler = _handler(ctx, "", key, entry.key_origin, entry.value)
+                if handler is not None:
+                    handlers[key] = handler
+            elif key in ("Style", "Class"):
                 ctx.not_built(entry.key_origin, f"{key} on a module call")
             elif key in module.params:
                 decl = module.params[key]
@@ -444,6 +451,10 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
                 ctx.unknown(entry.key_origin, key, allowed, f"param of {module.name}")
         elif isinstance(entry, Block) and entry.type == "Tooltip":
             tooltip = _tooltip_block(ctx, entry)
+        elif isinstance(entry, Block) and entry.type.startswith("On_"):
+            handler = _handler(ctx, "", entry.type, entry.origin, entry)
+            if handler is not None:
+                handlers[entry.type] = handler
         elif isinstance(entry, Block):
             ctx.unknown(entry.origin, entry.type, ["Name", *module.params], f"key of {module.name}")
         elif isinstance(entry, tess_dl.If | tess_dl.For):
@@ -457,7 +468,12 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
                 f"write {decl.name}: ...",
             )
     return m.UseNode(
-        module.name, name=name, params=params, tooltip=tooltip, origin=ctx.origin(block.origin)
+        module.name,
+        name=name,
+        params=params,
+        tooltip=tooltip,
+        handlers=handlers,
+        origin=ctx.origin(block.origin),
     )
 
 
@@ -498,6 +514,8 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
             elif key == "Tooltip":
                 tooltip = _tooltip_name(ctx, entry, f"a {block.type}", block.type)
             elif key in prop_keys or key in style_keys:
+                if block.type == m.FIELD and not _field_key(ctx, entry):
+                    continue
                 kind = prop_keys.get(key) or style_keys[key]
                 value = _typed(ctx, block.type, entry, kind, read_text=kind == "svg_source")
                 if value is not None:
@@ -555,6 +573,8 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
                 f"{block.type} needs {wanted}",
                 f"write {options[0]}: ...",
             )
+    if block.type == m.FIELD:
+        _field_checks(ctx, props, style, prop_at, style_at, handlers)
     if block.type == "SVG" and "Source" in written and "Icon" in written:
         ctx.add(block.origin, "bad-key", "an SVG has a Source or an Icon, not both", "keep one")
     if "Shadows" in props and "Elevation" in props:
@@ -588,6 +608,61 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
     )
 
 
+def _field_key(ctx: _Ctx, entry: Property) -> bool:
+    """A key of a TextField that the general reader would take but the field cannot: ``Wrap:
+    CHAR`` (character wrapping comes later) and a slot in ``Multiline`` (the form is fixed when
+    the field is built). False: the key is reported and left out."""
+    if entry.key == "Wrap" and isinstance(entry.value, tess_dl.Word) and entry.value.text == "CHAR":
+        ctx.not_built(entry.value_origin, "Wrap: CHAR (character wrapping; WORD, NONE are built)")
+        return False
+    if entry.key == "Multiline" and slot_value(ctx, entry) is not None:
+        ctx.add(
+            entry.value_origin,
+            "bad-value",
+            "Multiline cannot hold a slot: it is fixed when the field is built",
+            "write true or false",
+        )
+        return False
+    return True
+
+
+def _field_checks(
+    ctx: _Ctx,
+    props: Mapping[str, m.Value],
+    style: Mapping[str, m.Value],
+    prop_at: Mapping[str, tess_dl.Origin | None],
+    style_at: Mapping[str, tess_dl.Origin | None],
+    handlers: dict[str, m.Handler],
+) -> None:
+    """A key that means nothing to the form of the field is a warning and has no effect:
+    ``Wrap`` and ``Lines`` are for a multi-line field, ``Overflow`` and ``Password`` for a
+    single-line one, and Enter in a multi-line field is a new line, so ``On_Submit`` never fires
+    (TextField, tre ``wrap`` and ``overflow``)."""
+    multi = props.get("Multiline")
+    multiline = isinstance(multi, m.Bool) and multi.value
+    if multiline:
+        form, other = "multi-line", ("Overflow", "Password")
+        hint = "Overflow and Password are for a single-line field; the key is left out"
+    else:
+        form, other = "single-line", ("Wrap", "Lines")
+        hint = "Wrap and Lines are for a multi-line field (Multiline: true); the key is left out"
+    for key in other:
+        if key in props or key in style:
+            at = prop_at.get(key) or style_at.get(key)
+            message = f"{key} does nothing on a {form} TextField"
+            ctx.add(at, "key-not-applied", message, hint, "warning")
+    if multiline and "On_Submit" in handlers:
+        h = handlers["On_Submit"]
+        ctx.add(
+            h.origin,
+            "key-not-applied",
+            "On_Submit does nothing on a multi-line TextField: Enter inserts a new line",
+            "use On_Changed; it is left out",
+            "warning",
+        )
+        del handlers["On_Submit"]
+
+
 def _handler(
     ctx: _Ctx,
     block: str,
@@ -601,7 +676,7 @@ def _handler(
     if key not in blocks.EVENT_KEYS:
         ctx.unknown(origin, key, list(blocks.EVENT_KEYS), "event key")
         return None
-    if key not in blocks.BLOCK_EVENTS.get(block, ()):
+    if block and key not in blocks.BLOCK_EVENTS.get(block, ()):
         raised = ", ".join(blocks.BLOCK_EVENTS.get(block, ()))
         hint = f"it raises: {raised}" if raised else f"put {key} on the FlexBox or Box around it"
         ctx.add(origin, "event-not-raised", f"a {block} does not raise {key}", hint)
@@ -2413,10 +2488,24 @@ def read_module(
     )
     if any(f.severity == "error" for f in ctx.findings):
         return None, ctx.findings
-    definition = ModuleDef(
-        name, file, ctx.origin(root.origin), params, styled, style_file, tuple(ctx.parts)
-    )
+    parts = tuple(ctx.parts)
+    if _holds_field(styled) and "placeholder" not in parts:
+        parts = (*parts, "placeholder")  # every TextField has the part ``::placeholder``
+    definition = ModuleDef(name, file, ctx.origin(root.origin), params, styled, style_file, parts)
     return definition, ctx.findings
+
+
+def _holds_field(children: Sequence[Child]) -> bool:
+    for node in children:
+        if isinstance(node, m.Node):
+            if node.kind == m.FIELD or _holds_field(node.children):
+                return True
+        elif isinstance(node, m.IfNode):
+            if _holds_field(node.body) or _holds_field(node.else_body or ()):
+                return True
+        elif isinstance(node, m.ForNode) and _holds_field(node.body):
+            return True
+    return False
 
 
 def read_module_params(document: Document, file: str) -> ModuleDef | None:

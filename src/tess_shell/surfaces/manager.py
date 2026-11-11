@@ -23,6 +23,7 @@ from tess_shell.binder.model import BindError, BindFailed, Color, Handler, Value
 from tess_shell.binder.shadow import DEFAULT_MAX, style_bleed, style_shadows
 from tess_shell.model import args
 from tess_shell.model.expand import Expanded, expand
+from tess_shell.model.field import holds_text_field
 from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, apply_rules, resolve_style
 from tess_shell.model.store import Change, ValueStore
@@ -298,11 +299,15 @@ def _place(
     return geometries, failed
 
 
-def _keyboard(bar: BarDef | PanelDef, hidden: bool = False) -> str:
-    """tre's ``keyboard`` word: a Panel's ``Keyboard``, ``none`` for a Bar or a hidden Panel."""
-    if hidden or not isinstance(bar, PanelDef):
+def _keyboard(bar: BarDef | PanelDef, hidden: bool = False, text_field: bool = False) -> str:
+    """tre's ``keyboard`` word: a Panel's ``Keyboard``, ``none`` for a Bar or a hidden Panel. A
+    surface that holds a TextField and has no keyboard mode of its own (a Bar has none, a Panel's
+    is ``NONE``) takes ``on_demand``: the compositor gives it the keyboard when the field is
+    clicked. ``EXCLUSIVE`` is only ever written."""
+    if hidden:
         return "none"
-    return bar.keyboard.lower()
+    mode = bar.keyboard.lower() if isinstance(bar, PanelDef) else "none"
+    return "on_demand" if mode == "none" and text_field else mode
 
 
 def _kind(bar: BarDef | PanelDef) -> str:
@@ -718,6 +723,9 @@ class SurfaceManager:
 
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
         kind = _kind(bar)
+        field = holds_text_field(planned.expanded.nodes)
+        if field and not hidden and _keyboard(bar, False, True) != _keyboard(bar):
+            logger.info(f"{kind} {where}: keyboard on_demand, it holds a text field")
         window = LayerWindow(
             f"tesserae-shell.{kind.lower()}.{bar.name}",
             layer=bar.layer.lower(),  # type: ignore[arg-type]
@@ -726,7 +734,7 @@ class SurfaceManager:
             margin=geometry.margin,
             exclusive_zone=geometry.exclusive_zone,
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
-            keyboard=_keyboard(bar, hidden),  # type: ignore[arg-type]
+            keyboard=_keyboard(bar, hidden, field),  # type: ignore[arg-type]
             input_region=_input_for(bar, geometry, (output.width, output.height), hidden),
             output=output,
         )
@@ -1076,7 +1084,7 @@ class SurfaceManager:
             s.window.root.set(visible=True)
             s.window.set(
                 input_region=_input_for(bar, s.geometry, self._output_size(s)),
-                keyboard=_keyboard(bar),
+                keyboard=_keyboard(bar, False, holds_text_field(s.planned.expanded.nodes)),
             )
             self._arm_hide_after(s)
             self._trace(s, "shown")

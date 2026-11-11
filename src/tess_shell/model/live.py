@@ -147,7 +147,9 @@ class LiveTree:
         handlers = node.handlers
         if node.handlers and (use or here.entries):
             handlers = {
-                k: dataclasses.replace(h, use=use or h.use, entries=here.entries)
+                k: dataclasses.replace(
+                    h, use=h.use if h.forwarded else use or h.use, entries=here.entries
+                )
                 for k, h in node.handlers.items()
             }
         for handler in handlers.values():
@@ -166,7 +168,7 @@ class LiveTree:
         value: m.SlotValue,
         ctx: _Ctx,
     ) -> m.Value | None:
-        row = blocks.BLOCKS.get(node.kind)
+        row = blocks.table(node.kind)
         kind = (row[0] if scope == "props" else row[1]).get(key) if row else None
         if kind is None and row is not None:
             kind = (row[1] if scope == "props" else row[0]).get(key)

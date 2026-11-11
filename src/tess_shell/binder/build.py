@@ -15,6 +15,9 @@ from typing import TYPE_CHECKING, Any
 
 from tess_shell.binder.convert import CONVERTERS
 from tess_shell.binder.model import (
+    FIELD,
+    FIELD_INPUT,
+    FIELD_LINE,
     NO_POINTER_BLOCKS,
     BindError,
     BindFailed,
@@ -94,6 +97,13 @@ class Wire:
     disabled: bool = False  # the block's own ``Enabled: false``
     inherited: bool = False  # a block above it is disabled
     part: bool = False  # the node is a module's named part (``Part: track``)
+    # a TextField's text input: told when the field becomes blocked or free (it must stop taking
+    # keys, not only clicks)
+    on_block: Callable[[bool], None] | None = None
+    # a TextField's box: the text input that takes the focus when the box is pressed, and the
+    # wire that shows the box's hover and press (the text input's style states follow the box)
+    focus_target: TreNode | None = None
+    mirror: Wire | None = None
 
     @property
     def blocked(self) -> bool:
@@ -174,10 +184,24 @@ class Wire:
                 self._run("up")
             if was_hovered:
                 self._run("leave")
+        if self.on_block is not None and self.blocked != was:
+            self.on_block(self.blocked)
 
     def cancel(self) -> None:
         """The press became a move or resize of the window: no up or click follows."""
         self.up()
+
+    def focus_field(self) -> None:
+        """A press on a TextField's box (its padding, or its border) gives the text input the
+        focus, as a press on the text itself does."""
+        target = self.focus_target
+        if target is not None and not target.get("focused"):
+            target.focus()
+
+    def follow(self, event: str) -> None:
+        """The state of the wire that follows this one (a TextField's text input)."""
+        if self.mirror is not None:
+            getattr(self.mirror, event)()
 
     def wanted(self) -> dict[str, Any]:
         """The properties the current state forces: hovered's, with pressed's on top and, when
@@ -228,6 +252,14 @@ class Entry:
     children: list[Entry] = field(default_factory=list)
     wire: Wire | None = None
     states: dict[str, dict[str, Any]] = field(default_factory=dict)  # tre props per style state
+
+
+def field_input(box: Entry) -> Entry | None:
+    """The text input of a built TextField: in the line box that is the box's one child."""
+    for line in box.children:
+        if line.typed.kind == FIELD_LINE:
+            return next((c for c in line.children if c.typed.kind == FIELD_INPUT), None)
+    return None
 
 
 @dataclass(slots=True)
@@ -285,9 +317,89 @@ class View:
             entry.wire = Wire(entry.typed.handlers, tre=entry.tre, window=self.window)
         wire = entry.wire
         wire.states = entry.states
-        if any(state != "disabled" for state in wire.states):  # ``disabled`` needs no pointer
-            wire.listen()
-        self._ensure_click(entry)
+        if entry.typed.kind == FIELD_INPUT:
+            self._ensure_field_events(entry)  # its states follow its box, which listens
+        else:
+            if any(state != "disabled" for state in wire.states):  # ``disabled`` needs no pointer
+                wire.listen()
+            self._ensure_click(entry)
+            if entry.typed.kind == FIELD:
+                self._wire_field(entry)
+
+    def _wire_field(self, entry: Entry) -> None:
+        """A TextField's box: a press gives the text input the focus, and the box's hover and
+        press are the text input's too (its ``Foreground`` states). The wires are looked up when
+        an event arrives, so a rebuild that replaces the text input needs no new listener."""
+        assert entry.wire is not None
+        wire = entry.wire
+        inner = field_input(entry)
+        if inner is not None:
+            self._wire(inner)  # the walk reaches the children after their box
+        wire.focus_target = inner.tre if inner is not None else None
+        wire.mirror = inner.wire if inner is not None else None
+        if "field" not in wire.wired:
+            wire.wired.add("field")
+            wire.add_hook("down", wire.focus_field)
+
+            def follower(event: str, wire: Wire = wire) -> Callable[[], None]:
+                return lambda: wire.follow(event)
+
+            for event in ("enter", "leave", "down", "up"):
+                wire.add_hook(event, follower(event))
+        if inner is not None and inner.wire is not None:
+
+            def block(blocked: bool, box: Entry = entry) -> None:
+                self._block_field(box, blocked)
+
+            inner.wire.on_block = block  # told by the next ``_sync``
+
+    def _block_field(self, box: Entry, blocked: bool) -> None:
+        """A disabled TextField takes no pointer and no keys (tre's ``disabled`` is an
+        accessibility state only): its text input is read-only, takes no hit, says it is
+        disabled, and gives up the focus. Enabled again, it has what the file declared."""
+        inner = field_input(box)
+        if inner is None or inner.tre is None or box.tre is None:
+            return
+        declared = inner.props
+        changes: dict[str, Any] = {
+            "hit_testable": not blocked,
+            "disabled": blocked or bool(declared.get("disabled")),
+            "read_only": blocked or bool(declared.get("read_only")),
+        }
+        self.window.apply([(inner.tre, changes)])
+        if blocked and inner.tre.get("focused"):
+            # tre has no way to drop the focus but to give it away: the box takes it (a box that
+            # no key or press can reach) and is not focusable again
+            box.tre.set(focusable=True)
+            box.tre.focus()
+            box.tre.set(focusable=False)
+
+    def _ensure_field_events(self, entry: Entry) -> None:
+        """The text input's ``change``, ``submit`` and ``input`` listeners (``On_Changed``,
+        ``On_Submit``, ``On_Text_Commit``), one each, once the node has a handler for it. A
+        disabled field raises nothing, and a read-only one raises no commit."""
+        wire, tre = entry.wire, entry.tre
+        if tre is None or wire is None:
+            return
+        for event, key in (
+            ("change", "On_Changed"),
+            ("submit", "On_Submit"),
+            ("input", "On_Text_Commit"),
+        ):
+            token = f"field:{event}"
+            if token in wire.wired or key not in wire.handlers:
+                continue
+            wire.wired.add(token)
+
+            def listener(raw: Any, wire: Wire = wire, key: str = key, tre: TreNode = tre) -> None:
+                handler = wire.handlers.get(key)
+                if handler is None or wire.blocked or self.sink is None:
+                    return
+                if key == "On_Text_Commit" and tre.get("read_only"):
+                    return  # nothing was inserted
+                self.sink(handler, key, raw)
+
+            tre.on(event, listener)
 
     def _sync(self, entries: list[Entry], inherited: bool = False) -> None:
         """Tell every wire whether its block, or one above it, is disabled (``Enabled: false`` is
@@ -296,7 +408,8 @@ class View:
         for e in entries:
             own = bool(e.props.get("disabled"))
             if e.wire is not None:
-                e.wire.sync(own, inherited, bool(e.typed.part))
+                # a text input is a part of its field: it shows ``disabled`` when the field is
+                e.wire.sync(own, inherited, bool(e.typed.part) or e.typed.kind == FIELD_INPUT)
                 self._ensure_click(e)
             self._sync(e.children, inherited or own)
 
@@ -351,6 +464,12 @@ class View:
                 continue
             have = self.applied.setdefault(node_id, {})
             fresh = {n: v for n, v in converted.items() if n not in have or have[n] != v}
+            if kind == FIELD_INPUT and "text" in fresh:
+                tre = self.nodes[node_id]
+                if tre.get("text") == fresh["text"]:
+                    # the module echoes what the user typed: setting it again would put the caret
+                    # at the end of the text
+                    have["text"] = fresh.pop("text")
             wire = self.wires.get(node_id)
             if wire is not None and wire.saved:
                 # a state holds some of these: the base value waits under it

@@ -184,6 +184,14 @@ Value = (
 # pressed while it is disabled).
 STATES = ("hovered", "pressed", "disabled")
 
+# A TextField is built as four nodes (``model.field``): its box, a line box in the box's cell, a
+# text in the line that gives it the height of the field's lines, and the text input over the
+# line. The dot keeps the three inner words out of reach of a file.
+FIELD = "TextField"
+FIELD_LINE = "TextField.line"
+FIELD_SIZE = "TextField.size"
+FIELD_INPUT = "TextField.input"
+
 # Blocks that tre sends no pointer events: a listener on a ``text`` node is accepted and never
 # called (a click goes to the box around it), so a state style cannot apply to one.
 NO_POINTER_BLOCKS = ("Text",)
@@ -207,6 +215,9 @@ class Handler:
     # the ``For`` entries around the block, outermost first (set by the model): what a slot in
     # ``slots`` reads the loop variables from
     entries: tuple[Any, ...] = field(default=(), compare=False)
+    # written on a module call and raised by the module's root block: ``use`` is then the use
+    # that holds the call (empty in a shell file), not the module's own
+    forwarded: bool = False
     origin: Origin = _origin()
 
 
@@ -249,6 +260,8 @@ class UseNode:
     name: str | None = None
     params: Mapping[str, Value] = field(default_factory=dict)
     tooltip: TooltipRef | None = None
+    # ``On_Changed`` and the like written on the call: the module's root block raises them
+    handlers: Mapping[str, Handler] = field(default_factory=dict)
     origin: Origin = _origin()
 
 

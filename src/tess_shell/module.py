@@ -27,6 +27,11 @@ class Event:
     x: float | None = None  # pointer position in the window
     y: float | None = None
     button: str | None = None  # "primary", "secondary", ...
+    # a text field's ``On_Changed``: the text before and after the user's edit; its
+    # ``On_Text_Commit``: the text that was committed (typed, pasted or from an input method)
+    old: str | None = None
+    new: str | None = None
+    text: str | None = None
 
 
 class Module:

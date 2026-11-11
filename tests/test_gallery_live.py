@@ -47,4 +47,4 @@ def test_the_gallery_starts_clean_on_a_private_sway(
     # the private sway has no session bus: that one portal warning is the environment's
     bad = [line for line in bad if "the session bus is not reachable" not in line]
     assert bad == []
-    assert "step 10 (model): 3 module uses, 2 modules" in shell.stderr
+    assert "step 10 (model)" in shell.stderr

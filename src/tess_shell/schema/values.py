@@ -119,6 +119,27 @@ def coerce(
             if n is None or isinstance(n, float):
                 raise _bad("a whole number", value)
             return m.Number(n, origin=origin)
+        case "max_length" | "lines":
+            n = _number(value)
+            low = 0 if kind == "max_length" else 1
+            if n is None or isinstance(n, float) or n < low:
+                what = "a whole number, 0 or more" if low == 0 else "a whole number, 1 or more"
+                raise _bad(what, value)
+            return m.Number(n, origin=origin)
+        case "selection":
+            if (
+                isinstance(value, tess_dl.List)
+                and len(value.items) == 2
+                and all(
+                    (n := _number(item)) is not None and not isinstance(n, float) and n >= 0
+                    for item in value.items
+                )
+            ):
+                return m.Seq(
+                    tuple(m.Number(int(_number(item) or 0), origin=origin) for item in value.items),
+                    origin=origin,
+                )
+            raise _bad("two whole numbers, [start, end] (byte offsets)", value)
         case "bool" | "wrap_flag" | "enabled":
             word = _word(value)
             if word in ("true", "false"):
@@ -323,6 +344,20 @@ def from_python(
             if n is None or (kind == "whole" and isinstance(n, float)):
                 raise bad("a whole number" if kind == "whole" else "a number")
             return m.Number(n, origin=origin)
+        case "max_length" | "lines":
+            n = _py_number(value)
+            low = 0 if kind == "max_length" else 1
+            if n is None or isinstance(n, float) or n < low:
+                raise bad("a whole number, 0 or more" if low == 0 else "a whole number, 1 or more")
+            return m.Number(n, origin=origin)
+        case "selection":
+            if isinstance(value, list | tuple) and len(value) == 2:
+                ends = [_py_number(v) for v in value]
+                if all(isinstance(e, int) and e >= 0 for e in ends):
+                    return m.Seq(
+                        tuple(m.Number(int(e or 0), origin=origin) for e in ends), origin=origin
+                    )
+            raise bad("two whole numbers, [start, end]")
         case "bool" | "wrap_flag" | "enabled":
             if isinstance(value, bool):
                 return m.Bool(value, origin=origin)

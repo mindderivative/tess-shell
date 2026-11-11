@@ -119,6 +119,47 @@ def boolean(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ())
     raise _bad(value, "true or false")
 
 
+def _whole_of(value: Value) -> int | None:
+    if isinstance(value, Number) and isinstance(value.value, int):
+        return None if isinstance(value.value, bool) else value.value
+    return None
+
+
+def max_length(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """The most characters a text input takes; ``0`` is no limit (tre's ``None``)."""
+    (name,) = names
+    n = _whole_of(value)
+    if n is None:
+        raise _bad(value, "a whole number")
+    if n < 0:
+        raise BindError("must be 0 or more", value.origin)
+    return {name: n or None}
+
+
+def lines(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """``Lines: 3`` is a text of three lines (``x`` each): a field is as high as its lines."""
+    (name,) = names
+    n = _whole_of(value)
+    if n is None:
+        raise _bad(value, "a whole number")
+    if n < 1:
+        raise BindError("must be 1 or more", value.origin)
+    return {name: "\n".join(["x"] * n)}
+
+
+def selection(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """``Selection: [2, 5]`` is tre's ``(start, end)``, UTF-8 byte offsets."""
+    (name,) = names
+    if (
+        isinstance(value, Seq)
+        and len(value.items) == 2
+        and all(isinstance(i, Number) and isinstance(i.value, int) for i in value.items)
+    ):
+        start, end = (i.value for i in value.items if isinstance(i, Number))
+        return {name: (start, end)}
+    raise _bad(value, "[start, end]")
+
+
 def text(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
     (name,) = names
     if isinstance(value, Text):
@@ -267,6 +308,9 @@ CONVERTERS: Mapping[str, Converter] = {
     "whole": whole,
     "positive": positive,
     "bool": boolean,
+    "max_length": max_length,
+    "lines": lines,
+    "selection": selection,
     "text": text,
     "color": color,
     "enum": enum,

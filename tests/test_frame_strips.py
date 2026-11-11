@@ -234,7 +234,7 @@ def test_the_painters_keyboard_is_none_unless_a_hosted_tree_holds_a_text_input()
     from tess_shell.binder.model import Node
 
     assert not wants_keyboard(Expanded(nodes=[Node("Box", children=(Node("Text"),))]))
-    assert wants_keyboard(Expanded(nodes=[Node("Box", children=(Node("TextInput"),))]))
+    assert wants_keyboard(Expanded(nodes=[Node("Box", children=(Node("TextField"),))]))
 
 
 # -- melded Panels --------------------------------------------------------------------------------
