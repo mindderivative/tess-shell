@@ -62,7 +62,7 @@ The design documentation is in [`docs/`](docs/README.md). Start at [Home](docs/0
 
 ## Display widgets (M4b)
 
-Label, TextBox, ProgressBar, Badge, Marquee_Text, Icon, Image and Expander ship as standard modules; `Tooltip: "text"` is the short form of a tooltip (a slot is written unquoted: `Tooltip: {{ params.Text }}`); a disabled block opens no tooltip, with one exception: a Marquee (so `Marquee_Text`) whose text is cut with an ellipsis shows its whole text. Colours come from the Default stylesheet (`Appearance { Stylesheets: [Default] }`). The gallery: `uv run python tests/kwin/prepare_m4b_gallery.py`, then `/tmp/tess-kwin-m4b/run.sh`.
+Label, TextBox, ProgressBar, Badge, Marquee_Text, Icon, Image and Expander ship as standard modules; `Tooltip: "text"` is the short form of a tooltip (a slot is written unquoted: `Tooltip: {{ params.Text }}`); a disabled block opens no tooltip unless it writes `Tooltip_When_Disabled: true`; a disabled Marquee (so `Marquee_Text`) whose text is cut with an ellipsis always shows its whole text. Colours come from the Default stylesheet (`Appearance { Stylesheets: [Default] }`). The gallery: `uv run python tests/kwin/prepare_m4b_gallery.py`, then `/tmp/tess-kwin-m4b/run.sh`.
 
 ## Interactive widgets (M4c)
 

@@ -359,10 +359,42 @@ def test_a_tooltip_never_opens_over_a_disabled_block_and_opens_over_an_enabled_o
             logger.remove(_SINKS.pop())
 
 
-def test_a_disabled_marquee_cut_with_an_ellipsis_opens_its_tooltip_and_nothing_else_does() -> None:
-    """The one exception to "no tooltip over a disabled block" (M4 Brief, question 24): a Marquee
-    whose text does not fit (so it shows an ellipsis, being disabled); the same Marquee with a
-    short text, and any other disabled block, open none."""
+def test_a_disabled_block_that_says_so_opens_its_tooltip_after_the_enter_delay() -> None:
+    from tests.test_popup import _SINKS, rig
+
+    tip = (
+        "Popup { Name: Tip, Tooltip: true, "
+        "Children { FlexBox { Name: Card, Width: 40, Height: 20 } } }"
+    )
+    for extra, opens in (
+        ("Tooltip_When_Disabled: true, ", True),
+        ("Tooltip_When_Disabled: false, ", False),
+    ):
+        head = "FlexBox { Name: Tipped, Enabled: false, "
+        children = head + extra + "Width: 30, Height: 20, Tooltip: Tip }"
+        (r,) = list(rig(tip, children))
+        node = r.bar.view.nodes["Tipped"]
+        r.bar.window.simulate("pointer_enter", node=node)
+        assert (r.popups._enter_timer is not None) is opens
+        r.advance(100)
+        assert r.popups.current is None  # not before the Enter_Delay
+        r.advance(500)
+        assert (r.popups.current is not None) is opens
+        # the block stays disabled: no hovered look, no click
+        wire = r.bar.view.wires["Tipped"]
+        assert wire.hovered is False and wire.blocked
+        r.bar.window.simulate("pointer_leave", node=node)
+        r.advance(400)
+        assert r.popups.current is None
+        while _SINKS:
+            logger.remove(_SINKS.pop())
+
+
+def test_a_disabled_cut_marquee_opens_its_tooltip_by_itself_and_nothing_else_does_unasked() -> None:
+    """The automatic exception to "no tooltip over a disabled block" (M4 Brief, question 24): a
+    Marquee whose text does not fit (so it shows an ellipsis, being disabled), with no key
+    written. The same Marquee with a short text, and any other disabled block that does not write
+    ``Tooltip_When_Disabled: true``, open none."""
     from tests.test_popup import _SINKS, rig
 
     tip = (
@@ -377,6 +409,12 @@ def test_a_disabled_marquee_cut_with_an_ellipsis_opens_its_tooltip_and_nothing_e
         ),
         ('Marquee { Name: Tipped, Enabled: false, Width: 60, Text: "fits", Tooltip: Tip }', False),
         ("FlexBox { Name: Tipped, Enabled: false, Width: 30, Height: 20, Tooltip: Tip }", False),
+        # the key on a Marquee that fits: the gate still says there is nothing to add
+        (
+            'Marquee { Name: Tipped, Enabled: false, Width: 60, Text: "fits", '
+            "Tooltip_When_Disabled: true, Tooltip: Tip }",
+            False,
+        ),
     )
     for children, opens in cases:
         (r,) = list(rig(tip, children))

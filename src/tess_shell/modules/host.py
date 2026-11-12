@@ -59,6 +59,52 @@ class LoadedModule:
 SLOW_ACTION = 0.05  # seconds; a handler runs on the loop thread, so a slow one is logged
 
 
+@dataclass(frozen=True, slots=True)
+class ActionSpec:
+    """What an ``@action`` method declares after ``event`` (Events and Actions > Call): the
+    arguments a handler may write. ``names`` are its parameters after ``event`` (the ones a call
+    can pass by keyword), ``required`` those with no default, ``kwargs`` whether it has
+    ``**kwargs``. An action with no parameter after ``event`` and no ``**kwargs`` declares nothing
+    and takes any arguments through ``event.args``; one with ``**kwargs`` takes any arguments too,
+    and gets them as keywords."""
+
+    first: str
+    names: tuple[str, ...] = ()
+    required: frozenset[str] = frozenset()
+    kwargs: bool = False
+
+    @property
+    def checked(self) -> bool:
+        """Whether a handler's argument names are checked against ``names`` at load."""
+        return bool(self.names) and not self.kwargs
+
+    def keywords(self, args: Mapping[str, object]) -> dict[str, object]:
+        """The arguments a call passes as keywords: the declared ones (all that are identifiers,
+        for ``**kwargs``). ``event.args`` holds every argument whatever this gives."""
+        if self.kwargs:
+            return {k: v for k, v in args.items() if k.isidentifier() and k != self.first}
+        return {k: args[k] for k in self.names if k in args}
+
+
+def action_spec(fn: Callable[..., Any]) -> ActionSpec:
+    """The :class:`ActionSpec` of a bound method marked ``@action``: its first parameter is the
+    event, the others are the arguments."""
+    params = list(inspect.signature(fn).parameters.values())
+    if not params:
+        return ActionSpec("event")
+    names: list[str] = []
+    required: set[str] = set()
+    kwargs = False
+    for p in params[1:]:
+        if p.kind is inspect.Parameter.VAR_KEYWORD:
+            kwargs = True
+        elif p.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY):
+            names.append(p.name)
+            if p.default is inspect.Parameter.empty:
+                required.add(p.name)
+    return ActionSpec(params[0].name, tuple(names), frozenset(required), kwargs)
+
+
 def handlers_of(children: tuple[object, ...]) -> list[m.Handler]:
     """Every handler in a layout, inside blocks, ``If`` and ``For`` too."""
     found: list[m.Handler] = []
@@ -246,31 +292,51 @@ class ModuleHost:
         return loaded, []
 
     def check_calls(self, handlers: Sequence[m.Handler]) -> list[Finding]:
-        """The ``Call`` handlers among ``handlers`` (the shell's, once the modules are loaded):
-        each names a module that is loaded and an ``@action`` it has. A finding for each that does
-        not, at the handler, with the nearest names (Events and Actions > Call)."""
+        """The module handlers among ``handlers`` (the shell's, once the modules are loaded): a
+        ``Call`` names a module that is loaded and an ``@action`` it has, with the nearest names
+        when it does not; and the arguments of any handler that runs an ``@action`` (a ``Call``,
+        or a bare name in a module's layout) are checked against the method's parameters after
+        ``event``: an unknown name, or a required parameter with no argument, is a finding at the
+        handler (Events and Actions > Call). An action with no parameter after ``event``, or with
+        ``**kwargs``, takes any names. A ``{{ }}`` argument is checked by name only: its value is
+        known when the event fires."""
         out: list[Finding] = []
-        for h in handlers:
-            if not h.module or h.builtin:
+        seen: set[tuple[str, int, int, str, str]] = set()
+        # the planned handlers know their module only for a ``Call`` (a bare name's use is filled
+        # when a tree is resolved); the layouts of the loaded modules give each bare name its own
+        pairs = [(h, h.module or h.use.split("@", 1)[0]) for h in handlers if not h.builtin]
+        for own, mine in self.loaded.items():
+            pairs.extend(
+                (h, h.module or own) for h in handlers_of(mine.definition.children) if not h.builtin
+            )
+        for h, module in pairs:
+            if not module:
                 continue
+            key = (h.origin.file, h.origin.line, h.origin.column, module, h.action)
+            if key in seen:  # a layout is expanded once for each use of its module
+                continue
+            seen.add(key)
             o = h.origin
-            loaded = self.loaded.get(h.module)
+            loaded = self.loaded.get(module)
             if loaded is None:
-                out.append(
-                    Finding(
-                        o.file,
-                        o.line,
-                        o.column,
-                        "error",
-                        "call-module-not-loaded",
-                        f"Call: the module {h.module} is not loaded, so {h.action} cannot run",
-                        "a module loads when a Bar, Panel, Popup or Frame uses it; or its Python "
-                        "failed to load (see the errors above)",
+                if h.module:
+                    out.append(
+                        Finding(
+                            o.file,
+                            o.line,
+                            o.column,
+                            "error",
+                            "call-module-not-loaded",
+                            f"Call: the module {h.module} is not loaded, so {h.action} cannot run",
+                            "a module loads when a Bar, Panel, Popup or Frame uses it; or its "
+                            "Python failed to load (see the errors above)",
+                        )
                     )
-                )
                 continue
             actions = actions_of(type(loaded.instance))
             if h.action not in actions:
+                if not h.module:
+                    continue  # a layout's own action: the load reports a missing one
                 close = nearest(h.action, actions)
                 out.append(
                     Finding(
@@ -289,6 +355,46 @@ class ModuleHost:
                         ),
                     )
                 )
+                continue
+            out.extend(self._check_arguments(h, module, loaded))
+        return out
+
+    def _check_arguments(self, h: m.Handler, module: str, loaded: LoadedModule) -> list[Finding]:
+        spec = action_spec(getattr(loaded.instance, h.action))
+        given = [*h.args, *h.slots]
+        o = h.origin
+        name = f"{module}.{h.action}"
+        out: list[Finding] = []
+        if spec.checked:
+            for arg in given:
+                if arg in spec.names:
+                    continue
+                close = nearest(arg, spec.names)
+                out.append(
+                    Finding(
+                        o.file,
+                        o.line,
+                        o.column,
+                        "error",
+                        "unknown-argument",
+                        f"{name} has no argument {arg}",
+                        f"did you mean {', '.join(close)}?"
+                        if close
+                        else f"its arguments: {', '.join(spec.names)}",
+                    )
+                )
+        for arg in sorted(spec.required - set(given)):
+            out.append(
+                Finding(
+                    o.file,
+                    o.line,
+                    o.column,
+                    "error",
+                    "missing-argument",
+                    f"{name} needs the argument {arg}",
+                    f"write {arg}: ... in the handler (a value or a {{{{ }}}} slot)",
+                )
+            )
         return out
 
     # -- events ---------------------------------------------------------------------------------
@@ -322,7 +428,8 @@ class ModuleHost:
         started = time.monotonic()
         loaded.ctx.caller = loaded.ctx.uses.get(handler.use)  # what ctx.popup() calls from
         try:
-            fn(event)
+            # the arguments the method declares arrive as keywords too; ``event.args`` is whole
+            fn(event, **action_spec(fn).keywords(event.args))
         except Exception:
             logger.opt(exception=True).error(
                 f"{handler.origin}: {module}.{handler.action} raised on {key}"

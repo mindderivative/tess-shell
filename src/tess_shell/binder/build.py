@@ -128,11 +128,19 @@ class Wire:
     mirror: Wire | None = None
     # a Marquee's box: whether its tooltip may open now (it shows the whole text that is cut)
     tooltip_gate: Callable[[], bool] | None = None
-    # a Marquee's box: its tooltip also opens while the block is blocked (disabled), but only
-    # while the text is cut with an ellipsis (``tooltip_gate``): the one exception to "no tooltip
-    # over a disabled block" (M4 Brief, question 24). The pointer hooks added with ``always`` (the
-    # tooltip's) are the ones that still run; nothing else about the block changes.
-    tip_blocked: bool = False
+    # ``Tooltip_When_Disabled: true`` (any block), or a Marquee's box (always): the pointer hooks
+    # added with ``always`` (the tooltip's) also run while the block is blocked; nothing else about
+    # the block changes. A Marquee's tooltip, though, opens only while its text is cut with an
+    # ellipsis (``tooltip_gate``: the whole text is what it adds): the automatic exception to "no
+    # tooltip over a disabled block" (M4 Brief, question 24).
+    tip_key: bool = False  # the block wrote ``Tooltip_When_Disabled: true``
+    tip_auto: bool = False  # a Marquee's box: its cut text's tooltip always opens
+
+    @property
+    def tip_blocked(self) -> bool:
+        """The tooltip's hooks run although the block is blocked."""
+        return self.tip_key or self.tip_auto
+
     always: dict[str, list[Callable[[], None]]] = field(default_factory=dict)
     # a text input: its text as of the last ``change`` its user made or the last set by the shell,
     # which a commit that changed nothing (``Max_Length`` refused it) equals
@@ -179,13 +187,17 @@ class Wire:
             fn()
 
     def _run_blocked(self, event: str) -> None:
-        """A blocked Marquee runs only the tooltip's hooks, and its ``enter`` only while its text
-        is cut (the whole text is what the tooltip adds); a ``leave`` always runs, to cancel a
-        tooltip that is pending or open."""
+        """A blocked block that opted in to its tooltip (or a Marquee) runs only the tooltip's
+        hooks; a Marquee's ``enter`` only while its text is cut. A ``leave`` always runs, to cancel
+        a tooltip that is pending or open."""
         if not self.tip_blocked:
             return
-        if event == "enter" and (self.tooltip_gate is None or not self.tooltip_gate()):
-            return
+        if event == "enter":
+            if self.tooltip_gate is not None:
+                if not self.tooltip_gate():
+                    return
+            elif not self.tip_key:
+                return  # a Marquee not measured yet: nothing says its text is cut
         for fn in self.always.get(event, ()):
             fn()
 
@@ -494,7 +506,9 @@ class View:
         wire = entry.wire
         wire.states = entry.states
         wire.motion = entry.motion
-        wire.tip_blocked = entry.typed.kind == MARQUEE
+        flag = entry.typed.props.get("Tooltip_When_Disabled")
+        wire.tip_key = bool(getattr(flag, "value", False))
+        wire.tip_auto = entry.typed.kind == MARQUEE
         if entry.typed.kind == FIELD_INPUT:
             self._ensure_field_events(entry)  # its states follow its box, which listens
         else:

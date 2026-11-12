@@ -10,8 +10,9 @@ Name: Marquee_Text
 # end. `Loop` is RESTART (jump back to the start) or BOUNCE (scroll back); `Direction` is LEFT or
 # RIGHT. Disabled, or under reduced motion, it does not scroll: a text that does not fit ends with an
 # ellipsis and the tooltip shows the whole text (a Marquee's tooltip opens although the block is
-# disabled, but only while its text is cut: the one exception to "no tooltip over a disabled
-# block"). The whole text is also the accessible name.
+# disabled, but only while its text is cut: the automatic exception to "no tooltip over a disabled
+# block"; the module also writes `Tooltip_When_Disabled`). The whole text is also the accessible
+# name.
 Module {
     Params {
         Text { Type: string, Default: "" }
@@ -29,5 +30,6 @@ Module {
         Direction: {{ params.Direction }}
         Loop: {{ params.Loop }}
         Tooltip: {{ params.Text }}
+        Tooltip_When_Disabled: true
     }
 }
