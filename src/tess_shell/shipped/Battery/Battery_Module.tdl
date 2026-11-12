@@ -14,6 +14,13 @@ Name: Battery
 # theme's warning and error colour, and a dot of that colour appears beside them (the icon also
 # changes shape with the level: the colour is never the only sign). The icon is the name the Python
 # sends in `icon`, looked up in the icon sets when it changes.
+#
+# The three looks (normal, low, critical) are three boxes that exist from the start, one shown at a
+# time with `Visible:`. A level change therefore creates no node and changes no icon colour: only
+# which box is shown and the document of each icon. (Building a new box with a coloured icon when
+# the level changed left the icon undrawn on the maintainer's KWin, 2026-11-13; a headless tree
+# and a private sway drew it. The Root keeps its size from the box that is shown, so the tooltip's
+# hover area never depends on the icon.)
 Module {
     Style: Battery_Style.tdl
 
@@ -53,76 +60,77 @@ Module {
             }
         }
         Children {
-            If {{ critical }} {
-                FlexBox {
-                    Name: Level_Critical
-                    Flex: HORIZONTAL
-                    Align_Items: CENTER
-                    Spacing: 4
-                    Children {
-                        SVG {
-                            Name: Glyph_Critical
-                            Icon: {{ icon }}
-                            Width: 16
-                            Height: 16
-                            A11y_Hidden: true
-                            Foreground: $color.error
-                        }
-                        Circle { Name: Alarm_Critical, Diameter: 6, Fill: $color.error }
-                        If {{ params.show_percent }} {
-                            Text {
-                                Name: Percent_Critical
-                                Class: battery_text
-                                Text: {{ percent }} %
-                                Foreground: $color.error
-                            }
+            FlexBox {
+                Name: Level
+                Visible: {{ not low and not critical }}
+                Flex: HORIZONTAL
+                Align_Items: CENTER
+                Spacing: 4
+                Children {
+                    SVG {
+                        Name: Glyph
+                        Icon: {{ icon }}
+                        Width: 16
+                        Height: 16
+                        A11y_Hidden: true
+                    }
+                    If {{ params.show_percent }} {
+                        Text {
+                            Name: Percent
+                            Class: battery_text
+                            Text: {{ percent }} %
                         }
                     }
                 }
-            } Else {
-                If {{ low }} {
-                    FlexBox {
-                        Name: Level_Low
-                        Flex: HORIZONTAL
-                        Align_Items: CENTER
-                        Spacing: 4
-                        Children {
-                            SVG {
-                                Name: Glyph_Low
-                                Icon: {{ icon }}
-                                Width: 16
-                                Height: 16
-                                A11y_Hidden: true
-                                Foreground: $color.warning
-                            }
-                            Circle { Name: Alarm_Low, Diameter: 6, Fill: $color.warning }
-                            If {{ params.show_percent }} {
-                                Text {
-                                    Name: Percent_Low
-                                    Class: battery_text
-                                    Text: {{ percent }} %
-                                    Foreground: $color.warning
-                                }
-                            }
+            }
+            FlexBox {
+                Name: Level_Low
+                Visible: {{ low and not critical }}
+                Flex: HORIZONTAL
+                Align_Items: CENTER
+                Spacing: 4
+                Children {
+                    SVG {
+                        Name: Glyph_Low
+                        Icon: {{ icon }}
+                        Width: 16
+                        Height: 16
+                        A11y_Hidden: true
+                        Foreground: $color.warning
+                    }
+                    Circle { Name: Alarm_Low, Diameter: 6, Fill: $color.warning }
+                    If {{ params.show_percent }} {
+                        Text {
+                            Name: Percent_Low
+                            Class: battery_text
+                            Text: {{ percent }} %
+                            Foreground: $color.warning
                         }
                     }
-                } Else {
-                    FlexBox {
-                        Name: Level
-                        Flex: HORIZONTAL
-                        Align_Items: CENTER
-                        Spacing: 4
-                        Children {
-                            SVG {
-                                Name: Glyph
-                                Icon: {{ icon }}
-                                Width: 16
-                                Height: 16
-                                A11y_Hidden: true
-                            }
-                            If {{ params.show_percent }} {
-                                Text { Name: Percent, Class: battery_text, Text: {{ percent }} % }
-                            }
+                }
+            }
+            FlexBox {
+                Name: Level_Critical
+                Visible: {{ critical }}
+                Flex: HORIZONTAL
+                Align_Items: CENTER
+                Spacing: 4
+                Children {
+                    SVG {
+                        Name: Glyph_Critical
+                        Icon: {{ icon }}
+                        Width: 16
+                        Height: 16
+                        A11y_Hidden: true
+                        Foreground: $color.error
+                    }
+                    Circle { Name: Alarm_Critical, Diameter: 6, Fill: $color.error }
+                    If {{ params.show_percent }} {
+                        Text {
+                            Name: Percent_Critical
+                            Class: battery_text
+                            Text: {{ percent }} %
+                            Foreground: $color.error
                         }
                     }
                 }

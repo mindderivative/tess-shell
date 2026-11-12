@@ -157,14 +157,21 @@ def level(w: Widgets) -> Any:
     """The box of the level that shows (normal, low or critical), or ``None`` when hidden."""
     if not shown(w):
         return None
-    found = [n for k, n in w.view.nodes.items() if "/Level" in k]
-    assert len(found) == 1
+    found = [
+        n
+        for k, n in w.view.nodes.items()
+        if k.split("/")[-1].startswith("Level") and n.get("visible")
+    ]
+    assert len(found) == 1, f"{len(found)} levels shown"
     return found[0]
 
 
 def glyph(w: Widgets) -> Any:
-    found = [n for k, n in w.view.nodes.items() if "/Glyph" in k]
-    assert len(found) == 1, f"{len(found)} icon nodes"
+    """The icon of the level that shows."""
+    box = level(w)
+    assert box is not None
+    found = [c for c in box.children() if c.get("kind") == "svg"]
+    assert len(found) == 1
     return found[0]
 
 
@@ -178,7 +185,9 @@ def icon_of(w: Widgets) -> str | None:
 
 
 def texts(w: Widgets) -> list[str]:
-    return [n.get("text") for k, n in w.view.nodes.items() if w.view.kinds[k] == "Text"]
+    """The text the Bar shows: that of the level that shows."""
+    box = level(w)
+    return [] if box is None else [c.get("text") for c in box.children() if c.get("kind") == "text"]
 
 
 def values(w: Widgets) -> dict[str, Any]:
@@ -240,12 +249,12 @@ def test_the_warning_level_sets_low_and_critical_and_the_look_follows() -> None:
             assert d.settle(w, lambda: icon_of(w) == "battery-10")
 
             def percent_node() -> Any:
-                found = [n for k, n in w.view.nodes.items() if "/Percent" in k]
-                assert len(found) == 1
-                return found[0]
+                (found,) = [c for c in level(w).children() if c.get("kind") == "text"]
+                return found
 
             def dot() -> Any:
-                return [n for k, n in w.view.nodes.items() if "/Alarm" in k]
+                box = level(w)
+                return [c for c in box.children() if c.get("kind") == "path"] if box else []
 
             assert dot() == [] and percent_node().get("fill") not in (WARNING, ERROR)
             obj.set("WarningLevel", 3)
@@ -464,3 +473,74 @@ def test_the_slot_renders_each_of_the_24_names_and_swaps_the_icon_in_place() -> 
                 seen.add(name)
             assert seen == set(B.ICONS)
             assert w.warnings() == []
+
+
+def near(px: tuple[int, ...], want: tuple[int, ...], tol: int = 40) -> bool:
+    return all(abs(a - b) <= tol for a, b in zip(px[:3], want[:3], strict=True))
+
+
+def glyph_pixels(w: Widgets, want: tuple[int, ...]) -> int:
+    """How many pixels of the colour ``want`` the Bar's drawing has inside the shown icon's box."""
+    node = glyph(w)
+    x, y, gw, gh = (
+        int(node.get(k)) for k in ("layout_x", "layout_y", "layout_width", "layout_height")
+    )
+    assert (gw, gh) == (16, 16)
+    rgba, width, _ = w.window.snapshot()
+    return sum(
+        near(tuple(rgba[(row * width + col) * 4 : (row * width + col) * 4 + 4]), want)
+        for row in range(y, y + gh)
+        for col in range(x, x + gw)
+    )
+
+
+@needs_daemon
+def test_a_level_change_creates_and_removes_no_node_and_the_icon_is_drawn_in_its_colour() -> None:
+    """On the maintainer's KWin the icon was not drawn at low and critical, where the old layout
+    built a new box with a coloured icon. The three looks now exist from the start: a change of
+    level creates and destroys nothing (the node set and the icon nodes stay), and the icon's own
+    pixels have the level's colour."""
+    with desk() as d:
+        fake, obj = d.battery(percentage=60.0)
+        fake.up()
+        with shell(d, "Battery { }") as w:
+            assert d.settle(w, lambda: icon_of(w) == "battery-60")
+            names = set(w.view.nodes)
+            glyphs = {k: n for k, n in w.view.nodes.items() if "/Glyph" in k}
+            assert len(glyphs) == 3
+            plain = near((0, 0, 0), (0, 0, 0))
+            assert plain and glyph_pixels(w, (228, 234, 241)) > 20  # the theme's text colour
+            before = len([x for x in w.lines if "rebuilt" in x])
+            for level_code, pct, want in ((3, 15.0, WARNING), (4, 5.0, ERROR), (1, 60.0, None)):
+                obj.set("WarningLevel", level_code)
+                obj.set("Percentage", pct)
+                assert d.settle(w, lambda p=pct: values(w)["percent"] == int(p))
+                w.advance(16)
+                assert set(w.view.nodes) == names  # nothing created, nothing removed
+                assert all(w.view.nodes[k] == n for k, n in glyphs.items())
+                if want is not None:
+                    assert glyph_pixels(w, want) > 20, f"the icon is not drawn in {want}"
+                    assert glyph_pixels(w, (228, 234, 241)) == 0
+                else:
+                    assert glyph_pixels(w, (228, 234, 241)) > 20
+            rebuilt = [x for x in w.lines if "rebuilt" in x][before:]
+            assert rebuilt == [] or all("0 created, 0 removed" in x for x in rebuilt), rebuilt
+
+
+@needs_daemon
+def test_the_icon_only_battery_keeps_its_size_and_so_its_tooltip_area_at_every_level() -> None:
+    with desk() as d:
+        fake, obj = d.battery(percentage=60.0)
+        fake.up()
+        with shell(d, "Battery { show_percent: false }") as w:
+            assert d.settle(w, lambda: icon_of(w) == "battery-60")
+            (root,) = [n for k, n in w.view.nodes.items() if k.endswith("/Root")]
+            sizes = []
+            for code, pct in ((1, 60.0), (3, 15.0), (4, 5.0), (1, 60.0)):
+                obj.set("WarningLevel", code)
+                obj.set("Percentage", pct)
+                assert d.settle(w, lambda p=pct: values(w)["percent"] == int(p))
+                w.advance(16)
+                sizes.append((root.get("layout_width"), root.get("layout_height")))
+            assert all(w_ >= 16 and h_ >= 16 for w_, h_ in sizes), sizes  # the icon's box at least
+            assert sizes[0] == sizes[-1]
