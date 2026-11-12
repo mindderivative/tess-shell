@@ -314,6 +314,10 @@ class _Cache:
         self.interface = interface
         self.values: dict[str, Any] = {}
         self.loaded = False
+        # a ``GetAll`` is in flight: the changes that arrive meanwhile are kept apart and put on
+        # top of its reply (a signal can be handled before the coroutine that awaits the reply
+        # resumes, and the reply, read before that change, would then wipe it out)
+        self._pending: dict[str, Any] | None = None
         self.users: set[_ModuleDBus] = set()
         self.subs: list[_PropSub] = []
         self._unsubscribe: Unsubscribe | None = None
@@ -338,17 +342,22 @@ class _Cache:
         # a service that is simply not there is expected on some desktops (KWin on sway): an info
         # line, or a debug line when every user of it can do without
         quiet = all(h.is_optional(self.service.kind, self.service.name) for h in self.users)
-        reply = await self.layer.call(
-            self.service,
-            self.path,
-            PROPERTIES,
-            "GetAll",
-            "s",
-            [self.interface],
-            CALL_TIMEOUT,
-            unavailable_level="DEBUG" if quiet else "INFO",
-        )
-        self.values = dict(reply[0]) if reply else {}
+        self._pending = {}
+        try:
+            reply = await self.layer.call(
+                self.service,
+                self.path,
+                PROPERTIES,
+                "GetAll",
+                "s",
+                [self.interface],
+                CALL_TIMEOUT,
+                unavailable_level="DEBUG" if quiet else "INFO",
+            )
+            self.values = dict(reply[0]) if reply else {}
+            self.values.update(self._pending)
+        finally:
+            self._pending = None
         self.loaded = True
 
     async def refresh(self) -> None:
@@ -365,6 +374,8 @@ class _Cache:
         _, changed, invalidated = message.body
         changed = unwrap(changed)
         self.values.update(changed)
+        if self._pending is not None:
+            self._pending.update(changed)
         if invalidated:
             for prop in invalidated:
                 self.values.pop(prop, None)

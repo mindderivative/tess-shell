@@ -15,6 +15,7 @@ from typing import Any
 from tess_shell.services.bus import ServiceThread
 from tess_shell.services.layer import Layer
 from tests.fake_dbus import FakeBus, FakeObject, FakeService, fake_bus
+from tests.fake_nm import NM, Net, add_network
 from tests.test_dbus_layer import Pump
 from tests.widgets_live import Widgets, running
 
@@ -53,6 +54,12 @@ class Desk:
         }
         props.update({k: v for k, v in more.items()})
         return fake, fake.add(DEVICE, DEVICE_INTERFACE, properties=props)
+
+    def network(self) -> tuple[FakeService, Net]:
+        """A fake NetworkManager on the system bus (not up yet): the maintainer's desktop, wired
+        and online."""
+        fake = self.system.service(NM)
+        return fake, add_network(fake)
 
     def profiles(self, active: str = "balanced") -> tuple[FakeService, FakeObject]:
         fake = self.system.service(PROFILES)

@@ -834,3 +834,41 @@ def test_a_new_use_gets_the_current_available_from_the_context() -> None:
         finally:
             ctx.close()
             service.stop()
+
+
+def test_a_change_that_arrives_while_the_first_read_is_in_flight_is_not_lost() -> None:
+    """The layer subscribes before it reads, and a ``PropertiesChanged`` can be handled before the
+    coroutine that awaits the ``GetAll`` reply resumes: the reply, read before that change, must
+    not wipe it out (found on the Network module, where a change right after the start left the
+    module with half of an update). Modelled directly: the reply is the old state and the change
+    is handled first."""
+    from dbus_fast import Variant
+
+    from tess_shell.services.layer import _Cache
+
+    class Message:
+        body = ["iface", {"Primary": Variant("o", "/new")}, []]
+
+    class Stub:
+        async def call(self, *args: Any, **kwargs: Any) -> list[dict[str, Any]]:
+            cache._on_signal(Message())  # handled before ``_load`` resumes
+            return [{"Primary": "/old", "State": 70}]
+
+        def timed(self, helper: Any, fn: Any, *args: Any) -> None:
+            fn(*args)
+
+        def spawn(self, coro: Any) -> None:  # pragma: no cover - nothing is invalidated here
+            coro.close()
+
+    class Service:
+        kind = "system"
+        name = "org.x"
+
+    cache = _Cache(Stub(), Service(), "/p", "iface")  # type: ignore[arg-type]
+
+    async def go() -> None:
+        await cache._load()
+
+    asyncio.run(go())
+    assert cache.values == {"Primary": "/new", "State": 70}, cache.values
+    assert cache.loaded and cache._pending is None
