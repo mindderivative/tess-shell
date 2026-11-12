@@ -359,27 +359,35 @@ def test_a_tooltip_never_opens_over_a_disabled_block_and_opens_over_an_enabled_o
             logger.remove(_SINKS.pop())
 
 
-def test_a_disabled_block_that_says_so_opens_its_tooltip_after_the_enter_delay() -> None:
+def test_a_disabled_marquee_cut_with_an_ellipsis_opens_its_tooltip_and_nothing_else_does() -> None:
+    """The one exception to "no tooltip over a disabled block" (M4 Brief, question 24): a Marquee
+    whose text does not fit (so it shows an ellipsis, being disabled); the same Marquee with a
+    short text, and any other disabled block, open none."""
     from tests.test_popup import _SINKS, rig
 
     tip = (
         "Popup { Name: Tip, Tooltip: true, "
         "Children { FlexBox { Name: Card, Width: 40, Height: 20 } } }"
     )
-    for extra, opens in (
-        ("Tooltip_When_Disabled: true, ", True),
-        ("Tooltip_When_Disabled: false, ", False),
-    ):
-        head = "FlexBox { Name: Tipped, Enabled: false, "
-        children = head + extra + "Width: 30, Height: 20, Tooltip: Tip }"
+    long = "a text that is much too long for sixty pixels"
+    cases = (
+        (
+            f'Marquee {{ Name: Tipped, Enabled: false, Width: 60, Text: "{long}", Tooltip: Tip }}',
+            True,
+        ),
+        ('Marquee { Name: Tipped, Enabled: false, Width: 60, Text: "fits", Tooltip: Tip }', False),
+        ("FlexBox { Name: Tipped, Enabled: false, Width: 30, Height: 20, Tooltip: Tip }", False),
+    )
+    for children, opens in cases:
         (r,) = list(rig(tip, children))
+        r.advance(200)  # the first layout: the Marquee measures its text
         node = r.bar.view.nodes["Tipped"]
         r.bar.window.simulate("pointer_enter", node=node)
-        assert (r.popups._enter_timer is not None) is opens
+        assert (r.popups._enter_timer is not None) is opens, children
         r.advance(100)
         assert r.popups.current is None  # not before the Enter_Delay
         r.advance(500)
-        assert (r.popups.current is not None) is opens
+        assert (r.popups.current is not None) is opens, children
         # the block stays disabled: no hovered look, no click
         wire = r.bar.view.wires["Tipped"]
         assert wire.hovered is False and wire.blocked
@@ -388,3 +396,34 @@ def test_a_disabled_block_that_says_so_opens_its_tooltip_after_the_enter_delay()
         assert r.popups.current is None
         while _SINKS:
             logger.remove(_SINKS.pop())
+
+
+def test_enabled_on_a_module_use_disables_its_root_and_so_the_whole_subtree() -> None:
+    """M4 Brief, question 16: ``Driver { Enabled: false }`` takes the common block keys, and the
+    module's root block is the one that gets it: every block under it is blocked (no click, no
+    hover), and the standard modules do the same."""
+    from tests.widgets_live import running
+
+    layout = (
+        "Module { FlexBox { Name: Root, Width: 80, Height: 20, Children { "
+        "FlexBox { Name: Inner, Width: 40, Height: 20, On_Click: pressed } "
+        "FlexBox { Name: Deep, Width: 20, Height: 20, "
+        "Children { Text { Name: T, Text: x } } } } } }"
+    )
+    with running(
+        "Driver { Enabled: false } Label { Text: hi, Enabled: false }", driver=layout
+    ) as w:
+        root, inner = w.of_use("Driver", "Root"), w.of_use("Driver", "Inner")
+        assert root.get("disabled") is True  # the root is the one block that got the key
+        assert inner.get("disabled") is False  # not copied onto the others
+        wires = {k.rsplit("/", 1)[-1]: v for k, v in w.view.wires.items() if "Driver@" in k}
+        assert wires["Root"].disabled and not wires["Root"].inherited
+        assert all(wires[n].blocked and wires[n].inherited for n in ("Inner", "Deep", "T"))
+        w.window.simulate("click", node=inner)
+        assert w.host.loaded["Driver"].instance.seen == []  # the click is swallowed
+        (label,) = [n for k, n in w.view.nodes.items() if k.startswith("Label@")]
+        assert label.get("disabled") is True  # a standard module: its root (a Text) got it
+    with running("Driver { Enabled: true } Driver { }", driver=layout) as w:
+        assert all(w.of_use("Driver", "Root", i).get("disabled") is False for i in (0, 1))
+        w.window.simulate("click", node=w.of_use("Driver", "Inner", 0))
+        assert len(w.host.loaded["Driver"].instance.seen) == 1

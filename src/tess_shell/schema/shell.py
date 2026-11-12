@@ -1464,6 +1464,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         depth=values.get("Depth"),  # type: ignore[arg-type]
         length=values.get("Length"),  # type: ignore[arg-type]
         keyboard=word("Keyboard", "NONE"),
+        keyboard_written="Keyboard" in values,
         input=region.value if isinstance(region, m.Text) else "WHOLE",
         visible=visible.value if isinstance(visible, m.Bool) else True,
         hide_after=float(hide.value) if isinstance(hide, m.Number) else None,
@@ -2205,6 +2206,7 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         style=style,
         padding=_sides_of(values.get("Padding")),
         keyboard=keyboard.name if isinstance(keyboard, m.Enum) else "NONE",
+        keyboard_written=keyboard is not None,
         edges=edges,
     )
 

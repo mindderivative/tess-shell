@@ -128,10 +128,15 @@ class Wire:
     mirror: Wire | None = None
     # a Marquee's box: whether its tooltip may open now (it shows the whole text that is cut)
     tooltip_gate: Callable[[], bool] | None = None
-    # ``Tooltip_When_Disabled: true``: the pointer hooks added with ``always`` (the tooltip's) also
-    # run while the block is blocked; nothing else about the block changes
+    # a Marquee's box: its tooltip also opens while the block is blocked (disabled), but only
+    # while the text is cut with an ellipsis (``tooltip_gate``): the one exception to "no tooltip
+    # over a disabled block" (M4 Brief, question 24). The pointer hooks added with ``always`` (the
+    # tooltip's) are the ones that still run; nothing else about the block changes.
     tip_blocked: bool = False
     always: dict[str, list[Callable[[], None]]] = field(default_factory=dict)
+    # a text input: its text as of the last ``change`` its user made or the last set by the shell,
+    # which a commit that changed nothing (``Max_Length`` refused it) equals
+    field_text: str | None = None
 
     @property
     def blocked(self) -> bool:
@@ -174,10 +179,15 @@ class Wire:
             fn()
 
     def _run_blocked(self, event: str) -> None:
-        """A blocked block that opted in to its tooltip runs only the tooltip's hooks."""
-        if self.tip_blocked:
-            for fn in self.always.get(event, ()):
-                fn()
+        """A blocked Marquee runs only the tooltip's hooks, and its ``enter`` only while its text
+        is cut (the whole text is what the tooltip adds); a ``leave`` always runs, to cancel a
+        tooltip that is pending or open."""
+        if not self.tip_blocked:
+            return
+        if event == "enter" and (self.tooltip_gate is None or not self.tooltip_gate()):
+            return
+        for fn in self.always.get(event, ()):
+            fn()
 
     def enter(self) -> None:
         if self.blocked:
@@ -484,8 +494,7 @@ class View:
         wire = entry.wire
         wire.states = entry.states
         wire.motion = entry.motion
-        flag = entry.typed.props.get("Tooltip_When_Disabled")
-        wire.tip_blocked = bool(getattr(flag, "value", False))
+        wire.tip_blocked = entry.typed.kind == MARQUEE
         if entry.typed.kind == FIELD_INPUT:
             self._ensure_field_events(entry)  # its states follow its box, which listens
         else:
@@ -546,26 +555,38 @@ class View:
     def _ensure_field_events(self, entry: Entry) -> None:
         """The text input's ``change``, ``submit`` and ``input`` listeners (``On_Changed``,
         ``On_Submit``, ``On_Text_Commit``), one each, once the node has a handler for it. A
-        disabled field raises nothing, and a read-only one raises no commit."""
+        disabled field raises nothing, a read-only one raises no commit, and a commit that left
+        the text as it was (``Max_Length`` refused the edit) raises none either."""
         wire, tre = entry.wire, entry.tre
         if tre is None or wire is None:
             return
+        if "field:change" not in wire.wired:
+            wire.field_text = str(tre.get("text") or "")
         for event, key in (
             ("change", "On_Changed"),
             ("submit", "On_Submit"),
             ("input", "On_Text_Commit"),
         ):
             token = f"field:{event}"
-            if token in wire.wired or key not in wire.handlers:
+            # a node has one listener for an event, so ``change`` is always listened to: it keeps
+            # the text a commit is compared to, whether or not the block has an ``On_Changed``
+            if token in wire.wired or (key not in wire.handlers and event != "change"):
                 continue
             wire.wired.add(token)
 
             def listener(raw: Any, wire: Wire = wire, key: str = key, tre: TreNode = tre) -> None:
+                if key == "On_Changed":
+                    wire.field_text = str(getattr(raw, "new_value", "") or "")
                 handler = wire.handlers.get(key)
                 if handler is None or wire.blocked or self.sink is None:
                     return
-                if key == "On_Text_Commit" and tre.get("read_only"):
-                    return  # nothing was inserted
+                if key == "On_Text_Commit":
+                    if tre.get("read_only"):
+                        return  # nothing was inserted
+                    # tre raises ``input`` for an edit that ``Max_Length`` refused, with the text
+                    # as it was: that commits nothing (Events and Actions, 2026-11-13)
+                    if str(tre.get("text") or "") == wire.field_text:
+                        return
                 self.sink(handler, key, raw)
 
             tre.on(event, listener)
@@ -641,6 +662,7 @@ class View:
         errors: list[BindError] = []
         by_node: dict[str, dict[str, Any]] = {}
         touched: set[str] = set()  # nodes whose control reads something that changed
+        texts: list[tuple[str, str]] = []  # a field's text the shell sets: its wire remembers it
         for node_id, key, value in changes:
             kind = self.kinds.get(node_id)
             row = BLOCKS.get(kind) if kind else None
@@ -662,6 +684,8 @@ class View:
                     # the module echoes what the user typed: setting it again would put the caret
                     # at the end of the text
                     have["text"] = fresh.pop("text")
+                else:
+                    texts.append((node_id, str(fresh["text"])))
             wire = self.wires.get(node_id)
             if wire is not None and wire.saved:
                 # a state holds some of these: the base value waits under it
@@ -690,6 +714,10 @@ class View:
                 return errors
             for node_id, props in by_node.items():
                 self.applied[node_id].update(props)
+            for node_id, text in texts:
+                wire = self.wires.get(node_id)
+                if wire is not None and node_id in by_node:
+                    wire.field_text = text
             for node_id, props in eased.items():
                 left = start_motion(self.nodes[node_id], props, self.motions[node_id])
                 if left:  # tre could not ease these: they jump

@@ -51,7 +51,7 @@ from tess_shell.binder.model import (
     Value,
 )
 from tess_shell.model.expand import Expanded
-from tess_shell.model.field import holds_text_field
+from tess_shell.model.field import describe_text_field, first_text_field, holds_text_field
 from tess_shell.model.look import Look, resolve_style
 from tess_shell.schema.model import (
     BarDef,
@@ -435,6 +435,7 @@ class FrameState:
     shape: Ring | None = None  # the ring as last drawn, without the melded bodies that animate
     full: Ring | None = None  # the ring with every melded Panel that is shown or on its way
     keyboard: str = "none"
+    kb_warned: bool = False  # ``Keyboard: NONE`` was overridden and said so
     # the whole bodies of the melded Panels that peek, for the plan and size they were made for
     full_rects: tuple[Any, ...] = ()
 
@@ -909,12 +910,24 @@ class Frames:
         Panel holds a text input (Frame > What a Frame Holds), else ``none``."""
         if st.painter is None:
             return
-        mode = (
-            "on_demand"
-            if st.plan.frame.keyboard == "ON_DEMAND"
-            or any(wants_keyboard(h.plan.planned.expanded) for h in st.hosts.values())
-            else "none"
+        frame = st.plan.frame
+        found = next(
+            (
+                f
+                for h in st.hosts.values()
+                if (f := first_text_field(h.plan.planned.expanded.nodes)) is not None
+            ),
+            None,
         )
+        mode = "on_demand" if frame.keyboard == "ON_DEMAND" or found is not None else "none"
+        if found is not None and frame.keyboard == "NONE" and frame.keyboard_written:
+            if not st.kb_warned:  # M4 Brief, question 17: the override is said once
+                st.kb_warned = True
+                logger.warning(
+                    f"{frame.origin}: Frame {st.plan.where}: Keyboard: NONE is written, but it "
+                    f"holds {describe_text_field(found)}; the Frame takes the keyboard on_demand "
+                    "(a click on the field gives it the keyboard)"
+                )
         if mode != st.keyboard:
             st.painter.set(keyboard=mode)
             st.keyboard = mode

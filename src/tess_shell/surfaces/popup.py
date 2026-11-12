@@ -421,7 +421,8 @@ class Popups:
     ) -> None:
         """Open the Popup ``name`` beside a block (``mode`` ``show``: only when it is not open
         from there, ``toggle``: or close it). ``node_id`` names the block, ``node`` is the block
-        when it has no id. ``parent`` is the Popup the block is in: the new one is its submenu."""
+        when it has no id. ``parent`` is the Popup the block is in: the new one is its submenu, and
+        with no ``data`` of its own it inherits the parent's ``caller.data``."""
         assert surface.planned is not None
         plan = self.plans.get((surface.planned.group, name))
         if plan is None:
@@ -437,6 +438,10 @@ class Popups:
                 f"{surface.planned.group} ({hint})"
             )
             return
+        if parent is not None and not data:
+            # a submenu with no data of its own reads the ``caller.data`` of the Popup that opened
+            # it (Events and Actions > caller.data); a copy, so neither can change the other
+            data = parent.caller.data
         try:
             copy = args.copy_plain(data or {}, "data")
         except ValueError as exc:

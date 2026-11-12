@@ -451,6 +451,51 @@ def test_max_length_cuts_an_edit_and_a_rejected_edit_raises_no_change() -> None:
     assert b.inp.get("text") == "abcde" and len(b.events("On_Changed")) == 1
 
 
+def commits(b: Built) -> list[Any]:
+    return [raw.text for k, (_, _, raw) in b.seen if k == "On_Text_Commit"]
+
+
+def test_a_commit_that_max_length_refused_raises_no_on_text_commit() -> None:
+    """tre raises ``input`` for a refused edit, with the text as it was (Q20)."""
+    b = Built(node({"Max_Length": num(3), "Text": text("abc")}, handlers=handlers(*ALL)))
+    b.focus()
+    b.type("d")
+    assert b.inp.get("text") == "abc" and b.seen == []
+    b.key("backspace")
+    assert [k for k, _ in b.seen] == ["On_Changed"]
+    b.type("c")  # the same text as before the backspace: but this edit took
+    assert commits(b) == ["c"] and b.inp.get("text") == "abc"
+    b.type("x")  # full again
+    assert commits(b) == ["c"]
+
+
+def test_a_text_the_shell_sets_is_what_a_commit_is_compared_to() -> None:
+    b = Built(node({"Max_Length": num(3), "Text": text("abc")}, handlers=handlers(*ALL)))
+    b.focus()
+    assert b.view.update([("In", "Text", text("ab"))]) == []  # the module sets another text
+    b.type("c")  # an accepted edit that gives the text the field had before the module's set
+    assert b.inp.get("text") == "abc" and commits(b) == ["c"]
+    b.type("x")
+    assert commits(b) == ["c"]
+    b.view.rebuild(
+        resolve(
+            [
+                named(
+                    compose(
+                        node({"Max_Length": num(3), "Text": text("xyz")}, handlers=handlers(*ALL))
+                    )
+                )
+            ],
+            LOOK,
+        )[0]
+    )
+    b.type("w")  # refused: the text is the one the rebuild set
+    assert commits(b) == ["c"]
+    b.key("backspace")
+    b.type("z")
+    assert commits(b) == ["c", "z"]
+
+
 def test_a_text_longer_than_the_limit_is_kept_and_can_be_deleted() -> None:
     b = Built(node({"Max_Length": num(2), "Text": text("abcdef")}, handlers=handlers("On_Changed")))
     assert b.inp.get("text") == "abcdef"

@@ -61,6 +61,8 @@ class _Plan:
     restates: list[tuple[Wire, dict[str, dict[str, Any]], dict[str, Any]]] = field(
         default_factory=list
     )
+    # a text field's text the shell sets, for the wire to remember (what a commit is compared to)
+    texts: list[tuple[Wire, str]] = field(default_factory=list)
     # a kept node's changes that ease, with the transition it asks for
     animations: list[tuple[TreNode, dict[str, Any], Motion]] = field(default_factory=list)
 
@@ -94,6 +96,8 @@ def _diff(
             if node.kind == FIELD_INPUT and "text" in changed:
                 if kept.tre.get("text") == changed["text"]:
                     del changed["text"]  # the user typed it: setting it again moves the caret
+                elif kept.wire is not None:
+                    plan.texts.append((kept.wire, str(changed["text"])))
             states = entry_states(node)
             if kept.wire is not None and (states or kept.wire.states):
                 # what a state holds is not set under it; the wire keeps the new value for the end
@@ -173,6 +177,8 @@ def rebuild(view: View, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> R
         left = start_motion(tre, eased, motion)
         if left:  # tre could not ease these: they jump
             tre.set(**left)
+    for wire, text in plan.texts:
+        wire.field_text = text
     for wire, states, held in plan.restates:
         wire.restate(states, held)  # a node keeps the state the pointer has it in, restyled
     for fresh, tre in built:

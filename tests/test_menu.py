@@ -142,7 +142,8 @@ def test_a_submenu_opens_beside_its_item_after_a_rest_and_closes_with_its_parent
         sub = op.sub
         assert sub is not None and sub.popup.name == "Share_Menu" and sub.parent_op is op
         assert share.get("expanded") is True
-        assert sub.caller.use.startswith("MenuItem@") and sub.caller.data == {}
+        assert sub.caller.use.startswith("MenuItem@")
+        assert sub.caller.data == {"Id": 7}  # the data of the Menu that opened it (Q22)
         assert w.manager.popups.current is op  # the root stays the open popup
         assert [p.popup.name for p in w.manager.popups.chain()] == ["File_Menu", "Share_Menu"]
         w.manager.popups.close(op, "test")
@@ -255,3 +256,24 @@ def test_a_module_inside_a_popup_opens_a_submenu_with_ctx_popup() -> None:
         row = [n for k, n in op.view.nodes.items() if k.endswith("/Row")][0]
         click(op, row)
         assert op.sub is not None and op.sub.popup.name == "Share_Menu" and op.sub.parent_op is op
+
+
+def test_a_submenu_reads_the_data_of_the_menu_that_opened_it_and_cannot_change_it() -> None:
+    popups = POPUPS.replace(
+        'MenuItem { Text: "Mail", On_Click { Action: Call, Target: "Driver.pressed" } }',
+        'MenuItem { Text: "Mail", On_Click { Action: Call, Target: "Driver.pressed", Id: {{ caller.data.Id }} } }',
+    )
+    assert popups != POPUPS
+    with running(BAR, popups=popups) as w:
+        assert w.warnings() == [], w.warnings()
+        op = open_menu(w)
+        click(op, item(op, "Share"))
+        sub = op.sub
+        assert sub is not None and sub.caller.data == {"Id": 7}
+        click(sub, item(sub, "More"))  # a second level inherits it too
+        assert sub.sub is not None and sub.sub.caller.data == {"Id": 7}
+        click(sub, item(sub, "Mail"))
+        assert seen(w)[-1][2] == {"Id": 7}  # a submenu item acts on the parent menu's item
+        assert sub.record is not None
+        sub.record["data"]["Id"] = 99  # what a slot reads is a copy: the parent's data is whole
+        assert op.caller.data == {"Id": 7} and sub.caller.data == {"Id": 7}

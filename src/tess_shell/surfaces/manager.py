@@ -23,7 +23,7 @@ from tess_shell.binder.model import BindError, BindFailed, Color, Handler, Value
 from tess_shell.binder.shadow import DEFAULT_MAX, style_bleed, style_shadows
 from tess_shell.model import args
 from tess_shell.model.expand import Expanded, expand
-from tess_shell.model.field import holds_text_field
+from tess_shell.model.field import describe_text_field, first_text_field, holds_text_field
 from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, apply_rules, resolve_style
 from tess_shell.model.store import Change, ValueStore
@@ -488,6 +488,7 @@ class SurfaceManager:
         self._store = store
         self.surfaces: list[Surface] = []
         self._planned: list[Planned] = []
+        self._kb_warned: set[str] = set()  # surfaces whose ``Keyboard: NONE`` was overridden
         self._handle: Any = None
         self._all_uses: Mapping[str, Use] = {}
         from tess_shell.surfaces.popup import PopupPlan, Popups  # popup.py imports this module
@@ -794,8 +795,18 @@ class SurfaceManager:
 
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
         kind = _kind(bar)
-        field = holds_text_field(planned.expanded.nodes)
+        found = first_text_field(planned.expanded.nodes)
+        field = found is not None
         if field and not hidden and _keyboard(bar, False, True) != _keyboard(bar):
+            if getattr(bar, "keyboard_written", False) and planned.key not in self._kb_warned:
+                # ``Keyboard: NONE`` is written, and a field needs the keyboard to be typed in
+                # (M4 Brief, question 17): the override is said once, not silent
+                self._kb_warned.add(planned.key)
+                logger.warning(
+                    f"{bar.origin}: {kind} {where}: Keyboard: NONE is written, but it holds "
+                    f"{describe_text_field(found)}; the surface takes the keyboard on_demand "
+                    "(a click on the field gives it the keyboard)"
+                )
             logger.info(f"{kind} {where}: keyboard on_demand, it holds a text field")
         window = LayerWindow(
             f"tesserae-shell.{kind.lower()}.{bar.name}",

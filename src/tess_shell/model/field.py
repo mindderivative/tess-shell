@@ -180,14 +180,36 @@ def _split_states(
     return box, inp
 
 
-def holds_text_field(nodes: Sequence[Any]) -> bool:
-    """Whether a tree (the expanded nodes of a surface, ``If`` and ``For`` bodies too) holds a
-    TextField: its surface then takes the keyboard ``on_demand``, so a click on the field gives
-    it the keyboard (M4 Brief: a text field takes the keyboard when it is clicked)."""
+def first_text_field(nodes: Sequence[Any]) -> Any | None:
+    """The first TextField of a tree (the expanded nodes of a surface, ``If`` and ``For`` bodies
+    too), or ``None``."""
     for node in nodes:
         if getattr(node, "kind", None) == m.FIELD:
-            return True
+            return node
         for attr in ("children", "body", "else_body"):
-            if holds_text_field(getattr(node, attr, None) or ()):
-                return True
-    return False
+            found = first_text_field(getattr(node, attr, None) or ())
+            if found is not None:
+                return found
+    return None
+
+
+def holds_text_field(nodes: Sequence[Any]) -> bool:
+    """Whether a tree holds a TextField: its surface then takes the keyboard ``on_demand``, so a
+    click on the field gives it the keyboard (M4 Brief: a text field takes the keyboard when it is
+    clicked)."""
+    return first_text_field(nodes) is not None
+
+
+def describe_text_field(node: Any) -> str:
+    """A text field for a message: its ``Name``, the module use it stands in and its place in the
+    file."""
+    module = str(getattr(node, "owner", None) or "").split("@", 1)[0]
+    parts = ["the text field"]
+    if getattr(node, "name", None):
+        parts.append(str(node.name))
+    if module:
+        parts.append(f"of {module}")
+    origin = getattr(node, "origin", None)
+    if origin is not None and origin.file:
+        parts.append(f"({origin.file}:{origin.line})")
+    return " ".join(parts)

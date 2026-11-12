@@ -88,8 +88,6 @@ _COMMON: dict[str, KeyRow] = {
     "Align_Self": _k("align_self", "enum", *ALIGN),
     "Z_Index": _k("z_index", "whole"),
     "Label": _k("label", "text"),
-    # a disabled block's tooltip opens (the block says so); the shell's own key, nothing for tre
-    "Tooltip_When_Disabled": _k((), "bool"),
     "A11y_Hidden": _k("a11y_hidden", "bool"),
     "Opacity": _k("opacity", "number"),
     "Position": _k("position", "enum", "RELATIVE", "ABSOLUTE"),

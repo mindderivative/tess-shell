@@ -237,6 +237,26 @@ def test_the_painters_keyboard_is_none_unless_a_hosted_tree_holds_a_text_input()
     assert wants_keyboard(Expanded(nodes=[Node("Box", children=(Node("TextField"),))]))
 
 
+def test_a_frame_with_a_written_keyboard_none_that_holds_a_field_says_so_once() -> None:
+    """M4 Brief, question 17: the Frame takes the keyboard on_demand, and says so once."""
+    from loguru import logger
+
+    lines: list[str] = []
+    sink = logger.add(lines.append, level="DEBUG", format="{level} {message}")
+    try:
+        edges = "Edges { Left { Children { TextField { Name: Query, Width: 20 } } } }"
+        manager, _, _ = started(f"Frame {{ Name: F, Thickness: 30, Keyboard: NONE, {edges} }}")
+        assert only(manager).painter.get("keyboard") == "on_demand"
+        said = [x for x in lines if x.startswith("WARNING") and "Keyboard: NONE is written" in x]
+        assert len(said) == 1 and "Frame" in said[0] and "Query" in said[0], lines
+        lines.clear()
+        manager, _, _ = started(f"Frame {{ Name: F, Thickness: 30, {edges} }}")  # not written
+        assert only(manager).painter.get("keyboard") == "on_demand"
+        assert not [x for x in lines if "Keyboard: NONE" in x], lines
+    finally:
+        logger.remove(sink)
+
+
 # -- melded Panels --------------------------------------------------------------------------------
 
 TAB = (

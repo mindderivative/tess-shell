@@ -314,6 +314,31 @@ def test_a_panel_takes_the_keyboard_on_demand_when_it_holds_a_field_and_has_none
         assert any("Panel" in x and "P_None" in x and "on_demand" in x for x in r.lines)
 
 
+def test_a_written_keyboard_none_on_a_surface_with_a_field_is_overridden_with_one_warning() -> None:
+    """Q17: the override is said once, naming the surface and the field; a Panel that never wrote
+    ``Keyboard`` gets the info line only."""
+    unwritten = (
+        "Panel { Name: P_Unwritten, Layer: TOP, Width: 260, Height: 80, "
+        "Children { TextInput { } } }"
+    )
+    panels = "\n".join(
+        (
+            panel("P_None", "NONE", "TextInput { Name: Query }"),
+            unwritten,
+            panel("P_Plain", "NONE", "Host { }"),
+            panel("P_Demand", "ON_DEMAND", "TextInput { }"),
+        )
+    )
+    with running("Host { }", popups=panels) as r:
+        modes = {s.name: s.window.get("keyboard") for s in r.manager.surfaces}
+        assert modes["P_None"] == "on_demand" and modes["P_Unwritten"] == "on_demand"
+        said = [x for x in r.lines if "| WARNING " in x and "Keyboard: NONE is written" in x]
+        assert len(said) == 1, said
+        assert "P_None" in said[0] and "TextInput" in said[0] and "on_demand" in said[0]
+        assert not any("P_Unwritten" in x and "| WARNING " in x for x in r.lines)
+        assert not any("P_Plain" in x and "| WARNING " in x for x in r.lines)
+
+
 def test_the_keyboard_word_of_a_surface() -> None:
     def keyboard(mode: str) -> PanelDef:
         return PanelDef("P", NO_ORIGIN, keyboard=mode)
@@ -323,3 +348,23 @@ def test_the_keyboard_word_of_a_surface() -> None:
     assert _keyboard(keyboard("EXCLUSIVE"), False, True) == "exclusive"
     assert _keyboard(keyboard("ON_DEMAND"), False, False) == "on_demand"
     assert _keyboard(keyboard("NONE"), True, True) == "none"  # a hidden panel takes none
+
+
+def test_a_commit_that_max_length_refused_raises_no_on_text_commit() -> None:
+    """tre raises ``input`` for an edit ``Max_Length`` refused, with the text as it was: the shell
+    stays silent (Q20); ``On_Changed`` never fired for it either."""
+    with running(f'TextInput {{ Name: One, Text: "abc", Max_Length: 3, {CALLS} }}') as r:
+        assert r.problems == [] and bad(r) == []
+        (f,) = r.fields()
+        click(r, f.inp)
+        r.window.simulate("input", text="d")
+        assert f.inp.get("text") == "abc" and r.seen == []
+        r.window.simulate("key_down", key="backspace")  # now there is room again
+        assert f.inp.get("text") == "ab"
+        r.seen.clear()
+        r.window.simulate("input", text="c")  # the same text as before the edit before the last one
+        assert f.inp.get("text") == "abc"
+        assert [s[0] for s in r.seen] == ["commit", "changed"], r.seen
+        r.seen.clear()
+        r.window.simulate("input", text="x")  # full again: refused again
+        assert r.seen == []

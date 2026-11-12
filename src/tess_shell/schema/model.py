@@ -69,6 +69,7 @@ class PanelDef:
     width: Value = None  # type: ignore[assignment]
     height: Value = None  # type: ignore[assignment]
     keyboard: str = "NONE"
+    keyboard_written: bool = False  # the file says ``Keyboard:``: NONE is then a choice
     input: str = "WHOLE"  # WHOLE, NONE or AUTO (Input_Region)
     visible: bool = True
     hide_after: float | None = None  # milliseconds
@@ -156,6 +157,7 @@ class FrameDef:
     visible: bool = True
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     keyboard: str = "NONE"  # the painter's keyboard mode: NONE or ON_DEMAND
+    keyboard_written: bool = False  # the file says ``Keyboard:`` (NONE then is a choice)
     padding: tuple[float, float, float, float] = (0, 0, 0, 0)  # of every strip (left, top, ...)
     edges: Mapping[str, EdgeDef] = field(default_factory=dict)  # ``left``, ``top``, ... -> strip
     melds: tuple[PanelDef, ...] = ()  # Panels with ``Meld: true`` attached to this Frame

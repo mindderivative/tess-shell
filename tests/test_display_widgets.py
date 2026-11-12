@@ -7,6 +7,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from tess_shell.appearance import Appearance
 from tess_shell.binder.images import IMAGES
 from tests.widgets_live import running
@@ -202,3 +204,30 @@ def test_spacer_takes_no_pointer_unless_it_has_a_click() -> None:
         w.window.resize(600, 40)
         w.advance(16)
         assert b.get("layout_x") == before  # the spacers share what is free, the end stays put
+
+
+def test_each_decode_is_timed_and_one_over_the_limit_is_logged_with_the_file(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """M4 Brief, question 18: the loop-thread decode is measured, so the off-thread route is
+    built when a typical decode takes over 8 ms."""
+    from loguru import logger
+
+    from tess_shell.binder import images
+
+    IMAGES.clear()
+    lines: list[str] = []
+    sink = logger.add(lines.append, level="DEBUG", format="{level} {message}")
+    try:
+        IMAGES.timings.clear()
+        IMAGES.load(str(FIX / "png.png"))
+        assert [Path(p).name for p, _ in IMAGES.timings] == ["png.png"]
+        assert IMAGES.timings[0][1] >= 0 and not [x for x in lines if "off-thread" in x]
+        monkeypatch.setattr(images, "SLOW_MS", 0.0)
+        IMAGES.load(str(FIX / "jpeg.jpg"))
+        slow = [x for x in lines if "off-thread" in x]
+        assert len(slow) == 1 and "jpeg.jpg" in slow[0] and slow[0].startswith("DEBUG")
+        IMAGES.load(str(FIX / "jpeg.jpg"))  # a cache hit decodes nothing and logs nothing
+        assert len([x for x in lines if "off-thread" in x]) == 1
+    finally:
+        logger.remove(sink)

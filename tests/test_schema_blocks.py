@@ -70,10 +70,9 @@ def test_required_keys_agree() -> None:
         assert row.required == blocks.REQUIRED.get(name, ())
 
 
-def test_tooltip_when_disabled_is_a_common_bool_key_that_gives_tre_nothing() -> None:
+def test_there_is_no_key_that_opens_a_disabled_blocks_tooltip() -> None:
+    """The one exception is a cut Marquee text (M4 Brief, question 24); no block key opts in."""
     from tess_shell.binder.tables import BLOCKS
 
-    assert blocks.COMMON["Tooltip_When_Disabled"] == "bool"
-    for name, row in BLOCKS.items():
-        if "Visible" in row.keys:
-            assert row.keys["Tooltip_When_Disabled"].tre == (), name
+    assert "Tooltip_When_Disabled" not in blocks.COMMON
+    assert all("Tooltip_When_Disabled" not in row.keys for row in BLOCKS.values())

@@ -80,7 +80,6 @@ COMMON: dict[str, str] = {
     "Align_Self": "enum",
     "Z_Index": "whole",
     "Label": "text",
-    "Tooltip_When_Disabled": "bool",
     "A11y_Hidden": "bool",
     "Opacity": "number",
     # placement and transform (Block Reference > Size, Placement and Order, Transform and Clip)

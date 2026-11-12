@@ -7,13 +7,17 @@ first frame). A file that cannot be read or decoded, or that is larger than the 
 
 Decoded pixels are cached by the file's path and modification time (and size), so a rebuild of a
 surface decodes nothing again, and the cache holds at most :data:`BUDGET` bytes, the least
-recently used pixels going first. Decoding is done on the loop thread, on first use.
+recently used pixels going first. Decoding is done on the loop thread, on first use (M4 Brief,
+question 18: acceptable until a typical decode takes over :data:`SLOW_MS`). Each decode is timed:
+``timings`` keeps the last ones, and one over :data:`SLOW_MS` is logged at debug level with the
+file's name, so the off-thread route is built when it is measured to be needed.
 """
 
 from __future__ import annotations
 
 import os
-from collections import OrderedDict
+import time
+from collections import OrderedDict, deque
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -24,6 +28,7 @@ from tess_shell._vendor import tess_utils
 MAX_SIDE = 4096  # an image larger than this in either side is refused (Standard Modules > Image)
 MAX_FILE = 64 * 1024 * 1024  # a file larger than this is not read
 BUDGET = 256 * 1024 * 1024  # bytes of decoded pixels the cache keeps
+SLOW_MS = 8.0  # a decode on the loop thread over this is logged (about half a 60 Hz frame)
 ERROR_IMAGE = Path(__file__).resolve().parent.parent / "shipped" / "Images" / "error.png"
 
 
@@ -49,6 +54,8 @@ class ImageCache:
         self._error: Pixels | None = None
         self.decoded = 0  # files decoded since the start (a cache hit does not count)
         self.size = 0  # bytes held
+        # (path, milliseconds to read and decode it), the last ones: the measurement of question 18
+        self.timings: deque[tuple[str, float]] = deque(maxlen=64)
 
     def clear(self) -> None:
         self._pixels.clear()
@@ -80,6 +87,7 @@ class ImageCache:
         if stat.st_size > MAX_FILE:
             reason = f"the file is {stat.st_size} bytes, over the limit of {MAX_FILE}"
             return self._failure(key, reason)
+        started = time.perf_counter()
         try:
             data = Path(where).read_bytes()
             width, height, rgba = tess_utils.decode_image(data, MAX_SIDE)
@@ -87,6 +95,13 @@ class ImageCache:
             return self._failure(key, f"cannot read the image: {exc.strerror}")
         except ValueError as exc:
             return self._failure(key, str(exc))
+        took = (time.perf_counter() - started) * 1000
+        self.timings.append((where, took))
+        if took > SLOW_MS:
+            logger.debug(
+                f"image {where}: decoding {width}x{height} took {took:.1f} ms on the loop "
+                f"(over {SLOW_MS:g} ms: the off-thread route is due)"
+            )
         self.decoded += 1
         pixels = Pixels(width, height, rgba)
         self._pixels[key] = pixels
