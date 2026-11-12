@@ -156,14 +156,22 @@ def write_gallery(cfg: Path) -> None:
     (cfg / "settings.tdl").write_text(SETTINGS)
 
 
-BATTERY_SET = """# battery-set.sh PERCENT STATE [present|absent] [normal|low|critical]
+BATTERY_SET = """# battery-set.sh PERCENT STATE [present|absent] [normal|low|critical]  (the last two in any order)
 # STATE: charging, discharging, full, empty, unknown.  Talks to the fake UPower only.
 ROOT=${TESS_M5B_ROOT:-/tmp/tess-kwin-m5b}
 ADDR=$(cat "$ROOT/bus-address" 2>/dev/null) || { echo "run-battery-fake.sh is not running"; exit 1; }
 PERCENT=${1:?percent}
 STATE=${2:?state}
-PRESENT=${3:-present}
-WARNING=${4:-normal}
+PRESENT=present
+WARNING=normal
+shift 2
+for word in "$@"; do  # the rest, in any order: present|absent and normal|low|critical
+  case $word in
+    present|absent) PRESENT=$word ;;
+    normal|low|critical) WARNING=$word ;;
+    *) echo "after the state: present, absent, normal, low or critical (not '$word')"; exit 1 ;;
+  esac
+done
 case $STATE in
   unknown) CODE=0 ;; charging) CODE=1 ;; discharging) CODE=2 ;; empty) CODE=3 ;; full) CODE=4 ;;
   *) echo "state: charging, discharging, full, empty or unknown"; exit 1 ;;
