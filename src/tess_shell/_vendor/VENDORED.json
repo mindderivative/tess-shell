@@ -2,7 +2,7 @@
   "package": "tess_utils",
   "tag": "v0.2.0",
   "version": "0.2.0",
-  "source": "local build /home/phil/Projects/pyDev/projects/tess-utils/build/so",
+  "source": "mindderivative/tess-utils release v0.2.0",
   "files": {
     "tess_utils.cpython-314-x86_64-linux-gnu.so": "a648ca2a81ad2b22bf775fbac2e27463a087c32e40b3eebb0879d9904854286e",
     "tess_utils.pyi": "27446bd767ce8acb90b040ce8a18213244e8f44213fecb63987d72c637718405"
