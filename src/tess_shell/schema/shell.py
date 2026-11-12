@@ -337,15 +337,14 @@ def _part(ctx: _Ctx, slot: tess_dl.Slot) -> m.SlotPart:
 
 
 def _body(ctx: _Ctx, entries: tuple[tess_dl.Entry, ...]) -> tuple[Child, ...]:
-    """The blocks of an ``If`` or ``For`` body. A module call inside one is not built yet: it
-    would need a module use to appear and go away while the shell runs."""
+    """The blocks of an ``If`` or ``For`` body, module calls included: a call in an ``If`` is a use
+    that lives as long as the layout around it, a call in a ``For`` is one use for each entry
+    (Module File > Using a Module in a Structure)."""
     out: list[Child] = []
     for entry in entries:
         if isinstance(entry, Block):
             node = _block(ctx, entry)
-            if isinstance(node, m.UseNode):
-                ctx.not_built(entry.origin, "a module call inside If or For")
-            elif node is not None:
+            if node is not None:
                 out.append(node)
         elif isinstance(entry, tess_dl.If):
             out.append(_if(ctx, entry))
@@ -368,7 +367,12 @@ def _if(ctx: _Ctx, entry: tess_dl.If) -> m.IfNode:
 
 def _for(ctx: _Ctx, entry: tess_dl.For) -> m.ForNode:
     body = _body(ctx, entry.body)
-    head = next((n.kind for n in body if isinstance(n, m.Node)), "For")
+    heads = [
+        n.kind if isinstance(n, m.Node) else n.module
+        for n in body
+        if isinstance(n, m.Node | m.UseNode)
+    ]
+    head = heads[0] if heads else "For"
     if not _NAME.match(entry.variable):
         ctx.add(
             entry.origin,

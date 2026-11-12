@@ -111,15 +111,17 @@ class OutputWatch:
         self._reconcile(planned)
         m._planned = planned
         m.frames.sync(m._frame_plans, m._look)  # the Frames of the outputs that came or went
-        keep = {u.key for u in uses}
+        keep = {u.key for u in uses} | set(m._dyn_registered)
         for key in [k for k in m._store.values if k not in keep]:
             m._store.remove_use(key)
+        m.settle_dynamic()
 
     def _reconcile(self, planned: list[Planned]) -> None:
         m = self._m
         all_uses = {u.key: u for p in planned for u in p.expanded.uses}
         all_uses.update(m.popups.uses())
         all_uses.update(m._frame_uses())
+        m.merge_dynamic(all_uses)
         m._all_uses = all_uses
         old = {s.key: s for s in m.surfaces}
         kept: dict[str, Surface] = {}

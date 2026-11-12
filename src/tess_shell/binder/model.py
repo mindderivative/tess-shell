@@ -292,6 +292,10 @@ class UseNode:
     # in the scope of the place that wrote them
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
     origin: Origin = _origin()
+    # a call in a ``For`` body: its place among the calls of the layout it is in, set by the model.
+    # The use made for an entry is named by it, so editing the file above it (which moves its
+    # line) does not make the entries new uses
+    ordinal: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -318,6 +322,7 @@ class ForNode:
     body: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
     use: str = ""
     origin: Origin = _origin()
+    ordinal: int = 0  # its place among the ``For`` blocks of the layout it is in, set by the model
 
 
 class BindError(Exception):

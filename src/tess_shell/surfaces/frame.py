@@ -52,7 +52,6 @@ from tess_shell.binder.model import (
 )
 from tess_shell.model.expand import Expanded
 from tess_shell.model.field import holds_text_field
-from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, resolve_style
 from tess_shell.schema.model import (
     BarDef,
@@ -1886,7 +1885,7 @@ class Frames:
         else:
             container.set(z_index=_Z_CONTENT)
             st.painter.root.add_child(container)
-        live = LiveTree(m._store, m._all_uses, look=m._look)
+        live = m.new_live(m._all_uses)
         surface = Surface(
             planned.key,
             hp.name,
@@ -1938,7 +1937,7 @@ class Frames:
         assert st.painter is not None
         m, planned = self._m, hp.planned
         surface = host.surface
-        live = LiveTree(m._store, m._all_uses, look=m._look)
+        live = m.new_live(m._all_uses)
         try:
             nodes = live.resolve(planned.expanded)
             if surface.view is None:

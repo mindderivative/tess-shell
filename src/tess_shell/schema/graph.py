@@ -20,6 +20,11 @@ def module_cycles(modules: Mapping[str, ModuleDef]) -> list[Finding]:
                 out.append(node.module)
             elif isinstance(node, m.Node):
                 out.extend(calls(node.children))
+            elif isinstance(node, m.IfNode):
+                out.extend(calls(node.body))
+                out.extend(calls(node.else_body or ()))
+            elif isinstance(node, m.ForNode):
+                out.extend(calls(node.body))
         return out
 
     graph = {name: calls(definition.children) for name, definition in modules.items()}

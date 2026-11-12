@@ -103,6 +103,9 @@ class ModuleHost:
         self.loaded: dict[str, LoadedModule] = {}
         self.popups: PopupPort | None = None  # set by the app once the surfaces exist
         self.dbus: DBusPort | None = None  # set by the app: the D-Bus service layer
+        # the uses made for the entries of a For: they come and go while the shell runs, so a
+        # reload (which brings the modules to the uses the files give) must not drop them
+        self._dynamic: dict[str, Use] = {}
 
     def _finding(
         self, definition: ModuleDef, rule: str, message: str, hint: str = "", line: int = 0
@@ -454,7 +457,8 @@ class ModuleHost:
             gone.ctx.close()
             gone.state = "stopped"
             logger.info(f"module {name}: no longer used, stopped")
-        for name, uses in uses_by_module.items():
+        for name, given in uses_by_module.items():
+            uses = self._with_dynamic(name, given)
             src = sources[name]
             old = self.loaded.get(name)
             if old is None:
@@ -473,6 +477,32 @@ class ModuleHost:
                 if found is not None:
                     findings.append(found)
         return findings
+
+    def dynamic(self, added: Sequence[Use], removed: Sequence[str]) -> list[Finding]:
+        """Uses made for the entries of a ``For`` came or went: tell their modules the way a use
+        that appears or goes away in a reload is told (``use_added``, ``use_removed``)."""
+        before = set(self._dynamic)
+        touched: set[str] = set()
+        for key in removed:
+            gone = self._dynamic.pop(key, None)
+            if gone is not None:
+                touched.add(gone.module)
+        for use in added:
+            self._dynamic[use.key] = use
+            touched.add(use.module)
+        findings: list[Finding] = []
+        for name in touched:
+            loaded = self.loaded.get(name)
+            if loaded is None:
+                logger.warning(f"module {name} is called in a For but is not loaded")
+                continue
+            keep = [u for u in loaded.uses if u.key not in before]  # the uses the files give
+            keep += [u for u in self._dynamic.values() if u.module == name]
+            findings.extend(self._sync_uses(loaded, keep))
+        return findings
+
+    def _with_dynamic(self, name: str, uses: list[Use]) -> list[Use]:
+        return [*uses, *(u for u in self._dynamic.values() if u.module == name)]
 
     def stop_all(self) -> None:
         for loaded in self.loaded.values():

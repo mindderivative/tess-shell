@@ -106,6 +106,8 @@ class Reloader:
         by_module: dict[str, list[Use]] = {}
         for use in uses:
             by_module.setdefault(use.module, []).append(use)
+        for name in self.manager.dynamic_module_names():
+            by_module.setdefault(name, [])
         sources = {name: self._source(name) for name in by_module if name in self.scan.modules}
         report(self.host.sync(sources, {n: u for n, u in by_module.items() if n in sources}, set()))
         self.store.flush()
@@ -170,6 +172,8 @@ class Reloader:
         for use in uses:
             by_module.setdefault(use.module, []).append(use)
             self.store.add_use(use.module, use.key)
+        for name in self.manager.dynamic_module_names(planned):
+            by_module.setdefault(name, [])  # called in a For: loaded, with no use until an entry
         self.scan, self.file_uids = result, file_uids
         sources = {name: self._source(name) for name in by_module}
         everything = {p for s in sources.values() for p in (s.py_path, *s.tdl_paths)}

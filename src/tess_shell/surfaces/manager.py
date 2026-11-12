@@ -504,6 +504,11 @@ class SurfaceManager:
         # a hot-plug re-plans the uses; the host brings the modules to them (the reloader's
         # ``sync_uses``: the same path a reload takes). ``None`` where there are no modules.
         self.sync_uses: Callable[[list[Use]], None] | None = None
+        # the uses made for the entries of a For (Module File > Using a Module in a Structure):
+        # the ones told to the modules, who is told, and the changes a module's first sends make
+        self._dyn_registered: dict[str, Use] = {}
+        self.dynamic_sink: Callable[[list[Use], list[str]], None] | None = None
+        self._deferred: list[Change] = []
 
     def _dispatch(
         self, handler: Handler, key: str, raw: Any, caller: Mapping[str, Any] | None = None
@@ -696,6 +701,63 @@ class SurfaceManager:
         """The module uses of the strips and melded Panels of the last planning."""
         return {u.key: u for fp in self._frame_plans for u in fp.uses()}
 
+    # -- the uses made for the entries of a For -------------------------------------------------
+
+    def new_live(self, uses: Mapping[str, Use], **kwargs: Any) -> LiveTree:
+        """A live tree for one surface; the uses it makes for the entries of a ``For`` are
+        announced to the modules the moment it makes them (their first values are in the store
+        before the blocks that read them are resolved)."""
+        live = LiveTree(self._store, uses, look=self._look, **kwargs)
+        live.activate = self._activate_dynamic
+        return live
+
+    def _activate_dynamic(self, use: Use) -> None:
+        if self._dyn_registered.get(use.key) == use:
+            return
+        self._dyn_registered[use.key] = use
+        self._store.add_use(use.module, use.key)
+        if isinstance(self._all_uses, dict):
+            self._all_uses[use.key] = use
+        if self.dynamic_sink is not None:
+            self.dynamic_sink([use], [])
+        self._deferred.extend(self._store.flush())
+
+    def merge_dynamic(self, uses: dict[str, Use]) -> None:
+        """Keep the uses made for entries in a map of uses that was made again."""
+        uses.update(self._dyn_registered)
+
+    def settle_dynamic(self) -> None:
+        """Tell the modules of the uses whose entries are gone, then apply what the modules sent
+        for the uses that came (the surfaces were resolved with it already; the rest is news)."""
+        live: set[str] = set()
+        for surface in self.every_surface():
+            if surface.live is not None:
+                live.update(surface.live.dyn_uses)
+        gone = [key for key in self._dyn_registered if key not in live]
+        if gone:
+            removed = [self._dyn_registered.pop(key) for key in gone]
+            if isinstance(self._all_uses, dict):
+                for key in gone:
+                    self._all_uses.pop(key, None)
+            if self.dynamic_sink is not None:
+                self.dynamic_sink([], gone)
+            for use in removed:
+                self._store.remove_use(use.key)
+        if self._deferred:
+            pending, self._deferred = self._deferred, []
+            self.on_change(pending)
+
+    def dynamic_module_names(self, planned: Sequence[Planned] | None = None) -> set[str]:
+        """The modules a ``For`` of the last planning calls: they are loaded though nothing uses
+        them until an entry does."""
+        expanded = [p.expanded for p in (self._planned if planned is None else planned)]
+        expanded.extend(p.expanded for p in self._popup_plans)
+        expanded.extend(h.planned.expanded for fp in self._frame_plans for h in fp.hosts)
+        names: set[str] = set()
+        for e in expanded:
+            names |= e.dynamic_modules
+        return names
+
     def every_surface(self) -> list[Surface]:
         """The Bars and Panels, and the strips and melded Panels hosted in a Frame's painter."""
         return [*self.surfaces, *self.frames.host_surfaces()]
@@ -720,6 +782,7 @@ class SurfaceManager:
         for planned in self._planned:
             self.surfaces.append(self._open(planned, all_uses))
         self.frames.sync(self._frame_plans, self._look)
+        self.settle_dynamic()
         return self.surfaces
 
     def _make_window(self, planned: Planned, live: LiveTree, hidden: bool = False) -> Surface:
@@ -806,7 +869,7 @@ class SurfaceManager:
     def _open(self, planned: Planned, all_uses: Mapping[str, Use]) -> Surface:
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
         kind = _kind(bar)
-        live = LiveTree(self._store, all_uses, look=self._look)
+        live = self.new_live(all_uses)
         if isinstance(bar, PanelDef) and not bar.visible and self.hide_mode == "CLOSE":
             # a hidden Panel has no surface at all: nothing to go stale, nothing for the
             # compositor to hold, and no flash when it is first shown (D44, CLOSE)
@@ -1097,7 +1160,7 @@ class SurfaceManager:
             logger.info(f"Panel {s.planned.where} shown (surface kept)")
             self._enter(s)
             return
-        fresh = self._make_window(s.planned, LiveTree(self._store, self._all_uses, look=self._look))
+        fresh = self._make_window(s.planned, self.new_live(self._all_uses))
         assert fresh.window is not None
         s.window, s.view, s.body = fresh.window, fresh.view, fresh.body
         s.live, s.fill, s.shadows, s.extra = fresh.live, fresh.fill, fresh.shadows, fresh.extra
@@ -1277,6 +1340,7 @@ class SurfaceManager:
             for error in surface.view.update(updates):
                 logger.warning(f"{error.origin}: {error.message}")
         self.popups.on_change(changes)
+        self.settle_dynamic()
 
     def check(
         self, shell: ShellDef, modules: Mapping[str, ModuleDef], look: Look | None = None
@@ -1314,6 +1378,7 @@ class SurfaceManager:
         all_uses = {u.key: u for p in planned for u in p.expanded.uses}
         all_uses.update(self.popups.uses())
         all_uses.update(self._frame_uses())
+        self.merge_dynamic(all_uses)
         self._all_uses = all_uses
         old = {s.key: s for s in self.surfaces}
         out: list[Surface] = []
@@ -1335,7 +1400,8 @@ class SurfaceManager:
             self._close(s)
         self.surfaces = out
         self.frames.sync(self._frame_plans, self._look)
-        keep = {u.key for u in store_uses}
+        self.settle_dynamic()
+        keep = {u.key for u in store_uses} | set(self._dyn_registered)
         for key in [k for k in self._store.values if k not in keep]:
             self._store.remove_use(key)
 
@@ -1353,7 +1419,7 @@ class SurfaceManager:
                 logger.debug(f"closing {s.name} on {s.output}: already gone", exc_info=True)
 
     def _update(self, s: Surface, p: Planned, all_uses: Mapping[str, Use]) -> None:
-        live = LiveTree(self._store, all_uses, look=self._look)
+        live = self.new_live(all_uses)
         if s.hidden and s.window is None:  # the next show builds from the new definition
             s.live, s.expanded, s.name, s.planned, s.geometry = (
                 live,

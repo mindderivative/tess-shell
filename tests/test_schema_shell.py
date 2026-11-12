@@ -145,7 +145,9 @@ def test_if_and_for_in_children_are_typed_with_their_slots_and_bodies() -> None:
     assert loop.key is not None and loop.key.text == " w.id "
 
 
-def test_a_module_call_inside_if_or_for_is_not_built() -> None:
+def test_a_module_call_inside_if_or_for_is_read_and_a_shell_file_still_has_no_structure() -> None:
+    from tess_shell.model.expand import expand
+    from tess_shell.schema.model import ModuleDef
     from tess_shell.schema.shell import read_shell as rs
 
     result = tess_dl.parse(
@@ -153,14 +155,16 @@ def test_a_module_call_inside_if_or_for_is_not_built() -> None:
         path="Shells/Main_Shell.tdl",
     )
     assert result.document is not None
-    from tess_shell.schema.model import ModuleDef
-
     clock = ModuleDef(
         "Clock", "c", __import__("tess_shell.binder.model").binder.model.NO_ORIGIN, {}, ()
     )
     shell, findings = rs(result.document, "Shells/Main_Shell.tdl", lambda _: SVG, {"Clock": clock})
-    assert shell is None and findings[0].rule == "not-built"
-    assert "inside If or For" in findings[0].message
+    assert shell is not None and not [f for f in findings if f.severity == "error"]
+    # the call is a UseNode in the If's body; an If in a shell file (not in a module) is refused
+    # by the model, as it was before module calls were allowed in it
+    bar = shell.monitors[0].surfaces[0]
+    out = expand(bar.children, "Main_Shell.Main.Top_Bar", {"Clock": clock}, lambda p: "u", "Main")
+    assert any("outside a module" in e.message for e in out.errors)
 
 
 def test_bar_keys_m1_does_not_build_are_warnings_not_errors() -> None:

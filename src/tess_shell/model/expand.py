@@ -23,6 +23,13 @@ from tess_shell.schema.model import ModuleDef, Rule
 MAX_DEPTH = 8
 
 
+def _ephemeral(name: str) -> str:
+    """The uid of a use made for an entry of a ``For``: its dotted name, with nothing that a node
+    id uses as a separator. Such a use exists while its entry does, so it has no place in the
+    registry that remembers the uids of the uses in the files."""
+    return name.replace("/", ":")
+
+
 @dataclass(slots=True)
 class ExpandedTooltip:
     """A tooltip of a block or a use: what was written (an inline Popup or a Popup's ``Name``)
@@ -46,6 +53,57 @@ class Expanded:
     roots: dict[str, str] = field(default_factory=dict)
     # a node id (a block's, or a use's first root block) -> the tooltip it opens on hover
     tooltips: dict[str, ExpandedTooltip] = field(default_factory=dict)
+    # the modules called inside a ``For`` (and the modules those call): a use of one is made for
+    # each entry while the shell runs, so the module has to be loaded though nothing uses it yet
+    dynamic_modules: set[str] = field(default_factory=set)
+    # expands a module call of a ``For`` body for one entry (see :class:`CallFactory`)
+    factory: CallFactory | None = None
+
+
+class CallFactory:
+    """What the live tree uses to expand a module call that sits in a ``For`` body, once for each
+    entry, when the entry's key is known (the call cannot be expanded when the file is read: the
+    entries do not exist yet). The expansion is the one a call outside a ``For`` gets, with the
+    key and the dotted name the live tree chooses."""
+
+    def __init__(
+        self,
+        modules: Mapping[str, ModuleDef],
+        uid_of: Callable[[str], str],
+        monitor: str,
+        rules: Sequence[Rule],
+    ) -> None:
+        self.modules = modules
+        self.uid_of = uid_of
+        self.monitor = monitor
+        self.rules = rules
+
+    def make(self, call: m.UseNode, outer: Use, key: str, name: str) -> Expanded:
+        """``call`` as the use ``key`` (dotted name ``name``) of ``outer``'s layout: its blocks in
+        ``nodes``, its ``uses`` (the call's own first, then the modules its layout calls), and the
+        tooltips, roots and errors of the expansion."""
+        sub = _Expander(self.modules, self.uid_of, self.monitor, self.rules)
+        sub.out.nodes = sub._use(call, name, (), outer, key, name)  # noqa: SLF001
+        return sub.out
+
+
+def _called(
+    nodes: Sequence[Any], modules: Mapping[str, ModuleDef], into: set[str], depth: int = 0
+) -> None:
+    """The names of the modules called in ``nodes``, and in the layouts of those, at any depth."""
+    for node in nodes:
+        if isinstance(node, m.UseNode):
+            if node.module not in into and node.module in modules and depth < MAX_DEPTH:
+                into.add(node.module)
+                _called(modules[node.module].children, modules, into, depth + 1)
+            _called(node.children, modules, into, depth)
+        elif isinstance(node, m.Node):
+            _called(node.children, modules, into, depth)
+        elif isinstance(node, m.IfNode):
+            _called(node.body, modules, into, depth)
+            _called(node.else_body or (), modules, into, depth)
+        elif isinstance(node, m.ForNode):
+            _called(node.body, modules, into, depth)
 
 
 def _has_content(children: Sequence[Any]) -> bool:
@@ -88,6 +146,7 @@ class _Expander:
         self.monitor = monitor
         self.out = Expanded()
         self._counts: dict[str, int] = {}
+        self._in_for = 0  # inside the body of a ``For``: a module call stays a call (see _walk)
         # the content written on the calls being expanded, innermost last: a ``Content`` marker of
         # a module's layout is replaced by the top one
         self._content: list[list[m.Node | m.IfNode | m.ForNode]] = []
@@ -106,7 +165,11 @@ class _Expander:
         result: list[m.Node | m.IfNode | m.ForNode] = []
         for node in nodes:
             if isinstance(node, m.UseNode):
-                result.extend(self._use(node, path, stack, use))
+                if self._in_for:
+                    # only a ``For`` body holds a call: the model expands it for each entry
+                    result.append(self._for_call(node, path, stack, use))  # type: ignore[arg-type]
+                else:
+                    result.extend(self._use(node, path, stack, use))
             elif isinstance(node, m.Node) and node.kind == m.CONTENT:
                 result.extend(self._content[-1] if self._content else ())
             elif isinstance(node, m.Node):
@@ -136,11 +199,41 @@ class _Expander:
                 else_body=else_body,
                 use=use.key if use else "",
             )
-        return dataclasses.replace(
-            node,
-            body=tuple(self._walk(node.body, path, use, stack, dynamic=True)),
-            use=use.key if use else "",
-        )
+        ordinal = self._next(f"for:{use.key if use else path}")
+        self._in_for += 1
+        try:
+            body = tuple(self._walk(node.body, path, use, stack, dynamic=True))
+        finally:
+            self._in_for -= 1
+        return dataclasses.replace(node, body=body, use=use.key if use else "", ordinal=ordinal)
+
+    def _next(self, counter: str) -> int:
+        n = self._counts.get(counter, 0)
+        self._counts[counter] = n + 1
+        return n
+
+    def _for_call(
+        self, call: m.UseNode, path: str, stack: tuple[str, ...], outer: Use | None
+    ) -> m.UseNode:
+        """A module call in the body of a ``For``: one use for each entry, made when the entries
+        are known (:class:`CallFactory`), so the call stays in the tree. It is expanded once here,
+        as a use that is thrown away, to find what is wrong with it now: a handler the module's
+        root cannot raise, a Content it has no place for, a cycle."""
+        if outer is None:
+            self.out.errors.append(
+                m.BindError("If and For outside a module are not built yet", call.origin)
+            )
+            return call
+        if self.popup_depth:
+            self.out.errors.append(
+                m.BindError("a module call inside a For in a Popup is not built yet", call.origin)
+            )
+            return call
+        trial = _Expander(self.modules, _ephemeral, self.monitor, self.rules)
+        trial._use(call, path, stack, outer, f"{call.module}@trial", f"{path}.trial")  # noqa: SLF001
+        self.out.errors.extend(trial.out.errors)
+        _called([call], self.modules, self.out.dynamic_modules)
+        return dataclasses.replace(call, ordinal=self._next(f"call:{outer.key}"))
 
     def _node(
         self,
@@ -282,18 +375,27 @@ class _Expander:
         return (dataclasses.replace(placed, handlers={**root.handlers, **taken}), *children[1:])
 
     def _use(
-        self, call: m.UseNode, path: str, stack: tuple[str, ...], outer: Use | None = None
+        self,
+        call: m.UseNode,
+        path: str,
+        stack: tuple[str, ...],
+        outer: Use | None = None,
+        key: str | None = None,
+        name: str | None = None,
     ) -> list[m.Node | m.IfNode | m.ForNode]:
+        """``call`` replaced by the module's layout. ``key`` and ``name`` are given for a use made
+        for an entry of a ``For``; otherwise they come from the position of the call."""
         module = self.modules[call.module]
         if call.module in stack or len(stack) >= MAX_DEPTH:
             chain = " -> ".join((*stack, call.module))
             self.out.errors.append(m.BindError(f"module calls form a cycle: {chain}", call.origin))
             return []
-        count = self._counts.get(f"@{path}/{call.module}", 0) + 1
-        self._counts[f"@{path}/{call.module}"] = count
-        label = call.name or f"{call.module}_{count}"
-        name = f"{path}.{label}"
-        key = f"{call.module}@{self.uid_of(name)}"
+        if key is None or name is None:
+            count = self._counts.get(f"@{path}/{call.module}", 0) + 1
+            self._counts[f"@{path}/{call.module}"] = count
+            label = call.name or f"{call.module}_{count}"
+            name = f"{path}.{label}"
+            key = f"{call.module}@{self.uid_of(name)}"
         params: dict[str, Any] = {}
         slots: dict[str, tuple[m.SlotValue, str]] = {}
         for p in module.params.values():
@@ -414,4 +516,5 @@ def expand(
     ``in_popup`` says the children are a Popup's content, where a slot may read ``caller``."""
     expander = _Expander(modules, uid_of, monitor, rules, attach_targets, mark_roots, in_popup)
     expander.run(nodes, path)
+    expander.out.factory = CallFactory(modules, _ephemeral, monitor, rules)
     return expander.out

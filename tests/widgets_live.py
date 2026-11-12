@@ -22,7 +22,7 @@ from tess_shell.files.icons import IconSets
 from tess_shell.model.icons import RuntimeIcons
 from tess_shell.model.look import make_look
 from tess_shell.model.store import ValueStore
-from tess_shell.modules.host import ModuleHost
+from tess_shell.modules.host import ModuleHost, report
 from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.look import read_stylesheet, read_theme
 from tess_shell.schema.model import ModuleDef, StyleDef
@@ -180,6 +180,7 @@ def running(
     popups: str = "",
     driver_py: str = DRIVER_PY,
     dbus: DBusPort | None = None,
+    extra_py: dict[str, str] | None = None,
 ) -> Iterator[Widgets]:
     """The shell of ``tests.test_popup`` with ``children`` in its Bar, every standard module and a
     ``Driver`` module (layout ``driver``, Python ``driver_py``) loaded by a real module host."""
@@ -228,10 +229,15 @@ def running(
             for use in uses:
                 by_module.setdefault(use.module, []).append(use)
             by_module.setdefault("Driver", [])
+            for called in manager.dynamic_module_names():
+                by_module.setdefault(called, [])  # a module called in a For
             for name, module_uses in by_module.items():
                 if name == "Driver":
                     py = Path(tmp) / "Driver_Module.py"
                     py.write_text(driver_py)
+                elif extra_py and name in extra_py:
+                    py = Path(tmp) / f"{name}_Module.py"
+                    py.write_text(extra_py[name])
                 else:
                     py = SHIPPED / name / f"{name}_Module.py"
                 loaded, problems = host.load(defs[name], py, f"uid-{name}", module_uses)
@@ -239,6 +245,7 @@ def running(
             live.problems = host.check_calls(manager.planned_handlers())
             live.problems += host.start_all()
             store.flush()
+            manager.dynamic_sink = lambda added, removed: report(host.dynamic(added, removed))
             manager.build()
             live.window.advance(16)
             yield live

@@ -280,6 +280,8 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         by_module: dict[str, list[Use]] = {}
         for use in uses:
             by_module.setdefault(use.module, []).append(use)
+        for name in manager.dynamic_module_names():
+            by_module.setdefault(name, [])  # called in a For: loaded, with no use until an entry
         for name, module_uses in by_module.items():
             mf = result.modules[name]
             uid = file_uids.get(mf.path) or registry.uid_for(f"module:{name}", "module")
@@ -290,6 +292,8 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         store.flush()  # what the modules sent while starting, before the first build
         logger.info(f"step 10 (model): {len(uses)} module uses, {len(host.loaded)} modules")
         # 11. surfaces
+        # the entries of a For make uses while the surfaces are built: the modules hear of them
+        manager.dynamic_sink = lambda added, removed: report(host.dynamic(added, removed))
         manager.build()
         logger.info(f"step 11 (surfaces): {len(manager.surfaces)} opened")
         store.on_change = manager.on_change

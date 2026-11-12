@@ -12,7 +12,7 @@ or rebuild and :meth:`LiveTree.apply_changes` when the store reports changes.
 from __future__ import annotations
 
 import dataclasses
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -22,7 +22,7 @@ from loguru import logger
 from tess_shell.binder import model as m
 from tess_shell.model import args
 from tess_shell.model.args import TEL_LANGUAGE
-from tess_shell.model.expand import Expanded
+from tess_shell.model.expand import CallFactory, Expanded, ExpandedTooltip, _ephemeral
 from tess_shell.model.look import Look, resolve
 from tess_shell.model.store import Change, ValueStore
 from tess_shell.model.uses import MapScope, Use, UseScope
@@ -62,6 +62,8 @@ class _Ctx:
     prefix: str = ""  # prepended to the ids inside a For entry
     dynamic: bool = False  # inside an If or For: no fast-path links
     entries: tuple[Any, ...] = ()  # the For entries around the block, outermost first
+    outer: _Ctx | None = None  # where the call of the module being resolved was written
+    trail: str = ""  # the For blocks and entries around, by place and name: the key of a use
 
 
 def _touches(reads: frozenset[str] | set[str], key: str) -> bool:
@@ -102,6 +104,16 @@ class LiveTree:
     # a Popup's content: the ``caller`` record its slots read (Events and Actions > caller.data)
     caller: Mapping[str, Any] | None = None
     _owner: Mapping[str, str] = field(default_factory=dict)
+    # the uses made for the entries of a For (Module File > Using a Module in a Structure): the
+    # ones the last resolve made, what each call expanded to (kept while its entry lasts), and
+    # who is told when one comes or its params change
+    dyn_uses: dict[str, Use] = field(default_factory=dict)
+    activate: Callable[[Use], None] | None = None
+    _calls: dict[str, Expanded] = field(default_factory=dict)
+    _known: dict[str, Use] = field(default_factory=dict)
+    _factory: CallFactory | None = None
+    _dyn_tips: dict[str, ExpandedTooltip] = field(default_factory=dict)
+    _tips_out: dict[str, ExpandedTooltip] | None = None
 
     # -- resolve ------------------------------------------------------------------------------
 
@@ -113,8 +125,16 @@ class LiveTree:
         self.reads.clear()
         self.structural.clear()
         self._owner = expanded.owner
+        self._factory = expanded.factory
+        self._tips_out = expanded.tooltips
+        seen = self.dyn_uses
+        self.dyn_uses = {}
         self._params(expanded.uses)
         nodes, problems = resolve(self._list(tuple(expanded.nodes), None), self.look)
+        for key in [k for k in self._calls if k not in self.dyn_uses]:
+            del self._calls[key]  # its entry is gone
+        for key in seen.keys() - self.dyn_uses.keys():
+            self._known.pop(key, None)
         for problem in problems:
             self.errors += 1
             hint = f" ({problem.hint})" if problem.hint else ""
@@ -123,7 +143,8 @@ class LiveTree:
 
     def _scope(self, use: str) -> UseScope:
         shell = {"caller": self.caller} if self.caller is not None else None
-        params = self.uses[use].params
+        known = self.dyn_uses.get(use) or self.uses[use]
+        params = known.params
         if use in self.dynamic_params:
             params = {**params, **self.dynamic_params[use]}
         return UseScope(params, self.store.snapshot(use), shell)
@@ -186,7 +207,48 @@ class LiveTree:
                 out.extend(self._if(node, ctx))
             elif isinstance(node, m.ForNode):
                 out.extend(self._for(node, ctx))
+            else:
+                out.extend(self._call(node, ctx))
         return out
+
+    def _call(self, node: m.UseNode, ctx: _Ctx | None) -> list[m.Node]:
+        """A module call in the body of a ``For``: the use for this entry (made now, when the
+        entry's key is known, and kept while the entry lasts) and its blocks. The key of the use
+        comes from the use that holds the For and the entry's place in it, so the same entry has
+        the same use however the list is reordered, and the keyed diff keeps its nodes."""
+        factory = self._factory
+        outer = (self.dyn_uses.get(ctx.use) or self.uses.get(ctx.use)) if ctx else None
+        if factory is None or ctx is None or outer is None:
+            return []
+        label = node.name or f"{node.module}_{node.ordinal}"
+        name = f"{outer.name}.{ctx.trail}{label}"
+        key = f"{node.module}@{_ephemeral(name)}"
+        made = self._calls.get(key)
+        if made is None:
+            made = self._calls[key] = factory.make(node, outer, key, name)
+            for error in made.errors:
+                self._report(error)
+            self._dyn_tips.update(made.tooltips)
+        base = ctx.scope if ctx.scope is not None else self._scope(ctx.use)
+        for i, planned in enumerate(made.uses):
+            scope = base if i == 0 else None
+            params = dict(planned.params)
+            for pname, (slot, kind) in planned.slots.items():
+                link = self._compile(planned.outer, planned.key, "params", pname, kind, slot)
+                if link is None:
+                    continue
+                typed = self._evaluate(link, scope)
+                self.reads.setdefault(planned.outer, set()).update(link.reads)
+                if typed is not None:
+                    params[pname] = _plain(typed)
+            use = dataclasses.replace(planned, params=params, slots={})
+            self.dyn_uses[use.key] = use
+            self.structural.add(use.outer)
+            if self._known.get(use.key) != use:
+                self._known[use.key] = use
+                if self.activate is not None:
+                    self.activate(use)
+        return self._list(tuple(made.nodes), ctx)
 
     def _node(self, node: m.Node, ctx: _Ctx | None) -> m.Node:
         if node.owner is not None:  # the use the block was written in (the caller, for content)
@@ -200,9 +262,26 @@ class LiveTree:
             # a module's layout inside another's, or the caller's content inside a module's: the
             # scope of the use the block was written in, not of the layout around it
             here = _Ctx(
-                use, scope=None if use else popup_scope, prefix=ctx.prefix, dynamic=ctx.dynamic
+                use,
+                scope=None if use else popup_scope,
+                prefix=ctx.prefix,
+                dynamic=ctx.dynamic,
+                outer=ctx,
             )
+            caller: _Ctx | None = ctx
+            while caller is not None and caller.use != use:
+                caller = caller.outer
+            if caller is not None:
+                # content written on a call inside a For entry reads the entry's variables
+                here = dataclasses.replace(caller, prefix=ctx.prefix, dynamic=ctx.dynamic)
+        if use and here.dynamic:
+            # a block of a module called inside an If or For: it has no link of its own (it may
+            # not be there next turn), so a change to what that module's slots read resolves the
+            # tree again
+            self.structural.add(use)
         name = f"{here.prefix}{node.name}" if node.name and here.prefix else node.name
+        if name is not None and node.name in self._dyn_tips and self._tips_out is not None:
+            self._tips_out[name] = self._dyn_tips[node.name]  # the tooltip of an entry's block
         props = dict(node.props)
         style = dict(node.style)
         for scope, table in (("props", props), ("style", style)):
@@ -220,7 +299,10 @@ class LiveTree:
         if node.handlers and (use or here.entries):
             handlers = {
                 k: dataclasses.replace(
-                    h, use=h.use if h.forwarded else use or h.use, entries=here.entries
+                    h,
+                    use=h.use if h.forwarded else use or h.use,
+                    # a handler written on a call reads the entry the call is in
+                    entries=ctx.entries if h.forwarded and ctx is not None else here.entries,
                 )
                 for k, h in node.handlers.items()
             }
@@ -367,7 +449,11 @@ class LiveTree:
         for entry in result.entries:
             prefix = f"{here.prefix}for{node.origin.line}.{node.origin.column}/{entry.name}/"
             inner = dataclasses.replace(
-                here, scope=entry.scope(base), prefix=prefix, entries=(*here.entries, entry)
+                here,
+                scope=entry.scope(base),
+                prefix=prefix,
+                entries=(*here.entries, entry),
+                trail=f"{here.trail}for{node.ordinal}.{entry.name}.",
             )
             roots = self._list(node.body, inner)
             for i, root in enumerate(roots):
