@@ -122,12 +122,14 @@ Workspaces still read your real KWin (the same reads as part 1; do not click for
 13  `battery-set.sh 100 full`: the plain full battery, the tooltip "100 %, fully charged".
 14  `battery-set.sh 55 discharging`: the 50 % icon and "55 %".  `battery-set.sh 24 discharging`:
     the 20 % icon.  `battery-set.sh 9 discharging`: the alert icon (an exclamation mark).
-15  `battery-set.sh 15 discharging low`: the number is the theme's warning colour (amber) and a
-    small amber dot appears beside the icon, and the icon itself is amber; the icon-only Battery
-    shows the amber icon and the dot too.
+15  `battery-set.sh 15 discharging low`: the number is the theme's warning colour (amber) and the
+    icon is amber, and a round amber dot sits right of the battery drawing (the dot is part of the
+    icon's own picture); the icon-only Battery shows the amber icon with the dot too, and its
+    tooltip still opens when you point at it.  (If the icon is missing here: run the probe
+    /tmp/tess-kwin-m5b-dot/run.sh and report which letters lose the icon.)
 16  `battery-set.sh 5 discharging critical`: the number, the icon and the dot are the error colour
     (red-ish); the icon is the alert one.  `battery-set.sh 15 discharging low` again: back to amber.
-    `battery-set.sh 60 discharging`: no dot, normal colour.
+    `battery-set.sh 60 discharging`: no dot, normal colour, the icon is drawn.
 17  `battery-set.sh 0 empty`: the outlined alert battery, "0 %, empty".
 18  `battery-set.sh 0 unknown absent`: both Batteries vanish with no placeholder and no gap (as in
     line 1; the Clock moves right by the Batteries' width and the Spacing beside them).  `battery-set.sh 64 discharging present`: they come back.

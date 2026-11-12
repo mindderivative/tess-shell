@@ -3,7 +3,8 @@ Module). It reads once, then follows ``PropertiesChanged``: no timer, no thread.
 run on the ``dbus`` thread, derive the values and send only the ones that changed. One instance
 serves every use.
 
-Keys sent: ``present`` (UPower's ``IsPresent``), ``percent``, ``state``, ``icon``, ``low``,
+Keys sent: ``present`` (UPower's ``IsPresent``), ``percent``, ``state``, ``icon``, ``icon_alert``
+(the same icon with a dot beside it, in one document: the name plus ``+dot``), ``low``,
 ``critical``, ``tooltip``, ``label`` (the accessible name) and, when the power-profiles service is
 on the bus, ``profile`` (read only). ``available`` is the layer's: true while UPower is on the bus.
 A layout shows itself with ``If {{ available and present }}``.
@@ -120,11 +121,13 @@ def derive(props: Mapping[str, Any]) -> dict[str, Any]:
     warning = props.get("WarningLevel")
     level = warning if isinstance(warning, int) else 0
     have_reading = isinstance(props.get("Percentage"), int | float)
+    icon = icon_name(state, percent, have_reading)
     return {
         "present": bool(props.get("IsPresent", False)),
         "percent": percent,
         "state": state,
-        "icon": icon_name(state, percent, have_reading),
+        "icon": icon,
+        "icon_alert": icon + "+dot",
         "low": level == 3,
         "critical": level in (4, 5),
         "tooltip": tooltip_text(

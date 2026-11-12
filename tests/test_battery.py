@@ -180,7 +180,9 @@ def icon_of(w: Widgets) -> str | None:
     if not shown(w):
         return None
     doc = glyph(w).get("svg")
-    (name,) = [n for n in B.ICONS if SETS.lookup(f"mdi:{n}") == doc] or [None]
+    (name,) = [
+        n for n in B.ICONS if doc in (SETS.lookup(f"mdi:{n}"), SETS.lookup(f"mdi:{n}+dot"))
+    ] or [None]
     return name  # type: ignore[no-any-return]
 
 
@@ -252,23 +254,24 @@ def test_the_warning_level_sets_low_and_critical_and_the_look_follows() -> None:
                 (found,) = [c for c in level(w).children() if c.get("kind") == "text"]
                 return found
 
-            def dot() -> Any:
-                box = level(w)
-                return [c for c in box.children() if c.get("kind") == "path"] if box else []
+            def dot() -> bool:
+                """The shown icon's document has the dot in it (no node of its own)."""
+                return level(w) is not None and "<circle" in str(glyph(w).get("svg"))
 
-            assert dot() == [] and percent_node().get("fill") not in (WARNING, ERROR)
+            assert not dot() and percent_node().get("fill") not in (WARNING, ERROR)
             obj.set("WarningLevel", 3)
-            assert d.settle(w, lambda: values(w)["low"] is True and len(dot()) == 1)
+            assert d.settle(w, lambda: values(w)["low"] is True and dot())
             assert values(w)["critical"] is False
-            assert percent_node().get("fill") == WARNING and dot()[0].get("fill") == WARNING
+            assert percent_node().get("fill") == WARNING
             assert glyph(w).get("svg_color") == WARNING  # the icon takes the level's colour
             obj.set("WarningLevel", 4)
             assert d.settle(w, lambda: values(w)["critical"] is True)
             assert d.settle(w, lambda: percent_node().get("fill") == ERROR)
-            assert values(w)["low"] is False and dot()[0].get("fill") == ERROR
+            assert values(w)["low"] is False and dot()
             assert glyph(w).get("svg_color") == ERROR
             obj.set("WarningLevel", 1)
-            assert d.settle(w, lambda: dot() == [])
+            assert d.settle(w, lambda: not dot())
+            assert not [k for k in w.view.nodes if "/Alarm" in k]  # the dot is never a node
 
 
 @needs_daemon
@@ -479,18 +482,19 @@ def near(px: tuple[int, ...], want: tuple[int, ...], tol: int = 40) -> bool:
     return all(abs(a - b) <= tol for a, b in zip(px[:3], want[:3], strict=True))
 
 
-def glyph_pixels(w: Widgets, want: tuple[int, ...]) -> int:
-    """How many pixels of the colour ``want`` the Bar's drawing has inside the shown icon's box."""
+def glyph_pixels(w: Widgets, want: tuple[int, ...], beside: bool = False) -> int:
+    """How many pixels of the colour ``want`` the Bar's drawing has inside the shown icon's box;
+    ``beside``: only right of the battery drawing (where the dot is, from 14 px on)."""
     node = glyph(w)
     x, y, gw, gh = (
         int(node.get(k)) for k in ("layout_x", "layout_y", "layout_width", "layout_height")
     )
-    assert (gw, gh) == (16, 16)
+    assert gh == 16 and gw in (16, 24)
     rgba, width, _ = w.window.snapshot()
     return sum(
         near(tuple(rgba[(row * width + col) * 4 : (row * width + col) * 4 + 4]), want)
         for row in range(y, y + gh)
-        for col in range(x, x + gw)
+        for col in range(x + (14 if beside else 0), x + gw)
     )
 
 
@@ -520,9 +524,12 @@ def test_a_level_change_creates_and_removes_no_node_and_the_icon_is_drawn_in_its
                 assert all(w.view.nodes[k] == n for k, n in glyphs.items())
                 if want is not None:
                     assert glyph_pixels(w, want) > 20, f"the icon is not drawn in {want}"
-                    assert glyph_pixels(w, (228, 234, 241)) == 0
+                    assert glyph_pixels(w, want, beside=True) > 10, "no dot beside the icon"
+                    # (a few antialiased pixels at the dot's corners blend toward the text colour)
+                    assert glyph_pixels(w, (228, 234, 241)) < 8
                 else:
                     assert glyph_pixels(w, (228, 234, 241)) > 20
+                    assert glyph_pixels(w, (228, 234, 241), beside=True) == 0  # no dot
             rebuilt = [x for x in w.lines if "rebuilt" in x][before:]
             assert rebuilt == [] or all("0 created, 0 removed" in x for x in rebuilt), rebuilt
 

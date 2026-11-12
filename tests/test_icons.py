@@ -193,3 +193,19 @@ def test_the_shipped_mdi_set_resolves_with_no_icons_folder() -> None:
     assert "currentColor" in (shipped.lookup("mdi:account") or "")
     assert shipped.lookup("account") == shipped.lookup("mdi:account")
     assert (shipped_dir() / "Icons" / "MDI-LICENSE.txt").read_text().startswith("Pictogrammers")
+
+
+def test_a_name_ending_in_plus_dot_is_the_icon_with_a_dot_in_the_same_document(
+    tmp_path: Path,
+) -> None:
+    write_set(tmp_path, "mdi", "mdi", {"box": BOX})
+    sets = IconSets([tmp_path])
+    plain, dotted = sets.lookup("box"), sets.lookup("mdi:box+dot")
+    assert plain is not None and dotted is not None
+    assert 'viewBox="0 0 24 24"' in plain and "<circle" not in plain
+    assert 'viewBox="0 0 36 24"' in dotted and 'width="36" height="24"' in dotted
+    assert BOX in dotted
+    # half the height wider; the dot 9 across in the 24 high document, right of the icon
+    assert '<circle cx="30" cy="12" r="4.5" fill="currentColor"/>' in dotted
+    assert sets.lookup("nothing+dot") is None
+    assert sets.nearest("bx+dot") == sets.nearest("bx")
