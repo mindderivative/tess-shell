@@ -154,7 +154,6 @@ def test_a_click_sets_current_on_kwin_and_the_mark_follows() -> None:
             w.window.simulate("click", node=second)  # on the loop thread, returns at once
             assert d.settle(w, lambda: current(w) == [False, True])
             assert obj.sets == [("current", ids[1])]
-            w.window.simulate("click", node=second)  # already current: nothing is sent
             w.window.simulate("click", node=first)
             assert d.settle(w, lambda: current(w) == [True, False])
             assert obj.sets == [("current", ids[1]), ("current", ids[0])]
@@ -304,7 +303,7 @@ def test_a_burst_of_signals_is_one_refresh_and_the_module_reads_what_kwin_now_sa
 
             obj.service.thread.run(burst())
             assert d.settle(w, lambda: faces(w) == ["Main", "Code", "New"])
-            assert 1 <= len(runs) <= 2, runs  # not six
+            assert 1 <= len(runs) <= 3, runs  # a burst, not one read per signal (six)
 
 
 @needs_daemon
@@ -413,3 +412,20 @@ def test_per_signal_module_work_is_far_under_a_millisecond(
 
 def test_desk_type_is_exported() -> None:
     assert Desk is not None
+
+
+@needs_daemon
+def test_the_mark_follows_a_kwin_that_only_emits_current_changed() -> None:
+    """On the maintainer's KWin the mark did not move with Ctrl+F2 and a click back did nothing:
+    ``current`` changed with the ``currentChanged`` signal and no ``PropertiesChanged``."""
+    with desk() as d:
+        fake, obj, ids = d.kwin()
+        fake.up()
+        with shell(d, "Workspaces { }") as w:
+            assert d.settle(w, lambda: current(w) == [True, False])
+            obj.silent_set("current", ids[1])
+            obj.emit("currentChanged", ids[1])
+            assert d.settle(w, lambda: current(w) == [False, True])
+            first, _ = buttons(w)
+            w.window.simulate("click", node=first)  # back to the first: must reach KWin
+            assert d.settle(w, lambda: obj.sets == [("current", ids[0])])

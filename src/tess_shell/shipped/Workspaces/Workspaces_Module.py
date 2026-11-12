@@ -23,7 +23,16 @@ if TYPE_CHECKING:
 KWIN = "org.kde.KWin"
 PATH = "/VirtualDesktopManager"
 INTERFACE = "org.kde.KWin.VirtualDesktopManager"
-SIGNALS = ("desktopCreated", "desktopRemoved", "desktopDataChanged")
+# On the maintainer's KWin the mark did not follow Ctrl+F2 (2026-11-13): the properties say
+# ``emits-change`` but ``currentChanged`` and ``countChanged`` are signals too, and they are what
+# moves the mark here, whether or not ``PropertiesChanged`` also arrives.
+SIGNALS = (
+    "desktopCreated",
+    "desktopRemoved",
+    "desktopDataChanged",
+    "currentChanged",
+    "countChanged",
+)
 
 
 def records(raw: object, current: str) -> list[dict[str, Any]]:
@@ -109,7 +118,8 @@ class Workspaces(Module):
         self.publish(update)
 
     def signalled(self, *body: object) -> None:
-        """A desktop was created, removed or changed: read the list again, once for a burst."""
+        """A desktop was created, removed or changed, or the current one changed: read the list and
+        ``current`` again, once for a burst."""
         if not self.pending:
             self.pending = True
             self.bus.run(self.refresh())
@@ -147,8 +157,6 @@ class Workspaces(Module):
             if target not in self.refused:
                 self.refused.add(target)
                 self.ctx.log.warning(f"switch: {target!r} is not one of the desktops; ignored")
-            return
-        if target == self.sent.get("current"):
             return
         self.bus.run(self.vdm.set("current", target, "s")).add_done_callback(self.switched)
 

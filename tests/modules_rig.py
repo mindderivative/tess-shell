@@ -77,7 +77,13 @@ class Desk:
                 "desktops": (signature, [[i, ids[i], names[i]] for i in range(len(names))]),
                 "current": ("s", ids[0]),
             },
-            signals={"desktopCreated": "sus", "desktopRemoved": "s", "desktopDataChanged": "s"},
+            signals={
+                "desktopCreated": "sus",
+                "desktopRemoved": "s",
+                "desktopDataChanged": "s",
+                "currentChanged": "s",
+                "countChanged": "u",
+            },
             writable=["current"],
         )
         return fake, obj, ids
