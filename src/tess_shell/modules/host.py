@@ -482,6 +482,10 @@ class ModuleHost:
         """Uses made for the entries of a ``For`` came or went: tell their modules the way a use
         that appears or goes away in a reload is told (``use_added``, ``use_removed``)."""
         before = set(self._dynamic)
+        for use in added:
+            logger.debug(f"module {use.module}: a use of an entry came: {use.key}")
+        for key in removed:
+            logger.debug(f"module {key.split('@', 1)[0]}: the use of an entry ended: {key}")
         touched: set[str] = set()
         for key in removed:
             gone = self._dynamic.pop(key, None)

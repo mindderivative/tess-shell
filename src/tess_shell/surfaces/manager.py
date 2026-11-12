@@ -733,6 +733,8 @@ class SurfaceManager:
         for surface in self.every_surface():
             if surface.live is not None:
                 live.update(surface.live.dyn_uses)
+        for popup_live in self.popups.lives():
+            live.update(popup_live.dyn_uses)
         gone = [key for key in self._dyn_registered if key not in live]
         if gone:
             removed = [self._dyn_registered.pop(key) for key in gone]

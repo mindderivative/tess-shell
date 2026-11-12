@@ -475,6 +475,10 @@ class Popups:
                 return s, node_id, None
         return None
 
+    def lives(self) -> list[LiveTree]:
+        """The live trees of the open Popups: the uses their entries made are alive."""
+        return [op.live for op in self.chain() if not op.closing]
+
     def chain(self) -> list[OpenPopup]:
         """The open Popup and its submenus, outermost first."""
         out: list[OpenPopup] = []
@@ -539,13 +543,14 @@ class Popups:
             logger.warning(f"{error.origin}: {error.message}")
         caller = Caller(module, use, surface.key, rect, data, node_id)
         record = caller.record(self._m._all_uses.get(use))
-        live = LiveTree(self._m._store, self._m._all_uses, look=look, caller=record)
+        live = self._m.new_live(self._m._all_uses, caller=record)
         nodes = live.resolve(expanded or plan.expanded)
         try:
             size = measure(self._meter_window(), nodes, popup, shape.border)
         except BindFailed as failed:
             _log_errors(failed.errors)
             logger.error(f"Popup {where} is not opened: its contents did not bind")
+            self._m.settle_dynamic()  # the uses its entries made end with it
             return None
         for axis, value in (("width", size.width), ("height", size.height)):
             if value <= 0:
@@ -600,6 +605,7 @@ class Popups:
             window = factory(parent.window if parent is not None else surface.window, **kwargs)
         except (ValueError, RuntimeError) as exc:  # a bad size, or no compositor
             logger.error(f"Popup {where} is not opened: {exc}")
+            self._m.settle_dynamic()
             return None
         body = window.create("box", flex_grow=1, align_self="stretch", **shape.props())
         window.root.add_child(body)
@@ -625,6 +631,7 @@ class Popups:
             _log_errors(failed.errors)
             logger.error(f"Popup {where} is not opened: its contents did not bind")
             window.close()
+            self._m.settle_dynamic()
             return None
         op.view.sink = lambda h, k, raw, op=op: self._dispatch(op, h, k, raw)
         op.view.menu_sink = lambda event, block, opens, op=op: self.menu_event(
@@ -645,6 +652,7 @@ class Popups:
             + f", anchor {anchor} gravity {gravity} offset {offset}, "
             f"{'focus' if popup.focus else 'no focus'}"
         )
+        self._m.settle_dynamic()  # what the modules sent for the entries' new uses
         return op
 
     def _build_content(
@@ -748,6 +756,9 @@ class Popups:
         if op.view is not None:
             op.view.dispose()
             op.view = None
+        op.closing = True
+        op.live.release()
+        self._m.settle_dynamic()  # the uses made for its entries end with it
 
     def _closed(self, op: OpenPopup, reason: str) -> None:
         """tre's ``closed``: the compositor dismissed it (``dismissed``), the parent was not open

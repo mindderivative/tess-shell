@@ -114,6 +114,9 @@ class LiveTree:
     _factory: CallFactory | None = None
     _dyn_tips: dict[str, ExpandedTooltip] = field(default_factory=dict)
     _tips_out: dict[str, ExpandedTooltip] | None = None
+    _roots_out: dict[str, str] | None = None
+    _call_roots: dict[str, str] = field(default_factory=dict)  # use key -> its root block id
+    _tips_added: set[str] = field(default_factory=set)
 
     # -- resolve ------------------------------------------------------------------------------
 
@@ -127,6 +130,7 @@ class LiveTree:
         self._owner = expanded.owner
         self._factory = expanded.factory
         self._tips_out = expanded.tooltips
+        self._roots_out = expanded.roots
         seen = self.dyn_uses
         self.dyn_uses = {}
         self._params(expanded.uses)
@@ -135,11 +139,26 @@ class LiveTree:
             del self._calls[key]  # its entry is gone
         for key in seen.keys() - self.dyn_uses.keys():
             self._known.pop(key, None)
+            gone = self._call_roots.pop(key, None)
+            if gone is not None and self._roots_out is not None:
+                self._roots_out.pop(key, None)
         for problem in problems:
             self.errors += 1
             hint = f" ({problem.hint})" if problem.hint else ""
             logger.warning(f"{problem.origin}: {problem.message}{hint}")
         return nodes
+
+    def release(self) -> None:
+        """The surface this tree resolved is gone (a Popup closed): take back what its entries added
+        to the shared :class:`Expanded` (their root blocks and tooltips)."""
+        for key in self._call_roots:
+            if self._roots_out is not None:
+                self._roots_out.pop(key, None)
+        for name in self._tips_added:
+            if self._tips_out is not None:
+                self._tips_out.pop(name, None)
+        self._tips_added.clear()
+        self._call_roots.clear()
 
     def _scope(self, use: str) -> UseScope:
         shell = {"caller": self.caller} if self.caller is not None else None
@@ -229,6 +248,10 @@ class LiveTree:
             for error in made.errors:
                 self._report(error)
             self._dyn_tips.update(made.tooltips)
+            self._call_roots.update({u: f"{ctx.prefix}{n}" for u, n in made.roots.items()})
+        if self._roots_out is not None:
+            # a Popup can open beside an entry's use: its root block's id carries the entry's prefix
+            self._roots_out.update({u: f"{ctx.prefix}{n}" for u, n in made.roots.items()})
         base = ctx.scope if ctx.scope is not None else self._scope(ctx.use)
         for i, planned in enumerate(made.uses):
             scope = base if i == 0 else None
@@ -282,6 +305,7 @@ class LiveTree:
         name = f"{here.prefix}{node.name}" if node.name and here.prefix else node.name
         if name is not None and node.name in self._dyn_tips and self._tips_out is not None:
             self._tips_out[name] = self._dyn_tips[node.name]  # the tooltip of an entry's block
+            self._tips_added.add(name)
         props = dict(node.props)
         style = dict(node.style)
         for scope, table in (("props", props), ("style", style)):

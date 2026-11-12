@@ -60,8 +60,11 @@ class ValueStore:
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _wake: Wake | None = None
     _scheduled: bool = False
+    # the uses that ended lately (an entry of a For, a Popup's): a send to one is not a mistake
+    _ended: dict[str, None] = field(default_factory=dict)
 
     def add_use(self, module: str, use: str) -> None:
+        self._ended.pop(use, None)
         uses = self._uses.setdefault(module, [])
         if use not in uses:
             uses.append(use)
@@ -72,6 +75,9 @@ class ValueStore:
             if use in uses:
                 uses.remove(use)
         self.values.pop(use, None)
+        self._ended[use] = None
+        while len(self._ended) > 512:
+            self._ended.pop(next(iter(self._ended)))
 
     def drop_module(self, module: str) -> None:
         """Forget the values of a module whose instance was replaced (Module Contract)."""
@@ -124,7 +130,10 @@ class ValueStore:
             targets = [use] if use is not None else list(self._uses.get(module, ()))
             for target in targets:
                 if target not in self.values:
-                    logger.error(f"module {module}: unknown use {target}")
+                    if target in self._ended:
+                        logger.debug(f"module {module}: {target} has ended; the value is dropped")
+                    else:
+                        logger.error(f"module {module}: unknown use {target}")
                     continue
                 before.setdefault((target, key), self.values[target].get(key, missing))
                 self.values[target][key] = value

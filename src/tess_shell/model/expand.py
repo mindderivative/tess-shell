@@ -72,17 +72,21 @@ class CallFactory:
         uid_of: Callable[[str], str],
         monitor: str,
         rules: Sequence[Rule],
+        mark_roots: bool = False,
     ) -> None:
         self.modules = modules
         self.uid_of = uid_of
         self.monitor = monitor
         self.rules = rules
+        self.mark_roots = mark_roots
 
     def make(self, call: m.UseNode, outer: Use, key: str, name: str) -> Expanded:
         """``call`` as the use ``key`` (dotted name ``name``) of ``outer``'s layout: its blocks in
         ``nodes``, its ``uses`` (the call's own first, then the modules its layout calls), and the
         tooltips, roots and errors of the expansion."""
-        sub = _Expander(self.modules, self.uid_of, self.monitor, self.rules)
+        sub = _Expander(
+            self.modules, self.uid_of, self.monitor, self.rules, mark_roots=self.mark_roots
+        )
         sub.out.nodes = sub._use(call, name, (), outer, key, name)  # noqa: SLF001
         return sub.out
 
@@ -222,11 +226,6 @@ class _Expander:
         if outer is None:
             self.out.errors.append(
                 m.BindError("If and For outside a module are not built yet", call.origin)
-            )
-            return call
-        if self.popup_depth:
-            self.out.errors.append(
-                m.BindError("a module call inside a For in a Popup is not built yet", call.origin)
             )
             return call
         trial = _Expander(self.modules, _ephemeral, self.monitor, self.rules)
@@ -516,5 +515,5 @@ def expand(
     ``in_popup`` says the children are a Popup's content, where a slot may read ``caller``."""
     expander = _Expander(modules, uid_of, monitor, rules, attach_targets, mark_roots, in_popup)
     expander.run(nodes, path)
-    expander.out.factory = CallFactory(modules, _ephemeral, monitor, rules)
+    expander.out.factory = CallFactory(modules, _ephemeral, monitor, rules, mark_roots)
     return expander.out

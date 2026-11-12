@@ -318,3 +318,20 @@ def test_a_module_with_a_tooltip_in_a_for_gets_one_per_entry() -> None:
         assert len(w.bar.expanded.tooltips) >= 2  # one for each entry's root block
         ids = [k for k in w.bar.expanded.tooltips if "Tipped@" in k and k in w.view.nodes]
         assert len(ids) == 2
+
+
+def test_an_entry_use_has_a_root_block_a_popup_can_open_beside() -> None:
+    popups = "Popup { Name: Menu, Children { FlexBox { } } }"  # a Monitor with a Popup marks roots
+    with running(
+        "Driver { }",
+        driver=FOR,
+        driver_py=DRIVER_PY,
+        extra={"Item": ITEM_TDL},
+        extra_py={"Item": ITEM_PY},
+        popups=popups,
+    ) as w:
+        uses = list(w.host.loaded["Item"].ctx.uses)
+        roots = w.bar.expanded.roots
+        assert len(uses) == 2 and all(u in roots and roots[u] in w.view.nodes for u in uses)
+        w.send("rows", [{"id": "a", "t": "A"}])
+        assert len([u for u in uses if u in w.bar.expanded.roots]) == 1  # the gone one's is dropped
