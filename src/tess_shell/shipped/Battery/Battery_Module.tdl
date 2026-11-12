@@ -6,15 +6,14 @@ Name: Battery
 
 # The charge of the machine's battery (Battery Module): an icon, the percentage and a tooltip with the
 # state and the time left. The Python sends `present`, `percent`, `state`, `icon`, `low`, `critical`,
-# `tooltip` and `label`; the layer sends `available` (UPower is on the bus). The module hides itself,
-# with no placeholder, when UPower is absent or the machine has no battery.
+# `tooltip` and `label`; the layer sends `available` (UPower is on the bus). With UPower absent or
+# no battery the module is hidden: its root is `Visible: false`, which takes no space in the Bar
+# (no Spacing beside it) and shows no placeholder.
 #
-# The icon is chosen by its name from the list below: a `{{ }}` slot is not built for an `icon` param
-# and a module call (`Icon { }`) is not built inside an `If`, so each icon the Python can send is an
-# `SVG` block with its own line; a test pins that this list and the Python's agree and that every
-# name is in the shipped `mdi` set. `low` and `critical` come from
-# UPower's own warning level: the percentage takes the theme's warning and error colour and a dot of
-# that colour appears (the icon also changes shape: the colour is never the only sign).
+# `low` and `critical` come from UPower's own warning level: the icon and the number take the
+# theme's warning and error colour, and a dot of that colour appears beside them (the icon also
+# changes shape with the level: the colour is never the only sign). The icon is the name the Python
+# sends in `icon`, looked up in the icon sets when it changes.
 Module {
     Style: Battery_Style.tdl
 
@@ -25,6 +24,7 @@ Module {
 
     FlexBox {
         Name: Root
+        Visible: {{ available and present }}
         Role: GROUP
         Label: {{ label }}
         Flex: HORIZONTAL
@@ -53,67 +53,75 @@ Module {
             }
         }
         Children {
-            If {{ available and present }} {
+            If {{ critical }} {
                 FlexBox {
-                    Name: Level
+                    Name: Level_Critical
                     Flex: HORIZONTAL
                     Align_Items: CENTER
                     Spacing: 4
                     Children {
-                    If {{ icon == "battery" }} { SVG { Icon: "mdi:battery", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-alert" }} { SVG { Icon: "mdi:battery-alert", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-alert-variant-outline" }} { SVG { Icon: "mdi:battery-alert-variant-outline", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-unknown" }} { SVG { Icon: "mdi:battery-unknown", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-outline" }} { SVG { Icon: "mdi:battery-charging-outline", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-10" }} { SVG { Icon: "mdi:battery-10", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-20" }} { SVG { Icon: "mdi:battery-20", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-30" }} { SVG { Icon: "mdi:battery-30", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-40" }} { SVG { Icon: "mdi:battery-40", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-50" }} { SVG { Icon: "mdi:battery-50", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-60" }} { SVG { Icon: "mdi:battery-60", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-70" }} { SVG { Icon: "mdi:battery-70", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-80" }} { SVG { Icon: "mdi:battery-80", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-90" }} { SVG { Icon: "mdi:battery-90", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-10" }} { SVG { Icon: "mdi:battery-charging-10", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-20" }} { SVG { Icon: "mdi:battery-charging-20", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-30" }} { SVG { Icon: "mdi:battery-charging-30", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-40" }} { SVG { Icon: "mdi:battery-charging-40", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-50" }} { SVG { Icon: "mdi:battery-charging-50", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-60" }} { SVG { Icon: "mdi:battery-charging-60", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-70" }} { SVG { Icon: "mdi:battery-charging-70", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-80" }} { SVG { Icon: "mdi:battery-charging-80", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-90" }} { SVG { Icon: "mdi:battery-charging-90", Width: 16, Height: 16, A11y_Hidden: true } }
-                    If {{ icon == "battery-charging-100" }} { SVG { Icon: "mdi:battery-charging-100", Width: 16, Height: 16, A11y_Hidden: true } }
-                        If {{ critical }} {
-                            Circle { Name: Alarm_Critical, Diameter: 6, Fill: $color.error }
-                        } Else {
-                            If {{ low }} {
-                                Circle { Name: Alarm_Low, Diameter: 6, Fill: $color.warning }
+                        SVG {
+                            Name: Glyph_Critical
+                            Icon: {{ icon }}
+                            Width: 16
+                            Height: 16
+                            A11y_Hidden: true
+                            Foreground: $color.error
+                        }
+                        Circle { Name: Alarm_Critical, Diameter: 6, Fill: $color.error }
+                        If {{ params.show_percent }} {
+                            Text {
+                                Name: Percent_Critical
+                                Class: battery_text
+                                Text: {{ percent }} %
+                                Foreground: $color.error
                             }
                         }
-                        If {{ params.show_percent }} {
-                            If {{ critical }} {
+                    }
+                }
+            } Else {
+                If {{ low }} {
+                    FlexBox {
+                        Name: Level_Low
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 4
+                        Children {
+                            SVG {
+                                Name: Glyph_Low
+                                Icon: {{ icon }}
+                                Width: 16
+                                Height: 16
+                                A11y_Hidden: true
+                                Foreground: $color.warning
+                            }
+                            Circle { Name: Alarm_Low, Diameter: 6, Fill: $color.warning }
+                            If {{ params.show_percent }} {
                                 Text {
-                                    Name: Percent_Critical
+                                    Name: Percent_Low
                                     Class: battery_text
                                     Text: {{ percent }} %
-                                    Foreground: $color.error
+                                    Foreground: $color.warning
                                 }
-                            } Else {
-                                If {{ low }} {
-                                    Text {
-                                        Name: Percent_Low
-                                        Class: battery_text
-                                        Text: {{ percent }} %
-                                        Foreground: $color.warning
-                                    }
-                                } Else {
-                                    Text {
-                                        Name: Percent
-                                        Class: battery_text
-                                        Text: {{ percent }} %
-                                    }
-                                }
+                            }
+                        }
+                    }
+                } Else {
+                    FlexBox {
+                        Name: Level
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 4
+                        Children {
+                            SVG {
+                                Name: Glyph
+                                Icon: {{ icon }}
+                                Width: 16
+                                Height: 16
+                                A11y_Hidden: true
+                            }
+                            If {{ params.show_percent }} {
+                                Text { Name: Percent, Class: battery_text, Text: {{ percent }} % }
                             }
                         }
                     }

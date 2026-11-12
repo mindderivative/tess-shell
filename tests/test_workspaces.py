@@ -75,10 +75,11 @@ def test_any_other_shape_is_refused(raw: object) -> None:
 
 def buttons(w: Widgets, use: str | None = None) -> list[Any]:
     """The desktop buttons in the order the Bar shows them: the children of a use's ``Root``
-    (tre hands out a new proxy for a node on each call, but proxies of one node compare equal)."""
+    A hidden module (a root that is not visible) shows none. (tre hands out a new proxy for a node
+    on each call, but proxies of one node compare equal.)"""
     found: list[Any] = []
     for key, root in w.view.nodes.items():
-        if key.endswith("/Root") and (use is None or key.startswith(use)):
+        if key.endswith("/Root") and (use is None or key.startswith(use)) and root.get("visible"):
             found.extend(c for c in root.children() if c.get("kind") == "box")
     return found
 

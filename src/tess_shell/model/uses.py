@@ -25,9 +25,21 @@ class Use:
 
 
 # the kind a slot of a param of each type is read as
-PARAM_SLOT_KINDS = {"string": "text", "number": "number", "boolean": "bool", "path": "text"}
+PARAM_SLOT_KINDS = {
+    "string": "text",
+    "number": "number",
+    "boolean": "bool",
+    "path": "text",
+    "icon": "icon",
+}
 # what a param that has no default and is given a slot holds until the slot has a value
-PARAM_BLANKS: Mapping[str, Any] = {"string": "", "number": 0, "boolean": False, "path": ""}
+PARAM_BLANKS: Mapping[str, Any] = {
+    "string": "",
+    "number": 0,
+    "boolean": False,
+    "path": "",
+    "icon": "",
+}
 
 
 def plain_param(value: m.Value) -> Any:

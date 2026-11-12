@@ -378,6 +378,12 @@ class View:
         def walk(entries: list[Entry]) -> None:
             for e in entries:
                 self._wire(e)
+                if e.tre is not None and e.props.get("visible") is False:
+                    # tre 0.6.7 lays out a node that is built hidden when it also has an explicit
+                    # ``display`` (every FlexBox does): it keeps its space until ``visible`` is
+                    # set again. Setting it once more takes it out of the layout, so a hidden
+                    # module root takes no Bar Spacing.
+                    e.tre.set(visible=False)
                 name = e.typed.name
                 if name is not None and e.tre is not None:
                     self.nodes[name] = e.tre

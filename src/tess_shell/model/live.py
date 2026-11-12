@@ -388,6 +388,21 @@ class LiveTree:
         message = getattr(exc, "message", str(exc))
         logger.warning(f"{where}: {message}" + (f" ({hint})" if hint else ""))
 
+    def _icon(self, link: Link, value: object) -> m.Value | None:
+        """An icon name a module sent, as the SVG document of the icon (the same lookup a name
+        written in a file goes through). A param with no name holds the empty text (the module
+        shows nothing); a block's key gets an empty document."""
+        if not isinstance(value, str):
+            raise ValueProblem(
+                "bad-value", f"expected an icon name, the slot gave a {type(value).__name__}"
+            )
+        if link.block == "params" and not value:
+            return m.Text("", origin=link.origin)
+        icons = self.look.icons if self.look is not None else None
+        if icons is None:
+            raise ValueProblem("bad-value", "this shell has no icon sets to look a name up in")
+        return m.Text(icons.document(value), origin=link.origin)
+
     def _evaluate(self, link: Link, scope: Any | None = None) -> m.Value | None:
         """Evaluate ``link``; keep ``reads`` current; ``None`` on an error."""
         scope = scope if scope is not None else self._scope(link.use)
@@ -418,6 +433,8 @@ class LiveTree:
                     return None
             else:
                 value = "".join(r if isinstance(r, str) else str(r) for r in results)
+            if link.kind == "icon":
+                return self._icon(link, value)
             return from_python(link.kind, value, link.origin, link.choices)
         except ValueProblem as exc:
             self.errors += 1

@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from tess_shell.appearance import Appearance
 from tess_shell.binder import model as m
 from tess_shell.binder.shadow import scale
+from tess_shell.model.icons import RuntimeIcons
 from tess_shell.schema import blocks
 from tess_shell.schema.findings import Finding, nearest
 from tess_shell.schema.look import effective_tokens
@@ -37,6 +38,7 @@ class Look:
     tokens: Mapping[str, Token]
     rules: tuple[Rule, ...] = ()
     fallback: ThemeDef | None = None  # the Default theme, for a token the chosen one lacks
+    icons: RuntimeIcons | None = None  # where a name a module sends becomes an SVG document
 
     @property
     def max_shadows(self) -> m.Shadows | None:
@@ -45,7 +47,7 @@ class Look:
 
     def with_appearance(self, appearance: Appearance) -> Look:
         """The same theme and rules for a new light or dark setting, accent or motion flag."""
-        return make_look(self.theme, self.sheets, appearance, self.fallback)
+        return make_look(self.theme, self.sheets, appearance, self.fallback, self.icons)
 
 
 def make_look(
@@ -53,6 +55,7 @@ def make_look(
     sheets: Sequence[StylesheetDef],
     appearance: Appearance,
     fallback: ThemeDef | None = None,
+    icons: RuntimeIcons | None = None,
 ) -> Look:
     return Look(
         theme,
@@ -61,6 +64,7 @@ def make_look(
         effective_tokens(theme, appearance, fallback),
         tuple(rule for sheet in sheets for rule in sheet.rules),
         fallback,
+        icons,
     )
 
 

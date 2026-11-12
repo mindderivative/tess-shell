@@ -19,6 +19,7 @@ from loguru import logger
 from tess_shell.appearance import Appearance
 from tess_shell.binder import model as m
 from tess_shell.files.icons import IconSets
+from tess_shell.model.icons import RuntimeIcons
 from tess_shell.model.look import make_look
 from tess_shell.model.store import ValueStore
 from tess_shell.modules.host import ModuleHost
@@ -203,7 +204,7 @@ def running(
         parsed, findings = read_stylesheet(sdoc, "S_Stylesheet.tdl", set(defs))
         assert parsed is not None, findings
         sheets.append(parsed)
-    look = make_look(the_theme, sheets, appearance or Appearance())
+    look = make_look(the_theme, sheets, appearance or Appearance(), None, RuntimeIcons(icons))
     store = ValueStore()
     manager = SurfaceManager(StubApp(), defs, lambda k: k, store, look)  # type: ignore[arg-type]
     with tempfile.TemporaryDirectory() as tmp:

@@ -83,10 +83,9 @@ PART 1: on this desktop, real buses  (start with /tmp/tess-kwin-m5b/run.sh)
 Reads your real session bus and real system bus.  ONLY line 5 writes anything: it switches your
 real virtual desktop.
 
- 1  Battery: no battery here, so neither Battery shows: no icon, no placeholder.  (A hidden module
-    still takes the Bar's 16 px Spacing beside it, so the Clock sits 16 px further right than
-    without the two empty slots: known, in the report.)  The log has no WARNING or ERROR line
-    about the Battery or UPower
+ 1  Battery: no battery here, so neither Battery shows: no icon, no placeholder, and
+    no gap where they would be: the Clock is 16 px (the Bar's Spacing) from the Workspaces, not 48.
+    The log has no WARNING or ERROR line about the Battery or UPower
     (`grep -E "WARNING|ERROR"` on the shell's output; the `dbus: org.freedesktop.UPower.PowerProfiles`
     line, if you see it, is DEBUG).
  2  Workspaces with names: one button per virtual desktop, in KWin's order, labelled with each
@@ -124,13 +123,14 @@ Workspaces still read your real KWin (the same reads as part 1; do not click for
 14  `battery-set.sh 55 discharging`: the 50 % icon and "55 %".  `battery-set.sh 24 discharging`:
     the 20 % icon.  `battery-set.sh 9 discharging`: the alert icon (an exclamation mark).
 15  `battery-set.sh 15 discharging low`: the number is the theme's warning colour (amber) and a
-    small amber dot appears beside the icon; the icon-only Battery shows the dot too.
-16  `battery-set.sh 5 discharging critical`: the number is the error colour (red-ish) and the dot is
-    red; the icon is the alert one.  `battery-set.sh 15 discharging low` again: back to amber.
+    small amber dot appears beside the icon, and the icon itself is amber; the icon-only Battery
+    shows the amber icon and the dot too.
+16  `battery-set.sh 5 discharging critical`: the number, the icon and the dot are the error colour
+    (red-ish); the icon is the alert one.  `battery-set.sh 15 discharging low` again: back to amber.
     `battery-set.sh 60 discharging`: no dot, normal colour.
 17  `battery-set.sh 0 empty`: the outlined alert battery, "0 %, empty".
-18  `battery-set.sh 0 unknown absent`: both Batteries vanish with no placeholder (the Bar's 16 px
-    Spacing stays, as in line 1).  `battery-set.sh 64 discharging present`: they come back.
+18  `battery-set.sh 0 unknown absent`: both Batteries vanish with no placeholder and no gap (as in
+    line 1; the Clock moves right by the Batteries' width and the Spacing beside them).  `battery-set.sh 64 discharging present`: they come back.
 19  `battery-upower.sh away`: both Batteries vanish and exactly one WARNING appears in the log
     (`dbus: org.freedesktop.UPower left the system bus`).  `battery-upower.sh back`: they return
     at once with the value they had.  Run `away` and `back` a second time inside a minute: still

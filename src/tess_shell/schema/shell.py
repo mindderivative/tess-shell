@@ -216,9 +216,11 @@ def slot_value(ctx: _Ctx, prop: Property) -> m.SlotValue | None:
 
 def _icon(ctx: _Ctx, prop: Property, slot: m.SlotValue | None) -> m.Value | None:
     """``Icon: "mdi:account"``: the name becomes an SVG document read from the icon sets."""
+    if slot is not None:  # a name the module sends: the model looks it up when it is evaluated
+        return slot
     value = prop.value
     name = value.value if isinstance(value, tess_dl.String) else getattr(value, "text", None)
-    if slot is not None or not isinstance(name, str) or not name:
+    if not isinstance(name, str) or not name:
         ctx.add(prop.value_origin, "bad-value", "Icon is an icon name", 'write Icon: "mdi:account"')
         return None
     found = ctx.icons.lookup(name) if ctx.icons is not None else None
@@ -454,10 +456,7 @@ def _param_value(ctx: _Ctx, module: str, decl: ParamDecl, entry: Property) -> m.
     document of the named icon or file, or the absolute path of a bitmap file."""
     slot = slot_value(ctx, entry)
     if slot is not None:
-        if decl.type == "icon":
-            ctx.not_built(entry.value_origin, "a slot in a param of type icon (write the name)")
-            return None
-        return slot
+        return slot  # an icon param's slot gives a name: the model looks it up when it is evaluated
     origin = ctx.origin(entry.key_origin)
     try:
         value = coerce(_PARAM_KINDS[decl.type], entry.value, origin)

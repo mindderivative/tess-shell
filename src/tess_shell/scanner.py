@@ -28,6 +28,7 @@ from tess_shell.files.loader import (
     load_theme_file,
     register_module,
 )
+from tess_shell.model.icons import RuntimeIcons
 from tess_shell.model.look import Look, check_parts, check_states, check_tokens, make_look
 from tess_shell.schema.findings import Finding, nearest, render_findings
 from tess_shell.schema.graph import module_cycles
@@ -73,6 +74,7 @@ class Scan:
     modules: dict[str, ModuleFile]
     themes: dict[str, ThemeDef] = field(default_factory=dict)
     stylesheets: dict[str, StylesheetDef] = field(default_factory=dict)
+    icons: RuntimeIcons | None = None  # the icon sets, for a name a module sends
 
     @property
     def errors(self) -> list[Finding]:
@@ -183,7 +185,13 @@ def scan(settings: Settings, config: Path) -> Scan:
     findings.extend(_check_look(settings, themes, stylesheets, shells, modules))
     own = sum(1 for path in paths if not is_shipped(path))  # the user's files, not the shipped ones
     return Scan(
-        own, sorted(findings, key=lambda f: f.sort_key), shells, modules, themes, stylesheets
+        own,
+        sorted(findings, key=lambda f: f.sort_key),
+        shells,
+        modules,
+        themes,
+        stylesheets,
+        RuntimeIcons(icons),
     )
 
 
@@ -297,4 +305,4 @@ def build_look(result: Scan, settings: Settings, appearance: Appearance) -> Look
     error for a name it could not find, so the caller has already stopped on one."""
     theme = result.themes[settings.appearance.theme or DEFAULT_THEME]
     sheets = [result.stylesheets[name] for name in settings.appearance.stylesheets]
-    return make_look(theme, sheets, appearance, result.themes.get(DEFAULT_THEME))
+    return make_look(theme, sheets, appearance, result.themes.get(DEFAULT_THEME), result.icons)

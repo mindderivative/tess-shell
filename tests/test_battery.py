@@ -4,7 +4,6 @@ a private system bus, drawn by the real binder in a headless Bar."""
 from __future__ import annotations
 
 import importlib.util
-import re
 from types import ModuleType
 from typing import Any
 
@@ -38,12 +37,10 @@ LAYOUT = (SHIPPED / "Battery" / "Battery_Module.tdl").read_text()
 # -- the derivations ----------------------------------------------------------------------------
 
 
-def test_every_icon_in_the_python_is_in_the_mdi_set_and_has_a_line_in_the_layout() -> None:
+def test_every_icon_the_python_can_send_is_in_the_shipped_mdi_set() -> None:
     missing = sorted(name for name in B.ICONS if SETS.lookup(f"mdi:{name}") is None)
     assert missing == [], f"not in the mdi set: {missing}"
-    in_layout = set(re.findall(r'icon == "([a-z0-9-]+)"', LAYOUT))
-    assert in_layout == set(B.ICONS)
-    assert set(re.findall(r'Icon: "mdi:([a-z0-9-]+)"', LAYOUT)) == set(B.ICONS)
+    assert len(B.ICONS) == 24
 
 
 def test_icon_names_the_table_gives_never_leave_the_set() -> None:
@@ -150,19 +147,33 @@ def test_the_tooltip_text_changes_at_most_once_a_minute_of_time_left() -> None:
 # -- the module on a fake UPower ----------------------------------------------------------------
 
 
+def shown(w: Widgets) -> bool:
+    """Is the module's root visible (it takes space in the Bar)?"""
+    (root,) = [n for k, n in w.view.nodes.items() if k.endswith("/Root")]
+    return bool(root.get("visible"))
+
+
 def level(w: Widgets) -> Any:
-    found = [n for k, n in w.view.nodes.items() if k.endswith("/Level")]
-    return found[0] if found else None
+    """The box of the level that shows (normal, low or critical), or ``None`` when hidden."""
+    if not shown(w):
+        return None
+    found = [n for k, n in w.view.nodes.items() if "/Level" in k]
+    assert len(found) == 1
+    return found[0]
+
+
+def glyph(w: Widgets) -> Any:
+    found = [n for k, n in w.view.nodes.items() if "/Glyph" in k]
+    assert len(found) == 1, f"{len(found)} icon nodes"
+    return found[0]
 
 
 def icon_of(w: Widgets) -> str | None:
-    """The name of the icon the Bar shows: the one ``mdi`` SVG the ``Level`` box holds."""
-    box = level(w)
-    if box is None:
+    """The name of the icon the Bar shows (the one ``mdi`` SVG of the module), or ``None``."""
+    if not shown(w):
         return None
-    docs = [c.get("svg") for c in box.children() if c.get("kind") == "svg"]
-    assert len(docs) == 1, f"{len(docs)} icons shown"
-    (name,) = [n for n in B.ICONS if SETS.lookup(f"mdi:{n}") == docs[0]] or [None]
+    doc = glyph(w).get("svg")
+    (name,) = [n for n in B.ICONS if SETS.lookup(f"mdi:{n}") == doc] or [None]
     return name  # type: ignore[no-any-return]
 
 
@@ -241,10 +252,12 @@ def test_the_warning_level_sets_low_and_critical_and_the_look_follows() -> None:
             assert d.settle(w, lambda: values(w)["low"] is True and len(dot()) == 1)
             assert values(w)["critical"] is False
             assert percent_node().get("fill") == WARNING and dot()[0].get("fill") == WARNING
+            assert glyph(w).get("svg_color") == WARNING  # the icon takes the level's colour
             obj.set("WarningLevel", 4)
             assert d.settle(w, lambda: values(w)["critical"] is True)
             assert d.settle(w, lambda: percent_node().get("fill") == ERROR)
             assert values(w)["low"] is False and dot()[0].get("fill") == ERROR
+            assert glyph(w).get("svg_color") == ERROR
             obj.set("WarningLevel", 1)
             assert d.settle(w, lambda: dot() == [])
 
@@ -269,7 +282,7 @@ def test_no_battery_hides_the_module_and_logs_nothing() -> None:
             assert d.settle(w, lambda: values(w).get("available") is True)
             d.settle(w, lambda: False, 0.3)  # let the first read arrive and settle
             assert values(w)["present"] is False
-            assert level(w) is None and texts(w) == []
+            assert level(w) is None and not shown(w)
             instance = w.host.loaded["Battery"].instance
             assert instance.sent["present"] is False
             assert [x for x in quiet(w) if "Bar Top_Bar" not in x] == []
@@ -421,3 +434,33 @@ def test_per_signal_module_work_is_far_under_a_millisecond(
 def test_the_module_has_no_timer() -> None:
     source = (SHIPPED / "Battery" / "Battery_Module.py").read_text()
     assert "every(" not in source and "on_tick" not in source and "sleep" not in source
+
+
+@needs_daemon
+def test_the_slot_renders_each_of_the_24_names_and_swaps_the_icon_in_place() -> None:
+    with desk() as d:
+        fake, obj = d.battery()
+        fake.up()
+        with shell(d, "Battery { }") as w:
+            assert d.settle(w, lambda: icon_of(w) == "battery-80")
+            node = glyph(w)
+            seen: set[str] = set()
+            for state, percent in [
+                (s, p) for s in (1, 2, 3, 4, 0) for p in (0, 5, 15, 35, 55, 75, 95, 100)
+            ]:
+                obj.set("State", state)
+                obj.set("Percentage", float(percent))
+                want = B.icon_name(B.state_name(state, percent), percent, True)
+                assert d.settle(w, lambda want=want: icon_of(w) == want), (state, percent, want)
+                assert glyph(w) == node  # the same SVG node: the document was swapped in place
+                seen.add(want)
+            # every name in the table that the Python can reach by a reading is rendered here;
+            # the rest are rendered by sending the key directly
+            for name in sorted(B.ICONS - seen):
+                w.host.loaded["Battery"].instance.ctx.send("icon", name)
+                w.flush()
+                w.advance(16)
+                assert icon_of(w) == name
+                seen.add(name)
+            assert seen == set(B.ICONS)
+            assert w.warnings() == []
