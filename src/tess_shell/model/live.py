@@ -546,7 +546,7 @@ class LiveTree:
                 value = "".join(r if isinstance(r, str) else str(r) for r in results)
             if link.kind == "icon":
                 return self._icon(link, value)
-            return from_python(link.kind, value, link.origin, link.choices)
+            return from_python(link.kind, value, link.origin, link.choices, link.key)
         except ValueProblem as exc:
             self.errors += 1
             hint = f" ({exc.hint})" if exc.hint else ""

@@ -12,6 +12,7 @@ from tess_shell.binder import convert
 from tess_shell.binder import model as m
 from tess_shell.binder.model import BindError
 from tess_shell.schema.findings import nearest
+from tess_shell.schema.ranges import range_of
 
 SIDES_HINT = (
     "Use one number, four items (left, top, right, bottom) or named sides. CSS orders its "
@@ -82,14 +83,78 @@ def token_ref(
     return m.TokenRef(found.group(1).lower(), kind, choices, origin=origin)
 
 
+def _numbers(value: m.Value) -> list[float]:
+    """The numbers a typed value holds (a length's pixels, a percentage, each side, each corner)."""
+    match value:
+        case m.Number():
+            return [float(value.value)]
+        case m.Length():
+            return [float(value.px)]
+        case m.Percent():
+            return [float(value.value)]
+        case m.Sides():
+            return [value.left, value.top, value.right, value.bottom]
+        case m.Seq():
+            return [n for item in value.items for n in _numbers(item)]
+    return []
+
+
+_NOUNS = {
+    "max_length": "a whole number",
+    "lines": "a whole number",
+    "whole": "a whole number",
+    "diameter": "a whole number of pixels",
+    "duration": "a time in milliseconds",
+    "pause": "a time in milliseconds",
+    "elevation": "a percentage",
+    "length": "a length",
+    "text_length": "a length",
+    "bound": "a length",
+    "sides": "sides",
+    "bleed": "sides",
+    "radius": "a radius",
+}
+
+
+def check_range(kind: str, key: str, typed: m.Value) -> None:
+    """Raise :class:`ValueProblem` when a typed value is outside the range of its key or kind
+    (:mod:`tess_shell.schema.ranges`, the table the schema export reports as ``min`` and ``max``).
+    A token reference or a slot holds no number yet: it is checked when it is resolved."""
+    rng = range_of(kind, key)
+    if rng is None:
+        return
+    for n in _numbers(typed):
+        if not rng.holds(n):
+            unit = "%" if kind == "elevation" else ""
+            raise ValueProblem(
+                "bad-value",
+                f"expected {_NOUNS.get(kind, 'a number')}, {rng.words(unit)}, found {n:g}{unit}",
+            )
+
+
 def coerce(
     kind: str,
     value: tess_dl.Value,
     origin: m.Origin,
     choices: tuple[str, ...] = (),
     read_text: Callable[[str], str] | None = None,
+    key: str = "",
 ) -> m.Value:
-    """Return the typed value; raise :class:`ValueProblem` when the form is wrong."""
+    """Return the typed value; raise :class:`ValueProblem` when the form or the range is wrong.
+    ``key`` is the key that holds the value, for the ranges that belong to a key."""
+    typed = _coerce_kind(kind, value, origin, choices, read_text)
+    check_range(kind, key, typed)
+    return typed
+
+
+def _coerce_kind(
+    kind: str,
+    value: tess_dl.Value,
+    origin: m.Origin,
+    choices: tuple[str, ...],
+    read_text: Callable[[str], str] | None,
+) -> m.Value:
+    """The typed value of the written form of a kind, before its range is judged."""
     match kind:
         case "length" | "text_length":
             if isinstance(value, tess_dl.Percent):
@@ -121,25 +186,18 @@ def coerce(
             return m.Number(n, origin=origin)
         case "max_length" | "lines":
             n = _number(value)
-            low = 0 if kind == "max_length" else 1
-            if n is None or isinstance(n, float) or n < low:
-                what = "a whole number, 0 or more" if low == 0 else "a whole number, 1 or more"
-                raise _bad(what, value)
+            if n is None or isinstance(n, float):
+                raise _bad("a whole number", value)
             return m.Number(n, origin=origin)
-        case "pause" | "duration":
+        case "pause" | "duration" | "unit":
             n = _number(value)
-            if n is None or n < 0:
-                raise _bad("a time in milliseconds, 0 or more", value)
-            return m.Number(n, origin=origin)
-        case "unit":
-            n = _number(value)
-            if n is None or not 0 <= n <= 1:
-                raise _bad("a number from 0.0 to 1.0", value)
+            if n is None:
+                raise _bad("a number", value)
             return m.Number(n, origin=origin)
         case "diameter":
             n = _number(value)
-            if n is None or isinstance(n, float) or n <= 0:
-                raise _bad("a whole number of pixels above 0", value)
+            if n is None or isinstance(n, float):
+                raise _bad("a whole number of pixels", value)
             return m.Length(n, origin=origin)
         case "view_box":
             if isinstance(value, tess_dl.List) and len(value.items) == 4:
@@ -220,9 +278,9 @@ def coerce(
                 return m.Auto(origin=origin)
             return _sides(value, origin)
         case "elevation":
-            if isinstance(value, tess_dl.Percent) and 0 <= value.value <= 100:
+            if isinstance(value, tess_dl.Percent):
                 return m.Percent(value.value, origin=origin)
-            raise _bad("a percentage from 0% to 100%", value)
+            raise _bad("a percentage", value)
         case "shadows":
             raise ValueProblem(
                 "bad-value",
@@ -293,7 +351,7 @@ def _sides(value: tess_dl.Value, origin: m.Origin) -> m.Value:
     raise _bad("one number, four items or named sides", value, SIDES_HINT)
 
 
-def named_sides(block: tess_dl.Block, origin: m.Origin) -> m.Sides:
+def named_sides(block: tess_dl.Block, origin: m.Origin, key: str = "") -> m.Sides:
     """``Padding { Left: 24, Top: 8 }``: unnamed sides are 0."""
     sides = {"Left": 0.0, "Top": 0.0, "Right": 0.0, "Bottom": 0.0}
     for entry in block.entries:
@@ -306,7 +364,9 @@ def named_sides(block: tess_dl.Block, origin: m.Origin) -> m.Sides:
             if n is None:
                 raise _bad("a number", entry.value)
             sides[entry.key] = float(n)
-    return m.Sides(sides["Left"], sides["Top"], sides["Right"], sides["Bottom"], origin=origin)
+    typed = m.Sides(sides["Left"], sides["Top"], sides["Right"], sides["Bottom"], origin=origin)
+    check_range("sides", key, typed)
+    return typed
 
 
 _SHADOW_KEYS = ("Color", "X", "Y", "Blur", "Spread")
@@ -361,12 +421,22 @@ def _py_number(value: object) -> int | float | None:
 
 
 def from_python(
-    kind: str, value: object, origin: m.Origin, choices: tuple[str, ...] = ()
+    kind: str, value: object, origin: m.Origin, choices: tuple[str, ...] = (), key: str = ""
 ) -> m.Value:
     """The typed value of an evaluated slot (a plain Python value), for the key's ``kind``.
 
-    Raises :class:`ValueProblem` when the value cannot be that kind.
+    Raises :class:`ValueProblem` when the value cannot be that kind or is outside the range of the
+    key or the kind (the same table the loader judges a written value by).
     """
+    typed = _from_python_kind(kind, value, origin, choices)
+    check_range(kind, key, typed)
+    return typed
+
+
+def _from_python_kind(
+    kind: str, value: object, origin: m.Origin, choices: tuple[str, ...]
+) -> m.Value:
+    """The typed value of a slot's value, before its range is judged."""
 
     def bad(expected: str) -> ValueProblem:
         return ValueProblem("bad-value", f"expected {expected}, the slot gave a {_py_kind(value)}")
@@ -383,19 +453,18 @@ def from_python(
             return m.Number(n, origin=origin)
         case "max_length" | "lines":
             n = _py_number(value)
-            low = 0 if kind == "max_length" else 1
-            if n is None or isinstance(n, float) or n < low:
-                raise bad("a whole number, 0 or more" if low == 0 else "a whole number, 1 or more")
+            if n is None or isinstance(n, float):
+                raise bad("a whole number")
             return m.Number(n, origin=origin)
         case "pause" | "duration" | "unit":
             n = _py_number(value)
-            if n is None or n < 0 or (kind == "unit" and n > 1):
-                raise bad("a number from 0.0 to 1.0" if kind == "unit" else "a time of 0 or more")
+            if n is None:
+                raise bad("a number")
             return m.Number(n, origin=origin)
         case "diameter":
             n = _py_number(value)
-            if n is None or isinstance(n, float) or n <= 0:
-                raise bad("a whole number of pixels above 0")
+            if n is None or isinstance(n, float):
+                raise bad("a whole number of pixels")
             return m.Length(n, origin=origin)
         case "view_box":
             if isinstance(value, list | tuple) and len(value) == 4:

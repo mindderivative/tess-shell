@@ -47,7 +47,7 @@ from tess_shell.schema.values import (
 )
 
 _NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
-_IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp")
+IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp")
 
 
 def _absolute(text: str) -> str:
@@ -260,7 +260,7 @@ def _image(ctx: _Ctx, prop: Property, slot: m.SlotValue | None) -> m.Value | Non
 
 
 def _typed(
-    ctx: _Ctx, block: str, prop: Property, kind: str, read_text: bool = False
+    ctx: _Ctx, block: str, prop: Property, kind: str, read_text: bool = False, key: str = ""
 ) -> m.Value | None:
     slot = slot_value(ctx, prop)
     if kind == "icon":
@@ -282,6 +282,7 @@ def _typed(
             ctx.origin(prop.key_origin),
             _choices(block, prop.key),
             ctx.read_text if read_text else None,
+            key or prop.key,
         )
     except ValueProblem as exc:
         ctx.problem(prop.value_origin, prop.key, exc)
@@ -310,14 +311,14 @@ def _scalar_block_keys(
                         if flat not in table:
                             ctx.unknown(sub.key_origin, flat, list(table), f"{what} key")
                             continue
-                        value = _typed(ctx, what, sub, table[flat])
+                        value = _typed(ctx, what, sub, table[flat], key=flat)
                         if value is not None:
                             out[flat] = value
                     elif isinstance(sub, Property):
                         ctx.unknown(sub.key_origin, sub.key, ["Width", "Color"], "Border key")
             elif entry.type in table and table[entry.type] in ("sides", "bleed"):
                 try:
-                    out[entry.type] = named_sides(entry, ctx.origin(entry.origin))
+                    out[entry.type] = named_sides(entry, ctx.origin(entry.origin), entry.type)
                 except ValueProblem as exc:
                     ctx.problem(entry.origin, entry.type, exc)
             elif entry.type in table and table[entry.type] == "shadows":
@@ -492,7 +493,7 @@ def _icon_param(ctx: _Ctx, entry: Property, name: str, origin: m.Origin) -> m.Va
                 "the path is relative to this file",
             )
             return None
-    if lower.endswith(_IMAGE_SUFFIXES):
+    if lower.endswith(IMAGE_SUFFIXES):
         return m.Text(ctx.resolve_path(name), origin=origin)
     found = ctx.icons.lookup(name) if ctx.icons is not None else None
     if found is None:
@@ -676,7 +677,7 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
                     children = _children(ctx, entry, lambda b: _block(ctx, b))
             elif entry.type in ("Padding", "Margin") and entry.type in prop_keys:
                 try:
-                    props[entry.type] = named_sides(entry, ctx.origin(entry.origin))
+                    props[entry.type] = named_sides(entry, ctx.origin(entry.origin), entry.type)
                     prop_at[entry.type] = entry.origin
                 except ValueProblem as exc:
                     ctx.problem(entry.origin, entry.type, exc)
@@ -1133,7 +1134,7 @@ def read_style(document: Document, file: str) -> tuple[StyleDef | None, list[Fin
     return style, ctx.findings
 
 
-_BAR_KEYS: dict[str, str] = {
+BAR_KEYS: dict[str, str] = {
     "Edge": "enum",
     "Width": "length",
     "Height": "length",
@@ -1147,7 +1148,7 @@ _BAR_KEYS: dict[str, str] = {
     "Max_Width": "bound",
     "Max_Height": "bound",
 }
-_BAR_CHOICES: dict[str, tuple[str, ...]] = {
+BAR_CHOICES: dict[str, tuple[str, ...]] = {
     "Edge": ("TOP", "BOTTOM", "LEFT", "RIGHT"),
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),
     "Alignment": ("START", "CENTER", "END"),
@@ -1155,7 +1156,7 @@ _BAR_CHOICES: dict[str, tuple[str, ...]] = {
 
 
 def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
-    allowed = ["Name", "Style", "Children", *_BAR_KEYS, *blocks.BAR_NOT_BUILT]
+    allowed = ["Name", "Style", "Children", *BAR_KEYS, *blocks.BAR_NOT_BUILT]
     name: str | None = None
     values: dict[str, m.Value] = {}
     style: dict[str, m.Value] = {}
@@ -1169,13 +1170,14 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
                 ctx.not_built(entry.key_origin, "a Style file")
             elif key in blocks.BAR_NOT_BUILT:
                 ctx.not_built(entry.key_origin, f"the Bar key {key}", "warning")
-            elif key in _BAR_KEYS:
+            elif key in BAR_KEYS:
                 try:
                     values[key] = coerce(
-                        _BAR_KEYS[key],
+                        BAR_KEYS[key],
                         entry.value,
                         ctx.origin(entry.key_origin),
-                        _BAR_CHOICES.get(key, ()),
+                        BAR_CHOICES.get(key, ()),
+                        key=key,
                     )
                 except ValueProblem as exc:
                     ctx.problem(entry.value_origin, key, exc)
@@ -1293,6 +1295,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
                         entry.value,
                         ctx.origin(entry.key_origin),
                         blocks.PANEL_CHOICES.get(key, ()),
+                        key=key,
                     )
                 except ValueProblem as exc:
                     ctx.problem(entry.value_origin, key, exc)
@@ -1316,7 +1319,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
             elif entry.type == "Inset":
                 written.add("Inset")
                 try:
-                    values["Inset"] = named_sides(entry, ctx.origin(entry.origin))
+                    values["Inset"] = named_sides(entry, ctx.origin(entry.origin), "Inset")
                 except ValueProblem as exc:
                     ctx.problem(entry.origin, "Inset", exc)
             elif entry.type in blocks.PANEL_NOT_BUILT_ERROR:
@@ -1576,7 +1579,7 @@ def _animation(ctx: _Ctx, block: Block) -> tuple[str, float]:
     return ("NONE", 0.0) if kind == "NONE" or duration <= 0 else (kind, duration)
 
 
-_PEEK_WORDS = {
+PEEK_WORDS = {
     "Trigger": blocks.PEEK_TRIGGERS,
     "Handle": blocks.PEEK_HANDLES,
     "Slide_From": blocks.PEEK_EDGES,
@@ -1599,19 +1602,19 @@ def _peek(ctx: _Ctx, block: Block, strip: bool = False) -> PeekDef:
     written: set[str] = set()
     allowed = [*values, "Trigger", "Handle", *([] if strip else ["Slide_From"])]
     for entry in block.entries:
-        if isinstance(entry, Property) and entry.key in _PEEK_WORDS and entry.key in allowed:
+        if isinstance(entry, Property) and entry.key in PEEK_WORDS and entry.key in allowed:
             if isinstance(entry.value, tess_dl.List):
                 ctx.add(
                     entry.value_origin,
                     "not-built",
                     f"a list of values for {entry.key} is not built: a Peek takes one",
-                    f"write {entry.key}: {_PEEK_WORDS[entry.key][0]} (one of "
-                    f"{', '.join(_PEEK_WORDS[entry.key])})",
+                    f"write {entry.key}: {PEEK_WORDS[entry.key][0]} (one of "
+                    f"{', '.join(PEEK_WORDS[entry.key])})",
                 )
                 continue
             try:
                 value = coerce(
-                    "enum", entry.value, ctx.origin(entry.key_origin), _PEEK_WORDS[entry.key]
+                    "enum", entry.value, ctx.origin(entry.key_origin), PEEK_WORDS[entry.key]
                 )
             except ValueProblem as exc:
                 ctx.problem(entry.value_origin, entry.key, exc)
@@ -1850,6 +1853,7 @@ def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
                         entry.value,
                         ctx.origin(entry.key_origin),
                         blocks.POPUP_CHOICES.get(key, ()),
+                        key=key,
                     )
                 except ValueProblem as exc:
                     ctx.problem(entry.value_origin, key, exc)
@@ -1981,14 +1985,6 @@ def _check_tooltips(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
                     )
 
 
-def _frame_sides(ctx: _Ctx, key: str, value: m.Value, origin: tess_dl.Origin | None) -> m.Value:
-    """Sides of a Frame (``Thickness``, ``Margin``): none below 0."""
-    sides = _sides_of(value)
-    if any(x < 0 for x in sides):
-        ctx.add(origin, "bad-value", f"{key} is 0 or more", "")
-    return value
-
-
 def _sides_of(value: m.Value | None) -> tuple[float, float, float, float]:
     if isinstance(value, m.Length):
         return (float(value.px),) * 4
@@ -2084,16 +2080,11 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
                         entry.value,
                         ctx.origin(entry.key_origin),
                         blocks.FRAME_CHOICES.get(key, ()),
+                        key=key,
                     )
                 except ValueProblem as exc:
                     ctx.problem(entry.value_origin, key, exc)
                     continue
-                if key in ("Thickness", "Margin", "Padding"):
-                    _frame_sides(ctx, key, value, entry.value_origin)
-                elif key in ("Corner_Radius", "Inner_Radius") and any(
-                    x < 0 for x in _corners_of(value)
-                ):
-                    ctx.add(entry.value_origin, "bad-value", f"{key} is 0 or more", "")
                 values[key] = value
             elif key in ("Inner_Border", "Outer_Border"):
                 ctx.add(
@@ -2112,11 +2103,11 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
                 edges = _edges(ctx, entry)
             elif kind in ("Thickness", "Margin", "Padding"):
                 try:
-                    named = named_sides(entry, ctx.origin(entry.origin))
+                    named = named_sides(entry, ctx.origin(entry.origin), kind)
                 except ValueProblem as exc:
                     ctx.problem(entry.origin, kind, exc)
                     continue
-                values[kind] = _frame_sides(ctx, kind, named, entry.origin)
+                values[kind] = named
             elif kind in ("Inner_Border", "Outer_Border"):
                 border = _frame_border(ctx, entry)
                 if border is not None:
@@ -2282,11 +2273,12 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
                         thickness = float(value.value)
                 elif sub.key == "Padding":
                     try:
-                        value = coerce("sides", sub.value, ctx.origin(sub.key_origin))
+                        value = coerce(
+                            "sides", sub.value, ctx.origin(sub.key_origin), key="Padding"
+                        )
                     except ValueProblem as exc:
                         ctx.problem(sub.value_origin, sub.key, exc)
                         continue
-                    _frame_sides(ctx, "Padding", value, sub.value_origin)
                     padding = _sides_of(value)
                 else:
                     ctx.unknown(sub.key_origin, sub.key, keys, f"key in {entry.type}")
@@ -2297,11 +2289,11 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
                     peek = _peek(ctx, sub, strip=True)
                 elif sub.type == "Padding":
                     try:
-                        named = named_sides(sub, ctx.origin(sub.origin))
+                        named = named_sides(sub, ctx.origin(sub.origin), "Padding")
                     except ValueProblem as exc:
                         ctx.problem(sub.origin, "Padding", exc)
                         continue
-                    padding = _sides_of(_frame_sides(ctx, "Padding", named, sub.origin))
+                    padding = _sides_of(named)
                 else:
                     ctx.unknown(sub.origin, sub.type, keys, f"key in {entry.type}")
             elif isinstance(sub, tess_dl.If | tess_dl.For):

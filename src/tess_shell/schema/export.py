@@ -17,6 +17,7 @@ the words with the loader kinds each one covers.
 
 from __future__ import annotations
 
+import ast
 import dataclasses
 import functools
 import json
@@ -28,14 +29,14 @@ from typing import Any
 import tess_dl
 
 from tess_shell import __version__
-from tess_shell.binder import marquee
+from tess_shell.binder import marquee, motion
 from tess_shell.binder import model as m
+from tess_shell.binder.defaults import tre_defaults
 from tess_shell.config import settings as cfg
 from tess_shell.config.paths import FOLDERS
 from tess_shell.schema import blocks, docs
 from tess_shell.schema.look import GROUPS as THEME_GROUPS
-from tess_shell.schema.look import STYLE_UNION, read_theme
-from tess_shell.schema.look import _kind as _token_kind
+from tess_shell.schema.look import STYLE_UNION, read_theme, token_kind
 from tess_shell.schema.model import (
     PARAM_TYPES,
     BarDef,
@@ -45,10 +46,17 @@ from tess_shell.schema.model import (
     PeekDef,
     PopupDef,
 )
-from tess_shell.schema.shell import _BAR_CHOICES, _BAR_KEYS, _IMAGE_SUFFIXES, _PEEK_WORDS
+from tess_shell.schema.ranges import range_of
+from tess_shell.schema.shell import (
+    BAR_CHOICES,
+    BAR_KEYS,
+    IMAGE_SUFFIXES,
+    PEEK_WORDS,
+    read_module_params,
+)
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
 
 Json = dict[str, Any]
 
@@ -59,7 +67,7 @@ CORNERS = ("Top_Left", "Top_Right", "Bottom_Right", "Bottom_Left")
 # the words a key reads as a colour (``binder.convert.parse_color``)
 COLOR_FORMS = ('"#RRGGBB"', '"#RRGGBBAA"', '"#RGB"', '"#RGBA"', "rgba(r g b a)")
 # the words that stand for a path of the file system in the output
-IMAGE_FILTERS = tuple(f"*{suffix}" for suffix in _IMAGE_SUFFIXES)
+IMAGE_FILTERS = tuple(f"*{suffix}" for suffix in IMAGE_SUFFIXES)
 
 # the keys every block takes besides the tables (``shell._block``)
 IDENTITY_KEYS = ("Name", "Part", "Class", "Tooltip")
@@ -194,6 +202,30 @@ def _length_units(spec: str, key: str, model_kind: str) -> list[str]:
 _PIXEL_ONLY = {(s, k) for s in ("Popup", "Tooltip") for k in ("Max_Width", "Max_Height")}
 
 
+WHOLE_KINDS = ("whole", "max_length", "lines", "diameter")
+
+
+def _bounds(model_kind: str, key: str) -> Json:
+    """``min`` and ``max`` of a key of this loader kind: the table the loader judges by. A whole
+    number above 0 has 1 as its least, so that is its ``min`` (not exclusive)."""
+    rng = range_of(model_kind, key)
+    if rng is None:
+        return {"min": None, "max": None}
+    low = rng.low
+    if rng.low_open and low is not None and model_kind in WHOLE_KINDS:
+        return {"min": low + 1, "max": rng.high}
+    out: Json = {"min": low, "max": rng.high}
+    if rng.low_open:
+        out["min_exclusive"] = True
+    return out
+
+
+def _negative(model_kind: str, key: str) -> bool:
+    """Whether the loader takes a negative number in a key of this kind."""
+    rng = range_of(model_kind, key)
+    return rng is None or rng.low is None or rng.low < 0
+
+
 def _kind_fields(
     model_kind: str, spec: str, key: str, choices: tuple[str, ...]
 ) -> tuple[str, Json]:
@@ -213,39 +245,32 @@ def _kind_fields(
         case "a11y_value":
             return "text_or_number", {}
         case "duration" | "pause" | "non_negative_ms":
-            return "duration", {"min": 0, "max": None, "step": None, "unit": "ms"}
+            return "duration", {**_bounds(model_kind, key), "step": None, "unit": "ms"}
         case "color":
             return "color", {"alpha": True, "forms": list(COLOR_FORMS)}
-        case "number":
-            return "number", {"min": None, "max": None, "step": None, "unit": unit}
-        case "positive":
-            fields: Json = {"min": 0, "min_exclusive": True, "max": None, "step": None}
-            return "number", {**fields, "unit": unit}
-        case "non_negative":
-            return "number", {"min": 0, "max": None, "step": None, "unit": unit}
-        case "unit":
-            return "number", {"min": 0, "max": 1, "step": None, "unit": None}
-        case "peek_size":
-            return "number", {"min": 1, "max": None, "step": None, "unit": "px"}
-        case "whole":
-            return "whole", {"min": None, "max": None, "step": 1, "unit": unit}
-        case "max_length":
-            return "whole", {"min": 0, "max": None, "step": 1, "unit": None}
-        case "lines":
-            return "whole", {"min": 1, "max": None, "step": 1, "unit": None}
-        case "diameter":
-            return "whole", {"min": 1, "max": None, "step": 1, "unit": "px"}
+        case "number" | "positive" | "non_negative" | "unit" | "peek_size":
+            return "number", {
+                **_bounds(model_kind, key),
+                "step": None,
+                "unit": "px" if model_kind == "peek_size" else unit,
+            }
+        case "whole" | "max_length" | "lines" | "diameter":
+            return "whole", {
+                **_bounds(model_kind, key),
+                "step": 1,
+                "unit": "px" if model_kind == "diameter" else unit,
+            }
         case "length" | "text_length" | "bound":
             return "length", {
                 "units": _length_units(spec, key, model_kind),
-                "negative": False,
+                "negative": _negative(model_kind, key),
             }
         case "sides" | "bleed":
             fields = {
                 "arity": [1, 4],
                 "order": list(SIDES),
                 "named_block": True,
-                "negative": False,
+                "negative": _negative(model_kind, key),
                 "unit": "px",
             }
             if model_kind == "bleed":
@@ -255,7 +280,7 @@ def _kind_fields(
             return "radius", {
                 "arity": [1, 4],
                 "order": list(CORNERS),
-                "negative": False,
+                "negative": _negative(model_kind, key),
                 "unit": "px",
             }
         case "bool" | "wrap_flag":
@@ -265,7 +290,7 @@ def _kind_fields(
         case "enum" | "fit":
             return "enum", {}
         case "elevation":
-            return "percent", {"min": 0, "max": 100, "step": None}
+            return "percent", {**_bounds(model_kind, key), "step": None}
         case "shadows":
             return "shadows", {"block": "Shadows"}
         case "view_box":
@@ -367,6 +392,7 @@ def _key(
     out["tokens"] = (
         _tokens_accepted(model_kind, choices) if tokens and model_kind is not None else []
     )
+    out["preferred_tokens"] = _preferred(key, model_kind) if tokens else []
     return out
 
 
@@ -491,14 +517,29 @@ def _sheet_defaults() -> dict[tuple[str, str], str]:
     return out
 
 
+# key constants of the shell's code that no table row states (the binder's own default)
+_KEY_CONSTANTS: dict[str, object] = {"Duration": motion.DEFAULT_DURATION}
+
+
 def _default(spec: str, key: str) -> str | None:
+    """The default of a key as the text a file would write, or ``None`` where nothing states one.
+
+    In order: a literal of the loader, a field of the typed model, a constant of the binder, what
+    the shipped Default stylesheet gives the block, what tre reads on a bare block, a constant of
+    the shell for keys that set no tre property, then the small authored table (``docs``)."""
     if (spec, key) in docs.LITERAL_DEFAULTS:
         return docs.LITERAL_DEFAULTS[(spec, key)]
     if (spec, key) in _FIELDS:
         return _default_text(_field_default(*_FIELDS[(spec, key)]))
     if (spec, key) in _CONSTANTS:
         return _default_text(_CONSTANTS[(spec, key)])
-    return _sheet_defaults().get((spec, key))
+    found = _sheet_defaults().get((spec, key)) or tre_defaults().get((spec, key))
+    if found is not None or spec not in blocks.BLOCKS:
+        return found
+    if key in _KEY_CONSTANTS:
+        return _default_text(_KEY_CONSTANTS[key])
+    authored = docs.AUTHORED_DEFAULTS.get(key)
+    return None if authored is None else authored[0]
 
 
 def _text(value: tess_dl.Value | tess_dl.Block) -> str:
@@ -681,7 +722,7 @@ def _peek_spec(spec: str, strip: bool) -> Json:
             spec,
             key,
             kind,
-            choices=_PEEK_WORDS.get(key, ()),
+            choices=PEEK_WORDS.get(key, ()),
             default=_default(spec, key),
         )
         for key, kind in kinds.items()
@@ -716,7 +757,7 @@ def _roots() -> dict[str, Json]:
     # a Bar
     bar_keys = {
         "Name": _key("Bar", "Name", "name", required=True),
-        **_table_keys("Bar", _BAR_KEYS, choices=_BAR_CHOICES, required=("Edge", "Width", "Height")),
+        **_table_keys("Bar", BAR_KEYS, choices=BAR_CHOICES, required=("Edge", "Width", "Height")),
         **_not_built(
             "Bar",
             blocks.BAR_NOT_BUILT,
@@ -990,7 +1031,7 @@ def _settings() -> dict[str, dict[str, Json]]:
         "Appearance": block("Settings", "Appearance"),
         "Debug": block("Settings", "Debug"),
     }
-    assert tuple(root) == cfg._ROOT_KEYS  # the order of the loader's own tuple
+    assert tuple(root) == cfg.ROOT_KEYS  # the order of the loader's own tuple
     out: dict[str, dict[str, Json]] = {
         "Settings": root,
         "Directories": {
@@ -1026,9 +1067,9 @@ def _settings() -> dict[str, dict[str, Json]]:
             "Follow_Desktop": boolean("Appearance", "Follow_Desktop", appearance.follow_desktop),
         },
         "Debug": {
-            "Panel_Hide": word("Debug", "Panel_Hide", cfg._PANEL_HIDE, debug.panel_hide),
-            "Frame_Join": word("Debug", "Frame_Join", cfg._FRAME_JOIN, debug.frame_join),
-            "Frame_Blend": word("Debug", "Frame_Blend", cfg._FRAME_BLEND, debug.frame_blend),
+            "Panel_Hide": word("Debug", "Panel_Hide", cfg.PANEL_HIDE, debug.panel_hide),
+            "Frame_Join": word("Debug", "Frame_Join", cfg.FRAME_JOIN, debug.frame_join),
+            "Frame_Blend": word("Debug", "Frame_Blend", cfg.FRAME_BLEND, debug.frame_blend),
         },
     }
     return out
@@ -1080,7 +1121,7 @@ def _tokens() -> dict[str, dict[str, Json]]:
         group, _, name = path.partition(".")
         # the loader checks a token's value only for the groups ``look._kind`` names; the
         # easing words and ``elevation.reach`` it reads as written, so their kind is not known
-        model_kind = "shadows" if path == "elevation.max" else _token_kind(tuple(path.split(".")))
+        model_kind = "shadows" if path == "elevation.max" else token_kind(tuple(path.split(".")))
         kind, fields = (
             (None, {}) if model_kind is None else _kind_fields(model_kind, "Theme", name, ())
         )
@@ -1210,6 +1251,162 @@ def _kinds() -> dict[str, Json]:
     }
 
 
+# -- preferred tokens ---------------------------------------------------------------------------
+
+
+def _preferred(key: str, model_kind: str | None) -> list[str]:
+    """The token patterns a form should offer first for a key (``docs.PREFERRED_TOKENS``; a colour
+    key is offered the ``color`` group)."""
+    if key in docs.PREFERRED_TOKENS:
+        return list(docs.PREFERRED_TOKENS[key])
+    return ["color"] if model_kind == "color" else []
+
+
+# -- the shipped modules ----------------------------------------------------------------------
+
+_PARAM_KINDS = {"string": "text", "number": "number", "boolean": "bool", "icon": "icon"}
+
+
+def _param_text(value: m.Value | None) -> str | None:
+    """A param's default as the text a file would write."""
+    match value:
+        case m.Text():
+            return json.dumps(value.value)
+        case m.Number():
+            return _number_text(value.value)
+        case m.Bool():
+            return "true" if value.value else "false"
+    return None
+
+
+def _shipped_modules() -> dict[str, tuple[tess_dl.Document, str | None]]:
+    """The shipped modules by name: the parsed ``<Name>_Module.tdl`` and the source of its
+    ``<Name>_Module.py`` (read, never imported)."""
+    out: dict[str, tuple[tess_dl.Document, str | None]] = {}
+    root = resources.files("tess_shell") / "shipped"
+    for folder in sorted(root.iterdir(), key=lambda p: p.name):
+        tdl = folder / f"{folder.name}_Module.tdl"
+        if not folder.is_dir() or not tdl.is_file():
+            continue
+        parsed = tess_dl.parse(tdl.read_text(encoding="utf-8"), path=tdl.name)
+        assert parsed.document is not None, parsed.errors  # shipped files are tested
+        py = folder / f"{folder.name}_Module.py"
+        source = py.read_text(encoding="utf-8") if py.is_file() else None
+        out[folder.name] = (parsed.document, source)
+    return out
+
+
+def _layout_root(document: tess_dl.Document) -> tess_dl.Block | None:
+    for entry in document.root.entries:
+        if not isinstance(entry, tess_dl.Block) or entry.type in ("Params", "Style"):
+            continue
+        if entry.type == "Children":
+            return next((e for e in entry.entries if isinstance(e, tess_dl.Block)), None)
+        return entry
+    return None
+
+
+def _root_block(
+    name: str, modules: Mapping[str, tuple[tess_dl.Document, str | None]]
+) -> tuple[str, set[str]]:
+    """The block kind of a module's layout root and the keys written on it; a root that is itself
+    a module call is that module's (it passes events and keys on, ``model.expand``)."""
+    root = _layout_root(modules[name][0])
+    if root is None:
+        return "", set()
+    if root.type in modules and root.type != name:
+        return _root_block(root.type, modules)
+    return root.type, {e.key for e in root.entries if isinstance(e, tess_dl.Property)}
+
+
+def _events_of(kind: str, keys: set[str]) -> list[str]:
+    """The events a call of a module may handle: what its root block raises, a control event only
+    when the root has a key that makes it one (the rule of ``model.expand``)."""
+    raised = blocks.BLOCK_EVENTS.get(kind, ())
+    out = []
+    for event in raised:
+        needs = blocks.CONTROL_EVENTS.get(event)
+        if needs is None or kind not in blocks.CONTROL_KINDS or any(k in keys for k in needs):
+            out.append(event)
+    return out
+
+
+def _is_action(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    for deco in fn.decorator_list:
+        target = deco.func if isinstance(deco, ast.Call) else deco
+        if (isinstance(target, ast.Name) and target.id == "action") or (
+            isinstance(target, ast.Attribute) and target.attr == "action"
+        ):
+            return True
+    return False
+
+
+def _actions_of(source: str | None) -> list[Json]:
+    """The ``@action`` methods of a module's class: their arguments are the parameters after the
+    event (``modules.host.action_spec``): required when they have no default."""
+    if source is None:
+        return []
+    found: list[Json] = []
+    for cls in (n for n in ast.parse(source).body if isinstance(n, ast.ClassDef)):
+        if not any(isinstance(b, ast.Name) and b.id == "Module" for b in cls.bases):
+            continue
+        for fn in (n for n in cls.body if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)):
+            if not _is_action(fn):
+                continue
+            a = fn.args
+            positional = [*a.posonlyargs, *a.args]
+            defaults = [None] * (len(positional) - len(a.defaults)) + list(a.defaults)
+            pairs = list(zip(positional, defaults, strict=True))[2:]  # self, then the event
+            pairs += list(zip(a.kwonlyargs, a.kw_defaults, strict=True))
+            args = [{"name": arg.arg, "required": default is None} for arg, default in pairs]
+            doc = ast.get_docstring(fn) or ""
+            found.append(
+                {
+                    "name": fn.name,
+                    "doc": doc.split("\n\n")[0].replace("\n", " ").strip(),
+                    "args": args,
+                    "kwargs": a.kwarg is not None,
+                }
+            )
+    return sorted(found, key=lambda action: str(action["name"]))
+
+
+def _modules() -> dict[str, Json]:
+    """The shipped modules: their params (read with ``read_module_params``), the events a call
+    may handle, the common keys it may write and the actions ``Call`` may run."""
+    modules = _shipped_modules()
+    out: dict[str, Json] = {}
+    for name, (document, source) in modules.items():
+        found = read_module_params(document, f"{name}_Module.tdl")
+        assert found is not None
+        params: dict[str, Json] = {}
+        for param, decl in found.params.items():
+            if decl.type == "path":
+                kind, fields = "path", {"mode": "open", "filters": None}
+            else:
+                kind, fields = _kind_fields(_PARAM_KINDS[decl.type], "Module", "", ())
+            params[param] = {
+                "type": decl.type,
+                "kind": kind,
+                "default": _param_text(decl.default),
+                "doc": docs.PARAM_DOCS.get((name, param), ""),
+                "required": decl.default is None,
+                **fields,
+            }
+        kind_of_root, keys = _root_block(name, modules)
+        table = blocks.table(kind_of_root)
+        takes = set() if table is None else {*table[0], *table[1]}
+        out[name] = {
+            "doc": docs.MODULE_NOTES.get(name, ""),
+            "params": params,
+            "root_block": kind_of_root,
+            "events": _events_of(kind_of_root, keys),
+            "common_keys": [k for k in blocks.COMMON if k not in blocks.A11Y_STATE and k in takes],
+            "actions": _actions_of(source),
+        }
+    return out
+
+
 # -- the whole ------------------------------------------------------------------------------------
 
 
@@ -1227,6 +1424,7 @@ def schema_dict() -> Json:
         "actions": _actions(),
         "enums": {name: list(words) for name, words in NAMED_ENUMS.items()},
         "tokens": _tokens(),
+        "modules": _modules(),
     }
 
 

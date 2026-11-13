@@ -37,7 +37,9 @@ _TYPE_LEAF = {
 }
 
 
-def _kind(path: tuple[str, ...]) -> str | None:
+def token_kind(path: tuple[str, ...]) -> str | None:
+    """The loader kind a theme token's written value is checked as, by its place in the theme;
+    ``None`` where the theme reader checks nothing."""
     group, leaf = path[0], path[-1]
     if group == "color":
         return "color"
@@ -60,13 +62,11 @@ def _flatten(
     for entry in block.entries:
         if isinstance(entry, Property):
             path = (*prefix, entry.key.lower())
-            kind = _kind(path)
+            kind = token_kind(path)
             word = entry.value.text if isinstance(entry.value, tess_dl.Word) else None
             if kind is not None and not (path == ("color", "accent") and word == DESKTOP):
                 try:
-                    typed = coerce(kind, entry.value, ctx.origin(entry.key_origin))
-                    if kind == "positive" and isinstance(typed, m.Number) and typed.value <= 0:
-                        raise ValueProblem("bad-value", "must be greater than 0", "")
+                    coerce(kind, entry.value, ctx.origin(entry.key_origin), key=entry.key)
                 except ValueProblem as exc:
                     ctx.problem(entry.value_origin, entry.key, exc)
                     continue

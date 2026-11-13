@@ -800,3 +800,173 @@ EXAMPLES: dict[str, str] = {
     "Rule": 'Rule { Selector: "Text", Foreground: $color.on_surface }',
     "Stylesheet": 'Stylesheet {\n    Rule { Selector: "Text", Foreground: $color.on_surface }\n}',
 }
+
+# -- defaults tre and the tables do not give -----------------------------------------------------
+# key -> (default as TDL text, why it is authored). Only keys that set no tre property (the
+# shell's own keys), whose default is the behaviour of the binder when the key is absent; each is
+# pinned by ``tests/test_schema_export.py`` against that behaviour.
+
+AUTHORED_DEFAULTS: dict[str, tuple[str, str]] = {
+    "Easing": (
+        "STANDARD",
+        "no tre property; binder.motion.motion_of uses the STANDARD curve when none is written",
+    ),
+    "Toggles": (
+        "false",
+        "no tre property; binder.controls.kind_of makes a block a toggle only when it is true",
+    ),
+    "Selection_Mode": (
+        "NONE",
+        "no tre property; binder.controls.kind_of makes a block a list only when it is SINGLE",
+    ),
+    "Slides": (
+        "NONE",
+        "no tre property; binder.controls.kind_of makes a block a slider only with HORIZONTAL "
+        "or VERTICAL",
+    ),
+    "Menu_Item": (
+        "false",
+        "no tre property; binder.controls.kind_of makes a block a menu item only when it is true",
+    ),
+}
+
+# -- theme tokens a form should offer first -------------------------------------------------------
+# key -> token patterns: a group (``color``) or a group with ``*`` in its path
+# (``type.*.font_size``); every pattern names a group and a token of the shipped Default theme and
+# the key can read every token it matches (tested). A key of the ``color`` kind with no entry here
+# is offered the ``color`` group.
+
+PREFERRED_TOKENS: dict[str, tuple[str, ...]] = {
+    "Corner_Radius": ("shape",),
+    "Inner_Radius": ("shape",),
+    "Spacing": ("space",),
+    "Padding": ("space",),
+    "Margin": ("space",),
+    "Gap": ("space",),
+    "Inset": ("space",),
+    "Thickness": ("space",),
+    "Duration": ("motion.duration.*",),
+    "Font_Size": ("type.*.font_size",),
+    "Font_Weight": ("type.*.font_weight",),
+    "Line_Height": ("type.*.line_height",),
+    "Shadows": ("elevation.max",),
+}
+
+# -- the shipped modules ----------------------------------------------------------------------
+
+MODULE_NOTES: dict[str, str] = {
+    "Badge": "A pill with a count, or a dot, in the error colour.",
+    "Battery": "The battery's charge as an icon and a number, with a tooltip; hides without one.",
+    "Button": "A pressable control with an optional icon and text.",
+    "Checkbox": "A box that is checked or not, with an optional text beside it.",
+    "Clock": "The time, with a tooltip that shows the date.",
+    "Expander": "A block that shows or hides its content with an animation.",
+    "Icon": "An icon from an icon set or a file, sized by one number.",
+    "Image": "A picture from a file, with a placeholder while it loads.",
+    "Label": "A line of text in the theme's body type.",
+    "List": "A list of entries of which one can be chosen.",
+    "Marquee_Text": "A line of text that scrolls when it is wider than its box.",
+    "Media": "What a media player plays, with previous, play or pause and next buttons.",
+    "Menu": "The content of a Popup: a column of menu items.",
+    "MenuItem": "A row of a menu: text, an icon, a key hint, a rule or a submenu.",
+    "Network": "How the machine is connected, as NetworkManager reports it.",
+    "ProgressBar": "A bar that shows a value between a minimum and a maximum.",
+    "Slider": "A control that sets a value between a minimum and a maximum by dragging.",
+    "TextBox": "Several lines of text that can wrap, be cut and be selected.",
+    "TextEditor": "A multi-line text field.",
+    "TextInput": "A single-line text field.",
+    "Toggle": "A switch that is on or off.",
+    "Workspaces": "The virtual desktops as buttons: the current one is marked, a click switches.",
+}
+
+# (module, param) -> one line
+PARAM_DOCS: dict[tuple[str, str], str] = {
+    ("Badge", "Count"): "The number shown; 0 shows nothing unless Show_Zero is true.",
+    ("Badge", "Show_Zero"): "Shows the badge for a count of 0.",
+    ("Badge", "Max"): "The largest number shown; above it the badge reads that number and a plus.",
+    ("Badge", "Dot"): "Shows a dot with no number.",
+    ("Battery", "show_percent"): "Shows the charge as a number next to the icon.",
+    ("Button", "Text"): "The words on the button.",
+    ("Button", "Icon"): "An icon name such as mdi:home, or a file path, shown beside the text.",
+    ("Button", "Icon_Position"): "Where the icon sits: START (before the text) or END (after it).",
+    ("Button", "Label"): "The name assistive technology reads aloud; the text when it is empty.",
+    ("Checkbox", "Checked"): "Whether the box is checked; set from outside.",
+    ("Checkbox", "Text"): "A label beside the box; a click on it flips the checkbox too.",
+    ("Checkbox", "Label"): "The name assistive technology reads aloud; the text when it is empty.",
+    ("Clock", "format"): "A strftime pattern; empty is chosen by hour_cycle.",
+    ("Clock", "locale"): "A locale name such as de_DE for month and day names; empty is the "
+    "process's own. The system must have it; a missing one is warned about and ignored.",
+    ("Clock", "hour_cycle"): "desktop, 12 or 24.",
+    ("Clock", "timezone"): "An IANA zone such as Europe/Berlin; empty is the local zone.",
+    ("Clock", "tooltip_format"): "A strftime pattern for the text of the tooltip the pointer "
+    "opens on the clock.",
+    ("Expander", "Expanded"): "Whether the content is shown; set from outside.",
+    ("Expander", "Direction"): "The edge the content grows from: DOWN, UP, LEFT or RIGHT.",
+    ("Expander", "Duration"): "The animation time in milliseconds; -1 takes the theme's.",
+    ("Expander", "Content_Fade"): "Whether the content's opacity follows the animation.",
+    ("Icon", "Icon"): "An icon name such as mdi:account, or a file path relative to the file.",
+    ("Icon", "Size"): "The width and the height, in pixels.",
+    ("Image", "Source"): "The file to show, relative to the file that names it.",
+    ("Image", "Fit"): "How the picture fits its box: CONTAIN, COVER, FILL or NONE.",
+    ("Image", "Placeholder"): "A colour or an icon shown while the picture loads or fails.",
+    ("Label", "Text"): "The words.",
+    ("List", "Selected"): "The Key of the chosen entry, set from outside; empty is none.",
+    ("List", "Selection"): "SINGLE lets one entry be chosen; NONE does not.",
+    ("List", "Label"): "The name assistive technology reads aloud for the list.",
+    ("Marquee_Text", "Text"): "The words; they scroll when wider than the box.",
+    ("Marquee_Text", "Speed"): "How fast the text scrolls, in pixels a second.",
+    ("Marquee_Text", "Pause"): "How long the text waits at each end, in milliseconds.",
+    ("Marquee_Text", "Direction"): "The way the text moves: LEFT or RIGHT.",
+    ("Marquee_Text", "Loop"): "RESTART jumps back to the start; BOUNCE scrolls back.",
+    ("Media", "show_art"): "Shows the artwork, 24 px (a file:// URL of the player's; a "
+    "placeholder icon otherwise).",
+    ("Media", "show_title"): "Shows the title, scrolling when it is wider than max_width.",
+    ("Media", "show_controls"): "Shows the previous, play or pause and next buttons.",
+    ("Media", "show_position"): "Shows the seek slider; it turns on the one-second tick while "
+    "the player plays.",
+    ("Media", "max_width"): "The title's width in pixels.",
+    ("Menu", "Label"): "The name assistive technology reads aloud for the menu.",
+    ("MenuItem", "Text"): "The words of the row.",
+    ("MenuItem", "Icon"): "An icon name or a file path shown before the text.",
+    ("MenuItem", "Shortcut_Text"): "A key hint shown at the end of the row; display only.",
+    ("MenuItem", "Separator"): "Makes the row a rule between groups; it takes no events.",
+    ("MenuItem", "Submenu"): "The Name of the Popup that opens beside the row as its submenu; "
+    "empty has none.",
+    ("MenuItem", "Label"): "The name assistive technology reads aloud; the text when it is empty.",
+    ("Network", "show_name"): "Shows the connection's name (or the Wi-Fi network's) next to the "
+    "icon.",
+    ("Network", "show_vpn"): "Shows a second icon while a VPN is up.",
+    ("ProgressBar", "Value"): "The progress, between Min and Max.",
+    ("ProgressBar", "Min"): "The value at which the bar is empty.",
+    ("ProgressBar", "Max"): "The value at which the bar is full.",
+    ("Slider", "Value"): "The value, set from outside.",
+    ("Slider", "Min"): "The least value.",
+    ("Slider", "Max"): "The greatest value.",
+    ("Slider", "Step"): "The increment; a drag snaps to it.",
+    ("Slider", "Orientation"): "The direction: HORIZONTAL or VERTICAL.",
+    ("Slider", "Label"): "The name assistive technology reads aloud for the slider.",
+    ("TextBox", "Text"): "The words.",
+    ("TextBox", "Wrap"): "WORD wraps at word ends; NONE keeps the lines as written.",
+    ("TextBox", "Max_Lines"): "Cuts the text after this many lines; 0 is no limit.",
+    ("TextBox", "Selectable"): "Lets the user select the text.",
+    ("TextEditor", "Text"): "The value, set from outside; edits come out through On_Changed.",
+    ("TextEditor", "Placeholder"): "The text shown while the editor is empty.",
+    ("TextEditor", "Read_Only"): "The text can be selected and copied but not changed.",
+    ("TextEditor", "Max_Length"): "The most characters the editor takes; 0 is no limit.",
+    ("TextEditor", "Wrap"): "WORD wraps at the width by word; NONE does not wrap and scrolls "
+    "sideways.",
+    ("TextEditor", "Lines"): "The height in lines, when the height is AUTO.",
+    ("TextEditor", "Enabled"): "False disables the editor.",
+    ("TextEditor", "Width"): "The width in pixels.",
+    ("TextInput", "Text"): "The value, set from outside; edits come out through On_Changed.",
+    ("TextInput", "Placeholder"): "The text shown while the field is empty.",
+    ("TextInput", "Read_Only"): "The text can be selected and copied but not changed.",
+    ("TextInput", "Max_Length"): "The most characters the field takes; 0 is no limit.",
+    ("TextInput", "Password"): "Shows dots instead of the text and blocks copy and cut.",
+    ("TextInput", "Enabled"): "False disables the field.",
+    ("TextInput", "Width"): "The width in pixels.",
+    ("Toggle", "Checked"): "Whether the switch is on; set from outside.",
+    ("Toggle", "Label"): "The name assistive technology reads aloud for the switch.",
+    ("Workspaces", "label"): "name shows each desktop's name (its number when it has none); "
+    "number shows 1, 2, 3.",
+}

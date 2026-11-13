@@ -52,7 +52,16 @@ default, event, action, theme token and `settings.tdl` key the loader accepts, w
 documentation for each, so a configuration application can build its forms from it. It is read from
 the loader's own tables (`tess_shell.schema.export.schema_json()`; `schema_dict()` is the same as
 plain data), so it cannot list a key the loader refuses or miss one it accepts, and two runs give the
-same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.0.
+same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.1.
+
+Since 1.1: a key's `default` is what tre reads on a bare block (the binder builds it headless and
+`node.get` reads it back; a few shell-owned keys are authored and pinned by tests), `min`/`max` come
+from the one table of ranges (`schema/ranges.py`) that the loader also judges a written value or a
+slot by (`Opacity` 0 to 1, `Scale` above 0, `Flex_Grow` 0 or more, `Font_Weight` 1 to 1000, lengths,
+sides and radii 0 or more, ...), each key lists `preferred_tokens` (the theme tokens a form should
+offer first, next to the mechanical `tokens`), and a `modules` section lists every shipped module
+with its params (type, default, doc), the events a call may handle, the common keys it may write
+and the `@action`s `Call` may run.
 
 Global options: `--config-dir PATH`, `--json`, `--quiet`. Other subcommands named in the design
 report that they are not implemented yet.

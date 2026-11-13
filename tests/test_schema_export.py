@@ -29,7 +29,7 @@ from tess_shell.schema import blocks, docs, export
 from tess_shell.schema.export import schema_dict, schema_json
 from tess_shell.schema.findings import Finding
 from tess_shell.schema.look import STYLE_UNION, read_stylesheet
-from tess_shell.schema.shell import read_module, read_shell
+from tess_shell.schema.shell import BAR_KEYS, read_module, read_shell
 from tess_shell.schema.values import ValueProblem, coerce
 
 D: dict[str, Any] = schema_dict()
@@ -219,7 +219,7 @@ def every_key() -> list[tuple[str, str, str, dict[str, Any]]]:
 
 
 def test_top_level_shape() -> None:
-    assert D["schema_version"] == "1.0"
+    assert D["schema_version"] == "1.1"
     assert D["shell_version"]
     assert list(D) == [
         "schema_version",
@@ -232,6 +232,7 @@ def test_top_level_shape() -> None:
         "actions",
         "enums",
         "tokens",
+        "modules",
     ]
     assert list(D["blocks"]) == list(blocks.BLOCKS)
     for spec in (*D["roots"].values(), *D["blocks"].values()):
@@ -260,6 +261,7 @@ def test_top_level_shape() -> None:
             "built",
             "group",
             "tokens",
+            "preferred_tokens",
         } <= set(key)
 
 
@@ -268,7 +270,7 @@ def test_two_runs_give_the_same_bytes_and_the_tables_order() -> None:
     assert json.loads(schema_json()) == D
     assert list(D["roots"]["Bar"]["keys"]) == [
         "Name",
-        *export._BAR_KEYS,
+        *BAR_KEYS,
         *blocks.BAR_NOT_BUILT,
     ]
     assert list(D["blocks"]["Box"]["keys"]) == [
@@ -298,7 +300,7 @@ def test_every_loader_kind_is_mapped_and_every_output_kind_is_described() -> Non
         export._kind_fields(model_kind, "Box", "Width", ())
     tables = [
         blocks.COMMON,
-        export._BAR_KEYS,
+        BAR_KEYS,
         blocks.BAR_STYLE,
         blocks.PANEL_KEYS,
         blocks.PANEL_STYLE,
@@ -803,7 +805,7 @@ def test_the_command_prints_valid_json(capsys: pytest.CaptureFixture[str]) -> No
 
 def test_the_command_takes_json_before_the_command_too(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--json", "schema"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.0"
+    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.1"
 
 
 def test_out_writes_the_file_and_prints_nothing(
@@ -954,11 +956,11 @@ def settings_probe(tmp_path: Path, section: str, lines: list[str]) -> dict[int, 
 
 def test_the_settings_are_the_keys_of_the_readers_tuples() -> None:
     s = D["settings"]
-    assert tuple(s["Settings"]) == cfg._ROOT_KEYS
-    assert tuple(s["Logging"]) == cfg._LOGGING_KEYS
-    assert tuple(s["Appearance"]) == cfg._APPEARANCE_KEYS
-    assert tuple(s["Debug"]) == cfg._DEBUG_KEYS
-    assert tuple(s["Validation"]) == cfg._VALIDATION_KEYS
+    assert tuple(s["Settings"]) == cfg.ROOT_KEYS
+    assert tuple(s["Logging"]) == cfg.LOGGING_KEYS
+    assert tuple(s["Appearance"]) == cfg.APPEARANCE_KEYS
+    assert tuple(s["Debug"]) == cfg.DEBUG_KEYS
+    assert tuple(s["Validation"]) == cfg.VALIDATION_KEYS
     assert tuple(s["Directories"]) == FOLDERS
     assert set(s) == {"Settings", "Directories", "Logging", "Validation", "Appearance", "Debug"}
 

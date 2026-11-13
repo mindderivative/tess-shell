@@ -18,7 +18,7 @@ LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
 FORMATS = ("TEXT", "JSON")
 DEFAULT_MAIN_SHELL = "Main_Shell.tdl"
 
-_ROOT_KEYS = (
+ROOT_KEYS = (
     "Main_Shell",
     "Registry",
     "Directories",
@@ -29,12 +29,12 @@ _ROOT_KEYS = (
     "Appearance",
     "Debug",
 )
-_DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend")
-_PANEL_HIDE = ("CLOSE", "KEEP")
-_FRAME_JOIN = ("SMIL", "CONCAVE", "SHADER", "STRUCTURE", "PARAM")
-_FRAME_BLEND = ("SRGB", "LINEAR")
-_APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop")
-_LOGGING_KEYS = (
+DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend")
+PANEL_HIDE = ("CLOSE", "KEEP")
+FRAME_JOIN = ("SMIL", "CONCAVE", "SHADER", "STRUCTURE", "PARAM")
+FRAME_BLEND = ("SRGB", "LINEAR")
+APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop")
+LOGGING_KEYS = (
     "Level",
     "Directory",
     "Retention",
@@ -44,7 +44,7 @@ _LOGGING_KEYS = (
     "Capture_Stderr",
 )
 _BOOL_KEYS = ("Diagnose", "Console", "Capture_Stderr")
-_VALIDATION_KEYS = ("Enabled",)
+VALIDATION_KEYS = ("Enabled",)
 
 
 @dataclass(frozen=True, slots=True)
@@ -197,7 +197,7 @@ class _Reader:
 
 
 def _logging(reader: _Reader, block: Block) -> LoggingSettings:
-    reader.unknown_keys(block, _LOGGING_KEYS, "Logging")
+    reader.unknown_keys(block, LOGGING_KEYS, "Logging")
     values: dict[str, Any] = {}
     for prop in properties(block):
         match prop.key:
@@ -224,7 +224,7 @@ def _logging(reader: _Reader, block: Block) -> LoggingSettings:
 
 
 def _appearance(reader: _Reader, block: Block) -> AppearanceSettings:
-    reader.unknown_keys(block, _APPEARANCE_KEYS, "Appearance")
+    reader.unknown_keys(block, APPEARANCE_KEYS, "Appearance")
     values: dict[str, Any] = {}
     for prop in properties(block):
         match prop.key:
@@ -327,7 +327,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     debug = DebugSettings()
     main_origin: Origin | None = None
     if root is not None:
-        reader.unknown_keys(root, _ROOT_KEYS, "Settings")
+        reader.unknown_keys(root, ROOT_KEYS, "Settings")
         ms = find_property(root, "Main_Shell")
         if ms is not None:
             text_ = value_text(ms.value)
@@ -369,19 +369,19 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
         if (blk := reader.block(root, "Appearance")) is not None:
             appearance = _appearance(reader, blk)
         if (blk := reader.block(root, "Debug")) is not None:
-            reader.unknown_keys(blk, _DEBUG_KEYS, "Debug")
+            reader.unknown_keys(blk, DEBUG_KEYS, "Debug")
             hide, join = find_property(blk, "Panel_Hide"), find_property(blk, "Frame_Join")
             blend = find_property(blk, "Frame_Blend")
-            hide_word = None if hide is None else reader.enum(hide, _PANEL_HIDE)
-            join_word = None if join is None else reader.enum(join, _FRAME_JOIN)
-            blend_word = None if blend is None else reader.enum(blend, _FRAME_BLEND)
+            hide_word = None if hide is None else reader.enum(hide, PANEL_HIDE)
+            join_word = None if join is None else reader.enum(join, FRAME_JOIN)
+            blend_word = None if blend is None else reader.enum(blend, FRAME_BLEND)
             debug = DebugSettings(
                 panel_hide=hide_word or debug.panel_hide,
                 frame_join=join_word or debug.frame_join,
                 frame_blend=blend_word or debug.frame_blend,
             )
         if (blk := reader.block(root, "Validation")) is not None:
-            reader.unknown_keys(blk, _VALIDATION_KEYS, "Validation")
+            reader.unknown_keys(blk, VALIDATION_KEYS, "Validation")
             en = find_property(blk, "Enabled")
             if en is not None and (b := reader.boolean(en)) is not None:
                 validation = b

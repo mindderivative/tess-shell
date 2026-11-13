@@ -27,8 +27,10 @@ RULES: dict[str, set[str] | None] = {
     "schema.export": {
         "tess_dl",
         "tess_shell.__version__",
+        "tess_shell.binder.defaults",
         "tess_shell.binder.marquee",
         "tess_shell.binder.model",
+        "tess_shell.binder.motion",
         "tess_shell.config.paths",
         "tess_shell.config.settings",
         "tess_shell.schema",
