@@ -54,6 +54,7 @@ class PrivateSway:
         config = self.runtime / "config"
         config.write_text(f"exec sh -c 'echo $WAYLAND_DISPLAY > {display_file}'\n")
         env = {k: v for k, v in os.environ.items() if k not in ("WAYLAND_DISPLAY", "DISPLAY")}
+        env.pop("DBUS_SESSION_BUS_ADDRESS", None)  # sway itself never reaches the real session bus
         env.update(
             XDG_RUNTIME_DIR=str(self.runtime),
             WLR_BACKENDS="headless",
