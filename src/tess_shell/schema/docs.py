@@ -707,6 +707,8 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
     "milliseconds.",
     ("Settings", "Appearance"): "The theme and the stylesheets in use.",
     ("Settings", "Debug"): "Switches for finding a fault.",
+    ("Settings", "Control"): "Whether the shell exports its control interface on the session bus "
+    "(the tesserae-shell commands); a restart applies it.",
     ("Directories", "Shells"): "Folders searched for shell files.",
     ("Directories", "Modules"): "Folders searched for module files.",
     ("Directories", "Styles"): "Folders searched for style files.",

@@ -28,6 +28,7 @@ from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, apply_rules, resolve_style
 from tess_shell.model.store import Change, ValueStore
 from tess_shell.model.uses import Use, UseScope
+from tess_shell.schema.findings import nearest
 from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, PanelDef, ShellDef, use_names
 from tess_shell.surfaces.bar import (
     BarSpec,
@@ -419,6 +420,19 @@ class Planned:
     )
 
 
+@dataclass(frozen=True, slots=True)
+class SurfaceInfo:
+    """What the control interface says of a surface (``Status``): its ``Name``, its kind (``bar``,
+    ``panel``, ``frame``), the output it is on, the Monitor block it came from and whether it is
+    shown now."""
+
+    name: str
+    kind: str
+    output: str
+    monitor: str
+    shown: bool
+
+
 def _handlers(nodes: Sequence[Any]) -> list[Handler]:
     found: list[Handler] = []
     for node in nodes:
@@ -510,6 +524,10 @@ class SurfaceManager:
         self._dyn_registered: dict[str, Use] = {}
         self.dynamic_sink: Callable[[list[Use], list[str]], None] | None = None
         self._deferred: list[Change] = []
+        # the control interface (services/control.py): told when a Panel or a Frame is shown or
+        # hidden (``name``, ``"shown"`` or ``"hidden"``); the errors the last ``check`` found
+        self.on_surface: Callable[[str, str], None] | None = None
+        self.check_errors: list[BindError] = []
 
     def _dispatch(
         self, handler: Handler, key: str, raw: Any, caller: Mapping[str, Any] | None = None
@@ -1128,6 +1146,7 @@ class SurfaceManager:
             s.timer = None
         self._fire(s, "On_Close")  # before: the request is made
         s.hidden = True
+        self.changed(s.name, False)
         if self.hide_mode == "KEEP":  # a hiding Panel takes no input, whatever its animation
             s.window.set(input_region=[], keyboard="none")
         self._leave(s, lambda: self._finish_hide(s))
@@ -1163,6 +1182,7 @@ class SurfaceManager:
         if s.window is not None:  # KEEP: the surface is still there (or it is still leaving)
             bar = s.planned.bar
             s.hidden = False
+            self.changed(s.name, True)
             s.window.root.set(visible=True)
             s.window.set(
                 input_region=_input_for(bar, s.geometry, self._output_size(s)),
@@ -1178,6 +1198,7 @@ class SurfaceManager:
         s.window, s.view, s.body = fresh.window, fresh.view, fresh.body
         s.live, s.fill, s.shadows, s.extra = fresh.live, fresh.fill, fresh.shadows, fresh.extra
         s.expanded, s.geometry, s.hidden = s.planned.expanded, s.planned.geometry, False
+        self.changed(s.name, True)
         self._app.add_window(s.window)
         self._panel_events(s)
         self._watch_frames(s)
@@ -1293,6 +1314,69 @@ class SurfaceManager:
         finally:
             self._depth -= 1
 
+    # -- the control interface ----------------------------------------------------------------
+
+    def changed(self, name: str, shown: bool) -> None:
+        """A Panel or a Frame was shown or hidden: tell the control interface (it makes the
+        ``SurfaceChanged`` signal)."""
+        if self.on_surface is not None:
+            self.on_surface(name, "shown" if shown else "hidden")
+
+    def surface_infos(self) -> list[SurfaceInfo]:
+        """Every surface a command can name: the Bars and Panels, the Frames and their melded
+        Panels (a Frame's strips are parts of it, not surfaces of their own)."""
+        out: list[SurfaceInfo] = []
+        for s in self.surfaces:
+            if s.planned is not None:
+                kind = _kind(s.planned.bar).lower()
+                out.append(
+                    SurfaceInfo(s.name, kind, s.output, s.planned.group.split("@")[0], not s.hidden)
+                )
+        for st in self.frames.states.values():
+            monitor, output = st.plan.group.split("@")[0], st.plan.output.name
+            out.append(SurfaceInfo(st.plan.frame.name, "frame", output, monitor, not st.hidden))
+            for meld in st.plan.frame.melds:
+                shown = meld.name not in st.hidden_melds and not st.hidden
+                out.append(SurfaceInfo(meld.name, "panel", output, monitor, shown))
+        return out
+
+    def control_surface(self, action: str, name: str) -> tuple[bool, str]:
+        """``Show``, ``Hide`` or ``Toggle`` for the control interface: on the Panel, the Frame or
+        the melded Panel called ``name``. ``(ok, message)``: an unknown name is an error with the
+        nearest names, a Popup is never opened by a command, a Bar is always shown, and showing a
+        Panel whose target is hidden reports that it stays hidden. Idempotent: showing what is
+        shown succeeds and does nothing."""
+        infos = self.surface_infos()
+        found = [i for i in infos if i.name == name]
+        if not found:
+            popups = sorted({n for _, n in self.popups.plans})
+            if name in popups:
+                return False, (
+                    f"{name} is a Popup: no command opens a Popup (a Popup needs the pointer "
+                    "or key press that opened it); a Panel can be opened by a command"
+                )
+            names = sorted({i.name for i in infos})
+            close = nearest(name, names)
+            hint = (
+                f"did you mean {', '.join(close)}?"
+                if close
+                else f"the surfaces: {', '.join(names) or 'none'}"
+            )
+            return False, f"no surface named {name} ({hint})"
+        if all(i.kind == "bar" for i in found):
+            if action == "Show":
+                return True, f"{name} is a Bar and is always shown"
+            return False, f"{name} is a Bar: a Bar cannot be hidden"
+        self.run_builtin(Handler(action, {"Target": name}, builtin=True))
+        plain = [i for i in self.surface_infos() if i.name == name and i.kind == "panel"]
+        framed = {m.name for st in self.frames.states.values() for m in st.plan.frame.melds}
+        if action != "Toggle" and name not in framed and plain:
+            shown = all(i.shown for i in plain)
+            if shown != (action == "Show"):  # the log says why (a hidden target)
+                return False, f"{name} stays {'shown' if shown else 'hidden'}: see the log"
+        now = [i for i in self.surface_infos() if i.name == name]
+        return True, f"{name} is {'shown' if all(i.shown for i in now) else 'hidden'}"
+
     def run_builtin(self, handler: Handler, raw: Any = None) -> None:
         """A shell action (``Show``, ``Hide``, ``Toggle``) on the Panel or the Popup it names;
         ``raw`` is the event of the block that raised it (a Popup opens beside that block)."""
@@ -1366,6 +1450,7 @@ class SurfaceManager:
         failed.extend(
             h.planned for fp in self._frame_plans for h in fp.hosts if h.planned.expanded.errors
         )
+        self.check_errors = [e for p in failed for e in p.expanded.errors]
         for p in failed:
             _log_errors(p.expanded.errors)
         if failed:

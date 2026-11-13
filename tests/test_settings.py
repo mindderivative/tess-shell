@@ -73,6 +73,17 @@ def test_every_key(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert s.validation_enabled is False
 
 
+def test_control_defaults_to_true_takes_a_boolean_and_refuses_a_word(tmp_path: Path) -> None:
+    assert load_ok(tmp_path).control is True
+    write(tmp_path, "Settings { Control: false }\n")
+    assert load_ok(tmp_path).control is False
+    write(tmp_path, "Settings { Control: true }\n")
+    assert load_ok(tmp_path).control is True
+    write(tmp_path, "Settings { Control: maybe }\n")
+    settings, findings = load_settings(tmp_path)
+    assert settings is None and any("Control" in f.message for f in findings)
+
+
 def test_unknown_key_suggests_nearest(tmp_path: Path) -> None:
     write(tmp_path, "Settings {\n    Logging {\n        Levl: INFO\n    }\n}\n")
     (f,) = load_bad(tmp_path)

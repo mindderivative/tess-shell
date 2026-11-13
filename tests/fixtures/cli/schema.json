@@ -21794,6 +21794,18 @@
         "group": "Settings",
         "block": "Debug",
         "tokens": []
+      },
+      "Control": {
+        "kind": "bool",
+        "choices": null,
+        "enum": null,
+        "default": "true",
+        "doc": "Whether the shell exports its control interface on the session bus (the tesserae-shell commands); a restart applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Settings",
+        "tokens": []
       }
     },
     "Directories": {

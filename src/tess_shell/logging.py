@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -37,6 +38,8 @@ class LogState:
     timer: threading.Timer | None = None
     lock: threading.Lock = field(default_factory=threading.Lock)
     closed: bool = False
+    quiet: bool = False
+    level: str | None = None  # set by ``set_level`` (the control interface): not the file's own
 
 
 _state: LogState | None = None
@@ -58,7 +61,7 @@ def _add_file_sink(state: LogState, path: Path) -> int:
     json_ = state.settings.format == "JSON"
     return logger.add(
         path,
-        level=state.settings.level,
+        level=state.level or state.settings.level,
         format=_LINE,
         serialize=json_,
         enqueue=True,
@@ -117,6 +120,56 @@ def swap_file_sink(now: datetime | None = None) -> None:
         _schedule(state)
 
 
+def _add_console_sink(state: LogState) -> None:
+    journal = "JOURNAL_STREAM" in os.environ
+    state.console_sink = logger.add(
+        sys.stderr,
+        level="WARNING" if state.quiet else (state.level or state.settings.level),
+        format=_LINE_JOURNAL if journal else _LINE,
+        enqueue=True,
+        colorize=sys.stderr.isatty(),
+        diagnose=state.settings.diagnose,
+        backtrace=False,
+        filter=lambda record: not record["extra"].get("file_only"),
+    )
+
+
+def set_level(level: str) -> bool:
+    """Change the level of the console and the file sink until the next ``configure_logging``
+    (the control interface's ``SetLogLevel``; the reload of ``settings.tdl`` puts the file's level
+    back). ``False`` when logging is not configured."""
+    state = _state
+    if state is None or state.closed:
+        return False
+    with state.lock:
+        state.level = level
+        if state.file_sink is not None and state.directory is not None:
+            logger.remove(state.file_sink)
+            state.file_sink = _add_file_sink(state, log_path(state.directory, datetime.now()))
+        if state.console_sink is not None:
+            logger.remove(state.console_sink)
+            _add_console_sink(state)
+    return True
+
+
+def level_overridden() -> bool:
+    """Whether ``set_level`` changed the level since logging was configured."""
+    return _state is not None and _state.level is not None
+
+
+# what hears every finding the shell logs: the control interface's last errors and its
+# ``ErrorReported`` signal (any thread; a sink must not block)
+finding_sinks: list[Callable[[Finding], None]] = []
+
+
+def note_finding(finding: Finding) -> None:
+    for sink in list(finding_sinks):
+        try:
+            sink(finding)
+        except Exception:  # a listener never stops the logging of an error
+            logger.opt(exception=True).debug("a finding listener raised")
+
+
 def configure_logging(
     settings: LoggingSettings, *, quiet: bool = False, default_directory: Path | None = None
 ) -> LogState:
@@ -125,7 +178,7 @@ def configure_logging(
     shutdown_logging()
     logger.remove()
     logger.configure(extra={"source": "shell", "location": "-"})
-    state = LogState(settings=settings)
+    state = LogState(settings=settings, quiet=quiet)
     _state = state
     directory = settings.directory or default_directory
     failure: str | None = None
@@ -142,17 +195,7 @@ def configure_logging(
     else:
         failure = "no log directory; console only"
     if settings.console or state.file_sink is None:
-        journal = "JOURNAL_STREAM" in os.environ
-        state.console_sink = logger.add(
-            sys.stderr,
-            level="WARNING" if quiet else settings.level,
-            format=_LINE_JOURNAL if journal else _LINE,
-            enqueue=True,
-            colorize=sys.stderr.isatty(),
-            diagnose=settings.diagnose,
-            backtrace=False,
-            filter=lambda record: not record["extra"].get("file_only"),
-        )
+        _add_console_sink(state)
     if failure:
         logger.warning(failure)
     if state.file_sink is not None:
@@ -161,6 +204,7 @@ def configure_logging(
 
 
 def log_finding(finding: Finding) -> None:
+    note_finding(finding)
     location = f"{finding.file}:{finding.line}:{finding.column} {finding.rule}"
     # file only: the command prints the findings itself, with source lines and hints
     logger.bind(

@@ -4,11 +4,13 @@ import json
 
 import pytest
 
-from tests.cli_fixtures import FIXTURES, RECORDED
+from tests.cli_fixtures import FIXTURES, RECORDED, available
 
 
 @pytest.mark.parametrize("name", sorted(RECORDED))
 def test_the_fixture_equals_what_the_command_prints(name: str) -> None:
+    if name.startswith("status_") and not available():
+        pytest.skip("sway and dbus-daemon record the status fixtures")
     recorded = (FIXTURES / name).read_text(encoding="utf-8")
     assert recorded == RECORDED[name](), (
         f"{name} is stale: run `env -u WAYLAND_DISPLAY -u DISPLAY python -m tests.cli_fixtures`"
@@ -35,3 +37,26 @@ def test_version_and_check_json_name_the_folder_they_are_about(tmp_path) -> None
     for argv in (("version", "--json"), ("check", "--json")):
         _, out = run(*argv, "--config-dir", str(tmp_path))
         assert json.loads(out)["config_dir"] == str(tmp_path)
+
+
+def test_the_status_fixtures_show_what_a_tool_has_to_handle() -> None:
+    running = json.loads((FIXTURES / "status_running.json").read_text())
+    assert running["state"] == "running"
+    assert set(running) == {
+        "state",
+        "api_version",
+        "version",
+        "monitors",
+        "surfaces",
+        "modules",
+        "errors",
+    }
+    assert {s["name"]: s["kind"] for s in running["surfaces"]} == {
+        "Launcher": "panel",
+        "Top_Bar": "bar",
+    }
+    assert running["modules"] == ["Clock"]
+    assert running["version"]["shell"] == "<shell>"
+    assert "/home" not in json.dumps(running) and "/tmp" not in json.dumps(running)
+    gone = json.loads((FIXTURES / "status_not_running.json").read_text())
+    assert gone["ok"] is False and gone["exit"] == 3 and "no shell is running" in gone["error"]

@@ -744,6 +744,7 @@ class Frames:
                 hide = not st.hidden if action == "Toggle" else action == "Hide"
                 if hide != st.hidden:
                     st.hidden = hide
+                    self._m.changed(st.plan.frame.name, not hide)
                     logger.info(f"Frame {st.plan.where} {'hidden' if hide else 'shown'}")
                     self._reconcile(st)
             elif any(h.name == target and (h.kind == "meld" or h.peek) for h in st.plan.hosts):

@@ -1027,6 +1027,7 @@ def _settings() -> dict[str, dict[str, Json]]:
         ),
         "Appearance": block("Settings", "Appearance"),
         "Debug": block("Settings", "Debug"),
+        "Control": boolean("Settings", "Control", defaults.control),
     }
     assert tuple(root) == cfg.ROOT_KEYS  # the order of the loader's own tuple
     out: dict[str, dict[str, Json]] = {

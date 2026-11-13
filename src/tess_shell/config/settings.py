@@ -28,6 +28,7 @@ ROOT_KEYS = (
     "Reload_Debounce",
     "Appearance",
     "Debug",
+    "Control",
 )
 DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend")
 PANEL_HIDE = ("CLOSE", "KEEP")
@@ -101,6 +102,9 @@ class Settings:
     reload_debounce: float = 0.2  # seconds
     appearance: AppearanceSettings = field(default_factory=AppearanceSettings)
     debug: DebugSettings = field(default_factory=DebugSettings)
+    # export the shell's own D-Bus interface (IPC and CLI > Configuration): false runs the shell
+    # with no bus name and no control commands; a restart applies it
+    control: bool = True
 
 
 class _Reader:
@@ -325,6 +329,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     debounce = 0.2
     appearance = AppearanceSettings()
     debug = DebugSettings()
+    control = True
     main_origin: Origin | None = None
     if root is not None:
         reader.unknown_keys(root, ROOT_KEYS, "Settings")
@@ -338,6 +343,9 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
         hr = find_property(root, "Hot_Reload")
         if hr is not None and (flag := reader.boolean(hr)) is not None:
             hot_reload = flag
+        ct = find_property(root, "Control")
+        if ct is not None and (flag := reader.boolean(ct)) is not None:
+            control = flag
         rd = find_property(root, "Reload_Debounce")
         if rd is not None:
             v = rd.value
@@ -428,6 +436,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             reload_debounce=debounce,
             appearance=appearance,
             debug=debug,
+            control=control,
         ),
         [],
     )

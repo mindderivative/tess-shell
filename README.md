@@ -65,8 +65,33 @@ offer first, next to the mechanical `tokens`), and a `modules` section lists eve
 with its params (type, default, doc), the events a call may handle, the common keys it may write
 and the `@action`s `Call` may run.
 
-Global options: `--config-dir PATH`, `--json`, `--quiet`. Other subcommands named in the design
-report that they are not implemented yet.
+### Control commands
+
+A running shell owns the session bus name `io.github.mindderivative.TesseraeShell` (object
+`/io/github/mindderivative/TesseraeShell`, interface `io.github.mindderivative.TesseraeShell1`) and
+these commands talk to it. They import only the standard library and `jeepney`, so one from a key
+binding costs about 55 ms from process start to exit:
+
+```sh
+tesserae-shell reload                       # check every file and apply, answering after the apply
+tesserae-shell quit                         # stop the shell (exit 0 once it has been asked)
+tesserae-shell status [--json]              # state, versions, monitors, surfaces, module names, last errors
+tesserae-shell show|hide|toggle NAME        # a Panel, a Frame or a melded Panel by its Name
+tesserae-shell call MODULE ACTION [ARG ...] # run an @action of a module (each ARG a JSON value, else text)
+tesserae-shell log-level LEVEL              # TRACE to CRITICAL, until the next settings.tdl reload
+```
+
+`--timeout SECONDS` (default 5) bounds the wait. Exit codes: 0 done, 1 the command ran and failed
+(an unknown name, an action that raised, errors in the files: the message names the module or the
+`file:line`), 2 no session bus (`DBUS_SESSION_BUS_ADDRESS` is not set), 3 no shell is running, 4 a
+second `run` (the instance lock, or the bus name when the shell is run from another runtime
+directory), 5 timeout. With `--json` an error is also one object on standard output:
+`{"ok": false, "error": "...", "exit": 3}`. `status` never lists a param value or a line of the
+log. No command opens a Popup, and `call` reaches only methods marked `@action`.
+`Settings { Control: false }` exports nothing (no bus name; the commands exit 3).
+
+Global options: `--config-dir PATH`, `--json`, `--quiet`, `--timeout SECONDS`. The `kwin`
+subcommand named in the design reports that it is not implemented yet.
 
 ## Development
 

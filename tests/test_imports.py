@@ -54,6 +54,7 @@ RULES: dict[str, set[str] | None] = {
     "module": set(),
     "modules": {
         "loguru",
+        "tess_shell.logging",  # ModuleHost.report tells the control interface of a finding
         "tess_shell.binder.model",
         "tess_shell.module",
         "tess_shell.model",
@@ -87,6 +88,7 @@ RULES: dict[str, set[str] | None] = {
         "loguru",
         "tess_shell.binder",
         "tess_shell.model",
+        "tess_shell.schema.findings",  # nearest names for the control commands
         "tess_shell.schema.model",
         "tess_shell.surfaces",
     },
@@ -122,6 +124,10 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.schema.model",
         "tess_shell.surfaces",
     },
+    # the control commands' client: the standard library and jeepney, nothing that costs time to
+    # import (tests/test_client.py lists what a run imports)
+    "client": {"jeepney", "tess_shell.__version__", "tess_shell.exit_codes", "tess_shell.options"},
+    "commands": ANY,  # the shell's side of the control interface: it holds the model
     "scanner": ANY,
     "reloader": ANY,
     "app": ANY,

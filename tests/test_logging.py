@@ -12,9 +12,12 @@ from tess_shell.config.settings import LoggingSettings
 from tess_shell.logging import (
     apply_retention,
     configure_logging,
+    finding_sinks,
+    level_overridden,
     log_finding,
     log_path,
     seconds_until_midnight,
+    set_level,
     shutdown_logging,
     swap_file_sink,
 )
@@ -118,3 +121,35 @@ def test_swap_starts_next_day_file_and_keeps_old_whole(tmp_path: Path) -> None:
     second = (tmp_path / "log_2031-05-06.log").read_text()
     assert "day one" in first and "day two" not in first
     assert "day two" in second
+
+
+def test_set_level_changes_the_file_sink_until_the_next_configure(tmp_path: Path) -> None:
+    configure_logging(LoggingSettings(console=False, level="INFO"), default_directory=tmp_path)
+    logger.debug("before")
+    assert not level_overridden()
+    assert set_level("DEBUG") is True and level_overridden()
+    logger.debug("after")
+    assert set_level("ERROR") is True
+    logger.warning("dropped")
+    shutdown_logging()
+    text = today_file(tmp_path).read_text()
+    assert "after" in text and "before" not in text and "dropped" not in text
+    assert set_level("DEBUG") is False  # logging is off: nothing to change
+    configure_logging(LoggingSettings(console=False), default_directory=tmp_path)
+    assert not level_overridden()  # a new configuration is the file's own level again
+
+
+def test_every_finding_logged_is_told_to_the_listeners(tmp_path: Path) -> None:
+    configure_logging(LoggingSettings(console=False), default_directory=tmp_path)
+    heard: list[Finding] = []
+
+    def bad(finding: Finding) -> None:
+        raise RuntimeError("a listener that raises")
+
+    finding_sinks.extend([bad, heard.append])
+    try:
+        finding = Finding("a.tdl", 3, 1, "error", "rule", "message")
+        log_finding(finding)
+    finally:
+        finding_sinks.clear()
+    assert heard == [finding]  # the broken listener neither stops the others nor the log

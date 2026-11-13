@@ -22,6 +22,7 @@ from typing import Any
 from loguru import logger
 
 from tess_shell.binder import model as m
+from tess_shell.logging import note_finding
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.module import Event, Module
@@ -54,6 +55,11 @@ class LoadedModule:
     ctx: ModuleContext
     state: str = "created"  # created, running, failed, stopped
     uses: list[Use] = field(default_factory=list)
+
+
+class ActionError(Exception):
+    """A control call that did not run an action, or whose action raised; the text names the
+    module."""
 
 
 SLOW_ACTION = 0.05  # seconds; a handler runs on the loop thread, so a slow one is logged
@@ -452,6 +458,69 @@ class ModuleHost:
                 f"{handler.origin}: {module}.{handler.action} took {took * 1000:.0f} ms on the loop"
             )
 
+    def call_action(self, module: str, action: str, values: Sequence[Any]) -> Any:
+        """Loop thread: run the ``@action`` ``action`` of ``module`` for the control interface
+        (``Call``, IPC and CLI > The Interface). Only a method marked ``@action`` is reachable, the
+        rule of a shell file's ``Call``. ``values`` are the positional arguments: they are the
+        parameters the method declares after ``event``, in order (the signature binding of
+        ``Call``, Events and Actions > Call); an action that declares none takes them in
+        ``event.args`` under ``"0"``, ``"1"`` ... Returns what the action returned. Raises
+        :class:`ActionError` with the module's name for a module or action that is not there, a
+        wrong number of arguments, or an action that raised."""
+        names = sorted(self.loaded)
+        loaded = self.loaded.get(module)
+        if loaded is None:
+            close = nearest(module, names)
+            hint = (
+                f" (did you mean {', '.join(close)}?)"
+                if close
+                else f" (modules: {', '.join(names)})"
+            )
+            raise ActionError(f"no module named {module}{hint}")
+        if loaded.state != "running":
+            raise ActionError(f"{module} is {loaded.state}, not running")
+        actions = actions_of(type(loaded.instance))
+        fn = getattr(loaded.instance, action, None)
+        if not callable(fn) or action not in actions:
+            close = nearest(action, actions)
+            hint = (
+                f" (did you mean {', '.join(close)}?)"
+                if close
+                else f" (its actions: {', '.join(actions)})"
+                if actions
+                else " (it has no @action methods)"
+            )
+            raise ActionError(f"{module} has no action {action}{hint}")
+        spec = action_spec(fn)
+        args: dict[str, object]
+        if spec.names:
+            if len(values) > len(spec.names):
+                raise ActionError(
+                    f"{module}.{action} takes at most {len(spec.names)} argument"
+                    f"{'' if len(spec.names) == 1 else 's'} ({', '.join(spec.names)}), "
+                    f"{len(values)} were given"
+                )
+            args = dict(zip(spec.names, values, strict=False))
+            missing = [n for n in spec.names if n in spec.required and n not in args]
+            if missing:
+                raise ActionError(f"{module}.{action} needs the argument {', '.join(missing)}")
+        else:
+            args = {str(i): v for i, v in enumerate(values)}
+        event = Event("call", "", args)
+        started = time.monotonic()
+        loaded.ctx.caller = None
+        try:
+            result = fn(event, **spec.keywords(args))
+        except Exception as exc:
+            logger.opt(exception=True).error(f"{module}.{action} raised on a control call")
+            raise ActionError(f"{module}.{action} raised {type(exc).__name__}: {exc}") from exc
+        took = time.monotonic() - started
+        if took > SLOW_ACTION:
+            logger.warning(
+                f"{module}.{action} took {took * 1000:.0f} ms on the loop (control call)"
+            )
+        return result
+
     # -- lifecycle ------------------------------------------------------------------------------
 
     def _call(self, loaded: LoadedModule, what: str, fn: Callable[[], Any]) -> Finding | None:
@@ -638,6 +707,7 @@ class ModuleHost:
 def report(findings: list[Finding], source: Mapping[str, str] | None = None) -> None:
     """Log each finding as ``file:line: message``."""
     for f in findings:
+        note_finding(f)
         logger.error(
             f"{f.file}:{f.line}:{f.column}: {f.message}" + (f" ({f.hint})" if f.hint else "")
         )

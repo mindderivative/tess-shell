@@ -14,7 +14,7 @@ from collections.abc import Callable
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import NoReturn
+from typing import Any, NoReturn
 
 from loguru import logger
 
@@ -22,6 +22,7 @@ import tess_shell
 from tess_shell.appearance import Appearance
 from tess_shell.binder.images import IMAGES
 from tess_shell.binder.model import Handler
+from tess_shell.commands import ShellCommands
 from tess_shell.config.lock import InstanceLock
 from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir, state_dir
 from tess_shell.config.registry import Registry, RegistryError
@@ -31,6 +32,7 @@ from tess_shell.exit_codes import EnvironmentFailure, ExitCode, ShellError
 from tess_shell.logging import (
     configure_logging,
     current_state,
+    finding_sinks,
     log_finding,
     shutdown_logging,
 )
@@ -41,8 +43,10 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.options import Options
 from tess_shell.reloader import Reloader
 from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
+from tess_shell.services.api import ServiceUnavailable
 from tess_shell.services.audio import AudioService
 from tess_shell.services.bus import ServiceThread
+from tess_shell.services.control import NAME, ControlService, ErrorLog
 from tess_shell.services.icons import IconService
 from tess_shell.services.layer import Layer
 from tess_shell.services.portal import PortalReader
@@ -155,6 +159,47 @@ def run(options: Options) -> int:
     finally:
         shutdown_logging()
         lock.release()
+
+
+def _start_control(
+    service: ServiceThread,
+    handle: Any,
+    manager: SurfaceManager,
+    host: ModuleHost,
+    reloader: Reloader,
+    stopper: LoopStopper,
+) -> ControlService | None:
+    """Export the control interface and own its bus name (Shell Start and Stop). ``None`` when
+    the session bus cannot be reached: the shell runs without control commands and says so."""
+    errors = ErrorLog()
+    commands = ShellCommands(manager, host, reloader, stopper.request, errors.last)
+    control = ControlService(service, handle.call_soon, commands, tess_shell.__version__, errors)
+    try:
+        service.submit(control.start()).result(timeout=START_TIMEOUT)
+    except (ServiceUnavailable, TimeoutError, OSError) as exc:
+        logger.info(f"control: no commands: the session bus is not reachable ({exc})")
+        return None
+    except Exception as exc:
+        logger.opt(exception=True).warning(f"control: no commands ({exc!r})")
+        return None
+    if control.owned:
+        reloader.on_reloaded = control.reloaded
+        manager.on_surface = control.surface_changed
+        finding_sinks.append(control.error_reported)
+        logger.info(f"control: owning {NAME}")
+    return control
+
+
+def _stop_control(service: ServiceThread, control: ControlService) -> None:
+    if control.error_reported in finding_sinks:
+        finding_sinks.remove(control.error_reported)
+    try:
+        service.submit(control.stop()).result(timeout=START_TIMEOUT)
+    except Exception as exc:
+        logger.debug(f"control: stopping did not go through ({exc!r})")
+
+
+START_TIMEOUT = 6.0  # seconds the shell waits for the bus when it takes its name
 
 
 def _run(options: Options, lock: InstanceLock) -> ExitCode:
@@ -341,18 +386,37 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             file_watcher.start()
             if not file_watcher.ok:
                 logger.warning("some folders are not watched; SIGHUP still reloads everything")
-        logger.info("running")
-        try:
-            app.run(keep_alive=True)
-        finally:
+        control: ControlService | None = None
+        taken = False
+        if settings.control:
+            control = _start_control(service, handle, manager, host, reloader, stopper)
+            taken = control is not None and not control.owned
+        if taken:
+            _fail(
+                f"the bus name {NAME} is owned: another tesserae-shell is running on this "
+                "session bus"
+            )
             stopper.loop_finished()
             if file_watcher is not None:
                 file_watcher.stop()
-        if not stopper.requested.is_set():
-            _fail("event loop ended without a stop request")
-            return ExitCode.ENVIRONMENT
+        else:
+            logger.info("running")
+            if control is not None:
+                control.set_state("running")
+            try:
+                app.run(keep_alive=True)
+            finally:
+                stopper.loop_finished()
+                if file_watcher is not None:
+                    file_watcher.stop()
+            if not stopper.requested.is_set():
+                _fail("event loop ended without a stop request")
+                return ExitCode.ENVIRONMENT
         # stop sequence: modules, then the time source (no D-Bus yet)
         logger.info("stopping")
+        if control is not None:
+            control.set_state("stopping")
+            _stop_control(service, control)
         host.stop_all()
         ticks.close()
         if portal is not None:
@@ -364,6 +428,6 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             _fail(f"cannot save the registry: {exc}")
             return ExitCode.CONFIG
         logger.info("stopped")
-        return ExitCode.OK
+        return ExitCode.ALREADY_RUNNING if taken else ExitCode.OK
     finally:
         watcher.close()

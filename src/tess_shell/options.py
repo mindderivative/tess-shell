@@ -9,3 +9,4 @@ class Options:
     config_dir: Path | None = None
     json: bool = False
     quiet: bool = False
+    timeout: float = 5.0  # seconds a control command waits for the shell

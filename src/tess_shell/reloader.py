@@ -11,6 +11,7 @@ and its errors are reported with ``file:line:column``.
 from __future__ import annotations
 
 import dataclasses
+import sys
 import threading
 import time
 from collections.abc import Callable, Mapping
@@ -23,15 +24,45 @@ from tess_shell.config.paths import state_dir
 from tess_shell.config.registry import Registry
 from tess_shell.config.settings import Settings, load_settings
 from tess_shell.config.uids import assign_uids
-from tess_shell.logging import configure_logging, log_finding
+from tess_shell.logging import configure_logging, level_overridden, log_finding
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.modules.host import ModuleHost, ModuleSource, report
-from tess_shell.scanner import Scan, build_look, print_findings, scan
+from tess_shell.scanner import Scan, build_look, scan, source_line
+from tess_shell.schema.findings import Finding, render_findings
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites
 
 MAX_FINDINGS = 50
+
+
+@dataclass(frozen=True, slots=True)
+class Outcome:
+    """What a reload came to, for the control interface's ``Reload`` and ``Reloaded``: ``ok`` is
+    true when it was applied with no error; ``message`` the summary, or the errors in their printed
+    form."""
+
+    ok: bool
+    message: str
+
+
+@dataclass(slots=True)
+class Prepared:
+    """A reload that passed validation, waiting to be applied on the loop thread."""
+
+    result: Scan
+    fresh: Settings
+    changed: set[Path] | None
+    started: float
+    names: str
+
+
+@dataclass(slots=True)
+class Rejected:
+    """A reload that did not pass validation: nothing changes."""
+
+    findings: list[Finding]
+    why: str
 
 
 @dataclass(slots=True)
@@ -48,6 +79,8 @@ class Reloader:
     scan: Scan | None = None  # the files that are running: what a hot-plug needs to start a module
     file_uids: Mapping[Path, str] = dataclasses.field(default_factory=dict)
     reloads: int = 0
+    # told after every reload (the control interface's ``Reloaded`` signal); any thread
+    on_reloaded: Callable[[bool, str], None] | None = None
     _lock: threading.Lock = dataclasses.field(default_factory=threading.Lock)
 
     # -- the calling thread: read, parse, validate ---------------------------------------------
@@ -56,34 +89,78 @@ class Reloader:
         """Validate the new files and, if they are good, queue the apply. Never raises. ``None``
         means everything changed (``SIGHUP``)."""
         try:
-            with self._lock:  # a reload while another is validating waits for it
-                self._validate(changed)
+            prepared = self.prepare(changed)
+            if isinstance(prepared, Rejected):
+                self._reject(prepared)
+                return
+
+            def apply() -> None:
+                self._apply(prepared)
+
+            self.call_soon(apply)
         except Exception:
             logger.opt(exception=True).error("reload failed; the shell keeps its state")
 
-    def _validate(self, changed: set[Path] | None) -> None:
+    def prepare(self, changed: set[Path] | None) -> Prepared | Rejected:
+        """Read and check the settings and every shell file, exactly as at start (the calling
+        thread blocks; a reload while another is validating waits for it). Applies nothing."""
+        with self._lock:
+            return self._validate(changed)
+
+    def _validate(self, changed: set[Path] | None) -> Prepared | Rejected:
         started = time.monotonic()
         fresh, findings = load_settings(self.cfg)
         if fresh is None:
-            self._reject(findings, "settings.tdl")
-            return
+            return Rejected(findings, "settings.tdl")
         running = dataclasses.replace(
             self.settings, main_shell_path=fresh.main_shell_path, appearance=fresh.appearance
         )
         result = scan(running, self.cfg)
         if result.errors:
-            self._reject(result.findings, f"{len(result.errors)} errors")
-            return
+            return Rejected(result.findings, f"{len(result.errors)} errors")
         for f in result.findings[:MAX_FINDINGS]:
             log_finding(f)
         names = ", ".join(sorted(p.name for p in changed)) if changed else "everything"
-        self.call_soon(lambda: self._apply(result, fresh, changed, started, names))
+        return Prepared(result, fresh, changed, started, names)
 
-    def _reject(self, findings: list, why: str) -> None:  # type: ignore[type-arg]
-        for f in findings[:MAX_FINDINGS]:
+    def _reject(self, rejected: Rejected) -> Outcome:
+        for f in rejected.findings[:MAX_FINDINGS]:
             log_finding(f)
-        print_findings(findings, self.cfg)
-        logger.error(f"reload refused ({why}); the shell keeps what it shows")
+        text, _ = render_findings(rejected.findings, lambda f: source_line(self.cfg, f))
+        print(text, file=sys.stderr)
+        logger.error(f"reload refused ({rejected.why}); the shell keeps what it shows")
+        outcome = Outcome(
+            False, f"reload refused ({rejected.why}); the shell keeps what it shows\n{text}"
+        )
+        self._told(outcome)
+        return outcome
+
+    def _told(self, outcome: Outcome) -> None:
+        if self.on_reloaded is not None:
+            try:
+                self.on_reloaded(outcome.ok, outcome.message.split("\n", 1)[0])
+            except Exception:
+                logger.opt(exception=True).debug("a reload listener raised")
+
+    # -- for the control interface: the same two steps, with the answer ---------------------------
+
+    def validate_for_control(self) -> Prepared | Outcome:
+        """``Reload`` (any thread but the loop's: it blocks on the files): the checked reload, or
+        the refusal with the errors in their printed form."""
+        try:
+            prepared = self.prepare(None)
+        except Exception as exc:
+            logger.opt(exception=True).error("reload failed; the shell keeps its state")
+            outcome = Outcome(False, f"reload failed ({exc!r}); the shell keeps its state")
+            self._told(outcome)
+            return outcome
+        if isinstance(prepared, Rejected):
+            return self._reject(prepared)
+        return prepared
+
+    def apply_for_control(self, prepared: Prepared) -> Outcome:
+        """Loop thread: apply what :meth:`validate_for_control` checked and say how it went."""
+        return self._apply(prepared)
 
     # -- the loop thread: apply ---------------------------------------------------------------
 
@@ -122,42 +199,38 @@ class Reloader:
             logger.warning("settings.tdl: Debug applies after a restart")
         if fresh.appearance.follow_desktop != old.appearance.follow_desktop:
             logger.warning("settings.tdl: Appearance.Follow_Desktop applies after a restart")
-        if fresh.logging != old.logging:
+        if fresh.logging != old.logging or level_overridden():  # SetLogLevel lasts to here
             configure_logging(fresh.logging, quiet=self.quiet, default_directory=self.cfg / "logs")
             logger.info("settings.tdl: the logging settings were applied")
 
-    def _apply(
-        self,
-        result: Scan,
-        fresh: Settings,
-        changed: set[Path] | None,
-        started: float,
-        names: str,
-    ) -> None:
+    def _apply(self, prepared: Prepared) -> Outcome:
         try:
-            self._apply_now(result, fresh, changed, started, names)
-        except Exception:
+            outcome = self._apply_now(prepared)
+        except Exception as exc:
             logger.opt(exception=True).error("applying the reload failed; check the Bars")
+            outcome = Outcome(False, f"applying the reload failed ({exc!r}); check the Bars")
+        self._told(outcome)
+        return outcome
 
-    def _apply_now(
-        self,
-        result: Scan,
-        fresh: Settings,
-        changed: set[Path] | None,
-        started: float,
-        names: str,
-    ) -> None:
+    def _apply_now(self, prepared: Prepared) -> Outcome:
+        result, fresh, changed = prepared.result, prepared.fresh, prepared.changed
+        started, names = prepared.started, prepared.names
         self._settings_changes(fresh)
         shell = result.shells.get(fresh.main_shell_path) if fresh.main_shell_path else None
         if shell is None:
             logger.info("reload: there is no main shell file; nothing to show")
-            return
+            return Outcome(True, "reloaded: there is no main shell file; nothing to show")
         module_defs = {name: mf.definition for name, mf in result.modules.items()}
         look = build_look(result, fresh, self.manager.look.appearance)
         checked = self.manager.check(shell, module_defs, look)
         if checked is None:
             logger.error("reload refused: a Bar's contents have errors; the shell keeps its state")
-            return
+            errors = "\n".join(f"{e.origin}: {e.message}" for e in self.manager.check_errors)
+            return Outcome(
+                False,
+                f"reload refused: a Bar's contents have errors; the shell keeps its state\n"
+                f"{errors}",
+            )
         planned, uses = checked
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         file_uids, problems = assign_uids(
@@ -197,3 +270,12 @@ class Reloader:
         failed = any(f.severity == "error" for f in (*problems, *sync_problems))
         note = " with errors" if failed else ""
         logger.info(f"reloaded{note} ({names}) in {ms:.0f} ms")
+        summary = f"reloaded{note} ({names}) in {ms:.0f} ms"
+        if not failed:
+            return Outcome(True, summary)
+        text = "\n".join(
+            f"{f.file}:{f.line}:{f.column}: {f.message}"
+            for f in (*problems, *sync_problems)
+            if f.severity == "error"
+        )
+        return Outcome(False, f"{summary}\n{text}")

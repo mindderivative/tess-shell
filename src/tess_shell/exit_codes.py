@@ -7,7 +7,9 @@ class ExitCode(IntEnum):
     OK = 0
     CONFIG = 1
     ENVIRONMENT = 2
+    NOT_RUNNING = 3  # a control command found no shell: the bus name has no owner
     ALREADY_RUNNING = 4
+    TIMEOUT = 5  # a control command timed out
     INTERNAL = 70
     FORCED = 130
 
