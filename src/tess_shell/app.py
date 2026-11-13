@@ -70,6 +70,7 @@ def check(options: Options) -> int:
             json.dumps(
                 {
                     "ok": not failed,
+                    "config_dir": str(config),
                     "files": count,
                     "errors": [f.to_dict() for f in shown],
                     "omitted": len(findings) - len(shown),

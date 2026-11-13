@@ -33,7 +33,14 @@ def test_version_script_and_module_agree() -> None:
 
 def test_version_json_keys() -> None:
     out = _module("version", "--json").stdout
-    assert set(json.loads(out)) == {"shell", "tess_re", "tess_el", "tess_dl", "python"}
+    assert set(json.loads(out)) == {
+        "shell",
+        "tess_re",
+        "tess_el",
+        "tess_dl",
+        "python",
+        "config_dir",
+    }
 
 
 def test_stub_command_reports_not_implemented(capsys: pytest.CaptureFixture[str]) -> None:

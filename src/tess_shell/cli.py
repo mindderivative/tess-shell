@@ -97,7 +97,11 @@ def _version(options: Options) -> int:
         print(f"tesserae-shell: dependency unavailable ({exc})", file=sys.stderr)
         return ExitCode.ENVIRONMENT
     if options.json:
-        print(json.dumps(versions))
+        from tess_shell.config.paths import config_dir
+
+        # the folder the shell would read (``--config-dir``, else the XDG one), so a tool that
+        # drives the command knows which folder its answer is about
+        print(json.dumps({**versions, "config_dir": str(config_dir(options.config_dir))}))
     else:
         names = {"shell": "tesserae-shell"}
         for key, value in versions.items():
