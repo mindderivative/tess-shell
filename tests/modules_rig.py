@@ -15,6 +15,7 @@ from typing import Any
 from tess_shell.services.bus import ServiceThread
 from tess_shell.services.layer import Layer
 from tests.fake_dbus import FakeBus, FakeObject, FakeService, fake_bus
+from tests.fake_mpris import Fake, add_player
 from tests.fake_nm import NM, Net, add_network
 from tests.test_dbus_layer import Pump
 from tests.widgets_live import Widgets, running
@@ -60,6 +61,10 @@ class Desk:
         and online."""
         fake = self.system.service(NM)
         return fake, add_network(fake)
+
+    def player(self, suffix: str = "fake", **kwargs: Any) -> Fake:
+        """A fake MPRIS player on the session bus (not up yet)."""
+        return add_player(self.session, suffix, **kwargs)
 
     def profiles(self, active: str = "balanced") -> tuple[FakeService, FakeObject]:
         fake = self.system.service(PROFILES)

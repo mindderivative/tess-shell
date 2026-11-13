@@ -55,6 +55,7 @@ STANDARD = (
     "Battery",
     "Workspaces",
     "Network",
+    "Media",
 )
 THEME = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text()
 DEFAULT_SHEET = (SHIPPED / "Stylesheets" / "Default_Stylesheet.tdl").read_text()

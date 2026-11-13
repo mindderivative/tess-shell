@@ -134,6 +134,23 @@ class Bus(Protocol):
         only a debug line in the log."""
         ...
 
+    def watch_prefix(
+        self, prefix: str, on_added: Callable[[str], None], on_removed: Callable[[str], None]
+    ) -> Subscription:
+        """Follow every well-known name that starts with ``prefix`` (``org.mpris.MediaPlayer2.``):
+        ``on_added(name)`` for each that has an owner now and for each that appears later,
+        ``on_removed(name)`` when one goes. One ``ListNames`` at the start and one
+        ``NameOwnerChanged`` rule, no polling; the callbacks run on the service thread. The names
+        are not made services of the module: make a proxy for each with ``optional=True`` (a
+        player may leave at any time without the module being unavailable). ``available`` stays
+        true while the bus can be reached."""
+        ...
+
+    def forget(self, name: str) -> None:
+        """Let go of a name the module made a proxy for (a player that left): its watch and its
+        cached properties. Cancel the subscriptions on it first."""
+        ...
+
     def state(self, name: str) -> ServiceState:
         """The state of a service this module has made a proxy for (any thread)."""
         ...

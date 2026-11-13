@@ -352,15 +352,16 @@ class LiveTree:
             kind = (row[1] if scope == "props" else row[0]).get(key)
         if kind is None:
             return None
-        link = self._compile(ctx.use, name or "", node.kind, key, kind, value)
+        owner = value.use or ctx.use  # a key written on a module call reads the caller's scope
+        link = self._compile(owner, name or "", node.kind, key, kind, value)
         if link is None:
             return None
-        typed = self._evaluate(link, ctx.scope)
+        typed = self._evaluate(link, ctx.scope if owner == ctx.use else None)
         if not ctx.dynamic and name is not None:
             self.links.append(link)
-            self.by_use.setdefault(ctx.use, []).append(link)
+            self.by_use.setdefault(owner, []).append(link)
             link.last = typed
-        self.reads.setdefault(ctx.use, set()).update(link.reads)
+        self.reads.setdefault(owner, set()).update(link.reads)
         return typed
 
     def _compile(

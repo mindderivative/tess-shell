@@ -432,7 +432,14 @@ def test_no_module_can_request_a_bus_name_through_the_helper(rig: Rig) -> None:
 
     # what a module is promised: no call that takes a name, exports an object or owns anything
     assert get_protocol_members(api.ModuleDBus) == {"available", "close", "session", "system"}
-    assert get_protocol_members(api.Bus) == {"proxy", "run", "run_blocking", "state"}
+    assert get_protocol_members(api.Bus) == {
+        "forget",
+        "proxy",
+        "run",
+        "run_blocking",
+        "state",
+        "watch_prefix",
+    }
     assert get_protocol_members(api.Proxy) == {
         "call",
         "get",

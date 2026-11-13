@@ -155,6 +155,10 @@ class SlotValue:
 
     parts: tuple[str | SlotPart, ...]
     origin: Origin = _origin()
+    # the key of the module use whose scope the slot reads, when it is not the use of the block it
+    # stands on: a common key written on a module call (``Button { Enabled: {{ can_next }} }``) is
+    # placed on the callee's root block but reads the scope of the module that holds the call
+    use: str = field(default="", compare=False)
 
     @property
     def single(self) -> bool:

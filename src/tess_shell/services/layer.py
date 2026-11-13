@@ -574,6 +574,34 @@ class _Bus:
     def state(self, name: str) -> ServiceState:
         return self.helper.states.get((self.kind, name), ServiceState.UNAVAILABLE)
 
+    def watch_prefix(
+        self, prefix: str, on_added: Callable[[str], None], on_removed: Callable[[str], None]
+    ) -> _Subscription:
+        helper, kind, layer = self.helper, self.kind, self.helper.layer
+        subscription = helper.subscription()
+        helper.use_prefix(kind, prefix)
+
+        def changed(name: str, old: str | None, new: str | None) -> None:
+            if old is not None and new is not None:  # it changed hands: gone, then there again
+                layer.timed(helper, on_removed, name)
+            if new is None:
+                layer.timed(helper, on_removed, name)
+            elif old is None or old != new:
+                layer.timed(helper, on_added, name)
+
+        def reach(reachable: bool) -> None:
+            helper.prefix_state(kind, prefix, reachable)
+
+        async def watch() -> None:
+            bus = layer.service.bus(kind)
+            subscription.attach(await bus.watch_prefix(prefix, changed, reach))
+
+        layer.service.post(lambda: layer.spawn(watch()))
+        return subscription
+
+    def forget(self, name: str) -> None:
+        self.helper.forget(self.kind, name)
+
     def run[T](self, coro: Coroutine[Any, Any, T]) -> concurrent.futures.Future[T]:
         return self.helper.layer.service.submit(coro)
 
@@ -648,6 +676,31 @@ class _ModuleDBus:
 
         self.layer.service.post(lambda: self.layer.spawn(attach()))
 
+    def use_prefix(self, kind: BusKind, prefix: str) -> None:
+        """The module watches a prefix: its pseudo service counts for ``available`` (the bus can
+        be reached) and is read as soon as the bus says."""
+        if self._closed:
+            return
+        self.states.setdefault((kind, prefix + "*"), ServiceState.UNAVAILABLE)
+
+    def forget(self, kind: BusKind, name: str) -> None:
+        """Let go of a well-known name the module made a proxy for (a player that left): its
+        watch, its cached properties and its entry in ``available``. The module cancels its own
+        subscriptions on the name first."""
+        self.layer.service.post(lambda: self._forget_on_thread(kind, name))
+
+    def _forget_on_thread(self, kind: BusKind, name: str) -> None:
+        self._used.discard((kind, name))
+        self._optional.discard((kind, name))
+        self.states.pop((kind, name), None)
+        service = self.layer._services.get((kind, name))
+        if service is not None:
+            for cache in service._caches():
+                if self in cache.users:
+                    cache.release(self, None)
+            service.detach(self)
+        self._publish()
+
     def close(self) -> None:
         """The module stopped: every subscription and watch of it ends."""
         if self._closed:
@@ -667,13 +720,24 @@ class _ModuleDBus:
         if self._closed:
             return
         self.states[service.key] = state
+        self._publish()
+        if hook is not None:
+            name = service.name
+            self.layer.call_soon(lambda: self._run_hook(hook, name))
+
+    def prefix_state(self, kind: BusKind, prefix: str, reachable: bool) -> None:
+        """Whether the bus of a prefix watch can be reached, as this module sees it."""
+        if self._closed:
+            return
+        state = ServiceState.AVAILABLE if reachable else ServiceState.UNAVAILABLE
+        self.states[(kind, prefix + "*")] = state
+        self._publish()
+
+    def _publish(self) -> None:
         value = self.available
         if value != self._published:
             self._published = value
             self._send("available", value)
-        if hook is not None:
-            name = service.name
-            self.layer.call_soon(lambda: self._run_hook(hook, name))
 
     def _run_hook(self, hook: str, name: str) -> None:  # loop thread
         if self._closed:

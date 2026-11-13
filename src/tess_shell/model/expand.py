@@ -324,10 +324,17 @@ class _Expander:
             k: dataclasses.replace(h, use=outer.key if outer else "", forwarded=True)
             for k, h in call.handlers.items()
         }
+        # a slot written on the call reads the scope of the module that holds the call
+        written = {
+            k: dataclasses.replace(v, use=outer.key)
+            if outer is not None and isinstance(v, m.SlotValue)
+            else v
+            for k, v in call.common.items()
+        }
         root = children[0] if children else None
         if isinstance(root, m.UseNode):
             merged = {**root.handlers, **handlers}
-            common = {**root.common, **call.common}
+            common = {**root.common, **written}
             return (dataclasses.replace(root, handlers=merged, common=common), *children[1:])
         if not isinstance(root, m.Node):
             self.out.errors.append(
@@ -354,7 +361,7 @@ class _Expander:
         props = dict(root.props)
         style = dict(root.style)
         table = blocks.table(root.kind)
-        for key, value in call.common.items():
+        for key, value in written.items():
             if table is not None and key not in table[0] and key not in table[1]:
                 self.out.errors.append(
                     m.BindError(

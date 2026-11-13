@@ -49,6 +49,8 @@ BusKind = Literal["session", "system"]
 Unsubscribe = Callable[[], None]
 ReconnectHook = Callable[[MessageBus], Awaitable[None]]
 OwnerCallback = Callable[[str | None, str | None], None]  # (old owner, new owner); None: no owner
+PrefixCallback = Callable[[str, str | None, str | None], None]  # (name, old owner, new owner)
+ReachCallback = Callable[[bool], None]  # the bus can (not) be reached
 
 
 def unwrap(value: Any) -> Any:
@@ -66,13 +68,15 @@ def unwrap(value: Any) -> Any:
 class MatchKey:
     """What one match rule asks for. ``sender`` is a well-known name, a unique name or ``None``;
     ``arg0`` narrows on the first string argument (``PropertiesChanged``: the interface;
-    ``NameOwnerChanged``: the name)."""
+    ``NameOwnerChanged``: the name); ``arg0namespace`` on a first argument that is that name or
+    a name under it (``org.mpris.MediaPlayer2`` takes ``org.mpris.MediaPlayer2.vlc``)."""
 
     sender: str | None
     path: str | None
     interface: str
     member: str
     arg0: str | None = None
+    arg0namespace: str | None = None  # the first argument is this name or a name under it
 
     def rule(self) -> str:
         parts = ["type='signal'"]
@@ -82,6 +86,7 @@ class MatchKey:
             ("interface", self.interface),
             ("member", self.member),
             ("arg0", self.arg0),
+            ("arg0namespace", self.arg0namespace),
         ):
             if value is not None:
                 parts.append(f"{field}='{value}'")
@@ -109,6 +114,22 @@ class _Name:
         self.ready = asyncio.Event()  # set once the owner was read
 
 
+class _Prefix:
+    """A watch on every well-known name that starts with ``prefix``: the names with an owner now,
+    and who wants to hear when one appears, goes or changes hands."""
+
+    __slots__ = ("callbacks", "names", "prefix", "reach", "reachable", "ready", "unsubscribe")
+
+    def __init__(self, prefix: str) -> None:
+        self.prefix = prefix
+        self.names: dict[str, str] = {}  # name -> owner
+        self.callbacks: list[PrefixCallback] = []
+        self.reach: list[ReachCallback] = []
+        self.reachable = False
+        self.unsubscribe: Unsubscribe | None = None
+        self.ready = asyncio.Event()
+
+
 class Bus:
     """One bus connection. Every method runs on the service thread (coroutines and callbacks of
     its loop); the connection is made by the first call that needs it."""
@@ -122,6 +143,7 @@ class Bus:
         self._rules: dict[str, int] = {}  # rule string -> reference count
         self._subs: list[_Sub] = []
         self._names: dict[str, _Name] = {}
+        self._prefixes: dict[str, _Prefix] = {}
         self._hooks: list[ReconnectHook] = []
         self._tasks: set[asyncio.Task[Any]] = set()
         self._reconnecting: asyncio.Task[None] | None = None
@@ -177,7 +199,7 @@ class Bus:
     def _wanted(self) -> bool:
         """Does anything depend on the connection staying up? Then a lost or unreachable bus is
         retried; otherwise the next call tries again."""
-        return bool(self._rules or self._names or self._hooks)
+        return bool(self._rules or self._names or self._prefixes or self._hooks)
 
     async def connection(self) -> MessageBus:
         """The connection, opened now if it was never opened. Raises :class:`ServiceUnavailable`
@@ -214,6 +236,8 @@ class Bus:
         for name, watched in list(self._names.items()):
             owner = await self._read_owner(conn, name)
             self._set_owner(name, watched, owner)
+        for prefix in list(self._prefixes.values()):
+            await self._list_prefix(conn, prefix)
         if not first:
             logger.info(f"dbus: the {self.kind} bus is back")
         for hook in list(self._hooks):
@@ -242,6 +266,8 @@ class Bus:
         self._conn = None
         for name, watched in list(self._names.items()):
             self._set_owner(name, watched, None)
+        for prefix in list(self._prefixes.values()):
+            self._prefix_unreachable(prefix)
         if self._closed or not self._wanted():
             return
         if self._reconnecting is None or self._reconnecting.done():
@@ -373,6 +399,10 @@ class Bus:
             return False
         if key.arg0 is not None and (not message.body or message.body[0] != key.arg0):
             return False
+        if key.arg0namespace is not None:
+            first = str(message.body[0]) if message.body else ""
+            if first != key.arg0namespace and not first.startswith(key.arg0namespace + "."):
+                return False
         sender = key.sender
         if sender is None or sender == message.sender:
             return True
@@ -480,6 +510,139 @@ class Bus:
                     watched.unsubscribe()
 
         return stop
+
+    async def watch_prefix(
+        self, prefix: str, callback: PrefixCallback, reach: ReachCallback | None = None
+    ) -> Unsubscribe:
+        """Follow every well-known name that starts with ``prefix`` (``org.mpris.MediaPlayer2.``):
+        one ``ListNames`` now, and one ``NameOwnerChanged`` rule by namespace for all of them (no
+        polling). ``callback(name, old, new)`` runs on the service thread for each name that has an
+        owner now (old ``None``), and afterwards when one appears, goes (new ``None``) or changes
+        hands; ``reach(True or False)`` says whether the bus can be reached (the names of a bus
+        that is lost go, and are listed again when it is back). The result ends this watch."""
+        watched = self._prefixes.get(prefix)
+        if watched is None:
+            watched = self._prefixes[prefix] = _Prefix(prefix)
+            created = watched
+
+            def changed(message: Message) -> None:
+                name, _, new = message.body[0], message.body[1], message.body[2]
+                if str(name).startswith(created.prefix):
+                    self._set_prefixed(created, str(name), str(new) or None)
+
+            key = MatchKey(
+                BUS_NAME,
+                BUS_PATH,
+                BUS_NAME,
+                "NameOwnerChanged",
+                arg0namespace=prefix.rstrip("."),
+            )
+            try:
+                watched.unsubscribe = await self.subscribe(key, changed)
+            except BaseException:
+                self._prefixes.pop(prefix, None)
+                watched.ready.set()
+                raise
+            # callbacks are added before the first list, so the first names reach them
+            watched.callbacks.append(callback)
+            if reach is not None:
+                watched.reach.append(reach)
+                if watched.reachable:  # the first connection listed the names already
+                    reach(True)
+            for name, owner in list(watched.names.items()):
+                self._call_prefix(callback, name, None, owner)
+            try:
+                await self._list_prefix(await self.connection(), watched)
+            except ServiceUnavailable, TimeoutError, OSError:
+                self._prefix_unreachable(watched)  # listed when the bus is reached
+            finally:
+                watched.ready.set()
+        else:
+            await watched.ready.wait()
+            watched.callbacks.append(callback)
+            if reach is not None:
+                watched.reach.append(reach)
+                reach(watched.reachable)
+            for name, owner in list(watched.names.items()):
+                self._call_prefix(callback, name, None, owner)
+
+        def stop() -> None:
+            if callback in watched.callbacks:
+                watched.callbacks.remove(callback)
+            if reach is not None and reach in watched.reach:
+                watched.reach.remove(reach)
+            if not watched.callbacks and self._prefixes.get(prefix) is watched:
+                del self._prefixes[prefix]
+                if watched.unsubscribe is not None:
+                    watched.unsubscribe()
+
+        return stop
+
+    async def _list_prefix(self, conn: MessageBus, watched: _Prefix) -> None:
+        """Read every name on the bus and bring ``watched`` up to date: the names that are new
+        are announced, the ones that went are told as gone."""
+        reply = await asyncio.wait_for(
+            conn.call(
+                Message(
+                    destination=BUS_NAME,
+                    path=BUS_PATH,
+                    interface=BUS_NAME,
+                    member="ListNames",
+                )
+            ),
+            CALL_TIMEOUT,
+        )
+        names = [
+            str(n)
+            for n in (reply.body[0] if reply is not None and reply.body else [])
+            if str(n).startswith(watched.prefix)
+        ]
+        self._set_reachable(watched, True)
+        for name in names:
+            try:
+                owner = await self._read_owner(conn, name)
+            except ServiceUnavailable, TimeoutError, OSError:
+                owner = None
+            if owner is not None:
+                self._set_prefixed(watched, name, owner)
+        for name in list(watched.names):
+            if name not in names:
+                self._set_prefixed(watched, name, None)
+
+    def _prefix_unreachable(self, watched: _Prefix) -> None:
+        for name in list(watched.names):
+            self._set_prefixed(watched, name, None)
+        self._set_reachable(watched, False)
+
+    def _set_reachable(self, watched: _Prefix, reachable: bool) -> None:
+        if watched.reachable == reachable and watched.ready.is_set():
+            return
+        watched.reachable = reachable
+        for fn in tuple(watched.reach):
+            try:
+                fn(reachable)
+            except Exception:
+                logger.opt(exception=True).error(
+                    f"dbus: a reach callback of {watched.prefix} raised"
+                )
+
+    def _set_prefixed(self, watched: _Prefix, name: str, owner: str | None) -> None:
+        old = watched.names.get(name)
+        if owner == old:
+            return
+        if owner is None:
+            del watched.names[name]
+        else:
+            watched.names[name] = owner
+        for callback in tuple(watched.callbacks):
+            self._call_prefix(callback, name, old, owner)
+
+    @staticmethod
+    def _call_prefix(callback: PrefixCallback, name: str, old: str | None, new: str | None) -> None:
+        try:
+            callback(name, old, new)
+        except Exception:
+            logger.opt(exception=True).error(f"dbus: a prefix callback of {name} raised")
 
     def _set_owner(
         self, name: str, watched: _Name, owner: str | None, *, quiet: bool = False
