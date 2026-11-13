@@ -5624,6 +5624,24 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Menu_Item": {
           "kind": "bool",
           "choices": null,
@@ -6938,6 +6956,24 @@
           "enum": null,
           "default": "NONE",
           "doc": "Makes the block a slider along its axis: HORIZONTAL or VERTICAL; NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -8372,6 +8408,24 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Menu_Item": {
           "kind": "bool",
           "choices": null,
@@ -9742,6 +9796,24 @@
           "enum": null,
           "default": "NONE",
           "doc": "Makes the block a slider along its axis: HORIZONTAL or VERTICAL; NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -11191,6 +11263,24 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Menu_Item": {
           "kind": "bool",
           "choices": null,
@@ -12310,6 +12400,24 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Menu_Item": {
           "kind": "bool",
           "choices": null,
@@ -13281,6 +13389,24 @@
           "enum": null,
           "default": "NONE",
           "doc": "Makes the block a slider along its axis: HORIZONTAL or VERTICAL; NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -14438,6 +14564,24 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Menu_Item": {
           "kind": "bool",
           "choices": null,
@@ -15485,6 +15629,24 @@
           "enum": null,
           "default": "NONE",
           "doc": "Makes the block a slider along its axis: HORIZONTAL or VERTICAL; NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -16773,6 +16935,24 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Menu_Item": {
           "kind": "bool",
           "choices": null,
@@ -18047,6 +18227,24 @@
           "enum": null,
           "default": "NONE",
           "doc": "Makes the block a slider along its axis: HORIZONTAL or VERTICAL; NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -19447,6 +19645,24 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Menu_Item": {
           "kind": "bool",
           "choices": null,
@@ -20769,6 +20985,24 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Reveals": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "OPEN",
+            "CLOSED"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the block raises On_Changed (event.value true or false) when its size has finished easing there. NONE is a plain block.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Menu_Item": {
           "kind": "bool",
           "choices": null,
@@ -22008,12 +22242,13 @@
       ]
     },
     "On_Changed": {
-      "doc": "A control's value changed by the user: a toggle flipped, an entry chosen, a slider moved; for each new value while the pointer moves. A TextField raises it for each change of its text.",
+      "doc": "A control's value changed by the user: a toggle flipped, an entry chosen, a slider moved; for each new value while the pointer moves. A TextField raises it for each change of its text. An Expander raises it when an opening or a closing has finished (event.value is whether it is open), whoever set the new state.",
       "module_only": true,
       "needs": [
         "Toggles",
         "Selection_Mode",
-        "Slides"
+        "Slides",
+        "Reveals"
       ],
       "raised_by": [
         "Box",
@@ -23436,7 +23671,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Changed"
       ],
       "common_keys": [
         "Key",

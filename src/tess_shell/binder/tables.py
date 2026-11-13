@@ -118,6 +118,7 @@ _COMMON: dict[str, KeyRow] = {
     "Selection_Mode": _k((), "enum", "NONE", "SINGLE"),
     "Chosen": _k((), "text"),
     "Slides": _k((), "enum", "NONE", "HORIZONTAL", "VERTICAL"),
+    "Reveals": _k((), "enum", "NONE", "OPEN", "CLOSED"),
     "Key": _k((), "text"),
     "Menu_Item": _k((), "bool"),
     "Opens": _k((), "text"),

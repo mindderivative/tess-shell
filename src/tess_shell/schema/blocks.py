@@ -56,6 +56,9 @@ A11Y_STATE: dict[str, str] = {
     "Selection_Mode": "enum",
     "Chosen": "text",
     "Slides": "enum",
+    # ``Reveals`` makes the block an expander (``binder.controls.Expand``): OPEN or CLOSED is the
+    # state the module wants; the block raises On_Changed when its size has finished easing there
+    "Reveals": "enum",
     # a menu item (``binder.controls``): ``Menu_Item`` makes the block take the pointer as one,
     # ``Opens`` names the Popup its submenu is (empty: it opens nothing)
     "Menu_Item": "bool",
@@ -204,6 +207,7 @@ CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     ("Path", "Hit_Shape"): ("PAINTED", "BOX"),
     ("*", "Selection_Mode"): ("NONE", "SINGLE"),
     ("*", "Slides"): ("NONE", "HORIZONTAL", "VERTICAL"),
+    ("*", "Reveals"): ("NONE", "OPEN", "CLOSED"),
     ("ScrollBox", "Orientation"): ("VERTICAL", "HORIZONTAL"),
     ("Marquee", "Direction"): ("LEFT", "RIGHT"),
     ("Marquee", "Loop"): ("RESTART", "BOUNCE"),
@@ -517,7 +521,7 @@ BLOCK_EVENTS: dict[str, tuple[str, ...]] = {
 # a control raises ``On_Changed`` (the user flipped it, chose an entry or moved it): only a block
 # of a module's layout that has one of ``CONTROL_KEYS``; a slider (``Slides``) also raises
 # ``On_Released`` once, when the press that moved it ends
-CONTROL_KEYS = ("Toggles", "Selection_Mode", "Slides")
+CONTROL_KEYS = ("Toggles", "Selection_Mode", "Slides", "Reveals")
 CONTROL_KINDS = ("Box", "FlexBox", "Rectangle", "ScrollBox")
 # the control event -> the key that makes the block raise it
 CONTROL_EVENTS = {"On_Changed": CONTROL_KEYS, "On_Released": ("Slides",)}

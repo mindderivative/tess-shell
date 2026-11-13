@@ -231,3 +231,79 @@ def test_each_decode_is_timed_and_one_over_the_limit_is_logged_with_the_file(
         assert len([x for x in lines if "off-thread" in x]) == 1
     finally:
         logger.remove(sink)
+
+
+def test_expander_raises_on_changed_when_an_opening_and_a_closing_finish() -> None:
+    driver = (
+        "Module { FlexBox { Children { Expander { Name: E, Expanded: {{ open }}, "
+        "On_Changed: changed, Children { Label { Text: inside } } } } } }"
+    )
+    code = (
+        "from tess_shell import Module, action\n"
+        "class Driver(Module):\n"
+        "    def __init__(self):\n        self.seen = []\n"
+        "    def start(self):\n        self.ctx.send('open', False)\n"
+        "    @action\n    def changed(self, event):\n"
+        "        self.seen.append((event.value, event.old, event.new))\n"
+    )
+    with running("Driver { }", driver=driver, driver_py=code) as w:
+        seen = w.host.loaded["Driver"].instance.seen  # type: ignore[attr-defined]
+        assert w.warnings() == [] and seen == []  # the state it starts in is no change
+        w.send("open", True)
+        w.advance(100)
+        assert seen == []  # still opening
+        w.advance(500)
+        assert seen == [(True, False, True)]
+        w.send("open", False)
+        w.advance(500)
+        assert seen == [(True, False, True), (False, True, False)]
+        w.advance(2000)
+        assert len(seen) == 2  # at rest nothing more
+
+
+def test_expander_reversed_half_way_raises_one_event_for_the_finish() -> None:
+    driver = (
+        "Module { FlexBox { Children { Expander { Name: E, Expanded: {{ open }}, "
+        "On_Changed: changed, Children { Label { Text: inside } } } } } }"
+    )
+    code = (
+        "from tess_shell import Module, action\n"
+        "class Driver(Module):\n"
+        "    def __init__(self):\n        self.seen = []\n"
+        "    def start(self):\n        self.ctx.send('open', False)\n"
+        "    @action\n    def changed(self, event):\n        self.seen.append(event.value)\n"
+    )
+    with running("Driver { }", driver=driver, driver_py=code) as w:
+        seen = w.host.loaded["Driver"].instance.seen  # type: ignore[attr-defined]
+        w.send("open", True)
+        w.advance(80)
+        w.send("open", False)
+        w.advance(600)
+        assert seen == [False]
+
+
+def test_expander_on_changed_is_at_once_under_reduced_motion() -> None:
+    driver = (
+        "Module { FlexBox { Children { Expander { Name: E, Expanded: {{ open }}, "
+        "On_Changed: changed, Children { Label { Text: inside } } } } } }"
+    )
+    code = (
+        "from tess_shell import Module, action\n"
+        "class Driver(Module):\n"
+        "    def __init__(self):\n        self.seen = []\n"
+        "    def start(self):\n        self.ctx.send('open', False)\n"
+        "    @action\n    def changed(self, event):\n        self.seen.append(event.value)\n"
+    )
+    with running(
+        "Driver { }", driver=driver, driver_py=code, appearance=Appearance(reduced_motion=True)
+    ) as w:
+        seen = w.host.loaded["Driver"].instance.seen  # type: ignore[attr-defined]
+        w.send("open", True)
+        w.advance(16)
+        assert seen == [True]
+
+
+def test_expander_on_changed_on_a_call_in_a_shell_file() -> None:
+    body = "Expander { On_Changed { Action: Call, Target: \"Driver.pressed\" }, Children { Label { Text: x } } }"
+    with running(body) as w:
+        assert w.problems == [] and w.warnings() == []

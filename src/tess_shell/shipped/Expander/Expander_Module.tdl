@@ -13,7 +13,9 @@ Name: Expander
 # eases under reduced motion), and an animation that is interrupted turns round from where it is. At
 # rest the Expander draws no frame. `Content_Fade: false` keeps the content opaque, so only the size
 # eases. The collapsed content is hidden from assistive technology; the button that controls the
-# Expander carries the `expanded` state.
+# Expander carries the `expanded` state. A call may write `On_Changed`: it is raised when an opening
+# or a closing has finished (`event.value` is true when it is open), also when the module's own
+# value changed `Expanded`, and at once when nothing eases (reduced motion).
 Module {
     Params {
         Expanded { Type: boolean, Default: false }
@@ -24,6 +26,7 @@ Module {
     FlexBox {
         Name: Root
         Clip_Children: true
+        Reveals: {{ "OPEN" if params.Expanded else "CLOSED" }}
         Flex: {{ "HORIZONTAL" if params.Direction in ("LEFT", "RIGHT") else "VERTICAL" }}
         Justify_Content: {{ "END" if params.Direction in ("UP", "LEFT") else "START" }}
         Height: {{ "AUTO" if params.Expanded or params.Direction in ("LEFT", "RIGHT") else 0 }}

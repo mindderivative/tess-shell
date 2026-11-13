@@ -107,6 +107,9 @@ KEY_DOCS: dict[str, str] = {
     "Chosen": "The Key of the chosen entry of a list.",
     "Slides": "Makes the block a slider along its axis: HORIZONTAL or VERTICAL; NONE is a plain "
     "block.",
+    "Reveals": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the "
+    "block raises On_Changed (event.value true or false) when its size has finished easing there. "
+    "NONE is a plain block.",
     "Menu_Item": "Makes the block take the pointer as a menu item.",
     "Opens": "The Name of the Popup this menu item opens as its submenu; empty opens nothing.",
     # flex
@@ -509,6 +512,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Selection_Mode",
         "Chosen",
         "Slides",
+        "Reveals",
         "Menu_Item",
         "Opens",
         "Keyboard",
@@ -624,7 +628,8 @@ EVENT_DOCS: dict[str, str] = {
     "On_Anim_End": "A Panel's animation ended.",
     "On_Changed": "A control's value changed by the user: a toggle flipped, an entry chosen, a "
     "slider moved; for each new value while the pointer moves. A TextField raises it for each "
-    "change of its text.",
+    "change of its text. An Expander raises it when an opening or a closing has finished "
+    "(event.value is whether it is open), whoever set the new state.",
     "On_Released": "A slider's press ended, once, with the final value.",
     "On_Change": "Reserved: the old spelling of On_Changed.",
     "On_Submit": "Enter in a single-line TextField.",
@@ -829,6 +834,11 @@ AUTHORED_DEFAULTS: dict[str, tuple[str, str]] = {
         "NONE",
         "no tre property; binder.controls.kind_of makes a block a slider only with HORIZONTAL "
         "or VERTICAL",
+    ),
+    "Reveals": (
+        "NONE",
+        "no tre property; binder.controls.kind_of makes a block an expander only with OPEN "
+        "or CLOSED",
     ),
     "Menu_Item": (
         "false",

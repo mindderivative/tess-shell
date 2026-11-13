@@ -35,7 +35,8 @@ def _flag(entry: Entry, key: str) -> bool:
 
 
 def kind_of(entry: Entry) -> str:
-    """The control this block is: ``toggle``, ``select``, ``slide`` or empty."""
+    """The control this block is: ``toggle``, ``select``, ``slide``, ``item``, ``expand`` or
+    empty."""
     if _flag(entry, "Toggles"):
         return "toggle"
     if _word(entry, "Selection_Mode") == "SINGLE":
@@ -44,6 +45,8 @@ def kind_of(entry: Entry) -> str:
         return "slide"
     if _flag(entry, "Menu_Item"):
         return "item"
+    if _word(entry, "Reveals") in ("OPEN", "CLOSED"):
+        return "expand"
     return ""
 
 
@@ -410,11 +413,65 @@ class Item(Control):
         self.say("click")
 
 
+class Expand(Control):
+    """``Reveals: OPEN | CLOSED``: an Expander's root. The module sets the state it wants (a slot
+    of its ``Expanded`` param); the size and the content's opacity ease there (``binder.motion``)
+    and, when the size has arrived, ``On_Changed`` is raised with ``event.value`` the new state.
+    A change with nothing to ease (reduced motion, a ``Duration`` of 0, a content with no size)
+    raises it at once; an opening reversed half-way raises nothing for the opening that did not
+    finish, and one event for the closing that did."""
+
+    def __init__(self, view: View, entry: Entry) -> None:
+        super().__init__(view, entry)
+        self.open: bool | None = None  # the state the block was last told
+        self.pending = False  # a size animation is on its way to the state
+        self.tre.on("animation_end", self._ended)
+
+    def _wanted(self, entry: Entry) -> bool:
+        value = self.view.dynamic.get(entry.typed.name or "", {}).get("Reveals")
+        value = value if value is not None else entry.typed.props.get("Reveals")
+        return isinstance(value, Enum) and value.name == "OPEN"
+
+    @property
+    def axis(self) -> str:
+        """The size that eases: the width of a row (LEFT, RIGHT), else the height."""
+        return "width" if self.tre.get("flex_direction") == "horizontal" else "height"
+
+    def configure(self, entry: Entry) -> None:
+        super().configure(entry)
+        now = self._wanted(entry)
+        if self.open is None:  # the first state is what the block starts in
+            self.open = now
+            return
+        if now == self.open:
+            return
+        self.open = now
+        axis = self.axis
+        if self.tre.get_target(axis) != self.tre.get(axis):  # the size is on its way
+            self.pending = True
+        else:
+            self.pending = False
+            self.changed(not now, now)
+
+    def _ended(self, event: Any) -> None:
+        if self.pending and event.property == self.axis and event.finished:
+            self.pending = False
+            assert self.open is not None
+            self.changed(not self.open, self.open)
+
+    def stop(self) -> None:
+        try:
+            self.tre.off("animation_end")
+        except ValueError:  # the node is gone
+            pass
+
+
 def make(view: View, entry: Entry) -> Control | None:
     kind = kind_of(entry)
     if entry.tre is None or not kind:
         return None
-    return {"toggle": Toggle, "select": Select, "slide": Slide, "item": Item}[kind](view, entry)
+    makers = {"toggle": Toggle, "select": Select, "slide": Slide, "item": Item, "expand": Expand}
+    return makers[kind](view, entry)
 
 
-__all__ = ["Control", "Item", "Select", "Slide", "Toggle", "kind_of", "make"]
+__all__ = ["Control", "Expand", "Item", "Select", "Slide", "Toggle", "kind_of", "make"]

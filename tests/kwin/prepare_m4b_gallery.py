@@ -52,9 +52,11 @@ Module {
                 On_Click: flip
                 Children { Text { Text: "Open / close", Width: AUTO, Height: AUTO } }
             }
+            Text { Name: Said, Text: {{ said }}, Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
             Expander {
                 Name: Fold
                 Expanded: {{ open }}
+                On_Changed: finished
                 Children {
                     FlexBox {
                         Padding: 10
@@ -74,6 +76,11 @@ class Toggler(Module):
     def start(self):
         self.open = False
         self.ctx.send("open", False)
+        self.ctx.send("said", "On_Changed: nothing yet")
+
+    @action
+    def finished(self, event):
+        self.ctx.send("said", f"On_Changed: finished {'opening' if event.value else 'closing'}")
 
     @action
     def flip(self, event):
@@ -184,6 +191,10 @@ Do these in light and in dark (Plasma's colour scheme; every colour is a theme t
 10  Spacer: the two dots stay at the ends of the frame.
 11  Expander: press "Open / close": the content grows and fades in together; press again while
     it moves: it turns round from where it is. At rest nothing moves.
+13  Expander On_Changed: the grey line above the Expander says "On_Changed: nothing yet" at the
+    start; it changes to "finished opening" only when the opening has ARRIVED (not when you press),
+    and to "finished closing" after the closing. Press twice quickly (reverse half-way): only the
+    last finish is reported.
 12  Switch Plasma light to dark: everything follows. The log has no ERROR (one WARNING for the
     bad icon name and one for the bad image file).
 """
