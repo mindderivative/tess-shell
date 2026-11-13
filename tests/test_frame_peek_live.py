@@ -239,3 +239,97 @@ def test_dragging_the_tray_the_contour_and_the_content_move_together(
         expect = 2 + (e - 1004) * 11 / 36  # the content's row less the edge's, when still
         assert abs((d - e) - expect) <= 2, (blend, at, e, d, expect)
     assert min(e for _, e, _ in seen) <= 1010, "the body did not follow the pointer"
+
+
+def edge_row(shot: tuple[int, int, bytes]) -> int | None:
+    """The row of the contour's far edge (the border's colour) at x = 100, in the Tray's range."""
+    for y in range(950, 1075):
+        p = pixel(shot, 100, y)
+        if all(abs(a - b) < 12 for a, b in zip(p, (0x89, 0xB4, 0xFA), strict=True)):
+            return y
+    return None
+
+
+def dot_progress(shot: tuple[int, int, bytes], edge: int) -> float | None:
+    """How opaque the Tray's dot (#89dceb) is over the ring's fill (#1e1e2e), from its brightest
+    red in the body's left columns (the handle's bar, in the border's colour, is further right)
+    below the edge: ``(red - 0x1e) / (0x89 - 0x1e)``."""
+    best = 0
+    for y in range(edge + 4, 1062):
+        for x in range(16, 90, 2):
+            best = max(best, pixel(shot, x, y)[0])
+    return (best - 0x1E) / (0x89 - 0x1E) if best > 0x1E + 6 else None
+
+
+@pytest.mark.parametrize("blend", ["SRGB", "LINEAR"])
+def test_dragging_the_tray_the_content_fades_with_the_contour(
+    private_sway: PrivateSway, tmp_path: Path, blend: str
+) -> None:
+    """The pointer climbs the Tray tab while the screen is grabbed over and over: the dot's opacity
+    (its colour between the ring's fill and its own) is the contour's progress, the fraction of
+    the way from the tab's edge to the whole body's, every time, with both ways of drawing the ring.
+    The content opacity is set in the same call as the contour's: it cannot lag."""
+    (tmp_path / "Shells").mkdir(parents=True, exist_ok=True)
+    body = f"\nShell {{ Monitor {{ Name: Main, Index: 0, Children {{ {FRAME} }} }} }}\n"
+    (tmp_path / "Shells" / "Main_Shell.tdl").write_text(HEADER + body)
+    (tmp_path / "settings.tdl").write_text(
+        "---\nTDL: 0.1\nName: S\n---\n"
+        f"Settings {{ Logging {{ Level: DEBUG }} Debug {{ Frame_Blend: {blend} }} }}\n"
+    )
+    private_sway.msg("output", "*", "resolution", f"{OUT[0]}x{OUT[1]}")
+    private_sway.msg("output", "*", "scale", "1")
+    time.sleep(0.4)
+    shell = Shell(tmp_path, private_sway.env)
+    pointer = live_pointer.VirtualPointer(private_sway.env, *OUT)
+    state = {"y": 1050, "go": True}
+
+    def feed() -> None:
+        while state["y"] > 1000 and state["go"]:
+            state["y"] -= 1
+            pointer.move(100, state["y"], 0.004)
+        state["go"] = False
+
+    log: list[tuple[int, float | None]] = []
+    try:
+        shell.wait_for("painter configured", timeout=30)
+        time.sleep(1.0)
+        rest = edge_row(screenshot(private_sway))
+        assert rest is not None
+        pointer.move(100, 1058, 0.2)
+        pointer.down()
+        pointer.move(100, 1050, 0.2)
+        thread = threading.Thread(target=feed)
+        thread.start()
+        while state["go"]:
+            shot = screenshot(private_sway)
+            edge = edge_row(shot)
+            if edge is not None:
+                log.append((edge, dot_progress(shot, edge)))
+        thread.join()
+        pointer.up()
+        time.sleep(1.0)
+        out_edge = edge_row(screenshot(private_sway))
+    finally:
+        pointer.close()
+        stop(shell)
+    assert out_edge is not None and out_edge < rest - 30, (rest, out_edge)
+    span = rest - out_edge
+    mid = [((rest - e) / span, d) for e, d in log if d is not None]
+    mid = [(p, d) for p, d in mid if 0.3 < p < 0.9]
+    assert len(mid) >= 8, (rest, out_edge, log)
+    for p, d in mid:
+        assert abs(d - p) < 0.18, (blend, p, d, mid)
+    assert any(d < 0.8 for _, d in mid), "the content was opaque all the way"
+
+
+@pytest.mark.parametrize("blend", ["SRGB", "LINEAR"])
+def test_the_content_fade_costs_no_frames_once_the_slide_is_over(
+    private_sway: PrivateSway, blend: str
+) -> None:
+    """G8-style idle cost: the compare script's Panel holds content (so it fades with the slide,
+    on by default); the slide draws frames and nothing is drawn in the 0.7 s of idle after it."""
+    from tests.kwin.compare_join import live_run
+
+    (r,) = live_run(["PARAM"], private_sway.output_names()[0], 1.0, private_sway.env, 0.7, blend)
+    assert r["blend"] == blend and r["frames"] >= 15, r
+    assert r["idle_frames"] == 0, f"{r['idle_frames']} frames drawn at idle"

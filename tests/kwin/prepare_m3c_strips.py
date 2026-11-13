@@ -204,10 +204,11 @@ def peek_panel(
     peek: str,
     button: str,
     target: str,
+    more: str = "",
 ) -> str:
     return (
         f"Panel {{ Name: {name}, Meld: true, Attach_To: Screen_Frame, Attach: {attach}, "
-        f"Alignment: {alignment}, Length: {length}, Depth: {depth}, {peek}, "
+        f"Alignment: {alignment}, Length: {length}, Depth: {depth}, {peek}, {more}"
         "Animation { Type: SLIDE, Duration: 300 }, Style { Corner_Radius: 12 }, "
         + body(f"{name}: part of the frame", button, target)
         + " }"
@@ -278,8 +279,8 @@ def peek_frame(enter: int = 150, size: int | None = None) -> tuple[str, RingSpec
                 }}
             }}
             {peek_dock(enter, tab["dock"])}
-            {peek_panel("Notes", "TOP", "END", 220, 90, f"Peek {{ Size: {tab['notes']}, Trigger: CLICK, Slide_From: RIGHT }}", "Toggle Dock", "Dock")}
-            {peek_panel("Tray", "BOTTOM", "START", 200, 60, f"Peek {{ Size: {tab['tray']}, Trigger: DRAG }}", "Toggle Notes", "Notes")}"""
+            {peek_panel("Notes", "TOP", "END", 220, 90, f"Peek {{ Size: {tab['notes']}, Trigger: CLICK, Slide_From: RIGHT, Handle_Opacity: 0.3 }}", "Toggle Dock", "Dock")}
+            {peek_panel("Tray", "BOTTOM", "START", 200, 60, f"Peek {{ Size: {tab['tray']}, Trigger: DRAG }}", "Toggle Notes", "Notes", "Content_Fade: false,")}"""
     spec = RingSpec(
         thickness=thick,
         inner_radius=(14, 14, 14, 14),
@@ -347,8 +348,8 @@ Variant C: the top strip (34 px, Menu, Tall, ... plus buttons Dock, Left, Notes 
 Four things peek (the Frame is 10 left, 34 top, 12 right, 14 bottom so each handle fits its side):
   Dock   melded Panel at the bottom centre, 320 x 56:  Peek {{ Size: 24, Trigger: HOVER }}   (3 dots)
   Notes  melded Panel in the TOP-RIGHT corner, 220 wide x 90 high, Slide_From: RIGHT: it slides out
-         of the right band, its tab is 12 px wide at the right edge:  Peek {{ Size: 12, Trigger: CLICK }}   (chevron)
-  Tray   melded Panel at the bottom left, 200 x 60:  Peek {{ Size: 14, Trigger: DRAG }}   (a bar)
+         of the right band, its tab is 12 px wide at the right edge:  Peek {{ Size: 12, Trigger: CLICK, Handle_Opacity: 0.3 }}   (chevron, dim)
+  Tray   melded Panel at the bottom left, 200 x 60:  Peek {{ Size: 14, Trigger: DRAG }}, Content_Fade: false   (a bar; its content does not fade)
   Left   the left strip (three coloured blocks), Thickness 56:  Peek {{ Size: 10, Trigger: DRAG }}   (a bar)
 Tell me what you see, line by line.
   [ ] AT REST the Dock is a 24 px TAB hanging up from the bottom band at the centre (320 wide): the
@@ -402,6 +403,19 @@ Tell me what you see, line by line.
       it stays out (no hover), a second click sends it back to the tab.
   [ ] The log (DEBUG) shows "Panel Dock on HDMI-A-1 shown (melded, slide)" when it comes out and
       "hiding" when it goes back, and "strip Left_Strip ... (peek, slide)" for the strip.
+  [ ] HANDLE_OPACITY: Notes' chevron rests at 30 % (Handle_Opacity: 0.3) and the Dock's dots, the
+      Left bar and the Tray bar at the default 60 %; hovering a tab raises its handle to full in
+      about 120 ms and leaving lowers it back to ITS rest value. Edit one Peek to Handle_Opacity: 0
+      (the icon is gone but the tab works) and 1 (always bright); a value above 1 is a load error.
+  [ ] CONTENT FADE: coming out, the text and the button in the Dock, in Notes and in the left
+      strip's blocks fade IN as the contour grows (fully clear exactly when it stops) and fade OUT as
+      it goes back; nothing of the content shows on the tab. Dragging (Tray excepted), the content's
+      brightness follows the pointer, exactly with the edge, at 125 moves a second without lagging
+      behind the contour, with Debug {{ Frame_Blend: SRGB }} and with LINEAR (set it in settings.tdl,
+      restart). A Show/Hide from a button fades the same. The Tray has Content_Fade: false: its
+      text is opaque during the whole move, only its contour grows. Reduced motion: no fade.
+  [ ] A plain Panel with no Peek (Visible: false in your own file, then Show) also fades its content
+      with the slide; an Expander's content fades on its own (Content_Fade module parameter).
   [ ] REDUCED MOTION (Plasma animation speed "instant"): all switch at once, the delays stay; a
       dragged one still follows the pointer, and a release settles at once; the chevron flips at once.
   [ ] toggle-peek.sh: after it the Dock needs about 400 ms of hover; a Dock that was out stays out

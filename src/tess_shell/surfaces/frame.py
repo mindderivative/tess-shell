@@ -286,6 +286,7 @@ class PeekPlan:
     exit_delay: float
     trigger: str = "HOVER"  # HOVER, CLICK or DRAG
     handle: str | None = None  # the icon drawn on the tab: DOTS, BAR or CHEVRON; None draws none
+    handle_opacity: float = 0.6  # the handle's opacity at rest
 
 
 @dataclass(slots=True)
@@ -299,6 +300,7 @@ class HostPlan:
     planned: Planned
     padding: Sides = (0, 0, 0, 0)
     peek: PeekPlan | None = None
+    fade: bool = True  # ``Content_Fade``: the content's opacity follows the slide's progress
 
 
 @dataclass(slots=True)
@@ -537,6 +539,7 @@ class Frames:
                                 planned,
                                 pad,
                                 peeks.get(bar.name),
+                                edge.content_fade,
                             )
                         )
                     for panel in frame.melds:
@@ -559,6 +562,7 @@ class Frames:
                                 slide_side(panel)[0],
                                 planned,
                                 peek=peeks.get(panel.name),
+                                fade=panel.content_fade,
                             )
                         )
                     plans.append(plan)
@@ -611,6 +615,7 @@ class Frames:
                 peek.exit_delay,
                 peek.trigger,
                 Frames._handle_kind(frame, panel.name, peek, slide_side(panel)[0], output),
+                peek.handle_opacity,
             )
         bodies: list[tuple[str, MeldSpec]] = []
         for side in SIDES:
@@ -625,6 +630,7 @@ class Frames:
                 edge.peek.exit_delay,
                 edge.peek.trigger,
                 Frames._handle_kind(frame, name, edge.peek, side, output),
+                edge.peek.handle_opacity,
             )
             bodies.append((name, strip_body(frame, side)))
             for panel in frame.melds:
@@ -1298,8 +1304,15 @@ class Frames:
             return
         if have is None:
             have = host.handle = handles.make(
-                st.painter, want, host.plan.side, _Z_HANDLE, self._handle_colour(st)
+                st.painter,
+                want,
+                host.plan.side,
+                _Z_HANDLE,
+                self._handle_colour(st),
+                peek.handle_opacity if peek is not None else 0.6,
             )
+        if peek is not None:
+            have.set_rest(peek.handle_opacity)
         axis = host.axis
         state = self._rest_state(st, host)
         if axis is None or (state == "hidden" and host.anim is None):
@@ -1502,14 +1515,23 @@ class Frames:
             return
         self._drag_end(st, host, drag)
 
+    def _fades(self, host: HostState) -> bool:
+        """Whether the content of a sliding body fades with it (``Content_Fade``, on by default;
+        not with reduced motion). A FADE body fades whole, through its mover, already."""
+        return host.plan.fade and not self._reduced()
+
     def _seek(self, host: HostState, p: float) -> None:
-        """Put the body ``p`` of the way out at once: the contour, the content and the handle."""
+        """Put the body ``p`` of the way out at once: the contour, the content (its place and its
+        opacity, one write) and the handle."""
         axis = host.axis
         assert host.mover is not None and axis is not None
         if isinstance(host.join, Seekable):
             host.join.seek(p)
         prop, away = host.away
-        host.mover.set(**{prop: away * (1.0 - p)})
+        if self._fades(host):
+            host.mover.set(**{prop: away * (1.0 - p)}, opacity=p)
+        else:
+            host.mover.set(**{prop: away * (1.0 - p)})
         if host.handle is not None:
             far = axis.full - axis.size
             host.handle.seek(p, axis.nx * far * p, axis.ny * far * p)
@@ -1733,6 +1755,8 @@ class Frames:
         host.mover.set(translate_x=0, translate_y=0, opacity=1.0)
         if kind == "SLIDE":
             host.mover.set(**{prop: away if show else 0.0})
+            if self._fades(host):
+                host.mover.set(opacity=0.0 if show else 1.0)  # the content starts as the contour
             axis = host.axis
             if host.handle is not None and axis is not None:
                 far = axis.full - axis.size
@@ -1780,6 +1804,8 @@ class Frames:
         host.join.play(show, ms, easing, done)
         if host.kind == "SLIDE":
             host.mover.animate(prop, 0.0 if show else away, ms, easing)
+            if self._fades(host):  # the same clock and easing as the contour: opacity = progress
+                host.mover.animate("opacity", 1.0 if show else 0.0, ms, easing)
             axis = host.axis
             if host.handle is not None and axis is not None:
                 far = axis.full - axis.size

@@ -53,6 +53,7 @@ class PeekDef:
     trigger: str = "HOVER"  # HOVER, CLICK or DRAG: what opens it
     handle: str = "AUTO"  # AUTO, NONE, DOTS, BAR or CHEVRON: the icon on the tab
     slide_from: str | None = None  # a corner Panel only: TOP, RIGHT, BOTTOM or LEFT; None is Attach
+    handle_opacity: float = 0.6  # 0 to 1: how bright the handle is at rest (hover raises it)
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,6 +87,7 @@ class PanelDef:
     movable: bool = False  # the pointer can move it; the position is saved (Panel > Position)
     animation: str = "NONE"  # SLIDE, FADE or NONE: how it appears and disappears
     peek: PeekDef | None = None  # melded only: rests as a tab of ``Size`` pixels (see PeekDef)
+    content_fade: bool = True  # melded: the content's opacity follows the slide's progress
     duration: float = 200  # milliseconds of the animation
     handlers: Mapping[str, Handler] = field(default_factory=dict)  # ``On_Open`` -> handler
 
@@ -138,6 +140,7 @@ class EdgeDef:
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
     name: str | None = None  # the target of Show, Hide and Toggle (a strip with ``Peek`` only)
     peek: PeekDef | None = None  # the strip rests as a ``Size`` sliver; ``thickness`` is its full
+    content_fade: bool = True  # the strip's children fade with the strip's slide
 
 
 @dataclass(frozen=True, slots=True)

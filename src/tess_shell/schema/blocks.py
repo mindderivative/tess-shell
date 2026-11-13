@@ -546,6 +546,8 @@ PANEL_KEYS: dict[str, str] = {
     "Alignment": "enum",
     "Movable": "bool",
     "Meld": "bool",
+    # a melded Panel's content fades with its slide (Frame > Peek Triggers and Handles)
+    "Content_Fade": "bool",
     # a melded Panel's size: ``Depth`` perpendicular to the Frame's edge, ``Length`` along it
     "Depth": "length",
     "Length": "length",

@@ -1426,7 +1426,16 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
                 "the tab is part of the body: write a Size below the extent it slides along",
             )
             peek = None
-    elif peek is not None:
+    elif "Content_Fade" in values:
+        ctx.add(
+            block.origin,
+            "not-built",
+            "Content_Fade is for a Panel with Meld: true: a Panel in a window of its own fades "
+            "its whole surface with its animation",
+            "remove Content_Fade, or write Meld: true and Attach_To: <a Frame>",
+            "warning",
+        )
+    if not is_meld and peek is not None:
         ctx.add(
             peek.origin or block.origin,
             "peek-window",
@@ -1450,6 +1459,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
     else:
         sides = (0, 0, 0, 0)
     hide = values.get("Hide_After")
+    fade = values.get("Content_Fade")
     visible = values.get("Visible")
     region = values.get("Input_Region")
     gap = values.get("Gap")
@@ -1479,6 +1489,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         animation=animation[0],
         duration=float(animation[1]),
         peek=peek,
+        content_fade=fade.value if isinstance(fade, m.Bool) else True,
         handlers=handlers,
     )
 
@@ -1581,7 +1592,7 @@ def _peek(ctx: _Ctx, block: Block, strip: bool = False) -> PeekDef:
     before it comes out and after it leaves before it goes back (0 or more; they apply to
     ``HOVER``), what opens it, the icon on its tab and, for a Panel in a Frame corner, the edge it
     slides out of (checked against ``Attach`` and ``Alignment`` by the Panel)."""
-    values = {"Size": 24.0, "Enter_Delay": 150.0, "Exit_Delay": 300.0}
+    values = {"Size": 24.0, "Enter_Delay": 150.0, "Exit_Delay": 300.0, "Handle_Opacity": 0.6}
     words: dict[str, str] = {}
     written: set[str] = set()
     allowed = [*values, "Trigger", "Handle", *([] if strip else ["Slide_From"])]
@@ -1613,7 +1624,7 @@ def _peek(ctx: _Ctx, block: Block, strip: bool = False) -> PeekDef:
                 "remove Slide_From",
             )
         elif isinstance(entry, Property) and entry.key in values:
-            if entry.key != "Size":
+            if entry.key not in ("Size", "Handle_Opacity"):
                 written.add(entry.key)
             try:
                 value = coerce("number", entry.value, ctx.origin(entry.key_origin), ())
@@ -1626,7 +1637,14 @@ def _peek(ctx: _Ctx, block: Block, strip: bool = False) -> PeekDef:
                 ctx.add(
                     entry.value_origin, "bad-value", "Size is 1 or more pixels", "write Size: 24"
                 )
-            elif entry.key != "Size" and number < 0:
+            elif entry.key == "Handle_Opacity" and not 0 <= number <= 1:
+                ctx.add(
+                    entry.value_origin,
+                    "bad-value",
+                    "Handle_Opacity is a number from 0 to 1",
+                    "write Handle_Opacity: 0.6",
+                )
+            elif entry.key not in ("Size", "Handle_Opacity") and number < 0:
                 ctx.add(entry.value_origin, "bad-value", f"{entry.key} is 0 or more", "")
             else:
                 values[entry.key] = number
@@ -1656,6 +1674,7 @@ def _peek(ctx: _Ctx, block: Block, strip: bool = False) -> PeekDef:
         trigger,
         words.get("Handle", "AUTO"),
         words.get("Slide_From"),
+        values["Handle_Opacity"],
     )
 
 
@@ -2234,11 +2253,20 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
         children: list[Child] = []
         edge_name: str | None = None
         peek: PeekDef | None = None
-        keys = ["Name", "Thickness", "Padding", "Children", "Peek"]
+        content_fade = True
+        keys = ["Name", "Thickness", "Padding", "Children", "Peek", "Content_Fade"]
         for sub in entry.entries:
             if isinstance(sub, Property):
                 if sub.key == "Name":
                     edge_name = ctx.name(sub)
+                elif sub.key == "Content_Fade":
+                    try:
+                        flag = coerce("bool", sub.value, ctx.origin(sub.key_origin))
+                    except ValueProblem as exc:
+                        ctx.problem(sub.value_origin, sub.key, exc)
+                        continue
+                    assert isinstance(flag, m.Bool)
+                    content_fade = flag.value
                 elif sub.key == "Thickness":
                     try:
                         value = coerce("number", sub.value, ctx.origin(sub.key_origin))
@@ -2295,7 +2323,14 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
             )
             edge_name = None
         out[side] = EdgeDef(
-            side, ctx.origin(entry.origin), thickness, padding, tuple(children), edge_name, peek
+            side,
+            ctx.origin(entry.origin),
+            thickness,
+            padding,
+            tuple(children),
+            edge_name,
+            peek,
+            content_fade,
         )
     return out
 

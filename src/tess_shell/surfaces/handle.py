@@ -41,7 +41,8 @@ BAR_RX, BAR_RY = 1.5, 1.0  # the bar's elliptical corners (Inkscape squashed its
 # base (1.0, 7.37)-(23.0, 7.37), apex (12.0, 0.63)
 CHEVRON_HALF = 11.0  # half the chevron's width along the edge
 CHEVRON_RISE = 3.365  # half its height: the apex is this far from the midline, away or towards
-REST_OPACITY = 0.6  # a handle is dimmer than its colour until the pointer is on the tab
+REST_OPACITY = 0.6  # the default of ``Peek { Handle_Opacity }``: a handle is dimmer than its
+# colour until the pointer is on the tab
 # the direction into the opening from each side, in the painter's pixels
 TOWARD = {"top": (0.0, 1.0), "bottom": (0.0, -1.0), "left": (1.0, 0.0), "right": (-1.0, 0.0)}
 
@@ -131,6 +132,8 @@ class Handle:
     width: float
     height: float
     colour: RGBA
+    rest: float = REST_OPACITY  # its opacity at rest (``Handle_Opacity``); hover raises it to 1
+    hovered: bool = False
 
     def place(self, cx: float, cy: float) -> None:
         """Put the holder's centre at the painter's point (``cx``, ``cy``)."""
@@ -157,7 +160,15 @@ class Handle:
             self.chevron.animate_param("p", p, ms, easing)
 
     def hover(self, on: bool, ms: int = 120) -> None:
-        self.holder.animate("opacity", 1.0 if on else REST_OPACITY, ms)
+        self.hovered = on
+        self.holder.animate("opacity", 1.0 if on else self.rest, ms)
+
+    def set_rest(self, rest: float) -> None:
+        """A new ``Handle_Opacity`` (a reload): shown at once unless the pointer is on the tab."""
+        if rest != self.rest:
+            self.rest = rest
+            if not self.hovered:
+                self.holder.set(opacity=rest)
 
     def destroy(self) -> None:
         try:
@@ -166,7 +177,14 @@ class Handle:
             pass
 
 
-def make(painter: LayerWindow, kind: str, side: str, z_index: int, colour: RGBA) -> Handle:
+def make(
+    painter: LayerWindow,
+    kind: str,
+    side: str,
+    z_index: int,
+    colour: RGBA,
+    rest: float = REST_OPACITY,
+) -> Handle:
     """The nodes of a ``kind`` handle on ``side``, added to ``painter`` at ``z_index``, hidden."""
     width, height = size_of(kind, side)
     holder = painter.create(
@@ -179,7 +197,7 @@ def make(painter: LayerWindow, kind: str, side: str, z_index: int, colour: RGBA)
         visible=False,
         hit_testable=False,
         a11y_hidden=True,
-        opacity=REST_OPACITY,
+        opacity=rest,
         z_index=z_index,
     )
     painter.root.add_child(holder)
@@ -222,4 +240,4 @@ def make(painter: LayerWindow, kind: str, side: str, z_index: int, colour: RGBA)
             )
     for node in parts:
         holder.add_child(node)
-    return Handle(kind, side, holder, parts, chevron, width, height, colour)
+    return Handle(kind, side, holder, parts, chevron, width, height, colour, rest)

@@ -247,3 +247,62 @@ def test_size_is_not_a_hover_delay_and_never_warns() -> None:
         )
         shell, findings = read(body)
         assert shell is not None and not [f for f in findings if f.severity == "warning"]
+
+
+# -- Handle_Opacity, Content_Fade -----------------------------------------------------------------
+
+
+def test_handle_opacity_defaults_to_0_6_and_takes_0_to_1() -> None:
+    peek = read_corner("Peek { }").peek
+    assert peek is not None and peek.handle_opacity == 0.6
+    for value, want in (("0", 0.0), ("1", 1.0), ("0.25", 0.25)):
+        peek = read_corner(f"Peek {{ Handle_Opacity: {value} }}").peek
+        assert peek is not None and peek.handle_opacity == want
+    edge = strip(f"Thickness: 34, {KID}, Peek {{ Handle_Opacity: 0.3 }}")
+    assert edge.peek is not None and edge.peek.handle_opacity == 0.3
+
+
+@pytest.mark.parametrize("value", ["1.5", "-0.1"])
+def test_a_handle_opacity_outside_0_to_1_is_an_error(value: str) -> None:
+    body = "Frame { Name: F, Thickness: 12 }\n" + corner_panel(
+        f"Peek {{ Handle_Opacity: {value} }}"
+    )
+    (f,) = problems(body)
+    assert f.rule == "bad-value" and "0 to 1" in f.message
+
+
+def test_handle_opacity_never_warns_with_click_or_drag() -> None:
+    body = with_frame(
+        "Frame { Name: F, Thickness: 12 }\n"
+        + corner_panel("Peek { Trigger: CLICK, Handle_Opacity: 0.2 }")
+    )
+    shell, findings = read(body)
+    assert shell is not None and not [f for f in findings if f.severity == "warning"]
+
+
+def test_content_fade_is_on_by_default_and_false_opts_out_on_a_panel_and_a_strip() -> None:
+    assert read_corner("Peek { }").content_fade is True
+    body = with_frame(
+        "Frame { Name: F, Thickness: 12 }\n"
+        + corner_panel("Peek { }").replace("Depth: 40,", "Depth: 40, Content_Fade: false,")
+    )
+    shell, findings = read(body)
+    assert shell is not None and not findings
+    assert shell.monitors[0].frames[0].melds[0].content_fade is False
+    assert strip(f"Thickness: 34, {KID}, Peek {{ }}").content_fade is True
+    assert strip(f"Thickness: 34, Content_Fade: false, {KID}, Peek {{ }}").content_fade is False
+
+
+def test_content_fade_must_be_a_boolean_and_a_window_panel_is_warned_it_has_none() -> None:
+    body = "Frame { Name: F, Thickness: 12 }\n" + corner_panel("Peek { }").replace(
+        "Depth: 40,", "Depth: 40, Content_Fade: 3,"
+    )
+    assert problems(body)
+    window = (
+        "Panel { Name: P, Layer: OVERLAY, Width: 100, Height: 50, Anchor: [TOP], "
+        "Content_Fade: false }"
+    )
+    shell, findings = read(with_frame(window))
+    assert shell is not None
+    warned = [f for f in findings if f.severity == "warning"]
+    assert warned and "Content_Fade" in warned[0].message and "Meld" in warned[0].hint
