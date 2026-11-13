@@ -6,6 +6,7 @@ word wrap, a disabled field. ``window.simulate`` is the keyboard; there is no co
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -800,3 +801,36 @@ def test_a_handler_added_by_a_reload_runs_and_one_removed_stops() -> None:
     b.view.rebuild(nodes)
     b.type("e")
     assert len(b.events("On_Changed")) == 1
+
+
+def test_two_way_typing_at_the_start_keeps_the_order_whichever_way_the_echo_arrives() -> None:
+    """tess-ui found that a text set equal to the one the input holds moves the caret to the end.
+    A module that stores what was typed and sends it back (``Text: {{ value }}``) must not make
+    typing after Home jump to the end: Home, type two characters, they are in order at the start.
+    The echo reaches the field by a property update and by a keyed rebuild; both must skip the set
+    (the shell does not rely on tre making an identical set a no-op)."""
+
+    def at_the_start(echo: Callable[[Built, str], None]) -> None:
+        b = Built(node({"Text": text("abcd")}, handlers=handlers("On_Changed")))
+        b.focus()
+        b.key("home")  # tre names its keys in lower case
+        assert b.inp.get("selection") == (0, 0)
+        b.type("X")
+        echo(b, "Xabcd")
+        b.type("Y")
+        echo(b, "XYabcd")
+        assert b.inp.get("text") == "XYabcd" and b.inp.get("selection") == (2, 2)
+        assert [new for _, new in b.events("On_Changed")] == ["Xabcd", "XYabcd"]
+
+    def by_update(b: Built, echoed: str) -> None:
+        assert b.view.update([("In", "Text", text(echoed))]) == []
+
+    def by_rebuild(b: Built, echoed: str) -> None:
+        echoed_node = node({"Text": text(echoed)}, handlers=handlers("On_Changed"))
+        nodes, errors = resolve([named(compose(echoed_node))], LOOK)
+        assert errors == []
+        b.view.rebuild(nodes)
+        b.window.advance(16)
+
+    at_the_start(by_update)
+    at_the_start(by_rebuild)
