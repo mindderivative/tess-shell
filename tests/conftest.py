@@ -22,6 +22,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.fake_pulse import FakePulse
 from tests.sway import PrivateSway, SwayUnavailable
 
 ALLOW = "TESS_SHELL_TESTS_REAL_SESSION"
@@ -40,6 +41,17 @@ def pytest_configure(config: pytest.Config) -> None:
         )
     _private = Path(tempfile.mkdtemp(prefix="tess-tests-"))
     os.environ.pop("DBUS_SESSION_BUS_ADDRESS", None)
+    # no test may find the real sound server: libpulse and the shell look at these (Audio Module)
+    for name in (
+        "PULSE_SERVER",
+        "PULSE_RUNTIME_PATH",
+        "PULSE_COOKIE",
+        "PULSE_SINK",
+        "PULSE_SOURCE",
+        "PIPEWIRE_REMOTE",
+        "PIPEWIRE_RUNTIME_DIR",
+    ):
+        os.environ.pop(name, None)
     os.environ["DBUS_SYSTEM_BUS_ADDRESS"] = f"unix:path={_private}/no-system-bus"
     for name, sub in (
         ("XDG_RUNTIME_DIR", "run"),
@@ -67,3 +79,26 @@ def private_sway() -> Iterator[PrivateSway]:
         yield sway
     finally:
         sway.stop()
+
+
+@pytest.fixture(autouse=True)
+def no_real_sound_server(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The shell's own discovery of the sound server (``default_socket``, which follows the
+    environment in a real run) names a socket that does not exist in every test: a test that wants
+    a server starts the in-process ``FakePulse`` and passes its socket (Audio Module, safety)."""
+    from tess_shell.services import audio
+
+    monkeypatch.setattr(audio, "default_socket", lambda env: Path("/nonexistent/no-pulse/native"))
+
+
+@pytest.fixture
+def fake_pulse() -> Iterator[FakePulse]:
+    """An in-process fake PulseAudio server, not started yet, on a short path under /tmp (a unix
+    socket path is at most 107 bytes)."""
+    folder = Path(tempfile.mkdtemp(prefix="fp-", dir="/tmp"))
+    fake = FakePulse(folder)
+    try:
+        yield fake
+    finally:
+        fake.close()
+        shutil.rmtree(folder, ignore_errors=True)

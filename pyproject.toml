@@ -57,8 +57,9 @@ markers = [
     "manual: needs a person",
     "dbus: needs a session bus",
     "compositor: needs the real compositor",
+    "audio_sandbox: needs the private PipeWire stack inside the bwrap sandbox (tests/spikes/audio)",
 ]
-addopts = "-m 'not perf and not manual and not compositor and not dbus'"
+addopts = "-m 'not perf and not manual and not compositor and not dbus and not audio_sandbox'"
 
 [tool.ruff]
 line-length = 100

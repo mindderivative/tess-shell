@@ -37,6 +37,9 @@ class Event:
     new: str | bool | float | None = None
     text: str | None = None
     value: str | bool | float | None = None
+    # ``On_Scroll``: one wheel step, +1 scrolling down and -1 scrolling up (``On_Secondary_Click``
+    # has ``button == "secondary"``)
+    delta: float | None = None
 
 
 class Module:

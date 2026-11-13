@@ -452,7 +452,7 @@ def test_every_shipped_module_is_listed_with_all_its_params() -> None:
             assert entry["doc"].strip(), (name, param)
             assert entry["kind"] in D["kinds"], (name, param)
         assert D["modules"][name]["doc"].strip(), name
-    assert total == 80
+    assert total == 84
 
 
 def test_a_param_default_passes_the_check_of_its_kind() -> None:
@@ -528,7 +528,7 @@ def test_the_actions_listed_are_the_modules_own_with_their_arguments() -> None:
 def test_the_events_a_call_may_handle_are_what_the_loader_allows() -> None:
     mods = D["modules"]
     assert mods["Label"]["events"] == [] and mods["TextBox"]["events"] == []
-    assert mods["Button"]["events"] == ["On_Click"]
+    assert mods["Button"]["events"] == ["On_Click", "On_Secondary_Click", "On_Scroll"]
     assert (
         "On_Changed" in mods["Toggle"]["events"] and "On_Released" not in mods["Toggle"]["events"]
     )

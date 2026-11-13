@@ -17,6 +17,7 @@ from __future__ import annotations
 import concurrent.futures
 import enum
 from collections.abc import Callable, Coroutine, Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 CALL_TIMEOUT = 5.0  # seconds; every call has one
@@ -208,3 +209,96 @@ class DBusPort(Protocol):
         send: Callable[[str, object], None],
         hooks: ServiceHooks,
     ) -> ModuleDBus: ...
+
+
+# -- the sound server (Audio Module, ADR-0021 Audio Access) ---------------------------------------
+
+
+class AudioError(Exception):
+    """A call to the sound server failed (the server said no, or it did not answer)."""
+
+
+class AudioUnavailable(AudioError):
+    """There is no sound server to call (none is running, or it went away)."""
+
+
+@dataclass(frozen=True, slots=True)
+class Output:
+    """One output (a sink) of the sound server."""
+
+    name: str  # the sink's name: what ``set_output`` takes
+    description: str
+    kind: str  # SPEAKER, HEADPHONES, HDMI, BLUETOOTH or OTHER (Audio Module > Kind and Icon)
+
+
+@dataclass(frozen=True, slots=True)
+class AudioState:
+    """What the Audio module shows. ``volume`` is the mean of the default output's channels in
+    percent, as the server reports it (above 100 stays above 100)."""
+
+    output: Output | None  # the default output; ``None`` when the server has no sink
+    volume: int
+    muted: bool
+    has_mic: bool  # a default input exists
+    mic_muted: bool
+    outputs: tuple[Output, ...]  # every output, in the server's order
+
+
+AudioCallback = Callable[[AudioState | None], None]
+
+
+class ModuleAudio(Protocol):
+    """``ctx.audio``: the sound server, through the shell's own client of the PulseAudio native
+    protocol. Nothing connects until it is first used. Everything runs on the ``dbus`` service
+    thread's loop: a callback runs there (short, never blocking: it calls ``ctx.send``), and a
+    setter returns a future at once from any thread. The shell cancels a module's subscription
+    when the module stops."""
+
+    @property
+    def available(self) -> bool:
+        """True while a sound server is connected (any thread)."""
+        ...
+
+    @property
+    def state(self) -> AudioState | None:
+        """The last state, or ``None`` while there is no server (any thread)."""
+        ...
+
+    def on_changed(self, callback: AudioCallback) -> Subscription:
+        """``callback(state)`` on the service thread: once with the current state (``None`` while
+        there is no server) as soon as it is known, then each time the state differs from the
+        last one handed over. ``None`` means the server went away; it comes back as a state."""
+        ...
+
+    def set_volume(self, percent: float) -> concurrent.futures.Future[None]:
+        """Set every channel of the default output so that their mean is ``percent`` (clamped to 0
+        to 100); a balance between the channels is kept by scaling them."""
+        ...
+
+    def step(self, delta: float) -> concurrent.futures.Future[None]:
+        """``set_volume`` of the volume plus ``delta``, clamped to 0 to 100. Steps that follow each
+        other before the server's event arrives add up (the base is what the last call wrote)."""
+        ...
+
+    def set_muted(self, muted: bool) -> concurrent.futures.Future[None]: ...
+
+    def toggle_mute(self) -> concurrent.futures.Future[None]: ...
+
+    def toggle_mic(self) -> concurrent.futures.Future[None]:
+        """Toggle the default input's mute."""
+        ...
+
+    def set_output(self, name: str) -> concurrent.futures.Future[None]:
+        """Make the output ``name`` the default. Raises :class:`AudioError` in the future if the
+        server has no such output."""
+        ...
+
+    def close(self) -> None:
+        """Cancel every subscription of the module."""
+        ...
+
+
+class AudioPort(Protocol):
+    """What the module host needs of the sound service: one helper per module."""
+
+    def for_module(self, module: str) -> ModuleAudio: ...

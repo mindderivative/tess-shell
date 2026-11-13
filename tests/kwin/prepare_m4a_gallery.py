@@ -434,7 +434,8 @@ SINGLE = [
         f'TextInput {{ Name: In_Max, Width: 270, Max_Length: 8, Placeholder: "8 characters", {CHANGES} }}',
     ),
     field_row(
-        "Enabled: false", f'TextInput {{ Name: In_Off, Width: 270, Enabled: false, Text: "disabled", {CHANGES} }}'
+        "Enabled: false",
+        f'TextInput {{ Name: In_Off, Width: 270, Enabled: false, Text: "disabled", {CHANGES} }}',
     ),
     field_row(
         "Overflow SCROLL (the default): scrolls to the caret", block_field("F_Scroll", "SCROLL")
@@ -457,7 +458,7 @@ MULTI = [
     ),
     field_row(
         "TextEditor, Enabled: false",
-        f'TextEditor {{ Name: Ed_Off, Width: 270, Lines: 2, Enabled: false, '
+        f"TextEditor {{ Name: Ed_Off, Width: 270, Lines: 2, Enabled: false, "
         f'Text: "disabled editor", {CHANGES} }}',
     ),
     "Echo { Name: Echo_One }",

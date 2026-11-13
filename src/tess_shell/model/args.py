@@ -78,6 +78,7 @@ def event_record(key: str, raw: object) -> dict[str, Any]:
         ("new", "new_value"),
         ("text", "text"),
         ("value", "value"),
+        ("delta", "delta"),
     ):
         value = getattr(raw, attr, None)
         if isinstance(value, bool | int | float | str):

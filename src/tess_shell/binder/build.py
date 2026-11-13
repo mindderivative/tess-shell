@@ -11,6 +11,7 @@ import difflib
 import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 from tess_shell.binder import controls
@@ -42,6 +43,8 @@ from tess_shell.binder.motion import check as check_motion
 from tess_shell.binder.motion import start as start_motion
 from tess_shell.binder.shapes import POSTS
 from tess_shell.binder.tables import BLOCKS, BlockRow, KeyRow
+
+_POINTER_EVENTS = frozenset({"On_Click", "On_Secondary_Click", "On_Scroll"})
 
 if TYPE_CHECKING:
     from tess_re import Node as TreNode
@@ -629,6 +632,8 @@ class View:
                 part = bool(e.typed.part) or e.typed.kind in (FIELD_INPUT, MARQUEE_TEXT)
                 e.wire.sync(own, inherited, part, *seen)
                 self._ensure_click(e)
+                self._ensure_pointer(e, "On_Secondary_Click", "secondary_click")
+                self._ensure_pointer(e, "On_Scroll", "wheel")
                 mine = (seen[0] or e.wire.checked, seen[1] or e.wire.selected)
             self._sync(e.children, inherited or own, {**flags, owner: mine} if owner else flags)
 
@@ -665,6 +670,48 @@ class View:
                     stop()
 
         entry.tre.on("click", listener)
+
+    def _ensure_pointer(self, entry: Entry, key: str, tre_event: str) -> None:
+        """The one ``secondary_click`` or ``wheel`` listener of a node that has ``key``
+        (``On_Secondary_Click``, ``On_Scroll``) or is disabled. Like the click it stops the event
+        (the nearest block with the handler takes it alone; a disabled one swallows it); a block
+        with no handler of its own has no listener, so the event bubbles to the nearest ancestor
+        that has. A secondary click is its own tre event: it never reaches an ``On_Click``. The
+        handler's event is a plain record: ``button`` is ``"secondary"``; a wheel step has
+        ``delta``, +1 for one step down and -1 for one step up (the sign of tre's ``delta_y``; a
+        purely sideways wheel raises nothing)."""
+        wire = entry.wire
+        if entry.tre is None or wire is None or key in wire.wired:
+            return
+        if key not in wire.handlers and not wire.disabled:
+            return
+        wire.wired.add(key)
+
+        def listener(event: Any, wire: Wire = wire) -> None:
+            stop = getattr(event, "stop", None)
+            handler = wire.handlers.get(key)
+            if not wire.blocked and handler is None:  # a reload dropped the handler
+                return
+            try:
+                if wire.blocked or handler is None or self.sink is None:
+                    return
+                raw = SimpleNamespace(
+                    window_x=getattr(event, "window_x", None),
+                    window_y=getattr(event, "window_y", None),
+                )
+                if key == "On_Scroll":
+                    dy = getattr(event, "delta_y", None) or 0.0
+                    if dy == 0:
+                        return
+                    raw.delta = 1.0 if dy > 0 else -1.0
+                else:
+                    raw.button = "secondary"
+                self.sink(handler, key, raw)
+            finally:
+                if stop is not None:
+                    stop()
+
+        entry.tre.on(tre_event, listener)
 
     def update(self, changes: Sequence[tuple[str, str, Value]]) -> list[BindError]:
         """Set new typed values on named nodes: ``(node id, TDL key, value)``.
@@ -916,7 +963,7 @@ def _plan(
     props.update(row.fixed)
     props.update(extra)
     if node.kind == "Spacer":  # no pointer events unless it has a click to run
-        props.setdefault("hit_testable", "On_Click" in node.handlers)
+        props.setdefault("hit_testable", bool(_POINTER_EVENTS & node.handlers.keys()))
     if node.kind in DECORATIVE:  # an image or a shape is not announced unless it has a Label
         props.setdefault("a11y_hidden", "label" not in props)
     if row.post:

@@ -94,30 +94,66 @@ def row(caption: str, *items: str) -> str:
 
 ROWS = [
     'Text { Text: "M4b display widgets", Width: AUTO, Height: AUTO, Font_Size: 15, Font_Weight: 500 }',
-    row("Label", 'Label { Text: "normal" }', 'Label { Text: "disabled", Enabled: false }',
-        'Label { Text: "a clipped long label", Width: 70 }'),
-    row("TextBox", 'TextBox { Text: "A text box wraps a long text by word at its width", Width: 180 }',
-        'TextBox { Text: "Max_Lines 2: one two three four five six seven eight", Width: 120, Max_Lines: 2 }'),
-    row("ProgressBar", "ProgressBar { Value: 30 }", "ProgressBar { Value: 75 }",
-        "ProgressBar { Value: 75, Enabled: false }"),
-    row("Badge", "Badge { Count: 3 }", "Badge { Count: 120 }", "Badge { Dot: true }",
-        "Badge { Count: 0, Show_Zero: true }", "Badge { Count: 0 }"),
-    row("Marquee text", f'Marquee_Text {{ Text: "{LONG}", Width: 140 }}',
+    row(
+        "Label",
+        'Label { Text: "normal" }',
+        'Label { Text: "disabled", Enabled: false }',
+        'Label { Text: "a clipped long label", Width: 70 }',
+    ),
+    row(
+        "TextBox",
+        'TextBox { Text: "A text box wraps a long text by word at its width", Width: 180 }',
+        'TextBox { Text: "Max_Lines 2: one two three four five six seven eight", Width: 120, Max_Lines: 2 }',
+    ),
+    row(
+        "ProgressBar",
+        "ProgressBar { Value: 30 }",
+        "ProgressBar { Value: 75 }",
+        "ProgressBar { Value: 75, Enabled: false }",
+    ),
+    row(
+        "Badge",
+        "Badge { Count: 3 }",
+        "Badge { Count: 120 }",
+        "Badge { Dot: true }",
+        "Badge { Count: 0, Show_Zero: true }",
+        "Badge { Count: 0 }",
+    ),
+    row(
+        "Marquee text",
+        f'Marquee_Text {{ Text: "{LONG}", Width: 140 }}',
         f'Marquee_Text {{ Text: "{LONG}", Width: 140, Loop: BOUNCE }}',
         f'Marquee_Text {{ Text: "{LONG}", Width: 140, Enabled: false }}',
-        'Marquee_Text { Text: "fits", Width: 140 }'),
-    row("Icon", 'Icon { Icon: "mdi:home", Size: 24 }', 'Icon { Icon: "mdi:account", Size: 32 }',
-        'Icon { Icon: "mdi:home", Size: 24, Enabled: false }', 'Icon { Icon: "mdi:no-such-icon-here", Size: 24 }'),
-    row("Image", *[f'Image {{ Source: "{FIX / n}", Width: 48, Height: 48, Fit: FILL }}'
-                   for n in ("png.png", "jpeg.jpg", "gif.gif", "webp.webp")],
+        'Marquee_Text { Text: "fits", Width: 140 }',
+    ),
+    row(
+        "Icon",
+        'Icon { Icon: "mdi:home", Size: 24 }',
+        'Icon { Icon: "mdi:account", Size: 32 }',
+        'Icon { Icon: "mdi:home", Size: 24, Enabled: false }',
+        'Icon { Icon: "mdi:no-such-icon-here", Size: 24 }',
+    ),
+    row(
+        "Image",
+        *[
+            f'Image {{ Source: "{FIX / n}", Width: 48, Height: 48, Fit: FILL }}'
+            for n in ("png.png", "jpeg.jpg", "gif.gif", "webp.webp")
+        ],
         f'Image {{ Source: "{FIX / "bad.png"}", Width: 48, Height: 48 }}',
-        'Image { Placeholder: "#55657A", Width: 48, Height: 48 }'),
-    row("Circle, Ring, Path", 'Circle { Diameter: 24, Fill: $color.primary }',
-        'Ring { Diameter: 24, Border_Width: 3, Border_Color: $color.success }',
-        'Path { Data: "M2,2 L22,2 L12,22 Z", View_Box: [0, 0, 24, 24], Width: 24, Height: 24, Fill: $color.warning }'),
+        'Image { Placeholder: "#55657A", Width: 48, Height: 48 }',
+    ),
+    row(
+        "Circle, Ring, Path",
+        "Circle { Diameter: 24, Fill: $color.primary }",
+        "Ring { Diameter: 24, Border_Width: 3, Border_Color: $color.success }",
+        'Path { Data: "M2,2 L22,2 L12,22 Z", View_Box: [0, 0, 24, 24], Width: 24, Height: 24, Fill: $color.warning }',
+    ),
     row("Tooltip", 'Label { Text: "hover me", Tooltip: "A one-line tooltip" }'),
-    row("Spacer", "FlexBox { Width: 300, Height: 20, Align_Items: CENTER, Style { Border_Width: 1, Border_Color: $color.outline }, "
-        "Children { Circle { Diameter: 12, Fill: $color.primary } Spacer { } Circle { Diameter: 12, Fill: $color.primary } } }"),
+    row(
+        "Spacer",
+        "FlexBox { Width: 300, Height: 20, Align_Items: CENTER, Style { Border_Width: 1, Border_Color: $color.outline }, "
+        "Children { Circle { Diameter: 12, Fill: $color.primary } Spacer { } Circle { Diameter: 12, Fill: $color.primary } } }",
+    ),
     row("Expander", "Toggler { }"),
 ]
 

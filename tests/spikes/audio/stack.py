@@ -136,6 +136,21 @@ class PrivateStack:
             proc.kill()
             proc.wait(5)
 
+    def restart_pipewire(self) -> None:
+        """Kill ``pipewire`` itself (``wireplumber`` and ``pipewire-pulse`` lose their server and
+        are stopped), then start all three again: the devices (made by pipewire's own config) and
+        the pulse socket come back. A stale socket file of the killed ``pipewire-pulse`` stays until
+        the new one replaces it, as after a crash."""
+        proc = self.procs["pipewire"]
+        proc.kill()
+        proc.wait(5)
+        for name in ("pipewire-pulse", "wireplumber"):
+            self._terminate(name)
+        self._spawn("pipewire", ["pipewire"])
+        self._wait_path(self.run / "pipewire-0")
+        self._spawn("wireplumber", ["wireplumber"])
+        self.start_pulse()
+
     def pid(self, name: str) -> int:
         return self.procs[name].pid
 

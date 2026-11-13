@@ -40,6 +40,7 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.options import Options
 from tess_shell.reloader import Reloader
 from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
+from tess_shell.services.audio import AudioService
 from tess_shell.services.bus import ServiceThread
 from tess_shell.services.layer import Layer
 from tess_shell.services.portal import PortalReader
@@ -264,6 +265,7 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         manager.sink = route
         host.popups = manager.popups  # ctx.popup() opens a Popup of the surfaces
         host.dbus = layer  # ctx.dbus: the D-Bus service layer
+        host.audio = AudioService(service)  # ctx.audio: the sound server, on the same thread
         # a file the shell registers for the first time gets a UID in its metadata (G8)
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         own_writes = OwnWrites()

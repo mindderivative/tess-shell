@@ -614,6 +614,10 @@ EVENT_DOCS: dict[str, str] = {
     "On_Unfocus": "The block lost keyboard focus. Not raised yet.",
     "On_Toggle": "A Panel was toggled.",
     "On_Click": "A click: the mouse, Space or Enter on a focused block, or assistive activation.",
+    "On_Secondary_Click": "A click with the secondary (right) button; event.button is "
+    '"secondary". It does not run On_Click.',
+    "On_Scroll": "One step of the mouse wheel over the block (the nearest block with the handler "
+    "takes it); event.delta is +1 for a step down and -1 for a step up.",
     "On_Anim_Start": "A Panel's animation started.",
     "On_Anim_End": "A Panel's animation ended.",
     "On_Changed": "A control's value changed by the user: a toggle flipped, an entry chosen, a "
@@ -855,6 +859,9 @@ PREFERRED_TOKENS: dict[str, tuple[str, ...]] = {
 # -- the shipped modules ----------------------------------------------------------------------
 
 MODULE_NOTES: dict[str, str] = {
+    "Audio": "The default sound output: an icon for its kind and level, mute on a click, the "
+    "volume on the wheel, an optional percent and slider, and a menu of outputs.",
+    "Audio_Outputs": "The content of the Audio module's outputs Popup: one row per output.",
     "Badge": "A pill with a count, or a dot, in the error colour.",
     "Battery": "The battery's charge as an icon and a number, with a tooltip; hides without one.",
     "Button": "A pressable control with an optional icon and text.",
@@ -881,6 +888,10 @@ MODULE_NOTES: dict[str, str] = {
 
 # (module, param) -> one line
 PARAM_DOCS: dict[tuple[str, str], str] = {
+    ("Audio", "show_percent"): "Shows the volume as a number next to the icon.",
+    ("Audio", "show_slider"): "Shows a volume slider.",
+    ("Audio", "show_mic"): "Shows a microphone mark while the default input is muted.",
+    ("Audio", "step"): "The percent one wheel step changes the volume by.",
     ("Badge", "Count"): "The number shown; 0 shows nothing unless Show_Zero is true.",
     ("Badge", "Show_Zero"): "Shows the badge for a count of 0.",
     ("Badge", "Max"): "The largest number shown; above it the badge reads that number and a plus.",

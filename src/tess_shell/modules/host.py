@@ -30,7 +30,7 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.blocks import BUILTIN_ACTIONS
 from tess_shell.schema.findings import Finding, nearest
 from tess_shell.schema.model import ModuleDef
-from tess_shell.services.api import DBusPort
+from tess_shell.services.api import AudioPort, DBusPort
 
 PACKAGE = "tess_shell_user_modules"
 
@@ -149,6 +149,7 @@ class ModuleHost:
         self.loaded: dict[str, LoadedModule] = {}
         self.popups: PopupPort | None = None  # set by the app once the surfaces exist
         self.dbus: DBusPort | None = None  # set by the app: the D-Bus service layer
+        self.audio: AudioPort | None = None  # set by the app: the sound service (ctx.audio)
         # the uses made for the entries of a For: they come and go while the shell runs, so a
         # reload (which brings the modules to the uses the files give) must not drop them
         self._dynamic: dict[str, Use] = {}
@@ -274,6 +275,7 @@ class ModuleHost:
             self.ticks,
             lambda: self.popups,
             lambda: self.dbus,
+            lambda: self.audio,
         )
         instance = classes[0].__new__(classes[0])
         instance.ctx = ctx
@@ -424,6 +426,7 @@ class ModuleHost:
             new=getattr(raw, "new_value", None),
             text=getattr(raw, "text", None),
             value=getattr(raw, "value", None),
+            delta=getattr(raw, "delta", None),
         )
         started = time.monotonic()
         loaded.ctx.caller = loaded.ctx.uses.get(handler.use)  # what ctx.popup() calls from

@@ -13,7 +13,7 @@ from typing import Any, Protocol
 from loguru import logger
 
 from tess_shell.modules.ticks import Subscription, TimeSource
-from tess_shell.services.api import DBusPort, ModuleDBus
+from tess_shell.services.api import AudioPort, DBusPort, ModuleAudio, ModuleDBus
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,12 +48,15 @@ class ModuleContext:
         ticks: TimeSource,
         popups: Callable[[], PopupPort | None] | None = None,
         dbus: Callable[[], DBusPort | None] | None = None,
+        audio: Callable[[], AudioPort | None] | None = None,
     ) -> None:
         self.name = name
         self.caller: UseRecord | None = None  # the use whose block raised the event being handled
         self._popups = popups
         self._dbus_port = dbus
         self._dbus: ModuleDBus | None = None
+        self._audio_port = audio
+        self._audio: ModuleAudio | None = None
         self._on_lost: Callable[[str], None] | None = None
         self._on_found: Callable[[str], None] | None = None
         self._closed = False
@@ -117,6 +120,18 @@ class ModuleContext:
             self.send("available", False)
         return self._dbus
 
+    @property
+    def audio(self) -> ModuleAudio:
+        """The sound server (Audio Module): ``on_changed(callback)`` for the default output's
+        volume, mute, name and kind, the default input's mute and the list of outputs, and the
+        setters. Nothing connects until it is used."""
+        if self._audio is None:
+            port = self._audio_port() if self._audio_port else None
+            if port is None:
+                raise RuntimeError("the shell has no sound service")
+            self._audio = port.for_module(self.name)
+        return self._audio
+
     def send_available(self, use: UseRecord) -> None:
         """Give a use that appeared after the layer sent ``available`` its current value (the
         host calls it for each new use of a module that has used ``ctx.dbus``)."""
@@ -165,3 +180,6 @@ class ModuleContext:
         if self._dbus is not None:
             self._dbus.close()
             self._dbus = None
+        if self._audio is not None:
+            self._audio.close()
+            self._audio = None

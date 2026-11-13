@@ -474,6 +474,8 @@ FRAME_STYLE_NOT_BUILT = ("Elevation", "Shadows", "Shadow_Bleed")
 # in Block Reference > TextField), as the TDL keys. A block raises only the events its
 # pointer or focus handling supports: M1's blocks take a click and nothing else; the rest wait for
 # the surfaces and the value blocks that raise them.
+# the pointer events of a block: the primary click, the secondary click and one wheel step
+POINTER_EVENTS = ("On_Click", "On_Secondary_Click", "On_Scroll")
 EVENT_KEYS = (
     "On_Open",
     "On_Close",
@@ -483,6 +485,8 @@ EVENT_KEYS = (
     "On_Unfocus",
     "On_Toggle",
     "On_Click",
+    "On_Secondary_Click",
+    "On_Scroll",
     "On_Anim_Start",
     "On_Anim_End",
     "On_Changed",
@@ -494,7 +498,7 @@ EVENT_KEYS = (
 # A tre text node takes no listener of its own (a click on it reaches the nearest box above it,
 # measured on tre 0.6.1), so a Text raises nothing: put the handler on the box around it.
 BLOCK_EVENTS: dict[str, tuple[str, ...]] = {
-    kind: ("On_Click",)
+    kind: POINTER_EVENTS
     for kind in (
         "Box",
         "FlexBox",
@@ -519,7 +523,7 @@ CONTROL_EVENTS = {"On_Changed": CONTROL_KEYS, "On_Released": ("Slides",)}
 for _kind in CONTROL_KINDS:
     BLOCK_EVENTS[_kind] = (*BLOCK_EVENTS[_kind], *CONTROL_EVENTS)
 # the text events are raised by the text input inside the composition; ``On_Click`` by its box
-BLOCK_EVENTS[FIELD] = ("On_Click", *FIELD_EVENTS)
+BLOCK_EVENTS[FIELD] = (*POINTER_EVENTS, *FIELD_EVENTS)
 BLOCK_EVENTS["Panel"] = (
     "On_Open",
     "On_Close",
