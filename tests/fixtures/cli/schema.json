@@ -5987,6 +5987,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
         "On_Released"
@@ -7425,6 +7426,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
         "On_Released"
@@ -10244,6 +10246,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
         "On_Released"
@@ -11348,6 +11351,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
         "On_Released"
@@ -12342,6 +12346,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "required": [],
@@ -13485,6 +13490,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "required": [
@@ -14592,6 +14598,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "required": [
@@ -15871,6 +15878,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "required": [
@@ -17100,6 +17108,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "required": [
@@ -18491,6 +18500,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "required": [
@@ -19816,6 +19826,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "required": [],
@@ -21413,6 +21424,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
         "On_Submit",
@@ -21927,6 +21939,25 @@
     },
     "On_Secondary_Click": {
       "doc": "A click with the secondary (right) button; event.button is \"secondary\". It does not run On_Click.",
+      "module_only": false,
+      "needs": [],
+      "raised_by": [
+        "Box",
+        "FlexBox",
+        "Rectangle",
+        "ScrollBox",
+        "Spacer",
+        "SVG",
+        "Bitmap",
+        "Circle",
+        "Ring",
+        "Path",
+        "Marquee",
+        "TextField"
+      ]
+    },
+    "On_Middle_Click": {
+      "doc": "A click with the middle button (a press and a release on the block); event.button is \"middle\". It does not run On_Click.",
       "module_only": false,
       "needs": [],
       "raised_by": [
@@ -22844,6 +22875,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -22952,6 +22984,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -23046,6 +23079,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -23099,6 +23133,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -23173,6 +23208,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -23240,6 +23276,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed"
       ],
@@ -23322,6 +23359,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -23400,6 +23438,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -23464,6 +23503,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -23533,6 +23573,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -23649,6 +23690,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed"
       ],
@@ -23739,6 +23781,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -23824,6 +23867,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -23929,6 +23973,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -24011,12 +24056,20 @@
           "default": "\"\"",
           "doc": "The name assistive technology reads aloud; the text when it is empty.",
           "required": false
+        },
+        "Id": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "A text the row carries for the code that built the menu; shown nowhere. A submenu reads it as caller.use.params.Id.",
+          "required": false
         }
       },
       "root_block": "FlexBox",
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -24077,6 +24130,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -24156,6 +24210,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
@@ -24260,6 +24315,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
         "On_Released"
@@ -24450,6 +24506,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
         "On_Submit",
@@ -24556,6 +24613,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
         "On_Submit",
@@ -24619,6 +24677,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll",
         "On_Changed"
       ],
@@ -24658,6 +24717,313 @@
       ],
       "actions": []
     },
+    "Tray": {
+      "doc": "The system tray: one icon per StatusNotifier application, with its tooltip, clicks and menu; the shell is a second tray host beside Plasma's.",
+      "params": {
+        "icon_size": {
+          "type": "number",
+          "kind": "number",
+          "default": "18",
+          "doc": "The size of each icon in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "show_passive": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Shows the items whose status is Passive.",
+          "required": false
+        },
+        "spacing": {
+          "type": "number",
+          "kind": "number",
+          "default": "6",
+          "doc": "The space between two items in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live"
+      ],
+      "actions": [
+        {
+          "name": "activate",
+          "doc": "",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "menu",
+          "doc": "The item's menu, drawn by the shell; ``ContextMenu`` when the item has none.",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "scroll",
+          "doc": "One wheel step (``delta`` +1 for a step down): ``Scroll(delta, \"vertical\")`` in Qt's units, up positive.",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            },
+            {
+              "name": "delta",
+              "required": false
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "secondary",
+          "doc": "",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        }
+      ]
+    },
+    "Tray_Item": {
+      "doc": "One icon of the Tray, with a tooltip.",
+      "params": {
+        "icon": {
+          "type": "icon",
+          "kind": "icon",
+          "default": "\"\"",
+          "doc": "The icon: an SVG document or pixels the shell holds (the Tray sends it).",
+          "required": false
+        },
+        "size": {
+          "type": "number",
+          "kind": "number",
+          "default": "18",
+          "doc": "The icon's size in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "tooltip_title": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The first line of the tooltip.",
+          "required": false
+        },
+        "tooltip_text": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The second line of the tooltip; empty shows none.",
+          "required": false
+        },
+        "label": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The name assistive technology reads aloud.",
+          "required": false
+        },
+        "description": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The description assistive technology reads after the name.",
+          "required": false
+        },
+        "attention": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "The item needs attention: the block takes the :selected look.",
+          "required": false
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live"
+      ],
+      "actions": []
+    },
+    "Tray_Menu": {
+      "doc": "The content of the Popups that draw a tray item's menu, one level of it.",
+      "params": {
+        "Level": {
+          "type": "number",
+          "kind": "number",
+          "default": "1",
+          "doc": "1 is the menu itself; 2 and 3 are the submenus of the row that opened the Popup.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live"
+      ],
+      "actions": [
+        {
+          "name": "pick",
+          "doc": "A row was clicked: tell the application (``Event`` with ``clicked``); the menu closes. A row that opens a submenu (``submenu`` is its Popup) is only opened by the click.",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            },
+            {
+              "name": "service",
+              "required": true
+            },
+            {
+              "name": "path",
+              "required": true
+            },
+            {
+              "name": "submenu",
+              "required": false
+            }
+          ],
+          "kwargs": false
+        }
+      ]
+    },
     "Workspaces": {
       "doc": "The virtual desktops as buttons: the current one is marked, a click switches.",
       "params": {
@@ -24673,6 +25039,7 @@
       "events": [
         "On_Click",
         "On_Secondary_Click",
+        "On_Middle_Click",
         "On_Scroll"
       ],
       "common_keys": [
