@@ -51,9 +51,7 @@
       "model_kinds": [
         "number",
         "positive",
-        "non_negative",
-        "unit",
-        "peek_size"
+        "unit"
       ]
     },
     "whole": {
@@ -136,8 +134,7 @@
       "note": "A time in milliseconds.",
       "model_kinds": [
         "duration",
-        "pause",
-        "non_negative_ms"
+        "pause"
       ]
     },
     "path": {

@@ -38,10 +38,10 @@ def test_a_peek_is_a_block_with_the_defaults_24_150_and_300() -> None:
 @pytest.mark.parametrize(
     ("written", "message"),
     [
-        ("Peek { Size: 0 }", "Size is 1 or more pixels"),
-        ("Peek { Size: -3 }", "Size is 1 or more pixels"),
-        ("Peek { Enter_Delay: -1 }", "Enter_Delay is 0 or more"),
-        ("Peek { Exit_Delay: -1 }", "Exit_Delay is 0 or more"),
+        ("Peek { Size: 0 }", "Size: expected a number, 1 or more, found 0"),
+        ("Peek { Size: -3 }", "Size: expected a number, 1 or more, found -3"),
+        ("Peek { Enter_Delay: -1 }", "Enter_Delay: expected a number, 0 or more, found -1"),
+        ("Peek { Exit_Delay: -1 }", "Exit_Delay: expected a number, 0 or more, found -1"),
     ],
 )
 def test_a_peek_size_below_1_px_or_a_negative_delay_is_an_error(written: str, message: str) -> None:

@@ -36,6 +36,7 @@ from tess_shell.schema.model import (
     StyleDef,
     use_names,
 )
+from tess_shell.schema.ranges import scoped
 from tess_shell.schema.style import apply_style
 from tess_shell.schema.tree import position
 from tess_shell.schema.values import (
@@ -1632,27 +1633,18 @@ def _peek(ctx: _Ctx, block: Block, strip: bool = False) -> PeekDef:
             if entry.key not in ("Size", "Handle_Opacity"):
                 written.add(entry.key)
             try:
-                value = coerce("number", entry.value, ctx.origin(entry.key_origin), ())
+                value = coerce(
+                    "number",
+                    entry.value,
+                    ctx.origin(entry.key_origin),
+                    (),
+                    key=scoped("Peek", entry.key),
+                )
             except ValueProblem as exc:
                 ctx.problem(entry.value_origin, entry.key, exc)
                 continue
             assert isinstance(value, m.Number)
-            number = float(value.value)
-            if entry.key == "Size" and number < 1:
-                ctx.add(
-                    entry.value_origin, "bad-value", "Size is 1 or more pixels", "write Size: 24"
-                )
-            elif entry.key == "Handle_Opacity" and not 0 <= number <= 1:
-                ctx.add(
-                    entry.value_origin,
-                    "bad-value",
-                    "Handle_Opacity is a number from 0 to 1",
-                    "write Handle_Opacity: 0.6",
-                )
-            elif entry.key not in ("Size", "Handle_Opacity") and number < 0:
-                ctx.add(entry.value_origin, "bad-value", f"{entry.key} is 0 or more", "")
-            else:
-                values[entry.key] = number
+            values[entry.key] = float(value.value)
         else:
             key = entry.key if isinstance(entry, Property) else getattr(entry, "type", "?")
             ctx.unknown(
@@ -2010,15 +2002,17 @@ def _frame_border(ctx: _Ctx, block: Block) -> FrameBorder | None:
         if isinstance(entry, Property):
             if entry.key == "Width":
                 try:
-                    value = coerce("number", entry.value, ctx.origin(entry.key_origin))
+                    value = coerce(
+                        "number",
+                        entry.value,
+                        ctx.origin(entry.key_origin),
+                        key=scoped("Border", entry.key),
+                    )
                 except ValueProblem as exc:
                     ctx.problem(entry.value_origin, entry.key, exc)
                     continue
                 assert isinstance(value, m.Number)
-                if value.value < 0:
-                    ctx.add(entry.value_origin, "bad-value", "Width is 0 or more", "")
-                else:
-                    width = float(value.value)
+                width = float(value.value)
             elif entry.key == "Color":
                 typed = _typed(ctx, "Frame", entry, "color")
                 if isinstance(typed, m.SlotValue):
@@ -2143,7 +2137,7 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         )
     if "Border_Width" in style:
         width = style["Border_Width"]
-        if isinstance(width, m.Number) and width.value >= 0:
+        if isinstance(width, m.Number):
             color = style.get("Border_Color")
             if color is None:
                 ctx.add(
@@ -2154,10 +2148,8 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
                 )
             else:
                 borders.setdefault("Inner_Border", FrameBorder(float(width.value), color))
-        elif not isinstance(width, m.Number):
-            ctx.add(getattr(width, "origin", None), "bad-value", "Border_Width is a number", "")
         else:
-            ctx.add(width.origin, "bad-value", "Border_Width is 0 or more", "")
+            ctx.add(getattr(width, "origin", None), "bad-value", "Border_Width is a number", "")
     elif "Border_Color" in style:
         ctx.add(
             block.origin,
@@ -2262,15 +2254,17 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
                     content_fade = flag.value
                 elif sub.key == "Thickness":
                     try:
-                        value = coerce("number", sub.value, ctx.origin(sub.key_origin))
+                        value = coerce(
+                            "number",
+                            sub.value,
+                            ctx.origin(sub.key_origin),
+                            key=scoped("Edge", sub.key),
+                        )
                     except ValueProblem as exc:
                         ctx.problem(sub.value_origin, sub.key, exc)
                         continue
                     assert isinstance(value, m.Number)
-                    if value.value < 0:
-                        ctx.add(sub.value_origin, "bad-value", "Thickness is 0 or more", "")
-                    else:
-                        thickness = float(value.value)
+                    thickness = float(value.value)
                 elif sub.key == "Padding":
                     try:
                         value = coerce(

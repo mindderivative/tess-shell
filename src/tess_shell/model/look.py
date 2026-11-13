@@ -78,7 +78,9 @@ class TokenProblem(Exception):
         self.hint = hint
 
 
-def _ref_value(ref: m.TokenRef, tokens: Mapping[str, Token]) -> m.Value:
+def _ref_value(ref: m.TokenRef, tokens: Mapping[str, Token], key: str = "") -> m.Value:
+    """The value of the token ``ref`` names, read as ``key`` reads it (its kind) and judged by the
+    range of ``key`` and of its kind, like a value written in the file (``schema.ranges``)."""
     token = tokens.get(ref.path)
     if token is None:
         close = nearest(ref.path, tokens)
@@ -93,7 +95,7 @@ def _ref_value(ref: m.TokenRef, tokens: Mapping[str, Token]) -> m.Value:
             return token.value
         raise TokenProblem(f"${ref.path} is a list of shadows, not a {ref.kind}")
     try:
-        return coerce(ref.kind, token.value, ref.origin, ref.choices)
+        return coerce(ref.kind, token.value, ref.origin, ref.choices, key=key)
     except ValueProblem as exc:
         raise TokenProblem(
             f"${ref.path} cannot be used here: {exc.message}", f"defined at {token.origin}"
@@ -111,7 +113,7 @@ def resolve_style(
             if look is None:
                 continue
             try:
-                value = _ref_value(value, look.tokens)
+                value = _ref_value(value, look.tokens, key)
             except TokenProblem as exc:
                 if report is not None:
                     report.append(m.BindError(f"{key}: {exc.message}", value.origin, exc.hint))
@@ -376,7 +378,7 @@ def check_tokens(
             if not isinstance(value, m.TokenRef):
                 continue
             try:
-                _ref_value(value, tokens)
+                _ref_value(value, tokens, key)
             except TokenProblem as exc:
                 o = value.origin
                 found.append(

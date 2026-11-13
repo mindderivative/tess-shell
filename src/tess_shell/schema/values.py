@@ -12,7 +12,7 @@ from tess_shell.binder import convert
 from tess_shell.binder import model as m
 from tess_shell.binder.model import BindError
 from tess_shell.schema.findings import nearest
-from tess_shell.schema.ranges import range_of
+from tess_shell.schema.ranges import range_of, scoped
 
 SIDES_HINT = (
     "Use one number, four items (left, top, right, bottom) or named sides. CSS orders its "
@@ -394,8 +394,9 @@ def named_shadows(block: tess_dl.Block, origin: m.Origin) -> m.Shadows:
         for key in _SHADOW_KEYS[1:]:
             if key in found:
                 n = _number(found[key])
-                if n is None or (key == "Blur" and n < 0):
-                    raise _bad("a number" if key != "Blur" else "a number of 0 or more", found[key])
+                if n is None:
+                    raise _bad("a number", found[key])
+                check_range("number", scoped("Shadow", key), m.Number(n, origin=origin))
                 numbers[key] = float(n)
         items.append(
             m.Shadow(

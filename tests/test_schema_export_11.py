@@ -161,19 +161,32 @@ def test_the_export_reports_the_numbers_the_loader_judges_by() -> None:
     assert D["roots"]["Panel"]["keys"]["Hide_After"]["min"] == 0
 
 
-def test_the_numbers_of_the_peek_and_an_edge_are_the_tables_too() -> None:
+def test_the_numbers_of_the_peek_an_edge_a_border_and_a_shadow_are_the_table() -> None:
     peek = D["roots"]["Peek"]["keys"]
-    assert peek["Size"]["min"] == ranges.KIND_RANGES["peek_size"].low == 1
-    assert peek["Enter_Delay"]["min"] == ranges.KIND_RANGES["non_negative_ms"].low == 0
+    assert peek["Size"]["min"] == ranges.KEY_RANGES["Peek.Size"].low == 1
+    assert D["roots"]["Edge_Peek"]["keys"]["Size"]["min"] == 1
+    assert peek["Enter_Delay"]["min"] == ranges.KEY_RANGES["Enter_Delay"].low == 0
     assert (peek["Handle_Opacity"]["min"], peek["Handle_Opacity"]["max"]) == (0, 1)
     assert D["roots"]["Edge"]["keys"]["Thickness"]["min"] == 0
-    # and the loader, which checks them in place, says the same
-    assert any("1 or more" in f.message for f in probe("Peek", ["Size: 0"])[0])
-    assert any("0 or more" in f.message for f in probe("Peek", ["Enter_Delay: -1"])[0])
-    assert any(
-        "0 and 1" in f.message or "0 to 1" in f.message
-        for f in probe("Peek", ["Handle_Opacity: 2"])[0]
-    )
+    assert D["roots"]["Border"]["keys"]["Width"]["min"] == 0
+    assert D["roots"]["Shadow"]["keys"]["Blur"]["min"] == 0
+    # and the loader says the same, in the one wording
+    for spec, line, words in (
+        ("Peek", "Size: 0", "expected a number, 1 or more, found 0"),
+        ("Edge_Peek", "Size: 0", "expected a number, 1 or more, found 0"),
+        ("Peek", "Enter_Delay: -1", "expected a number, 0 or more, found -1"),
+        ("Peek", "Handle_Opacity: 2", "expected a number, from 0 to 1, found 2"),
+        ("Edge", "Thickness: -1", "expected a number, 0 or more, found -1"),
+        ("Border", "Width: -1", "expected a number, 0 or more, found -1"),
+        ("Shadow", "Blur: -1", "expected a number, 0 or more, found -1"),
+    ):
+        found = probe(spec, [line])[0]
+        if spec == "Shadow":  # reported at the Shadows block, not at the key's line
+            kind, template = CONTEXTS[spec]
+            found = run(kind, template.replace("@", f'Color: "#000000"\n{line}'))
+        assert any(words in f.message for f in found), (spec, line, found)
+    assert ranges.scoped("Edge_Peek", "Size") == "Peek.Size"
+    assert ranges.scoped("Box", "Width") == "Width"
 
 
 def test_the_range_words_read_as_a_person_says_them() -> None:

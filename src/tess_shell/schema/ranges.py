@@ -55,11 +55,6 @@ KIND_RANGES: dict[str, Range] = {
     "sides": Range(0),
     "bleed": Range(0),
     "radius": Range(0),
-    # kinds the export names for keys whose loader reads the number itself (the Peek, an Edge, a
-    # Shadow): the shell checks them in place, with these numbers in its messages
-    "peek_size": Range(1),
-    "non_negative": Range(0),
-    "non_negative_ms": Range(0),
 }
 
 # the keys that take a range the kind does not give them
@@ -70,6 +65,11 @@ KEY_RANGES: dict[str, Range] = {
     "Flex_Shrink": Range(0),
     "Font_Weight": Range(1, 1000),
     "Border_Width": Range(0),
+    # keys of a block of their own, listed as ``<Block>.<Key>`` (``scoped``)
+    "Peek.Size": Range(1),
+    "Edge.Thickness": Range(0),
+    "Border.Width": Range(0),
+    "Shadow.Blur": Range(0),
     "Hide_After": Range(0),
     "Enter_Delay": Range(0),
     "Exit_Delay": Range(0),
@@ -82,6 +82,13 @@ NEGATIVE_OK = frozenset({"Inset"})
 
 # the kinds whose numbers a key's own range may narrow (the key is a plain number of that kind)
 KEY_RANGE_KINDS = frozenset({"number", "whole", "unit"})
+
+
+def scoped(spec: str, key: str) -> str:
+    """The name a key's range is listed under: ``Peek.Size`` for a key whose range belongs to the
+    block that has it (a strip's Peek is a Peek), else the key's own name."""
+    name = f"{'Peek' if spec == 'Edge_Peek' else spec}.{key}"
+    return name if name in KEY_RANGES else key
 
 
 def range_of(kind: str, key: str = "") -> Range | None:

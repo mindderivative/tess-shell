@@ -314,5 +314,7 @@ def test_the_gallery_starts_on_a_private_sway_against_the_fakes_and_follows_the_
         "the system bus is not reachable",
         "StatusNotifierWatcher left the session bus",
         "the Settings portal is not available",  # the fakes' bus has none
+        "ms on the loop",  # machine load, not the kit
+        "ms on the service thread",
     )
     assert [x for x in bad if not any(a in x for a in allowed)] == [], bad

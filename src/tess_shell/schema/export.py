@@ -46,7 +46,7 @@ from tess_shell.schema.model import (
     PeekDef,
     PopupDef,
 )
-from tess_shell.schema.ranges import range_of
+from tess_shell.schema.ranges import range_of, scoped
 from tess_shell.schema.shell import (
     BAR_CHOICES,
     BAR_KEYS,
@@ -231,6 +231,7 @@ def _kind_fields(
 ) -> tuple[str, Json]:
     """The output kind of a loader kind and the fields that kind carries."""
     unit = docs.UNITS.get(key)
+    rkey = scoped(spec, key)  # the name the key's range is listed under
     match model_kind:
         case "text":
             return "string", {}
@@ -244,33 +245,29 @@ def _kind_fields(
             return "font", {"multiple": True}
         case "a11y_value":
             return "text_or_number", {}
-        case "duration" | "pause" | "non_negative_ms":
-            return "duration", {**_bounds(model_kind, key), "step": None, "unit": "ms"}
+        case "duration" | "pause":
+            return "duration", {**_bounds(model_kind, rkey), "step": None, "unit": "ms"}
         case "color":
             return "color", {"alpha": True, "forms": list(COLOR_FORMS)}
-        case "number" | "positive" | "non_negative" | "unit" | "peek_size":
-            return "number", {
-                **_bounds(model_kind, key),
-                "step": None,
-                "unit": "px" if model_kind == "peek_size" else unit,
-            }
+        case "number" | "positive" | "unit":
+            return "number", {**_bounds(model_kind, rkey), "step": None, "unit": unit}
         case "whole" | "max_length" | "lines" | "diameter":
             return "whole", {
-                **_bounds(model_kind, key),
+                **_bounds(model_kind, rkey),
                 "step": 1,
                 "unit": "px" if model_kind == "diameter" else unit,
             }
         case "length" | "text_length" | "bound":
             return "length", {
                 "units": _length_units(spec, key, model_kind),
-                "negative": _negative(model_kind, key),
+                "negative": _negative(model_kind, rkey),
             }
         case "sides" | "bleed":
             fields = {
                 "arity": [1, 4],
                 "order": list(SIDES),
                 "named_block": True,
-                "negative": _negative(model_kind, key),
+                "negative": _negative(model_kind, rkey),
                 "unit": "px",
             }
             if model_kind == "bleed":
@@ -280,7 +277,7 @@ def _kind_fields(
             return "radius", {
                 "arity": [1, 4],
                 "order": list(CORNERS),
-                "negative": _negative(model_kind, key),
+                "negative": _negative(model_kind, rkey),
                 "unit": "px",
             }
         case "bool" | "wrap_flag":
@@ -290,7 +287,7 @@ def _kind_fields(
         case "enum" | "fit":
             return "enum", {}
         case "elevation":
-            return "percent", {**_bounds(model_kind, key), "step": None}
+            return "percent", {**_bounds(model_kind, rkey), "step": None}
         case "shadows":
             return "shadows", {"block": "Shadows"}
         case "view_box":
@@ -708,9 +705,9 @@ def _choices(block: str, key: str) -> tuple[str, ...]:
 
 def _peek_spec(spec: str, strip: bool) -> Json:
     kinds = {
-        "Size": "peek_size",
-        "Enter_Delay": "non_negative_ms",
-        "Exit_Delay": "non_negative_ms",
+        "Size": "number",
+        "Enter_Delay": "duration",
+        "Exit_Delay": "duration",
         "Trigger": "enum",
         "Handle": "enum",
         "Handle_Opacity": "unit",
@@ -855,7 +852,7 @@ def _roots() -> dict[str, Json]:
         heads=list(blocks.EDGE_SIDES),
         keys={
             "Name": _key("Edge", "Name", "name"),
-            "Thickness": _key("Edge", "Thickness", "non_negative"),
+            "Thickness": _key("Edge", "Thickness", "number"),
             "Padding": _key("Edge", "Padding", "sides"),
             "Content_Fade": _key(
                 "Edge", "Content_Fade", "bool", default=_default("Edge", "Content_Fade")
@@ -870,7 +867,7 @@ def _roots() -> dict[str, Json]:
         "Border",
         heads=["Inner_Border", "Outer_Border"],
         keys={
-            "Width": _key("Border", "Width", "non_negative", required=True),
+            "Width": _key("Border", "Width", "number", required=True),
             "Color": _key("Border", "Color", "color", required=True, tokens=True),
         },
         required=[["Width"], ["Color"]],
@@ -907,7 +904,7 @@ def _roots() -> dict[str, Json]:
             "Color": _key("Shadow", "Color", "color", required=True),
             "X": _key("Shadow", "X", "number"),
             "Y": _key("Shadow", "Y", "number"),
-            "Blur": _key("Shadow", "Blur", "non_negative"),
+            "Blur": _key("Shadow", "Blur", "number"),
             "Spread": _key("Shadow", "Spread", "number"),
         },
         required=[["Color"]],
@@ -1201,13 +1198,10 @@ LOADER_KINDS = (
     "a11y_value",
     "duration",
     "pause",
-    "non_negative_ms",
     "color",
     "number",
     "positive",
-    "non_negative",
     "unit",
-    "peek_size",
     "whole",
     "max_length",
     "lines",
