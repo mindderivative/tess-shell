@@ -44,7 +44,15 @@ Not built yet: strip expand and contract (reserved-space changes), a Bar or a wi
 tesserae-shell version   # versions of the shell, tess_re, tess_el, tess_dl and Python
 tesserae-shell check     # validate settings.tdl and every shell file (syntax, header, schema)
 tesserae-shell run       # start the shell (needs a Wayland compositor with layer-shell)
+tesserae-shell schema --json [--out FILE]  # the shell's schema as JSON, for configuration tools
 ```
+
+`schema --json` prints (or, with `--out FILE`, writes) every block, surface, key, kind, choice,
+default, event, action, theme token and `settings.tdl` key the loader accepts, with a line of
+documentation for each, so a configuration application can build its forms from it. It is read from
+the loader's own tables (`tess_shell.schema.export.schema_json()`; `schema_dict()` is the same as
+plain data), so it cannot list a key the loader refuses or miss one it accepts, and two runs give the
+same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.0.
 
 Global options: `--config-dir PATH`, `--json`, `--quiet`. Other subcommands named in the design
 report that they are not implemented yet.

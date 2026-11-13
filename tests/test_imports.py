@@ -22,6 +22,17 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.binder.model",
         "tess_shell.binder.convert",
     },
+    # the export of the schema to JSON reads the loader's own tables, the settings reader's and the
+    # shipped theme; only the command line calls it
+    "schema.export": {
+        "tess_dl",
+        "tess_shell.__version__",
+        "tess_shell.binder.marquee",
+        "tess_shell.binder.model",
+        "tess_shell.config.paths",
+        "tess_shell.config.settings",
+        "tess_shell.schema",
+    },
     "files": {"tess_dl", "tess_shell.schema", "tess_shell.config", "tess_shell.files"},
     "config": {
         "tess_dl",

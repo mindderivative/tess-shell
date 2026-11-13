@@ -18,7 +18,6 @@ from tess_shell.options import Options
 
 # name -> (help, positional arguments as (name, nargs), optional flags)
 _STUBS: dict[str, tuple[str, list[tuple[str, str | None]], list[str]]] = {
-    "schema": ("write the JSON schemas", [], ["--out"]),
     "reload": ("reload the running shell", [], []),
     "quit": ("stop the running shell", [], []),
     "status": ("show the running shell's state", [], []),
@@ -60,6 +59,10 @@ def _build_parser() -> argparse.ArgumentParser:
     add("run", "start the shell (default)")
     add("check", "validate settings and shell files")
     add("version", "print versions")
+    schema = add("schema", "print the schema of the shell's files as JSON (with --json)")
+    schema.add_argument(
+        "--out", type=Path, metavar="FILE", help="write the JSON to FILE, not to standard output"
+    )
     for name, (help_, positionals, flags) in _STUBS.items():
         p = add(name, help_)
         for arg, nargs in positionals:
@@ -102,6 +105,26 @@ def _version(options: Options) -> int:
     return ExitCode.OK
 
 
+def _schema(options: Options, out: Path | None) -> int:
+    """The shell's schema as JSON on standard output, or in the file ``--out`` names. JSON is the
+    only form, so ``--json`` is asked for; a bare ``schema`` is kept for another form."""
+    if not options.json:
+        print("tesserae-shell: schema writes JSON only; add --json", file=sys.stderr)
+        return ExitCode.CONFIG
+    from tess_shell.schema.export import schema_json
+
+    text = schema_json()
+    if out is None:
+        sys.stdout.write(text)
+        return ExitCode.OK
+    try:
+        out.write_text(text, encoding="utf-8")
+    except OSError as exc:
+        print(f"tesserae-shell: cannot write {out}: {exc.strerror}", file=sys.stderr)
+        return ExitCode.ENVIRONMENT
+    return ExitCode.OK
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -113,6 +136,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     command = args.command or "run"
     if command == "version":
         return _version(options)
+    if command == "schema":
+        return _schema(options, getattr(args, "out", None))
     if command in _STUBS:
         print(f"tesserae-shell: '{command}' is not implemented in M0", file=sys.stderr)
         return ExitCode.CONFIG
