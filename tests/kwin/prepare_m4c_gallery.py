@@ -72,6 +72,10 @@ class Probe(Module):
         self.shown(f"{event.args['Who']}: {event.old!r} -> {event.new!r}")
 
     @action
+    def released(self, event):
+        self.shown(f"{event.args['Who']} released at {event.value!r} (pressed at {event.old!r})")
+
+    @action
     def clicked(self, event):
         extra = {k: v for k, v in event.args.items() if k != "Who"}
         self.shown(f"{event.args['Who']} clicked" + (f" {extra}" if extra else ""))
@@ -82,6 +86,10 @@ HEAD = 'Text {{ Text: "{t}", Width: AUTO, Height: AUTO, Font_Size: 15, Font_Weig
 
 def changed(who: str) -> str:
     return f'On_Changed {{ Action: Call, Target: "Probe.changed", Who: "{who}" }}'
+
+
+def released(who: str) -> str:
+    return f'On_Released {{ Action: Call, Target: "Probe.released", Who: "{who}" }}'
 
 
 def clicked(who: str, **args: str) -> str:
@@ -126,8 +134,8 @@ LEFT_ROWS = [
     ),
     row(
         "Slider",
-        f'Slider {{ Value: 30, Label: "Volume", {changed("Volume")} }}',
-        f'Slider {{ Value: 50, Step: 10, Width: 120, Label: "Stepped", {changed("Step 10")} }}',
+        f'Slider {{ Value: 30, Label: "Volume", {changed("Volume")} {released("Volume")} }}',
+        f'Slider {{ Value: 50, Step: 10, Width: 120, Label: "Stepped", {changed("Step 10")} {released("Step 10")} }}',
         'Slider { Value: 70, Width: 120, Enabled: false, Label: "Disabled" }',
     ),
     row(
@@ -272,6 +280,11 @@ each widget raised.
     the handle jumps there and the Probe says "Volume: 30 -> ..." once. Drag the handle left and
     right: it follows the pointer, also when the pointer leaves the slider sideways while the
     button is held; the value never leaves 0 to 100. The second slider moves in steps of 10 (50 -> 60 ...).
+    While you drag, the Probe shows a new "Volume: a -> b" for each value; when you let go it adds ONE
+    line "Volume released at <final value> (pressed at <value before the press>)". Let go with the
+    pointer well outside the slider (above it, below it, outside the Panel): that line still comes,
+    once. A click on the track gives one "Volume: ..." line and then one "released" line; a click on
+    the handle without moving gives only the "released" line, with the same two values.
     The handle shows a grey ring when pointed at and a thicker white ring while pressed. The third
     is faint with a grey handle and does not react.
  5  Vertical sliders: the first is at 40 (the fill is from the bottom); dragging up raises it to 100

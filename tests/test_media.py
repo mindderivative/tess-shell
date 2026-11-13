@@ -521,12 +521,45 @@ def test_a_released_slider_calls_set_position_with_the_track_id_and_microseconds
             w.window.simulate("pointer_move", node=slider, x=width / 2, y=10)
             d.settle(w, lambda: False, 0.3)
             assert calls(p) == []
+            assert instance(w).dragging  # the handle is held: the position display waits
             w.window.simulate("pointer_up", node=slider, x=width / 2, y=10)
             assert wait_for(lambda: calls(p) == ["SetPosition"], 3), (calls(p), quiet(w))
             track, micro = p.calls[0][1]
             assert (
                 track == "/track/42" and 90_000_000 <= micro <= 110_000_000
             )  # about half of 200 s
+            assert not instance(w).dragging
+            d.settle(w, lambda: False, 0.3)
+            assert calls(p) == ["SetPosition"]  # once: the release is the only thing that seeks
+
+
+@needs_daemon
+def test_a_slider_released_outside_seeks_once_and_a_touch_seeks_nowhere() -> None:
+    with desk() as d:
+        p = d.player("vlc", status="Playing", meta=metadata("Song", track="/track/42"))
+        p.up()
+        with shell(d, "Media { show_position: true }") as w:
+            assert d.settle(w, lambda: values(w).get("can_seek") is True)
+            slider = node(w, "Media_1.Position/Root")
+            width = float(slider.get("layout_width"))
+            # a press on the handle where it rests moves nothing (200 s long, a 16 px handle)
+            now = float(slider.get("value"))
+            handle_x = 8 + now / 200 * (width - 16)
+            w.window.simulate("pointer_down", node=slider, x=handle_x, y=10)
+            w.window.simulate("pointer_up", node=slider, x=handle_x, y=10)
+            d.settle(w, lambda: False, 0.3)
+            assert calls(p) == [] and not instance(w).dragging
+            # a drag that ends far outside the slider (the pointer is captured): one seek, to the
+            # end the pointer was dragged past, never during the drag
+            w.window.simulate("pointer_down", node=slider, x=width / 4, y=10)
+            w.window.simulate("pointer_move", node=slider, x=width + 400, y=300)
+            d.settle(w, lambda: False, 0.2)
+            assert calls(p) == []
+            w.window.simulate("pointer_up", node=slider, x=width + 400, y=300)
+            assert wait_for(lambda: calls(p) == ["SetPosition"], 3), (calls(p), quiet(w))
+            assert p.calls[0][1][1] == 200_000_000
+            d.settle(w, lambda: False, 0.3)
+            assert calls(p) == ["SetPosition"]
 
 
 @needs_daemon

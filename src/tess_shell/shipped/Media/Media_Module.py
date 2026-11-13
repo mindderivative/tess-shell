@@ -476,14 +476,15 @@ class Media(Module):
         self.pending = float(position)
 
     @action
-    def release(self, event: Any) -> None:
-        """The handle was let go: ask the player for the position the drag ended on and wait for
-        its ``Seeked`` (the module moves nothing itself)."""
+    def release(self, event: Any, position: float) -> None:
+        """The press on the slider ended (``On_Released``, ``position`` is its final value): ask
+        the player for that position and wait for its ``Seeked`` (the module moves nothing
+        itself). A press that moved nothing (a touch on the handle) seeks nowhere."""
         self.dragging.discard(event.use)
-        position, self.pending = self.pending, None
-        if position is None:
+        moved, self.pending = self.pending, None
+        if moved is None:
             return
-        self.seek_to(position)
+        self.seek_to(float(position))
 
     @action
     def seek(self, event: Any, position: float) -> None:

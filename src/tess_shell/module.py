@@ -30,7 +30,9 @@ class Event:
     # a text field's ``On_Changed``: the text before and after the user's edit; its
     # ``On_Text_Commit``: the text that was committed (typed, pasted or from an input method). A
     # control's ``On_Changed`` (Toggle, Checkbox: true or false; Slider: a number; List: the
-    # chosen entry's key) has the same ``old`` and ``new`` and ``value`` (the new one)
+    # chosen entry's key) has the same ``old`` and ``new`` and ``value`` (the new one); a
+    # Slider's ``On_Released`` has ``old``, the value when the press began, and ``new`` and
+    # ``value``, the final one
     old: str | bool | float | None = None
     new: str | bool | float | None = None
     text: str | None = None

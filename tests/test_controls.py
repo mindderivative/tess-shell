@@ -10,6 +10,7 @@ from tess_shell.appearance import Appearance
 from tests.widgets_live import Widgets, running
 
 CLICK = 'On_Click { Action: Call, Target: "Driver.pressed" }'
+RELEASED = 'On_Released { Action: Call, Target: "Driver.released" }'
 CHANGED = 'On_Changed { Action: Call, Target: "Driver.changed" }'
 
 
@@ -400,3 +401,112 @@ def test_a_controls_state_survives_a_rebuild_of_its_surface() -> None:
         assert seen(w) == [True]
         w.window.simulate("click", node=toggle)
         assert toggle.get("checked") is False and seen(w) == [True, False]
+
+
+# -- Slider On_Released ------------------------------------------------------------------------
+
+
+def kinds(w: Widgets) -> list[str]:
+    return [x[0] for x in seen(w)]
+
+
+def test_released_fires_once_after_a_drag_released_inside_with_the_final_value() -> None:
+    with running(f"Slider {{ Value: 0, Step: 10, {CHANGED}, {RELEASED} }}") as w:
+        root = w.of_use("Slider", "Root")
+        press(w, root, 8)
+        w.window.simulate("pointer_move", node=root, x=84, y=10)  # 50
+        w.window.simulate("pointer_move", node=root, x=84 + 14.4, y=10)  # 60
+        assert kinds(w) == ["changed", "changed"]  # nothing released while it moves
+        w.window.simulate("pointer_up", node=root, x=84 + 14.4, y=10)
+        assert kinds(w) == ["changed", "changed", "released"]
+        _, _, old, new, value = seen(w)[-1]
+        assert (old, new, value) == (0, 60, 60)
+        w.window.simulate("pointer_up", node=root, x=84, y=10)  # no press: nothing more
+        assert kinds(w).count("released") == 1
+
+
+def test_released_fires_when_the_button_is_let_go_outside_the_slider() -> None:
+    with running(f"Slider {{ Value: 0, {CHANGED}, {RELEASED} }}") as w:
+        root = w.of_use("Slider", "Root")
+        press(w, root, 8)
+        w.window.simulate("pointer_move", node=root, x=900, y=300)  # far outside: captured
+        w.window.simulate("pointer_up", node=root, x=900, y=300)
+        assert kinds(w) == ["changed", "released"] and seen(w)[-1][4] == 100
+        assert not root.get("disabled")
+
+
+def test_released_fires_after_a_click_on_the_track_and_after_a_press_that_moved_nothing() -> None:
+    with running(f"Slider {{ Value: 0, {CHANGED}, {RELEASED} }}") as w:
+        root = w.of_use("Slider", "Root")
+        press(w, root, 80)
+        w.window.simulate("pointer_up", node=root, x=80, y=10)
+        assert kinds(w) == ["changed", "released"] and seen(w)[-1][4] == 50
+        press(w, root, 80)  # on the value it has: no change, still a release with that value
+        w.window.simulate("pointer_up", node=root, x=80, y=10)
+        assert kinds(w) == ["changed", "released", "released"]
+        assert seen(w)[-1][2:] == (50, 50, 50)
+
+
+def test_on_changed_is_raised_as_many_times_as_before_released_adds_none() -> None:
+    with running(f"Slider {{ Value: 0, Step: 10, {CHANGED} }}") as w:
+        root = w.of_use("Slider", "Root")
+        press(w, root, 8)
+        for x in (84, 98.4, 500):
+            w.window.simulate("pointer_move", node=root, x=x, y=10)
+        w.window.simulate("pointer_up", node=root, x=500, y=10)
+        assert kinds(w) == ["changed"] * 3  # no On_Released written: none raised
+    with running(f"Slider {{ Value: 0, Step: 10, {CHANGED}, {RELEASED} }}") as w:
+        root = w.of_use("Slider", "Root")
+        press(w, root, 8)
+        for x in (84, 98.4, 500):
+            w.window.simulate("pointer_move", node=root, x=x, y=10)
+        w.window.simulate("pointer_up", node=root, x=500, y=10)
+        assert kinds(w) == ["changed"] * 3 + ["released"]
+
+
+def test_a_disabled_slider_raises_no_released_and_one_disabled_mid_drag_ends_it_once() -> None:
+    with running(f"Slider {{ Value: 10, Enabled: false, {RELEASED} }}") as w:
+        root = w.of_use("Slider", "Root")
+        press(w, root, 100)
+        w.window.simulate("pointer_up", node=root, x=100, y=10)
+        assert seen(w) == []
+    driver = f"Module {{ FlexBox {{ Children {{ Slider {{ Name: S, Enabled: {{{{ on }}}}, {RELEASED} }} }} }} }}"
+    code = (
+        "from tess_shell import Module, action\nclass Driver(Module):\n"
+        "    def __init__(self):\n        self.seen = []\n"
+        "    def start(self):\n        self.ctx.send('on', True)\n"
+        "    @action\n    def released(self, event):\n        self.seen.append(event.value)\n"
+    )
+    with running("Driver { }", driver=driver, driver_py=code) as w:
+        root = w.of_use("Slider", "Root")
+        press(w, root, 80)
+        w.send("on", False)  # the slider is disabled while the button is down
+        assert seen(w) == [50]
+        w.window.simulate("pointer_up", node=root, x=80, y=10)
+        assert seen(w) == [50]  # the release is not a second one
+
+
+def test_on_released_is_an_error_on_a_plain_block_and_on_a_module_that_is_not_a_slider() -> None:
+    with running(f"Toggle {{ {RELEASED} }}") as w:
+        assert any("Toggle does not raise On_Released" in x for x in w.lines)
+    with running(f"Label {{ Text: x, {RELEASED} }}") as w:
+        assert any("Label does not raise On_Released" in x for x in w.lines)
+
+
+def test_a_call_to_released_with_an_unknown_argument_is_still_checked() -> None:
+    code = (
+        "from tess_shell import Module, action\nclass Driver(Module):\n"
+        "    def __init__(self):\n        self.seen = []\n"
+        "    @action\n    def released(self, event, position):\n"
+        "        self.seen.append(position)\n"
+    )
+    good = 'On_Released { Action: Call, Target: "Driver.released", position: {{ event.value }} }'
+    with running(f"Slider {{ Value: 0, {good} }}", driver_py=code) as w:
+        assert w.problems == []
+        root = w.of_use("Slider", "Root")
+        press(w, root, 80)
+        w.window.simulate("pointer_up", node=root, x=80, y=10)
+        assert seen(w) == [50]  # the argument is the final value
+    bad = 'On_Released { Action: Call, Target: "Driver.released", Nope: 1 }'
+    with running(f"Slider {{ {bad} }}", driver_py=code) as w:
+        assert any("has no argument Nope" in p.message for p in w.problems), w.problems

@@ -486,6 +486,7 @@ EVENT_KEYS = (
     "On_Anim_Start",
     "On_Anim_End",
     "On_Changed",
+    "On_Released",
     "On_Change",
     "On_Submit",
     "On_Text_Commit",
@@ -509,11 +510,14 @@ BLOCK_EVENTS: dict[str, tuple[str, ...]] = {
     + ("Marquee",)
 }
 # a control raises ``On_Changed`` (the user flipped it, chose an entry or moved it): only a block
-# of a module's layout that has one of ``CONTROL_KEYS``
+# of a module's layout that has one of ``CONTROL_KEYS``; a slider (``Slides``) also raises
+# ``On_Released`` once, when the press that moved it ends
 CONTROL_KEYS = ("Toggles", "Selection_Mode", "Slides")
 CONTROL_KINDS = ("Box", "FlexBox", "Rectangle", "ScrollBox")
+# the control event -> the key that makes the block raise it
+CONTROL_EVENTS = {"On_Changed": CONTROL_KEYS, "On_Released": ("Slides",)}
 for _kind in CONTROL_KINDS:
-    BLOCK_EVENTS[_kind] = (*BLOCK_EVENTS[_kind], "On_Changed")
+    BLOCK_EVENTS[_kind] = (*BLOCK_EVENTS[_kind], *CONTROL_EVENTS)
 # the text events are raised by the text input inside the composition; ``On_Click`` by its box
 BLOCK_EVENTS[FIELD] = ("On_Click", *FIELD_EVENTS)
 BLOCK_EVENTS["Panel"] = (

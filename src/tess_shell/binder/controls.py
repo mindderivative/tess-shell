@@ -80,6 +80,15 @@ class Control:
         raw = SimpleNamespace(old_value=old, new_value=new, value=new)
         self.view.sink(handler, "On_Changed", raw)
 
+    def released(self, old: object, new: object) -> None:
+        """Raise ``On_Released``, if the call wrote one: the press that moved a slider ended."""
+        wire = self.wire
+        handler = wire.handlers.get("On_Released") if wire is not None else None
+        if handler is None or self.view.sink is None:
+            return
+        raw = SimpleNamespace(old_value=old, new_value=new, value=new)
+        self.view.sink(handler, "On_Released", raw)
+
     def clicked(self, event: Any) -> None:  # noqa: B027 - most controls do not take a click
         """The block's ``click`` (not blocked, not stopped by an entry's own handler)."""
 
@@ -197,6 +206,7 @@ class Slide(Control):
         self.low, self.high, self.step = 0.0, 100.0, 1.0
         self.vertical = False
         self.dragging = False
+        self.pressed_at: int | float = 0  # the value when the press began
         self.size = (0.0, 0.0)
         self.fill: Entry | None = None
         self.handle: Entry | None = None
@@ -330,6 +340,7 @@ class Slide(Control):
         if event is None or getattr(event, "button", "primary") not in (None, "primary"):
             return
         self.dragging = True
+        self.pressed_at = self.number(self.value)
         self.tre.capture_pointer()
         if self.handle is not None and self.handle.wire is not None:
             self.handle.wire.down()  # the handle shows pressed whatever part was pressed
@@ -349,6 +360,9 @@ class Slide(Control):
             self.handle.wire.up()  # the capture took the release from the handle
             if event is not None and not self._over_handle(event):
                 self.handle.wire.leave()
+        # once per press, however it ended: the button went up (the capture delivers it outside
+        # the slider too), the press was taken for a window move, or the slider was disabled
+        self.released(self.pressed_at, self.number(self.value))
 
     def _over_handle(self, event: Any) -> bool:
         x, y = getattr(event, "x", None), getattr(event, "y", None)

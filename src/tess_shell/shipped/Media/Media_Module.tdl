@@ -15,7 +15,8 @@ Name: Media
 # The controls call the player and change nothing here: the icon follows the player's own
 # PlaybackStatus signal. A control the player cannot do is disabled. `show_position` adds the slider
 # and, while the player plays, a one-second tick that moves it. The slider's drag sends nothing to
-# the player: the release does (`On_Click`: the Slider raises no release event), with the position the drag ended on.
+# the player: the release does (`On_Released`, raised once when the press ends, also when the button
+# is let go outside the slider), with the position the drag ended on.
 #
 # Nothing here is created or removed by a change of state (the Battery's lesson, M5b): the
 # controls, the title and the icon are updated in place; only the `If`s of the params, which never
@@ -103,7 +104,7 @@ Module {
                     Max: {{ length }}
                     Enabled: {{ can_seek }}
                     On_Changed { Action: drag, position: {{ event.value }} }
-                    On_Click: release
+                    On_Released { Action: release, position: {{ event.value }} }
                 }
             }
         }

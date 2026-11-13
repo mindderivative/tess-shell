@@ -99,7 +99,9 @@ those clicks play, pause, skip and seek YOUR REAL PLAYER.  Nothing else is writt
  5  The second module's slider: while the player plays it moves forward by itself, about once a
     second (only then); pause the player: it stops.  Drag it to another place and let go: your
     player seeks there and the slider stays there and goes on from there.  (If your player does not
-    support seeking the slider is grey.)
+    support seeking the slider is grey.)  The seek is sent ONCE, when you let go (the slider's
+    On_Released), also when you let go with the pointer far outside the slider; while you hold the
+    handle the player does not move and the slider does not jump.
  6  The cover: a player that gives a cover as a file (Elisa, a browser through Plasma's
     integration) shows it in the second module; one that gives a web address shows the music note.
  7  Start a second player and play it: it is the one shown; pause it and play the first: the first
@@ -126,8 +128,8 @@ playing "First Song" and beta is paused with a long title; chrome and integratio
 13  Click play/pause in the first module: alpha pauses and the icon follows; click it again: it
     plays.  Click next: the title becomes the long one ("Second Song with a rather long title ...")
     and, in the third module (120 px wide), it scrolls; click previous: "First Song" again.
-14  Drag the second module's slider to the middle and let go: it stays there and moves on from
-    there.  `media-set.sh 150`: the slider jumps to 150 s (a quarter of the way past the middle).
+14  Drag the second module's slider to the middle and let go (also try letting go well outside the
+    slider, above or below the Bar): it stays there and moves on from there; the player gets one seek.  `media-set.sh 150`: the slider jumps to 150 s (a quarter of the way past the middle).
     `media-set.sh 10`: back near the start.
 15  Two players: `media-set.sh beta playing`: beta is shown (tooltip "..., Beta Player, playing").
     `media-set.sh alpha playing`: alpha began later: alpha is shown.  `media-set.sh alpha paused`:

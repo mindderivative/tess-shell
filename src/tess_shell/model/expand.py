@@ -343,10 +343,12 @@ class _Expander:
             return children
         raised = blocks.BLOCK_EVENTS.get(root.kind, ())
         taken: dict[str, m.Handler] = {}
-        controls = any(k in root.props for k in blocks.CONTROL_KEYS)
         for key, handler in handlers.items():
+            needs = blocks.CONTROL_EVENTS.get(key)
             if key in raised and (
-                key != "On_Changed" or controls or root.kind not in blocks.CONTROL_KINDS
+                needs is None
+                or root.kind not in blocks.CONTROL_KINDS
+                or any(k in root.props for k in needs)
             ):
                 taken[key] = handler
                 continue

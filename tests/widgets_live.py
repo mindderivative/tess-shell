@@ -72,6 +72,10 @@ class Driver(Module):
         self.seen.append(("pressed", event.use, dict(event.args)))
 
     @action
+    def released(self, event):
+        self.seen.append(("released", event.use, event.old, event.new, event.value))
+
+    @action
     def changed(self, event):
         self.seen.append(("changed", event.use, event.old, event.new, event.value))
 """

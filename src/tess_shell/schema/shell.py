@@ -816,13 +816,15 @@ def _handler(
         hint = f"it raises: {raised}" if raised else f"put {key} on the FlexBox or Box around it"
         ctx.add(origin, "event-not-raised", f"a {block} does not raise {key}", hint)
         return None
-    if key == "On_Changed" and block in blocks.CONTROL_KINDS:
+    if key in blocks.CONTROL_EVENTS and block in blocks.CONTROL_KINDS:
         if not ctx.in_module:
             ctx.add(
                 origin,
                 "event-not-raised",
-                f"a {block} does not raise On_Changed: only a module that is a control does",
-                "put On_Changed on the call of a Toggle, Checkbox, Slider or List",
+                f"a {block} does not raise {key}: only a module that is a control does",
+                "put On_Changed on the call of a Toggle, Checkbox, Slider or List"
+                if key == "On_Changed"
+                else "put On_Released on the call of a Slider",
             )
             return None
     args: dict[str, object] = {}
