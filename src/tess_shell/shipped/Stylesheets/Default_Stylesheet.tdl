@@ -103,6 +103,13 @@ Stylesheet {
         Border_Color: $color.primary
     }
 
+    Rule { Selector: ".tray_item:hovered", Background: $color.surface_raised }
+    Rule {
+        Selector: ".tray_item:selected"
+        Border_Width: 2
+        Border_Color: $color.warning
+    }
+
     Rule { Selector: "MenuItem:hovered", Background: $color.outline }
     Rule { Selector: "MenuItem:pressed", Background: $color.primary }
     Rule { Selector: "MenuItem:disabled", Opacity: 0.5 }

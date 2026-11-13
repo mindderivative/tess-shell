@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from loguru import logger
 
+from tess_shell.binder.model import PIXELS_PREFIX
 from tess_shell.schema.model import IconSource
 
 FALLBACK = "mdi:image-broken-variant"
@@ -28,7 +29,7 @@ class RuntimeIcons:
         """The SVG document for ``name``. ``blank`` is what an empty name gives."""
         if not name:
             return blank
-        if name.startswith("<"):
+        if name.startswith(("<", PIXELS_PREFIX)):  # a document, or pixels the shell registered
             return name
         found = self._source.lookup(name)
         if found is not None:

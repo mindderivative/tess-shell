@@ -13,7 +13,16 @@ from typing import Any, Protocol
 from loguru import logger
 
 from tess_shell.modules.ticks import Subscription, TimeSource
-from tess_shell.services.api import AudioPort, DBusPort, ModuleAudio, ModuleDBus
+from tess_shell.services.api import (
+    AudioPort,
+    DBusPort,
+    IconsPort,
+    ModuleAudio,
+    ModuleDBus,
+    ModuleIcons,
+    ModuleTray,
+    TrayPort,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +45,8 @@ class PopupPort(Protocol):
 
     def close_named(self, name: str | None = None) -> None: ...
 
+    def is_open(self, name: str) -> bool: ...
+
 
 class ModuleContext:
     def __init__(
@@ -49,6 +60,9 @@ class ModuleContext:
         popups: Callable[[], PopupPort | None] | None = None,
         dbus: Callable[[], DBusPort | None] | None = None,
         audio: Callable[[], AudioPort | None] | None = None,
+        icons: Callable[[], IconsPort | None] | None = None,
+        tray: Callable[[], TrayPort | None] | None = None,
+        call_soon: Callable[[], Callable[[Callable[[], None]], None] | None] | None = None,
     ) -> None:
         self.name = name
         self.caller: UseRecord | None = None  # the use whose block raised the event being handled
@@ -57,6 +71,11 @@ class ModuleContext:
         self._dbus: ModuleDBus | None = None
         self._audio_port = audio
         self._audio: ModuleAudio | None = None
+        self._icons_port = icons
+        self._icons: ModuleIcons | None = None
+        self._tray_port = tray
+        self._tray: ModuleTray | None = None
+        self._call_soon = call_soon
         self._on_lost: Callable[[str], None] | None = None
         self._on_found: Callable[[str], None] | None = None
         self._closed = False
@@ -105,6 +124,29 @@ class ModuleContext:
         if port is not None:
             port.close_named(name)
 
+    def is_popup_open(self, name: str) -> bool:
+        """Is the Popup ``name`` open (or one of its submenus)? Loop thread only."""
+        port = self._popups() if self._popups else None
+        return port is not None and port.is_open(name)
+
+    def call_soon(self, fn: Callable[[], None]) -> None:
+        """Run ``fn`` on the loop thread soon, from any thread (a callback of the ``dbus``
+        thread that must open a Popup does it this way). An exception is logged with the module's
+        name. Dropped once the module has stopped."""
+        port = self._call_soon() if self._call_soon else None
+        if port is None:
+            raise RuntimeError("the shell has no loop to call into")
+
+        def run() -> None:
+            if self._closed:
+                return
+            try:
+                fn()
+            except Exception:
+                self.log.opt(exception=True).error("a call_soon callback raised")
+
+        port(run)
+
     @property
     def dbus(self) -> ModuleDBus:
         """The D-Bus helper (D-Bus Service Layer): ``ctx.dbus.session()`` and ``.system()`` give a
@@ -131,6 +173,29 @@ class ModuleContext:
                 raise RuntimeError("the shell has no sound service")
             self._audio = port.for_module(self.name)
         return self._audio
+
+    @property
+    def icons(self) -> ModuleIcons:
+        """The shell's icon lookup (Tray Module > Icons): ``theme_icon(name, size, theme_path)``,
+        ``pixmap_icon`` and ``png_icon`` give a reference a block's ``Icon:`` shows. They read
+        files: not on the loop thread."""
+        if self._icons is None:
+            port = self._icons_port() if self._icons_port else None
+            if port is None:
+                raise RuntimeError("the shell has no icon service")
+            self._icons = port.for_module(self.name)
+        return self._icons
+
+    @property
+    def tray(self) -> ModuleTray:
+        """The shell as a StatusNotifier host: ``on_host(callback)``. The shell owns the host's
+        name; the helper offers no way to own another."""
+        if self._tray is None:
+            port = self._tray_port() if self._tray_port else None
+            if port is None:
+                raise RuntimeError("the shell has no tray host service")
+            self._tray = port.for_module(self.name)
+        return self._tray
 
     def send_available(self, use: UseRecord) -> None:
         """Give a use that appeared after the layer sent ``available`` its current value (the
@@ -183,3 +248,6 @@ class ModuleContext:
         if self._audio is not None:
             self._audio.close()
             self._audio = None
+        if self._tray is not None:
+            self._tray.close()
+            self._tray = None

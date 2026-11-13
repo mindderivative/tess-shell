@@ -10,7 +10,9 @@ Name: MenuItem
 # submenu: it opens to the right of the row (to the left when there is no room) when the pointer has
 # rested on the row for 250 ms or at a click, closes when the pointer rests on another row of this
 # menu for 300 ms, and with this menu; one submenu is open at a time, at most three levels deep. A
-# submenu reads the row as `caller.use.params` (its `Text`, for one). `Separator: true` is a rule
+# submenu reads the row as `caller.use.params` (its `Text`, for one; `Id` is a text the row carries
+# for the code that built the menu, shown nowhere: a menu made from a list puts the entry's key
+# there, so the submenu can pick that entry's children). `Separator: true` is a rule
 # between groups that takes no events. Parts `::icon`, `::label`, `::shortcut`, `::arrow` and
 # `::rule`; states `:hovered`, `:pressed` and `:disabled`. The role is MENUITEM (SEPARATOR for a
 # rule), with `expanded` while its submenu is open.
@@ -22,6 +24,7 @@ Module {
         Separator { Type: boolean, Default: false }
         Submenu { Type: string, Default: "" }
         Label { Type: string, Default: "" }
+        Id { Type: string, Default: "" }
     }
     FlexBox {
         Name: Root

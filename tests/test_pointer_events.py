@@ -1,11 +1,12 @@
-"""``On_Secondary_Click`` and ``On_Scroll`` (Events and Actions): the schema, the loader, the
-binder's listeners on a headless tre window and the module host's ``Event`` (``button``,
-``delta``)."""
+"""``On_Secondary_Click``, ``On_Middle_Click`` and ``On_Scroll`` (Events and Actions): the schema,
+the loader, the binder's listeners on a headless tre window and the module host's ``Event``
+(``button``, ``delta``)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 import tess_dl
@@ -21,7 +22,7 @@ from tests.test_events import ACTION_PY, host_module
 from tests.test_module_host import Rig
 
 HEAD = "---\nTDL: 0.1\nName: Btn\n---\n"
-KEYS = ("On_Click", "On_Secondary_Click", "On_Scroll")
+KEYS = ("On_Click", "On_Secondary_Click", "On_Middle_Click", "On_Scroll")
 
 
 def module_findings(body: str) -> tuple[bool, list[Finding]]:
@@ -64,6 +65,7 @@ def test_the_keys_are_declared_documented_and_raised_wherever_on_click_is() -> N
             assert all(k in events for k in KEYS), kind
     assert "delta" in docs.EVENT_DOCS["On_Scroll"] and "+1" in docs.EVENT_DOCS["On_Scroll"]
     assert "secondary" in docs.EVENT_DOCS["On_Secondary_Click"]
+    assert "middle" in docs.EVENT_DOCS["On_Middle_Click"]
 
 
 @pytest.mark.parametrize("key", KEYS[1:])
@@ -166,6 +168,66 @@ def test_a_reload_swaps_the_handler_and_a_dropped_one_stops_nothing() -> None:
     assert [a for a, _, _ in seen] == ["Outer:On_Scroll"]  # Inner's listener let it bubble
 
 
+def middle(window: Window, target: Any, release_on: Any = None) -> None:
+    window.simulate("pointer_down", node=target, button="middle")
+    window.simulate(
+        "pointer_up", node=release_on if release_on is not None else target, button="middle"
+    )
+
+
+def test_a_middle_press_and_release_on_the_block_is_a_middle_click_with_the_position() -> None:
+    window, view, seen = rig(node("A", *KEYS))
+    middle(window, view.nodes["A"])
+    assert [(a, k) for a, k, _ in seen] == [("A:On_Middle_Click", "On_Middle_Click")]
+    raw = seen[0][2]
+    assert raw.button == "middle"  # type: ignore[attr-defined]
+    box = view.nodes["A"]
+    centre = tuple(  # the pointer is at the block's centre
+        float(box.get(a)) + float(box.get(b)) / 2
+        for a, b in (("layout_x", "layout_width"), ("layout_y", "layout_height"))
+    )
+    assert (raw.window_x, raw.window_y) == centre  # type: ignore[attr-defined]
+    middle(window, view.nodes["A"])
+    assert len(seen) == 2  # each click is one event, not two
+
+
+def test_a_middle_click_runs_neither_on_click_nor_the_secondary_handler() -> None:
+    window, view, seen = rig(node("A", "On_Click", "On_Secondary_Click"))
+    middle(window, view.nodes["A"])
+    assert seen == []
+    window2, view2, seen2 = rig(node("A", *KEYS))
+    window2.simulate("click", node=view2.nodes["A"])
+    window2.simulate("secondary_click", node=view2.nodes["A"])
+    assert [k for _, k, _ in seen2] == ["On_Click", "On_Secondary_Click"]  # and not the middle
+
+
+def test_another_button_or_a_release_elsewhere_is_not_a_middle_click() -> None:
+    inner = node("Inner", "On_Middle_Click")
+    other = node("Other")
+    window, view, seen = rig(node("Outer", children=(inner,)), other)
+    window.simulate("pointer_down", node=view.nodes["Inner"], button="primary")
+    window.simulate("pointer_up", node=view.nodes["Inner"], button="primary")
+    window.simulate("pointer_down", node=view.nodes["Inner"], button="middle")
+    window.simulate("pointer_up", node=view.nodes["Inner"], button="primary")
+    assert seen == []
+    window.simulate("pointer_down", node=view.nodes["Other"], button="middle")  # no handler there
+    window.simulate("pointer_up", node=view.nodes["Inner"], button="middle")
+    assert seen == []  # the press began elsewhere
+
+
+def test_a_disabled_block_raises_no_middle_click_and_a_reload_swaps_the_handler() -> None:
+    window, view, seen = rig(node("A", "On_Middle_Click", enabled=False))
+    middle(window, view.nodes["A"])
+    assert seen == []
+    window, view, seen = rig(node("A", "On_Middle_Click"))
+    view.rebuild([node("A")])  # the reload dropped the handler: the listener does nothing
+    middle(window, view.nodes["A"])
+    assert seen == []
+    view.rebuild([node("A", "On_Middle_Click")])
+    middle(window, view.nodes["A"])
+    assert [k for _, k, _ in seen] == ["On_Middle_Click"]
+
+
 # -- module host --------------------------------------------------------------------------------
 
 STEP = """@action
@@ -193,6 +255,7 @@ def test_the_action_receives_delta_and_button(tmp_path: Path) -> None:
         handlers={
             "On_Scroll": Handler("step", {"delta": 7}, use=u.key),
             "On_Secondary_Click": Handler("step", use=u.key),
+            "On_Middle_Click": Handler("step", use=u.key),
         },
     )
     view = build([box], window)
@@ -200,8 +263,9 @@ def test_the_action_receives_delta_and_button(tmp_path: Path) -> None:
     window.simulate("wheel", node=view.nodes["T"], delta_y=40.0)
     window.simulate("wheel", node=view.nodes["T"], delta_y=-40.0)
     window.simulate("secondary_click", node=view.nodes["T"])
+    middle(window, view.nodes["T"])
     events = [e for e, _ in getattr(loaded.instance, "seen")]  # noqa: B009
-    scroll_down, scroll_up, secondary = events
+    scroll_down, scroll_up, secondary, third = events
     assert (scroll_down.name, scroll_down.delta, scroll_down.button) == ("scroll", 1.0, None)
     assert (scroll_up.delta, scroll_up.name) == (-1.0, "scroll")
     assert (secondary.name, secondary.button, secondary.delta) == (
@@ -209,3 +273,5 @@ def test_the_action_receives_delta_and_button(tmp_path: Path) -> None:
         "secondary",
         None,
     )
+    assert (third.name, third.button, third.delta) == ("middle_click", "middle", None)
+    assert third.x is not None and third.y is not None  # the pointer's position

@@ -15,7 +15,9 @@ file's name, so the off-thread route is built when it is measured to be needed.
 
 from __future__ import annotations
 
+import hashlib
 import os
+import threading
 import time
 from collections import OrderedDict, deque
 from dataclasses import dataclass
@@ -24,10 +26,12 @@ from pathlib import Path
 from loguru import logger
 
 from tess_shell._vendor import tess_utils
+from tess_shell.binder.model import PIXELS_PREFIX
 
 MAX_SIDE = 4096  # an image larger than this in either side is refused (Standard Modules > Image)
 MAX_FILE = 64 * 1024 * 1024  # a file larger than this is not read
 BUDGET = 256 * 1024 * 1024  # bytes of decoded pixels the cache keeps
+REGISTERED_BUDGET = 64 * 1024 * 1024  # bytes of registered pixels (icons) kept, least recent out
 SLOW_MS = 8.0  # a decode on the loop thread over this is logged (about half a 60 Hz frame)
 ERROR_IMAGE = Path(__file__).resolve().parent.parent / "shipped" / "Images" / "error.png"
 
@@ -56,11 +60,46 @@ class ImageCache:
         self.size = 0  # bytes held
         # (path, milliseconds to read and decode it), the last ones: the measurement of question 18
         self.timings: deque[tuple[str, float]] = deque(maxlen=64)
+        # pixels the shell registered itself (a theme icon, an item's pixmap), by reference; the
+        # registry is filled from worker threads and read on the loop thread
+        self._registered: OrderedDict[str, Pixels] = OrderedDict()
+        self._registered_size = 0
+        self._registered_lock = threading.Lock()
 
     def clear(self) -> None:
         self._pixels.clear()
         self._failed.clear()
         self.size = 0
+
+    def register(self, width: int, height: int, rgba: bytes) -> str:
+        """Hold decoded RGBA pixels and give their reference (``pixels:<digest>``): the same pixels
+        always give the same reference. A Bitmap's ``Source`` and an ``Icon:`` take it like a
+        path. Thread safe; the least recently used references go when over
+        :data:`REGISTERED_BUDGET`."""
+        digest = hashlib.blake2b(rgba, digest_size=12, salt=f"{width}x{height}".encode()[:16])
+        ref = f"{PIXELS_PREFIX}{digest.hexdigest()}"
+        with self._registered_lock:
+            if ref in self._registered:
+                self._registered.move_to_end(ref)
+                return ref
+            self._registered[ref] = Pixels(width, height, rgba)
+            self._registered_size += len(rgba)
+            while self._registered_size > REGISTERED_BUDGET and len(self._registered) > 1:
+                _, old = self._registered.popitem(last=False)
+                self._registered_size -= len(old.rgba)
+        return ref
+
+    def _registered_pixels(self, ref: str) -> Pixels:
+        with self._registered_lock:
+            found = self._registered.get(ref)
+            if found is not None:
+                self._registered.move_to_end(ref)
+                return found
+        key = (ref, 0, 0)
+        if key not in self._failed:
+            self._failed[key] = "no pixels were registered under this reference"
+            logger.warning(f"image {ref}: no pixels were registered under this reference")
+        return self.error_image()
 
     def error_image(self) -> Pixels:
         """The picture a bad file shows: a framed square with a cross, shipped as a png."""
@@ -72,6 +111,8 @@ class ImageCache:
     def load(self, path: str) -> Pixels:
         """The pixels of the image file ``path``; the error image, with one warning, when it
         cannot be had (missing, unreadable, not a png, jpeg, gif or webp, or over the limit)."""
+        if path.startswith(PIXELS_PREFIX):
+            return self._registered_pixels(path)
         where = os.path.expanduser(path)
         try:
             stat = os.stat(where)

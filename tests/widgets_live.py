@@ -27,7 +27,7 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.look import read_stylesheet, read_theme
 from tess_shell.schema.model import ModuleDef, StyleDef
 from tess_shell.schema.shell import read_module, read_module_params, read_shell, read_style
-from tess_shell.services.api import AudioPort, DBusPort
+from tess_shell.services.api import AudioPort, DBusPort, IconsPort, TrayPort
 from tess_shell.surfaces.manager import SurfaceManager
 from tests.shell_samples import HEADER
 from tests.test_panel import StubApp
@@ -58,6 +58,9 @@ STANDARD = (
     "Media",
     "Audio",
     "Audio_Outputs",
+    "Tray",
+    "Tray_Item",
+    "Tray_Menu",
 )
 THEME = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text()
 DEFAULT_SHEET = (SHIPPED / "Stylesheets" / "Default_Stylesheet.tdl").read_text()
@@ -189,6 +192,9 @@ def running(
     driver_py: str = DRIVER_PY,
     dbus: DBusPort | None = None,
     audio: AudioPort | None = None,
+    icon_port: IconsPort | None = None,
+    tray: TrayPort | None = None,
+    call_soon: Callable[[Callable[[], None]], None] | None = None,
     extra_py: dict[str, str] | None = None,
 ) -> Iterator[Widgets]:
     """The shell of ``tests.test_popup`` with ``children`` in its Bar, every standard module and a
@@ -230,7 +236,9 @@ def running(
         host.popups = manager.popups
         host.dbus = dbus
         host.audio = audio
-        host.audio = audio
+        host.icons = icon_port
+        host.tray = tray
+        host.call_soon = call_soon or getattr(dbus, "call_soon", None)  # a Layer has one
         live = Widgets(manager, host, store)
         sink = logger.add(lambda message: live.lines.append(str(message).rstrip()), level="DEBUG")
         try:

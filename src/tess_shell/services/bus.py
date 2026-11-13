@@ -20,7 +20,15 @@ from collections.abc import Awaitable, Callable, Coroutine, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from dbus_fast import BusType, Message, MessageType, Variant
+from dbus_fast import (
+    BusType,
+    Message,
+    MessageType,
+    NameFlag,
+    RequestNameReply,
+    SignatureTree,
+    Variant,
+)
 from dbus_fast.aio import MessageBus
 from loguru import logger
 
@@ -62,6 +70,20 @@ def unwrap(value: Any) -> Any:
     if isinstance(value, dict):
         return {k: unwrap(v) for k, v in value.items()}
     return value
+
+
+def _variants(signature: str, body: Sequence[Any]) -> list[Any]:
+    """The arguments of a call; an argument of type ``v`` that is a ``(signature, value)`` pair
+    becomes a ``Variant`` (a module cannot import ``dbus_fast``: ``("s", "")`` is an empty text)."""
+    if "v" not in signature:
+        return list(body)
+    types = SignatureTree(signature).types
+    return [
+        Variant(arg[0], arg[1])
+        if t.token == "v" and isinstance(arg, tuple) and len(arg) == 2
+        else arg
+        for t, arg in zip(types, body, strict=False)
+    ]
 
 
 @dataclass(frozen=True, slots=True)
@@ -145,6 +167,7 @@ class Bus:
         self._names: dict[str, _Name] = {}
         self._prefixes: dict[str, _Prefix] = {}
         self._hooks: list[ReconnectHook] = []
+        self._owned: dict[str, Unsubscribe] = {}  # names the shell owns -> their reconnect hook
         self._tasks: set[asyncio.Task[Any]] = set()
         self._reconnecting: asyncio.Task[None] | None = None
         self.connects = 0  # connections made so far (tests)
@@ -169,7 +192,7 @@ class Bus:
     def on_reconnect(self, hook: ReconnectHook) -> Unsubscribe:
         """``await hook(connection)`` after every reconnect, once the match rules are back and the
         watched names are read again. This is where the owner of a bus name of the shell's own asks
-        for it again (the shell owns no name yet: the control interface is not built)."""
+        for it again (see :meth:`own_name`)."""
         self._hooks.append(hook)
 
         def remove() -> None:
@@ -177,6 +200,51 @@ class Bus:
                 self._hooks.remove(hook)
 
         return remove
+
+    # -- owning a well-known name (the shell's own services only) -------------------------------
+
+    async def own_name(self, name: str) -> bool:
+        """Own the well-known ``name`` on this bus (``DO_NOT_QUEUE``: a name somebody else owns is
+        not waited for). ``True`` when the shell owns it now; asking again for a name it owns is
+        ``True`` and does nothing. After each reconnect the name is asked for again through
+        :meth:`on_reconnect`; a name that has been taken meanwhile is one warning.
+
+        This is for the shell's own services (the tray host, D-Bus Service Layer > Own Names and
+        Objects): it is not on the helper a module gets as ``ctx.dbus``, and no module can own a
+        name. Raises :class:`ServiceUnavailable` while the bus is not reachable."""
+        conn = await self.connection()
+        owned = await self._request_name(conn, name)
+        if owned and name not in self._owned:
+
+            async def again(conn: MessageBus) -> None:
+                if not await self._request_name(conn, name):
+                    logger.warning(f"dbus: the name {name} was taken while the bus was gone")
+
+            self._owned[name] = self.on_reconnect(again)
+        return owned
+
+    async def release_name(self, name: str) -> None:
+        """Give up a name :meth:`own_name` took (no longer asked for after a reconnect)."""
+        forget = self._owned.pop(name, None)
+        if forget is not None:
+            forget()
+        conn = self._conn
+        if conn is not None and conn.connected:
+            try:
+                await asyncio.wait_for(conn.release_name(name), CALL_TIMEOUT)
+            except Exception as exc:  # the name went with the connection, or the daemon is gone
+                logger.debug(f"dbus: releasing {name} did not go through ({exc})")
+
+    async def _request_name(self, conn: MessageBus, name: str) -> bool:
+        try:
+            reply = await asyncio.wait_for(
+                conn.request_name(name, NameFlag.DO_NOT_QUEUE), CALL_TIMEOUT
+            )
+        except TimeoutError as exc:
+            raise ServiceTimeout(BUS_NAME, f"no reply to RequestName {name}") from exc
+        except Exception as exc:
+            raise ServiceUnavailable(BUS_NAME, f"RequestName {name} failed ({exc})") from exc
+        return reply in (RequestNameReply.PRIMARY_OWNER, RequestNameReply.ALREADY_OWNER)
 
     # -- connection -----------------------------------------------------------------------------
 
@@ -331,7 +399,7 @@ class Bus:
             interface=interface,
             member=member,
             signature=signature,
-            body=list(body),
+            body=_variants(signature, body),
         )
         try:
             reply = await asyncio.wait_for(conn.call(message), timeout)

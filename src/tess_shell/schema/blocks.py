@@ -474,8 +474,8 @@ FRAME_STYLE_NOT_BUILT = ("Elevation", "Shadows", "Shadow_Bleed")
 # in Block Reference > TextField), as the TDL keys. A block raises only the events its
 # pointer or focus handling supports: M1's blocks take a click and nothing else; the rest wait for
 # the surfaces and the value blocks that raise them.
-# the pointer events of a block: the primary click, the secondary click and one wheel step
-POINTER_EVENTS = ("On_Click", "On_Secondary_Click", "On_Scroll")
+# the pointer events of a block: the primary, secondary and middle clicks and one wheel step
+POINTER_EVENTS = ("On_Click", "On_Secondary_Click", "On_Middle_Click", "On_Scroll")
 EVENT_KEYS = (
     "On_Open",
     "On_Close",
@@ -486,6 +486,7 @@ EVENT_KEYS = (
     "On_Toggle",
     "On_Click",
     "On_Secondary_Click",
+    "On_Middle_Click",
     "On_Scroll",
     "On_Anim_Start",
     "On_Anim_End",

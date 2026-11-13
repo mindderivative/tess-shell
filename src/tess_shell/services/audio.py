@@ -56,6 +56,7 @@ SLOW_CALLBACK = 0.05  # a module's callback over this is a warning
 CONNECT_TRIES = 3  # a connect refused right after the socket appeared
 CONNECT_RETRY = 0.05  # seconds between those
 SHORT_SESSION = 1.0  # a connection that ended sooner than this waits before the next try
+HINT_TTL = 1.0  # s: a written volume stays the next step's base until the server shows it
 _STATS_KEPT = 4096
 
 # device.form_factor -> kind; a form factor not listed here is passed over (the port type, then
@@ -204,7 +205,10 @@ class AudioService:
         self._default_source = ""
         self._busy = False
         self._dirty = False
-        self._volume_hint: float | None = None  # what a setter wrote, until the next read
+        # what a setter wrote, until the server's read shows it (or HINT_TTL has passed): a read of
+        # an EARLIER step's echo must not make the next step start from the stale value
+        self._volume_hint: float | None = None
+        self._volume_hint_at = 0.0
         self._mute_hint: bool | None = None
         self._mic_hint: bool | None = None
         self._tasks: set[asyncio.Future[Any]] = set()
@@ -374,7 +378,13 @@ class AudioService:
         sink = self._device(self._sinks, self._default_sink)
         source = self._device(self._sources, self._default_source)
         mic = source is not None and not is_monitor(source)
-        self._volume_hint = self._mute_hint = self._mic_hint = None
+        self._mute_hint = self._mic_hint = None
+        if self._volume_hint is not None and (
+            sink is None
+            or abs(float(sink.percent) - self._volume_hint) <= 0.5
+            or self._clock() - self._volume_hint_at > HINT_TTL
+        ):
+            self._volume_hint = None
         self._publish(
             AudioState(
                 output_of(sink) if sink else None,
@@ -446,6 +456,7 @@ class AudioService:
         client, sink = self._need(), self._default()
         percent = min(max(percent, 0.0), 100.0)
         self._volume_hint = percent  # before the await: the next step starts from it
+        self._volume_hint_at = self._clock()
         try:
             await client.set_sink_volume(sink.index, scaled(sink.volume, percent))
         except BaseException:

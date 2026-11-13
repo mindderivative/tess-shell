@@ -44,7 +44,7 @@ from tess_shell.binder.motion import start as start_motion
 from tess_shell.binder.shapes import POSTS
 from tess_shell.binder.tables import BLOCKS, BlockRow, KeyRow
 
-_POINTER_EVENTS = frozenset({"On_Click", "On_Secondary_Click", "On_Scroll"})
+_POINTER_EVENTS = frozenset({"On_Click", "On_Secondary_Click", "On_Middle_Click", "On_Scroll"})
 
 if TYPE_CHECKING:
     from tess_re import Node as TreNode
@@ -634,6 +634,7 @@ class View:
                 self._ensure_click(e)
                 self._ensure_pointer(e, "On_Secondary_Click", "secondary_click")
                 self._ensure_pointer(e, "On_Scroll", "wheel")
+                self._ensure_middle(e)
                 mine = (seen[0] or e.wire.checked, seen[1] or e.wire.selected)
             self._sync(e.children, inherited or own, {**flags, owner: mine} if owner else flags)
 
@@ -670,6 +671,41 @@ class View:
                     stop()
 
         entry.tre.on("click", listener)
+
+    def _ensure_middle(self, entry: Entry) -> None:
+        """``On_Middle_Click``: tre has no middle click event, only ``pointer_down`` and
+        ``pointer_up`` with ``button == "middle"``, so the node's state hooks (the one listener the
+        node takes of each) do it: a middle press that is released on the same node is a click. A
+        disabled block raises nothing (its hooks do not run). Unlike the other pointer events it
+        does not stop the event: a block above that has the handler too hears it as well.
+        The handler's event has ``button == "middle"`` and the pointer's position."""
+        wire = entry.wire
+        key = "On_Middle_Click"
+        if entry.tre is None or wire is None or key in wire.wired or key not in wire.handlers:
+            return
+        wire.wired.add(key)
+        pressed = [False]
+
+        def down() -> None:
+            pressed[0] = getattr(wire.event, "button", None) == "middle"
+
+        def up() -> None:
+            event = wire.event
+            was, pressed[0] = pressed[0], False
+            if not was or getattr(event, "button", None) != "middle":
+                return
+            handler = wire.handlers.get(key)
+            if handler is None or self.sink is None:  # a reload dropped the handler
+                return
+            raw = SimpleNamespace(
+                window_x=getattr(event, "window_x", None),
+                window_y=getattr(event, "window_y", None),
+                button="middle",
+            )
+            self.sink(handler, key, raw)
+
+        wire.add_hook("down", down)
+        wire.add_hook("up", up)
 
     def _ensure_pointer(self, entry: Entry, key: str, tre_event: str) -> None:
         """The one ``secondary_click`` or ``wheel`` listener of a node that has ``key``

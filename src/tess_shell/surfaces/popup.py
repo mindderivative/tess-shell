@@ -465,6 +465,10 @@ class Popups:
         if cur is not None and (name is None or cur.popup.name == name):
             self.close(cur, "closed by a call")
 
+    def is_open(self, name: str) -> bool:
+        """Is the Popup ``name`` open now, as the outermost one or as a submenu?"""
+        return any(op.popup.name == name and not op.closing for op in self.chain())
+
     def _holder(self, use: str) -> tuple[Surface, str, OpenPopup | None] | None:
         """The open surface (or open Popup, for a submenu) that holds ``use``, the id of the
         use's first root block, and the Popup the use is in (``None`` on a surface)."""
@@ -1034,7 +1038,10 @@ class Popups:
         op.rest = None
         if op.closing or op.view is None:
             return
-        use = block.split("/", 1)[0]
+        # a block of an entry of a For has its prefix first (``for3.7/Row_0001/<use>/Root``): the
+        # use is the part that is a use key, ``<Module>@<name>``
+        parts = block.split("/")
+        use = next((p for p in parts if "@" in p), parts[0])
         self.request(
             "MenuItem", use, op.parent, block, None, opens, {}, "show", op, f"submenu {opens}"
         )

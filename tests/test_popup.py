@@ -641,6 +641,9 @@ class Port:
     def close_named(self, name: str | None = None) -> None:
         self.closed.append(name)
 
+    def is_open(self, name: str) -> bool:
+        return False
+
 
 CALLER_PY = """
 from tess_shell import Module, action

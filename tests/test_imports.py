@@ -75,6 +75,7 @@ RULES: dict[str, set[str] | None] = {
         "dbus_fast",
         "inotify_simple",
         "loguru",
+        "tess_shell._vendor.tess_utils",  # services.icons decodes a png the way the Image path does
         "tess_shell.services",
         "tess_shell.appearance",
     },

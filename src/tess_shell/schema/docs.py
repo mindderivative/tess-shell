@@ -616,6 +616,8 @@ EVENT_DOCS: dict[str, str] = {
     "On_Click": "A click: the mouse, Space or Enter on a focused block, or assistive activation.",
     "On_Secondary_Click": "A click with the secondary (right) button; event.button is "
     '"secondary". It does not run On_Click.',
+    "On_Middle_Click": "A click with the middle button (a press and a release on the block); "
+    'event.button is "middle". It does not run On_Click.',
     "On_Scroll": "One step of the mouse wheel over the block (the nearest block with the handler "
     "takes it); event.delta is +1 for a step down and -1 for a step up.",
     "On_Anim_Start": "A Panel's animation started.",
@@ -883,6 +885,10 @@ MODULE_NOTES: dict[str, str] = {
     "TextEditor": "A multi-line text field.",
     "TextInput": "A single-line text field.",
     "Toggle": "A switch that is on or off.",
+    "Tray": "The system tray: one icon per StatusNotifier application, with its tooltip, clicks "
+    "and menu; the shell is a second tray host beside Plasma's.",
+    "Tray_Item": "One icon of the Tray, with a tooltip.",
+    "Tray_Menu": "The content of the Popups that draw a tray item's menu, one level of it.",
     "Workspaces": "The virtual desktops as buttons: the current one is marked, a click switches.",
 }
 
@@ -944,6 +950,8 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("MenuItem", "Submenu"): "The Name of the Popup that opens beside the row as its submenu; "
     "empty has none.",
     ("MenuItem", "Label"): "The name assistive technology reads aloud; the text when it is empty.",
+    ("MenuItem", "Id"): "A text the row carries for the code that built the menu; shown nowhere. "
+    "A submenu reads it as caller.use.params.Id.",
     ("Network", "show_name"): "Shows the connection's name (or the Wi-Fi network's) next to the "
     "icon.",
     ("Network", "show_vpn"): "Shows a second icon while a VPN is up.",
@@ -978,6 +986,21 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("TextInput", "Width"): "The width in pixels.",
     ("Toggle", "Checked"): "Whether the switch is on; set from outside.",
     ("Toggle", "Label"): "The name assistive technology reads aloud for the switch.",
+    ("Tray", "icon_size"): "The size of each icon in pixels.",
+    ("Tray", "show_passive"): "Shows the items whose status is Passive.",
+    ("Tray", "spacing"): "The space between two items in pixels.",
+    (
+        "Tray_Item",
+        "icon",
+    ): "The icon: an SVG document or pixels the shell holds (the Tray sends it).",
+    ("Tray_Item", "size"): "The icon's size in pixels.",
+    ("Tray_Item", "tooltip_title"): "The first line of the tooltip.",
+    ("Tray_Item", "tooltip_text"): "The second line of the tooltip; empty shows none.",
+    ("Tray_Item", "label"): "The name assistive technology reads aloud.",
+    ("Tray_Item", "description"): "The description assistive technology reads after the name.",
+    ("Tray_Item", "attention"): "The item needs attention: the block takes the :selected look.",
+    ("Tray_Menu", "Level"): "1 is the menu itself; 2 and 3 are the submenus of the row that "
+    "opened the Popup.",
     ("Workspaces", "label"): "name shows each desktop's name (its number when it has none); "
     "number shows 1, 2, 3.",
 }

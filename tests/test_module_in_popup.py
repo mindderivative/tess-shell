@@ -178,7 +178,7 @@ def test_two_popups_with_the_same_module_do_not_collide() -> None:
         '        self.ctx.popup("Tray_Menu", data={"items": self.items})',
         '        self.ctx.popup("Tray_Menu", data={"items": self.items})\n'
         '        self.ctx.popup("Tray_Menu_Two", data={"items": self.items[:1]},\n'
-        '                       use=self.ctx.caller.key)',
+        "                       use=self.ctx.caller.key)",
     )
     with running(
         "Driver { }",
@@ -225,6 +225,36 @@ def test_a_submenu_from_an_entry_hangs_off_the_entry_and_closes_with_its_parent(
         # only the submenu's static item is left: it is a use the files give, not an entry's
         assert item_uses(w) == ["MenuItem@Main_Shell.Main.Sub_Menu.MenuItem_1"]
         assert quiet(w) == [], quiet(w)
+
+
+def test_a_submenu_from_an_entry_reads_that_entry_as_caller_use_not_the_for_prefix() -> None:
+    """The row's block id starts with the ``For`` prefix (``for3.7/...``): the submenu's ``caller``
+    is the row's own use, so ``caller.use.params`` are its params (the Tray menu reads ``Id``)."""
+    tray = TRAY_TDL.replace(
+        "MenuItem { Text: {{ e.text }}, On_Click",
+        "MenuItem { Text: {{ e.text }}, Id: {{ e.id }}, Submenu: Sub_Menu, On_Click",
+    )
+    sub = (
+        "Popup { Name: Sub_Menu, Style { Background: $color.surface_raised }, "
+        "Children { Menu { Children { MenuItem { Text: {{ caller.use.params.Id }} } } } } }"
+    )
+    with running(
+        "Driver { }",
+        driver=DRIVER,
+        driver_py=DRIVER_PY,
+        extra={"TrayMenu": tray},
+        extra_py={"TrayMenu": TRAY_PY},
+        popups=POPUPS + sub,
+    ) as w:
+        op = open_popup(w)
+        for text, ident in (("Alpha", "a"), ("Beta", "b")):
+            row = [n for n in op.view.nodes.values() if n.get("label") == text][0]
+            op.window.simulate("click", node=row)
+            assert op.sub is not None
+            assert op.sub.caller.use.startswith("MenuItem@") and "for" in op.sub.caller.use
+            assert op.sub.record["use"]["params"]["Id"] == ident  # type: ignore[index]
+            labels = [n.get("label") for n in op.sub.view.nodes.values() if n.get("label")]
+            assert ident in labels
 
 
 def test_a_reload_that_replaces_the_plans_closes_the_popup_and_ends_its_entries() -> None:

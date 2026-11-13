@@ -208,6 +208,11 @@ MARQUEE_TEXT = "Marquee.text"
 # Expander): ``Expander { Children { ... } }``. Only a module file may hold one.
 CONTENT = "Content"
 
+# A Bitmap's ``Source`` that starts with this names pixels the shell decoded and registered
+# (``ImageCache.register``), not a file: an icon from the desktop's theme or an item's pixmap
+# (Tray Module > Icons). ``Icon: {{ ref }}`` and ``Source: {{ ref }}`` take such a reference.
+PIXELS_PREFIX = "pixels:"
+
 # Blocks that tre sends no pointer events: a listener on a ``text`` node is accepted and never
 # called (a click goes to the box around it), so a state style cannot apply to one.
 NO_POINTER_BLOCKS = ("Text", MARQUEE_TEXT)

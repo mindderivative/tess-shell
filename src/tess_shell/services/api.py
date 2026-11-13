@@ -87,7 +87,8 @@ class Proxy(Protocol):
         interface: str | None = None,
         timeout: float = CALL_TIMEOUT,
     ) -> Any:
-        """Call a method. ``signature`` is the D-Bus type string of ``args``. The result is the
+        """Call a method. ``signature`` is the D-Bus type string of ``args``; an argument of type
+        ``v`` is written as a ``(signature, value)`` pair (``("s", "")``). The result is the
         reply's one value, ``None`` for no value, or a tuple for several. Raises
         :class:`ServiceTimeout`, :class:`ServiceUnavailable` or :class:`ServiceError`."""
         ...
@@ -302,3 +303,71 @@ class AudioPort(Protocol):
     """What the module host needs of the sound service: one helper per module."""
 
     def for_module(self, module: str) -> ModuleAudio: ...
+
+
+# -- icons from the desktop's theme and the tray host (Tray Module) --------------------------------
+
+
+class ModuleIcons(Protocol):
+    """``ctx.icons``: icon names and pixmaps become something a block's ``Icon:`` shows (Tray Module
+    > Icons). A reference is an SVG document (text that starts with ``<``) or ``pixels:...``, the
+    name of decoded pixels the shell holds for the engine; never a path. The calls read files
+    (a theme's ``index.theme``, the icon, a png's bytes) and may build the index of a theme chain
+    the first time (under 100 ms): call them from the ``dbus`` thread or a worker, never the loop
+    thread. A lookup after that reads no folder; its result is cached by (name, size, theme path)
+    and the file's modification time."""
+
+    def theme_icon(self, name: str, size: int, theme_path: str | None = None) -> str | None:
+        """``name`` as the freedesktop icon theme spec finds it: in ``theme_path`` (an item's
+        ``IconThemePath``, when set), then in the user's theme, the themes it inherits and
+        ``hicolor``, then in ``/usr/share/pixmaps``. A scalable SVG is preferred; otherwise the png
+        whose size is nearest above ``size``. ``None`` when no theme has it. An absolute path to an
+        image file is read as it is."""
+        ...
+
+    def pixmap_icon(
+        self, pixmaps: Sequence[Sequence[Any]], size: int, source: str = ""
+    ) -> str | None:
+        """The pixmap of ``pixmaps`` (``(width, height, bytes)``: ARGB32, network byte order, the
+        StatusNotifierItem way) nearest above ``size`` (else the largest), as RGBA. A pixmap whose
+        length is not width times height times 4 is ignored, with one warning naming ``source``.
+        ``None`` when none is usable."""
+        ...
+
+    def png_icon(self, data: bytes, source: str = "") -> str | None:
+        """The pixels of png (or other image) ``data``, as a reference; ``None`` (with one warning
+        naming ``source``) when it cannot be decoded."""
+        ...
+
+
+class IconsPort(Protocol):
+    """What the module host needs of the icon service."""
+
+    def for_module(self, module: str) -> ModuleIcons: ...
+
+
+HostCallback = Callable[[bool], None]
+
+
+class ModuleTray(Protocol):
+    """``ctx.tray``: the shell as a StatusNotifier host. The shell owns the bus name
+    ``org.kde.StatusNotifierHost-<pid>`` and registers it with the watcher
+    (``RegisterStatusNotifierHost``), again whenever the watcher comes back or the bus does. A
+    module cannot take any other name: the name is the service's own."""
+
+    def on_host(self, callback: HostCallback) -> Subscription:
+        """``callback(hosted)`` on the service thread: ``True`` once the shell is registered with
+        a watcher, ``False`` while it is not (no watcher on the bus, or the host name could not be
+        had). Called when the state is known and each time it changes. The first subscription
+        starts the host; the last one cancelled gives the name up."""
+        ...
+
+    def close(self) -> None:
+        """Cancel every subscription of the module."""
+        ...
+
+
+class TrayPort(Protocol):
+    """What the module host needs of the tray host service."""
+
+    def for_module(self, module: str) -> ModuleTray: ...

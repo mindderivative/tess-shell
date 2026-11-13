@@ -117,6 +117,10 @@ class LiveTree:
     _roots_out: dict[str, str] | None = None
     _call_roots: dict[str, str] = field(default_factory=dict)  # use key -> its root block id
     _tips_added: set[str] = field(default_factory=set)
+    # compiled slot expressions by (text, origin): the entries of a For share their slots' text, so
+    # a list of 100 rows compiles each slot once, not 100 times (an expression is not changed by
+    # evaluating it); errors are not kept
+    _expressions: dict[tuple[str, m.Origin], tess_el.Expression] = field(default_factory=dict)
 
     # -- resolve ------------------------------------------------------------------------------
 
@@ -356,7 +360,16 @@ class LiveTree:
         link = self._compile(owner, name or "", node.kind, key, kind, value)
         if link is None:
             return None
-        typed = self._evaluate(link, ctx.scope if owner == ctx.use else None)
+        where = ctx.scope if owner == ctx.use else None
+        if owner != ctx.use:
+            # a key written on a call inside a For entry reads the entry's variables too: the
+            # scope of the context of the module that holds the call, found up the chain
+            holder = ctx.outer
+            while holder is not None and holder.use != owner:
+                holder = holder.outer
+            if holder is not None:
+                where = holder.scope
+        typed = self._evaluate(link, where)
         if not ctx.dynamic and name is not None:
             self.links.append(link)
             self.by_use.setdefault(owner, []).append(link)
@@ -373,11 +386,14 @@ class LiveTree:
                 parts.append(part)
                 continue
             try:
-                parts.append(
-                    tess_el.compile_expression(
+                cached = (part.text, part.origin)
+                expression = self._expressions.get(cached)
+                if expression is None:
+                    expression = tess_el.compile_expression(
                         part.text, language=TEL_LANGUAGE, origin=_pos(part.origin)
                     )
-                )
+                    self._expressions[cached] = expression
+                parts.append(expression)
             except tess_el.TelError as exc:
                 self._report(exc)
                 return None

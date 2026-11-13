@@ -20,6 +20,7 @@ from loguru import logger
 
 import tess_shell
 from tess_shell.appearance import Appearance
+from tess_shell.binder.images import IMAGES
 from tess_shell.binder.model import Handler
 from tess_shell.config.lock import InstanceLock
 from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir, state_dir
@@ -42,8 +43,10 @@ from tess_shell.reloader import Reloader
 from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
 from tess_shell.services.audio import AudioService
 from tess_shell.services.bus import ServiceThread
+from tess_shell.services.icons import IconService
 from tess_shell.services.layer import Layer
 from tess_shell.services.portal import PortalReader
+from tess_shell.services.tray import TrayService
 from tess_shell.signals import LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites, Watcher
@@ -267,6 +270,9 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         host.popups = manager.popups  # ctx.popup() opens a Popup of the surfaces
         host.dbus = layer  # ctx.dbus: the D-Bus service layer
         host.audio = AudioService(service)  # ctx.audio: the sound server, on the same thread
+        host.icons = IconService(IMAGES.register)  # ctx.icons: the theme lookup, files read here
+        host.tray = TrayService(service)  # ctx.tray: the shell as a StatusNotifier host
+        host.call_soon = handle.call_soon  # ctx.call_soon: back to the loop thread
         # a file the shell registers for the first time gets a UID in its metadata (G8)
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         own_writes = OwnWrites()
