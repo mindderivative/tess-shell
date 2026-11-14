@@ -8,7 +8,7 @@ above 100 as the server says), ``volume_text`` (``"45 %"``), ``muted``, ``kind``
 ``HEADPHONES``, ``HDMI``, ``BLUETOOTH`` or ``OTHER``), ``name`` (the output's description),
 ``mic_muted``, ``has_mic``, ``outputs`` (a list of ``id``, ``name``, ``kind``, ``icon``,
 ``current``), ``icon``, ``tooltip`` and ``label`` (the accessible name). A layout shows itself with
-``Visible: {{ ready }}``.
+``Visible: <| ready |>``.
 
 The module does not predict a change: the setters call the server and the values change when its
 event arrives. While the user drags a slider the module sends no ``volume`` for that use (the

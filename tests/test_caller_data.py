@@ -14,14 +14,14 @@ from tests.test_popup import _remove_log_sinks as _remove_popup_sinks  # noqa: F
 
 FROM_CALLER = (
     "Popup { Name: Menu, Gap: 4, Children { FlexBox { Name: Card, Padding: 6, Children { "
-    "Text { Name: Heading, Text: {{ caller.data.Title }}, Width: AUTO, Height: AUTO, "
+    "Text { Name: Heading, Text: <| caller.data.Title |>, Width: AUTO, Height: AUTO, "
     "Font_Size: 14 } } } } }"
 )
 
 ITEM = (
     "Popup { Name: Menu, Children { FlexBox { Name: Item, Width: 50, Height: 20, "
-    'On_Click { Action: Call, Target: "Btn.picked", Id: {{ caller.data.Id }}, '
-    "Who: {{ caller.use.params.label }} } } } }"
+    'On_Click { Action: Call, Target: "Btn.picked", Id: <| caller.data.Id |>, '
+    "Who: <| caller.use.params.label |> } } } }"
 )
 
 
@@ -92,7 +92,7 @@ def test_a_block_of_the_popup_can_hand_caller_data_to_a_modules_action(tmp_path:
 def test_a_module_used_in_the_popup_reads_caller_in_its_layout(tmp_path: Path) -> None:
     layouts = {
         "Card": "Module { FlexBox { Children { Text { Name: Heading, "
-        "Text: {{ caller.data.Title }}, Width: AUTO, Height: AUTO } } } }"
+        "Text: <| caller.data.Title |>, Width: AUTO, Height: AUTO } } } }"
     }
     popups = "Popup { Name: Menu, Children { Card { Name: C } } }"
     r = running(tmp_path, popups=popups, layouts=layouts)
@@ -107,16 +107,16 @@ def test_a_module_used_in_the_popup_reads_caller_in_its_layout(tmp_path: Path) -
 
 
 def test_a_slot_in_a_shell_file_block_outside_a_popup_is_still_an_error() -> None:
-    shell, findings = read(SHELL % ("Text { Text: {{ caller.data.x }} }", ""))
+    shell, findings = read(SHELL % ("Text { Text: <| caller.data.x |> }", ""))
     assert shell is not None, findings
     out = expand(shell.monitors[0].surfaces[0].children, "S.M.B", {}, lambda k: k, "Main")
     assert [e.message for e in out.errors] == ["a slot outside a module is not built yet"]
 
 
 def test_a_slot_in_a_popup_or_a_tooltip_of_a_shell_file_is_allowed() -> None:
-    popup = "Popup { Name: P, Children { Text { Text: {{ caller.data.x }} } } }"
+    popup = "Popup { Name: P, Children { Text { Text: <| caller.data.x |> } } }"
     tip = (
-        "FlexBox { Width: 10, Height: 10, Tooltip { Children { Text { Text: {{ caller.source }} "
+        "FlexBox { Width: 10, Height: 10, Tooltip { Children { Text { Text: <| caller.source |> "
         "} } } }"
     )
     shell, findings = read(SHELL % (tip, popup))

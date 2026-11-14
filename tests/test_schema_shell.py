@@ -124,11 +124,22 @@ def test_surfaces_and_forms_not_built_in_m1_are_refused(snippet: str, what: str)
     assert f.rule == "not-built" and what in f.message
 
 
+def test_a_for_with_several_variables_is_a_load_error_with_one_hint() -> None:
+    body = BODY.replace(
+        "Spacer { }",
+        "For i, w In <| enumerate(items) |> Key <| w.id |> { Text { Text: <| w.t |> } }",
+    )
+    (f,) = errors(body)
+    assert f.rule == "for-variables" and "i, w" in f.message
+    assert f.hint == "the shell supports one loop variable (For item In <| items |> ...)"
+    assert f.file == "Shells/Main_Shell.tdl" and f.line > 4 and f.column > 1
+
+
 def test_if_and_for_in_children_are_typed_with_their_slots_and_bodies() -> None:
     body = BODY.replace(
         "Spacer { }",
-        "If {{ a > 1 }} { Spacer { } } Else { Text { Text: no } }\n"
-        "For w In {{ items }} Key {{ w.id }} { Text { Text: {{ w.t }} } }",
+        "If <| a > 1 |> { Spacer { } } Else { Text { Text: no } }\n"
+        "For w In <| items |> Key <| w.id |> { Text { Text: <| w.t |> } }",
     )
     shell, findings = read(body)
     assert findings == [] and shell is not None
@@ -151,7 +162,7 @@ def test_a_module_call_inside_if_or_for_is_read_and_a_shell_file_still_has_no_st
     from tess_shell.schema.shell import read_shell as rs
 
     result = tess_dl.parse(
-        HEADER + BODY.replace("Spacer { }", "If {{ true }} { Clock { } }"),
+        HEADER + BODY.replace("Spacer { }", "If <| true |> { Clock { } }"),
         path="Shells/Main_Shell.tdl",
     )
     assert result.document is not None

@@ -9,7 +9,7 @@ import pytest
 
 from tess_shell.cli import main
 
-HEAD = "---\nTDL: 0.1\nName: {name}\n---\n"
+HEAD = "---\nTDL: 0.2\nName: {name}\n---\n"
 
 SHELL = """
 Shell {{

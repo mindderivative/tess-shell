@@ -10,7 +10,7 @@ Keys sent: ``has_player``, ``status`` (``PLAYING``, ``PAUSED``, ``STOPPED``), ``
 ``mpris:artUrl`` that exists, else empty), ``length`` and ``position`` (seconds),
 ``can_play_pause``, ``can_next``, ``can_previous``, ``can_seek``, ``icon``, ``tooltip`` and
 ``label``. ``available`` is the layer's: true while the session bus can be reached. A layout shows
-itself with ``Visible: {{ available and has_player }}``.
+itself with ``Visible: <| available and has_player |>``.
 
 The position is not signalled by MPRIS while a track plays: it is the stored ``Position`` plus the
 time since it was stored times ``Rate``. A tick of one second runs only while the chosen player is

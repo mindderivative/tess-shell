@@ -27,7 +27,7 @@ pytestmark = [
 PROBE_TDL = """
 Module {
     Params { token { Type: string, Default: "" } }
-    Text { Text: {{ label }} }
+    Text { Text: <| label |> }
 }
 """
 PROBE_PY = """

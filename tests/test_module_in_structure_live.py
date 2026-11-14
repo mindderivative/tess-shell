@@ -15,7 +15,7 @@ pytestmark = pytest.mark.tre
 
 ROWS_TDL = (
     HEADER.replace("Main_Shell", "Rows") + "Module { FlexBox { Name: Root, Spacing: %d, Children { "
-    "For r In {{ rows }} Key {{ r.id }} { Pill { title: {{ r.t }} } } } } }\n"
+    "For r In <| rows |> Key <| r.id |> { Pill { title: <| r.t |> } } } } }\n"
 )
 ROWS_PY = """
 from tess_shell import Module
@@ -28,7 +28,7 @@ class Rows(Module):
 PILL_TDL = (
     HEADER.replace("Main_Shell", "Pill")
     + "Module { Params { title { Type: string, Default: none } }\n"
-    "FlexBox { Name: Root, Children { Text { Name: T, Text: {{ label }} } } } }\n"
+    "FlexBox { Name: Root, Children { Text { Name: T, Text: <| label |> } } } }\n"
 )
 PILL_PY = """
 from tess_shell import Module

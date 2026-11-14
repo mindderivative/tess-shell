@@ -141,7 +141,7 @@ class TokenRef:
 
 @dataclass(frozen=True, slots=True)
 class SlotPart:
-    """One ``{{ }}`` slot: its source text and the origin of that text (not of the braces)."""
+    """One ``<| |>`` slot: its source text and the origin of that text (not of the braces)."""
 
     text: str
     origin: Origin = _origin()
@@ -156,7 +156,7 @@ class SlotValue:
     parts: tuple[str | SlotPart, ...]
     origin: Origin = _origin()
     # the key of the module use whose scope the slot reads, when it is not the use of the block it
-    # stands on: a common key written on a module call (``Button { Enabled: {{ can_next }} }``) is
+    # stands on: a common key written on a module call (``Button { Enabled: <| can_next |> }``) is
     # placed on the callee's root block but reads the scope of the module that holds the call
     use: str = field(default="", compare=False)
 
@@ -210,7 +210,7 @@ CONTENT = "Content"
 
 # A Bitmap's ``Source`` that starts with this names pixels the shell decoded and registered
 # (``ImageCache.register``), not a file: an icon from the desktop's theme or an item's pixmap
-# (Tray Module > Icons). ``Icon: {{ ref }}`` and ``Source: {{ ref }}`` take such a reference.
+# (Tray Module > Icons). ``Icon: <| ref |>`` and ``Source: <| ref |>`` take such a reference.
 PIXELS_PREFIX = "pixels:"
 
 # Blocks that tre sends no pointer events: a listener on a ``text`` node is accepted and never
@@ -234,7 +234,7 @@ class Handler:
     # ``Call``: the module whose ``@action`` runs, when it is not the block's own (empty: the
     # module of ``use``)
     module: str = ""
-    # arguments written as ``{{ }}`` slots: evaluated when the event fires (Events and Actions >
+    # arguments written as ``<| |>`` slots: evaluated when the event fires (Events and Actions >
     # Call), with ``event`` in scope, the module's values and the enclosing ``For`` variables
     slots: Mapping[str, SlotValue] = field(default_factory=dict, compare=False)
     # the ``For`` entries around the block, outermost first (set by the model): what a slot in
@@ -309,7 +309,7 @@ class UseNode:
 
 @dataclass(frozen=True, slots=True)
 class IfNode:
-    """``If {{ cond }} { ... } Else { ... }``. The model picks the branch; the binder refuses an
+    """``If <| cond |> { ... } Else { ... }``. The model picks the branch; the binder refuses an
     unresolved one."""
 
     condition: SlotPart | None = None
@@ -321,7 +321,7 @@ class IfNode:
 
 @dataclass(frozen=True, slots=True)
 class ForNode:
-    """``For w In {{ items }} Key {{ w.id }} { ... }``. ``name`` is what the entries are called
+    """``For w In <| items |> Key <| w.id |> { ... }``. ``name`` is what the entries are called
     (``<name>_0001``): the head of the body's first block, else ``For``."""
 
     variable: str = ""

@@ -119,7 +119,7 @@ KEY_DOCS: dict[str, str] = {
     "Justify_Content": "How the children share the space along the stacking direction.",
     "Spacing": "The space between the children, in pixels.",
     # text
-    "Text": "The words; may hold {{ }} slots in a module.",
+    "Text": "The words; may hold <| |> slots in a module.",
     "Selectable": "Lets the user select the text.",
     "Max_Lines": "Cuts the text after this many lines; 0 is no limit.",
     "Font_Family": "A font family name, or a list of them in the order of fallback.",

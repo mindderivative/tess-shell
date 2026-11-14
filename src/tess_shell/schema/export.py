@@ -105,7 +105,7 @@ _KINDS: dict[str, tuple[str, str]] = {
     # export kind: (widget hint, note); the loader kinds each one covers come from LOADER_KINDS
     "string": (
         "text",
-        "A string, written quoted or as one word; a module's layout may hold {{ }} slots in it.",
+        "A string, written quoted or as one word; a module's layout may hold <| |> slots in it.",
     ),
     "text_or_number": ("text", "A number or a string."),
     "name": ("text", "An identifier: letters, digits and _, starting with a letter."),
@@ -172,7 +172,7 @@ _KINDS: dict[str, tuple[str, str]] = {
     ),
     "expression": (
         "expression",
-        "{{ }}: an expression of the module's values, evaluated in a "
+        "<| |>: an expression of the module's values, evaluated in a "
         "module's layout; a key with slot true takes it.",
     ),
 }

@@ -7,7 +7,7 @@ Keys sent: ``present`` (UPower's ``IsPresent``), ``percent``, ``state``, ``icon`
 (the same icon with a dot beside it, in one document: the name plus ``+dot``), ``low``,
 ``critical``, ``tooltip``, ``label`` (the accessible name) and, when the power-profiles service is
 on the bus, ``profile`` (read only). ``available`` is the layer's: true while UPower is on the bus.
-A layout shows itself with ``If {{ available and present }}``.
+A layout shows itself with ``If <| available and present |>``.
 """
 
 from __future__ import annotations

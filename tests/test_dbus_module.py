@@ -150,8 +150,8 @@ Module {
     FlexBox {
         Name: Row
         Children {
-            Text { Name: Clock, Text: {{ time }} }
-            If {{ available }} {
+            Text { Name: Clock, Text: <| time |> }
+            If <| available |> {
                 Text { Name: Shown, Text: shown }
             }
         }

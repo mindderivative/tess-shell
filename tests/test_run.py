@@ -137,7 +137,7 @@ def test_signal_right_after_starting_still_stops(shell_factory, tmp_path: Path) 
 def test_invalid_settings_exit_1_with_position(shell_factory, tmp_path: Path) -> None:  # type: ignore[no-untyped-def]
     cfg = tmp_path / "cfg"
     cfg.mkdir()
-    (cfg / "settings.tdl").write_text("---\nTDL: 0.1\nName: Settings\n---\nSettings {\n")
+    (cfg / "settings.tdl").write_text("---\nTDL: 0.2\nName: Settings\n---\nSettings {\n")
     shell = shell_factory(cfg)
     assert shell.finish() == 1
     assert "settings.tdl:5:" in shell.stderr
@@ -176,7 +176,7 @@ def test_no_compositor_exit_2(tmp_path: Path) -> None:
 def test_bad_shell_file_stops_run_with_exit_1(shell_factory, tmp_path: Path) -> None:  # type: ignore[no-untyped-def]
     cfg = tmp_path / "cfg"
     (cfg / "Shells").mkdir(parents=True)
-    (cfg / "Shells" / "Bad_Shell.tdl").write_text("---\nTDL: 0.1\nName: B\n---\nShell {\n")
+    (cfg / "Shells" / "Bad_Shell.tdl").write_text("---\nTDL: 0.2\nName: B\n---\nShell {\n")
     shell = shell_factory(cfg)
     assert shell.finish() == 1
     assert "Shells/Bad_Shell.tdl:5:7" in shell.stderr

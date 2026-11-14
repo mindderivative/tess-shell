@@ -19,7 +19,7 @@ from tests.test_run import Shell
 pytestmark = [pytest.mark.tre, pytest.mark.skipif(not HAVE_DAEMON, reason="no dbus-daemon")]
 
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\n"
+    "---\nTDL: 0.2\nName: Settings\n---\n"
     "Settings { Logging { Level: DEBUG }  Appearance { Follow_Desktop: %s } }\n"
 )
 THEMED = BODY.replace('Style { Fill: "#1f1f1f" }', "Style { Fill: $color.surface }")

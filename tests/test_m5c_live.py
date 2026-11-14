@@ -29,7 +29,7 @@ TEXT = (228, 234, 241)  # $color.on_surface of the Default theme
 WARNING = (230, 187, 106)
 MUTED = (159, 174, 191)
 SETTINGS = (
-    "---\nTDL: 0.1\nName: S\n---\n"
+    "---\nTDL: 0.2\nName: S\n---\n"
     "Settings { Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: false } }\n"
 )

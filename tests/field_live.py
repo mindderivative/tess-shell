@@ -146,7 +146,7 @@ def _defs(extra: dict[str, str]) -> dict[str, ModuleDef]:
     texts: dict[str, str] = {
         "TextInput": (SHIPPED / "TextInput" / "TextInput_Module.tdl").read_text(),
         "TextEditor": (SHIPPED / "TextEditor" / "TextEditor_Module.tdl").read_text(),
-        "Host": "---\nTDL: 0.1\nName: Host\n---\n" + HOST_TDL,
+        "Host": "---\nTDL: 0.2\nName: Host\n---\n" + HOST_TDL,
         **extra,
     }
     stubs: dict[str, ModuleDef] = {}

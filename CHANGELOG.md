@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Moved to tesserae-dl 0.2.0 (floor `>=0.2.0,<0.3`; language TDL 0.2): a slot is written `<| expression |>` and `{{ }}` is refused by the parser (`tdl-unexpected-text`, with the hint `Write <| expression |>`); every shipped `.tdl` file, fixture, example, hint, doc line and the README use the new form and the header `TDL: 0.2` (`Shell: 0.1` is the shell's own version and stays). `tess_dl` accepts any version of its own major number, so the shell checks the `TDL:` key itself: a file written for TDL 0.1 is an error `tdl-old-version` at the key (and a newer one a `version-pin`), also for `settings.tdl`, and the UID write skips such a file. `tdl-double-close` no longer exists (`}}` is two closing braces). A `For` with several loop variables (`For i, item In <| enumerate(xs) |> ...`, new in the language) is a load error `for-variables` with the hint `the shell supports one loop variable`; the shell has one.
 - Package skeleton: `pyproject.toml`, `src/tess_shell`, tooling (ruff, mypy, pytest).
 - Command line `tesserae-shell` with `version`; `run` and `check` are wired in later tasks; the other subcommands report "not implemented in M0".
 - Config directory lookup (`--config-dir`, `$XDG_CONFIG_HOME`, `~/.config`) and `settings.tdl` reading: every key of the Settings File note, one finding per problem with `file:line:column`.

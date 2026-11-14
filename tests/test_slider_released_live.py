@@ -26,7 +26,7 @@ pytestmark = [
 
 OUT = (1280, 720)
 SETTINGS = (
-    "---\nTDL: 0.1\nName: S\n---\n"
+    "---\nTDL: 0.2\nName: S\n---\n"
     "Settings { Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: false } }\n"
 )

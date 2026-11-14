@@ -41,7 +41,7 @@ def themed(**style: object) -> SurfaceManager:
     theme, _ = read_theme(doc, "T_Theme.tdl")
     assert theme is not None
     sheet_doc = tess_dl.parse(
-        '---\nTDL: 0.1\nName: S\n---\nStylesheet { Rule { Selector: "Text", '
+        '---\nTDL: 0.2\nName: S\n---\nStylesheet { Rule { Selector: "Text", '
         "Foreground: $color.on_surface } }",
         path="S_Stylesheet.tdl",
     ).document
@@ -146,7 +146,7 @@ def hoverable(appearance: Appearance) -> SurfaceManager:
     assert doc is not None
     theme, _ = read_theme(doc, "T_Theme.tdl")
     sheet_doc = tess_dl.parse(
-        "---\nTDL: 0.1\nName: S\n---\nStylesheet {\n"
+        "---\nTDL: 0.2\nName: S\n---\nStylesheet {\n"
         '  Rule { Selector: "FlexBox", Background: $color.surface }\n'
         '  Rule { Selector: "#Btn:hovered", Background: $color.primary }\n'
         '  Rule { Selector: "#Btn:pressed", Background: $color.on_surface }\n}',

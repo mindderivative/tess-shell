@@ -129,7 +129,7 @@ def clock_config(tmp_path: Path, fmt: str) -> Path:
     )
     write_example(tmp_path, body)
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: Settings\n---\nSettings { Logging { Level: DEBUG } }\n"
+        "---\nTDL: 0.2\nName: Settings\n---\nSettings { Logging { Level: DEBUG } }\n"
     )
     return tmp_path
 
@@ -232,8 +232,8 @@ Module {
     FlexBox {
         Name: Row
         Children {
-            For w In {{ items }} Key {{ w.id }} {
-                Text { Text: {{ w.title }}, Foreground: "#ffffff" }
+            For w In <| items |> Key <| w.id |> {
+                Text { Text: <| w.title |>, Foreground: "#ffffff" }
             }
         }
     }
@@ -253,7 +253,7 @@ def test_a_for_follows_a_modules_list_while_the_shell_runs(
     (folder / "Todo_Module.tdl").write_text(HEADER.replace("Main_Shell", "Todo") + TODO_TDL)
     (folder / "Todo_Module.py").write_text(TODO_PY)
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: Settings\n---\nSettings { Logging { Level: DEBUG } }\n"
+        "---\nTDL: 0.2\nName: Settings\n---\nSettings { Logging { Level: DEBUG } }\n"
     )
     shell = start(private_sway, tmp_path)
     try:

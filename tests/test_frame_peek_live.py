@@ -69,7 +69,7 @@ def run(sway: PrivateSway, cfg: Path, blend: str) -> list[str]:
     body = f"\nShell {{ Monitor {{ Name: Main, Index: 0, Children {{ {FRAME} }} }} }}\n"
     (cfg / "Shells" / "Main_Shell.tdl").write_text(HEADER + body)
     (cfg / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\n"
+        "---\nTDL: 0.2\nName: S\n---\n"
         f"Settings {{ Logging {{ Level: DEBUG }} Debug {{ Frame_Blend: {blend} }} }}\n"
     )
     sway.msg("output", "*", "resolution", f"{OUT[0]}x{OUT[1]}")
@@ -197,7 +197,7 @@ def test_dragging_the_tray_the_contour_and_the_content_move_together(
     body = f"\nShell {{ Monitor {{ Name: Main, Index: 0, Children {{ {FRAME} }} }} }}\n"
     (tmp_path / "Shells" / "Main_Shell.tdl").write_text(HEADER + body)
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\n"
+        "---\nTDL: 0.2\nName: S\n---\n"
         f"Settings {{ Logging {{ Level: DEBUG }} Debug {{ Frame_Blend: {blend} }} }}\n"
     )
     private_sway.msg("output", "*", "resolution", f"{OUT[0]}x{OUT[1]}")
@@ -273,7 +273,7 @@ def test_dragging_the_tray_the_content_fades_with_the_contour(
     body = f"\nShell {{ Monitor {{ Name: Main, Index: 0, Children {{ {FRAME} }} }} }}\n"
     (tmp_path / "Shells" / "Main_Shell.tdl").write_text(HEADER + body)
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\n"
+        "---\nTDL: 0.2\nName: S\n---\n"
         f"Settings {{ Logging {{ Level: DEBUG }} Debug {{ Frame_Blend: {blend} }} }}\n"
     )
     private_sway.msg("output", "*", "resolution", f"{OUT[0]}x{OUT[1]}")

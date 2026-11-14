@@ -35,7 +35,7 @@ SECRET = "hunter2-not-for-status"
 PROBE_TDL = """
 Module {
     Params { token { Type: string, Default: "" } }
-    Text { Text: {{ label }} }
+    Text { Text: <| label |> }
 }
 """
 PROBE_PY = """
@@ -73,7 +73,7 @@ def write_config(cfg: Path, *, control: bool = True, probe: bool = True) -> None
     write_example(cfg, body)
     extra = "" if control else "Control: false,"
     (cfg / "settings.tdl").write_text(
-        f"---\nTDL: 0.1\nName: S\n---\nSettings {{ {extra} Logging {{ Level: DEBUG }} }}\n"
+        f"---\nTDL: 0.2\nName: S\n---\nSettings {{ {extra} Logging {{ Level: DEBUG }} }}\n"
     )
     if probe:
         folder = cfg / "Modules" / "Probe"

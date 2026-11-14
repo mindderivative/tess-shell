@@ -557,7 +557,7 @@ class LiveTree:
         try:
             if link.single:
                 value = results[0]
-                if value is None:  # ``{{ x if y else None }}``: the key is left as it is
+                if value is None:  # ``<| x if y else None |>``: the key is left as it is
                     return None
             else:
                 value = "".join(r if isinstance(r, str) else str(r) for r in results)

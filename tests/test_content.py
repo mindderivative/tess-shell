@@ -11,7 +11,7 @@ import tess_dl
 from tess_shell.schema.shell import read_module
 from tests.widgets_live import running
 
-SHEET_HEAD = "---\nTDL: 0.1\nName: Extra\n---\n"
+SHEET_HEAD = "---\nTDL: 0.2\nName: Extra\n---\n"
 DRIVER = """Module {
     FlexBox {
         Name: Root
@@ -20,7 +20,7 @@ DRIVER = """Module {
                 Name: Fold
                 Expanded: true
                 Children {
-                    Label { Name: Said, Text: {{ title }} }
+                    Label { Name: Said, Text: <| title |> }
                     FlexBox { Name: Hit, Width: 20, Height: 10, On_Click: pressed }
                 }
             }
@@ -81,7 +81,7 @@ def test_children_on_a_call_whose_module_has_no_content_marker_is_an_error() -> 
 
 
 def _read(text: str) -> tuple[Any, list[Any]]:
-    doc = tess_dl.parse("---\nTDL: 0.1\nName: Box_M\n---\n" + text, path="Modules/Box_M.tdl")
+    doc = tess_dl.parse("---\nTDL: 0.2\nName: Box_M\n---\n" + text, path="Modules/Box_M.tdl")
     assert doc.document is not None
     return read_module(doc.document, "Box_M.tdl")
 

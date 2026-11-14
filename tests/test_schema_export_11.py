@@ -279,7 +279,7 @@ def tre_of(window: Window, block: str, lines: list[str], names: tuple[str, ...])
     """Load a module with one ``block`` that has ``lines`` written, bind it, read tre's names."""
     body = "\n".join(lines)
     module = f"Module {{ Children {{ {block} {{\n{body}\n}} }} }}"
-    head = "---\nTDL: 0.1\nName: Probe\n---\n"
+    head = "---\nTDL: 0.2\nName: Probe\n---\n"
     result = tess_dl.parse(head + module, path="Probe_Module.tdl")
     assert result.document is not None and not result.errors
     found, findings = read_module(
@@ -479,7 +479,7 @@ def test_a_param_default_passes_the_check_of_its_kind() -> None:
     for name in shipped_names():
         for param, entry in D["modules"][name]["params"].items():
             assert entry["default"] is not None, (name, param)
-            result = tess_dl.parse(f"---\nTDL: 0.1\nName: P\n---\nX {{ K: {entry['default']} }}")
+            result = tess_dl.parse(f"---\nTDL: 0.2\nName: P\n---\nX {{ K: {entry['default']} }}")
             assert result.document is not None and not result.errors, (name, param)
             (prop,) = result.document.root.entries
             assert isinstance(prop, tess_dl.Property)
@@ -569,7 +569,7 @@ def test_a_use_of_every_module_with_its_defaults_loads_as_the_export_says() -> N
             "Bar { Name: B, Edge: TOP, Width: 10, Height: 10, "
             f"Children {{ {name} {{ {args} }} }} }}"
         )
-        head = "---\nTDL: 0.1\nShell: 0.1\nName: S\n---\n"
+        head = "---\nTDL: 0.2\nShell: 0.1\nName: S\n---\n"
         text = head + f"Shell {{ Monitor {{ Name: M, Children {{ {call} }} }} }}"
         result = tess_dl.parse(text, path="S_Shell.tdl")
         assert result.document is not None and not result.errors, name

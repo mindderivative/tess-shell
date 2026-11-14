@@ -26,12 +26,12 @@ CFG = ROOT / "gallery"
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 FIX = REPO / "tests" / "fixtures"
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
+    "---\nTDL: 0.2\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: true }\n}\n"
 )
 
 TOGGLER_TDL = """---
-TDL: 0.1
+TDL: 0.2
 Name: Toggler
 ---
 
@@ -52,10 +52,10 @@ Module {
                 On_Click: flip
                 Children { Text { Text: "Open / close", Width: AUTO, Height: AUTO } }
             }
-            Text { Name: Said, Text: {{ said }}, Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
+            Text { Name: Said, Text: <| said |>, Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
             Expander {
                 Name: Fold
-                Expanded: {{ open }}
+                Expanded: <| open |>
                 On_Changed: finished
                 Children {
                     FlexBox {

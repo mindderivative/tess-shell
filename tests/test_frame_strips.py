@@ -30,7 +30,7 @@ Module {
     FlexBox {
         Children {
             Rectangle { Name: Dot, Width: 10, Height: 10, Fill: "#ff0000" }
-            Text { Name: Face, Text: {{ time }}, Style { Foreground: "#ffffff" } }
+            Text { Name: Face, Text: <| time |>, Style { Foreground: "#ffffff" } }
         }
     }
 }
@@ -38,7 +38,7 @@ Module {
 
 
 def module() -> dict[str, ModuleDef]:
-    result = tess_dl.parse("---\nTDL: 0.1\nName: Label\n---\n" + LABEL, path="Label_Module.tdl")
+    result = tess_dl.parse("---\nTDL: 0.2\nName: Label\n---\n" + LABEL, path="Label_Module.tdl")
     assert result.document is not None
     found, findings = read_module(result.document, "Label_Module.tdl")
     assert found is not None, findings

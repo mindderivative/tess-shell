@@ -20,7 +20,7 @@ from tests.test_run import Shell
 pytestmark = [pytest.mark.tre, pytest.mark.skipif(not HAVE_DAEMON, reason="no dbus-daemon")]
 
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\n"
+    "---\nTDL: 0.2\nName: Settings\n---\n"
     "Settings { Logging { Level: DEBUG }  Appearance { Follow_Desktop: false } }\n"
 )
 
@@ -29,7 +29,7 @@ Module {
     FlexBox {
         Children {
             Text { Name: Always, Text: "svc" }
-            If {{ available }} { Text { Name: Shown, Text: {{ percent }} } }
+            If <| available |> { Text { Name: Shown, Text: <| percent |> } }
         }
     }
 }

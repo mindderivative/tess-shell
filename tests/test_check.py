@@ -5,7 +5,7 @@ import pytest
 
 from tess_shell.cli import main
 
-HEAD = "---\nTDL: 0.1\nName: X\n---\n"
+HEAD = "---\nTDL: 0.2\nName: X\n---\n"
 
 
 def make(cfg: Path, relative: str, body: str) -> Path:
@@ -116,3 +116,29 @@ def test_a_schema_error_and_a_warning_are_both_printed_and_only_the_error_fails(
     )
     assert main(["check", "--config-dir", str(tmp_path)]) == 0
     assert "warning: the Bar key Auto_Hide is not built in M1" in capsys.readouterr().err
+
+
+def test_a_slot_written_with_double_braces_is_refused_with_its_hint(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    make(tmp_path, "Modules/Clock/Clock_Module.tdl", "Module {\n  Text { Text: {{ time }} }\n}\n")
+    assert main(["check", "--json", "--config-dir", str(tmp_path)]) == 1
+    (error,) = json.loads(capsys.readouterr().out)["errors"]
+    assert error["rule"] == "tdl-unexpected-text"
+    assert (error["file"], error["line"]) == ("Modules/Clock/Clock_Module.tdl", 6)
+    assert error["column"] > 1 and "<| expression |>" in error["message"]
+    assert error["hint"] == "Write <| expression |>"
+
+
+def test_a_file_written_for_tdl_0_1_is_refused_not_read_silently(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "Shells" / "Main_Shell.tdl"
+    path.parent.mkdir(parents=True)
+    path.write_text("---\nTDL: 0.1\nName: X\n---\nShell {\n}\n", encoding="utf-8")
+    assert main(["check", "--json", "--config-dir", str(tmp_path)]) == 1
+    (error,) = json.loads(capsys.readouterr().out)["errors"]
+    assert error["rule"] == "tdl-old-version"
+    assert (error["file"], error["line"], error["column"]) == ("Shells/Main_Shell.tdl", 2, 1)
+    assert "TDL 0.1" in error["message"] and "TDL 0.2" in error["message"]
+    assert "<| expression |>" in error["hint"] and "TDL: 0.2" in error["hint"]

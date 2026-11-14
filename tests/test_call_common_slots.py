@@ -1,7 +1,7 @@
-"""A key written on a module call and placed on its root block (``Button { Enabled: {{ ok }} }``,
-``Marquee_Text { Width: {{ params.w }} }``) is a slot of the module that holds the call: it reads
+"""A key written on a module call and placed on its root block (``Button { Enabled: <| ok |> }``,
+``Marquee_Text { Width: <| params.w |> }``) is a slot of the module that holds the call: it reads
 that module's values and params, and follows them (found with the Media module, whose layout calls
-Buttons with ``Enabled: {{ can_next }}``; the slot used to be read in the callee's own scope and
+Buttons with ``Enabled: <| can_next |>``; the slot used to be read in the callee's own scope and
 failed with "not defined")."""
 
 from __future__ import annotations
@@ -10,8 +10,8 @@ from tests.widgets_live import running
 
 DRIVER = (
     "Module { Params { w { Type: number, Default: 50 } } FlexBox { Name: Root, Children { "
-    'Button { Name: B, Icon: "mdi:home", Label: "B", Enabled: {{ ok }}, Width: {{ params.w }} } '
-    'If {{ 1 == 1 }} { Button { Name: C, Icon: "mdi:home", Label: "C", Enabled: {{ ok }} } } '
+    'Button { Name: B, Icon: "mdi:home", Label: "B", Enabled: <| ok |>, Width: <| params.w |> } '
+    'If <| 1 == 1 |> { Button { Name: C, Icon: "mdi:home", Label: "C", Enabled: <| ok |> } } '
     "} } }"
 )
 CODE = (
@@ -38,8 +38,8 @@ def test_a_slot_on_a_module_call_reads_the_scope_of_the_module_that_holds_the_ca
 
 FOR_DRIVER = (
     "Module { FlexBox { Name: Root, Children { "
-    "For e In {{ rows }} Key {{ e.id }} { "
-    'Button { Name: B, Icon: "mdi:home", Label: {{ e.name }}, Enabled: {{ e.on }} } } } } }'
+    "For e In <| rows |> Key <| e.id |> { "
+    'Button { Name: B, Icon: "mdi:home", Label: <| e.name |>, Enabled: <| e.on |> } } } } }'
 )
 FOR_CODE = (
     "from tess_shell import Module\n"
@@ -51,7 +51,7 @@ FOR_CODE = (
 
 
 def test_a_slot_on_a_module_call_in_a_for_reads_the_entry_s_variables() -> None:
-    """Found with the Tray menu: ``MenuItem { Enabled: {{ e.enabled }} }`` in a ``For e In ...``
+    """Found with the Tray menu: ``MenuItem { Enabled: <| e.enabled |> }`` in a ``For e In ...``
     said ``'e' is not defined``: the key placed on the callee's root read the holder's scope
     without the entry."""
     with running("Driver { }", driver=FOR_DRIVER, driver_py=FOR_CODE) as w:

@@ -38,12 +38,12 @@ ROOT = Path("/tmp/tess-kwin-m4a")
 CFG = ROOT / "gallery"
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
+    "---\nTDL: 0.2\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default, Gallery, Gallery_Fields], Follow_Desktop: true }\n}\n"
 )
 
 STYLESHEET = """---
-TDL: 0.1
+TDL: 0.2
 Name: Gallery
 ---
 
@@ -87,7 +87,7 @@ Stylesheet {
 """
 
 FIELDS_STYLESHEET = """---
-TDL: 0.1
+TDL: 0.2
 Name: Gallery_Fields
 ---
 
@@ -100,7 +100,7 @@ Stylesheet {
 """
 
 ECHO_TDL = """---
-TDL: 0.1
+TDL: 0.2
 Name: Echo
 ---
 
@@ -113,8 +113,8 @@ Module {
         Width: 270
         Children {
             Text { Text: "last event", Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
-            Text { Name: Last, Text: {{ last }}, Width: 270, Height: AUTO, Font_Size: 13 }
-            Text { Name: Count, Text: {{ count }}, Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
+            Text { Name: Last, Text: <| last |>, Width: 270, Height: AUTO, Font_Size: 13 }
+            Text { Name: Count, Text: <| count |>, Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
         }
     }
 }
@@ -154,7 +154,7 @@ class Echo(Module):
 """
 
 METER_TDL = """---
-TDL: 0.1
+TDL: 0.2
 Name: Meter
 ---
 
@@ -167,7 +167,7 @@ Module {
         Name: Root
         Width: 180
         Height: 14
-        Enabled: {{ params.enabled }}
+        Enabled: <| params.enabled |>
         Children {
             Rectangle { Name: Track, Part: track, Width: 180, Height: 14 }
             Rectangle { Name: Fill, Part: fill, Width: 110, Height: 14, Align_Self: START }
@@ -184,7 +184,7 @@ class Meter(Module):
 """
 
 PAD_TDL = """---
-TDL: 0.1
+TDL: 0.2
 Name: Pad
 ---
 
@@ -205,7 +205,7 @@ Module {
                 Align_Items: CENTER
                 Justify_Content: CENTER
                 Style { Background: $color.surface_raised, Border_Width: 1, Border_Color: $color.outline, Corner_Radius: 6 }
-                On_Click { Action: Call, Target: "Pad.log_press", Label: {{ params.label }}, Amount: 5, Kind: {{ event.name }} }
+                On_Click { Action: Call, Target: "Pad.log_press", Label: <| params.label |>, Amount: 5, Kind: <| event.name |> }
                 Children { Text { Text: "Call with arguments", Width: AUTO, Height: AUTO } }
             }
             FlexBox {
@@ -218,7 +218,7 @@ Module {
                 On_Click: open_menu
                 Children { Text { Text: "Open the popup (caller.data)", Width: AUTO, Height: AUTO } }
             }
-            Text { Name: Last, Text: {{ last }}, Width: AUTO, Height: AUTO }
+            Text { Name: Last, Text: <| last |>, Width: AUTO, Height: AUTO }
         }
     }
 }
@@ -356,13 +356,13 @@ POPUP = """Popup {
             Padding: 12
             Spacing: 6
             Children {
-                Text { Name: Menu_Title, Text: {{ caller.data.Title }}, Width: AUTO, Height: AUTO, Font_Size: 15 }
-                Text { Name: Menu_Source, Text: called by {{ caller.module }} at {{ caller.use.name }}, Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
+                Text { Name: Menu_Title, Text: <| caller.data.Title |>, Width: AUTO, Height: AUTO, Font_Size: 15 }
+                Text { Name: Menu_Source, Text: called by <| caller.module |> at <| caller.use.name |>, Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
                 FlexBox {
                     Name: Menu_Call
                     Padding: 8
                     Style { Background: $color.surface, Corner_Radius: 6 }
-                    On_Click { Action: Call, Target: "Pad.log_press", Id: {{ caller.data.Count }}, From: "popup" }
+                    On_Click { Action: Call, Target: "Pad.log_press", Id: <| caller.data.Count |>, From: "popup" }
                     Children { Text { Text: "Call with caller.data.Count", Width: AUTO, Height: AUTO } }
                 }
                 FlexBox {

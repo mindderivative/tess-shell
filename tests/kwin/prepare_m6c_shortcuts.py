@@ -36,7 +36,7 @@ ROOT = Path("/tmp/tess-kwin-m6c")
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 KEY_ONE = "Ctrl+Alt+Shift+F11"
 KEY_TWO = "Ctrl+Alt+Shift+F12"
-HEAD = "---\nTDL: 0.1\nName: Settings\n---\n"
+HEAD = "---\nTDL: 0.2\nName: Settings\n---\n"
 SHELL = """
 Shell {
     Monitor {

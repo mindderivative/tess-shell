@@ -24,7 +24,7 @@ from tests.kwin import prepare_m4c_gallery as gallery  # noqa: E402
 from tests.sway import PrivateSway  # noqa: E402
 
 AUTO_TDL = """---
-TDL: 0.1
+TDL: 0.2
 Name: Auto
 ---
 Module {

@@ -124,7 +124,7 @@ def test_a_popup_name_is_unique_across_the_shell() -> None:
 BTN = 'Module { FlexBox { Name: Root, Width: 60, Height: 20, Style { Background: "#336699" } } }'
 BTN_TIP = (
     "Module { FlexBox { Name: Root, Width: 60, Height: 20, Tooltip { Children { Text { "
-    "Text: {{ note }}, Width: AUTO, Height: AUTO } } } } }"
+    "Text: <| note |>, Width: AUTO, Height: AUTO } } } } }"
 )
 
 
@@ -673,7 +673,7 @@ def test_ctx_popup_opens_beside_the_use_whose_action_runs_and_close_popup_closes
     from tess_shell.binder.model import NO_ORIGIN, Handler
 
     layout = (
-        "---\nTDL: 0.1\nName: Menu_Button\n---\n"
+        "---\nTDL: 0.2\nName: Menu_Button\n---\n"
         "Module { FlexBox { Width: 10, Height: 10, On_Click: open_menu } }\n"
     )
     result = tess_dl.parse(layout, path="Modules/Menu_Button_Module.tdl")

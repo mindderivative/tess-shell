@@ -13,7 +13,7 @@ shows: an SVG document or ``pixels:...``; the attention icon while the status is
 and the item has one), ``tooltip_title``, ``tooltip_text``, ``attention``, ``label`` (the accessible
 name: the title, and "needs attention") and ``description`` (the tooltip's text). ``available`` is
 the layer's: the watcher is on the session bus. A layout shows itself with
-``Visible: {{ available and has_items }}``.
+``Visible: <| available and has_items |>``.
 
 The clicks are actions on the loop thread: ``activate``, ``secondary``, ``scroll`` and ``menu``. The
 item's menu is the shell's own: ``AboutToShow`` and ``GetLayout`` of its ``com.canonical.dbusmenu``,

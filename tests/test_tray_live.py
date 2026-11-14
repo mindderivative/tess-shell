@@ -32,7 +32,7 @@ pytestmark = [
 OUT = (1280, 720)
 RAISED = (27, 34, 43)  # $color.surface_raised of the Default theme: the Popup's background
 SETTINGS = (
-    "---\nTDL: 0.1\nName: S\n---\n"
+    "---\nTDL: 0.2\nName: S\n---\n"
     "Settings { Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: false } }\n"
 )

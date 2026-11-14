@@ -9,7 +9,7 @@ from tess_shell.schema.findings import Finding
 from tess_shell.schema.model import ModuleDef
 from tess_shell.schema.shell import read_module, read_shell
 
-HEAD = "---\nTDL: 0.1\nName: {name}\n---\n"
+HEAD = "---\nTDL: 0.2\nName: {name}\n---\n"
 
 CLOCK = """
 Module {
@@ -22,8 +22,8 @@ Module {
     Children {
         Text {
             Name: Face
-            Text: {{ time }}
-            Width: Now {{ params.size }}
+            Text: <| time |>
+            Width: Now <| params.size |>
             Style { Foreground: "#ffffff" }
         }
     }
@@ -71,8 +71,8 @@ def test_a_slot_keeps_its_text_and_the_origin_of_the_text_not_the_braces() -> No
     assert isinstance(part, m.SlotPart) and part.text == " time "
     lines = (HEAD.format(name="Clock") + CLOCK).splitlines()
     text = lines[part.origin.line - 1]
-    assert text[part.origin.column - 1 :].startswith(" time }}")  # the text, not the braces
-    assert "Text: {{" in text
+    assert text[part.origin.column - 1 :].startswith(" time |>")  # the text, not the braces
+    assert "Text: <|" in text
 
 
 def test_a_template_has_literal_and_slot_parts() -> None:
@@ -172,5 +172,5 @@ def test_an_unknown_head_lists_modules_among_the_names_that_fit() -> None:
 def test_a_slot_in_a_param_is_kept_for_the_model() -> None:
     """The schema keeps the slot; the model evaluates it in the scope of the call's place (a module,
     or a Popup); a slot in a shell file's own block is refused there (tests/test_param_slots.py)."""
-    result, findings = shell(SHELL.replace('format: "%H:%M:%S"', "format: {{ x }}"))
+    result, findings = shell(SHELL.replace('format: "%H:%M:%S"', "format: <| x |>"))
     assert result is not None and findings == []

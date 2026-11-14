@@ -199,7 +199,7 @@ def _choices(block: str, key: str) -> tuple[str, ...]:
 
 
 def slot_value(ctx: _Ctx, prop: Property) -> m.SlotValue | None:
-    """A value written with ``{{ }}`` slots, or ``None`` for a plain value."""
+    """A value written with ``<| |>`` slots, or ``None`` for a plain value."""
     value = prop.value
     parts: list[str | m.SlotPart] = []
     if isinstance(value, tess_dl.Slot):
@@ -375,12 +375,20 @@ def _for(ctx: _Ctx, entry: tess_dl.For) -> m.ForNode:
         if isinstance(n, m.Node | m.UseNode)
     ]
     head = heads[0] if heads else "For"
+    if len(entry.variables) > 1:
+        ctx.add(
+            entry.origin,
+            "for-variables",
+            f"For names {len(entry.variables)} loop variables ({', '.join(entry.variables)}), "
+            "and the shell has one",
+            "the shell supports one loop variable (For item In <| items |> ...)",
+        )
     if not _NAME.match(entry.variable):
         ctx.add(
             entry.origin,
             "bad-name",
             f"the loop variable {entry.variable!r} must be letters, digits and _",
-            "write For item In {{ items }} Key {{ item.id }}",
+            "write For item In <| items |> Key <| item.id |>",
         )
     return m.ForNode(
         variable=entry.variable,
@@ -457,7 +465,7 @@ _FALLBACK_ICON = "mdi:image-broken-variant"
 
 
 def _param_value(ctx: _Ctx, module: str, decl: ParamDecl, entry: Property) -> m.Value | None:
-    """The value a call gives a param. A ``{{ }}`` slot is kept (the model evaluates it in the scope
+    """The value a call gives a param. A ``<| |>`` slot is kept (the model evaluates it in the scope
     of the place that wrote the call); a ``path`` becomes absolute; an ``icon`` becomes the SVG
     document of the named icon or file, or the absolute path of a bitmap file."""
     slot = slot_value(ctx, entry)
@@ -881,8 +889,7 @@ def _action_handler(
                 ctx.add(
                     e.value_origin,
                     "bad-value",
-                    f"{e.key}: an argument is a string, a number, true or false, or a "
-                    "{{ }} slot",
+                    f"{e.key}: an argument is a string, a number, true or false, or a <| |> slot",
                     "",
                 )
                 return None
@@ -917,7 +924,7 @@ def _action_handler(
             ctx.add(
                 at,
                 "bad-value",
-                f"{name} takes literal arguments: a {{{{ }}}} slot is for the arguments of Call "
+                f"{name} takes literal arguments: a <| |> slot is for the arguments of Call "
                 "and of a module's own action (and for the Data of Show and Toggle)",
                 "",
             )
@@ -958,7 +965,7 @@ def _data_block(
             ctx.add(
                 e.origin,
                 "bad-value",
-                "Data holds Name: value entries: text, numbers, true or false, or a {{ }} slot",
+                "Data holds Name: value entries: text, numbers, true or false, or a <| |> slot",
                 "",
             )
             return False
@@ -971,7 +978,7 @@ def _data_block(
             ctx.add(
                 e.value_origin,
                 "bad-value",
-                f"Data.{e.key}: a string, a number, true or false, or a {{{{ }}}} slot",
+                f"Data.{e.key}: a string, a number, true or false, or a <| |> slot",
                 "",
             )
             return False
@@ -1740,7 +1747,7 @@ def _tooltip_name(
 
 def _tooltip_text(ctx: _Ctx, entry: Property) -> m.TooltipRef | None:
     """``Tooltip: "Save the file"``: the short form of an inline tooltip Popup that holds the text
-    on one line (Standard Modules > Tooltip). The text may hold ``{{ }}`` slots in a module. It is
+    on one line (Standard Modules > Tooltip). The text may hold ``<| |>`` slots in a module. It is
     also the block's accessible description (Accessibility, rule 11)."""
     o = ctx.origin(entry.key_origin)
     slot = slot_value(ctx, entry)
@@ -2836,7 +2843,7 @@ def read_shortcut_handler(
     """The handler of a ``Shortcuts`` block entry (``Volume_Up { Keys: "...", Action: Call,
     Target: "Audio.step", delta: 5 }``, Global Shortcuts > Action Names and Forms): the form of
     Events and Actions > A Handler, with ``Keys`` beside it. A key press has no event and no value,
-    so a ``{{ }}`` argument is refused; the checks of the ``Call`` target are those of any other
+    so a ``<| |>`` argument is refused; the checks of the ``Call`` target are those of any other
     ``Call``."""
     ctx = _Ctx(file, lambda p: "", modules)
     handler = _action_handler(ctx, block.type, block.origin, block, skip=("Keys",))
@@ -2845,8 +2852,7 @@ def read_shortcut_handler(
         ctx.add(
             block.origin,
             "bad-value",
-            f"{block.type}: {slot} is a {{{{ }}}} slot, and a key press has no event or value "
-            "to read",
+            f"{block.type}: {slot} is a <| |> slot, and a key press has no event or value to read",
             "write the argument as a plain value",
         )
         return None, ctx.findings

@@ -160,7 +160,7 @@ def _defs(driver: str, extra: dict[str, str]) -> dict[str, ModuleDef]:
     texts: dict[str, str] = {
         name: (SHIPPED / name / f"{name}_Module.tdl").read_text() for name in STANDARD
     }
-    texts["Driver"] = "---\nTDL: 0.1\nName: Driver\n---\n" + driver
+    texts["Driver"] = "---\nTDL: 0.2\nName: Driver\n---\n" + driver
     texts.update(extra)
     icons = IconSets([SHIPPED / "Icons"])
     stubs: dict[str, ModuleDef] = {}

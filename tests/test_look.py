@@ -14,7 +14,7 @@ from tess_shell.schema.findings import Finding
 from tess_shell.schema.look import effective_tokens, read_stylesheet, read_theme
 from tess_shell.schema.model import StylesheetDef, ThemeDef
 
-HEADER = "---\nTDL: 0.1\nName: T\n---\n\n"
+HEADER = "---\nTDL: 0.2\nName: T\n---\n\n"
 THEME = (
     HEADER
     + """

@@ -19,6 +19,7 @@ from pathlib import Path
 import tess_dl
 
 from tess_shell.schema.findings import Finding
+from tess_shell.schema.tree import language_finding
 
 
 def _backup(path: Path, config: Path, backups: Path, now: datetime) -> Path:
@@ -69,8 +70,8 @@ def assign_uids(
             continue  # the loader already reported it
         result = tess_dl.parse(text, path=str(path))
         document = result.document
-        if result.errors or document is None:
-            continue
+        if result.errors or document is None or language_finding(document, str(path)):
+            continue  # the loader reports it; a file the shell refuses is not written to
         existing = document.metadata.get("UID")
         known = getattr(existing, "text", None) or getattr(existing, "value", None)
         try:

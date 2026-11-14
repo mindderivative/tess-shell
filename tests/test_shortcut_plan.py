@@ -21,7 +21,7 @@ from tests.shell_samples import HEADER
 from tests.test_call import running
 from tests.test_call_args import OTHER, OTHER_PY, shell_box
 
-SETTINGS_HEAD = "---\nTDL: 0.1\nName: S\n---\n"
+SETTINGS_HEAD = "---\nTDL: 0.2\nName: S\n---\n"
 LAUNCHER = (
     "Panel { Name: Launcher, Layer: OVERLAY, Width: 600, Height: 400, Visible: false, "
     "%s Children { FlexBox { Name: Inside } } }"
@@ -411,7 +411,7 @@ def test_a_call_to_a_module_that_does_not_exist_is_an_error_at_load(tmp_path: Pa
 
 def test_a_slot_has_nothing_to_read_in_a_shortcut(tmp_path: Path) -> None:
     write(
-        tmp_path, 'Shortcuts { Go_Now { Keys: "A", Action: Toggle, Target: Launcher, X: {{ 1 }} } }'
+        tmp_path, 'Shortcuts { Go_Now { Keys: "A", Action: Toggle, Target: Launcher, X: <| 1 |> } }'
     )
     result, findings = load(tmp_path)
     assert result is not None and any(

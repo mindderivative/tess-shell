@@ -21,7 +21,7 @@ from tests.test_run import Shell
 pytestmark = pytest.mark.tre
 
 BTN_TDL = (
-    "---\nTDL: 0.1\nName: Btn\n---\n"
+    "---\nTDL: 0.2\nName: Btn\n---\n"
     'Module { Rectangle { Width: 60, Height: 20, Fill: "#0000ff" } }\n'
 )
 # opens the Popup from the first second tick, as an @action would from a click (use= is what the

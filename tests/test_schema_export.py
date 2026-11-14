@@ -34,8 +34,8 @@ from tess_shell.schema.values import ValueProblem, coerce
 
 D: dict[str, Any] = schema_dict()
 SVG = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4'><rect width='4' height='4'/></svg>"
-SHELL_HEAD = "---\nTDL: 0.1\nShell: 0.1\nName: Main_Shell\n---\n"
-FILE_HEAD = "---\nTDL: 0.1\nName: Probe\n---\n"
+SHELL_HEAD = "---\nTDL: 0.2\nShell: 0.1\nName: Main_Shell\n---\n"
+FILE_HEAD = "---\nTDL: 0.2\nName: Probe\n---\n"
 ORIGIN = m.Origin("", 1, 1)
 
 
@@ -346,7 +346,7 @@ def words() -> list[str]:
 
 def writable(shape: str) -> list[str]:
     """The words that can be written in ``shape`` (some are the language's own: ``If``, ``Key``)."""
-    head = "---\nTDL: 0.1\nName: P\n---\n"
+    head = "---\nTDL: 0.2\nName: P\n---\n"
     return [
         w
         for w in words()
@@ -524,7 +524,7 @@ def test_a_slot_is_taken_where_the_export_says() -> None:
             for key, entry in spec[part].items():
                 if entry["kind"] in ("block", "tooltip", "shadows"):
                     continue
-                found = probe(context, [f"{key}: {{{{ x }}}}"])[0]
+                found = probe(context, [f"{key}: <| x |>"])[0]
                 refused = any(f.rule in BAD for f in found)
                 if refused == entry["slot"]:
                     bad.append((name, part, key, entry["slot"]))
@@ -537,7 +537,7 @@ def test_a_surface_takes_no_slot() -> None:
             assert entry["slot"] is False
             if entry["kind"] in ("block", "tooltip", None) or not entry["built"]:
                 continue
-            found = probe(name, [f"{key}: {{{{ x }}}}"])[0]
+            found = probe(name, [f"{key}: <| x |>"])[0]
             assert any(f.rule in BAD for f in found), (name, key)
 
 
@@ -624,7 +624,7 @@ def test_named_enums_are_the_lists_the_keys_use() -> None:
 
 
 def accepts(kind: str, text: str, choices: tuple[str, ...] = ()) -> bool:
-    result = tess_dl.parse(f"---\nTDL: 0.1\nName: P\n---\nX {{ K: {text} }}")
+    result = tess_dl.parse(f"---\nTDL: 0.2\nName: P\n---\nX {{ K: {text} }}")
     assert not result.errors and result.document is not None, text
     (entry,) = result.document.root.entries
     assert isinstance(entry, tess_dl.Property)
@@ -937,7 +937,7 @@ def test_a_key_lists_the_token_groups_whose_values_it_can_read() -> None:
 
 
 def load(tmp_path: Path, body: str) -> list[Any]:
-    (tmp_path / "settings.tdl").write_text(f"---\nTDL: 0.1\nName: Settings\n---\n{body}")
+    (tmp_path / "settings.tdl").write_text(f"---\nTDL: 0.2\nName: Settings\n---\n{body}")
     return load_settings(tmp_path)[1]
 
 

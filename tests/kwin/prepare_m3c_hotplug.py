@@ -25,12 +25,12 @@ from tests.shell_samples import HEADER, SVG  # noqa: E402
 ROOT = Path("/tmp/tess-kwin-m3c")
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
+    "---\nTDL: 0.2\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default] }\n}\n"
 )
 
 PROBE_TDL = """---
-TDL: 0.1
+TDL: 0.2
 Name: Probe
 ---
 

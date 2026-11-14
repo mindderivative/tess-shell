@@ -24,7 +24,7 @@ pytestmark = [
 OUT = (1280, 720)
 LONG = "a very long text that does not fit in a hundred pixels"
 SETTINGS = (
-    "---\nTDL: 0.1\nName: S\n---\n"
+    "---\nTDL: 0.2\nName: S\n---\n"
     "Settings { Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: false } }\n"
 )

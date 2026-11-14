@@ -13,7 +13,14 @@ from tess_dl import Block, List, Number, Origin, Property, Value
 from tess_shell.config.paths import FOLDERS, PathError, expand_path
 from tess_shell.schema.findings import Finding, nearest
 from tess_shell.schema.keys import Chord, ChordError, parse_chord
-from tess_shell.schema.tree import child_blocks, find_property, position, properties, value_text
+from tess_shell.schema.tree import (
+    child_blocks,
+    find_property,
+    language_finding,
+    position,
+    properties,
+    value_text,
+)
 
 SETTINGS_FILE = "settings.tdl"
 LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
@@ -437,6 +444,9 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
                 )
                 for e in result.errors
             ]
+        stale = language_finding(result.document, SETTINGS_FILE)
+        if stale is not None:
+            return None, [stale]
         root = result.document.root
         if root.type != "Settings":
             reader.error(

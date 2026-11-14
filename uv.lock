@@ -387,11 +387,11 @@ wheels = [
 
 [[package]]
 name = "tesserae-dl"
-version = "0.1.1"
+version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2a/f5/ff3329fa4285165b753201585a42d07b868fee974b79cf37cf85d8e25a23/tesserae_dl-0.1.1.tar.gz", hash = "sha256:fc766effe9f393753b1f97c02580bb8c9c5b139c365fb0ce9a73039613c63bbc", size = 62018, upload-time = "2026-11-03T21:24:47.136Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/db/ae/dcf38fabab07eb76d5d5b51038ad6b10342f526239eb575a12552e329950/tesserae_dl-0.2.0.tar.gz", hash = "sha256:ade110405f867c716b5daeb347a79f60e87c3906fbf01875c0665cb558f0ae72", size = 87684, upload-time = "2026-11-14T22:28:48.209Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/75/bd2e048507e228d2512d2110ffbd1318361d0e5a671327343589bfd2df8b/tesserae_dl-0.1.1-py3-none-any.whl", hash = "sha256:e974068979cc603129486d585b33045146fb658d1328fa5f0aba3c330e9bdec5", size = 22716, upload-time = "2026-11-03T21:24:45.649Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/5f/39a37a47ff3b2ba5258b3b7383cbafe7ef14779309abeb5a3b443c54d598/tesserae_dl-0.2.0-py3-none-any.whl", hash = "sha256:0da551f7715298c080a3d03e21152de7b877b97b2f95e52aed9c2fe4cca963e1", size = 32354, upload-time = "2026-11-14T22:28:46.83Z" },
 ]
 
 [[package]]
@@ -445,7 +445,7 @@ requires-dist = [
     { name = "jeepney", specifier = ">=0.9,<0.10" },
     { name = "loguru", specifier = ">=0.7.3,<0.8" },
     { name = "pillow", specifier = ">=11,<14" },
-    { name = "tesserae-dl", specifier = ">=0.1.1,<0.2" },
+    { name = "tesserae-dl", specifier = ">=0.2.0,<0.3" },
     { name = "tesserae-el", specifier = ">=0.1.2,<0.2" },
     { name = "tesserae-engine", specifier = ">=0.6.7,<0.7" },
 ]

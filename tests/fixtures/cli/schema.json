@@ -4,7 +4,7 @@
   "kinds": {
     "string": {
       "ui": "text",
-      "note": "A string, written quoted or as one word; a module's layout may hold {{ }} slots in it.",
+      "note": "A string, written quoted or as one word; a module's layout may hold <| |> slots in it.",
       "model_kinds": [
         "text"
       ]
@@ -581,7 +581,7 @@
     },
     "expression": {
       "ui": "expression",
-      "note": "{{ }}: an expression of the module's values, evaluated in a module's layout; a key with slot true takes it.",
+      "note": "<| |>: an expression of the module's values, evaluated in a module's layout; a key with slot true takes it.",
       "model_kinds": []
     }
   },
@@ -8901,7 +8901,7 @@
           "choices": null,
           "enum": null,
           "default": "\"\"",
-          "doc": "The words; may hold {{ }} slots in a module.",
+          "doc": "The words; may hold <| |> slots in a module.",
           "slot": true,
           "required": false,
           "built": true,

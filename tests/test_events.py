@@ -17,7 +17,7 @@ from tests.shell_samples import BODY, HEADER, SVG
 from tests.test_module_host import Rig, definition, use
 
 BOX = {"Width": Length(10), "Height": Length(10)}  # a zero-size box takes no click
-MODULE_HEAD = "---\nTDL: 0.1\nName: Btn\n---\n"
+MODULE_HEAD = "---\nTDL: 0.2\nName: Btn\n---\n"
 
 
 def module(body: str) -> tuple[ModuleDef | None, list[Finding]]:
@@ -63,7 +63,7 @@ def test_a_bare_name_and_a_block_form_are_typed() -> None:
             "bad-value",
             "belongs on Show",
         ),
-        ("On_Click { Action: Show, Target: P, Who: {{ params.x }} }", "bad-value", "literal"),
+        ("On_Click { Action: Show, Target: P, Who: <| params.x |> }", "bad-value", "literal"),
         ("On_Click { Action: Close, Target: Menu }", "bad-key", "no Target"),
         ("On_Click: Show", "missing-key", "Target"),
         ("On_Click: 5", "bad-name", "action"),

@@ -10,7 +10,7 @@ read), ``state`` (``CONNECTED``, ``LIMITED``, ``PORTAL``, ``CONNECTING``, ``DISC
 ``OTHER`` or ``NONE``), ``name``, ``strength`` (percent, -1 when the connection is not Wi-Fi; sent
 only when the icon step or the tooltip's value changes), ``vpn``, ``icon``, ``tooltip`` and
 ``label`` (the accessible name). ``available`` is the layer's: true while NetworkManager is on the
-system bus. A layout shows itself with ``Visible: {{ available and ready }}``.
+system bus. A layout shows itself with ``Visible: <| available and ready |>``.
 """
 
 from __future__ import annotations

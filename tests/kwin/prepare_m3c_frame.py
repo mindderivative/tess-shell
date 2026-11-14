@@ -29,7 +29,7 @@ from tests.shell_samples import HEADER, SVG  # noqa: E402
 
 ROOT = Path("/tmp/tess-kwin-m3c")
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
-SETTINGS = "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n}\n"
+SETTINGS = "---\nTDL: 0.2\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n}\n"
 
 
 def four(n: float) -> tuple[float, float, float, float]:

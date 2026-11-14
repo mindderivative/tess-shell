@@ -15,7 +15,7 @@ from tess_shell.config.uids import assign_uids
 
 TEXT = (
     "---\n"
-    "TDL: 0.1   # the language\n"
+    "TDL: 0.2   # the language\n"
     "Shell: 0.1\n"
     "Name: Main_Shell\n"
     "---\n"

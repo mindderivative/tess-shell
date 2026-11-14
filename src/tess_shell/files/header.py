@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import Mapping
 
 from tess_dl import Document, Property
 
 from tess_shell.schema.findings import Finding
-from tess_shell.schema.tree import position, value_text
+from tess_shell.schema.tree import language_finding, parse_version, position, value_text
 
 _ROOT_SUFFIX = {
     "Shell": "_Shell.tdl",
@@ -19,23 +18,13 @@ _ROOT_SUFFIX = {
 }
 
 
-def parse_version(text: str) -> tuple[int, ...]:
-    """``0.1.0.dev0`` is ``(0, 1, 0)``: the leading numeric parts."""
-    parts: list[int] = []
-    for piece in text.split("."):
-        m = re.match(r"\d+", piece)
-        if not m:
-            break
-        parts.append(int(m.group()))
-        if m.end() != len(piece):
-            break
-    return tuple(parts)
-
-
 def check_header(document: Document, file: str, installed: Mapping[str, str]) -> list[Finding]:
     """The minimum-version pins (``TEL``, ``TRE``, ``Shell``) and the root block against the
     file's suffix. ``installed`` maps ``TEL``, ``TRE`` and ``Shell`` to the running versions."""
     out: list[Finding] = []
+    language = language_finding(document, file)
+    if language is not None:
+        out.append(language)
     for entry in document.metadata.entries:
         if not isinstance(entry, Property) or entry.key not in installed:
             continue

@@ -35,7 +35,7 @@ EXTRA = (
     "            Panel { Name: Side, Width: 100, Height: 100, Visible: false }"
 )
 SPACE = parse_chord("Meta+Space").qt
-HEAD = "---\nTDL: 0.1\nName: S\n---\n"
+HEAD = "---\nTDL: 0.2\nName: S\n---\n"
 
 
 class Desk:

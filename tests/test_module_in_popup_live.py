@@ -23,7 +23,7 @@ pytestmark = [
 ]
 
 OPENER_TDL = (
-    "---\nTDL: 0.1\nName: Opener\n---\n"
+    "---\nTDL: 0.2\nName: Opener\n---\n"
     'Module { Rectangle { Name: Root, Width: 60, Height: 20, Fill: "#0000ff" } }\n'
 )
 OPENER_PY = """
@@ -44,10 +44,10 @@ class Opener(Module):
                 {"id": "a", "text": "Alpha"}, {"id": "b", "text": "Beta"}]})
 """
 TRAY_TDL = (
-    "---\nTDL: 0.1\nName: TrayMenu\n---\n"
+    "---\nTDL: 0.2\nName: TrayMenu\n---\n"
     "Module { FlexBox { Name: Root, Children { Menu { Children { "
-    "For e In {{ caller.data.items }} Key {{ e.id }} { "
-    "MenuItem { Text: {{ e.text }}, On_Click { Action: pick, Id: {{ e.id }} } } } } } } } }\n"
+    "For e In <| caller.data.items |> Key <| e.id |> { "
+    "MenuItem { Text: <| e.text |>, On_Click { Action: pick, Id: <| e.id |> } } } } } } } }\n"
 )
 TRAY_PY = """
 from tess_shell import Module, action
@@ -63,7 +63,7 @@ POPUP = (
     "Children { TrayMenu { } } }"
 )
 SETTINGS = (
-    "---\nTDL: 0.1\nName: S\n---\n"
+    "---\nTDL: 0.2\nName: S\n---\n"
     "Settings { Logging { Level: DEBUG } Appearance { Stylesheets: [Default] } }\n"
 )
 OUT = (1280, 720)

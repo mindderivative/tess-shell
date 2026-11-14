@@ -15,7 +15,7 @@ from tess_shell.schema.shell import read_module
 from tests.test_call import known
 from tests.test_popup import SHELL, read
 
-HEAD = "---\nTDL: 0.1\nName: Fld\n---\n"
+HEAD = "---\nTDL: 0.2\nName: Fld\n---\n"
 
 
 def field(body: str) -> tuple[m.Node | None, list[Finding]]:
@@ -126,7 +126,7 @@ def test_a_misspelt_wrap_names_the_choices() -> None:
 def test_multiline_is_fixed_when_the_field_is_built_so_a_slot_is_refused() -> None:
     result = tess_dl.parse(
         HEAD + "Module { Params { p { Type: boolean, Default: true } }\n"
-        "TextField { Multiline: {{ params.p }} } }",
+        "TextField { Multiline: <| params.p |> } }",
         path="Modules/Fld_Module.tdl",
     )
     assert result.document is not None
@@ -250,7 +250,7 @@ def test_an_unknown_event_on_a_call_is_an_error() -> None:
 
 def sheet(rule: str) -> tuple[Any, list[Finding]]:
     doc = tess_dl.parse(
-        f"---\nTDL: 0.1\nName: S\n---\nStylesheet {{ {rule} }}", path="S_Stylesheet.tdl"
+        f"---\nTDL: 0.2\nName: S\n---\nStylesheet {{ {rule} }}", path="S_Stylesheet.tdl"
     ).document
     assert doc is not None
     return read_stylesheet(doc, "S_Stylesheet.tdl", {"TextInput"})

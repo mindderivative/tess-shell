@@ -313,7 +313,7 @@ class ModuleHost:
         or a bare name in a module's layout) are checked against the method's parameters after
         ``event``: an unknown name, or a required parameter with no argument, is a finding at the
         handler (Events and Actions > Call). An action with no parameter after ``event``, or with
-        ``**kwargs``, takes any names. A ``{{ }}`` argument is checked by name only: its value is
+        ``**kwargs``, takes any names. A ``<| |>`` argument is checked by name only: its value is
         known when the event fires."""
         out: list[Finding] = []
         seen: set[tuple[str, int, int, str, str]] = set()
@@ -407,7 +407,7 @@ class ModuleHost:
                     "error",
                     "missing-argument",
                     f"{name} needs the argument {arg}",
-                    f"write {arg}: ... in the handler (a value or a {{{{ }}}} slot)",
+                    f"write {arg}: ... in the handler (a value or a <| |> slot)",
                 )
             )
         return out

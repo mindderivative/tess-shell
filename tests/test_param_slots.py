@@ -1,4 +1,4 @@
-"""A module call may write a param as a ``{{ }}`` slot (Module File > Using a Module): the slot is
+"""A module call may write a param as a ``<| |>`` slot (Module File > Using a Module): the slot is
 evaluated in the scope of the place that wrote the call, and the called module follows it, so a
 standard module can show a value its caller's Python sends. A shell file's own block has no
 scope."""
@@ -12,9 +12,9 @@ DRIVER = """Module {
     FlexBox {
         Name: Root
         Children {
-            ProgressBar { Name: Bar, Value: {{ level }}, Max: {{ params.Count * 10 }} }
-            Label { Name: Name, Text: {{ title }} }
-            Badge { Name: Chip, Count: {{ level }}, Show_Zero: {{ zero }} }
+            ProgressBar { Name: Bar, Value: <| level |>, Max: <| params.Count * 10 |> }
+            Label { Name: Name, Text: <| title |> }
+            Badge { Name: Chip, Count: <| level |>, Show_Zero: <| zero |> }
         }
     }
 }"""
@@ -51,7 +51,7 @@ def test_the_slot_feeds_the_numbers_of_a_nested_module_too() -> None:
 
 
 def test_a_declared_default_is_what_a_slot_that_cannot_be_read_leaves() -> None:
-    bad = DRIVER.replace("Max: {{ params.Count * 10 }}", "Max: {{ nothing_here }}")
+    bad = DRIVER.replace("Max: <| params.Count * 10 |>", "Max: <| nothing_here |>")
     with running("Driver { }", driver=bad, driver_py=CODE) as w:
         assert any("nothing_here" in line for line in w.warnings())
         # the default Max (100) stands: 5 of 100
@@ -59,7 +59,7 @@ def test_a_declared_default_is_what_a_slot_that_cannot_be_read_leaves() -> None:
 
 
 def test_a_slot_of_the_wrong_type_is_a_warning_and_leaves_the_default() -> None:
-    wrong = DRIVER.replace("Value: {{ level }}", 'Value: {{ "text" }}')
+    wrong = DRIVER.replace("Value: <| level |>", 'Value: <| "text" |>')
     with running("Driver { }", driver=wrong, driver_py=CODE) as w:
         assert any("number" in line for line in w.warnings())
         assert w.of_use("ProgressBar", "Fill").get("width") == "0%"
@@ -67,7 +67,7 @@ def test_a_slot_of_the_wrong_type_is_a_warning_and_leaves_the_default() -> None:
 
 def test_a_slot_in_a_shell_files_own_call_is_refused_for_want_of_a_scope() -> None:
     """A shell file has no values of its own: the model says so and the Bar opens empty."""
-    with running("ProgressBar { Value: {{ level }} }") as w:
+    with running("ProgressBar { Value: <| level |> }") as w:
         assert any("a slot outside a module is not built yet" in x for x in w.lines)
         assert w.view is None
 

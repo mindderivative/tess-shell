@@ -21,7 +21,7 @@ from tess_shell.schema.shell import read_module
 from tests.shell_samples import HEADER
 
 SLIDER = """---
-TDL: 0.1
+TDL: 0.2
 Name: Slider
 ---
 Module {
@@ -107,7 +107,7 @@ def test_a_layout_declares_parts_and_the_module_lists_them_in_order() -> None:
     ],
 )
 def test_a_bad_part_is_an_error_at_its_key(body: str, rule: str, needle: str) -> None:
-    result = tess_dl.parse("---\nTDL: 0.1\nName: Slider\n---\n" + body, path="M.tdl")
+    result = tess_dl.parse("---\nTDL: 0.2\nName: Slider\n---\n" + body, path="M.tdl")
     assert result.document is not None
     found, findings = read_module(result.document, "M.tdl")
     assert found is None

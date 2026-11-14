@@ -5,7 +5,7 @@ import pytest
 from tess_shell.config.settings import Settings, load_settings
 from tess_shell.schema.findings import Finding
 
-HEAD = "---\nTDL: 0.1\nName: Settings\n---\n"
+HEAD = "---\nTDL: 0.2\nName: Settings\n---\n"
 
 
 def write(cfg: Path, body: str) -> None:
@@ -165,7 +165,7 @@ def test_debug_panel_hide_defaults_to_keep_and_takes_close(tmp_path: Path) -> No
     from tess_shell.config.settings import DebugSettings
 
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\nSettings { Debug { Panel_Hide: CLOSE } }\n"
+        "---\nTDL: 0.2\nName: S\n---\nSettings { Debug { Panel_Hide: CLOSE } }\n"
     )
     settings, findings = load_settings(tmp_path)
     assert findings == [] and settings is not None
@@ -176,7 +176,7 @@ def test_debug_panel_hide_defaults_to_keep_and_takes_close(tmp_path: Path) -> No
 def test_debug_panel_hide_refuses_another_word_and_a_misspelt_key(tmp_path: Path) -> None:
     for text, needle in (("Panel_Hide: KEPT", "KEEP"), ("Panel_Hid: KEEP", "Panel_Hide")):
         (tmp_path / "settings.tdl").write_text(
-            f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ {text} }} }}\n"
+            f"---\nTDL: 0.2\nName: S\n---\nSettings {{ Debug {{ {text} }} }}\n"
         )
         settings, findings = load_settings(tmp_path)
         assert settings is None and needle in findings[0].message + findings[0].hint
@@ -189,7 +189,7 @@ def test_debug_frame_join_defaults_to_param_and_takes_each_option(tmp_path: Path
     assert load_settings(tmp_path / "none")[0].debug.frame_join == "PARAM"  # type: ignore[union-attr]
     for word in JOINS:
         (tmp_path / "settings.tdl").write_text(
-            f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ Frame_Join: {word} }} }}\n"
+            f"---\nTDL: 0.2\nName: S\n---\nSettings {{ Debug {{ Frame_Join: {word} }} }}\n"
         )
         settings, findings = load_settings(tmp_path)
         assert findings == [] and settings is not None
@@ -202,7 +202,7 @@ def test_debug_frame_blend_defaults_to_linear_and_takes_srgb(tmp_path: Path) -> 
     assert load_settings(tmp_path / "none")[0].debug.frame_blend == "LINEAR"  # type: ignore[union-attr]
     for word in ("SRGB", "LINEAR"):
         (tmp_path / "settings.tdl").write_text(
-            f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ Frame_Blend: {word} }} }}\n"
+            f"---\nTDL: 0.2\nName: S\n---\nSettings {{ Debug {{ Frame_Blend: {word} }} }}\n"
         )
         settings, findings = load_settings(tmp_path)
         assert findings == [] and settings is not None
@@ -214,7 +214,7 @@ def test_debug_frame_blend_goes_with_the_other_debug_keys(tmp_path: Path) -> Non
     from tess_shell.config.settings import DebugSettings
 
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\n"
+        "---\nTDL: 0.2\nName: S\n---\n"
         "Settings { Debug { Panel_Hide: CLOSE, Frame_Join: SMIL, Frame_Blend: LINEAR } }\n"
     )
     settings, findings = load_settings(tmp_path)
@@ -229,7 +229,7 @@ def test_debug_frame_blend_refuses_another_word_and_a_lower_case_one(tmp_path: P
         ("Frame_Blends: LINEAR", "Frame_Blend"),
     ):
         (tmp_path / "settings.tdl").write_text(
-            f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ {text} }} }}\n"
+            f"---\nTDL: 0.2\nName: S\n---\nSettings {{ Debug {{ {text} }} }}\n"
         )
         settings, findings = load_settings(tmp_path)
         assert settings is None and needle in findings[0].message + findings[0].hint
@@ -239,7 +239,7 @@ def test_debug_takes_panel_hide_and_frame_join_together(tmp_path: Path) -> None:
     from tess_shell.config.settings import DebugSettings
 
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\n"
+        "---\nTDL: 0.2\nName: S\n---\n"
         "Settings { Debug { Panel_Hide: CLOSE, Frame_Join: SHADER } }\n"
     )
     settings, findings = load_settings(tmp_path)
@@ -254,7 +254,7 @@ def test_debug_frame_join_refuses_another_word_and_a_lower_case_one(tmp_path: Pa
         ("Frame_Joins: SMIL", "Frame_Join"),
     ):
         (tmp_path / "settings.tdl").write_text(
-            f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Debug {{ {text} }} }}\n"
+            f"---\nTDL: 0.2\nName: S\n---\nSettings {{ Debug {{ {text} }} }}\n"
         )
         settings, findings = load_settings(tmp_path)
         assert settings is None and needle in findings[0].message + findings[0].hint

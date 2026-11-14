@@ -1,6 +1,6 @@
-"""A handler's ``{{ }}`` arguments, evaluated when the event fires (Events and Actions > Call).
+"""A handler's ``<| |>`` arguments, evaluated when the event fires (Events and Actions > Call).
 
-``On_Click { Action: Call, Target: "Clock.cycle_format", Format: {{ params.format }} }``: the
+``On_Click { Action: Call, Target: "Clock.cycle_format", Format: <| params.format |> }``: the
 literal arguments are plain values read at load; an argument written as a slot is compiled once
 and evaluated each time the event fires, in a scope that holds ``event`` (the event record), the
 module's values and params, the variables of the ``For`` entries around the block and, in a

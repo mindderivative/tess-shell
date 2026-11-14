@@ -252,7 +252,7 @@ def test_a_reload_that_adds_a_handler_to_a_disabled_block_still_swallows() -> No
 
 # -- the schema -------------------------------------------------------------------------------
 
-HEAD = "---\nTDL: 0.1\nName: Btn\n---\n"
+HEAD = "---\nTDL: 0.2\nName: Btn\n---\n"
 
 
 def read(body: str) -> tuple[Any, list[Any]]:
@@ -264,7 +264,7 @@ def read(body: str) -> tuple[Any, list[Any]]:
 def test_enabled_is_read_on_a_block_as_a_value_and_as_a_slot() -> None:
     found, findings = read(
         "Module { Params { on { Type: boolean, Default: true } }\n"
-        "FlexBox { Enabled: false, Children { Spacer { Enabled: {{ params.on }} } } } }"
+        "FlexBox { Enabled: false, Children { Spacer { Enabled: <| params.on |> } } } }"
     )
     assert found is not None and findings == []
     (root,) = found.children

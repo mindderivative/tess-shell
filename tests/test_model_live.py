@@ -14,7 +14,7 @@ from tess_shell.model.store import ValueStore
 from tess_shell.schema.model import ModuleDef
 from tess_shell.schema.shell import read_module, read_shell
 
-HEAD = "---\nTDL: 0.1\nName: {name}\n---\n"
+HEAD = "---\nTDL: 0.2\nName: {name}\n---\n"
 
 CLOCK = """
 Module {
@@ -26,12 +26,12 @@ Module {
         Children {
             Text {
                 Name: Face
-                Text: {{ time }}
-                Style { Font_Size: {{ params.size }}, Foreground: "#ffffff" }
+                Text: <| time |>
+                Style { Font_Size: <| params.size |>, Foreground: "#ffffff" }
             }
             Text {
                 Name: Day
-                Text: Today is {{ day }}{{ params.suffix }}
+                Text: Today is <| day |><| params.suffix |>
             }
             Text { Name: Idle, Text: fixed }
         }
@@ -199,9 +199,9 @@ def test_a_name_that_is_not_sent_yet_leaves_the_property_unset_then_fills_in() -
 def test_a_misspelled_name_is_reported_at_its_line_and_column_with_the_nearest_name() -> None:
     from loguru import logger
 
-    text = HEAD.format(name="Clock") + CLOCK.replace("{{ time }}", "{{ tme }}")
+    text = HEAD.format(name="Clock") + CLOCK.replace("<| time |>", "<| tme |>")
     module, _ = read_module(
-        parse(CLOCK.replace("{{ time }}", "{{ tme }}"), "Clock", "M.tdl"), "M.tdl"
+        parse(CLOCK.replace("<| time |>", "<| tme |>"), "Clock", "M.tdl"), "M.tdl"
     )
     assert module is not None
     shell, _ = read_shell(parse(SHELL, "S", "S.tdl"), "S.tdl", lambda _: "", {"Clock": module})
@@ -222,7 +222,7 @@ def test_a_misspelled_name_is_reported_at_its_line_and_column_with_the_nearest_n
         LiveTree(store, {u.key: u for u in expanded.uses}).resolve(expanded)
     finally:
         logger.remove(sink)
-    line = next(i for i, t in enumerate(text.splitlines(), 1) if "{{ tme }}" in t)
+    line = next(i for i, t in enumerate(text.splitlines(), 1) if "<| tme |>" in t)
     column = text.splitlines()[line - 1].index("tme") + 1
     assert any(f"M.tdl:{line}:{column}:" in s and "time" in s for s in seen), seen
 
@@ -231,7 +231,7 @@ COND = """
 Module {
     Text {
         Name: Face
-        Text: {{ a if flag else b }}
+        Text: <| a if flag else b |>
     }
 }
 """

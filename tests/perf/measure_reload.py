@@ -45,7 +45,7 @@ def main() -> int:
     )
     shell_file = write_example(config, body)
     (config / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: Settings\n---\nSettings { Logging { Level: INFO } }\n"
+        "---\nTDL: 0.2\nName: Settings\n---\nSettings { Logging { Level: INFO } }\n"
     )
     process = subprocess.Popen(
         [sys.executable, "-m", "tess_shell", "run", "--config-dir", str(config)],
