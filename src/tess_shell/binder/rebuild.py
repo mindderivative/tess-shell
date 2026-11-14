@@ -111,7 +111,7 @@ def _diff(
             if changed:
                 plan.changes.append((kept.tre, changed))
             kids = [c for c in node.children if isinstance(c, Node)]
-            entry = Entry(node, kept.tre, dict(props), [], kept.wire, states, motion)
+            entry = Entry(node, kept.tre, dict(props), [], kept.wire, states, motion, kept.rank)
             if entry.wire is not None:
                 entry.wire.handlers = node.handlers
             entry.children = _diff(kept.children, kids, spec.get("children", []), kept.tre, plan)

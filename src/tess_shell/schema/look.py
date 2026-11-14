@@ -202,9 +202,6 @@ _SELECTOR = re.compile(
     r"^(?P<head>[#.]?)(?P<name>[A-Za-z][A-Za-z0-9_]*)(?P<part>::[A-Za-z_]+)?(?P<state>:[A-Za-z_]+)?$"
 )
 
-# the states a rule can name that no block can be in yet, and why
-_STATES_NOT_BUILT = {"focused": "no block can take focus yet (keyboard focus is M6)"}
-
 # every style key of every block, with its kind; the kinds agree across blocks
 STYLE_UNION: dict[str, str] = {k: v for row in blocks.BLOCKS.values() for k, v in row[1].items()}
 
@@ -257,15 +254,6 @@ def _rule(ctx: _Ctx, block: Block, module_names: set[str]) -> Rule | None:
         )
         return None
     state = (found["state"] or ":")[1:]
-    if state in _STATES_NOT_BUILT:
-        ctx.add(
-            selector.value_origin,
-            "not-built",
-            f"the state :{state} is not built: {_STATES_NOT_BUILT[state]}",
-            "the rule is skipped",
-            "warning",
-        )
-        return None
     if state and state not in m.STATES:
         ctx.add(
             selector.value_origin,

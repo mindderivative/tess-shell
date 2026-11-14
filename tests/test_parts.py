@@ -168,12 +168,12 @@ def test_a_part_after_a_class_or_a_name_is_skipped_with_a_warning(selector: str)
     assert f.severity == "warning" and f.rule == "not-built" and "module's name" in f.message
 
 
-def test_a_part_selector_with_the_focused_state_is_still_skipped() -> None:
+def test_a_part_selector_takes_the_focused_state() -> None:
     s, findings = sheet(
         'Stylesheet { Rule { Selector: "Slider::track:focused", Border_Width: 1 } }'
     )
-    assert s is not None and s.rules == ()
-    assert ":focused" in findings[0].message
+    assert s is not None and findings == []
+    assert [(r.part, r.state) for r in s.rules] == [("track", "focused")]
 
 
 # -- folding into a layout ---------------------------------------------------------------------

@@ -184,13 +184,17 @@ Value = (
 
 # The style states a stylesheet rule can name after a colon (``Button:hovered``), weakest first: a
 # checked or chosen block shows its values under the pointer's, a pressed block that is also
-# hovered shows both, the pressed values on top, and a disabled block shows its ``disabled``
-# values over everything (it takes no pointer, so it is never hovered or pressed while it is
-# disabled).
-STATES = ("checked", "selected", "hovered", "pressed", "disabled")
+# hovered shows both, the pressed values on top, a focused block (keyboard focus only: a click
+# gives none) shows its ring over those, and a disabled block shows its ``disabled`` values over
+# everything (it takes no pointer and no focus, so it is never hovered, pressed or focused while it
+# is disabled).
+STATES = ("checked", "selected", "hovered", "pressed", "focused", "disabled")
 # the states that do not come from the pointer: a control sets ``checked`` and ``selected`` (a
-# Toggle that is on, the chosen entry of a list), ``disabled`` is ``Enabled: false``
-FLAG_STATES = ("checked", "selected", "disabled")
+# Toggle that is on, the chosen entry of a list), ``focused`` is keyboard focus, ``disabled`` is
+# ``Enabled: false``
+FLAG_STATES = ("checked", "selected", "focused", "disabled")
+# the largest ``Tab_Index``: the largest signed 32-bit integer (Focus and Keyboard > Tab Order)
+TAB_INDEX_MAX = 2_147_483_647
 
 # A TextField is built as four nodes (``model.field``): its box, a line box in the box's cell, a
 # text in the line that gives it the height of the field's lines, and the text input over the

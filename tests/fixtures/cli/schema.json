@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3",
+  "schema_version": "1.1",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -61,6 +61,7 @@
         "whole",
         "max_length",
         "lines",
+        "tab_index",
         "diameter"
       ]
     },
@@ -186,393 +187,6 @@
       "model_kinds": [
         "monitor_index"
       ]
-    },
-    "key_chord": {
-      "ui": "key",
-      "note": "A key press written as modifiers and one key joined by +, such as \"Ctrl+Shift+F1\": modifiers lists the modifiers in the written order, keys the key names by group, aliases the other names that are read and never written; any case and order is read.",
-      "model_kinds": [
-        "key_chord"
-      ],
-      "separator": "+",
-      "modifiers": [
-        "Ctrl",
-        "Alt",
-        "Shift",
-        "Meta"
-      ],
-      "case_sensitive": false,
-      "keys": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E",
-        "F",
-        "G",
-        "H",
-        "I",
-        "J",
-        "K",
-        "L",
-        "M",
-        "N",
-        "O",
-        "P",
-        "Q",
-        "R",
-        "S",
-        "T",
-        "U",
-        "V",
-        "W",
-        "X",
-        "Y",
-        "Z",
-        "0",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "F1",
-        "F2",
-        "F3",
-        "F4",
-        "F5",
-        "F6",
-        "F7",
-        "F8",
-        "F9",
-        "F10",
-        "F11",
-        "F12",
-        "F13",
-        "F14",
-        "F15",
-        "F16",
-        "F17",
-        "F18",
-        "F19",
-        "F20",
-        "F21",
-        "F22",
-        "F23",
-        "F24",
-        "Enter",
-        "Escape",
-        "Tab",
-        "Space",
-        "Backspace",
-        "Delete",
-        "Insert",
-        "Home",
-        "End",
-        "Left",
-        "Up",
-        "Right",
-        "Down",
-        "PageUp",
-        "PageDown",
-        "Plus",
-        "Print",
-        "Pause",
-        "Menu",
-        "AudioRaiseVolume",
-        "AudioLowerVolume",
-        "AudioMute",
-        "AudioMicMute",
-        "AudioPlay",
-        "AudioPause",
-        "AudioStop",
-        "AudioNext",
-        "AudioPrev",
-        "AudioRecord",
-        "AudioRewind",
-        "AudioForward",
-        "AudioMedia",
-        "MonBrightnessUp",
-        "MonBrightnessDown",
-        "KbdLightOnOff",
-        "KbdBrightnessUp",
-        "KbdBrightnessDown",
-        "PowerOff",
-        "WakeUp",
-        "Eject",
-        "ScreenSaver",
-        "WWW",
-        "Sleep",
-        "Suspend",
-        "Hibernate",
-        "Standby",
-        "HomePage",
-        "Favorites",
-        "Search",
-        "Mail",
-        "Calculator",
-        "Calendar",
-        "Explorer",
-        "Documents",
-        "Tools",
-        "Music",
-        "Video",
-        "Display",
-        "Battery",
-        "Bluetooth",
-        "WLAN",
-        "TouchpadToggle",
-        "ZoomIn",
-        "ZoomOut",
-        "Back",
-        "Forward",
-        "Refresh",
-        "Launch0",
-        "Launch1",
-        "Launch2",
-        "Launch3",
-        "Launch4",
-        "Launch5",
-        "Launch6",
-        "Launch7",
-        "Launch8",
-        "Launch9",
-        "LaunchA",
-        "LaunchB",
-        "LaunchC",
-        "LaunchD",
-        "LaunchE",
-        "LaunchF"
-      ],
-      "groups": {
-        "letters": [
-          "A",
-          "B",
-          "C",
-          "D",
-          "E",
-          "F",
-          "G",
-          "H",
-          "I",
-          "J",
-          "K",
-          "L",
-          "M",
-          "N",
-          "O",
-          "P",
-          "Q",
-          "R",
-          "S",
-          "T",
-          "U",
-          "V",
-          "W",
-          "X",
-          "Y",
-          "Z"
-        ],
-        "digits": [
-          "0",
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8",
-          "9"
-        ],
-        "function": [
-          "F1",
-          "F2",
-          "F3",
-          "F4",
-          "F5",
-          "F6",
-          "F7",
-          "F8",
-          "F9",
-          "F10",
-          "F11",
-          "F12",
-          "F13",
-          "F14",
-          "F15",
-          "F16",
-          "F17",
-          "F18",
-          "F19",
-          "F20",
-          "F21",
-          "F22",
-          "F23",
-          "F24"
-        ],
-        "named": [
-          "Enter",
-          "Escape",
-          "Tab",
-          "Space",
-          "Backspace",
-          "Delete",
-          "Insert",
-          "Home",
-          "End",
-          "Left",
-          "Up",
-          "Right",
-          "Down",
-          "PageUp",
-          "PageDown",
-          "Plus",
-          "Print",
-          "Pause",
-          "Menu"
-        ],
-        "hardware": [
-          "AudioRaiseVolume",
-          "AudioLowerVolume",
-          "AudioMute",
-          "AudioMicMute",
-          "AudioPlay",
-          "AudioPause",
-          "AudioStop",
-          "AudioNext",
-          "AudioPrev",
-          "AudioRecord",
-          "AudioRewind",
-          "AudioForward",
-          "AudioMedia",
-          "MonBrightnessUp",
-          "MonBrightnessDown",
-          "KbdLightOnOff",
-          "KbdBrightnessUp",
-          "KbdBrightnessDown",
-          "PowerOff",
-          "WakeUp",
-          "Eject",
-          "ScreenSaver",
-          "WWW",
-          "Sleep",
-          "Suspend",
-          "Hibernate",
-          "Standby",
-          "HomePage",
-          "Favorites",
-          "Search",
-          "Mail",
-          "Calculator",
-          "Calendar",
-          "Explorer",
-          "Documents",
-          "Tools",
-          "Music",
-          "Video",
-          "Display",
-          "Battery",
-          "Bluetooth",
-          "WLAN",
-          "TouchpadToggle",
-          "ZoomIn",
-          "ZoomOut",
-          "Back",
-          "Forward",
-          "Refresh",
-          "Launch0",
-          "Launch1",
-          "Launch2",
-          "Launch3",
-          "Launch4",
-          "Launch5",
-          "Launch6",
-          "Launch7",
-          "Launch8",
-          "Launch9",
-          "LaunchA",
-          "LaunchB",
-          "LaunchC",
-          "LaunchD",
-          "LaunchE",
-          "LaunchF"
-        ]
-      },
-      "aliases": {
-        "Return": "Enter",
-        "Esc": "Escape",
-        "Del": "Delete",
-        "Ins": "Insert",
-        "PgUp": "PageUp",
-        "PgDown": "PageDown",
-        "XF86AudioRaiseVolume": "AudioRaiseVolume",
-        "XF86AudioLowerVolume": "AudioLowerVolume",
-        "XF86AudioMute": "AudioMute",
-        "XF86AudioMicMute": "AudioMicMute",
-        "XF86AudioPlay": "AudioPlay",
-        "XF86AudioPause": "AudioPause",
-        "XF86AudioStop": "AudioStop",
-        "XF86AudioNext": "AudioNext",
-        "XF86AudioPrev": "AudioPrev",
-        "XF86AudioRecord": "AudioRecord",
-        "XF86AudioRewind": "AudioRewind",
-        "XF86AudioForward": "AudioForward",
-        "XF86AudioMedia": "AudioMedia",
-        "XF86MonBrightnessUp": "MonBrightnessUp",
-        "XF86MonBrightnessDown": "MonBrightnessDown",
-        "XF86KbdLightOnOff": "KbdLightOnOff",
-        "XF86KbdBrightnessUp": "KbdBrightnessUp",
-        "XF86KbdBrightnessDown": "KbdBrightnessDown",
-        "XF86PowerOff": "PowerOff",
-        "XF86WakeUp": "WakeUp",
-        "XF86Eject": "Eject",
-        "XF86ScreenSaver": "ScreenSaver",
-        "XF86WWW": "WWW",
-        "XF86Sleep": "Sleep",
-        "XF86Suspend": "Suspend",
-        "XF86Hibernate": "Hibernate",
-        "XF86Standby": "Standby",
-        "XF86HomePage": "HomePage",
-        "XF86Favorites": "Favorites",
-        "XF86Search": "Search",
-        "XF86Mail": "Mail",
-        "XF86Calculator": "Calculator",
-        "XF86Calendar": "Calendar",
-        "XF86Explorer": "Explorer",
-        "XF86Documents": "Documents",
-        "XF86Tools": "Tools",
-        "XF86Music": "Music",
-        "XF86Video": "Video",
-        "XF86Display": "Display",
-        "XF86Battery": "Battery",
-        "XF86Bluetooth": "Bluetooth",
-        "XF86WLAN": "WLAN",
-        "XF86TouchpadToggle": "TouchpadToggle",
-        "XF86ZoomIn": "ZoomIn",
-        "XF86ZoomOut": "ZoomOut",
-        "XF86Back": "Back",
-        "XF86Forward": "Forward",
-        "XF86Refresh": "Refresh",
-        "XF86Launch0": "Launch0",
-        "XF86Launch1": "Launch1",
-        "XF86Launch2": "Launch2",
-        "XF86Launch3": "Launch3",
-        "XF86Launch4": "Launch4",
-        "XF86Launch5": "Launch5",
-        "XF86Launch6": "Launch6",
-        "XF86Launch7": "Launch7",
-        "XF86Launch8": "Launch8",
-        "XF86Launch9": "Launch9",
-        "XF86LaunchA": "LaunchA",
-        "XF86LaunchB": "LaunchB",
-        "XF86LaunchC": "LaunchC",
-        "XF86LaunchD": "LaunchD",
-        "XF86LaunchE": "LaunchE",
-        "XF86LaunchF": "LaunchF"
-      }
     },
     "token_ref": {
       "ui": "token",
@@ -914,17 +528,36 @@
           "tokens": [],
           "preferred_tokens": []
         },
-        "Reveal_Key": {
-          "kind": "key_chord",
-          "choices": null,
+        "Keyboard": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "ON_DEMAND"
+          ],
           "enum": null,
-          "default": null,
-          "doc": "The global key that shows the Bar, written as Ctrl+Shift+B; the same as Show_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
+          "default": "NONE",
+          "doc": "Whether the Bar takes the keyboard: NONE never (Tab does nothing in it), ON_DEMAND on a click.",
           "slot": false,
           "required": false,
           "built": true,
           "group": "Behaviour",
-          "example": "Ctrl+Shift+F1",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
           "tokens": [],
           "preferred_tokens": []
         },
@@ -939,24 +572,6 @@
           "built": false,
           "refused": false,
           "group": "Placement",
-          "tokens": [],
-          "preferred_tokens": []
-        },
-        "Keyboard": {
-          "kind": "enum",
-          "choices": [
-            "NONE",
-            "ON_DEMAND",
-            "EXCLUSIVE"
-          ],
-          "enum": "Keyboard",
-          "default": null,
-          "doc": "Whether the Bar takes the keyboard. Not built.",
-          "slot": false,
-          "required": false,
-          "built": false,
-          "refused": false,
-          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -997,6 +612,20 @@
           "enum": null,
           "default": null,
           "doc": "How long the pointer is away before the Bar hides, in milliseconds. Not built.",
+          "slot": false,
+          "required": false,
+          "built": false,
+          "refused": false,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Reveal_Key": {
+          "kind": null,
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "A shortcut that reveals a hidden Bar. Not built.",
           "slot": false,
           "required": false,
           "built": false,
@@ -1298,10 +927,10 @@
       "example": "Bar {\n    Name: Top_Bar\n    Edge: TOP\n    Width: EXPAND\n    Height: 32\n    Style { Background: $color.surface }\n    Children { Text { Text: \"Hello\" } }\n}",
       "not_built": [
         "Exclusive_Zone",
-        "Keyboard",
         "Input_Region",
         "Auto_Hide",
         "Auto_Hide_Delay",
+        "Reveal_Key",
         "Visible",
         "Attach_To",
         "Meld",
@@ -1621,17 +1250,20 @@
           "tokens": [],
           "preferred_tokens": []
         },
-        "Shortcut": {
-          "kind": "key_chord",
+        "Tab_Index": {
+          "kind": "whole",
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The global key that toggles the Panel, written as Meta+Space; the same as Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
           "slot": false,
           "required": false,
           "built": true,
-          "group": "Behaviour",
-          "example": "Ctrl+Shift+F1",
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
           "tokens": [],
           "preferred_tokens": []
         },
@@ -3286,6 +2918,23 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Inner_Border": {
           "kind": "block",
           "choices": null,
@@ -3704,6 +3353,23 @@
           "required": false,
           "built": true,
           "group": "Motion",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
           "tokens": [],
           "preferred_tokens": []
         },
@@ -5841,6 +5507,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -7179,6 +6881,42 @@
           "built": true,
           "group": "Accessibility",
           "tokens": [],
+          "preferred_tokens": []
+        },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
           "preferred_tokens": []
         },
         "Value": {
@@ -8625,6 +8363,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -10019,6 +9793,42 @@
           "built": true,
           "group": "Accessibility",
           "tokens": [],
+          "preferred_tokens": []
+        },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
           "preferred_tokens": []
         },
         "Value": {
@@ -11480,6 +11290,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -12617,6 +12463,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -13612,6 +13494,42 @@
           "built": true,
           "group": "Accessibility",
           "tokens": [],
+          "preferred_tokens": []
+        },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
           "preferred_tokens": []
         },
         "Value": {
@@ -14781,6 +14699,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -15852,6 +15806,42 @@
           "built": true,
           "group": "Accessibility",
           "tokens": [],
+          "preferred_tokens": []
+        },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
           "preferred_tokens": []
         },
         "Value": {
@@ -17152,6 +17142,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -18450,6 +18476,42 @@
           "built": true,
           "group": "Accessibility",
           "tokens": [],
+          "preferred_tokens": []
+        },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
           "preferred_tokens": []
         },
         "Value": {
@@ -19862,6 +19924,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -21202,6 +21300,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "true",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled block takes none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -22214,31 +22348,6 @@
         "built": true,
         "group": "Settings",
         "tokens": []
-      },
-      "Shortcuts": {
-        "kind": "block",
-        "choices": null,
-        "enum": null,
-        "default": null,
-        "doc": "The shell's global keys, one Name: \"keys\" entry for each action; a hot reload applies it.",
-        "slot": false,
-        "required": false,
-        "built": true,
-        "group": "Settings",
-        "block": "Shortcuts",
-        "tokens": []
-      },
-      "Global_Shortcuts": {
-        "kind": "bool",
-        "choices": null,
-        "enum": null,
-        "default": "true",
-        "doc": "Whether the shell registers its keys with the desktop's shortcut service; false makes no call to it at all. A hot reload applies it.",
-        "slot": false,
-        "required": false,
-        "built": true,
-        "group": "Settings",
-        "tokens": []
       }
     },
     "Directories": {
@@ -22447,73 +22556,6 @@
         "required": false,
         "built": true,
         "group": "Validation",
-        "tokens": []
-      }
-    },
-    "Shortcuts": {
-      "Enter_Shortcut_Mode": {
-        "kind": "key_chord",
-        "choices": null,
-        "enum": null,
-        "default": null,
-        "doc": "The key that puts the shell in shortcut mode.",
-        "slot": false,
-        "required": false,
-        "built": true,
-        "group": "Shortcuts",
-        "example": "Ctrl+Shift+F1",
-        "tokens": []
-      },
-      "Exit_Shortcut_Mode": {
-        "kind": "key_chord",
-        "choices": null,
-        "enum": null,
-        "default": null,
-        "doc": "The key that leaves shortcut mode.",
-        "slot": false,
-        "required": false,
-        "built": true,
-        "group": "Shortcuts",
-        "example": "Ctrl+Shift+F1",
-        "tokens": []
-      },
-      "Set_Shortcut_Mode": {
-        "kind": "key_chord",
-        "choices": null,
-        "enum": null,
-        "default": null,
-        "doc": "The key that turns shortcut mode on or off for the focused surface.",
-        "slot": false,
-        "required": false,
-        "built": true,
-        "group": "Shortcuts",
-        "example": "Ctrl+Shift+F1",
-        "tokens": []
-      },
-      "Next_Focus": {
-        "kind": "key_chord",
-        "choices": null,
-        "enum": null,
-        "default": null,
-        "doc": "The key that moves focus to the next surface or block in shortcut mode.",
-        "slot": false,
-        "required": false,
-        "built": true,
-        "group": "Shortcuts",
-        "example": "Ctrl+Shift+F1",
-        "tokens": []
-      },
-      "Previous_Focus": {
-        "kind": "key_chord",
-        "choices": null,
-        "enum": null,
-        "default": null,
-        "doc": "The key that moves focus to the previous surface or block in shortcut mode.",
-        "slot": false,
-        "required": false,
-        "built": true,
-        "group": "Shortcuts",
-        "example": "Ctrl+Shift+F1",
         "tokens": []
       }
     },
@@ -23654,7 +23696,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -23763,7 +23807,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -23858,7 +23904,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23912,7 +23960,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23987,7 +24037,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24056,7 +24108,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24138,7 +24192,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24218,7 +24274,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24283,7 +24341,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24353,7 +24413,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24402,7 +24464,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24471,7 +24535,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24561,7 +24627,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24647,7 +24715,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -24753,7 +24823,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24849,7 +24921,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24910,7 +24984,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24990,7 +25066,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -25097,7 +25175,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -25171,7 +25251,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -25289,7 +25371,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -25396,7 +25480,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -25458,7 +25544,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -25534,7 +25622,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -25683,7 +25773,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -25741,7 +25833,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -25819,7 +25913,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -25830,141 +25926,5 @@
         }
       ]
     }
-  },
-  "popups": {
-    "monitors": "every Monitor with a Bar, Panel or Frame that shows the module in shown_by, on each output it opens on, unless that Monitor writes a Popup of the same name (which replaces it whole)",
-    "popups": {
-      "Tray_Menu": {
-        "shown_by": "Tray",
-        "content": "Tray_Menu",
-        "attach": "BOTTOM",
-        "alignment": "START",
-        "gap": 4.0,
-        "max_height": {
-          "value": 60.0,
-          "unit": "%"
-        },
-        "doc": "The menu of a tray item: its entries, below the clicked icon."
-      },
-      "Tray_Menu_2": {
-        "shown_by": "Tray",
-        "content": "Tray_Menu",
-        "attach": "BOTTOM",
-        "alignment": "START",
-        "gap": 0,
-        "max_height": {
-          "value": 60.0,
-          "unit": "%"
-        },
-        "doc": "The submenu of a row of Tray_Menu."
-      },
-      "Tray_Menu_3": {
-        "shown_by": "Tray",
-        "content": "Tray_Menu",
-        "attach": "BOTTOM",
-        "alignment": "START",
-        "gap": 0,
-        "max_height": {
-          "value": 60.0,
-          "unit": "%"
-        },
-        "doc": "The submenu of a row of Tray_Menu_2."
-      },
-      "Audio_Outputs": {
-        "shown_by": "Audio",
-        "content": "Audio_Outputs",
-        "attach": "BOTTOM",
-        "alignment": "START",
-        "gap": 4.0,
-        "max_height": {
-          "value": 400,
-          "unit": "px"
-        },
-        "doc": "The list of sound outputs the Audio module's secondary click opens."
-      }
-    }
-  },
-  "shortcuts": {
-    "fixed": [
-      "Enter_Shortcut_Mode",
-      "Exit_Shortcut_Mode",
-      "Set_Shortcut_Mode",
-      "Next_Focus",
-      "Previous_Focus"
-    ],
-    "forms": [
-      {
-        "form": "Toggle_<Name>",
-        "verb": "Toggle",
-        "value": "key_chord",
-        "target": {
-          "kind": "name_ref",
-          "doc": "The Name of the surface, written exactly."
-        },
-        "targets": [
-          "Panel",
-          "Bar",
-          "Frame"
-        ],
-        "doc": "Toggle_<Name>: \"keys\" toggles the Panel, Bar or Frame called <Name>."
-      },
-      {
-        "form": "Show_<Name>",
-        "verb": "Show",
-        "value": "key_chord",
-        "target": {
-          "kind": "name_ref",
-          "doc": "The Name of the surface, written exactly."
-        },
-        "targets": [
-          "Panel",
-          "Bar",
-          "Frame"
-        ],
-        "doc": "Show_<Name>: \"keys\" shows the Panel, Bar or Frame called <Name>."
-      },
-      {
-        "form": "Hide_<Name>",
-        "verb": "Hide",
-        "value": "key_chord",
-        "target": {
-          "kind": "name_ref",
-          "doc": "The Name of the surface, written exactly."
-        },
-        "targets": [
-          "Panel",
-          "Frame"
-        ],
-        "doc": "Hide_<Name>: \"keys\" hides the Panel or Frame called <Name>; a Bar cannot be hidden."
-      },
-      {
-        "form": "<Any_Name> { Keys, Action }",
-        "verb": null,
-        "value": "block",
-        "keys": {
-          "kind": "key_chord",
-          "key": "Keys",
-          "required": true
-        },
-        "actions": [
-          "Show",
-          "Hide",
-          "Toggle",
-          "Call"
-        ],
-        "doc": "<Any_Name> { Keys: \"keys\", Action: ... } runs a handler of Events and Actions (Show, Hide, Toggle or Call, with its arguments) when the key is pressed; its name is what the desktop's shortcut settings show."
-      }
-    ],
-    "surface_keys": {
-      "Panel": {
-        "key": "Shortcut",
-        "same_as": "Toggle_<Name>"
-      },
-      "Bar": {
-        "key": "Reveal_Key",
-        "same_as": "Show_<Name>"
-      }
-    },
-    "doc": "A surface's own key and a Shortcuts entry for the same action: the entry wins, with one warning. Two actions with the same key (any case, order or alias) are both left without it, with one warning. A name that matches no surface is a warning and the shortcut is not registered."
   }
 }

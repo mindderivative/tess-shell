@@ -91,6 +91,10 @@ _COMMON: dict[str, KeyRow] = {
     # a disabled block's tooltip opens (the block says so); the shell's own key, nothing for tre
     "Tooltip_When_Disabled": _k((), "bool"),
     "A11y_Hidden": _k("a11y_hidden", "bool"),
+    # focus (Focus and Keyboard): a block that takes input is focusable unless it says otherwise
+    # (``binder.focus``); the Tab order is ranked over the whole tree (``View.reindex``)
+    "Focusable": _k("focusable", "bool"),
+    "Tab_Index": _k((), "tab_index"),
     "Opacity": _k("opacity", "number"),
     "Position": _k("position", "enum", "RELATIVE", "ABSOLUTE"),
     "Left": _k("left", "length"),
@@ -356,7 +360,9 @@ _FONT: dict[str, KeyRow] = {
     "Font_Size": _TEXT_STYLE["Font_Size"],
     "Font_Weight": _TEXT_STYLE["Font_Weight"],
 }
-_FIELD_BOX_KEYS: dict[str, KeyRow] = {k: v for k, v in _COMMON.items() if k != "Label"}
+_FIELD_BOX_KEYS: dict[str, KeyRow] = {
+    k: v for k, v in _COMMON.items() if k not in ("Label", "Focusable", "Tab_Index")
+}
 _FIELD_CHILD = {"grid_column": 1, "grid_row": 1}
 _ROWS["TextField"] = BlockRow(
     "box",
@@ -402,6 +408,8 @@ _ROWS["TextField.input"] = BlockRow(
         "Max_Length": _k("max_length", "max_length"),
         "Password": _k("obscured", "bool"),
         "Label": _COMMON["Label"],
+        "Focusable": _COMMON["Focusable"],
+        "Tab_Index": _COMMON["Tab_Index"],
     },
     style={
         "Foreground": _TEXT_STYLE["Foreground"],

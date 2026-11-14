@@ -866,6 +866,7 @@ class Frames:
 
         def closed(event: Any, st: FrameState = st, window: Any = window) -> None:
             logger.info(f"Frame {where} painter closed ({getattr(event, 'reason', '')})")
+            self._m._surface_gone(plan.frame.name)
             if st.painter is window:
                 self._drop_hosts(st)
                 st.painter = None  # a later sync makes it again
@@ -878,6 +879,7 @@ class Frames:
 
         window.on("configure", configure)
         window.on("closed", closed)
+        window.on("active", lambda e: self._m._surface_active(plan.frame.name, bool(e.active)))
         window.root.on("pointer_down", pointer_down)
         window.root.on("key_down", key_down)  # a key bubbles up from the focused node
         self._m._app.add_window(window)
