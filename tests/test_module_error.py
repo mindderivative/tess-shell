@@ -82,6 +82,7 @@ def test_one_finding_for_each_distinct_error_a_minute_and_again_after_it() -> No
     first = seen[0]
     assert (first.severity, first.rule) == ("error", "module-exception")
     assert first.message == "Tray: Tray.activate raised RuntimeError: it broke"
+    assert first.module == "Tray" and seen[2].module == "Clock"  # type: ignore[attr-defined]
     assert first.file.endswith("test_module_error.py") and first.line > 1  # where it was raised
 
 
@@ -142,7 +143,9 @@ def test_the_control_interface_emits_error_reported_for_a_module_exception() -> 
             finding_sinks.remove(r.control.error_reported)
             listener.stop()
     assert len(seen) == 1  # once, though it raised three times
-    rule, file, line, message = seen[0]
+    rule, file, line, message, module = seen[0]
+    assert module == "Driver"  # the module's name is its own field
     assert rule == "module-exception" and file.endswith("Driver_Module.py") and line == 7
     assert message == "Driver: Driver.boom raised RuntimeError: boom on purpose"
     assert r.control.errors.last()[0]["rule"] == "module-exception"  # and Status keeps it
+    assert r.control.errors.last()[0]["module"] == "Driver"

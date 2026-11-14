@@ -10,9 +10,11 @@ typed by the same reader as the user's file, so they are also what a user copies
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import Any
 
 import tess_dl
 
+from tess_shell.binder import model as m
 from tess_shell.schema.model import ModuleDef, PopupDef
 from tess_shell.schema.shell import read_shell
 
@@ -74,3 +76,43 @@ def default_popups(
 
 def _no_files(path: str) -> str:
     raise OSError(f"{path}: the shipped Popups read no files")
+
+
+def describe(modules: Mapping[str, ModuleDef]) -> dict[str, dict[str, Any]]:
+    """The shipped Popups as plain data for the schema export (``popups``): by Popup name, the
+    module whose use on a Monitor brings it (``shown_by``), the module that is its content
+    (``content``), its placement keys and its ``Max_Height`` as written. Derived from the text
+    above, so the export and the shell cannot disagree."""
+    found, _problems = default_popups(modules)
+    out: dict[str, dict[str, Any]] = {}
+    for shown_by, popups in found.items():
+        for popup in popups:
+            content = [c.module for c in popup.children if isinstance(c, m.UseNode)]
+            height: dict[str, Any] = (
+                {"value": popup.max_height_percent, "unit": "%"}
+                if popup.max_height_percent is not None
+                else {"value": popup.max_height, "unit": "px"}
+            )
+            out[popup.name] = {
+                "shown_by": shown_by,
+                "content": content[0] if content else "",
+                "attach": popup.attach,
+                "alignment": popup.alignment,
+                "gap": popup.gap,
+                "max_height": height,
+                "doc": DOCS.get(popup.name, ""),
+            }
+    return out
+
+
+# one line for each shipped Popup (the schema export's ``doc``)
+DOCS: dict[str, str] = {
+    "Tray_Menu": "The menu of a tray item: its entries, below the clicked icon.",
+    "Tray_Menu_2": "The submenu of a row of Tray_Menu.",
+    "Tray_Menu_3": "The submenu of a row of Tray_Menu_2.",
+    "Audio_Outputs": "The list of sound outputs the Audio module's secondary click opens.",
+}
+MONITORS = (
+    "every Monitor with a Bar, Panel or Frame that shows the module in shown_by, on each output "
+    "it opens on, unless that Monitor writes a Popup of the same name (which replaces it whole)"
+)

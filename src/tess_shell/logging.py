@@ -184,11 +184,12 @@ def note_module_error(
     *,
     clock: Callable[[], float] = time.monotonic,
 ) -> None:
-    """A module's code raised (the caller has logged it): tell the finding listeners, so the control
-    interface emits ``ErrorReported(rule, file, line, message)``. Once for each distinct error
-    (module, where, message) a minute; the log line is the caller's and is not rate limited. Any
-    thread. ``where`` is what ran (``Tray.activate``, ``on_service_lost``, ``a D-Bus callback``)."""
-    from tess_shell.schema.findings import Finding
+    """A module's code raised (the caller has logged it): tell the finding listeners, so the
+    control interface emits ``ErrorReported(rule, file, line, message, module)``. Once for each
+    distinct error (module, where, message) a minute; the log line is the caller's and is not
+    rate limited. Any thread. ``where`` is what ran (``Tray.activate``, ``on_service_lost``, ``a
+    D-Bus callback``)."""
+    from tess_shell.schema.findings import ModuleFinding
 
     message = f"{module}: {where} raised {type(exc).__name__}: {exc}"
     key = (module, where, message)
@@ -204,13 +205,14 @@ def note_module_error(
     frames = traceback.extract_tb(exc.__traceback__)
     frame = frames[-1] if frames else None
     note_finding(
-        Finding(
+        ModuleFinding(
             frame.filename if frame else module,
             frame.lineno or 1 if frame else 1,
             1,
             "error",
             "module-exception",
             message,
+            module=module,
         )
     )
 

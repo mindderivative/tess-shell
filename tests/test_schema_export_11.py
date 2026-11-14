@@ -587,6 +587,6 @@ def test_the_cli_schema_is_regenerated_to_a_file(tmp_path: Path) -> None:
     import json
 
     data = json.loads(target.read_text(encoding="utf-8"))
-    assert data["schema_version"] == "1.1" and "modules" in data
-    assert list(data)[-1] == "modules"
+    assert data["schema_version"] == "1.2" and "modules" in data
+    assert list(data)[-1] == "popups"
     _ = (CONTEXTS, run)  # the probes of the first suite are shared

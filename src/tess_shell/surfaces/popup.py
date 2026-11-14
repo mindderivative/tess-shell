@@ -16,7 +16,7 @@ import difflib
 import math
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
@@ -34,6 +34,7 @@ from tess_shell.model.uses import Use
 from tess_shell.schema.default_popups import default_popups
 from tess_shell.schema.model import ModuleDef, PopupDef, ShellDef
 from tess_shell.surfaces.bar import Rect, surface_rect
+from tess_shell.surfaces.popup_measure import measure_menu
 
 if TYPE_CHECKING:
     from tess_re import Node as TreNode
@@ -129,6 +130,7 @@ class Measured:
     width: float
     height: float
     scrolls: bool = False
+    estimated: bool = field(default=False, compare=False)  # from the cheap measure of a menu
 
 
 def measure(
@@ -137,12 +139,17 @@ def measure(
     popup: PopupDef,
     border: Mapping[str, Any] | None = None,
     output_height: float | None = None,
+    estimate: bool = True,
 ) -> Measured:
     """Lay ``nodes`` out in the headless ``meter`` window and read the body's size.
 
     Popup > Size: build the content, run a layout pass and read the laid-out size. ``Width`` and
     ``Height`` that are pixels are used as they are; ``AUTO`` reads the content's size, clamped
     to ``Max_Width`` / ``Max_Height``. Raises :class:`BindFailed` when the content does not bind.
+
+    A menu (a column of uniform rows) is measured without building all its rows, from one built
+    row of each kind (``popup_measure``); ``estimate=False`` forces the full pass (the tests that
+    pin the two to the same numbers), and any other content takes it anyway.
     """
     # ``Max_Height: 60%`` is a share of the output's height
     max_height = popup.max_height
@@ -150,6 +157,10 @@ def measure(
         max_height = output_height * popup.max_height_percent / 100
     fixed_w = popup.width.px if isinstance(popup.width, m.Length) else None
     fixed_h = popup.height.px if isinstance(popup.height, m.Length) else None
+    if estimate and fixed_w is None and fixed_h is None:
+        size = measure_menu(meter, nodes, popup.max_width, border)
+        if size is not None:
+            return Measured(size[0], min(size[1], max_height), size[1] > max_height + 0.5, True)
     props: dict[str, Any] = {"align_self": "start", **(border or {})}
     if fixed_w is not None:
         props["width"] = fixed_w

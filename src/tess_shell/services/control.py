@@ -100,9 +100,15 @@ class Reported(Protocol):
     def message(self) -> str: ...
 
 
+def module_of(finding: object) -> str:
+    """The name of the module a finding comes from, empty for a finding of a file."""
+    module = getattr(finding, "module", "")
+    return module if isinstance(module, str) else ""
+
+
 class ErrorLog:
-    """The last errors the shell reported (rule, file, line, message): what ``Status`` lists. Never
-    a log line and never a value of a param."""
+    """The last errors the shell reported (rule, file, line, message, module): what ``Status``
+    lists. Never a log line and never a value of a param."""
 
     def __init__(self, size: int = LAST_ERRORS) -> None:
         self._errors: deque[dict[str, Any]] = deque(maxlen=size)
@@ -114,6 +120,7 @@ class ErrorLog:
                 "file": finding.file,
                 "line": finding.line,
                 "message": finding.message,
+                "module": module_of(finding),
             }
         )
 
@@ -265,7 +272,14 @@ class ControlService:
         if finding.severity != "error":
             return
         self.errors.add(finding)
-        self._emit("ErrorReported", finding.rule, finding.file, finding.line, finding.message)
+        self._emit(
+            "ErrorReported",
+            finding.rule,
+            finding.file,
+            finding.line,
+            finding.message,
+            module_of(finding),
+        )
 
     def surface_changed(self, name: str, state: str) -> None:
         self._emit("SurfaceChanged", name, state)
@@ -298,7 +312,7 @@ class ControlService:
             "Version": _property("Version", "s", lambda: self.version),
             "ApiVersion": _property("ApiVersion", "u", lambda: API_VERSION),
             "Reloaded": _signal("Reloaded", "bs", 2),
-            "ErrorReported": _signal("ErrorReported", "ssis", 4),
+            "ErrorReported": _signal("ErrorReported", "ssiss", 5),
             "SurfaceChanged": _signal("SurfaceChanged", "ss", 2),
         }
         cls = type("TesseraeShell1", (ServiceInterface,), ns)

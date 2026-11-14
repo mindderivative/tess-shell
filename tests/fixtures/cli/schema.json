@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -25337,6 +25337,59 @@
           "kwargs": false
         }
       ]
+    }
+  },
+  "popups": {
+    "monitors": "every Monitor with a Bar, Panel or Frame that shows the module in shown_by, on each output it opens on, unless that Monitor writes a Popup of the same name (which replaces it whole)",
+    "popups": {
+      "Tray_Menu": {
+        "shown_by": "Tray",
+        "content": "Tray_Menu",
+        "attach": "BOTTOM",
+        "alignment": "START",
+        "gap": 4.0,
+        "max_height": {
+          "value": 60.0,
+          "unit": "%"
+        },
+        "doc": "The menu of a tray item: its entries, below the clicked icon."
+      },
+      "Tray_Menu_2": {
+        "shown_by": "Tray",
+        "content": "Tray_Menu",
+        "attach": "BOTTOM",
+        "alignment": "START",
+        "gap": 0,
+        "max_height": {
+          "value": 60.0,
+          "unit": "%"
+        },
+        "doc": "The submenu of a row of Tray_Menu."
+      },
+      "Tray_Menu_3": {
+        "shown_by": "Tray",
+        "content": "Tray_Menu",
+        "attach": "BOTTOM",
+        "alignment": "START",
+        "gap": 0,
+        "max_height": {
+          "value": 60.0,
+          "unit": "%"
+        },
+        "doc": "The submenu of a row of Tray_Menu_2."
+      },
+      "Audio_Outputs": {
+        "shown_by": "Audio",
+        "content": "Audio_Outputs",
+        "attach": "BOTTOM",
+        "alignment": "START",
+        "gap": 4.0,
+        "max_height": {
+          "value": 400,
+          "unit": "px"
+        },
+        "doc": "The list of sound outputs the Audio module's secondary click opens."
+      }
     }
   }
 }

@@ -184,7 +184,8 @@ def text_status(status: dict[str, Any]) -> str:
     errors = status.get("errors", [])
     lines.append("last errors:" + ("" if errors else " none"))
     for e in errors:
-        lines.append(f"  {e['file']}:{e['line']}: {e['rule']}: {e['message']}")
+        module = f" [{e['module']}]" if e.get("module") else ""
+        lines.append(f"  {e['file']}:{e['line']}: {e['rule']}: {e['message']}{module}")
     return "\n".join(lines)
 
 

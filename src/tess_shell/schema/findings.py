@@ -28,6 +28,15 @@ class Finding:
         return asdict(self)
 
 
+@dataclass(frozen=True, slots=True)
+class ModuleFinding(Finding):
+    """A finding that comes from a module's code (it raised): ``module`` is the module's name. The
+    control interface sends it as the ``module`` of ``ErrorReported`` and lists it in ``Status``;
+    a finding of a file has no module (``Finding`` has none, so ``check --json`` is unchanged)."""
+
+    module: str = ""
+
+
 def nearest(name: str, choices: Iterable[str], limit: int = 3) -> list[str]:
     """Up to ``limit`` of ``choices`` closest to ``name``, ignoring case."""
     by_lower = {c.lower(): c for c in choices}

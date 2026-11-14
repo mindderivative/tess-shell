@@ -1,5 +1,5 @@
 """The shell's schema as plain JSON, for a configuration application that builds forms from it
-(``tesserae-shell schema --json``; the shape is version 1.0, see ``schema_version``).
+(``tesserae-shell schema --json``; the shape is version 1.2, see ``schema_version``).
 
 Everything is read from the tables the loader uses, so there is no second list of keys to drift:
 :mod:`tess_shell.schema.blocks` (blocks, surfaces, kinds, choices, required keys, events, what is
@@ -34,7 +34,7 @@ from tess_shell.binder import model as m
 from tess_shell.binder.defaults import tre_defaults
 from tess_shell.config import settings as cfg
 from tess_shell.config.paths import FOLDERS
-from tess_shell.schema import blocks, docs
+from tess_shell.schema import blocks, default_popups, docs
 from tess_shell.schema.look import GROUPS as THEME_GROUPS
 from tess_shell.schema.look import STYLE_UNION, read_theme, token_kind
 from tess_shell.schema.model import (
@@ -56,7 +56,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.1"
+SCHEMA_VERSION = "1.2"
 
 Json = dict[str, Any]
 
@@ -1408,6 +1408,16 @@ def _modules() -> dict[str, Json]:
     return out
 
 
+def _popups() -> Json:
+    """The Popups the shell provides (``schema.default_popups``), and which Monitors get them."""
+    stubs = {}
+    for name, (document, _source) in _shipped_modules().items():
+        found = read_module_params(document, f"{name}_Module.tdl")
+        assert found is not None
+        stubs[name] = found
+    return {"monitors": default_popups.MONITORS, "popups": default_popups.describe(stubs)}
+
+
 # -- the whole ------------------------------------------------------------------------------------
 
 
@@ -1426,6 +1436,7 @@ def schema_dict() -> Json:
         "enums": {name: list(words) for name, words in NAMED_ENUMS.items()},
         "tokens": _tokens(),
         "modules": _modules(),
+        "popups": _popups(),
     }
 
 

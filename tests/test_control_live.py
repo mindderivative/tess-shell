@@ -236,7 +236,7 @@ def test_reload_applies_and_returns_a_bad_file_with_its_errors_and_exit_1(desk: 
     assert as_json["ok"] is False and "Main_Shell.tdl" in as_json["message"]
     status = json.loads(d.run("status", "--json").stdout)
     assert status["errors"], "the refused reload is among the last errors"
-    assert all(set(e) == {"rule", "file", "line", "message"} for e in status["errors"])
+    assert all(set(e) == {"rule", "file", "line", "message", "module"} for e in status["errors"])
     shell_file.write_text(good)  # fixed: the next reload goes through
     assert d.run("reload").returncode == 0
     assert d.finish() == 0

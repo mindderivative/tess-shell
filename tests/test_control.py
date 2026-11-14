@@ -261,6 +261,10 @@ def test_introspection_lists_the_methods_properties_and_signals() -> None:
     assert signatures["Call"] == "sssas".replace("as", "s")  # three strings in, one out
     assert signatures["Show"] == "sbs"  # the name in, (ok, message) out
     assert signatures["Reload"] == "bs"
+    (reported,) = [x for x in iface.findall("signal") if x.get("name") == "ErrorReported"]
+    assert (
+        "".join(a.get("type", "") for a in reported) == "ssiss"
+    )  # rule, file, line, message, module
 
 
 def test_the_properties_are_the_state_the_version_and_the_api_version() -> None:
@@ -463,7 +467,7 @@ def test_the_signals_are_emitted_when_something_happened() -> None:
             listener.stop()
     by_name = {name: body for name, body in listener.seen}
     assert by_name["Reloaded"] == [True, "reloaded (a.tdl) in 12 ms"]
-    assert by_name["ErrorReported"] == ["unknown-key", "a.tdl", 3, "no key X"]
+    assert by_name["ErrorReported"] == ["unknown-key", "a.tdl", 3, "no key X", ""]  # no module
     assert by_name["SurfaceChanged"] == ["Launcher", "shown"]
     names = [n for n, _ in listener.seen]
     assert names.count("ErrorReported") == 1  # a warning is no error
@@ -475,7 +479,7 @@ def test_the_last_errors_are_kept_without_their_log_lines() -> None:
     with rig() as r:
         r.control.error_reported(Finding("f.tdl", 1, 1, "error", "r", "m"))
         assert r.control.errors.last() == [
-            {"rule": "r", "file": "f.tdl", "line": 1, "message": "m"}
+            {"rule": "r", "file": "f.tdl", "line": 1, "message": "m", "module": ""}
         ]
 
 

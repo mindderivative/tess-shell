@@ -118,6 +118,7 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.schema.model",
         "tess_shell.surfaces",
     },
+    "surfaces.popup_measure": {"tess_shell.binder", "tess_shell.surfaces"},
     "surfaces.popup": {
         "tess_re",
         "loguru",
