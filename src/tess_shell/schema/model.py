@@ -15,6 +15,7 @@ from tess_shell.binder.model import (
     Node,
     Origin,
     Shadows,
+    Text,
     UseNode,
     Value,
 )
@@ -38,6 +39,7 @@ class BarDef:
     max_height: float | None = None
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
+    reveal_key: Text | None = None  # ``Reveal_Key``: the canonical key string, where it is written
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +92,7 @@ class PanelDef:
     content_fade: bool = True  # melded: the content's opacity follows the slide's progress
     duration: float = 200  # milliseconds of the animation
     handlers: Mapping[str, Handler] = field(default_factory=dict)  # ``On_Open`` -> handler
+    shortcut: Text | None = None  # ``Shortcut``: the canonical key string, where it is written
 
 
 @dataclass(frozen=True, slots=True)

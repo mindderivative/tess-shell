@@ -12,6 +12,7 @@ from tess_shell.binder import convert
 from tess_shell.binder import model as m
 from tess_shell.binder.model import BindError
 from tess_shell.schema.findings import nearest
+from tess_shell.schema.keys import ChordError, parse_chord
 from tess_shell.schema.ranges import range_of, scoped
 
 SIDES_HINT = (
@@ -258,6 +259,14 @@ def _coerce_kind(
                         "the path is relative to this file",
                     ) from exc
             return m.Text(text, origin=origin)
+        case "key_chord":
+            keys = _word(value) if not isinstance(value, tess_dl.String) else value.value
+            if keys is None:
+                raise _bad("a string of keys", value, 'write "Ctrl+Space"')
+            try:
+                return m.Text(parse_chord(keys).text, origin=origin)
+            except ChordError as exc:
+                raise ValueProblem("bad-value", exc.message, exc.hint) from exc
         case "color":
             return _color(value, origin)
         case "enum":

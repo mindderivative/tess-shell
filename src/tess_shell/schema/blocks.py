@@ -410,7 +410,6 @@ BAR_NOT_BUILT = (
     "Input_Region",
     "Auto_Hide",
     "Auto_Hide_Delay",
-    "Reveal_Key",
     "Visible",
     "Attach_To",
     "Meld",
@@ -564,6 +563,8 @@ PANEL_KEYS: dict[str, str] = {
     # a melded Panel's size: ``Depth`` perpendicular to the Frame's edge, ``Length`` along it
     "Depth": "length",
     "Length": "length",
+    # the global key that toggles the Panel: the same as ``Toggle_<Name>`` in ``Shortcuts``
+    "Shortcut": "key_chord",
 }
 PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),

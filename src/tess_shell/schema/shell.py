@@ -829,6 +829,19 @@ def _handler(
                 else "put On_Released on the call of a Slider",
             )
             return None
+    return _action_handler(ctx, key, origin, value)
+
+
+def _action_handler(
+    ctx: _Ctx,
+    key: str,
+    origin: tess_dl.Origin | None,
+    value: tess_dl.Value | Block,
+    skip: tuple[str, ...] = (),
+) -> m.Handler | None:
+    """The action a handler value names, with its arguments: the part of :func:`_handler` that is
+    the same wherever the handler is written (``skip`` are keys of the block that are not
+    arguments, such as a shortcut's ``Keys``)."""
     args: dict[str, object] = {}
     slots: dict[str, m.SlotValue] = {}
     if isinstance(value, Block):
@@ -857,7 +870,7 @@ def _handler(
                     "",
                 )
                 return None
-            if not isinstance(e, Property) or e.key == "Action":
+            if not isinstance(e, Property) or e.key == "Action" or e.key in skip:
                 continue
             slot = slot_value(ctx, e)
             if slot is not None:
@@ -1148,6 +1161,8 @@ BAR_KEYS: dict[str, str] = {
     "Min_Height": "bound",
     "Max_Width": "bound",
     "Max_Height": "bound",
+    # the global key that shows the Bar: the same as ``Show_<Name>`` in ``Shortcuts``
+    "Reveal_Key": "key_chord",
 }
 BAR_CHOICES: dict[str, tuple[str, ...]] = {
     "Edge": ("TOP", "BOTTOM", "LEFT", "RIGHT"),
@@ -1236,6 +1251,7 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         max_height=px("Max_Height"),
         style=style,
         children=tuple(children),
+        reveal_key=reveal if isinstance(reveal := values.get("Reveal_Key"), m.Text) else None,
     )
 
 
@@ -1497,6 +1513,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         peek=peek,
         content_fade=fade.value if isinstance(fade, m.Bool) else True,
         handlers=handlers,
+        shortcut=key if isinstance(key := values.get("Shortcut"), m.Text) else None,
     )
 
 
@@ -2811,3 +2828,26 @@ def read_module_params(document: Document, file: str) -> ModuleDef | None:
         if isinstance(entry, Block) and entry.type == "Params":
             params = _param_decls(ctx, entry)
     return ModuleDef(name, file, ctx.origin(root.origin), params, ())
+
+
+def read_shortcut_handler(
+    block: Block, file: str, modules: Mapping[str, ModuleDef]
+) -> tuple[m.Handler | None, list[Finding]]:
+    """The handler of a ``Shortcuts`` block entry (``Volume_Up { Keys: "...", Action: Call,
+    Target: "Audio.step", delta: 5 }``, Global Shortcuts > Action Names and Forms): the form of
+    Events and Actions > A Handler, with ``Keys`` beside it. A key press has no event and no value,
+    so a ``{{ }}`` argument is refused; the checks of the ``Call`` target are those of any other
+    ``Call``."""
+    ctx = _Ctx(file, lambda p: "", modules)
+    handler = _action_handler(ctx, block.type, block.origin, block, skip=("Keys",))
+    if handler is not None and handler.slots:
+        slot = next(iter(handler.slots))
+        ctx.add(
+            block.origin,
+            "bad-value",
+            f"{block.type}: {slot} is a {{{{ }}}} slot, and a key press has no event or value "
+            "to read",
+            "write the argument as a plain value",
+        )
+        return None, ctx.findings
+    return handler, ctx.findings

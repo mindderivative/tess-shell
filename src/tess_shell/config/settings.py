@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,7 @@ from tess_dl import Block, List, Number, Origin, Property, Value
 
 from tess_shell.config.paths import FOLDERS, PathError, expand_path
 from tess_shell.schema.findings import Finding, nearest
+from tess_shell.schema.keys import Chord, ChordError, parse_chord
 from tess_shell.schema.tree import child_blocks, find_property, position, properties, value_text
 
 SETTINGS_FILE = "settings.tdl"
@@ -29,6 +31,8 @@ ROOT_KEYS = (
     "Appearance",
     "Debug",
     "Control",
+    "Shortcuts",
+    "Global_Shortcuts",
 )
 DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend")
 PANEL_HIDE = ("CLOSE", "KEEP")
@@ -46,6 +50,19 @@ LOGGING_KEYS = (
 )
 _BOOL_KEYS = ("Diagnose", "Console", "Capture_Stderr")
 VALIDATION_KEYS = ("Enabled",)
+# the five actions of Focus and Keyboard, written in ``Shortcuts { }`` with the keys of the user
+FIXED_SHORTCUTS = (
+    "Enter_Shortcut_Mode",
+    "Exit_Shortcut_Mode",
+    "Set_Shortcut_Mode",
+    "Next_Focus",
+    "Previous_Focus",
+)
+# ``Toggle_<Name>``, ``Show_<Name>``, ``Hide_<Name>``: the verb is the text before the first
+# underscore, the rest is the Name of a surface
+SHORTCUT_VERBS = ("Toggle", "Show", "Hide")
+_VERB_FORM = re.compile(r"^(Toggle|Show|Hide)_([A-Za-z][A-Za-z0-9_]*)$")
+_ENTRY_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,6 +106,22 @@ class DebugSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class ShortcutEntry:
+    """One entry of ``Shortcuts { }`` (Global Shortcuts > Action Names and Forms). ``kind`` is
+    ``fixed`` (one of ``FIXED_SHORTCUTS``), ``toggle``, ``show`` or ``hide`` (``target`` is the Name
+    of a surface) or ``handler`` (a block: ``block`` holds it, ``target`` is empty). ``line`` and
+    ``column`` are where the entry's name is written, for the warnings that name it."""
+
+    name: str
+    kind: str
+    target: str
+    chord: Chord
+    line: int
+    column: int
+    block: Block | None = field(default=None, compare=False)
+
+
+@dataclass(frozen=True, slots=True)
 class Settings:
     config_dir: Path
     main_shell: str = DEFAULT_MAIN_SHELL
@@ -105,6 +138,10 @@ class Settings:
     # export the shell's own D-Bus interface (IPC and CLI > Configuration): false runs the shell
     # with no bus name and no control commands; a restart applies it
     control: bool = True
+    # register the shell's shortcuts with the desktop's shortcut service (Global Shortcuts >
+    # Configuration): false makes no call to it at all; hot reload applies it
+    global_shortcuts: bool = True
+    shortcuts: tuple[ShortcutEntry, ...] = ()  # the ``Shortcuts { }`` block, in file order
 
 
 class _Reader:
@@ -280,6 +317,98 @@ def _directories(reader: _Reader, block: Block, config: Path) -> dict[str, tuple
         result[prop.key] = tuple(found)
     return result
 
+def _chord(reader: _Reader, origin: Origin | None, text: str | None) -> Chord | None:
+    if text is None:
+        reader.error(origin, "bad-value", "keys are a string such as \"Ctrl+Space\"", "")
+        return None
+    try:
+        return parse_chord(text)
+    except ChordError as exc:
+        reader.error(origin, "bad-value", exc.message, exc.hint)
+        return None
+
+
+def _shortcuts(reader: _Reader, block: Block) -> tuple[ShortcutEntry, ...]:
+    """``Shortcuts { Toggle_Launcher: "Meta+Space", Volume_Up { Keys: "...", Action: ... } }``
+    (Global Shortcuts > Action Names and Forms). The keys are read here (a string that is no key
+    string is an error at its place); whether a surface named in a ``Toggle_<Name>`` exists, and the
+    handler of a block entry, are judged when the shell files are known (``tess_shell.shortcuts``).
+    """
+    entries: list[ShortcutEntry] = []
+    seen: dict[str, tuple[int, int]] = {}
+
+    def once(name: str, origin: Origin | None) -> bool:
+        line, column = position(origin)
+        if name in seen:
+            first = seen[name]
+            reader.error(
+                origin,
+                "shortcut-duplicate",
+                f"the shortcut {name} is written twice, first at {first[0]}:{first[1]}",
+                "an action has one entry",
+            )
+            return False
+        seen[name] = (line, column)
+        return True
+
+    for prop in properties(block):
+        verb = _VERB_FORM.match(prop.key)
+        if prop.key not in FIXED_SHORTCUTS and verb is None:
+            close = nearest(prop.key, FIXED_SHORTCUTS)
+            hint = (
+                f"did you mean {', '.join(close)}?"
+                if close
+                else f"the actions: {', '.join(FIXED_SHORTCUTS)}, Toggle_<Name>, Show_<Name>, "
+                "Hide_<Name>; or a block with Keys and Action"
+            )
+            reader.error(prop.key_origin, "unknown-key", f"unknown shortcut {prop.key}", hint)
+            continue
+        chord = _chord(reader, prop.value_origin, value_text(prop.value))
+        if chord is None or not once(prop.key, prop.key_origin):
+            continue
+        line, column = position(prop.key_origin)
+        if verb is None:
+            entries.append(ShortcutEntry(prop.key, "fixed", prop.key, chord, line, column))
+        else:
+            entries.append(
+                ShortcutEntry(prop.key, verb[1].lower(), verb[2], chord, line, column)
+            )
+    for child in child_blocks(block):
+        name = child.type
+        if name in FIXED_SHORTCUTS or _VERB_FORM.match(name):
+            reader.error(
+                child.origin,
+                "bad-name",
+                f"{name} is written as a block, which is a handler of your own: its name may "
+                "not be one of the fixed actions or start with Toggle_, Show_ or Hide_",
+                f'write {name}: "keys" for the shell\'s own action, or rename the handler',
+            )
+            continue
+        keys = find_property(child, "Keys")
+        if keys is None:
+            reader.error(
+                child.origin,
+                "missing-key",
+                f"the shortcut {name} needs Keys",
+                f'write {name} {{ Keys: "Ctrl+Alt+T", Action: ... }}',
+            )
+            continue
+        chord = _chord(reader, keys.value_origin, value_text(keys.value))
+        if chord is None or not once(name, child.origin):
+            continue
+        line, column = position(child.origin)
+        entries.append(ShortcutEntry(name, "handler", "", chord, line, column, child))
+    for entry in block.entries:
+        if isinstance(entry, tess_dl.If | tess_dl.For):
+            reader.error(
+                entry.origin,
+                "unsupported-entry",
+                "Shortcuts does not take 'If' or 'For'",
+                "write plain entries",
+            )
+    return tuple(sorted(entries, key=lambda e: (e.line, e.column)))
+
+
 
 def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     """Read ``<config>/settings.tdl``. A missing file means defaults.
@@ -330,6 +459,8 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     appearance = AppearanceSettings()
     debug = DebugSettings()
     control = True
+    global_shortcuts = True
+    shortcuts: tuple[ShortcutEntry, ...] = ()
     main_origin: Origin | None = None
     if root is not None:
         reader.unknown_keys(root, ROOT_KEYS, "Settings")
@@ -393,6 +524,11 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             en = find_property(blk, "Enabled")
             if en is not None and (b := reader.boolean(en)) is not None:
                 validation = b
+        gs = find_property(root, "Global_Shortcuts")
+        if gs is not None and (flag := reader.boolean(gs)) is not None:
+            global_shortcuts = flag
+        if (blk := reader.block(root, "Shortcuts")) is not None:
+            shortcuts = _shortcuts(reader, blk)
 
     search: dict[str, tuple[Path, ...]] = {}
     for folder in FOLDERS:
@@ -437,6 +573,8 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             appearance=appearance,
             debug=debug,
             control=control,
+            global_shortcuts=global_shortcuts,
+            shortcuts=shortcuts,
         ),
         [],
     )
