@@ -187,9 +187,9 @@ def test_a_taken_key_registers_with_no_key_and_warns_once(desk: Make) -> None:
 def test_no_key_press_opens_a_popup(desk: Make) -> None:
     d = desk()
     d.write('    Shortcuts { Open_Menu { Keys: "Ctrl+M", Action: Toggle, Target: Menu_Popup } }')
-    d.start()
-    d.fake.press("Open_Menu")
-    d.seen("no command opens a Popup")
+    shell = d.start()
+    assert "Open_Menu: Menu_Popup is a Popup, and no key opens a Popup" in shell.stderr
+    assert d.fake.names() == []  # the action is not declared: no key can reach a Popup
     status = json.loads(d.run("status", "--json").stdout)
     assert {s["name"]: s["shown"] for s in status["surfaces"]}["Launcher"] is False
     assert "Menu_Popup" not in {s["name"] for s in status["surfaces"]}  # never a surface

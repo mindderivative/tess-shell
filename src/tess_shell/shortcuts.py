@@ -96,6 +96,47 @@ def build_plan(
     for surface in keyed:
         own(surface)
 
+    def target_ok(entry: ShortcutEntry, verb: str, target: str) -> bool:
+        """Whether a key may act on the surface ``target``; a warning says why not (the action
+        is then not declared)."""
+        where = (SETTINGS_FILE, entry.line, entry.column)
+        if target in popups:
+            findings.append(
+                _warning(
+                    *where,
+                    "shortcut-popup",
+                    f"{entry.name}: {target} is a Popup, and no key opens a Popup",
+                    "a key opens a Panel; a Popup needs the press or click that opens it",
+                )
+            )
+            return False
+        if target not in kinds:
+            close = nearest(target, kinds)
+            findings.append(
+                _warning(
+                    *where,
+                    "shortcut-unknown-surface",
+                    f"{entry.name}: no Panel, Bar or Frame is named {target}; the shortcut is "
+                    "not registered",
+                    f"did you mean {VERBS[verb]}_{close[0]}?"
+                    if close
+                    else f"the surfaces: {', '.join(sorted(kinds)) or 'none'}",
+                )
+            )
+            return False
+        if kinds[target] == "bar" and verb != "show":
+            findings.append(
+                _warning(
+                    *where,
+                    "shortcut-bar",
+                    f"{entry.name}: {target} is a Bar, which is always shown and cannot be "
+                    "hidden; the shortcut is not registered",
+                    f"write Show_{target}",
+                )
+            )
+            return False
+        return True
+
     for entry in entries:
         file, line, column = SETTINGS_FILE, entry.line, entry.column
         where = f"{file}:{line}:{column}"
@@ -106,49 +147,12 @@ def build_plan(
             findings.extend(found)
             if handler is None:
                 continue
-        elif entry.kind in VERBS:
-            target = entry.target
-            if target in popups:
-                findings.append(
-                    _warning(
-                        file,
-                        line,
-                        column,
-                        "shortcut-popup",
-                        f"{entry.name}: {target} is a Popup, and no key opens a Popup",
-                        "a key opens a Panel; a Popup needs the press or click that opens it",
-                    )
-                )
+            if handler.builtin and not target_ok(
+                entry, handler.action.lower(), str(handler.args.get("Target", ""))
+            ):
                 continue
-            if target not in kinds:
-                close = nearest(target, kinds)
-                findings.append(
-                    _warning(
-                        file,
-                        line,
-                        column,
-                        "shortcut-unknown-surface",
-                        f"{entry.name}: no Panel, Bar or Frame is named {target}; the shortcut is "
-                        "not registered",
-                        f"did you mean {VERBS[entry.kind]}_{close[0]}?"
-                        if close
-                        else f"the surfaces: {', '.join(sorted(kinds)) or 'none'}",
-                    )
-                )
-                continue
-            if kinds[target] == "bar" and entry.kind != "show":
-                findings.append(
-                    _warning(
-                        file,
-                        line,
-                        column,
-                        "shortcut-bar",
-                        f"{entry.name}: {target} is a Bar, which is always shown and cannot be "
-                        "hidden; the shortcut is not registered",
-                        f"write Show_{target}",
-                    )
-                )
-                continue
+        elif entry.kind in VERBS and not target_ok(entry, entry.kind, entry.target):
+            continue
         action = Action(
             entry.name,
             friendly_text(entry.name),

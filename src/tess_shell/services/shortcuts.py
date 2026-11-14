@@ -218,12 +218,14 @@ class ShortcutService:
                 return False
         if self.bus.owner(SERVICE) is None:
             self._attached = False
-            if not self._missing_said:
+            if self._desired and not self._missing_said:
                 self._missing_said = True
                 logger.warning(
                     f"shortcuts: no {SERVICE} on the session bus: no global keys; the shell runs "
                     "and `tesserae-shell toggle <name>` still works"
                 )
+            elif not self._desired:
+                logger.debug(f"shortcuts: no {SERVICE} on the session bus, and none is declared")
             return False
         self._missing_said = False
         self._attached = True
