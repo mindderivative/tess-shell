@@ -192,6 +192,8 @@ def sample(key: dict[str, Any]) -> str | None:
             return "[]"
         case "monitor_index":
             return "0"
+        case "key_chord":
+            return '"Ctrl+Alt+F5"'
         case "list":
             item, length = key["item_kind"], key.get("length")
             if item == "number" and length == 4:
@@ -219,7 +221,7 @@ def every_key() -> list[tuple[str, str, str, dict[str, Any]]]:
 
 
 def test_top_level_shape() -> None:
-    assert D["schema_version"] == "1.2"
+    assert D["schema_version"] == "1.3"
     assert D["shell_version"]
     assert list(D) == [
         "schema_version",
@@ -234,6 +236,7 @@ def test_top_level_shape() -> None:
         "tokens",
         "modules",
         "popups",
+        "shortcuts",
     ]
     assert list(D["blocks"]) == list(blocks.BLOCKS)
     for spec in (*D["roots"].values(), *D["blocks"].values()):
@@ -806,7 +809,7 @@ def test_the_command_prints_valid_json(capsys: pytest.CaptureFixture[str]) -> No
 
 def test_the_command_takes_json_before_the_command_too(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--json", "schema"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.2"
+    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.3"
 
 
 def test_out_writes_the_file_and_prints_nothing(
@@ -963,7 +966,16 @@ def test_the_settings_are_the_keys_of_the_readers_tuples() -> None:
     assert tuple(s["Debug"]) == cfg.DEBUG_KEYS
     assert tuple(s["Validation"]) == cfg.VALIDATION_KEYS
     assert tuple(s["Directories"]) == FOLDERS
-    assert set(s) == {"Settings", "Directories", "Logging", "Validation", "Appearance", "Debug"}
+    assert tuple(s["Shortcuts"]) == cfg.FIXED_SHORTCUTS
+    assert set(s) == {
+        "Settings",
+        "Directories",
+        "Logging",
+        "Validation",
+        "Appearance",
+        "Debug",
+        "Shortcuts",
+    }
 
 
 @pytest.mark.parametrize(
@@ -980,6 +992,8 @@ def settings_sample(tmp_path: Path, key: dict[str, Any]) -> str | None:
     match key["kind"]:
         case "bool":
             return "false"
+        case "key_chord":
+            return '"Ctrl+Shift+F1"'
         case "enum":
             return str(key["choices"][-1])
         case "number" | "whole":

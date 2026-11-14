@@ -437,7 +437,7 @@ class ShortcutService:
             if len(ids) < 2 or ids[0] != COMPONENT:
                 return
             codes = tuple(_flatten(keys))
-        except (IndexError, TypeError):
+        except IndexError, TypeError:
             return
         self.keys_now[str(ids[1])] = codes
         logger.debug(f"shortcuts: the key of {ids[1]} was changed in the desktop's settings")

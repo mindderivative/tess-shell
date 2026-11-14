@@ -317,9 +317,10 @@ def _directories(reader: _Reader, block: Block, config: Path) -> dict[str, tuple
         result[prop.key] = tuple(found)
     return result
 
+
 def _chord(reader: _Reader, origin: Origin | None, text: str | None) -> Chord | None:
     if text is None:
-        reader.error(origin, "bad-value", "keys are a string such as \"Ctrl+Space\"", "")
+        reader.error(origin, "bad-value", 'keys are a string such as "Ctrl+Space"', "")
         return None
     try:
         return parse_chord(text)
@@ -370,9 +371,7 @@ def _shortcuts(reader: _Reader, block: Block) -> tuple[ShortcutEntry, ...]:
         if verb is None:
             entries.append(ShortcutEntry(prop.key, "fixed", prop.key, chord, line, column))
         else:
-            entries.append(
-                ShortcutEntry(prop.key, verb[1].lower(), verb[2], chord, line, column)
-            )
+            entries.append(ShortcutEntry(prop.key, verb[1].lower(), verb[2], chord, line, column))
     for child in child_blocks(block):
         name = child.type
         if name in FIXED_SHORTCUTS or _VERB_FORM.match(name):
@@ -407,7 +406,6 @@ def _shortcuts(reader: _Reader, block: Block) -> tuple[ShortcutEntry, ...]:
                 "write plain entries",
             )
     return tuple(sorted(entries, key=lambda e: (e.line, e.column)))
-
 
 
 def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:

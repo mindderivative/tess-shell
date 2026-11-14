@@ -26,7 +26,7 @@ from tess_shell.commands import ShellCommands
 from tess_shell.config.lock import InstanceLock
 from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir, state_dir
 from tess_shell.config.registry import Registry, RegistryError
-from tess_shell.config.settings import LoggingSettings, load_settings
+from tess_shell.config.settings import LoggingSettings, Settings, load_settings
 from tess_shell.config.uids import assign_uids
 from tess_shell.exit_codes import EnvironmentFailure, ExitCode, ShellError
 from tess_shell.logging import (
@@ -44,6 +44,7 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.options import Options
 from tess_shell.reloader import Reloader
 from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
+from tess_shell.schema.findings import Finding
 from tess_shell.services.api import ServiceUnavailable
 from tess_shell.services.audio import AudioService
 from tess_shell.services.bus import ServiceThread
@@ -51,7 +52,9 @@ from tess_shell.services.control import NAME, ControlService, ErrorLog
 from tess_shell.services.icons import IconService
 from tess_shell.services.layer import Layer
 from tess_shell.services.portal import PortalReader
+from tess_shell.services.shortcuts import STOP_TIMEOUT, Action, ShortcutService
 from tess_shell.services.tray import TrayService
+from tess_shell.shortcuts import drop_failed, shortcut_handlers
 from tess_shell.signals import LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites, Watcher
@@ -166,14 +169,12 @@ def _start_control(
     service: ServiceThread,
     handle: Any,
     manager: SurfaceManager,
-    host: ModuleHost,
     reloader: Reloader,
-    stopper: LoopStopper,
+    commands: ShellCommands,
+    errors: ErrorLog,
 ) -> ControlService | None:
     """Export the control interface and own its bus name (Shell Start and Stop). ``None`` when
     the session bus cannot be reached: the shell runs without control commands and says so."""
-    errors = ErrorLog()
-    commands = ShellCommands(manager, host, reloader, stopper.request, errors.last)
     control = ControlService(service, handle.call_soon, commands, tess_shell.__version__, errors)
     try:
         service.submit(control.start()).result(timeout=START_TIMEOUT)
@@ -201,6 +202,41 @@ def _stop_control(service: ServiceThread, control: ControlService) -> None:
 
 
 START_TIMEOUT = 6.0  # seconds the shell waits for the bus when it takes its name
+
+
+def _start_shortcuts(
+    service: ServiceThread,
+    handle: Any,
+    commands: ShellCommands,
+    call_problems: list[Finding],
+    declared: tuple[Action, ...],
+    settings: Settings,
+) -> ShortcutService:
+    """Register the shell's global shortcuts with the desktop's shortcut service, after the
+    shell's own bus name is owned and before the surfaces are shown (Global Shortcuts >
+    Registration). A missing service or a refused call is a warning and no keys: the shell runs and
+    the commands work."""
+    shortcuts = ShortcutService(service, handle.call_soon, commands.press)
+    actions = drop_failed(declared, call_problems)
+    try:
+        service.submit(shortcuts.start(actions, settings.global_shortcuts)).result(
+            timeout=START_TIMEOUT
+        )
+    except Exception as exc:
+        logger.opt(exception=True).warning(f"shortcuts: no global keys ({exc!r})")
+    else:
+        if settings.global_shortcuts:
+            logger.info(
+                f"shortcuts: {len(shortcuts.registered)} of {len(actions)} actions registered"
+            )
+    return shortcuts
+
+
+def _stop_shortcuts(service: ServiceThread, shortcuts: ShortcutService) -> None:
+    try:
+        service.submit(shortcuts.stop()).result(timeout=STOP_TIMEOUT + 0.5)
+    except Exception as exc:
+        logger.debug(f"shortcuts: stopping did not go through ({exc!r})")
 
 
 def _run(options: Options, lock: InstanceLock) -> ExitCode:
@@ -343,7 +379,11 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             uid = file_uids.get(mf.path) or registry.uid_for(f"module:{name}", "module")
             _, problems = host.load(mf.definition, mf.python, uid, module_uses)
             report(problems)
-        report(host.check_calls(manager.planned_handlers()))  # every Call names a loaded action
+        # every Call names a loaded action, the shortcuts' too
+        call_problems = host.check_calls(
+            [*manager.planned_handlers(), *shortcut_handlers(result.shortcuts)]
+        )
+        report(call_problems)
         report(host.start_all())
         store.flush()  # what the modules sent while starting, before the first build
         logger.info(f"step 10 (model): {len(uses)} module uses, {len(host.loaded)} modules")
@@ -389,9 +429,12 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             if not file_watcher.ok:
                 logger.warning("some folders are not watched; SIGHUP still reloads everything")
         control: ControlService | None = None
+        shortcuts: ShortcutService | None = None
+        errors = ErrorLog()
+        commands = ShellCommands(manager, host, reloader, stopper.request, errors.last)
         taken = False
         if settings.control:
-            control = _start_control(service, handle, manager, host, reloader, stopper)
+            control = _start_control(service, handle, manager, reloader, commands, errors)
             taken = control is not None and not control.owned
         if taken:
             _fail(
@@ -402,6 +445,10 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             if file_watcher is not None:
                 file_watcher.stop()
         else:
+            shortcuts = _start_shortcuts(
+                service, handle, commands, call_problems, result.shortcuts, settings
+            )
+            reloader.shortcuts = shortcuts
             logger.info("running")
             if control is not None:
                 control.set_state("running")
@@ -416,9 +463,13 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
                 return ExitCode.ENVIRONMENT
         # stop sequence: modules, then the time source (no D-Bus yet)
         logger.info("stopping")
+        if shortcuts is not None:
+            shortcuts.begin_stop()  # a press from here on is dropped
         if control is not None:
             control.set_state("stopping")
             _stop_control(service, control)
+        if shortcuts is not None:
+            _stop_shortcuts(service, shortcuts)
         host.stop_all()
         ticks.close()
         if portal is not None:

@@ -80,6 +80,7 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell._vendor.tess_utils",  # services.icons decodes a png the way the Image path does
         "tess_shell.services",
         "tess_shell.appearance",
+        "tess_shell.schema.keys",  # services.shortcuts reads key strings (pure, no I/O)
     },
     "surfaces": set(),
     "surfaces.bar": {"tess_shell.binder.model"},
@@ -133,6 +134,7 @@ RULES: dict[str, set[str] | None] = {
     "client": {"jeepney", "tess_shell.__version__", "tess_shell.exit_codes", "tess_shell.options"},
     "commands": ANY,  # the shell's side of the control interface: it holds the model
     "scanner": ANY,
+    "shortcuts": ANY,  # the actions the shell declares: settings and shell files put together
     "reloader": ANY,
     "app": ANY,
     "cli": ANY,

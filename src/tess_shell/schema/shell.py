@@ -1513,7 +1513,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         peek=peek,
         content_fade=fade.value if isinstance(fade, m.Bool) else True,
         handlers=handlers,
-        shortcut=key if isinstance(key := values.get("Shortcut"), m.Text) else None,
+        shortcut=hotkey if isinstance(hotkey := values.get("Shortcut"), m.Text) else None,
     )
 
 

@@ -12,12 +12,15 @@ import sys
 from collections.abc import Callable
 from typing import Any
 
+from loguru import logger
+
 from tess_shell import __version__
 from tess_shell.config.settings import LEVELS
 from tess_shell.logging import set_level
 from tess_shell.modules.host import ActionError, ModuleHost
 from tess_shell.reloader import Outcome, Reloader
 from tess_shell.services.control import CommandError
+from tess_shell.services.shortcuts import Action
 from tess_shell.surfaces.manager import SurfaceManager
 
 
@@ -53,8 +56,43 @@ class ShellCommands:
         self.reloader = reloader
         self._stop = stop
         self._errors = errors
+        # the five fixed shortcut actions (Focus and Keyboard): other parts of the shell fill this
+        # table; an action with no entry is "not built" and a press of it does nothing
+        self.fixed_actions: dict[str, Callable[[], None]] = {}
 
     # -- loop thread ------------------------------------------------------------------------------
+
+    def press(self, action: Action) -> None:
+        """A global shortcut was pressed (``services.shortcuts``, on the loop thread): the same
+        command the control interface runs for ``Toggle``, ``Show``, ``Hide`` and ``Call``, with no
+        trip through the bus. A key press never opens a Popup (``control_surface`` refuses one)."""
+        if action.kind == "fixed":
+            hook = self.fixed_actions.get(action.target)
+            if hook is None:
+                logger.debug(f"shortcut {action.id}: not built; nothing done")
+                return
+            hook()
+            return
+        if action.kind in ("toggle", "show", "hide"):
+            self._surface_press(action, action.kind.title(), action.target)
+            return
+        handler = action.handler
+        if handler is None:
+            logger.debug(f"shortcut {action.id}: no handler")
+        elif handler.builtin:
+            self._surface_press(action, handler.action, str(handler.args.get("Target", "")))
+        else:
+            try:
+                self.host.call_named(handler.module, handler.action, handler.args)
+            except ActionError as exc:
+                logger.warning(f"shortcut {action.id} ({action.where}): {exc}")
+
+    def _surface_press(self, action: Action, verb: str, name: str) -> None:
+        ok, message = self.manager.control_surface(verb, name)
+        if ok:
+            logger.debug(f"shortcut {action.id}: {message}")
+        else:
+            logger.warning(f"shortcut {action.id} ({action.where}): {message}")
 
     def status(self) -> dict[str, Any]:
         """The state of the shell: versions, monitors, surfaces, module names, last errors. Names,

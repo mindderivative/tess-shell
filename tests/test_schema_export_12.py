@@ -14,9 +14,9 @@ SECTION = D["popups"]
 POPUPS = SECTION["popups"]
 
 
-def test_the_version_is_1_2_and_popups_is_the_last_section() -> None:
-    assert D["schema_version"] == "1.2"
-    assert list(D)[-1] == "popups" and set(SECTION) == {"monitors", "popups"}
+def test_the_version_is_1_3_and_popups_is_the_section_before_shortcuts() -> None:
+    assert D["schema_version"] == "1.3"
+    assert list(D)[-2] == "popups" and set(SECTION) == {"monitors", "popups"}
     assert SECTION["monitors"] == default_popups.MONITORS
 
 

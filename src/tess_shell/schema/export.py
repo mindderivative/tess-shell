@@ -1,5 +1,5 @@
 """The shell's schema as plain JSON, for a configuration application that builds forms from it
-(``tesserae-shell schema --json``; the shape is version 1.2, see ``schema_version``).
+(``tesserae-shell schema --json``; the shape is version 1.3, see ``schema_version``).
 
 Everything is read from the tables the loader uses, so there is no second list of keys to drift:
 :mod:`tess_shell.schema.blocks` (blocks, surfaces, kinds, choices, required keys, events, what is
@@ -35,6 +35,7 @@ from tess_shell.binder.defaults import tre_defaults
 from tess_shell.config import settings as cfg
 from tess_shell.config.paths import FOLDERS
 from tess_shell.schema import blocks, default_popups, docs
+from tess_shell.schema import keys as chords
 from tess_shell.schema.look import GROUPS as THEME_GROUPS
 from tess_shell.schema.look import STYLE_UNION, read_theme, token_kind
 from tess_shell.schema.model import (
@@ -56,7 +57,8 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.2"
+SCHEMA_VERSION = "1.3"
+EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
 
@@ -157,6 +159,12 @@ _KINDS: dict[str, tuple[str, str]] = {
     "block": ("block", "A block of its own: block names the spec in roots."),
     "tooltip": ("tooltip", "A Popup's Name, a short quoted text or an inline Tooltip block."),
     "monitor_index": ("text", "A whole number 0 or more, or the word default."),
+    "key_chord": (
+        "key",
+        'A key press written as modifiers and one key joined by +, such as "Ctrl+Shift+F1": '
+        "modifiers lists the modifiers in the written order, keys the key names by group, "
+        "aliases the other names that are read and never written; any case and order is read.",
+    ),
     "token_ref": (
         "token",
         "$group.name, a reference to a theme token; valid where the key's "
@@ -334,6 +342,8 @@ def _kind_fields(
             return "tooltip", {}
         case "monitor_index":
             return "monitor_index", {"min": 0, "word": "default"}
+        case "key_chord":
+            return "key_chord", {"example": EXAMPLE_CHORD}
         case _ if model_kind.startswith("block:"):
             return "block", {"block": model_kind.split(":", 1)[1]}
     raise AssertionError(f"no output kind for the loader kind {model_kind!r}")  # a table bug
@@ -1034,6 +1044,8 @@ def _settings() -> dict[str, dict[str, Json]]:
         "Appearance": block("Settings", "Appearance"),
         "Debug": block("Settings", "Debug"),
         "Control": boolean("Settings", "Control", defaults.control),
+        "Shortcuts": block("Settings", "Shortcuts"),
+        "Global_Shortcuts": boolean("Settings", "Global_Shortcuts", defaults.global_shortcuts),
     }
     assert tuple(root) == cfg.ROOT_KEYS  # the order of the loader's own tuple
     out: dict[str, dict[str, Json]] = {
@@ -1059,6 +1071,10 @@ def _settings() -> dict[str, dict[str, Json]]:
             "Capture_Stderr": boolean("Logging", "Capture_Stderr", logging.capture_stderr),
         },
         "Validation": {"Enabled": boolean("Validation", "Enabled", defaults.validation_enabled)},
+        "Shortcuts": {
+            name: _settings_key("Shortcuts", name, "key_chord", {"example": EXAMPLE_CHORD}, None)
+            for name in cfg.FIXED_SHORTCUTS
+        },
         "Appearance": {
             "Theme": _settings_key("Appearance", "Theme", "string", {}, None),
             "Stylesheets": _settings_key(
@@ -1237,6 +1253,7 @@ LOADER_KINDS = (
     "class",
     "tooltip",
     "monitor_index",
+    "key_chord",
     "block:Block",
 )
 
@@ -1246,10 +1263,12 @@ def _kinds() -> dict[str, Json]:
     for model_kind in LOADER_KINDS:
         kind, _ = _kind_fields(model_kind, "", "", ())
         covers.setdefault(kind, []).append(model_kind)
-    return {
+    out: dict[str, Json] = {
         kind: {"ui": ui, "note": note, "model_kinds": covers.get(kind, [])}
         for kind, (ui, note) in _KINDS.items()
     }
+    out["key_chord"].update(chords.key_names())  # the names a key string may use
+    return out
 
 
 # -- preferred tokens ---------------------------------------------------------------------------
@@ -1418,6 +1437,46 @@ def _popups() -> Json:
     return {"monitors": default_popups.MONITORS, "popups": default_popups.describe(stubs)}
 
 
+def _shortcuts() -> Json:
+    """The forms of an entry of ``Shortcuts { }`` (``config.settings.FIXED_SHORTCUTS``,
+    ``SHORTCUT_VERBS``) and the keys a surface declares; the key names are those of the
+    ``key_chord`` kind."""
+    named = {"kind": "name_ref", "doc": "The Name of the surface, written exactly."}
+    forms: list[Json] = [
+        {
+            "form": f"{verb}_<Name>",
+            "verb": verb,
+            "value": "key_chord",
+            "target": named,
+            "targets": ["Panel", "Frame"] if verb == "Hide" else ["Panel", "Bar", "Frame"],
+            "doc": docs.SHORTCUT_FORMS[verb],
+        }
+        for verb in cfg.SHORTCUT_VERBS
+    ]
+    forms.append(
+        {
+            "form": "<Any_Name> { Keys, Action }",
+            "verb": None,
+            "value": "block",
+            "keys": {"kind": "key_chord", "key": "Keys", "required": True},
+            "actions": ["Show", "Hide", "Toggle", "Call"],
+            "doc": docs.SHORTCUT_FORMS["Handler"],
+        }
+    )
+    return {
+        "fixed": list(cfg.FIXED_SHORTCUTS),
+        "forms": forms,
+        "surface_keys": {
+            "Panel": {"key": "Shortcut", "same_as": "Toggle_<Name>"},
+            "Bar": {"key": "Reveal_Key", "same_as": "Show_<Name>"},
+        },
+        "doc": "A surface's own key and a Shortcuts entry for the same action: the entry wins, "
+        "with one warning. Two actions with the same key (any case, order or alias) are both "
+        "left without it, with one warning. A name that matches no surface is a warning and "
+        "the shortcut is not registered.",
+    }
+
+
 # -- the whole ------------------------------------------------------------------------------------
 
 
@@ -1437,6 +1496,7 @@ def schema_dict() -> Json:
         "tokens": _tokens(),
         "modules": _modules(),
         "popups": _popups(),
+        "shortcuts": _shortcuts(),
     }
 
 

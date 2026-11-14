@@ -14,7 +14,7 @@ import dataclasses
 import sys
 import threading
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -30,6 +30,8 @@ from tess_shell.model.uses import Use
 from tess_shell.modules.host import ModuleHost, ModuleSource, report
 from tess_shell.scanner import Scan, build_look, scan, source_line
 from tess_shell.schema.findings import Finding, render_findings
+from tess_shell.services.shortcuts import Action, ShortcutService
+from tess_shell.shortcuts import drop_failed, shortcut_handlers
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites
 
@@ -81,6 +83,9 @@ class Reloader:
     reloads: int = 0
     # told after every reload (the control interface's ``Reloaded`` signal); any thread
     on_reloaded: Callable[[bool, str], None] | None = None
+    # the global shortcuts (``services.shortcuts``): told the actions after every reload, or
+    # ``None`` when none are made (a test)
+    shortcuts: ShortcutService | None = None
     _lock: threading.Lock = dataclasses.field(default_factory=threading.Lock)
 
     # -- the calling thread: read, parse, validate ---------------------------------------------
@@ -113,7 +118,11 @@ class Reloader:
         if fresh is None:
             return Rejected(findings, "settings.tdl")
         running = dataclasses.replace(
-            self.settings, main_shell_path=fresh.main_shell_path, appearance=fresh.appearance
+            self.settings,
+            main_shell_path=fresh.main_shell_path,
+            appearance=fresh.appearance,
+            shortcuts=fresh.shortcuts,
+            global_shortcuts=fresh.global_shortcuts,
         )
         result = scan(running, self.cfg)
         if result.errors:
@@ -203,6 +212,16 @@ class Reloader:
             configure_logging(fresh.logging, quiet=self.quiet, default_directory=self.cfg / "logs")
             logger.info("settings.tdl: the logging settings were applied")
 
+    def _apply_shortcuts(
+        self, actions: Sequence[Action], fresh: Settings, checked: Sequence[Finding]
+    ) -> None:
+        """The global shortcuts of the new files: a new action is registered, a changed key
+        replaced, a removed action unregistered, an unchanged one left alone (``Global_Shortcuts``
+        false makes them all inactive). An action whose ``Call`` the module check refused is not
+        registered."""
+        if self.shortcuts is not None:
+            self.shortcuts.update(drop_failed(actions, checked), fresh.global_shortcuts)
+
     def _apply(self, prepared: Prepared) -> Outcome:
         try:
             outcome = self._apply_now(prepared)
@@ -219,6 +238,7 @@ class Reloader:
         shell = result.shells.get(fresh.main_shell_path) if fresh.main_shell_path else None
         if shell is None:
             logger.info("reload: there is no main shell file; nothing to show")
+            self._apply_shortcuts(result.shortcuts, fresh, [])
             return Outcome(True, "reloaded: there is no main shell file; nothing to show")
         module_defs = {name: mf.definition for name, mf in result.modules.items()}
         look = build_look(result, fresh, self.manager.look.appearance)
@@ -254,12 +274,17 @@ class Reloader:
             sources, by_module, everything if changed is None else changed
         )
         report(sync_problems)
-        report(self.host.check_calls(self.manager.planned_handlers(planned)))
+        handlers = [*self.manager.planned_handlers(planned), *shortcut_handlers(result.shortcuts)]
+        checked_calls = self.host.check_calls(handlers)
+        report(checked_calls)
+        self._apply_shortcuts(result.shortcuts, fresh, checked_calls)
         self.store.flush()  # what modules sent while changing; the Bars below are resolved from it
         self.manager.apply(planned, module_defs, uses, look)
         self.settings = dataclasses.replace(
             self.settings,
             logging=fresh.logging,
+            global_shortcuts=fresh.global_shortcuts,
+            shortcuts=fresh.shortcuts,
             main_shell_path=fresh.main_shell_path,
             appearance=dataclasses.replace(
                 fresh.appearance, follow_desktop=self.settings.appearance.follow_desktop

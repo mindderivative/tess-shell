@@ -460,15 +460,9 @@ class ModuleHost:
                 f"{handler.origin}: {module}.{handler.action} took {took * 1000:.0f} ms on the loop"
             )
 
-    def call_action(self, module: str, action: str, values: Sequence[Any]) -> Any:
-        """Loop thread: run the ``@action`` ``action`` of ``module`` for the control interface
-        (``Call``, IPC and CLI > The Interface). Only a method marked ``@action`` is reachable, the
-        rule of a shell file's ``Call``. ``values`` are the positional arguments: they are the
-        parameters the method declares after ``event``, in order (the signature binding of
-        ``Call``, Events and Actions > Call); an action that declares none takes them in
-        ``event.args`` under ``"0"``, ``"1"`` ... Returns what the action returned. Raises
-        :class:`ActionError` with the module's name for a module or action that is not there, a
-        wrong number of arguments, or an action that raised."""
+    def _resolve(self, module: str, action: str) -> tuple[LoadedModule, Callable[..., Any]]:
+        """The running module and its ``@action`` method; :class:`ActionError` with the nearest
+        names when either is not there."""
         names = sorted(self.loaded)
         loaded = self.loaded.get(module)
         if loaded is None:
@@ -493,6 +487,18 @@ class ModuleHost:
                 else " (it has no @action methods)"
             )
             raise ActionError(f"{module} has no action {action}{hint}")
+        return loaded, fn
+
+    def call_action(self, module: str, action: str, values: Sequence[Any]) -> Any:
+        """Loop thread: run the ``@action`` ``action`` of ``module`` for the control interface
+        (``Call``, IPC and CLI > The Interface). Only a method marked ``@action`` is reachable, the
+        rule of a shell file's ``Call``. ``values`` are the positional arguments: they are the
+        parameters the method declares after ``event``, in order (the signature binding of
+        ``Call``, Events and Actions > Call); an action that declares none takes them in
+        ``event.args`` under ``"0"``, ``"1"`` ... Returns what the action returned. Raises
+        :class:`ActionError` with the module's name for a module or action that is not there, a
+        wrong number of arguments, or an action that raised."""
+        loaded, fn = self._resolve(module, action)
         spec = action_spec(fn)
         args: dict[str, object]
         if spec.names:
@@ -508,20 +514,45 @@ class ModuleHost:
                 raise ActionError(f"{module}.{action} needs the argument {', '.join(missing)}")
         else:
             args = {str(i): v for i, v in enumerate(values)}
+        return self._invoke(loaded, module, action, fn, args, "a control call")
+
+    def call_named(self, module: str, action: str, args: Mapping[str, object]) -> Any:
+        """Loop thread: run an ``@action`` with named arguments, for a global shortcut whose entry
+        is a handler (``Call`` with ``delta: 5``): the names are those of the parameters the
+        method declares after ``event``. Raises :class:`ActionError` as :meth:`call_action` does."""
+        loaded, fn = self._resolve(module, action)
+        spec = action_spec(fn)
+        if spec.checked:
+            unknown = [a for a in args if a not in spec.names]
+            if unknown:
+                raise ActionError(f"{module}.{action} has no argument {', '.join(unknown)}")
+        missing = [n for n in spec.required if n not in args]
+        if missing:
+            raise ActionError(f"{module}.{action} needs the argument {', '.join(sorted(missing))}")
+        return self._invoke(loaded, module, action, fn, dict(args), "a shortcut")
+
+    def _invoke(
+        self,
+        loaded: LoadedModule,
+        module: str,
+        action: str,
+        fn: Callable[..., Any],
+        args: dict[str, object],
+        why: str,
+    ) -> Any:
+        spec = action_spec(fn)
         event = Event("call", "", args)
         started = time.monotonic()
         loaded.ctx.caller = None
         try:
             result = fn(event, **spec.keywords(args))
         except Exception as exc:
-            logger.opt(exception=True).error(f"{module}.{action} raised on a control call")
+            logger.opt(exception=True).error(f"{module}.{action} raised on {why}")
             note_module_error(module, f"{module}.{action}", exc)
             raise ActionError(f"{module}.{action} raised {type(exc).__name__}: {exc}") from exc
         took = time.monotonic() - started
         if took > SLOW_ACTION:
-            logger.warning(
-                f"{module}.{action} took {took * 1000:.0f} ms on the loop (control call)"
-            )
+            logger.warning(f"{module}.{action} took {took * 1000:.0f} ms on the loop ({why})")
         return result
 
     # -- lifecycle ------------------------------------------------------------------------------

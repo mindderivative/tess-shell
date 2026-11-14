@@ -35,6 +35,8 @@ from tess_shell.schema.graph import module_cycles
 from tess_shell.schema.look import effective_tokens
 from tess_shell.schema.model import ShellDef, StyleDef, StylesheetDef, ThemeDef
 from tess_shell.schema.shell import read_module, read_module_params
+from tess_shell.services.shortcuts import Action
+from tess_shell.shortcuts import build_plan
 
 
 def source_line(config: Path, finding: Finding) -> str | None:
@@ -75,6 +77,7 @@ class Scan:
     themes: dict[str, ThemeDef] = field(default_factory=dict)
     stylesheets: dict[str, StylesheetDef] = field(default_factory=dict)
     icons: RuntimeIcons | None = None  # the icon sets, for a name a module sends
+    shortcuts: tuple[Action, ...] = ()  # the global shortcuts to declare (``tess_shell.shortcuts``)
 
     @property
     def errors(self) -> list[Finding]:
@@ -183,6 +186,11 @@ def scan(settings: Settings, config: Path) -> Scan:
         for problem in icons.problems
     )
     findings.extend(_check_look(settings, themes, stylesheets, shells, modules))
+    main = shells.get(settings.main_shell_path) if settings.main_shell_path else None
+    shortcuts, found = build_plan(
+        settings.shortcuts, main, {name: mf.definition for name, mf in modules.items()}
+    )
+    findings.extend(found)
     own = sum(1 for path in paths if not is_shipped(path))  # the user's files, not the shipped ones
     return Scan(
         own,
@@ -192,6 +200,7 @@ def scan(settings: Settings, config: Path) -> Scan:
         themes,
         stylesheets,
         RuntimeIcons(icons),
+        shortcuts,
     )
 
 
