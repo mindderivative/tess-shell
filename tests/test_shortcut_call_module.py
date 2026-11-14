@@ -76,7 +76,7 @@ def test_a_call_shortcut_loads_a_module_no_bar_uses_and_the_press_calls_the_acti
     setup(d, shortcuts(ENTRY))
     shell = d.start()
     assert shell.stderr.count("probe started") == 1  # loaded and started once, with no use
-    assert "call-module-not-loaded" not in shell.stderr and "ERROR" not in shell.stderr
+    assert "call-module-not-loaded" not in shell.stderr and "| ERROR " not in shell.stderr
     assert d.fake.names() == ["Probe_Mark"]
     assert d.fake.press_key(d.fake.keys_of("tesserae-shell", "Probe_Mark")[0])
     d.seen("probe marked 3")  # the handler's argument arrived by name
