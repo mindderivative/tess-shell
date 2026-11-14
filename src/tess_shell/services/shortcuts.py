@@ -350,13 +350,39 @@ class ShortcutService:
         self.registrations += 1
         self.keys_now[action.id] = tuple(set_keys)
         if action.keys and not set_keys:
-            keys = ", ".join(chord.text for chord in action.keys)
+            await self._explain_empty(action)
+        return True
+
+    async def _explain_empty(self, action: Action) -> None:
+        """The service set none of the keys asked for: the desktop (or another application) owns
+        them, or the user cleared this action's key in System Settings (which autoloads as an
+        empty answer). ``isGlobalShortcutAvailable`` tells which, once for each chord: a free key
+        is the user's own clearing and no warning; a key that is not free is taken; a call that
+        fails leaves the question open and the warning says so."""
+        taken: list[Chord] = []
+        unchecked = ""
+        for chord in action.keys:
+            try:
+                reply = await self._call("isGlobalShortcutAvailable", "is", [chord.qt, COMPONENT])
+                free = bool(reply[0])
+            except Exception as exc:
+                taken.append(chord)
+                unchecked = f"; could not be checked ({exc})"
+                continue
+            if free:
+                logger.debug(
+                    f"shortcuts: {action.id}: the key {chord.text} is free and the action has no "
+                    "key: the user cleared it in System Settings"
+                )
+            else:
+                taken.append(chord)
+        if taken:
+            keys = ", ".join(chord.text for chord in taken)
             logger.warning(
                 f"shortcuts: {action.id}: the key {keys} is taken by the desktop or another "
                 "application: the action is registered with no key (choose one in System "
-                "Settings)"
+                f"Settings){unchecked}"
             )
-        return True
 
     async def _component(self) -> None:
         """The component's object path (asked, never derived), the actions it holds that the shell

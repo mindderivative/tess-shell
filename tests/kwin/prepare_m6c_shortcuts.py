@@ -137,7 +137,10 @@ PART 2: the user's keys
     Ctrl+Alt+Shift+F10).  WITHOUT restarting the shell: the new key opens the panel; {KEY_ONE} no
     longer does.
  9  Stop the shell (Ctrl+C) and run.sh again: the key you chose is still the one in System Settings
-    (the default {KEY_ONE} did not win back), and it works.
+    (the default {KEY_ONE} did not win back), and it works.  Now CLEAR the key of "Toggle Launcher"
+    in System Settings (remove it, leave the row), stop the shell and run.sh again: the log has NO
+    warning about Toggle_Launcher (a cleared key is the user's own choice, not a taken key: the shell
+    asks isGlobalShortcutAvailable before it warns); the row stays with no key.
 10  Stop the shell: press the key: nothing happens (the action is inactive) and the shell's rows are
     still in System Settings with their keys.  Start it again: the keys work again.
 

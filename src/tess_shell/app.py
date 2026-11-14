@@ -54,7 +54,7 @@ from tess_shell.services.layer import Layer
 from tess_shell.services.portal import PortalReader
 from tess_shell.services.shortcuts import STOP_TIMEOUT, Action, ShortcutService
 from tess_shell.services.tray import TrayService
-from tess_shell.shortcuts import drop_failed, shortcut_handlers
+from tess_shell.shortcuts import drop_failed, shortcut_handlers, shortcut_modules
 from tess_shell.signals import LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites, Watcher
@@ -374,6 +374,8 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             by_module.setdefault(use.module, []).append(use)
         for name in manager.dynamic_module_names():
             by_module.setdefault(name, [])  # called in a For: loaded, with no use until an entry
+        for name in shortcut_modules(result.shortcuts):
+            by_module.setdefault(name, [])  # named by a Call shortcut: loaded, with no use
         for name, module_uses in by_module.items():
             mf = result.modules[name]
             uid = file_uids.get(mf.path) or registry.uid_for(f"module:{name}", "module")

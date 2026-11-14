@@ -31,7 +31,7 @@ from tess_shell.modules.host import ModuleHost, ModuleSource, report
 from tess_shell.scanner import Scan, build_look, scan, source_line
 from tess_shell.schema.findings import Finding, render_findings
 from tess_shell.services.shortcuts import Action, ShortcutService
-from tess_shell.shortcuts import drop_failed, shortcut_handlers
+from tess_shell.shortcuts import drop_failed, shortcut_handlers, shortcut_modules
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites
 
@@ -194,6 +194,8 @@ class Reloader:
             by_module.setdefault(use.module, []).append(use)
         for name in self.manager.dynamic_module_names():
             by_module.setdefault(name, [])
+        for name in shortcut_modules(self.scan.shortcuts):
+            by_module.setdefault(name, [])
         sources = {name: self._source(name) for name in by_module if name in self.scan.modules}
         report(self.host.sync(sources, {n: u for n, u in by_module.items() if n in sources}, set()))
         self.store.flush()
@@ -267,6 +269,8 @@ class Reloader:
             self.store.add_use(use.module, use.key)
         for name in self.manager.dynamic_module_names(planned):
             by_module.setdefault(name, [])  # called in a For: loaded, with no use until an entry
+        for name in shortcut_modules(result.shortcuts):
+            by_module.setdefault(name, [])  # named by a Call shortcut: loaded, with no use
         self.scan, self.file_uids = result, file_uids
         sources = {name: self._source(name) for name in by_module}
         everything = {p for s in sources.values() for p in (s.py_path, *s.tdl_paths)}

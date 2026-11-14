@@ -211,6 +211,13 @@ def shortcut_handlers(actions: Sequence[Action]) -> list[m.Handler]:
     return [a.handler for a in actions if a.handler is not None]
 
 
+def shortcut_modules(actions: Sequence[Action]) -> set[str]:
+    """The modules a ``Call`` shortcut names: each is loaded and started even when no surface uses
+    it (an instance with no use), so a key can act without the module on a Bar, and stopped when
+    neither a surface nor a shortcut names it any more."""
+    return {a.handler.module for a in actions if a.handler is not None and a.handler.module}
+
+
 def drop_failed(actions: Sequence[Action], findings: Sequence[Finding]) -> tuple[Action, ...]:
     """Without the actions whose handler a check reported as an error (the same findings are
     reported once, as for any other ``Call``): such an action would fail at every press."""

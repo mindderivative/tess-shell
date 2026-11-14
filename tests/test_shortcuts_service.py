@@ -302,6 +302,7 @@ def test_a_restart_of_the_service_registers_everything_again_and_the_keys_work()
         r.fake.restart()
         assert wait_for(lambda: len(r.fake.of("doRegister")) == 2 * first)
         assert wait_for(lambda: sorted(r.fake.present()) == ["Show_Top_Bar", "Toggle_Launcher"])
+        assert wait_for(lambda: r.shortcuts._unpress is not None)  # listening again
         assert r.fake.press_key(SPACE)
         assert wait_for(lambda: r.pressed == [LAUNCHER])
         assert r.shortcuts.registered == {"Toggle_Launcher", "Show_Top_Bar"}
@@ -315,6 +316,7 @@ def test_a_service_that_leaves_and_comes_back_is_followed() -> None:
         assert wait_for(lambda: r.said("INFO", "left the session bus"))
         r.fake.start()
         assert wait_for(lambda: r.fake.present() == ["Toggle_Launcher"])
+        assert wait_for(lambda: r.shortcuts._unpress is not None)  # listening again
         assert r.fake.press_key(SPACE)
         assert wait_for(lambda: r.pressed == [LAUNCHER])
 
@@ -490,6 +492,7 @@ def test_turning_global_shortcuts_on_registers_as_at_start() -> None:
         r.start([LAUNCHER], enabled=False)
         r.shortcuts.update([LAUNCHER, BAR], True)
         assert wait_for(lambda: sorted(r.fake.present()) == ["Show_Top_Bar", "Toggle_Launcher"])
+        assert wait_for(lambda: r.shortcuts._unpress is not None)  # listening again
         assert r.fake.press_key(SPACE)
         assert wait_for(lambda: r.pressed == [LAUNCHER])
 
@@ -521,3 +524,61 @@ def test_the_press_time_on_the_bus_thread_is_recorded_and_tiny(
             f"p99 {p99 / 1000:.1f} us"
         )
     assert p99 < 5_000_000  # 5 ms: a lookup and a call_soon
+
+
+# -- an empty answer: taken, or cleared by the user (isGlobalShortcutAvailable) ------------------
+
+
+def test_a_key_the_user_cleared_is_not_reported_as_taken_and_is_asked_about_once() -> None:
+    with rig() as r:
+        r.start([LAUNCHER])
+        r.stop()
+        r.fake.user_changes(COMPONENT, "Toggle_Launcher", ())  # cleared in System Settings
+        r.fake.clear_calls()
+        r.lines.clear()
+        second = ShortcutService(r.service, r.loop.call_soon, r.pressed.append)
+        r.service.submit(second.start([LAUNCHER], True)).result(10)
+        assert r.fake.keys_of(COMPONENT, "Toggle_Launcher") == []  # autoload: the cleared key
+        asked = r.fake.of("isGlobalShortcutAvailable")
+        assert [c.args for c in asked] == [(SPACE, "tesserae-shell")]  # one call, the chord + us
+        assert r.said("WARNING", "") == []  # no warning
+        assert r.said("DEBUG", "cleared it in System Settings")
+        assert "Toggle_Launcher" in r.fake.names() and r.fake.present() == ["Toggle_Launcher"]
+
+
+def test_a_taken_key_is_asked_about_once_and_warned_once_by_the_answer() -> None:
+    with rig() as r:
+        r.fake.own(SPACE, "kwin")
+        r.start([LAUNCHER, BAR])
+        assert [c.args for c in r.fake.of("isGlobalShortcutAvailable")] == [
+            (SPACE, "tesserae-shell")
+        ]  # only the empty chord is asked about
+        (w,) = r.said("WARNING", "taken")
+        assert "Toggle_Launcher" in w and "Meta+Space" in w and "could not be checked" not in w
+
+
+def test_a_key_another_component_holds_is_asked_about_and_reported_taken() -> None:
+    with rig() as r:
+        r.fake.preregister("plasma", "Launcher", keys=(SPACE,))
+        r.start([LAUNCHER])
+        assert len(r.fake.of("isGlobalShortcutAvailable")) == 1
+        assert len(r.said("WARNING", "taken")) == 1
+
+
+def test_a_key_that_was_set_is_not_asked_about() -> None:
+    with rig() as r:
+        r.start([LAUNCHER, PLAIN])  # one set, one declared with no key
+        assert r.fake.of("isGlobalShortcutAvailable") == []
+
+
+def test_when_the_availability_cannot_be_checked_the_warning_says_so_and_nothing_crashes() -> None:
+    with rig() as r:
+        r.fake.own(SPACE, "kwin")
+        r.fake.refuse.add("isGlobalShortcutAvailable")
+        r.start([LAUNCHER, BAR])
+        (w,) = r.said("WARNING", "taken")
+        assert "Toggle_Launcher" in w and "could not be checked" in w
+        assert sorted(r.shortcuts.registered) == ["Show_Top_Bar", "Toggle_Launcher"]
+        assert len(r.fake.of("isGlobalShortcutAvailable")) == 1  # not asked again
+        r.fake.press("Show_Top_Bar")
+        assert wait_for(lambda: r.pressed == [BAR])

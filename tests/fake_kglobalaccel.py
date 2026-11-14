@@ -112,9 +112,11 @@ class FakeKGlobalAccel:
                 "setShortcutKeys": (["as", "a(ai)", "u"], "a(ai)", self._set_keys),
                 "shortcutKeys": (["as"], "a(ai)", self._shortcut_keys),
                 "isGlobalShortcutAvailable": (["i", "s"], "b", self._available),
+                "globalShortcutAvailable": (["(ai)", "s"], "b", self._available_seq),
+                "setShortcut": (["as", "ai", "u"], "ai", self._set_shortcut),
                 "setInactive": (["as"], "", self._set_inactive),
                 "unRegister": (["as"], "", self._un_register),
-                "unregister": (["s", "s"], "", self._unregister),
+                "unregister": (["s", "s"], "b", self._unregister),
             },
             signals={"yourShortcutsChanged": "asa(ai)", "yourShortcutGotChanged": "asai"},
         )
@@ -270,7 +272,13 @@ class FakeKGlobalAccel:
 
         def infos() -> list[Any]:
             self._log_on(path, "allShortcutInfos")
-            return []
+            with self._lock:
+                comp = self.components[unique]
+                return [
+                    [comp.unique, a.unique, comp.friendly, a.friendly, "default", "Global"]
+                    + [list(a.keys), list(a.defaults)]
+                    for a in comp.actions.values()
+                ]
 
         obj = self.service.add(
             path,
@@ -281,7 +289,7 @@ class FakeKGlobalAccel:
             },
             methods={
                 "shortcutNames": ([], "as", names),
-                "allShortcutInfos": ([], "a(ssssssasasi)", infos),
+                "allShortcutInfos": ([], "a(ssssssaiai)", infos),
                 "invokeShortcut": (["s"], "b", invoke),
                 "isActive": ([], "b", active),
                 "cleanUp": ([], "", clean_up),
@@ -350,36 +358,57 @@ class FakeKGlobalAccel:
 
     def _set_keys(self, ids: list[str], sequences: list[Any], flags: int) -> list[Any]:
         self._log("setShortcutKeys", list(ids), [list(s) for s in sequences], int(flags))
+        return _sequences(self._apply(list(ids), _codes(sequences), int(flags)))
+
+    def _set_shortcut(self, ids: list[str], keys: list[int], flags: int) -> list[int]:
+        """The older form: one list of key integers."""
+        self._log("setShortcut", list(ids), [int(k) for k in keys], int(flags))
+        return self._apply(list(ids), [int(k) for k in keys if k], int(flags))
+
+    def _apply(self, ids: list[str], wanted: list[int], flags: int) -> list[int]:
         with self._lock:
-            state, act = self._state_of(list(ids))
-            wanted = _codes(sequences)
+            state, act = self._state_of(ids)
             if flags & IS_DEFAULT:
                 act.defaults = list(wanted)
-                return _sequences(list(wanted))
+                return list(wanted)
             if not flags & NO_AUTOLOADING and (state.unique, act.unique) in self.saved:
                 wanted = list(self.saved[(state.unique, act.unique)])  # the user's key wins
-            taken = {
+            kept = [
                 k
-                for c in self.components.values()
-                if c is not state
-                for a in c.actions.values()
-                for k in a.keys
-            }
-            kept = [k for k in wanted if k not in self.owned and k not in taken]
+                for k in wanted
+                if k not in self.owned and not self._held_by_other(k, state.unique)
+            ]
             act.keys = kept
             if flags & SET_PRESENT:
                 act.present = True
-            return _sequences(kept)
+            return kept
 
     def _shortcut_keys(self, ids: list[str]) -> list[Any]:
         self._log("shortcutKeys", list(ids))
         with self._lock:
             return _sequences(list(self._state_of(list(ids))[1].keys))
 
+    def _held_by_other(self, key: int, component: str) -> bool:
+        return any(
+            key in a.keys
+            for c in self.components.values()
+            if c.unique != component
+            for a in c.actions.values()
+        )
+
     def _available(self, key: int, component: str) -> bool:
+        """Whether ``key`` is free for ``component``: nobody else holds it (its own actions do
+        not count)."""
         self._log("isGlobalShortcutAvailable", int(key), component)
         with self._lock:
-            return key not in self.owned
+            return key not in self.owned and not self._held_by_other(int(key), component)
+
+    def _available_seq(self, sequence: Any, component: str) -> bool:
+        """``(ai)``: a struct holding one list of key integers."""
+        keys = [int(k) for k in sequence[0]]
+        self._log("globalShortcutAvailable", keys, component)
+        with self._lock:
+            return all(k not in self.owned and not self._held_by_other(k, component) for k in keys)
 
     def _set_inactive(self, ids: list[str]) -> None:
         self._log("setInactive", list(ids))
@@ -390,13 +419,15 @@ class FakeKGlobalAccel:
         self._log("unRegister", list(ids))
         self._remove(ids[0], ids[1])
 
-    def _unregister(self, component: str, action: str) -> None:
+    def _unregister(self, component: str, action: str) -> bool:
         self._log("unregister", component, action)
-        self._remove(component, action)
+        return self._remove(component, action)
 
-    def _remove(self, component: str, action: str) -> None:
+    def _remove(self, component: str, action: str) -> bool:
         with self._lock:
             state = self.components.get(component)
+            found = state is not None and action in state.actions
             if state is not None:
                 state.actions.pop(action, None)
             self.saved.pop((component, action), None)
+            return found
