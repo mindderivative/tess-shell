@@ -40,6 +40,12 @@ class Event:
     # ``On_Scroll``: one wheel step, +1 scrolling down and -1 scrolling up (``On_Secondary_Click``
     # has ``button == "secondary"``)
     delta: float | None = None
+    # the pointer events (``On_Click``, ``On_Secondary_Click``, ``On_Middle_Click``,
+    # ``On_Scroll``): the block the handler is on, ``(x, y, width, height)`` in the OUTPUT's
+    # coordinates (the compositor's: what ``ctx.popup(..., anchor=event.rect)`` and the
+    # StatusNotifier ``Activate`` take). ``None`` for a block inside a Popup, where the shell
+    # does not know the Popup's place, and for an event that is not a pointer event
+    rect: tuple[float, float, float, float] | None = None
 
 
 class Module:

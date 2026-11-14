@@ -1801,15 +1801,19 @@
           "choices": null,
           "enum": null,
           "default": "400",
-          "doc": "The greatest height of the Popup, in pixels.",
+          "doc": "The greatest height of the Popup, in pixels, or a percentage (above 0, at most 100) of the output's height; a taller content scrolls.",
           "slot": false,
           "required": false,
           "built": true,
           "group": "Size",
           "units": [
-            "px"
+            "px",
+            "%"
           ],
           "negative": false,
+          "percent_min": 0,
+          "percent_max": 100,
+          "percent_min_exclusive": true,
           "tokens": [],
           "preferred_tokens": []
         },
@@ -2328,9 +2332,13 @@
           "built": true,
           "group": "Size",
           "units": [
-            "px"
+            "px",
+            "%"
           ],
           "negative": false,
+          "percent_min": 0,
+          "percent_max": 100,
+          "percent_min_exclusive": true,
           "tokens": [],
           "preferred_tokens": []
         },
@@ -22162,7 +22170,7 @@
       ]
     },
     "On_Click": {
-      "doc": "A click: the mouse, Space or Enter on a focused block, or assistive activation.",
+      "doc": "A click: the mouse, Space or Enter on a focused block, or assistive activation. A pointer event (this, On_Secondary_Click, On_Middle_Click, On_Scroll) gives a module's action event.rect: the block's (x, y, width, height) on the output, None inside a Popup.",
       "module_only": false,
       "needs": [],
       "raised_by": [

@@ -12,6 +12,7 @@ from typing import Any, Protocol
 
 from loguru import logger
 
+from tess_shell.logging import note_module_error
 from tess_shell.modules.ticks import Subscription, TimeSource
 from tess_shell.services.api import (
     AudioPort,
@@ -40,7 +41,12 @@ class PopupPort(Protocol):
     """What the shell offers a module for its Popups (the surface manager's ``Popups``)."""
 
     def call(
-        self, module: str, use: str | None, name: str, data: Mapping[str, Any] | None
+        self,
+        module: str,
+        use: str | None,
+        name: str,
+        data: Mapping[str, Any] | None,
+        anchor: tuple[float, float, float, float] | None = None,
     ) -> None: ...
 
     def close_named(self, name: str | None = None) -> None: ...
@@ -98,9 +104,12 @@ class ModuleContext:
         name: str,
         data: Mapping[str, Any] | None = None,
         use: UseRecord | str | None = None,
+        anchor: tuple[float, float, float, float] | None = None,
     ) -> None:
         """Open the Popup ``name`` beside the use that called (``ctx.caller``, set while an
-        ``@action`` runs; or ``use``), or close it when it is the open one. Loop thread only. A
+        ``@action`` runs; or ``use``) or, with ``anchor`` (``(x, y, width, height)`` in output
+        coordinates, normally ``event.rect``), beside that rectangle: one block of a use's own
+        ``For`` entries. Or close it when it is the open one. Loop thread only. A
         Popup that does not exist, or a use on no open surface, is logged with the module and
         the name; nothing is raised."""
         key = use.key if isinstance(use, UseRecord) else use
@@ -116,7 +125,7 @@ class ModuleContext:
         if port is None:
             self.log.error(f"ctx.popup({name!r}): the shell has no surfaces to open it on")
             return
-        port.call(self.name, key, name, data)
+        port.call(self.name, key, name, data, anchor)
 
     def close_popup(self, name: str | None = None) -> None:
         """Close the open Popup (the one called ``name``, if given). Loop thread only."""
@@ -142,8 +151,9 @@ class ModuleContext:
                 return
             try:
                 fn()
-            except Exception:
+            except Exception as exc:
                 self.log.opt(exception=True).error("a call_soon callback raised")
+                note_module_error(self.name, "a call_soon callback", exc)
 
         port(run)
 
@@ -218,8 +228,9 @@ class ModuleContext:
             return
         try:
             fn(name)
-        except Exception:
+        except Exception as exc:
             self.log.opt(exception=True).error(f"{what}({name!r}) raised")
+            note_module_error(self.name, what, exc)
 
     def on_tick(self, unit: str, fn: Callable[[], None]) -> Subscription:
         """Call ``fn`` at the start of each ``"second"`` or ``"minute"``, on the loop thread."""
@@ -232,8 +243,9 @@ class ModuleContext:
         def run() -> None:
             try:
                 fn()
-            except Exception:
+            except Exception as exc:
                 self.log.opt(exception=True).error("a tick callback raised")
+                note_module_error(self.name, "a tick callback", exc)
 
         return run
 

@@ -635,7 +635,7 @@ class Port:
         self.calls: list[tuple[str, str | None, str, Any]] = []
         self.closed: list[str | None] = []
 
-    def call(self, module: str, use: str | None, name: str, data: Any) -> None:
+    def call(self, module: str, use: str | None, name: str, data: Any, anchor: Any = None) -> None:
         self.calls.append((module, use, name, data))
 
     def close_named(self, name: str | None = None) -> None:
@@ -759,3 +759,56 @@ def test_a_reload_closes_the_open_popup_and_the_new_definition_is_the_one_that_o
     assert "closing (reloaded)" in r.log()
     op = r.call()
     assert op is not None and op.window.get("offset") == (0, 9)  # the Gap that was written
+
+
+# -- Max_Height as a percentage of the output's height --------------------------------------------
+
+
+def test_max_height_takes_a_percentage_above_0_and_at_most_100() -> None:
+    p = popup_of("Popup { Name: P, Max_Height: 60%, Children { FlexBox { } } }")
+    assert p.max_height_percent == 60.0 and p.max_height == 400  # the pixels stay as they were
+    assert (
+        popup_of("Popup { Name: P, Max_Height: 250, Children { FlexBox { } } }").max_height == 250
+    )
+    assert popup_of("Popup { Name: P, Max_Height: 100%, Children { FlexBox { } } }")
+    assert (
+        popup_of("Popup { Name: P, Max_Height: 250, Children { FlexBox { } } }").max_height_percent
+        is None
+    )
+    for bad in ("0%", "101%", "150%"):
+        (found,) = popup_errors(
+            f"Popup {{ Name: P, Max_Height: {bad}, Children {{ FlexBox {{ }} }} }}"
+        )
+        assert (
+            found.rule == "bad-value"
+            and "greater than 0" in found.message
+            or "to 100" in found.message
+        )
+        assert "output's height" in found.message
+
+
+def test_max_width_still_refuses_a_percentage() -> None:
+    (found,) = popup_errors("Popup { Name: P, Max_Width: 50%, Children { FlexBox { } } }")
+    assert found.rule == "not-built"
+
+
+def test_a_percentage_max_height_is_a_share_of_the_outputs_height() -> None:
+    tall = (
+        "FlexBox { Name: Column, Flex: VERTICAL, Children { "
+        + 'Rectangle { Width: 80, Height: 50, Fill: "#ff0000" } ' * 40
+        + "} }"
+    )
+    (r,) = list(rig(f"Popup {{ Name: Menu, Max_Height: 50%, Children {{ {tall} }} }}"))
+    op = r.call()
+    planned = r.manager.surfaces[0].planned
+    assert planned is not None
+    height = planned.output.height
+    assert tuple(op.window.get("size"))[1] == round(height * 0.5)  # 2000 px of content, half
+    assert [c.get("kind") for c in op.body.children()] == ["scroll_view"]  # and it scrolls
+    (small,) = list(
+        rig(
+            "Popup { Name: Menu, Max_Height: 90%, "
+            "Children { Rectangle { Width: 80, Height: 50 } } }"
+        )
+    )
+    assert tuple(small.call().window.get("size"))[1] == 50  # content shorter than the share

@@ -36,7 +36,7 @@ from tess_shell.schema.model import (
     StyleDef,
     use_names,
 )
-from tess_shell.schema.ranges import scoped
+from tess_shell.schema.ranges import percent_range, scoped
 from tess_shell.schema.style import apply_style
 from tess_shell.schema.tree import position
 from tess_shell.schema.values import (
@@ -1878,10 +1878,22 @@ def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
                 f"{type(v).__name__.upper()} as a {what} {key} is {_NOT_BUILT}",
                 "write pixels or AUTO",
             )
-    for key in ("Max_Width", "Max_Height"):
-        v = values.get(key)
-        if isinstance(v, m.Percent):
-            ctx.add(v.origin, "not-built", f"a percentage as {key} is {_NOT_BUILT}", "write pixels")
+    v = values.get("Max_Width")
+    if isinstance(v, m.Percent):
+        ctx.add(v.origin, "not-built", f"a percentage as Max_Width is {_NOT_BUILT}", "write pixels")
+    share = values.get("Max_Height")
+    max_height_percent: float | None = None
+    if isinstance(share, m.Percent):
+        limit = percent_range("Tooltip" if inline else "Popup", "Max_Height")
+        if limit is not None and not limit.holds(share.value):
+            ctx.add(
+                share.origin,
+                "bad-value",
+                f"expected a percentage of the output's height, {limit.words('%')}, "
+                f"found {share.value:g}%",
+            )
+        else:
+            max_height_percent = float(share.value)
     if (name is None and not inline) or any(
         isinstance(values.get(k), m.Percent | m.Expand) for k in ("Width", "Height")
     ):
@@ -1915,6 +1927,7 @@ def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
         height=values.get("Height") or m.Auto(),
         max_width=bound("Max_Width", 300),
         max_height=bound("Max_Height", 400),
+        max_height_percent=max_height_percent,
         focus=flag("Focus", not tooltip),
         tooltip=tooltip,
         open_on_enter=flag("Open_On_Enter", tooltip),

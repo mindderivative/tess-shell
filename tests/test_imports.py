@@ -65,7 +65,8 @@ RULES: dict[str, set[str] | None] = {
     # the shipped modules are module code: only the public names a module author may use
     "shipped": {"tess_shell.Module", "tess_shell.action"},
     "watch": {"inotify_simple", "loguru"},
-    "logging": {"loguru"},
+    # note_module_error makes a Finding (the record: standard library only)
+    "logging": {"loguru", "tess_shell.schema.findings"},
     "exit_codes": set(),
     "options": set(),
     "signals": set(),
@@ -88,6 +89,7 @@ RULES: dict[str, set[str] | None] = {
         "loguru",
         "tess_shell.binder",
         "tess_shell.model",
+        "tess_shell.schema.default_popups",
         "tess_shell.schema.findings",  # nearest names for the control commands
         "tess_shell.schema.model",
         "tess_shell.surfaces",
@@ -121,6 +123,7 @@ RULES: dict[str, set[str] | None] = {
         "loguru",
         "tess_shell.binder",
         "tess_shell.model",
+        "tess_shell.schema.default_popups",  # the Popups the shell provides
         "tess_shell.schema.model",
         "tess_shell.surfaces",
     },

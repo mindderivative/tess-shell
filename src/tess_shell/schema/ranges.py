@@ -75,6 +75,21 @@ KEY_RANGES: dict[str, Range] = {
     "Exit_Delay": Range(0),
 }
 
+# a key that takes a percentage of something has its own range for it: a Popup's ``Max_Height`` is a
+# share of the output's height, above 0 and at most 100 (a share of nothing is no limit at all).
+# Listed as ``<Block>.<Key>``; ``percent_range`` is what the loader and the export read
+PERCENT_RANGES: dict[str, Range] = {
+    "Popup.Max_Height": Range(0, 100, low_open=True),
+    "Tooltip.Max_Height": Range(0, 100, low_open=True),
+}
+
+
+def percent_range(spec: str, key: str) -> Range | None:
+    """The range of a percentage written as ``key`` of the block ``spec``, or ``None`` when the
+    key takes none (or a percentage is not built there)."""
+    return PERCENT_RANGES.get(f"{spec}.{key}")
+
+
 # keys of a kind with a non-negative range that may be negative: a Panel's ``Inset`` is a distance
 # from the edge it is anchored to, and a compositor takes a negative margin
 NEGATIVE_OK = frozenset({"Inset"})

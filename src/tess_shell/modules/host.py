@@ -22,7 +22,7 @@ from typing import Any
 from loguru import logger
 
 from tess_shell.binder import model as m
-from tess_shell.logging import note_finding
+from tess_shell.logging import note_finding, note_module_error
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.module import Event, Module
@@ -440,16 +440,18 @@ class ModuleHost:
             text=getattr(raw, "text", None),
             value=getattr(raw, "value", None),
             delta=getattr(raw, "delta", None),
+            rect=getattr(raw, "rect", None),
         )
         started = time.monotonic()
         loaded.ctx.caller = loaded.ctx.uses.get(handler.use)  # what ctx.popup() calls from
         try:
             # the arguments the method declares arrive as keywords too; ``event.args`` is whole
             fn(event, **action_spec(fn).keywords(event.args))
-        except Exception:
+        except Exception as exc:
             logger.opt(exception=True).error(
                 f"{handler.origin}: {module}.{handler.action} raised on {key}"
             )
+            note_module_error(module, f"{module}.{handler.action}", exc)
         finally:
             loaded.ctx.caller = None
         took = time.monotonic() - started
@@ -513,6 +515,7 @@ class ModuleHost:
             result = fn(event, **spec.keywords(args))
         except Exception as exc:
             logger.opt(exception=True).error(f"{module}.{action} raised on a control call")
+            note_module_error(module, f"{module}.{action}", exc)
             raise ActionError(f"{module}.{action} raised {type(exc).__name__}: {exc}") from exc
         took = time.monotonic() - started
         if took > SLOW_ACTION:
@@ -578,6 +581,21 @@ class ModuleHost:
             for u in uses
         }
 
+    def _use_new(self, loaded: LoadedModule, record: UseRecord, appeared: bool) -> list[Finding]:
+        """A use that appeared (``appeared``) or whose params changed: ``validate_use``, and for a
+        new one ``available`` and ``use_added``."""
+        findings: list[Finding] = []
+        try:
+            loaded.instance.validate_use(record)
+        except ValueError as exc:
+            findings.append(self._finding(loaded.definition, "module-use", f"{record.name}: {exc}"))
+        if appeared and loaded.state == "running":
+            loaded.ctx.send_available(record)  # the layer sent it to the uses that existed
+            found = self._call(loaded, "use_added", partial(loaded.instance.use_added, record))
+            if found is not None:
+                findings.append(found)
+        return findings
+
     def _sync_uses(self, loaded: LoadedModule, uses: list[Use]) -> list[Finding]:
         """Bring ``ctx.uses`` to ``uses`` and tell the module: ``use_removed``, ``use_added`` and
         ``validate_use`` for a use whose params changed."""
@@ -595,17 +613,7 @@ class ModuleHost:
             current[key] = record
             if had is not None and had.params == record.params:
                 continue
-            try:
-                loaded.instance.validate_use(record)
-            except ValueError as exc:
-                findings.append(
-                    self._finding(loaded.definition, "module-use", f"{record.name}: {exc}")
-                )
-            if had is None and loaded.state == "running":
-                loaded.ctx.send_available(record)  # the layer sent it to the uses that existed
-                found = self._call(loaded, "use_added", partial(loaded.instance.use_added, record))
-                if found is not None:
-                    findings.append(found)
+            findings.extend(self._use_new(loaded, record, had is None))
         loaded.uses = uses
         return findings
 
@@ -667,6 +675,8 @@ class ModuleHost:
     def dynamic(self, added: Sequence[Use], removed: Sequence[str]) -> list[Finding]:
         """Uses made for the entries of a ``For`` came or went: tell their modules the way a use
         that appears or goes away in a reload is told (``use_added``, ``use_removed``)."""
+        if not removed and self._only_new(added):
+            return self._dynamic_added(added)  # the usual case: entries came, none went
         before = set(self._dynamic)
         for use in added:
             logger.debug(f"module {use.module}: a use of an entry came: {use.key}")
@@ -689,6 +699,33 @@ class ModuleHost:
             keep = [u for u in loaded.uses if u.key not in before]  # the uses the files give
             keep += [u for u in self._dynamic.values() if u.module == name]
             findings.extend(self._sync_uses(loaded, keep))
+        return findings
+
+    def _only_new(self, added: Sequence[Use]) -> bool:
+        """Every use in ``added`` is one its (loaded) module has not seen."""
+        for use in added:
+            loaded = self.loaded.get(use.module)
+            if loaded is None or use.key in self._dynamic or use.key in loaded.ctx.uses:
+                return False
+        return True
+
+    def _dynamic_added(self, added: Sequence[Use]) -> list[Finding]:
+        """Entries came and none went: tell each module of the new uses only. The full reconcile
+        of :meth:`_sync_uses` compares every use the module has, so a list of 100 entries that
+        arrive one by one cost 100 times that; this costs the new use."""
+        findings: list[Finding] = []
+        for use in added:
+            logger.debug(f"module {use.module}: a use of an entry came: {use.key}")
+            self._dynamic[use.key] = use
+            loaded = self.loaded[use.module]
+            record = UseRecord(
+                use.key, use.name, use.key.split("@", 1)[1], use.monitor, dict(use.params)
+            )
+            ctx_uses = loaded.ctx.uses
+            assert isinstance(ctx_uses, dict)
+            ctx_uses[use.key] = record
+            loaded.uses = [*loaded.uses, use]
+            findings.extend(self._use_new(loaded, record, True))
         return findings
 
     def _with_dynamic(self, name: str, uses: list[Use]) -> list[Use]:

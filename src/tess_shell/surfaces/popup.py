@@ -31,6 +31,7 @@ from tess_shell.model.expand import Expanded, ExpandedTooltip, expand
 from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, apply_rules, resolve_style
 from tess_shell.model.uses import Use
+from tess_shell.schema.default_popups import default_popups
 from tess_shell.schema.model import ModuleDef, PopupDef, ShellDef
 from tess_shell.surfaces.bar import Rect, surface_rect
 
@@ -135,6 +136,7 @@ def measure(
     nodes: Sequence[Any],
     popup: PopupDef,
     border: Mapping[str, Any] | None = None,
+    output_height: float | None = None,
 ) -> Measured:
     """Lay ``nodes`` out in the headless ``meter`` window and read the body's size.
 
@@ -142,6 +144,10 @@ def measure(
     ``Height`` that are pixels are used as they are; ``AUTO`` reads the content's size, clamped
     to ``Max_Width`` / ``Max_Height``. Raises :class:`BindFailed` when the content does not bind.
     """
+    # ``Max_Height: 60%`` is a share of the output's height
+    max_height = popup.max_height
+    if popup.max_height_percent is not None and output_height:
+        max_height = output_height * popup.max_height_percent / 100
     fixed_w = popup.width.px if isinstance(popup.width, m.Length) else None
     fixed_h = popup.height.px if isinstance(popup.height, m.Length) else None
     props: dict[str, Any] = {"align_self": "start", **(border or {})}
@@ -168,8 +174,8 @@ def measure(
         width = fixed_w
     if fixed_h is not None:
         return Measured(width, fixed_h)
-    scrolls = height > popup.max_height + 0.5
-    return Measured(width, min(height, popup.max_height), scrolls)
+    scrolls = height > max_height + 0.5
+    return Measured(width, min(height, max_height), scrolls)
 
 
 def _border_props(style: Mapping[str, m.Value]) -> dict[str, Any]:
@@ -344,18 +350,33 @@ class Popups:
         uid_of: Callable[[str], str],
         assign: Callable[..., list[tuple[Any, list[int]]]],
         panels: set[str],
+        shown: Sequence[Use] = (),
     ) -> tuple[list[PopupPlan], list[Use]]:
         """Expand each Popup of each Monitor for each output the Monitor opens on. ``modules`` are
-        the module definitions with the stylesheet's rules already folded in."""
+        the module definitions with the stylesheet's rules already folded in. ``shown`` are the
+        uses of the Bars, Panels and Frames: an output that shows a module with shipped Popups
+        (``schema.default_popups``) gets them, unless the Monitor writes a Popup of that name."""
         from tess_shell.surfaces.manager import is_default  # it imports this module
 
         rules = look.rules if look else ()
         plans: list[PopupPlan] = []
         uses: list[Use] = []
+        shipped, problems = default_popups(modules)
+        for problem in problems:
+            logger.error(problem)
         for monitor, indices in assign(shell.monitors, outputs):
+            written = {p.name for p in monitor.popups}
             for i in indices:
                 suffix = f"@{outputs[i].name}" if is_default(monitor) else ""
-                for popup in monitor.popups:
+                here = {u.module for u in shown if u.monitor == outputs[i].name}
+                added = [
+                    p
+                    for module, popups in shipped.items()
+                    if module in here
+                    for p in popups
+                    if p.name not in written
+                ]
+                for popup in [*monitor.popups, *added]:
                     path = f"{shell.name}.{monitor.name}{suffix}.{popup.name}"
                     expanded = expand(
                         apply_rules(popup.children, rules),
@@ -391,9 +412,18 @@ class Popups:
 
     # -- the module API -----------------------------------------------------------------------
 
-    def call(self, module: str, use: str | None, name: str, data: Mapping[str, Any] | None) -> None:
-        """``ctx.popup(name, data)``: open the Popup beside the calling use, or close it when it
-        is the open one (a toggle). A use inside an open Popup opens a submenu of that Popup.
+    def call(
+        self,
+        module: str,
+        use: str | None,
+        name: str,
+        data: Mapping[str, Any] | None,
+        anchor: tuple[float, float, float, float] | Rect | None = None,
+    ) -> None:
+        """``ctx.popup(name, data)``: open the Popup beside the calling use, or beside ``anchor``
+        (a rectangle in output coordinates: the ``Event.rect`` of the click on one block of the
+        use's own ``For`` entries), or close it when it is the open one (a toggle). A use inside
+        an open Popup opens a submenu of that Popup.
         Errors are logged, never raised into the module."""
         found = self._holder(use) if use else None
         if found is None or use is None:
@@ -404,7 +434,9 @@ class Popups:
             return
         surface, node_id, parent = found
         how = f"ctx.popup({name!r})"
-        self.request(module, use, surface, node_id, None, name, data, "toggle", parent, how)
+        if anchor is not None and not isinstance(anchor, Rect):
+            anchor = Rect(*anchor)
+        self.request(module, use, surface, node_id, None, name, data, "toggle", parent, how, anchor)
 
     def request(
         self,
@@ -418,6 +450,7 @@ class Popups:
         mode: str,
         parent: OpenPopup | None = None,
         how: str = "",
+        anchor: Rect | None = None,
     ) -> None:
         """Open the Popup ``name`` beside a block (``mode`` ``show``: only when it is not open
         from there, ``toggle``: or close it). ``node_id`` names the block, ``node`` is the block
@@ -457,7 +490,7 @@ class Popups:
             self._swallow = None
             logger.debug(f"Popup {name}: the click that closed it is not a call to open it again")
             return
-        self.open(plan, surface, node_id, who, module, None, copy, parent, node)
+        self.open(plan, surface, node_id, who, module, None, copy, parent, node, anchor)
 
     def close_named(self, name: str | None = None) -> None:
         """``ctx.close_popup(name)``: close the open Popup (the named one, if a name is given)."""
@@ -526,6 +559,7 @@ class Popups:
         data: Mapping[str, Any] | None = None,
         parent: OpenPopup | None = None,
         node: TreNode | None = None,
+        given: Rect | None = None,
     ) -> OpenPopup | None:
         """Open ``plan`` beside the block ``node_id`` of ``surface`` (or the block ``node``, which
         has no id). ``expanded`` is the content when it is not the plan's own (an inline tooltip).
@@ -543,6 +577,12 @@ class Popups:
         holder = parent.view if parent is not None else surface.view
         found = node if node is not None else (holder.nodes.get(node_id) if holder else None)
         rect = self.rect_of_node(found)
+        if given is not None and parent is None:
+            # a rectangle the module was given (output coordinates): in this surface's window
+            home = surface_rect(
+                surface.geometry, (surface.planned.output.width, surface.planned.output.height)
+            )
+            rect = Rect(given.x - home.x, given.y - home.y, given.width, given.height)
         if rect is None:
             logger.warning(f"Popup {where}: the caller has no laid-out rectangle yet; not opened")
             return None
@@ -555,7 +595,13 @@ class Popups:
         live = self._m.new_live(self._m._all_uses, caller=record)
         nodes = live.resolve(expanded or plan.expanded)
         try:
-            size = measure(self._meter_window(), nodes, popup, shape.border)
+            size = measure(
+                self._meter_window(),
+                nodes,
+                popup,
+                shape.border,
+                plan.output.height,
+            )
         except BindFailed as failed:
             _log_errors(failed.errors)
             logger.error(f"Popup {where} is not opened: its contents did not bind")

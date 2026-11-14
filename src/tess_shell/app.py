@@ -34,6 +34,7 @@ from tess_shell.logging import (
     current_state,
     finding_sinks,
     log_finding,
+    note_module_error,
     shutdown_logging,
 )
 from tess_shell.model.store import ValueStore
@@ -273,6 +274,7 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         service = ServiceThread()
         service.start()
         layer = Layer(service, handle.call_soon)
+        layer.on_module_error = note_module_error
         portal: PortalReader | None = None
         appearance = Appearance()
         manager_box: list[SurfaceManager] = []

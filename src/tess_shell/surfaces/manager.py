@@ -28,6 +28,7 @@ from tess_shell.model.live import LiveTree
 from tess_shell.model.look import Look, apply_rules, resolve_style
 from tess_shell.model.store import Change, ValueStore
 from tess_shell.model.uses import Use, UseScope
+from tess_shell.schema.default_popups import SHIPPED_POPUP_MODULES
 from tess_shell.schema.findings import nearest
 from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, PanelDef, ShellDef, use_names
 from tess_shell.surfaces.bar import (
@@ -547,8 +548,25 @@ class SurfaceManager:
                 return
             handler = dataclasses.replace(handler, args=resolved, slots={})
         logger.debug(f"{key} -> {handler.action} {dict(handler.args)} ({handler.origin})")
+        self._place(raw)
         if self.sink is not None:
             self.sink(handler, key, raw)
+
+    def _place(self, raw: Any) -> None:
+        """``Event.rect``: the block a pointer event was raised on, in output coordinates. The
+        binder said where it is in its window (``window_rect``); the window is a Bar's, a Panel's
+        or a Frame's strip... whose place on the output is known. A block in a Popup, whose
+        place the shell does not track, gets none."""
+        in_window = getattr(raw, "window_rect", None)
+        window = getattr(raw, "window", None)
+        if in_window is None or window is None:
+            return
+        for s in self.every_surface():
+            if s.window is window and s.planned is not None:
+                where = surface_rect(s.geometry, self._output_size(s))
+                x, y, w, h = in_window
+                raw.rect = (where.x + x, where.y + y, w, h)
+                return
 
     def _arg_scope(
         self, handler: Handler, key: str, raw: Any, caller: Mapping[str, Any] | None
@@ -577,6 +595,8 @@ class SurfaceManager:
         outputs are read from the compositor, and the tracked list starts over from them."""
         self._shell_name = shell.name
         self._planned_shell = shell
+        # a Bar that shows the Tray or Audio gets shipped Popups: its modules need a root block id
+        shipped_popups = bool(SHIPPED_POPUP_MODULES & modules.keys())
         rules = look.rules if look else ()
         if rules:
             modules = {
@@ -648,7 +668,7 @@ class SurfaceManager:
                         outputs[i].name,
                         rules,
                         wanted,
-                        bool(monitor.popups),
+                        bool(monitor.popups) or shipped_popups,
                     )
                     uses.extend(expanded.uses)
                     planned.append(
@@ -698,7 +718,7 @@ class SurfaceManager:
             for hp in fp.hosts:
                 _check_targets(hp.planned.expanded, targets)
         self._popup_plans, popup_uses = self.popups.plan(
-            shell, modules, look, outputs, self._uid_of, assign, targets
+            shell, modules, look, outputs, self._uid_of, assign, targets, uses
         )
         uses.extend(popup_uses)
         return planned, uses

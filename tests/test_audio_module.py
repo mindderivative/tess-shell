@@ -511,12 +511,20 @@ def test_a_secondary_click_opens_the_outputs_menu_and_a_click_on_an_entry_sets_t
         assert quiet(w) == [], quiet(w)
 
 
-def test_a_secondary_click_with_no_popup_logs_and_does_nothing_else(fake_pulse: FakePulse) -> None:
+def test_a_secondary_click_with_no_popup_written_opens_the_shipped_one(
+    fake_pulse: FakePulse,
+) -> None:
+    """The shell provides ``Audio_Outputs`` (T-039): a shell file that writes none still has the
+    menu."""
     maintainers_desktop(fake_pulse)
     with desk(fake_pulse) as d, shell(d, "Audio { }") as w:
         assert d.settle(w, lambda: icon_of(w) == "volume-medium")
+        assert w.manager.popups.current is None
         w.window.simulate("secondary_click", node=root(w))
-        assert any("Audio_Outputs" in x for x in w.warnings())
+        op = w.manager.popups.current
+        assert op is not None and op.plan.popup.name == "Audio_Outputs"
+        assert labels(op) == ["Mainboard", "Razer Leviathan V2 X, current", "HDMI"]
+        assert not [x for x in w.warnings() if "Audio_Outputs" in x]
         assert fake_pulse.default_sink == "razer"
 
 

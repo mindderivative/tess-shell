@@ -287,7 +287,8 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     ("Popup", "Width"): "The Popup's width in pixels or AUTO.",
     ("Popup", "Height"): "The Popup's height in pixels or AUTO.",
     ("Popup", "Max_Width"): "The greatest width of the Popup, in pixels.",
-    ("Popup", "Max_Height"): "The greatest height of the Popup, in pixels.",
+    ("Popup", "Max_Height"): "The greatest height of the Popup, in pixels, or a percentage "
+    "(above 0, at most 100) of the output's height; a taller content scrolls.",
     ("Popup", "Attach"): "The edge of the block it opens from that the Popup meets.",
     ("Popup", "Alignment"): "How the Popup lines up along the edge it shares with the block: "
     "START, CENTER or END.",
@@ -617,7 +618,9 @@ EVENT_DOCS: dict[str, str] = {
     "On_Focus": "The block took keyboard focus. Not raised yet.",
     "On_Unfocus": "The block lost keyboard focus. Not raised yet.",
     "On_Toggle": "A Panel was toggled.",
-    "On_Click": "A click: the mouse, Space or Enter on a focused block, or assistive activation.",
+    "On_Click": "A click: the mouse, Space or Enter on a focused block, or assistive activation. "
+    "A pointer event (this, On_Secondary_Click, On_Middle_Click, On_Scroll) gives a module's "
+    "action event.rect: the block's (x, y, width, height) on the output, None inside a Popup.",
     "On_Secondary_Click": "A click with the secondary (right) button; event.button is "
     '"secondary". It does not run On_Click.',
     "On_Middle_Click": "A click with the middle button (a press and a release on the block); "

@@ -108,6 +108,9 @@ class PopupDef:
     height: Value = None  # type: ignore[assignment]
     max_width: float = 300
     max_height: float = 400
+    # ``Max_Height: 60%``: a share of the output's height, which replaces ``max_height`` when the
+    # Popup opens (the output is known only then)
+    max_height_percent: float | None = None
     focus: bool = True  # tre's grab: the popup takes the keyboard and pointer
     tooltip: bool = False
     open_on_enter: bool = False

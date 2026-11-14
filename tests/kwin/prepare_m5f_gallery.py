@@ -3,8 +3,10 @@
 Run from the repo root: ``uv run python tests/kwin/prepare_m5f_gallery.py``. It writes a scratch
 config and scripts under ``/tmp/tess-kwin-m5f`` and starts nothing. The Bar shows the Tray (the
 icons of every application that registers a StatusNotifierItem) and the Clock, all coloured by
-theme tokens, so it follows Plasma's light and dark. Three Popups named ``Tray_Menu``,
-``Tray_Menu_2`` and ``Tray_Menu_3`` hold an item's menu and its two levels of submenu.
+theme tokens, so it follows Plasma's light and dark. The shell file writes NO Popup: the
+shell provides ``Tray_Menu``, ``Tray_Menu_2`` and ``Tray_Menu_3`` (an item's menu and its two
+levels of submenu; ``Max_Height: 60%``). ``run-override.sh`` is the fake run with a Popup of the
+same name written in the shell file, which replaces the shipped ``Tray_Menu``.
 
 * ``run.sh``: the shell on YOUR REAL session bus. The Tray reads the real watcher and shows your real
   tray items beside Plasma's own tray (the shell is a second host). **A click on an icon calls the
@@ -17,6 +19,8 @@ theme tokens, so it follows Plasma's light and dark. Three Popups named ``Tray_M
   items). A fake watcher and five fake items; every call the shell makes on them is written to
   ``fake.log``. ``tray-set.sh`` changes the fakes (any words, in any order; an unknown word is
   refused).
+* ``run-override.sh``: ``run-fake.sh`` with a ``Tray_Menu`` Popup of the user's own in the shell file
+  (a primary-coloured menu with sharp corners, 180 px at most, 12 px below the Bar).
 * ``check.sh``: ``tesserae-shell check`` on the config.
 * ``checklist.txt``: every line to check, in one list.
 
@@ -37,22 +41,13 @@ from tests.shell_samples import write_example  # noqa: E402
 
 ROOT = Path("/tmp/tess-kwin-m5f")
 CFG = ROOT / "gallery"
+CFG_OVERRIDE = ROOT / "gallery-override"
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 SETTINGS = (
     "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: true }\n}\n"
 )
-POPUP = (
-    "Popup {{\n"
-    "                Name: {name}\n"
-    "                {attach}Max_Height: 500\n"
-    "                Style {{ Background: $color.surface_raised, Corner_Radius: 8 }}\n"
-    "                Children {{ Tray_Menu {{ Level: {level} }} }}\n"
-    "            }}\n"
-)
-
-BODY = (
-    """
+BAR = """
 Shell {
     Monitor {
         Name: Main
@@ -79,19 +74,24 @@ Shell {
                     }
                 }
             }
-            """
-    + POPUP.format(
-        name="Tray_Menu", attach="Attach: BOTTOM\n                Gap: 4\n                ", level=1
-    )
-    + "            "
-    + POPUP.format(name="Tray_Menu_2", attach="", level=2)
-    + "            "
-    + POPUP.format(name="Tray_Menu_3", attach="", level=3)
-    + """        }
+%s        }
     }
 }
 """
-)
+# the shell file writes NO Popup: the shell provides Tray_Menu, Tray_Menu_2 and Tray_Menu_3
+BODY = BAR % ""
+# the variant that overrides the shipped Tray_Menu with a Popup of the same name (Max_Height in
+# pixels, opening above the Bar's row): the two other Popups stay the shipped ones
+OVERRIDE = """            Popup {
+                Name: Tray_Menu
+                Attach: BOTTOM
+                Gap: 12
+                Max_Height: 180
+                Style { Background: $color.primary, Corner_Radius: 2 }
+                Children { Tray_Menu { Level: 1 } }
+            }
+"""
+BODY_OVERRIDE = BAR % OVERRIDE
 
 CHECKLIST = """M5f Tray: one list, every line to run.  Do it in light and in dark (Plasma's colour scheme;
 every colour is a theme token).  The Bar shows, at the right: the Tray (one icon for each application
@@ -204,8 +204,18 @@ makes on the fakes is written to /tmp/tess-kwin-m5f/fake.log (`tail -f` it).
     are refused too, and change nothing.
 28  Log: no ERROR line; the only WARNING lines are the one "portal: the Settings portal is not
     available" at start (the private bus has none: the look is the Default theme's dark) and the
-    "left the session bus" ones of line 26 (at most one a minute).  `top -p $(pgrep -f 'tesserae-shell run')` shows the shell idle (0 % CPU) when you
-    stop touching it.
+    "left the session bus" ones of line 26 (at most one a minute).  `top -p $(pgrep -f 'tesserae-shell
+    run')` shows the shell idle (0 % CPU) when you stop touching it.
+29  The shell's own Popups: in every run above the config writes no Popup, and the menus of lines 14
+    to 18 are the shell's: dark raised background, rounded corners, a long menu (line 18) stops at
+    60 % of the screen's height and scrolls.  Each menu opens below the CLICKED icon (its left edge
+    at the icon's left edge), not under the whole row.  Stop the run; start
+    /tmp/tess-kwin-m5f/run-override.sh (the same fakes; the shell file now writes a Popup named
+    Tray_Menu): right-click Mail: the menu is the user's (primary colour, square corners, 12 px
+    below the Bar, at most 180 px high: scroll it) and its submenu ("More") is still the shell's.
+30  The clicks name the icon's centre: left-click Mail near its edge: fake.log gets `mail Activate X
+    Y` with X and Y the centre of the icon on the screen, the same numbers wherever on the icon you
+    click.
 """
 
 TRAY_SET = """# tray-set.sh WORD...  (the words in any order; every other word is refused)
@@ -274,22 +284,10 @@ def script(name: str, text: str) -> None:
     path.chmod(0o755)
 
 
-def write_gallery(cfg: Path) -> None:
-    shutil.rmtree(cfg, ignore_errors=True)
-    write_example(cfg, BODY)
-    (cfg / "settings.tdl").write_text(SETTINGS)
-
-
-def main() -> None:
-    ROOT.mkdir(exist_ok=True)
-    write_gallery(CFG)
-    (ROOT / "checklist.txt").write_text(CHECKLIST)
-    state = f"export XDG_STATE_HOME={ROOT}/state\n"
-    script("run.sh", state + REAL_WARNING + f"exec {BIN}/tesserae-shell run --config-dir {CFG}\n")
-    script("check.sh", state + f"{BIN}/tesserae-shell check --config-dir {CFG}\n")
-    script(
-        "run-fake.sh",
-        state
+def run_fake(cfg: Path) -> str:
+    """``run-fake.sh``: the fakes on a private bus, and the shell on that bus and no other."""
+    return (
+        f"export XDG_STATE_HOME={ROOT}/state\n"
         + f"ROOT={ROOT}\n"
         + 'rm -f "$ROOT/bus-address" "$ROOT/fake.pid"\n'
         + f'{BIN}/python {REPO}/tests/kwin/fake_tray.py --root "$ROOT" &\n'
@@ -300,8 +298,27 @@ def main() -> None:
         + "# the shell is told this bus and nothing else: it cannot reach the real session bus\n"
         + 'export DBUS_SESSION_BUS_ADDRESS=$(cat "$ROOT/bus-address")\n'
         + 'echo "session bus (private): $DBUS_SESSION_BUS_ADDRESS"\n'
-        + f"{BIN}/tesserae-shell run --config-dir {CFG}\n",
+        + f"{BIN}/tesserae-shell run --config-dir {cfg}\n"
     )
+
+
+def write_gallery(cfg: Path, body: str = BODY) -> None:
+    shutil.rmtree(cfg, ignore_errors=True)
+    write_example(cfg, body)
+    (cfg / "settings.tdl").write_text(SETTINGS)
+
+
+def main() -> None:
+    ROOT.mkdir(exist_ok=True)
+    write_gallery(CFG)
+    write_gallery(CFG_OVERRIDE, BODY_OVERRIDE)
+    (ROOT / "checklist.txt").write_text(CHECKLIST)
+    state = f"export XDG_STATE_HOME={ROOT}/state\n"
+    script("run.sh", state + REAL_WARNING + f"exec {BIN}/tesserae-shell run --config-dir {CFG}\n")
+    script("check.sh", state + f"{BIN}/tesserae-shell check --config-dir {CFG}\n")
+    script("run-fake.sh", run_fake(CFG))
+    # the same private fake bus, with a Popup of the user's own that overrides the shipped one
+    script("run-override.sh", run_fake(CFG_OVERRIDE))
     script("tray-set.sh", TRAY_SET)
     print(f"wrote {ROOT}")
 

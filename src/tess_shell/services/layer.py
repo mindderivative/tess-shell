@@ -81,6 +81,9 @@ class Layer:
         self._warned: dict[tuple[str, str, str], float] = {}
         self._tasks: set[asyncio.Future[Any]] = set()
         self.callback_times: dict[str, deque[float]] = {}  # module -> seconds of each callback
+        # told when a module's callback raises (the app sets it: the control interface's
+        # ``ErrorReported``); ``services`` import nothing of the shell's logging
+        self.on_module_error: Callable[[str, str, BaseException], None] | None = None
 
     def for_module(
         self, module: str, send: Callable[[str, object], None], hooks: ServiceHooks
@@ -116,8 +119,10 @@ class Layer:
         start = time.perf_counter()
         try:
             fn(*args)
-        except Exception:
+        except Exception as exc:
             helper.log.opt(exception=True).error("a D-Bus callback raised")
+            if self.on_module_error is not None:
+                self.on_module_error(helper.module, "a D-Bus callback", exc)
         took = time.perf_counter() - start
         self.callback_times.setdefault(helper.module, deque(maxlen=_STATS_KEPT)).append(took)
         if took > SLOW_CALLBACK:

@@ -46,7 +46,7 @@ from tess_shell.schema.model import (
     PeekDef,
     PopupDef,
 )
-from tess_shell.schema.ranges import range_of, scoped
+from tess_shell.schema.ranges import percent_range, range_of, scoped
 from tess_shell.schema.shell import (
     BAR_CHOICES,
     BAR_KEYS,
@@ -199,7 +199,7 @@ def _length_units(spec: str, key: str, model_kind: str) -> list[str]:
     return ["px", "%", "AUTO", "EXPAND"] if key in ("Width", "Height") else ["px", "%", "AUTO"]
 
 
-_PIXEL_ONLY = {(s, k) for s in ("Popup", "Tooltip") for k in ("Max_Width", "Max_Height")}
+_PIXEL_ONLY = {(s, k) for s in ("Popup", "Tooltip") for k in ("Max_Width",)}
 
 
 WHOLE_KINDS = ("whole", "max_length", "lines", "diameter")
@@ -258,10 +258,16 @@ def _kind_fields(
                 "unit": "px" if model_kind == "diameter" else unit,
             }
         case "length" | "text_length" | "bound":
-            return "length", {
+            fields = {
                 "units": _length_units(spec, key, model_kind),
                 "negative": _negative(model_kind, rkey),
             }
+            share = percent_range(spec, key)
+            if share is not None:  # a percentage has a range of its own (a Popup's Max_Height)
+                fields["percent_min"] = share.low
+                fields["percent_max"] = share.high
+                fields["percent_min_exclusive"] = share.low_open
+            return "length", fields
         case "sides" | "bleed":
             fields = {
                 "arity": [1, 4],

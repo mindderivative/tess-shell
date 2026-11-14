@@ -79,6 +79,36 @@ _STATE_EVENTS = (
 )
 
 
+class Raised:
+    """A tre pointer event as a handler's sink gets it: everything the tre event says (attribute
+    access is passed on), plus the block it was raised on: ``window`` (the tre window of the view)
+    and ``window_rect`` (the block's ``(x, y, width, height)`` in that window). The surface
+    manager adds ``rect``, the same in output coordinates, for a block on a Bar, Panel or Frame
+    surface (``Event.rect``); it stays ``None`` for a block in a Popup."""
+
+    __slots__ = ("event", "rect", "window", "window_rect")
+
+    def __init__(self, event: Any, window: Any, window_rect: tuple[float, ...] | None) -> None:
+        self.event = event
+        self.window = window
+        self.window_rect = window_rect
+        self.rect: tuple[float, float, float, float] | None = None
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.event, name)
+
+
+def layout_rect(node: Any) -> tuple[float, float, float, float] | None:
+    """Where tre laid ``node`` out in its window, or ``None`` before it has been."""
+    try:
+        x, y, w, h = (
+            float(node.get(k)) for k in ("layout_x", "layout_y", "layout_width", "layout_height")
+        )
+    except TypeError, ValueError:
+        return None
+    return (x, y, w, h) if w > 0 or h > 0 else None
+
+
 @dataclass(slots=True)
 class Wire:
     """What a built node's listeners read: the current handlers (a reload replaces them without
@@ -665,7 +695,7 @@ class View:
                 if ctl is not None:  # the control first: the handler sees the new state
                     ctl.clicked(event)
                 if handler is not None and self.sink is not None:
-                    self.sink(handler, "On_Click", event)
+                    self.sink(handler, "On_Click", Raised(event, self.window, layout_rect(tre)))
             finally:
                 if stop is not None:
                     stop()
@@ -700,6 +730,8 @@ class View:
             raw = SimpleNamespace(
                 window_x=getattr(event, "window_x", None),
                 window_y=getattr(event, "window_y", None),
+                window=self.window,
+                window_rect=layout_rect(entry.tre),
                 button="middle",
             )
             self.sink(handler, key, raw)
@@ -734,6 +766,8 @@ class View:
                 raw = SimpleNamespace(
                     window_x=getattr(event, "window_x", None),
                     window_y=getattr(event, "window_y", None),
+                    window=self.window,
+                    window_rect=layout_rect(entry.tre),
                 )
                 if key == "On_Scroll":
                     dy = getattr(event, "delta_y", None) or 0.0

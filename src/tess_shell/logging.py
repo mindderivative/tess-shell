@@ -10,6 +10,8 @@ import os
 import re
 import sys
 import threading
+import time
+import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -168,6 +170,49 @@ def note_finding(finding: Finding) -> None:
             sink(finding)
         except Exception:  # a listener never stops the logging of an error
             logger.opt(exception=True).debug("a finding listener raised")
+
+
+MODULE_ERROR_EVERY = 60.0  # seconds: one ``ErrorReported`` for each distinct module error
+_module_errors: dict[tuple[str, str, str], float] = {}
+_module_errors_lock = threading.Lock()
+
+
+def note_module_error(
+    module: str,
+    where: str,
+    exc: BaseException,
+    *,
+    clock: Callable[[], float] = time.monotonic,
+) -> None:
+    """A module's code raised (the caller has logged it): tell the finding listeners, so the control
+    interface emits ``ErrorReported(rule, file, line, message)``. Once for each distinct error
+    (module, where, message) a minute; the log line is the caller's and is not rate limited. Any
+    thread. ``where`` is what ran (``Tray.activate``, ``on_service_lost``, ``a D-Bus callback``)."""
+    from tess_shell.schema.findings import Finding
+
+    message = f"{module}: {where} raised {type(exc).__name__}: {exc}"
+    key = (module, where, message)
+    now = clock()
+    with _module_errors_lock:
+        last = _module_errors.get(key)
+        if last is not None and now - last < MODULE_ERROR_EVERY:
+            return
+        _module_errors[key] = now
+        if len(_module_errors) > 256:  # forget the old ones: a bounded table
+            for old in [k for k, t in _module_errors.items() if now - t >= MODULE_ERROR_EVERY]:
+                del _module_errors[old]
+    frames = traceback.extract_tb(exc.__traceback__)
+    frame = frames[-1] if frames else None
+    note_finding(
+        Finding(
+            frame.filename if frame else module,
+            frame.lineno or 1 if frame else 1,
+            1,
+            "error",
+            "module-exception",
+            message,
+        )
+    )
 
 
 def configure_logging(

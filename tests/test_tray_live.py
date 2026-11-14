@@ -42,7 +42,8 @@ BODY = (
     "Width: EXPAND, Flex: HORIZONTAL, Spacing: 4, Padding: 4, Align_Items: CENTER, "
     "Children { Tray { } } } } } " + POPUPS + " } } }\n"
 )
-ITEM = (16, 16)  # the first item: 4 px padding, 3 px of its own, an 18 px icon: centre 4 + 12
+FIRST = (16, 16)  # the first icon: 4 px of padding, 3 of its own, an 18 px icon: centre 4 + 12
+ITEM = (46, 16)  # the second: 6 px of spacing and 24 px further
 
 
 def grim(sway: PrivateSway) -> tuple[bytes, int]:
@@ -54,11 +55,11 @@ def grim(sway: PrivateSway) -> tuple[bytes, int]:
 
 
 def red_pixels(sway: PrivateSway) -> int:
-    """Pixels of the item's icon (a red pixmap) in the Bar's first 40 columns."""
+    """Pixels of the item's icon (a red pixmap) in the Bar's first 80 columns."""
     pixels, width = grim(sway)
     count = 0
     for y in range(32):
-        for x in range(40):
+        for x in range(80):
             i = (y * width + x) * 3
             count += pixels[i] > 200 and pixels[i + 1] < 60 and pixels[i + 2] < 60
     return count
@@ -99,6 +100,11 @@ def test_a_real_click_opens_the_menu_and_a_click_on_a_row_sends_event_and_closes
             menu=tree,
             item_is_menu=True,
         )
+        plain = add_item(
+            session, "8-1", icon="", pixmap=[[8, 8, bytes([255, 0, 255, 0]) * 64]]
+        )  # a green icon before it: the menu's icon is the second
+        plain.up()
+        watcher.register(plain)
         item.up()
         watcher.register(item)
         (tmp_path / "Shells").mkdir()
@@ -115,6 +121,12 @@ def test_a_real_click_opens_the_menu_and_a_click_on_a_row_sends_event_and_closes
             assert wait_for(lambda: red_pixels(private_sway) > 100, 10)  # the pixmap, drawn
             assert popup_box(private_sway) is None
             pointer = live_pointer.VirtualPointer(private_sway.env, *OUT)
+            # a click on the first icon: Activate gets the icon's centre on the output
+            pointer.move(FIRST[0] - 4, FIRST[1] + 5)
+            pointer.move(FIRST[0] + 3, FIRST[1] - 4)  # not the centre: the call still says it
+            pointer.click()
+            assert wait_for(lambda: [a for m, a in plain.calls if m == "Activate"], 5)
+            assert [a for m, a in plain.calls if m == "Activate"] == [FIRST]
             pointer.move(ITEM[0] - 8, ITEM[1])
             pointer.move(*ITEM)
             pointer.click()
@@ -125,6 +137,8 @@ def test_a_real_click_opens_the_menu_and_a_click_on_a_row_sends_event_and_closes
                 "GetLayout",
             ]
             left, top, right, bottom = popup_box(private_sway)  # type: ignore[misc]
+            # beside the clicked icon (its box starts at x = 34), not the whole row (x = 4)
+            assert 30 <= left <= 38, (left, top, right, bottom)
             assert bottom - top > 50  # two rows of 28 px
             x = (left + right) // 2
             second = top + 4 + 28 + 14  # 4 px of padding, the first row, half the second
@@ -134,6 +148,7 @@ def test_a_real_click_opens_the_menu_and_a_click_on_a_row_sends_event_and_closes
             assert wait_for(lambda: item.menu is not None and item.menu.clicked() == [2], 5)
             assert wait_for(lambda: popup_box(private_sway) is None, 5)  # the menu closed
             assert item.calls == []  # no Activate: the item is a menu
+            assert [a for m, a in plain.calls if m == "Activate"] == [FIRST]
             # the watcher goes and comes back: no restart of the shell, the host registers again
             watcher.restart()
             assert wait_for(lambda: len(watcher.hosts) == 2, 10), watcher.hosts

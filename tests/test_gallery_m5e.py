@@ -26,8 +26,9 @@ from tests.sway import PrivateSway
 from tests.test_run import Shell
 
 
-def test_the_gallery_files_check_clean(tmp_path: Path) -> None:
-    g.write_gallery(tmp_path)
+@pytest.mark.parametrize("body", ["BODY", "BODY_OVERRIDE"])
+def test_the_gallery_files_check_clean(tmp_path: Path, body: str) -> None:
+    g.write_gallery(tmp_path, getattr(g, body))
     done = subprocess.run(
         [sys.executable, "-m", "tess_shell", "check", "--config-dir", str(tmp_path)],
         capture_output=True,
@@ -51,7 +52,7 @@ def entries() -> list[str]:
 
 def test_the_checklist_numbers_every_line_in_one_list() -> None:
     numbers = [int(x[:2]) for x in entries()]
-    assert numbers == [*range(1, 11), *range(11, 26)]
+    assert numbers == [*range(1, 11), *range(11, 27)]
     assert "$color" not in g.CHECKLIST and "#" not in g.BODY  # theme tokens, never hex
     for light_dark in ("light", "dark"):
         assert light_dark in g.CHECKLIST
@@ -98,7 +99,18 @@ def test_the_real_run_warns_and_the_fake_run_names_only_its_own_socket(tmp_path:
         assert 'export PULSE_SERVER="unix:$(cat "$ROOT/server-socket")"' in fake
         assert "unset PULSE_RUNTIME_PATH PULSE_COOKIE" in fake
         assert "pactl" not in run + fake and "wpctl" not in run + fake
-        for name in ("run.sh", "run-fake.sh", "check.sh", "audio-set.sh", "audio-server.sh"):
+        override = (g.ROOT / "run-override.sh").read_text()
+        assert str(g.CFG_OVERRIDE) in override and str(g.CFG) + "\n" not in override
+        assert "Name: Audio_Outputs" in (g.CFG_OVERRIDE / "Shells" / "Main_Shell.tdl").read_text()
+        assert "Popup" not in (g.CFG / "Shells" / "Main_Shell.tdl").read_text()  # the shell's own
+        for name in (
+            "run.sh",
+            "run-fake.sh",
+            "run-override.sh",
+            "check.sh",
+            "audio-set.sh",
+            "audio-server.sh",
+        ):
             done = subprocess.run(
                 ["bash", "-n", str(g.ROOT / name)], capture_output=True, text=True
             )

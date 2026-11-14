@@ -19,7 +19,7 @@ from tests.fake_sni import Item, Node, sample_tree
 from tests.icon_theme import Dir, png_bytes, svg, write_theme
 from tests.test_dbus_own_name import owner_of
 from tests.tray_rig import HOST_NAME, TrayDesk, tray_desk, tray_shell
-from tests.widgets_live import SHIPPED, Widgets
+from tests.widgets_live import SHIPPED, Widgets, running
 
 needs_daemon = pytest.mark.skipif(not HAVE_DAEMON, reason="dbus-daemon is not installed")
 
@@ -545,18 +545,63 @@ def test_an_event_call_that_fails_is_logged_once_a_minute_and_the_menu_closes(
 
 
 @needs_daemon
-def test_without_the_popups_the_secondary_click_logs_one_error_and_nothing_opens(
+def test_with_no_popups_written_the_shipped_ones_open_the_menu_and_its_submenus(
     tmp_path: Path,
 ) -> None:
     with tray_desk(tmp_path) as t:
         item = t.item(menu=sample_tree())
         up(t, item)
-        with tray_shell(t, popups="") as w:
+        with tray_shell(t, popups="") as w:  # the shell file writes no Popup at all
             assert settle(t, w, lambda: ids(w) == [item.registered])
-            w.window.simulate("secondary_click", node=item_node(w))
-            settle(t, w, lambda: False, 0.4)
-            assert w.manager.popups.current is None
-            assert any("Tray_Menu" in x for x in w.warnings())
+            plans = {name for _, name in w.manager.popups.plans}
+            assert plans == {"Tray_Menu", "Tray_Menu_2", "Tray_Menu_3"}
+            op = open_menu(t, w, item)
+            assert "Quit" in labels(op)
+            planned = w.bar.planned
+            assert planned is not None
+            popup = op.plan.popup
+            assert (popup.max_height_percent, popup.attach) == (60.0, "BOTTOM")
+            op.window.simulate("click", node=row(op, "More"))
+            assert settle(t, w, lambda: op.sub is not None)
+            assert labels(op.sub) == ["First", "Deeper"]
+            op.window.simulate("click", node=row(op, "Open Window"))
+            assert item.menu is not None
+            assert wait_for(lambda: item.menu.clicked() == [1])
+            assert w.warnings() == [], w.warnings()
+
+
+@needs_daemon
+def test_a_popup_of_the_same_name_in_the_shell_file_overrides_the_shipped_one(
+    tmp_path: Path,
+) -> None:
+    mine = (
+        "Popup { Name: Tray_Menu, Attach: TOP, Max_Height: 120, "
+        "Style { Background: $color.surface_raised }, Children { Tray_Menu { Level: 1 } } }"
+    )
+    with tray_desk(tmp_path) as t:
+        item = t.item(menu=sample_tree())
+        up(t, item)
+        with tray_shell(t, popups=mine) as w:
+            assert settle(t, w, lambda: ids(w) == [item.registered])
+            plans = {name: p for (_, name), p in w.manager.popups.plans.items()}
+            assert set(plans) == {"Tray_Menu", "Tray_Menu_2", "Tray_Menu_3"}
+            assert (plans["Tray_Menu"].popup.attach, plans["Tray_Menu"].popup.max_height) == (
+                "TOP",
+                120,
+            )  # the user's, whole: not merged with the shipped one
+            assert plans["Tray_Menu"].popup.max_height_percent is None
+            assert plans["Tray_Menu_2"].popup.max_height_percent == 60.0  # the others stay shipped
+            assert plans["Tray_Menu_2"].popup.attach == "BOTTOM"
+
+
+def test_a_shell_that_shows_neither_the_tray_nor_audio_gets_no_shipped_popup() -> None:
+    with running("Label { Text: x }") as w:
+        assert w.manager.popups.plans == {}
+    with running("Audio { }") as w:  # no sound service here: the module fails, the plan stays
+        assert {name for _, name in w.manager.popups.plans} == {"Audio_Outputs"}
+    with running("Audio { }", popups="Popup { Name: Audio_Outputs, Attach: TOP }") as w:
+        (plan,) = w.manager.popups.plans.values()
+        assert plan.popup.attach == "TOP"
 
 
 def pixel_at(w: Widgets, x: float, y: float) -> tuple[int, ...]:
@@ -708,28 +753,72 @@ def test_a_theme_svg_is_drawn_in_the_bar_and_a_change_of_icon_keeps_the_node(
             assert set(w.view.nodes) == nodes  # the SVG node stays: its document changed
 
 
-@needs_daemon
-def test_a_menu_of_100_entries_opens_within_100_ms_of_the_click(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """Tray Module > Performance Budget: on the headless engine, from the click until the Popup
-    is open (the fetch, the entries and the build)."""
+def timed_opens(t: TrayDesk, w: Widgets, count: int) -> tuple[list[float], list[float]]:
+    """``count`` openings of a menu: the click to the Popup shown (what a person waits), and the
+    shell's own work in it (the time ``show_menu`` runs on the loop thread)."""
     import time
 
-    tree = Node(0, {}, [Node(i + 1, {"label": f"Entry {i + 1}"}) for i in range(100)])
+    tray = w.host.loaded["Tray"].instance
+    inside: list[float] = []
+    real = tray.show_menu
+
+    def timed(*args: Any) -> None:
+        started = time.perf_counter()
+        real(*args)
+        inside.append((time.perf_counter() - started) * 1000)
+
+    tray.show_menu = timed
+    waits: list[float] = []
+    for _ in range(count):
+        started = time.perf_counter()
+        w.window.simulate("secondary_click", node=item_node(w))
+        assert settle(t, w, lambda: w.manager.popups.current is not None)
+        waits.append((time.perf_counter() - started) * 1000)
+        w.manager.popups.close_current("test")
+        settle(t, w, lambda: w.manager.popups.current is None)
+    return waits, inside
+
+
+def hundred_entries() -> Node:
+    return Node(0, {}, [Node(i + 1, {"label": f"Entry {i + 1}"}) for i in range(100)])
+
+
+@needs_daemon
+def test_a_menu_of_100_entries_is_built_and_shown_in_a_reasonable_time(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Tray Module > Performance Budget: the Popup shows within 100 ms of the click. The suite's
+    bound is generous (a loaded machine); ``-m perf`` holds the 100 ms."""
     with tray_desk(tmp_path) as t:
-        item = t.item(menu=tree)
+        item = t.item(menu=hundred_entries())
         up(t, item)
         with tray_shell(t) as w:
             assert settle(t, w, lambda: ids(w) == [item.registered])
-            timings: list[float] = []
-            for _ in range(5):
-                started = time.perf_counter()
-                w.window.simulate("secondary_click", node=item_node(w))
-                assert settle(t, w, lambda: w.manager.popups.current is not None)
-                timings.append((time.perf_counter() - started) * 1000)
-                w.manager.popups.close_current("test")
-                settle(t, w, lambda: w.manager.popups.current is None)
+            waits, inside = timed_opens(t, w, 5)
             with capsys.disabled():
-                print(f"\nTray menu of 100 entries opens in {sorted(timings)} ms")
-            assert min(timings) < 150, timings  # the budget is 100 ms; the polling loop adds some
+                print(
+                    f"\nTray menu of 100 entries: click to shown {min(waits):.0f} ms best of "
+                    f"{len(waits)}, the shell's own work {min(inside):.0f} ms"
+                )
+            assert min(inside) < 150, inside
+
+
+@pytest.mark.perf
+@needs_daemon
+def test_a_menu_of_100_entries_shows_within_100_ms_of_the_click(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with tray_desk(tmp_path) as t:
+        item = t.item(menu=hundred_entries())
+        up(t, item)
+        with tray_shell(t) as w:
+            assert settle(t, w, lambda: ids(w) == [item.registered])
+            waits, inside = timed_opens(t, w, 20)
+            ordered = sorted(waits)
+            with capsys.disabled():
+                print(
+                    f"\nTray menu of 100 entries, click to shown: best {ordered[0]:.0f} ms, "
+                    f"median {ordered[len(ordered) // 2]:.0f} ms; the shell's own work "
+                    f"{min(inside):.0f} ms best"
+                )
+            assert ordered[len(ordered) // 2] < 100, ordered

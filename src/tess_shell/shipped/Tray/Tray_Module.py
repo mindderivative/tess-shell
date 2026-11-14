@@ -141,6 +141,7 @@ class Tray(Module):
         self.pool: ThreadPoolExecutor | None = None
         self.subs: list[Subscription] = []
         self.menu_item: tuple[str, str] | None = None  # (item id, use key) of the open menu
+        self.menu_anchor: tuple[float, float, float, float] | None = None  # the icon's rect
         self.menu_subs: list[Subscription] = []
         self.menu_opening = False  # the first tree is on its way
         self.menu_busy = False  # a refresh of the open menu is under way
@@ -371,8 +372,12 @@ class Tray(Module):
 
     @staticmethod
     def where(event: Event) -> list[int]:
-        """The pointer's position in the window: the nearest the shell has to the item's centre
-        (the specification says the centre; the anchor of the click is not offered to a module)."""
+        """The centre of the icon that was clicked, in the output's coordinates (the specification
+        says so; ``Event.rect`` is the block's rectangle there). Without a rectangle (the shell
+        could not place the block) the pointer's position in its window is the nearest it has."""
+        if event.rect is not None:
+            x, y, width, height = event.rect
+            return [round(x + width / 2), round(y + height / 2)]
         return [round(event.x or 0), round(event.y or 0)]
 
     @action
@@ -436,6 +441,7 @@ class Tray(Module):
         # listen first: a change between the read and the Popup opening is read once more
         self.watch_menu(item, event.use)
         self.menu_opening, self.menu_dirty = True, False
+        self.menu_anchor = event.rect  # the menu opens beside the icon that was clicked
         self.bus.run(self.fetch_menu(item, event.use, False))
 
     async def fetch_menu(self, item: Item, use_key: str, refresh: bool) -> None:
@@ -479,7 +485,7 @@ class Tray(Module):
             return  # it was closed while the new tree was on its way
         if refresh:
             self.ctx.close_popup(POPUP)
-        self.ctx.popup(POPUP, data=data, use=use_key)
+        self.ctx.popup(POPUP, data=data, use=use_key, anchor=self.menu_anchor)
         self.menu_opening = False
         if self.menu_dirty:  # it changed again while this tree was on its way
             self.menu_dirty = False
@@ -532,6 +538,7 @@ class Tray(Module):
 
     def forget_menu(self) -> None:
         self.menu_item = None
+        self.menu_anchor = None
         self.menu_opening = self.menu_busy = self.menu_dirty = False
         for sub in self.menu_subs:
             sub.cancel()

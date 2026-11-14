@@ -3,8 +3,10 @@
 Run from the repo root: ``uv run python tests/kwin/prepare_m5e_gallery.py``. It writes a scratch
 config and scripts under ``/tmp/tess-kwin-m5e`` and starts nothing. The Bar shows four Audio modules
 (the icon only; with the percent; with the percent and a slider; with ``show_mic: false``) and the
-Clock, all coloured by theme tokens, so it follows Plasma's light and dark. A Popup named
-``Audio_Outputs`` holds the outputs menu that a secondary click opens.
+Clock, all coloured by theme tokens, so it follows Plasma's light and dark. The shell file writes NO
+Popup: the shell provides ``Audio_Outputs``, the outputs menu that a secondary click opens.
+``run-override.sh`` is the fake run with a Popup of that name written in the shell file, which
+replaces the shipped one.
 
 * ``run.sh``: the shell on YOUR REAL sound server (and the real session bus). The Audio module reads
   it, and **the lines of the checklist marked [CHANGES ...] change your real volume, mute, default
@@ -14,6 +16,8 @@ Clock, all coloured by theme tokens, so it follows Plasma's light and dark. A Po
   nothing else, so it cannot reach your real server). ``audio-set.sh`` changes the fake (any words,
   in any order; an unknown word is refused) and ``audio-server.sh away|back`` makes the fake server
   leave and return. Every setter the shell calls on the fake is written to ``fake.log``.
+* ``run-override.sh``: ``run-fake.sh`` with an ``Audio_Outputs`` Popup of the user's own in the shell
+  file (a primary-coloured menu with sharp corners, 12 px below the Bar).
 * ``check.sh``: ``tesserae-shell check`` on the config.
 * ``checklist.txt``: every line to check, in one list.
 
@@ -34,13 +38,14 @@ from tests.shell_samples import write_example  # noqa: E402
 
 ROOT = Path("/tmp/tess-kwin-m5e")
 CFG = ROOT / "gallery"
+CFG_OVERRIDE = ROOT / "gallery-override"
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 SETTINGS = (
     "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: true }\n}\n"
 )
 
-BODY = """
+BODY_TEMPLATE = """
 Shell {
     Monitor {
         Name: Main
@@ -70,17 +75,26 @@ Shell {
                     }
                 }
             }
-            Popup {
-                Name: Audio_Outputs
-                Attach: BOTTOM
-                Gap: 4
-                Style { Background: $color.surface_raised, Corner_Radius: 8 }
-                Children { Audio_Outputs { } }
-            }
-        }
+%s        }
     }
 }
 """
+
+# the shell file writes NO Popup: the shell provides Audio_Outputs
+BODY = BODY_TEMPLATE % ""
+# the variant that overrides the shipped Audio_Outputs with a Popup of the same name (a different
+# look: primary colour, square corners, opening above the row at 12 px)
+BODY_OVERRIDE = (
+    BODY_TEMPLATE
+    % """            Popup {
+                Name: Audio_Outputs
+                Attach: BOTTOM
+                Gap: 12
+                Style { Background: $color.primary, Corner_Radius: 2 }
+                Children { Audio_Outputs { } }
+            }
+"""
+)
 
 CHECKLIST = """M5e Audio: one list, every line to run.  Do it in light and in dark (Plasma's colour
 scheme; every colour is a theme token).  The Bar shows, at the right: four Audio modules (the first the
@@ -186,6 +200,11 @@ to /tmp/tess-kwin-m5e/fake.log (`tail -f` it).
     refused (no USB DAC is plugged) and changes nothing.
 25  Log: no ERROR line; no WARNING line.  `top -p $(pgrep -f 'tesserae-shell run')` shows the shell
     idle (0 % CPU) when you stop touching it.
+26  The shell's own Popup: in every run above the config writes no Popup, and the outputs menu of
+    lines 7 and 19 is the shell's (dark raised background, rounded corners).  Stop the run; start
+    /tmp/tess-kwin-m5e/run-override.sh (the same fake; the shell file now writes a Popup named
+    Audio_Outputs): right-click an icon: the menu is the user's (primary colour, square corners,
+    12 px below the Bar) and picking an output still works.
 """
 
 AUDIO_SET = """# audio-set.sh WORD...  (the words in any order; every other word is refused)
@@ -266,22 +285,10 @@ def audio_set_text() -> str:
     return AUDIO_SET.replace("AUDIO_CTL", str(REPO / "tests" / "kwin" / "audio_ctl.py"))
 
 
-def write_gallery(cfg: Path) -> None:
-    shutil.rmtree(cfg, ignore_errors=True)
-    write_example(cfg, BODY)
-    (cfg / "settings.tdl").write_text(SETTINGS)
-
-
-def main() -> None:
-    ROOT.mkdir(exist_ok=True)
-    write_gallery(CFG)
-    (ROOT / "checklist.txt").write_text(CHECKLIST)
-    state = f"export XDG_STATE_HOME={ROOT}/state\n"
-    script("run.sh", state + REAL_WARNING + f"exec {BIN}/tesserae-shell run --config-dir {CFG}\n")
-    script("check.sh", state + f"{BIN}/tesserae-shell check --config-dir {CFG}\n")
-    script(
-        "run-fake.sh",
-        state
+def run_fake(cfg: Path) -> str:
+    """``run-fake.sh``: the fake sound server on a private socket, and the shell told that socket."""
+    return (
+        f"export XDG_STATE_HOME={ROOT}/state\n"
         + f"ROOT={ROOT}\n"
         + 'rm -f "$ROOT/control" "$ROOT/fake.pid" "$ROOT/server-socket"\n'
         + f'{BIN}/python {REPO}/tests/kwin/fake_pulse_server.py --root "$ROOT" &\n'
@@ -293,8 +300,27 @@ def main() -> None:
         + "unset PULSE_RUNTIME_PATH PULSE_COOKIE PULSE_SINK PULSE_SOURCE\n"
         + 'export PULSE_SERVER="unix:$(cat "$ROOT/server-socket")"\n'
         + 'echo "sound server (private fake): $PULSE_SERVER"\n'
-        + f"{BIN}/tesserae-shell run --config-dir {CFG}\n",
+        + f"{BIN}/tesserae-shell run --config-dir {cfg}\n"
     )
+
+
+def write_gallery(cfg: Path, body: str = BODY) -> None:
+    shutil.rmtree(cfg, ignore_errors=True)
+    write_example(cfg, body)
+    (cfg / "settings.tdl").write_text(SETTINGS)
+
+
+def main() -> None:
+    ROOT.mkdir(exist_ok=True)
+    write_gallery(CFG)
+    write_gallery(CFG_OVERRIDE, BODY_OVERRIDE)
+    (ROOT / "checklist.txt").write_text(CHECKLIST)
+    state = f"export XDG_STATE_HOME={ROOT}/state\n"
+    script("run.sh", state + REAL_WARNING + f"exec {BIN}/tesserae-shell run --config-dir {CFG}\n")
+    script("check.sh", state + f"{BIN}/tesserae-shell check --config-dir {CFG}\n")
+    script("run-fake.sh", run_fake(CFG))
+    # the same private fake server, with a Popup of the user's own that overrides the shipped one
+    script("run-override.sh", run_fake(CFG_OVERRIDE))
     script("audio-set.sh", audio_set_text())
     script("audio-server.sh", AUDIO_SERVER)
     print(f"wrote {ROOT}")
