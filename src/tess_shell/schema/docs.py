@@ -29,6 +29,13 @@ KEY_DOCS: dict[str, str] = {
     "is announced as disabled.",
     "Tooltip_When_Disabled": "Lets a disabled block open its tooltip; without it a disabled "
     "block opens none.",
+    "Focusable": "Whether the block takes keyboard focus. A block that takes input is focusable "
+    "unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled "
+    "block takes none.",
+    "Tab_Index": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: "
+    "a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items "
+    "with no number come after all the others. A surface holds one order for its blocks and the "
+    "shell holds one for its surfaces.",
     # size
     "Width": "The width: pixels, a percentage, AUTO (fit the content) or EXPAND (take the free "
     "space).",
@@ -245,7 +252,8 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     ("Bar", "Max_Width"): "The greatest width of the Bar, in pixels.",
     ("Bar", "Max_Height"): "The greatest height of the Bar, in pixels.",
     ("Bar", "Visible"): "Starts the Bar shown or hidden. Not built.",
-    ("Bar", "Keyboard"): "Whether the Bar takes the keyboard. Not built.",
+    ("Bar", "Keyboard"): "Whether the Bar takes the keyboard: NONE never (Tab does nothing in "
+    "it), ON_DEMAND on a click.",
     ("Bar", "Input_Region"): "Which part of the Bar takes the pointer. Not built.",
     ("Bar", "Meld"): "Draws the Bar inside its Frame. Not built.",
     ("Bar", "Padding"): "Space between the Bar's children and its sides. Not built.",
@@ -382,7 +390,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Type",
         "Default",
     ),
-    "State": ("Visible", "Enabled", "Tooltip_When_Disabled"),
+    "State": ("Visible", "Enabled", "Tooltip_When_Disabled", "Focusable", "Tab_Index"),
     "Size": (
         "Width",
         "Height",

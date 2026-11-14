@@ -303,6 +303,10 @@ class OpenPopup:
     item: str = ""
     sub: OpenPopup | None = None
     rest: Any = None  # the pending hover timer of a menu item (opens a submenu, closes one)
+    # the block that had keyboard focus when the Popup opened from it, with whether its ring was
+    # showing, and the view it is in: focus goes back to it when the Popup closes (Accessibility,
+    # rule 12)
+    opener: tuple[TreNode, bool, View] | None = None
 
     @property
     def popup(self) -> PopupDef:
@@ -693,6 +697,13 @@ class Popups:
             op, event, block, opens
         )
         self._listen(op)
+        if popup.focus and holder is not None and found is not None:
+            held = holder.focus_holder(found)  # the block it was opened from, if it has focus
+            if held is not None:
+                ring = holder.ring_shown(held)
+                op.opener = (held, ring, holder)
+                if ring:  # opened from the keyboard: the Popup's first Tab stop takes the focus
+                    op.view.focus_first()
         if parent is not None:
             parent.sub = op
             if parent.view is not None:
@@ -814,6 +825,10 @@ class Popups:
         op.closing = True
         op.live.release()
         self._m.settle_dynamic()  # the uses made for its entries end with it
+        opener, op.opener = op.opener, None
+        if opener is not None:  # focus goes back to the block the Popup was opened from
+            node, ring, view = opener
+            view.restore_focus(node, ring)
 
     def _closed(self, op: OpenPopup, reason: str) -> None:
         """tre's ``closed``: the compositor dismissed it (``dismissed``), the parent was not open

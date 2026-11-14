@@ -298,14 +298,13 @@ def sheet(text: str, modules: set[str] | None = None) -> Any:
     return read_stylesheet(result.document, "S_Stylesheet.tdl", modules or set())
 
 
-def test_disabled_is_a_built_state_and_focused_is_still_skipped() -> None:
+def test_disabled_and_focused_are_built_states() -> None:
     s, findings = sheet(
         'Stylesheet { Rule { Selector: "FlexBox:disabled", Background: "#fff" }\n'
         'Rule { Selector: "FlexBox:focused", Background: "#fff" } }'
     )
-    assert [r.state for r in s.rules] == ["disabled"]
-    (f,) = findings
-    assert f.severity == "warning" and ":focused" in f.message and "M6" in f.message
+    assert findings == []
+    assert [r.state for r in s.rules] == ["disabled", "focused"]
 
 
 def test_a_disabled_rule_folds_in_by_the_precedence_of_the_other_states() -> None:

@@ -1148,12 +1148,23 @@ BAR_KEYS: dict[str, str] = {
     "Min_Height": "bound",
     "Max_Width": "bound",
     "Max_Height": "bound",
+    "Keyboard": "enum",
+    "Tab_Index": "tab_index",
 }
 BAR_CHOICES: dict[str, tuple[str, ...]] = {
     "Edge": ("TOP", "BOTTOM", "LEFT", "RIGHT"),
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),
     "Alignment": ("START", "CENTER", "END"),
+    # a Bar takes the keyboard on a click or not at all: EXCLUSIVE would take every key of the
+    # desktop, as for the Frame's painter
+    "Keyboard": ("NONE", "ON_DEMAND"),
 }
+
+
+def _tab_index(values: Mapping[str, m.Value]) -> int | None:
+    """The ``Tab_Index`` a surface wrote (already judged 0 to 2 147 483 647), or ``None``."""
+    value = values.get("Tab_Index")
+    return int(value.value) if isinstance(value, m.Number) else None
 
 
 def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
@@ -1234,6 +1245,9 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         min_height=px("Min_Height"),
         max_width=px("Max_Width"),
         max_height=px("Max_Height"),
+        keyboard=word("Keyboard", "NONE") or "NONE",
+        keyboard_written="Keyboard" in values,
+        tab_index=_tab_index(values),
         style=style,
         children=tuple(children),
     )
@@ -1496,6 +1510,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         duration=float(animation[1]),
         peek=peek,
         content_fade=fade.value if isinstance(fade, m.Bool) else True,
+        tab_index=_tab_index(values),
         handlers=handlers,
     )
 
@@ -2225,6 +2240,7 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         keyboard=keyboard.name if isinstance(keyboard, m.Enum) else "NONE",
         keyboard_written=keyboard is not None,
         edges=edges,
+        tab_index=_tab_index(values),
     )
 
 
@@ -2252,7 +2268,8 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
         edge_name: str | None = None
         peek: PeekDef | None = None
         content_fade = True
-        keys = ["Name", "Thickness", "Padding", "Children", "Peek", "Content_Fade"]
+        tab_index: int | None = None
+        keys = ["Name", "Thickness", "Padding", "Children", "Peek", "Content_Fade", "Tab_Index"]
         for sub in entry.entries:
             if isinstance(sub, Property):
                 if sub.key == "Name":
@@ -2278,6 +2295,16 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
                         continue
                     assert isinstance(value, m.Number)
                     thickness = float(value.value)
+                elif sub.key == "Tab_Index":
+                    try:
+                        index = coerce(
+                            "tab_index", sub.value, ctx.origin(sub.key_origin), key="Tab_Index"
+                        )
+                    except ValueProblem as exc:
+                        ctx.problem(sub.value_origin, sub.key, exc)
+                        continue
+                    assert isinstance(index, m.Number)
+                    tab_index = int(index.value)
                 elif sub.key == "Padding":
                     try:
                         value = coerce(
@@ -2332,6 +2359,7 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
             edge_name,
             peek,
             content_fade,
+            tab_index,
         )
     return out
 

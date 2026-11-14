@@ -36,6 +36,9 @@ class BarDef:
     min_height: float | None = None
     max_width: float | None = None
     max_height: float | None = None
+    keyboard: str = "NONE"  # NONE or ON_DEMAND: a click gives the Bar the keyboard
+    keyboard_written: bool = False  # the file says ``Keyboard:`` (NONE then is a choice)
+    tab_index: int | None = None  # its place in the shell's focus order (None: after the rest)
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
 
@@ -88,6 +91,7 @@ class PanelDef:
     animation: str = "NONE"  # SLIDE, FADE or NONE: how it appears and disappears
     peek: PeekDef | None = None  # melded only: rests as a tab of ``Size`` pixels (see PeekDef)
     content_fade: bool = True  # melded: the content's opacity follows the slide's progress
+    tab_index: int | None = None  # its place in the shell's focus order (None: after the rest)
     duration: float = 200  # milliseconds of the animation
     handlers: Mapping[str, Handler] = field(default_factory=dict)  # ``On_Open`` -> handler
 
@@ -144,6 +148,7 @@ class EdgeDef:
     name: str | None = None  # the target of Show, Hide and Toggle (a strip with ``Peek`` only)
     peek: PeekDef | None = None  # the strip rests as a ``Size`` sliver; ``thickness`` is its full
     content_fade: bool = True  # the strip's children fade with the strip's slide
+    tab_index: int | None = None  # the strip's place in the shell's focus order
 
 
 @dataclass(frozen=True, slots=True)
@@ -167,6 +172,7 @@ class FrameDef:
     padding: tuple[float, float, float, float] = (0, 0, 0, 0)  # of every strip (left, top, ...)
     edges: Mapping[str, EdgeDef] = field(default_factory=dict)  # ``left``, ``top``, ... -> strip
     melds: tuple[PanelDef, ...] = ()  # Panels with ``Meld: true`` attached to this Frame
+    tab_index: int | None = None  # its place in the shell's focus order (None: after the rest)
 
 
 @dataclass(frozen=True, slots=True)

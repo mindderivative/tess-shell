@@ -41,6 +41,7 @@ from tess_shell.surfaces.bar import (
     input_region,
     surface_rect,
 )
+from tess_shell.surfaces.focus import next_surface, surface_order
 from tess_shell.surfaces.frame import FramePlan, Frames
 from tess_shell.surfaces.panel import PanelSpec, panel_geometry, px_size
 
@@ -302,13 +303,14 @@ def _place(
 
 
 def _keyboard(bar: BarDef | PanelDef, hidden: bool = False, text_field: bool = False) -> str:
-    """tre's ``keyboard`` word: a Panel's ``Keyboard``, ``none`` for a Bar or a hidden Panel. A
-    surface that holds a TextField and has no keyboard mode of its own (a Bar has none, a Panel's
-    is ``NONE``) takes ``on_demand``: the compositor gives it the keyboard when the field is
-    clicked. ``EXCLUSIVE`` is only ever written."""
+    """tre's ``keyboard`` word: the surface's ``Keyboard``, ``none`` for a hidden Panel. A surface
+    that holds a TextField and has ``Keyboard: NONE`` (the default) takes ``on_demand``: the
+    compositor gives it the keyboard when the field is clicked. A surface with focusable blocks
+    and no ``Keyboard`` takes none: Tab does nothing there (Focus and Keyboard > Focusable Things
+    and the Focus Ring). ``EXCLUSIVE`` is only ever written."""
     if hidden:
         return "none"
-    mode = bar.keyboard.lower() if isinstance(bar, PanelDef) else "none"
+    mode = bar.keyboard.lower()
     return "on_demand" if mode == "none" and text_field else mode
 
 
@@ -504,6 +506,11 @@ class SurfaceManager:
         self.surfaces: list[Surface] = []
         self._planned: list[Planned] = []
         self._kb_warned: set[str] = set()  # surfaces whose ``Keyboard: NONE`` was overridden
+        # keyboard focus between surfaces (Focus and Keyboard): the order of the shell's surfaces
+        # by ``Tab_Index`` (derived from the planned shell, never a file), and the ``Name`` of the
+        # surface that has the OS's keyboard focus (``None``: none of ours)
+        self.focus_order: list[str] = []
+        self.focused: str | None = None
         self._handle: Any = None
         self._all_uses: Mapping[str, Use] = {}
         from tess_shell.surfaces.popup import PopupPlan, Popups  # popup.py imports this module
@@ -806,6 +813,7 @@ class SurfaceManager:
     def plan(self, shell: ShellDef) -> list[Use]:
         planned, uses = self._plan_bars(shell, self._modules, self._look)
         self._shell = shell
+        self.focus_order = surface_order(shell)
         for use in uses:
             self._store.add_use(use.module, use.key)
         self._planned = planned
@@ -873,10 +881,13 @@ class SurfaceManager:
             "configure",
             lambda e, n=where: logger.info(f"{kind} {n} configured {int(e.width)}x{int(e.height)}"),
         )
-        window.on(
-            "closed",
-            lambda e, n=where: logger.info(f"{kind} {n} closed ({getattr(e, 'reason', '')})"),
-        )
+
+        def closed(e: Any, n: str = where, k: str = kind, name: str = bar.name) -> None:
+            logger.info(f"{k} {n} closed ({getattr(e, 'reason', '')})")
+            self._surface_gone(name)
+
+        window.on("closed", closed)
+        window.on("active", lambda e, name=bar.name: self._surface_active(name, bool(e.active)))
 
         def pointer_trace(e: Any, n: str = where, k: str = kind, p: str = "") -> None:
             logger.debug(
@@ -1490,6 +1501,8 @@ class SurfaceManager:
         tree that does not bind leaves that surface as it was."""
         self._modules = modules
         self._shell = self._planned_shell  # the shell ``check`` just planned
+        if self._shell is not None:
+            self.focus_order = surface_order(self._shell)
         if look is not None:
             self._look = look
         self.popups.set_plans(self._popup_plans)  # the plans of the check just made
@@ -1522,6 +1535,27 @@ class SurfaceManager:
         keep = {u.key for u in store_uses} | set(self._dyn_registered)
         for key in [k for k in self._store.values if k not in keep]:
             self._store.remove_use(key)
+
+    def _surface_active(self, name: str, active: bool) -> None:
+        """The OS gave a surface of ours the keyboard focus (``active``), or took it away."""
+        if active:
+            self.focused = name
+        elif self.focused == name:
+            self.focused = None
+
+    def _surface_gone(self, name: str) -> None:
+        """A surface closed. When it had the keyboard focus, focus goes to the next surface in the
+        shell's order, or to none when no other is left (Focus and Keyboard > Failure Modes). The
+        compositor decides which layer surface has the keyboard; moving it there is the shortcut
+        mode's (M6c, M6d), so this is the surface that mode will focus."""
+        if self.focused != name:
+            return
+        open_names = {s.name for s in self.surfaces if s.window is not None}
+        open_names |= {st.plan.frame.name for st in self.frames.states.values() if st.painter}
+        self.focused = next_surface(
+            [n for n in self.focus_order if n == name or n in open_names], name
+        )
+        logger.info(f"surface {name} had the keyboard focus and closed; next: {self.focused}")
 
     def _close(self, s: Surface) -> None:
         self.popups.parent_closed(s)

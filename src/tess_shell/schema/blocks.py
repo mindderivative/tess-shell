@@ -101,6 +101,10 @@ COMMON: dict[str, str] = {
     "Role": "enum",
     "Description": "text",
     "Live": "enum",
+    # focus (Focus and Keyboard): whether the block takes keyboard focus (true by default on
+    # an interactive block) and its place in the Tab order
+    "Focusable": "bool",
+    "Tab_Index": "tab_index",
     # the state a module sets on the block that has it (Block Reference > Accessibility: "set by
     # the block that has them, not written by the author"): a shell file may not write these
     **A11Y_STATE,
@@ -312,7 +316,7 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
 # box in its cell that holds the size text and, over it, the text input); they are the kinds the
 # binder builds and the model addresses slots to. The words have a dot, so no file can name one.
 FIELD_BOX_KEYS = frozenset(
-    {*COMMON, "Padding", *BOX_STYLE} - {"Label"},
+    {*COMMON, "Padding", *BOX_STYLE} - {"Label", "Focusable", "Tab_Index"},
 )
 FIELD_INPUT_KEYS = frozenset(
     {
@@ -326,6 +330,8 @@ FIELD_INPUT_KEYS = frozenset(
         "Max_Length",
         "Password",
         "Label",
+        "Focusable",
+        "Tab_Index",
         "Foreground",
         "Font_Family",
         "Font_Size",
@@ -347,6 +353,8 @@ _FIELD_INPUT_PROPS: dict[str, str] = {
     "Max_Length": "max_length",
     "Password": "bool",
     "Label": "text",
+    "Focusable": "bool",
+    "Tab_Index": "tab_index",
 }
 _FIELD_INPUT_STYLE: dict[str, str] = {
     "Foreground": "color",
@@ -357,7 +365,9 @@ _FIELD_INPUT_STYLE: dict[str, str] = {
     "Placeholder_Foreground": "color",
 }
 _FIELD_BOX_PROPS: dict[str, str] = {
-    k: v for k, v in {**COMMON, "Padding": "sides"}.items() if k != "Label"
+    k: v
+    for k, v in {**COMMON, "Padding": "sides"}.items()
+    if k not in ("Label", "Focusable", "Tab_Index")
 }
 # the kinds the model and the binder meet after the composition: key tables per kind
 INTERNAL: dict[str, tuple[dict[str, str], dict[str, str]]] = {
@@ -403,10 +413,9 @@ REQUIRED: dict[str, tuple[str | tuple[str, ...], ...]] = {
     "Path": ("Data",),
 }
 
-# Surface keys of a Bar that M1 reads but does not build: accepted with a warning.
+# Surface keys of a Bar that are read but not built: accepted with a warning.
 BAR_NOT_BUILT = (
     "Exclusive_Zone",
-    "Keyboard",
     "Input_Region",
     "Auto_Hide",
     "Auto_Hide_Delay",
@@ -442,6 +451,8 @@ FRAME_KEYS: dict[str, str] = {
     # the painter's keyboard mode (opt-in): EXCLUSIVE would take every key of the desktop, so
     # only NONE and ON_DEMAND (the compositor gives the painter focus on a click) are offered
     "Keyboard": "enum",
+    # the place of the Frame in the shell's focus order (Focus and Keyboard > Tab Order)
+    "Tab_Index": "tab_index",
 }
 FRAME_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("TOP",),
@@ -457,7 +468,7 @@ FRAME_NOT_BUILT_ERROR = (
 FRAME_NOT_BUILT_WARNING = ("Class",)
 # an ``Edges`` entry: its own thickness, padding and the strip's children
 EDGE_SIDES = ("Left", "Top", "Right", "Bottom")
-EDGE_KEYS: dict[str, str] = {"Thickness": "number", "Padding": "sides"}
+EDGE_KEYS: dict[str, str] = {"Thickness": "number", "Padding": "sides", "Tab_Index": "tab_index"}
 FRAME_BORDER_KEYS = ("Width", "Color")
 # A Frame's inline Style: the background, the shorthand for the inner border (``Border_Width``,
 # ``Border_Color`` or a ``Border { Width, Color }`` block, D78) and the opacity. Shadows are
@@ -564,6 +575,8 @@ PANEL_KEYS: dict[str, str] = {
     # a melded Panel's size: ``Depth`` perpendicular to the Frame's edge, ``Length`` along it
     "Depth": "length",
     "Length": "length",
+    # the place of the Panel in the shell's focus order (Focus and Keyboard > Tab Order)
+    "Tab_Index": "tab_index",
 }
 PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),

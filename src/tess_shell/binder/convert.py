@@ -17,6 +17,7 @@ from typing import Any
 from tess_shell._vendor import tess_utils
 from tess_shell.binder.images import IMAGES
 from tess_shell.binder.model import (
+    TAB_INDEX_MAX,
     Auto,
     BindError,
     Bool,
@@ -49,6 +50,16 @@ def _bad(value: Value, expected: str) -> BindError:
 
 def _num(x: float) -> int | float:
     return int(x) if float(x).is_integer() else x
+
+
+def tab_index(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """``Tab_Index``: a whole number from 0 to 2 147 483 647. It gives tre nothing of its own: the
+    order is the whole tree's, so the view ranks the blocks that have one (``View.reindex``)."""
+    if isinstance(value, Number) and isinstance(value.value, int):
+        if 0 <= value.value <= TAB_INDEX_MAX:
+            return {}
+        raise BindError(f"must be from 0 to {TAB_INDEX_MAX}", value.origin)
+    raise _bad(value, "a whole number")
 
 
 def length(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
@@ -411,6 +422,7 @@ CONVERTERS: Mapping[str, Converter] = {
     "positive": positive,
     "bool": boolean,
     "max_length": max_length,
+    "tab_index": tab_index,
     "lines": lines,
     "selection": selection,
     "image": image,

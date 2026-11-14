@@ -202,7 +202,7 @@ def _length_units(spec: str, key: str, model_kind: str) -> list[str]:
 _PIXEL_ONLY = {(s, k) for s in ("Popup", "Tooltip") for k in ("Max_Width",)}
 
 
-WHOLE_KINDS = ("whole", "max_length", "lines", "diameter")
+WHOLE_KINDS = ("whole", "max_length", "lines", "tab_index", "diameter")
 
 
 def _bounds(model_kind: str, key: str) -> Json:
@@ -251,7 +251,7 @@ def _kind_fields(
             return "color", {"alpha": True, "forms": list(COLOR_FORMS)}
         case "number" | "positive" | "unit":
             return "number", {**_bounds(model_kind, rkey), "step": None, "unit": unit}
-        case "whole" | "max_length" | "lines" | "diameter":
+        case "whole" | "max_length" | "lines" | "tab_index" | "diameter":
             return "whole", {
                 **_bounds(model_kind, rkey),
                 "step": 1,
@@ -433,6 +433,7 @@ _FIELDS: dict[tuple[str, str], tuple[type, str]] = {
     ("Bar", "Layer"): (BarDef, "layer"),
     ("Bar", "Gap"): (BarDef, "gap"),
     ("Bar", "Reserve"): (BarDef, "reserve"),
+    ("Bar", "Keyboard"): (BarDef, "keyboard"),
     ("Panel", "Layer"): (PanelDef, "layer"),
     ("Panel", "Inset"): (PanelDef, "inset"),
     ("Panel", "Keyboard"): (PanelDef, "keyboard"),
@@ -863,6 +864,7 @@ def _roots() -> dict[str, Json]:
             "Content_Fade": _key(
                 "Edge", "Content_Fade", "bool", default=_default("Edge", "Content_Fade")
             ),
+            "Tab_Index": _key("Edge", "Tab_Index", "tab_index"),
             "Peek": _key("Edge", "Peek", "block:Edge_Peek"),
         },
         repeatable=False,
@@ -1212,6 +1214,7 @@ LOADER_KINDS = (
     "whole",
     "max_length",
     "lines",
+    "tab_index",
     "diameter",
     "length",
     "text_length",

@@ -294,12 +294,10 @@ def test_a_bad_rule_is_reported(body: str, needle: str) -> None:
     assert any(needle in f.message + f.hint for f in findings), findings
 
 
-def test_the_focused_state_is_skipped_with_a_warning_that_says_why() -> None:
+def test_the_focused_state_is_a_built_state() -> None:
     s, findings = sheet('Stylesheet { Rule { Selector: "Text:focused", Foreground: "#fff" } }')
-    assert s.rules == ()
-    (f,) = findings
-    assert f.severity == "warning" and f.rule == "not-built"
-    assert "no block can take focus" in f.message
+    assert findings == []
+    assert [r.state for r in s.rules] == ["focused"]
 
 
 def test_disabled_and_a_part_of_a_module_are_built() -> None:

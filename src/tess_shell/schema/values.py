@@ -12,7 +12,7 @@ from tess_shell.binder import convert
 from tess_shell.binder import model as m
 from tess_shell.binder.model import BindError
 from tess_shell.schema.findings import nearest
-from tess_shell.schema.ranges import range_of, scoped
+from tess_shell.schema.ranges import plain, range_of, scoped
 
 SIDES_HINT = (
     "Use one number, four items (left, top, right, bottom) or named sides. CSS orders its "
@@ -102,6 +102,7 @@ def _numbers(value: m.Value) -> list[float]:
 _NOUNS = {
     "max_length": "a whole number",
     "lines": "a whole number",
+    "tab_index": "a whole number",
     "whole": "a whole number",
     "diameter": "a whole number of pixels",
     "duration": "a time in milliseconds",
@@ -128,7 +129,8 @@ def check_range(kind: str, key: str, typed: m.Value) -> None:
             unit = "%" if kind == "elevation" else ""
             raise ValueProblem(
                 "bad-value",
-                f"expected {_NOUNS.get(kind, 'a number')}, {rng.words(unit)}, found {n:g}{unit}",
+                f"expected {_NOUNS.get(kind, 'a number')}, {rng.words(unit)}, "
+                f"found {plain(n)}{unit}",
             )
 
 
@@ -184,7 +186,7 @@ def _coerce_kind(
             if n is None or isinstance(n, float):
                 raise _bad("a whole number", value)
             return m.Number(n, origin=origin)
-        case "max_length" | "lines":
+        case "max_length" | "lines" | "tab_index":
             n = _number(value)
             if n is None or isinstance(n, float):
                 raise _bad("a whole number", value)
@@ -452,7 +454,7 @@ def _from_python_kind(
             if n is None or (kind == "whole" and isinstance(n, float)):
                 raise bad("a whole number" if kind == "whole" else "a number")
             return m.Number(n, origin=origin)
-        case "max_length" | "lines":
+        case "max_length" | "lines" | "tab_index":
             n = _py_number(value)
             if n is None or isinstance(n, float):
                 raise bad("a whole number")

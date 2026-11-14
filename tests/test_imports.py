@@ -47,6 +47,7 @@ RULES: dict[str, set[str] | None] = {
         "loguru",
         "tess_shell.appearance",
         "tess_shell.binder.model",
+        "tess_shell.binder.focus",
         "tess_shell.binder.shadow",
         "tess_shell.schema",
         "tess_shell.model",
@@ -84,6 +85,8 @@ RULES: dict[str, set[str] | None] = {
     "surfaces": set(),
     "surfaces.bar": {"tess_shell.binder.model"},
     "surfaces.panel": {"tess_shell.binder.model", "tess_shell.surfaces.bar"},
+    # the order of the shell's surfaces for keyboard focus: pure, over the shell definition
+    "surfaces.focus": {"tess_shell.binder.focus", "tess_shell.schema.model"},
     "surfaces.manager": {
         "tess_re",
         "loguru",

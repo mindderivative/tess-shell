@@ -28,8 +28,8 @@ class Range:
     def words(self, unit: str = "") -> str:
         """The range as a person reads it: ``0 or more``, ``greater than 0``, ``from 0 to 1``;
         ``unit`` follows each number (``%``)."""
-        low = None if self.low is None else f"{self.low:g}{unit}"
-        high = None if self.high is None else f"{self.high:g}{unit}"
+        low = None if self.low is None else f"{plain(self.low)}{unit}"
+        high = None if self.high is None else f"{plain(self.high)}{unit}"
         if low is not None and high is not None:
             return f"from {low} to {high}"
         if low is not None:
@@ -37,11 +37,20 @@ class Range:
         return f"{high} or less"
 
 
+def plain(n: float) -> str:
+    """A whole number in full (``2147483647``, not ``2.14748e+09``), another as ``g`` writes it."""
+    return str(int(n)) if float(n).is_integer() else f"{n:g}"
+
+
+# the largest ``Tab_Index``: the largest signed 32-bit integer (Focus and Keyboard > Tab Order)
+TAB_INDEX_MAX = 2_147_483_647
+
 # the range of every value of a kind (the loader's kind words, ``schema.values``)
 KIND_RANGES: dict[str, Range] = {
     "positive": Range(0, low_open=True),
     "max_length": Range(0),
     "lines": Range(1),
+    "tab_index": Range(0, TAB_INDEX_MAX),
     "duration": Range(0),
     "pause": Range(0),
     "unit": Range(0, 1),

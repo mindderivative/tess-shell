@@ -114,3 +114,7 @@ Label, TextBox, ProgressBar, Badge, Marquee_Text, Icon, Image and Expander ship 
 ## Interactive widgets (M4c)
 
 Button, Toggle, Checkbox, Slider, List, Menu and MenuItem ship as standard modules and `ScrollBox` is a block. They are operated by the pointer (keys and focus are M6); `Enabled: false` shows `:disabled` and ignores the pointer. A Toggle, a Checkbox, a Slider or a List raises `On_Changed` (`event.old`, `event.new`, `event.value`) when the user changes it and never when a module sets `Checked`, `Value` or `Selected`. A Slider also raises `On_Released` once when the press that moved it ends (also when the button is let go outside the slider), with the final value in `event.value`: use it for an action that must happen once, such as a seek. A Menu is the content of a `Popup`; a Button opens it with `On_Click { Action: Show, Target: File_Menu, Data { Id: 7 } }` and a `MenuItem { Submenu: Share_Menu }` opens another Popup beside it. The gallery: `uv run python tests/kwin/prepare_m4c_gallery.py`, then `/tmp/tess-kwin-m4c-widgets/run.sh`.
+
+## Focus (M6a)
+
+`Tab` and `Shift+Tab` walk the focusable blocks of a surface that takes the keyboard (`Keyboard: ON_DEMAND`); `Tab_Index` (0 to 2147483647) sets the order, `Focusable` switches a block in or out, and `:focused` styles the ring that keyboard focus shows (a click focuses without it). A Popup gives focus back to the block it was opened from. Keys inside a widget, shortcut mode and moving focus between surfaces are M6b to M6d.

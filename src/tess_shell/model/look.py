@@ -16,6 +16,7 @@ from dataclasses import dataclass
 
 from tess_shell.appearance import Appearance
 from tess_shell.binder import model as m
+from tess_shell.binder.focus import takes_ring
 from tess_shell.binder.shadow import scale
 from tess_shell.model.icons import RuntimeIcons
 from tess_shell.schema import blocks
@@ -128,9 +129,38 @@ def resolve_style(
 
 
 def resolve(nodes: Sequence[m.Node], look: Look | None) -> tuple[list[m.Node], list[m.BindError]]:
-    """The tree with every token reference resolved; the errors name each reference left out."""
+    """The tree with every token reference resolved; the errors name each reference left out.
+    A block that takes keyboard focus gets the focus ring as its ``:focused`` look."""
     errors: list[m.BindError] = []
-    return [_resolve_node(n, look, errors) for n in nodes], errors
+    ring = focus_ring(look)
+    return [_resolve_node(n, look, errors, ring) for n in nodes], errors
+
+
+# the ring of keyboard focus when the theme has no tokens to build it from
+_RING_COLOR = m.Color(0x5B, 0x97, 0xC9, 255)
+_RING_SPREAD = 2
+
+
+def focus_ring(look: Look | None) -> m.Shadows:
+    """The ring that shows keyboard focus (Focus and Keyboard > Focusable Things and the Focus
+    Ring): one shadow with no blur and no offset, so it does not shift the layout, in the theme's
+    ``color.primary``, ``space.step_1`` pixels thick. A theme without those tokens gets the
+    Default theme's values."""
+    origin = m.Origin("<focus ring>", 1, 1)
+    color: m.Value = _RING_COLOR
+    spread: m.Value = m.Number(_RING_SPREAD, origin=origin)
+    if look is not None:
+        for path, kind in (("color.primary", "color"), ("space.step_1", "number")):
+            try:
+                found = _ref_value(m.TokenRef(path, kind), look.tokens)
+            except TokenProblem:
+                continue  # a theme with no such token: the default stands
+            if isinstance(found, m.Color):
+                color = found
+            elif isinstance(found, m.Number):
+                spread = found
+    assert isinstance(color, m.Color) and isinstance(spread, m.Number)
+    return m.Shadows((m.Shadow(color, 0, 0, 0, float(spread.value), origin=origin),), origin=origin)
 
 
 def _motion(
@@ -157,19 +187,32 @@ def _motion(
         props["Animated"] = m.Bool(False, origin=node.origin)
 
 
-def _resolve_node(node: m.Node, look: Look | None, errors: list[m.BindError]) -> m.Node:
+def _resolve_node(
+    node: m.Node, look: Look | None, errors: list[m.BindError], ring: m.Shadows
+) -> m.Node:
     props = resolve_style(node.props, look, errors)
     style = resolve_style(node.style, look, errors)
     _motion(node, props, style, look)
+    states = {s: resolve_style(v, look, errors) for s, v in node.states.items()}
+    if takes_ring(node) and _allowed(node.kind, "Shadows"):
+        # the ring of keyboard focus, under whatever ``:focused`` rule the file or a stylesheet
+        # has (its ``Shadows`` replaces the ring); the block's own shadows stay under it
+        base = style.get("Shadows") or props.get("Shadows")
+        shown = ring if not isinstance(base, m.Shadows) else _with_ring(ring, base)
+        states["focused"] = {"Shadows": shown, **states.get("focused", {})}
     return dataclasses.replace(
         node,
         props=props,
         style=style,
-        states={s: resolve_style(v, look, errors) for s, v in node.states.items()},
+        states=states,
         children=tuple(
-            _resolve_node(c, look, errors) for c in node.children if isinstance(c, m.Node)
+            _resolve_node(c, look, errors, ring) for c in node.children if isinstance(c, m.Node)
         ),
     )
+
+
+def _with_ring(ring: m.Shadows, base: m.Shadows) -> m.Shadows:
+    return m.Shadows((*ring.items, *base.items), origin=ring.origin)
 
 
 # -- stylesheet rules --------------------------------------------------------------------------
@@ -398,9 +441,10 @@ def check_tokens(
 def check_states(
     children: Sequence[Child], rules: Sequence[Rule], module: str = ""
 ) -> list[Finding]:
-    """A warning for each ``:hovered`` or ``:pressed`` style the rules give a block that tre sends
-    no pointer events (a ``Text``): the state would never hold, so the rule does nothing there.
-    ``module`` is the call name when ``children`` are a module's layout."""
+    """A warning for each ``:hovered``, ``:pressed`` or ``:focused`` style the rules give a block
+    that tre sends no pointer events and that takes no focus (a ``Text``): the state would never
+    hold, so the rule does nothing there. ``module`` is the call name when ``children`` are a
+    module's layout."""
     if not any(r.state for r in rules):
         return []
     ruled: Sequence[Child] = apply_rules(tuple(children), rules, module)
@@ -411,8 +455,8 @@ def check_states(
         if not node.states or node.kind not in m.NO_POINTER_BLOCKS:
             continue
         for state, values in node.states.items():
-            if state in m.FLAG_STATES:  # these need no pointer: a Text can be disabled or chosen
-                continue
+            if state in m.FLAG_STATES and state != "focused":  # these need no pointer: a Text can
+                continue  # be disabled or chosen, never focused
             o = next(iter(values.values())).origin if values else node.origin
             found.append(
                 Finding(
@@ -421,7 +465,8 @@ def check_states(
                     o.column,
                     "warning",
                     "state-never-applies",
-                    f"a :{state} style reaches a {node.kind}, which tre sends no pointer events",
+                    f"a :{state} style reaches a {node.kind}, which tre sends no "
+                    f"{'focus' if state == 'focused' else 'pointer'} events",
                     "put the state rule on the Box or FlexBox around the text",
                 )
             )
