@@ -33,7 +33,9 @@ sys.path.insert(0, str(REPO))
 from tests.shell_samples import write_example  # noqa: E402
 
 ROOT = Path("/tmp/tess-kwin-m6c")
-BIN = Path(sys.executable).parent  # the environment this generator runs in, so run.sh runs this code
+BIN = Path(
+    sys.executable
+).parent  # the environment this generator runs in, so run.sh runs this code
 KEY_ONE = "Ctrl+Alt+Shift+F11"
 KEY_TWO = "Ctrl+Alt+Shift+F12"
 HEAD = "---\nTDL: 0.2\nName: Settings\n---\n"
