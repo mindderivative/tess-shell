@@ -304,6 +304,6 @@ def test_expander_on_changed_is_at_once_under_reduced_motion() -> None:
 
 
 def test_expander_on_changed_on_a_call_in_a_shell_file() -> None:
-    body = "Expander { On_Changed { Action: Call, Target: \"Driver.pressed\" }, Children { Label { Text: x } } }"
+    body = 'Expander { On_Changed { Action: Call, Target: "Driver.pressed" }, Children { Label { Text: x } } }'
     with running(body) as w:
         assert w.problems == [] and w.warnings() == []

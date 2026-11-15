@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: false
+      - run: uv sync --python 3.14
+      # src and tests only: tools/ and docs/ are not linted
+      # (docs/ is generated from the vault)
+      - run: uv run ruff check src tests
+      - run: uv run ruff format --check src tests
+      - run: uv run mypy
+
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      # The suite drives a private headless sway (WLR_BACKENDS=headless,
+      # pixman), private D-Bus daemons and a virtual keyboard (wtype). tre
+      # draws through wgpu and a hosted runner has no GPU, so Mesa's software
+      # Vulkan (lavapipe) gives it an adapter, as tre's own CI does.
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            sway wtype grim dbus systemd \
+            mesa-vulkan-drivers libgl1-mesa-dri libegl1 libxkbcommon0 \
+            fontconfig fonts-dejavu-core
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: false
+      - run: uv sync --python 3.14
+      # The suite refuses to run with WAYLAND_DISPLAY or DISPLAY set
+      # (tests/conftest.py); a hosted runner has neither. The 60 s idle tests
+      # and the PipeWire sandbox tests are deselected by default (pyproject
+      # addopts).
+      - run: uv run pytest -q -rfE
