@@ -55,7 +55,7 @@ from tess_shell.services.portal import PortalReader
 from tess_shell.services.shortcuts import STOP_TIMEOUT, Action, ShortcutService
 from tess_shell.services.tray import TrayService
 from tess_shell.shortcuts import drop_failed, shortcut_handlers, shortcut_modules
-from tess_shell.signals import LoopStopper, SignalWatcher
+from tess_shell.signals import EarlyStop, LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites, Watcher
 
@@ -144,11 +144,19 @@ def _fail(message: str) -> None:
         print(f"tesserae-shell: {message}", file=sys.stderr)
 
 
+def _force_exit() -> NoReturn:
+    """A second signal: leave at once, as the ``SignalWatcher`` does."""
+    shutdown_logging()
+    os._exit(int(ExitCode.FORCED))
+
+
 def run(options: Options) -> int:
     lock = InstanceLock()
+    early = EarlyStop(_force_exit)
+    early.install()  # the first signal of the start is held for the watcher (EarlyStop)
     try:
         _install_excepthooks()
-        return int(_run(options, lock))
+        return int(_run(options, lock, early))
     except ShellError as exc:
         _fail(str(exc))
         return int(exc.exit_code)
@@ -161,6 +169,7 @@ def run(options: Options) -> int:
             logger.opt(exception=True).critical("unexpected error")
         return int(ExitCode.INTERNAL)
     finally:
+        early.uninstall()
         shutdown_logging()
         lock.release()
 
@@ -239,7 +248,7 @@ def _stop_shortcuts(service: ServiceThread, shortcuts: ShortcutService) -> None:
         logger.debug(f"shortcuts: stopping did not go through ({exc!r})")
 
 
-def _run(options: Options, lock: InstanceLock) -> ExitCode:
+def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
     # 1. pre-flight
     runtime_dir, loose = _preflight()
     # 2. the config directory
@@ -289,15 +298,11 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
     handle = app.thread_handle()
     stopper = LoopStopper(handle.stop)
 
-    def force() -> NoReturn:
-        shutdown_logging()
-        os._exit(int(ExitCode.FORCED))
-
     reload_signal: list[Callable[[], None]] = []
     watcher = SignalWatcher(
-        stopper.request, force, lambda: reload_signal[-1]() if reload_signal else None
+        stopper.request, _force_exit, lambda: reload_signal[-1]() if reload_signal else None
     )
-    watcher.start()
+    watcher.start(early)
     try:
         store = ValueStore()
         ticks = TimeSource()

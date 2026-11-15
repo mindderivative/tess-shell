@@ -19,6 +19,39 @@ def _ignore(signum: int, frame: FrameType | None) -> None:
     """Python needs a handler installed for the C handler to write the wakeup fd."""
 
 
+class EarlyStop:
+    """Hold the first SIGTERM or SIGINT of the start, until the real watcher can act on it.
+
+    The shell logs ``starting`` long before the event loop and the ``SignalWatcher`` exist (it
+    takes the lock, opens the registry, scans every shell file and imports the engine first). A
+    SIGTERM in that time would hit the default action and kill the process with no clean stop. So
+    the first signal is remembered (``requested``) and the start goes on; ``SignalWatcher.start``
+    takes it over and stops the shell as it does for any signal. A second signal still forces an
+    exit, so a start that hangs can be interrupted. Main thread only; ``uninstall`` puts the
+    handlers back (and does nothing for one that is no longer ours).
+    """
+
+    def __init__(self, force: Callable[[], NoReturn]) -> None:
+        self._force = force
+        self.requested = threading.Event()
+        self.previous: dict[int, object] = {}
+
+    def install(self) -> None:
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            self.previous[sig] = signal.signal(sig, self._handle)
+
+    def _handle(self, signum: int, frame: FrameType | None) -> None:
+        if self.requested.is_set():
+            self._force()
+        self.requested.set()
+
+    def uninstall(self) -> None:
+        for sig, handler in self.previous.items():
+            if signal.getsignal(sig) == self._handle:
+                signal.signal(sig, handler)  # type: ignore[arg-type]
+        self.previous.clear()
+
+
 class SignalWatcher:
     def __init__(
         self,
@@ -35,16 +68,24 @@ class SignalWatcher:
         self._thread = threading.Thread(target=self._loop, name="signal-watcher", daemon=True)
         self._seen = False
 
-    def start(self) -> None:
-        """Must be called from the main thread."""
+    def start(self, early: EarlyStop | None = None) -> None:
+        """Must be called from the main thread. ``early`` is the hold on a signal of the start: its
+        handlers are replaced (the handlers to restore are the ones it replaced, not itself), and a
+        signal it kept is acted on now, as a first signal."""
         self._w.setblocking(False)
         self._old_fd = signal.set_wakeup_fd(self._w.fileno(), warn_on_full_buffer=False)
         wanted = [signal.SIGTERM, signal.SIGINT]
         if self._reload is not None:
             wanted.append(signal.SIGHUP)
         for sig in wanted:
-            self._previous[sig] = signal.signal(sig, _ignore)
+            replaced: object = signal.signal(sig, _ignore)
+            if early is not None and sig in early.previous and replaced == early._handle:
+                replaced = early.previous[sig]
+            self._previous[sig] = replaced
         self._thread.start()
+        if early is not None and early.requested.is_set():
+            self._seen = True
+            self._stop()
 
     def _loop(self) -> None:
         while True:
