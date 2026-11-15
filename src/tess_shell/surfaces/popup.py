@@ -305,6 +305,7 @@ class OpenPopup:
     timer: Any = None  # the pending Exit_Delay timer of a tooltip
     size: tuple[int, int] = (0, 0)
     placed: tuple[int, int] | None = None
+    close_pending: bool = False  # closed before the compositor placed it: tre closes it on placing
     attach: str = ""  # the side of the anchor it was asked to open on
     block: str | None = None  # the block of a tooltip's surface the pointer must be on
     record: Mapping[str, Any] | None = None  # the ``caller`` its content's slots read
@@ -777,6 +778,8 @@ class Popups:
     def _configured(self, op: OpenPopup, event: Any) -> None:
         x, y = int(getattr(event, "x", 0)), int(getattr(event, "y", 0))
         op.placed = (x, y)
+        if op.close_pending:
+            self._close_window(op)
         c = op.caller.rect
         w, h = op.size
         mid_x, mid_y = x + w / 2, y + h / 2
@@ -804,11 +807,21 @@ class Popups:
             op.timer = None
         self._unlink(op, why)
         logger.info(f"Popup {op.where} closing ({why})")
+        if op.placed is None:
+            # tre's PopupWindow.close() does nothing until the compositor has placed the popup (it
+            # has no window id yet), and the popup would stay on screen for good: close it when
+            # ``configure`` arrives
+            op.close_pending = True
+        else:
+            self._close_window(op)
+        self._free(op)
+
+    def _close_window(self, op: OpenPopup) -> None:
+        op.close_pending = False
         try:
             op.window.close()
         except Exception:  # the window may be gone already
             logger.debug(f"Popup {op.where}: close raised", exc_info=True)
-        self._free(op)
 
     def _unlink(self, op: OpenPopup, why: str) -> None:
         """``op`` is closing: its submenu closes first (xdg-shell wants the innermost popup to go
