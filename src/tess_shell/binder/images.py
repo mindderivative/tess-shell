@@ -23,9 +23,9 @@ from collections import OrderedDict, deque
 from dataclasses import dataclass
 from pathlib import Path
 
+import tess_utils
 from loguru import logger
 
-from tess_shell._vendor import tess_utils
 from tess_shell.binder.model import PIXELS_PREFIX
 
 MAX_SIDE = 4096  # an image larger than this in either side is refused (Standard Modules > Image)

@@ -2,7 +2,7 @@
 
 Pure functions over :mod:`tess_shell.binder.model`. The forms that several Tesserae projects share
 (a colour's written forms, four-sided values and their order, corner radii, enum words) belong to
-``tess_utils`` (the carried compiled file, ``tess_shell._vendor``); what is left here wraps them in
+``tess_utils`` (the ``tesserae-utils`` package from PyPI); what is left here wraps them in
 the shell's typed values and raises :class:`BindError` at the value's origin. Each converter takes
 the value and the tre property names of the key's row and returns
 ``{tre property: tre value}``. The parsers at the end turn written forms into typed values; the
@@ -14,7 +14,8 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from tess_shell._vendor import tess_utils
+import tess_utils
+
 from tess_shell.binder.images import IMAGES
 from tess_shell.binder.model import (
     TAB_INDEX_MAX,

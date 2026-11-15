@@ -122,21 +122,14 @@ jobs:
           python-version: "3.14"
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - run: uv build --out-dir dist
-      - name: The wheel's manylinux tag is what auditwheel says its files need
-        run: |
-          uvx auditwheel==6.6.0 show dist/*.whl | tee /tmp/audit.txt
-          tag=$(basename dist/*.whl .whl | sed -E 's/.*-(manylinux_[0-9]+_[0-9]+)_x86_64$/\1/')
-          grep -q "consistent with the following platform tag: \"${tag}_x86_64\"" /tmp/audit.txt || {
-            echo "the wheel is tagged $tag but auditwheel says otherwise (see above): fix hatch_build.py or rebuild tess_utils"; exit 1; }
-      # The wheel carries a compiled tess_utils (src/tess_shell/_vendor), so it is a platform
-      # wheel. -I: no user site and no working directory on the path, so only the wheel's own
-      # files can be imported.
+      # -I: no user site and no working directory on the path, so only the wheel's own files and
+      # its installed dependencies (tesserae-utils among them, from PyPI) can be imported.
       - name: Install the wheel alone, import it and run the command
         run: |
           uv venv --python 3.14 /tmp/smoke
           uv pip install --python /tmp/smoke/bin/python dist/*.whl
           cd /tmp
-          /tmp/smoke/bin/python -I -c "import tess_shell; from tess_shell._vendor import tess_utils"
+          /tmp/smoke/bin/python -I -c "import tess_shell, tess_utils"
           /tmp/smoke/bin/tesserae-shell version
 
   result:
