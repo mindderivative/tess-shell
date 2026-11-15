@@ -79,9 +79,14 @@ def grab(sway: PrivateSway) -> bytes:
 
 
 def wait_for_shot(
-    sway: PrivateSway, colour: tuple[int, int, int], timeout: float = 5
+    sway: PrivateSway, colour: tuple[int, int, int], timeout: float = 30
 ) -> tuple[bytes, tuple[int, int, int, int]]:
-    """Screenshots until a rectangle of ``colour`` is on screen (the popup takes a few frames)."""
+    """Screenshots until a rectangle of ``colour`` is on screen (the popup takes a few frames).
+
+    An upper bound, not a delay: it returns at once when the colour is there. 30 s because the
+    first graphics work in a fresh CI machine (software Vulkan shaders and caches not built yet)
+    took 16 s for this whole test where the later runs took 3, and a test that lands first in a
+    CI shard pays it."""
     deadline = time.monotonic() + timeout
     while True:
         shot = grab(sway)
