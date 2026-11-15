@@ -42,7 +42,7 @@ from typing import Any
 
 from loguru import logger
 
-from tess_shell.schema.keys import Chord
+from tess_shell.schema.keys import Chord, qt_text
 from tess_shell.services.api import ServiceError
 from tess_shell.services.bus import Bus, MatchKey, ServiceThread, Unsubscribe
 
@@ -360,10 +360,15 @@ class ShortcutService:
             return False
         self.registrations += 1
         self.keys_now[action.id] = tuple(set_keys)
-        logger.debug(
-            f"shortcuts: {action.id}: asked for {[c.text for c in action.keys]}, "
-            f"the service set {list(set_keys)}"
-        )
+        asked = [c.text for c in action.keys]
+        used = [qt_text(k) for k in set_keys]
+        logger.debug(f"shortcuts: {action.id}: asked for {asked}, the service set {used}")
+        if set_keys and set(set_keys) != {c.qt for c in action.keys}:
+            logger.info(
+                f"shortcuts: {action.id}: the file writes {', '.join(asked)} but the service uses "
+                f"{', '.join(used)}: a key kept from an earlier run or chosen in System Settings "
+                "wins over the file, which only gives the default"
+            )
         if action.keys and not set_keys:
             await self._explain_empty(action)
         return True
