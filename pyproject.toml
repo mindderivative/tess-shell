@@ -43,6 +43,11 @@ dev = [
     "mypy>=1.10",
     "pytest-split>=0.10",
 ]
+docs = [
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.5",
+    "mkdocs-github-admonitions-plugin>=0.1",
+]
 
 [tool.hatch.version]
 path = "src/tess_shell/__init__.py"

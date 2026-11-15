@@ -1,0 +1,74 @@
+site_name: Tesserae Shell
+site_description: >-
+  Tesserae Shell: build desktop shells (bars, panels, docks, launchers, OSDs, widgets) from TDL
+  files. The design record: vision, architecture, decisions, specifications and the TDL reference.
+site_url: https://mindderivative.github.io/tess-shell/
+repo_url: https://github.com/mindderivative/tess-shell
+repo_name: mindderivative/tess-shell
+# docs/ is generated from the design vault by tools/sync_docs.py and overwritten each time, so
+# there is no "edit this page" link (edit_uri): the notes are edited in the vault.
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  # the notes' front matter has status: draft, review, accepted, stable or superseded; Material
+  # shows it as an icon beside the page in the navigation, labelled by extra.status below
+  icon:
+    status:
+      draft: material/pencil-circle
+      review: material/eye-circle
+      accepted: material/check-circle
+      stable: material/shield-check
+      superseded: material/archive
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - navigation.sections
+    - toc.follow
+    - content.code.copy
+    - search.suggest
+
+extra:
+  status:
+    draft: Draft
+    review: In review
+    accepted: Accepted
+    stable: Stable
+    superseded: Superseded
+
+plugins:
+  - search
+  - gh-admonitions # the export writes GitHub alerts (> [!NOTE]); this makes them admonitions
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - tables
+  - admonition
+  - attr_list
+  - pymdownx.details
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight
+  - pymdownx.inlinehilite

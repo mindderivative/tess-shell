@@ -132,10 +132,31 @@ jobs:
           /tmp/smoke/bin/python -I -c "import tess_shell, tess_utils"
           /tmp/smoke/bin/tesserae-shell version
 
+  docs:
+    name: The docs site builds (mkdocs --strict)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      # Only the docs group: the docs never import the package. docs/ is the vault's generated
+      # export, so a broken link or an unreadable page in a new export fails here, before the
+      # merge, and not at the deploy.
+      - run: uv sync --locked --only-group docs
+      - run: uv run --no-sync mkdocs build --strict
+        env:
+          NO_MKDOCS_2_WARNING: "1"
+
   result:
     name: CI result
     if: always()
-    needs: [lint, test, package]
+    needs: [lint, test, package, docs]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -143,7 +164,7 @@ jobs:
       - env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
-          echo "lint, test, package: $RESULTS"
+          echo "lint, test, package, docs: $RESULTS"
           for r in $RESULTS; do
             [ "$r" = success ] || { echo "a job did not succeed ($r)"; exit 1; }
           done
