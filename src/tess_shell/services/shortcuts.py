@@ -287,8 +287,19 @@ class ShortcutService:
             return
         self._missing_said = False
         logger.info(f"shortcuts: {SERVICE} is back: registering again")
-        task = asyncio.ensure_future(self._sync())
+        task = asyncio.ensure_future(self._resync())
         task.add_done_callback(self._done)
+
+    async def _resync(self) -> None:
+        """Register everything again after an owner change, and say when it is done: the press
+        signal is subscribed only at the end (``_component``), so a key pressed before this line
+        reaches no one."""
+        await self._sync()
+        if self._started and self._enabled and self._attached and self._unpress is not None:
+            logger.info(
+                f"shortcuts: registered again: {len(self._registered)} of {len(self._desired)} "
+                "actions, listening for keys"
+            )
 
     # -- registration -----------------------------------------------------------------------------
 

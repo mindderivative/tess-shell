@@ -228,6 +228,9 @@ def test_a_restart_of_the_service_registers_again_and_the_keys_work(desk: Make) 
     d.start()
     d.fake.restart()
     assert wait_for(lambda: d.fake.present() == ["Toggle_Launcher"], 10)
+    # the action is present before the shell listens again: a press then reaches no one (this
+    # test failed one run in five when it pressed here), so wait for the line that says it does
+    d.seen("shortcuts: registered again: 1 of 1 actions, listening for keys")
     assert d.fake.press_key(SPACE)
     d.seen("Panel Launcher on HEADLESS-1 shown")
     assert d.finish() == 0
