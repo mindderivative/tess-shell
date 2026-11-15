@@ -202,3 +202,78 @@ def test_the_daemon_restarting_lists_the_names_again_and_tells_what_went() -> No
             assert wait_for(lambda: mod.available()[-1] is True, 15)
         finally:
             rig.close()
+
+
+# -- a signal that arrives while the list is being read ------------------------------------------
+
+
+class _Reply:
+    def __init__(self, body: list[object], kind: object = None) -> None:
+        from dbus_fast import MessageType
+
+        self.body = body
+        self.message_type = kind or MessageType.METHOD_RETURN
+
+
+def signal(bus: object) -> object:
+    """What the ``NameOwnerChanged`` handler of the watch calls."""
+    return getattr(bus, "_prefix_signal", None) or bus._set_prefixed  # type: ignore[attr-defined]
+
+
+def _stub_conn(bus: object, listed: list[str], owners: dict[str, str], during: object) -> object:
+    """A connection whose ``ListNames`` answers ``listed`` and then, before the reply is handled
+    (the order that was found on a loaded machine), lets ``during()`` deliver a signal."""
+
+    class Conn:
+        async def call(self, message: object) -> _Reply:
+            member = getattr(message, "member", "")
+            if member == "ListNames":
+                reply = _Reply([listed])
+                during()  # type: ignore[operator]
+                return reply
+            if member == "GetNameOwner":
+                return _Reply([owners[message.body[0]]])  # type: ignore[attr-defined]
+            raise AssertionError(member)
+
+    return Conn()
+
+
+@pytest.mark.parametrize("listed_first", [False, True])
+def test_a_name_that_appeared_after_the_list_was_made_is_not_undone_by_the_list(
+    listed_first: bool,
+) -> None:
+    """Found as a flake of the two-players Media test: ``ListNames`` was answered without a player
+    that came up a moment later; its ``NameOwnerChanged`` was handled before the list was, and the
+    list then removed the name again (the module never saw the player). A signal is newer than the
+    list in flight: it wins, for a name the list lacks and for one it holds."""
+    import asyncio
+
+    from tess_shell.services.bus import Bus, _Prefix
+
+    bus = Bus("session", "unix:path=/nonexistent")
+    watched = _Prefix(PREFIX)
+    told: list[tuple[str, str | None, str | None]] = []
+    watched.callbacks.append(lambda name, old, new: told.append((name, old, new)))
+    name = PREFIX + "vlc"
+    listed = [name] if listed_first else []
+    conn = _stub_conn(bus, listed, {name: ":1.9"}, lambda: signal(bus)(watched, name, ":1.9"))
+    asyncio.run(bus._list_prefix(conn, watched))  # type: ignore[arg-type]
+    assert watched.names == {name: ":1.9"}, watched.names
+    assert told == [(name, None, ":1.9")], told  # announced once, never removed
+    assert watched.touched is None
+
+
+def test_a_name_that_left_after_the_list_was_made_stays_gone() -> None:
+    import asyncio
+
+    from tess_shell.services.bus import Bus, _Prefix
+
+    bus = Bus("session", "unix:path=/nonexistent")
+    watched = _Prefix(PREFIX)
+    name = PREFIX + "vlc"
+    watched.names[name] = ":1.9"
+    told: list[tuple[str, str | None, str | None]] = []
+    watched.callbacks.append(lambda n, old, new: told.append((n, old, new)))
+    conn = _stub_conn(bus, [name], {name: ":1.9"}, lambda: signal(bus)(watched, name, None))
+    asyncio.run(bus._list_prefix(conn, watched))  # type: ignore[arg-type]
+    assert watched.names == {} and told == [(name, ":1.9", None)], (watched.names, told)

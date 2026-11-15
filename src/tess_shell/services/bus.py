@@ -140,7 +140,16 @@ class _Prefix:
     """A watch on every well-known name that starts with ``prefix``: the names with an owner now,
     and who wants to hear when one appears, goes or changes hands."""
 
-    __slots__ = ("callbacks", "names", "prefix", "reach", "reachable", "ready", "unsubscribe")
+    __slots__ = (
+        "callbacks",
+        "names",
+        "prefix",
+        "reach",
+        "reachable",
+        "ready",
+        "touched",
+        "unsubscribe",
+    )
 
     def __init__(self, prefix: str) -> None:
         self.prefix = prefix
@@ -150,6 +159,9 @@ class _Prefix:
         self.reachable = False
         self.unsubscribe: Unsubscribe | None = None
         self.ready = asyncio.Event()
+        # while a ``ListNames`` is being read: the names a ``NameOwnerChanged`` signal has set
+        # since it was asked. The list is older than such a signal and must not undo it.
+        self.touched: set[str] | None = None
 
 
 class Bus:
@@ -596,7 +608,7 @@ class Bus:
             def changed(message: Message) -> None:
                 name, _, new = message.body[0], message.body[1], message.body[2]
                 if str(name).startswith(created.prefix):
-                    self._set_prefixed(created, str(name), str(new) or None)
+                    self._prefix_signal(created, str(name), str(new) or None)
 
             key = MatchKey(
                 BUS_NAME,
@@ -649,6 +661,19 @@ class Bus:
     async def _list_prefix(self, conn: MessageBus, watched: _Prefix) -> None:
         """Read every name on the bus and bring ``watched`` up to date: the names that are new
         are announced, the ones that went are told as gone."""
+        watched.touched = set()
+        try:
+            await self._reconcile_prefix(conn, watched)
+        finally:
+            watched.touched = None
+
+    def _prefix_signal(self, watched: _Prefix, name: str, owner: str | None) -> None:
+        """A ``NameOwnerChanged`` for a name under the prefix: newer than any list in flight."""
+        if watched.touched is not None:
+            watched.touched.add(name)
+        self._set_prefixed(watched, name, owner)
+
+    async def _reconcile_prefix(self, conn: MessageBus, watched: _Prefix) -> None:
         reply = await asyncio.wait_for(
             conn.call(
                 Message(
@@ -660,6 +685,7 @@ class Bus:
             ),
             CALL_TIMEOUT,
         )
+        touched = watched.touched if watched.touched is not None else set()
         names = [
             str(n)
             for n in (reply.body[0] if reply is not None and reply.body else [])
@@ -671,10 +697,10 @@ class Bus:
                 owner = await self._read_owner(conn, name)
             except ServiceUnavailable, TimeoutError, OSError:
                 owner = None
-            if owner is not None:
+            if owner is not None and name not in touched:
                 self._set_prefixed(watched, name, owner)
         for name in list(watched.names):
-            if name not in names:
+            if name not in names and name not in touched:  # a signal is newer than the list
                 self._set_prefixed(watched, name, None)
 
     def _prefix_unreachable(self, watched: _Prefix) -> None:
