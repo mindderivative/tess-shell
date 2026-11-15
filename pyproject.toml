@@ -36,7 +36,12 @@ Repository = "https://github.com/mindderivative/tess-shell"
 tesserae-shell = "tess_shell.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "pytest-split>=0.10",
+]
 
 [tool.hatch.version]
 path = "src/tess_shell/__init__.py"
