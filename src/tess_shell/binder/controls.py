@@ -34,6 +34,11 @@ def _flag(entry: Entry, key: str) -> bool:
     return bool(getattr(value, "value", False))
 
 
+def _holds_focus(node: TreNode) -> bool:
+    """Whether ``node`` or a node under it has keyboard focus."""
+    return bool(node.get("focused")) or any(_holds_focus(c) for c in node.children())
+
+
 def kind_of(entry: Entry) -> str:
     """The control this block is: ``toggle``, ``select``, ``slide``, ``item``, ``expand`` or
     empty."""
@@ -442,21 +447,43 @@ class Expand(Control):
         now = self._wanted(entry)
         if self.open is None:  # the first state is what the block starts in
             self.open = now
-            return
-        if now == self.open:
-            return
-        self.open = now
-        axis = self.axis
-        if self.tre.get_target(axis) != self.tre.get(axis):  # the size is on its way
-            self.pending = True
-        else:
-            self.pending = False
-            self.changed(not now, now)
+        elif now != self.open:
+            self.open = now
+            axis = self.axis
+            if self.tre.get_target(axis) != self.tre.get(axis):  # the size is on its way
+                self.pending = True
+            else:
+                self.pending = False
+                self.changed(not now, now)
+        self._content()
+
+    def _content(self) -> None:
+        """The content of a closed Expander is not on screen and takes no Tab stop (Standard
+        Modules > Keyboard Operation: a disabled or hidden widget takes no focus): it is hidden
+        while the Expander is closed, shown the moment it opens and until a closing has finished.
+        Done for every block the Expander holds, so a rebuild that made a new one hides it too.
+        Focus that was inside when the content hid is parked on the Expander's own block, so no
+        key reaches a hidden block (a text field is not typed into unseen)."""
+        show = bool(self.open) or self.pending
+        for child in self.tre.children():
+            if child.get("visible") != show:
+                if not show and _holds_focus(child):
+                    self._park_focus()
+                child.set(visible=show)
+
+    def _park_focus(self) -> None:
+        """tre drops focus only by giving it to another node: the Expander's block takes it (it
+        is no Tab stop, so the next Tab starts again at the first stop)."""
+        was = self.tre.get("focusable")
+        self.tre.set(focusable=True)
+        self.tre.focus()
+        self.tre.set(focusable=was)
 
     def _ended(self, event: Any) -> None:
         if self.pending and event.property == self.axis and event.finished:
             self.pending = False
             assert self.open is not None
+            self._content()
             self.changed(not self.open, self.open)
 
     def stop(self) -> None:

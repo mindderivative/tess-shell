@@ -239,10 +239,11 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
     ),
     "Rectangle": ({**COMMON, **SHAPE}, SHAPE),
     # a clipped viewport that scrolls its one content child by the wheel (Block Reference >
-    # ScrollBox): it scrolls its one child; ``Scroll_Snap`` and ``On_Scroll`` are not built
+    # ScrollBox): it scrolls its one child; ``Scroll_Snap`` and ``On_Scroll`` are not built. It
+    # takes shadows so a List (a ScrollBox) can show the focus ring.
     "ScrollBox": (
         {**COMMON, "Orientation": "enum", "Scroll_Offset": "number"},
-        {**MOTION_STYLE, "Opacity": "number"},
+        {**MOTION_STYLE, "Opacity": "number", "Elevation": "elevation", "Shadows": "shadows"},
     ),
     "Spacer": (COMMON, {}),
     "SVG": (

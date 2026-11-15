@@ -14,18 +14,19 @@ from collections.abc import Sequence
 
 from tess_shell.binder.model import FIELD, FIELD_INPUT, Bool, Enum, Node
 
-# The roles of a block that takes input and is a Tab stop on its own. A List or a Menu is one stop
-# whose entries are reached by the arrow keys, and an entry takes no Tab stop: that is the keyboard
-# operation of M6b, so those roles are not here yet.
+# The roles of a block that takes input and is a Tab stop on its own (Standard Modules > Keyboard
+# Operation). A List and a Menu are ONE stop each: their entries (LISTITEM, MENUITEM) are reached
+# by the arrow keys, which M6b builds, so an entry is no Tab stop.
 INTERACTIVE_ROLES = frozenset(
-    {"BUTTON", "CHECKBOX", "RADIO", "SWITCH", "SLIDER", "LINK", "TAB"},
+    {"BUTTON", "CHECKBOX", "RADIO", "SWITCH", "SLIDER", "LINK", "TAB", "LIST", "MENU"},
 )
 
 
 def default_focusable(node: Node) -> bool:
     """Whether a block with no ``Focusable`` key takes focus: a block with an interactive role, a
     block a control makes a switch or a slider (``Toggles``, ``Slides``). A TextField's text input
-    is focusable in tre already."""
+    is focusable in tre already. (A Text the pointer may select is not one yet: a Text takes no
+    ``Shadows``, so it has no way to show the ring.)"""
     role = node.props.get("Role")
     if isinstance(role, Enum) and role.name in INTERACTIVE_ROLES:
         return True

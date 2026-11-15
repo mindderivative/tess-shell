@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
+from loguru import logger
+
 from tess_shell.binder import controls
 from tess_shell.binder.convert import CONVERTERS
 from tess_shell.binder.focus import default_focusable, tab_order
@@ -168,6 +170,7 @@ class Wire:
     # one or a pointer one by the last input); a text input tells its box too
     focused: bool = False
     override: bool | None = None
+    label: str = ""  # the block's id, for the log line of a focus change
     focus_to: Wire | None = None
     # a Marquee's box: whether its tooltip may open now (it shows the whole text that is cut)
     tooltip_gate: Callable[[], bool] | None = None
@@ -335,10 +338,15 @@ class Wire:
             visible = bool(getattr(event, "focus_visible", False))
             if self.override is not None:
                 visible = self.override
+            logger.debug(
+                f"focus: {self.label} {tre.get('label') or ''!r} "
+                f"({'ring' if visible else 'no ring'})"
+            )
             self.set_focused(visible)
 
         def lost(event: Any) -> None:
             if event.target == tre:
+                logger.debug(f"focus: {self.label} {tre.get('label') or ''!r} lost")
                 self.set_focused(False)
 
         tre.on("focus", gained)
@@ -413,6 +421,17 @@ class Wire:
         self.saved.update({n: v for n, v in base.items() if n in self.saved})
         self.states = states
         self.refresh()
+
+
+def _shown(node: TreNode) -> bool:
+    """Whether neither ``node`` nor a node above it is hidden (``visible`` false): tre's Tab skips
+    a hidden block and everything under it."""
+    cur: TreNode | None = node
+    while cur is not None:
+        if not cur.get("visible"):
+            return False
+        cur = cur.parent()
+    return True
 
 
 @dataclass(slots=True)
@@ -560,10 +579,16 @@ class View:
             self.window.apply(changes)
 
     def tab_stops(self) -> list[TreNode]:
-        """The focusable nodes in the order Tab visits them (the first is where Tab starts)."""
+        """The focusable nodes in the order Tab visits them (the first is where Tab starts): the
+        ones tre's Tab reaches, so a node under a hidden block (``Visible: false``, the content of
+        a closed Expander) is not one."""
         stops = [(e.rank or TAB_INDEX_MAX + 1, n, e) for n, e in enumerate(self._flat())]
         stops.sort(key=lambda t: (t[0], t[1]))
-        return [e.tre for _, _, e in stops if e.tre is not None and e.tre.get("focusable")]
+        return [
+            e.tre
+            for _, _, e in stops
+            if e.tre is not None and e.tre.get("focusable") and _shown(e.tre)
+        ]
 
     def focus_holder(self, node: TreNode) -> TreNode | None:
         """The node that has keyboard focus, if it is ``node`` or one of the nodes above it (a
@@ -679,7 +704,12 @@ class View:
         if entry.tre is None:
             return
         if entry.wire is None:
-            entry.wire = Wire(entry.typed.handlers, tre=entry.tre, window=self.window)
+            entry.wire = Wire(
+                entry.typed.handlers,
+                tre=entry.tre,
+                window=self.window,
+                label=entry.typed.name or entry.typed.kind,
+            )
         wire = entry.wire
         wire.states = entry.states
         wire.motion = entry.motion

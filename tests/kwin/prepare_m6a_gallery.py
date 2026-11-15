@@ -96,8 +96,8 @@ scheme; the ring is the theme's Primary colour, 2 px, outside the block).  Start
 below it a Panel with a text field and a checkbox.
 
  1  Click the empty part of the Bar, then press Tab: the ring appears on Second, then Third, then
-    First, then Fourth (the order of their Tab_Index 1, 2, 3, 4), not on the switch and not on Disabled
-    (they have none: they come after the numbered ones, the switch last; Disabled is never reached).
+    First, then Fourth (the order of their Tab_Index 1, 2, 3, 4), then on the switch (it has none:
+    it comes after the numbered ones), then round to Second again; it is never on Disabled.
  2  Shift+Tab walks the same ring backwards, and wraps from the first to the last.
  3  CLICK a button with the mouse: it has the keyboard focus (Enter or Space runs it) but NO ring.
     Press Tab: the ring appears on the next one.

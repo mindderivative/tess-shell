@@ -31,8 +31,11 @@ KEY_DOCS: dict[str, str] = {
     "Tooltip_When_Disabled": "Lets a disabled block open its tooltip; without it a disabled "
     "block opens none.",
     "Focusable": "Whether the block takes keyboard focus. A block that takes input is focusable "
-    "unless it says false: a Button, a Toggle, a Checkbox, a Slider and a TextField; a disabled "
-    "block takes none.",
+    "unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a "
+    "TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one "
+    "that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a "
+    "shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or "
+    "TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
     "Tab_Index": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: "
     "a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items "
     "with no number come after all the others. A surface holds one order for its blocks and the "

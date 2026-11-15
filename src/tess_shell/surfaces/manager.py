@@ -834,6 +834,31 @@ class SurfaceManager:
         self.settle_dynamic()
         return self.surfaces
 
+    def _keyboard_word(self, planned: Planned, hidden: bool = False, say: bool = False) -> str:
+        """tre's ``keyboard`` word for a Bar or Panel as planned: its ``Keyboard``, or ``on_demand``
+        when it holds a TextField and says ``NONE``, with one warning when the file wrote the
+        ``NONE`` (M4 Brief, question 17). Made at the surface's creation (``say``: and logged) and
+        at every reload, so a reload that changes ``Keyboard`` or adds or removes a field reaches
+        the window."""
+        bar, where = planned.bar, planned.where
+        kind = _kind(bar)
+        found = first_text_field(planned.expanded.nodes)
+        field = found is not None
+        word = _keyboard(bar, hidden, field)
+        if field and not hidden and word != _keyboard(bar):
+            if getattr(bar, "keyboard_written", False) and planned.key not in self._kb_warned:
+                # ``Keyboard: NONE`` is written, and a field needs the keyboard to be typed in:
+                # the override is said once, not silent
+                self._kb_warned.add(planned.key)
+                logger.warning(
+                    f"{bar.origin}: {kind} {where}: Keyboard: NONE is written, but it holds "
+                    f"{describe_text_field(found)}; the surface takes the keyboard on_demand "
+                    "(a click on the field gives it the keyboard)"
+                )
+            if say:
+                logger.info(f"{kind} {where}: keyboard on_demand, it holds a text field")
+        return word
+
     def _make_window(self, planned: Planned, live: LiveTree, hidden: bool = False) -> Surface:
         """Create the window of a Bar or a Panel and bind its tree. The window is not added to the
         app yet; the caller does that (at start, or when a hidden Panel is shown)."""
@@ -841,19 +866,6 @@ class SurfaceManager:
 
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
         kind = _kind(bar)
-        found = first_text_field(planned.expanded.nodes)
-        field = found is not None
-        if field and not hidden and _keyboard(bar, False, True) != _keyboard(bar):
-            if getattr(bar, "keyboard_written", False) and planned.key not in self._kb_warned:
-                # ``Keyboard: NONE`` is written, and a field needs the keyboard to be typed in
-                # (M4 Brief, question 17): the override is said once, not silent
-                self._kb_warned.add(planned.key)
-                logger.warning(
-                    f"{bar.origin}: {kind} {where}: Keyboard: NONE is written, but it holds "
-                    f"{describe_text_field(found)}; the surface takes the keyboard on_demand "
-                    "(a click on the field gives it the keyboard)"
-                )
-            logger.info(f"{kind} {where}: keyboard on_demand, it holds a text field")
         window = LayerWindow(
             f"tesserae-shell.{kind.lower()}.{bar.name}",
             layer=bar.layer.lower(),  # type: ignore[arg-type]
@@ -862,7 +874,7 @@ class SurfaceManager:
             margin=geometry.margin,
             exclusive_zone=geometry.exclusive_zone,
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
-            keyboard=_keyboard(bar, hidden, field),  # type: ignore[arg-type]
+            keyboard=self._keyboard_word(planned, hidden, say=True),  # type: ignore[arg-type]
             input_region=_input_for(bar, geometry, (output.width, output.height), hidden),
             output=output,
         )
@@ -1611,8 +1623,8 @@ class SurfaceManager:
     def _sync_body(
         self, s: Surface, bar: BarDef | PanelDef, geometry: Geometry, where: str
     ) -> None:
-        """Bring a kept surface's body (fill, shadows, margin) and its window geometry to what the
-        Bar asks for; each is set only when it differs."""
+        """Bring a kept surface's body (fill, shadows, margin), its window geometry and its
+        keyboard mode to what the Bar asks for; each is set only when it differs."""
         if s.window is None:
             return
         fill, shadows = _body_props(bar, self._look)
@@ -1643,6 +1655,11 @@ class SurfaceManager:
                 )
             except ValueError as exc:
                 logger.error(f"{_kind(bar)} {where}: {exc}; the geometry was not changed")
+        if s.planned is not None:
+            word = self._keyboard_word(s.planned, s.hidden)
+            if s.window.get("keyboard") != word:
+                s.window.set(keyboard=word)
+                logger.info(f"{_kind(bar)} {where}: keyboard {word}")
 
     # -- the desktop's look changed ------------------------------------------------------------
 

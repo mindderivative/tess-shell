@@ -234,7 +234,12 @@ _ROWS: dict[str, BlockRow] = {
             "Orientation": _k("orientation", "enum", "VERTICAL", "HORIZONTAL"),
             "Scroll_Offset": _k("scroll_offset", "number"),
         },
-        style={**_MOTION, "Opacity": _COMMON["Opacity"]},
+        style={
+            **_MOTION,
+            "Opacity": _COMMON["Opacity"],
+            "Elevation": _k("shadows", "elevation"),
+            "Shadows": _k("shadows", "shadows"),
+        },
         defaults={"orientation": "vertical"},
         children_ok=True,
     ),
