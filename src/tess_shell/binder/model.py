@@ -322,9 +322,11 @@ class IfNode:
 @dataclass(frozen=True, slots=True)
 class ForNode:
     """``For w In <| items |> Key <| w.id |> { ... }``. ``name`` is what the entries are called
-    (``<name>_0001``): the head of the body's first block, else ``For``."""
+    (``<name>_0001``): the head of the body's first block, else ``For``. ``variables`` are the
+    names written before ``In``; with several (``For i, w In <| enumerate(items) |>``) each item
+    of the list is unpacked over them."""
 
-    variable: str = ""
+    variables: tuple[str, ...] = ()
     items: SlotPart | None = None
     key: SlotPart | None = None
     name: str = "For"

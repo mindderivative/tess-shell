@@ -462,7 +462,7 @@ class LiveTree:
         if pair is None:
             try:
                 repeater = tess_el.compile_repeater_parts(
-                    node.variable,
+                    ", ".join(node.variables),
                     node.items.text,
                     key=node.key.text,
                     name=node.name,

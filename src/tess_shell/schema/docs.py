@@ -22,7 +22,8 @@ KEY_DOCS: dict[str, str] = {
     "Tooltip": "What opens when the pointer rests on the block: the Name of a Popup, a short text "
     "or an inline Tooltip block.",
     "Key": "The name of an entry of a list in a module's layout; an entry of a For has its "
-    "repeater's key unless it writes one.",
+    "repeater's key unless it writes one. A For may name several variables (For i, item In "
+    "<| enumerate(items) |>): each item is unpacked over them.",
     "Visible": "False hides the block from everyone, assistive technology included, and it takes "
     "no space.",
     "Enabled": "False disables the block: it ignores input, takes the disabled style state and "

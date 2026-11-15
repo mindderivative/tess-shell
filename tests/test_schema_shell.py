@@ -124,17 +124,6 @@ def test_surfaces_and_forms_not_built_in_m1_are_refused(snippet: str, what: str)
     assert f.rule == "not-built" and what in f.message
 
 
-def test_a_for_with_several_variables_is_a_load_error_with_one_hint() -> None:
-    body = BODY.replace(
-        "Spacer { }",
-        "For i, w In <| enumerate(items) |> Key <| w.id |> { Text { Text: <| w.t |> } }",
-    )
-    (f,) = errors(body)
-    assert f.rule == "for-variables" and "i, w" in f.message
-    assert f.hint == "the shell supports one loop variable (For item In <| items |> ...)"
-    assert f.file == "Shells/Main_Shell.tdl" and f.line > 4 and f.column > 1
-
-
 def test_if_and_for_in_children_are_typed_with_their_slots_and_bodies() -> None:
     body = BODY.replace(
         "Spacer { }",
@@ -151,7 +140,7 @@ def test_if_and_for_in_children_are_typed_with_their_slots_and_bodies() -> None:
     assert isinstance(cond, m.IfNode) and cond.condition is not None
     assert cond.condition.text == " a > 1 " and len(cond.body) == 1 and cond.else_body is not None
     assert isinstance(loop, m.ForNode)
-    assert (loop.variable, loop.name) == ("w", "Text")
+    assert (loop.variables, loop.name) == (("w",), "Text")
     assert loop.items is not None and loop.items.text == " items "
     assert loop.key is not None and loop.key.text == " w.id "
 

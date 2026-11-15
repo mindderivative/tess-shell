@@ -375,23 +375,16 @@ def _for(ctx: _Ctx, entry: tess_dl.For) -> m.ForNode:
         if isinstance(n, m.Node | m.UseNode)
     ]
     head = heads[0] if heads else "For"
-    if len(entry.variables) > 1:
-        ctx.add(
-            entry.origin,
-            "for-variables",
-            f"For names {len(entry.variables)} loop variables ({', '.join(entry.variables)}), "
-            "and the shell has one",
-            "the shell supports one loop variable (For item In <| items |> ...)",
-        )
-    if not _NAME.match(entry.variable):
-        ctx.add(
-            entry.origin,
-            "bad-name",
-            f"the loop variable {entry.variable!r} must be letters, digits and _",
-            "write For item In <| items |> Key <| item.id |>",
-        )
+    for variable in entry.variables:
+        if not _NAME.match(variable):
+            ctx.add(
+                entry.origin,
+                "bad-name",
+                f"the loop variable {variable!r} must be letters, digits and _",
+                "write For item In <| items |> Key <| item.id |>",
+            )
     return m.ForNode(
-        variable=entry.variable,
+        variables=entry.variables,
         items=_part(ctx, entry.items),
         key=_part(ctx, entry.key),
         name=head,

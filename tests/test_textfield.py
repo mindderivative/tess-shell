@@ -252,7 +252,7 @@ def test_holds_text_field_finds_a_field_in_a_branch() -> None:
     field_node = node()
     assert holds_text_field([m.Node("Box", children=(field_node,))])
     assert holds_text_field([m.IfNode(body=(field_node,))])
-    assert holds_text_field([m.ForNode("x", body=(m.Node("Box", children=(field_node,)),))])
+    assert holds_text_field([m.ForNode(("x",), body=(m.Node("Box", children=(field_node,)),))])
     assert not holds_text_field([m.Node("Box", children=(m.Node("Text"),))])
 
 
