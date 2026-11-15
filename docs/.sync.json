@@ -1,7 +1,7 @@
 {
- "vault_commit": "08960f4af620d973701a1b3a0e1da44414643ea1",
- "vault_subject": "Add Docs Publishing: vault commits reach the design site automatically",
- "exported_at": "2026-11-15 15:45:25",
+ "vault_commit": "2c624dcfc9d3785612e373d3d36fd86094eebfc1",
+ "vault_subject": "Docs Publishing: docs-only pull requests skip the long CI jobs",
+ "exported_at": "2026-11-15 16:09:07",
  "files": {
   "00 Home/Build Logs.md": "7156839d84b290e7",
   "00 Home/Development Readiness.md": "843936a6b8913f1d",
@@ -130,7 +130,7 @@
   "60 Quality/Performance Budgets.md": "b722d5eda7a19382",
   "60 Quality/Testing Strategy.md": "3b2d076fdf8092cc",
   "70 Delivery/70 Delivery.md": "a922518f1a62d1d7",
-  "70 Delivery/Docs Publishing.md": "5abacda286117d74",
+  "70 Delivery/Docs Publishing.md": "b3b99227e39ea6f8",
   "70 Delivery/Packaging and Session Start.md": "5239f2e123c2cbb8",
   "80 Requests/80 Requests.md": "080a9d706aa7c83a",
   "80 Requests/TRE-REQ-001 Layer Surface Window.md": "3bdee25a05acdbc9",
