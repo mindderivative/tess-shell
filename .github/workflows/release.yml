@@ -106,6 +106,17 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           awk -v v="$version" '$1 == "##" && $2 == v {on=1; next} /^## / && on {exit} on' "$CHANGELOG" > notes.md
           test -s notes.md
+          # A release body may hold 125,000 characters; the first release's section had 144,000.
+          # A longer section is cut to its first lines with a link to the whole of it at the tag.
+          if [ "$(wc -m < notes.md)" -gt 100000 ]; then
+            anchor=$(grep -E "^## ${version//./\\.}( |$)" "$CHANGELOG" | head -1 | tr 'A-Z' 'a-z' | sed -E 's/^## //; s/[^a-z0-9 -]//g; s/ /-/g')
+            { head -n 40 notes.md
+              printf '\n[The rest of this version in %s](%s/%s/blob/%s/%s#%s)\n' \
+                "$CHANGELOG" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" "$CHANGELOG" "$anchor"
+            } > cut.md
+            mv cut.md notes.md
+          fi
+          [ "$(wc -m < notes.md)" -le 125000 ]
       - run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md
         env:
           GH_TOKEN: ${{ github.token }}
