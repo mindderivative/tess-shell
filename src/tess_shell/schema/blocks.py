@@ -453,6 +453,8 @@ FRAME_KEYS: dict[str, str] = {
     "Keyboard": "enum",
     # the place of the Frame in the shell's focus order (Focus and Keyboard > Tab Order)
     "Tab_Index": "tab_index",
+    # whether the Frame is the surface in shortcut mode (Focus and Keyboard > Shortcut Mode)
+    "Shortcut_Mode": "bool",
 }
 FRAME_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("TOP",),
@@ -468,7 +470,12 @@ FRAME_NOT_BUILT_ERROR = (
 FRAME_NOT_BUILT_WARNING = ("Class",)
 # an ``Edges`` entry: its own thickness, padding and the strip's children
 EDGE_SIDES = ("Left", "Top", "Right", "Bottom")
-EDGE_KEYS: dict[str, str] = {"Thickness": "number", "Padding": "sides", "Tab_Index": "tab_index"}
+EDGE_KEYS: dict[str, str] = {
+    "Thickness": "number",
+    "Padding": "sides",
+    "Tab_Index": "tab_index",
+    "Shortcut_Mode": "bool",
+}
 FRAME_BORDER_KEYS = ("Width", "Color")
 # A Frame's inline Style: the background, the shorthand for the inner border (``Border_Width``,
 # ``Border_Color`` or a ``Border { Width, Color }`` block, D78) and the opacity. Shadows are
@@ -579,6 +586,8 @@ PANEL_KEYS: dict[str, str] = {
     "Shortcut": "key_chord",
     # the place of the Panel in the shell's focus order (Focus and Keyboard > Tab Order)
     "Tab_Index": "tab_index",
+    # whether the Panel is the surface in shortcut mode (Focus and Keyboard > Shortcut Mode)
+    "Shortcut_Mode": "bool",
 }
 PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),
@@ -594,7 +603,9 @@ PANEL_NOT_BUILT_ERROR = (
     "Exclusive_Zone",
 )
 # keys of a Panel with ``Meld: true`` (hosted in its Frame's surface) that are not built
-PANEL_MELD_NOT_BUILT = ("Movable", "Keyboard", "Input_Region")
+# (a melded Panel is hosted in its Frame's painter: it has no window of its own to take the
+# keyboard, so it takes no ``Shortcut_Mode`` either; a Frame or a strip does)
+PANEL_MELD_NOT_BUILT = ("Movable", "Keyboard", "Input_Region", "Shortcut_Mode")
 # style keys a melded Panel does not use: it is drawn in the Frame's colour and border
 PANEL_MELD_IGNORED_STYLE = (
     "Background",

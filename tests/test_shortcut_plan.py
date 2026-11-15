@@ -12,7 +12,7 @@ import pytest
 
 from tess_shell.cli import main
 from tess_shell.commands import ShellCommands
-from tess_shell.config.settings import load_settings
+from tess_shell.config.settings import FIXED_SHORTCUTS, load_settings
 from tess_shell.scanner import Scan, scan
 from tess_shell.schema.keys import Chord, parse_chord
 from tess_shell.services.shortcuts import Action
@@ -486,12 +486,15 @@ def test_a_press_of_a_surface_that_is_gone_does_nothing_and_the_log_names_it(
     assert "Toggle_Gone (settings.tdl:7:5): no surface named Gone" in live.log()
 
 
-def test_the_five_fixed_actions_go_to_a_hook_table_and_do_nothing_until_it_is_filled(
+def test_the_five_fixed_actions_go_to_a_hook_table_and_one_with_no_hook_does_nothing(
     tmp_path: Path,
 ) -> None:
     live = running(tmp_path)
     commands = commands_of(live)
     action = Action("Next_Focus", "Next Focus", "fixed", "Next_Focus", ())
+    # shortcut mode (T-050) fills all five; taking one out shows what an unfilled entry does
+    assert sorted(commands.fixed_actions) == sorted(FIXED_SHORTCUTS)
+    del commands.fixed_actions["Next_Focus"]
     commands.press(action)
     assert "Next_Focus: not built" in live.log()
     seen: list[str] = []

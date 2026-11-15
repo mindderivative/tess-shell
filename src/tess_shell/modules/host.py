@@ -26,7 +26,7 @@ from tess_shell.logging import note_finding, note_module_error
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.module import Event, Module
-from tess_shell.modules.context import ModuleContext, PopupPort, UseRecord
+from tess_shell.modules.context import FocusPort, ModuleContext, PopupPort, UseRecord
 from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.blocks import BUILTIN_ACTIONS
 from tess_shell.schema.findings import Finding, nearest
@@ -158,6 +158,7 @@ class ModuleHost:
         self.audio: AudioPort | None = None  # set by the app: the sound service (ctx.audio)
         self.icons: IconsPort | None = None  # set by the app: the icon lookup (ctx.icons)
         self.tray: TrayPort | None = None  # set by the app: the tray host (ctx.tray)
+        self.focus: FocusPort | None = None  # set by the app: shortcut mode (ctx.focus)
         # set by the app: run a function on the loop thread (ctx.call_soon)
         self.call_soon: Callable[[Callable[[], None]], None] | None = None
         # the uses made for the entries of a For: they come and go while the shell runs, so a
@@ -289,6 +290,7 @@ class ModuleHost:
             lambda: self.icons,
             lambda: self.tray,
             lambda: self.call_soon,
+            lambda: self.focus,
         )
         instance = classes[0].__new__(classes[0])
         instance.ctx = ctx

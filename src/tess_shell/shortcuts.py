@@ -20,8 +20,11 @@ entry (``Toggle_Launcher``, ``Show_Top_Bar``).
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+
+from loguru import logger
 
 from tess_shell.binder import model as m
 from tess_shell.config.settings import SETTINGS_FILE, ShortcutEntry
@@ -205,6 +208,13 @@ def build_plan(
     return tuple(actions), findings
 
 
+def mode_keys(actions: Sequence[Action]) -> dict[Chord, str]:
+    """The keys of shortcut mode: the fixed actions of Focus and Keyboard that have a key, by key.
+    The mode runs them from the key events of the surface that holds the keyboard (a key held back
+    for a conflict has none); the desktop's service carries the same keys when it is on."""
+    return {key: a.id for a in actions if a.kind == "fixed" for key in a.keys}
+
+
 def shortcut_handlers(actions: Sequence[Action]) -> list[m.Handler]:
     """The handlers of the ``handler`` entries: what ``ModuleHost.check_calls`` checks along with
     the handlers of the surfaces (the module is loaded, the action exists, the arguments fit)."""
@@ -216,6 +226,26 @@ def shortcut_modules(actions: Sequence[Action]) -> set[str]:
     it (an instance with no use), so a key can act without the module on a Bar, and stopped when
     neither a surface nor a shortcut names it any more."""
     return {a.handler.module for a in actions if a.handler is not None and a.handler.module}
+
+
+# the fixed actions whose keys act inside shortcut mode only (Focus and Keyboard > How mode keys are
+# delivered, option A): a key registered with the desktop is a key taken from every application, so
+# only ``Enter_Shortcut_Mode`` is one; the mode's own keys arrive as key events on the surface that
+# has the keyboard (``mode_keys``). They are still declared, with no key, so the desktop lists them.
+MODE_ONLY = ("Exit_Shortcut_Mode", "Set_Shortcut_Mode", "Next_Focus", "Previous_Focus")
+
+
+def registered(actions: Sequence[Action]) -> tuple[Action, ...]:
+    """The actions to register with the desktop's shortcut service: as declared, but the actions
+    of ``MODE_ONLY`` carry no key (they stay declared: the user may still bind one in the
+    desktop's own settings, and a press of it runs the action)."""
+    out: list[Action] = []
+    for a in actions:
+        if a.kind == "fixed" and a.target in MODE_ONLY and a.keys:
+            logger.debug(f"{a.id}: its key acts in shortcut mode only; not registered")
+            a = dataclasses.replace(a, keys=())
+        out.append(a)
+    return tuple(out)
 
 
 def drop_failed(actions: Sequence[Action], findings: Sequence[Finding]) -> tuple[Action, ...]:

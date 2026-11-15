@@ -31,7 +31,13 @@ from tess_shell.modules.host import ModuleHost, ModuleSource, report
 from tess_shell.scanner import Scan, build_look, scan, source_line
 from tess_shell.schema.findings import Finding, render_findings
 from tess_shell.services.shortcuts import Action, ShortcutService
-from tess_shell.shortcuts import drop_failed, shortcut_handlers, shortcut_modules
+from tess_shell.shortcuts import (
+    drop_failed,
+    mode_keys,
+    registered,
+    shortcut_handlers,
+    shortcut_modules,
+)
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites
 
@@ -220,9 +226,10 @@ class Reloader:
         """The global shortcuts of the new files: a new action is registered, a changed key
         replaced, a removed action unregistered, an unchanged one left alone (``Global_Shortcuts``
         false makes them all inactive). An action whose ``Call`` the module check refused is not
-        registered."""
+        registered. The keys of shortcut mode are read again too."""
+        self.manager.mode.set_keys(mode_keys(actions))
         if self.shortcuts is not None:
-            self.shortcuts.update(drop_failed(actions, checked), fresh.global_shortcuts)
+            self.shortcuts.update(registered(drop_failed(actions, checked)), fresh.global_shortcuts)
 
     def _apply(self, prepared: Prepared) -> Outcome:
         try:

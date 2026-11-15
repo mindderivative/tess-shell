@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3",
+  "schema_version": "1.4",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -962,6 +962,19 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Shortcut_Mode": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Exclusive_Zone": {
           "kind": null,
           "choices": null,
@@ -1664,6 +1677,19 @@
           "max": 2147483647,
           "step": 1,
           "unit": null,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Shortcut_Mode": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -3335,6 +3361,19 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Shortcut_Mode": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Inner_Border": {
           "kind": "block",
           "choices": null,
@@ -3770,6 +3809,19 @@
           "max": 2147483647,
           "step": 1,
           "unit": null,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Shortcut_Mode": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -23024,7 +23076,7 @@
         "choices": null,
         "enum": null,
         "default": null,
-        "doc": "The key that puts the shell in shortcut mode.",
+        "doc": "The key that puts the shell in shortcut mode: the one global key of the mode, registered with the desktop.",
         "slot": false,
         "required": false,
         "built": true,
@@ -23037,7 +23089,7 @@
         "choices": null,
         "enum": null,
         "default": null,
-        "doc": "The key that leaves shortcut mode.",
+        "doc": "The key that leaves shortcut mode. It acts inside the mode only (a key event on the surface that has the keyboard); it is not registered with the desktop.",
         "slot": false,
         "required": false,
         "built": true,
@@ -23050,7 +23102,7 @@
         "choices": null,
         "enum": null,
         "default": null,
-        "doc": "The key that turns shortcut mode on or off for the focused surface.",
+        "doc": "The key that turns shortcut mode on or off for the focused surface. It acts inside the mode only; it is not registered with the desktop.",
         "slot": false,
         "required": false,
         "built": true,
@@ -23063,7 +23115,7 @@
         "choices": null,
         "enum": null,
         "default": null,
-        "doc": "The key that moves focus to the next surface or block in shortcut mode.",
+        "doc": "The key that moves focus to the next surface in shortcut mode. It acts inside the mode only; it is not registered with the desktop.",
         "slot": false,
         "required": false,
         "built": true,
@@ -23076,7 +23128,7 @@
         "choices": null,
         "enum": null,
         "default": null,
-        "doc": "The key that moves focus to the previous surface or block in shortcut mode.",
+        "doc": "The key that moves focus to the previous surface in shortcut mode. It acts inside the mode only; it is not registered with the desktop.",
         "slot": false,
         "required": false,
         "built": true,
@@ -23168,6 +23220,21 @@
         "enum": null,
         "default": "LINEAR",
         "doc": "How the Frame's ring is blended: LINEAR in linear light or SRGB. A restart applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Debug",
+        "tokens": []
+      },
+      "Mode_Keyboard": {
+        "kind": "enum",
+        "choices": [
+          "EXCLUSIVE",
+          "ON_DEMAND"
+        ],
+        "enum": null,
+        "default": "EXCLUSIVE",
+        "doc": "The keyboard mode the surface that has the focus takes while the shell is in shortcut mode: EXCLUSIVE (the one way a layer surface takes the keyboard without a click) or ON_DEMAND (for a compositor that hands focus over after a global key). A restart applies it.",
         "slot": false,
         "required": false,
         "built": true,

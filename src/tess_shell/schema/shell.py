@@ -1165,6 +1165,7 @@ BAR_KEYS: dict[str, str] = {
     "Reveal_Key": "key_chord",
     "Keyboard": "enum",
     "Tab_Index": "tab_index",
+    "Shortcut_Mode": "bool",
 }
 BAR_CHOICES: dict[str, tuple[str, ...]] = {
     "Edge": ("TOP", "BOTTOM", "LEFT", "RIGHT"),
@@ -1180,6 +1181,13 @@ def _tab_index(values: Mapping[str, m.Value]) -> int | None:
     """The ``Tab_Index`` a surface wrote (already judged 0 to 2 147 483 647), or ``None``."""
     value = values.get("Tab_Index")
     return int(value.value) if isinstance(value, m.Number) else None
+
+
+def _shortcut_mode(values: Mapping[str, m.Value]) -> m.Origin | None:
+    """Where a surface writes ``Shortcut_Mode: true`` (the key's position), or ``None``: it wrote
+    false or nothing."""
+    value = values.get("Shortcut_Mode")
+    return value.origin if isinstance(value, m.Bool) and value.value else None
 
 
 def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
@@ -1263,6 +1271,7 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         keyboard=word("Keyboard", "NONE") or "NONE",
         keyboard_written="Keyboard" in values,
         tab_index=_tab_index(values),
+        shortcut_mode=_shortcut_mode(values),
         style=style,
         children=tuple(children),
         reveal_key=reveal if isinstance(reveal := values.get("Reveal_Key"), m.Text) else None,
@@ -1527,6 +1536,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         peek=peek,
         content_fade=fade.value if isinstance(fade, m.Bool) else True,
         tab_index=_tab_index(values),
+        shortcut_mode=_shortcut_mode(values),
         handlers=handlers,
         shortcut=hotkey if isinstance(hotkey := values.get("Shortcut"), m.Text) else None,
     )
@@ -2022,6 +2032,38 @@ def _check_tooltips(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
                     )
 
 
+def _check_shortcut_mode(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
+    """At most one surface is in shortcut mode (Focus and Keyboard, rule 1): two or more written
+    ``Shortcut_Mode: true`` are one warning that names them all, and the first in document order
+    keeps it (the others start false). A surface is a Bar, a Panel, a Frame or a strip, named as the
+    focus order names it."""
+    written: list[tuple[m.Origin, str, str]] = []
+    for monitor in monitors:
+        for surface in monitor.surfaces:
+            if surface.shortcut_mode is not None:
+                kind = "Bar" if isinstance(surface, BarDef) else "Panel"
+                written.append((surface.shortcut_mode, kind, surface.name))
+        for frame in monitor.frames:
+            if frame.shortcut_mode is not None:
+                written.append((frame.shortcut_mode, "Frame", frame.name))
+            for side, edge in frame.edges.items():
+                if edge.shortcut_mode is not None:
+                    written.append((edge.shortcut_mode, "strip", f"{frame.name}.{side}"))
+    if len(written) < 2:
+        return
+    written.sort(key=lambda w: (w[0].line, w[0].column))
+    named = ", ".join(f"{kind} {name} ({where})" for where, kind, name in written)
+    first = written[0]
+    ctx.add(
+        first[0],
+        "shortcut-mode-twice",
+        f"Shortcut_Mode: true is written on {len(written)} surfaces: {named}; at most one surface "
+        f"is in shortcut mode, so {first[2]} keeps it and the others start false",
+        "write Shortcut_Mode: true on one surface only",
+        "warning",
+    )
+
+
 def _sides_of(value: m.Value | None) -> tuple[float, float, float, float]:
     if isinstance(value, m.Length):
         return (float(value.px),) * 4
@@ -2258,6 +2300,7 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         keyboard_written=keyboard is not None,
         edges=edges,
         tab_index=_tab_index(values),
+        shortcut_mode=_shortcut_mode(values),
     )
 
 
@@ -2286,7 +2329,17 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
         peek: PeekDef | None = None
         content_fade = True
         tab_index: int | None = None
-        keys = ["Name", "Thickness", "Padding", "Children", "Peek", "Content_Fade", "Tab_Index"]
+        shortcut_mode: m.Origin | None = None
+        keys = [
+            "Name",
+            "Thickness",
+            "Padding",
+            "Children",
+            "Peek",
+            "Content_Fade",
+            "Tab_Index",
+            "Shortcut_Mode",
+        ]
         for sub in entry.entries:
             if isinstance(sub, Property):
                 if sub.key == "Name":
@@ -2322,6 +2375,16 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
                         continue
                     assert isinstance(index, m.Number)
                     tab_index = int(index.value)
+                elif sub.key == "Shortcut_Mode":
+                    try:
+                        flag = coerce(
+                            "bool", sub.value, ctx.origin(sub.key_origin), key="Shortcut_Mode"
+                        )
+                    except ValueProblem as exc:
+                        ctx.problem(sub.value_origin, sub.key, exc)
+                        continue
+                    assert isinstance(flag, m.Bool)
+                    shortcut_mode = flag.origin if flag.value else None
                 elif sub.key == "Padding":
                     try:
                         value = coerce(
@@ -2377,6 +2440,7 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
             peek,
             content_fade,
             tab_index,
+            shortcut_mode,
         )
     return out
 
@@ -2595,6 +2659,7 @@ def read_shell(
             ctx.unknown(entry.key_origin, entry.key, ["Monitor"], "key in Shell")
     _check_attach(ctx, monitors)
     _check_tooltips(ctx, monitors)
+    _check_shortcut_mode(ctx, monitors)
     name = document.metadata.get("Name")
     shell_name = getattr(name, "text", None) or getattr(name, "value", "") or ""
     if any(f.severity == "error" for f in ctx.findings):
