@@ -1,11 +1,12 @@
 name: Release
 
-# Runs only for a `vX.Y.Z` tag the maintainer pushes: the checks below must pass, then a GitHub
-# Release is made with the wheel and the sdist, and the same files go to PyPI through Trusted
-# Publishing (environment `pypi`, no stored token; the environment's reviewer approves each
-# upload). The wheel carries a compiled tess_utils, so it is a platform wheel tagged
-# manylinux_2_36 (hatch_build.py); the CI job `package`, which this workflow runs first, checks with
-# `auditwheel show` that the tag is honest.
+# Runs only for a `vX.Y.Z` tag the maintainer pushes. The full CI must pass on the tagged commit,
+# the build checks the tag against the built version and the changelog, then the files go to PyPI
+# through Trusted Publishing (environment `pypi`: no stored token, the environment's reviewer
+# approves each upload), and only then is a GitHub Release made with the wheel and the sdist, so a
+# refused upload leaves no public release. The wheel carries a compiled tess_utils, so it is a
+# platform wheel tagged manylinux_2_36 (hatch_build.py); the CI job `package`, which this workflow
+# runs first, checks that tag with `auditwheel show`.
 on:
   push:
     tags: ["v*"]
@@ -65,9 +66,28 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  pypi:
+    name: PyPI
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # Trusted Publishing: PyPI trusts this repository, this workflow file and this environment
+    # (the pending publisher the maintainer set up on 2026-11-15). No token is stored anywhere.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/tesserae-shell/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+
   github-release:
     name: GitHub Release
-    needs: build
+    needs: pypi
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -89,22 +109,3 @@ jobs:
       - run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md
         env:
           GH_TOKEN: ${{ github.token }}
-
-  pypi:
-    name: PyPI
-    needs: github-release
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    # Trusted Publishing: PyPI trusts this repository, this workflow file and this environment
-    # (the pending publisher the maintainer set up on 2026-11-15). No token is stored anywhere.
-    environment:
-      name: pypi
-      url: https://pypi.org/project/tesserae-shell/
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: dist
-          path: dist/
-      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
