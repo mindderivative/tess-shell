@@ -15,7 +15,8 @@ Name: MenuItem
 # there, so the submenu can pick that entry's children). `Separator: true` is a rule
 # between groups that takes no events. Parts `::icon`, `::label`, `::shortcut`, `::arrow` and
 # `::rule`; states `:hovered`, `:pressed` and `:disabled`. The role is MENUITEM (SEPARATOR for a
-# rule), with `expanded` while its submenu is open.
+# rule), with `expanded` while its submenu is open. A row is no Tab stop: the keys of the Menu that
+# holds it move the lit row (`:hovered` shows it) and run it.
 Module {
     Params {
         Text { Type: string, Default: "" }

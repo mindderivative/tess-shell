@@ -11,6 +11,10 @@ Name: TextEditor
 # `TextEditor::placeholder { Foreground: ... }` colours the hint.
 #
 # The call takes On_Changed (event.old, event.new) and On_Text_Commit (event.text).
+#
+# Keys of a focused editor (tre's): those of a TextInput; Enter inserts a newline. Tab should leave
+# the field and does not yet: tre inserts a tab character in a multi-line field and has no property
+# that lets Tab through (a request to tre, T-048).
 Module {
     Params {
         Text { Type: string, Default: "" }

@@ -15,7 +15,8 @@ Name: Expander
 # eases. The collapsed content is hidden from assistive technology; the button that controls the
 # Expander carries the `expanded` state. A call may write `On_Changed`: it is raised when an opening
 # or a closing has finished (`event.value` is true when it is open), also when the module's own
-# value changed `Expanded`, and at once when nothing eases (reduced motion).
+# value changed `Expanded`, and at once when nothing eases (reduced motion). The Expander has no
+# keys of its own: Enter and Space on the Button that controls it (`Expandable: true`) toggle it.
 Module {
     Params {
         Expanded { Type: boolean, Default: false }

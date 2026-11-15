@@ -10,7 +10,8 @@ Name: Toggle
 # `Checked` is set to a different value. The look is the stylesheet's: the parts `::track` and
 # `::thumb`, with `:checked`, `:hovered`, `:pressed` and `:disabled` (the thumb and the track ease
 # over the theme's motion duration, and at once under reduced motion). The role is SWITCH with the
-# state `checked`; give the call a `Label` to name it.
+# state `checked`; give the call a `Label` to name it. Keys: Space flips a focused Toggle and
+# raises `On_Changed` once; Enter does nothing; a disabled Toggle takes no focus and no key.
 Module {
     Params {
         Checked { Type: boolean, Default: false }

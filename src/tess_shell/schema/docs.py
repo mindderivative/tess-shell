@@ -656,11 +656,13 @@ EVENT_DOCS: dict[str, str] = {
     "takes it); event.delta is +1 for a step down and -1 for a step up.",
     "On_Anim_Start": "A Panel's animation started.",
     "On_Anim_End": "A Panel's animation ended.",
-    "On_Changed": "A control's value changed by the user: a toggle flipped, an entry chosen, a "
-    "slider moved; for each new value while the pointer moves. A TextField raises it for each "
-    "change of its text. An Expander raises it when an opening or a closing has finished "
-    "(event.value is whether it is open), whoever set the new state.",
-    "On_Released": "A slider's press ended, once, with the final value.",
+    "On_Changed": "A control's value changed by the user: a toggle flipped (a click, or Space), "
+    "an entry chosen (a click, or an arrow key), a slider moved (for each new value while the "
+    "pointer moves, and for each key step). A TextField raises it for each change of its text. "
+    "An Expander raises it when an opening or a closing has finished (event.value is whether it "
+    "is open), whoever set the new state.",
+    "On_Released": "A slider's press ended, once, with the final value; a key step (an arrow, "
+    "Page Up or Down, Home or End) raises it at once after its On_Changed.",
     "On_Change": "Reserved: the old spelling of On_Changed.",
     "On_Submit": "Enter in a single-line TextField.",
     "On_Text_Commit": "Committed text in a TextField, such as an input-method composition.",
@@ -982,6 +984,10 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Button", "Icon"): "An icon name such as mdi:home, or a file path, shown beside the text.",
     ("Button", "Icon_Position"): "Where the icon sits: START (before the text) or END (after it).",
     ("Button", "Label"): "The name assistive technology reads aloud; the text when it is empty.",
+    ("Button", "Expandable"): "True when the button controls an Expander: it then carries the "
+    "accessibility state expanded, with the value of Expanded.",
+    ("Button", "Expanded"): "Whether the Expander the button controls is open; read only when "
+    "Expandable is true.",
     ("Checkbox", "Checked"): "Whether the box is checked; set from outside.",
     ("Checkbox", "Text"): "A label beside the box; a click on it flips the checkbox too.",
     ("Checkbox", "Label"): "The name assistive technology reads aloud; the text when it is empty.",
