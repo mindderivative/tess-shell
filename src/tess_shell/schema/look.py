@@ -26,6 +26,8 @@ from tess_shell.schema.values import ValueProblem, coerce, named_shadows
 GROUPS = ("Color", "Type", "Shape", "Space", "Elevation", "Motion")
 _MODE_BLOCKS = {"Light": "light", "Dark": "dark", "High_Contrast": "high_contrast"}
 _MODE_BLOCKS["Reduced_Motion"] = "reduced_motion"
+SYSTEM_FONT = "type.system.font_family"  # the desktop's UI font family (Portals)
+GENERIC_FONT = "sans-serif"  # what that token holds while the desktop names no font
 DESKTOP = "DESKTOP"  # ``Accent: DESKTOP`` asks for the desktop's accent colour
 
 # the kind a token's written value is checked as, by its place in the theme
@@ -158,6 +160,15 @@ def effective_tokens(
     tokens = _effective(theme, appearance)
     if fallback is not None and fallback is not theme:
         tokens = {**_effective(fallback, appearance), **tokens}
+    # the desktop's UI font, offered to every theme (a theme that sets the token itself keeps it);
+    # with no desktop font a generic family, so a layout that uses it always resolves
+    tokens.setdefault(
+        SYSTEM_FONT,
+        Token(
+            tess_dl.String(appearance.font_family or GENERIC_FONT, ""),
+            m.Origin("<desktop font>", 1, 1),
+        ),
+    )
     return tokens
 
 
@@ -170,7 +181,7 @@ def _effective(theme: ThemeDef, appearance: Appearance) -> dict[str, Token]:
         order.append(appearance.scheme)
     if appearance.high_contrast:
         order.append("high_contrast")
-    if appearance.reduced_motion:
+    if appearance.motion_reduced:
         order.append("reduced_motion")
     for mode in order:
         tokens.update(theme.modes.get(mode, {}))
@@ -189,7 +200,7 @@ def _effective(theme: ThemeDef, appearance: Appearance) -> dict[str, Token]:
             tokens["color.accent"] = tokens["color.primary"]
         else:
             del tokens["color.accent"]
-    if appearance.reduced_motion:
+    if appearance.motion_reduced:
         for path, token in list(tokens.items()):
             if path.startswith("motion.duration."):
                 tokens[path] = Token(tess_dl.Number(0, "0"), token.origin)

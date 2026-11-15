@@ -160,6 +160,7 @@ class Tray(Module):
             watcher.on_signal("StatusNotifierItemRegistered", self.registered),
             watcher.on_signal("StatusNotifierItemUnregistered", self.unregistered),
             self.ctx.tray.on_host(self.host_changed),
+            self.ctx.icons.on_theme_changed(self.resolve_all),  # the desktop's icon theme changed
         ]
 
     def stop(self) -> None:

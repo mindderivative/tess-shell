@@ -325,9 +325,12 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         portal: PortalReader | None = None
         appearance = Appearance()
         manager_box: list[SurfaceManager] = []
+        icon_box: list[IconService] = []
 
         def appearance_changed(new: Appearance) -> None:  # on the service thread
             def apply() -> None:
+                if icon_box:  # the portal's icon theme; a change makes the modules' icons again
+                    icon_box[0].set_portal_theme(new.icon_theme)
                 manager_box[0].set_look(manager_box[0].look.with_appearance(new))
 
             handle.call_soon(apply)
@@ -365,7 +368,10 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         host.popups = manager.popups  # ctx.popup() opens a Popup of the surfaces
         host.dbus = layer  # ctx.dbus: the D-Bus service layer
         host.audio = AudioService(service)  # ctx.audio: the sound server, on the same thread
-        host.icons = IconService(IMAGES.register)  # ctx.icons: the theme lookup, files read here
+        icon_service = IconService(IMAGES.register)  # ctx.icons: the theme lookup, files read here
+        icon_service.set_portal_theme(appearance.icon_theme)
+        icon_box.append(icon_service)
+        host.icons = icon_service
         host.tray = TrayService(service)  # ctx.tray: the shell as a StatusNotifier host
         host.call_soon = handle.call_soon  # ctx.call_soon: back to the loop thread
         host.focus = manager.mode  # ctx.focus: shortcut mode and the default focus

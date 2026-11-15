@@ -1274,7 +1274,7 @@ class SurfaceManager:
         panel = s.planned.bar if s.planned else None
         if not isinstance(panel, PanelDef) or panel.animation == "NONE" or s.window is None:
             return False
-        return not (self._look is not None and self._look.appearance.reduced_motion)
+        return not (self._look is not None and self._look.appearance.motion_reduced)
 
     @staticmethod
     def _slide_from(panel: PanelDef, geometry: Geometry) -> tuple[int, int] | None:
@@ -1688,7 +1688,7 @@ class SurfaceManager:
         a = look.appearance
         logger.info(
             f"look: scheme {a.scheme}, accent {a.accent}, high contrast {a.high_contrast}, "
-            f"reduced motion {a.reduced_motion}"
+            f"reduced motion {a.motion_reduced}"
         )
         placed = {
             g: self._place_group(g, look)[0]

@@ -66,14 +66,22 @@ def default_theme(base: Path) -> None:
 
 
 @contextmanager
-def tray_desk(tmp_path: Path, *, watcher_up: bool = True) -> Iterator[TrayDesk]:
+def tray_desk(
+    tmp_path: Path, *, watcher_up: bool = True, theme: str | None = "Fake"
+) -> Iterator[TrayDesk]:
     base = tmp_path / "icons"
     default_theme(base)
     with desk() as d:
         watcher = add_watcher(d.session)
         if watcher_up:
             watcher.up()
-        icons = IconService(IMAGES.register, theme="Fake", bases=[base], pixmaps=None)
+        icons = IconService(
+            IMAGES.register,
+            theme=theme,
+            bases=[base],
+            pixmaps=None,
+            config_home=tmp_path / "config",  # never the real kdeglobals
+        )
         tray = TrayService(d.service, pid=PID)
         yield TrayDesk(d, icons, tray, watcher, base)
 
