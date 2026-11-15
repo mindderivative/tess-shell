@@ -1,8 +1,11 @@
 name: CI
 
 # Also called by release.yml, so a tagged release runs the same checks on the tagged commit.
-# No paths-ignore: "CI result" is a required check on main (a ruleset, 2026-11-15), and a pull
-# request that CI skips would wait for it for ever, docs-only ones included.
+# No paths-ignore: "CI result" is a required check on main (a ruleset, 2026-11-15), and a workflow
+# that does not run would leave it pending for ever. A pull request that changes only docs/ (the
+# vault's generated export) therefore still runs this workflow, but skips lint, the test shards and
+# the package check, which cannot be affected; the docs build and "CI result" still run. Every
+# other change, and every push, tag and manual run, runs everything.
 on:
   push:
     branches: [main]
@@ -23,8 +26,40 @@ defaults:
     shell: bash
 
 jobs:
+  changes:
+    name: What the pull request changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    # No job-level permissions: release.yml calls this workflow with only contents: read, and a
+    # called workflow cannot ask for more. The pull request's file list is public data, so the
+    # default token reads it; if the call ever fails, docs_only stays false and everything runs.
+    outputs:
+      docs_only: ${{ steps.files.outputs.docs_only }}
+    steps:
+      - id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          # docs_only is true only for a pull request whose every changed path (a renamed file's
+          # old path too) is under docs/. Anything else, or any error, means "run everything".
+          docs_only=false
+          if [ "$EVENT" = pull_request ]; then
+            files=$(gh api "repos/$REPO/pulls/$PR/files" --paginate \
+              --jq '.[] | .filename, (.previous_filename // empty)') || files=""
+            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qv '^docs/'; then
+              docs_only=true
+            fi
+          fi
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+          echo "docs_only=$docs_only"
+
   lint:
     name: Lint & types
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -47,6 +82,8 @@ jobs:
 
   test:
     name: Test (shard ${{ matrix.group }} of 4)
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     strategy:
@@ -110,6 +147,8 @@ jobs:
 
   package:
     name: Wheel installs and imports in a clean environment
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -156,15 +195,22 @@ jobs:
   result:
     name: CI result
     if: always()
-    needs: [lint, test, package, docs]
+    needs: [changes, lint, test, package, docs]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       # The one check to require: it does not change when the number of shards does.
       - env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
+          DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
         run: |
-          echo "lint, test, package, docs: $RESULTS"
+          echo "changes, lint, test, package, docs: $RESULTS (docs only: $DOCS_ONLY)"
           for r in $RESULTS; do
-            [ "$r" = success ] || { echo "a job did not succeed ($r)"; exit 1; }
+            case "$r" in
+              success) ;;
+              # Skipped is a pass only where the "changes" job decided the skip: a pull request that
+              # touches docs/ and nothing else. Any other skip (a failed dependency) is a failure.
+              skipped) [ "$DOCS_ONLY" = true ] || { echo "a job was skipped but the change is not docs-only"; exit 1; } ;;
+              *) echo "a job did not succeed ($r)"; exit 1 ;;
+            esac
           done
