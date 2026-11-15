@@ -189,8 +189,8 @@ KEY_DOCS: dict[str, str] = {
     "built.",
     "Reveal_Key": "The global key that shows the Bar, written as Ctrl+Shift+B; the same as "
     "Show_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
-    "Shortcut": "The global key that toggles the Panel, written as Meta+Space; the same as "
-    "Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
+    "Shortcut": "The global key that toggles the Panel or Frame, written as Meta+Space; the same "
+    "as Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
     "Shortcut_Mode": "Whether this surface is the one in shortcut mode: the shell's keyboard "
     "mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces "
     "(Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is "

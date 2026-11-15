@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4",
+  "schema_version": "1.5",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -1654,7 +1654,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The global key that toggles the Panel, written as Meta+Space; the same as Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
+          "doc": "The global key that toggles the Panel or Frame, written as Meta+Space; the same as Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
           "slot": false,
           "required": false,
           "built": true,
@@ -3358,6 +3358,20 @@
           "max": 2147483647,
           "step": 1,
           "unit": null,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Shortcut": {
+          "kind": "key_chord",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The global key that toggles the Panel or Frame, written as Meta+Space; the same as Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "example": "Ctrl+Shift+F1",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -26660,6 +26674,10 @@
     ],
     "surface_keys": {
       "Panel": {
+        "key": "Shortcut",
+        "same_as": "Toggle_<Name>"
+      },
+      "Frame": {
         "key": "Shortcut",
         "same_as": "Toggle_<Name>"
       },

@@ -453,6 +453,8 @@ FRAME_KEYS: dict[str, str] = {
     "Keyboard": "enum",
     # the place of the Frame in the shell's focus order (Focus and Keyboard > Tab Order)
     "Tab_Index": "tab_index",
+    # the global key that toggles the Frame: the same as ``Toggle_<Name>`` in ``Shortcuts``
+    "Shortcut": "key_chord",
     # whether the Frame is the surface in shortcut mode (Focus and Keyboard > Shortcut Mode)
     "Shortcut_Mode": "bool",
 }
