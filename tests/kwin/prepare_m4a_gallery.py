@@ -570,6 +570,12 @@ Row   Look
 20    Switch Plasma's colour scheme light to dark and back with the Panel open: the fields' fill, outline,
       text, caret, selection and the hints follow it at once, and what you typed is still there. The
       log shows no ERROR or WARNING line for the whole run.
+21    Keys (M6b): a Panel with a text field already takes the keyboard. Tab walks the fields in order
+      and skips the disabled ones; Tab in a TextInput moves on and a typed key is not inserted. In
+      "TextInput: click it and type" press Enter: Echo shows "submit (Enter)"; type a letter: Echo
+      shows "commit" and "changed"; Shift+Right selects, Ctrl+A selects all. In a TextEditor Enter
+      adds a line. KNOWN GAP: Tab in a TextEditor types a tab character and does not leave the
+      field (tre has no property for it; the request is open).
 """
 
 

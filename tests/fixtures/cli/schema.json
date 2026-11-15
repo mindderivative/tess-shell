@@ -23389,7 +23389,7 @@
       ]
     },
     "On_Changed": {
-      "doc": "A control's value changed by the user: a toggle flipped, an entry chosen, a slider moved; for each new value while the pointer moves. A TextField raises it for each change of its text. An Expander raises it when an opening or a closing has finished (event.value is whether it is open), whoever set the new state.",
+      "doc": "A control's value changed by the user: a toggle flipped (a click, or Space), an entry chosen (a click, or an arrow key), a slider moved (for each new value while the pointer moves, and for each key step). A TextField raises it for each change of its text. An Expander raises it when an opening or a closing has finished (event.value is whether it is open), whoever set the new state.",
       "module_only": true,
       "needs": [
         "Toggles",
@@ -23406,7 +23406,7 @@
       ]
     },
     "On_Released": {
-      "doc": "A slider's press ended, once, with the final value.",
+      "doc": "A slider's press ended, once, with the final value; a key step (an arrow, Page Up or Down, Home or End) raises it at once after its On_Changed.",
       "module_only": true,
       "needs": [
         "Slides"
@@ -24588,6 +24588,20 @@
           "kind": "string",
           "default": "\"\"",
           "doc": "The name assistive technology reads aloud; the text when it is empty.",
+          "required": false
+        },
+        "Expandable": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "True when the button controls an Expander: it then carries the accessibility state expanded, with the value of Expanded.",
+          "required": false
+        },
+        "Expanded": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Whether the Expander the button controls is open; read only when Expandable is true.",
           "required": false
         }
       },

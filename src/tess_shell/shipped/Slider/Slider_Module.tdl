@@ -12,7 +12,12 @@ Name: Slider
 # slider upwards (Max at the top). Parts `::track`, `::fill` and `::handle`, with `:hovered`,
 # `:pressed` and `:disabled`. The role is SLIDER with `value`, `value_min`, `value_max` and
 # `value_step`; give the call a `Label` to name it. It is 160 by 20 pixels (20 by 160 upright)
-# unless the call writes a `Width` or a `Height`. The pointer operates it; the keys are M6.
+# unless the call writes a `Width` or a `Height`. `On_Released` fires once when a press ends (with
+# the final value).
+# Keys: Left and Down take a step off, Right and Up put one on (both orientations), Page Up and
+# Page Down ten steps, Home and End go to `Min` and `Max`. Each key that moves the value fires
+# `On_Changed` and then, at once, `On_Released`, both with `old` the value before the step; a key
+# at an end that cannot move it fires nothing. A key with Ctrl, Alt or Meta is not the slider's.
 Module {
     Params {
         Value { Type: number, Default: 0 }

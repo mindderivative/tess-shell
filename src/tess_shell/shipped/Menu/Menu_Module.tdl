@@ -11,6 +11,11 @@ Name: Menu
 #       Children { Menu { MenuItem { Text: "New", On_Click: ... } MenuItem { Separator: true } } } }
 # A Button opens it with `On_Click { Action: Show, Target: File_Menu, Data { Id: 7 } }`; the items
 # read `caller.data`. A click on an item runs its action and closes the menu.
+# Keys: a Menu opened from the keyboard takes the focus (one Tab stop). Up and Down move the lit
+# row (round the ends, over a disabled row), Home and End go to the first and the last, Enter and
+# Space run it (a row with a submenu opens it), Right opens the submenu of the lit row, Left closes
+# a submenu, and Escape closes the innermost level; Escape on the first menu closes it and gives the
+# focus back to the block it was opened from. The pointer on a row takes the light from the keys.
 Module {
     Params {
         Label { Type: string, Default: "" }

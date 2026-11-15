@@ -12,7 +12,15 @@ Name: List
 # `On_Changed` fires when the user chooses one (`event.old`, `event.new` and `event.value` are the
 # keys). The chosen entry takes the style state `:selected` (and the role LISTITEM carries
 # `selected`), so give the entries a class and style `.list_item:selected`; the Default stylesheet
-# does for the class `list_item`. The role is LIST. Keys to move the choice are M6.
+# does for the class `list_item`. The role is LIST.
+# Keys: the List is one Tab stop and its entries are reached with the arrow keys. Up and Down move
+# the chosen entry (the first Down chooses the first entry, the first Up the last), Page Up and
+# Page Down by a page, Home and End to the ends, Enter and Space choose the first entry when none
+# is chosen, and letters typed jump to the next entry whose text starts with them (a space in a
+# search is a letter of it; the search ends a second after the last letter). Each move is a choice:
+# `On_Changed` fires and the entry scrolls into view. A disabled entry is passed over, a List with
+# `Selection: NONE` takes no key, and a focused List keeps the keys, so they do not scroll a
+# ScrollBox around it.
 #   List { Selected: <| picked |>, On_Changed: choose, Children { For ... Key <| w.id |> { ... } } }
 Module {
     Params {

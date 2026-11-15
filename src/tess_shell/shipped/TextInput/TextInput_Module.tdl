@@ -12,6 +12,10 @@ Name: TextInput
 # The call takes the events On_Changed (every edit the user makes: event.old and event.new),
 # On_Submit (Enter) and On_Text_Commit (event.text); the TextField raises them. `Text` is data in:
 # a value the module sets never raises On_Changed.
+#
+# Keys of a focused field (tre's): typing, the arrows, Home and End, Shift to select, Ctrl+A
+# (select all), Ctrl+C, Ctrl+X and Ctrl+V; Enter raises On_Submit; Tab leaves the field. A
+# committed character raises On_Text_Commit (event.text) and then On_Changed.
 Module {
     Params {
         Text { Type: string, Default: "" }

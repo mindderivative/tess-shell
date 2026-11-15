@@ -172,6 +172,12 @@ class Wire:
     override: bool | None = None
     label: str = ""  # the block's id, for the log line of a focus change
     focus_to: Wire | None = None
+    # the keyboard's share of the states: ``active`` is a menu row the arrow keys are on (it shows
+    # what the pointer's ``hovered`` shows), ``held`` is the Enter or Space held down on a Button
+    # (it shows ``pressed``); ``announced`` is whether tre's accessibility ``pressed`` says so
+    active: bool = False
+    held: str | None = None
+    announced: bool = False
     # a Marquee's box: whether its tooltip may open now (it shows the whole text that is cut)
     tooltip_gate: Callable[[], bool] | None = None
     # ``Tooltip_When_Disabled: true`` (any block), or a Marquee's box (always): the pointer hooks
@@ -296,7 +302,8 @@ class Wire:
         self.in_checked, self.in_selected = in_checked, in_selected
         newly = self.blocked and not was
         if newly:
-            self.hovered = self.pressed = False
+            self.hovered = self.pressed = self.active = False
+            self.held = None
         self.refresh()
         if newly:
             if was_pressed:
@@ -309,6 +316,41 @@ class Wire:
     def cancel(self) -> None:
         """The press became a move or resize of the window: no up or click follows."""
         self.up()
+
+    def set_active(self, on: bool) -> None:
+        """A menu row the arrow keys are on (or have left): it shows the ``hovered`` look."""
+        if on != self.active:
+            self.active = on and not self.blocked
+            self.refresh()
+
+    def listen_keys(self) -> None:
+        """A block with the role BUTTON, once: Enter or Space held down on it shows ``pressed``
+        (the style state and tre's accessibility ``pressed``) until the key goes up or the focus
+        goes. tre clicks the focused block itself for both keys, after the ``key_down``, so the
+        handler runs while it is held. The listener is the block's one ``key_down``: tre then
+        gives the block every key, and the arrow keys no longer scroll a scroll view around it."""
+        tre = self.tre
+        if tre is None or "keys" in self.wired:
+            return
+        self.wired.add("keys")
+
+        def down(event: Any) -> None:
+            key = getattr(event, "key", None)
+            if key in ("enter", "space") and event.target == tre and not self.blocked:
+                self.press_key(key)
+
+        def up(event: Any) -> None:
+            if getattr(event, "key", None) == self.held:
+                self.press_key(None)
+
+        tre.on("key_down", down)
+        tre.on("key_up", up)
+
+    def press_key(self, key: str | None) -> None:
+        """Enter or Space went down (``key``) on the block, or the held one went up (``None``)."""
+        if key != self.held:
+            self.held = key
+            self.refresh()
 
     def focus_field(self) -> None:
         """A press on a TextField's box (its padding, or its border) gives the text input the
@@ -348,6 +390,8 @@ class Wire:
             if event.target == tre:
                 logger.debug(f"focus: {self.label} {tre.get('label') or ''!r} lost")
                 self.set_focused(False)
+                if self.held is not None:  # the key went up where nobody hears it
+                    self.press_key(None)
 
         tre.on("focus", gained)
         tre.on("unfocus", lost)
@@ -371,9 +415,9 @@ class Wire:
             out.update(self.states.get("checked", {}))
         if self.selected or (self.part and self.in_selected):
             out.update(self.states.get("selected", {}))
-        if self.hovered or self.pressed:
+        if self.hovered or self.pressed or self.active or self.held is not None:
             out.update(self.states.get("hovered", {}))
-        if self.pressed:
+        if self.pressed or self.held is not None:
             out.update(self.states.get("pressed", {}))
         if self.focused and not self.blocked:  # a disabled block shows no ring
             out.update(self.states.get("focused", {}))
@@ -386,6 +430,11 @@ class Wire:
         tre, window = self.tre, self.window
         if tre is None or window is None:
             return
+        press = self.pressed or self.held is not None
+        if press != self.announced:  # a Button says it is pressed while it is held
+            self.announced = press
+            if tre.get("role") == "button":
+                tre.set(pressed=True if press else None)
         wanted = self.wanted()
         changes: dict[str, Any] = {n: self.saved.pop(n) for n in self.shown if n not in wanted}
         for name, value in wanted.items():
@@ -634,6 +683,50 @@ class View:
             return False
         return self.restore_focus(stops[0], ring=True)
 
+    # -- a menu from the keyboard -------------------------------------------------------------
+
+    def menu_rows(self) -> list[Entry]:
+        """The rows of the menu (the blocks with ``Menu_Item``) the keys can reach, in document
+        order: a disabled row, and a separator (it is no row), is passed over."""
+        return [
+            e
+            for e in self._flat()
+            if e.tre is not None
+            and isinstance(self.controls.get(e.tre), controls.Item)
+            and (e.wire is None or not e.wire.blocked)
+        ]
+
+    def mark_row(self, row: Entry | None) -> None:
+        """The one row the arrow keys are on (``None``: none), lit as a hovered row is."""
+        for e in self._flat():
+            if e.wire is not None and e is not row and e.wire.active:
+                e.wire.set_active(False)
+        if row is not None and row.wire is not None:
+            row.wire.set_active(True)
+
+    def marked_row(self) -> Entry | None:
+        """The row the arrow keys are on, else the one the pointer rests on."""
+        rows = self.menu_rows()
+        return next((e for e in rows if e.wire and e.wire.active), None) or next(
+            (e for e in rows if e.wire and e.wire.hovered), None
+        )
+
+    def activate(self, entry: Entry) -> None:
+        """What a click on the block does, with no pointer: a menu row chosen with Enter."""
+        node = entry.tre
+        if node is None or entry.wire is None:
+            return
+        event = SimpleNamespace(
+            target=node,
+            current=node,
+            button=None,
+            x=None,
+            y=None,
+            window_x=None,
+            window_y=None,
+        )
+        self._run_click(entry.wire, node, event)
+
     def _controls(self) -> None:
         """Keep one control per block that has one (``Toggles``, ``Slides``, ``Selection_Mode``):
         a new block gets one, a kept block is told what it is now, a block that is gone loses
@@ -661,6 +754,7 @@ class View:
                 ctl = live.get(e.tre) if e.tre is not None else None
                 if ctl is not None:
                     ctl.configure(e)
+                    ctl.listen_keys()
                 configure(e.children)
 
         configure(self.entries)
@@ -724,6 +818,8 @@ class View:
                 wire.listen()
             if entry.props.get("focusable"):
                 wire.listen_focus()
+            if str(entry.props.get("role")) == "button":
+                wire.listen_keys()
             self._ensure_click(entry)
             if entry.typed.kind == FIELD:
                 self._wire_field(entry)
@@ -869,24 +965,33 @@ class View:
 
         def listener(event: Any, wire: Wire = wire) -> None:
             stop = getattr(event, "stop", None)
-            if wire.blocked:
-                if stop is not None:
-                    stop()
-                return
-            handler = wire.handlers.get("On_Click")
-            ctl = self.controls.get(tre)
-            if handler is None and ctl is None:  # the node was disabled once, and has no handler
-                return
+            taken = True  # a raising handler takes the click too
             try:
-                if ctl is not None:  # the control first: the handler sees the new state
-                    ctl.clicked(event)
-                if handler is not None and self.sink is not None:
-                    self.sink(handler, "On_Click", Raised(event, self.window, layout_rect(tre)))
+                taken = self._run_click(wire, tre, event)
             finally:
-                if stop is not None:
+                if taken and stop is not None:
                     stop()
 
         entry.tre.on("click", listener)
+
+    def _run_click(self, wire: Wire, tre: TreNode, event: Any) -> bool:
+        """What a click on the block does: nothing for a disabled block, else the control first (the
+        handler sees the new state), then ``On_Click``; a control may refuse a click (an Enter on a
+        Toggle). ``False`` when the block has no handler and no control (the click goes on to the
+        blocks above)."""
+        if wire.blocked:
+            return True
+        handler = wire.handlers.get("On_Click")
+        ctl = self.controls.get(tre)
+        if handler is None and ctl is None:  # the node was disabled once, and has no handler
+            return False
+        if ctl is not None:
+            if not ctl.accepts(event):
+                return True
+            ctl.clicked(event)
+        if handler is not None and self.sink is not None:
+            self.sink(handler, "On_Click", Raised(event, self.window, layout_rect(tre)))
+        return True
 
     def _ensure_middle(self, entry: Entry) -> None:
         """``On_Middle_Click``: tre has no middle click event, only ``pointer_down`` and

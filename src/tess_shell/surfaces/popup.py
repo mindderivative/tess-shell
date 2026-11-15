@@ -24,6 +24,7 @@ from loguru import logger
 from tess_shell.binder import convert
 from tess_shell.binder import model as m
 from tess_shell.binder.build import View, Wire, build
+from tess_shell.binder.controls import plain
 from tess_shell.binder.model import BindError, BindFailed, Handler
 from tess_shell.binder.shadow import DEFAULT_MAX, style_bleed, style_shadows
 from tess_shell.model import args
@@ -772,8 +773,56 @@ class Popups:
     def _key(self, op: OpenPopup, event: Any) -> None:
         key = getattr(event, "key", None)
         logger.debug(f"Popup {op.where}: key {key}")
-        if key == "escape":
+        if key == "escape":  # the innermost level closes: a submenu alone, the root with focus back
             self.close(op, "escape")
+        elif isinstance(key, str) and plain(event) and not op.closing and op.view is not None:
+            self._menu_key(op, key)
+
+    def _menu_key(self, op: OpenPopup, key: str) -> None:
+        """The keys of a menu (Standard Modules > Keyboard Operation): Up and Down move the lit
+        row (round the ends), Home and End go to the first and the last, Enter and Space run the
+        row (a row with a submenu opens it), Right opens the submenu of the lit row and Left
+        closes this one when it is a submenu. A submenu opened from the keyboard takes the focus
+        and lights its first row."""
+        assert op.view is not None
+        rows = op.view.menu_rows()
+        if not rows:
+            return
+        lit = op.view.marked_row()
+        at = next((i for i, row in enumerate(rows) if row is lit), None)
+        if key in ("arrow_down", "arrow_up", "home", "end"):
+            if key == "home" or (key == "arrow_down" and at is None):
+                to = 0
+            elif key == "end" or (key == "arrow_up" and at is None):
+                to = len(rows) - 1
+            else:
+                assert at is not None
+                to = (at + (1 if key == "arrow_down" else -1)) % len(rows)
+            op.view.mark_row(rows[to])
+        elif key in ("enter", "space", "arrow_right") and lit is not None:
+            ctl = op.view.controls.get(lit.tre) if lit.tre is not None else None
+            opens = getattr(ctl, "opens", "")
+            if key == "arrow_right":
+                if opens:
+                    self._open_item(op, lit.typed.name or "", opens)
+                    self._enter_submenu(op)
+            else:
+                op.view.activate(lit)
+                if opens:
+                    self._enter_submenu(op)
+        elif key == "arrow_left" and op.parent_op is not None:
+            self.close(op, "left")
+
+    def _enter_submenu(self, op: OpenPopup) -> None:
+        """The submenu ``op`` has just opened from the keyboard takes the focus and lights its
+        first row."""
+        sub = op.sub
+        if sub is None or sub.view is None or sub.closing:
+            return
+        sub.view.focus_first()
+        rows = sub.view.menu_rows()
+        if rows:
+            sub.view.mark_row(rows[0])
 
     def _configured(self, op: OpenPopup, event: Any) -> None:
         x, y = int(getattr(event, "x", 0)), int(getattr(event, "y", 0))
@@ -1104,6 +1153,7 @@ class Popups:
             op.rest = None
         window = op.window
         if event == "enter":
+            op.view.mark_row(None)  # the pointer is on a row: the keys' row gives way to it
             if opens:
                 if op.sub is None or op.sub.item != block:
                     op.rest = window.after(OPEN_REST_MS, lambda: self._open_item(op, block, opens))

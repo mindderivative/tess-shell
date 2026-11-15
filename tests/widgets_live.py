@@ -94,10 +94,14 @@ class Widgets:
     lines: list[str] = field(default_factory=list)
     problems: list[Any] = field(default_factory=list)
     uses: list[str] = field(default_factory=list)
+    home: str = "Top_Bar"  # the surface ``window``, ``view`` and ``advance`` are about
+
+    def surface(self, name: str) -> Any:
+        return next(s for s in self.manager.surfaces if s.name == name)
 
     @property
     def bar(self) -> Any:
-        return next(s for s in self.manager.surfaces if s.name == "Top_Bar")
+        return self.surface(self.home)
 
     @property
     def window(self) -> Any:
@@ -196,11 +200,16 @@ def running(
     tray: TrayPort | None = None,
     call_soon: Callable[[Callable[[], None]], None] | None = None,
     extra_py: dict[str, str] | None = None,
+    body: str | None = None,
+    home: str = "Top_Bar",
 ) -> Iterator[Widgets]:
     """The shell of ``tests.test_popup`` with ``children`` in its Bar, every standard module and a
-    ``Driver`` module (layout ``driver``, Python ``driver_py``) loaded by a real module host."""
+    ``Driver`` module (layout ``driver``, Python ``driver_py``) loaded by a real module host. A
+    ``body`` is a whole shell file (``Shell { ... }``) instead, as a gallery writes it, and
+    ``home`` the surface of it the ``window`` and ``view`` of the result are."""
     defs = _defs(driver, extra or {})
-    result = tess_dl.parse(HEADER + SHELL % (children, popups), path="Shells/Main_Shell.tdl")
+    shell_text = body if body is not None else SHELL % (children, popups)
+    result = tess_dl.parse(HEADER + shell_text, path="Shells/Main_Shell.tdl")
     assert not result.errors and result.document is not None
     icons = IconSets([SHIPPED / "Icons"])
     shell, findings = read_shell(
@@ -239,7 +248,7 @@ def running(
         host.icons = icon_port
         host.tray = tray
         host.call_soon = call_soon or getattr(dbus, "call_soon", None)  # a Layer has one
-        live = Widgets(manager, host, store)
+        live = Widgets(manager, host, store, home=home)
         sink = logger.add(lambda message: live.lines.append(str(message).rstrip()), level="DEBUG")
         try:
             uses = manager.plan(shell)

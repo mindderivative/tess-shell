@@ -9,6 +9,12 @@ accessibility state. Data in, edits out (R6): a value that the module sets moves
 raises nothing; a value the user sets stays until the module sets a different one. Nothing here
 runs in Python while the pointer does nothing: a slider drag is pointer events, the engine draws
 the result and an idle control draws no frame.
+
+The keys of a control (Standard Modules > Keyboard Operation) are its ``key_down`` listener: a node
+with a ``key_down`` listener keeps every key, so a focused Toggle, Slider or List does not scroll a
+scroll view around it with the arrow keys (tre's rule), and a handled key does not bubble. tre fires
+``click`` for Enter and Space on a focused node itself (``Activated``, after the ``key_down``); a
+click that came from the keyboard has no pointer position and no button (:func:`from_keyboard`).
 """
 
 from __future__ import annotations
@@ -39,6 +45,17 @@ def _holds_focus(node: TreNode) -> bool:
     return bool(node.get("focused")) or any(_holds_focus(c) for c in node.children())
 
 
+def from_keyboard(event: Any) -> bool:
+    """Whether a ``click`` was made by Enter or Space on a focused block (tre's ``Activated``): it
+    has no pointer position and no button, a click of the pointer has both."""
+    return getattr(event, "button", None) is None and getattr(event, "x", None) is None
+
+
+def plain(event: Any) -> bool:
+    """A key with no Ctrl, Alt or Meta held: those are the user's shortcuts, not the widget's."""
+    return not any(getattr(event, name, False) for name in ("ctrl", "alt", "meta"))
+
+
 def kind_of(entry: Entry) -> str:
     """The control this block is: ``toggle``, ``select``, ``slide``, ``item``, ``expand`` or
     empty."""
@@ -58,12 +75,15 @@ def kind_of(entry: Entry) -> str:
 class Control:
     """Base: the block, its wire and where ``On_Changed`` goes."""
 
+    takes_keys = False  # the control has keys: its block listens for ``key_down``
+
     def __init__(self, view: View, entry: Entry) -> None:
         self.view = view
         self.entry = entry
         assert entry.tre is not None
         self.tre: TreNode = entry.tre
         self.wired = False
+        self.key_wired = False
 
     @property
     def wire(self) -> Wire | None:
@@ -97,6 +117,28 @@ class Control:
         raw = SimpleNamespace(old_value=old, new_value=new, value=new)
         self.view.sink(handler, "On_Released", raw)
 
+    def listen_keys(self) -> None:
+        """Listen for the control's keys, once (a node takes one ``key_down`` listener)."""
+        if self.takes_keys and not self.key_wired:
+            self.key_wired = True
+            self.tre.on("key_down", self._key_down)
+
+    def _key_down(self, event: Any) -> None:
+        wire = self.wire
+        if wire is not None and wire.blocked:  # a disabled block takes no key
+            return
+        if self.key(event):
+            event.stop()  # the key was the control's: nothing above it hears it
+
+    def key(self, event: Any) -> bool:
+        """A key went down on the focused block (or one under it); whether the control used it."""
+        return False
+
+    def accepts(self, event: Any) -> bool:
+        """Whether a ``click`` that reached the block does anything: the block's ``On_Click`` and
+        :meth:`clicked` run only when it does."""
+        return True
+
     def clicked(self, event: Any) -> None:  # noqa: B027 - most controls do not take a click
         """The block's ``click`` (not blocked, not stopped by an entry's own handler)."""
 
@@ -105,12 +147,27 @@ class Control:
 
 
 class Toggle(Control):
-    """``Toggles: true``: a click flips ``Checked`` (tre's ``checked``)."""
+    """``Toggles: true``: a click flips ``Checked`` (tre's ``checked``). Space flips it too and
+    Enter does nothing (Standard Modules > Keyboard Operation): tre clicks the focused block for
+    both keys, so the block remembers an Enter (and a repeat of a held Space) from the
+    ``key_down`` that comes first and does not take the click that follows."""
+
+    takes_keys = True
 
     def __init__(self, view: View, entry: Entry) -> None:
         super().__init__(view, entry)
         self.state = False
         self.base: bool | None = None
+        self.mute = False  # the next click from the keyboard is not a flip
+
+    def key(self, event: Any) -> bool:
+        key = getattr(event, "key", None)
+        self.mute = key == "enter" or (key == "space" and bool(getattr(event, "repeat", False)))
+        return False
+
+    def accepts(self, event: Any) -> bool:
+        mute, self.mute = self.mute, False
+        return not (mute and from_keyboard(event))
 
     def configure(self, entry: Entry) -> None:
         super().configure(entry)
@@ -137,14 +194,28 @@ class Toggle(Control):
         self.changed(old, self.state)
 
 
+TYPE_AHEAD_MS = 1000  # the letters typed in a list make one search until this long after the last
+
+
 class Select(Control):
     """``Selection_Mode: SINGLE``: the block's children are the entries of a list; a click on one
-    chooses it (an entry has a ``Key``, a ``For`` entry the key of the repeater)."""
+    chooses it (an entry has a ``Key``, a ``For`` entry the key of the repeater).
+
+    The keys (Standard Modules > Keyboard Operation): Up and Down move the chosen entry (the
+    first Down chooses the first entry and the first Up the last), Page Up and Page Down by a
+    page, Home and End to the ends, Enter and Space choose the first entry when none is chosen,
+    and a letter typed jumps to the next entry whose text starts with the letters typed in the
+    last second. Every move is a choice: ``On_Changed`` with the old and the new key, and the
+    entry scrolls into view. An entry that is disabled is passed over."""
+
+    takes_keys = True
 
     def __init__(self, view: View, entry: Entry) -> None:
         super().__init__(view, entry)
         self.chosen = ""
         self.base: str | None = None
+        self.typed = ""  # the letters of the search in progress
+        self.forget: Any = None  # the timer that ends it
 
     def keys(self) -> list[tuple[str, Entry]]:
         """The entries and their keys: the children of the block, or, when the block is a
@@ -181,6 +252,18 @@ class Select(Control):
                 if "role" not in child.props and child.tre.get("role") != "listitem":
                     child.tre.set(role="listitem")
 
+    def choose(self, key: str, child: Entry) -> None:
+        """The user chose the entry ``key`` (``child``): it takes the state, ``On_Changed`` says
+        so, and it scrolls into view."""
+        if key != self.chosen:
+            old = self.chosen
+            self.chosen = key
+            self.apply()
+            self.view.resync()
+            self.changed(old, key)
+        if child.tre is not None:
+            child.tre.scroll_into_view()
+
     def clicked(self, event: Any) -> None:
         target = getattr(event, "target", None)
         by_node = {child.tre: key for key, child in self.keys()}
@@ -201,11 +284,113 @@ class Select(Control):
         self.view.resync()
         self.changed(old, key)
 
+    # -- the keys -----------------------------------------------------------------------------
+
+    def enabled(self) -> list[tuple[str, Entry]]:
+        return [(k, c) for k, c in self.keys() if c.wire is None or not c.wire.blocked]
+
+    def page(self) -> int:
+        """How many entries fit in the list: the step of Page Up and Page Down."""
+        rows = self.keys()
+        if not rows or rows[0][1].tre is None:
+            return 1
+        row = float(rows[0][1].tre.get("layout_height") or 0)
+        shown = float(self.tre.get("layout_height") or 0)
+        return max(int(shown // row), 1) if row > 0 else 1
+
+    @staticmethod
+    def text_of(entry: Entry) -> str:
+        """What an entry says, for a search by typing: its ``Label``, else the text of the
+        ``Text`` blocks in it."""
+        label = entry.tre.get("label") if entry.tre is not None else None
+        if label:
+            return str(label)
+        parts: list[str] = []
+
+        def walk(e: Entry) -> None:
+            if e.tre is not None and e.typed.kind == "Text":
+                parts.append(str(e.tre.get("text") or ""))
+            for c in e.children:
+                walk(c)
+
+        walk(entry)
+        return " ".join(p for p in parts if p)
+
+    def search(self, letter: str, rows: list[tuple[str, Entry]], at: int | None) -> int | None:
+        """The entry a typed ``letter`` jumps to: the next one whose text starts with the letters
+        typed in the last second (the same letter again goes round the entries that start with
+        it), or ``None``."""
+        self.typed += letter.lower()
+        if self.forget is not None:
+            self.forget.cancel()
+        self.forget = self.view.window.after(TYPE_AHEAD_MS, self._forget)
+        needle = self.typed
+        again = len(set(needle)) == 1  # "aa": the next entry that starts with "a"
+        if again:
+            needle = needle[0]
+        first = 0 if at is None else (at + 1 if again or len(needle) == 1 else at)
+        count = len(rows)
+        for i in range(count):
+            at_i = (first + i) % count
+            if self.text_of(rows[at_i][1]).lower().startswith(needle):
+                return at_i
+        return None
+
+    def _forget(self) -> None:
+        self.typed = ""
+        self.forget = None
+
+    def key(self, event: Any) -> bool:
+        key = getattr(event, "key", None)
+        if not isinstance(key, str) or not plain(event):
+            return False
+        rows = self.enabled()
+        if not rows:
+            return False
+        names = [k for k, _ in rows]
+        at = names.index(self.chosen) if self.chosen in names else None
+        last = len(rows) - 1
+        if key == "arrow_down":
+            to = 0 if at is None else min(at + 1, last)
+        elif key == "arrow_up":
+            to = last if at is None else max(at - 1, 0)
+        elif key == "page_down":
+            to = 0 if at is None else min(at + self.page(), last)
+        elif key == "page_up":
+            to = last if at is None else max(at - self.page(), 0)
+        elif key == "home":
+            to = 0
+        elif key == "end":
+            to = last
+        elif key == "space" and self.typed:  # a space in the middle of a search is a letter of it
+            found = self.search(" ", rows, at)
+            if found is None:
+                return True
+            to = found
+        elif key in ("enter", "space"):
+            to = 0 if at is None else at
+        elif len(key) == 1 and key.isprintable():
+            found = self.search(key, rows, at)
+            if found is None:
+                return True  # nothing starts with it: the key was a search all the same
+            to = found
+        else:
+            return False
+        self.choose(*rows[to])
+        return True
+
+    def stop(self) -> None:
+        if self.forget is not None:
+            self.forget.cancel()
+            self.forget = None
+
 
 class Slide(Control):
     """``Slides: HORIZONTAL | VERTICAL``: a press on the block, and a drag with the pointer
     captured, set ``value`` between ``value_min`` and ``value_max`` in steps of ``value_step``.
-    The block's parts ``fill`` and ``handle`` follow it."""
+    The block's parts ``fill`` and ``handle`` follow it. The keys are at :meth:`key`."""
+
+    takes_keys = True
 
     def __init__(self, view: View, entry: Entry) -> None:
         super().__init__(view, entry)
@@ -274,6 +459,41 @@ class Slide(Control):
         if span <= 0:
             return 0.0
         return min(max(((self.value if value is None else value) - self.low) / span, 0.0), 1.0)
+
+    # -- the keys -----------------------------------------------------------------------------
+
+    def key(self, event: Any) -> bool:
+        """Left and Down take a step off, Right and Up put a step on, Page Up and Page Down ten,
+        Home and End go to the ends (Standard Modules > Keyboard Operation, in both
+        orientations). Each key that moves the value raises ``On_Changed`` and then, at once,
+        ``On_Released``, both with the value before the step as ``old``; one that cannot move it
+        (at an end) raises nothing."""
+        key = getattr(event, "key", None)
+        if self.dragging or not plain(event):
+            return False
+        step = self.step if self.step > 0 else 1.0
+        if key in ("arrow_right", "arrow_up"):
+            target = self.value + step
+        elif key in ("arrow_left", "arrow_down"):
+            target = self.value - step
+        elif key == "page_up":
+            target = self.value + 10 * step
+        elif key == "page_down":
+            target = self.value - 10 * step
+        elif key == "home":
+            target = self.low
+        elif key == "end":
+            target = self.high
+        else:
+            return False
+        new = self.clamp(target)
+        if new != self.value:
+            old = self.value
+            self.value = new
+            self.apply()
+            self.changed(self.number(old), self.number(new))
+            self.released(self.number(old), self.number(new))
+        return True
 
     # -- geometry -----------------------------------------------------------------------------
 

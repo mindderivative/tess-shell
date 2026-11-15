@@ -12,16 +12,24 @@ Name: Button
 # are styled in a stylesheet (`Button:hovered { Border_Color: $color.primary }`); `Enabled: false`
 # shows `:disabled` and ignores the pointer. The role is BUTTON and its name is `Label`, else `Text`;
 # an icon-only Button has no name unless the call gives a `Label` (the shell warns at load).
+# Enter and Space press a focused Button (`:pressed` and the accessibility state `pressed` show while
+# the key is held, and `On_Click` runs). A Button that controls an Expander says so:
+#   Button { Text: "More", Expandable: true, Expanded: <| open |>, On_Click: flip }
+# so it carries the accessibility state `expanded` (the Expander itself has no role); a Button with
+# `Expandable: false` (the default) says nothing about it.
 Module {
     Params {
         Text { Type: string, Default: "" }
         Icon { Type: icon, Default: "" }
         Icon_Position { Type: string, Default: START }
         Label { Type: string, Default: "" }
+        Expandable { Type: boolean, Default: false }
+        Expanded { Type: boolean, Default: false }
     }
     FlexBox {
         Name: Root
         Role: BUTTON
+        Expanded: <| params.Expanded if params.Expandable else None |>
         Label: <| params.Label if params.Label else params.Text |>
         Height: 32
         Min_Width: 32

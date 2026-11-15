@@ -16,7 +16,8 @@ from tess_shell.binder.model import FIELD, FIELD_INPUT, Bool, Enum, Node
 
 # The roles of a block that takes input and is a Tab stop on its own (Standard Modules > Keyboard
 # Operation). A List and a Menu are ONE stop each: their entries (LISTITEM, MENUITEM) are reached
-# by the arrow keys, which M6b builds, so an entry is no Tab stop.
+# by the arrow keys (``binder.controls`` for a List, ``surfaces.popup`` for a Menu), so an entry is
+# no Tab stop.
 INTERACTIVE_ROLES = frozenset(
     {"BUTTON", "CHECKBOX", "RADIO", "SWITCH", "SLIDER", "LINK", "TAB", "LIST", "MENU"},
 )

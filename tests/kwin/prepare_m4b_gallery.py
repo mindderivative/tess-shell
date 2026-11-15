@@ -35,22 +35,20 @@ TDL: 0.2
 Name: Toggler
 ---
 
-# A test module: a pressed tile flips `open`, which an Expander follows (its Expanded param is a slot).
+# A test module: a pressed Button flips `open`, which an Expander follows (its Expanded param is a
+# slot). The Button controls the Expander, so it says `expanded`, and Enter and Space press it.
 Module {
     FlexBox {
         Name: Root
         Flex: VERTICAL
         Spacing: 6
         Children {
-            FlexBox {
+            Button {
                 Name: Tile
-                Width: 150
-                Height: 30
-                Align_Items: CENTER
-                Justify_Content: CENTER
-                Style { Background: $color.surface_raised, Border_Width: 1, Border_Color: $color.outline, Corner_Radius: 6 }
+                Text: "Open / close"
+                Expandable: true
+                Expanded: <| open |>
                 On_Click: flip
-                Children { Text { Text: "Open / close", Width: AUTO, Height: AUTO } }
             }
             Text { Name: Said, Text: <| said |>, Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
             Expander {
@@ -197,6 +195,10 @@ Do these in light and in dark (Plasma's colour scheme; every colour is a theme t
     last finish is reported.
 12  Switch Plasma light to dark: everything follows. The log has no ERROR (one WARNING for the
     bad icon name and one for the bad image file).
+14  Keys (M6b): write `Keyboard: ON_DEMAND,` in the Panel's keys in gallery/Shells/Main_Shell.tdl
+    and click the Panel. Tab to "Open / close" (it is a
+    Button now): Enter and Space open and close the Expander as a click does, and the line above it
+    reports each finish.
 """
 
 

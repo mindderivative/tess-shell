@@ -9,6 +9,7 @@ Name: Checkbox
 # click flips it and raises `On_Changed` once (`event.old`, `event.new`, `event.value`). A mixed
 # state is not in v1. Parts `::box`, `::mark` and `::label`; states `:checked`, `:hovered`, `:pressed`
 # and `:disabled`. The role is CHECKBOX with the state `checked`; its name is `Label`, else `Text`.
+# Keys: Space flips a focused Checkbox and raises `On_Changed` once; Enter does nothing.
 Module {
     Params {
         Checked { Type: boolean, Default: false }
