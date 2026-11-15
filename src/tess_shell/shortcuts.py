@@ -2,9 +2,10 @@
 collected (Global Shortcuts > Action Names and Forms, Failure Modes).
 
 The sources are the ``Shortcuts { }`` block of ``settings.tdl`` and the keys the surfaces declare
-(a Panel's ``Shortcut``, a Bar's ``Reveal_Key``). They are put together when the shell files are
-known (``scanner.scan``), so a name that matches no surface and two actions that share a key are
-found at load, before anything is registered, and ``tesserae-shell check`` reports them:
+(a Panel's or Frame's ``Shortcut``, a Bar's ``Reveal_Key``). They are put together when the
+shell files are known (``scanner.scan``), so a name that matches no surface and two actions
+that share a key are found at load, before anything is registered, and
+``tesserae-shell check`` reports them:
 
 * ``Toggle_<Name>``, ``Show_<Name>``, ``Hide_<Name>`` name a Panel, Bar or Frame; a name that
   matches none is a warning naming the nearest, and the action is not declared.
@@ -30,7 +31,7 @@ from tess_shell.binder import model as m
 from tess_shell.config.settings import SETTINGS_FILE, ShortcutEntry
 from tess_shell.schema.findings import Finding, nearest
 from tess_shell.schema.keys import Chord, parse_chord
-from tess_shell.schema.model import BarDef, ModuleDef, PanelDef, ShellDef
+from tess_shell.schema.model import BarDef, FrameDef, ModuleDef, PanelDef, ShellDef
 from tess_shell.schema.shell import read_shortcut_handler
 from tess_shell.services.shortcuts import Action, friendly_text
 
@@ -51,18 +52,21 @@ class _Declared:
         return f"{self.file}:{self.line}:{self.column}"
 
 
-def _surfaces(shell: ShellDef | None) -> tuple[dict[str, str], set[str], list[BarDef | PanelDef]]:
+def _surfaces(
+    shell: ShellDef | None,
+) -> tuple[dict[str, str], set[str], list[BarDef | PanelDef | FrameDef]]:
     """The Names a ``Toggle_<Name>`` may use (Bars, Panels, Frames, melded Panels) with their kind,
-    the Popup names (no key opens a Popup), and the Bars and Panels (for their own keys)."""
+    the Popup names (no key opens a Popup), and the Bars, Panels and Frames (for their own keys)."""
     kinds: dict[str, str] = {}
     popups: set[str] = set()
-    keyed: list[BarDef | PanelDef] = []
+    keyed: list[BarDef | PanelDef | FrameDef] = []
     for monitor in shell.monitors if shell is not None else ():
         for surface in monitor.surfaces:
             kinds[surface.name] = "bar" if isinstance(surface, BarDef) else "panel"
             keyed.append(surface)
         for frame in monitor.frames:
             kinds[frame.name] = "frame"
+            keyed.append(frame)
             for meld in frame.melds:
                 kinds[meld.name] = "panel"
                 keyed.append(meld)
@@ -85,7 +89,7 @@ def build_plan(
     kinds, popups, keyed = _surfaces(shell)
     declared: dict[str, _Declared] = {}
 
-    def own(surface: BarDef | PanelDef) -> None:
+    def own(surface: BarDef | PanelDef | FrameDef) -> None:
         key = surface.reveal_key if isinstance(surface, BarDef) else surface.shortcut
         if key is None:
             return

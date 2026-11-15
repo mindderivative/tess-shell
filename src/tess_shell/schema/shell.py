@@ -2301,6 +2301,7 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         edges=edges,
         tab_index=_tab_index(values),
         shortcut_mode=_shortcut_mode(values),
+        shortcut=hotkey if isinstance(hotkey := values.get("Shortcut"), m.Text) else None,
     )
 
 

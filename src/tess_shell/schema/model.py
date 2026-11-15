@@ -180,6 +180,7 @@ class FrameDef:
     melds: tuple[PanelDef, ...] = ()  # Panels with ``Meld: true`` attached to this Frame
     tab_index: int | None = None  # its place in the shell's focus order (None: after the rest)
     shortcut_mode: Origin | None = None  # where ``Shortcut_Mode: true`` is written; None: false
+    shortcut: Text | None = None  # ``Shortcut``: the canonical key string, where it is written
 
 
 @dataclass(frozen=True, slots=True)

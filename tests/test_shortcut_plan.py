@@ -34,7 +34,7 @@ SHELL_BODY = """Shell {
             Bar { Name: Top_Bar, Edge: TOP, Width: EXPAND, Height: 32, %(bar)s }
             %(launcher)s
             Panel { Name: Settings_Panel, Width: 300, Height: 200, Visible: false }
-            Frame { Name: Border_Frame, Thickness: 4 }
+            Frame { Name: Border_Frame, Thickness: 4%(frame)s }
             Popup { Name: Menu_Popup }
         }
     }
@@ -43,10 +43,18 @@ SHELL_BODY = """Shell {
 
 
 def write(
-    cfg: Path, settings: str, *, panel_key: str = "", bar_key: str = "", extra: str = ""
+    cfg: Path,
+    settings: str,
+    *,
+    panel_key: str = "",
+    bar_key: str = "",
+    frame_key: str = "",
+    extra: str = "",
 ) -> None:
     (cfg / "Shells").mkdir(parents=True, exist_ok=True)
-    body = SHELL_BODY % {"bar": bar_key, "launcher": LAUNCHER % panel_key} + extra
+    body = (
+        SHELL_BODY % {"bar": bar_key, "launcher": LAUNCHER % panel_key, "frame": frame_key} + extra
+    )
     (cfg / "Shells" / "Main_Shell.tdl").write_text(HEADER + body, encoding="utf-8")
     (cfg / "settings.tdl").write_text(
         SETTINGS_HEAD + "Settings {\n" + settings + "\n}\n", encoding="utf-8"
@@ -266,6 +274,62 @@ def test_the_keys_a_panel_and_a_bar_declare_are_the_equal_entries(tmp_path: Path
     assert actions["Toggle_Launcher"].keys == (parse_chord("Meta+Space"),)
     assert actions["Toggle_Launcher"].kind == "toggle" and actions["Show_Top_Bar"].kind == "show"
     assert actions["Show_Top_Bar"].keys == (parse_chord("Ctrl+Alt+B"),)
+
+
+def test_a_frame_declares_toggle_with_its_shortcut_key(tmp_path: Path) -> None:
+    actions, findings = plan(tmp_path, "", frame_key=', Shortcut: "ctrl+alt+f"')
+    assert findings == []
+    assert list(actions) == ["Toggle_Border_Frame"]
+    a = actions["Toggle_Border_Frame"]
+    assert (a.kind, a.target) == ("toggle", "Border_Frame")
+    assert a.keys == (parse_chord("Ctrl+Alt+F"),)
+    assert a.where.startswith("Shells/Main_Shell.tdl:")
+
+
+def test_a_bad_key_on_a_frame_is_a_value_error_at_the_key(tmp_path: Path) -> None:
+    write(tmp_path, "", frame_key=', Shortcut: "Meta+Spce"')
+    result, findings = load(tmp_path)
+    assert result is not None
+    errors = [f for f in findings if f.severity == "error"]
+    assert errors and errors[0].file == "Shells/Main_Shell.tdl" and errors[0].rule == "bad-value"
+    assert "Space" in errors[0].hint and errors[0].line > 0 and errors[0].column > 0
+    assert "Toggle_Border_Frame" not in {a.id for a in result.shortcuts}
+
+
+def test_a_frame_key_conflicts_with_another_action_once_naming_both(tmp_path: Path) -> None:
+    actions, findings = plan(
+        tmp_path,
+        'Shortcuts { Toggle_Launcher: "Alt+Ctrl+F" }',
+        frame_key=', Shortcut: "ctrl+alt+f"',
+    )
+    (w,) = warnings(findings, "shortcut-conflict")
+    assert "Toggle_Border_Frame (Shells/Main_Shell.tdl:" in w.message
+    assert "Toggle_Launcher (settings.tdl:" in w.message
+    assert actions["Toggle_Border_Frame"].keys == () and actions["Toggle_Launcher"].keys == ()
+
+
+def test_the_entry_wins_over_a_frames_own_key_with_one_warning(tmp_path: Path) -> None:
+    actions, findings = plan(
+        tmp_path,
+        'Shortcuts { Toggle_Border_Frame: "Ctrl+Alt+G" }',
+        frame_key=', Shortcut: "Ctrl+Alt+F"',
+    )
+    (w,) = warnings(findings, "shortcut-override")
+    assert w.file == "Shells/Main_Shell.tdl" and "wins" in w.message
+    assert actions["Toggle_Border_Frame"].keys == (parse_chord("Ctrl+Alt+G"),)
+
+
+def test_a_call_shortcut_naming_no_module_is_still_an_error(tmp_path: Path) -> None:
+    write(
+        tmp_path,
+        'Shortcuts { Ghost_Mark { Keys: "Ctrl+Alt+G", Action: Call, Target: "Ghost.mark" } }',
+    )
+    result, findings = load(tmp_path)
+    assert result is not None
+    errors = [f for f in findings if f.severity == "error"]
+    assert errors and "no module named Ghost" in errors[0].message
+    assert errors[0].file == "settings.tdl"
+    assert "Ghost_Mark" not in {a.id for a in result.shortcuts}
 
 
 def test_a_bad_key_on_a_surface_is_a_value_error_in_the_shell_file(tmp_path: Path) -> None:
