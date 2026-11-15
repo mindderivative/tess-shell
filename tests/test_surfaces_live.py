@@ -288,7 +288,7 @@ def test_a_shadow_changes_neither_the_reserved_space_nor_the_body(
         shell.wait_for("Bar Top_Bar on HEADLESS-1 configured")
         # Gap 8 + Height 32 reserved 48 without a shadow (D31); the same with one
         assert reserved_rect(private_sway, before)["y"] == before["y"] + 48
-        assert "size (0, 105)" in shell.log_text()  # 8 (shadow in the Gap) + 32 + 65 below
+        shell.wait_log("size (0, 105)")  # 8 (shadow in the Gap) + 32 + 65 below
         shell.process.send_signal(signal.SIGTERM)
         assert shell.finish() == 0
     finally:

@@ -309,6 +309,9 @@ def test_global_shortcuts_false_makes_no_call_and_a_reload_turns_it_on_and_off(
     d.write('    Global_Shortcuts: false\n    Shortcuts { Toggle_Launcher: "Meta+Space" }')
     d.start()
     assert d.fake.calls == []
+    # the file log lags the console by a few milliseconds (two queued sinks): wait for the line
+    assert d.shell is not None
+    d.shell.wait_log("Global_Shortcuts is false")
     assert d.log().count("Global_Shortcuts is false") == 1
     d.settings('    Global_Shortcuts: true\n    Shortcuts { Toggle_Launcher: "Meta+Space" }')
     assert d.run("reload").returncode == 0

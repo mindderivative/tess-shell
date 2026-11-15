@@ -68,6 +68,19 @@ class Shell:
         (log,) = sorted((self.config / "logs").glob("log_*.log"))
         return log.read_text()
 
+    def wait_log(self, text: str, timeout: float = 8) -> None:
+        """Wait until ``text`` is in the LOG FILE. The console and the file are written by two
+        queued sinks (``enqueue=True``), so a line the console has shown may not be in the file
+        yet: a test that reads the file while the shell runs waits with this, and one that reads it
+        after the shell has ended does not need to."""
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            files = sorted((self.config / "logs").glob("log_*.log"))
+            if files and text in files[0].read_text():
+                return
+            time.sleep(0.05)
+        pytest.fail(f"never saw {text!r} in the log file:\n{self.log_text()}")
+
 
 @pytest.fixture
 def shell_factory(private_sway: PrivateSway) -> Iterator[object]:
