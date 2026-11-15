@@ -10,10 +10,12 @@ traversal."""
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Iterator
 from typing import Any
 
 import pytest
 import tess_dl
+from loguru import logger
 from tess_re import Window
 
 from tess_shell.binder import model as m
@@ -30,7 +32,18 @@ from tess_shell.schema.shell import read_shell
 from tess_shell.surfaces.focus import next_surface, surface_order
 from tests.field_live import look
 from tests.shell_samples import HEADER, SVG
-from tests.test_popup import BTN, Rig, rig
+from tests.test_popup import _SINKS, BTN, Rig, rig
+
+
+@pytest.fixture(autouse=True)
+def _drain_the_rig_sinks() -> Iterator[None]:
+    """The popup ``rig`` adds a log sink and leaves its id in ``tests.test_popup._SINKS``, which
+    only that module's own tests drain; a later test that clears every handler would leave the
+    ids dead and fail the first popup tests' teardown. Take them out here."""
+    yield
+    while _SINKS:
+        logger.remove(_SINKS.pop())
+
 
 DARK = look(scheme="dark")
 LIGHT = look(scheme="light")

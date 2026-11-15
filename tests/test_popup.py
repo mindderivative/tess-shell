@@ -350,7 +350,10 @@ _SINKS: list[int] = []
 def _remove_log_sinks() -> Iterator[None]:
     yield
     while _SINKS:
-        logger.remove(_SINKS.pop())
+        try:
+            logger.remove(_SINKS.pop())
+        except ValueError:  # a test that cleared every handler (the shell's own logging setup)
+            pass
 
 
 @pytest.fixture
