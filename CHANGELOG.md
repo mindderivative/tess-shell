@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 - 2026-11-15
 
 - Moved to tesserae-dl 0.2.0 (floor `>=0.2.0,<0.3`; language TDL 0.2): a slot is written `<| expression |>` and `{{ }}` is refused by the parser (`tdl-unexpected-text`, with the hint `Write <| expression |>`); every shipped `.tdl` file, fixture, example, hint, doc line and the README use the new form and the header `TDL: 0.2` (`Shell: 0.1` is the shell's own version and stays). `tess_dl` accepts any version of its own major number, so the shell checks the `TDL:` key itself: a file written for TDL 0.1 is an error `tdl-old-version` at the key (and a newer one a `version-pin`), also for `settings.tdl`, and the UID write skips such a file. `tdl-double-close` no longer exists (`}}` is two closing braces).
 - `For` with several loop variables (`For i, item In <| enumerate(items) |> Key <| item.id |> { ... }`, new in TDL 0.2): `ForNode.variables` (a tuple; `variable` is gone) carries every name written, and `model/live.py` gives them to tess-el's `compile_repeater_parts` as written, which unpacks each item of the list over the names (an item that is not a list or tuple with one value per name is reported at the `For` as a TEL error and the entries are left out). Every name is readable in the entry's slots, in `Key`, in a handler's argument slots and in a Popup's content; the nodes are kept by key as before. A duplicate or invalid name is the language's own finding (`tdl-duplicate-variable`, "A For needs a variable name").
