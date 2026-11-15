@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import signal
 import subprocess
+import time
 from pathlib import Path
 
 import pytest
@@ -60,6 +61,14 @@ def text_pixels(sway: PrivateSway) -> int:
     return count
 
 
+def park(pointer: live_pointer.VirtualPointer) -> None:
+    """Put the pointer in an empty corner. Some compositors (sway 1.9 on wlroots 0.17, the one on
+    GitHub's runners) draw the cursor into a screenshot, and a count of pixels in the bar would then
+    count the cursor's; with the pointer parked the count is the bar's own, and the hover look is
+    gone too, so it is the look at rest that is compared."""
+    pointer.move(OUT[0] - 20, OUT[1] - 20)
+
+
 def test_a_real_click_on_play_and_next_reaches_the_fake_player_and_the_icon_follows_its_signal(
     private_sway: PrivateSway, tmp_path: Path
 ) -> None:
@@ -74,16 +83,19 @@ def test_a_real_click_on_play_and_next_reaches_the_fake_player_and_the_icon_foll
         shell.wait_for("running")
         pointer: live_pointer.VirtualPointer | None = None
         try:
-            assert wait_for(
-                lambda: text_pixels(private_sway) > 40, 10
-            )  # the three icons and a title
+            # the three icons and a title (the first frame takes several seconds on a slow runner)
+            assert wait_for(lambda: text_pixels(private_sway) > 40, 30)
             hidden_before = text_pixels(private_sway)
             pointer = live_pointer.VirtualPointer(private_sway.env, *OUT)
             pointer.move(PLAY - 12, ROW)
             pointer.move(PLAY, ROW)
             pointer.click()
             assert wait_for(lambda: [c[0] for c in player.calls] == ["PlayPause"], 5), player.calls
-            # the player has not said anything: the look has not moved (no guess)
+            # the player has not said anything: the look has not moved (no guess). Back at rest it
+            # must be the look from before the click, and it stays so.
+            park(pointer)
+            assert wait_for(lambda: text_pixels(private_sway) == hidden_before, 5)
+            time.sleep(0.3)
             assert text_pixels(private_sway) == hidden_before
             player.status("Playing")  # now it says so: the play icon becomes the pause icon
             assert wait_for(lambda: text_pixels(private_sway) != hidden_before, 5)
@@ -95,6 +107,7 @@ def test_a_real_click_on_play_and_next_reaches_the_fake_player_and_the_icon_foll
             assert wait_for(
                 lambda: [c[0] for c in player.calls] == ["PlayPause", "Next", "Previous"], 5
             ), player.calls
+            park(pointer)
             player.down()  # the only player leaves: nothing is drawn, no placeholder
             assert wait_for(lambda: text_pixels(private_sway) == 0, 8)
             player.up()
