@@ -186,6 +186,17 @@ class Chord:
         return self.text
 
 
+_NAME_OF_CODE = {code: name for name, code in reversed(KEY_CODES.items())}
+
+
+def qt_text(qt: int) -> str:
+    """The written form of a Qt key integer (modifier bits OR-ed with a ``Qt::Key``), as the service
+    answers it; a key this table does not know is its hexadecimal number."""
+    held = [m for m in MODIFIER_ORDER if qt & MODIFIER_BITS[m]]
+    rest = qt & ~sum(MODIFIER_BITS[m] for m in held)
+    return SEPARATOR.join((*held, _NAME_OF_CODE.get(rest, hex(rest))))
+
+
 def _all_names() -> list[str]:
     return [*KEYS, *ALIASES]
 

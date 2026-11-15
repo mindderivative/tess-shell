@@ -546,6 +546,29 @@ def test_a_key_the_user_cleared_is_not_reported_as_taken_and_is_asked_about_once
         assert "Toggle_Launcher" in r.fake.names() and r.fake.present() == ["Toggle_Launcher"]
 
 
+def test_a_saved_key_that_differs_from_the_file_is_used_and_one_info_line_says_so() -> None:
+    """The hand check on KWin: the file asked for Ctrl+Alt+Del, the service applied the key saved by
+    an earlier run (autoloading), and nothing said so."""
+    with rig() as r:
+        r.start([LAUNCHER])
+        r.stop()
+        saved = parse_chord("Ctrl+Alt+L").qt
+        r.fake.user_changes(COMPONENT, "Toggle_Launcher", (saved,))
+        r.lines.clear()
+        second = ShortcutService(r.service, r.loop.call_soon, r.pressed.append)
+        r.service.submit(second.start([LAUNCHER], True)).result(10)
+        assert r.fake.keys_of(COMPONENT, "Toggle_Launcher") == [saved]
+        (line,) = r.said("INFO", "wins over the file")
+        assert "Meta+Space" in line and "Ctrl+Alt+L" in line
+        assert r.said("WARNING", "") == []
+
+
+def test_the_key_the_file_writes_is_not_reported_when_the_service_sets_it() -> None:
+    with rig() as r:
+        r.start([LAUNCHER])
+        assert r.said("INFO", "wins over the file") == []
+
+
 def test_a_taken_key_is_asked_about_once_and_warned_once_by_the_answer() -> None:
     with rig() as r:
         r.fake.own(SPACE, "kwin")
