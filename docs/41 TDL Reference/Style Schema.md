@@ -5,7 +5,7 @@ type: tdl-ref
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-11-02
+updated: 2026-11-14
 tags: [tdl-ref, design]
 ---
 
@@ -32,7 +32,7 @@ Proposed set for v1. A key a block does not have is an error with the nearest na
 | Fill   | `Background`, `Foreground`, `Fill`, `Opacity`                                      | `Foreground` is text and icon colour; `Fill` is a shape's interior (from the maintainer's Icon example)                                                                                                                                                                                                                                                                                                                                        |
 | Border | `Border { Width, Color }`, `Border_Width`, `Border_Color`, `Corner_Radius`         | `Border` is always a block; the boolean `Border: true` or `Border: false` does not exist. The flat `Border_Width` and `Border_Color` are the same two values written as plain keys. `Width` takes one number, four in the order left, top, right, bottom, or named sides. `Corner_Radius` takes one number, four from the top-left corner clockwise, or named corners. A border takes layout space: the content and the children sit inside it |
 | Space  | `Padding`, `Margin`, `Spacing`                                                     | `Padding` and `Margin` are four-sided (left, top, right, bottom); `Spacing` is a number                                                                                                                                                                                                                                                                                                                                                        |
-| Text   | `Font_Family`, `Font_Size`, `Font_Weight`, `Line_Height`, `Text_Align`, `Overflow` | `Font_Family` is an ordered fallback list; `Font_Size` is the text size in pixels                                                                                                                                                                                                                                                                                                                                                              |
+| Text   | `Font_Family`, `Font_Size`, `Font_Weight`, `Line_Height`, `Text_Align`, `Overflow` | `Font_Family` is an ordered fallback list (tre takes one string, so the binder joins the list with `, `; decided 2026-11-04); `Font_Size` is the text size in pixels. `Overflow` is `CLIP` or `ELLIPSIS` on a `Text`; on a single-line TextField it also takes `SCROLL`, the default there (decided 2026-11-08, [Block Reference > TextField](Block%20Reference.md#textfield)) |
 | Shadow | `Elevation`, `Shadows`, `Shadow_Bleed`                                             | See below                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Motion | `Transition`, `Duration`, `Easing`                                                 | A property list plus timing; token names allowed                                                                                                                                                                                                                                                                                                                                                                                               |
 | State  | A state key (`Hovered`, `Pressed`, `Focused`, `Disabled`) holding style values     | Overrides the base values while the state holds                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -74,14 +74,14 @@ A theme file holds token groups, each a Capitalised key (`Color`, `Type`, `Shape
 | `Type`      | `Caption`, `Label`, `Body`, `Title`, `Display`; each with `Font_Size`, `Font_Weight`, `Line_Height` and optional `Font_Family`                      | The type scale                                            |
 | `Shape`     | `None`, `Small`, `Medium`, `Large`, `Full`                                                                                                          | Corner radii in pixels                                    |
 | `Space`     | `Step_1` to `Step_8`                                                                                                                                | A spacing scale in pixels                                 |
-| `Elevation` | `Max`, with an optional `Reach` (default 64) | The shadow list at 100%; the shell scales `X`, `Y`, `Blur` and `Spread` by the percentage (proposed) |
+| `Elevation` | `Max` | The shadow list at 100%; the shell scales `X`, `Y`, `Blur` and `Spread` by the percentage (proposed) |
 | `Motion`    | `Duration.Short`, `Duration.Medium`, `Duration.Long`, `Easing.Standard`, `Easing.Emphasized`                                                        | Milliseconds and easing names; zero under reduced motion  |
 
 A token is referenced as `$group.name`, for example `$color.surface` or `$type.body.font_size`; the reference is lowercase and the style engine matches it to the theme's Capitalised keys (`On_Surface`) without regard to case (D16, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). The `$group.name` text is a plain string to TDL, resolved by the style engine by theme key; it is not a TDL variable and does not clash with TEL's delimiter. An unknown token is an error with the nearest names.
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 Name: Dark
 ---
 
@@ -97,7 +97,6 @@ Theme {
         Large: 16
     }
     Elevation {
-        Reach: 64
         Max {
             Shadows {
                 Shadow { Color: "#00000040", X: 0, Y: 16, Blur: 48, Spread: 0 }
@@ -111,6 +110,20 @@ A token name in a theme file (`On_Surface`) is a Capitalised key; the lowercase 
 
 Light, dark, high contrast and reduced motion are modes of one theme: a `Modes` block (`Light`, `Dark`, `High_Contrast`, `Reduced_Motion`) overrides token values, and the shell picks the mode from the desktop ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7). Recommendation over one theme file per mode: tokens stay in one place and a missing override is easy to spot. Open.
 
+### Decided from the M3a Build (2026-11-05)
+
+The maintainer accepted these as recommended; the questions and the build are in [M3 Build Log](../00%20Home/M3%20Build%20Log.md) (D33 to D39, D41).
+
+| # | Rule |
+|---|---|
+| D33 | The shipped `Default` theme is a dark theme with steel blue as its primary colour. The base block is the dark look, and also what a desktop with no colour-scheme preference gets; `Light` overrides the colours; `High_Contrast` is black and white. The code session proposes the exact values, in `shipped/Themes/Default_Theme.tdl`, and the maintainer adjusts them. The values are plain data and the design system takes them over |
+| D34 | `Accent: DESKTOP` is how a theme asks for the desktop's accent colour ([Portals](../40%20Specifications/Integration/Portals.md)); with no desktop accent it is the theme's `Primary` |
+| D35 | `Reach` is dropped from `Elevation`. The margin comes from each shadow's own numbers, which is exact (the table above no longer lists it) |
+| D36 | The shipped `Default` stylesheet applies only when named in `Appearance.Stylesheets`; with none named a block keeps its own look. The `Default` theme is always the token source |
+| D38 | A theme has tokens only, no style values. Priority stays theme (the token values), then stylesheet, then style, then inline; a stylesheet is the lowest layer of style values |
+| D39 | `:hovered`, `:pressed`, `:focused`, `:disabled` and `::part` selectors are read and skipped with a warning in M3a; they are built with the events in M3b |
+| D41 | A token is allowed on any key of a block, in an inline `Style` and in a Bar's `Style`, but not on a Bar's placement keys (`Edge`, `Width`, `Height`, `Gap` and the like) |
+
 ## Stylesheet Selectors
 
 A stylesheet is a root block `Stylesheet { }` holding `Rule` blocks, repeated as needed and ordered by position. Each `Rule` has a `Selector:` property, a quoted string, and style values beside it (D5, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
@@ -123,11 +136,13 @@ A stylesheet is a root block `Stylesheet { }` holding `Rule` blocks, repeated as
 | A trailing state        | The state                 | `"Button:hovered"`        |
 | A trailing double colon | A named part of a block   | `"Slider::track"`         |
 
+A module name (`"Clock"`) matches every use of that module and applies its values to the module's root block only (maintainer, 2026-11-05, D40). Inheriting values such as `Foreground` and `Font_Size` reach the children through tre. The module's inner blocks are styled by type, class or `#name`; there is no descendant selector in v1.
+
 The selector is a string, so `.`, `#`, `:` and `::` are not TDL syntax there. Specificity is the order in the table, reversed: name beats class beats type; a state adds to the base rule. Within the priority order theme, stylesheet, style, inline ([Style, Theme and Stylesheet Files > Rules](Style%2C%20Theme%20and%20Stylesheet%20Files.md#rules)).
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 Name: Base_Stylesheet
 ---
 
@@ -147,6 +162,12 @@ Stylesheet {
     }
 }
 ```
+
+### Parts and Module Rules (Decided 2026-11-13)
+
+- A part is declared with `Part: name` on a block in a module's layout ([Block Reference > State](Block%20Reference.md#state)). The selector forms are `Module::part` and `Module::part:hovered`, `:pressed` or `:disabled`. `.class::part` and `#name::part` are left out of v1 and give a load warning "not built" (maintainer, 2026-11-13, as recommended). A part rule weighs between a class rule and a `#name` rule.
+- A part also shows the module's `:disabled` state when the module's root is disabled.
+- Rule keys written for a module name pass down the chain of first children from the module's root, so a rule such as `Clock { Background: ... }` reaches the visible block when the root is a wrapper; this replaces the wording "roots only" of D40 (maintainer, 2026-11-13, as recommended). The order stays module above type.
 
 ## Why Not Copy CSS or Another Framework's Names
 

@@ -2,10 +2,10 @@
 title: D-Bus Service Layer
 aliases: [D-Bus Services, Service Layer, ctx.dbus]
 type: spec
-status: draft
+status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-02
+updated: 2026-11-12
 tags: [spec/integration, integration/dbus, needs-verification]
 ---
 
@@ -35,16 +35,21 @@ tags: [spec/integration, integration/dbus, needs-verification]
 ### Calling a Service
 
 1. **Every call has a timeout.** The default is 5 seconds, the same as the control interface ([IPC and CLI > Threading](../Runtime/IPC%20and%20CLI.md#threading)). A module may pass a shorter one. A call that times out raises one `ServiceTimeout` error in the module and is logged once per service per minute.
-2. **A missing service is a state, not a crash.** `ServiceUnknown`, `NameHasNoOwner` and `NoReply` map to a service state `UNAVAILABLE`. The helper returns it to the module, which shows its empty or hidden state (the module specs decide what that looks like). The shell keeps running ([Goals and Non-Goals](../../10%20Vision/Goals%20and%20Non-Goals.md) G3).
+2. **A missing service is a state, not a crash.** `ServiceUnknown`, `NameHasNoOwner` and `NoReply` map to a service state `UNAVAILABLE`. A call to such a service raises `ServiceUnavailable`, with the state in `.state` and on `bus.state(name)` (maintainer, 2026-11-12, as recommended), and the module shows its empty or hidden state (the module specs decide what that looks like). The shell keeps running ([Goals and Non-Goals](../../10%20Vision/Goals%20and%20Non-Goals.md) G3).
 3. **No call from the loop thread.** A module that awaits a D-Bus call from a loop callback is a defect; the helper's blocking forms raise when called on the loop thread (proposed).
 4. **No polling when a signal exists.** A module that needs a value watches `PropertiesChanged` (the idle-CPU budget in AGENTS > 12. Design Completeness Checklist applies; the `60 Quality` budgets are not written).
 
 ### Listening and Name Owners
 
 - A subscription is a match rule on the bus. The helper adds the rule once per (bus, sender, path, interface, member) however many modules ask, and removes it when the last subscriber stops.
-- The helper watches `NameOwnerChanged` for every well-known name a module uses. When the owner goes away it marks the service `UNAVAILABLE` and calls the module's `on_service_lost`; when a new owner appears it re-reads the module's properties and calls `on_service_found`. The helper hands both calls to the loop with `call_soon`, so they run on the loop thread like every other hook. This is how a module survives `plasmashell` or `upowerd` restarting. The two hook names are proposed additions to the hook table in [Module Contract](../../42%20Python%20API/Module%20Contract.md); they do not exist there yet.
+- The helper watches `NameOwnerChanged` for every well-known name a module uses. When the owner goes away it marks the service `UNAVAILABLE` and calls the module's `on_service_lost`; when a new owner appears it re-reads the module's properties and calls `on_service_found`. The helper hands both calls to the loop with `call_soon`, so they run on the loop thread like every other hook. This is how a module survives `plasmashell` or `upowerd` restarting. The two hooks are in [Module Contract](../../42%20Python%20API/Module%20Contract.md) (decided 2026-11-12).
 - Property reads are cached per (service, path, interface) and updated from `PropertiesChanged`. A service that does not emit `PropertiesChanged` for a property (the catalogue says which) is read on a timer the module chooses, not by the helper.
 - `GetAll` is used once at subscription, then signals only.
+- A service that has not been read yet counts as unavailable, so `available` is false right after `proxy()` and turns true when the service is read; a module with two services may get `false, true` (maintainer, 2026-11-12).
+- A service that is absent when the module starts does not call `on_service_lost`, because nothing was lost; the module sees `available: false` and gets `on_service_found` when the service appears (maintainer, 2026-11-12).
+- `available` is the AND over the module's services. A module that needs "any" (Media) makes one proxy per player after it finds them and reads `bus.state(name)` (maintainer, 2026-11-12).
+- A one-shot `get` leaves a `PropertiesChanged` rule on the bus until the module stops; `fresh=True` asks the service directly for a rare one-off read (maintainer, 2026-11-12).
+- When the IPC interface is built, the IPC module re-requests the shell's own bus name through `Bus.on_reconnect` and once at start (maintainer, 2026-11-12).
 
 ### Own Names and Objects
 
@@ -82,7 +87,7 @@ None in v1. The shell asks for no bus address option: it uses `DBUS_SESSION_BUS_
 
 ## Python Contract
 
-The helper's methods, hooks and error types are listed in [Module Context > D-Bus Helper](../../42%20Python%20API/Module%20Context.md#d-bus-helper) and [Module Contract](../../42%20Python%20API/Module%20Contract.md). The additions this note proposes: `ServiceTimeout` and `ServiceUnavailable` error types, the hooks `on_service_lost(name)` and `on_service_found(name)`, a blocking-call guard on the loop thread, and a state value `UNAVAILABLE`.
+The helper's methods, hooks and error types are listed in [Module Context > D-Bus Helper](../../42%20Python%20API/Module%20Context.md#d-bus-helper) and [Module Contract](../../42%20Python%20API/Module%20Contract.md). The additions this note proposes: `ServiceTimeout` and `ServiceUnavailable` error types, the hooks `on_service_lost(name)` and `on_service_found(name)` (now in [Module Contract](../../42%20Python%20API/Module%20Contract.md), decided 2026-11-12), a blocking-call guard on the loop thread, and a state value `UNAVAILABLE`.
 
 ## Integration
 
@@ -117,10 +122,13 @@ The layer carries no UI. A module that shows a service as unavailable must also 
 
 ## Open Questions
 
-1. [ ] The 1 ms and 50 ms callback numbers are proposals; measure in the spike.
-2. [ ] Whether the hooks `on_service_lost` and `on_service_found` belong to the module contract or to the helper's subscription call (recommendation: the contract, so every module handles a service the same way).
-3. [ ] Whether the system bus connection is opened lazily (recommended) or at start.
-4. [ ] The Applications source for the launcher ([Roadmap](../../00%20Home/Roadmap.md)).
+1. [x] Do the hooks `on_service_lost` and `on_service_found` belong to the module contract or to the helper's subscription call? The module contract, so every module handles a service the same way (maintainer, 2026-11-12, as recommended). They are written into [Module Contract](../../42%20Python%20API/Module%20Contract.md).
+2. [x] Should the system bus connection open lazily or at start? Lazily, on the first call that needs it (maintainer, 2026-11-12, as recommended).
+3. [x] What is the Applications source for the launcher? Desktop entries read from the files for v1; KRunner is left as a later search backend (maintainer, 2026-11-12, as recommended). The files, their folders and the search belong to the Applications spec owed before M6d ([M6 Brief](../../00%20Home/M6%20Brief.md)). #needs-verification
+
+## Questions After Testing
+
+1. [x] Are 1 ms (own work in a callback) and 50 ms (logged slow callback) the right numbers? Keep them until the spike shows real callback times, then set them from the measured p99 (maintainer, 2026-11-12, as recommended). The numbers are proposals until the D-Bus spike with the real modules measures them.
 
 ## Acceptance Criteria
 

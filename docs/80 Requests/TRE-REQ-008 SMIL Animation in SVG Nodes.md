@@ -5,7 +5,7 @@ type: engine-request
 status: review
 owner: phil
 created: 2026-11-01
-updated: 2026-11-02
+updated: 2026-11-10
 tags: [engine-request, design, needs-verification]
 ---
 
@@ -143,9 +143,12 @@ Not measured. By reading the data: the elements and attributes in the table abov
 ## Open Questions
 
 - [x] Whether tre prefers a pre-pass over `usvg`, a different SVG library or its own SMIL evaluator: a pre-pass over `usvg` (tre, issue #245).
-- [ ] Whether `usvg` already drops SMIL elements or fails on them (it drew the test icons without error).
-- [ ] The cost of re-parsing a small document per sample: tre's target is 30 icons per frame in under 4 ms, to be measured in issue #245. What tre does while only an `svg_time` animation runs (wake-ups, hidden or occluded windows) was unverified on 2026-11-01; tre measured it on 2026-11-02 (see "Built in tre").
 - [x] Whether `svg_time` is animatable: yes, with the existing `animate` (tre, issue #245).
+
+## Questions After Testing
+
+1. [ ] Does `usvg` drop SMIL elements or fail on them? Context: it drew the test icons without error. Recommendation: no action unless a test shows a failure; the pre-pass design does not depend on the answer. Answered by: parsing the animated `mli` icons with `usvg` directly.
+2. [ ] Is the cost of re-parsing a small document per sample acceptable? Context: tre's target is 30 icons per frame in under 4 ms, to be measured in issue #245. What tre does while only an `svg_time` animation runs (wake-ups, hidden or occluded windows) was unverified on 2026-11-01; tre measured it on 2026-11-02 (see "Built in tre"). Recommendation: accept tre's target of 30 icons per frame in under 4 ms. Answered by: tre's measurement in issue #245.
 
 ## Links
 

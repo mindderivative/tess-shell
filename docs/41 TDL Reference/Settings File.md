@@ -5,7 +5,7 @@ type: tdl-ref
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-11-03
+updated: 2026-11-14
 tags: [tdl-ref, runtime]
 ---
 
@@ -39,7 +39,7 @@ $HOME/.config/tesserae-shell/
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 Name: Settings
 ---
 ```
@@ -51,10 +51,11 @@ The metadata block of every shell file is defined in [TDL Language > The Metadat
 | Key           | Meaning                              | Value                                                                                                                                                                                |
 |---------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Directories` | Where to look for each file type     | A block with the keys `Shells`, `Modules`, `Styles`, `Themes`, `Stylesheets`, `Icons` to an absolute directory or a list of them. `Icons` lists extra locations searched after the config `Icons/` folder (decided 2026-11-01, [Block Reference > Icons (R7)](Block%20Reference.md#icons-r7))                                                                     |
-| `Main_Shell`  | The shell file the shell starts from | A file name in the shells directory; default `Main_Shell.tdl`                                                                                                                       |
+| `Main_Shell`  | The shell file the shell starts from | A file name in the shells directory; default `Main_Shell.tdl`. It names the file only; the `Name:` in that file's metadata is independent of it                                                                                                                       |
 | `Registry`    | Where the registry file lives        | An absolute path to a `registry.json` file; default `$HOME/.config/tesserae-shell/registry.json`. Same path rules as `Directories`                                                   |
 | `Logging`     | Global log settings                  | `Level`, `Directory` (default `logs/` in the config directory, same path rules) and `Retention` (optional, days); naming and rotation are in [Log files](#log-files) |
 | `Validation`  | Schema validation settings           | `Enabled` (default true); there is no validation cache ([ADR-0020 Validation in Code](../30%20Decisions/ADR-0020%20Validation%20in%20Code.md))                                                                                              |
+| `Shortcuts`   | The user's own shortcut keys, listened for globally (decided 2026-11-08; names to be determined) | A block of `Name: "keys"` properties, for example `Shortcuts { Focus_Shell: "ctrl+shift+F1" }` (a bracketed list of pairs is not valid TDL, [Global Shortcuts > Keyboard Access: Shortcuts in settings.tdl (Decided 2026-11-08, Names to Be Determined)](../40%20Specifications/Integration/Global%20Shortcuts.md#keyboard-access-shortcuts-in-settingstdl-decided-2026-11-08-names-to-be-determined)) |
 
 Keys are Capitalised like every key in a shell file ([TDL Language > Names and the Registry](TDL%20Language.md#names-and-the-registry)). The key names are the agent's Capitalisation of the 2026-10-29 names; `Level`, `Directory`, `Retention` and `Enabled` follow the same rule.
 
@@ -68,7 +69,7 @@ Enum values of settings keys are full upper case, like every enum value (D58):
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 Name: Settings
 ---
 

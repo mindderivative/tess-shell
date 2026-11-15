@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-27
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [moc, question]
 ---
 
@@ -29,6 +29,7 @@ Every claim tagged `#needs-verification`, grouped by folder. **Where** links to 
 
 The same notes as a plain list, with no JavaScript:
 
+- [Accessibility](../60%20Quality/Accessibility.md)
 - [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md)
 - [ADR-0004 Plasma Coexistence](../30%20Decisions/ADR-0004%20Plasma%20Coexistence.md)
 - [ADR-0005 Global Shortcuts](../30%20Decisions/ADR-0005%20Global%20Shortcuts.md)
@@ -40,18 +41,26 @@ The same notes as a plain list, with no JavaScript:
 - [ADR-0013 Control Interface](../30%20Decisions/ADR-0013%20Control%20Interface.md)
 - [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)
 - [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md)
+- [ADR-0021 Audio Access](../30%20Decisions/ADR-0021%20Audio%20Access.md)
+- [Applications Module](../40%20Specifications/Modules/Applications%20Module.md)
+- [Audio Access Spike](../90%20Research/Audio%20Access%20Spike.md)
+- [Audio Module](../40%20Specifications/Modules/Audio%20Module.md)
 - [Bar](../40%20Specifications/Surfaces/Bar.md)
+- [Battery Module](../40%20Specifications/Modules/Battery%20Module.md)
 - [Block Reference](../41%20TDL%20Reference/Block%20Reference.md)
 - [Building Blocks](../50%20Design%20System/Building%20Blocks.md)
 - [Clock Module](../40%20Specifications/Modules/Clock%20Module.md)
 - [Common Keys and Conventions](../41%20TDL%20Reference/Common%20Keys%20and%20Conventions.md)
 - [Config Discovery and Registry](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md)
+- [Configuration Application](../40%20Specifications/Configuration%20Application.md)
 - [D-Bus Libraries for Python](../90%20Research/D-Bus%20Libraries%20for%20Python.md)
 - [D-Bus Service Layer](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md)
 - [Data Flow](../20%20Architecture/Data%20Flow.md)
+- [Events and Actions](../42%20Python%20API/Events%20and%20Actions.md)
 - [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)
 - [Expression Languages for YAML](../90%20Research/Expression%20Languages%20for%20YAML.md)
 - [Familiar Names Audit](../41%20TDL%20Reference/Familiar%20Names%20Audit.md)
+- [Focus and Keyboard](../40%20Specifications/Integration/Focus%20and%20Keyboard.md)
 - [Frame](../40%20Specifications/Surfaces/Frame.md)
 - [Global Shortcuts](../40%20Specifications/Integration/Global%20Shortcuts.md)
 - [Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md)
@@ -62,9 +71,14 @@ The same notes as a plain list, with no JavaScript:
 - [Layers and Components](../20%20Architecture/Layers%20and%20Components.md)
 - [Logging](../40%20Specifications/Runtime/Logging.md)
 - [Logging with Loguru](../90%20Research/Logging%20with%20Loguru.md)
+- [M3 Build Log](M3%20Build%20Log.md)
+- [M4 Brief](M4%20Brief.md)
+- [Media Module](../40%20Specifications/Modules/Media%20Module.md)
 - [Module Context](../42%20Python%20API/Module%20Context.md)
 - [Module Contract](../42%20Python%20API/Module%20Contract.md)
 - [Module File](../41%20TDL%20Reference/Module%20File.md)
+- [Network Module](../40%20Specifications/Modules/Network%20Module.md)
+- [Packaging and Session Start](../70%20Delivery/Packaging%20and%20Session%20Start.md)
 - [Panel](../40%20Specifications/Surfaces/Panel.md)
 - [Plasma Coexistence](../40%20Specifications/Integration/Plasma%20Coexistence.md)
 - [Popup](../40%20Specifications/Surfaces/Popup.md)
@@ -74,35 +88,49 @@ The same notes as a plain list, with no JavaScript:
 - [Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md)
 - [Python Builder](../42%20Python%20API/Python%20Builder.md)
 - [Render Binder Design](../20%20Architecture/Render%20Binder%20Design.md)
-- [Risk Register](Risk%20Register.md)
 - [Settings File](../41%20TDL%20Reference/Settings%20File.md)
 - [Shadows on Layer Surfaces](../90%20Research/Shadows%20on%20Layer%20Surfaces.md)
 - [Shell File](../41%20TDL%20Reference/Shell%20File.md)
 - [Shell Start and Stop](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md)
 - [Shell Structure](../20%20Architecture/Shell%20Structure.md)
+- [Standard Modules](../50%20Design%20System/Standard%20Modules.md)
 - [Style Schema](../41%20TDL%20Reference/Style%20Schema.md)
 - [Style, Theme and Stylesheet Files](../41%20TDL%20Reference/Style%2C%20Theme%20and%20Stylesheet%20Files.md)
 - [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md)
 - [System Context](../20%20Architecture/System%20Context.md)
+- [Tasks Module](../40%20Specifications/Modules/Tasks%20Module.md)
 - [TDL Language](../41%20TDL%20Reference/TDL%20Language.md)
+- [TEL Integration](../20%20Architecture/TEL%20Integration.md)
+- [tess-utils Brief](tess-utils%20Brief.md)
 - [Testing Strategy](../60%20Quality/Testing%20Strategy.md)
+- [Tray Module](../40%20Specifications/Modules/Tray%20Module.md)
 - [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)
 - [TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)
 - [TRE-REQ-006 Repeating Gradients](../80%20Requests/TRE-REQ-006%20Repeating%20Gradients.md)
 - [TRE-REQ-007 Popup Body Geometry](../80%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md)
 - [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md)
 - [TRE-REQ-009 Batch and Tree Building](../80%20Requests/TRE-REQ-009%20Batch%20and%20Tree%20Building.md)
+- [TRE-REQ-011 Drain call_soon at Loop Start](../80%20Requests/TRE-REQ-011%20Drain%20call_soon%20at%20Loop%20Start.md)
+- [TRE-REQ-012 Draw a Window Changed in Another Window's Callback](../80%20Requests/TRE-REQ-012%20Draw%20a%20Window%20Changed%20in%20Another%20Window%27s%20Callback.md)
+- [TRE-REQ-013 Structure-Preserving Path Morph](../80%20Requests/TRE-REQ-013%20Structure-Preserving%20Path%20Morph.md)
+- [TRE-REQ-014 Popup Input Region](../80%20Requests/TRE-REQ-014%20Popup%20Input%20Region.md)
+- [TRE-REQ-015 Linear-Light Edge Blending](../80%20Requests/TRE-REQ-015%20Linear-Light%20Edge%20Blending.md)
+- [TRE-REQ-016 Text Input Wrap and Overflow](../80%20Requests/TRE-REQ-016%20Text%20Input%20Wrap%20and%20Overflow.md)
+- [TRE-REQ-017 Caret Movement by Visual Row](../80%20Requests/TRE-REQ-017%20Caret%20Movement%20by%20Visual%20Row.md)
+- [TRE-REQ-018 Tab Leaves a Multi-Line Text Input](../80%20Requests/TRE-REQ-018%20Tab%20Leaves%20a%20Multi-Line%20Text%20Input.md)
+- [TRE-REQ-019 Popup Close Before Placement](../80%20Requests/TRE-REQ-019%20Popup%20Close%20Before%20Placement.md)
 - [V1 Scope](../10%20Vision/V1%20Scope.md)
 - [Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)
 - [Value Types and Conversion](../42%20Python%20API/Value%20Types%20and%20Conversion.md)
 - [Wayland Protocols](../40%20Specifications/Integration/Wayland%20Protocols.md)
+- [Workspaces Module](../40%20Specifications/Modules/Workspaces%20Module.md)
 
 ## Vision
 
 ### [Personas and Use Cases](../10%20Vision/Personas%20and%20Use%20Cases.md)
 
 
-- [ ] Is a notification centre a v1 use case? It depends on the notification-server coexistence decision, which is not made. Placed outside v1 in [V1 Scope](../10%20Vision/V1%20Scope.md).
+- [ ] Is a notification centre a v1 use case? Context: it depends on the notification-server coexistence decision, which is not made; it is placed outside v1 in [V1 Scope](../10%20Vision/V1%20Scope.md). Recommendation: keep it outside v1 until that decision is made.
 - [x] What does a newly plugged monitor get when the configuration does not name it? A configurable default section ([V1 Scope > Multi-monitor](../10%20Vision/V1%20Scope.md#multi-monitor)).
 - [x] Which persona writes the default shell? P2 (shell author), with the maintainer as the reviewer. Confirmed 2026-10-25 with the Vision.
 
@@ -113,40 +141,39 @@ The same notes as a plain list, with no JavaScript:
 
 
 - [x] The D-Bus names plasmashell holds on a live Plasma 6 session: observed above, for [ADR-0004 Plasma Coexistence](../30%20Decisions/ADR-0004%20Plasma%20Coexistence.md). Re-check on other distributions.
-- [ ] The access path for each service above; one `Integration` spec per service ([40 Specifications](../40%20Specifications/40%20Specifications.md)).
+- [ ] **Which access path does each service use?** Context: the candidate table above leaves Tasks, Audio and Applications open; each service needs one `Integration` spec ([40 Specifications](../40%20Specifications/40%20Specifications.md)). Recommendation: write one `Integration` spec per service as its module starts, and pick the access path there.
 - [x] Which D-Bus client library: `dbus-fast` on a shared asyncio service thread ([ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md), decided 2026-10-26).
 
 
 ### [Layers and Components](../20%20Architecture/Layers%20and%20Components.md)
 
 
-- [ ] Is the value store a component of its own, or part of the shell model?
+- [ ] **Is the value store a component of its own, or part of the shell model?** Context: the component table lists it separately, while [Shell Package Layout](../20%20Architecture/Shell%20Package%20Layout.md) puts it in `model/` next to the TEL scope. Recommendation: keep it a distinct component, implemented inside `model/`.
 - [x] How a widget event (a click) reaches a module: the shell maps the event to a module method or a shell action; TEL only evaluates argument expressions ([ADR-0007 Shell UI Layer > Events and module reload (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26)). The key names are set in the TDL reference (folder `41 TDL Reference/`).
-- [ ] Where theme changes (light/dark, high contrast, reduced motion following the desktop) are read and pushed ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7).
-- [ ] The global shortcut service: a runtime component or a module.
+- [ ] **Where are theme changes read and pushed (light/dark, high contrast, reduced motion following the desktop)?** Context: [Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7 asks the shell to follow the desktop. Recommendation: a runtime component that reads the desktop setting and pushes a theme change through the model, like any other value.
+- [ ] **Is the global shortcut service a runtime component or a module?** Context: [ADR-0005 Global Shortcuts](../30%20Decisions/ADR-0005%20Global%20Shortcuts.md) and the table above put shortcuts in modules and a shortcut service in the runtime. Recommendation: a runtime component, because it serves every module.
 - [x] Which component builds and rebuilds the `If` and `For` branches: the shell model builder, which evaluates the condition or iterable through TEL and rebuilds that branch or entry. TEL evaluates expressions (values) only (D11, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 
 
 ### [Process Model and Threading](../20%20Architecture/Process%20Model%20and%20Threading.md)
 
 
-- [ ] **Module threads: who owns them?** Options. **A.** Each module starts and owns its threads; the shell gives a helper that catches and logs thread exceptions (flexible, simple contract; recommended). **B.** The shell runs a shared `asyncio` thread for services and modules are coroutines (less thread code, forces async on module authors). **C.** A shell thread pool for module work. Recommendation A, with B available as an optional shared service thread for D-Bus.
+- [ ] **Who owns module threads?** Context: options. A: each module starts and owns its threads, and the shell gives a helper that catches and logs thread exceptions (flexible, simple contract). B: the shell runs a shared `asyncio` thread for services and modules are coroutines (less thread code, forces async on module authors). C: a shell thread pool for module work. Recommendation: A, with B available as an optional shared service thread for D-Bus.
 - [x] **D-Bus client library.** `dbus-fast` on a shared asyncio service thread, `jeepney` as the fallback (maintainer, 2026-10-26, [ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)).
-- [ ] **Registry I/O and the UID write** on the loop or a single writer thread ([ADR-0007 Shell UI Layer > Open items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)). Proposed in [Config Discovery and Registry > The registry file](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md#the-registry-file): one writer thread, one write per 500 ms.
-- [ ] **Supervisor** in v1 or later.
+- [ ] **Does registry I/O and the UID write run on the loop or on a single writer thread?** Context: [Config Discovery and Registry > The registry file](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md#the-registry-file) proposes one writer thread, one write per 500 ms ([ADR-0007 Shell UI Layer > Open Items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)). Recommendation: the single writer thread.
+- [ ] **Does a supervisor ship in v1 or later?** Context: only a supervisor outside the process recovers from a hard hang; the watchdog alone logs it, and neither is built. Recommendation: later; the v1 watchdog is enough.
 - [x] **No windows** policy: stay idle (maintainer, 2026-10-26).
 - [x] **No windows mechanism.** Option A, chosen 2026-10-26 and released in tre 0.5.9 on 2026-10-27: `App.run(keep_alive=True)` and `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). The shell requires tre 0.5.9 or later.
-- [ ] **Where conversions run** (send or flush).
+- [ ] **Do value conversions run in the send or in the flush?** Context: HEX to RGBA and the like can run on the module thread if pure, or on the loop in the flush. Recommendation: convert in the flush on the loop, which keeps module threads free of shell types; decide finally in the Python API spec.
 
 
 ### [Data Flow](../20%20Architecture/Data%20Flow.md)
 
 
-- [ ] Where the value store sits and how a module's last value is kept across a reload.
-- [ ] The handler vocabulary for input: the shell's, in the TDL reference (folder `41 TDL Reference/`), not TEL's.
+- [ ] **Where does the value store sit, and how is a module's last value kept across a reload?** Context: the store holds the latest value per module and key; a module reload stops the old instance and imports new code. Recommendation: the store lives in the shell model (`model/`, as in [TEL Integration](../20%20Architecture/TEL%20Integration.md)), and a reload keeps the stored values until the new instance sends its own, so widgets do not blank during the reload.
 - [x] A module's `.py` can be reloaded at runtime (maintainer, 2026-10-26). Mechanics are proposed above.
 - [x] How the diff of a reload works: by identity (file UID), then name, then position (proposed in [Hot Reload > The diff](../40%20Specifications/Runtime/Hot%20Reload.md#the-diff)).
-- [ ] What `output_updated` does to surfaces whose size depends on the output.
+- [ ] What does `output_updated` do to surfaces whose size depends on the output? Context: today it keeps the surfaces and re-evaluates only the match rules. Recommendation: re-evaluate the size of those surfaces on `output_updated` and apply it live through `set()`.
 
 
 ## Decisions
@@ -155,12 +182,8 @@ The same notes as a plain list, with no JavaScript:
 
 
 - [x] Confirm tre has no layer-shell or external-surface API (Window reference, source). Confirmed in tre #195, now superseded by the build.
-- [ ] Find the first KWin release exposing `zwlr_layer_shell_v1`; record the version. Deferred to the testing phase (maintainer, 2026-10-25): Tesserae Shell tests it once a build exists. The design assumes KWin 6.8.1, where tre tested.
-- [ ] Verify `org_kde_plasma_shell` status for third-party clients. Deferred to the testing phase (maintainer, 2026-10-25). Option D is not pursued, so nothing in the design depends on it.
-- [ ] Decide whether non-layer-shell compositors (GNOME) are explicitly out of scope for v1. Deferred to the testing phase (maintainer, 2026-10-25). Until then the design targets KWin and wlroots compositors; `LayerWindow` raises `UnsupportedPlatform` elsewhere.
 - [x] Specify popup behaviour (parenting, grabs, dismissal) in `TRE-REQ-001`. Built as `PopupWindow` in tre 0.5.8; see [TRE-REQ-001 Layer Surface Window > Popups](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#popups).
 - [x] Choose the backend path for layer surfaces: I2 built, a second event queue on `winit`'s `wl_display`; tre binds layer-shell v5 itself. See [TRE-REQ-001 Layer Surface Window > Implementation candidates](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#implementation-candidates).
-- [ ] Read the gtk-layer-shell and Quickshell source to see how they attach a layer role to a toolkit surface; this informs Option B.
 
 
 ### [ADR-0007 Shell UI Layer](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md)
@@ -177,10 +200,8 @@ Settled on 2026-10-25 and recorded above: file naming; the `shell:` key; `import
 - [x] **Four-sided shorthand: option A** (maintainer, 2026-10-26): forms YAML already understands. One number for all sides (`border_thickness: 2`), a list of four (`[2, 2, 2, 2]`), or named sides (`{left: 2, top: 2, right: 2, bottom: 2}`). The maintainer's brace forms were written from experience of other UI tools; they do not survive a standard YAML load (PyYAML read `{2, 2, 2, 2}` as `{2: None}` on 2026-10-26). The order of a list of four is clockwise from the top (top, right, bottom, left), confirmed by the maintainer on 2026-10-26, as tre's `margin` is; named sides are the unambiguous form.
 - [x] **Is "overlay" a kind?** No (maintainer, 2026-10-26): the Overlay is the shell-wide layer that puts something on top of everything else, and a Panel with `layer: overlay` is an overlay popup panel. The kinds stay bar, frame, panel and popup. See [Surface Types > Overlay](../40%20Specifications/Surfaces/Surface%20Types.md#overlay).
 - [x] What `type:` means in "layer surfaces (`type:`)". The file identifiers: `_Shell.yaml`, `_Module.yaml` and so on, with `type: Shell`, `type: Module` (maintainer, 2026-10-26). Nothing to do with rendering.
-- [ ] **Expression language design.** Its grammar, sandbox and errors are designed in the TEL project. The shell's requirements on it are in [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md). `41 TDL Reference/` records which TEL features a shell file may use and what names an expression can reference (module values, tokens, other entries).
-- [ ] **Python builder API.** The Python front-end that produces the same tree as the YAML, and the parity test. Written in `42 Python API/`.
 - [x] **Writing the UID into a user's file.** Decided 2026-10-25: once the file is found, the shell opens it and writes `UID:` below `shell:`. The points below are implementation defaults for that write, not open questions; the maintainer called the question obvious. Defaults — The shell edits a file the user owns. Needs: a YAML writer that keeps comments and layout; no reload loop when the watcher sees the shell's own write; behaviour for a read-only file or a file shared by two shells; and what happens when the user copies a file, so two files carry one UID. Recommendation: the writer keeps comments, writes are ignored by the watcher for that file, a read-only file is registered without injection and warned, and a duplicate UID is a load error naming both files.
-- [ ] `kind:` inside a class. The Label style example writes `kind: Text` to say which widget a class applies to; `kind:` is the surface kind everywhere else. Recommendation: `widget: Text` inside a class ([Style, Theme and Stylesheet Files > Classes](../41%20TDL%20Reference/Style%2C%20Theme%20and%20Stylesheet%20Files.md#classes)).
+- [ ] **Which key names the block in a style class?** Does a class write `widget: Text`, `block: Text` or `kind: Text` to say which block it applies to? Context: the Label style example writes `kind: Text`, but `kind:` is the surface kind everywhere else, and the later keys call blocks with `block:` ([Style, Theme and Stylesheet Files > Classes](../41%20TDL%20Reference/Style%2C%20Theme%20and%20Stylesheet%20Files.md#classes)). Recommendation: `block: Text`, to match the decided block call form.
 - [x] **Widget, module and building blocks** (2026-10-26). Decided: blocks called with `block:`, modules called by name, `widget:` and `module:` dropped. See Blocks, modules and styling above and [Building Blocks](../50%20Design%20System/Building%20Blocks.md).
 - [x] **The exact form of a module call:** the module's name as the key, params beneath it, `import:` embeds a file (maintainer, 2026-10-26; see Module call, shipped modules and Path).
 - [x] **Two uses of one module in one container** (maintainer, 2026-10-26): `children:` may be a list, each item one entry, so a module can repeat and the order is explicit. The maintainer's sketch put `import:` as a mapping key beside the list items; a YAML parser rejects that (checked with PyYAML: a list and a mapping key cannot share a collection), so `import:` is a list item too:
@@ -201,15 +222,14 @@ children:
 - [x] **Can the listed modules be made from the listed blocks?** The maintainer reports yes, tested on Tesserae (2026-10-26).
 - [x] **A free-form shape block:** Path is added.
 - [x] **Is TextBox editable?** No (maintainer, 2026-10-26). Label and TextBox are not editable; TextInput and TextEditor are.
-- [ ] **Case of block names.** The maintainer wrote `path` where the list has capitalised names. Recommendation: match case-insensitively and write the capitalised form in files.
-- [ ] **Two files of the same type that conflict.** Two stylesheets that set the same property: proposal, the later import wins.
-- [ ] `kind: Text` in a style class is settled by the new keys: a class names the block with `block: Text` (recommendation, to confirm).
+- [ ] **Case of block names.** Should block names match case-insensitively? Context: the maintainer wrote `path` where the list has capitalised names. Recommendation: match case-insensitively and write the capitalised form in files.
+- [ ] **Two files of the same type that conflict.** Which file wins when two stylesheets set the same property? Context: proposal so far is that the later import wins. Recommendation: the later import wins, and the shell logs the conflict once at load.
 - [x] Unique names across the shell with repeated uses: decided (maintainer, 2026-10-26). Names inside a definition are local; each use gets a path name (for example `dp1_root.top_bar.Label_1.Label_Text`), and the registry holds the path as the shell-wide unique name and a UID for the instance. A UID written into a file belongs to the file (the definition); an instance UID lives in the registry only. References can use the path, or a short name when it is unambiguous. List items are named by an optional `name:`, else from their position.
 - [x] Params and "bubble up": decided (maintainer, 2026-10-26), opt-in only. A param declares `inherit: true` to be looked up the tree when it is not passed; the nearest ancestor that has it wins; a required param found nowhere is an error naming the chain searched. Everything else must be passed. See [Module File > Params down the tree](../41%20TDL%20Reference/Module%20File.md#params-down-the-tree).
 - [x] Popup call shape and caller context: decided (maintainer, 2026-10-26), the shell supplies the calling use to the action automatically. The module writes `self.ctx.popup(popup_name)` and the shell fills in the caller. See [Module Context > Calling a popup](../42%20Python%20API/Module%20Context.md#calling-a-popup).
 - [x] Popup focus and dismissal: decided (maintainer, 2026-10-26), option 1. One flag; focus is on by default (matching tre's `grab`, which gives the popup the pointer and keyboard and closes it on an outside click or Escape); tooltip-like popups opt out and close when the pointer leaves. This replaces the earlier "opt-in" decision, which could not close a popup with no selections on an outside click, because clicks outside the application are not delivered to a popup without the grab. #needs-verification against tre's `PopupWindow`.
 - [x] **Directory spelling.** Decided 2026-10-27: `$XDG_CONFIG_HOME/tesserae-shell/` when it is set, non-empty and absolute, else `$HOME/.config/tesserae-shell/` ([Settings File > The config directory](../41%20TDL%20Reference/Settings%20File.md#the-config-directory)). The key for the search list is superseded by `directories` in `settings.yaml`.
-- [ ] **What a registry mismatch changes.** The maintainer decided an entry with no match is treated as removed and a new one is registered; also decide whether a removed entry's saved state is dropped at once or kept for a while.
+- [ ] **What a registry mismatch changes.** Is a removed entry's saved state dropped at once or kept for a while? Context: the maintainer decided an entry with no match is treated as removed and a new one is registered. Recommendation: keep the saved state for one session of the registry (until the next clean start), so a renamed file does not lose its state by accident.
 
 
 ### [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)
@@ -357,7 +377,7 @@ Raised by TEL's step 5 design (2026-11-01):
 
 
 - [x] What a Frame holds: a plain ring, melding Bars and Panels, or thicker edges that act as bars, all four edges or none (maintainer, 2026-10-27). The key is `Edges` (maintainer, 2026-10-27). The painter hosting the strips (option A) is accepted with the strips (maintainer review, 2026-10-27).
-- [x] The Frame's layer: `top`, with melded Bars and Panels hosted in the Frame's surface (maintainer, 2026-10-27). Open: how the join is drawn in the painter, and the cost of a large tree and region in the painter (to measure).
+- [x] The Frame's layer: `top`, with melded Bars and Panels hosted in the Frame's surface (maintainer, 2026-10-27). The join is drawn as one path with fillets (decided 2026-11-06, above). Open: the cost of a large tree and region in the painter (to measure).
 - [x] The four reservers plus the painter tested together on KWin, and a 4K frame with many joins: after the v1 build, in the testing phase (maintainer, 2026-10-27).
 - [x] Fractional scale: wanted (maintainer, 2026-10-27). tre's docs say layer windows lay out in logical pixels and follow fractional scaling, and round a node's offset to a whole device pixel ([layer window reference](https://mindderivative.github.io/tre/reference/layer-window/), [window reference](https://mindderivative.github.io/tre/reference/window/)). Open: how a 1 px reserver and the ring edge look at 1.5x, tested with the rest. #needs-verification
 - [x] A fullscreen window covers all shell elements and a maximised window does not ([Surface Types > Fullscreen and maximised windows (decided 2026-10-27)](../40%20Specifications/Surfaces/Surface%20Types.md#fullscreen-and-maximised-windows-decided-2026-10-27)). Open: how KWin stacks them and how the shell detects fullscreen.
@@ -369,6 +389,14 @@ Raised by TEL's step 5 design (2026-11-01):
 - [x] Named sides for `Thickness`: a block of named sides, `Thickness { Top: 8, Left: 24 }` (D7, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] `Inner_Border`, `Outer_Border`, `Edges` and the edge names are nested blocks; `Edges` holds `Top`, `Right`, `Bottom`, `Left` blocks (D21, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] Shadow tokens: `Elevation`, `Shadow` and `Shadow_Bleed` are accepted ([Style Schema > Shadow keys](../41%20TDL%20Reference/Style%20Schema.md#shadow-keys)); the Frame needs no bleed margin because the painter covers the output.
+- [x] The hover handle is three dots, and the keys `Trigger`, `Handle` and `Slide_From` (maintainer, 2026-11-07; [Frame > Peek Triggers and Handles (Decided 2026-11-07)](../40%20Specifications/Surfaces/Frame.md#peek-triggers-and-handles-decided-2026-11-07)).
+- [x] Combining triggers: `Trigger` takes one value or a list (`[HOVER, DRAG]`), and `AUTO` takes the icon of the first; the first build may take one value (maintainer, 2026-11-07, as recommended).
+- [x] The chevron's change of direction: tre 0.6.4's `animate_param`, driven by the slide progress, with a half-turn of the chevron as the fallback if the spike is poor (maintainer, 2026-11-07, as recommended).
+- [x] Minimum thickness for a handle: 8 px for `DOTS`, `BAR` and `CHEVRON`, tuned on KWin (maintainer, 2026-11-07, as recommended; the chevron lowered from 12 to 8 px on 2026-11-08 because his icon is 24 by 8 px).
+- [x] The default `Slide_From` for a corner Panel is the edge it is attached to (maintainer, 2026-11-07, as recommended).
+- [x] A keyboard way into the Frame and focusable handles (M3 Build Log D102). Decided by the maintainer on 2026-11-10: shortcut mode. `Enter_Shortcut_Mode` puts the Frame in `Shortcut_Mode: true` with the initial focus, and in that mode every peek of the Frame shows at the same time, if they can render together; `Next_Focus` and `Previous_Focus` cycle through its panels, peeks, bars and strips by `Tab_Index` ([Focus and Keyboard](../40%20Specifications/Integration/Focus%20and%20Keyboard.md)). Built in M6 ([M6 Brief](M6%20Brief.md)). Open there: how mode keys are delivered.
+- [x] Handle brightness: `Peek { Handle_Opacity: 0.6 }`, 0 to 1, default 0.6 (maintainer, 2026-11-08, recommendation accepted).
+- [x] Content fade: on by default, content opacity following the slide's progress with the slide's duration and easing, `Content_Fade: false` to opt out, for Panels, strips and Bars that slide, peek, expand or contract, and also for a plain show and hide (maintainer, 2026-11-08, recommendation accepted, "yes it also applies to a plain show and hide, with an opt-out option"). It also applies to an Expander's content (maintainer, 2026-11-08), with the same opt-out ([M4 Brief](M4%20Brief.md) W8). A module that appears or disappears through `If` does not fade, so the empty-state convention does not flicker as services come and go (maintainer, 2026-11-12, [M5 Brief](M5%20Brief.md) question 8).
 
 
 ### [Panel](../40%20Specifications/Surfaces/Panel.md)
@@ -383,7 +411,7 @@ Raised by TEL's step 5 design (2026-11-01):
 - [x] Auto-hide timing for an OSD: a reasonable default the user can set; the caller controls the reset (maintainer, 2026-10-27). Open: the default value.
 - [x] Shadow keys: as ADR-0010 defines them (maintainer, 2026-10-27).
 - [x] Keys the type adds, and the baseline for other types: no additions at this time (maintainer, 2026-10-27).
-- [ ] How the shell reads a module's geometry for a module target, and what the gap against the parent Bar means exactly.
+- [x] A module as the target: `Attach` and `Alignment` use the module's laid-out rectangle; the gap is measured from the parent Bar's outer edge (decided 2026-10-27, confirmed 2026-11-04).
 
 
 ### [Popup](../40%20Specifications/Surfaces/Popup.md)
@@ -431,7 +459,6 @@ All seven were answered on 2026-10-28.
 6. [x] **Ready notice:** the shell notifies systemd (`READY=1` and `STOPPING=1` on `NOTIFY_SOCKET`).
 7. [x] **Lock path:** `$XDG_RUNTIME_DIR/tesserae-shell/`, not the config directory.
 - [x] `XDG_RUNTIME_DIR` is required, with no fallback; the shell checks it in pre-flight and sets the sticky bit on its lock file (maintainer, 2026-10-28, as recommended; the control socket was dropped by ADR-0013).
-- [ ] Whether any cleaner runs on the target session, and that the sticky bit is honoured on those files. #needs-verification
 
 
 ### [Config Discovery and Registry](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md)
@@ -446,7 +473,7 @@ All seven were answered on 2026-10-28, as recommended.
 5. [x] **Named entries:** registry-only UIDs for entries inside a file.
 6. [x] A `backups/` folder under the config directory for the first UID write.
 7. [x] **Unimported shell files:** a `_Shell.tdl` in `Shells/` that nothing imports is ignored with an info notice.
-- [ ] The registry writer: one thread, one write per 500 ms (proposed, not asked).
+8. [ ] Should the registry writer be one thread that writes once per 500 ms? Context: the registry file is rewritten on UID writes and scans, and a burst of changes should not cause a burst of writes. This was proposed and never asked. Recommendation: yes, one writer thread with a 500 ms write interval.
 - [x] The UID write: the shell patches the text at the node's position and does not print the tree back out (D10, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] A property key repeated inside one block is an error naming both places; repeated block names are allowed (D9).
 
@@ -466,9 +493,7 @@ All seven were answered on 2026-10-28, as recommended.
 
 Raised by the move to TDL ([ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)), not yet asked:
 
-> [!NOTE]
-> **Open for the maintainer**
-> - [ ] The TDL error list (rule slugs for syntax errors such as an unclosed brace or a `}}` written for two closing braces) is a proposal in [TDL Language > Errors](../41%20TDL%20Reference/TDL%20Language.md#errors); the maintainer has not decided it.
+8. [ ] Should the TDL error list (rule slugs for syntax errors such as an unclosed brace or an unclosed slot) in [TDL Language > Errors](../41%20TDL%20Reference/TDL%20Language.md#errors) be accepted as proposed? Context: the list is a proposal and the maintainer has not decided it. Recommendation: accept it as the first list and extend it as real errors appear.
 
 Answered on 2026-10-30 ("Do all as you would recommend", [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)):
 
@@ -523,15 +548,14 @@ All nine were answered on 2026-10-28, as recommended.
 7. [x] Library records at `WARNING` and above by default.
 8. [x] Per-source levels: later, not v1.
 9. [x] Under systemd, a shorter console line without the timestamp.
-- [ ] To verify: that `logger.remove()` flushes the queue at stop; that forwarding stderr cannot block the process; the meaning of `JOURNAL_STREAM` in `systemd.exec(5)`.
-- [ ] Not asked: the `console` key.
+- [x] The `console` key: name accepted 2026-10-29 (see the key table in Configuration).
 
 
 ### [tess-dl Handover](../41%20TDL%20Reference/tess-dl%20Handover.md)
 
 
-1. [ ] Whether `tess-dl` publishes its docs as a site (the tre and Tesserae projects do) or keeps Markdown in the repository.
-2. [ ] Who edits the language text when a shell need changes it: the `tess-dl` session after a `TDL-REQ-###` (recommended), or the shell session directly.
+1. [ ] Should `tess-dl` publish its docs as a site, or keep Markdown in the repository? Context: the tre and Tesserae projects publish sites. Recommendation: a site, as the sibling projects do, once the first slice is stable.
+2. [ ] Who edits the language text when a shell need changes it? Context: the owner of the language text must be one party after the move. Recommendation: the `tess-dl` session after a `TDL-REQ-###`, not the shell session directly.
 
 
 ### [tess-utils Brief](tess-utils%20Brief.md)
@@ -539,33 +563,166 @@ All nine were answered on 2026-10-28, as recommended.
 
 1. [x] Private repository (maintainer, 2026-11-03).
 2. [x] The shell's code session starts the build; any project may add (maintainer, 2026-11-03).
-3. [ ] Where the sync script lives (options A to D above; recommendation C).
+3. [x] Where the sync script lives: option C, a manifest `vendor.json` in `tess-utils` and a short script in each consumer, the shell writing the first (maintainer, 2026-11-10, as recommended).
 4. [x] Bundled by each PyPI-released project at release time, pulling the latest from `tess-utils` (maintainer, 2026-11-03).
-5. [ ] Whether "latest" means the latest tag (recommended) or `main`.
-6. [ ] Credentials for a CI release job, if one is ever used.
-7. [x] The "100+" was an example of where a project could go over a long time, not a present count (maintainer, 2026-11-03). A compiled extension is not wanted now; the dependency rule is [ADR-0019 Dependency Policy](../30%20Decisions/ADR-0019%20Dependency%20Policy.md): a library only for what would be a project of its own, otherwise a few lines of our own code.
+5. [x] "Latest" means the latest tag, not `main` (maintainer, 2026-11-10).
+6. [x] Credentials: the maintainer's standard GitHub credentials (2026-11-10). No separate deploy key for now; a CI release job, if one is ever made, is a new question.
+7. [x] The "100+" was an example of where a project could go over a long time, not a present count (maintainer, 2026-11-03). On 2026-11-03 a compiled extension was not wanted yet; on 2026-11-08 the maintainer wants releases as a single compiled `.so` ([tess-utils Brief > Decision Direction: One Compiled `.so` per Release (2026-11-08)](tess-utils%20Brief.md#decision-direction-one-compiled-so-per-release-2026-11-08)). The dependency rule is still [ADR-0019 Dependency Policy](../30%20Decisions/ADR-0019%20Dependency%20Policy.md): a library only for what would be a project of its own, otherwise a few lines of our own code.
+8. [x] The compiled build tool: typed Python compiled with `mypyc`; Rust only for a compelling need (maintainer, 2026-11-08).
+9. [x] Pillow stays outside the `.so` and is imported lazily by `tess_utils.image` (maintainer, 2026-11-08, as recommended).
+10. [x] Linux x86_64 on CPython 3.14 first; macOS and Windows when there is a strong way to test them (maintainer, 2026-11-08). The stable ABI (`abi3`) is still to be settled when the compiler is chosen.
+11. [x] Git tags for the `.so` versions, and the release file as a GitHub release asset on the private repository (maintainer, 2026-11-08: "Agreed" and "git tags are fine"). The wheels of the consumers are platform wheels (accepted).
+12. [x] `tess-utils` pushed and the `v0.1.0` release exists on GitHub (maintainer, 2026-11-10: the repository shows the 0.1.0 release). The code session reports (peer message, 2026-11-10) that `v0.1.1` is pushed and released on the private repository at the maintainer's word, and that the real `tools/vendor_utils.py sync` from GitHub works and the shell carries it (D111); the vault cannot see GitHub.
+13. [x] The shell replaces its own converters in `binder/convert.py` with `tess_utils`, keeping the typed `Value`, `Origin` and `BindError` wrappers in the shell (maintainer, 2026-11-10, as recommended; done by the code session).
+14. [x] The compiled file has no submodule imports (`tess_utils.color`); the public API is the top-level names (maintainer, 2026-11-10, as recommended).
+
+
+### [Events and Actions](../42%20Python%20API/Events%20and%20Actions.md)
+
+
+1. [x] The spelling of two-word events is the underscore rule: `On_Anim_Start` (maintainer, 2026-11-04).
+2. [ ] Can a "before" handler cancel the thing it precedes (a veto)? Context: events run either before or after the thing happens, so a "before" handler could in principle stop it. Recommendation: no veto in v1; a handler only observes and may run an action.
+3. [ ] How are the older event names and the later additions reconciled? Context: the twelve v1 events and the list of possible later ones come from the maintainer's M3 answers (see [Events and Actions > The Events](../42%20Python%20API/Events%20and%20Actions.md#the-events)), and the older names in this note differ in places. Recommendation: keep the maintainer's twelve as the canonical v1 set and list the older names as later additions until each is needed.
+4. [ ] What is the final shape of the event record and of `On_Input(Event, Args)`? Context: the handler example reads `event.name`, `event.source`, `event.time`, and `event.old` and `event.new` for changes. Recommendation: fix exactly that record for v1 and add fields only with a new event that needs them.
+5. [x] `Call`, `caller.data` and submenus: as recommended (maintainer, 2026-11-10), written above.
+
+
+### [TEL Integration](../20%20Architecture/TEL%20Integration.md)
+
+
+1. [ ] **How is the name tree built and updated on a hot reload (M2b)?** Context: the choices are to rebuild the whole tree or to patch the changed element. Recommendation: rebuild the whole tree at M2b, because a reload is rare, and patch only if a measured cost demands it.
+2. [x] At M2a a slot reads only the module's own sent values and `params`; a slot in a shell file or in a module call's param is `not-built` (as built, [M2 Build Log](M2%20Build%20Log.md)). The name tree and other modules' keys wait for a module that needs them.
+3. [x] `evaluate_tracked` with a conditional expression is re-tracked for the names it reads now: confirmed by a test in `tess-shell` (`077d347`, [M2 Build Log](M2%20Build%20Log.md)).
+4. [x] A slot error on the first build leaves the property unset and logs the error (as built).
+
+
+### [M3 Brief](M3%20Brief.md)
+
+
+All six were answered on 2026-11-04, together with G1 to G9 ("As recommended" for each).
+
+1. [x] M3 is split into M3a, M3b and M3c, in that order.
+2. [x] G1: "Events and Actions" is written ([Events and Actions](../42%20Python%20API/Events%20and%20Actions.md)) from the maintainer's list of twelve events and the possible later additions.
+3. [x] G2: hand-written default palettes, generation from the accent later.
+4. [x] G3: the portal reader belongs in M3a, so `dbus-fast` comes in before M4.
+5. [x] G8: measure the Frame on KWin first (C1) and decide from the figures.
+6. [x] The Clock's `locale` and tooltip move to M3b.
+
+### Added on 2026-11-04
+
+7. [x] Decided yes by the maintainer (2026-11-05). Does `mdi` ship in the package from M3? The earlier decision is that v1 ships only `mdi` (2026-11-01), and D26 left the icon set out of M2. Recommendation: yes, as package data with its Apache 2.0 licence text and the per-icon exceptions list (R-23), read as the lowest-priority set after the user's `Icons` folders.
+
+
+### [M4 Brief](M4%20Brief.md)
+
+
+1. [x] Scope: TextBox, TextEditor, Badge, Tooltip, Toggle, Marquee text and Checkbox are all V1 (maintainer, 2026-11-08), so M4 builds them with the rest.
+2. [x] M5 stays one milestone, broken into smaller parts ([M5 Brief](M5%20Brief.md)); release is M7 and focus and keyboard is M6 ([M6 Brief](M6%20Brief.md)) (maintainer, 2026-11-08).
+3. [x] W1 and W7: the vault session writes `Standard Modules` and the v1 accessibility note before M4a (maintainer, 2026-11-08, as recommended). Written, and on 2026-11-10 the maintainer answered all their open questions ([Standard Modules](../50%20Design%20System/Standard%20Modules.md), [Accessibility](../60%20Quality/Accessibility.md)), so both are at `review`.
+4. [x] W3 and the wrap: `Wrap` is word wrapping now, character wrapping later; a single-line field has horizontal scroll or ellipsis, a multi-line field wraps by word or does not (maintainer, 2026-11-08).
+5. [x] W3: the ellipsis shows while a single-line field is not edited and the text scrolls to keep the caret visible; the keys are the block key `Wrap: WORD \| NONE` for multi-line and the style key `Overflow` extended with `SCROLL` for single-line, default `SCROLL` (maintainer, 2026-11-08, as recommended).
+6. [x] W8: the surface content fade applies to an Expander (maintainer, 2026-11-08).
+7. [x] The boundary with M6: M4 widgets work by the pointer and a clicked text field takes typed text; Tab and arrow-key focus, the focus ring, `:focused` and keyboard operation of every widget are M6 (maintainer, 2026-11-08, as recommended).
+9. [x] W3 and tre: the maintainer chose (a) with (b) meanwhile (2026-11-08, "As you recommend"): he carries [TRE-REQ-016 Text Input Wrap and Overflow](../80%20Requests/TRE-REQ-016%20Text%20Input%20Wrap%20and%20Overflow.md) to tre, and the shell builds a workaround for the single line (fixed height, scroll through `selection` and tre's `caret_move`, ellipsis at rest). A multi-line TextEditor has no word wrap until tre supports it (no shell-side route): it ships with `Wrap: NONE` behaviour or waits, and [Standard Modules > TextEditor](../50%20Design%20System/Standard%20Modules.md#texteditor) says so.
+10. [x] W5: Pillow lives in `tess_utils`, imported lazily by `tess_utils.image`, outside the compiled `.so` (maintainer, 2026-11-08; [tess-utils Brief](tess-utils%20Brief.md), [ADR-0017 Shared Utilities](../30%20Decisions/ADR-0017%20Shared%20Utilities.md)). The shell lists Pillow in its own `pyproject.toml` and never imports it directly. The `image` module is built when M4b needs Bitmap and Image.
+11. [x] The shell side of `Enabled`: the shell stops the widget's events itself, since tre only sets the accessibility state (maintainer, 2026-11-08, as recommended).
+12. [x] Is `Part: <name>` the key that declares a part of a module (a block in its layout), with `Module::part` and `Module::part:hovered|pressed|disabled` as the only selector forms for now? Context: the code session reports (not confirmed here) that the spec was silent and it built `Part:`; `.class::part` and `#name::part` give a "not built" warning; a part rule weighs between class and name. Recommendation: yes; the vault writes `Part` into [Block Reference](../41%20TDL%20Reference/Block%20Reference.md) and the part selectors into [Style Schema](../41%20TDL%20Reference/Style%20Schema.md). Maintainer, 2026-11-13: as recommended.
+13. [x] Is this the right behaviour for a disabled block? Context (code session's report): the block and all its descendants take no hover, press or click; a click is swallowed at the block; `pointer_down` and `pointer_up` still bubble, so a press on a disabled block still dismisses a Popup; no tooltip opens over it; re-enabling under the pointer restores hover at the next pointer event. Recommendation: yes; the vault writes it into [Standard Modules](../50%20Design%20System/Standard%20Modules.md) and [Accessibility](../60%20Quality/Accessibility.md). Maintainer, 2026-11-13: as recommended.
+14. [x] Should `Call` check its arguments against the action's Python signature at load? Context: the spec says an unknown argument is a load error, but no note declares an action's parameters, so the code session built only the checks that the target module and action exist (reported, not confirmed). `Target` is the module's `Name`, as in `Clock.cycle_format`; the arguments arrive unordered in `event.args`. Recommendation: yes, read the parameter names from the `@action` method's signature, so a module declares nothing extra; the vault amends [Events and Actions](../42%20Python%20API/Events%20and%20Actions.md). Maintainer, 2026-11-13: as recommended.
+15. [x] Does `caller.uid` stay the uid of the use of the module that opened the Popup, not a module uid? Context: the Popup note says "module name and UID", but a Popup cannot reach a module UID (reported). Recommendation: yes; the vault corrects the Popup note. Maintainer, 2026-11-13: as recommended.
+16. [x] Does `Enabled` on a use of a module disable that module's root block and so its whole subtree? Context: [Standard Modules](../50%20Design%20System/Standard%20Modules.md) says modules take the common keys; the first report said a module call took only its own parameters. The code session now reports (build log, not confirmed here) that a module call takes the common block keys and forwards them to its root, which is the recommendation. Recommendation: yes; the vault writes it into [Standard Modules](../50%20Design%20System/Standard%20Modules.md). Maintainer, 2026-11-13: as recommended.
+17. [x] When a surface holds a text field, may the shell override an explicit `Keyboard: NONE` with `ON_DEMAND`? Context (reported): a field needs the keyboard to take typing, and the code session overrides the written value silently. Recommendation: yes, with one warning at load naming the surface and the field, so the override is not silent. Maintainer, 2026-11-13: as recommended.
+18. [x] Is synchronous image decoding acceptable for M4? Context (reported): the spec says decoding runs off the loop thread and the image "appears when ready"; the code session decodes on the loop thread, and has not measured a decode against a frame. Recommendation: yes for M4; build the off-thread path when a measured decode of a typical icon or photo exceeds 8 ms, and record the measurement in [M4 Build Log](M4%20Build%20Log.md). Maintainer, 2026-11-13: as recommended.
+19. [x] Should module rule keys pass down the chain of first children of a module's layout, instead of styling the module's root block only (D40)? Context (reported): a module whose root is a wrapper then lets a stylesheet rule such as `Clock { Background: ... }` reach the visible block. Recommendation: yes, and the vault amends the D40 wording in [Style Schema](../41%20TDL%20Reference/Style%20Schema.md) to the first-child chain. Maintainer, 2026-11-13: as recommended.
+20. [x] Should `On_Text_Commit` stay silent when `Max_Length` rejects an edit? Context (reported): tre fires `input` even then, so the shell's `On_Text_Commit` fires although the text did not change, while `On_Changed` does not. Recommendation: yes, the shell ignores a commit whose text equals the previous text. Maintainer, 2026-11-13: as recommended.
+21. [x] Is a submenu declared only as a named Popup (`Submenu: Share_Menu`), with the inline `MenuItem { Children { Menu } }` form left out of v1? Context (reported): only the named form is built; two spellings of one thing would break one-spelling-per-key. Recommendation: yes; the vault amends [Events and Actions](../42%20Python%20API/Events%20and%20Actions.md) to the named form. Maintainer, 2026-11-13: as recommended.
+22. [x] Should a submenu get the `caller.data` of the Menu that opened it? Context (reported): today a submenu's `caller.data` is empty, so a submenu item cannot act on the item of the parent menu. Recommendation: yes, read-only and inherited from the Menu that opened it. Maintainer, 2026-11-13: as recommended.
+23. [x] Are `.class::part` and `#name::part` left out of v1? Context (reported): only `Module::part` is built; the others warn "not built". Recommendation: yes; part rules are written under the module name ([M4 Brief](M4%20Brief.md) question 12). Maintainer, 2026-11-13: as recommended.
+24. [x] Should a disabled Marquee text that is cut with an ellipsis still show a tooltip with its whole text? Context: on KWin (maintainer, 2026-11-11) no tooltip showed over the disabled Marquee however long the pointer stayed; the checklist and [Standard Modules > Marquee text](../50%20Design%20System/Standard%20Modules.md#marquee-text) expect the whole text in a tooltip. The cause is probably the rule of question 13 that no tooltip opens over a disabled block (reported decision 4, not confirmed); without the tooltip a disabled cut text cannot be read. Recommendation: yes; the rule of question 13 gets one exception, the automatic whole-text tooltip of cut text, and the code session fixes it. Maintainer, 2026-11-13: as recommended.
+25. [x] Is the one input-method check on KWin (task A2) needed before M4 is done? No: the maintainer did not perform it and does not care about that part (2026-11-11). The input-method behaviour of text fields stays untested ([V1 Widgets](../50%20Design%20System/V1%20Widgets.md), Questions After Testing).
+
+
+### [M5 Brief](M5%20Brief.md)
+
+
+Questions 1 to 7 were answered on 2026-11-05 for this plan when it was M4 (1 to 5 and 7 as recommended; 6 as stated). Question 8 is open; 9 was answered on 2026-11-08.
+
+1. [x] G1: move Tasks and the launcher to M5 with the KWin script and the shortcuts? Recommendation: yes. (Changed 2026-11-08: Tasks stay in M5, the launcher moves to M6.)
+2. [x] G2: the empty-state convention, `available` plus `If`. Recommendation: yes; one rule for every module.
+3. [x] G3: run the audio spike at the start of the Audio part and decide by ADR (asked as M4c). Recommendation: yes.
+4. [x] The split of the services in that order (asked as M4a to M4d), with Tray movable. Recommendation: yes. (Split further on 2026-11-08: M5a to M5h.)
+5. [x] G4: write the module specs in the order Battery, Workspaces, Network, Media, Audio, Tray, each at `review` before its part. Recommendation: yes; the vault session writes them.
+6. [x] Battery is tested on the fake service only; there is no laptop check. The Battery KWin check is therefore the hidden state on this desktop (`IsPresent` false) plus the fake service.
+7. [x] Decided: all six, in that order. Does the default shell show all six at once on the Bar, or is the default Bar a smaller set? This changes the shipped `Main_Shell.tdl`, not the modules. Recommendation: all six, in the order Workspaces, Media, Network, Audio, Battery, Tray, Clock.
+8. [x] G12: should the content fade skip a module that appears or disappears through `If`, so that only a surface's own motion and an Expander fade? Context: a fade on every `If` change would make the empty-state convention (G2) flicker as services come and go. Recommendation: yes. Yes: the content fade skips a module that appears or disappears through `If`; only a surface's own motion and an Expander fade (maintainer, 2026-11-12, as recommended).
+9. [x] M5 stays one milestone, broken into smaller parts (maintainer, 2026-11-08), with focus and keyboard as M6 and release as M7.
+10. [x] Should a call to a service with no owner raise `ServiceUnavailable` (with `.state`), rather than return `UNAVAILABLE` as [D-Bus Service Layer > Calling a Service](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md#calling-a-service) says? Context (code session's M5a report, not confirmed here): a return value would make every call site compare against a sentinel; the state is also on `bus.state(name)` and in `available`. Recommendation: raise, and the vault rewrites the spec line to match. Maintainer, 2026-11-12: as recommended.
+11. [x] Is "an unread service counts as unavailable" right, so `available` is false right after `proxy()` and turns true when the service is read, a few milliseconds later? Context (reported): a module with two services may get `false, true`. Recommendation: yes; the module is hidden until its service is read. Maintainer, 2026-11-12: as recommended.
+12. [x] Should a module hear `on_service_lost` for a service that was absent from the start? Context (reported): nothing was lost; the module sees `available: false` and gets `on_service_found` when the service appears. Recommendation: no. Maintainer, 2026-11-12: as recommended.
+13. [x] When the IPC interface is built, who re-requests the shell's own bus name after a bus restart? Context: the layer has `Bus.on_reconnect(hook)`; the shell owns no bus name yet. Recommendation: the IPC module, through `Bus.on_reconnect` and once at start. Maintainer, 2026-11-12: as recommended.
+14. [x] Is the AND rule right for `available` when a module uses several services (all present)? Context (reported): Tray (watcher plus an item) and Media (several players) use more than one. Recommendation: yes; a module that needs "any" (Media) makes one proxy per player after it finds them and reads `bus.state(name)`. Maintainer, 2026-11-12: as recommended.
+15. [x] Should a one-shot `proxy.get` leave a `PropertiesChanged` rule on the bus for the life of the module? Context (reported): `get` is cached and subscribes the first time; `fresh=True` asks the service directly. Recommendation: accept; `fresh=True` covers the rare one-off read. Maintainer, 2026-11-12: as recommended.
+16. [x] Keep the identity scheme for a module call inside `If` and `For` (parent use, the `For`'s place in the layout, the entry's TEL name, and the call's place, with no source line)? Context (code session's report of d47f5d4, not confirmed here): a first version used the source line, and the shell's own `UID:` write shifted every key on the first hot reload; a live test caught it. Recommendation: yes. Maintainer, 2026-11-13: yes.
+17. [x] Should a module call inside an `If` stay one static use, so only its blocks come and go and `start` and `stop` do not run on a flip? Context (reported): in a `For` each entry is its own use with `use_added` and `use_removed`. Recommendation: yes. Maintainer, 2026-11-13: yes.
+18. [x] Should the next piece of work be a module call in a `For` inside a Popup? Context (reported): the Tray menus need it, and the uses end when the Popup closes; today it is an error naming the call. Recommendation: yes, as separate work before the Tray part. Maintainer, 2026-11-13: yes.
+
+Reported by the code session, not confirmed here (peer messages, 2026-11-12): the maintainer answered the M5b decisions in its session: a `{{ }}` slot in an icon param, yes; a hidden module takes no Bar Spacing, fix now; keep the warning when a service leaves; leave `profile` unused until the Menu that switches profiles; a `TRE-REQ` for the tre `visible: false` layout-space quirk, not filed because the shell handles it; an unknown runtime icon shows the broken-image icon; a module call inside `If` and `For`, as separate work. These are recorded in [M5 Build Log](M5%20Build%20Log.md), and the specs below follow them.
+
+19. [x] Should the code session fix the Workspaces current-desktop marker now? Context: it is the M5b KWin failure of 2026-11-13 (see KWin Results below): the marker does not follow a desktop change, and clicks stop working after the first switch. Recommendation: yes, before M5c; the code session finds the cause (reported: the module reads KWin's `current`, and a fake KWin passes), and a test that changes `current` on a second real property signal is added. Done without waiting for an answer: the code session reports the fix in aab71a4 (a click compared against a stale own copy of `current`: certain; the module did not listen to KWin's `currentChanged` and `countChanged`: inferred, not seen on your KWin). The maintainer re-tested it on KWin and it works (2026-11-13).
+20. [x] Inside an entry of a `For` call, should `ctx.caller` stay as built: for a handler written on the call it is the holder of the call, and for the entry's own layout it is the entry's use? Context (code session's report of 36fa502, not confirmed here; it is question 19 in the M5 Build Log). Recommendation: keep. Maintainer, 2026-11-13: keep.
+21. [x] Should `caller.data` stay a copy made when the Popup opens? Context (reported; build log question 20). Recommendation: keep. Maintainer, 2026-11-13: keep.
+22. [x] Is a shell-file `If` or `For` written directly in a Popup's content left out for now? Context (reported; build log question 21): it is still refused; module layouts inside a Popup can use them (the Tray menus). Recommendation: yes, not now. Maintainer, 2026-11-13: yes.
+23. [x] Should the Network tooltip's Wi-Fi percent round down in fives (72 and 73 both show 70), or to the nearest five (72 shows 70, 73 shows 75)? Context (code session's M5c report, 01dc853, not confirmed here; its question 22): your answer to the Network spec was "rounded to 5", and the spec's own acceptance bullet (72 to 73 changes nothing sent) only fits round-down; the code session built round-down. Recommendation: keep round-down, and the spec says "rounded down in fives". Decided by the orchestrator on 2026-11-13 (directive rule 7, Tier 1): as recommended.
+24. [x] Should the icon rows that the Network spec's table lacks, which the code session filled (for example connected with no known kind shows `network`), be folded into the spec's table? Context (reported; its question 23). Recommendation: yes; the vault copies them from the build log into the table. Decided by the orchestrator on 2026-11-13 (directive rule 7, Tier 1): as recommended.
+25. [x] When a VPN is the primary connection, should the icon describe the link under it and the tooltip add `VPN <name>`? Context (reported; its question 24): the spec said a VPN is never the kind, but it did not say what to show when NetworkManager reports the VPN as primary. Recommendation: yes. Decided by the orchestrator on 2026-11-13 (directive rule 7, Tier 1): as recommended.
+26. [x] Should the Network state-change announcement to assistive technology be left to the M6 accessibility pass? Context (reported; its question 25): the spec proposed one polite announcement when the state changes to or from connected; it is not built. Recommendation: yes, M6 builds every announcement together. Decided by the orchestrator on 2026-11-13 (directive rule 7, Tier 1): as recommended.
+
+
+### [M6 Brief](M6%20Brief.md)
+
+
+1. [x] The parts: M6a focus, M6b keyboard operation, M6c shortcuts, M6d keyboard-only access and the launcher (maintainer, 2026-11-10, as recommended).
+2. [x] The launcher belongs to M6 (it needs a shortcut), not M5 (maintainer, 2026-11-10, as recommended).
+3. [x] K3: the `Shortcuts` action names: see [Global Shortcuts > Open Questions](../40%20Specifications/Integration/Global%20Shortcuts.md#open-questions) (maintainer, 2026-11-10); four given, the rest by testing.
+4. [x] K4: the live shortcut test on this machine at the start of M6c, after a copy of `kglobalshortcutsrc` (maintainer, 2026-11-10, as recommended).
+
+
+### [M2 Brief](M2%20Brief.md)
+
+
+All seven were answered on 2026-11-04 ("1. yes ... 6. yes, 7. M2b").
+
+1. [x] M2 is split into M2a and M2b, in that order.
+2. [x] Design first: the TEL Integration note is written while M1 is built ([TEL Integration](../20%20Architecture/TEL%20Integration.md)).
+3. [x] G3, G4, G5 and G6 are accepted as recommended (module contract, context API, value types, module file).
+4. [x] G7: the Clock in M2 has `format`, `hour_cycle` and `timezone`; `locale` and the tooltip wait for M3.
+5. [x] G8: the file UID write is in M2a, with a backup outside the config folder.
+6. [x] G10: tokens and themes move to M3; M2 uses literal values.
+7. [x] B5: icon sets are in M2b.
 
 
 ### [M1 Brief](M1%20Brief.md)
 
 
-1. [ ] Scope: the blocks `Box`, `FlexBox`, `Text`, `Rectangle`, `Spacer`, inline `Style` only, one Bar. Agree?
-2. [ ] The typed tree classes live in `binder/model.py` and `schema` imports them (the one new allowed import). Agree (recommended)?
-3. [ ] The binder builds each surface with `Window.build` only, which needs `tesserae-engine` 0.6.0 or later (already the M0 minimum). Agree?
-4. [ ] Theme tokens are resolved by the shell before binding, and M1 has none: literal values only. Agree?
-5. [ ] The Block Reference "tre" columns are corrected against tre by a test at T3, and I fix the notes from its output. Agree?
-6. [ ] Should M1 start only when M0 is done, or may the code session start T1 to T4 now, since they need no config or lifecycle code?
+All six were answered on 2026-11-03. The `tess-shell` session reported the first five over the mailbox and the maintainer confirmed them in chat: "That is correct, I added SVG and agreed to M1 - M5. Yes, they can."
+
+1. [x] Scope: the blocks `Box`, `FlexBox`, `Text`, `Rectangle`, `Spacer` and `SVG`, inline `Style` only, one Bar. `SVG` was added by the maintainer.
+2. [x] The typed tree classes live in `binder/model.py` and `schema` imports them.
+3. [x] The binder builds each surface with `Window.build` only.
+4. [x] Theme tokens are resolved by the shell before binding; M1 has none (literal values only).
+5. [x] The Block Reference "tre" columns are corrected against tre by a test at T3, and the notes are fixed from its output.
+6. [x] The code session may start T1 to T4 before the design notes reach `review`.
 
 
 ### [Render Binder Design](../20%20Architecture/Render%20Binder%20Design.md)
 
 
-1. [ ] Whether `font_family` takes a list or a string in tre; test it.
-2. [ ] How `AUTO` and `EXPAND` map in tre for each block ([Block Reference](../41%20TDL%20Reference/Block%20Reference.md) sizes).
-3. [ ] Whether `fill` colours text in tre, by a snapshot test.
-4. [ ] Whether the binder resolves theme tokens itself (`$color.surface`) or the shell resolves them before binding (recommendation: the shell, so the binder sees literal values; tokens arrive with M2).
-5. [ ] The shape of `View` for `If` and `For` branches (M2).
-6. [ ] Whether the key table is hand-written or generated from the Block Reference with the test as a guard (recommendation: hand-written, guarded).
+1. [x] `font_family` takes one string; a comma-separated stack is accepted; rendering of the fallback is to check in a real window.
+
+3. [x] `fill` colours text (`tess-shell`, snapshot test).
+4. [ ] Does the binder resolve theme tokens (`$color.surface`) itself, or does the shell resolve them before binding? Context: tokens arrive with M2. Recommendation: the shell resolves them, so the binder sees literal values.
+5. [ ] What shape does `View` take for `If` and `For` branches (M2)? Context: `IfNode` and `ForNode` exist from M1, and M2b built `View.rebuild` ([Render Binder Design > The View and the Later Operations](../20%20Architecture/Render%20Binder%20Design.md#the-view-and-the-later-operations)). Recommendation: keep the one `View` and let `rebuild` replace the branch or entry that TEL reports as changed.
+6. [ ] **Is the key table hand-written or generated from the Block Reference?** Context: a test guards it either way. Recommendation: hand-written, guarded by the test.
 
 
 ### [M0 Brief](M0%20Brief.md)
@@ -579,28 +736,28 @@ All nine were answered on 2026-10-28, as recommended.
 ### [Testing Strategy](../60%20Quality/Testing%20Strategy.md)
 
 
-1. [ ] Which tolerance and which blocks get reference images.
-2. [ ] Whether the table-vs-docs test reads the vault directly in the maintainer's environment, or a copy under `tests/data/` that a script refreshes (recommended: the copy, so CI works).
-3. [ ] The headless sway job: recommend adopting tre's setup once the first `LayerWindow` is built.
-4. [ ] How tre exposes the accessibility tree to a test.
-5. [ ] A coverage target. Recommendation: none at first; report only.
+1. [x] M1 commits one reference PNG of the example at 400x32, compared with a tolerance (maintainer, 2026-11-04, D17).
+2. [ ] Which other blocks get reference images? Context: M1 has one reference PNG; more images cost review time when looks change. Recommendation: add one image per block when that block is built, with the same tolerance.
+3. [ ] Does the table-vs-docs test read the vault directly in the maintainer's environment, or a copy under `tests/data/` that a script refreshes? Context: CI has no vault. Recommendation: the copy, so CI works.
+4. [ ] Do we adopt tre's headless sway setup for the CI job? Context: the job is needed once the first `LayerWindow` is built. Recommendation: adopt tre's setup at that point.
+5. [ ] Do we set a coverage target? Context: a target early on rewards trivial tests. Recommendation: none at first; report coverage only.
 
 
 ### [Shell Package Layout](../20%20Architecture/Shell%20Package%20Layout.md)
 
 
-1. [ ] The PyPI name `tesserae-shell`: register it when the first release nears; it is free today.
-2. [ ] Whether `services/` splits into its own library later (the D-Bus layer is useful beyond the shell); not now.
-3. [ ] A shipped-module folder layout: `modules/<name>/` with the TDL and Python files side by side, as user modules are ([Module File](../41%20TDL%20Reference/Module%20File.md)).
-4. [ ] Whether the import rules are enforced with `import-linter` or with a small test of our own.
+1. [ ] When should the PyPI name `tesserae-shell` be registered? Context: the name is free today. Recommendation: register it when the first release nears.
+2. [ ] Should `services/` split into its own library later? Context: the D-Bus layer is useful beyond the shell. Recommendation: not now; revisit after the first release.
+3. [ ] **What is the folder layout of a shipped module?** Context: user modules keep the TDL and Python files side by side ([Module File](../41%20TDL%20Reference/Module%20File.md)). Recommendation: `modules/<name>/` with the TDL and Python files side by side, as user modules are.
+4. [ ] Are the import rules enforced with `import-linter` or with a small test of our own? Context: the acceptance criteria already name tests for the forbidden imports. Recommendation: a small test of our own, to avoid another dependency.
 
 
 ### [Performance Budgets](../60%20Quality/Performance%20Budgets.md)
 
 
-1. [ ] Accept the proposed values above, or change them.
-2. [ ] Whether the budgets are checked in automated tests (a headless idle-CPU test) or only measured by hand in v1; AGENTS > 12. Design Completeness Checklist lists testing through `window.simulate`.
-3. [ ] Which machine counts as the reference (the maintainer's AMD desktop, or a slower laptop).
+1. [ ] Do you accept the proposed values above, or change them? Context: see [Performance Budgets > Proposed Values for the Missing Numbers](../60%20Quality/Performance%20Budgets.md#proposed-values-for-the-missing-numbers). Recommendation: accept them as the v1 starting values and revise after the first measurements.
+2. [ ] Are the budgets checked in automated tests (a headless idle-CPU test) or only measured by hand in v1? Context: AGENTS > 12. Design Completeness Checklist lists testing through `window.simulate`. Recommendation: measure by hand in v1 and add the headless idle-CPU test once the budgets have held through one milestone.
+3. [ ] Which machine counts as the reference: the maintainer's AMD desktop, or a slower laptop? Context: the budgets are only meaningful against one machine. Recommendation: the AMD desktop sets the numbers; spot-check on a slower laptop before release.
 
 
 ### [Wayland Protocols](../40%20Specifications/Integration/Wayland%20Protocols.md)
@@ -629,46 +786,55 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 6. [x] The settings keys `KWin.Script` and `KWin.Hide_On_Fullscreen`.
 7. [x] An OSD on top of a fullscreen window: none in v1, consistent with the earlier decision that a fullscreen window always covers every shell element; revisit if a need appears. (This one had no recommendation written; I took the earlier decision as the answer.)
 - [x] The namespace convention: every shell surface uses the layer-shell namespace `tesserae-shell.<type>.<name>`, the type in lower case (maintainer, 2026-10-29, as proposed; the placeholder reads `<type>` since D24).
-- [ ] The rule file's key names and a test of the rule (needs a backup of `kwinrulesrc` and permission).
+8. [ ] May the rule test back up `kwinrulesrc` to `/tmp`, write one rule group and remove it again on this machine? Context: `kwin rule install` writes one group and `remove` restores the file; the test needs permission, like the shortcut test in [Global Shortcuts > Open Questions](../40%20Specifications/Integration/Global%20Shortcuts.md#open-questions) item 1. Recommendation: yes, in the testing phase and not before, after the backup.
 
 
 ### [Plasma Coexistence](../40%20Specifications/Integration/Plasma%20Coexistence.md)
 
 
-1. [ ] Whether a second tray host sees items that register before it joins: the watcher's `RegisteredStatusNotifierItems` property lists them, so the host reads it at registration (proposed; test).
-2. [ ] The behaviour of an app that checks `IsStatusNotifierHostRegistered` when only the shell's host is present (test with plasmashell stopped, in a throwaway session).
-3. [ ] Whether the same owners hold on Plasma versions before 6.8 and on Fedora, KDE neon and Arch.
-4. [ ] Whether the shell should offer a `tesserae-shell doctor` command that prints the owners table for a bug report (recommended, post-v1).
+1. [ ] Should the shell offer a `tesserae-shell doctor` command that prints the owners table for a bug report? Context: the owners table in this note is what a bug report needs, and the command would print it from `busctl`-style reads. Recommendation: yes, but after v1.
 
 
 ### [D-Bus Service Layer](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md)
 
 
-1. [ ] The 1 ms and 50 ms callback numbers are proposals; measure in the spike.
-2. [ ] Whether the hooks `on_service_lost` and `on_service_found` belong to the module contract or to the helper's subscription call (recommendation: the contract, so every module handles a service the same way).
-3. [ ] Whether the system bus connection is opened lazily (recommended) or at start.
-4. [ ] The Applications source for the launcher ([Roadmap](Roadmap.md)).
+1. [x] Do the hooks `on_service_lost` and `on_service_found` belong to the module contract or to the helper's subscription call? The module contract, so every module handles a service the same way (maintainer, 2026-11-12, as recommended). They are written into [Module Contract](../42%20Python%20API/Module%20Contract.md).
+2. [x] Should the system bus connection open lazily or at start? Lazily, on the first call that needs it (maintainer, 2026-11-12, as recommended).
+3. [x] What is the Applications source for the launcher? Desktop entries read from the files for v1; KRunner is left as a later search backend (maintainer, 2026-11-12, as recommended). The files, their folders and the search belong to the Applications spec owed before M6d ([M6 Brief](M6%20Brief.md)). #needs-verification
 
 
 ### [Global Shortcuts](../40%20Specifications/Integration/Global%20Shortcuts.md)
 
 
-1. [ ] **Test permission.** A live test registers a throwaway component (`tesserae-shell-test`), sets a key, receives one press, then calls `unregister` and `cleanUp`. It writes a group to `~/.config/kglobalshortcutsrc`; the service rewrites that file. Recommendation: allow it, after a copy of the file to `/tmp`, in the testing phase and not before. This is the only test that proves a non-KDE client works.
-2. [ ] The exact meaning and values of the `u` flags beyond the three seen; the `GlobalShortcutLoading` values are in a header not read. #needs-verification
-3. [ ] Whether a component without a desktop file appears in System Settings with its friendly name.
-4. [ ] The TDL key for a Panel and a module action (`Shortcut`) and its value type; `Reveal_Key` is decided in name only ([Bar](../40%20Specifications/Surfaces/Bar.md)).
-5. [ ] Whether a held key should repeat the toggle (recommendation: no).
-6. [ ] The portal path as a second implementation, or only the commands (recommendation: commands only in v1, [Portals](../40%20Specifications/Integration/Portals.md)).
+1. [x] Test permission: the live test with a throwaway component, after a copy of `kglobalshortcutsrc` to `/tmp`, in the testing phase and not before (maintainer, 2026-11-10, as recommended).
+2. [x] The `u` flags: the maintainer found nothing in the note that said plainly what they are. Written plainly in [Global Shortcuts > The `u` Flags in Plain Words](../40%20Specifications/Integration/Global%20Shortcuts.md#the-u-flags-in-plain-words) (2026-11-10).
+5. [x] A held key does not repeat the toggle (maintainer, 2026-11-10, as recommended).
+6. [x] The portal path is not built in v1; commands only (maintainer, 2026-11-10, as recommended; [Portals](../40%20Specifications/Integration/Portals.md)).
+7. [x] The action names: `Enter_Shortcut_Mode`, `Exit_Shortcut_Mode`, `Set_Shortcut_Mode`, `Next_Focus` and `Previous_Focus` are given ([Focus and Keyboard](../40%20Specifications/Integration/Focus%20and%20Keyboard.md)). The form is `Shortcuts { Name: "keys" }` (2026-11-08). The names of the other actions are now a question under Questions After Testing (item 7 of 2026-11-10 asked for them to follow the test).
+8. [x] Key strings: any case is accepted, `ctrl+shift+F1` and `Ctrl+Shift+F1` alike, and converted to the backend's form. A string the shell cannot parse is a value error with `file:line:column` (maintainer, 2026-11-08, as recommended).
+9. [x] Precedence: the desktop's or compositor's global shortcut wins over the shell's; the shell warns about conflicts with the desktop and within the shell; a change in System Settings on KDE wins as before. On a compositor with no global mechanism the shell cannot listen globally, and says so once at start (maintainer, 2026-11-08; this replaces my recommendation that the user's `Shortcuts` win over a surface default).
+10. [x] Two shell actions that share a key at the same level: neither works, with one warning naming both (maintainer, 2026-11-08; this replaces my recommendation that the first in load order keeps it).
+11. [x] Modes: decided by the maintainer on 2026-11-10 as `Shortcut_Mode: true | false` on a surface, with `Enter_Shortcut_Mode`, `Exit_Shortcut_Mode`, `Next_Focus`, `Previous_Focus` and `Tab_Index`; written in [Focus and Keyboard](../40%20Specifications/Integration/Focus%20and%20Keyboard.md). Open there: how mode keys are delivered (recommendation: the mode's surface takes keyboard focus, not more global shortcuts) and the name of the action that sets the mode on a focused Panel.
+
+### Shortcuts Stay Changeable
+
+The maintainer asked (2026-11-10, items 4 and 7) that shortcuts be as dynamic as possible, and where not, easy to change or tweak after testing. So: no key and no action binding is hard-coded; every key comes from `settings.tdl` `Shortcuts` or from a surface's own declared key; the `Shortcuts` block is read again at hot reload and the registrations are updated (a changed key is re-registered, a removed one is unregistered, with no restart); and the `Shortcut_Mode` of a surface can be changed at run time ([Focus and Keyboard](../40%20Specifications/Integration/Focus%20and%20Keyboard.md)). The live test and the first weeks of use decide the final keys and where each key is declared.
 
 
 ### [Portals](../40%20Specifications/Integration/Portals.md)
 
 
-1. [ ] Whether `ReadAll` needs a registered app id (test with and without `Register`).
-2. [ ] Whether the KDE backend emits `SettingChanged` for the accent colour and scheme at once, and for a custom colour scheme.
-3. [ ] Whether tre has a reduced-motion switch to set, or the shell applies it alone.
-4. [ ] The `.desktop` file and the id for delivery; recorded for the Delivery notes.
-5. [ ] Whether the GlobalShortcuts portal is worth building for any v1 target (recommendation: no).
+1. [x] Should the shell ship a `.desktop` file and which application id should it use for `Register` and delivery? Context: the portal Registry needs an id that matches the basename of a `.desktop` file (see the registry paragraph above); the Delivery notes must record it. Recommendation: use the shell's own D-Bus name as the id and ship the matching `.desktop` file in the package; the exact id is fixed in the Delivery notes. #needs-verification Decided by the orchestrator on 2026-11-13 (directive rule 7): as recommended.
+2. [x] Is the GlobalShortcuts portal worth building for any v1 target? Context: v1 registers shortcuts through the KDE shortcut service ([Global Shortcuts](../40%20Specifications/Integration/Global%20Shortcuts.md)) and commands cover other compositors. Recommendation: no. Decided by the orchestrator on 2026-11-13 (directive rule 7): as recommended.
+3. [ ] What does `type.system.font_family` hold when the desktop names no font? Context: the spec did not say. As built the token is always defined and holds `sans-serif`, so `check` does not report a bad token for a layout that uses it; whether tre accepts the generic name `sans-serif` is untested. Recommendation: keep it, and confirm the generic name against tre before the note is `stable`. #needs-verification
+4. [ ] Does a theme that sets `type.system.font_family` itself keep its value over the desktop's font? Context: as built, yes. Recommendation: yes; a theme's own value is the author's choice, like a fixed accent.
+5. [ ] Is the font's size offered too? Context: `font-name` carries a size (`Hack Nerd Font  10` on this machine); as built only the family is offered. Recommendation: family only for now; a size token can follow if a theme needs it.
+6. [ ] Keep two names for reduced motion: `Appearance.reduced_motion` for the portal key alone and `motion_reduced` for the combined flag? Context: the two names differ only in word order and are easy to confuse. Recommendation: keep one public flag, the combined one, and make the single key private.
+7. [ ] Does an icon theme set in code beat the portal's? Context: as built, yes; the shell's tests rely on it, and no shell file key sets a theme today. Recommendation: yes.
+8. [ ] May a portal icon-theme change notify listeners without comparing it to `kdeglobals`? Context: comparing would read a file on the loop thread; the cost of not comparing is one redundant icon refresh. Recommendation: yes, as built.
+9. [ ] Is a wrong-typed portal key logged at debug only? Context: [Portals > Failure Modes and Recovery](../40%20Specifications/Integration/Portals.md#failure-modes-and-recovery) says the key uses its default; the one warning is kept for the portal being unavailable. Recommendation: yes, as built.
+10. [ ] Should the schema export list `type.system.font_family`, so the configuration application can offer it? Context: it is documented only in the repository's README today; a test requires the export's token list to equal the shipped theme's tokens. Recommendation: yes, as a separate list of tokens the shell supplies, so that test keeps its meaning.
+11. [ ] Should an open Tray menu also refresh its icons on a theme change? Context: as built only the item icons refresh; an open menu keeps the old icons until it is opened again. Recommendation: leave it; a theme change while a menu is open is rare and the menu is short-lived.
 
 
 ### [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)
@@ -680,7 +846,7 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 - [x] TEL's repository and licence: [mindderivative/tess-el](https://github.com/mindderivative/tess-el), MIT (2026-10-25). Local project `~/Projects/pyDev/projects/tess-el`.
 - [x] TEL's PyPI name and first release: `tesserae-el` 0.1.0, language version 0.1 (released 2026-11-02, reported by `tess-el`, checked on PyPI). The ongoing release process is the maintainer's.
 - [x] Statements and events: none in TEL. The maintainer told `tess-el` that TEL is an expression language only and that statements, events and handlers belong to the shell (2026-10-26, T15). Syntax and form are worked out in the TEL project (2026-10-25).
-- [ ] How the shell and any other user share TEL's releases without blocking each other.
+- [ ] How do the shell and any other TEL user share TEL's releases without blocking each other? Context: the shell is one of several TEL consumers, and a release that the shell needs must not wait on another user's schedule. Recommendation: the shell pins a released `tesserae-el` version and asks for changes through requests the maintainer carries to the TEL project, so no consumer waits on another.
 - [x] T17 to T20 are accepted requirements from ADR-0014 (maintainer, 2026-10-31). The `tess-el` session answered the shell's four questions on 2026-10-31 (see "TEL's Answers"). No request was filed.
 - [x] T3 and T8 are narrowed to expression-level conditionals and comprehensions; structure conditions and repeats are TDL's (D11, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). T17, T18 and T19 are unchanged.
 
@@ -693,7 +859,7 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 - [ ] What a version change of `TDL:` or of a version pin means (the format is a string, `0.1`).
 - [x] Case rules: keys and block heads are Capitalised, enum values full upper case (D33), `Kind:` takes an exact name ([ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules), items 4, 10, 11 and 13).
 - [x] Unknown keys are errors (decided 2026-10-28, [Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)); unknown metadata keys are kept and ignored (ADR-0014, item 14).
-- [x] The expression delimiter: `{{ }}` on one line (ADR-0014, 2026-10-29). The expression syntax inside it is TEL's.
+- [x] The expression delimiter: a slot on one line (ADR-0014, 2026-10-29), written `<| |>` since TDL 0.2 (2026-11-14; double braces before). The expression syntax inside it is TEL's.
 - [x] Whether a block is named by the word before the brace or by a key: the head is the type and `Name:` is the unique name (ADR-0014, item 6).
 - [ ] Units beyond pixels (a scale-aware unit).
 - [x] A TDL form for a percentage plus pixels: none in v1; it waits for a surface that needs it (D6, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
@@ -706,11 +872,11 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 
 - [x] Several `root` blocks in one file: now several `Monitor` blocks, allowed (decided 2026-10-29, [ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules), item 9).
 - [x] Where shell files live: `$HOME/.config/tesserae-shell/Shells/`, or the directory `settings.tdl` names (decided 2026-10-27, [Settings File](../41%20TDL%20Reference/Settings%20File.md)).
-- [ ] Which shell file is the top-level one when `Shells/` holds several: proposed `Main_Shell` in `settings.tdl` ([Settings File](../41%20TDL%20Reference/Settings%20File.md)), default `Main_Shell.tdl`.
+- [x] The top-level shell file is `Main_Shell` in `settings.tdl`, default `Main_Shell.tdl`; it names the file only ([Settings File](../41%20TDL%20Reference/Settings%20File.md)).
 - [x] The names of the surface keys: accepted by the maintainer on 2026-10-29. Their types follow the per-type specs.
 - [ ] How a surface lays out its modules (order, spacing, alignment): a surface layout key, or the surface being a container widget.
 - [ ] The keys each surface type adds ([Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md)).
-- [ ] How `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` map to tre's `anchor`, `size` and margins, and how a collapsed Bar keeps a layer surface (#needs-verification; [TDL Language > Open](../41%20TDL%20Reference/TDL%20Language.md#open)).
+- [x] How `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` map to tre: accepted in [Bar > Mapping to tre](../40%20Specifications/Surfaces/Bar.md#mapping-to-tre) (D61) and built in M1 (`bar_geometry`, tested on the worked examples).
 - [x] Whether a surface is named by the word before the brace or by a key: the head is the type and `Name:` is the unique name (ADR-0014, item 6).
 - [x] The order in which the shell tries several monitor selectors on one block: `Connector`, then `Description`, then `Index` (ADR-0014 Layout Rules, item 15, decided 2026-10-30).
 - [x] What an imported `_Shell.tdl` contains: surface blocks only, which take the importing Monitor's monitor (D22, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
@@ -719,14 +885,14 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 ### [Module File](../41%20TDL%20Reference/Module%20File.md)
 
 
-- [ ] The `Params` type names and whether defaults are v1.
-- [ ] How the module's root is written when it is not a container (a single `Text`).
-- [ ] The widget property names (`Foreground`, `Fill`, `Alignment`, `Justify_Content`, `Align_Content`, `Width`, `Height`) and which go in style or on the widget.
+- [x] `Params` types in M2 are `string`, `number` and `boolean`; defaults are in v1 because the Clock needs them (maintainer, 2026-11-04, G6).
+- [x] The root is `Module { Params { ... } Children { ... } }`; `Children` may hold a single block, not only a container (G6).
+- [ ] The widget property names and which belong in style or on the widget. Settled with the themes in M3a.
 - [x] Where a module file's own `Style:` and `Params { }` sit: inside the `Module { }` root block (D17, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] Whether `Type:` stays inside a param declaration: yes, as a property, not a file key (D17). Open: `Default:` and the type names ([Module File > Params](../41%20TDL%20Reference/Module%20File.md#params)).
-- [ ] Whether a module can declare the keys its Python sends, so the shell checks a layout against them at load ([Value Types and Conversion > Open questions](../42%20Python%20API/Value%20Types%20and%20Conversion.md#open-questions)).
+- [ ] Whether a module can declare the keys its Python sends. Deferred past M2.
 - [x] Whether a module can contain other modules: the flow diagram says yes ("Can Nest"); the meaning for params, names and UIDs is open ([Shell Structure](../20%20Architecture/Shell%20Structure.md)).
-- [ ] How events are declared on a widget (`On_Click:` and the like) and how they name `@action` methods ([ADR-0007 Shell UI Layer > Events and module reload (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26)).
+- [ ] How events are declared on a widget and how they name `@action` methods. Settled with Events and Actions before M3b ([M3 Brief](M3%20Brief.md)).
 - [x] Whether a module call may take the name word before the brace: yes, the head is the module's metadata `Name:` (ADR-0014, item 7). Open: how a repeated use names itself in the file ([TDL Language > Open](../41%20TDL%20Reference/TDL%20Language.md#open)).
 
 
@@ -805,28 +971,28 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 ### [Module Contract](../42%20Python%20API/Module%20Contract.md)
 
 
-- [ ] Constructor versus `self.ctx` set by the base class (proposed above).
+- [x] `self.ctx` is set by the base class before `start()`; there is no constructor argument (maintainer, 2026-11-04, M2 decisions, G3).
 - [x] Only `@action`-marked methods are callable from a shell file (maintainer, 2026-10-26).
-- [ ] The decorator's final name, and whether actions can return values. The value form of an event key (a bare action name, or a block with `Action:` and named arguments) was decided on 2026-11-01 in [Block Reference > Events](../41%20TDL%20Reference/Block%20Reference.md#events).
-- [ ] The `Block` base class and `Prop` helper of a custom block ([Block Reference > Custom Block API (Decided)](../41%20TDL%20Reference/Block%20Reference.md#custom-block-api-decided)).
+- [ ] Is `action` the final decorator name, and may an action return a value? Context: the value form of an event key (a bare action name, or a block with `Action:` and named arguments) was decided on 2026-11-01 in [Block Reference > Events](../41%20TDL%20Reference/Block%20Reference.md#events); [Events and Actions](../42%20Python%20API/Events%20and%20Actions.md) uses `action` and ignores a returned value in v1. Recommendation: keep `action` and ignore return values in v1.
+- [ ] What are the `Block` base class and `Prop` helper of a custom block? Context: [Block Reference > Custom Block API (Decided)](../41%20TDL%20Reference/Block%20Reference.md#custom-block-api-decided) describes the custom block API. Recommendation: define both exactly as that section states and add nothing else in v1.
 - [x] How a module used several times is named: a use's `Name:` is for the file, references and expressions, and Python uses the `<Module>@<uid>` key (D23, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30); the head word is the module name, [ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules), items 6 and 7). Which names an expression reads (`params`, sent values) stays open under Integration.
-- [ ] The shell's package name and import path.
-- [ ] Which timer helpers `ctx` offers (`every`, `after`) and which clock they use.
-- [ ] Whether `reload()` is passed the changed keys.
+- [x] The package is `tess_shell`; a module writes `from tess_shell import Module, action` (maintainer, 2026-11-04, G3).
+- [x] M2 offers only `ctx.on_tick("second" or "minute")`, driven by the shared wall-clock source; `ctx.every` and `ctx.after` wait until a module needs them (G4).
+- [x] `reload()` takes no arguments; the module re-reads `ctx.config` (G3).
 
 
 ### [Module Context](../42%20Python%20API/Module%20Context.md)
 
 
-- [ ] Whether `ctx.send` accepts a dict of several keys at once.
-- [ ] Whether `ctx.uses` is a mapping (as in the example), a list or an event stream. The example above is for the maintainer to judge the use cases (2026-10-26).
-- [ ] Whether a module can send to a specific monitor.
-- [ ] Whether `ctx.state_dir` is needed or `ctx.data_dir` is enough.
-- [ ] What `ctx.tdl()` returns for imported files and for values that are TEL expressions (the raw text or the evaluated value).
+- [x] M2: `ctx.send(key, value)` takes one key and one value (G4); a dict form can come later.
+- [x] `ctx.uses` is a mapping from `<Module>@<uid>` to the use, as in the example (G4).
+- [ ] Can a module send to a specific monitor? Context: deferred past M2; no M2 module needs it. Recommendation: not before a module needs it.
+- [ ] Is `ctx.state_dir` needed, or is `ctx.data_dir` enough? Context: deferred past M2; the Clock needs neither. Recommendation: offer only `ctx.data_dir` until a module needs a separate state directory.
+- [ ] What does `ctx.tdl()` return for imported files and for values that are TEL expressions: the raw text or the evaluated value? Context: a module reads data, not syntax. Recommendation: the evaluated value, with the raw text reachable through the tree view.
 - [x] The name `ctx.yaml` is renamed `ctx.tdl` (D14, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
-- [ ] What shape the read-only view of the TDL tree has. D12 ([ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)) fixes the tree as an ordered list of entries (head, properties, children) that keeps repeated names, with the metadata block read first. Still open: lookup by `Name:` and whether the view exposes comments.
+- [ ] What shape does the read-only view of the TDL tree have: does it support lookup by `Name:`, and does it expose comments? Context: D12 ([ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)) fixes the tree as an ordered list of entries (head, properties, children) that keeps repeated names, with the metadata block read first. Recommendation: offer lookup by `Name:` and do not expose comments.
 - [x] The brace shorthand `{2, 2, 2, 2}` is not defined; the three forms of D7 stand ([ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
-- [ ] The timer clock and what happens to timers on reload.
+- [x] M2: ticks come from one shared wall-clock source scheduled to the next second or minute boundary; a module's tick subscriptions end on `stop()` and on a replacement of its instance (G4).
 - [x] Param names written on a use stay as the module declared them (D18, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] An action names a use by the `Label@<uid>` key from `ctx.uses` (D23, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 
@@ -834,27 +1000,26 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 ### [Python Builder](../42%20Python%20API/Python%20Builder.md)
 
 
-- [ ] What is the entry point: a function that returns the model, a class, or a script that calls the shell API.
-- [ ] How a Python-defined shell is found and where its UID is stored (P4).
-- [ ] Whether the Python form is a separate package or part of the shell package.
-- [ ] How errors point to Python source lines (P3).
-- [ ] Whether imports between Python and TDL are v1 (P7).
+- [ ] What is the entry point: a function that returns the model, a class, or a script that calls the shell API? Context: the choice shapes how the shell finds and runs a Python-defined shell. Recommendation: a function that returns the model, because it is the easiest to test and to compare with a TDL tree. #needs-verification
+- [ ] How is a Python-defined shell found, and where is its UID stored (P4)? Context: a TDL file keeps its UID in the metadata block. Recommendation: keep the UID in the model's metadata, as a TDL file does, and find the shell through one configured entry point.
+- [ ] Is the Python form a separate package or part of the shell package? Context: a separate package keeps the shell import-light. Recommendation: part of the shell package in v1, split later if needed.
+- [ ] How do errors point to Python source lines (P3)? Context: TDL errors point to file lines. Recommendation: record the call site (file and line) when a head is constructed and report it in errors.
+- [ ] Is importing between Python and TDL part of v1 (P7)? Context: it doubles the loader work. Recommendation: no, not in v1.
 - [x] `If` and `For` signatures stand, and the parity test compares trees, including metadata, and ignores comments and layout (D15, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
-- [ ] The signatures of the metadata setter and the head constructors ([Python Builder > Metadata and Heads (Proposed Signature Sketch)](../42%20Python%20API/Python%20Builder.md#metadata-and-heads-proposed-signature-sketch)).
-- [ ] The TEL Python form: owned by the TEL project; the shell side needs it before this note can be designed.
+- [ ] What are the signatures of the metadata setter and the head constructors? Context: see [Python Builder > Metadata and Heads (Proposed Signature Sketch)](../42%20Python%20API/Python%20Builder.md#metadata-and-heads-proposed-signature-sketch). Recommendation: adopt the sketch as written.
 
 
 ### [Value Types and Conversion](../42%20Python%20API/Value%20Types%20and%20Conversion.md)
 
 
 - [x] The four conversions above are v1 (maintainer, 2026-10-26). Additions later.
-- [ ] Whether the shell warns when a key is sent but no view reads it (useful while building a shell).
-- [ ] Units (logical pixels only, or also a scale-aware unit). TDL fixes the file spelling: pixels as a whole number, `50%` for a percentage ([ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)); percent plus pixels is not in v1 (D6, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
+- [ ] Should the shell warn when a key is sent but no view reads it? Context: deferred past M2. Recommendation: log it at debug level only, with no user-facing warning.
+- [ ] Are units logical pixels only, or also a scale-aware unit? Context: TDL fixes the file spelling: pixels as a whole number, `50%` for a percentage ([ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)); percent plus pixels is not in v1 (D6, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). Recommendation: logical pixels and percentages only in v1.
 - [x] Named sides are a block, and no brace shorthand is defined (D7, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] `true`, `false` and numbers are typed by the key's schema, not the parser (D2, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
-- [ ] How `rgba(...)` alpha converts to 0 to 255 (rounding).
-- [ ] How an image is sent and who owns the buffer (copy or hand over).
-- [ ] Whether a module can declare its keys and types in its TDL file so the shell can check a view against them at load.
+- [ ] How does `rgba(...)` alpha convert to 0 to 255 (rounding)? Context: colours are sent in M3 or later, and `tess_utils` decides. Recommendation: round to the nearest integer.
+- [ ] How is an image sent, and who owns the buffer? Context: deferred past M2. Recommendation: the module hands the buffer over on send and the shell owns it afterwards. #needs-verification
+- [ ] Can a module declare its keys and types in its TDL file? Context: deferred past M2. Recommendation: not in v1; the key schema stays in the module's Python code.
 
 
 ## Design System
@@ -865,7 +1030,7 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 - [x] A module author can add a block, in Python, shipped with the module (maintainer, 2026-11-01). The mechanism is a proposal in [Block Reference > Custom Blocks (R12)](../41%20TDL%20Reference/Block%20Reference.md#custom-blocks-r12).
 - [x] A free-form Path block: added (2026-10-26).
 - [x] Whether the listed modules can be built from the listed blocks: the maintainer reports yes, tested on Tesserae (2026-10-26). Expander and Marquee need animated layout and translate properties; Slider, Toggle and Button need pointer and drag events from the blocks.
-- [x] Grid: tre has a grid (`display: "grid"`, `grid_template_columns`, `grid_template_rows`, `row_gap`, `column_gap`); the mapping of `Columns`, `Rows` and `Spacing` is in [Block Reference > Grid](../41%20TDL%20Reference/Block%20Reference.md#grid). Open: the text form of tre's track template.
+- [x] Grid: tre has a grid (`display: "grid"`, `grid_template_columns`, `grid_template_rows`, `row_gap`, `column_gap`); the mapping of `Columns`, `Rows` and `Spacing` is in [Block Reference > Grid](../41%20TDL%20Reference/Block%20Reference.md#grid).
 - [x] The default hit shape of Path and the shape blocks: `painted` (maintainer, 2026-10-27): the reason to use a shape is for the look and for the hit box to be the painted shape. tre 0.5.9 has `hit_shape` `box` (its default) or `painted`; the shell's shape blocks set `painted`. SVG and Canvas are not covered by `hit_shape` ([Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md)).
 - [x] How icons are found: the shipped SVG set (a JSON file), then the freedesktop icon theme, then the config `Icons` folder, then the locations a developer lists in the settings file (maintainer, 2026-11-01; [Block Reference > Icons (R7)](../41%20TDL%20Reference/Block%20Reference.md#icons-r7)).
 - [x] The state model: data in through `Text` and edits out through `On_Changed`, with no two-way binding (R6, maintainer, 2026-11-01).
@@ -875,8 +1040,8 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 ### [V1 Widgets](../50%20Design%20System/V1%20Widgets.md)
 
 
-- [ ] Which of TextBox, TextEditor, Badge, Tooltip, Toggle and Marquee text are v1.
-- [ ] Which text-input behaviour TextField needs for v1 (composition and input methods work on layer surfaces in tre 0.5.8; no real input method was tested).
+- [x] Which of TextBox, TextEditor, Badge, Tooltip, Toggle, Marquee text and Checkbox are v1: all of them (maintainer, 2026-11-08).
+- [x] Which text-input behaviour TextField needs for v1: single-line and multi-line (maintainer, 2026-11-08). Wrapping: `Wrap` means word wrapping for now and character wrapping comes later; a single-line field has horizontal scroll or an ellipsis, because wrapping a single line makes no sense; a multi-line field wraps by word or does not. The key names are proposed in [M4 Brief](M4%20Brief.md) W3.
 - [x] The properties and states of each: [Block Reference](../41%20TDL%20Reference/Block%20Reference.md); proposals R1 to R11 decided 2026-11-01. The v1 block set is R11.
 
 
@@ -888,22 +1053,17 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 - [x] Confirm the absences listed under [What tre has today](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#what-tre-has-today) in the tre source. Done in [tre #195](https://github.com/mindderivative/tre/issues/195).
 - [x] Choose the implementation path (I1, I2, I3). Spike recommends I2 ([tre #196](https://github.com/mindderivative/tre/issues/196)); the maintainer confirms.
 - [x] Check which of `wl_output` v4 and `xdg-output-unstable-v1` KWin exposes for stable output names. `wl_output` v4 gives names (spike).
-- [ ] Check whether `window.set(x=, y=, always_on_top=, skip_taskbar=)` does anything on Wayland. tre #195 reads the source: they call `set_outer_position` and `set_window_level`, which `winit` documents as unsupported on Wayland, and `skip_taskbar` is Windows only. So Option C cannot place or stack a bar under KWin. A test on a live session is still pending.
 - [x] Decide keyboard focus for popups under a `"none"` parent. Overlay route uses `keyboard="exclusive"` while a menu is open.
-- [ ] Define "layer" in the Glossary in both senses (tre in-window overlay, protocol stacking layer) and decide whether `LayerWindow` should rename its `layer=` parameter. Rename declined: tre keeps `layer=`; the shell may use `shell_layer=`. The Glossary entry is still to write.
 - [x] Decide whether `LayerWindow.animate` covers only margins or also size and `exclusive_zone` (the request recommends margins only). Margins only, as built.
 - [x] Negative margins on KWin: accepted and honoured (spike).
-- [ ] Frame-callback behaviour for covered surfaces and KWin's own map and unmap effects on layer surfaces. The spike did not test frame callbacks under a fullscreen window.
-- [ ] Whether `reduced_motion` follows Plasma's animation speed. tre reads it from the settings portal (`org.freedesktop.appearance` `reduced-motion`); with Plasma 6.8 at speed factor 0.25 it reported 0, so it likely does not follow the factor. Unconfirmed. 0.5.8 also makes the OS reduced-motion and contrast preferences send live changes on a desktop whose portal only has GNOME's older keys (`enable-animations`, `high-contrast`) ([upgrade notes](https://mindderivative.github.io/tre/migrating-0.5/)).
 - [x] Phase 5 ([#205](https://github.com/mindderivative/tre/issues/205)) reviewed against this note on 2026-10-23: met on sway, with the gaps listed under [Phase 5 as built](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#phase-5-as-built-tre-205). [Margin drag](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#margin-drag) is updated for the relative-pointer drag.
 - [x] Review tre's scoping of phase 6 ([#206](https://github.com/mindderivative/tre/issues/206)): 6a done; 6b approved and built as `PopupWindow` ([tre #223](https://github.com/mindderivative/tre/issues/223)), in 0.5.8.
-- [ ] Margin drag ignores other surfaces' exclusive zones, so a widget can be dragged over a bar. Decide whether the shell clamps in the `moved` handler, or asks tre for an optional clamp to the usable area.
+- [ ] Should the shell clamp margin drag in the `moved` handler, or ask tre for an optional clamp to the usable area? Context: margin drag ignores other surfaces' exclusive zones, so a widget can be dragged over a bar. Recommendation: clamp in the shell, which needs no tre change; ask tre only if the shell cannot read the usable area.
 - [x] `reduced_motion` on a `LayerWindow`: met headless in the hand-off; a live portal change on a layer surface was not run.
-- [ ] Mask-aware hit testing: tre #204 made hit testing follow `corner_radius` only; masks and `clip_children` stay ignored. Decide whether the shell needs more before `TRE-REQ-003`.
-- [ ] Prototype the screen frame on the shell side, then decide on `TRE-REQ-003`. tre did the overlay route (6a) and built `PopupWindow` (6b, #223) in 0.5.8, so the popup half is settled: use `PopupWindow` for menus. The spike's `-1` painter and 1 px reserver results support the frame layout.
+- [ ] Does the shell need mask-aware hit testing before `TRE-REQ-003`? Context: tre #204 made hit testing follow `corner_radius` only; masks and `clip_children` stay ignored. Recommendation: do not ask tre yet; decide when the frame prototype shows a concrete need.
+- [ ] Should the shell prototype the screen frame on its side before you decide on `TRE-REQ-003`? Context: tre did the overlay route (6a) and built `PopupWindow` (6b, #223) in 0.5.8, so the popup half is settled: use `PopupWindow` for menus. The spike's `-1` painter and 1 px reserver results support the frame layout. Recommendation: yes, prototype first, then decide on `TRE-REQ-003` from the result.
 - [x] tre's animation progress is clock-driven (`Tree::tick_all(now: Instant)`). What the loop does when frames stop is untested; requirement 2 still needs a test.
 - [x] Check the 0.5.7 docs for the mask API, concave corners, blend modes and shape-aware box hit-testing. Hit testing follows `corner_radius`, not masks (tre #204).
-- [ ] Find the first KWin release exposing `zwlr_layer_shell_v1` (shared with ADR-0001).
 - [x] Decide whether v1 targets wlroots-family compositors as well as KWin, which affects which compositors the acceptance tests cover. Both KWin and wlroots (maintainer, tre #195). Only sway and KWin tested.
 
 
@@ -914,8 +1074,6 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 - [x] `keep_alive` is an argument of `run()`, not of `App` (`tre`).
 - [x] Non-Wayland: `keep_alive` works, with no output events and no error (`tre`).
 - [x] The `closed` reason for a stop: `"stopped"`, on ordinary windows too (as built, per `tre`).
-- [ ] Idle cost with zero windows: `tre` checks CPU ticks and wake-ups over 5 s ([Process Model and Threading > Performance notes](../20%20Architecture/Process%20Model%20and%20Threading.md#performance-notes)).
-- [ ] Whether KWin behaves the same as sway.
 
 
 ## Research
@@ -950,6 +1108,180 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 - [ ] How the Edge Shell prototype drew its shadows.
 - [ ] Whether tre can expose the surface for route A, and whether the engine accepts a shadow request (AGENTS > 6. Requests Between Projects). Ask the `tre` session before writing a request.
 - [x] The memory cost of the larger transparent buffer for route B: 134 KB per buffer for a 32 px margin on a 320x140 body (see the performance test). Still to measure at Frame size, per [Surface Types > Performance budget](../40%20Specifications/Surfaces/Surface%20Types.md#performance-budget).
+
+
+## Questions After Testing
+
+Questions that a test, a probe or a release must answer first. Each is embedded from the note that owns it.
+
+### [tess-utils Brief](tess-utils%20Brief.md)
+
+
+Answered by: the first `mypyc` build of `tess_utils` (see question 10 above).
+
+1. [ ] Should the compiled `.so` target the stable ABI (`abi3`) or a CPython 3.14 specific build? Context: question 10 left it open until the compiler is chosen; `mypyc` output may not support `abi3`, which only a build shows. Recommendation: the CPython 3.14 specific build unless `mypyc` produces `abi3` without cost.
+
+
+### [Render Binder Design](../20%20Architecture/Render%20Binder%20Design.md)
+
+
+- [ ] Do `AUTO` and `EXPAND` map in tre as the Block Reference sizes say, for each block? Context: the shell maps `EXPAND` to `flex_grow` 1 with `align_self` `stretch` because tre refuses `expand`; this is untested per block ([Block Reference](../41%20TDL%20Reference/Block%20Reference.md)). Answered by: rendering each block with both values in a real window. Recommendation: test the blocks that take `Width` and `Height` first and record the result in the Block Reference.
+
+
+### [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md)
+
+
+Answered by: the first Tesserae Shell build running on KWin (maintainer, 2026-10-25: deferred to the testing phase).
+
+- [ ] Which KWin release first exposes `zwlr_layer_shell_v1`? Context: the design assumes KWin 6.8.1, where tre tested. Answered by: running the build on older KWin releases. Recommendation: record the first release that works as the minimum KWin version in this ADR.
+- [ ] What is the `org_kde_plasma_shell` status for third-party clients? Context: Option D is not pursued, so nothing in the design depends on it. Answered by: probing the protocol on the live KWin session. Recommendation: probe once and record the result; no design change.
+- [ ] **Are non-layer-shell compositors (GNOME) out of scope for v1?** Context: until answered the design targets KWin and wlroots compositors; `LayerWindow` raises `UnsupportedPlatform` elsewhere. Answered by: the first run on a non-layer-shell compositor. Recommendation: declare them out of scope for v1.
+- [ ] **How do gtk-layer-shell and Quickshell attach a layer role to a toolkit surface?** Context: this informs Option B, which is not pursued. Answered by: reading their source. Recommendation: skip unless Option B is reopened.
+
+
+### [D-Bus Service Layer](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md)
+
+
+1. [x] Are 1 ms (own work in a callback) and 50 ms (logged slow callback) the right numbers? Keep them until the spike shows real callback times, then set them from the measured p99 (maintainer, 2026-11-12, as recommended). The numbers are proposals until the D-Bus spike with the real modules measures them.
+
+
+### [Focus and Keyboard](../40%20Specifications/Integration/Focus%20and%20Keyboard.md)
+
+
+1. [x] How are mode keys delivered? Option A, the mode takes keyboard focus (maintainer, 2026-11-10, as recommended). Yes, the shell may use `EXCLUSIVE` keyboard mode for the length of the mode if KWin does not hand focus over after a global key (maintainer, 2026-11-10, as recommended); the live KWin test shows whether it is needed.
+2. [ ] What are KWin's focus rules for layer surfaces, and which `Keyboard` mode (`ON_DEMAND` or `EXCLUSIVE`) does the mode need? Context: on Wayland the compositor decides which layer surface has keyboard focus. Recommendation: try `ON_DEMAND` first and use `EXCLUSIVE` for the duration of the mode only if KWin does not hand focus over. Answered by: the live KWin test (key press, then check which surface receives key events). Until that test: the maintainer decided on 2026-11-15 that shortcut mode keeps `EXCLUSIVE` as the default and the recommendation to try `ON_DEMAND` first is not taken; `Debug { Mode_Keyboard: ON_DEMAND }` in `settings.tdl` stays as the switch to try the other mode. Built this way in `45f7a9f` (the code session's report).
+
+
+### [Global Shortcuts](../40%20Specifications/Integration/Global%20Shortcuts.md)
+
+
+Numbers 3, 4 and 7 keep the numbers they had in Open Questions, because other notes refer to them.
+
+3. [x] Does a component without a desktop file appear in System Settings with its friendly name? Answered on 2026-11-15 by the maintainer's hand check: yes, it shows as "Tesserae Shell" with both rows and their keys ([Global Shortcuts > KWin Hand Check of M6c (maintainer, 2026-11-15; code session's report, not run in the vault)](../40%20Specifications/Integration/Global%20Shortcuts.md#kwin-hand-check-of-m6c-maintainer-2026-11-15-code-sessions-report-not-run-in-the-vault)). Original text: Context: the maintainer answered "No" on 2026-11-10, but the vault cannot tell whether that means "it does not appear" or "not needed", and the question is a fact about KDE. Recommendation: treat it as unanswered and settle it by the live test; if the component shows only by its id, ship a desktop file for the friendly name ([Portals](../40%20Specifications/Integration/Portals.md)). Answered by: the live test with a throwaway component (Open Questions item 1). #needs-verification
+4. [x] Which TDL key sets the shortcut of a Panel or a module action (`Shortcut`), and what is its value type? Context: `Reveal_Key` is decided in name only ([Bar](../40%20Specifications/Surfaces/Bar.md)); the maintainer (2026-11-10) wants this tested before a decision, with shortcuts as dynamic as possible and easy to change afterwards ([Global Shortcuts > Shortcuts Stay Changeable](../40%20Specifications/Integration/Global%20Shortcuts.md#shortcuts-stay-changeable)). Recommendation: `Shortcut: "keys"` on the Panel or module, a string in the same form and parsing rules as the `Shortcuts` block (item 8), with `Reveal_Key` as the Bar's name for the same thing. Answered by: the live test, registering a shortcut from a surface key and from `Shortcuts`. Decided by the orchestrator on 2026-11-13 without the live test: `Shortcut: "keys"` on a Panel, equal to a `Toggle_<Name>` entry ([Global Shortcuts > Action Names and Forms (Decided 2026-11-13)](../40%20Specifications/Integration/Global%20Shortcuts.md#action-names-and-forms-decided-2026-11-13)).
+7. [x] What are the names of the shell actions other than `Enter_Shortcut_Mode`, `Exit_Shortcut_Mode`, `Set_Shortcut_Mode`, `Next_Focus` and `Previous_Focus`? Context: the maintainer (2026-11-10) left the rest of the list for testing, with the same requirement as question 4: dynamic, and easy to change after tests; the form is `Shortcuts { Name: "keys" }`. Recommendation: one action per surface verb (toggle, show, hide) named in `Verb_Surface` style like the four given names, fixed after the live test shows which actions are used. Answered by: the live test and the first weeks of use. Decided by the orchestrator on 2026-11-13: `Toggle_<Name>`, `Show_<Name>`, `Hide_<Name>` and block entries that carry a handler ([Global Shortcuts > Action Names and Forms (Decided 2026-11-13)](../40%20Specifications/Integration/Global%20Shortcuts.md#action-names-and-forms-decided-2026-11-13)).
+
+
+### [KWin Integration](../40%20Specifications/Integration/KWin%20Integration.md)
+
+
+1. [ ] Which key names does the rule file use, and does the rule raise the shell's surfaces above other windows? Context: the rule is opt-in and its keys are not written yet. Recommendation: use the key names KWin writes when the same rule is made in System Settings, copied from a backed-up `kwinrulesrc`, and keep the rule to one group. Answered by: the rule test of question 8 with the live KWin 6.8.1. #needs-verification
+
+
+### [Plasma Coexistence](../40%20Specifications/Integration/Plasma%20Coexistence.md)
+
+
+1. [ ] Does a second tray host see items that registered before it joined? Context: the watcher's `RegisteredStatusNotifierItems` property lists them, so the host would read it at registration. Recommendation: read the property at registration (as proposed). Answered by: starting the shell as second host while items are registered and comparing its list with the property.
+2. [ ] How does an app behave when it checks `IsStatusNotifierHostRegistered` and only the shell's host is present? Context: plasmashell normally registers a host. Recommendation: keep the shell's host registered at all times so such apps show their icon. Answered by: a test with plasmashell stopped, in a throwaway session.
+3. [ ] Do the same name owners hold on Plasma versions before 6.8 and on Fedora, KDE neon and Arch? Context: the owners table was read on one machine (KWin 6.8.1). Recommendation: state the table as verified for 6.8 only and add a column per distribution as results arrive. Answered by: reading `busctl --user list` on each distribution.
+
+
+### [Portals](../40%20Specifications/Integration/Portals.md)
+
+
+1. [ ] Does `ReadAll` need a registered app id? Context: the Registry says an unsandboxed app registers before any other portal call; whether reads work without it is unknown. Recommendation: always call `Register` first (as the acceptance criteria say) unless the test shows reads fail or break with it. Answered by: calling `ReadAll` on `org.freedesktop.appearance` with and without `Register` on this machine.
+2. [ ] Does the KDE backend emit `SettingChanged` for the accent colour and the colour scheme at once, and for a custom colour scheme? Context: the theme re-resolve is coalesced to one per frame ([Portals > Failure Modes and Recovery](../40%20Specifications/Integration/Portals.md#failure-modes-and-recovery)). Recommendation: re-resolve on either signal and read all keys again, so the order of signals does not matter. Answered by: changing scheme, accent and a custom scheme in System Settings while `busctl --user monitor` watches the portal.
+3. [ ] Does tre have a reduced-motion switch for the shell to set, or does the shell apply it alone? Context: acceptance requires no animation with `reduced-motion` 1. Recommendation: the shell applies it alone (it already does for Panels, D49) and uses a tre switch only if one exists. Answered by: checking tre's window and animation reference and a spike with an animated surface.
+4. [ ] Is the 100 ms budget from signal to screen met on a loaded machine? Context: the code session saw `test_a_scheme_change_on_the_bus_reaches_the_bar_within_100_ms` take 1076 ms once in 6 runs of a CI shard, unexplained, one sample. Recommendation: keep the budget and read it on an idle machine; look again if it repeats. Answered by: repeating the test on an idle machine and on CI. Update, 2026-11-15 (code session's report, `tess-shell` PR #19): the same unexplained wait of about 650 ms before the portal reader saw a signal happened in 2 of 36 CI runs of one shard, while applying the look itself always took 0 to 1 ms. The test is now the best of five runs with a 3 s hang guard, so the 100 ms budget is checked on the shell's own work and the signal's arrival is not. Where the wait comes from is still unknown (the bus, the runner or the reader thread).
+
+
+### [Battery Module](../40%20Specifications/Modules/Battery%20Module.md)
+
+
+Answered by: a check of every `mdi` name in the icon table against the shipped icon set.
+
+5. [ ] Do all the `mdi` names in the icon table exist in the shipped set? Context: a missing name shows no icon. Recommendation: run the check before M5 starts this module and rename any that fail. #needs-verification
+
+
+### [Workspaces Module](../40%20Specifications/Modules/Workspaces%20Module.md)
+
+
+Answered by: the first test on a real KWin session, and a D-Bus read of the desktop list.
+
+6. [ ] Which call switches desktops: setting `current` or `/KWin setCurrentDesktop(int)`? Context: `current` names the desktop by id; the KWin call uses a number and can race a reorder. Read-only checks cannot answer it. Recommendation: set `current`.
+7. [ ] Is the type of `desktops` `a(iss)` or `a(uss)`? Context: see the warning above; the wrong signature fails the call. Recommendation: read the property on a real session and use what it returns. #needs-verification
+
+
+### [Logging](../40%20Specifications/Runtime/Logging.md)
+
+
+Answered by: a check of Loguru's behaviour and of `systemd.exec(5)`.
+
+10. [ ] Does `logger.remove()` flush the enqueued records at stop? Context: both sinks use `enqueue=True`, so a lost queue would lose the last lines before exit. Recommendation: assume yes only after a test that logs, stops and counts the lines. #needs-verification
+11. [ ] Can forwarding tre's stderr into the log block the process? Context: a full pipe or a slow sink could stall the forwarder. Recommendation: forward on its own thread and test with a burst of output. #needs-verification
+12. [ ] What does `JOURNAL_STREAM` mean in `systemd.exec(5)`? Context: the shell uses it to detect that it runs under systemd and shortens the console line. Recommendation: read the man page and test under a user unit before relying on it. #needs-verification
+
+
+### [Shell Start and Stop](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md)
+
+
+Answered by: a test on the target session that lists the lock directory after a cleaner pass and checks the sticky bit.
+
+8. [ ] Does any cleaner run on the target session, and is the sticky bit honoured on the lock files? Context: a cleaner that removes the lock file would allow a second instance. Recommendation: keep the sticky bit and verify on the real session. #needs-verification
+
+
+### [Events and Actions](../42%20Python%20API/Events%20and%20Actions.md)
+
+
+1. [ ] Does tre report animation start and end to the shell? #needs-verification Context: `On_Anim_Start` and `On_Anim_End` depend on it. Recommendation: raise them from the shell's own animation timers if tre does not report them. Answered by: a probe of tre's animation reporting.
+2. [ ] Can tre parent a popup to a popup? Context: submenus in `Call` need it (question 5 above). Recommendation: if tre cannot, open the submenu as a sibling popup positioned beside its parent. Answered by: the M4c tre probe.
+
+
+### [V1 Widgets](../50%20Design%20System/V1%20Widgets.md)
+
+
+1. [x] Do composition and input methods work with a real input method on layer surfaces? The check was not performed and the maintainer does not care about it (2026-11-11); it stays untested.
+2. [x] Does tre's `text_input` support each text-input behaviour (single-line scroll or ellipsis, multi-line word wrap or none)? Yes with tre 0.6.6 (TRE-REQ-016, verified headless by the code session, not repeated in the vault), and the maintainer's KWin check of the fields passed (M4a rows 15 to 20, 2026-11-11).
+
+
+### [Testing Strategy](../60%20Quality/Testing%20Strategy.md)
+
+
+1. [ ] How does tre expose the accessibility tree to a test? Context: [Accessibility](../60%20Quality/Accessibility.md) checks need it. Recommendation: assert on the tree if tre exposes one, and otherwise check roles through the shell's own model. Answered by: a probe of tre's accessibility API.
+
+
+### [TRE-REQ-001 Layer Surface Window](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)
+
+
+1. [ ] Do `window.set(x=, y=, always_on_top=, skip_taskbar=)` do anything on Wayland, so that Option C could place or stack a bar under KWin? Context: tre #195 reads the source: they call `set_outer_position` and `set_window_level`, which `winit` documents as unsupported on Wayland, and `skip_taskbar` is Windows only. Recommendation: treat Option C as unusable and keep the layer-surface route (I2); confirm only if a live session is cheap to run. Answered by: a live KWin session test.
+2. [ ] Do covered surfaces keep receiving frame callbacks, and how do KWin's own map and unmap effects treat layer surfaces? Context: the spike did not test frame callbacks under a fullscreen window. Recommendation: test under a fullscreen window before the bar ships. Answered by: a live KWin test with a fullscreen window over the bar.
+3. [ ] Does `reduced_motion` follow Plasma's animation speed? Context: tre reads it from the settings portal (`org.freedesktop.appearance` `reduced-motion`); with Plasma 6.8 at speed factor 0.25 it reported 0, so it likely does not follow the factor. 0.5.8 also makes the OS reduced-motion and contrast preferences send live changes on a desktop whose portal only has GNOME's older keys (`enable-animations`, `high-contrast`) ([upgrade notes](https://mindderivative.github.io/tre/migrating-0.5/)). Recommendation: do not rely on the factor; offer a shell setting for reduced motion. Answered by: toggling the Plasma animation setting and the portal value on a live session.
+4. [ ] Which is the first KWin release that exposes `zwlr_layer_shell_v1`? Context: shared with ADR-0001. Recommendation: keep the KWin 6.7 floor already stated. Answered by: checking KWin release notes or a build probe.
+
+
+### [TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)
+
+
+1. [ ] Is the idle cost with zero windows acceptable? Context: with `keep_alive` and no windows, tre checks CPU ticks and wake-ups over 5 s ([Process Model and Threading > Performance notes](../20%20Architecture/Process%20Model%20and%20Threading.md#performance-notes)). Recommendation: accept if the loop shows no CPU ticks and no wake-ups in 5 s. Answered by: the 5 s CPU tick and wake-up measurement.
+2. [ ] Does KWin behave the same as sway for `keep_alive` with zero windows? Context: the acceptance criteria were checked on sway. Recommendation: ship only when both behave the same. Answered by: running the same zero-window test on a live KWin session.
+
+
+### [TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md)
+
+
+1. [ ] Does `usvg` drop SMIL elements or fail on them? Context: it drew the test icons without error. Recommendation: no action unless a test shows a failure; the pre-pass design does not depend on the answer. Answered by: parsing the animated `mli` icons with `usvg` directly.
+2. [ ] Is the cost of re-parsing a small document per sample acceptable? Context: tre's target is 30 icons per frame in under 4 ms, to be measured in issue #245. What tre does while only an `svg_time` animation runs (wake-ups, hidden or occluded windows) was unverified on 2026-11-01; tre measured it on 2026-11-02 (see "Built in tre"). Recommendation: accept tre's target of 30 icons per frame in under 4 ms. Answered by: tre's measurement in issue #245.
+
+
+### [TRE-REQ-011 Drain call_soon at Loop Start](../80%20Requests/TRE-REQ-011%20Drain%20call_soon%20at%20Loop%20Start.md)
+
+
+1. [ ] Does the same hold with windows open and without `keep_alive`? Context: tested only with `keep_alive` and no windows. Recommendation: run the repro with one open window before sending, and widen the request if it also fails. Answered by: the repro run with a window open and no `keep_alive`.
+
+
+### [TRE-REQ-012 Draw a Window Changed in Another Window's Callback](../80%20Requests/TRE-REQ-012%20Draw%20a%20Window%20Changed%20in%20Another%20Window%27s%20Callback.md)
+
+
+1. [ ] Does the same happen for `Window` (xdg toplevel) windows as for layer surfaces? Context: the shell has layer surfaces only. Recommendation: run `repro_cross_window_redraw.py` with two ordinary windows and widen the request if it also fails. Answered by: that repro with `Window` instead of `LayerWindow`.
+2. [ ] Why does a window with a recurring timer draw promptly after such a change while one without does not? Context: observed in the repro; the cause is inside tre's loop. Recommendation: leave it to tre; it is not needed to state the request. Answered by: tre's diagnosis, or a repro with and without `b.every(...)`.
+
+
+### [TRE-REQ-013 Structure-Preserving Path Morph](../80%20Requests/TRE-REQ-013%20Structure-Preserving%20Path%20Morph.md)
+
+
+1. [ ] Is the morph sample count 96 (`path.rs`) or 48 (the code session's figure) for the build it ran? Context: the code session ran tesserae-engine 0.6.1 in its venv; 0.6.3 is released. Recommendation: use the figure measured on the released 0.6.3. Answered by: reading `MORPH_SAMPLES` or measuring on 0.6.3.
+2. [ ] Can a shader node be hit-tested and clipped today? Context: the docs read do not say. Recommendation: keep the request for Part B of mechanism 2 until a test shows it works. Answered by: a test shader node with `hit_shape` and a clip.
+3. [ ] Does the SMIL `d` morph the code session is probing already keep arcs and curves ([TRE-REQ-008 SMIL Animation in SVG Nodes](../80%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md))? Context: if it does, mechanism 3 is partly covered. Recommendation: wait for the probe before changing mechanism 3. Answered by: the code session's probe.
 
 
 ## Links

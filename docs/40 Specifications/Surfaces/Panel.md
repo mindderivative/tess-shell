@@ -2,10 +2,10 @@
 title: Panel
 aliases: [Panel Surface, kind panel]
 type: spec
-status: review
+status: stable
 owner: phil
 created: 2026-10-27
-updated: 2026-11-02
+updated: 2026-11-14
 tags: [spec/surface, needs-verification]
 ---
 
@@ -54,7 +54,7 @@ stateDiagram-v2
 - **Attaching is by naming the surface** (decided, [ADR-0007 Shell UI Layer > Open items](../../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)). It is a reference, not nesting. The registry resolves the name; an unresolved name is an error at load, and a target that disappears while running is a warning and the Panel stays hidden until it returns.
 - layer-shell has no way to place one surface relative to another, so the shell computes the margins itself and recomputes them when the target moves or animates. Two separate surfaces animating together can differ by up to a frame on screen ([TRE-REQ-001 Layer Surface Window > Animation](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#animation)).
 - Dragging clamps the Panel to its output. It does not cross to another monitor (no cross-monitor dragging for now; a later item), and other surfaces' reserved zones do not limit it.
-- **Only a floating Panel has a persistent position** (decided 2026-10-27). An attached or anchored Panel is placed by its target or its anchor, so nothing is saved for it. The floating Panel's position is saved in the registry, which already holds a unique identity for it (proposed key: the final margins from the `moved` event, kept as an `Inset`).
+- **Only a movable Panel has a persistent position** (decided 2026-10-27; widened to anchored Panels by D51, 2026-11-06). An attached Panel is placed by its target, so nothing is saved for it; an anchored or floating Panel with `Movable` is saved. The floating Panel's position is saved in the registry, which already holds a unique identity for it (proposed key: the final margins from the `moved` event, kept as an `Inset`).
 
 ### Attachment Geometry (Decided 2026-10-27)
 
@@ -97,11 +97,15 @@ This attaches the Panel's right edge to the target's left edge, lines up their t
 
 **One Panel, one target (decided 2026-10-27).** A target has one attached Panel. A second Panel attaches to the first Panel (a chain). Opening the second from the first is opt-in: either the origin target opens both (proposed key `Open_With_Target`, default off), or the first Panel has its own way to open the second.
 
-**A module as the target (decided 2026-10-27).** The target can be a module inside a Bar. Then `Attach` and `Alignment` are computed against the module's geometry, not the Bar's, while the gap respects the parent Bar, so the Panel does not overlap it. A Bar can therefore carry several Panels, one per module. A Panel can be attached to a Bar itself and open when the Bar becomes visible, for a stylised application menu. How the shell reads a module's geometry, and what "the gap respects the parent Bar" means exactly (the gap measured from the Bar's edge), are open. #needs-verification
+**A module as the target (decided 2026-10-27).** The target can be a module inside a Bar. Then `Attach` and `Alignment` are computed against the module's geometry, not the Bar's, while the gap respects the parent Bar, so the Panel does not overlap it. A Bar can therefore carry several Panels, one per module. A Panel can be attached to a Bar itself and open when the Bar becomes visible, for a stylised application menu. The gap is measured from the parent Bar's outer edge on the side that faces the Panel, so the Panel never overlaps the Bar. The shell reads the module's geometry from the laid-out rectangle of the module's root node in the Bar's window (`layout_x`, `layout_y`, `layout_width`, `layout_height`, read after a layout pass; checked on `tess_re` 0.6.0 on 2026-11-04) and adds the Bar's own placement. Confirmed by the maintainer on 2026-11-04 as already decided.
 
 ### Hide and Show (Decided 2026-10-27)
 
-Hide and show mean hidden, not closed. A hidden Panel keeps its identity and its place in the tree; it does not reload, and a Panel that is shown again returns where it was. The window mechanics (tre's `show_layer` is about node layers inside a window, per its layer-window reference, not surface visibility, so surface hiding may need another route) are open. #needs-verification
+Hide and show mean hidden, not closed. A hidden Panel keeps its identity and its place in the tree; it does not reload, and a Panel that is shown again returns where it was.
+
+> [!WARNING]
+> **Amended 2026-11-06 (D44, maintainer): hidden is a kept surface again, after a tre fault was found**
+> Two routes were built. The first keeps a mapped surface that draws nothing (root invisible, empty input region, keyboard none); the second closes the window on hide and makes a new one on show. On 2026-11-05 the first looked stale or late on KWin. The code session then found the cause: a node property set in one window during another window's callback (a click on the Bar that changes a Panel) is not drawn until something else wakes the loop. A wake after every change (`SurfaceManager.wake`, a queued `call_soon`) fixed about 60 toggles at 1 to 2 ms each. The maintainer decided on 2026-11-06 to make the kept-surface route the default again, with `Debug { Panel_Hide: KEEP }` in `settings.tdl` (`CLOSE` selects the close route), and asked for [TRE-REQ-012 Draw a Window Changed in Another Window's Callback](../../80%20Requests/TRE-REQ-012%20Draw%20a%20Window%20Changed%20in%20Another%20Window%27s%20Callback.md). "Hidden, not closed" holds as written. `Debug` is a debugging switch, not part of the design, and is not in [Settings File](../../41%20TDL%20Reference/Settings%20File.md). [Risk Register](../../00%20Home/Risk%20Register.md) R-29 tracks it.
 
 ### Collapsed Handle (Decided 2026-10-27: Use the Edge Shell as the Example)
 
@@ -117,7 +121,7 @@ A Panel can collapse to a handle on its edge, as the maintainer's Edge Shell doe
 - The hover zone is an invisible strip beyond the edge (16 px in the Edge Shell) that wakes a collapsed Panel.
 - A press that moves under 4 px is a click; a longer press moves the depth along the panel's axis and snaps at 50% on release.
 - The handle is a focusable button with an accessible name such as "Expand dock".
-- Proposed keys, from the Edge Shell names: `State` (`collapsed`, `extended`), `Peek` (pixels), `Hover_Zone` (pixels), `Handle` (a block for shape, size, weight, offset, colour and hover colour), `Click`, `Hover` and `Drag` (booleans). These are proposals; the maintainer chose the Edge Shell as the model, not the key names.
+- Keys, updated 2026-11-07: the Edge Shell's names are not used. A Panel or strip that peeks uses `Peek { Size, Enter_Delay, Exit_Delay, Trigger, Handle, Slide_From }`, defined once in [Frame > Peek Triggers and Handles (Decided 2026-11-07)](Frame.md#peek-triggers-and-handles-decided-2026-11-07). `State` (`collapsed`, `extended`) and `Hover_Zone` from the Edge Shell remain proposals.
 
 ### Layers
 
@@ -164,7 +168,7 @@ Keys of a Panel entry. Decided keys are from [Common Keys and Conventions](../..
 | `Keyboard`         | `NONE`, `ON_DEMAND`, `EXCLUSIVE`                                                                                                                                                                                                                                                     | Decided (key name accepted 2026-10-29)                                                                   |
 | `Input_Region`     | Whole, nothing, rectangles or `auto`                                                                                                                                                                                                                                                 | Decided (key name accepted 2026-10-29)                                                                   |
 | `Exclusive_Zone`   | Space to reserve; only on `TOP`                                                                                                                                                                                                                                                      | Rule decided; key accepted 2026-10-29                                                                    |
-| `Movable`          | The mouse can move it; the position is saved. Floating Panels only                                                                                                                                                                                                                   | Decided (key name accepted 2026-10-29); saved in the registry (decided 2026-10-27)                       |
+| `Movable`          | The mouse can move it; the position is saved. Anchored or floating, not with `Attach_To` (D51, below)                                                                                                                                                                                                                   | Decided (key name accepted 2026-10-29); saved in the registry (decided 2026-10-27)                       |
 | `Visible`          | `true` (the default) starts the Panel shown; `false` starts it hidden. The opposite of the earlier `Hidden`                                                                                                                                                                          | Decided (key name accepted 2026-10-29; renamed from `Hidden`, 2026-11-02)                                |
 | `Hide_After`       | Hide itself after a time, for an OSD; the default is a reasonable value the user can set, and the caller resets the timer when it re-shows the Panel                                                                                                                                 | Decided (2026-10-27); the default value is open                                                          |
 | `Animation`        | Slide, fade or none, with a duration                                                                                                                                                                                                                                                 | Decided (key name accepted 2026-10-29)                                                                   |
@@ -183,7 +187,7 @@ Panel {
     Input_Region: []
     Hide_After: 1500
     Children {
-        ProgressBar { Value: {{ volume }} }
+        ProgressBar { Value: <| volume |> }
     }
 }
 
@@ -258,7 +262,7 @@ A Panel has no Python of its own. A module reaches it through shell actions: sho
 
 ## Performance Budget
 
-- A hidden Panel with `Visible: false` should not hold a surface if the compositor allows; whether the window is created hidden or destroyed and recreated is open.
+- A hidden Panel keeps one mapped, empty surface (the default, above), which costs surface memory per hidden Panel; the `CLOSE` route holds none and costs a window creation per show. The figures are in [M3 Build Log](../../00%20Home/M3%20Build%20Log.md). #needs-verification
 - Moving is done in the engine, with one commit per input frame and no Python in the loop.
 - A slide uses margin animation, one small commit per step with no buffer change. Size and `Exclusive_Zone` changes are not animated (a configure round trip each).
 - Budgets are set in `60 Quality/`.
@@ -276,6 +280,21 @@ A Panel has no Python of its own. A module reaches it through shell actions: sho
 | The compositor closes the surface                        | The Panel is dead; the shell recreates it                                         |
 | Two Panels overlap on the same layer                     | Draw order undefined; use different layers                                        |
 
+## As Built in M3b (2026-11-06)
+
+The code session built these parts of the Panel; the choices below are in [M3 Build Log](../../00%20Home/M3%20Build%20Log.md) (D45 to D51, D53 to D55), and the maintainer's KWin checklists for `Attach_To`, animation, events, `Movable` and hover passed on 2026-11-06.
+
+| # | What was built | Spec effect |
+|---|---|---|
+| D45 | The default `Alignment` of an attached Panel is `CENTER`, the Bar's default | New default |
+| D46 | A Panel is created with `exclusive_zone` -1. With 0 the compositor places it inside the area the Bars leave free, so `Inset` and attach positions would be measured from below the Bar, against this note's "from the output's edges" and "other surfaces' reserved zones do not limit it". The Panel now ignores other zones. Confirmed on KWin (the output's edge, measurements as stated) | Code now matches the note. A Bar that reserves no zone still has 0, so a second Bar on the same edge is not seen by the attach arithmetic |
+| D47 | A body that would leave the output is moved back onto it with a log warning, not an error | A Panel does not flip, unlike a Popup |
+| D48 | The module target is the use's first root block, read when the Panel is shown and whenever tre's `layout` event fires on it (tre has the event; an earlier build note said it had none) | A Panel on a module that grows while open follows it |
+| D49 | `Animation` defaults to `SLIDE`, 200 ms. A slide moves the margin 24 px toward the edge the Panel grows from and fades at once; `FADE` is opacity only; a centred floating Panel only fades; reduced motion makes both instant. The 24 px is a constant, not a key | Replaces "slide from off screen" |
+| D50 | The Panel's events: `On_Open` and `On_Close` run when the request is made, `On_Visible` and `On_Hidden` when it has happened (after the animation, or one turn later without one). In a shell file a handler names only the shell's actions; `Call` is not built | tre has no "frame presented" event, so "visible" means the animation finished |
+| D51 | `Movable` works on an anchored Panel (moved by its anchored edges) and on a floating one (anchored top and left, starting centred or at its `Inset`). The whole body is the handle. The position is saved as the `Inset` of each anchored side in `registry.json`, per output. `Movable` with `Attach_To` is an error | The "floating only" wording is dropped; the example in this note was right |
+| D53 to D55 | `:hovered` and `:pressed` work; `:focused`, `:disabled` and `::part` stay warnings until a block has focus, an `Enabled` key or parts; a state rule on a `Text` is the warning `state-never-applies` | See [Style Schema](../../41%20TDL%20Reference/Style%20Schema.md) |
+
 ## Open Questions
 
 - [x] Attachment geometry: `Attach`, `Gap` and `Alignment`, and how `Attach_To` treats a hidden or animating target (maintainer, 2026-10-27).
@@ -287,7 +306,7 @@ A Panel has no Python of its own. A module reaches it through shell actions: sho
 - [x] Auto-hide timing for an OSD: a reasonable default the user can set; the caller controls the reset (maintainer, 2026-10-27). Open: the default value.
 - [x] Shadow keys: as ADR-0010 defines them (maintainer, 2026-10-27).
 - [x] Keys the type adds, and the baseline for other types: no additions at this time (maintainer, 2026-10-27).
-- [ ] How the shell reads a module's geometry for a module target, and what the gap against the parent Bar means exactly.
+- [x] A module as the target: `Attach` and `Alignment` use the module's laid-out rectangle; the gap is measured from the parent Bar's outer edge (decided 2026-10-27, confirmed 2026-11-04).
 
 ## Acceptance Criteria
 

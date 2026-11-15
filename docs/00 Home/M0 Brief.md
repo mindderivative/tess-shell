@@ -5,7 +5,7 @@ type: moc
 status: stable
 owner: phil
 created: 2026-11-03
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [moc, roadmap, brief]
 ---
 
@@ -73,7 +73,7 @@ The `tess_dl` 0.1 tree has `Document`, `Block.entries`, `Property` and the value
 
 ## Rules for the Code Session
 
-- Work only in `~/Projects/pyDev/projects/tess-shell`: `src/`, `tests/`, `pyproject.toml`, `README.md`, `CHANGELOG.md`, `LICENSE`. Do not edit `docs/` (it is generated from the vault) or `tools/`, and do not edit the vault.
+- Work only in `~/Projects/pyDev/projects/tess-shell`: `src/`, `tests/`, `pyproject.toml`, `README.md`, `CHANGELOG.md`, `LICENSE`. Do not edit `docs/` (it is generated from the vault) or `tools/`. From 2026-11-04 the code session may also write its own build logs in the vault and tick its brief's checkboxes, and nothing else there ([Build Logs](Build%20Logs.md)).
 - Commit locally after each task, with a short imperative message. Never push, open a pull request or touch a remote without the maintainer's instruction.
 - Follow the layout and the import rules in [Shell Package Layout](../20%20Architecture/Shell%20Package%20Layout.md). If a design is wrong, unclear or missing, stop and tell the maintainer, who brings it to the vault session; do not decide it silently. A design change is a dated amendment in the vault, not a quiet edit in code.
 - Do not invent tre, TEL or `tess_dl` API. Check the installed package or its docs; ask for a request if something is missing.
@@ -106,7 +106,27 @@ Built by the code session in `tess-shell` and pushed to `origin/main`. Checked a
 | Engine | `tesserae-engine` 0.6.1 in the lock file (0.6.0 was the minimum) |
 | Python | The repository stays on the system Python with the GIL |
 
-Not checked by the vault session: the code itself, and the list of design gaps (see the open item below).
+Not checked by the vault session: the code itself.
+
+### Report from the `tess-shell` session (2026-11-03, over the mailbox)
+
+A peer's report is information, not a decision. The vault session checked what it could; the rest is recorded as reported.
+
+Built: `pyproject.toml` (hatchling, src layout, `uv` on the system CPython 3.14.9 with the GIL); the commands `version`, `check` and `run`, the others print "not implemented in M0" and exit 1; the settings reader for every key of [Settings File](../41%20TDL%20Reference/Settings%20File.md); Loguru with a daily log file; the instance lock and the runtime-directory checks; `registry.json` created and saved atomically; `run` start steps 1 to 7 and 9 and the stop sequence; `check` for `*_Shell`, `*_Module`, `*_Style`, `*_Theme` and `*_Stylesheet` files, `--json`, capped at 50 findings.
+
+Not built in M0 (deferred): `sd_notify` READY and STOPPING, the failure notification, `Capture_Stderr` forwarding, routing of the standard `logging` and `warnings` modules, `--verbose`, registry rebuild from UIDs and the 30-day prune, the keys `Stop_Timeout`, `Module_Stop_Timeout`, `Control`, `Registry_Retention` and `Validation.Max_Errors` and `Notify` (refused as unknown keys), and the name, suffix and duplicate checks in `check`.
+
+Differences from the specs, and what the vault did about each:
+
+| # | Difference | Vault action |
+|---|---|---|
+| 1 | [Shell Start and Stop](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md) said tre 0.5.9 or later; the brief and lock use 0.6.0 or later (0.6.1 locked) | Spec updated to 0.6.0 |
+| 2 | `run` tests need a compositor, so the tests start a private headless sway (`tests/sway.py`) in the default suite under the `tre` marker | [Testing Strategy](../60%20Quality/Testing%20Strategy.md) updated |
+| 3 | `Main_Shell` defaults to `Main_Shell.tdl`; an absent default file is an info log, an absent explicit one is an error; `check` on a missing config directory exits 2 | Recorded; `Main_Shell` is a file name and `Name:` in the file is independent ([Settings File](../41%20TDL%20Reference/Settings%20File.md) clarified) |
+| 4 | The package layout lacked the files M0 added | [Shell Package Layout](../20%20Architecture/Shell%20Package%20Layout.md) updated |
+| 5 | `tess_re` has no `__version__`; versions come from `importlib.metadata` | [IPC and CLI](../40%20Specifications/Runtime/IPC%20and%20CLI.md) updated |
+| 6 | `tess_dl` 0.1.1 has no `Block.properties`, `blocks`, `get` or `walk`; helpers are in `files/tree.py`; `Shell: 0.1` metadata parses | Known; a `TDL-REQ-###` if wanted |
+| 7 | A `call_soon` queued before `App.run()` is not drained at loop start | Verified on tess_re 0.6.0; [TRE-REQ-011 Drain call_soon at Loop Start](../80%20Requests/TRE-REQ-011%20Drain%20call_soon%20at%20Loop%20Start.md) drafted |
 
 ## Open Questions
 
@@ -119,7 +139,7 @@ Not checked by the vault session: the code itself, and the list of design gaps (
 - [x] Every item under "Goal and Definition of Done" is true (tests and idle measurement above; the maintainer reports M0 built and pushed).
 - [x] Each task T1 to T9 has at least one test or a recorded measurement (`tests/` and `tests/perf/idle-results.md`).
 - [x] No file outside the allowed list was changed, as far as the history shows (the agent setup files are in the list).
-- [ ] A list of design gaps found is handed to the vault session.
+- [x] The design gaps found were handed to the vault session over the mailbox (above).
 
 ## Links
 

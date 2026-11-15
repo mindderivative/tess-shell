@@ -2,10 +2,10 @@
 title: Portals
 aliases: [XDG Desktop Portals, Desktop Portals, Appearance Portal]
 type: spec
-status: draft
+status: accepted
 owner: phil
 created: 2026-11-02
-updated: 2026-11-02
+updated: 2026-11-15
 tags: [spec/integration, integration/dbus, integration/portal, needs-verification]
 ---
 
@@ -42,11 +42,11 @@ tags: [spec/integration, integration/dbus, integration/portal, needs-verificatio
 Portals identify the caller by an application id. A Flatpak or Snap app has one from its sandbox; a normal install does not. The host portal Registry exists for this: `org.freedesktop.host.portal.Registry.Register(s app_id, a{sv} options)` is on the same object on this machine (version 1). Per the documentation, an unsandboxed app registers its D-Bus connection once, before any other portal call; registering after a portal call is an error; and the id must match the basename of a `.desktop` file that describes the app ([Registry](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.host.portal.Registry.html)).
 
 - The shell registers the id `io.github.mindderivative.TesseraeShell` first, before it reads any setting. The id matches the bus name in [IPC and CLI > The Bus Name](../Runtime/IPC%20and%20CLI.md#the-bus-name).
-- The package must install `io.github.mindderivative.TesseraeShell.desktop`. This is a **delivery requirement**; the Delivery notes are not written, so it is recorded here and in [Open Questions](../../00%20Home/Open%20Questions.md).
+- The package must install `io.github.mindderivative.TesseraeShell.desktop`. This is a delivery requirement, specified in [Packaging and Session Start > The Desktop File](../../70%20Delivery/Packaging%20and%20Session%20Start.md#the-desktop-file) (2026-11-13).
 - Reading the Settings portal may not need the registration (reads are not tied to an app); that was not tested. Registering is cheap, and the id is what portals use to tell apps apart (the Registry documentation); whether `BindShortcuts` requires it is untested. #needs-verification
 - On `NameOwnerChanged` of `org.freedesktop.portal.Desktop` the shell calls `Register` again, then re-reads the settings.
 - **Order at start.** The service thread starts at step 10, so the portal `Register` and the single `ReadAll` run at the start of step 11, before the surfaces open ([Shell Start and Stop > Start Sequence](../Runtime/Shell%20Start%20and%20Stop.md#start-sequence)). The first theme resolve waits for the answer for at most 200 ms (proposed), then uses the defaults and re-resolves when the answer arrives, so a slow portal never delays the surfaces.
-- If `Register` fails (portal absent, id already registered), the shell logs one warning and keeps reading settings.
+- If `Register` fails (portal absent, id already registered), the shell logs one warning and keeps reading settings. The maintainer chose to keep the warning until the package ships the `.desktop` file (D43, 2026-11-05).
 
 ### The Settings Portal
 
@@ -127,13 +127,51 @@ The portal supplies three tokens' sources: scheme, accent, contrast, and the mot
 | A burst of `SettingChanged` | The loop coalesces to one theme re-resolve per frame |
 | Backend swaps (KDE to GTK) | The shell reads whichever answers on the portal name |
 
+## Settings Read in M5h (Decided 2026-11-13)
+
+Read on the maintainer's machine on 2026-11-13 with read-only `ReadOne` calls on `org.freedesktop.portal.Settings`:
+
+| Namespace and key | Value read | Use |
+|---|---|---|
+| `org.gnome.desktop.interface` `icon-theme` | `breeze-dark` (the same as `org.kde.kdeglobals.Icons` `Theme`) | The icon service's theme, before `kdeglobals` ([Tray Module > Icons (G8)](../Modules/Tray%20Module.md#icons-g8)) |
+| `org.gnome.desktop.interface` `font-name` | `Hack Nerd Font  10` | The desktop's UI font, offered to themes as the token `type.system.font_family`; the shipped theme does not use it unless the user says so |
+| `org.gnome.desktop.interface` `enable-animations` | true | False is treated as reduced motion |
+| `org.gnome.desktop.interface` `cursor-theme` | `Oxygen 18 White` | Not used: the compositor draws the cursor |
+
+## As Built in M5h (code session's report, 2026-11-14, not run in the vault)
+
+Merged as `ce89ad5` (task T-044, PR #9; its suite 5010 passed, 1 skipped, 25 deselected, 1 expected failure).
+
+| Part | Built |
+|---|---|
+| Reading | One `ReadAll` over `org.freedesktop.appearance` and `org.gnome.desktop.interface`; `SettingChanged` is followed for `icon-theme`, `font-name` and `enable-animations` |
+| Icon theme | The icon service's order is: a theme set in code (the constructor or `set_theme`), then the portal's `icon-theme`, then `kdeglobals`, then `hicolor`. A portal change empties the icon cache and calls the listeners of `ctx.icons.on_theme_changed`; the shipped Tray resolves its icons again ([Tray Module > Icons (G8)](../Modules/Tray%20Module.md#icons-g8)) |
+| Font | The token `type.system.font_family` holds the family of `font-name`: the first family of a list, with the style, weight and stretch words and the size taken off the end. The size is not offered |
+| Motion | The combined flag `Appearance.motion_reduced` is true when `reduced-motion` is 1 or `enable-animations` is false; every user of reduced motion reads it. `Appearance.reduced_motion` still holds only the `reduced-motion` key |
+| Not built | The Tasks module's icons (no Tasks module yet; it will use the same `ctx.icons.on_theme_changed`). The cursor theme is not used |
+
+Gaps in this note that the build met, each now a question below: what the font token holds when the desktop names no font (question 3), and that the token is not in the schema export's token list, because a test requires that list to equal the shipped theme's tokens (question 10).
+
 ## Open Questions
 
-1. [ ] Whether `ReadAll` needs a registered app id (test with and without `Register`).
-2. [ ] Whether the KDE backend emits `SettingChanged` for the accent colour and scheme at once, and for a custom colour scheme.
-3. [ ] Whether tre has a reduced-motion switch to set, or the shell applies it alone.
-4. [ ] The `.desktop` file and the id for delivery; recorded for the Delivery notes.
-5. [ ] Whether the GlobalShortcuts portal is worth building for any v1 target (recommendation: no).
+1. [x] Should the shell ship a `.desktop` file and which application id should it use for `Register` and delivery? Context: the portal Registry needs an id that matches the basename of a `.desktop` file (see the registry paragraph above); the Delivery notes must record it. Recommendation: use the shell's own D-Bus name as the id and ship the matching `.desktop` file in the package; the exact id is fixed in the Delivery notes. #needs-verification Decided by the orchestrator on 2026-11-13 (directive rule 7): as recommended.
+2. [x] Is the GlobalShortcuts portal worth building for any v1 target? Context: v1 registers shortcuts through the KDE shortcut service ([Global Shortcuts](Global%20Shortcuts.md)) and commands cover other compositors. Recommendation: no. Decided by the orchestrator on 2026-11-13 (directive rule 7): as recommended.
+3. [ ] What does `type.system.font_family` hold when the desktop names no font? Context: the spec did not say. As built the token is always defined and holds `sans-serif`, so `check` does not report a bad token for a layout that uses it; whether tre accepts the generic name `sans-serif` is untested. Recommendation: keep it, and confirm the generic name against tre before the note is `stable`. #needs-verification
+4. [ ] Does a theme that sets `type.system.font_family` itself keep its value over the desktop's font? Context: as built, yes. Recommendation: yes; a theme's own value is the author's choice, like a fixed accent.
+5. [ ] Is the font's size offered too? Context: `font-name` carries a size (`Hack Nerd Font  10` on this machine); as built only the family is offered. Recommendation: family only for now; a size token can follow if a theme needs it.
+6. [ ] Keep two names for reduced motion: `Appearance.reduced_motion` for the portal key alone and `motion_reduced` for the combined flag? Context: the two names differ only in word order and are easy to confuse. Recommendation: keep one public flag, the combined one, and make the single key private.
+7. [ ] Does an icon theme set in code beat the portal's? Context: as built, yes; the shell's tests rely on it, and no shell file key sets a theme today. Recommendation: yes.
+8. [ ] May a portal icon-theme change notify listeners without comparing it to `kdeglobals`? Context: comparing would read a file on the loop thread; the cost of not comparing is one redundant icon refresh. Recommendation: yes, as built.
+9. [ ] Is a wrong-typed portal key logged at debug only? Context: [Failure Modes and Recovery](#failure-modes-and-recovery) says the key uses its default; the one warning is kept for the portal being unavailable. Recommendation: yes, as built.
+10. [ ] Should the schema export list `type.system.font_family`, so the configuration application can offer it? Context: it is documented only in the repository's README today; a test requires the export's token list to equal the shipped theme's tokens. Recommendation: yes, as a separate list of tokens the shell supplies, so that test keeps its meaning.
+11. [ ] Should an open Tray menu also refresh its icons on a theme change? Context: as built only the item icons refresh; an open menu keeps the old icons until it is opened again. Recommendation: leave it; a theme change while a menu is open is rare and the menu is short-lived.
+
+## Questions After Testing
+
+1. [ ] Does `ReadAll` need a registered app id? Context: the Registry says an unsandboxed app registers before any other portal call; whether reads work without it is unknown. Recommendation: always call `Register` first (as the acceptance criteria say) unless the test shows reads fail or break with it. Answered by: calling `ReadAll` on `org.freedesktop.appearance` with and without `Register` on this machine.
+2. [ ] Does the KDE backend emit `SettingChanged` for the accent colour and the colour scheme at once, and for a custom colour scheme? Context: the theme re-resolve is coalesced to one per frame ([Failure Modes and Recovery](#failure-modes-and-recovery)). Recommendation: re-resolve on either signal and read all keys again, so the order of signals does not matter. Answered by: changing scheme, accent and a custom scheme in System Settings while `busctl --user monitor` watches the portal.
+3. [ ] Does tre have a reduced-motion switch for the shell to set, or does the shell apply it alone? Context: acceptance requires no animation with `reduced-motion` 1. Recommendation: the shell applies it alone (it already does for Panels, D49) and uses a tre switch only if one exists. Answered by: checking tre's window and animation reference and a spike with an animated surface.
+4. [ ] Is the 100 ms budget from signal to screen met on a loaded machine? Context: the code session saw `test_a_scheme_change_on_the_bus_reaches_the_bar_within_100_ms` take 1076 ms once in 6 runs of a CI shard, unexplained, one sample. Recommendation: keep the budget and read it on an idle machine; look again if it repeats. Answered by: repeating the test on an idle machine and on CI. Update, 2026-11-15 (code session's report, `tess-shell` PR #19): the same unexplained wait of about 650 ms before the portal reader saw a signal happened in 2 of 36 CI runs of one shard, while applying the look itself always took 0 to 1 ms. The test is now the best of five runs with a 3 s hang guard, so the 100 ms budget is checked on the shell's own work and the signal's arrival is not. Where the wait comes from is still unknown (the bus, the runner or the reader thread).
 
 ## Acceptance Criteria
 

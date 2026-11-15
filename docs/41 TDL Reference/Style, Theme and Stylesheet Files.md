@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-11-02
+updated: 2026-11-14
 tags: [tdl-ref, design, needs-verification]
 ---
 
@@ -20,7 +20,7 @@ All three are shell files: each starts with a metadata block (`TDL:` and a requi
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 Name: Label_Style
 ---
 
@@ -77,7 +77,7 @@ A theme holds design tokens: colour roles, type scale, shape (radii), motion (du
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 Name: Dark
 ---
 
@@ -94,7 +94,7 @@ A stylesheet holds shared rules that apply across the shell by widget type or cl
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 Name: Base_Stylesheet
 ---
 
@@ -102,6 +102,10 @@ Stylesheet {
     # Rule blocks (Selector plus style values) -- see Style Schema
 }
 ```
+
+> [!NOTE]
+> **As built at M2b (reported by `tess-shell`, 2026-11-04)**
+> A module names its style with `Style: <Name>_Style.tdl` (relative to the module file) or an inline `Style { }` in `Module { }`; a block's own `Style:` file is `not-built`. A style file may hold `Classes { name { Kind: Text, ... } }` and per-type defaults; `Class:` on a block takes one name or a list. Priority, lowest to highest: the file's type default, its classes, the block's inline `Style`, then keys written on the block. A missing class, a class of another block type, or a missing or bad style file is an error at its own file and line. No theme or stylesheet yet (M3). Details in [M2 Build Log](../00%20Home/M2%20Build%20Log.md).
 
 ## Rules
 
@@ -130,7 +134,8 @@ The maintainer's Edge Shell notes ordered it Theme, Frame, Panel, Widget with a 
 - A property name the widget does not have: error with the closest names.
 - A value of the wrong form (a colour that is not one of the three): error with the forms.
 - A class used and not defined: error naming the file searched.
-- A token that does not exist: error with the nearest names.
+- A token that does not exist in any theme: error with the nearest names.
+- A partial theme is allowed (maintainer, 2026-11-05, D42): any token the chosen theme does not define falls back to the `Default` theme's value, token by token. An error is raised only when neither theme defines the token.
 
 ## Open
 

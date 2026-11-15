@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-11-02
+updated: 2026-11-04
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -32,6 +32,7 @@ tags: [spec/runtime, needs-verification]
 - **Library.** inotify, through `inotify_simple` (decided 2026-10-28). A spike on 2026-10-28 installed `inotify_simple` 2.0.1 (BSD-2-Clause, no dependencies, released 2025-08-25) and ran on Python 3.14.8. A plain write produced create, modify and close-write events. An editor's atomic save (write a temporary file, then rename it over the target) produced create, modify and close-write on the temporary file and then a moved-to event on the real name. So the watcher listens for close-write and moved-to on a directory, and ignores names that start with a dot or end in `~`, `.swp`, `.tmp` or `.bak`.
 - **Alternatives.** `watchfiles` 1.3.0 (MIT, 2026-09-21, Python 3.14 classifier; a Rust extension and one dependency) has debouncing built in; `watchdog` 6.0.0 was last released 2024-11-01 and has no 3.14 classifier; `pyinotify` was last released in 2015. The shell is Linux-only, so inotify's limits do not matter. Decided 2026-10-28: `inotify_simple` with the shell's own debounce, for the smallest surface. #needs-verification on a target distribution.
 - **Debounce.** A change is acted on 200 ms after the last event for it (decided 2026-10-28), so an editor's burst of events, or a multi-file save, becomes one reload.
+- **The shell's own writes** (reported by `tess-shell`, 2026-11-04; proposal): the UID write changes a file the watcher watches, and the 200 ms debounce alone may not hide it. Before it writes a file the shell records the path and the hash of the content it is about to write; when the watcher's event for that path arrives, it compares the file's hash with the recorded one, ignores the event if they match, and forgets the record. A user edit during the same moment has a different hash and is not ignored. Acceptance: the shell's own UID write does not trigger a reload (below).
 - **inotify limits.** The number of watches is limited by `fs.inotify.max_user_watches`. Watches are per directory, a few dozen in all, so the limit is not close. If adding a watch fails, the shell logs a warning and runs without hot reload; a manual reload still works.
 - **Manual triggers.** `SIGHUP` and the `Reload` call on the shell's D-Bus interface (`tesserae-shell reload`) reload everything ([IPC and CLI](IPC%20and%20CLI.md)). Proposed.
 
@@ -97,6 +98,18 @@ The new model is compared with the current one to decide what to change. Decided
 - A file that fails validation: the old state keeps running and the errors are reported, with a desktop notification (opt-out) ([Validation and Errors > Where it goes](Validation%20and%20Errors.md#where-it-goes)).
 - A failure while applying (a tre error on one window): the shell logs it and tries to bring the affected window back to the old definition; if that also fails the window is closed and the rest continues. tre calls cannot be rolled back, so validation before applying is the protection. Open question 4.
 - A module whose new code fails to import keeps its old instance ([Process Model and Threading > Failure and recovery](../../20%20Architecture/Process%20Model%20and%20Threading.md#failure-and-recovery)).
+
+## As Built at M2b (Reported by `tess-shell`, 2026-11-04)
+
+Checked against the repository's history and its 663 passing tests; the behaviour is as reported. Details in [M2 Build Log](../../00%20Home/M2%20Build%20Log.md).
+
+- **The watcher:** one thread on one inotify descriptor (`inotify_simple`), close-write, moved-to, moved-from and delete; it ignores dot files, `~`, `.swp`, `.tmp`, `.bak` and the `schemas`, `logs` and `backups` folders, and watches folders created later; one callback with the set of paths after 200 ms of quiet. A watch that cannot be added turns the feature off with a warning.
+- **Pipeline:** the watcher thread parses and validates; the loop applies. Validation runs on every file again, not only the affected set, and keeps no map from a file to its importers (a rescan takes about 5 ms; D24, accepted 2026-11-04). Slots compile on the loop thread when the surface is resolved, not on the watcher thread (D25, accepted 2026-11-04; `check` does not compile slots, so a slot's syntax error shows when the surface is resolved).
+- **Apply:** modules first (a module no longer used is stopped, a new one is started, a changed `.py` is imported first and replaces the instance only if the import works, a changed module or style TDL calls `reload()` and keeps the instance), then each Bar is kept (rebuilt by the keyed diff, its geometry set live in one `set()`), closed or opened. An error anywhere changes nothing and is reported at `file:line:column`.
+- **Own writes:** built as proposed above (the hash of what the shell wrote is compared when the event arrives, then forgotten), with two additions: a record expires after 5 seconds, and the records are cleared when the watcher starts, because the writes of the start made no event. Without them, restoring a file to content the shell once wrote was dropped as the shell's own write.
+- **Settings and signals:** `Hot_Reload` (default true) and `Reload_Debounce` (default 200 ms) are built. A change of `Directories`, `Registry` or `Main_Shell` is reported as needing a restart; `Logging` applies at once. `SIGHUP` reloads everything, also with `Hot_Reload: false`; the D-Bus `Reload` call is not built.
+- **The log line** (maintainer, 2026-11-04): a reload that applied cleanly logs `reloaded (<files>) in <ms>`; a reload during which an error was reported logs `reloaded with errors (<files>)`, so the line never reads as success when a module or file was kept as it was. The exact text is the code session's.
+- **Measured:** a saved `Height` is applied a median of 206 ms after the save (best 205, worst 208 over 10 saves): 200 ms of debounce plus about 5 ms to validate, diff and set; the Bar's reserved zone follows in one reflow.
 
 ## Configuration
 

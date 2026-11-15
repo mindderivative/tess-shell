@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-11-03
+updated: 2026-11-04
 tags: [moc, api]
 ---
 
@@ -18,6 +18,7 @@ What a module author, and a shell written in Python, can rely on. The shell is t
 | [Module Contract](Module%20Contract.md) | The class, lifecycle, rules, failures                  | draft  |
 | [Module Context](Module%20Context.md) | `self.ctx`: config, send, uses, D-Bus, threads, timers | draft  |
 | [Value Types and Conversion](Value%20Types%20and%20Conversion.md) | What a module sends and what the shell converts        | draft  |
+| [Events and Actions](Events%20and%20Actions.md) | The twelve v1 events and their timing, handler forms, built-in actions | review |
 | [Python Builder](Python%20Builder.md) | The Python form of a shell file; requirements stub     | draft  |
 | [TDL Library API](TDL%20Library%20API.md) | The public API of the `tess_dl` parser library (`tess-dl`) | draft  |
 

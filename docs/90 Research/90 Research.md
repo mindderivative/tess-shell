@@ -15,6 +15,7 @@ tags: [moc, research]
 |-----------------------------------------|-------------------------------------------------------------------------------------------------------|--------|
 | [Prior Art - Linux Shell Surfaces](Prior%20Art%20-%20Linux%20Shell%20Surfaces.md) | How other shells create layer surfaces                                                                | draft  |
 | [Shadows on Layer Surfaces](Shadows%20on%20Layer%20Surfaces.md) | Compositor-drawn and in-surface shadows; test results; led to [ADR-0010 Surface Shadows](../30%20Decisions/ADR-0010%20Surface%20Shadows.md) | draft  |
+| [Audio Access Spike](Audio%20Access%20Spike.md) | The brief for the M5e spike: how to read and set volume without polling | research |
 | [Hit Testing for Concave Corners](Hit%20Testing%20for%20Concave%20Corners.md) | tre's hit testing for concave and convex corners; shipped in tre 0.5.9 as `hit_shape`                 | draft  |
 | [D-Bus Libraries for Python](D-Bus%20Libraries%20for%20Python.md) | Python D-Bus clients compared; recommendation `dbus-fast` on a shared asyncio thread                  | draft  |
 | [Logging with Loguru](Logging%20with%20Loguru.md) | Loguru as the candidate for the shell's logging, warnings and errors                                  | draft  |

@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-18
-updated: 2026-11-03
+updated: 2026-11-04
 tags: [moc]
 ---
 
@@ -22,6 +22,7 @@ Operating rules for agents: AGENTS.
 |-----------------------------------------|-----------------------------------------------------------|
 | [Home](Home.md) | Live dashboard: decisions, verification backlog, coverage |
 | [Roadmap](Roadmap.md) | Design completeness checklist and phase status            |
+| [Build Logs](Build%20Logs.md) | The code session's own notes in the vault: rules and the log of each milestone |
 | [Open Questions](Open%20Questions.md) | Unknowns and `#needs-verification` items                  |
 | [Risk Register](Risk%20Register.md) | Technical debt and design hazards                         |
 | [Glossary](Glossary.md) | Canonical terms                                           |
@@ -39,7 +40,7 @@ Operating rules for agents: AGENTS.
 | `42 Python API`      | [42 Python API](../42%20Python%20API/42%20Python%20API.md) | Module and ViewModel contracts, services, events            |
 | `50 Design System`   | [50 Design System](../50%20Design%20System/50%20Design%20System.md) | Tokens, components, iconography, motion                     |
 | `60 Quality`         | [60 Quality](../60%20Quality/60%20Quality.md) | Budgets, accessibility, testing, security, recovery         |
-| `70 Delivery`        | 70 Delivery | Packaging, install, session integration, release            |
+| `70 Delivery`        | [70 Delivery](../70%20Delivery/70%20Delivery.md) | Packaging, install, session integration, release            |
 | `80 Requests` | [80 Requests](../80%20Requests/80%20Requests.md) | Scoped requests for tre and Tesserae                        |
 | `90 Research`        | [90 Research](../90%20Research/90%20Research.md) | Prior art, protocol notes, spikes                           |
 

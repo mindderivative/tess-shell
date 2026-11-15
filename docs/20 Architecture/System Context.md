@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-10-26
+updated: 2026-11-10
 tags: [architecture, needs-verification]
 ---
 
@@ -96,7 +96,7 @@ Read-only checks with `busctl` on the maintainer's machine on 2026-10-26: plasma
 ## Open Questions
 
 - [x] The D-Bus names plasmashell holds on a live Plasma 6 session: observed above, for [ADR-0004 Plasma Coexistence](../30%20Decisions/ADR-0004%20Plasma%20Coexistence.md). Re-check on other distributions.
-- [ ] The access path for each service above; one `Integration` spec per service ([40 Specifications](../40%20Specifications/40%20Specifications.md)).
+- [ ] **Which access path does each service use?** Context: the candidate table above leaves Tasks, Audio and Applications open; each service needs one `Integration` spec ([40 Specifications](../40%20Specifications/40%20Specifications.md)). Recommendation: write one `Integration` spec per service as its module starts, and pick the access path there.
 - [x] Which D-Bus client library: `dbus-fast` on a shared asyncio service thread ([ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md), decided 2026-10-26).
 
 ## Links

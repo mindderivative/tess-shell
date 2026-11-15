@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -169,7 +169,7 @@ All seven were answered on 2026-10-28, as recommended.
 5. [x] **Named entries:** registry-only UIDs for entries inside a file.
 6. [x] A `backups/` folder under the config directory for the first UID write.
 7. [x] **Unimported shell files:** a `_Shell.tdl` in `Shells/` that nothing imports is ignored with an info notice.
-- [ ] The registry writer: one thread, one write per 500 ms (proposed, not asked).
+8. [ ] Should the registry writer be one thread that writes once per 500 ms? Context: the registry file is rewritten on UID writes and scans, and a burst of changes should not cause a burst of writes. This was proposed and never asked. Recommendation: yes, one writer thread with a 500 ms write interval.
 - [x] The UID write: the shell patches the text at the node's position and does not print the tree back out (D10, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] A property key repeated inside one block is an error naming both places; repeated block names are allowed (D9).
 

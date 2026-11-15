@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-11-15
 tags: [spec/integration, integration/wayland, needs-verification]
 ---
 
@@ -31,7 +31,7 @@ tags: [spec/integration, integration/wayland, needs-verification]
 | D-Bus | Settings, services, virtual desktops, the KWin script's reports | The shell, on its D-Bus service thread ([ADR-0009 D-Bus Client Library](../../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md), [ADR-0013 Control Interface](../../30%20Decisions/ADR-0013%20Control%20Interface.md)) |
 | A second Wayland connection | A protocol tre does not expose | Nothing yet: the shell has no Wayland library and Python has none in the standard library |
 
-tre's crate list (`crates/engine-platform/Cargo.toml`, read 2026-10-28) shows the layer shell on a second event queue of the connection `winit` owns, bound at version 5 by tre itself, plus `zbus` for the desktop settings portal. The Python API exposes no raw connection or surface handle ([ADR-0001 Shell Surface Strategy > Option B — Shell-created surface, tre renders into it](../../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md#option-b--shell-created-surface-tre-renders-into-it) was not chosen, and `TRE-REQ-002`, the raw-handle request it needed, was never written; the module's public names on tre 0.5.8 include no handle). So the shell cannot bind a protocol on tre's connection.
+tre's crate list (`crates/engine-platform/Cargo.toml`, read 2026-10-28) shows the layer shell on a second event queue of the connection `winit` owns, bound at version 5 by tre itself, plus `zbus` for the desktop settings portal. The Python API exposes no raw connection or surface handle ([ADR-0001 Shell Surface Strategy > Option B — Shell-created Surface, Tre Renders into it](../../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md#option-b--shell-created-surface-tre-renders-into-it) was not chosen, and `TRE-REQ-002`, the raw-handle request it needed, was never written; the module's public names on tre 0.5.8 include no handle). So the shell cannot bind a protocol on tre's connection.
 
 ### Protocols the shell needs, bound by tre
 

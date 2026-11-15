@@ -2,10 +2,10 @@
 title: Popup
 aliases: [Popup Surface, kind popup, Menu, Flyout]
 type: spec
-status: draft
+status: stable
 owner: phil
 created: 2026-10-28
-updated: 2026-11-02
+updated: 2026-11-15
 tags: [spec/surface, needs-verification]
 ---
 
@@ -71,7 +71,9 @@ The compositor places the popup against the anchor rectangle and keeps it on scr
 - `configure` reports where the compositor put it, so a flip is visible to the shell ([tre reference](https://mindderivative.github.io/tre/reference/layer-window/#popupwindow)); the content can react (an arrow on the other side).
 - **The visual shape is what is placed (decided 2026-10-28).** The shape the compositor uses for placement is the popup's border plus its body size. A transparent margin for a shadow is ignored and is not part of the popup's size, so `Attach: BOTTOM` with `Gap: 4` leaves 4 px between the anchor and the body, margin or not. tre today sets the window geometry to the whole surface, margin included (`set_window_geometry(0, 0, width, height)`, `crates/engine-platform/src/layer.rs`, read 2026-10-28), so the compositor would place the margin. Until tre can name the body ([TRE-REQ-007 Popup Body Geometry](../../80%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md), draft, not filed), the shell enlarges the popup by the margin and shifts tre's `offset` by it; the compositor's flip and slide then use the larger rectangle, so a popup near a screen edge can flip up to one margin early. #needs-verification on KWin 6.8.1.
 
-### Size (Proposed)
+### Size (Decided 2026-11-04)
+
+The maintainer accepted this proposal on 2026-11-04.
 
 tre fixes a popup's size at creation. A tray menu's height depends on its items, so the shell measures first. A throwaway test on tre 0.5.8 showed it works without a display: a headless `Window` with a content tree of three text lines, a layout pass (`advance`), and `get("layout_width")` / `get("layout_height")` returned 126 by 72 for a box with `fit-content` sizes (2026-10-28, scratch script in /tmp). Proposed flow on open:
 
@@ -91,6 +93,8 @@ Costs: the content is built twice per open. `Width: AUTO` and `Height: AUTO` are
 
 A tooltip is a Popup that opens when the pointer enters its caller and closes when it leaves. Two parts: the Popup says it is a tooltip, and the thing hovered says which tooltip it has.
 
+**A string as a tooltip (decided 2026-11-10, "as recommended").** `Tooltip` on any block may be a string instead of a Popup: `Tooltip: "Volume 40"` is shorthand for a one-line tooltip Popup with that text, the default delays and `Tooltip: true` behaviour ([Standard Modules > Tooltip](../../50%20Design%20System/Standard%20Modules.md#tooltip)). The Popup form above stays for anything with more than one line of plain text.
+
 **On the Popup entry** (`Tooltip: true | false`, default false). `Tooltip: true` makes the Popup a tooltip: it sets `Focus: false`, `Open_On_Enter: true` and `Close_On_Exit: true`, with the default delays. An explicit key on the entry overrides each default. Four keys give the behaviour:
 
 | Key             | Meaning                                                               |
@@ -108,7 +112,7 @@ Clock { Tooltip: Clock_Tooltip.tdl }    # a file that holds the Popup
 Clock {
     Tooltip {                           # or an inline popup
         Children {
-            Label { Text: {{ caller.data.text }} }
+            Label { Text: <| caller.data.text |> }
         }
     }
 }
@@ -127,7 +131,7 @@ A Popup is not on a layer-shell layer: it is an `xdg_popup` stacked by the compo
 
 ### What the Popup Knows
 
-The caller's record is available to the Popup's modules and expressions (decided, [Module Context > Calling a popup](../../42%20Python%20API/Module%20Context.md#calling-a-popup)): the calling module's name and UID, the use (name, monitor, params), the anchor rectangle, and an optional `data` mapping the module passes. Expressions read `caller.<field>`; a tray menu shows the items of the icon that was clicked. A Popup is built fresh on each open, so it sees the record of that call.
+The caller's record is available to the Popup's modules and expressions (decided, [Module Context > Calling a popup](../../42%20Python%20API/Module%20Context.md#calling-a-popup)): the calling module's name and the UID of the use that opened the Popup (`caller.use.uid`, not a module UID, which a Popup cannot reach; (maintainer, 2026-11-13, as recommended)), the use (name, monitor, params), the anchor rectangle, and an optional `data` mapping the module passes. Expressions read `caller.<field>`; a tray menu shows the items of the icon that was clicked. A Popup is built fresh on each open, so it sees the record of that call.
 
 ## Configuration
 
@@ -157,7 +161,7 @@ Popup {
     Alignment: START
     Gap: 4
     Children {
-        Menu { Items: {{ caller.data.items }} }
+        Menu { Items: <| caller.data.items |> }
     }
 }
 
@@ -169,7 +173,7 @@ Popup {
     Attach: BOTTOM
     Alignment: CENTER
     Children {
-        Label { Text: {{ caller.data.text }} }
+        Label { Text: <| caller.data.text |> }
     }
 }
 ```
@@ -211,12 +215,45 @@ A Popup has no Python of its own. A module opens it from an action with `self.ct
 | Failure                                                                  | Result                                                                                              |
 |--------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
 | The parent is gone or not open                                           | tre closes the popup with reason `failed`; the shell logs the Popup name and the caller             |
+| The Popup is closed before the compositor has placed it | tre 0.6.8 remembers the close and makes it when the popup is placed ([TRE-REQ-019 Popup Close Before Placement](../../80%20Requests/TRE-REQ-019%20Popup%20Close%20Before%20Placement.md)); the shell's own guard for tre 0.6.7 (`6d24108`) is removed |
 | A Popup is called with a name that does not exist                        | Error at the call, naming the module and the name                                                   |
 | The compositor denies the grab (no valid user action, or a stale serial) | The popup is dismissed at once; the shell logs it and, for a `Focus: true` Popup, reports the cause |
 | The monitor is removed                                                   | The parent closes, so the Popup closes                                                              |
 | The content is larger than `Max_Width` or `Max_Height`                   | Clamped to `Max_Width` and `Max_Height`; the content scrolls (decided 2026-10-28)                   |
 | A module's content expression fails                                      | The Popup opens with the failing node empty and the error is logged, as in any view                 |
 | A second Popup is called while one is open                               | The first closes, unless the second is a submenu                                                    |
+
+## As Built in M3b (2026-11-06)
+
+Choices from [M3 Build Log](../../00%20Home/M3%20Build%20Log.md) (D57 to D64). The maintainer's KWin checklist on 2026-11-06 passed except for the four faults under "Found on KWin".
+
+| # | What was built |
+|---|---|
+| D57 | sway flips `anchor` and `gravity` but not the `offset`, so the shell chooses the opposite side itself when the popup would leave the output and fits on the other; `Adjust` still goes to tre as a backup |
+| D58 | `ctx.popup(name, data=None, use=None)` and `ctx.close_popup(name=None)`; the anchor is the calling use's first root block, the use is supplied while an `@action` runs (`ctx.caller`) |
+| D59 to D61 | `data` is accepted and warned about (nothing reads it yet); a Popup named by `Tooltip: Name` needs `Tooltip: true` or `Open_On_Enter: true`; a `Text` in an `AUTO`-sized popup needs `Height: AUTO` |
+| D62 | `Clock.locale` uses `setlocale(LC_TIME)` around each `strftime`; a locale the system lacks is warned about once |
+| D63 | The shadow margin: the body sits `Gap` from the anchor. Near a screen edge the compositor slides the whole surface, up to one margin early. `PopupWindow` has no `input_region`, so the transparent margin takes clicks ([TRE-REQ-007 Popup Body Geometry](../../80%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md)) |
+| D64 | `Close` outside a Popup is an error; a tooltip stays open on a press; scroll is vertical only; stylesheet rules do not reach an inline tooltip's content |
+
+### Found on KWin (maintainer, 2026-11-06)
+
+> [!CAUTION]
+> **Four faults in the Popup, open**
+> 1. **Placement.** On a top Bar the popup sits 4 px below the button (not below the Bar) and its left edge is not aligned with the button's. Under a bottom Bar it sits 4 px above the button, which passes. At the right edge the popup is right-aligned but not button edge to card edge, and it stops about 30 px short of the screen edge.
+> 2. **A shadowed popup near an edge** stays about 30 px from the edge, not 7 px or flush.
+> 3. **Escape does nothing** to close a popup; an outside click and a click on the Bar do close it.
+> 4. **The menu popup's shadow area takes clicks** (the transparent margin blocks the windows under it).
+>
+> The maintainer's reading: one cause explains 2 and 4, the transparent shadow margin. D63 says the same: the margin takes input because `PopupWindow` has no `input_region`, and the compositor keeps the surface, margin included, inside the screen. Faults 2 and 4 may therefore need [TRE-REQ-007 Popup Body Geometry](../../80%20Requests/TRE-REQ-007%20Popup%20Body%20Geometry.md) (a body-geometry and input-region request) rather than a shell workaround. The vault session has not verified the cause. #needs-verification
+
+> [!CAUTION]
+> **Retest of popup shadows on KWin (maintainer, 2026-11-07): one line fails**
+> With `PopupWindow(geometry=)` (D93, tre 0.6.3) four of five lines pass; the failure: "shadows are still taking click about 30-40px from the shape of the panel." `geometry` places the body but is not an input region, and `PopupWindow` has none. The fix is [TRE-REQ-014 Popup Input Region](../../80%20Requests/TRE-REQ-014%20Popup%20Input%20Region.md) (an `input_region` on `PopupWindow`); the maintainer directed the `tre` session to work on it (2026-11-07). Meanwhile the shell keeps or drops the shadow as the maintainer decides. [Risk Register](../../00%20Home/Risk%20Register.md) R-30.
+
+> [!TIP]
+> **Resolved by [TRE-REQ-014 Popup Input Region](../../80%20Requests/TRE-REQ-014%20Popup%20Input%20Region.md) (maintainer, 2026-11-07)**
+> tre 0.6.5 added `PopupWindow(input_region=)`; the shell sets `input_region="geometry"` on a shadowed popup (M3 Build Log D99). The KWin retest passes: "shadows have click through now and works well." The click-through fault above is closed ([Risk Register](../../00%20Home/Risk%20Register.md) R-30).
 
 ## Open Questions
 

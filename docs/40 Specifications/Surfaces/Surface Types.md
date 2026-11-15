@@ -2,10 +2,10 @@
 title: Surface Types
 aliases: [Surfaces, Bar Frame Panel Popup]
 type: spec
-status: draft
+status: stable
 owner: phil
 created: 2026-10-25
-updated: 2026-11-02
+updated: 2026-11-04
 tags: [spec/surface, needs-verification]
 ---
 

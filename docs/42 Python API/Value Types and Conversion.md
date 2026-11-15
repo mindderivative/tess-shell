@@ -2,10 +2,10 @@
 title: Value Types and Conversion
 aliases: [Value Types, Conversions]
 type: api
-status: draft
+status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-11-02
+updated: 2026-11-10
 tags: [api, needs-verification]
 ---
 
@@ -124,13 +124,13 @@ An unknown word, or a lowercase word such as `top`, is a schema error that says 
 ## Open Questions
 
 - [x] The four conversions above are v1 (maintainer, 2026-10-26). Additions later.
-- [ ] Whether the shell warns when a key is sent but no view reads it (useful while building a shell).
-- [ ] Units (logical pixels only, or also a scale-aware unit). TDL fixes the file spelling: pixels as a whole number, `50%` for a percentage ([ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)); percent plus pixels is not in v1 (D6, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
+- [ ] Should the shell warn when a key is sent but no view reads it? Context: deferred past M2. Recommendation: log it at debug level only, with no user-facing warning.
+- [ ] Are units logical pixels only, or also a scale-aware unit? Context: TDL fixes the file spelling: pixels as a whole number, `50%` for a percentage ([ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)); percent plus pixels is not in v1 (D6, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). Recommendation: logical pixels and percentages only in v1.
 - [x] Named sides are a block, and no brace shorthand is defined (D7, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] `true`, `false` and numbers are typed by the key's schema, not the parser (D2, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
-- [ ] How `rgba(...)` alpha converts to 0 to 255 (rounding).
-- [ ] How an image is sent and who owns the buffer (copy or hand over).
-- [ ] Whether a module can declare its keys and types in its TDL file so the shell can check a view against them at load.
+- [ ] How does `rgba(...)` alpha convert to 0 to 255 (rounding)? Context: colours are sent in M3 or later, and `tess_utils` decides. Recommendation: round to the nearest integer.
+- [ ] How is an image sent, and who owns the buffer? Context: deferred past M2. Recommendation: the module hands the buffer over on send and the shell owns it afterwards. #needs-verification
+- [ ] Can a module declare its keys and types in its TDL file? Context: deferred past M2. Recommendation: not in v1; the key schema stays in the module's Python code.
 
 ## Acceptance Criteria
 

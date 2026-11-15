@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-11-03
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [architecture, binder, needs-verification]
 ---
 
@@ -99,6 +99,31 @@ tre's `build` is not faster than per-node calls (5.3 ms against 4.9 ms for 3,100
 
 A link records: the tracked paths of a slot, the node id, the tre property and the converter. TEL's `evaluate_tracked` gives the paths ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md), T20); `For` entries use TEL's entry names ([ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md) D65).
 
+### The Keyed Diff (Proposed, for M2b)
+
+`view.rebuild(new_nodes)` compares the old typed tree with the new one and changes only what differs. It is the design behind hot reload ([Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md)) and the `For` updates in [TEL Integration](TEL%20Integration.md); G9 of the [M2 Brief](../00%20Home/M2%20Brief.md).
+
+**Identity of a child.** A child is matched by key, in this order:
+
+1. its `Name:` if it has one (unique in its file, so unique among siblings);
+2. else the pair (block word, how many earlier siblings have that word), the same positional naming the registry uses for repeats (`Square_1`, `Square_2`);
+3. for the entries of a `For`, TEL's entry name (`<name>_0001`, never reused), which is stable while the item's key is.
+
+**Steps**
+
+1. Build the new typed tree completely and validate it. If it has any error, the old view stays untouched and every error is reported with `file:line:column`.
+2. Walk old and new children in step, by key. For each key present in both with the same block word: compute the properties whose converted values differ, and recurse into the children. A different block word under the same key is a replacement (remove, then create).
+3. Keys only in the new tree are created detached with `Window.build`; keys only in the old tree are removed.
+4. If the order of the kept children changed, set the parent's children once with `Node.set_children(list)`.
+5. Collect every change first, then apply: the property changes of the whole surface in one `Window.apply`, then the `set_children` calls, then attach the new subtrees. Because tre checks `apply` and `build` as a whole, a refused value changes nothing and is reported at its key.
+6. Re-resolve the links of the changed slots; unchanged links stay. The `RepeaterState`s are dropped on a reload, because the compiled expressions may have changed, and the diff then matches entries by TEL's names (D30, accepted 2026-11-04; [TEL Integration](TEL%20Integration.md)). A module whose `Name` and file are unchanged keeps its instance; a changed TDL file for the module calls `reload()`; a changed `.py` replaces the instance ([Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md)).
+
+**Surfaces.** A window is kept when its surface key (the `Name:` of the Bar, Panel or Popup) is unchanged and only keys that tre can change live differ (`anchor`, `size`, `margin`, `exclusive_zone`, the children); the shell sends one `set()` for the layer-window keys. A change of `Layer`, of the namespace or of the monitor closes and recreates the window ([Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md) lists the keys).
+
+**Cost.** The comparison is one pass over both trees, linear in the number of nodes, and all of it runs on the loop thread between frames. The target is a reload on screen within about 300 ms of the save, 200 ms of which is the debounce ([Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md)).
+
+**Built in M2b** (reported by `tess-shell`, [M2 Build Log](../00%20Home/M2%20Build%20Log.md)): `View.rebuild` follows the steps above. A kept node that loses a property is replaced, because tre has no way to unset a property (D28, accepted 2026-11-04); a moved child with a changed `Name:` is a replacement, as recommended. `For` entry names restart on a reload (the `RepeaterState` is dropped because the compiled expressions may have changed) and the diff matches entries by those names; a use whose layout has `If` or `For` is resolved again whole and diffed (D27, accepted 2026-11-04). A Bar window is kept when its key, output, `Layer` and exclusive edge are unchanged; `exclusive_edge` is not a key of `LayerWindow.set`, so changing it recreates the window.
+
 ## What tre Accepts (Tested 2026-11-03)
 
 On tre 0.5.10, calling `Window.create` with each form. #needs-verification again on tre 0.6.0, which only renames the package.
@@ -119,6 +144,20 @@ On tre 0.5.10, calling `Window.create` with each form. #needs-verification again
 
 The first M1 task that touches the tables is a test that builds a node for every table row on a headless tre window, so a wrong name or form is found by the test and not by a user.
 
+### More Forms Found While Building M1 (Reported by `tess-shell`, 2026-11-04; the vault checked the first column on `tess_re` 0.6.0)
+
+| Need | tre accepts |
+|---|---|
+| Font family | One string (a list is refused). A comma-separated stack such as `"Inter, sans-serif"` is accepted by the setter; whether tre then falls back along the stack could not be seen headless (no text pixels for any family). The binder joins a TDL list with `", "`. #needs-verification in a real window |
+| Text colour | `fill`, as for a box (the key `color` does not exist); `tess-shell` saw text pixels change colour in a snapshot |
+| Wrap | `flex_wrap` is the word `wrap` or `no_wrap`, not a boolean |
+| Text alignment | `text_align`: `start`, `center`, `end` (not `left` or `right`); a box refuses it |
+| Font weight | A number from 1 to 1000, not `bold` |
+| Width and height | A number, `auto`, `fit-content` or a percentage string; `expand` is refused, so `EXPAND` is `flex_grow` 1 with `align_self` `stretch` |
+| Read-back | `grid_column` and `grid_row` read back as strings; other properties read back as set |
+| Layer window root | No padding and a horizontal flex container; an ordinary window root has padding 16. A `FlexBox` that must fill a Bar needs `Width: EXPAND` |
+| Headless | `Window` and `LayerWindow` work with no display and `snapshot()` renders off screen |
+
 ## Threading and Failure
 
 - The binder runs on the loop thread only, in a callback between frames ([Process Model and Threading](Process%20Model%20and%20Threading.md)). It makes no blocking call.
@@ -131,18 +170,22 @@ None.
 
 ## Open Questions
 
-1. [ ] Whether `font_family` takes a list or a string in tre; test it.
-2. [ ] How `AUTO` and `EXPAND` map in tre for each block ([Block Reference](../41%20TDL%20Reference/Block%20Reference.md) sizes).
-3. [ ] Whether `fill` colours text in tre, by a snapshot test.
-4. [ ] Whether the binder resolves theme tokens itself (`$color.surface`) or the shell resolves them before binding (recommendation: the shell, so the binder sees literal values; tokens arrive with M2).
-5. [ ] The shape of `View` for `If` and `For` branches (M2).
-6. [ ] Whether the key table is hand-written or generated from the Block Reference with the test as a guard (recommendation: hand-written, guarded).
+1. [x] `font_family` takes one string; a comma-separated stack is accepted; rendering of the fallback is to check in a real window.
+
+3. [x] `fill` colours text (`tess-shell`, snapshot test).
+4. [ ] Does the binder resolve theme tokens (`$color.surface`) itself, or does the shell resolve them before binding? Context: tokens arrive with M2. Recommendation: the shell resolves them, so the binder sees literal values.
+5. [ ] What shape does `View` take for `If` and `For` branches (M2)? Context: `IfNode` and `ForNode` exist from M1, and M2b built `View.rebuild` ([The View and the Later Operations](#the-view-and-the-later-operations)). Recommendation: keep the one `View` and let `rebuild` replace the branch or entry that TEL reports as changed.
+6. [ ] **Is the key table hand-written or generated from the Block Reference?** Context: a test guards it either way. Recommendation: hand-written, guarded by the test.
+
+## Questions After Testing
+
+- [ ] Do `AUTO` and `EXPAND` map in tre as the Block Reference sizes say, for each block? Context: the shell maps `EXPAND` to `flex_grow` 1 with `align_self` `stretch` because tre refuses `expand`; this is untested per block ([Block Reference](../41%20TDL%20Reference/Block%20Reference.md)). Answered by: rendering each block with both values in a real window. Recommendation: test the blocks that take `Width` and `Height` first and record the result in the Block Reference.
 
 ## Acceptance Criteria
 
 - [ ] Every block row and key row builds a node on a headless `tess_re` window without error.
 - [ ] A bad value reports the `file:line:column` of its key, through the spec-path index.
-- [ ] A typed tree of 3,100 nodes binds in a few milliseconds ([Performance Budgets](../60%20Quality/Performance%20Budgets.md)).
+- [ ] A typed tree of 3,100 nodes binds in 15 ms or less (decided 2026-11-04, D12; measured 12.6 ms median, of which tre's `build` is 5.3 ms; [Performance Budgets](../60%20Quality/Performance%20Budgets.md)).
 - [ ] The binder imports only `tess_re` and the standard library.
 - [ ] A tree with an `If` or `For` is refused at M1 with a clear message.
 

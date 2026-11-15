@@ -5,7 +5,7 @@ type: engine-request
 status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [engine-request, design, performance, needs-verification]
 ---
 
@@ -151,14 +151,14 @@ Small to medium for tre: a description walker over the existing node-creation co
 
 ## Open Questions
 
-1. [ ] Ask tre to repeat the measurements on its own build, with medians, and with layout included (attach to a window and call `Window.advance`).
+1. [ ] Should tre repeat the measurements on its own build, with medians, and with layout included (attach to a window and call `Window.advance`)? Context: tre's reply of 2026-11-02 already gives medians from a release build, with about 0.7 ms of layout for a 3,100-node tree (see "tre's Reply"). Recommendation: no further request; treat tre's figures as the reference.
 2. [x] Why `add_child` with 20,000 siblings averages 12 µs: tre answered (2026-11-02, from reading `crates/engine-core/src/tree/mod.rs`, not measured) that it is linear in the sibling count. Each call walks the existing siblings three to four times (`content_len` twice, a `contains` check, plus ancestor walks that depend on depth), so 20,000 appends are quadratic. A small fix inside tre (track the content length, skip the `contains` check for a parentless child) would make a plain append constant time. tre has filed nothing for it. The binder can avoid the cost by building a subtree detached and attaching its root once.
 3. [x] Whether a batch also coalesces frame work: tre found layout already runs once per frame, not per set (1,000 sets and one frame took 0.42 ms), so a batch adds all-or-nothing validation and fewer crossings only.
 4. [x] The shape: a dict description (tre's choice, see "tre's Reply").
 5. [x] Carry it now: the maintainer asked for it and tasked tre to build it for 0.5.10.
 6. [x] Issue number: #253.
 7. [x] The plain-append fix is in the scope (maintainer, 2026-11-02).
-8. [ ] Whether the shell wants other names or spec keys than tre's before it is built; tre offered to change them. The names match the sketch above.
+8. [ ] Does the shell want other names or spec keys than tre's before it is built? Context: tre offered to change them; the names match the sketch above. Recommendation: keep tre's names, since they already match the sketch.
 
 ## Acceptance Criteria
 

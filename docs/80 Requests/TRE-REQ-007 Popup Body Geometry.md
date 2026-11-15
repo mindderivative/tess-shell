@@ -2,21 +2,21 @@
 title: TRE-REQ-007 Popup Body Geometry
 aliases: [TRE-REQ-007, tre Popup Geometry, Popup Window Geometry]
 type: engine-request
-status: draft
+status: stable
 owner: phil
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-11-11
 tags: [engine-request, integration/wayland, needs-verification]
 ---
 
 # TRE-REQ-007: Popup Body Geometry
 
 > [!NOTE]
-> Let a `PopupWindow` say which rectangle of its surface is the popup proper, so the compositor places and constrains that rectangle and ignores a transparent margin around it (a shadow margin). Written for the future; the shell has a workaround, so nothing is blocked. The maintainer will carry it to tre when it is wanted.
+> Let a `PopupWindow` say which rectangle of its surface is the popup proper, so the compositor places and constrains that rectangle and ignores a transparent margin around it (a shadow margin). Written 2026-10-28; released in tre 0.6.3 as `PopupWindow(geometry=(x, y, w, h))` and used by the shell (D93). The maintainer tested it all on KWin and it passed; he reviewed and accepted it on 2026-11-11.
 
 > [!NOTE]
-> **Not to be filed now**
-> Written 2026-10-28 after the maintainer decided that a popup's placement uses its visual shape. Not filed from this vault, and the `tre` session has not been told (AGENTS > 6. Requests Between Projects).
+> **History**
+> Written 2026-10-28 after the maintainer decided that a popup's placement uses its visual shape, for the future. It was carried to tre by the maintainer and released in tre 0.6.3 (PyPI, 2026-11-06). The sections below keep the original reasoning (AGENTS > 6. Requests Between Projects).
 
 ## Shell Need
 

@@ -2,10 +2,10 @@
 title: Module Context
 aliases: [ctx, Module ctx API]
 type: api
-status: draft
+status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-11-03
+updated: 2026-11-14
 tags: [api, needs-verification]
 ---
 
@@ -36,7 +36,7 @@ tags: [api, needs-verification]
 
 ```python
 self.ctx.send("time", "14:05")                       # to every use
-self.ctx.send("text", "Hello", use=self.ctx.uses[use_key])       # to one use; use_key is "Label@<uid>"
+self.ctx.send("text", "Hello", use=self.ctx.uses[use_key])       # to one use; use_key is "Label@<uid>" (the code also takes the key string itself, as built in M2a)
 ```
 
 - **Keys** are strings. A view reads them as `<module name>.<key>` in an expression ([Module Contract > Integration](Module%20Contract.md#integration)).
@@ -67,7 +67,7 @@ The maintainer's example (2026-10-26), which replaced an earlier example of mine
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 TEL: 0.1
 TRE: 0.5.9
 Shell: 0.1
@@ -105,7 +105,7 @@ Module {
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 TEL: 0.1
 TRE: 0.5.9
 Shell: 0.1
@@ -189,7 +189,7 @@ class Label(Module):
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 TEL: 0.1
 TRE: 0.5.9
 Shell: 0.1
@@ -222,7 +222,7 @@ Shell {
                 Children {
                     Label {
                         Name: Side_Label
-                        text: {{ "label.text" }}
+                        text: <| "label.text" |>
                     }
                 }
             }
@@ -249,7 +249,7 @@ The bar geometry (`Edge`, `Width`, `Height`) was not in the maintainer's example
 | Options or params          | **Decided:** `use.params` ("params matches the file", said of YAML before ADR-0014). The example's `use.options.get("top_label")` reads the entry's value for the param, which is `use.params["text"]`                                                                                                                                                                                          |
 | The fourth source          | `f"${text_name}"` asks for the text widget's name, so the module can address a widget by `Name:`                                                                                                                                                                                                                                                                  |
 | The text in the widget     | The `Text` widget has no `text:` expression in the example. How the sent value or the param reaches it is the first open item in [ADR-0007 Shell UI Layer > Open items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)                                                                                                                                                                                          |
-| `text: {{ "label.text" }}` | In the `Side_Label` use, a param bound to the module's own sent value. What `label.text` resolves to for that use is part of the same open item                                                                                                                                                                                                                 |
+| `text: <\| "label.text" \|>` | In the `Side_Label` use, a param bound to the module's own sent value. What `label.text` resolves to for that use is part of the same open item                                                                                                                                                                                                                 |
 | `Children` entries         | **Decided:** the block head is the type (`Text { Name: Label_Text }`), with no `Block:` or `widget:` key ([ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules), item 6). The same block or module name may repeat in one `Children { }`, ordered by position (`Text_1`, `Text_2`; [TDL Language > Names and the Registry](../41%20TDL%20Reference/TDL%20Language.md#names-and-the-registry))                                                |
 | Style syntax               | `{2, 2, 2, 2}` is the maintainer's list shorthand for four sides. PyYAML read it as `{2: None}` (2026-10-26), and in TDL `{ }` is a block, so the examples write `[2, 2, 2, 2]`. No brace shorthand is defined (D7, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). The colour forms are in [Value Types and Conversion](Value%20Types%20and%20Conversion.md)                          |
 | File type                  | **Decided (D26):** the root block names it (`Module { }`, `Style { }`, `Shell { }`); the metadata block has no file-type key. The root block must agree with the suffix                                                                                                                                                                                                              |
@@ -283,19 +283,36 @@ What the popup sees: a `caller` record: the calling module's name and UID, the u
 
 ## D-Bus Helper
 
-Over `dbus-fast` on the shared asyncio service thread ([ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)). Proposed shape:
+Over `dbus-fast` on the shared asyncio service thread ([ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)). As built in M5a (the code session's report, 2026-11-12, not run in the vault; the code is `tess_shell.services`):
 
 ```python
-bus = self.ctx.dbus.system()              # or .session()
-proxy = bus.proxy("org.freedesktop.UPower", "/org/freedesktop/UPower/devices/DisplayDevice")
-proxy.on_property_changed(self.on_battery)      # called on the service thread, short, never blocks
-level = proxy.get("Percentage")                  # may be awaited off the loop thread
+bus = self.ctx.dbus.session()            # or .system(); nothing connects until first use
+proxy = bus.proxy("org.freedesktop.UPower", "/org/freedesktop/UPower/devices/DisplayDevice",
+                  "org.freedesktop.UPower.Device")          # interface optional here, or per call
+# on the loop thread, return at once (the work is posted to the dbus thread):
+sub = proxy.on_property_changed(cb, initial=True)   # cb(changed: Mapping[str, Any]) on the dbus thread
+sub = proxy.on_signal("Changed", cb)                # cb(*body) on the dbus thread; sub.cancel()
+# coroutines on the dbus thread:
+await proxy.get("Percentage", fresh=False)          # the cache; fresh=True asks the service
+await proxy.call("SetProfile", ["balanced"], "s", timeout=5.0)   # reply: value, None or tuple
+# from anywhere:
+fut = bus.run(proxy.call(...))                      # a concurrent.futures.Future, never blocks
+bus.run_blocking(proxy.call(...), timeout=None)     # BlockingCallError on the loop thread and the dbus thread
+bus.state("org.freedesktop.UPower")                 # a ServiceState
+self.ctx.dbus.available                             # bool: every service of this module is present
+def on_service_lost(self, name): ...                # loop thread
+def on_service_found(self, name): ...               # loop thread
 ```
 
-- Callbacks run on the service thread and call `ctx.send`, which crosses to the loop.
-- Reads and calls are asynchronous; a module author does not use them from the loop thread.
+- `on_property_changed` first calls back with every property (unless `initial=False`), then with what `PropertiesChanged` reports; when a service returns after leaving, the callback gets every property again, before `on_service_found`.
+- Callbacks run on the service thread, are short, never block, and call `ctx.send`, which crosses to the loop. A callback over 50 ms is logged with the module name.
+- A call takes the D-Bus signature of its arguments (no introspection). A call to a service with no owner raises `ServiceUnavailable` (maintainer, 2026-11-12, as recommended).
+- The errors are `ServiceTimeout`, `ServiceUnavailable` and `ServiceError`; they and `ServiceState` and `BlockingCallError` are exported from `tess_shell`.
+- `available` is sent with `ctx.send("available", bool)` to every use when the AND over the module's services changes. A module that needs more (Battery `IsPresent`) sends a key of its own and combines it in its layout, and does not send `available` itself.
+- `bus.watch_prefix(prefix, on_added, on_removed)` follows every bus name that starts with a prefix (one `ListNames` and one `NameOwnerChanged` rule by namespace, shared, listed again after a reconnect); the callbacks run on the dbus thread. `bus.forget(name)` stops watching a name the module no longer needs, so names that come and go (a browser's player per instance) do not pile up. Built in M5d for the Media module (code session's report, 2026-11-13).
+- No call takes a bus name, exports an object or owns anything.
+- `ctx.thread` does not exist yet; `bus.run` from an `@action`, or a thread of the module's own, serves until it does.
 - A module may use another D-Bus library on its own thread; the helper is a recommendation.
-- #needs-verification: the exact `dbus-fast` calls, after the spike in [ADR-0009 D-Bus Client Library > Consequences](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md#consequences).
 
 ## Timers and Threads
 
@@ -326,15 +343,15 @@ handle.cancel()                                  # the shell also cancels it on 
 
 ## Open Questions
 
-- [ ] Whether `ctx.send` accepts a dict of several keys at once.
-- [ ] Whether `ctx.uses` is a mapping (as in the example), a list or an event stream. The example above is for the maintainer to judge the use cases (2026-10-26).
-- [ ] Whether a module can send to a specific monitor.
-- [ ] Whether `ctx.state_dir` is needed or `ctx.data_dir` is enough.
-- [ ] What `ctx.tdl()` returns for imported files and for values that are TEL expressions (the raw text or the evaluated value).
+- [x] M2: `ctx.send(key, value)` takes one key and one value (G4); a dict form can come later.
+- [x] `ctx.uses` is a mapping from `<Module>@<uid>` to the use, as in the example (G4).
+- [ ] Can a module send to a specific monitor? Context: deferred past M2; no M2 module needs it. Recommendation: not before a module needs it.
+- [ ] Is `ctx.state_dir` needed, or is `ctx.data_dir` enough? Context: deferred past M2; the Clock needs neither. Recommendation: offer only `ctx.data_dir` until a module needs a separate state directory.
+- [ ] What does `ctx.tdl()` return for imported files and for values that are TEL expressions: the raw text or the evaluated value? Context: a module reads data, not syntax. Recommendation: the evaluated value, with the raw text reachable through the tree view.
 - [x] The name `ctx.yaml` is renamed `ctx.tdl` (D14, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
-- [ ] What shape the read-only view of the TDL tree has. D12 ([ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)) fixes the tree as an ordered list of entries (head, properties, children) that keeps repeated names, with the metadata block read first. Still open: lookup by `Name:` and whether the view exposes comments.
+- [ ] What shape does the read-only view of the TDL tree have: does it support lookup by `Name:`, and does it expose comments? Context: D12 ([ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)) fixes the tree as an ordered list of entries (head, properties, children) that keeps repeated names, with the metadata block read first. Recommendation: offer lookup by `Name:` and do not expose comments.
 - [x] The brace shorthand `{2, 2, 2, 2}` is not defined; the three forms of D7 stand ([ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
-- [ ] The timer clock and what happens to timers on reload.
+- [x] M2: ticks come from one shared wall-clock source scheduled to the next second or minute boundary; a module's tick subscriptions end on `stop()` and on a replacement of its instance (G4).
 - [x] Param names written on a use stay as the module declared them (D18, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] An action names a use by the `Label@<uid>` key from `ctx.uses` (D23, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 

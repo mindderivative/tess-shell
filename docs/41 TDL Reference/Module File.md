@@ -2,10 +2,10 @@
 title: Module File
 aliases: [_Module.yaml, Module YAML, _Module.tdl, Module TDL]
 type: tdl-ref
-status: draft
+status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-11-14
 tags: [tdl-ref, needs-verification]
 ---
 
@@ -18,7 +18,7 @@ tags: [tdl-ref, needs-verification]
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 TEL: 0.1
 TRE: 0.5.9
 Shell: 0.1
@@ -103,7 +103,7 @@ Expressions in the module's TDL place data in widgets. They read two kinds of na
 Text {
     Name: Label_Text
     # the slot is TDL's; the expression inside it is TEL's (illustration only)
-    Text: {{ params.text if params.text else text }}
+    Text: <| params.text if params.text else text |>
 }
 ```
 
@@ -155,6 +155,18 @@ Children {
 
 `Import:` is a property of the same `Children` block. An optional `Name:` per use keeps its path name unique; without one the shell names it from its position (`Label_1`, `Label_2`), decided 2026-10-26 ([ADR-0007 Shell UI Layer > Open items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)). Python keys each use as `Label@<uid>`; the shell writes `UID:` into a use in the file only if the user asks for stable identity across reordering ([TDL Language > Names and the Registry](TDL%20Language.md#names-and-the-registry)).
 
+## A Module Call inside If and For (Built in M5)
+
+As built by the code session (`d47f5d4` and `36fa502`, reported 2026-11-12 and 2026-11-13, not run in the vault) and decided ([M5 Brief](../00%20Home/M5%20Brief.md) questions 16 to 18 and 20 to 22):
+
+- In a module's layout a module may be called inside `If`, `Else` and `For`.
+- Inside `If` the call is one use that lives as long as the layout around it: only its blocks come and go, and `start` and `stop` do not run when the condition flips.
+- Inside `For` each entry is its own use, made when the entry appears and ended when it goes (`use_added`, `use_removed`). `ctx.send(use=)` reaches the right entry after a reorder; slot params, handler argument slots and `Children` read the entry's variables; a `Tooltip` is registered per entry.
+- A use's identity is the parent use, the `For`'s place in the layout, the entry's key and the call's place. It does not include the source line, so a hot reload that shifts lines keeps every use.
+- Inside a Popup a `For` over `caller.data` or over a module value makes one use per entry when the Popup opens and ends them when it closes. `caller.data` is a copy made at open. Inside an entry, `ctx.caller` is the holder of the call for a handler written on the call, and the entry's use for its own layout.
+- Not allowed: a module call inside `If` or `For` written directly in a shell file or directly in a Popup's shell-file content (no slot scope there); a module that calls itself through `If` or `For` is a load error.
+- A handler the called module's root cannot raise, or a missing `Content`, is a load error.
+
 ## Params down the Tree
 
 The maintainer suggested a "bubble up" policy for params (2026-10-26). My reading and thoughts:
@@ -178,14 +190,14 @@ The maintainer suggested a "bubble up" policy for params (2026-10-26). My readin
 
 ## Open
 
-- [ ] The `Params` type names and whether defaults are v1.
-- [ ] How the module's root is written when it is not a container (a single `Text`).
-- [ ] The widget property names (`Foreground`, `Fill`, `Alignment`, `Justify_Content`, `Align_Content`, `Width`, `Height`) and which go in style or on the widget.
+- [x] `Params` types in M2 are `string`, `number` and `boolean`; defaults are in v1 because the Clock needs them (maintainer, 2026-11-04, G6).
+- [x] The root is `Module { Params { ... } Children { ... } }`; `Children` may hold a single block, not only a container (G6).
+- [ ] The widget property names and which belong in style or on the widget. Settled with the themes in M3a.
 - [x] Where a module file's own `Style:` and `Params { }` sit: inside the `Module { }` root block (D17, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 - [x] Whether `Type:` stays inside a param declaration: yes, as a property, not a file key (D17). Open: `Default:` and the type names ([Params](#params)).
-- [ ] Whether a module can declare the keys its Python sends, so the shell checks a layout against them at load ([Value Types and Conversion > Open questions](../42%20Python%20API/Value%20Types%20and%20Conversion.md#open-questions)).
+- [ ] Whether a module can declare the keys its Python sends. Deferred past M2.
 - [x] Whether a module can contain other modules: the flow diagram says yes ("Can Nest"); the meaning for params, names and UIDs is open ([Shell Structure](../20%20Architecture/Shell%20Structure.md)).
-- [ ] How events are declared on a widget (`On_Click:` and the like) and how they name `@action` methods ([ADR-0007 Shell UI Layer > Events and module reload (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26)).
+- [ ] How events are declared on a widget and how they name `@action` methods. Settled with Events and Actions before M3b ([M3 Brief](../00%20Home/M3%20Brief.md)).
 - [x] Whether a module call may take the name word before the brace: yes, the head is the module's metadata `Name:` (ADR-0014, item 7). Open: how a repeated use names itself in the file ([TDL Language > Open](TDL%20Language.md#open)).
 
 ## Links

@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-11-02
+updated: 2026-11-10
 tags: [architecture, needs-verification]
 ---
 
@@ -106,13 +106,16 @@ A pointer or key event reaches a tre node on the loop thread. **Events belong to
 - Window actions (close, dismiss a popup) are shell-provided.
 - A handler may set a value in the shell's store (a local state) or call a module method.
 
+## Notes
+
+- The handler vocabulary for input is the shell's, set in the TDL reference (folder `41 TDL Reference/`), not TEL's.
+
 ## Open Questions
 
-- [ ] Where the value store sits and how a module's last value is kept across a reload.
-- [ ] The handler vocabulary for input: the shell's, in the TDL reference (folder `41 TDL Reference/`), not TEL's.
+- [ ] **Where does the value store sit, and how is a module's last value kept across a reload?** Context: the store holds the latest value per module and key; a module reload stops the old instance and imports new code. Recommendation: the store lives in the shell model (`model/`, as in [TEL Integration](TEL%20Integration.md)), and a reload keeps the stored values until the new instance sends its own, so widgets do not blank during the reload.
 - [x] A module's `.py` can be reloaded at runtime (maintainer, 2026-10-26). Mechanics are proposed above.
 - [x] How the diff of a reload works: by identity (file UID), then name, then position (proposed in [Hot Reload > The diff](../40%20Specifications/Runtime/Hot%20Reload.md#the-diff)).
-- [ ] What `output_updated` does to surfaces whose size depends on the output.
+- [ ] What does `output_updated` do to surfaces whose size depends on the output? Context: today it keeps the surfaces and re-evaluates only the match rules. Recommendation: re-evaluate the size of those surfaces on `output_updated` and apply it live through `set()`.
 
 ## Links
 

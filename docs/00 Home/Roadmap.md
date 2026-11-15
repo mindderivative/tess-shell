@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-27
-updated: 2026-11-03
+updated: 2026-11-08
 tags: [moc, roadmap]
 ---
 
@@ -16,7 +16,7 @@ tags: [moc, roadmap]
 
 ## Checklist
 
-A proposal for starting in stages, with each row's state and the milestones, is in [Development Readiness](Development%20Readiness.md); M0 is built ([M0 Brief](M0%20Brief.md)); M1 is next ([M1 Brief](M1%20Brief.md)).
+A proposal for starting in stages, with each row's state and the milestones, is in [Development Readiness](Development%20Readiness.md); M0 is built ([M0 Brief](M0%20Brief.md), [M0 Build Log](M0%20Build%20Log.md)); M1 and M2 are built and passed their KWin checklists ([M1 Brief](M1%20Brief.md), [M2 Brief](M2%20Brief.md), [M1 Build Log](M1%20Build%20Log.md), [M2 Build Log](M2%20Build%20Log.md)); M3 is built and confirmed completed by the maintainer, 2026-11-08 ([M3 Brief](M3%20Brief.md)); M4 (widgets, [M4 Brief](M4%20Brief.md)), M5 (services and desktop integration, [M5 Brief](M5%20Brief.md)) and M6 (focus and keyboard, [M6 Brief](M6%20Brief.md)) are scoped; M7 is the release.
 
 | Area            | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Status                                 | Missing                                                                                                                                                                     |
 |-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

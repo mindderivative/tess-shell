@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-29
-updated: 2026-11-03
+updated: 2026-11-14
 tags: [tdl-ref, tdl, needs-verification]
 ---
 
@@ -32,7 +32,7 @@ A file is a metadata block, then one root block.
 
 ```
 ---
-TDL: 0.1                # Tesserae Data Language version
+TDL: 0.2                # Tesserae Data Language version
 TEL: 0.1                # Tesserae Expression Language version
 TRE: 0.5.9              # Tesserae Rendering Engine version
 Shell: 0.1              # Tesserae Shell version (a shell app)
@@ -59,7 +59,7 @@ Shell {
           Corner_Radius: [8, 8, 8, 8]
         }
         Children {
-          Label { text: Battery {{ battery.percent }}% }
+          Label { text: Battery <| battery.percent |>% }
         }
       }
     }
@@ -96,7 +96,11 @@ The root block is authoritative. A mismatch with the suffix is a load error that
 
 ## Punctuation
 
-The punctuation of TDL (`---`, `#` comments, `Name { }` blocks, `Key: value`, lists, quoted strings, `rgba(...)` calls, `{{ }}` slots, escapes, line endings and the nesting limit) is defined by the `tess-dl` project in `~/Projects/pyDev/projects/tess-dl/docs/language.md`. It is not repeated here, so there is one definition ([tess-dl Handover](tess-dl%20Handover.md)).
+The punctuation of TDL (`---`, `#` comments, `Name { }` blocks, `Key: value`, lists, quoted strings, `rgba(...)` calls, `<| |>` slots, escapes, line endings and the nesting limit) is defined by the `tess-dl` project in `~/Projects/pyDev/projects/tess-dl/docs/language.md`. It is not repeated here, so there is one definition ([tess-dl Handover](tess-dl%20Handover.md)).
+
+> [!IMPORTANT]
+> **TDL 0.2: the slot is written with `<|` and `|>`**
+> Since language 0.2 (`tesserae-dl` 0.2.0, 2026-11-14) a slot is `<| expression |>` on one line, and it ends at the first `|>` outside a quoted string. The double-brace form of 0.1 is no longer a slot: the parser refuses it with `tdl-unexpected-text` and a hint. Two closing braces are now just two closing braces, so the code `tdl-double-close` is gone and a slot may hold a dict or set literal. `For` takes several names, and `tdl-duplicate-variable` is new. A file says `TDL: 0.2`; the `tess-dl` repository's `tools/migrate_slots.py` rewrites a 0.1 file. Read from `docs/language.md` of `tess-dl` at `fcb1f21`; the shell is on it since `e30bfe3` and `4cbacd2` (read from its `origin/main`, not run in the vault). In a table in this vault the bars are written with a backslash so the table survives; a file has none.
 
 ## Values
 
@@ -110,7 +114,7 @@ The punctuation of TDL (`---`, `#` comments, `Name { }` blocks, `Key: value`, li
 | Boolean, null | `true`, `false` and `null` are lowercase bare words. The parser keeps them as strings; the key's declared type in the schema makes them a boolean or null (D2)                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Four-sided    | One number, a list of four in the order left, top, right, bottom, or a block of named sides: `Thickness { Left: 24, Top: 8 }` (D7, D50). A list of two or three items is an error with the slug `bad-sides` ([Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)); its hint says: "Use one number, four items (left, top, right, bottom) or named sides. CSS orders its sides top, right, bottom, left and accepts two or three items; this language does not." The order left, top, right, bottom matches Flutter, Qt and WPF and differs from CSS and SwiftUI #needs-verification. Four corner radii run from the top-left corner clockwise |
 | List          | `[a, b, c]` or `[]`; an item may sit on its own line                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Expression    | `{{ ... }}`. A value that is exactly one slot keeps its type; text with a slot inside is a string                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Expression    | `<\| ... \|>`. A value that is exactly one slot keeps its type; text with a slot inside is a string                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 A percentage plus pixels (tre's `calc(100% - 16)`) has no form in v1 (D6). A style token such as `$color.on_surface` is a plain string that the style engine resolves by theme key; it is not a variable, and matching ignores case (D16).
 
@@ -143,8 +147,8 @@ The lexical kinds a file is read into (Word, String, Number, Percent, Call, List
 |----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `Children`                                         | The only holder of contents                                                                                     |
 | `Import`                                           | One file name or a list: `Import: Applications_Module.tdl`, or `Import: [A_Module.tdl, B_Module.tdl,]`. Paths are relative to the importing file; imports nest. The spelling is `Import` (the sketch also wrote `import:`, which is open) |
-| `If`, `Else`                                       | `If {{ cond }} { ... } Else { ... }`; no `Else If`; nest an `If` inside `Else`                                   |
-| `For`, `In`, `Key`                                 | `For item In {{ list }} Key {{ item.id }} { ... }`. `Key` is required: it gives each entry a stable identity     |
+| `If`, `Else`                                       | `If <\| cond \|> { ... } Else { ... }`; no `Else If`; nest an `If` inside `Else`                                   |
+| `For`, `In`, `Key`                                 | `For item In <\| list \|> Key <\| item.id \|> { ... }`. `Key` is required: it gives each entry a stable identity. Several names unpack each item: `For i, item In <\| enumerate(list) \|> Key <\| item.id \|> { ... }`; a name used twice is `tdl-duplicate-variable` (TDL 0.2) |
 
 `If`, `Else`, `For`, `In` and `Key` cannot be the name of a block or module. The rules for conditions and repeats are in [ADR-0014 Shell File Language > Conditions and Repeats (Decided)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#conditions-and-repeats-decided).
 
@@ -203,7 +207,7 @@ The language-level criteria (syntax errors, slots, comments, limits, the exact r
 
 - A root block that disagrees with the suffix is a load error naming both (`shell-root-suffix`).
 - `Panel { Name: p1 }` loads with no `Kind:` or `Type:`.
-- Two `Monitor` blocks under `Shell` load; two that name the same monitor are an error naming both places.
+- Two `Monitor` blocks under `Shell` load. Two that give the same selector value (for example the same `Connector`) are an error naming both places. Two that select different values but resolve to the same output at run time cannot be seen by `check`: the shell logs a warning naming both blocks at start and the first one wins (maintainer, 2026-11-04, D11).
 - A name registered twice is a load error naming both; a user module of a shipped module's name overrides it.
 - `Index: default` applies to a monitor no other block names.
 - A metadata key the shell does not know is kept and ignored.

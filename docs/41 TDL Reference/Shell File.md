@@ -2,10 +2,10 @@
 title: Shell File
 aliases: [_Shell.yaml, Main_Shell.yaml, Shell YAML, _Shell.tdl, Main_Shell.tdl, Shell TDL]
 type: tdl-ref
-status: draft
+status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-11-02
+updated: 2026-11-14
 tags: [tdl-ref, spec/surface, needs-verification]
 ---
 
@@ -18,7 +18,7 @@ tags: [tdl-ref, spec/surface, needs-verification]
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 TEL: 0.1
 TRE: 0.5.9
 Shell: 0.1
@@ -153,11 +153,11 @@ Per-type keys (a Frame's side thicknesses and corner shapes, a Popup's gravity) 
 
 - [x] Several `root` blocks in one file: now several `Monitor` blocks, allowed (decided 2026-10-29, [ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules), item 9).
 - [x] Where shell files live: `$HOME/.config/tesserae-shell/Shells/`, or the directory `settings.tdl` names (decided 2026-10-27, [Settings File](Settings%20File.md)).
-- [ ] Which shell file is the top-level one when `Shells/` holds several: proposed `Main_Shell` in `settings.tdl` ([Settings File](Settings%20File.md)), default `Main_Shell.tdl`.
+- [x] The top-level shell file is `Main_Shell` in `settings.tdl`, default `Main_Shell.tdl`; it names the file only ([Settings File](Settings%20File.md)).
 - [x] The names of the surface keys: accepted by the maintainer on 2026-10-29. Their types follow the per-type specs.
 - [ ] How a surface lays out its modules (order, spacing, alignment): a surface layout key, or the surface being a container widget.
 - [ ] The keys each surface type adds ([Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md)).
-- [ ] How `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` map to tre's `anchor`, `size` and margins, and how a collapsed Bar keeps a layer surface (#needs-verification; [TDL Language > Open](TDL%20Language.md#open)).
+- [x] How `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap` map to tre: accepted in [Bar > Mapping to tre](../40%20Specifications/Surfaces/Bar.md#mapping-to-tre) (D61) and built in M1 (`bar_geometry`, tested on the worked examples).
 - [x] Whether a surface is named by the word before the brace or by a key: the head is the type and `Name:` is the unique name (ADR-0014, item 6).
 - [x] The order in which the shell tries several monitor selectors on one block: `Connector`, then `Description`, then `Index` (ADR-0014 Layout Rules, item 15, decided 2026-10-30).
 - [x] What an imported `_Shell.tdl` contains: surface blocks only, which take the importing Monitor's monitor (D22, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).

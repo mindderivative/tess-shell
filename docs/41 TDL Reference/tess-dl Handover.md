@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-11-02
-updated: 2026-11-02
+updated: 2026-11-10
 tags: [tdl-ref, tdl]
 ---
 
@@ -43,8 +43,8 @@ tags: [tdl-ref, tdl]
 
 ## Open Questions
 
-1. [ ] Whether `tess-dl` publishes its docs as a site (the tre and Tesserae projects do) or keeps Markdown in the repository.
-2. [ ] Who edits the language text when a shell need changes it: the `tess-dl` session after a `TDL-REQ-###` (recommended), or the shell session directly.
+1. [ ] Should `tess-dl` publish its docs as a site, or keep Markdown in the repository? Context: the tre and Tesserae projects publish sites. Recommendation: a site, as the sibling projects do, once the first slice is stable.
+2. [ ] Who edits the language text when a shell need changes it? Context: the owner of the language text must be one party after the move. Recommendation: the `tess-dl` session after a `TDL-REQ-###`, not the shell session directly.
 
 ## Acceptance Criteria
 
