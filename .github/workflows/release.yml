@@ -4,9 +4,8 @@ name: Release
 # the build checks the tag against the built version and the changelog, then the files go to PyPI
 # through Trusted Publishing (environment `pypi`: no stored token, the environment's reviewer
 # approves each upload), and only then is a GitHub Release made with the wheel and the sdist, so a
-# refused upload leaves no public release. The wheel carries a compiled tess_utils, so it is a
-# platform wheel tagged manylinux_2_36 (hatch_build.py); the CI job `package`, which this workflow
-# runs first, checks that tag with `auditwheel show`.
+# refused upload leaves no public release. The wheel is pure Python (py3-none-any); the shared
+# converters come from PyPI as the dependency tesserae-utils.
 on:
   push:
     tags: ["v*"]
@@ -58,7 +57,7 @@ jobs:
           uv venv --python 3.14 /tmp/smoke
           uv pip install --python /tmp/smoke/bin/python dist/*.whl
           # Package metadata, not __version__, is what pip reads.
-          cd /tmp && /tmp/smoke/bin/python -I -c "import tess_shell, importlib.metadata as m; from tess_shell._vendor import tess_utils; v = m.version('tesserae-shell'); assert v == '$VERSION', v"
+          cd /tmp && /tmp/smoke/bin/python -I -c "import tess_shell, importlib.metadata as m; import tess_utils; v = m.version('tesserae-shell'); assert v == '$VERSION', v"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist

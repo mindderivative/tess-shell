@@ -71,14 +71,13 @@ RULES: dict[str, set[str] | None] = {
     "exit_codes": set(),
     "options": set(),
     "signals": set(),
-    "binder": {"tess_re", "loguru", "tess_shell._vendor.tess_utils", "tess_shell.binder"},
-    "_vendor": set(),
+    "binder": {"tess_re", "loguru", "tess_utils", "tess_shell.binder"},
     "appearance": set(),
     "services": {
         "dbus_fast",
         "inotify_simple",
         "loguru",
-        "tess_shell._vendor.tess_utils",  # services.icons decodes a png the way the Image path does
+        "tess_utils",  # services.icons decodes a png the way the Image path does
         "tess_shell.services",
         "tess_shell.appearance",
         "tess_shell.schema.keys",  # services.shortcuts reads key strings (pure, no I/O)
@@ -221,6 +220,4 @@ def test_shell_modules_never_import_the_engine() -> None:
 
 def test_only_tess_utils_imports_pillow() -> None:
     for path in SOURCES:
-        if "tess_utils" in path.parts:
-            continue
         assert not any(n.split(".")[0] == "PIL" for n in external_imports(path)), path

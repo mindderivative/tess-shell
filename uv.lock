@@ -441,6 +441,7 @@ dependencies = [
     { name = "tesserae-dl" },
     { name = "tesserae-el" },
     { name = "tesserae-engine" },
+    { name = "tesserae-utils", extra = ["image"] },
 ]
 
 [package.dev-dependencies]
@@ -461,6 +462,7 @@ requires-dist = [
     { name = "tesserae-dl", specifier = ">=0.2.0,<0.3" },
     { name = "tesserae-el", specifier = ">=0.1.2,<0.2" },
     { name = "tesserae-engine", specifier = ">=0.6.7,<0.7" },
+    { name = "tesserae-utils", extras = ["image"], specifier = ">=0.2.1,<0.3" },
 ]
 
 [package.metadata.requires-dev]
@@ -469,6 +471,20 @@ dev = [
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-split", specifier = ">=0.10" },
     { name = "ruff", specifier = ">=0.6" },
+]
+
+[[package]]
+name = "tesserae-utils"
+version = "0.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/22/64/7aae61373067073f148b988873b5e075bf3c565a757f2261a44ae04100a4/tesserae_utils-0.2.1.tar.gz", hash = "sha256:80972ff3d3a0481c09e0d916e521b4311b802e8d243a30c15b9918969d419123", size = 81689, upload-time = "2026-11-15T17:54:45.043Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/09/61/7ea8686c07457063bf574a10c96ae471cdeac9910dcaf470152d8c110af3/tesserae_utils-0.2.1-py3-none-any.whl", hash = "sha256:e3ffcdb78a5102219bd14136f2d6469c1d953818e93082e170e190a368f27f44", size = 9619, upload-time = "2026-11-15T17:54:43.694Z" },
+]
+
+[package.optional-dependencies]
+image = [
+    { name = "pillow" },
 ]
 
 [[package]]

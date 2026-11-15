@@ -29,9 +29,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import tess_utils
 from loguru import logger
 
-from tess_shell._vendor import tess_utils
 from tess_shell.services.api import ModuleIcons, Subscription
 
 Register = Callable[[int, int, bytes], str]  # (width, height, RGBA) -> a reference to the pixels
