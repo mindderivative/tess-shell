@@ -2,6 +2,8 @@
 
 Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launchers, OSDs and widgets) that run alongside an installed desktop environment, with KDE Plasma on Wayland as the first target. It is built on the [tre](https://github.com/mindderivative/tre) rendering engine, with Python for logic and its own data language, TDL, for describing shells.
 
+**Design documentation:** https://mindderivative.github.io/tess-shell/ (the vision, architecture, decisions, specifications and the TDL reference, built with MkDocs from `docs/`; `docs/` is generated from the design vault, so edit the notes there). To build it locally: `uv sync --only-group docs && uv run --no-sync mkdocs serve`.
+
 ## Status
 
 Milestones M0 (the skeleton), M1 (a static Bar), M2 (live and modular) and M3 (more surfaces: the look, `Panel`, `Popup`, the `Frame` with strips, melding and peek, monitor hot-plug) are built and accepted on KWin. `run` opens a `Bar` from `Main_Shell.tdl` on the matched monitor through `tess_dl`, the schema, the binder and tre, reserves its space, and stops cleanly on SIGTERM or SIGINT. On top of that:
