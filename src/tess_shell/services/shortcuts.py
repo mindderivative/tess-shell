@@ -360,6 +360,10 @@ class ShortcutService:
             return False
         self.registrations += 1
         self.keys_now[action.id] = tuple(set_keys)
+        logger.debug(
+            f"shortcuts: {action.id}: asked for {[c.text for c in action.keys]}, "
+            f"the service set {list(set_keys)}"
+        )
         if action.keys and not set_keys:
             await self._explain_empty(action)
         return True
