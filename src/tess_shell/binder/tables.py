@@ -400,8 +400,17 @@ _ROWS["TextField.size"] = BlockRow(
 )
 _ROWS["TextField.input"] = BlockRow(
     "text_input",
-    # over the line box, exactly as large: it is not in the flow, so the size text sets the height
-    fixed={"position": "absolute", "left": 0, "top": 0, "right": 0, "bottom": 0},
+    # over the line box, exactly as large: it is not in the flow, so the size text sets the height;
+    # Tab leaves a multi-line field like every other widget (tre 0.6.8, TRE-REQ-018; a single-line
+    # one ignores it)
+    fixed={
+        "position": "absolute",
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "tab_navigates": True,
+    },
     keys={
         "Text": _k("text", "text"),
         "Placeholder": _k("placeholder", "text"),

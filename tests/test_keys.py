@@ -777,11 +777,6 @@ def test_texteditor_enter_inserts_a_newline_and_raises_on_changed_and_no_submit(
         assert field.get("selection") == (0, len(str(field.get("text"))))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="blocked on tre: a multi-line text input takes Tab as a tab character and has no "
-    "property that lets Tab leave it (TRE-REQ in T048.md); the table says Tab leaves a TextEditor",
-)
 def test_texteditor_tab_leaves_the_field() -> None:
     with gallery_a() as w:
         k = Keys(w, "Fields")
