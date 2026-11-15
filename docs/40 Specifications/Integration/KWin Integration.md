@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-29
-updated: 2026-10-30
+updated: 2026-11-13
 tags: [spec/integration, integration/kwin, needs-verification]
 ---
 
@@ -38,7 +38,7 @@ tags: [spec/integration, integration/kwin, needs-verification]
 
 **Purpose (v1).** Report the outputs that have an active fullscreen window, so the shell can hide its surfaces there ([Surface Types > Fullscreen and maximised windows (decided 2026-10-27)](../Surfaces/Surface%20Types.md#fullscreen-and-maximised-windows-decided-2026-10-27)). Why "active": KWin puts a fullscreen window in its Active layer only while it is active; a fullscreen window that is not active stays in the normal layer ([KWin `globals.h`](https://invent.kde.org/plasma/kwin/-/raw/master/src/effect/globals.h): "active fullscreen, or active dialog"). Surfaces on the `top` layer are covered by an active fullscreen window by KWin itself; surfaces on `overlay` are not, so the shell must hide them, and it releases the reserved space of the hidden Bar and Frame ([Frame > Hidden and shown at runtime (decided 2026-10-27)](../Surfaces/Frame.md#hidden-and-shown-at-runtime-decided-2026-10-27)).
 
-**What it sends.** One call, `FullscreenState(s outputs)`, on the shell's interface: the full list of output names that have an active fullscreen window, empty when none, written as a JSON array in one string, for example `["DP-1"]` ([IPC and CLI > The interface](../Runtime/IPC%20and%20CLI.md#the-interface); the list is decided 2026-10-28, the string form follows from the test below). It sends the full state each time, so a lost message is corrected by the next. It sends nothing else in v1: no titles, no classes, no window ids.
+**What it sends.** One call, `FullscreenState(s outputs)`, on the shell's interface: the full list of output names that have an active fullscreen window, empty when none, written as a JSON array in one string, for example `["DP-1"]` ([IPC and CLI > The interface](../Runtime/IPC%20and%20CLI.md#the-interface); the list is decided 2026-10-28, the string form follows from the test below). It sends the full state each time, so a lost message is corrected by the next. It sends nothing else unless a Tasks module is in use; then it also sends the window list ([Tasks Module > Change to an Earlier Decision](../Modules/Tasks%20Module.md#change-to-an-earlier-decision), 2026-11-13). With no Tasks module: no titles, no classes, no window ids.
 
 **When it sends.** At load, and whenever the active window changes, a window closes, a window enters or leaves fullscreen, or a window moves to another output. The signals it listens to are `windowActivated` and `windowRemoved` on `workspace`, and per window `fullScreenChanged` and `outputChanged`; the test below found all four present on KWin 6.8.1.
 
@@ -189,7 +189,11 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 6. [x] The settings keys `KWin.Script` and `KWin.Hide_On_Fullscreen`.
 7. [x] An OSD on top of a fullscreen window: none in v1, consistent with the earlier decision that a fullscreen window always covers every shell element; revisit if a need appears. (This one had no recommendation written; I took the earlier decision as the answer.)
 - [x] The namespace convention: every shell surface uses the layer-shell namespace `tesserae-shell.<type>.<name>`, the type in lower case (maintainer, 2026-10-29, as proposed; the placeholder reads `<type>` since D24).
-- [ ] The rule file's key names and a test of the rule (needs a backup of `kwinrulesrc` and permission).
+8. [ ] May the rule test back up `kwinrulesrc` to `/tmp`, write one rule group and remove it again on this machine? Context: `kwin rule install` writes one group and `remove` restores the file; the test needs permission, like the shortcut test in [Global Shortcuts > Open Questions](Global%20Shortcuts.md#open-questions) item 1. Recommendation: yes, in the testing phase and not before, after the backup.
+
+## Questions After Testing
+
+1. [ ] Which key names does the rule file use, and does the rule raise the shell's surfaces above other windows? Context: the rule is opt-in and its keys are not written yet. Recommendation: use the key names KWin writes when the same rule is made in System Settings, copied from a backed-up `kwinrulesrc`, and keep the rule to one group. Answered by: the rule test of question 8 with the live KWin 6.8.1. #needs-verification
 
 ## Acceptance Criteria
 
@@ -201,7 +205,7 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 - [ ] With the script unloadable, the shell starts, logs one warning, and `tesserae-shell kwin script status` reports it.
 - [ ] After a normal stop in mode R, `isScriptLoaded` is false.
 - [ ] `tesserae-shell kwin rule install` writes one group and removes nothing else; `remove` restores the file's earlier content for every other group.
-- [ ] The script sends no window title, class or id.
+- [ ] With no Tasks module in use, the script sends no window title, class or id.
 - [ ] A call with the string `["DP-1"]` reaches the shell; a call with `as` from a script does not (a regression check on the interface's signature).
 
 ## Links

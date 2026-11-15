@@ -5,7 +5,7 @@ type: engine-request
 status: superseded
 owner: phil
 created: 2026-10-25
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [engine-request, spec/surface, tesserae, needs-verification]
 ---
 
@@ -171,11 +171,11 @@ app.run()
 
 ## Open Questions
 
-- [ ] **ViewModel per opening.** Tesserae serves a view with "the ViewModel that serves its name". A bar opened on three monitors has three windows and, today, one ViewModel. Does each opening get its own instance (so it knows its monitor), or share one with `params`? The shell needs per-monitor state (the monitor name, its workspaces) and shared state (the clock). Recommendation: one ViewModel instance per opening, with shared services passed in. #needs-verification against the ViewModel binding code.
-- [ ] **Zero windows.** tre raises `RuntimeError` with no registered window. A shell whose every monitor is "none" ([V1 Scope > Multi-monitor](../10%20Vision/V1%20Scope.md#multi-monitor)) has none. Does Tesserae keep the loop alive with an idle hidden anchor, or does the shell open nothing and let `run()` return? Needs a tre answer or a Tesserae decision.
-- [ ] **Output hot-plug in Tesserae.** `App.outputs()` and the `output_*` events are tre's. Does Tesserae expose them (`app.outputs`, `app.on("output_added")`), or does the shell use `tre.App` directly through `app._tre_app`? Recommendation: Tesserae exposes them, so the shell stays off private attributes.
-- [ ] **Naming.** `widget: LayerWindow` and `widget: PopupWindow` against a `kind:` key on `widget: Window`. Tesserae's choice.
-- [ ] **Version.** Which Tesserae release carries it, and is the pin `tesserae-engine>=0.5.8`?
+1. [ ] Should each opening get its own ViewModel instance, or share one with `params`? Context: Tesserae serves a view with "the ViewModel that serves its name". A bar opened on three monitors has three windows and, today, one ViewModel. The shell needs per-monitor state (the monitor name, its workspaces) and shared state (the clock). Recommendation: one ViewModel instance per opening, with shared services passed in. #needs-verification against the ViewModel binding code.
+2. [ ] With no registered window, should Tesserae keep the loop alive, or should the shell open nothing and let `run()` return? Context: tre raises `RuntimeError` with no registered window. A shell whose every monitor is "none" ([V1 Scope > Multi-monitor](../10%20Vision/V1%20Scope.md#multi-monitor)) has none. Recommendation: keep the loop alive with the `keep_alive` argument of `run()` from [TRE-REQ-005 Keep-Alive and Loop Stop](TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md), not with an idle hidden anchor window.
+3. [ ] Should Tesserae expose output hot-plug (`app.outputs`, `app.on("output_added")`), or should the shell use `tre.App` directly through `app._tre_app`? Context: `App.outputs()` and the `output_*` events are tre's. Recommendation: Tesserae exposes them, so the shell stays off private attributes.
+4. [ ] Should the TDL spell the surfaces `widget: LayerWindow` and `widget: PopupWindow`, or use a `kind:` key on `widget: Window`? Context: this is Tesserae's choice, which you carry. Recommendation: separate `widget: LayerWindow` and `widget: PopupWindow`, which mirror tre's class names and keep one spelling per widget.
+5. [ ] Which Tesserae release carries this, and should the pin be `tesserae-engine>=0.5.8`? Context: `PopupWindow` arrived in tre 0.5.8 ([TRE-REQ-001 Layer Surface Window](TRE-REQ-001%20Layer%20Surface%20Window.md)). Recommendation: pin `tesserae-engine>=0.5.8` unless Tesserae ships it later.
 
 ## Acceptance Criteria
 

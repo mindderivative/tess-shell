@@ -2,10 +2,10 @@
 title: Shell File Syntax Comparison
 aliases: [YAML TDL KDL Comparison, TDL Comparison]
 type: research
-status: draft
+status: research
 owner: phil
 created: 2026-10-29
-updated: 2026-10-29
+updated: 2026-11-11
 tags: [research, tdl]
 ---
 

@@ -2,10 +2,10 @@
 title: Prior Art - Linux Shell Surfaces
 aliases: [Shell Surface Prior Art, Layer Shell Survey]
 type: research
-status: draft
+status: research
 owner: phil
 created: 2026-10-18
-updated: 2026-10-18
+updated: 2026-11-11
 tags: [research, integration/wayland, spec/surface, needs-verification]
 ---
 

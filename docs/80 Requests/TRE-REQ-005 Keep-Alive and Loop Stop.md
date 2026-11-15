@@ -5,7 +5,7 @@ type: engine-request
 status: stable
 owner: phil
 created: 2026-10-26
-updated: 2026-10-27
+updated: 2026-11-10
 tags: [engine-request, integration/wayland, needs-verification]
 ---
 
@@ -114,8 +114,11 @@ Behaviour `tre` is building:
 - [x] `keep_alive` is an argument of `run()`, not of `App` (`tre`).
 - [x] Non-Wayland: `keep_alive` works, with no output events and no error (`tre`).
 - [x] The `closed` reason for a stop: `"stopped"`, on ordinary windows too (as built, per `tre`).
-- [ ] Idle cost with zero windows: `tre` checks CPU ticks and wake-ups over 5 s ([Process Model and Threading > Performance notes](../20%20Architecture/Process%20Model%20and%20Threading.md#performance-notes)).
-- [ ] Whether KWin behaves the same as sway.
+
+## Questions After Testing
+
+1. [ ] Is the idle cost with zero windows acceptable? Context: with `keep_alive` and no windows, tre checks CPU ticks and wake-ups over 5 s ([Process Model and Threading > Performance notes](../20%20Architecture/Process%20Model%20and%20Threading.md#performance-notes)). Recommendation: accept if the loop shows no CPU ticks and no wake-ups in 5 s. Answered by: the 5 s CPU tick and wake-up measurement.
+2. [ ] Does KWin behave the same as sway for `keep_alive` with zero windows? Context: the acceptance criteria were checked on sway. Recommendation: ship only when both behave the same. Answered by: running the same zero-window test on a live KWin session.
 
 ## Acceptance Criteria
 

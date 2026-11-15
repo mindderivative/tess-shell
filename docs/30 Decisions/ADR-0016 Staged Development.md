@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-11-02
-updated: 2026-11-03
+updated: 2026-11-08
 tags: [adr, process]
 ---
 
@@ -43,6 +43,11 @@ Accepted 2026-11-02 by the maintainer in chat ("agree"): **Option A**.
 | Design system: token values, iconography | M1 and M2 | M1 needs the building blocks, not the values |
 | Python API for Python-built shells | After M2 | Needs the module contract working |
 | Surfaces: Popup | M3 | Not needed before the Bar works |
+
+
+> [!NOTE]
+> **Amendment 2026-11-08 (maintainer): milestone numbers**
+> The milestone plan changed ([Development Readiness](../00%20Home/Development%20Readiness.md)): M4 is the widgets, M5 the services and desktop integration (one milestone in smaller parts), M6 focus and keyboard, and M7 the release. The rows above that were deferred to M6 (crash recovery, delivery) are now deferred to M7. The decision itself, Option A, is unchanged.
 
 Not deferred: Vision, Architecture (the binder is accepted), Runtime (needed at M0), Engine requests. A milestone starts when its "Needs" notes in [Development Readiness](../00%20Home/Development%20Readiness.md) are at `review`. The first milestone, M0, starts when [Shell Package Layout](../20%20Architecture/Shell%20Package%20Layout.md) and [Testing Strategy](../60%20Quality/Testing%20Strategy.md) are written.
 

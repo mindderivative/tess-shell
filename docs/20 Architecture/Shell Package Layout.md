@@ -5,7 +5,7 @@ type: architecture
 status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [architecture, delivery]
 ---
 
@@ -17,7 +17,7 @@ tags: [architecture, delivery]
 ## Purpose and Scope
 
 - Fix the names and the folder structure before M0 ([Development Readiness](../00%20Home/Development%20Readiness.md)), so the first commit has a place for everything.
-- Not in this note: what each component does ([Layers and Components](Layers%20and%20Components.md)), the test plan ([Testing Strategy](../60%20Quality/Testing%20Strategy.md)), and packaging for users ([Roadmap](../00%20Home/Roadmap.md), Delivery, M6).
+- Not in this note: what each component does ([Layers and Components](Layers%20and%20Components.md)), the test plan ([Testing Strategy](../60%20Quality/Testing%20Strategy.md)), and packaging for users ([Roadmap](../00%20Home/Roadmap.md), Delivery, M7).
 
 ## Names
 
@@ -76,6 +76,18 @@ tess_shell/
 └── py.typed
 ```
 
+### As Built at M0 (Reported by `tess-shell`, 2026-11-03)
+
+```
+tess_shell/
+├── exit_codes.py   options.py   signals.py   logging.py   app.py   cli.py   __main__.py
+├── config/         paths.py   settings.py   lock.py   registry.py   discovery.py
+├── files/          tree.py (helpers over the tess_dl tree)   loader.py
+└── schema/         findings.py
+```
+
+As built at M1 (reported 2026-11-04): `schema/` holds `blocks.py` (the declared keys), `values.py`, `model.py` (the typed shell definitions `ShellDef`, `BarDef`, `MonitorDef`, which live there until a `model/` package exists), `shell.py` and `tree.py` (the `tess_dl` accessors, moved from `files/` because `schema` may not import `files`); `files/header.py` (the version pins and `shell-root-suffix`); `surfaces/bar.py` and `surfaces/manager.py`. The import rules for `config`, `logging.py`, `schema`, `files` and `surfaces` are set in `tests/test_imports.py`. The `binder/`, `model/`, `surfaces/`, `modules/`, `services/` and `ipc/` packages arrive with later milestones.
+
 ### The Binder Is Independent
 
 `tess_shell/binder/` follows [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md): it holds the block table, the key table, the converters and the links, it imports only `tess_re`, `tess_utils` and the standard library, and it receives a typed tree through plain classes defined in `binder/`. A test fails if `binder/` imports any other part of `tess_shell`. It can then become its own library without edits.
@@ -86,7 +98,7 @@ tess_shell/
 |---|---|---|
 | `binder` | `tess_re`, `tess_utils` (the vendored copy), the standard library | everything else in `tess_shell`, `tess_dl`, `tess_el` |
 | `files` | `tess_dl`, `config`, `schema` | `tess_re`, `surfaces`, `services` |
-| `schema` | the standard library, `binder.model` (the typed tree classes only) | `tess_re`, `tess_dl` internals (it reads the public tree) |
+| `schema` | the standard library, `binder.model` (the typed tree classes), and `binder.convert` until `tess_utils` is vendored (interim, maintainer, 2026-11-04) | `tess_re`, `tess_dl` internals (it reads the public tree) |
 | `model` | `tess_el`, `schema`, `files` | `tess_re`, `surfaces`, `services` |
 | `surfaces` | `tess_re`, `binder`, `model`, `config` | `services`, `modules` internals |
 | `modules` | `model`, the module context, `services` through the context only | `tess_re`, `surfaces` ([Layers and Components > Dependency Rules](Layers%20and%20Components.md#dependency-rules) rule 3) |
@@ -128,10 +140,10 @@ Dev dependencies (the TEL project's set): `pytest`, `ruff`, `mypy`, `hypothesis`
 
 ## Open Questions
 
-1. [ ] The PyPI name `tesserae-shell`: register it when the first release nears; it is free today.
-2. [ ] Whether `services/` splits into its own library later (the D-Bus layer is useful beyond the shell); not now.
-3. [ ] A shipped-module folder layout: `modules/<name>/` with the TDL and Python files side by side, as user modules are ([Module File](../41%20TDL%20Reference/Module%20File.md)).
-4. [ ] Whether the import rules are enforced with `import-linter` or with a small test of our own.
+1. [ ] When should the PyPI name `tesserae-shell` be registered? Context: the name is free today. Recommendation: register it when the first release nears.
+2. [ ] Should `services/` split into its own library later? Context: the D-Bus layer is useful beyond the shell. Recommendation: not now; revisit after the first release.
+3. [ ] **What is the folder layout of a shipped module?** Context: user modules keep the TDL and Python files side by side ([Module File](../41%20TDL%20Reference/Module%20File.md)). Recommendation: `modules/<name>/` with the TDL and Python files side by side, as user modules are.
+4. [ ] Are the import rules enforced with `import-linter` or with a small test of our own? Context: the acceptance criteria already name tests for the forbidden imports. Recommendation: a small test of our own, to avoid another dependency.
 
 ## Acceptance Criteria
 

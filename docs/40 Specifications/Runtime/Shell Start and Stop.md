@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -55,7 +55,7 @@ flowchart TD
 
 | Step                         | What happens                                                                                                                 | Source                                                                           | If it fails                                                                             |
 |------------------------------|------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
-| 1. Pre-flight                | Python 3.14 or later; tre 0.5.9 or later (the Frame needs `hit_shape`); a Wayland session; a valid `XDG_RUNTIME_DIR` (above) | [Frame > Failure modes and recovery](../Surfaces/Frame.md#failure-modes-and-recovery), [Surface Types](../Surfaces/Surface%20Types.md) | Stop, code 2, a message naming the missing version or the environment                   |
+| 1. Pre-flight                | Python 3.14 or later; tre 0.6.0 or later (`tesserae-engine`, import `tess_re`; the Frame needs `hit_shape`, from 0.5.9; the binder needs `Window.build`, from 0.5.10); a Wayland session; a valid `XDG_RUNTIME_DIR` (above) | [Frame > Failure modes and recovery](../Surfaces/Frame.md#failure-modes-and-recovery), [Surface Types](../Surfaces/Surface%20Types.md) | Stop, code 2, a message naming the missing version or the environment                   |
 | 2. Config directory          | `$XDG_CONFIG_HOME/tesserae-shell/` if set, non-empty and absolute, else `$HOME/.config/tesserae-shell/`                      | [Settings File > The config directory](../../41%20TDL%20Reference/Settings%20File.md#the-config-directory)                                          | If it does not exist, create it with the default folders (decided 2026-10-28)           |
 | 3. Settings                  | Read `settings.tdl`; expand `~` and variables; check paths                                                                  | [Settings File](../../41%20TDL%20Reference/Settings%20File.md)                                          | Stop, code 1, error on the console and in the default log directory                     |
 | 4. Logging                   | Start Loguru with the `Logging` keys, or the defaults                                                                        | [Settings File > Log files](../../41%20TDL%20Reference/Settings%20File.md#log-files)                                          | Fall back to the console only and say so; do not stop                                   |
@@ -165,7 +165,12 @@ All seven were answered on 2026-10-28.
 6. [x] **Ready notice:** the shell notifies systemd (`READY=1` and `STOPPING=1` on `NOTIFY_SOCKET`).
 7. [x] **Lock path:** `$XDG_RUNTIME_DIR/tesserae-shell/`, not the config directory.
 - [x] `XDG_RUNTIME_DIR` is required, with no fallback; the shell checks it in pre-flight and sets the sticky bit on its lock file (maintainer, 2026-10-28, as recommended; the control socket was dropped by ADR-0013).
-- [ ] Whether any cleaner runs on the target session, and that the sticky bit is honoured on those files. #needs-verification
+
+## Questions After Testing
+
+Answered by: a test on the target session that lists the lock directory after a cleaner pass and checks the sticky bit.
+
+8. [ ] Does any cleaner run on the target session, and is the sticky bit honoured on the lock files? Context: a cleaner that removes the lock file would allow a second instance. Recommendation: keep the sticky bit and verify on the real session. #needs-verification
 
 ## Acceptance Criteria
 

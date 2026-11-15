@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-11-02
+updated: 2026-11-14
 tags: [api, needs-verification]
 ---
 
@@ -42,7 +42,7 @@ The file form starts with a metadata block, then one root block, and a block's h
 # Illustration only. Each line pairs with the TDL form above it.
 
 # ---
-# TDL: 0.1
+# TDL: 0.2
 # TEL: 0.1
 # TRE: 0.5.9
 # Shell: 0.1
@@ -77,12 +77,12 @@ clock = Module(meta={"TDL": "0.1", "TEL": "0.1", "TRE": "0.5.9", "Shell": "0.1",
 ```python
 # Illustration only. Each line pairs with the TDL form above it.
 
-# If {{ battery.present }} { Label { Text: ... } } Else { Icon { Svg: battery-missing } }
+# If <| battery.present |> { Label { Text: ... } } Else { Icon { Svg: battery-missing } }
 If(expr("battery.present"),
-   then=[Label(text=tpl("Battery {{ battery.percent }}%"))],
+   then=[Label(text=tpl("Battery <| battery.percent |>%"))],
    otherwise=[Icon(svg="battery-missing")])      # "else" is a Python keyword
 
-# For item In {{ tray.items }} Key {{ item.id }} { Icon { Svg: {{ item.icon }} } }
+# For item In <| tray.items |> Key <| item.id |> { Icon { Svg: <| item.icon |> } }
 For("item", expr("tray.items"),
     key=expr("item.id"),
     body=[Icon(svg=expr("item.icon"))])
@@ -92,16 +92,19 @@ For("item", expr("tray.items"),
 - `If` and `For` carry structure only and run no code, as in the file form. `For` binds one name; its `key` is required; `Else If` does not exist (nest an `If` in `otherwise`). The reserved words `If`, `Else`, `For`, `In` and `Key` apply to block names in both forms.
 - `then`, `otherwise` and `body` take the same children a `Children { }` block takes.
 
+## Notes
+
+The TEL Python form is owned by the TEL project; the shell side needs it before this note can be designed.
+
 ## Open Questions
 
-- [ ] What is the entry point: a function that returns the model, a class, or a script that calls the shell API.
-- [ ] How a Python-defined shell is found and where its UID is stored (P4).
-- [ ] Whether the Python form is a separate package or part of the shell package.
-- [ ] How errors point to Python source lines (P3).
-- [ ] Whether imports between Python and TDL are v1 (P7).
+- [ ] What is the entry point: a function that returns the model, a class, or a script that calls the shell API? Context: the choice shapes how the shell finds and runs a Python-defined shell. Recommendation: a function that returns the model, because it is the easiest to test and to compare with a TDL tree. #needs-verification
+- [ ] How is a Python-defined shell found, and where is its UID stored (P4)? Context: a TDL file keeps its UID in the metadata block. Recommendation: keep the UID in the model's metadata, as a TDL file does, and find the shell through one configured entry point.
+- [ ] Is the Python form a separate package or part of the shell package? Context: a separate package keeps the shell import-light. Recommendation: part of the shell package in v1, split later if needed.
+- [ ] How do errors point to Python source lines (P3)? Context: TDL errors point to file lines. Recommendation: record the call site (file and line) when a head is constructed and report it in errors.
+- [ ] Is importing between Python and TDL part of v1 (P7)? Context: it doubles the loader work. Recommendation: no, not in v1.
 - [x] `If` and `For` signatures stand, and the parity test compares trees, including metadata, and ignores comments and layout (D15, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
-- [ ] The signatures of the metadata setter and the head constructors ([Metadata and Heads (Proposed Signature Sketch)](#metadata-and-heads-proposed-signature-sketch)).
-- [ ] The TEL Python form: owned by the TEL project; the shell side needs it before this note can be designed.
+- [ ] What are the signatures of the metadata setter and the head constructors? Context: see [Metadata and Heads (Proposed Signature Sketch)](#metadata-and-heads-proposed-signature-sketch). Recommendation: adopt the sketch as written.
 
 ## Acceptance Criteria
 

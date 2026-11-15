@@ -5,7 +5,7 @@ type: quality
 status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [quality, performance]
 ---
 
@@ -40,6 +40,9 @@ A measured number from tre is a tre fact on one machine (an AMD GPU with RADV, a
 | Popups | [Popup > Performance Budget](../40%20Specifications/Surfaces/Popup.md#performance-budget) | Proposed |
 | Surfaces and memory | [Surface Types > Performance Budget](../40%20Specifications/Surfaces/Surface%20Types.md#performance-budget), [Bar > Integration](../40%20Specifications/Surfaces/Bar.md#integration), [Frame > Integration](../40%20Specifications/Surfaces/Frame.md#integration), [Panel](../40%20Specifications/Surfaces/Panel.md) | Measured by tre on 0.5.8 and 0.5.9 |
 | tre call cost (create, set, add_child, a 3,100-node tree) | [TRE-REQ-009 Batch and Tree Building > Measured Cost Today (2026-11-02)](../80%20Requests/TRE-REQ-009%20Batch%20and%20Tree%20Building.md#measured-cost-today-2026-11-02) | Measured here, single runs, no layout |
+| The Clock shown (M2a: idle with a module that ticks) | [M2 Build Log](../00%20Home/M2%20Build%20Log.md), `tests/perf/idle-results-clock.md` in `tess-shell` | Measured by `tess-shell`: 0.017 % CPU; 8.07 wake-ups per second over a 60 s window with one minute tick on the software renderer, 2 per second between ticks (tre's own thread); the 5-per-second budget is read as "between ticks" for a module that ticks (D19, accepted 2026-11-04); the burst at a tick is measured separately on a real GPU |
+| The Clock and the file watcher (M2b: idle) | [M2 Build Log](../00%20Home/M2%20Build%20Log.md) | Measured by `tess-shell`: 0.000 % CPU, 7.75 wake-ups per second over a 60 s window with one tick on the software renderer |
+| Binder and Bar (M1: bind time of a 3,100-node tree, idle with a Bar shown) | [M1 Build Log](../00%20Home/M1%20Build%20Log.md), `tests/perf/bind-results.md` and `idle-results-bar.md` in `tess-shell` | Measured by `tess-shell`: 12.6 ms bind; idle 0.000 % CPU, 2.65 wake-ups/s |
 | Animated icons | [TRE-REQ-008 SMIL Animation in SVG Nodes > Built in tre (Reported 2026-11-02)](../80%20Requests/TRE-REQ-008%20SMIL%20Animation%20in%20SVG%20Nodes.md#built-in-tre-reported-2026-11-02) | Measured by tre |
 | Config load and validation | [JSON Schema and Editor Support](../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md), [Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md) | Measured on YAML; TDL parse not measured |
 | Logging | [Logging > Threads and Speed](../40%20Specifications/Runtime/Logging.md#threads-and-speed) | Measured |
@@ -56,7 +59,7 @@ Recommendations, each with its reason. None is measured on the shell, because th
 | Idle wake-ups | At most 5 per second. Measured at M0: about 2.0 per second, counted as context switches | tre reports about 2 per second from its OS-preference watcher; the Clock adds 1 per second; the D-Bus layer adds 0 without signals |
 | Time to first surface | Under 1.0 s from the process start on a warm cache | Steps 1 to 11 of the start sequence run before the surfaces open ([Shell Start and Stop > Start Sequence](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md#start-sequence)); validation is in code and loads no JSON Schema library ([ADR-0020 Validation in Code](../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)) |
 | Time to ready | Under 2.0 s | Modules start at step 12 |
-| Hot reload apply, after the 200 ms debounce | Under 100 ms for a shell of 10 surfaces | The debounce is decided at 200 ms and "about 300 ms end to end" is the spec's acceptance ([Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md)) |
+| Hot reload apply, after the 200 ms debounce | Under 100 ms for a shell of 10 surfaces. Measured at M2b: a saved `Height` applied a median of 206 ms after the save, about 5 ms of it validate, diff and set ([M2 Build Log](../00%20Home/M2%20Build%20Log.md)) | The debounce is decided at 200 ms and "about 300 ms end to end" is the spec's acceptance ([Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md)) |
 | Resident memory of the default shell | To be set after the first build | The measured parts are per window (18 MiB for a bar, 177 MiB for a 4K overlay, 0.5.8); a total needs the real surface count |
 | Looping icons at once | At most 2 per output, none on hidden surfaces | One looping icon cost about 30% of a core on software drawing ([Risk Register](../00%20Home/Risk%20Register.md) R-24); applies only when `mli` ships |
 | Module callback on the loop | Under 4 ms | A 60 Hz frame is 16.7 ms; leaves room for paint ([Process Model and Threading > Performance Notes](../20%20Architecture/Process%20Model%20and%20Threading.md#performance-notes)) |
@@ -82,9 +85,9 @@ These are inconsistencies between notes, found by the sweep. I have not edited t
 
 ## Open Questions
 
-1. [ ] Accept the proposed values above, or change them.
-2. [ ] Whether the budgets are checked in automated tests (a headless idle-CPU test) or only measured by hand in v1; AGENTS > 12. Design Completeness Checklist lists testing through `window.simulate`.
-3. [ ] Which machine counts as the reference (the maintainer's AMD desktop, or a slower laptop).
+1. [ ] Do you accept the proposed values above, or change them? Context: see [Proposed Values for the Missing Numbers](#proposed-values-for-the-missing-numbers). Recommendation: accept them as the v1 starting values and revise after the first measurements.
+2. [ ] Are the budgets checked in automated tests (a headless idle-CPU test) or only measured by hand in v1? Context: AGENTS > 12. Design Completeness Checklist lists testing through `window.simulate`. Recommendation: measure by hand in v1 and add the headless idle-CPU test once the budgets have held through one milestone.
+3. [ ] Which machine counts as the reference: the maintainer's AMD desktop, or a slower laptop? Context: the budgets are only meaningful against one machine. Recommendation: the AMD desktop sets the numbers; spot-check on a slower laptop before release.
 
 ## Acceptance Criteria
 

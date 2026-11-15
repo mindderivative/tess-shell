@@ -5,7 +5,7 @@ type: spec
 status: draft
 owner: phil
 created: 2026-11-02
-updated: 2026-11-02
+updated: 2026-11-10
 tags: [spec/integration, integration/dbus, integration/plasma, needs-verification]
 ---
 
@@ -121,10 +121,13 @@ Coexistence adds no work: the shell owns one name of its own plus the tray host 
 
 ## Open Questions
 
-1. [ ] Whether a second tray host sees items that register before it joins: the watcher's `RegisteredStatusNotifierItems` property lists them, so the host reads it at registration (proposed; test).
-2. [ ] The behaviour of an app that checks `IsStatusNotifierHostRegistered` when only the shell's host is present (test with plasmashell stopped, in a throwaway session).
-3. [ ] Whether the same owners hold on Plasma versions before 6.8 and on Fedora, KDE neon and Arch.
-4. [ ] Whether the shell should offer a `tesserae-shell doctor` command that prints the owners table for a bug report (recommended, post-v1).
+1. [ ] Should the shell offer a `tesserae-shell doctor` command that prints the owners table for a bug report? Context: the owners table in this note is what a bug report needs, and the command would print it from `busctl`-style reads. Recommendation: yes, but after v1.
+
+## Questions After Testing
+
+1. [ ] Does a second tray host see items that registered before it joined? Context: the watcher's `RegisteredStatusNotifierItems` property lists them, so the host would read it at registration. Recommendation: read the property at registration (as proposed). Answered by: starting the shell as second host while items are registered and comparing its list with the property.
+2. [ ] How does an app behave when it checks `IsStatusNotifierHostRegistered` and only the shell's host is present? Context: plasmashell normally registers a host. Recommendation: keep the shell's host registered at all times so such apps show their icon. Answered by: a test with plasmashell stopped, in a throwaway session.
+3. [ ] Do the same name owners hold on Plasma versions before 6.8 and on Fedora, KDE neon and Arch? Context: the owners table was read on one machine (KWin 6.8.1). Recommendation: state the table as verified for 6.8 only and add a column per distribution as results arrive. Answered by: reading `busctl --user list` on each distribution.
 
 ## Acceptance Criteria
 

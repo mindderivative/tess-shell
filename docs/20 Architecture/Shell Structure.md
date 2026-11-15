@@ -2,10 +2,10 @@
 title: Shell Structure
 aliases: [Shell Flow Diagram, Structure Diagram]
 type: architecture
-status: draft
+status: accepted
 owner: phil
 created: 2026-10-26
-updated: 2026-10-30
+updated: 2026-11-11
 tags: [architecture, needs-verification]
 ---
 

@@ -5,11 +5,15 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-29
-updated: 2026-11-03
+updated: 2026-11-14
 tags: [adr, architecture, needs-verification]
 ---
 
 # ADR-0014: Shell File Language
+
+> [!IMPORTANT]
+> **Changed in TDL 0.2 (2026-11-14)**
+> Decision 2 below (the slot written with double braces) was replaced: a slot is written `<| expression |>` since language 0.2, released as `tesserae-dl` 0.2.0. The `tess-dl` session reports this as the maintainer's decision given in its chat; the reason was a dict or set literal inside a slot, whose braces collided with the closing pair. The text and examples below keep the form of the day they were decided; the current rules are in [TDL Language > Punctuation](../41%20TDL%20Reference/TDL%20Language.md#punctuation).
 
 > [!NOTE]
 > The shell's view files are written in the **Tesserae Data Language (TDL)**, a structure-only data language with brace blocks, lists, imports and expression slots, in place of YAML. Expressions stay in TEL ([ADR-0008 Tesserae Expression Language](ADR-0008%20Tesserae%20Expression%20Language.md)). Accepted by the maintainer on 2026-10-29.

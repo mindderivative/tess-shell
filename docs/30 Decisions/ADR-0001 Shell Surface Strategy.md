@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-18
-updated: 2026-10-25
+updated: 2026-11-10
 tags: [adr, spec/surface, integration/wayland, needs-verification]
 ---
 
@@ -117,12 +117,17 @@ Option A is accepted, so:
 ## Open Items
 
 - [x] Confirm tre has no layer-shell or external-surface API (Window reference, source). Confirmed in tre #195, now superseded by the build.
-- [ ] Find the first KWin release exposing `zwlr_layer_shell_v1`; record the version. Deferred to the testing phase (maintainer, 2026-10-25): Tesserae Shell tests it once a build exists. The design assumes KWin 6.8.1, where tre tested.
-- [ ] Verify `org_kde_plasma_shell` status for third-party clients. Deferred to the testing phase (maintainer, 2026-10-25). Option D is not pursued, so nothing in the design depends on it.
-- [ ] Decide whether non-layer-shell compositors (GNOME) are explicitly out of scope for v1. Deferred to the testing phase (maintainer, 2026-10-25). Until then the design targets KWin and wlroots compositors; `LayerWindow` raises `UnsupportedPlatform` elsewhere.
 - [x] Specify popup behaviour (parenting, grabs, dismissal) in `TRE-REQ-001`. Built as `PopupWindow` in tre 0.5.8; see [TRE-REQ-001 Layer Surface Window > Popups](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#popups).
 - [x] Choose the backend path for layer surfaces: I2 built, a second event queue on `winit`'s `wl_display`; tre binds layer-shell v5 itself. See [TRE-REQ-001 Layer Surface Window > Implementation candidates](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#implementation-candidates).
-- [ ] Read the gtk-layer-shell and Quickshell source to see how they attach a layer role to a toolkit surface; this informs Option B.
+
+## Questions After Testing
+
+Answered by: the first Tesserae Shell build running on KWin (maintainer, 2026-10-25: deferred to the testing phase).
+
+- [ ] Which KWin release first exposes `zwlr_layer_shell_v1`? Context: the design assumes KWin 6.8.1, where tre tested. Answered by: running the build on older KWin releases. Recommendation: record the first release that works as the minimum KWin version in this ADR.
+- [ ] What is the `org_kde_plasma_shell` status for third-party clients? Context: Option D is not pursued, so nothing in the design depends on it. Answered by: probing the protocol on the live KWin session. Recommendation: probe once and record the result; no design change.
+- [ ] **Are non-layer-shell compositors (GNOME) out of scope for v1?** Context: until answered the design targets KWin and wlroots compositors; `LayerWindow` raises `UnsupportedPlatform` elsewhere. Answered by: the first run on a non-layer-shell compositor. Recommendation: declare them out of scope for v1.
+- [ ] **How do gtk-layer-shell and Quickshell attach a layer role to a toolkit surface?** Context: this informs Option B, which is not pursued. Answered by: reading their source. Recommendation: skip unless Option B is reopened.
 
 ## Links
 

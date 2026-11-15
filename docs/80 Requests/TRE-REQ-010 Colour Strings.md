@@ -5,7 +5,7 @@ type: engine-request
 status: superseded
 owner: phil
 created: 2026-11-03
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [engine-request, design, needs-verification]
 ---
 
@@ -69,13 +69,15 @@ The shell converts colours in `binder/convert.py`, as a pure function with no de
 
 Small, if tre already has the parser on the Rust side: expose it and call it from the property setters.
 
-## Open Questions
+## Notes
 
-1. [ ] Does tre already have a colour parser in its Rust code, and where? Ask tre.
-2. [ ] The form of alpha in `rgba()`: 0 to 1, a percentage, or both.
-3. [ ] The set of colour names, if any.
-4. [ ] The name of the function and the error wording.
-5. [ ] Whether the same applies to `Painter` colours.
+The maintainer withdrew this request on 2026-11-03, so these points are moot. They were for tre and stay as the record of what was unresolved:
+
+- Whether tre already has a colour parser in its Rust code, and where.
+- The form of alpha in `rgba()`: 0 to 1, a percentage, or both.
+- The set of colour names, if any.
+- The name of the function and the error wording.
+- Whether the same applies to `Painter` colours.
 
 ## Acceptance Criteria
 

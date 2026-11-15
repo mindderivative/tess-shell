@@ -5,7 +5,7 @@ type: quality
 status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [quality, testing, needs-verification]
 ---
 
@@ -42,7 +42,7 @@ tags: [quality, testing, needs-verification]
 | Marker | Meaning | In the default run |
 |---|---|---|
 | (none) | Unit, files, module and geometry tests | Yes |
-| `tre` | Needs a headless tre window | Yes, if tre imports; skipped with a clear reason otherwise |
+| `tre` | Needs `tess_re`, including the `run` tests that start a private headless sway (`tests/sway.py`) | Yes, if `tess_re` imports and sway is found; skipped with a clear reason otherwise (as built at M0) |
 | `dbus` | Needs `dbus-daemon` | Yes, if found |
 | `compositor` | Needs a running Wayland compositor | No; run in the sway job and by hand |
 | `perf` | Timing and idle-cost checks | No; run on request |
@@ -77,11 +77,15 @@ None.
 
 ## Open Questions
 
-1. [ ] Which tolerance and which blocks get reference images.
-2. [ ] Whether the table-vs-docs test reads the vault directly in the maintainer's environment, or a copy under `tests/data/` that a script refreshes (recommended: the copy, so CI works).
-3. [ ] The headless sway job: recommend adopting tre's setup once the first `LayerWindow` is built.
-4. [ ] How tre exposes the accessibility tree to a test.
-5. [ ] A coverage target. Recommendation: none at first; report only.
+1. [x] M1 commits one reference PNG of the example at 400x32, compared with a tolerance (maintainer, 2026-11-04, D17).
+2. [ ] Which other blocks get reference images? Context: M1 has one reference PNG; more images cost review time when looks change. Recommendation: add one image per block when that block is built, with the same tolerance.
+3. [ ] Does the table-vs-docs test read the vault directly in the maintainer's environment, or a copy under `tests/data/` that a script refreshes? Context: CI has no vault. Recommendation: the copy, so CI works.
+4. [ ] Do we adopt tre's headless sway setup for the CI job? Context: the job is needed once the first `LayerWindow` is built. Recommendation: adopt tre's setup at that point.
+5. [ ] Do we set a coverage target? Context: a target early on rewards trivial tests. Recommendation: none at first; report coverage only.
+
+## Questions After Testing
+
+1. [ ] How does tre expose the accessibility tree to a test? Context: [Accessibility](Accessibility.md) checks need it. Recommendation: assert on the tree if tre exposes one, and otherwise check roles through the shell's own model. Answered by: a probe of tre's accessibility API.
 
 ## Acceptance Criteria
 

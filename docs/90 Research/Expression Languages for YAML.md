@@ -2,10 +2,10 @@
 title: Expression Languages for YAML
 aliases: [Expression Language Survey, Jinja2 and jinjyaml]
 type: research
-status: draft
+status: research
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-11
 tags: [research, needs-verification]
 ---
 
@@ -55,8 +55,8 @@ Two different jobs are mixed in "expression language":
 
 ## Questions for the Maintainer
 
-- [ ] Is a syntax like Python's expressions (`battery < 20 and not charging`) acceptable, or should users see `{if ...}` as the only form? The `{if ...}` form can be a function in whichever engine is chosen.
-- [ ] Is load-time templating (Jinja-style) wanted at all, beside live expressions?
+- [ ] **Are Python-style expressions acceptable for conditions?** Context: a syntax like `battery < 20 and not charging` against `{if ...}` as the only form; the `{if ...}` form can be a function in whichever engine is chosen. Recommendation: yes, accept Python-style expressions, as TEL does.
+- [ ] **Is load-time templating (Jinja-style) wanted at all, beside live expressions?** Context: structure is handled by shell-owned keys (`If`, `For`), so templating would be a second mechanism. Recommendation: no.
 
 ## Links
 

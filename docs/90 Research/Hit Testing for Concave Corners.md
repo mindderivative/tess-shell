@@ -2,10 +2,10 @@
 title: Hit Testing for Concave Corners
 aliases: [Frame Hit Testing, Concave Corner Pass-through]
 type: research
-status: draft
+status: research
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-11
 tags: [research, spec/surface, integration/wayland, needs-verification]
 ---
 

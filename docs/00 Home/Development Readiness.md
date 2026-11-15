@@ -5,7 +5,7 @@ type: moc
 status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-03
+updated: 2026-11-14
 tags: [moc, roadmap]
 ---
 
@@ -28,15 +28,15 @@ Status is the lowest status among the row's notes. "Needed for" names the first 
 | Python API | draft | Module contract and context are drafts; no surface or widget API for Python-built shells, no registry API, no package layout and version policy | M2 |
 | TDL reference | draft | `tess-dl` owns the language; the shell schema notes are drafts; the built-in actions list and the event and action vocabulary are open | M1 |
 | Design system | draft | [Building Blocks](../50%20Design%20System/Building%20Blocks.md) and [V1 Widgets](../50%20Design%20System/V1%20Widgets.md) exist; the shipped-module list, principles, token values (colour, type, shape, motion, elevation curve) and iconography are not written | M1 for blocks, M2 for modules |
-| Quality | draft | [Performance Budgets](../60%20Quality/Performance%20Budgets.md) and [Testing Strategy](../60%20Quality/Testing%20Strategy.md) are written; accessibility, security model and crash recovery are not | M2 for accessibility and security, M6 for recovery |
-| Delivery | none | Packaging, install and autostart, versioning and release, licensing; the `.desktop` file for portal calls ([Portals](../40%20Specifications/Integration/Portals.md)) | M6 |
+| Quality | draft | [Performance Budgets](../60%20Quality/Performance%20Budgets.md) and [Testing Strategy](../60%20Quality/Testing%20Strategy.md) are written; accessibility, security model and crash recovery are not | M2 for accessibility and security, M7 for recovery |
+| Delivery | accepted | [Packaging and Session Start](../70%20Delivery/Packaging%20and%20Session%20Start.md): the wheel, the desktop file, the session unit, the `install-session` command (2026-11-13). Versioning and release are the maintainer's | M7 |
 | Engine requests | review | TRE-REQ-001 to 009 are released or in tre 0.5.10; nothing blocks | n/a |
 | Decisions | 16 accepted (ADR-0002 superseded) | [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md) and [ADR-0016 Staged Development](../30%20Decisions/ADR-0016%20Staged%20Development.md) accepted 2026-11-02 | n/a |
 
 ## What Already Exists to Build On
 
-- `tess_dl` is published: `tesserae-dl` 0.1.1 is on PyPI (checked 2026-11-03; the first release importing as `tess_dl`; 0.1.0 imported as `tdl`; Python 3.14 or later, no dependencies), with the language reference, the API and a conformance corpus in the `tess-dl` repository ([TDL Library API](../42%20Python%20API/TDL%20Library%20API.md)).
-- TEL 0.1.2 and tre 0.6.0 are on PyPI (imports `tess_el`, `tess_re`), with `Window.build`, `Window.apply` and `Node.set_children` ([TRE-REQ-009 Batch and Tree Building](../80%20Requests/TRE-REQ-009%20Batch%20and%20Tree%20Building.md)).
+- `tess_dl` is published: `tesserae-dl` 0.1.1 is on PyPI (checked 2026-11-03; the first release importing as `tess_dl`; 0.1.0 imported as `tdl`; Python 3.14 or later, no dependencies), with the language reference, the API and a conformance corpus in the `tess-dl` repository ([TDL Library API](../42%20Python%20API/TDL%20Library%20API.md)). `tesserae-dl` 0.2.0 (language 0.2, the slot written `<| |>`) is on PyPI (checked 2026-11-14) and the shell requires it ([TDL Language > Punctuation](../41%20TDL%20Reference/TDL%20Language.md#punctuation)).
+- TEL 0.1.2 and tre 0.6.4 (2026-11-07; 0.6.0 had the first of these) are on PyPI (imports `tess_el`, `tess_re`), with `Window.build`, `Window.apply` and `Node.set_children` ([TRE-REQ-009 Batch and Tree Building](../80%20Requests/TRE-REQ-009%20Batch%20and%20Tree%20Building.md)).
 - The `tess-shell` repository exists with the docs export and the sync tool; it holds no code, no `pyproject.toml` and no package yet.
 
 ## Proposed Milestones
@@ -46,12 +46,13 @@ Each milestone is a vertical slice that runs, so the design is tested early. The
 | # | Milestone | What works at the end | Needs |
 |---|---|---|---|
 | M0 | Skeleton | `tesserae-shell run`, `check`, `version`; config directory, logging, lock, start and stop with no windows; `pyproject.toml` with the dependencies; tests run headless | [Shell Start and Stop](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md), [Logging](../40%20Specifications/Runtime/Logging.md), [Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md), the package layout, the testing strategy |
-| M1 | A static Bar ([M1 Brief](M1%20Brief.md)) | One `Bar` on one monitor from a `.tdl` file: `tess_dl` parse, a minimal schema check, the binder with the table for `Box`, `FlexBox`, `Text`, `Rectangle`, `Svg`; a `LayerWindow`; the Clock as a fixed string | [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md) accepted, [Bar](../40%20Specifications/Surfaces/Bar.md), [Block Reference](../41%20TDL%20Reference/Block%20Reference.md), [Style Schema](../41%20TDL%20Reference/Style%20Schema.md) |
-| M2 | Live and modular | TEL slots and tracked updates, the value store, the module contract (Clock updates every second), hot reload by keyed diff | [Module Contract](../42%20Python%20API/Module%20Contract.md), [Module Context](../42%20Python%20API/Module%20Context.md), [Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md), the shipped-module list |
-| M3 | More surfaces | `Panel`, `Popup`, `Frame`, multi-monitor and hot-plug, shadows | [Panel](../40%20Specifications/Surfaces/Panel.md), [Popup](../40%20Specifications/Surfaces/Popup.md), [Frame](../40%20Specifications/Surfaces/Frame.md), [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md) |
-| M4 | Services | The D-Bus service layer, then Workspaces, Battery, Network, Audio, Media, Tray one at a time | [D-Bus Service Layer](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md), the module specs |
-| M5 | Desktop integration | The KWin script, global shortcuts, portal settings, fullscreen hiding | [KWin Integration](../40%20Specifications/Integration/KWin%20Integration.md), [Global Shortcuts](../40%20Specifications/Integration/Global%20Shortcuts.md), [Portals](../40%20Specifications/Integration/Portals.md) |
-| M6 | Release | Packaging, autostart, the `.desktop` file, version policy, security model | `70 Delivery` (to write) |
+| M1 | A static Bar ([M1 Brief](M1%20Brief.md)) | One `Bar` on one monitor from a `.tdl` file: `tess_dl` parse, a minimal schema check, the binder with the table for `Box`, `FlexBox`, `Text`, `Rectangle`, `SVG`; a `LayerWindow`; the Clock as a fixed string | [ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md) accepted, [Bar](../40%20Specifications/Surfaces/Bar.md), [Block Reference](../41%20TDL%20Reference/Block%20Reference.md), [Style Schema](../41%20TDL%20Reference/Style%20Schema.md) |
+| M2 | Live and modular ([M2 Brief](M2%20Brief.md)) | TEL slots and tracked updates, the value store, the module contract (Clock updates every second), hot reload by keyed diff | [Module Contract](../42%20Python%20API/Module%20Contract.md), [Module Context](../42%20Python%20API/Module%20Context.md), [Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md), the shipped-module list |
+| M3 | More surfaces ([M3 Brief](M3%20Brief.md); design: [Events and Actions](../42%20Python%20API/Events%20and%20Actions.md) written, Panel, Popup, Frame and Surface Types stable) | `Panel`, `Popup`, `Frame`, multi-monitor and hot-plug, shadows | [Panel](../40%20Specifications/Surfaces/Panel.md), [Popup](../40%20Specifications/Surfaces/Popup.md), [Frame](../40%20Specifications/Surfaces/Frame.md), [Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md) |
+| M4 | Widgets ([M4 Brief](M4%20Brief.md)) | Every V1 block and standard module (Label, TextBox, TextInput, TextEditor, Icon, Image, Button, Toggle, Checkbox, Slider, ProgressBar, Badge, Tooltip, List, Menu, MenuItem, Marquee text, Spacer, Expander) operated by the pointer, `Enabled`, `:disabled` and `::part`, single-line and multi-line text input, `Call`, popup submenus and a widgets gallery on KWin (decided 2026-11-08: the basic widgets first) | [Standard Modules](../50%20Design%20System/Standard%20Modules.md) (draft), [Accessibility](../60%20Quality/Accessibility.md) (draft), [Events and Actions](../42%20Python%20API/Events%20and%20Actions.md), [V1 Widgets](../50%20Design%20System/V1%20Widgets.md) |
+| M5 | Services and desktop integration, one milestone in parts M5a to M5h ([M5 Brief](M5%20Brief.md)) | The D-Bus service layer, then Battery with Workspaces, Network, Media, Audio and Tray, then the KWin script, fullscreen hiding and Tasks, then portal settings (moved from M4, 2026-11-08) | [D-Bus Service Layer](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md), the module specs, [KWin Integration](../40%20Specifications/Integration/KWin%20Integration.md), [Portals](../40%20Specifications/Integration/Portals.md) |
+| M6 | Focus and keyboard ([M6 Brief](M6%20Brief.md)) | The focus model, keyboard operation of every widget, the user's `Shortcuts` in `settings.tdl`, keyboard-only access to the shell and the launcher (decided 2026-11-08) | `Focus and Keyboard`, [Global Shortcuts](../40%20Specifications/Integration/Global%20Shortcuts.md) (action names), [Settings File](../41%20TDL%20Reference/Settings%20File.md) |
+| M7 | Release | Packaging, autostart, the `.desktop` file, version policy, security model | `70 Delivery` (to write) |
 
 M0 and M1 are the smallest steps that prove the layering: a file is read by `tess_dl`, bound to tre by the binder, and shown on screen.
 
@@ -65,11 +66,11 @@ Recommended order. Each item is small and unblocks code.
 4. Write the shipped-module list ([V1 Widgets](../50%20Design%20System/V1%20Widgets.md)), needed from M2.
 5. Write a short accessibility note for v1 (roles and names are already in [Block Reference](../41%20TDL%20Reference/Block%20Reference.md); keyboard reach, contrast and reduced motion come from [Portals](../40%20Specifications/Integration/Portals.md)).
 6. Write the security model for user Python or defer it by ADR with the risk kept in [Risk Register](Risk%20Register.md) R-19.
-7. Write the delivery basics (packaging, autostart, the `.desktop` file) before M6.
+7. Write the delivery basics (packaging, autostart, the `.desktop` file) before M7.
 
 ## The Staged Start (Accepted)
 
-[ADR-0016 Staged Development](../30%20Decisions/ADR-0016%20Staged%20Development.md) (accepted 2026-11-02) defers the rows that a milestone does not need to the milestone that does. M0 is built and pushed (maintainer, 2026-11-03): 97 tests pass and `run` idles at 0.017 % of one core ([M0 Brief > Result (2026-11-03)](M0%20Brief.md#result-2026-11-03)). M1 is next ([M1 Brief](M1%20Brief.md)). Each later milestone starts when its "Needs" notes are at `review`.
+[ADR-0016 Staged Development](../30%20Decisions/ADR-0016%20Staged%20Development.md) (accepted 2026-11-02) defers the rows that a milestone does not need to the milestone that does. M0 is built and pushed (maintainer, 2026-11-03): 97 tests pass and `run` idles at 0.017 % of one core ([M0 Brief > Result (2026-11-03)](M0%20Brief.md#result-2026-11-03)). M1 is built and its KWin checklist passed ([M1 Brief](M1%20Brief.md)); M2 is built and its 15-line KWin checklist passed ([M2 Brief](M2%20Brief.md)). Each later milestone starts when its "Needs" notes are at `review`.
 
 ## Questions for the Maintainer
 
@@ -80,8 +81,6 @@ All five were answered on 2026-11-02.
 3. [x] The staged start and the deferral ADR are agreed ([ADR-0016 Staged Development](../30%20Decisions/ADR-0016%20Staged%20Development.md)).
 4. [x] The recommended order of design work is fine: the binder, then the package layout, then the testing strategy; then the shipped-module list and the rest.
 5. [x] The code goes in `tess-shell` under `src/tess_shell/` and `tests/`, with `docs/` kept as the export.
-
-Open: when M0 starts, and the next design items in the order above (the shipped-module list, accessibility, the security model, delivery basics).
 
 ## Links
 

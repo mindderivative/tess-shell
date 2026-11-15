@@ -2,10 +2,10 @@
 title: D-Bus Libraries for Python
 aliases: [D-Bus Survey, Python D-Bus Options]
 type: research
-status: draft
+status: research
 owner: phil
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-11-11
 tags: [research, integration/dbus, needs-verification]
 ---
 

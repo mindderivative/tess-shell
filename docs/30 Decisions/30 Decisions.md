@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-11-03
+updated: 2026-11-13
 tags: [moc, adr]
 ---
 
@@ -33,3 +33,4 @@ tags: [moc, adr]
 | [ADR-0018 One Entry Form in tre](ADR-0018%20One%20Entry%20Form%20in%20tre.md) | tre takes one standard form per kind of value; the framework converts | accepted 2026-11-03 |
 | [ADR-0019 Dependency Policy](ADR-0019%20Dependency%20Policy.md) | A third-party library only where building it would be a project of its own | accepted 2026-11-03 |
 | [ADR-0020 Validation in Code](ADR-0020%20Validation%20in%20Code.md) | The shell validates in code; no `jsonschema` at run time | accepted 2026-11-03 |
+| [ADR-0021 Audio Access](ADR-0021%20Audio%20Access.md) | The shell's own client for the PulseAudio native protocol; `pactl subscribe` as the fallback | accepted 2026-11-13 by the orchestrator (directive, Tier 1) |

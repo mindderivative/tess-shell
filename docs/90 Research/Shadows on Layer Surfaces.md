@@ -2,10 +2,10 @@
 title: Shadows on Layer Surfaces
 aliases: [Surface Shadows, Shadow Research]
 type: research
-status: stable
+status: research
 owner: phil
 created: 2026-10-25
-updated: 2026-10-27
+updated: 2026-11-11
 tags: [research, spec/surface, integration/wayland, needs-verification]
 ---
 

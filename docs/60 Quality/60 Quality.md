@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-11-02
-updated: 2026-11-02
+updated: 2026-11-08
 tags: [moc, quality]
 ---
 
@@ -17,8 +17,9 @@ Budgets, accessibility, testing, security and crash recovery (AGENTS > 12. Desig
 |---|---|---|
 | [Performance Budgets](Performance%20Budgets.md) | The budget ledger: which numbers exist, which are measured, which are proposed, which conflict, which are missing | draft |
 | [Testing Strategy](Testing%20Strategy.md) | Test layers, markers, what runs without a display, what needs a compositor, the manual checklist | draft |
+| [Accessibility](Accessibility.md) | The v1 accessibility rules every widget follows: roles, names, states, contrast, reduced motion | draft |
 
-Not yet written: Accessibility, Security Model (user Python, [Risk Register](../00%20Home/Risk%20Register.md) R-19), Crash Recovery and the watchdog (R-01).
+Not yet written: Security Model (user Python, [Risk Register](../00%20Home/Risk%20Register.md) R-19), Crash Recovery and the watchdog (R-01).
 
 ## Links
 

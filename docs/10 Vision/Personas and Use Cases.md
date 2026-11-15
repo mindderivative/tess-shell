@@ -5,7 +5,7 @@ type: vision
 status: stable
 owner: phil
 created: 2026-10-25
-updated: 2026-10-29
+updated: 2026-11-10
 tags: [vision]
 ---
 
@@ -48,7 +48,7 @@ The maintainer is all three while the design is made. Separate personas keep the
 
 ## Open Questions
 
-- [ ] Is a notification centre a v1 use case? It depends on the notification-server coexistence decision, which is not made. Placed outside v1 in [V1 Scope](V1%20Scope.md).
+- [ ] Is a notification centre a v1 use case? Context: it depends on the notification-server coexistence decision, which is not made; it is placed outside v1 in [V1 Scope](V1%20Scope.md). Recommendation: keep it outside v1 until that decision is made.
 - [x] What does a newly plugged monitor get when the configuration does not name it? A configurable default section ([V1 Scope > Multi-monitor](V1%20Scope.md#multi-monitor)).
 - [x] Which persona writes the default shell? P2 (shell author), with the maintainer as the reviewer. Confirmed 2026-10-25 with the Vision.
 

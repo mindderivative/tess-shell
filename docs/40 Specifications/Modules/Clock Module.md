@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-11-03
+updated: 2026-11-14
 tags: [spec/module, needs-verification]
 ---
 
@@ -34,7 +34,7 @@ Modules/Clock/
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 TEL: 0.1
 TRE: 0.5.9
 Shell: 0.1
@@ -60,7 +60,7 @@ Module {
         Children {
             Label {
                 # the value the Python sends; the slot is TDL's, the expression is TEL's
-                Text: {{ time }}
+                Text: <| time |>
                 Class: clock_text
             }
         }
@@ -78,7 +78,7 @@ The metadata block and the registry are in [TDL Language](../../41%20TDL%20Refer
 
 ```
 ---
-TDL: 0.1
+TDL: 0.2
 TEL: 0.1
 TRE: 0.5.9
 Shell: 0.1
@@ -172,6 +172,10 @@ Children {
 ```
 
 A use is named by its head alone; `Name:` gives it a unique name, and an unnamed repeat is named from its position (`Clock_1`, `Clock_2`). There is no `root name { }` form (D3, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30); [Module File > Using a Module](../../41%20TDL%20Reference/Module%20File.md#using-a-module)). Python always receives the `Clock@<uid>` key from `ctx.uses` and passes it back to name a use in an action (D23).
+
+> [!NOTE]
+> **As built in M2 (accepted 2026-11-04, D20)**
+> `hour_cycle: desktop` follows 24 hours until the KDE regional setting is read, with the `locale` param in M3. `locale` and `tooltip_format` are M3b; `format`, `hour_cycle` and `timezone` are built.
 
 ## Python Contract
 

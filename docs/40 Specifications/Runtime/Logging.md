@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-10-30
+updated: 2026-11-10
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -177,8 +177,15 @@ All nine were answered on 2026-10-28, as recommended.
 7. [x] Library records at `WARNING` and above by default.
 8. [x] Per-source levels: later, not v1.
 9. [x] Under systemd, a shorter console line without the timestamp.
-- [ ] To verify: that `logger.remove()` flushes the queue at stop; that forwarding stderr cannot block the process; the meaning of `JOURNAL_STREAM` in `systemd.exec(5)`.
-- [ ] Not asked: the `console` key.
+- [x] The `console` key: name accepted 2026-10-29 (see the key table in Configuration).
+
+## Questions After Testing
+
+Answered by: a check of Loguru's behaviour and of `systemd.exec(5)`.
+
+10. [ ] Does `logger.remove()` flush the enqueued records at stop? Context: both sinks use `enqueue=True`, so a lost queue would lose the last lines before exit. Recommendation: assume yes only after a test that logs, stops and counts the lines. #needs-verification
+11. [ ] Can forwarding tre's stderr into the log block the process? Context: a full pipe or a slow sink could stall the forwarder. Recommendation: forward on its own thread and test with a burst of output. #needs-verification
+12. [ ] What does `JOURNAL_STREAM` mean in `systemd.exec(5)`? Context: the shell uses it to detect that it runs under systemd and shortens the console line. Recommendation: read the man page and test under a user unit before relying on it. #needs-verification
 
 ## Acceptance Criteria
 

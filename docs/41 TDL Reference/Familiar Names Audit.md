@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-11-02
-updated: 2026-11-02
+updated: 2026-11-14
 tags: [tdl-ref, naming, needs-verification]
 ---
 
@@ -106,7 +106,7 @@ Reference pages for designers should not say these; the right column is the plai
 | painter, reserver, strip, hosted melding | The ring, an edge band, joined corners |
 | registry, UID, `Clock@<uid>` | A unique name for each item; you rarely write it |
 | bare word kept as a string until the schema types it | Write `true` or `false`; no quotes |
-| slot, TEL, ViewModel, `@action` | A `{{ }}` expression; a Python function marked as an action |
+| slot, TEL, ViewModel, `@action` | A `<\| \|>` expression; a Python function marked as an action |
 | pins, minimum versions | The oldest version of each tool this file needs |
 | decision numbers (D41), `#needs-verification`, a "tre" column in every table | Keep in a maintainer appendix, not in the user tables |
 
@@ -122,8 +122,8 @@ Reference pages for designers should not say these; the right column is the plai
 
 1. [x] All rows are answered (D71 to D88). The Panel's key is `Inset` (D89); the elevation numbers are provisional until tre's shadows are seen (D90).
 2. [x] `Panel` and `Bar` keep their names (D73).
-3. [ ] Confirm the framework comparisons against the official docs before any rename is applied (rule 1).
-4. [ ] Where the designer-facing docs live: the `tess-dl` language reference and a shell guide ([tess-dl Handover](tess-dl%20Handover.md)).
+3. [ ] Should the framework comparisons be confirmed against the official docs before any rename is applied? Context: rule 1 says to lead with the familiar name, and a wrong comparison would mislead designers. Recommendation: yes, confirm each comparison first. #needs-verification
+4. [ ] Where do the designer-facing docs live? Context: they are the `tess-dl` language reference and a shell guide ([tess-dl Handover](tess-dl%20Handover.md)). Recommendation: the language reference in `tess-dl`, the shell guide in the vault until the shell has its own docs.
 
 ## Acceptance Criteria
 

@@ -5,7 +5,7 @@ type: architecture
 status: review
 owner: phil
 created: 2026-10-25
-updated: 2026-11-03
+updated: 2026-11-10
 tags: [architecture, needs-verification]
 ---
 
@@ -143,13 +143,13 @@ The loop cannot interrupt itself, so detecting a blocked loop needs a separate w
 
 ## Open Questions
 
-- [ ] **Module threads: who owns them?** Options. **A.** Each module starts and owns its threads; the shell gives a helper that catches and logs thread exceptions (flexible, simple contract; recommended). **B.** The shell runs a shared `asyncio` thread for services and modules are coroutines (less thread code, forces async on module authors). **C.** A shell thread pool for module work. Recommendation A, with B available as an optional shared service thread for D-Bus.
+- [ ] **Who owns module threads?** Context: options. A: each module starts and owns its threads, and the shell gives a helper that catches and logs thread exceptions (flexible, simple contract). B: the shell runs a shared `asyncio` thread for services and modules are coroutines (less thread code, forces async on module authors). C: a shell thread pool for module work. Recommendation: A, with B available as an optional shared service thread for D-Bus.
 - [x] **D-Bus client library.** `dbus-fast` on a shared asyncio service thread, `jeepney` as the fallback (maintainer, 2026-10-26, [ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)).
-- [ ] **Registry I/O and the UID write** on the loop or a single writer thread ([ADR-0007 Shell UI Layer > Open items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)). Proposed in [Config Discovery and Registry > The registry file](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md#the-registry-file): one writer thread, one write per 500 ms.
-- [ ] **Supervisor** in v1 or later.
+- [ ] **Does registry I/O and the UID write run on the loop or on a single writer thread?** Context: [Config Discovery and Registry > The registry file](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md#the-registry-file) proposes one writer thread, one write per 500 ms ([ADR-0007 Shell UI Layer > Open Items](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)). Recommendation: the single writer thread.
+- [ ] **Does a supervisor ship in v1 or later?** Context: only a supervisor outside the process recovers from a hard hang; the watchdog alone logs it, and neither is built. Recommendation: later; the v1 watchdog is enough.
 - [x] **No windows** policy: stay idle (maintainer, 2026-10-26).
 - [x] **No windows mechanism.** Option A, chosen 2026-10-26 and released in tre 0.5.9 on 2026-10-27: `App.run(keep_alive=True)` and `LoopHandle.stop()` ([TRE-REQ-005 Keep-Alive and Loop Stop](../80%20Requests/TRE-REQ-005%20Keep-Alive%20and%20Loop%20Stop.md)). The shell requires tre 0.5.9 or later.
-- [ ] **Where conversions run** (send or flush).
+- [ ] **Do value conversions run in the send or in the flush?** Context: HEX to RGBA and the like can run on the module thread if pure, or on the loop in the flush. Recommendation: convert in the flush on the loop, which keeps module threads free of shell types; decide finally in the Python API spec.
 
 ## Links
 

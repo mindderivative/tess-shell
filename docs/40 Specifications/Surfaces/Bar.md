@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-11-02
+updated: 2026-11-05
 tags: [spec/surface, needs-verification]
 ---
 
@@ -30,7 +30,7 @@ The Bar is placed with `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap
 | Full-span bar on one edge          | `Edge: TOP`, `Width: EXPAND`, `Height: 32`                     | `anchor` the edge and both perpendicular edges; `size` 0 along the edge and 32 across it; `exclusive_zone` 32                   |
 | A shorter bar, centred on its edge | `Edge: BOTTOM`, `Width: 560`, `Height: 64`, `Alignment: CENTER` | `anchor` the edge only; `size` (560, 64); the compositor centres it along that edge                                            |
 | A shorter bar at one end           | `Edge: TOP`, `Width: 400`, `Height: 32`, `Alignment: START`, `Offset: 200` | `anchor` the edge and one perpendicular edge; a `margin` along the edge for the offset                                         |
-| A bar that looks floating          | `Edge: TOP`, `Width: EXPAND`, `Height: 32`, `Gap: 8`           | The same, with a `margin` on its own edge; the zone is 40. It is still a Bar: the 8 px is reserved                              |
+| A bar that looks floating          | `Edge: TOP`, `Width: EXPAND`, `Height: 32`, `Gap: 8`           | The same, with a `margin` on its own edge; the zone is 40 and the margin 8, and the compositor reserves 48 (the Gap shows above and below the Bar; measured, see below). It is still a Bar: the Gap is reserved                              |
 
 The shell computes tre's `anchor`, `size`, `margin` and `exclusive_zone` from `Edge`, `Width`, `Height`, `Alignment`, `Offset` and `Gap`, the same way it computes a Panel's attachment geometry. The maintainer accepted the computation below on 2026-10-31 (D61).
 
@@ -63,13 +63,18 @@ Worked examples on a 1920 px wide output (margin as top, right, bottom, left):
 | `Edge: TOP`, `Width: 400`, `Height: 32`, `Alignment: START`, `Offset: 200`            | top, left          | (400, 32)   | (0, 0, 0, 200)  | 32, `exclusive_edge` top |
 | `Edge: TOP`, `Width: 400`, `Height: 32`, `Alignment: END`, `Offset: 40`               | top, right         | (400, 32)   | (0, -40, 0, 0)  | 32, `exclusive_edge` top |
 
-Still unverified (#needs-verification): the exact zone a compositor reserves for a margin (the protocol says the zone "includes the margin"; the 40 above is the 2026-10-27 reading) on KWin 6.8.1; whether margins on an axis with no anchor are ignored by the compositor (the reason `CENTER` with an Offset anchors to the start side instead); whether `Output.width` and `height` are already rotated for a rotated output; and whether tre offers a way to measure content for `AUTO` before the window exists.
+Measured 2026-11-04 on KWin 6.8.2 and sway: a Bar with Height 32 and Gap 8 reserves 48 pixels, because the compositor adds the margin to the zone. Still unverified (#needs-verification): whether margins on an axis with no anchor are ignored by the compositor (the reason `CENTER` with an Offset anchors to the start side instead); whether `Output.width` and `height` are already rotated for a rotated output; and whether tre offers a way to measure content for `AUTO` before the window exists.
+
+> [!TIP]
+> **Measured on KWin 6.8.2 and sway, 2026-11-04**
+> A Bar with Height 32 and Gap 8, given the mapping above (`margin` top 8, `exclusive_zone` 40), reserves 48 pixels on both compositors: the compositor adds the margin to the zone, so there are 8 pixels above the Bar, the Bar, and 8 below it. The maintainer ran the check on KWin and kept the rule (zone = thickness + Gap, margin = Gap; reported by `tess-shell` as D31, 2026-11-04): the Gap is on both sides of the Bar. The "reserved zone is 40" reading of 2026-10-27 was wrong; the number windows stop at is 48.
 
 - A positive `exclusive_zone` counts only for a surface anchored to one edge, or one edge plus both perpendicular edges; with any other anchor set the compositor treats it as 0, and a `warning` event says so ([TRE-REQ-001 Layer Surface Window > Shell need](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#shell-need)).
 - A size is pixels, a percent, `AUTO` or `EXPAND` ([TDL Language > Sizes (Shell Schema)](../../41%20TDL%20Reference/TDL%20Language.md#sizes-shell-schema)). `AUTO` shrinks the Bar to its content on that axis. `Max_Width`, `Max_Height`, `Min_Width` and `Min_Height` bound the result.
 - **The EXPAND rule.** `EXPAND` stretches the Bar edge to edge along its attached Edge. Across the Edge it cannot stretch, because the attached edge does not reach the opposite edge: a top Bar with `Height: EXPAND` resolves to `Max_Height`, else `Min_Height`, else 0 px (D34, D46).
 - **The zero-size rule.** A Bar whose size resolves to 0 on the axis it is attached along (a top Bar with `Height: EXPAND` and no bound, or `Height: 0`) is not created. The shell warns, names the Bar and says to set `Min_Height` (`Min_Width` for a left or right Bar). The check runs at creation only; it never stops hide, peek, expand or contract of a Bar or of a Frame strip, which may reach a size of 0 while hidden or contracted ([Frame > Strip: Expand, Contract, Peek](Frame.md#strip-expand-contract-peek)).
-- **The gap is part of the Bar (decided 2026-10-27).** A Bar with a `Gap` looks as if it floats but stays attached to its edge, and the gap space is reserved, so windows stop where they would for a flush Bar. The protocol says the exclusive zone includes the margin: "The exclusive zone includes the margin" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1), read 2026-10-27). So a Bar with a `Gap` of 8 and a `Height` of 32 sets a zone of 40, or windows would overlap its gap. The shell computes the zone from the size across the Edge and the `Gap`. A Panel differs: it is not attached to an edge and does not have to reserve anything. #needs-verification on KWin 6.8.1.
+- **The gap is part of the Bar (decided 2026-10-27).** A Bar with a `Gap` looks as if it floats but stays attached to its edge, and the gap space is reserved, so windows stop where they would for a flush Bar. The protocol says the exclusive zone includes the margin: "The exclusive zone includes the margin" ([protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1), read 2026-10-27). A Bar with a `Gap` of 8 and a `Height` of 32 sets a zone of 40 and a margin of 8; measured on KWin 6.8.2 and sway, the compositor then reserves 48 (the margin is added to the zone), so windows stop 8 pixels below the Bar, and the Gap shows on both sides of it. The shell computes the zone from the size across the Edge and the `Gap`. A Panel differs: it is not attached to an edge and does not have to reserve anything. Verified on KWin 6.8.2 (2026-11-04).
+- **A shadow makes the surface larger (decided 2026-11-05, D37).** A Bar with an `Elevation` is a larger surface than its body: it grows by the shadow margin on its inner side and, for a Bar that does not span the screen, on both ends. A side flush with the screen gets none. The Edge side gets at most the `Gap`, so the shadow above the Bar shows in the Gap. The exclusive zone grows by what the Edge margin shrinks, so the reserved space is `Height + Gap` with or without a shadow. The surface is transparent and holds the Bar's fill in a body node, and its input region is the body, so clicks in the margin reach the windows below ([ADR-0010 Surface Shadows](../../30%20Decisions/ADR-0010%20Surface%20Shadows.md), [M3 Build Log](../../00%20Home/M3%20Build%20Log.md)).
 - **Layers and reserving space.** A Bar may use `BOTTOM`, `TOP` or `OVERLAY`. It may reserve space only on `TOP`; an `Exclusive_Zone` on another layer is a load error ([Surface Types > Layers per kind](Surface%20Types.md#layers-per-kind)). A Bar on `BOTTOM` or `OVERLAY` is therefore not reserving and is for effects (a decorative strip, a launcher dock that floats over windows).
 - **Corner anchors.** A bar anchored to an edge and one perpendicular edge reserves nothing unless `exclusive_edge` (tre's argument) names the edge; tre binds layer-shell version 5 for this ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)). KWin 6.8.1 and sway were tested for corner reservation.
 
@@ -98,6 +103,10 @@ A Bar holds modules, containers and blocks under `Children` ([Common Keys and Co
 ### Multi-monitor
 
 A Bar belongs to a `Monitor` block, and so to one monitor ([Shell File](../../41%20TDL%20Reference/Shell%20File.md)). A Bar defined once and imported by several `Monitor` blocks appears on each. Each Bar reserves space on its own output only.
+
+> [!NOTE]
+> **`Fill` in a Bar's `Style` (maintainer, 2026-11-04, D14)**
+> In a Bar's inline `Style`, `Fill` is accepted as an alias of `Background`, because the M1 sample writes `Style { Fill: ... }`. Elsewhere `Fill` is the interior of a shape.
 
 ## Configuration
 

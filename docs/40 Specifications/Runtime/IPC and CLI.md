@@ -84,7 +84,7 @@ One executable, `tesserae-shell` (name decided 2026-10-28), also `python -m tess
 | `events`                                  | yes           | Streams the interface's signals until interrupted. Not in v1: later (decided 2026-10-28); until then `busctl --user monitor` shows them                  |
 | `kwin script install`, `remove`, `status` | no            | Installs or removes the KWin fullscreen script ([ADR-0012 Keeping the Shell Above Plasma Panels](../../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md))                                                                 |
 | `kwin rule show`, `install`, `remove`     | no            | Shows, writes or removes the one KWin window rule group the shell owns; `install` shows the rule and asks, or needs `--yes`                              |
-| `version`                                 | no            | Prints the shell, tre and Python versions                                                                                                                |
+| `version`                                 | no            | Prints the shell, tre and Python versions; `tess_re` has no `__version__`, so versions come from the installed distributions (`importlib.metadata`: `tesserae-engine`, `tesserae-el`, `tesserae-dl`)                                                                                                                |
 
 Global options: `--config-dir PATH` (overrides the config directory, for tests), `--json`, `--timeout SECONDS` (default 5), `--quiet`.
 

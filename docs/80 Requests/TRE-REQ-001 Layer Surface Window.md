@@ -5,7 +5,7 @@ type: engine-request
 status: stable
 owner: phil
 created: 2026-10-18
-updated: 2026-10-25
+updated: 2026-11-10
 tags: [engine-request, spec/surface, integration/wayland, needs-verification]
 ---
 
@@ -446,23 +446,29 @@ Recommendation: take I2. The spike found it workable; I1 is the fallback and I3 
 - [x] Confirm the absences listed under [What tre has today](#what-tre-has-today) in the tre source. Done in [tre #195](https://github.com/mindderivative/tre/issues/195).
 - [x] Choose the implementation path (I1, I2, I3). Spike recommends I2 ([tre #196](https://github.com/mindderivative/tre/issues/196)); the maintainer confirms.
 - [x] Check which of `wl_output` v4 and `xdg-output-unstable-v1` KWin exposes for stable output names. `wl_output` v4 gives names (spike).
-- [ ] Check whether `window.set(x=, y=, always_on_top=, skip_taskbar=)` does anything on Wayland. tre #195 reads the source: they call `set_outer_position` and `set_window_level`, which `winit` documents as unsupported on Wayland, and `skip_taskbar` is Windows only. So Option C cannot place or stack a bar under KWin. A test on a live session is still pending.
 - [x] Decide keyboard focus for popups under a `"none"` parent. Overlay route uses `keyboard="exclusive"` while a menu is open.
-- [ ] Define "layer" in the Glossary in both senses (tre in-window overlay, protocol stacking layer) and decide whether `LayerWindow` should rename its `layer=` parameter. Rename declined: tre keeps `layer=`; the shell may use `shell_layer=`. The Glossary entry is still to write.
 - [x] Decide whether `LayerWindow.animate` covers only margins or also size and `exclusive_zone` (the request recommends margins only). Margins only, as built.
 - [x] Negative margins on KWin: accepted and honoured (spike).
-- [ ] Frame-callback behaviour for covered surfaces and KWin's own map and unmap effects on layer surfaces. The spike did not test frame callbacks under a fullscreen window.
-- [ ] Whether `reduced_motion` follows Plasma's animation speed. tre reads it from the settings portal (`org.freedesktop.appearance` `reduced-motion`); with Plasma 6.8 at speed factor 0.25 it reported 0, so it likely does not follow the factor. Unconfirmed. 0.5.8 also makes the OS reduced-motion and contrast preferences send live changes on a desktop whose portal only has GNOME's older keys (`enable-animations`, `high-contrast`) ([upgrade notes](https://mindderivative.github.io/tre/migrating-0.5/)).
 - [x] Phase 5 ([#205](https://github.com/mindderivative/tre/issues/205)) reviewed against this note on 2026-10-23: met on sway, with the gaps listed under [Phase 5 as built](#phase-5-as-built-tre-205). [Margin drag](#margin-drag) is updated for the relative-pointer drag.
 - [x] Review tre's scoping of phase 6 ([#206](https://github.com/mindderivative/tre/issues/206)): 6a done; 6b approved and built as `PopupWindow` ([tre #223](https://github.com/mindderivative/tre/issues/223)), in 0.5.8.
-- [ ] Margin drag ignores other surfaces' exclusive zones, so a widget can be dragged over a bar. Decide whether the shell clamps in the `moved` handler, or asks tre for an optional clamp to the usable area.
+- [ ] Should the shell clamp margin drag in the `moved` handler, or ask tre for an optional clamp to the usable area? Context: margin drag ignores other surfaces' exclusive zones, so a widget can be dragged over a bar. Recommendation: clamp in the shell, which needs no tre change; ask tre only if the shell cannot read the usable area.
 - [x] `reduced_motion` on a `LayerWindow`: met headless in the hand-off; a live portal change on a layer surface was not run.
-- [ ] Mask-aware hit testing: tre #204 made hit testing follow `corner_radius` only; masks and `clip_children` stay ignored. Decide whether the shell needs more before `TRE-REQ-003`.
-- [ ] Prototype the screen frame on the shell side, then decide on `TRE-REQ-003`. tre did the overlay route (6a) and built `PopupWindow` (6b, #223) in 0.5.8, so the popup half is settled: use `PopupWindow` for menus. The spike's `-1` painter and 1 px reserver results support the frame layout.
+- [ ] Does the shell need mask-aware hit testing before `TRE-REQ-003`? Context: tre #204 made hit testing follow `corner_radius` only; masks and `clip_children` stay ignored. Recommendation: do not ask tre yet; decide when the frame prototype shows a concrete need.
+- [ ] Should the shell prototype the screen frame on its side before you decide on `TRE-REQ-003`? Context: tre did the overlay route (6a) and built `PopupWindow` (6b, #223) in 0.5.8, so the popup half is settled: use `PopupWindow` for menus. The spike's `-1` painter and 1 px reserver results support the frame layout. Recommendation: yes, prototype first, then decide on `TRE-REQ-003` from the result.
 - [x] tre's animation progress is clock-driven (`Tree::tick_all(now: Instant)`). What the loop does when frames stop is untested; requirement 2 still needs a test.
 - [x] Check the 0.5.7 docs for the mask API, concave corners, blend modes and shape-aware box hit-testing. Hit testing follows `corner_radius`, not masks (tre #204).
-- [ ] Find the first KWin release exposing `zwlr_layer_shell_v1` (shared with ADR-0001).
 - [x] Decide whether v1 targets wlroots-family compositors as well as KWin, which affects which compositors the acceptance tests cover. Both KWin and wlroots (maintainer, tre #195). Only sway and KWin tested.
+
+## Questions After Testing
+
+1. [ ] Do `window.set(x=, y=, always_on_top=, skip_taskbar=)` do anything on Wayland, so that Option C could place or stack a bar under KWin? Context: tre #195 reads the source: they call `set_outer_position` and `set_window_level`, which `winit` documents as unsupported on Wayland, and `skip_taskbar` is Windows only. Recommendation: treat Option C as unusable and keep the layer-surface route (I2); confirm only if a live session is cheap to run. Answered by: a live KWin session test.
+2. [ ] Do covered surfaces keep receiving frame callbacks, and how do KWin's own map and unmap effects treat layer surfaces? Context: the spike did not test frame callbacks under a fullscreen window. Recommendation: test under a fullscreen window before the bar ships. Answered by: a live KWin test with a fullscreen window over the bar.
+3. [ ] Does `reduced_motion` follow Plasma's animation speed? Context: tre reads it from the settings portal (`org.freedesktop.appearance` `reduced-motion`); with Plasma 6.8 at speed factor 0.25 it reported 0, so it likely does not follow the factor. 0.5.8 also makes the OS reduced-motion and contrast preferences send live changes on a desktop whose portal only has GNOME's older keys (`enable-animations`, `high-contrast`) ([upgrade notes](https://mindderivative.github.io/tre/migrating-0.5/)). Recommendation: do not rely on the factor; offer a shell setting for reduced motion. Answered by: toggling the Plasma animation setting and the portal value on a live session.
+4. [ ] Which is the first KWin release that exposes `zwlr_layer_shell_v1`? Context: shared with ADR-0001. Recommendation: keep the KWin 6.7 floor already stated. Answered by: checking KWin release notes or a build probe.
+
+## Notes
+
+- The `layer=` rename was declined: tre keeps `layer=`; the shell may use `shell_layer=`. The Glossary entry that defines "layer" in both senses (tre in-window overlay, protocol stacking layer) is still to write.
 
 ## Links
 

@@ -2,10 +2,10 @@
 title: Building Blocks
 aliases: [Shell Building Blocks, Blocks]
 type: design
-status: draft
+status: accepted
 owner: phil
 created: 2026-10-26
-updated: 2026-11-02
+updated: 2026-11-11
 tags: [design, needs-verification]
 ---
 
@@ -113,11 +113,15 @@ Decided by the maintainer (2026-10-26); the full rules are in [Style, Theme and 
 - [x] A module author can add a block, in Python, shipped with the module (maintainer, 2026-11-01). The mechanism is a proposal in [Block Reference > Custom Blocks (R12)](../41%20TDL%20Reference/Block%20Reference.md#custom-blocks-r12).
 - [x] A free-form Path block: added (2026-10-26).
 - [x] Whether the listed modules can be built from the listed blocks: the maintainer reports yes, tested on Tesserae (2026-10-26). Expander and Marquee need animated layout and translate properties; Slider, Toggle and Button need pointer and drag events from the blocks.
-- [x] Grid: tre has a grid (`display: "grid"`, `grid_template_columns`, `grid_template_rows`, `row_gap`, `column_gap`); the mapping of `Columns`, `Rows` and `Spacing` is in [Block Reference > Grid](../41%20TDL%20Reference/Block%20Reference.md#grid). Open: the text form of tre's track template.
+- [x] Grid: tre has a grid (`display: "grid"`, `grid_template_columns`, `grid_template_rows`, `row_gap`, `column_gap`); the mapping of `Columns`, `Rows` and `Spacing` is in [Block Reference > Grid](../41%20TDL%20Reference/Block%20Reference.md#grid).
 - [x] The default hit shape of Path and the shape blocks: `painted` (maintainer, 2026-10-27): the reason to use a shape is for the look and for the hit box to be the painted shape. tre 0.5.9 has `hit_shape` `box` (its default) or `painted`; the shell's shape blocks set `painted`. SVG and Canvas are not covered by `hit_shape` ([Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md)).
 - [x] How icons are found: the shipped SVG set (a JSON file), then the freedesktop icon theme, then the config `Icons` folder, then the locations a developer lists in the settings file (maintainer, 2026-11-01; [Block Reference > Icons (R7)](../41%20TDL%20Reference/Block%20Reference.md#icons-r7)).
 - [x] The state model: data in through `Text` and edits out through `On_Changed`, with no two-way binding (R6, maintainer, 2026-11-01).
 - [x] Accessibility defaults for each block (roles, labels, keyboard operation) ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7): as in [Block Reference > Accessibility Defaults](../41%20TDL%20Reference/Block%20Reference.md#accessibility-defaults) (maintainer, 2026-11-01).
+
+## Questions After Testing
+
+1. [ ] What is the exact text form of tre's `grid_template_columns` and `grid_template_rows`? Context: the tre page the vault read does not give it, so the shell builds it from the track list in [Block Reference > Grid](../41%20TDL%20Reference/Block%20Reference.md#grid) #needs-verification. Recommendation: build it from the list as written and correct it where a Grid test on tre shows a different form. Answered by: a Grid test in the M4 gallery or a probe of tre.
 
 ## Links
 

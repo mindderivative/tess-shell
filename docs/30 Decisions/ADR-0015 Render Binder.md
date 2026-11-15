@@ -5,14 +5,14 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-11-02
-updated: 2026-11-03
+updated: 2026-11-14
 tags: [adr, architecture, performance]
 ---
 
 # ADR-0015: Render Binder
 
 > [!NOTE]
-> Who turns a parsed TDL file into tre nodes? Accepted (Option A, maintainer, 2026-11-02): a generic, table-driven binder inside the shell package. `tess_dl` reads the file and stops. The shell checks and types the tree, and the binder applies a table (block to tre node kind, key to tre property) to build nodes, link `{{ }}` slots to node properties, and update only what changed. The binder imports nothing from the shell, so it can be split into its own library later. Accepted by the maintainer in chat on 2026-11-02 ("accept option a").
+> Who turns a parsed TDL file into tre nodes? Accepted (Option A, maintainer, 2026-11-02): a generic, table-driven binder inside the shell package. `tess_dl` reads the file and stops. The shell checks and types the tree, and the binder applies a table (block to tre node kind, key to tre property) to build nodes, link `<| |>` slots to node properties, and update only what changed. The binder imports nothing from the shell, so it can be split into its own library later. Accepted by the maintainer in chat on 2026-11-02 ("accept option a").
 
 ## Context
 

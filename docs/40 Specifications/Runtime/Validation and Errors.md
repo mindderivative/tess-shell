@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-28
-updated: 2026-11-03
+updated: 2026-11-14
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -37,7 +37,7 @@ flowchart LR
 | Stage          | Checks                                                                                   | Tool                                                             | Position comes from                                                   |
 |----------------|------------------------------------------------------------------------------------------|------------------------------------------------------------------|-----------------------------------------------------------------------|
 | 1. Read        | The file opens and is UTF-8 (a byte-order mark is allowed and dropped)                   | Standard library                                                 | The file, line 1                                                      |
-| 2. Parse       | TDL syntax; the tree is an ordered list of entries (head, properties, children) that keeps repeated names (D12); it holds only blocks, properties, lists and literal values; `{{ }}` slots are kept as text for stage 6 | The shell's TDL parser ([ADR-0014 Shell File Language](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md))        | The parser's own positions                                            |
+| 2. Parse       | TDL syntax; the tree is an ordered list of entries (head, properties, children) that keeps repeated names (D12); it holds only blocks, properties, lists and literal values; `<\| \|>` slots are kept as text for stage 6 | The shell's TDL parser ([ADR-0014 Shell File Language](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md))        | The parser's own positions                                            |
 | 3. Header      | The loader reads the metadata block first, then the root block, which picks the schema (D12). The metadata block is present; `TDL:` is present with a known version; `Name:` is present and follows the name rules (letters, digits and `_`, starting with a letter); the minimum version pins (`TEL:`, `TRE:`, `Shell:`) are met; exactly one root block (`Shell`, `Module`, `Style`, `Stylesheet`, `Theme`); the root block agrees with the suffix; `UID:` well formed | The shell                                                        | The key's or the root block's node                                    |
 | 4. Schema      | The schema picked at stage 3 validates the metadata part and the block part (D12). Types, enums (upper case: `Edge: top` is refused with a hint to write `TOP`), required keys, unknown keys (the metadata block's other keys are kept and ignored), value forms (colour, four-sided in the order left, top, right, bottom, size) | The `schema` package, in code ([ADR-0020 Validation in Code](../../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)) | The tree node at the error's path                                       |
 | 5. Semantic    | Rules a schema cannot say (below)                                                        | The shell                                                        | The node at the offending key or value                                |
@@ -47,6 +47,9 @@ flowchart LR
 
 - Unknown keys are errors, not warnings, to catch typos (decided 2026-10-28). The exception is the metadata block, where other keys are allowed and the shell ignores them ([TDL Language > The Metadata Block](../../41%20TDL%20Reference/TDL%20Language.md#the-metadata-block)).
 - **Stage 3 errors** name the file and say which rule failed: no metadata block, no `TDL:`, no `Name:`, a bad `Name:`, no root block or more than one, or the root block and the suffix disagree (the error names both; the root block is authoritative, [TDL Language > The Root Block](../../41%20TDL%20Reference/TDL%20Language.md#the-root-block)). The proposed codes and hints (`tdl-no-metadata`, `tdl-no-version`, `tdl-no-name`, `tdl-bad-name`, `tdl-no-root`, `tdl-many-roots` and the others) are in [TDL Language > Errors](../../41%20TDL%20Reference/TDL%20Language.md#errors); this note does not copy them. The shell raises the suffix check itself as `shell-root-suffix` (D91).
+- **A key in both places** (decided 2026-11-04): a key written as a property and inside the block's `Style { }` is an error, `style-duplicate`, naming both positions ([Block Reference](../../41%20TDL%20Reference/Block%20Reference.md) R2).
+- **A feature that is not built yet** (decided 2026-11-04, D15): a Bar key that M1 does not build (`Auto_Hide`, `Keyboard`, `Input_Region` and the like) is a warning, so the file stays valid when the feature arrives; `Import`, other surfaces, `If` and `For` are errors with the slug `not-built`.
+- **Version pins in M1** (D16): a missing `TEL` or `TRE` pin is not an error in M1, because the M1 sample omits them; a pin that is present is still compared with the installed version.
 - **A four-sided value** is one number, a list of four or a block of named sides. A list of two or three items is refused at stage 4 with the slug `bad-sides`. No slug list exists in this note: the convention is a short kebab-case word (`unknown-key`, `name-duplicate`), and schema and load errors carry no `tdl-` prefix, which is for the parser's syntax errors ([TDL Language > Errors](../../41%20TDL%20Reference/TDL%20Language.md#errors)), so `bad-sides` follows it. The hint says to write one number, four items (left, top, right, bottom) or named sides, and that CSS orders its sides top, right, bottom, left and accepts two or three ([Common Keys and Conventions > For Readers Who Know Other Frameworks](../../41%20TDL%20Reference/Common%20Keys%20and%20Conventions.md#for-readers-who-know-other-frameworks)).
 - **A file that fails stage 2 or 3 is not checked further,** because later stages need its data; other files continue. Stage 5 runs only when every file has passed stage 4, because it compares across files (decided 2026-10-28).
 - **Stages 1 to 7 run before anything is shown** at start, and before anything is applied on a reload ([Hot Reload](Hot%20Reload.md)). Stage 8 happens while running.
@@ -55,7 +58,7 @@ flowchart LR
 
 - The parser is the shell's own, in a module that imports nothing from the shell ([ADR-0014 Shell File Language > What TDL Is (Decided)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#what-tdl-is-decided), item 9). Its syntax errors carry `file:line:column` directly. There is no third-party parser, so no marks to translate.
 - The same block name may repeat in one `Children { }`, ordered by position, so a repeated module call is not an error ([Module File > Using a module](../../41%20TDL%20Reference/Module%20File.md#using-a-module)). A property key repeated in one block is an error naming both places (D9, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)); the stage 5 rule is in the table below.
-- The tree holds structure and literal values only. A file cannot run code: TDL has no statements, variables or tags, and every `{{ }}` slot is handed to TEL, which is sandboxed ([Expression Language Requirements](Expression%20Language%20Requirements.md)).
+- The tree holds structure and literal values only. A file cannot run code: TDL has no statements, variables or tags, and every `<| |>` slot is handed to TEL, which is sandboxed ([Expression Language Requirements](Expression%20Language%20Requirements.md)).
 - The tree is lossless: it keeps comments and layout, and every node knows its line and column, so any path in the data maps to a position. This replaces the earlier YAML design, which kept PyYAML's `compose` node marks beside the data (spike of 2026-10-27, [JSON Schema and Editor Support > Findings from a spike (2026-10-27)](../../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md#findings-from-a-spike-2026-10-27)).
 - Columns are 1-based and count characters, as editors do.
 - No language server in v1, so these printed errors are the author's main feedback ([ADR-0014 Shell File Language > What TDL Is (Decided)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#what-tdl-is-decided), item 10). A small TextMate grammar gives highlighting only.
@@ -143,7 +146,7 @@ A module reports a rejected param by raising `ValueError` in `validate_use` ([Mo
 
 - The TDL parser (`tess_dl`), `difflib` for the nearest key names, and Loguru ([Logging with Loguru](../../90%20Research/Logging%20with%20Loguru.md)). No JSON Schema library is loaded ([ADR-0020 Validation in Code](../../30%20Decisions/ADR-0020%20Validation%20in%20Code.md)).
 - Threads: stages 1 to 7 run on the config watcher thread or before the loop at start; the loop only receives a finished result or a finished report ([Process Model and Threading > Threads](../../20%20Architecture/Process%20Model%20and%20Threading.md#threads)).
-- TEL: the parser tells TEL where each `{{ }}` slot starts as an `Origin` (file, line, column, 1-based), so TEL errors point into the file and the shell adds no offset itself. A slot is on one line, so no indentation arithmetic is needed. This is the proposed requirement T17 in [Expression Language Requirements](Expression%20Language%20Requirements.md), not yet sent to the TEL project. #needs-verification
+- TEL: the parser tells TEL where each `<| |>` slot starts as an `Origin` (file, line, column, 1-based), so TEL errors point into the file and the shell adds no offset itself. A slot is on one line, so no indentation arithmetic is needed. This is the proposed requirement T17 in [Expression Language Requirements](Expression%20Language%20Requirements.md), not yet sent to the TEL project. #needs-verification
 
 ## Design
 
@@ -181,9 +184,7 @@ All seven were answered on 2026-10-28, as recommended.
 
 Raised by the move to TDL ([ADR-0014 Shell File Language](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)), not yet asked:
 
-> [!NOTE]
-> **Open for the maintainer**
-> - [ ] The TDL error list (rule slugs for syntax errors such as an unclosed brace or a `}}` written for two closing braces) is a proposal in [TDL Language > Errors](../../41%20TDL%20Reference/TDL%20Language.md#errors); the maintainer has not decided it.
+8. [ ] Should the TDL error list (rule slugs for syntax errors such as an unclosed brace or an unclosed slot) in [TDL Language > Errors](../../41%20TDL%20Reference/TDL%20Language.md#errors) be accepted as proposed? Context: the list is a proposal and the maintainer has not decided it. Recommendation: accept it as the first list and extend it as real errors appear.
 
 Answered on 2026-10-30 ("Do all as you would recommend", [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)):
 
@@ -209,7 +210,7 @@ Answered on 2026-10-30 ("Do all as you would recommend", [ADR-0014 Shell File La
 - [ ] A warning never stops the shell.
 - [ ] The log record of each finding carries `file`, `line`, `column`, `rule` and `severity`.
 - [ ] No error is reported twice by two stages.
-- [ ] A `{{ }}` slot with an error in its expression reports the file line and the column of the error inside the slot, using the `Origin` the parser gave TEL.
+- [ ] A `<| |>` slot with an error in its expression reports the file line and the column of the error inside the slot, using the `Origin` the parser gave TEL.
 
 ## Links
 

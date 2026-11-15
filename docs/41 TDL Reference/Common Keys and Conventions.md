@@ -5,14 +5,14 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-11-02
+updated: 2026-11-14
 tags: [tdl-ref, needs-verification]
 ---
 
 # Common Keys and Conventions
 
 > [!NOTE]
-> The keys and value forms every shell file (written in TDL) shares. The language rules, the metadata block, the name registry and the monitor selectors are stated once in [TDL Language](TDL%20Language.md); this note links to them and lists only what a file author needs beside them. The decisions live in [ADR-0007 Shell UI Layer](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md) and, for the file layout and the key names, [ADR-0014 Shell File Language > File Layout (Decided 2026-10-29)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#file-layout-decided-2026-10-29). Examples are illustrations. Expressions are TEL's ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)); the `{{ }}` slot that holds one is TDL's.
+> The keys and value forms every shell file (written in TDL) shares. The language rules, the metadata block, the name registry and the monitor selectors are stated once in [TDL Language](TDL%20Language.md); this note links to them and lists only what a file author needs beside them. The decisions live in [ADR-0007 Shell UI Layer](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md) and, for the file layout and the key names, [ADR-0014 Shell File Language > File Layout (Decided 2026-10-29)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#file-layout-decided-2026-10-29). Examples are illustrations. Expressions are TEL's ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)); the `<| |>` slot that holds one is TDL's.
 
 ## Keys Every File Has
 
@@ -82,11 +82,11 @@ The value forms are stated once in [TDL Language > Values](TDL%20Language.md#val
 | Kind                                                        | Forms                                                                                                                                            | Notes                                                                                                       |
 |-------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
 | Colour                                                      | `"#RRGGBB"`, `"#RRGGBBAA"` (quoted, because `#` starts a comment), `rgba(0 0 0 0.5)` (space separated; red, green and blue 0 to 255, alpha 0.0 to 1.0), a theme token reference such as `$color.on_surface`, a plain string the style engine resolves by theme key (D16, [Style Schema > Theme Tokens](Style%20Schema.md#theme-tokens)) | The shell converts to tre's `(r, g, b, a)` with 0 to 255 integers ([Value Types and Conversion](../42%20Python%20API/Value%20Types%20and%20Conversion.md)) |
-| Four-sided values (borders, corner radii, margins, padding) | One number for all sides; a list of four in the order left, top, right, bottom (D50), `[2, 2, 2, 2]`; named sides as a block, `Margin { Left: 2, Top: 2, Right: 2, Bottom: 2 }`. A list of two or three items is an error (`bad-sides`) whose hint says to use one number, four items or named sides, and that CSS orders its sides top, right, bottom, left and accepts two or three. The order matches Flutter, Qt and WPF and differs from CSS and SwiftUI #needs-verification. The shell reorders to tre's order (top, right, bottom, left) when it passes a value to tre | The brace-only form `{2, 2, 2, 2}` is not used (PyYAML read it as `{2: None}` on 2026-10-26; in TDL a brace opens a named block) |
+| Four-sided values (borders, margins, padding) | One number for all sides; a list of four in the order left, top, right, bottom (D50), `[2, 2, 2, 2]`; named sides as a block, `Margin { Left: 2, Top: 2, Right: 2, Bottom: 2 }`. A list of two or three items is an error (`bad-sides`) whose hint says to use one number, four items or named sides, and that CSS orders its sides top, right, bottom, left and accepts two or three. The order matches Flutter, Qt and WPF and differs from CSS and SwiftUI #needs-verification. The shell reorders to tre's order (top, right, bottom, left) when it passes a value to tre | The brace-only form `{2, 2, 2, 2}` is not used (PyYAML read it as `{2: None}` on 2026-10-26; in TDL a brace opens a named block) |
 | Size                                                        | A whole number of pixels, a percentage `50%`, `AUTO`, `EXPAND` where a key allows them (D34); a percentage plus pixels (tre's `calc(100% - 16)`) is not in v1 (D6) | Lengths have no unit suffix; a float is only for non-lengths such as `Opacity: 0.9` (ADR-0014). The forms tre accepts |
 | Text, numbers, booleans                                     | Unquoted words are strings; quote text that holds a `,` or a closing brace; `"..."` or `'...'` with `\` escapes                                   | `true`, `false` and `null` are bare words that the key's schema type reads as boolean or null; `[]` is the empty list (D2)                                                        |
 | Lists, blocks                                               | `[a, b]` lists; `Head { ... }` blocks, one-line `Spacer { }` allowed (D8)                                                                                                            | A list feeds a `For` repeat; no unnamed block as a list item, no numeric keys (D4); a repeated key in one block is an error naming both places (D9)                                                                                 |
-| Expression                                                  | A `{{ ... }}` slot on one line, no quotes; TEL evaluates it                                                                                      | Reads `params.<name>` and values the module sends                                                           |
+| Expression                                                  | A `<\| ... \|>` slot on one line, no quotes; TEL evaluates it                                                                                      | Reads `params.<name>` and values the module sends                                                           |
 
 ## Errors
 
@@ -119,12 +119,14 @@ Some words here mean something other than they do elsewhere. This table lists th
 | `Label`              | A module for short text; the accessibility name is a separate key, and `Type.Label` is a text style                                                                                      | SwiftUI `Label` is an icon with text; HTML label captions an input #needs-verification |
 | `START` and `END`    | The left or top side and the right or bottom side, in a left-to-right layout. There is no right-to-left mode in v1                                                                       | CSS, Compose and SwiftUI follow the text direction #needs-verification |
 
+Corner radii are not four-sided in this sense: `Corner_Radius` is one number or a list of four from the top-left corner clockwise, as tre takes it ([Block Reference](Block%20Reference.md); found by `tess-shell` while building M1, 2026-11-04).
+
 ## Open
 
 - [ ] What a version change of `TDL:` or of a version pin means (the format is a string, `0.1`).
 - [x] Case rules: keys and block heads are Capitalised, enum values full upper case (D33), `Kind:` takes an exact name ([ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules), items 4, 10, 11 and 13).
 - [x] Unknown keys are errors (decided 2026-10-28, [Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)); unknown metadata keys are kept and ignored (ADR-0014, item 14).
-- [x] The expression delimiter: `{{ }}` on one line (ADR-0014, 2026-10-29). The expression syntax inside it is TEL's.
+- [x] The expression delimiter: a slot on one line (ADR-0014, 2026-10-29), written `<| |>` since TDL 0.2 (2026-11-14; double braces before). The expression syntax inside it is TEL's.
 - [x] Whether a block is named by the word before the brace or by a key: the head is the type and `Name:` is the unique name (ADR-0014, item 6).
 - [ ] Units beyond pixels (a scale-aware unit).
 - [x] A TDL form for a percentage plus pixels: none in v1; it waits for a surface that needs it (D6, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).

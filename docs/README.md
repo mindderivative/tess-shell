@@ -14,5 +14,7 @@ Start at [Home](00%20Home/Home.md) for the current status. Folders:
 - [42 Python API](42%20Python%20API/42%20Python%20API.md)
 - [50 Design System](50%20Design%20System/50%20Design%20System.md)
 - [60 Quality](60%20Quality/60%20Quality.md)
+- [70 Delivery](70%20Delivery/70%20Delivery.md)
 - [80 Requests](80%20Requests/80%20Requests.md)
 - [90 Research](90%20Research/90%20Research.md)
+- _attachments

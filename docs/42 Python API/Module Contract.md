@@ -2,10 +2,10 @@
 title: Module Contract
 aliases: [Module API, Module Base Class]
 type: api
-status: draft
+status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-11-03
+updated: 2026-11-12
 tags: [api, needs-verification]
 ---
 
@@ -48,6 +48,7 @@ class Clock(Module):
 - **One class.** The file holds exactly one class extending `Module`. None or more than one is a load error naming the file ([ADR-0007 Shell UI Layer > Monitors, names and errors (2026-10-25)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#monitors-names-and-errors-2026-10-25)).
 - **No constructor arguments.** The base class sets `self.ctx` before `start()` is called.
 - **Methods.** `start()`, `stop()`, an optional `reload()` and an optional `validate_use(use)`; the base class provides empty versions. `validate_use` is called when a use is loaded, before it is shown; it raises `ValueError` with a message to reject a param, and the shell reports it as an error naming the file, the use and the param ([Clock Module](../40%20Specifications/Modules/Clock%20Module.md), decided 2026-10-27 that the Clock validates its format on use loaded; the hook and its name are proposed).
+- **Service hooks.** An optional `on_service_lost(name)` and an optional `on_service_found(name)`; the base class provides empty versions. The D-Bus layer calls them on the loop thread (handed over with `call_soon`) when a well-known name the module uses loses or gains an owner: lost gives the module its empty state, found makes it re-read its properties ([D-Bus Service Layer > Listening and Name Owners](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md#listening-and-name-owners)). Decided: they belong to the contract, so every module handles a service the same way (maintainer, 2026-11-12).
 - **Actions.** A shell file can call a module method from an event (the shell, not TEL, maps events: [ADR-0007 Shell UI Layer > Events and module reload (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26)). Decided (maintainer, 2026-10-26): only methods marked with an `@action` decorator can be called from a shell file, and a shell file cannot call anything else. Slow work in an action goes to a thread and the method returns at once.
 
 ## Lifecycle
@@ -106,14 +107,14 @@ A module author can add a block, in Python, shipped with the module (maintainer,
 
 ## Open Questions
 
-- [ ] Constructor versus `self.ctx` set by the base class (proposed above).
+- [x] `self.ctx` is set by the base class before `start()`; there is no constructor argument (maintainer, 2026-11-04, M2 decisions, G3).
 - [x] Only `@action`-marked methods are callable from a shell file (maintainer, 2026-10-26).
-- [ ] The decorator's final name, and whether actions can return values. The value form of an event key (a bare action name, or a block with `Action:` and named arguments) was decided on 2026-11-01 in [Block Reference > Events](../41%20TDL%20Reference/Block%20Reference.md#events).
-- [ ] The `Block` base class and `Prop` helper of a custom block ([Block Reference > Custom Block API (Decided)](../41%20TDL%20Reference/Block%20Reference.md#custom-block-api-decided)).
+- [ ] Is `action` the final decorator name, and may an action return a value? Context: the value form of an event key (a bare action name, or a block with `Action:` and named arguments) was decided on 2026-11-01 in [Block Reference > Events](../41%20TDL%20Reference/Block%20Reference.md#events); [Events and Actions](Events%20and%20Actions.md) uses `action` and ignores a returned value in v1. Recommendation: keep `action` and ignore return values in v1.
+- [ ] What are the `Block` base class and `Prop` helper of a custom block? Context: [Block Reference > Custom Block API (Decided)](../41%20TDL%20Reference/Block%20Reference.md#custom-block-api-decided) describes the custom block API. Recommendation: define both exactly as that section states and add nothing else in v1.
 - [x] How a module used several times is named: a use's `Name:` is for the file, references and expressions, and Python uses the `<Module>@<uid>` key (D23, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30); the head word is the module name, [ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules), items 6 and 7). Which names an expression reads (`params`, sent values) stays open under Integration.
-- [ ] The shell's package name and import path.
-- [ ] Which timer helpers `ctx` offers (`every`, `after`) and which clock they use.
-- [ ] Whether `reload()` is passed the changed keys.
+- [x] The package is `tess_shell`; a module writes `from tess_shell import Module, action` (maintainer, 2026-11-04, G3).
+- [x] M2 offers only `ctx.on_tick("second" or "minute")`, driven by the shared wall-clock source; `ctx.every` and `ctx.after` wait until a module needs them (G4).
+- [x] `reload()` takes no arguments; the module re-reads `ctx.config` (G3).
 
 ## Acceptance Criteria
 

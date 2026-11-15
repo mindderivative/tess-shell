@@ -5,7 +5,7 @@ type: tdl-ref
 status: draft
 owner: phil
 created: 2026-11-01
-updated: 2026-11-03
+updated: 2026-11-14
 tags: [tdl-ref, spec/widget, needs-verification]
 ---
 
@@ -56,7 +56,11 @@ Every block has these.
 |-------------|---------------|-------------------------|-------------|-----------------------------------------------------------------------------------------------------------|
 | `Visible`   | true, false   | true                    | `visible`   | False hides the block from everyone, including assistive technology, and takes no space                   |
 | `Enabled`   | true, false   | true                    | `disabled`  | False sets the accessibility state `disabled`, applies the style state `Disabled` and makes the block ignore input; tre does not do this |
-| `Focusable` | true, false   | true on interactive blocks, false otherwise | `focusable` | Joins the Tab order                                                                                       |
+| `Part` | A name (a word) | none | none | On a block in a module's layout: declares a part of the module that a stylesheet can address as `Module::part`; unique per module; an error outside a module or a duplicate (maintainer, 2026-11-13, as recommended) |
+| `Tooltip_When_Disabled` | true, false | false | none | Lets a disabled block open its tooltip; without it a disabled block opens none, except a disabled Marquee text whose text is cut ([Standard Modules > As Built in M4 and Decided 2026-11-13](../50%20Design%20System/Standard%20Modules.md#as-built-in-m4-and-decided-2026-11-13); the code session's key, kept by the maintainer 2026-11-13) |
+| `Focusable` | true, false   | true on interactive blocks, false otherwise | `focusable` | Joins the Tab order |
+| `Tab_Index` | An integer 0 to 2 147 483 647 | none | none | The place in the focus order; the order is held in memory by the shell ([Focus and Keyboard > Tab Order: Tab_Index](../40%20Specifications/Integration/Focus%20and%20Keyboard.md#tab-order-tab_index); decided 2026-11-10) |
+| `Shortcut_Mode` | true, false | false | none | On a surface: whether it is in shortcut mode; at most one is true at a time ([Focus and Keyboard > Shortcut Mode (the maintainer's design, 2026-11-10)](../40%20Specifications/Integration/Focus%20and%20Keyboard.md#shortcut-mode-the-maintainers-design-2026-11-10); decided 2026-11-10) |
 | `Cursor`    | An enum       | none                    | `cursor`    | The pointer shape while over the block. tre's examples use `cursor="pointer"`; its page does not list the values #needs-verification |
 
 ### Size, Placement and Order
@@ -104,6 +108,10 @@ State flags (`checked`, `selected`, `expanded`, `pressed`, `value`, `value_min`,
 
 ### Events
 
+> [!NOTE]
+> **Event vocabulary (2026-11-04)**
+> The twelve v1 events, their timing and the later additions are defined in [Events and Actions](../42%20Python%20API/Events%20and%20Actions.md). The table below is the older draft; the names in it that are not among the twelve stay until the two lists are reconciled.
+
 An event key is `On_` plus the event name. The `On_` prefix is reserved for events (maintainer, 2026-11-01, R5): the events in the table below are the first set, and event names are added here as blocks need them. An unknown `On_` key is an error that names the closest events.
 
 An action is what the shell does when the event happens. It is a method of the module's Python class marked `@action`, or a built-in shell action ([Module Contract > The Class (Proposed)](../42%20Python%20API/Module%20Contract.md#the-class-proposed); decided 2026-10-26 that nothing else can be called from a shell file). Arguments may be TEL expressions, evaluated when the event fires ([ADR-0007 Shell UI Layer > Events and Module Reload (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26)).
@@ -115,7 +123,7 @@ On_Click: toggle_mute
 
 On_Changed {
     Action: set_volume
-    value: {{ event.value }}
+    value: <| event.value |>
 }
 ```
 
@@ -165,6 +173,12 @@ Maps to a tre `box` with `display: "grid"`, one column and one row, and every ch
 
 A vertical Bar is a FlexBox with `Flex: VERTICAL` (decided 2026-10-27). The defaults of the align and justify keys are CSS-like and tre's page does not state them #needs-verification.
 
+### Spacer
+
+| Key | Values | Default | tre | Meaning |
+|---|---|---|---|---|
+| (common keys only) | | | a `box` with `flex_grow` 1 | Takes the free space between its siblings in a flex container; `Flex_Grow` overrides the 1. Decided 2026-11-04 |
+
 ### Grid
 
 | Key                              | Values                                                             | Default  | tre                                       | Meaning                                                                                      |
@@ -201,14 +215,14 @@ For long lists (launcher results, tasks) where only visible entries are built. M
 
 | Key          | Values                       | Default | tre                         | Meaning                                                                                              |
 |--------------|------------------------------|---------|-----------------------------|------------------------------------------------------------------------------------------------------|
-| `Text`       | A string; may hold slots      | empty   | `text`                      | The words. `Text: Battery {{ battery.percent }}%`                                                    |
+| `Text`       | A string; may hold slots      | empty   | `text`                      | The words. `Text: Battery <\| battery.percent \|>%`                                                    |
 | `Wrap`       | `WORD`, `NONE`                | `WORD`  | `wrap`                      | `NONE` keeps one line                                                                                 |
 | `Max_Lines`  | A whole number                | none    | `max_lines`                 | Truncates after this many lines                                                                       |
 | `Selectable` | true, false                   | false   | `selectable` (default false) | Lets the user select the text                                                                         |
 | `Padding`    | Four-sided                    | 0       | `padding_top`, `padding_right`, `padding_bottom`, `padding_left` | Inset around the words (R6)                                                                           |
 | `On_Link`    | event                         | none    | `link` (`href`)             | A press and release on a link span                                                                    |
 
-Style keys: `Font_Family`, `Font_Size`, `Font_Weight`, `Line_Height`, `Text_Align`, `Overflow`, `Foreground` ([Style Schema > Style Keys](Style%20Schema.md#style-keys)). tre also has `font_style`, `letter_spacing`, `spans` (rich text) and `fill`; the shell has no key for `font_style` and `letter_spacing` yet, and rich text is post-v1 (R10). `Width: AUTO` is tre's `"fit-content"` for text. Role none; the block that shows the text carries the label. Label is a Text with `Wrap: NONE`; TextBox is a Text with `Wrap: WORD`.
+A `Text`'s `Width` and `Height` default to `fit-content`, because tre lays out an unset width at 0 and two texts in a row would overlap (found at the M2 KWin check, `tess-shell` 4e08b54, 2026-11-04; a bridge until tre measures an unset width). Style keys: `Font_Family`, `Font_Size`, `Font_Weight`, `Line_Height`, `Text_Align`, `Overflow`, `Foreground` ([Style Schema > Style Keys](Style%20Schema.md#style-keys)). `Text_Align` takes `START`, `CENTER` or `END`; `Overflow` takes `CLIP` or `ELLIPSIS`; `Font_Weight` is a number from 1 to 1000 (the sets tre accepts, tested 2026-11-04). A `Text` with no `Foreground` is drawn invisibly on the default background: no default colour is specified (see [M1 Brief > Decisions Raised by the Build (2026-11-04)](../00%20Home/M1%20Brief.md#decisions-raised-by-the-build-2026-11-04)). tre also has `font_style`, `letter_spacing`, `spans` (rich text) and `fill`; the shell has no key for `font_style` and `letter_spacing` yet, and rich text is post-v1 (R10). `Width: AUTO` is tre's `"fit-content"` for text. Role none; the block that shows the text carries the label. Label is a Text with `Wrap: NONE`; TextBox is a Text with `Wrap: WORD`.
 
 ### TextField
 
@@ -226,7 +240,9 @@ tre's advice is a `text_input` inside a box that paints the background and borde
 | `On_Submit`       | event                         | none     | `submit`                                                    | Enter in a single-line field                                                                                                                                                                 |
 | `On_Text_Commit`  | event                         | none     | `input` (`text`)                                            | Fires for committed text, for example an input-method composition; with `On_Changed` it covers input methods (`compose_start`, `compose_update`, `compose_end` are handled inside the block) |
 
-Not available in tre and so not offered: password masking, a maximum length, a read-only flag (none are on tre's page). A module that needs one makes an engine request (AGENTS > 6. Requests Between Projects). `syntax_spans` and `folded_ranges` exist in tre for code editing and are post-v1. Role `TEXTBOX`, focusable. Input methods work on layer surfaces in tre 0.5.8; no real input method was tested ([V1 Widgets > Open Questions](../50%20Design%20System/V1%20Widgets.md#open-questions)).
+tre 0.6.5 has `read_only`, `max_length` and `obscured` (password masking) on `text_input`, found by the code session's probe on 2026-11-08 (earlier text here said tre had none, from its documentation page; not checked in the vault); the shell does not offer them as keys yet ([Standard Modules](../50%20Design%20System/Standard%20Modules.md) open question 7). `syntax_spans` and `folded_ranges` exist in tre for code editing and are post-v1. Role `TEXTBOX`, focusable. Input methods work on layer surfaces in tre 0.5.8; no real input method was tested ([V1 Widgets > Open Questions](../50%20Design%20System/V1%20Widgets.md#open-questions)). tre refuses `wrap` and `overflow` on a `text_input`, and a default single-line input wraps by word while `multiline=True` does not wrap ([TRE-REQ-016 Text Input Wrap and Overflow](../80%20Requests/TRE-REQ-016%20Text%20Input%20Wrap%20and%20Overflow.md)).
+
+**V1 forms (maintainer, 2026-11-08).** Text input is v1 as single-line and as multi-line (`Multiline`). `Wrap` means word wrapping at this time, and character wrapping is added later. A single-line field does not wrap ("makes no sense"): it has horizontal scroll or an ellipsis. A multi-line field wraps by word or does not wrap. TextInput is the single-line module and TextEditor the multi-line one ([Building Blocks](../50%20Design%20System/Building%20Blocks.md)). Decided with no new key (maintainer, 2026-11-08, as recommended): a multi-line TextField takes the block key `Wrap: WORD | NONE` that [Text](#text) has (`NONE` scrolls horizontally; `CHAR` later), and a single-line TextField takes the style key `Overflow` ([Style Schema > Style Keys](Style%20Schema.md#style-keys)), which gains the value `SCROLL` for a TextField and defaults to it; `ELLIPSIS` shows while the field is not edited, and while it is edited the text scrolls to keep the caret visible. tre 0.6.5 cannot select these today: it refuses `wrap` and `overflow` on a `text_input` and does the inverse by default, so the behaviour waits on [TRE-REQ-016 Text Input Wrap and Overflow](../80%20Requests/TRE-REQ-016%20Text%20Input%20Wrap%20and%20Overflow.md) or a shell-side workaround, which the maintainer chooses ([M4 Brief](../00%20Home/M4%20Brief.md), question 9). #needs-verification
 
 ## Graphics
 
@@ -244,13 +260,14 @@ A side is at most 8192 pixels (tre). Decoding png, jpeg, gif and webp needs an i
 | Key      | Values                         | Default | tre                | Meaning                                                                                                   |
 |----------|--------------------------------|---------|--------------------|-----------------------------------------------------------------------------------------------------------|
 | `Source` | A file path, relative to the file that names it | none | `svg` (str or bytes, gzip allowed) | The document, read by the shell and given to tre. A malformed document is an error with the file position |
+| `Icon` | An icon name, `mdi:account` (a prefix selects a set; no prefix looks in `mdi` first) | none | `svg` | Exactly one of `Source` and `Icon`. Icon sets are Iconify-style JSON read from the config `Icons` folder, then `Directories { Icons }`; no set shipped in M2b (D26); `mdi` ships in the package from M3 (maintainer, 2026-11-05; [M3 Brief](../00%20Home/M3%20Brief.md)); an unknown icon is an error at its value naming the nearest names; `Color` tints it |
 | `Color`  | A colour                       | none    | `svg_color`        | What `currentColor` resolves to; the `Foreground` style key sets it, so a themed icon follows the theme    |
 
 tre fits an SVG uniformly and centres it (`xMidYMid meet`), so `Fit` is not offered. `svg_images` (pixels for an `<image>` inside the document) is not exposed. Width and Height default to the document's size #needs-verification. Role none; `A11y_Hidden` true unless `Label` is set.
 
 ## Shapes
 
-All shapes are drawn as a tre `path` (SVG path data) and take the style keys `Fill` (the interior) and `Border_Color`, `Border_Width` (the stroke, centred on the outline). A shape's default hit shape is `PAINTED` (decided 2026-10-27); `Hit_Shape` can set `BOX` ([Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md); tre's `hit_shape` is `"box"` by default and `"painted"`). Shapes have no `Children`, so no `Padding`. Role none; `A11y_Hidden` true.
+All shapes are drawn as a tre `path` (SVG path data), except a Rectangle, which M1 builds as a rounded tre `box` (`fill`, `corner_radius`, `stroke_*`) because its Width and Height may be `AUTO` or `EXPAND`, which a path cannot take (decided 2026-11-04) and take the style keys `Fill` (the interior) and `Border_Color`, `Border_Width` (the stroke, centred on the outline). A shape's default hit shape is `PAINTED` (decided 2026-10-27); `Hit_Shape` can set `BOX` ([Hit Testing for Concave Corners](../90%20Research/Hit%20Testing%20for%20Concave%20Corners.md); tre's `hit_shape` is `"box"` by default and `"painted"`). Shapes have no `Children`, so no `Padding`. Role none; `A11y_Hidden` true.
 
 | Block     | Own keys                                                                                         | Notes                                                                                                                                                                           |
 |-----------|--------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -314,7 +331,7 @@ Proposals R1 to R11 were decided by the maintainer in chat ("As recommended"), e
 | #   | Topic                     | Decision                                                                                                                                                                                                                                                                                                                  |
 |-----|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | R1  | What is a Box?            | A one-cell grid: children overlap, the Box sizes to the largest, children align themselves.                                                                                                                                                                                                                               |
-| R2  | Property or style?        | Layout and behaviour are properties; visual keys are style keys. A key that is both (`Padding`, `Margin`, `Spacing`, `Opacity`) is accepted on the block as a shorthand for inline `Style`, with inline priority.                                                                                                         |
+| R2  | Property or style?        | Layout and behaviour are properties; visual keys are style keys. Every style key of a block may be written directly on the block as a shorthand for inline `Style` (maintainer, 2026-11-04, D13); `Padding`, `Margin`, `Spacing` and `Opacity` are the usual ones. Writing the same key both as a property and inside `Style { }` is an error naming both places (maintainer, 2026-11-04), so there is no precedence rule.                                                                                                         |
 | R3  | Scrolling blocks          | `ScrollBox` is added to the block set. `VirtualList` waits until a module needs it.                                                                                                                                                                                                                                       |
 | R4  | Terminal                  | No `Command` key in TDL; a module's Python attaches the process. Post-v1.                                                                                                                                                                                                                                                 |
 | R5  | Event values              | `On_` is reserved for events; event names are added as blocks need them. An action is an `@action` method or a built-in shell action. The value form under Events is a proposal.                                                                                                                                          |
@@ -375,6 +392,15 @@ Options for the animated set, given item 3. Decided by the maintainer on 2026-11
 | A. Ship only `mdi` in v1; leave `mli` out until tre plays SMIL                                  | None. The shell works with 7,447 static icons.                                                                                         | Recommended for v1                          |
 | B. Export a static `mli`: each icon in its end state, with the animation tags removed           | A change in the tess-icons export (the earlier "no-anim" idea). It gives a second, line-style family that tre can draw correctly.     | Recommended as a later addition             |
 | C. An engine request to tre for SMIL (`<animate>`, `<set>`, `<animateTransform>`)                | A request to tre (AGENTS > 6. Requests Between Projects); not needed to ship v1; the shell cannot play SMIL itself (Python never runs per frame). | Write it only if you want animated icons    |
+
+### An Icon Chosen at Run Time (Built in M5b)
+
+As built by the code session (`f71b491`, reported 2026-11-12, not run in the vault; the maintainer's yes is relayed by it):
+
+- `Icon: <| expr |>` on an `SVG` block, and as the `icon` param of a module call (`Icon`, `Button`, `MenuItem`), also inside `If` and `For`. A change of the name swaps the document in the same node.
+- An unknown name at run time shows `image-broken-variant` with one warning per name, as a static unknown name does; an empty name shows nothing; text that starts with `<svg` is used as it is.
+- Limits: a file path arriving at run time is not resolved; the slot is not available in a shell-file layout, because a slot outside a module has no scope.
+- A name from the desktop's icon theme (a tray item, a task) goes through `ctx.icons.theme_icon` ([Tray Module > Icons (G8)](../40%20Specifications/Modules/Tray%20Module.md#icons-g8)), not through this slot's `mdi` lookup.
 
 ## Custom Blocks (R12)
 

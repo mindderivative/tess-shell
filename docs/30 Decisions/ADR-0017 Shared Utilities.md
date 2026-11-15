@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-11-03
-updated: 2026-11-03
+updated: 2026-11-15
 tags: [adr, architecture]
 ---
 
@@ -46,7 +46,7 @@ The maintainer noted on 2026-11-03 that the shell's M1 needs converters (hex str
 
 Accepted 2026-11-03 by the maintainer in chat: **Option A**, with these terms: "tess-utils will be its own project but not a pypi released one as it is geared specifically for tesserae projects. It will have a github but again it will be a utility tool for tesserae projects which will leave it open for other projects to add to it when the needs are more then just one project."
 
-- Repository `mindderivative/tess-utils` on GitHub, private (maintainer, 2026-11-03); import name `tess_utils`; no PyPI release.
+- Repository `mindderivative/tess-utils` on GitHub, private (maintainer, 2026-11-03), public since 2026-11-15 (maintainer; GitHub's API shows it public, MIT licence, default branch `main`, last push 2026-11-12; the vault did not read its code). Changed by the maintainer on 2026-11-15: he set up a pending Trusted Publisher on PyPI for the name `tesserae-utils` (owner `mindderivative`, repository `tess-utils`, workflow `release.yml`, environment `pypi`), which reverses "no PyPI release". The code session in the repository wrote the release workflow and renamed the package (`tesserae-utils`; the import stays `tess_utils`) and removed the `Private :: Do Not Upload` classifier, which PyPI refuses. The maintainer confirmed the reversal the same day and set the version to 0.2.1; the repository has full CI and a release workflow (local commits `88a28be` and `5df6b28`, not pushed, never run on GitHub), and the release workflow attaches the compiled file to the GitHub release as well. Published on 2026-11-15: `tesserae-utils` 0.2.1 is on PyPI (wheel and sdist, read from PyPI's JSON page) and the GitHub release `v0.2.1` carries the wheel, sdist, compiled `.so`, stub and stamp (asset names read with `gh`). The tag points at a commit on the branch `ci-setup`; the pull request into `main` was not merged when this was checked. The vendoring decision below was in force until the shell moved off it: by the code session's report of 2026-11-15, `tess-shell` PR #15 made the shell depend on `tesserae-utils[image]>=0.2.1,<0.3` from PyPI and removed its `_vendor/` copy and the vendoring tool, so the shell no longer carries the compiled file (the release still attaches it); import name `tess_utils`; no PyPI release.
 - Dependencies are allowed where every consumer needs them (maintainer, 2026-11-03: "I don't mind it having dependencies like Pillow because both tess-ui and tess-shell will use them for image decoding"). This also lets the image decoding that tre does not do ([ADR-0018 One Entry Form in tre](ADR-0018%20One%20Entry%20Form%20in%20tre.md)) live in one place: only `tess_utils` imports Pillow, and the shell and Tesserae UI call its image functions instead of importing Pillow themselves (maintainer, 2026-11-03: "that way tess-ui and tess-shell dont have to import Pillow themselves").
 - It serves the Tesserae projects only. Another project may add to it when a need spans more than one project (the "at least two users" rule below).
 - How a project that is released on PyPI gets it is a consequence with a proposed answer, in "Distribution" below.
@@ -106,6 +106,10 @@ PyPI rejects an upload whose dependencies are given by URL, such as a `git+https
 | Publish it after all | PyPI `tesserae-utils` | Simplest | Against the maintainer's term |
 
 Recommendation: vendor a tagged copy. The binder's import rule becomes `tess_re`, `tess_utils` (the vendored copy) and the standard library; to a reader of the code it is the module `tess_utils`, reached as `from tess_shell._vendor import tess_utils`.
+
+> [!NOTE]
+> **Amendment 2026-11-08 (maintainer): releases are a compiled `.so`**
+> The maintainer wants `tess-utils` releases to be a single compiled `.so` that the Tesserae projects use, with no PyPI release, in a private project. The vendored-source distribution above changes to a carried, stamped binary (version and SHA-256). The decision itself, Option A (a small shared package, not on PyPI, only `tess_utils` imports Pillow), is unchanged. The details and the open points are in [tess-utils Brief > Decision Direction: One Compiled `.so` per Release (2026-11-08)](../00%20Home/tess-utils%20Brief.md#decision-direction-one-compiled-so-per-release-2026-11-08).
 
 ## Links
 

@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-11-03
+updated: 2026-11-14
 tags: [architecture]
 ---
 
@@ -62,7 +62,7 @@ flowchart TB
 | Config loader and watcher | Finds shell files in the config directory and its Modules, Styles, Themes and Stylesheets folders, parses TDL with the `tess_dl` library (the `tess-dl` project, [TDL Library API](../42%20Python%20API/TDL%20Library%20API.md)) (an ordered list of entries that keeps repeated names, [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md), D12), checks the metadata block (`TDL`, `Name`, the version pins) and the root block against the suffix ([TDL Language > The Root Block](../41%20TDL%20Reference/TDL%20Language.md#the-root-block)), follows `Import`, reports errors with `file:line:column`, watches files | Watching on a worker; applying on the loop                       |
 | Registry                  | `registry.json`: UIDs, names, kinds, locations; one registry of names for blocks, surface types and modules ([TDL Language > Names and the Registry](../41%20TDL%20Reference/TDL%20Language.md#names-and-the-registry)); writes the `UID:` into the metadata block of files by patching the text at the node's position (D10); resolves cross-file references                                                                             | Loop (file I/O on a worker for large writes) #needs-verification |
 | Shell model               | The tree built from a shell file: `Monitor` blocks, surfaces, widgets, modules, with TEL expressions compiled; builds and rebuilds the `If` and `For` branches, evaluating the condition or iterable through TEL (D11)                                                                                       | Loop                                                             |
-| Render binder (proposed) | Turns the typed shell tree into tre nodes with two tables (block to node kind, key to property), links `{{ }}` slots to node properties, updates only what changed, and diffs a reload by key; imports nothing from the shell ([ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md)) | Loop |
+| Render binder (proposed) | Turns the typed shell tree into tre nodes with two tables (block to node kind, key to property), links `<\| \|>` slots to node properties, updates only what changed, and diffs a reload by key; imports nothing from the shell ([ADR-0015 Render Binder](../30%20Decisions/ADR-0015%20Render%20Binder.md)) | Loop |
 | Widgets, theme, styles    | The widget set in [V1 Widgets](../50%20Design%20System/V1%20Widgets.md), tokens from theme files, style files and stylesheets                                                                          | Loop                                                             |
 | Surface manager           | Reads outputs, creates and closes a `LayerWindow` or `PopupWindow` per surface and monitor, handles hot-plug and `Monitor` matching                                                     | Loop                                                             |
 | Module host               | Imports `<Name>_Module.py`, creates the module class once, calls `start`, `stop`, `reload`; gives it a context                                                                           | Loop for calls; module work on module threads                    |
@@ -92,10 +92,10 @@ The store is this note's addition. The ADR says a module sends data to shell ent
 
 ## Open Questions
 
-- [ ] Is the value store a component of its own, or part of the shell model?
+- [ ] **Is the value store a component of its own, or part of the shell model?** Context: the component table lists it separately, while [Shell Package Layout](Shell%20Package%20Layout.md) puts it in `model/` next to the TEL scope. Recommendation: keep it a distinct component, implemented inside `model/`.
 - [x] How a widget event (a click) reaches a module: the shell maps the event to a module method or a shell action; TEL only evaluates argument expressions ([ADR-0007 Shell UI Layer > Events and module reload (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26)). The key names are set in the TDL reference (folder `41 TDL Reference/`).
-- [ ] Where theme changes (light/dark, high contrast, reduced motion following the desktop) are read and pushed ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7).
-- [ ] The global shortcut service: a runtime component or a module.
+- [ ] **Where are theme changes read and pushed (light/dark, high contrast, reduced motion following the desktop)?** Context: [Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7 asks the shell to follow the desktop. Recommendation: a runtime component that reads the desktop setting and pushes a theme change through the model, like any other value.
+- [ ] **Is the global shortcut service a runtime component or a module?** Context: [ADR-0005 Global Shortcuts](../30%20Decisions/ADR-0005%20Global%20Shortcuts.md) and the table above put shortcuts in modules and a shortcut service in the runtime. Recommendation: a runtime component, because it serves every module.
 - [x] Which component builds and rebuilds the `If` and `For` branches: the shell model builder, which evaluates the condition or iterable through TEL and rebuilds that branch or entry. TEL evaluates expressions (values) only (D11, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
 
 ## Links

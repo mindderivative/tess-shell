@@ -2,10 +2,10 @@
 title: Logging with Loguru
 aliases: [Loguru, Shell Logging Option]
 type: research
-status: draft
+status: research
 owner: phil
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-11
 tags: [research, spec/runtime, needs-verification]
 ---
 
