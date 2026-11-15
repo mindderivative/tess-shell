@@ -1,19 +1,15 @@
 name: CI
 
-# Also called by release.yml, so a tagged release runs the same checks on the tagged commit
-# (paths-ignore applies to push and pull_request only, never to a call).
+# Also called by release.yml, so a tagged release runs the same checks on the tagged commit.
+# No paths-ignore: "CI result" is a required check on main (a ruleset, 2026-11-15), and a pull
+# request that CI skips would wait for it for ever, docs-only ones included.
 on:
   push:
     branches: [main]
-    paths-ignore: ["**.md", "docs/**", "LICENSE"]
   pull_request:
     branches: [main]
-    paths-ignore: ["**.md", "docs/**", "LICENSE"]
   workflow_call:
   workflow_dispatch:
-# docs/ is generated from the vault, so a commit that only touches it does not run the suite. If
-# "CI result" is ever made a required check, a docs-only pull request would wait for it for ever:
-# drop paths-ignore then.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

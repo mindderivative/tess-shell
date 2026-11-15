@@ -263,4 +263,5 @@
 ## Unreleased
 
 - Release fix: the GitHub Release step of `release.yml` failed for v0.1.0 because the changelog section used as the release body was 144,000 characters and GitHub allows 125,000 (PyPI had already been published; the GitHub Release for v0.1.0 was made by hand). A section over 100,000 characters is now cut to its first 40 lines with a link to the whole of it at the tag.
+- CI: `paths-ignore` is removed from `ci.yml`. `CI result` is a required check on `main` now (a repository ruleset), and a pull request whose changes were all ignored would never get the check and could not merge. Pull requests that only change Markdown or `docs/` run the full suite (about 5 minutes) as a result.
 
