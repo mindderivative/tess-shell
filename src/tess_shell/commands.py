@@ -56,9 +56,10 @@ class ShellCommands:
         self.reloader = reloader
         self._stop = stop
         self._errors = errors
-        # the five fixed shortcut actions (Focus and Keyboard): other parts of the shell fill this
-        # table; an action with no entry is "not built" and a press of it does nothing
-        self.fixed_actions: dict[str, Callable[[], None]] = {}
+        # the five fixed shortcut actions (Focus and Keyboard), run by a global key: shortcut mode
+        # (``surfaces/mode_driver.py``). An action with no entry is "not built" and a press of it
+        # does nothing
+        self.fixed_actions: dict[str, Callable[[], None]] = manager.mode.actions()
 
     # -- loop thread ------------------------------------------------------------------------------
 

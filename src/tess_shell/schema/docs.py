@@ -191,6 +191,12 @@ KEY_DOCS: dict[str, str] = {
     "Show_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
     "Shortcut": "The global key that toggles the Panel, written as Meta+Space; the same as "
     "Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
+    "Shortcut_Mode": "Whether this surface is the one in shortcut mode: the shell's keyboard "
+    "mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces "
+    "(Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is "
+    "true at a time: setting one true sets every other false, and writing it false on the one "
+    "that is true leaves the mode. Written true on a surface it makes the shell start in the "
+    "mode on that surface; two surfaces written true are a warning and the first keeps it.",
     "Text_Rotation": "Rotates the text of a vertical Bar. Not built.",
     "Attach_To": "The Name of the Bar, Panel or Frame this Panel is placed against.",
     "Attach": "The edge of the target the surface meets: LEFT, RIGHT, TOP or BOTTOM.",
@@ -549,6 +555,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Auto_Hide_Delay",
         "Reveal_Key",
         "Shortcut",
+        "Shortcut_Mode",
         "Text_Rotation",
     ),
 }
@@ -622,6 +629,10 @@ LITERAL_DEFAULTS: dict[tuple[str, str], str] = {
     ("Marquee", "Animated"): "true",
     ("Popup", "Adjust"): "[FLIP_Y, SLIDE_X]",  # PopupDef.adjust, written the way the file does
     ("Popup", "Focus"): "true",  # false for a tooltip
+    ("Bar", "Shortcut_Mode"): "false",  # the model holds where it is written true, or None
+    ("Panel", "Shortcut_Mode"): "false",
+    ("Frame", "Shortcut_Mode"): "false",
+    ("Edge", "Shortcut_Mode"): "false",
 }
 
 # -- the events, the actions, the tokens -----------------------------------------------------------
@@ -755,20 +766,28 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
     "SHADER or STRUCTURE. A restart applies it.",
     ("Debug", "Frame_Blend"): "How the Frame's ring is blended: LINEAR in linear light or SRGB. "
     "A restart applies it.",
+    ("Debug", "Mode_Keyboard"): "The keyboard mode the surface that has the focus takes while the "
+    "shell is in shortcut mode: EXCLUSIVE (the one way a layer surface takes the keyboard without "
+    "a click) or ON_DEMAND (for a compositor that hands focus over after a global key). A "
+    "restart applies it.",
     ("Settings", "Shortcuts"): 'The shell\'s global keys, one Name: "keys" entry for each action; '
     "a hot reload applies it.",
     ("Settings", "Global_Shortcuts"): "Whether the shell registers its keys with the desktop's "
     "shortcut service; false makes no call to it at all. A hot reload applies it.",
-    ("Shortcuts", "Enter_Shortcut_Mode"): "The key that puts the shell in shortcut mode.",
-    ("Shortcuts", "Exit_Shortcut_Mode"): "The key that leaves shortcut mode.",
+    ("Shortcuts", "Enter_Shortcut_Mode"): "The key that puts the shell in shortcut mode: the "
+    "one global key of the mode, registered with the desktop.",
+    ("Shortcuts", "Exit_Shortcut_Mode"): "The key that leaves shortcut mode. It acts inside the "
+    "mode only (a key event on the surface that has the keyboard); it is not registered with the "
+    "desktop.",
     ("Shortcuts", "Set_Shortcut_Mode"): "The key that turns shortcut mode on or off for the "
-    "focused surface.",
+    "focused surface. It acts inside the mode only; it is not registered with the desktop.",
     (
         "Shortcuts",
         "Next_Focus",
-    ): "The key that moves focus to the next surface or block in shortcut mode.",
-    ("Shortcuts", "Previous_Focus"): "The key that moves focus to the previous surface or block in "
-    "shortcut mode.",
+    ): "The key that moves focus to the next surface in shortcut mode. It acts inside the mode "
+    "only; it is not registered with the desktop.",
+    ("Shortcuts", "Previous_Focus"): "The key that moves focus to the previous surface in "
+    "shortcut mode. It acts inside the mode only; it is not registered with the desktop.",
 }
 
 # the forms of an entry of ``Shortcuts { }`` that are not a fixed key (the ``shortcuts`` section of

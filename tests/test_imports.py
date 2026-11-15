@@ -88,6 +88,17 @@ RULES: dict[str, set[str] | None] = {
     "surfaces.panel": {"tess_shell.binder.model", "tess_shell.surfaces.bar"},
     # the order of the shell's surfaces for keyboard focus: pure, over the shell definition
     "surfaces.focus": {"tess_shell.binder.focus", "tess_shell.schema.model"},
+    # shortcut mode: the rules are pure (keys and the surface order); the driver applies a change
+    # to the windows it is given
+    "surfaces.mode": {"tess_shell.schema.keys", "tess_shell.surfaces.focus"},
+    "surfaces.mode_driver": {
+        "loguru",
+        "tess_shell.binder",  # the View whose first Tab stop gets the ring (a type only)
+        "tess_shell.schema.findings",  # nearest names for ``ctx.focus``
+        "tess_shell.schema.keys",
+        "tess_shell.schema.model",
+        "tess_shell.surfaces",
+    },
     "surfaces.manager": {
         "tess_re",
         "loguru",

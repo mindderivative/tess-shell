@@ -1,7 +1,7 @@
 """The context (``self.ctx``): a module's whole view of the shell (Module Context).
 
-M2 offers ``name``, ``uid``, ``config``, ``log``, ``uses``, ``send`` and ``on_tick``; the rest of
-the member list waits for a module that needs it.
+M2 offers ``name``, ``uid``, ``config``, ``log``, ``uses``, ``send`` and ``on_tick``; later
+milestones add ``popup``, ``dbus``, ``audio``, ``icons``, ``tray`` and ``focus``.
 """
 
 from __future__ import annotations
@@ -54,6 +54,46 @@ class PopupPort(Protocol):
     def is_open(self, name: str) -> bool: ...
 
 
+class FocusPort(Protocol):
+    """What the shell offers a module for shortcut mode (the surface manager's ``ModeDriver``)."""
+
+    def get_default(self) -> str | None: ...
+
+    def set_default(self, name: str | None, who: str = ...) -> None: ...
+
+    def set_mode(self, name: str, value: bool, who: str = ...) -> bool: ...
+
+
+class ModuleFocus:
+    """``ctx.focus``: shortcut mode and the surface that starts with focus (Focus and Keyboard >
+    Python Contract). Loop thread only, like ``ctx.popup``."""
+
+    def __init__(self, port: FocusPort, who: str) -> None:
+        self._port = port
+        self._who = who
+
+    @property
+    def default(self) -> str | None:
+        """The ``Name`` of the surface that starts with the focus when shortcut mode is entered
+        with ``Enter_Shortcut_Mode``; ``None``, the start value, is the Frame. Set it to a surface's
+        ``Name`` (a Bar, a Panel, a Frame or a strip written ``<Frame>.<side>``, as the focus
+        order names them); a name that is no surface is logged with the nearest names and the
+        value does not change."""
+        return self._port.get_default()
+
+    @default.setter
+    def default(self, name: str | None) -> None:
+        self._port.set_default(name, f"ctx.focus.default ({self._who})")
+
+    def set_mode(self, name: str, value: bool) -> bool:
+        """Set ``Shortcut_Mode`` of the surface ``name``. True puts that surface in shortcut mode
+        with the focus (every other is false, the shell enters the mode if it was not in it);
+        False on the surface that is in the mode leaves the mode for the whole shell, False on any
+        other changes nothing. ``False`` is returned, and one error logged, when no surface has
+        that name."""
+        return self._port.set_mode(name, bool(value), f"ctx.focus.set_mode ({self._who})")
+
+
 class ModuleContext:
     def __init__(
         self,
@@ -69,6 +109,7 @@ class ModuleContext:
         icons: Callable[[], IconsPort | None] | None = None,
         tray: Callable[[], TrayPort | None] | None = None,
         call_soon: Callable[[], Callable[[Callable[[], None]], None] | None] | None = None,
+        focus: Callable[[], FocusPort | None] | None = None,
     ) -> None:
         self.name = name
         self.caller: UseRecord | None = None  # the use whose block raised the event being handled
@@ -82,6 +123,8 @@ class ModuleContext:
         self._tray_port = tray
         self._tray: ModuleTray | None = None
         self._call_soon = call_soon
+        self._focus_port = focus
+        self._focus: ModuleFocus | None = None
         self._on_lost: Callable[[str], None] | None = None
         self._on_found: Callable[[str], None] | None = None
         self._closed = False
@@ -156,6 +199,17 @@ class ModuleContext:
                 note_module_error(self.name, "a call_soon callback", exc)
 
         port(run)
+
+    @property
+    def focus(self) -> ModuleFocus:
+        """Shortcut mode and the default focus (Focus and Keyboard): ``ctx.focus.default = "Dock"``
+        and ``ctx.focus.set_mode("Dock", True)``. Loop thread only."""
+        if self._focus is None:
+            port = self._focus_port() if self._focus_port else None
+            if port is None:
+                raise RuntimeError("the shell has no surfaces: no shortcut mode")
+            self._focus = ModuleFocus(port, self.name)
+        return self._focus
 
     @property
     def dbus(self) -> ModuleDBus:

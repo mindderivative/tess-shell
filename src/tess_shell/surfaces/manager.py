@@ -43,6 +43,7 @@ from tess_shell.surfaces.bar import (
 )
 from tess_shell.surfaces.focus import next_surface, surface_order
 from tess_shell.surfaces.frame import FramePlan, Frames
+from tess_shell.surfaces.mode_driver import ModeDriver
 from tess_shell.surfaces.panel import PanelSpec, panel_geometry, px_size
 
 if TYPE_CHECKING:
@@ -488,6 +489,7 @@ class SurfaceManager:
         positions: PositionStore | None = None,
         join_mode: str = "PARAM",
         blend_mode: str = "LINEAR",
+        mode_keyboard: str = "EXCLUSIVE",
     ) -> None:
         self._app = app
         self._positions = positions  # where the user left each Movable Panel (the registry)
@@ -511,6 +513,9 @@ class SurfaceManager:
         # surface that has the OS's keyboard focus (``None``: none of ours)
         self.focus_order: list[str] = []
         self.focused: str | None = None
+        # shortcut mode: the rules, and what a change does to the windows (surfaces/mode_driver.py)
+        self.mode = ModeDriver(self)
+        self.mode.set_keyboard(mode_keyboard)
         self._handle: Any = None
         self._all_uses: Mapping[str, Use] = {}
         from tess_shell.surfaces.popup import PopupPlan, Popups  # popup.py imports this module
@@ -814,6 +819,7 @@ class SurfaceManager:
         planned, uses = self._plan_bars(shell, self._modules, self._look)
         self._shell = shell
         self.focus_order = surface_order(shell)
+        self.mode.configure(shell)
         for use in uses:
             self._store.add_use(use.module, use.key)
         self._planned = planned
@@ -832,6 +838,7 @@ class SurfaceManager:
             self.surfaces.append(self._open(planned, all_uses))
         self.frames.sync(self._frame_plans, self._look)
         self.settle_dynamic()
+        self.mode.start()  # a surface the files write ``Shortcut_Mode: true`` has the mode now
         return self.surfaces
 
     def _keyboard_word(self, planned: Planned, hidden: bool = False, say: bool = False) -> str:
@@ -896,10 +903,13 @@ class SurfaceManager:
 
         def closed(e: Any, n: str = where, k: str = kind, name: str = bar.name) -> None:
             logger.info(f"{k} {n} closed ({getattr(e, 'reason', '')})")
-            self._surface_gone(name)
+            self._surface_gone(name, window)
 
         window.on("closed", closed)
         window.on("active", lambda e, name=bar.name: self._surface_active(name, bool(e.active)))
+        # the keys of shortcut mode arrive here when this surface has the keyboard (a Panel's own
+        # handler, set after this one, asks the mode first)
+        window.root.on("key_down", lambda e: self.mode.on_key(e))
 
         def pointer_trace(e: Any, n: str = where, k: str = kind, p: str = "") -> None:
             logger.debug(
@@ -992,6 +1002,8 @@ class SurfaceManager:
         assert s.window is not None
 
         def on_key(event: Any) -> None:
+            if self.mode.on_key(event):  # a key of shortcut mode: the mode's, not the Panel's
+                return
             current = s.planned.bar if s.planned else None
             if (
                 getattr(event, "key", None) == "escape"
@@ -1189,6 +1201,7 @@ class SurfaceManager:
             s.timer = None
         self._fire(s, "On_Close")  # before: the request is made
         s.hidden = True
+        self.mode.gone(s.name)  # shortcut mode does not stay on a hidden Panel
         self.changed(s.name, False)
         if self.hide_mode == "KEEP":  # a hiding Panel takes no input, whatever its animation
             s.window.set(input_region=[], keyboard="none")
@@ -1543,6 +1556,7 @@ class SurfaceManager:
             self._close(s)
         self.surfaces = out
         self.frames.sync(self._frame_plans, self._look)
+        self.mode.configure(self._shell)  # what the files now write of ``Shortcut_Mode``
         self.settle_dynamic()
         keep = {u.key for u in store_uses} | set(self._dyn_registered)
         for key in [k for k in self._store.values if k not in keep]:
@@ -1555,11 +1569,13 @@ class SurfaceManager:
         elif self.focused == name:
             self.focused = None
 
-    def _surface_gone(self, name: str) -> None:
+    def _surface_gone(self, name: str, window: Any = None) -> None:
         """A surface closed. When it had the keyboard focus, focus goes to the next surface in the
         shell's order, or to none when no other is left (Focus and Keyboard > Failure Modes). The
         compositor decides which layer surface has the keyboard; moving it there is the shortcut
-        mode's (M6c, M6d), so this is the surface that mode will focus."""
+        mode's, which is told as well (``window`` is the one that closed: a surface made again
+        under the same name is not gone)."""
+        self.mode.closed(name, window)
         if self.focused != name:
             return
         open_names = {s.name for s in self.surfaces if s.window is not None}
@@ -1657,8 +1673,8 @@ class SurfaceManager:
                 logger.error(f"{_kind(bar)} {where}: {exc}; the geometry was not changed")
         if s.planned is not None:
             word = self._keyboard_word(s.planned, s.hidden)
-            if s.window.get("keyboard") != word:
-                s.window.set(keyboard=word)
+            if s.window.get("keyboard") != word and not self.mode.holds(s.window):
+                s.window.set(keyboard=word)  # shortcut mode holds it while it is on
                 logger.info(f"{_kind(bar)} {where}: keyboard {word}")
 
     # -- the desktop's look changed ------------------------------------------------------------

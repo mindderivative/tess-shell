@@ -1,5 +1,5 @@
 """The shell's schema as plain JSON, for a configuration application that builds forms from it
-(``tesserae-shell schema --json``; the shape is version 1.3, see ``schema_version``).
+(``tesserae-shell schema --json``; the shape is version 1.4, see ``schema_version``).
 
 Everything is read from the tables the loader uses, so there is no second list of keys to drift:
 :mod:`tess_shell.schema.blocks` (blocks, surfaces, kinds, choices, required keys, events, what is
@@ -57,7 +57,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.3"
+SCHEMA_VERSION = "1.4"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -875,6 +875,9 @@ def _roots() -> dict[str, Json]:
                 "Edge", "Content_Fade", "bool", default=_default("Edge", "Content_Fade")
             ),
             "Tab_Index": _key("Edge", "Tab_Index", "tab_index"),
+            "Shortcut_Mode": _key(
+                "Edge", "Shortcut_Mode", "bool", default=_default("Edge", "Shortcut_Mode")
+            ),
             "Peek": _key("Edge", "Peek", "block:Edge_Peek"),
         },
         repeatable=False,
@@ -1092,6 +1095,7 @@ def _settings() -> dict[str, dict[str, Json]]:
             "Panel_Hide": word("Debug", "Panel_Hide", cfg.PANEL_HIDE, debug.panel_hide),
             "Frame_Join": word("Debug", "Frame_Join", cfg.FRAME_JOIN, debug.frame_join),
             "Frame_Blend": word("Debug", "Frame_Blend", cfg.FRAME_BLEND, debug.frame_blend),
+            "Mode_Keyboard": word("Debug", "Mode_Keyboard", cfg.MODE_KEYBOARD, debug.mode_keyboard),
         },
     }
     return out

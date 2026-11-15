@@ -41,10 +41,11 @@ ROOT_KEYS = (
     "Shortcuts",
     "Global_Shortcuts",
 )
-DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend")
+DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend", "Mode_Keyboard")
 PANEL_HIDE = ("CLOSE", "KEEP")
 FRAME_JOIN = ("SMIL", "CONCAVE", "SHADER", "STRUCTURE", "PARAM")
 FRAME_BLEND = ("SRGB", "LINEAR")
+MODE_KEYBOARD = ("EXCLUSIVE", "ON_DEMAND")
 APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop")
 LOGGING_KEYS = (
     "Level",
@@ -110,6 +111,11 @@ class DebugSettings:
     # anti-aliased edges in sRGB (a light line on a dark ground looks thinner on a curve). A
     # Frame the shader cannot draw falls back to paths with one warning. A restart applies it.
     frame_blend: str = "LINEAR"
+    # the keyboard word the surface that has the focus in shortcut mode is given for the length of
+    # the mode (Focus and Keyboard > How mode keys are delivered): EXCLUSIVE, the default, is the
+    # one way a layer surface takes the keyboard without a click; ON_DEMAND is for a compositor
+    # that hands focus over after a global key (KWin, to be checked by hand). A restart applies it.
+    mode_keyboard: str = "EXCLUSIVE"
 
 
 @dataclass(frozen=True, slots=True)
@@ -519,13 +525,16 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             reader.unknown_keys(blk, DEBUG_KEYS, "Debug")
             hide, join = find_property(blk, "Panel_Hide"), find_property(blk, "Frame_Join")
             blend = find_property(blk, "Frame_Blend")
+            mode_kb = find_property(blk, "Mode_Keyboard")
             hide_word = None if hide is None else reader.enum(hide, PANEL_HIDE)
             join_word = None if join is None else reader.enum(join, FRAME_JOIN)
             blend_word = None if blend is None else reader.enum(blend, FRAME_BLEND)
+            mode_word = None if mode_kb is None else reader.enum(mode_kb, MODE_KEYBOARD)
             debug = DebugSettings(
                 panel_hide=hide_word or debug.panel_hide,
                 frame_join=join_word or debug.frame_join,
                 frame_blend=blend_word or debug.frame_blend,
+                mode_keyboard=mode_word or debug.mode_keyboard,
             )
         if (blk := reader.block(root, "Validation")) is not None:
             reader.unknown_keys(blk, VALIDATION_KEYS, "Validation")

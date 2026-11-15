@@ -54,7 +54,13 @@ from tess_shell.services.layer import Layer
 from tess_shell.services.portal import PortalReader
 from tess_shell.services.shortcuts import STOP_TIMEOUT, Action, ShortcutService
 from tess_shell.services.tray import TrayService
-from tess_shell.shortcuts import drop_failed, shortcut_handlers, shortcut_modules
+from tess_shell.shortcuts import (
+    drop_failed,
+    mode_keys,
+    registered,
+    shortcut_handlers,
+    shortcut_modules,
+)
 from tess_shell.signals import EarlyStop, LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites, Watcher
@@ -226,7 +232,7 @@ def _start_shortcuts(
     Registration). A missing service or a refused call is a warning and no keys: the shell runs and
     the commands work."""
     shortcuts = ShortcutService(service, handle.call_soon, commands.press)
-    actions = drop_failed(declared, call_problems)
+    actions = registered(drop_failed(declared, call_problems))
     try:
         service.submit(shortcuts.start(actions, settings.global_shortcuts)).result(
             timeout=START_TIMEOUT
@@ -343,6 +349,7 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
             positions=registry,
             join_mode=settings.debug.frame_join,
             blend_mode=settings.debug.frame_blend,
+            mode_keyboard=settings.debug.mode_keyboard,
         )
         manager_box.append(manager)
         host = ModuleHost(store, ticks, cfg)
@@ -361,6 +368,7 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         host.icons = IconService(IMAGES.register)  # ctx.icons: the theme lookup, files read here
         host.tray = TrayService(service)  # ctx.tray: the shell as a StatusNotifier host
         host.call_soon = handle.call_soon  # ctx.call_soon: back to the loop thread
+        host.focus = manager.mode  # ctx.focus: shortcut mode and the default focus
         # a file the shell registers for the first time gets a UID in its metadata (G8)
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         own_writes = OwnWrites()
@@ -439,6 +447,8 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         shortcuts: ShortcutService | None = None
         errors = ErrorLog()
         commands = ShellCommands(manager, host, reloader, stopper.request, errors.last)
+        manager.mode.set_keys(mode_keys(result.shortcuts))  # the keys of shortcut mode
+        manager.mode.watch_focus = True  # a real compositor: warn when it does not hand focus over
         taken = False
         if settings.control:
             control = _start_control(service, handle, manager, reloader, commands, errors)
