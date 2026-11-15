@@ -170,7 +170,7 @@ def test_with_no_service_the_shell_starts_warns_once_and_the_command_still_works
     assert d.fake.calls == []  # a service that is not there is not called
 
 
-def test_a_taken_key_registers_with_no_key_and_warns_once(desk: Make) -> None:
+def test_a_taken_key_is_not_requested_registers_with_no_key_and_warns_once(desk: Make) -> None:
     d = desk()
     d.fake.own(SPACE, "kwin")
     d.write('    Shortcuts { Toggle_Launcher: "Meta+Space" }')
@@ -182,6 +182,9 @@ def test_a_taken_key_registers_with_no_key_and_warns_once(desk: Make) -> None:
     assert d.finish() == 0
     log = d.log()
     assert log.count("Toggle_Launcher: the key Meta+Space is taken") == 1
+    assert not any(  # the key was asked about, never requested
+        SPACE in [k for s in c.args[1] for q in s for k in q] for c in d.fake.of("setShortcutKeys")
+    )
 
 
 def test_no_key_press_opens_a_popup(desk: Make) -> None:

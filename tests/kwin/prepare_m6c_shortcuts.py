@@ -33,7 +33,7 @@ sys.path.insert(0, str(REPO))
 from tests.shell_samples import write_example  # noqa: E402
 
 ROOT = Path("/tmp/tess-kwin-m6c")
-BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
+BIN = Path(sys.executable).parent  # the environment this generator runs in, so run.sh runs this code
 KEY_ONE = "Ctrl+Alt+Shift+F11"
 KEY_TWO = "Ctrl+Alt+Shift+F12"
 HEAD = "---\nTDL: 0.2\nName: Settings\n---\n"
@@ -145,11 +145,14 @@ PART 2: the user's keys
     still in System Settings with their keys.  Start it again: the keys work again.
 
 PART 3: a key the desktop owns
-11  Stop the shell.  Choose a key a Plasma shortcut already uses (look in System Settings, for
-    example the one for Show Desktop).  Run  /tmp/tess-kwin-m6c/run-taken.sh "THAT KEY"  (write
-    the key the way System Settings shows it, "Meta+D"): the log has exactly ONE warning naming
-    Toggle_Launcher and the key ("is taken by the desktop"); the desktop's own shortcut still does
-    what it did; System Settings shows "Toggle Launcher" with no key.  The shell runs.
+11  Stop the shell.  REMOVE the "Tesserae Shell" entry in System Settings first (a key saved by an
+    earlier run wins over the file and hides this check).  Choose a key a Plasma shortcut already
+    uses (look in System Settings, for example Ctrl+Alt+Del of Log Out).  Run
+    /tmp/tess-kwin-m6c/run-taken.sh "THAT KEY"  (write the key the way System Settings shows it):
+    the DEBUG line says  asked for ['THAT KEY'], the service set []  and the log has exactly ONE
+    warning naming Toggle_Launcher and the key ("is taken by the desktop"); the desktop's own
+    shortcut still does what it did and keeps its key in System Settings; "Toggle Launcher" shows
+    with no key.  The shell runs.
 
 PART 4: restarts and spellings
 12  /tmp/tess-kwin-m6c/run-anycase.sh : the key reads ctrl+ALT+shift+f11 in the file, and System

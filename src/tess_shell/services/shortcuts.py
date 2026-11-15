@@ -11,13 +11,16 @@ timer, so a connected, quiet service wakes the thread never.
 
 What is sent, and why (all of it from the spec, never read from the real service):
 
-* ``doRegister(as)`` with four strings (component, action, component friendly name, action friendly
-  name), then ``setShortcutKeys(asa(ai)u)`` twice, as the client library does: the active keys with
+* ``doRegister(as)`` with four strings (component, action, component friendly name, action
+  friendly name), then ``isGlobalShortcutAvailable(key, component)`` once for each chord, then
+  ``setShortcutKeys(asa(ai)u)`` twice, as the client library does: the active keys with
   ``SetPresent`` (2) and the default keys with ``IsDefault`` (8). ``NoAutoloading`` (4) is never
-  sent, so a key the user changed in System Settings survives a restart. The first call returns the
-  keys the service actually set: an empty answer for a requested key means the desktop (or another
-  application) owns it, so the action stays registered with no key and one warning names it. The
-  shell never takes a key.
+  sent, so a key the user changed in System Settings survives a restart. The real service does NOT
+  refuse a key another component owns (found by a hand check on KDE: Ctrl+Alt+Delete, the Log Out
+  action, was handed over), so a chord that is not free is never requested: the action stays
+  registered with no key and one warning names it. A check that fails does not block the request.
+  An empty answer for a free chord is the user's own clearing (no warning). The first call returns
+  the keys the service actually set. The shell never takes a key.
 * ``getComponent("tesserae-shell")`` gives the object path of the component (never derived); the
   shell listens to ``globalShortcutPressed`` on it, and to ``yourShortcutsChanged`` on
   ``/kglobalaccel`` for its own component (a key the user changed is used by the service at the
@@ -346,12 +349,15 @@ class ShortcutService:
         await self._component()
 
     async def _register(self, action: Action) -> bool:
-        """``doRegister`` and the two ``setShortcutKeys`` of one action. A failure skips this
-        action only."""
+        """``doRegister``, the availability of each chord, and the two ``setShortcutKeys`` of one
+        action. A failure skips this action only. A chord that is not free is never requested: the
+        real service does not refuse a key another component owns, it hands it over."""
         ids = self._ids(action)
         try:
             await self._call("doRegister", "as", [ids])
-            sequences = self._sequences(action.keys)
+            free, taken, unchecked = await self._availability(action)
+            requested = [c for c in action.keys if c not in taken]
+            sequences = self._sequences(requested)
             got = await self._call("setShortcutKeys", "asa(ai)u", [ids, sequences, SET_PRESENT])
             set_keys = _flatten(got[0] if got else [])
             await self._call("setShortcutKeys", "asa(ai)u", [ids, sequences, IS_DEFAULT])
@@ -360,49 +366,54 @@ class ShortcutService:
             return False
         self.registrations += 1
         self.keys_now[action.id] = tuple(set_keys)
-        asked = [c.text for c in action.keys]
+        asked = [c.text for c in requested]
         used = [qt_text(k) for k in set_keys]
         logger.debug(f"shortcuts: {action.id}: asked for {asked}, the service set {used}")
-        if set_keys and set(set_keys) != {c.qt for c in action.keys}:
+        if set_keys and set(set_keys) != {c.qt for c in requested}:
             logger.info(
                 f"shortcuts: {action.id}: the file writes {', '.join(asked)} but the service uses "
                 f"{', '.join(used)}: a key kept from an earlier run or chosen in System Settings "
                 "wins over the file, which only gives the default"
             )
-        if action.keys and not set_keys:
-            await self._explain_empty(action)
-        return True
-
-    async def _explain_empty(self, action: Action) -> None:
-        """The service set none of the keys asked for: the desktop (or another application) owns
-        them, or the user cleared this action's key in System Settings (which autoloads as an
-        empty answer). ``isGlobalShortcutAvailable`` tells which, once for each chord: a free key
-        is the user's own clearing and no warning; a key that is not free is taken; a call that
-        fails leaves the question open and the warning says so."""
-        taken: list[Chord] = []
-        unchecked = ""
-        for chord in action.keys:
-            try:
-                reply = await self._call("isGlobalShortcutAvailable", "is", [chord.qt, COMPONENT])
-                free = bool(reply[0])
-            except Exception as exc:
-                taken.append(chord)
-                unchecked = f"; could not be checked ({exc})"
-                continue
-            if free:
-                logger.debug(
-                    f"shortcuts: {action.id}: the key {chord.text} is free and the action has no "
-                    "key: the user cleared it in System Settings"
-                )
-            else:
-                taken.append(chord)
-        if taken:
-            keys = ", ".join(chord.text for chord in taken)
+        blocked = list(taken)
+        suffix = ""
+        if requested and not set_keys:
+            # nothing came back for the keys asked for: a free key is the user's own clearing
+            # (autoloaded as an empty answer); a key that could not be checked stays open
+            for chord in requested:
+                if chord in free:
+                    logger.debug(
+                        f"shortcuts: {action.id}: the key {chord.text} is free and the action has "
+                        "no key: the user cleared it in System Settings"
+                    )
+                else:
+                    blocked.append(chord)
+                    suffix = unchecked
+        if blocked:
+            keys = ", ".join(chord.text for chord in blocked)
             logger.warning(
                 f"shortcuts: {action.id}: the key {keys} is taken by the desktop or another "
                 "application: the action is registered with no key (choose one in System "
-                f"Settings){unchecked}"
+                f"Settings){suffix}"
             )
+        return True
+
+    async def _availability(self, action: Action) -> tuple[set[Chord], set[Chord], str]:
+        """``isGlobalShortcutAvailable`` once for each chord of this registration (the shell's own
+        component does not count): the free chords, the taken ones, and the note for a call that
+        failed (that chord is in neither set: it is requested, and the question stays open)."""
+        free: set[Chord] = set()
+        taken: set[Chord] = set()
+        note = ""
+        for chord in action.keys:
+            if chord in free or chord in taken:
+                continue
+            try:
+                reply = await self._call("isGlobalShortcutAvailable", "is", [chord.qt, COMPONENT])
+                (free if bool(reply[0]) else taken).add(chord)
+            except Exception as exc:
+                note = f"; could not be checked ({exc})"
+        return free, taken, note
 
     async def _component(self) -> None:
         """The component's object path (asked, never derived), the actions it holds that the shell

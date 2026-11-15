@@ -258,17 +258,49 @@ def test_a_key_the_user_changed_survives_a_restart_of_the_shell() -> None:
         assert r.fake.of("setShortcutKeys")[-2].flags == 2
 
 
-def test_a_taken_key_leaves_the_action_registered_with_no_key_and_one_warning() -> None:
+def sent_keys(r: Rig) -> list[int]:
+    """Every key integer any ``setShortcutKeys`` of the shell carried."""
+    return [
+        k
+        for c in r.fake.of("setShortcutKeys")
+        for struct in c.args[1]
+        for seq in struct
+        for k in seq
+    ]
+
+
+def test_a_taken_key_is_never_requested_the_action_has_no_key_and_one_warning() -> None:
     with rig() as r:
         r.fake.own(SPACE, "kwin")
         r.start([LAUNCHER, BAR])
         assert "Toggle_Launcher" in r.fake.names()  # registered
         assert r.fake.keys_of(COMPONENT, "Toggle_Launcher") == []  # with no key
+        assert SPACE not in sent_keys(r)  # the real service would have handed it over: not asked
         assert r.fake.keys_of(COMPONENT, "Show_Top_Bar") != []  # the other one is fine
         warnings = r.said("WARNING", "taken")
         assert len(warnings) == 1
         assert "Toggle_Launcher" in warnings[0] and "Meta+Space" in warnings[0]
         assert not r.fake.press_key(SPACE)  # the desktop keeps the key
+
+
+def test_a_fresh_component_asking_for_a_key_another_component_owns_never_sends_it() -> None:
+    """The hand check on KDE (2026-11-15): kglobalacceld does not refuse a key another component
+    owns, it hands it over, so the shell asks isGlobalShortcutAvailable first. Ctrl+Alt+Delete is
+    KDE's own Log Out (component ksmserver)."""
+    logout = parse_chord("Ctrl+Alt+Delete").qt
+    with rig() as r:
+        r.fake.preregister("ksmserver", "Log Out", keys=(logout,))
+        r.fake.action("ksmserver", "Log Out").present = True  # type: ignore[union-attr]
+        r.start([act("Toggle_Launcher", "Ctrl+Alt+Delete")])
+        assert logout not in sent_keys(r)  # no setShortcutKeys call carries it
+        assert r.fake.keys_of(COMPONENT, "Toggle_Launcher") == []
+        assert r.fake.keys_of("ksmserver", "Log Out") == [logout]  # the owner still has its key
+        (w,) = r.said("WARNING", "")
+        assert "Toggle_Launcher" in w and "Ctrl+Alt+Delete" in w and "is taken" in w
+        assert [c.args for c in r.fake.of("isGlobalShortcutAvailable")] == [
+            (logout, "tesserae-shell")
+        ]
+        assert "Toggle_Launcher" in r.shortcuts.registered
 
 
 def test_a_key_another_component_holds_is_never_taken() -> None:
@@ -278,6 +310,7 @@ def test_a_key_another_component_holds_is_never_taken() -> None:
         r.start([LAUNCHER])
         assert r.fake.keys_of(COMPONENT, "Toggle_Launcher") == []
         assert r.fake.keys_of("plasma", "Launcher") == [SPACE]
+        assert SPACE not in sent_keys(r)
         assert len(r.said("WARNING", "taken")) == 1
 
 
@@ -569,13 +602,14 @@ def test_the_key_the_file_writes_is_not_reported_when_the_service_sets_it() -> N
         assert r.said("INFO", "wins over the file") == []
 
 
-def test_a_taken_key_is_asked_about_once_and_warned_once_by_the_answer() -> None:
+def test_a_taken_key_is_asked_about_once_and_warned_once() -> None:
     with rig() as r:
         r.fake.own(SPACE, "kwin")
         r.start([LAUNCHER, BAR])
-        assert [c.args for c in r.fake.of("isGlobalShortcutAvailable")] == [
-            (SPACE, "tesserae-shell")
-        ]  # only the empty chord is asked about
+        # one call for each chord of each registration, before anything is requested
+        assert sorted(c.args for c in r.fake.of("isGlobalShortcutAvailable")) == sorted(
+            [(SPACE, "tesserae-shell"), (parse_chord("Ctrl+Alt+B").qt, "tesserae-shell")]
+        )
         (w,) = r.said("WARNING", "taken")
         assert "Toggle_Launcher" in w and "Meta+Space" in w and "could not be checked" not in w
 
@@ -588,20 +622,62 @@ def test_a_key_another_component_holds_is_asked_about_and_reported_taken() -> No
         assert len(r.said("WARNING", "taken")) == 1
 
 
-def test_a_key_that_was_set_is_not_asked_about() -> None:
+def test_a_free_key_is_asked_about_before_it_is_requested_and_an_action_with_no_key_is_not() -> (
+    None
+):
     with rig() as r:
-        r.start([LAUNCHER, PLAIN])  # one set, one declared with no key
-        assert r.fake.of("isGlobalShortcutAvailable") == []
+        r.start([LAUNCHER, PLAIN])  # one free, one declared with no key
+        assert [c.args for c in r.fake.of("isGlobalShortcutAvailable")] == [
+            (SPACE, "tesserae-shell")
+        ]
+        members = [c.member for c in r.fake.calls]
+        assert members.index("isGlobalShortcutAvailable") < members.index("setShortcutKeys")
+        assert r.fake.keys_of(COMPONENT, "Toggle_Launcher") == [SPACE]
+        assert r.said("WARNING", "") == []
 
 
-def test_when_the_availability_cannot_be_checked_the_warning_says_so_and_nothing_crashes() -> None:
+def test_a_key_changed_at_reload_is_checked_too_and_a_taken_one_is_not_requested() -> None:
+    other = parse_chord("Ctrl+Alt+K").qt
     with rig() as r:
-        r.fake.own(SPACE, "kwin")
+        r.start([LAUNCHER])
+        r.fake.own(other, "kwin")
+        r.fake.clear_calls()
+        changed = act("Toggle_Launcher", "Ctrl+Alt+K")
+        r.shortcuts.update([changed], True)
+        assert wait_for(lambda: len(r.fake.of("setShortcutKeys")) == 2)
+        assert wait_for(lambda: r.said("WARNING", "taken") != [])
+        assert [c.args for c in r.fake.of("isGlobalShortcutAvailable")] == [
+            (other, "tesserae-shell")
+        ]
+        assert other not in sent_keys(r)
+        assert r.fake.keys_of(COMPONENT, "Toggle_Launcher") == []
+        assert len(r.said("WARNING", "taken")) == 1
+
+
+def test_when_the_availability_cannot_be_checked_the_key_is_requested() -> None:
+    with rig() as r:
         r.fake.refuse.add("isGlobalShortcutAvailable")
         r.start([LAUNCHER, BAR])
-        (w,) = r.said("WARNING", "taken")
-        assert "Toggle_Launcher" in w and "could not be checked" in w
+        assert SPACE in sent_keys(r)  # a failed check does not block the request
+        assert r.fake.keys_of(COMPONENT, "Toggle_Launcher") == [SPACE]  # the fake hands it over
+        assert r.said("WARNING", "") == []  # the key was set: nothing to explain
         assert sorted(r.shortcuts.registered) == ["Show_Top_Bar", "Toggle_Launcher"]
-        assert len(r.fake.of("isGlobalShortcutAvailable")) == 1  # not asked again
         r.fake.press("Show_Top_Bar")
         assert wait_for(lambda: r.pressed == [BAR])
+
+
+def test_when_the_check_fails_and_the_reply_is_empty_one_warning_says_it_could_not_be_checked() -> (
+    None
+):
+    with rig() as r:
+        r.start([LAUNCHER])
+        r.stop()
+        r.fake.user_changes(COMPONENT, "Toggle_Launcher", ())  # autoload answers empty
+        r.fake.refuse.add("isGlobalShortcutAvailable")
+        r.fake.clear_calls()
+        r.lines.clear()
+        second = ShortcutService(r.service, r.loop.call_soon, r.pressed.append)
+        r.service.submit(second.start([LAUNCHER], True)).result(10)
+        (w,) = r.said("WARNING", "taken")
+        assert "Toggle_Launcher" in w and "could not be checked" in w
+        assert len(r.fake.of("isGlobalShortcutAvailable")) == 1  # not asked again

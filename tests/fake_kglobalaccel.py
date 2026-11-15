@@ -13,7 +13,10 @@ is an object ``/component/<name>`` (``org.kde.kglobalaccel.Component``) with the
 
 It behaves like the real service on the points the shell depends on:
 
-* a key another component owns (``own``) comes back EMPTY from ``setShortcutKeys``;
+* a key another component owns (``own``, or a preregistered action) is NOT refused by
+  ``setShortcutKeys``: it is set and returned, as the real ``kglobalacceld`` does (seen in the hand
+  check of 2026-11-15, ``Ctrl+Alt+Delete`` owned by KDE's Log Out); only
+  ``isGlobalShortcutAvailable`` says it is not free (for any component but the owner's own);
 * a key the user changed in System Settings (``user_changes``) is kept, and restored when the action
   registers again with the flags not including ``NoAutoloading`` (4); ``unregister`` forgets it;
 * an action registered and not present (``setInactive``, a service that restarted) stays known;
@@ -139,7 +142,9 @@ class FakeKGlobalAccel:
         self.service.restart()
 
     def own(self, key: int, owner: str = "kwin") -> None:
-        """Another component holds ``key`` (a Qt key integer): a request for it comes back empty."""
+        """Another component holds ``key`` (a Qt key integer): ``isGlobalShortcutAvailable`` says
+        it is not free, but a request for it is still accepted (the real service does not
+        refuse)."""
         with self._lock:
             self.owned[key] = owner
 
@@ -373,11 +378,7 @@ class FakeKGlobalAccel:
                 return list(wanted)
             if not flags & NO_AUTOLOADING and (state.unique, act.unique) in self.saved:
                 wanted = list(self.saved[(state.unique, act.unique)])  # the user's key wins
-            kept = [
-                k
-                for k in wanted
-                if k not in self.owned and not self._held_by_other(k, state.unique)
-            ]
+            kept = list(wanted)  # the real service does not refuse a key another component holds
             act.keys = kept
             if flags & SET_PRESENT:
                 act.present = True
