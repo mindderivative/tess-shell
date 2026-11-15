@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from dbus_fast import Variant
 
+from tess_shell.services.portal import INTERFACE_NAMESPACE
 from tests.fake_portal import HAVE_DAEMON, fake_portal
 from tests.shell_samples import BODY, write_example
 from tests.sway import PrivateSway
@@ -58,6 +59,28 @@ def test_a_scheme_change_on_the_bus_reaches_the_bar_within_100_ms(
             if shell.process.poll() is None:
                 shell.process.kill()
     # the engine's own wgpu noise on a headless compositor is not the shell's: only its log lines
+    assert not any("| ERROR " in x for x in shell.seen), "".join(shell.seen)
+
+
+def test_the_desktops_animations_switch_and_icon_theme_and_font_reach_the_running_shell(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    with fake_portal() as (address, portal):
+        shell = start(private_sway, tmp_path, address)
+        try:
+            shell.wait_for("Bar Top_Bar on HEADLESS-1 configured")
+            shell.wait_for("portal: appearance")
+            assert portal.settings.calls.count("ReadAll") == 1
+            assert not any("reduced motion True" in x for x in shell.seen)
+            portal.set("icon-theme", Variant("s", "Papirus"), INTERFACE_NAMESPACE)
+            portal.set("font-name", Variant("s", "Noto Sans 11"), INTERFACE_NAMESPACE)
+            shell.wait_for("icon_theme='Papirus', font_family='Noto Sans'")
+            portal.set("enable-animations", Variant("b", False), INTERFACE_NAMESPACE)
+            shell.wait_for("reduced motion True")  # no reduced-motion key was set
+            finish(shell)
+        finally:
+            if shell.process.poll() is None:
+                shell.process.kill()
     assert not any("| ERROR " in x for x in shell.seen), "".join(shell.seen)
 
 

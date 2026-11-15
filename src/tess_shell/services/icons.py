@@ -32,7 +32,7 @@ from typing import Any
 from loguru import logger
 
 from tess_shell._vendor import tess_utils
-from tess_shell.services.api import ModuleIcons
+from tess_shell.services.api import ModuleIcons, Subscription
 
 Register = Callable[[int, int, bytes], str]  # (width, height, RGBA) -> a reference to the pixels
 MAX_SIDE = 1024  # an icon larger than this in either side is refused
@@ -123,8 +123,8 @@ def _read_index(path: Path) -> configparser.RawConfigParser | None:
 
 
 def desktop_theme(config_home: Path) -> str:
-    """The user's icon theme: ``kdeglobals`` ``[Icons] Theme``, else ``hicolor`` (Tray Module,
-    open question 6; the Settings portal offers no icon theme as far as it was read)."""
+    """The theme the desktop's files name: ``kdeglobals`` ``[Icons] Theme``, else ``hicolor``. The
+    Settings portal's ``icon-theme`` comes before it (``IconService.set_portal_theme``)."""
     parser = _read_index(config_home / "kdeglobals")
     if parser is not None and parser.has_section("Icons"):
         name = parser.get("Icons", "Theme", fallback="").strip()
@@ -172,7 +172,10 @@ class IconService:
         config_home: Path | None = None,
     ) -> None:
         self._register = register
-        self._theme = theme
+        self._theme = theme  # fixed by the caller: beats the portal and kdeglobals
+        self._portal_theme: str | None = None  # the Settings portal's icon-theme
+        self._file_theme: str | None = None  # kdeglobals, read once and only when needed
+        self._listeners: list[Callable[[], None]] = []
         self._bases = list(bases) if bases is not None else default_bases()
         self._pixmaps = pixmaps
         env = os.environ
@@ -194,17 +197,50 @@ class IconService:
 
     @property
     def theme(self) -> str:
-        """The user's icon theme name (read once, from ``kdeglobals``)."""
+        """The user's icon theme name: the one set by ``set_theme``, else the Settings portal's,
+        else ``kdeglobals`` (read once), else ``hicolor``."""
         with self._lock:
-            if self._theme is None:
-                self._theme = desktop_theme(self._config_home)
-            return self._theme
+            if self._theme is not None:
+                return self._theme
+            if self._portal_theme:
+                return self._portal_theme
+            if self._file_theme is None:
+                self._file_theme = desktop_theme(self._config_home)
+            return self._file_theme
 
     def set_theme(self, name: str) -> None:
         """The user changed the theme: forget every index and result."""
         with self._lock:
             self._theme = name
             self.invalidate()
+
+    def set_portal_theme(self, name: str | None) -> None:
+        """The Settings portal's ``icon-theme`` (``None``: it names none). A change forgets every
+        index and result and calls the listeners, which make their icons again. Reads no file."""
+        with self._lock:
+            if name == self._portal_theme:
+                return
+            self._portal_theme = name
+            self.invalidate()
+            listeners = list(self._listeners)
+        for listener in listeners:
+            try:
+                listener()
+            except Exception:
+                logger.opt(exception=True).error("icons: a theme listener failed")
+
+    def on_theme_changed(self, callback: Callable[[], None]) -> Callable[[], None]:
+        """Call ``callback`` (on the thread that changed the theme) after the theme changed; it
+        returns the function that stops it."""
+        with self._lock:
+            self._listeners.append(callback)
+
+        def cancel() -> None:
+            with self._lock:
+                if callback in self._listeners:
+                    self._listeners.remove(callback)
+
+        return cancel
 
     def invalidate(self) -> None:
         """Forget every index and every cached result: the next lookup reads the folders again."""
@@ -432,11 +468,28 @@ def _best(hits: Sequence[_Hit], size: int) -> str:
     return max(hits, key=lambda h: h.directory.pixels).path
 
 
+class _Subscription:
+    def __init__(self, cancel: Callable[[], None]) -> None:
+        self.cancel = cancel
+
+
 class _ModuleIcons:
-    """``ctx.icons`` of one module: the three lookups and nothing of the service's internals."""
+    """``ctx.icons`` of one module: the three lookups, the theme-change callback and nothing of
+    the service's internals."""
 
     def __init__(self, service: IconService) -> None:
         self._service = service
+        self._cancels: list[Callable[[], None]] = []
+
+    def on_theme_changed(self, callback: Callable[[], None]) -> Subscription:
+        cancel = self._service.on_theme_changed(callback)
+        self._cancels.append(cancel)
+        return _Subscription(cancel)
+
+    def close(self) -> None:
+        for cancel in self._cancels:
+            cancel()
+        self._cancels.clear()
 
     def theme_icon(self, name: str, size: int, theme_path: str | None = None) -> str | None:
         return self._service.theme_icon(name, size, theme_path)

@@ -314,6 +314,9 @@ class ModuleContext:
         if self._audio is not None:
             self._audio.close()
             self._audio = None
+        if self._icons is not None:
+            self._icons.close()
+            self._icons = None
         if self._tray is not None:
             self._tray.close()
             self._tray = None

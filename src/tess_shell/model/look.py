@@ -169,7 +169,7 @@ def _motion(
     """The motion a block asks for, as it is with this look: a ``Transition`` with no ``Duration``
     takes the theme's medium duration (200 ms without a theme), and under reduced motion every
     duration is 0 and a Marquee does not scroll (Accessibility > Rules, 7)."""
-    reduced = look is not None and look.appearance.reduced_motion
+    reduced = look is not None and look.appearance.motion_reduced
     if "Transition" in props or "Transition" in style:
         table = props if "Duration" in props else style
         if "Duration" not in table:

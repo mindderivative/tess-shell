@@ -9,7 +9,13 @@ from dbus_fast import Variant
 
 from tess_shell.appearance import Appearance
 from tess_shell.services.bus import ServiceThread
-from tess_shell.services.portal import PortalReader, apply_key, parse
+from tess_shell.services.portal import (
+    INTERFACE_NAMESPACE,
+    NAMESPACE,
+    PortalReader,
+    apply_key,
+    parse,
+)
 from tests.fake_portal import HAVE_DAEMON, fake_portal, wait_for
 
 needs_daemon = pytest.mark.skipif(not HAVE_DAEMON, reason="dbus-daemon is not installed")
@@ -18,10 +24,12 @@ needs_daemon = pytest.mark.skipif(not HAVE_DAEMON, reason="dbus-daemon is not in
 def test_parse_reads_the_four_keys() -> None:
     got = parse(
         {
-            "color-scheme": Variant("u", 2),
-            "accent-color": Variant("(ddd)", [0.0, 0.5, 1.0]),
-            "contrast": Variant("u", 1),
-            "reduced-motion": Variant("u", 1),
+            NAMESPACE: {
+                "color-scheme": Variant("u", 2),
+                "accent-color": Variant("(ddd)", [0.0, 0.5, 1.0]),
+                "contrast": Variant("u", 1),
+                "reduced-motion": Variant("u", 1),
+            }
         }
     )
     assert got == Appearance("light", (0, 128, 255), True, True)
@@ -40,7 +48,7 @@ def test_parse_reads_the_four_keys() -> None:
 def test_odd_values_fall_back_to_the_defaults(
     key: str, value: object, expected: Appearance
 ) -> None:
-    assert apply_key(Appearance(), key, value) == expected
+    assert apply_key(Appearance(), NAMESPACE, key, value) == expected
 
 
 @needs_daemon
@@ -52,7 +60,9 @@ def test_it_registers_first_reads_once_and_follows_changes() -> None:
         reader = PortalReader(service, lambda a: seen.append((time.monotonic(), a)))
         try:
             reader.start()
-            assert reader.first(2.0) == Appearance("dark", (64, 128, 255), False, False)
+            assert reader.first(2.0) == Appearance(
+                "dark", (64, 128, 255), False, False, True, "breeze-dark", "Hack Nerd Font"
+            )
             assert portal.settings.calls == ["Register", "ReadAll"]  # Register before any read
             assert portal.registry.ids == ["io.github.mindderivative.TesseraeShell"]
             sent = time.monotonic()
@@ -62,6 +72,8 @@ def test_it_registers_first_reads_once_and_follows_changes() -> None:
             assert arrived - sent < 0.1  # the 100 ms budget, signal to callback
             portal.set("reduced-motion", Variant("u", 1))
             assert wait_for(lambda: seen[-1][1].reduced_motion)
+            portal.set("icon-theme", Variant("s", "Papirus"), INTERFACE_NAMESPACE)
+            assert wait_for(lambda: seen[-1][1].icon_theme == "Papirus")
             assert portal.settings.calls.count("ReadAll") == 1  # signals only, no polling
         finally:
             reader.stop()

@@ -1,16 +1,17 @@
 """Follow the desktop's appearance through the Settings portal (Portals > The Settings Portal).
 
-One ``ReadAll`` of ``org.freedesktop.appearance`` at start, then ``SettingChanged`` only: no
-polling. Everything runs on the D-Bus service thread; ``on_change`` is called there and its
-caller crosses to the loop thread with ``call_soon``. A missing portal, a failed read or an odd
-value gives the defaults and one warning; the reader tries again when the portal service
-reappears on the bus.
+One ``ReadAll`` of ``org.freedesktop.appearance`` and ``org.gnome.desktop.interface`` (icon theme,
+UI font, ``enable-animations``) at start, then ``SettingChanged`` only: no polling. Everything runs
+on the D-Bus service thread; ``on_change`` is called there and its caller crosses to the loop thread
+with ``call_soon``. A missing portal, a failed read or an odd value gives the defaults and one
+warning; the reader tries again when the portal service reappears on the bus.
 """
 
 from __future__ import annotations
 
 import asyncio
 import concurrent.futures
+import re
 import threading
 from collections.abc import Callable, Mapping
 from dataclasses import replace
@@ -27,6 +28,8 @@ APP_ID = "io.github.mindderivative.TesseraeShell"
 PORTAL = "org.freedesktop.portal.Desktop"
 PATH = "/org/freedesktop/portal/desktop"
 NAMESPACE = "org.freedesktop.appearance"
+INTERFACE_NAMESPACE = "org.gnome.desktop.interface"  # icon-theme, font-name, enable-animations
+NAMESPACES = [NAMESPACE, INTERFACE_NAMESPACE]
 SETTINGS = "org.freedesktop.portal.Settings"
 REGISTRY = "org.freedesktop.host.portal.Registry"
 
@@ -48,10 +51,53 @@ def _accent(raw: Any) -> tuple[int, int, int] | None:
     return (round(r * 255), round(g * 255), round(b * 255))
 
 
-def apply_key(current: Appearance, key: str, raw: Any) -> Appearance:
-    """``current`` with one portal key applied; a key it does not know leaves it as it is, and an
-    unknown value of a ``u`` key counts as 0 (the portal documentation)."""
+_STYLE_WORDS = frozenset(
+    {
+        "thin", "ultra-light", "extra-light", "light", "semi-light", "book", "regular", "normal",
+        "medium", "semi-bold", "demi-bold", "bold", "ultra-bold", "extra-bold", "heavy", "black",
+        "italic", "oblique", "ultra-condensed", "extra-condensed", "condensed", "semi-condensed",
+        "semi-expanded", "expanded", "extra-expanded", "ultra-expanded", "small-caps",
+    }
+)  # fmt: skip
+
+
+def font_family(raw: Any) -> str | None:
+    """The family of a Pango font description (``Hack Nerd Font  10``, ``Noto Sans Bold 11``,
+    ``Sans, Serif Italic 9.5``): the first family, without the style words and the size; ``None``
+    for anything that is not a non-empty string."""
     value = _unwrap(raw)
+    if not isinstance(value, str):
+        return None
+    words = value.replace(",", ", ").split()
+    if words and re.fullmatch(r"\d+(\.\d+)?", words[-1]):
+        words.pop()
+    while len(words) > 1 and words[-1].lower() in _STYLE_WORDS:
+        words.pop()
+    family = " ".join(words).split(",")[0].strip()
+    return family or None
+
+
+def _text(raw: Any) -> str | None:
+    value = _unwrap(raw)
+    return value.strip() or None if isinstance(value, str) else None
+
+
+def apply_key(current: Appearance, namespace: str, key: str, raw: Any) -> Appearance:
+    """``current`` with one portal key applied; a key it does not know leaves it as it is, and an
+    unknown value of a ``u`` key counts as 0 (the portal documentation). A value of the wrong type
+    is the key's default (the other keys still apply)."""
+    value = _unwrap(raw)
+    if namespace == INTERFACE_NAMESPACE:
+        match key:
+            case "icon-theme":
+                return replace(current, icon_theme=_text(value))
+            case "font-name":
+                return replace(current, font_family=font_family(value))
+            case "enable-animations":
+                return replace(current, animations=value if isinstance(value, bool) else True)
+        return current
+    if namespace != NAMESPACE:
+        return current
     match key:
         case "color-scheme":
             return replace(current, scheme=_SCHEMES.get(value, "default"))
@@ -64,10 +110,12 @@ def apply_key(current: Appearance, key: str, raw: Any) -> Appearance:
     return current
 
 
-def parse(values: Mapping[str, Any]) -> Appearance:
+def parse(values: Mapping[str, Mapping[str, Any]]) -> Appearance:
+    """The look from a ``ReadAll`` reply: namespace -> key -> value."""
     result = Appearance()
-    for key, raw in values.items():
-        result = apply_key(result, key, raw)
+    for namespace, keys in values.items():
+        for key, raw in keys.items():
+            result = apply_key(result, namespace, key, raw)
     return result
 
 
@@ -164,9 +212,9 @@ class PortalReader:
         try:
             await self._register()
             reply = await bus.call(
-                PORTAL, PATH, SETTINGS, "ReadAll", "as", [[NAMESPACE]], timeout=CALL_TIMEOUT
+                PORTAL, PATH, SETTINGS, "ReadAll", "as", [NAMESPACES], timeout=CALL_TIMEOUT
             )
-            self._settle(parse(reply[0].get(NAMESPACE, {})), initial=first)
+            self._settle(parse(reply[0]), initial=first)
         except ServiceUnavailable as exc:
             if exc.service == f"{bus.kind} bus":
                 self._warn(f"the {bus.kind} bus is {exc.detail}; using the default appearance")
@@ -205,8 +253,8 @@ class PortalReader:
 
     def _setting_changed(self, message: Message) -> None:
         namespace, key, value = message.body
-        if namespace == NAMESPACE:
-            self._settle(apply_key(self.current, key, value), initial=False)
+        if namespace in NAMESPACES:
+            self._settle(apply_key(self.current, namespace, key, value), initial=False)
 
     def _owner_changed(self, old: str | None, new: str | None) -> None:
         if new is not None:

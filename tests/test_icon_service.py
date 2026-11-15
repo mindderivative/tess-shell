@@ -288,10 +288,10 @@ def test_the_index_of_a_theme_chain_is_built_in_under_100_ms(tmp_path: Path) -> 
     assert icons.stats.folder_reads == 18
 
 
-def test_a_module_gets_only_the_three_lookups(tmp_path: Path) -> None:
+def test_a_module_gets_only_the_lookups_and_the_theme_callback(tmp_path: Path) -> None:
     icons, _ = service(tmp_path)
     helper = icons.for_module("Tray")
     public = {n for n in dir(helper) if not n.startswith("_")}
-    assert public == {"theme_icon", "pixmap_icon", "png_icon"}
+    assert public == {"theme_icon", "pixmap_icon", "png_icon", "on_theme_changed", "close"}
     with pytest.raises(AttributeError):
         helper.invalidate  # type: ignore[attr-defined]  # noqa: B018

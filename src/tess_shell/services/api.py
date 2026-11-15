@@ -339,6 +339,17 @@ class ModuleIcons(Protocol):
         naming ``source``) when it cannot be decoded."""
         ...
 
+    def on_theme_changed(self, callback: Callable[[], None]) -> Subscription:
+        """Call ``callback()`` when the desktop's icon theme changed (the Settings portal's
+        ``icon-theme``): every reference made before it came from the old theme, so make the
+        icons again. It runs on the thread that learned of the change: do no blocking work in it.
+        The shell cancels the subscription when the module stops."""
+        ...
+
+    def close(self) -> None:
+        """Cancel every subscription of the module."""
+        ...
+
 
 class IconsPort(Protocol):
     """What the module host needs of the icon service."""
