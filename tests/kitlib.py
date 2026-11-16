@@ -435,6 +435,23 @@ class Systemd:
         return [line.split()[0] for line in done.stdout.splitlines() if line.split()]
 
 
+_SYSTEMD_WORKS: list[bool] = []
+
+
+def systemd_works() -> bool:
+    """Whether a private ``systemd --user`` manager can be started on this machine (asked once).
+    The binary can be there while the manager cannot run: a CI runner has systemd but is not a
+    login session, and the manager exits at once. A test or a step then skips with that reason
+    instead of failing."""
+    if not _SYSTEMD_WORKS:
+        try:
+            with private_bus() as bus, private_systemd(bus):
+                _SYSTEMD_WORKS.append(True)
+        except SandboxError, OSError:
+            _SYSTEMD_WORKS.append(False)
+    return _SYSTEMD_WORKS[0]
+
+
 @contextlib.contextmanager
 def private_systemd(bus: Bus) -> Iterator[Systemd]:
     """A ``systemd --user`` manager inside ``bus`` (its own runtime, so its units, its
