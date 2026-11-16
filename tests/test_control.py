@@ -250,6 +250,8 @@ def test_introspection_lists_the_methods_properties_and_signals() -> None:
         "ClosePopup",
         "Call",
         "SetLogLevel",
+        "FullscreenState",  # the KWin script reports a fullscreen window per output
+        "WindowsState",  # and the window list (M5g)
     }
     assert props == {"State", "Version", "ApiVersion"}
     assert signals == {"Reloaded", "ErrorReported", "SurfaceChanged"}
