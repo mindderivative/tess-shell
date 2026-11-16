@@ -106,7 +106,7 @@ def apply_key(current: Appearance, namespace: str, key: str, raw: Any) -> Appear
         case "contrast":
             return replace(current, high_contrast=value == 1)
         case "reduced-motion":
-            return replace(current, reduced_motion=value == 1)
+            return replace(current, _reduced_motion_key=value == 1)
     return current
 
 

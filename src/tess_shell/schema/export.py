@@ -1,5 +1,5 @@
 """The shell's schema as plain JSON, for a configuration application that builds forms from it
-(``tesserae-shell schema --json``; the shape is version 1.5, see ``schema_version``).
+(``tesserae-shell schema --json``; the shape is version 1.6, see ``schema_version``).
 
 Everything is read from the tables the loader uses, so there is no second list of keys to drift:
 :mod:`tess_shell.schema.blocks` (blocks, surfaces, kinds, choices, required keys, events, what is
@@ -36,8 +36,8 @@ from tess_shell.config import settings as cfg
 from tess_shell.config.paths import FOLDERS
 from tess_shell.schema import blocks, default_popups, docs
 from tess_shell.schema import keys as chords
+from tess_shell.schema.look import DEFAULT_FONT, STYLE_UNION, SYSTEM_FONT, read_theme, token_kind
 from tess_shell.schema.look import GROUPS as THEME_GROUPS
-from tess_shell.schema.look import STYLE_UNION, read_theme, token_kind
 from tess_shell.schema.model import (
     PARAM_TYPES,
     BarDef,
@@ -57,7 +57,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.5"
+SCHEMA_VERSION = "1.6"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -1162,6 +1162,23 @@ def _tokens() -> dict[str, dict[str, Json]]:
     return out
 
 
+def _system_tokens() -> list[Json]:
+    """The tokens the shell supplies to every theme (not written in the shipped theme, so not in
+    ``tokens``): a theme's own value for one wins over the shell's."""
+    kind, fields = _kind_fields("font_family", "Theme", "font_family", ())
+    return [
+        {
+            "name": SYSTEM_FONT,
+            "ref": f"${SYSTEM_FONT}",
+            "kind": kind,
+            "default": DEFAULT_FONT,
+            "doc": docs.SYSTEM_TOKEN_DOCS[SYSTEM_FONT],
+            "theme_wins": True,
+            **fields,
+        }
+    ]
+
+
 # -- events, actions ------------------------------------------------------------------------------
 
 
@@ -1502,6 +1519,7 @@ def schema_dict() -> Json:
         "actions": _actions(),
         "enums": {name: list(words) for name, words in NAMED_ENUMS.items()},
         "tokens": _tokens(),
+        "system_tokens": _system_tokens(),
         "modules": _modules(),
         "popups": _popups(),
         "shortcuts": _shortcuts(),

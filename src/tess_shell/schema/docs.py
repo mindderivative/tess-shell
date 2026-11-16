@@ -676,6 +676,14 @@ ACTION_DOCS: dict[str, str] = {
     "Call": "Runs a module's @action: Target is Module.action, the other keys are its arguments.",
 }
 
+SYSTEM_TOKEN_DOCS: dict[str, str] = {
+    "type.system.font_family": "The family of the desktop's UI font (the family of the Settings "
+    "portal's font-name, without its style and size), for a Font_Family: $type.system.font_family. "
+    "While the desktop names no font it holds the family the shell uses for text that sets none "
+    "(the default, Roboto, which the shell's renderer bundles). A theme that sets this token "
+    "itself keeps its own value over the desktop's.",
+}
+
 TOKEN_DOCS: dict[str, str] = {
     "color.surface": "The ground of bars and panels.",
     "color.surface_raised": "A surface above the ground: popups, buttons, tooltips.",

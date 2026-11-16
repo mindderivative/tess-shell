@@ -107,7 +107,7 @@ def test_toggle_thumb_eases_and_switches_at_once_under_reduced_motion() -> None:
         assert 3 < thumb.get("margin_left") < 21  # on its way
         w.advance(500)
         assert thumb.get("margin_left") == 21
-    with running("Toggle { }", appearance=Appearance(reduced_motion=True)) as w:
+    with running("Toggle { }", appearance=Appearance(animations=False)) as w:
         w.window.simulate("click", node=w.of_use("Toggle", "Root"))
         w.advance(16)
         assert w.of_use("Toggle", "Thumb").get("margin_left") == 21

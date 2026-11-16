@@ -148,8 +148,8 @@ def test_every_token_the_shipped_files_use_passes_the_range_of_its_key_in_every_
         Appearance(),
         Appearance(scheme="light"),
         Appearance(high_contrast=True),
-        Appearance(reduced_motion=True),
-        Appearance(scheme="light", high_contrast=True, reduced_motion=True),
+        Appearance(animations=False),
+        Appearance(scheme="light", high_contrast=True, animations=False),
     ):
         tokens = effective_tokens(default, appearance)
         for _file, key, reference in used:

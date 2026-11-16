@@ -113,7 +113,7 @@ def test_showing_again_while_it_leaves_turns_it_round_from_where_it_is() -> None
 
 
 def test_reduced_motion_shows_and_hides_at_once() -> None:
-    m = manager(panel=SLIDE, hide_mode="KEEP", appearance=Appearance(reduced_motion=True))
+    m = manager(panel=SLIDE, hide_mode="KEEP", appearance=Appearance(animations=False))
     s = surface(m, "Drawer")
     m.show(s)
     assert s.window is not None

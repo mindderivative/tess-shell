@@ -644,6 +644,9 @@ class Port:
     def close_named(self, name: str | None = None) -> None:
         self.closed.append(name)
 
+    def update_data(self, name: str, data: Any) -> bool:
+        return False
+
     def is_open(self, name: str) -> bool:
         return False
 

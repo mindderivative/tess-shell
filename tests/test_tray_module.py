@@ -477,6 +477,61 @@ def test_layout_updated_while_the_menu_is_open_rebuilds_its_entries(tmp_path: Pa
             assert w.manager.popups.current is None
 
 
+def quit_icon(op: Any) -> str:
+    (icon,) = [e["icon"] for e in op.caller.data["menus"]["0"] if e["text"] == "Quit"]
+    return str(icon)
+
+
+@needs_daemon
+def test_an_open_menu_takes_the_icons_of_a_new_icon_theme_and_stays_open(tmp_path: Path) -> None:
+    with tray_desk(tmp_path, theme=None) as t:
+        for name, fill in (("Portal", "#00ff00"), ("Kde", "#ff00ff")):
+            write_theme(
+                t.theme, name, [Dir("scalable/apps", 48, "Scalable", {"app-quit.svg": svg(fill)})]
+            )
+        t.icons.set_portal_theme("Kde")
+        item = t.item(menu=sample_tree())
+        up(t, item)
+        with tray_shell(t) as w:
+            assert settle(t, w, lambda: ids(w) == [item.registered])
+            op = open_menu(t, w, item)
+            assert "#ff00ff" in quit_icon(op)
+            assert item.menu is not None
+            calls = len(item.menu.calls)
+            before = labels(op)
+            t.icons.set_portal_theme("Portal")  # what the app does on the portal's signal
+            assert settle(t, w, lambda: "#00ff00" in quit_icon(op)), w.log()[-3000:]
+            # the same Popup, still open, with the same rows; no new read of the menu
+            assert w.manager.popups.current is op and not op.closing
+            assert labels(op) == before
+            assert len(item.menu.calls) == calls
+            assert w.warnings() == [], w.warnings()
+            # the entries still work after the data was given again
+            op.window.simulate("click", node=row(op, "Quit"))
+            assert wait_for(lambda: item.menu.clicked() == [7])
+
+
+@needs_daemon
+def test_a_theme_change_with_the_menu_closed_opens_nothing_and_the_next_menu_is_new(
+    tmp_path: Path,
+) -> None:
+    with tray_desk(tmp_path, theme=None) as t:
+        for name, fill in (("Portal", "#00ff00"), ("Kde", "#ff00ff")):
+            write_theme(
+                t.theme, name, [Dir("scalable/apps", 48, "Scalable", {"app-quit.svg": svg(fill)})]
+            )
+        t.icons.set_portal_theme("Kde")
+        item = t.item(menu=sample_tree())
+        up(t, item)
+        with tray_shell(t) as w:
+            assert settle(t, w, lambda: ids(w) == [item.registered])
+            t.icons.set_portal_theme("Portal")
+            settle(t, w, lambda: False, 0.4)
+            assert w.manager.popups.current is None
+            op = open_menu(t, w, item)
+            assert "#00ff00" in quit_icon(op)
+
+
 @needs_daemon
 def test_an_item_that_leaves_while_its_menu_is_open_closes_the_menu(tmp_path: Path) -> None:
     with tray_desk(tmp_path) as t:
