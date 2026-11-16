@@ -140,8 +140,11 @@ PART 3: the commands
 
 def main() -> None:
     if ROOT.exists():
-        shutil.rmtree(ROOT)
-    ROOT.mkdir(parents=True)
+        for child in ROOT.iterdir():
+            if child.name == "backup":
+                continue  # the maintainer's copy of kwinrc and kwinrulesrc: never deleted
+            shutil.rmtree(child) if child.is_dir() else child.unlink()
+    ROOT.mkdir(parents=True, exist_ok=True)
     state = ROOT / "state"
     state.mkdir()
     for name, text in CONFIGS.items():
