@@ -58,9 +58,11 @@ default, event, action, theme token and `settings.tdl` key the loader accepts, w
 documentation for each, so a configuration application can build its forms from it. It is read from
 the loader's own tables (`tess_shell.schema.export.schema_json()`; `schema_dict()` is the same as
 plain data), so it cannot list a key the loader refuses or miss one it accepts, and two runs give the
-same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.7 (the notes below say what each version added).
+same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.8 (the notes below say what each version added).
 
 Since 1.1: a key's `default` is what tre reads on a bare block (the binder builds it headless and
+
+Since 1.8 (additive): the shipped module `Applications` (its four params, `modules` section), the event `On_Key_Down` (a TextField raises it; `events` section) and `panels`, a section beside `popups` that lists the Panels the shell provides (`Launcher`: the module it holds, its layer and keyboard, one line of documentation, and `when` it is added to a shell).
 
 Since 1.7 (additive): the `KWin` settings section (`Script`, `Hide_On_Fullscreen`) and the shipped modules `Tasks` and `Task_Item` (their params, `modules` section).
 
@@ -213,6 +215,25 @@ Settings {
 - **`Shortcut_Mode: true`** on a Bar, Panel, Frame or strip (`Edges { Top { Shortcut_Mode: true } }`) starts the shell in the mode on that surface. At most one is true: two written true are one load warning naming both with `file:line:column`, and the first in document order keeps it; a reload that changes a written value follows the same rules, and a reload that changes nothing leaves the mode as the run made it. A surface that closes or hides while it has the focus passes the focus to the next surface in order; if it was the one in the mode, the mode ends.
 - **From a module:** `self.ctx.focus.default = "Dock"` names the surface that has the focus when the mode is entered (`None`: the Frame), and `self.ctx.focus.set_mode("Dock", True)` puts that surface in the mode (False on the one in the mode leaves it); both on the loop thread, a name that is no surface is one logged error naming the nearest.
 - Entering and leaving the mode, and each move, set a polite status text on the window that has the focus. `Next_Focus` and the like are logged at `Logging { Level: DEBUG }` (`shortcut mode: mode Screen_Frame, focus Notes`).
+
+## Launcher (M6d)
+
+A text field over the installed applications, opened by a key and operated from the keyboard alone. The module is `Applications`; the shell ships a Panel named `Launcher` that holds it, so one line in `settings.tdl` gives you a launcher:
+
+```tdl
+Settings {
+  Shortcuts { Toggle_Launcher: "Meta+Space" }   # or: Button { On_Click { Action: Toggle, Target: Launcher } }
+}
+```
+
+The shipped Panel is added to the main shell's first Monitor when a `Shortcuts` entry (`Toggle_`, `Show_` or `Hide_Launcher`) or a `Show`, `Hide` or `Toggle` handler names `Launcher` and the file writes no Panel of that name (a shell that never names it gets no extra surface; a Panel you write called `Launcher` replaces it whole; `tesserae-shell schema --json` has it under `panels`). It is a floating 480 by 400 Panel on the overlay layer with `Keyboard: EXCLUSIVE` (so the field has the keyboard when it opens from a global key on a compositor that does not hand focus to an `ON_DEMAND` layer surface; hidden, it takes none).
+
+- **Opening.** The field takes the keyboard focus and its text is selected, so typing starts a new search. **Typing** narrows the list within one frame (every word of the query must match, without case and accents; best rank first: start of the name, start of a word of the name, anywhere in the name, start of a word of the generic name or a keyword, anywhere in the generic name, a keyword or the comment; equal ranks by how often you started the application, then by name) and selects the first row. An empty query lists the most started first, then the rest by name; `max_results` (8), `show_comment` (the generic name, else the comment, under the name), `icon_size` (24) and `placeholder` are the module's params.
+- **Keys.** Down and Up move the selection and wrap; Page Down and Page Up move by the rows shown and stop at the ends; Enter starts the selected row; **Escape** clears the field and, with it empty, hides the Panel. A click on a row starts it; hovering a row changes nothing. The text field keeps the keyboard throughout: the list's keys reach the module through `On_Key_Down` of the field.
+- **Starting.** The application is started detached, so it outlives the shell: in a transient user scope named `app-<id>-<random>.scope` when `systemd-run --user --scope` works, else as a plain process in a session of its own with no standard streams; the working folder is the entry's `Path` (else your home); the environment is the shell's without the shell's own variables (`NOTIFY_SOCKET`, `INVOCATION_ID`, `TESS_SHELL_*`...); `XDG_ACTIVATION_TOKEN` is the token the Panel's window asked the compositor for inside the Enter or click (`Window.request_activation_token`, tre 0.6.8), and without one (the callback gets `None`) the application starts without it and the log says so at debug. `Exec` follows the Desktop Entry Specification: its quoting rules, `%f %F %u %U` removed, `%i` as `--icon <Icon>`, `%c` the name, `%k` the file's path, `%%`; `Terminal=true` runs through `xdg-terminal-exec` (not on the path: one warning, nothing starts). A program that is not there, or a missing `Exec`, keeps the Panel open with "Could not start <name>". After a start the field is empty and the Panel hidden; the count of starts per application is a JSON file in the state folder (`launcher-counts.json`).
+- **The index** is the desktop-entry index of the icon lookup (`XDG_DATA_HOME` and `XDG_DATA_DIRS`, built on a worker thread on first use, followed with inotify: an entry file that comes or goes changes the list with no restart; without a watch the list is built again when the Panel opens). `ctx.apps` gives a module `ready`, `search(query, limit)`, `get(id)`, `launch(id)`, `on_changed(callback)`; `ctx.surface` gives `hide()`, `focus(name, select_all=...)` and `on_shown(callback)` for the Panel a module is on.
+- **Not in v1:** files, a calculator, web search, desktop actions of an entry, categories, a grid, pinned favourites; a click outside the Panel does not hide it (the Panel has the keyboard exclusively; Escape or the key hides it).
+- **Tests never start a process:** the real starter refuses while a test runs (`PYTEST_CURRENT_TEST`), or appends what it would have started to the file `TESS_SHELL_LAUNCH_RECORD` names; `tests/kwin/prepare_launcher.py` writes `/tmp/tess-kwin-launcher` (starts nothing), the hand check of a real start and of focus after it.
 
 ## KWin integration and Tasks (M5g)
 

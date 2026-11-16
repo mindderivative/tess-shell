@@ -135,6 +135,18 @@ def conflicts(
     return _resolve(monitors, outputs)[1]
 
 
+class _Cancel:
+    """A subscription that runs one function."""
+
+    __slots__ = ("_fn",)
+
+    def __init__(self, fn: Callable[[], None]) -> None:
+        self._fn = fn
+
+    def cancel(self) -> None:
+        self._fn()
+
+
 @dataclass(slots=True)
 class Surface:
     key: str  # the Bar's dotted path, with the output when a block opens on several
@@ -514,6 +526,7 @@ class SurfaceManager:
         # surface that has the OS's keyboard focus (``None``: none of ours)
         self.focus_order: list[str] = []
         self.focused: str | None = None
+        self._shown_listeners: list[Callable[[tuple[str, ...]], None]] = []
         # shortcut mode: the rules, and what a change does to the windows (surfaces/mode_driver.py)
         self.mode = ModeDriver(self)
         self.mode.set_keyboard(mode_keyboard)
@@ -1256,6 +1269,7 @@ class SurfaceManager:
             self._trace(s, "shown")
             logger.info(f"Panel {s.planned.where} shown (surface kept)")
             self._enter(s)
+            self._shown(s)
             return
         fresh = self._make_window(s.planned, self.new_live(self._all_uses))
         assert fresh.window is not None
@@ -1272,6 +1286,7 @@ class SurfaceManager:
         self._trace(s, "shown")
         logger.info(f"Panel {s.planned.where} shown (window created)")
         self._enter(s)
+        self._shown(s)
 
     # -- Panel: animation (Panel > Configuration, Animation) -------------------------------------
     #
@@ -1440,6 +1455,99 @@ class SurfaceManager:
         )
 
     # -- the control interface ----------------------------------------------------------------
+
+    # -- what a module asks of its own surface (ctx.surface, ctx.apps) -----------------------------
+
+    def _find_use(self, use_key: str) -> tuple[Surface, Use] | None:
+        """The Bar, Panel or hosted surface that holds the module use ``use_key``, and the use."""
+        for s in self.every_surface():
+            expanded = s.planned.expanded if s.planned is not None else s.expanded
+            for use in expanded.uses:
+                if use.key == use_key:
+                    return s, use
+        return None
+
+    def _surface_of_use(self, use_key: str) -> Surface | None:
+        found = self._find_use(use_key)
+        return found[0] if found else None
+
+    def hide_use(self, use_key: str) -> bool:
+        """``ctx.surface.hide()``: hide the Panel the use is on."""
+        s = self._surface_of_use(use_key)
+        if s is None or s.planned is None or _kind(s.planned.bar) != "Panel":
+            logger.error(f"ctx.surface.hide(): {use_key} is not on a Panel")
+            return False
+        self.hide(s)
+        return True
+
+    def watch_shown(self, callback: Callable[[tuple[str, ...]], None]) -> _Cancel:
+        """``ctx.surface.on_shown``: ``callback(use keys)`` for each Panel that is shown again."""
+        self._shown_listeners.append(callback)
+
+        def cancel() -> None:
+            if callback in self._shown_listeners:
+                self._shown_listeners.remove(callback)
+
+        return _Cancel(cancel)
+
+    def _shown(self, s: Surface) -> None:
+        keys = tuple(u.key for u in (s.planned.expanded.uses if s.planned else ()))
+        for callback in list(self._shown_listeners):
+            try:
+                callback(keys)
+            except Exception:
+                logger.opt(exception=True).error(f"a Panel {s.name} shown listener raised")
+
+    def focus_block(self, use_key: str, name: str, select_all: bool = False) -> bool:
+        """``ctx.surface.focus``: focus the block ``Name: name`` of the use (a TextField gives its
+        text input the focus), and with ``select_all`` select the field's text. A block of the
+        use's own layout is named ``Name``; a module the layout calls with ``Name: name`` is a use
+        of its own (its path is the use's, then ``.name``), and its blocks are what this finds."""
+        located = self._find_use(use_key)
+        view = located[0].view if located is not None else None
+        if located is None or view is None:
+            return False
+        surface, use = located
+        expanded = surface.planned.expanded if surface.planned is not None else surface.expanded
+        called = next((u.key for u in expanded.uses if u.name == f"{use.name}.{name}"), None)
+
+        def of_the_use(key: str) -> bool:
+            parts = key.split("/")
+            return (parts[-1] == name and use_key in parts[:-1]) or parts[0] == called
+
+        found = [key for key in view.nodes if of_the_use(key)]
+        for key in found:
+            wire = view.wires.get(key)
+            if wire is not None and wire.focus_target is not None:
+                found = [key]
+                break
+        for key in found:
+            wire = view.wires.get(key)
+            node = view.nodes[key]
+            target = wire.focus_target if wire is not None and wire.focus_target else node
+            if not target.get("focusable"):
+                continue
+            target.focus()
+            if select_all:
+                try:
+                    target.set(selection=(0, len(str(target.get("text") or ""))))
+                except ValueError, TypeError:  # not a text input
+                    pass
+            return True
+        logger.debug(f"ctx.surface.focus({name!r}): {use_key} has no such block")
+        return False
+
+    def request_token(self, use_key: str, callback: Callable[[str | None], None]) -> None:
+        """``ctx.apps.launch``: ask the engine for an activation token from the surface the use is
+        on (inside the key or click handler that starts the application). ``callback(None)`` when
+        the surface has no window or the engine has none to give."""
+        s = self._surface_of_use(use_key)
+        window = s.window if s is not None else None
+        if window is None:
+            logger.debug(f"activation token: {use_key} is on no open window")
+            callback(None)
+            return
+        window.request_activation_token(callback)
 
     def changed(self, name: str, shown: bool) -> None:
         """A Panel or a Frame was shown or hidden: tell the control interface (it makes the
@@ -1633,6 +1741,7 @@ class SurfaceManager:
 
     def _surface_active(self, name: str, active: bool) -> None:
         """The OS gave a surface of ours the keyboard focus (``active``), or took it away."""
+        logger.debug(f"surface {name}: keyboard {'gained' if active else 'lost'}")
         if active:
             self.focused = name
         elif self.focused == name:

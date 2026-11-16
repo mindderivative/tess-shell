@@ -1,7 +1,8 @@
 """The context (``self.ctx``): a module's whole view of the shell (Module Context).
 
 M2 offers ``name``, ``uid``, ``config``, ``log``, ``uses``, ``send`` and ``on_tick``; later
-milestones add ``popup``, ``dbus``, ``audio``, ``icons``, ``tray``, ``focus`` and ``windows``.
+milestones add ``popup``, ``dbus``, ``audio``, ``icons``, ``tray``, ``focus``, ``windows``, ``apps``
+and ``surface``.
 """
 
 from __future__ import annotations
@@ -15,17 +16,22 @@ from loguru import logger
 from tess_shell.logging import note_module_error
 from tess_shell.modules.ticks import Subscription, TimeSource
 from tess_shell.services.api import (
+    AppInfo,
+    AppsPort,
     AudioPort,
     DBusPort,
     IconsPort,
+    LaunchResult,
     ModuleAudio,
     ModuleDBus,
     ModuleIcons,
     ModuleTray,
     ModuleWindows,
+    SurfacePort,
     TrayPort,
     WindowsPort,
 )
+from tess_shell.services.api import Subscription as ServiceSubscription
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,6 +104,125 @@ class ModuleFocus:
         return self._port.set_mode(name, bool(value), f"ctx.focus.set_mode ({self._who})")
 
 
+class ModuleApps:
+    """``ctx.apps`` (Applications Module > The Application Index): the service's list, and a start
+    that asks the surface of the module's use for an activation token first (the token must come
+    from the handler of the key or click that starts the application). Loop thread only."""
+
+    def __init__(
+        self, port: AppsPort, surfaces: Callable[[], SurfacePort | None], ctx: ModuleContext
+    ) -> None:
+        self._port = port
+        self._surfaces = surfaces
+        self._ctx = ctx
+        self._subscriptions: list[ServiceSubscription] = []
+
+    @property
+    def ready(self) -> bool:
+        return self._port.ready
+
+    def search(self, query: str, limit: int = 8) -> list[AppInfo]:
+        return self._port.search(query, limit)
+
+    def get(self, app: str) -> AppInfo | None:
+        return self._port.get(app)
+
+    def launch(
+        self,
+        app: str,
+        *,
+        use: str | None = None,
+        on_done: Callable[[LaunchResult], None] | None = None,
+    ) -> None:
+        caller = self._ctx.caller
+        key = use if use is not None else (caller.key if caller is not None else None)
+        surfaces = self._surfaces()
+        if key is None or surfaces is None:
+            self._port.launch(app, None, on_done)
+            return
+
+        def got(token: str | None) -> None:
+            if token:
+                self._ctx.log.debug(f"activation token: received for {app}")
+            else:
+                self._ctx.log.debug(f"activation token: none for {app}: launching without one")
+            self._port.launch(app, token, on_done)
+
+        surfaces.request_token(key, got)
+
+    def on_changed(self, callback: Callable[[], None]) -> ServiceSubscription:
+        sub = self._port.on_changed(callback)
+        self._subscriptions.append(sub)
+        return sub
+
+    def refresh(self) -> None:
+        if not self._port.watching:
+            self._port.refresh()
+
+    def close(self) -> None:
+        for sub in self._subscriptions:
+            sub.cancel()
+        self._subscriptions.clear()
+
+
+class ModuleSurface:
+    """``ctx.surface``: the surface a module's use is on (a Panel, for ``hide``). The use is the
+    one that called (``ctx.caller``, set while an ``@action`` runs) or ``use``. Loop thread only."""
+
+    def __init__(self, ctx: ModuleContext, port: SurfacePort) -> None:
+        self._ctx = ctx
+        self._port = port
+        self._subscriptions: list[ServiceSubscription] = []
+
+    def _key(self, use: UseRecord | str | None, what: str) -> str | None:
+        if isinstance(use, UseRecord):
+            return use.key
+        if use is not None:
+            return use
+        if self._ctx.caller is not None:
+            return self._ctx.caller.key
+        self._ctx.log.error(
+            f"ctx.surface.{what}() needs the use: call it from an @action or pass use="
+        )
+        return None
+
+    def hide(self, use: UseRecord | str | None = None) -> bool:
+        """Hide the Panel the use is on (as ``Hide`` does). False, with one error logged, when the
+        use is on no Panel."""
+        key = self._key(use, "hide")
+        return key is not None and self._port.hide_use(key)
+
+    def focus(
+        self, name: str, *, select_all: bool = False, use: UseRecord | str | None = None
+    ) -> bool:
+        """Give the keyboard focus (inside the surface) to the block ``Name: name`` of the use, and
+        with ``select_all`` select its text, so the next key replaces it. False when the use has no
+        such block or it cannot take focus. The compositor decides whether the surface itself has
+        the keyboard (its ``Keyboard`` word)."""
+        key = self._key(use, "focus")
+        return key is not None and self._port.focus_block(key, name, select_all)
+
+    def on_shown(self, callback: Callable[[UseRecord], None]) -> ServiceSubscription:
+        """``callback(use)`` on the loop thread for each use of this module on a Panel that was just
+        shown (a Panel that shows again, from hidden). The shell cancels it when the module
+        stops."""
+
+        def shown(keys: tuple[str, ...]) -> None:
+            for key in keys:
+                use = self._ctx.uses.get(key)
+                if use is not None:
+                    callback(use)
+
+        sub = self._port.watch_shown(shown)
+        self._subscriptions.append(sub)
+        return sub
+
+    def close(self) -> None:
+        for sub in self._subscriptions:
+            sub.cancel()
+        self._subscriptions.clear()
+
+
 class ModuleContext:
     def __init__(
         self,
@@ -115,6 +240,8 @@ class ModuleContext:
         call_soon: Callable[[], Callable[[Callable[[], None]], None] | None] | None = None,
         focus: Callable[[], FocusPort | None] | None = None,
         windows: Callable[[], WindowsPort | None] | None = None,
+        apps: Callable[[], AppsPort | None] | None = None,
+        surfaces: Callable[[], SurfacePort | None] | None = None,
     ) -> None:
         self.name = name
         self.caller: UseRecord | None = None  # the use whose block raised the event being handled
@@ -129,6 +256,10 @@ class ModuleContext:
         self._tray: ModuleTray | None = None
         self._windows_port = windows
         self._windows: ModuleWindows | None = None
+        self._apps_port = apps
+        self._apps: ModuleApps | None = None
+        self._surfaces = surfaces
+        self._surface: ModuleSurface | None = None
         self._call_soon = call_soon
         self._focus_port = focus
         self._focus: ModuleFocus | None = None
@@ -288,6 +419,32 @@ class ModuleContext:
             self._windows = port.for_module(self.name)
         return self._windows
 
+    @property
+    def apps(self) -> ModuleApps:
+        """The installed applications (Applications Module): ``ready``, ``search(query, limit)``,
+        ``get(id)``, ``launch(id)``, ``on_changed(callback)``. The first use builds the list on a
+        worker thread. Loop thread only."""
+        if self._apps is None:
+            port = self._apps_port() if self._apps_port else None
+            if port is None:
+                raise RuntimeError("the shell has no application service")
+            port.start()  # the first use builds the list, off the loop thread
+            self._apps = ModuleApps(
+                port, lambda: self._surfaces() if self._surfaces else None, self
+            )
+        return self._apps
+
+    @property
+    def surface(self) -> ModuleSurface:
+        """The surface the module's use is on: ``hide()``, ``focus(name)``, ``on_shown(callback)``.
+        Loop thread only."""
+        if self._surface is None:
+            port = self._surfaces() if self._surfaces else None
+            if port is None:
+                raise RuntimeError("the shell has no surfaces")
+            self._surface = ModuleSurface(self, port)
+        return self._surface
+
     def send_available(self, use: UseRecord) -> None:
         """Give a use that appeared after the layer sent ``available`` its current value (the
         host calls it for each new use of a module that has used ``ctx.dbus``)."""
@@ -350,3 +507,9 @@ class ModuleContext:
         if self._windows is not None:
             self._windows.close()
             self._windows = None
+        if self._apps is not None:
+            self._apps.close()
+            self._apps = None
+        if self._surface is not None:
+            self._surface.close()
+            self._surface = None

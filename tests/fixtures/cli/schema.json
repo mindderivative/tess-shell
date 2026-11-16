@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.7",
+  "schema_version": "1.8",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -22701,7 +22701,8 @@
         "On_Scroll",
         "On_Changed",
         "On_Submit",
-        "On_Text_Commit"
+        "On_Text_Commit",
+        "On_Key_Down"
       ],
       "required": [],
       "repeatable": true,
@@ -23496,6 +23497,14 @@
       "raised_by": [
         "TextField"
       ]
+    },
+    "On_Key_Down": {
+      "doc": "A key went down in a TextField (event.key, event.ctrl, event.shift, event.alt, event.meta, event.repeat), before the field acts on it; the field acts whatever the handler does, and event.stop() keeps the surface above from hearing the key (a Panel's Escape).",
+      "module_only": false,
+      "needs": [],
+      "raised_by": [
+        "TextField"
+      ]
     }
   },
   "actions": [
@@ -24282,6 +24291,126 @@
     }
   ],
   "modules": {
+    "Applications": {
+      "doc": "The launcher: a text field over a list of the installed applications that narrows as you type; Down and Up move the selection, Enter or a click starts it, Escape clears the field and then hides the Panel. The shipped Panel Launcher holds it.",
+      "params": {
+        "max_results": {
+          "type": "number",
+          "kind": "number",
+          "default": "8",
+          "doc": "The most rows shown; Page Down and Page Up move by them.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "show_comment": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "true",
+          "doc": "Shows the generic name, else the comment, under each name.",
+          "required": false
+        },
+        "icon_size": {
+          "type": "number",
+          "kind": "number",
+          "default": "24",
+          "doc": "The size of each application icon in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "placeholder": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"Search applications\"",
+          "doc": "The hint the empty text field shows.",
+          "required": false
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live",
+        "Focusable",
+        "Tab_Index"
+      ],
+      "actions": [
+        {
+          "name": "key",
+          "doc": "``On_Key_Down`` of the field (it comes before the field acts, which it does whatever this does): the list's keys are moved from it, and Escape is the module's (clear, then hide). A key this module uses goes no further, so the Panel's own Escape does not also hide a Panel that was only cleared.",
+          "args": [],
+          "kwargs": false
+        },
+        {
+          "name": "launch",
+          "doc": "A click on a row: start that application.",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "launch_selected",
+          "doc": "Enter in the field: start the selected row.",
+          "args": [],
+          "kwargs": false
+        },
+        {
+          "name": "search",
+          "doc": "Typing in the field: the list narrows and the first row is selected.",
+          "args": [
+            {
+              "name": "text",
+              "required": false
+            }
+          ],
+          "kwargs": false
+        }
+      ]
+    },
     "Audio": {
       "doc": "The default sound output: an icon for its kind and level, mute on a click, the volume on the wheel, an optional percent and slider, and a menu of outputs.",
       "params": {
@@ -26265,7 +26394,8 @@
         "On_Scroll",
         "On_Changed",
         "On_Submit",
-        "On_Text_Commit"
+        "On_Text_Commit",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -26374,7 +26504,8 @@
         "On_Scroll",
         "On_Changed",
         "On_Submit",
-        "On_Text_Commit"
+        "On_Text_Commit",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -26853,6 +26984,18 @@
           "kwargs": false
         }
       ]
+    }
+  },
+  "panels": {
+    "when": "added to the main shell's first Monitor when a Shortcuts entry or a handler names it and no Panel of the same name is written",
+    "panels": {
+      "Launcher": {
+        "content": "Applications",
+        "layer": "OVERLAY",
+        "keyboard": "EXCLUSIVE",
+        "visible": false,
+        "doc": "The launcher: the Applications module in a hidden Panel. Open it with Toggle_Launcher in Shortcuts or a Toggle of Launcher."
+      }
     }
   },
   "popups": {
