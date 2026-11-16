@@ -1,0 +1,58 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# Shortcut mode walks the surfaces with the keyboard. Each surface that holds something to focus
+# takes the keyboard on demand and orders itself with Tab_Index.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Keyboard: ON_DEMAND
+                Tab_Index: 1
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 8
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Button { Text: "One" }
+                            Button { Text: "Two" }
+                        }
+                    }
+                }
+            }
+            Panel {
+                Name: Notes
+                Layer: TOP
+                Anchor: [TOP, RIGHT]
+                Inset: [0, 48, 12, 0]
+                Width: 280
+                Height: 120
+                Keyboard: ON_DEMAND
+                Tab_Index: 2
+                Style { Background: $color.surface_raised, Corner_Radius: 8 }
+                Children {
+                    FlexBox {
+                        Flex: VERTICAL
+                        Padding: 12
+                        Spacing: 8
+                        Children {
+                            Checkbox { Text: "Remind me" }
+                            Button { Text: "Done" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,46 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# A Panel placed against another surface: it sits under Top_Bar, 8 pixels away, at its right end.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Button { Text: "Menu", On_Click { Action: Toggle, Target: Drawer } }
+                            Spacer { }
+                            Clock { }
+                        }
+                    }
+                }
+            }
+            Panel {
+                Name: Drawer
+                Layer: TOP
+                Attach_To: Top_Bar
+                Attach: BOTTOM
+                Gap: 8
+                Alignment: START
+                Width: 240
+                Height: 120
+                Visible: false
+                Style { Background: $color.surface_raised, Corner_Radius: 8 }
+                Children { Label { Text: "Attached to the Bar", Margin: 12 } }
+            }
+        }
+    }
+}

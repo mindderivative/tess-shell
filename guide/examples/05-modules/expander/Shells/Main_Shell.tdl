@@ -1,0 +1,39 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# An Expander shows its children while Expanded is true, with a slide and a fade.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Panel {
+                Name: Details
+                Layer: TOP
+                Anchor: [TOP, LEFT]
+                Inset: [24, 48, 0, 0]
+                Width: 260
+                Height: 120
+                Style { Background: $color.surface, Corner_Radius: 8 }
+                Children {
+                    FlexBox {
+                        Flex: VERTICAL
+                        Padding: 12
+                        Spacing: 8
+                        Children {
+                            Label { Text: "Details" }
+                            Expander {
+                                Expanded: true
+                                Direction: DOWN
+                                Children {
+                                    Label { Text: "These lines are the Expander's content." }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+---
+TDL: 0.2
+Name: Settings
+---
+Settings {
+    Appearance {
+        Theme: Dusk
+        Stylesheets: [Default, Mine]
+        Follow_Desktop: true
+    }
+}

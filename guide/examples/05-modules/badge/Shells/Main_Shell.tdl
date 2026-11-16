@@ -1,0 +1,46 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 16
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Box {
+                                Width: 28
+                                Height: 24
+                                Children {
+                                    Icon { Icon: "mdi:email-outline", Size: 24, Label: "Mail, 3 unread" }
+                                    Badge { Count: 3, Position: ABSOLUTE, Right: 0, Top: 0 }
+                                }
+                            }
+                            Box {
+                                Width: 28
+                                Height: 24
+                                Children {
+                                    Icon { Icon: "mdi:bell-outline", Size: 24, Label: "Notifications" }
+                                    Badge { Dot: true, Position: ABSOLUTE, Right: 2, Top: 0 }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

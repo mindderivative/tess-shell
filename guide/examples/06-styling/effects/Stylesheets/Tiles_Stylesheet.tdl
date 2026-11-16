@@ -1,0 +1,8 @@
+---
+TDL: 0.2
+Name: Tiles
+---
+Stylesheet {
+    Rule { Selector: ".tile", Fill: $color.surface_raised }
+    Rule { Selector: ".tile:hovered", Fill: $color.primary }
+}

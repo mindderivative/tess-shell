@@ -1,0 +1,12 @@
+---
+TDL: 0.2
+Name: Settings
+---
+# settings.tdl: the shell's own settings. Every key is optional; a missing file means defaults.
+Settings {
+    Main_Shell: "Main_Shell.tdl"
+    Hot_Reload: true
+    Reload_Debounce: 200
+    Logging { Level: INFO, Retention: 14 }
+    Appearance { Stylesheets: [Default], Follow_Desktop: true }
+}

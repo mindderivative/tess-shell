@@ -1,0 +1,13 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar { Name: Top_Bar, Edge: TOP, Width: EXPAND, Height: 28 }
+        }
+    }
+}
