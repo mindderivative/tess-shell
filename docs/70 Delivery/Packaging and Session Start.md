@@ -120,15 +120,15 @@ WantedBy=graphical-session.target
 
 ## Acceptance criteria
 
-- [ ] `install-session --print` shows both files with the absolute path of the command that ran it.
+- [x] `install-session --print` shows both files with the absolute path of the command that ran it. (maintainer's hand check on his session, 2026-11-15, output pasted into the vault).
 - [ ] With the two XDG folders set to a temporary folder, `install-session` writes exactly two files there and nothing elsewhere; `--remove` removes exactly those.
-- [ ] A differing existing file is kept without `--force`.
-- [ ] The unit passes `systemd-analyze --user verify` on a copy in a temporary folder (a read-only check).
-- [ ] The desktop file passes `desktop-file-validate`, when that tool is installed.
+- [x] A differing existing file is kept without `--force`: exit 1, the unit named, nothing changed, and `--force` replaces it; `status` then warns about a unit that starts a missing command (maintainer's hand check on his session, 2026-11-15, output pasted into the vault).
+- [x] The unit passes `systemd-analyze --user verify` (`4-verify.sh` printed `unit: ok`) (maintainer's hand check on his session, 2026-11-15, output pasted into the vault).
+- [x] The desktop file passes `desktop-file-validate` (`desktop file: ok`) (maintainer's hand check on his session, 2026-11-15, output pasted into the vault).
 - [ ] No test calls `systemctl` or writes outside its temporary folder.
 - [ ] A test fails if `StartLimitIntervalSec` or `StartLimitBurst` appears in the `[Service]` section of the generated unit, and passes with both in `[Unit]` (reported built 2026-11-16, not run in the vault).
 
 ## Checks Only the Maintainer Can Run
 
-- Enabling the unit on his session and logging in again: the shell starts after KWin, and stops at logout.
-- The portal accepts the registration with the desktop file installed.
+- Enabling the unit on his session and logging in again: the shell starts after KWin, and stops at logout. Done 2026-11-15, lines 6 to 10 of the kit's checklist, reported as passing: `enable` worked; `systemctl --user start` returned once the shell was ready (`Type=notify`, `NotifyAccess=main`, `NRestarts=0`, active (running)); stop, log out and in, and the undo passed. The journal shows the shell starting under systemd with no warning from the registration.
+- The portal accepts the registration with the desktop file installed: the shell's journal on that start has no `Register failed` warning (pasted, not run in the vault); the portal's own journal showed nothing about it. Treated as done.
