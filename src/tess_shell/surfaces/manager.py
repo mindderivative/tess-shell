@@ -913,10 +913,17 @@ class SurfaceManager:
             **_body_style(geometry, fill, shadows, extra),
         )
         window.root.add_child(body)
-        window.on(
-            "configure",
-            lambda e, n=where: logger.info(f"{kind} {n} configured {int(e.width)}x{int(e.height)}"),
-        )
+        made: list[Surface] = []  # the Surface of this window, once it is made (below)
+        first_configure = [True]
+
+        def configured(e: Any, n: str = where, k: str = kind) -> None:
+            logger.info(f"{k} {n} configured {int(e.width)}x{int(e.height)}")
+            if first_configure:
+                first_configure.clear()
+                if made and k == "Panel":
+                    self._reassert_shown(made[0])
+
+        window.on("configure", configured)
 
         def closed(e: Any, n: str = where, k: str = kind, name: str = bar.name) -> None:
             logger.info(f"{k} {n} closed ({getattr(e, 'reason', '')})")
@@ -950,7 +957,7 @@ class SurfaceManager:
         _log_errors(errors)
         if view is None:
             logger.error(f"{kind} {where} is empty: its contents did not bind")
-        return Surface(
+        surface = Surface(
             planned.key,
             bar.name,
             output.name,
@@ -966,6 +973,24 @@ class SurfaceManager:
             planned,
             extra,
         )
+        made.append(surface)
+        return surface
+
+    def _reassert_shown(self, s: Surface) -> None:
+        """A kept Panel that was shown before its window had its first ``configure`` has not had
+        its keyboard and input region sent. tre drops a ``LayerWindow.set`` made before it has
+        told Python the surface exists (the id is set by the ``created`` hook, which can run late
+        on a busy machine: the Launcher then never got the keyboard), and does not apply the
+        stored values afterwards. The first ``configure`` comes after that hook, so the state of
+        a Panel that is shown by then is sent again (nothing changes if it was sent already)."""
+        window, planned = s.window, s.planned
+        if window is None or planned is None or s.hidden or s.covered:
+            return
+        window.set(
+            input_region=_input_for(planned.bar, s.geometry, self._output_size(s)),
+            keyboard=_keyboard(planned.bar, False, holds_text_field(planned.expanded.nodes)),
+        )
+        logger.debug(f"Panel {planned.where}: keyboard and input region sent again at configure")
 
     def _open(self, planned: Planned, all_uses: Mapping[str, Use]) -> Surface:
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
