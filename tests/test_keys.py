@@ -731,7 +731,7 @@ def test_textinput_typing_arrows_selection_enter_and_tab_reach_the_module() -> N
         assert k.said("Echo") == ["submit (Enter)"] and field.get("text") == "x"
         # Tab leaves the field: the next stop (the field with a hint) has the focus, no tab typed
         k.press("tab")
-        assert not field.get("focused") and "In_Hint" in k.name_of()
+        assert not field.get("focused") and "Search..." in k.name_of()  # named by its placeholder
         assert field.get("text") == "x"
         k.press("tab", shift=True)
         assert field.get("focused")

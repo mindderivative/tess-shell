@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.8",
+  "schema_version": "1.9",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -6095,6 +6095,20 @@
           ],
           "preferred_tokens": []
         },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Checked": {
           "kind": "bool",
           "choices": null,
@@ -7469,6 +7483,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -8951,6 +8979,20 @@
           ],
           "preferred_tokens": []
         },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Checked": {
           "kind": "bool",
           "choices": null,
@@ -10381,6 +10423,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -11878,6 +11934,20 @@
           ],
           "preferred_tokens": []
         },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Checked": {
           "kind": "bool",
           "choices": null,
@@ -13085,6 +13155,20 @@
           ],
           "preferred_tokens": []
         },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Checked": {
           "kind": "bool",
           "choices": null,
@@ -14116,6 +14200,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -15321,6 +15419,20 @@
           ],
           "preferred_tokens": []
         },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Checked": {
           "kind": "bool",
           "choices": null,
@@ -16428,6 +16540,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -17764,6 +17890,20 @@
           ],
           "preferred_tokens": []
         },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Checked": {
           "kind": "bool",
           "choices": null,
@@ -19098,6 +19238,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -20546,6 +20700,20 @@
           ],
           "preferred_tokens": []
         },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Checked": {
           "kind": "bool",
           "choices": null,
@@ -21920,6 +22088,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -24445,6 +24627,13 @@
           "max": null,
           "step": null,
           "unit": null
+        },
+        "announce": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Says aloud, politely, mute and unmute and a new volume once it has settled (off by default).",
+          "required": false
         }
       },
       "root_block": "FlexBox",
@@ -25478,6 +25667,13 @@
           "max": null,
           "step": null,
           "unit": null
+        },
+        "announce": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Says aloud, politely, a new track after one that was shown (off by default).",
+          "required": false
         }
       },
       "root_block": "FlexBox",
@@ -25936,6 +26132,13 @@
           "default": "\"\"",
           "doc": "The name assistive technology reads aloud for the slider.",
           "required": false
+        },
+        "Value_Text": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The value in words for assistive technology ('45 percent'); without one it reads the number.",
+          "required": false
         }
       },
       "root_block": "Box",
@@ -26157,6 +26360,13 @@
           "default": "false",
           "doc": "Keeps the module's space when there is no window.",
           "required": false
+        },
+        "announce": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Says aloud, politely, a window of the row that opens, closes or wants attention, once for a change (off by default).",
+          "required": false
         }
       },
       "root_block": "FlexBox",
@@ -26331,6 +26541,13 @@
           "doc": "The text shown while the editor is empty.",
           "required": false
         },
+        "Label": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The name assistive technology reads aloud for the editor; without one it is the Placeholder.",
+          "required": false
+        },
         "Read_Only": {
           "type": "boolean",
           "kind": "bool",
@@ -26450,6 +26667,13 @@
           "kind": "string",
           "default": "\"\"",
           "doc": "The text shown while the field is empty.",
+          "required": false
+        },
+        "Label": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The name assistive technology reads aloud for the field; without one it is the Placeholder.",
           "required": false
         },
         "Read_Only": {

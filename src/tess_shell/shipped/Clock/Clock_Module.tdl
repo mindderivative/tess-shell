@@ -51,6 +51,8 @@ Module {
                 Name: Face
                 Class: clock_text
                 Text: <| time |>
+                Label: <| time |>
+                Description: <| tooltip |>
             }
         }
     }

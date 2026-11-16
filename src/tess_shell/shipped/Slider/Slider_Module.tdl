@@ -11,7 +11,9 @@ Name: Slider
 # user's value stays until `Value` is set to a different one. `Orientation: VERTICAL` runs the
 # slider upwards (Max at the top). Parts `::track`, `::fill` and `::handle`, with `:hovered`,
 # `:pressed` and `:disabled`. The role is SLIDER with `value`, `value_min`, `value_max` and
-# `value_step`; give the call a `Label` to name it. It is 160 by 20 pixels (20 by 160 upright)
+# `value_step`; give the call a `Label` to name it and, to have the value said in words (`45
+# percent`, `1:23 of 3:45`), a `Value_Text` (the accessible `value_text`; without one assistive
+# technology reads the number). It is 160 by 20 pixels (20 by 160 upright)
 # unless the call writes a `Width` or a `Height`. `On_Released` fires once when a press ends (with
 # the final value).
 # Keys: Left and Down take a step off, Right and Up put one on (both orientations), Page Up and
@@ -26,6 +28,7 @@ Module {
         Step { Type: number, Default: 1 }
         Orientation { Type: string, Default: HORIZONTAL }
         Label { Type: string, Default: "" }
+        Value_Text { Type: string, Default: "" }
     }
     Box {
         Name: Root
@@ -35,6 +38,7 @@ Module {
         Value_Min: <| params.Min |>
         Value_Max: <| params.Max |>
         Value_Step: <| params.Step |>
+        Value_Text: <| None if params.Value_Text == "" else params.Value_Text |>
         Label: <| params.Label |>
         Width: <| 160 if params.Orientation == "HORIZONTAL" else 20 |>
         Height: <| 20 if params.Orientation == "HORIZONTAL" else 160 |>

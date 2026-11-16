@@ -224,6 +224,14 @@ class IconService:
                 return found
         return FALLBACK
 
+    def app_name(self, app: str) -> str:
+        """The ``Name`` of the application whose desktop file is ``app`` (``org.kde.dolphin``,
+        with or without ``.desktop``; a window class is tried too), in the user's language: what
+        a person calls it. ``app`` itself when no desktop entry is found. Reads files on first use:
+        not on the loop thread."""
+        entry = self.apps.for_window(app)
+        return entry.name if entry is not None and entry.name else app
+
     # -- the theme ------------------------------------------------------------------------------
 
     @property
@@ -535,3 +543,6 @@ class _ModuleIcons:
 
     def app_icon(self, app: str, size: int) -> str:
         return self._service.app_icon(app, size)
+
+    def app_name(self, app: str) -> str:
+        return self._service.app_name(app)

@@ -23,6 +23,7 @@ from tess_shell import Module, action
 if TYPE_CHECKING:
     from tess_shell.module import Event
     from tess_shell.modules.context import UseRecord
+    from tess_shell.modules.ticks import Subscription as TickSubscription
     from tess_shell.services.api import AppInfo, LaunchResult, Subscription
 
 FALLBACK_ICON = "mdi:application-outline"
@@ -34,7 +35,18 @@ MODIFIERS = ("ctrl", "alt", "meta")
 class State:
     """What one use shows."""
 
-    __slots__ = ("message", "query", "results", "selected", "sent")
+    __slots__ = (
+        "heard",
+        "heard_message",
+        "last",
+        "message",
+        "pending",
+        "query",
+        "results",
+        "selected",
+        "sent",
+        "zero_width",
+    )
 
     def __init__(self) -> None:
         self.query = ""
@@ -42,6 +54,11 @@ class State:
         self.selected = 0  # the index of the selected row
         self.message = ""  # "Could not start <name>"
         self.sent: dict[str, Any] = {}  # the last value sent, by key
+        self.heard: str | None = None  # the id of the row last said (None: no row chosen yet)
+        self.heard_message = ""  # the message last said (or there when the Panel was shown)
+        self.last = ""  # the words last put in the live region, without the mark
+        self.zero_width = False  # the mark is on them (see :meth:`Applications.words`)
+        self.pending = False  # a narrowed list's row waits for the next second to be said
 
 
 class Applications(Module):
@@ -52,6 +69,7 @@ class Applications(Module):
         self.icons: dict[tuple[str, int], str] = {}  # (application, size) -> a reference
         self.pending: set[tuple[str, int]] = set()  # icons the worker is making
         self.generation = 0  # counts icon-theme changes: a result of an older one is dropped
+        self.tick_sub: TickSubscription | None = None  # the second that says a narrowed list's row
 
     # -- start and stop -------------------------------------------------------------------------
 
@@ -72,6 +90,9 @@ class Applications(Module):
         if self.pool is not None:
             self.pool.shutdown(wait=False, cancel_futures=True)
             self.pool = None
+        if self.tick_sub is not None:
+            self.tick_sub.cancel()
+            self.tick_sub = None
 
     def validate_use(self, use: UseRecord) -> None:
         rows = use.params.get("max_results")
@@ -97,12 +118,19 @@ class Applications(Module):
 
     def shown(self, use: UseRecord) -> None:
         """The Panel was shown: the list is made again if the folders are not watched, and the
-        field takes the focus with its text selected, so typing starts a new search."""
+        field takes the focus with its text selected, so typing starts a new search. Nothing said
+        before is said again: the announcement is cleared (the live region is in the tree only
+        while the Panel is shown) and the row and the message that are there now count as heard."""
         self.ctx.apps.refresh()
         state = self.states.get(use.key)
         if state is not None and state.message:
             state.message = ""
             self.send(use, "message", "")
+        if state is not None:
+            state.heard = state.results[state.selected].id if state.results else None
+            state.heard_message = self.empty_text(state)
+            state.last, state.zero_width, state.pending = "", False, False
+            self.send(use, "announcement", "")
         self.ctx.surface.focus(FIELD, select_all=True, use=use)
 
     def theme_changed(self) -> None:
@@ -173,7 +201,7 @@ class Applications(Module):
             return ""
         return "No results" if state.query.strip() else "No applications found"
 
-    def refresh(self, use: UseRecord) -> None:
+    def refresh(self, use: UseRecord, settle: bool = False) -> None:
         """Send the use every value that differs from what it has (the first call sends all)."""
         state = self.states.get(use.key)
         if state is None:
@@ -191,6 +219,7 @@ class Applications(Module):
             for a in state.results
         ]
         chosen = state.results[state.selected].id if state.results else ""
+        message = self.empty_text(state)
         values: dict[str, Any] = {
             "ready": self.ctx.apps.ready,
             "query": state.query,
@@ -199,10 +228,66 @@ class Applications(Module):
             "selected_id": chosen,
             "has_results": bool(rows),
             "list_height": len(rows) * ROW_HEIGHT,
-            "message": self.empty_text(state),
+            "message": message,
         }
+        if "announcement" not in state.sent:
+            values["announcement"] = ""  # a value before the first announcement
+        said = self.announcement(state, rows, chosen, message, settle)
+        if said:
+            values["announcement"] = said
         for key, value in values.items():
             self.send(use, key, value)
+
+    def announcement(
+        self, state: State, rows: list[dict[str, Any]], chosen: str, message: str, settle: bool
+    ) -> str:
+        """The words this refresh says aloud (Accessibility, rule 6, ``POLITE``), or ``""``: a new
+        message ("No results", "Could not start <name>") at once; a selected row that is not the
+        one last said, as ``Name, 2 of 8``: at once when the user moved the selection, and when the
+        list narrowed under typing (``settle``) at the next second, so typing is not one
+        announcement a key. The first row of a list nobody has heard is not said (``heard`` is
+        ``None`` until one is chosen)."""
+        if message != state.heard_message:
+            state.heard_message = message
+            if message:
+                return self.words(state, message)
+        if not chosen:
+            return ""
+        if state.heard is None:
+            state.heard = chosen
+            return ""
+        if chosen == state.heard:
+            return ""
+        if settle:
+            state.pending = True
+            if self.tick_sub is None:
+                self.tick_sub = self.ctx.on_tick("second", self.settled)
+            return ""
+        state.heard, state.pending = chosen, False
+        name = rows[state.selected]["name"]
+        return self.words(state, f"{name}, {state.selected + 1} of {len(rows)}")
+
+    @staticmethod
+    def words(state: State, text: str) -> str:
+        """``text`` for the live region; the same words twice in a row get an invisible mark added
+        and taken off in turn, because only a change of the label is announced."""
+        if text == state.last:
+            state.zero_width = not state.zero_width
+        else:
+            state.last, state.zero_width = text, False
+        return text + ("\u200b" if state.zero_width else "")
+
+    def settled(self) -> None:
+        """Loop thread, the second after the list narrowed under typing: say the row now chosen
+        if it is not the one last said, and stop the tick."""
+        if self.tick_sub is not None:
+            self.tick_sub.cancel()
+            self.tick_sub = None
+        for key, state in list(self.states.items()):
+            use = self.ctx.uses.get(key)
+            if state.pending and use is not None:
+                state.pending = False
+                self.refresh(use)
 
     def use_of(self, event: Event) -> tuple[UseRecord, State] | None:
         use = self.ctx.uses.get(event.use)
@@ -220,7 +305,7 @@ class Applications(Module):
         use, state = found
         state.query, state.message = text, ""
         self.compute(use, state)
-        self.refresh(use)
+        self.refresh(use, settle=True)
         self.ctx.log.debug(f"search {text!r}: {len(state.results)} results")
 
     def move(self, use: UseRecord, state: State, step: int, wrap: bool) -> None:
@@ -260,7 +345,7 @@ class Applications(Module):
             if state.query:
                 state.query, state.message = "", ""
                 self.compute(use, state)
-                self.refresh(use)
+                self.refresh(use, settle=True)
                 self.ctx.log.debug("escape: the field is cleared")
             else:
                 self.ctx.log.debug("escape: the panel hides")
@@ -310,4 +395,5 @@ class Applications(Module):
         else:
             self.ctx.log.warning(f"could not start {app.name}: {result.error}")
             state.message = f"Could not start {app.name}"
+            state.heard_message = ""  # a second failure of the same one is said again
             self.refresh(use)

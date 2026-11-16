@@ -1,5 +1,5 @@
 """The shell's schema as plain JSON, for a configuration application that builds forms from it
-(``tesserae-shell schema --json``; the shape is version 1.8, see ``schema_version``).
+(``tesserae-shell schema --json``; the shape is version 1.9, see ``schema_version``).
 
 Everything is read from the tables the loader uses, so there is no second list of keys to drift:
 :mod:`tess_shell.schema.blocks` (blocks, surfaces, kinds, choices, required keys, events, what is
@@ -57,7 +57,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.8"
+SCHEMA_VERSION = "1.9"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]

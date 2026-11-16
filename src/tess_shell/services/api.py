@@ -348,6 +348,13 @@ class ModuleIcons(Protocol):
         (the launcher uses the same index). Same threading as :meth:`theme_icon`."""
         ...
 
+    def app_name(self, app: str) -> str:
+        """The ``Name`` of the application whose desktop file is ``app`` (as :meth:`app_icon`
+        takes it), in the user's language: what a person calls it, for an accessible name. ``app``
+        itself when no desktop entry is found. Same index and same threading as
+        :meth:`app_icon`."""
+        ...
+
     def on_theme_changed(self, callback: Callable[[], None]) -> Subscription:
         """Call ``callback()`` when the desktop's icon theme changed (the Settings portal's
         ``icon-theme``): every reference made before it came from the old theme, so make the

@@ -297,6 +297,7 @@ def test_a_module_gets_only_the_lookups_and_the_theme_callback(tmp_path: Path) -
         "pixmap_icon",
         "png_icon",
         "app_icon",
+        "app_name",
         "on_theme_changed",
         "close",
     }

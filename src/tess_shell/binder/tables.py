@@ -114,6 +114,7 @@ _COMMON: dict[str, KeyRow] = {
     "Value_Min": _k("value_min", "number"),
     "Value_Max": _k("value_max", "number"),
     "Value_Step": _k("value_step", "number"),
+    "Value_Text": _k("value_text", "text"),
     "Checked": _k("checked", "bool"),
     "Selected": _k("selected", "bool"),
     "Expanded": _k("expanded", "bool"),
