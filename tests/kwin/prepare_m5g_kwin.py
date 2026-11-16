@@ -61,7 +61,11 @@ def settings(extra: str) -> str:
 
 
 CONFIGS = {
-    "cfg": settings("  KWin { Script: RUNTIME, Hide_On_Fullscreen: true }\n"),
+    # the shipped Default stylesheet gives the active task its look (``.task_item:selected``) and applies
+    # only when it is named (Style Schema D36): without it the active window is not marked
+    "cfg": settings(
+        "  Appearance { Stylesheets: [Default] }\n  KWin { Script: RUNTIME, Hide_On_Fullscreen: true }\n"
+    ),
     "cfg-off": settings("  KWin { Script: OFF }\n"),
 }
 
@@ -100,7 +104,9 @@ PART 1: the script (run.sh)
   2  The log shows "kwin: KWin 6.x.y" and "kwin: the script tesserae-shell-kwin is loaded".
   3  `tesserae-shell kwin script status` says "loaded in KWin now: yes".
   4  With Tasks in the bar: one button per open window, in the order the windows were opened, with the
-     application icon and the title; the active window is marked; your shell's own bar is not in it.
+     application icon and the title; the active window is marked (a raised
+     background and a 2 px border in the primary colour: the Default stylesheet, which this config
+     names); your shell's own bar is not in it.
   5  Open, close, retitle (a terminal's title), minimise and move a window to another desktop: the
      row follows each within a moment.
   6  Click an inactive window: it activates (and un-minimises). Click the active one: it minimises.
