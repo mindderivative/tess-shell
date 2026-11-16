@@ -71,15 +71,15 @@ The publisher exports the vault's committed state (git `HEAD`), never uncommitte
 
 ## Questions After Testing
 
-1. [ ] Does a docs-only export merge within a few minutes? Context: the docs-only path skips the long jobs, so the wait should be the docs build plus the check itself. Recommendation: read the time between opening and merge on the first few exports and look again if it is over ten minutes. Answered by: the first exports after PR #24.
+1. [x] Does a docs-only export merge within a few minutes? Answered 2026-11-15: pull request #25 merged 40 seconds after it opened. Context: the docs-only path skips the long jobs, so the wait should be the docs build plus the check itself. Recommendation: read the time between opening and merge on the first few exports and look again if it is over ten minutes. Answered by: the first exports after PR #24.
 
 ## Acceptance criteria
 
 - [x] `tess-docs-publish --dry-run` exports into its own clone and reports the changed file count without pushing (run 2026-11-15, 133 files).
 - [x] A vault commit with no later commit for the quiet period opens or updates one pull request with auto-merge on, with nobody doing anything (2026-11-15: vault commit `08960f4` opened pull request #23 with 4 files; run with a 5-second quiet period).
 - [x] After the merge the site shows the note (2026-11-15: #23 merged by auto-merge 5 minutes after it opened, the Deploy Docs run succeeded, and the live page `Docs Publishing` answers 200).
-- [ ] A docs-only pull request skips lint, test and package and still merges on a green `CI result` (checked on the first export after PR #24).
-- [ ] A broken export shows in the log and as a notification.
+- [x] A docs-only pull request skips lint, test and package and still merges on a green `CI result` (2026-11-15: pull request #25, vault commit `2c624dc`, 2 files; lint, the four shards and the package check skipped, `changes`, the docs build and `CI result` succeeded; opened 16:09:12 and merged 16:09:52, 40 seconds).
+- [ ] A broken export shows in the log and as a notification (not yet seen: no export has failed).
 
 ## Links
 
