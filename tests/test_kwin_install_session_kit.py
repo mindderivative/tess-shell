@@ -127,6 +127,8 @@ def test_the_earlier_scripts_that_touched_the_real_home_are_removed(tmp_path: Pa
 def test_the_whole_kit_runs_in_private_sandboxes_and_every_unattended_step_passes(
     tmp_path: Path,
 ) -> None:
+    if not kitlib.systemd_works():
+        pytest.skip("a private systemd user manager cannot be started on this machine")
     home = Path(pwd.getpwuid(os.getuid()).pw_dir)
     real_unit = home / ".config" / "systemd" / "user" / kit.UNIT
     real_desktop = home / ".local" / "share" / "applications" / kit.DESKTOP

@@ -31,14 +31,23 @@ needs_bus = pytest.mark.skipif(
     not (shutil.which("dbus-run-session") and shutil.which("dbus-send")),
     reason="dbus-run-session is not installed",
 )
-needs_systemd = pytest.mark.skipif(
-    not (
+
+
+@pytest.fixture
+def systemd_or_skip() -> None:
+    """Skip, with the reason, where a private systemd user manager cannot run (not installed, or
+    installed but not startable: a CI runner)."""
+    if not (
         os.path.exists(kitlib.SYSTEMD)
         and shutil.which("systemctl")
         and shutil.which("dbus-run-session")
-    ),
-    reason="the systemd user manager is not installed",
-)
+    ):
+        pytest.skip("the systemd user manager is not installed")
+    if not kitlib.systemd_works():
+        pytest.skip("a private systemd user manager cannot be started on this machine")
+
+
+needs_systemd = pytest.mark.usefixtures("systemd_or_skip")
 needs_kwin = pytest.mark.skipif(
     not (shutil.which("kwin_wayland") and shutil.which("dbus-run-session")),
     reason="kwin_wayland is not installed",
