@@ -16,10 +16,14 @@ Name: TextInput
 # Keys of a focused field (tre's): typing, the arrows, Home and End, Shift to select, Ctrl+A
 # (select all), Ctrl+C, Ctrl+X and Ctrl+V; Enter raises On_Submit; Tab leaves the field. A
 # committed character raises On_Text_Commit (event.text) and then On_Changed.
+#
+# The field's accessible name is `Label`, else the `Placeholder` (the hint it shows while empty);
+# a field with neither has none, so give the call one of them.
 Module {
     Params {
         Text { Type: string, Default: "" }
         Placeholder { Type: string, Default: "" }
+        Label { Type: string, Default: "" }
         Read_Only { Type: boolean, Default: false }
         # the most characters the field takes; 0 is no limit
         Max_Length { Type: number, Default: 0 }
@@ -29,6 +33,7 @@ Module {
     }
     TextField {
         Text: <| params.Text |>
+        Label: <| params.Label if params.Label != "" else params.Placeholder |>
         Placeholder: <| params.Placeholder |>
         Read_Only: <| params.Read_Only |>
         Max_Length: <| params.Max_Length |>

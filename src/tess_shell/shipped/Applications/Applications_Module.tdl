@@ -13,8 +13,12 @@ Name: Applications
 # `results` (a record per row: `id`, `name`, `comment`, `icon`), `selected` (the selected row's
 # index), `selected_id` (its id, which the List marks), `has_results`, `list_height` (the rows'
 # height in pixels), `message` ("No results", "No applications found" or "Could not start <name>";
-# empty otherwise). The shipped Panel `Launcher` holds this module; bind a key to open it
-# (`Shortcuts { Toggle_Launcher: "Meta+Space" }`).
+# empty otherwise) and `announcement` (the words said aloud, politely: the selected row, "No
+# results", "Could not start <name>"). The shipped Panel `Launcher` holds this module; bind a key
+# to open it (`Shortcuts { Toggle_Launcher: "Meta+Space" }`).
+#
+# Accessibility: the text field's name is its placeholder, the list is named "Results" and each row
+# (role LISTITEM, state `selected`) is named by the application's name and its comment.
 Module {
     Style: Applications_Style.tdl
 
@@ -49,7 +53,7 @@ Module {
             If <| has_results |> {
                 List {
                     Name: results
-                    Label: "Applications"
+                    Label: "Results"
                     Selected: <| selected_id |>
                     Width: 456
                     Height: <| list_height |>
@@ -63,6 +67,7 @@ Module {
                                 Align_Items: CENTER
                                 Spacing: 10
                                 On_Click { Action: launch, id: <| app.id |> }
+                                Label: <| app.name + ", " + app.comment if params.show_comment and app.comment != "" else app.name |>
                                 Children {
                                     Icon { Name: Glyph, Icon: <| app.icon |>, Size: <| params.icon_size |> }
                                     FlexBox {
@@ -101,10 +106,27 @@ Module {
                     Name: Message
                     Class: app_message
                     Text: <| message |>
+                    Label: <| message |>
                     Wrap: NONE
                     Width: 456
                     Height: AUTO
                 }
+            }
+            # the live region (Accessibility, rule 6): a change of its label is announced, politely.
+            # The text field keeps the focus while the list's selection moves, and the engine has
+            # no active-descendant, so the module sends `announcement` for the selected row ("Name,
+            # 2 of 8"), for "No results" and for "Could not start <name>". The module clears it when
+            # the Panel is shown, so an opening does not say the last words again
+            Box {
+                Name: Announcer
+                Role: GROUP
+                Live: POLITE
+                Label: <| announcement |>
+                Position: ABSOLUTE
+                Left: 0
+                Top: 0
+                Width: 1
+                Height: 1
             }
         }
     }

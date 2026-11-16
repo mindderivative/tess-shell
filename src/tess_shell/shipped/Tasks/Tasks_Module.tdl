@@ -10,7 +10,10 @@ Name: Tasks
 # the wheel over the row activates the next or the previous window. The list comes from the shell's
 # KWin script (`ctx.windows`): KWin has no call that lists windows. The Python sends `ready` (the
 # first list has arrived), `windows` (a record per shown window, for each use: `id`, `title`, `app`,
-# `icon`, `active`, `minimized`, `attention`, `label`) and `has_windows`; the layer sends
+# `name` (the application's name from its desktop entry), `icon`, `active`, `minimized`,
+# `attention`, `label` (the button's accessible name: the title and that name, with "active",
+# "minimised" or "wants attention" said in words)), `has_windows` and `announcement` (see the param
+# `announce`); the layer sends
 # `available` (KWin is on the session bus). With no KWin, no script, no window yet or (unless
 # `show_empty`) no window the module is hidden: its root is `Visible: false`, which takes no space
 # in the Bar. Task_Item is the button; the module's own `monitor` and `desktop` choose the windows.
@@ -28,6 +31,9 @@ Module {
         desktop { Type: string, Default: CURRENT }
         # keep the module's space when there is no window
         show_empty { Type: boolean, Default: false }
+        # say aloud, politely, a window that opens, closes or wants attention (off by default:
+        # the specification names no announcement)
+        announce { Type: boolean, Default: false }
     }
 
     FlexBox {
@@ -53,6 +59,23 @@ Module {
                     icon_size: <| params.icon_size |>
                     On_Click { Action: activate, id: <| w.id |> }
                     On_Middle_Click { Action: close, id: <| w.id |> }
+                }
+            }
+            If <| params.announce |> {
+                # the live region (Accessibility, rule 6): a change of its label is announced,
+                # politely; the module sends `announcement` for a window of the row that opens,
+                # closes or wants attention. It is out of the accessibility tree while the row
+                # is hidden
+                Box {
+                    Name: Announcer
+                    Role: GROUP
+                    Live: POLITE
+                    Label: <| announcement |>
+                    Position: ABSOLUTE
+                    Left: 0
+                    Top: 0
+                    Width: 1
+                    Height: 1
                 }
             }
         }

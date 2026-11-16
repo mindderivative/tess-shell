@@ -8,8 +8,10 @@ serves every use.
 Keys sent: ``has_player``, ``status`` (``PLAYING``, ``PAUSED``, ``STOPPED``), ``title``, ``artist``,
 ``album``, ``player`` (its ``Identity``), ``art`` (a local file path from a ``file://``
 ``mpris:artUrl`` that exists, else empty), ``length`` and ``position`` (seconds),
-``can_play_pause``, ``can_next``, ``can_previous``, ``can_seek``, ``icon``, ``tooltip`` and
-``label``. ``available`` is the layer's: true while the session bus can be reached. A layout shows
+``position_text`` (the position as a time, ``1:23 of 3:45``: the slider's accessible value),
+``can_play_pause``, ``can_next``, ``can_previous``, ``can_seek``, ``icon``, ``tooltip``,
+``label`` and ``announcement`` (the words said when a new track follows one that was shown).
+``available`` is the layer's: true while the session bus can be reached. A layout shows
 itself with ``Visible: <| available and has_player |>``.
 
 The position is not signalled by MPRIS while a track plays: it is the stored ``Position`` plus the
@@ -80,6 +82,26 @@ def tooltip_text(title: str, artist: str, player: str, status: str) -> str:
 def label_text(title: str, artist: str, player: str, status: str) -> str:
     """The accessible name: the title, the artist, the player and the status."""
     return ", ".join(x for x in ("Media", title, artist, player, STATUS_WORDS[status]) if x)
+
+
+def clock_text(seconds: float) -> str:
+    """``1:23`` or ``1:02:03``: whole seconds."""
+    whole = max(int(seconds), 0)
+    hours, rest = divmod(whole, 3600)
+    minutes, secs = divmod(rest, 60)
+    return f"{hours}:{minutes:02d}:{secs:02d}" if hours else f"{minutes}:{secs:02d}"
+
+
+def position_text(position: float, length: float) -> str:
+    """The position's value in words for assistive technology: ``1:23 of 3:45``, or ``1:23`` when
+    the length is not known."""
+    now = clock_text(position)
+    return f"{now} of {clock_text(length)}" if length > 0 else now
+
+
+def announcement_text(title: str, artist: str) -> str:
+    """The words said when the track changes: ``Track changed: Song, Artist``."""
+    return "Track changed: " + ", ".join(x for x in (title, artist) if x)
 
 
 class Playing:
@@ -171,14 +193,15 @@ class Media(Module):
 
     def start(self) -> None:
         # defaults, so a layout reading any key has a value before a player has answered
-        self.publish(self.values(None))
+        self.publish({**self.values(None), "announcement": ""})
         self.bus: Bus = self.ctx.dbus.session()
         self.position_uses = {k for k, u in self.ctx.uses.items() if u.params.get("show_position")}
         self.bus.watch_prefix(PREFIX, self.added, self.removed)
 
     def use_added(self, use: UseRecord) -> None:
         for key, value in list(self.sent.items()):
-            self.ctx.send(key, value, use=use)
+            # the last announcement is not said again to a use that is added later
+            self.ctx.send(key, "" if key == "announcement" else value, use=use)
         if use.params.get("show_position"):
             self.position_uses.add(use.key)
             self.sync_timer()
@@ -300,7 +323,14 @@ class Media(Module):
         if chosen != self.active:
             self.active = chosen
         player = self.players.get(chosen) if chosen is not None else None
-        self.publish(self.values(player))
+        values = self.values(player)
+        # a new track after one was shown is announced once, politely (Media Module >
+        # Accessibility; a use shows the announcer only with its param ``announce``)
+        before = (self.sent.get("title", ""), self.sent.get("artist", ""))
+        now = (values["title"], values["artist"])
+        if any(before) and values["title"] and now != before:
+            values["announcement"] = announcement_text(*now)
+        self.publish(values)
         self.sync_timer()
 
     def current(self, player: Playing) -> float:
@@ -325,6 +355,7 @@ class Media(Module):
                 "art": "",
                 "length": 0,
                 "position": 0,
+                "position_text": "",
                 "can_play_pause": False,
                 "can_next": False,
                 "can_previous": False,
@@ -350,6 +381,7 @@ class Media(Module):
             "art": self.art(player, meta.get("mpris:artUrl")),
             "length": round(length, 3),
             "position": int(self.current(player)),
+            "position_text": position_text(self.current(player), length),
             "can_play_pause": control and (player.can.get("can_play_pause", False)),
             "can_next": control and player.can.get("can_next", False),
             "can_previous": control and player.can.get("can_previous", False),
@@ -398,7 +430,7 @@ class Media(Module):
         """Send what changed since the last send: a refresh that changes nothing sends nothing."""
         with self.send_lock:
             for key, value in values.items():
-                if key == "position" and self.dragging:
+                if key in ("position", "position_text") and self.dragging:
                     continue  # the user holds the handle
                 if key not in self.sent or self.sent[key] != value:
                     self.sent[key] = value
@@ -427,7 +459,10 @@ class Media(Module):
         """Loop thread, once a second while playing: the position moves on."""
         player = self.players.get(self.active) if self.active is not None else None
         if player is not None and player.status == "PLAYING":
-            self.publish({"position": int(self.current(player))})
+            position = int(self.current(player))
+            self.publish(
+                {"position": position, "position_text": position_text(position, player.length())}
+            )
 
     # -- the controls (loop thread) ---------------------------------------------------------------
 

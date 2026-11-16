@@ -913,6 +913,13 @@ class SurfaceManager:
             **_body_style(geometry, fill, shadows, extra),
         )
         window.root.add_child(body)
+        # what assistive technology says when the surface is reached (Bar > Accessibility: the
+        # window node of a layer surface has no name of its own, so the shell names it): the
+        # surface's name in words, and a Panel that takes the keyboard exclusively is a dialog
+        label = bar.name.replace("_", " ")
+        window.root.set(label=label)
+        if kind == "Panel" and bar.keyboard == "EXCLUSIVE":
+            body.set(role="dialog", label=label)
         made: list[Surface] = []  # the Surface of this window, once it is made (below)
         first_configure = [True]
 

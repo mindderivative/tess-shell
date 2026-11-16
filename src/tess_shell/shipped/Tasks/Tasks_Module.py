@@ -10,10 +10,13 @@ worker that reads icon files (never the loop thread).
 
 Keys sent, for each use and filtered for it (its ``monitor`` and ``desktop``): ``ready`` (the first
 list has arrived and the script is answering), ``windows`` (a record per shown window, in the order
-the windows were opened: ``id``, ``title``, ``app``, ``icon``, ``active``, ``minimized``,
-``attention``, ``label``) and ``has_windows``. ``available`` is the layer's: KWin is on the session
-bus. The icons come from ``ctx.icons.app_icon`` on the worker and are made again when the desktop's
-icon theme changes; until one is read a button shows the shipped ``application-outline``.
+the windows were opened: ``id``, ``title``, ``app``, ``name`` (the application's ``Name`` from its
+desktop entry, the desktop file name until it is read), ``icon``, ``active``, ``minimized``,
+``attention``, ``label``), ``has_windows`` and ``announcement`` (what a use with ``announce`` says
+aloud: a window opened, closed or wanting attention). ``available`` is the
+layer's: KWin is on the session bus. The icons and names come from ``ctx.icons`` on the worker and
+are made again when the desktop's icon theme changes; until an icon is read a button shows the
+shipped ``application-outline``.
 """
 
 from __future__ import annotations
@@ -37,10 +40,12 @@ MONITORS = ("THIS", "ALL")
 DESKTOPS = ("CURRENT", "ALL")
 
 
-def label_of(window: WindowInfo) -> str:
-    """The button's accessible name: the title and the application, the state in words."""
-    name = window.title or window.app
-    text = f"{name}, {window.app}" if window.title and window.app else name
+def label_of(window: WindowInfo, name: str = "") -> str:
+    """The button's accessible name: the title and the application's name (``name``, from its
+    desktop entry; the desktop file name when it is not known), the state in words."""
+    app = name or window.app
+    first = window.title or app
+    text = f"{first}, {app}" if window.title and app else first
     for flag, words in (
         (window.active, "active"),
         (window.minimized, "minimised"),
@@ -62,6 +67,9 @@ class Tasks(Module):
         self.generation = 0  # counts icon-theme changes: a result of an older one is dropped
         self.sent: dict[tuple[str, str], Any] = {}  # (use key, key) -> the last value sent
         self.shown: dict[str, list[str]] = {}  # use key -> the ids of its row, in order
+        self.names: dict[str, str] = {}  # application -> its desktop entry's Name
+        self.naming: set[str] = set()  # names the worker is reading
+        self.all_ids: set[str] = set()  # every window of the last list, whatever its row
 
     # -- start and stop -------------------------------------------------------------------------
 
@@ -128,6 +136,7 @@ class Tasks(Module):
     def theme_changed_on_loop(self) -> None:
         self.generation += 1
         self.icons.clear()
+        self.names.clear()
         self.refresh()
 
     # -- icons (a worker thread) ----------------------------------------------------------------
@@ -160,6 +169,35 @@ class Tasks(Module):
             self.icons[key] = ref
         self.refresh()
 
+    def name(self, app: str) -> str:
+        """What a person calls an application: the ``Name`` of its desktop entry, read on the
+        worker with the icons; the desktop file name until it is read (or when it has no entry)."""
+        found = self.names.get(app)
+        if found is not None:
+            return found
+        if app and app not in self.naming and self.pool is not None:
+            self.naming.add(app)
+            try:
+                self.pool.submit(self.resolve_name, app, self.generation)
+            except RuntimeError:  # the pool was shut down: the module stopped
+                self.naming.discard(app)
+        return app
+
+    def resolve_name(self, app: str, generation: int) -> None:
+        try:
+            name = self.ctx.icons.app_name(app)
+        except Exception:
+            self.ctx.log.opt(exception=True).error(f"the name of {app} failed")
+            name = app
+        self.ctx.call_soon(lambda: self.named(app, generation, name))
+
+    def named(self, app: str, generation: int, name: str) -> None:
+        self.naming.discard(app)
+        if generation == self.generation:
+            self.names[app] = name
+        if name != app:
+            self.refresh()
+
     # -- what is shown (loop thread) ------------------------------------------------------------
 
     def rows(self, use: UseRecord, windows: tuple[WindowInfo, ...]) -> list[dict[str, Any]]:
@@ -178,16 +216,18 @@ class Tasks(Module):
                 and self.current not in window.desktops
             ):
                 continue
+            name = self.name(window.app)
             out.append(
                 {
                     "id": window.id,
                     "title": window.title,
                     "app": window.app,
+                    "name": name,
                     "icon": self.icon(window.app, size),
                     "active": window.active,
                     "minimized": window.minimized,
                     "attention": window.attention,
-                    "label": label_of(window),
+                    "label": label_of(window, name),
                 }
             )
         return out
@@ -200,11 +240,50 @@ class Tasks(Module):
         for use in list(self.ctx.uses.values()):
             rows = self.rows(use, windows)
             self.shown[use.key] = [row["id"] for row in rows]
-            values = {"ready": ready, "windows": rows, "has_windows": bool(rows)}
+            values: dict[str, Any] = {"ready": ready, "windows": rows, "has_windows": bool(rows)}
+            if (use.key, "announcement") not in self.sent:
+                values["announcement"] = ""  # a value before the first announcement
+            if use.params.get("announce"):
+                said = self.announcement(use, ready, rows, windows)
+                if said:
+                    values["announcement"] = said
             for key, value in values.items():
                 if self.sent.get((use.key, key)) != value or (use.key, key) not in self.sent:
                     self.sent[(use.key, key)] = value
                     self.ctx.send(key, value, use=use)
+        self.all_ids = {window.id for window in windows}
+
+    def announcement(
+        self,
+        use: UseRecord,
+        ready: bool,
+        rows: list[dict[str, Any]],
+        windows: tuple[WindowInfo, ...],
+    ) -> str:
+        """What a use says aloud (Accessibility, rule 6, ``POLITE``): a window of its row that
+        opened, closed or came to want attention, in one message (the first three events, then a
+        count). Nothing for the first list, for a change of the active window (the desktop says
+        that itself) or for a window that only left the row (another desktop or monitor):
+        ``all_ids`` is the list of the whole shell before this one. The module is out of the
+        accessibility tree while the row is hidden (no window, or no script), so the last window's
+        closing and a script that stops are never heard: the layout cannot say them."""
+        if not self.sent.get((use.key, "ready")) or not ready:
+            return ""
+        before = {row["id"]: row for row in self.sent.get((use.key, "windows"), [])}
+        now = {row["id"]: row for row in rows}
+        here = {window.id for window in windows}
+        events: list[str] = []
+        for window_id, row in now.items():
+            if window_id not in before and window_id not in self.all_ids:
+                events.append(f"{row['title'] or row['name']} opened")
+            elif window_id in before and row["attention"] and not before[window_id]["attention"]:
+                events.append(f"{row['title'] or row['name']} wants attention")
+        for window_id, row in before.items():
+            if window_id not in now and window_id not in here:
+                events.append(f"{row['title'] or row['name']} closed")
+        if len(events) > 3:
+            events = [*events[:3], f"and {len(events) - 3} more"]
+        return ", ".join(events)
 
     # -- the clicks (loop thread) ---------------------------------------------------------------
 

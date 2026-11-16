@@ -107,6 +107,8 @@ KEY_DOCS: dict[str, str] = {
     "Value_Min": "The least value of a control, for assistive technology; set by a module.",
     "Value_Max": "The greatest value of a control, for assistive technology; set by a module.",
     "Value_Step": "The step of a control's value, for assistive technology; set by a module.",
+    "Value_Text": "The value of a control in words for assistive technology ('45 percent', "
+    "'1:23 of 3:45'); set by a module.",
     "Checked": "Whether the block is checked, for a toggle or a checkbox; set by a module.",
     "Selected": "Whether the block is the selected entry of a list; set by a module.",
     "Expanded": "Whether the block's submenu or section is open; set by a module.",
@@ -525,6 +527,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Value_Min",
         "Value_Max",
         "Value_Step",
+        "Value_Text",
         "Checked",
         "Selected",
         "Expanded",
@@ -997,6 +1000,8 @@ MODULE_NOTES: dict[str, str] = {
 # (module, param) -> one line
 PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Audio", "show_percent"): "Shows the volume as a number next to the icon.",
+    ("Audio", "announce"): "Says aloud, politely, mute and unmute and a new volume once it has "
+    "settled (off by default).",
     ("Audio", "show_slider"): "Shows a volume slider.",
     ("Audio", "show_mic"): "Shows a microphone mark while the default input is muted.",
     ("Audio", "step"): "The percent one wheel step changes the volume by.",
@@ -1048,6 +1053,8 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Media", "show_position"): "Shows the seek slider; it turns on the one-second tick while "
     "the player plays.",
     ("Media", "max_width"): "The title's width in pixels.",
+    ("Media", "announce"): "Says aloud, politely, a new track after one that was shown (off by "
+    "default).",
     ("Menu", "Label"): "The name assistive technology reads aloud for the menu.",
     ("MenuItem", "Text"): "The words of the row.",
     ("MenuItem", "Icon"): "An icon name or a file path shown before the text.",
@@ -1070,12 +1077,16 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Slider", "Step"): "The increment; a drag snaps to it.",
     ("Slider", "Orientation"): "The direction: HORIZONTAL or VERTICAL.",
     ("Slider", "Label"): "The name assistive technology reads aloud for the slider.",
+    ("Slider", "Value_Text"): "The value in words for assistive technology ('45 percent'); without "
+    "one it reads the number.",
     ("TextBox", "Text"): "The words.",
     ("TextBox", "Wrap"): "WORD wraps at word ends; NONE keeps the lines as written.",
     ("TextBox", "Max_Lines"): "Cuts the text after this many lines; 0 is no limit.",
     ("TextBox", "Selectable"): "Lets the user select the text.",
     ("TextEditor", "Text"): "The value, set from outside; edits come out through On_Changed.",
     ("TextEditor", "Placeholder"): "The text shown while the editor is empty.",
+    ("TextEditor", "Label"): "The name assistive technology reads aloud for the editor; without "
+    "one it is the Placeholder.",
     ("TextEditor", "Read_Only"): "The text can be selected and copied but not changed.",
     ("TextEditor", "Max_Length"): "The most characters the editor takes; 0 is no limit.",
     ("TextEditor", "Wrap"): "WORD wraps at the width by word; NONE does not wrap and scrolls "
@@ -1085,6 +1096,8 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("TextEditor", "Width"): "The width in pixels.",
     ("TextInput", "Text"): "The value, set from outside; edits come out through On_Changed.",
     ("TextInput", "Placeholder"): "The text shown while the field is empty.",
+    ("TextInput", "Label"): "The name assistive technology reads aloud for the field; without one "
+    "it is the Placeholder.",
     ("TextInput", "Read_Only"): "The text can be selected and copied but not changed.",
     ("TextInput", "Max_Length"): "The most characters the field takes; 0 is no limit.",
     ("TextInput", "Password"): "Shows dots instead of the text and blocks copy and cut.",
@@ -1112,6 +1125,8 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Tasks", "desktop"): "CURRENT shows the windows on the current virtual desktop (and those "
     "on all desktops), ALL those on every desktop.",
     ("Tasks", "show_empty"): "Keeps the module's space when there is no window.",
+    ("Tasks", "announce"): "Says aloud, politely, a window of the row that opens, closes or wants "
+    "attention, once for a change (off by default).",
     ("Toggle", "Checked"): "Whether the switch is on; set from outside.",
     ("Toggle", "Label"): "The name assistive technology reads aloud for the switch.",
     ("Tray", "icon_size"): "The size of each icon in pixels.",

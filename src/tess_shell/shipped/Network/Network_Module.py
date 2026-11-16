@@ -8,9 +8,11 @@ Keys sent: ``ready`` (the manager, the primary connection, its device and access
 read), ``state`` (``CONNECTED``, ``LIMITED``, ``PORTAL``, ``CONNECTING``, ``DISCONNECTED``,
 ``DISABLED`` or ``UNKNOWN``), ``kind`` (``ETHERNET``, ``WIFI``, ``MOBILE``, ``BLUETOOTH``,
 ``OTHER`` or ``NONE``), ``name``, ``strength`` (percent, -1 when the connection is not Wi-Fi; sent
-only when the icon step or the tooltip's value changes), ``vpn``, ``icon``, ``tooltip`` and
-``label`` (the accessible name). ``available`` is the layer's: true while NetworkManager is on the
-system bus. A layout shows itself with ``Visible: <| available and ready |>``.
+only when the icon step or the tooltip's value changes), ``vpn``, ``icon``, ``tooltip``,
+``label`` (the accessible name) and ``announcement`` (the words of the polite announcement made
+when ``state`` goes to or from ``CONNECTED``; nothing for a change of ``strength``).
+``available`` is the layer's: true while NetworkManager is on the system bus. A layout shows
+itself with ``Visible: <| available and ready |>``.
 """
 
 from __future__ import annotations
@@ -192,6 +194,18 @@ def label_text(kind: str, state: str, name: str, strength: int, vpn_name: str | 
     return ", ".join(parts)
 
 
+def announcement_text(kind: str, state: str, name: str, vpn_name: str | None) -> str:
+    """The words said when the state goes to or from ``CONNECTED`` (Network Module >
+    Accessibility): ``Network connected, Wi-Fi Home-WiFi`` or ``Network disconnected``. The
+    signal's percent is left out: it is not the news."""
+    text = f"Network {STATE_WORDS[state]}"
+    if state == "CONNECTED" and kind != "NONE":
+        text += f", {KIND_WORDS[kind]} {name}" if name else f", {KIND_WORDS[kind]}"
+    if state == "CONNECTED" and vpn_name is not None:
+        text += f", VPN {vpn_name}" if vpn_name else ", VPN"
+    return text
+
+
 class Link:
     """One object the module follows with the properties of one interface: the path it is on now,
     its subscription and the last properties it gave. ``follow`` replaces the path; ``changed`` is
@@ -253,6 +267,7 @@ class Network(Module):
                 "icon": FALLBACK_ICON,
                 "tooltip": "",
                 "label": "Network",
+                "announcement": "",
             }
         )
         self.bus = self.ctx.dbus.system()
@@ -264,7 +279,8 @@ class Network(Module):
 
     def use_added(self, use: UseRecord) -> None:
         for key, value in list(self.sent.items()):
-            self.ctx.send(key, value, use=use)
+            # the last announcement is not said again to a use that is added later
+            self.ctx.send(key, "" if key == "announcement" else value, use=use)
 
     # -- on the dbus thread -------------------------------------------------------------------
 
@@ -393,6 +409,9 @@ class Network(Module):
         if basis != self.basis or "strength" not in self.sent:
             self.basis = basis
             values["strength"] = strength
+        previous = self.sent.get("state") if self.sent.get("ready") else None
+        if previous is not None and (previous == "CONNECTED") != (state == "CONNECTED"):
+            values["announcement"] = announcement_text(kind, state, name, vpn_name)
         values["ready"] = True
         self.publish(values)
 

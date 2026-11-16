@@ -15,10 +15,13 @@ Name: TextEditor
 # Keys of a focused editor (tre's): those of a TextInput; Enter inserts a newline. Tab should leave
 # the field and does not yet: tre inserts a tab character in a multi-line field and has no property
 # that lets Tab through (a request to tre, T-048).
+#
+# The editor's accessible name is `Label`, else the `Placeholder`; give the call one of them.
 Module {
     Params {
         Text { Type: string, Default: "" }
         Placeholder { Type: string, Default: "" }
+        Label { Type: string, Default: "" }
         Read_Only { Type: boolean, Default: false }
         # the most characters the field takes; 0 is no limit
         Max_Length { Type: number, Default: 0 }
@@ -30,6 +33,7 @@ Module {
     TextField {
         Multiline: true
         Text: <| params.Text |>
+        Label: <| params.Label if params.Label != "" else params.Placeholder |>
         Placeholder: <| params.Placeholder |>
         Read_Only: <| params.Read_Only |>
         Max_Length: <| params.Max_Length |>

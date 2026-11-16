@@ -58,11 +58,13 @@ default, event, action, theme token and `settings.tdl` key the loader accepts, w
 documentation for each, so a configuration application can build its forms from it. It is read from
 the loader's own tables (`tess_shell.schema.export.schema_json()`; `schema_dict()` is the same as
 plain data), so it cannot list a key the loader refuses or miss one it accepts, and two runs give the
-same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.8 (the notes below say what each version added).
+same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.9 (the notes below say what each version added).
 
 Since 1.1: a key's `default` is what tre reads on a bare block (the binder builds it headless and
 
 Since 1.8 (additive): the shipped module `Applications` (its four params, `modules` section), the event `On_Key_Down` (a TextField raises it; `events` section) and `panels`, a section beside `popups` that lists the Panels the shell provides (`Launcher`: the module it holds, its layer and keyboard, one line of documentation, and `when` it is added to a shell).
+
+Since 1.9 (additive): the accessibility pass. The block key `Value_Text` (the value in words, `45 percent`; set by a module, so it is in the accessibility group of the keys and a shell file may not write it) and six module params: `Label` of `TextInput` and `TextEditor` (the field's accessible name; without one it is the `Placeholder`), `Value_Text` of `Slider`, and `announce` of `Media`, `Audio` and `Tasks` (polite live announcements, off by default). The Network, Battery and Applications modules announce without a param. Every module that shows a tooltip also gives it as the accessible description. Announcements are live regions: a 1 by 1 pixel `Announcer` block with `Live: POLITE` whose label the module changes.
 
 Since 1.7 (additive): the `KWin` settings section (`Script`, `Hide_On_Fullscreen`) and the shipped modules `Tasks` and `Task_Item` (their params, `modules` section).
 

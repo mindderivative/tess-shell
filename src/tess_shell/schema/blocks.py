@@ -45,6 +45,7 @@ A11Y_STATE: dict[str, str] = {
     "Value_Min": "number",
     "Value_Max": "number",
     "Value_Step": "number",
+    "Value_Text": "text",
     "Checked": "bool",
     "Selected": "bool",
     "Expanded": "bool",

@@ -5,7 +5,8 @@ serves every use.
 
 Keys sent: ``present`` (UPower's ``IsPresent``), ``percent``, ``state``, ``icon``, ``icon_alert``
 (the same icon with a dot beside it, in one document: the name plus ``+dot``), ``low``,
-``critical``, ``tooltip``, ``label`` (the accessible name) and, when the power-profiles service is
+``critical``, ``tooltip``, ``label`` (the accessible name), ``announcement`` (the words said once,
+politely, when the level becomes critical) and, when the power-profiles service is
 on the bus, ``profile`` (read only). ``available`` is the layer's: true while UPower is on the bus.
 A layout shows itself with ``If <| available and present |>``.
 """
@@ -107,6 +108,13 @@ def label_text(percent: int, state: str) -> str:
     return f"Battery {percent} percent{words}"
 
 
+def announcement_text(percent: int, state: str) -> str:
+    """The words said once when the level becomes critical: ``Battery critical, 4 percent,
+    discharging``."""
+    words = f", {WORDS[state]}" if WORDS[state] else ""
+    return f"Battery critical, {percent} percent{words}"
+
+
 def number(value: Any, default: float = 0.0) -> float:
     if isinstance(value, int | float) and not isinstance(value, bool):
         return float(value)
@@ -144,10 +152,11 @@ class Battery(Module):
     def __init__(self) -> None:
         self.props: dict[str, Any] = {}
         self.sent: dict[str, Any] = {}
+        self.read = False  # the first reading of the device has come
 
     def start(self) -> None:
         # defaults, so a layout reading any key has a value before UPower has answered
-        self.publish(derive({}))
+        self.publish({**derive({}), "announcement": ""})
         bus = self.ctx.dbus.system()
         bus.proxy(UPOWER, DEVICE, DEVICE_INTERFACE).on_property_changed(self.changed)
         # the power profile is a value this module can do without: the service may be absent
@@ -159,7 +168,13 @@ class Battery(Module):
 
     def changed(self, values: Mapping[str, Any]) -> None:
         self.props.update(values)
-        self.publish(derive(self.props))
+        derived = derive(self.props)
+        # a change TO critical, after a first reading, is announced once (Battery Module >
+        # Accessibility); a change of ``percent`` never is
+        if self.read and derived["critical"] and not self.sent.get("critical"):
+            derived["announcement"] = announcement_text(derived["percent"], derived["state"])
+        self.read = True
+        self.publish(derived)
 
     def profile_changed(self, values: Mapping[str, Any]) -> None:
         profile = values.get("ActiveProfile")
