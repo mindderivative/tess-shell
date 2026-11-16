@@ -50,6 +50,7 @@ tesserae-shell version   # versions of the shell, tess_re, tess_el, tess_dl and 
 tesserae-shell check     # validate settings.tdl and every shell file (syntax, header, schema)
 tesserae-shell run       # start the shell (needs a Wayland compositor with layer-shell)
 tesserae-shell schema --json [--out FILE]  # the shell's schema as JSON, for configuration tools
+tesserae-shell install-session [--print|--enable|--remove] [--force]  # the desktop file and the systemd user unit
 ```
 
 `schema --json` prints (or, with `--out FILE`, writes) every block, surface, key, kind, choice,
@@ -95,6 +96,53 @@ log. No command opens a Popup, and `call` reaches only methods marked `@action`.
 
 Global options: `--config-dir PATH`, `--json`, `--quiet`, `--timeout SECONDS`. The `kwin`
 subcommand named in the design reports that it is not implemented yet.
+
+### Starting with the session (`install-session`)
+
+A virtual environment, `uv tool` or `pipx` puts the wheel's data files under that environment, where
+neither the desktop nor systemd look. So the wheel carries two files as package data
+(`tess_shell/data/`) and a command writes them where they are read, with the absolute path of the
+command that ran it:
+
+```sh
+tesserae-shell install-session            # write both files; enable and start nothing
+tesserae-shell install-session --print    # show both files and their paths; write nothing
+tesserae-shell install-session --enable   # also: systemctl --user enable tesserae-shell.service
+tesserae-shell install-session --remove   # disable the unit if enabled, remove both files
+```
+
+* `$XDG_DATA_HOME/applications/io.github.mindderivative.TesseraeShell.desktop` (default
+  `~/.local/share/applications/`) gives the shell its application id: the Settings portal's
+  `Register` call wants a desktop file with the id the shell registers (`NoDisplay=true`: it is not
+  an application to start from a menu).
+* `$XDG_CONFIG_HOME/systemd/user/tesserae-shell.service` (default `~/.config/systemd/user/`) starts
+  `tesserae-shell run` with `graphical-session.target`: `Type=notify` (the shell sends `READY=1`
+  to `$NOTIFY_SOCKET` once it runs and `STOPPING=1` when it begins to stop, with the standard
+  library and no `sd_notify` library; nothing is sent when the variable is unset),
+  `Restart=on-failure` after 2 s, at most 5 starts in 60 s, and no restart after exit codes 1
+  (configuration), 2 (environment) and 4 (another shell is running).
+* The command is the `tesserae-shell` script that ran it (a link is kept, not followed), else the
+  one beside the interpreter (`python -m tess_shell` in a virtual environment), else
+  `<python> -m tess_shell`. `--config-dir PATH`, when given, is carried into both `Exec` lines.
+* A file that exists with other content is kept: the command names it, changes nothing and exits 1;
+  `--force` replaces it. The same content is "unchanged", so running it twice is fine. Each file is
+  written to a temporary name and renamed. `--json` gives
+  `{"ok", "action": "install"|"remove"|"print", "files": [{"kind", "path", "result"}], "enabled",
+  "exec_start", "notes"}` (`--print` lists `state` and `content` for each file); an error is
+  `{"ok": false, "error", "exit"}`. Exit codes: 0 done, 1 a differing file kept or a file that
+  cannot be written, 2 `systemctl` missing or refused (the files are written and listed; a failed
+  `disable` removes nothing).
+* After moving or reinstalling the shell, run `install-session --force` again. `tesserae-shell
+  status` warns on standard error (and adds a `"warnings"` list to its `--json` answer, only when
+  there is one) when the unit's `ExecStart` names a path that does not exist, a script whose
+  interpreter is gone, or another install than the one running `status`; it says so also when no
+  shell is running, which is when a stale unit shows.
+* `--remove` leaves `~/.config/tesserae-shell` alone and does not stop a running shell.
+* Tests write only into temporary folders and use a recording runner instead of `systemctl`; the
+  code refuses the real `~/.config/systemd/user` and `~/.local/share/applications` and the real
+  `systemctl` while `PYTEST_CURRENT_TEST` is set. The one check of the real session is a kit:
+  `uv run python tests/kwin/prepare_install_session.py` writes `/tmp/tess-kwin-install-session`
+  (backup, print, install, verify, stale warning, enable, after login, undo).
 
 ## Development
 

@@ -12,9 +12,13 @@ import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from tess_shell.exit_codes import ExitCode
 from tess_shell.options import Options
+
+if TYPE_CHECKING:
+    from tess_shell.session import Runner
 
 # the control commands: name -> (help, positional arguments as (name, nargs)); each is a client of
 # the running shell's D-Bus interface (``tess_shell.client``)
@@ -72,6 +76,30 @@ def _build_parser() -> argparse.ArgumentParser:
     schema = add("schema", "print the schema of the shell's files as JSON (with --json)")
     schema.add_argument(
         "--out", type=Path, metavar="FILE", help="write the JSON to FILE, not to standard output"
+    )
+    install = add(
+        "install-session",
+        "write the desktop file and the systemd user unit (--enable, --remove, --print)",
+    )
+    what = install.add_mutually_exclusive_group()
+    what.add_argument(
+        "--print",
+        dest="print_only",
+        action="store_true",
+        help="show both files and their paths, write nothing",
+    )
+    what.add_argument(
+        "--enable",
+        action="store_true",
+        help="also run systemctl --user enable tesserae-shell.service",
+    )
+    what.add_argument(
+        "--remove",
+        action="store_true",
+        help="disable the unit if it is enabled and remove both files",
+    )
+    install.add_argument(
+        "--force", action="store_true", help="replace an existing file that has other content"
     )
     for name, (control_help, control_positionals) in _CONTROL.items():
         p = add(name, control_help)
@@ -137,7 +165,23 @@ def _schema(options: Options, out: Path | None) -> int:
     return ExitCode.OK
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def _install_session(args: argparse.Namespace, options: Options, runner: Runner | None) -> int:
+    from tess_shell import session
+
+    return session.run_command(
+        print_only=args.print_only,
+        enable=args.enable,
+        remove_files=args.remove,
+        force=args.force,
+        json_out=options.json,
+        config_dir=options.config_dir,
+        runner=runner,
+    )
+
+
+def main(argv: Sequence[str] | None = None, *, runner: Runner | None = None) -> int:
+    """``runner`` is the hook of ``install-session``: what would run ``systemctl --user ...``.
+    Tests pass a recording one; a run from the command line uses the real one."""
     parser = _build_parser()
     args = parser.parse_args(argv)
     options = Options(
@@ -151,6 +195,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _version(options)
     if command == "schema":
         return _schema(options, getattr(args, "out", None))
+    if command == "install-session":
+        return _install_session(args, options, runner)
     if command in _CONTROL:
         from tess_shell import client
 

@@ -41,6 +41,7 @@ from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.modules.host import ModuleHost, report
 from tess_shell.modules.ticks import TimeSource
+from tess_shell.notify import READY, STOPPING, notify
 from tess_shell.options import Options
 from tess_shell.reloader import Reloader
 from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
@@ -254,6 +255,16 @@ def _stop_shortcuts(service: ServiceThread, shortcuts: ShortcutService) -> None:
         logger.debug(f"shortcuts: stopping did not go through ({exc!r})")
 
 
+def _tell_systemd(state: str) -> None:
+    """``READY=1`` or ``STOPPING=1`` to ``NOTIFY_SOCKET`` when systemd set it (Type=notify). A
+    failed send is a warning: the shell runs on, and the unit gives up waiting by itself."""
+    sent = notify(state)
+    if sent is False:
+        logger.warning(f"systemd: could not send {state} to NOTIFY_SOCKET")
+    elif sent:
+        logger.debug(f"systemd: sent {state}")
+
+
 def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
     # 1. pre-flight
     runtime_dir, loose = _preflight()
@@ -456,6 +467,7 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         manager.mode.set_keys(mode_keys(result.shortcuts))  # the keys of shortcut mode
         manager.mode.watch_focus = True  # a real compositor: warn when it does not hand focus over
         taken = False
+        ready = False  # READY=1 was sent: STOPPING=1 follows it
         if settings.control:
             control = _start_control(service, handle, manager, reloader, commands, errors)
             taken = control is not None and not control.owned
@@ -475,6 +487,8 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
             logger.info("running")
             if control is not None:
                 control.set_state("running")
+            _tell_systemd(READY)
+            ready = True
             try:
                 app.run(keep_alive=True)
             finally:
@@ -486,6 +500,8 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
                 return ExitCode.ENVIRONMENT
         # stop sequence: modules, then the time source (no D-Bus yet)
         logger.info("stopping")
+        if ready:
+            _tell_systemd(STOPPING)
         if shortcuts is not None:
             shortcuts.begin_stop()  # a press from here on is dropped
         if control is not None:
