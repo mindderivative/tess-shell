@@ -1,0 +1,39 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# The first Slider sets the sound volume, once, when you let go of it: On_Released calls the Audio module's set_volume action.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 16
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Slider {
+                                Label: "Volume"
+                                Value: 30
+                                Width: 140
+                                On_Released { Action: Call, Target: "Audio.set_volume", percent: <| event.value |> }
+                            }
+                            Audio { show_percent: true }
+                            Slider { Label: "Steps of ten", Value: 50, Step: 10, Min: 0, Max: 100, Value_Text: "50 percent" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

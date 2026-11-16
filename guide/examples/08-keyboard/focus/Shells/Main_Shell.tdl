@@ -1,0 +1,42 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# Tab and Shift+Tab walk the focusable blocks of a surface that takes the keyboard. Tab_Index
+# puts "Save" before "Name"; Focusable puts a plain box in the order, and Enabled: false takes
+# a button out of it.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Panel {
+                Name: Form
+                Layer: TOP
+                Anchor: [TOP, LEFT]
+                Inset: [24, 24, 0, 0]
+                Width: 320
+                Height: 200
+                Keyboard: ON_DEMAND
+                Style { Background: $color.surface, Corner_Radius: 8 }
+                Children {
+                    FlexBox {
+                        Flex: VERTICAL
+                        Padding: 12
+                        Spacing: 8
+                        Children {
+                            Button { Text: "Save", Tab_Index: 1 }
+                            TextInput { Placeholder: "Name", Tab_Index: 2 }
+                            Button { Text: "Not now", Enabled: false }
+                            FlexBox {
+                                Focusable: true
+                                Padding: 8
+                                Children { Label { Text: "A focusable box" } }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

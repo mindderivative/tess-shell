@@ -1,0 +1,25 @@
+---
+TDL: 0.2
+Name: Dusk
+---
+# A theme need only hold what differs from the Default theme; a token it leaves out comes from
+# there. The base values are the dark look; Modes change them for light, high contrast and
+# reduced motion.
+Theme {
+    Color {
+        Surface: "#1a1626"
+        Surface_Raised: "#262036"
+        Primary: "#b392f0"
+        Accent: DESKTOP
+    }
+    Modes {
+        Light {
+            Color {
+                Surface: "#f6f2ff"
+                Surface_Raised: "#ffffff"
+                On_Surface: "#1d1830"
+                Primary: "#5b3fa6"
+            }
+        }
+    }
+}

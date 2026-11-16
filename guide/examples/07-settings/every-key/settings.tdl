@@ -1,0 +1,44 @@
+---
+TDL: 0.2
+Name: Settings
+---
+# Every key of settings.tdl once, with its default or a typical value.
+Settings {
+    Main_Shell: "Main_Shell.tdl"
+    Hot_Reload: true
+    Reload_Debounce: 200
+    Control: true
+    Global_Shortcuts: true
+
+    Logging {
+        Level: INFO
+        Directory: "~/.local/state/tesserae-shell/logs"
+        Retention: 14
+        Format: TEXT
+        Diagnose: false
+        Console: true
+    }
+
+    Validation { Enabled: true }
+
+    Appearance {
+        Theme: Default
+        Stylesheets: [Default]
+        Follow_Desktop: true
+    }
+
+    KWin {
+        Script: RUNTIME
+        Hide_On_Fullscreen: true
+    }
+
+    Shortcuts {
+        Toggle_Launcher: "Meta+Space"
+    }
+
+    Debug {
+        Panel_Hide: KEEP
+        Frame_Blend: LINEAR
+        Mode_Keyboard: EXCLUSIVE
+    }
+}

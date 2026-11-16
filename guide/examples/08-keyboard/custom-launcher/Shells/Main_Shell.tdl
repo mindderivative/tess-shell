@@ -1,0 +1,25 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# A Panel written as Launcher replaces the shipped one whole: here a taller one near the top.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Panel {
+                Name: Launcher
+                Layer: OVERLAY
+                Anchor: [TOP]
+                Inset: [0, 80, 0, 0]
+                Width: 520
+                Height: 460
+                Keyboard: EXCLUSIVE
+                Visible: false
+                Style { Background: $color.surface_raised, Corner_Radius: 12, Elevation: 30% }
+                Children { Applications { max_results: 10, show_comment: false, icon_size: 28, placeholder: "Run..." } }
+            }
+        }
+    }
+}

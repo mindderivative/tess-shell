@@ -1,0 +1,51 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# A Button opens the Popup Info under itself; the Popup's own button closes it again. A click
+# outside the Popup or Escape closes it too.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Button { Text: "Info", On_Click { Action: Show, Target: Info } }
+                        }
+                    }
+                }
+            }
+            Popup {
+                Name: Info
+                Attach: BOTTOM
+                Alignment: START
+                Gap: 4
+                Max_Width: 260
+                Style { Background: $color.surface_raised, Corner_Radius: 8, Elevation: 20% }
+                Children {
+                    FlexBox {
+                        Flex: VERTICAL
+                        Padding: 12
+                        Spacing: 8
+                        Children {
+                            TextBox { Text: "A Popup opens beside the block that opened it.", Width: 220 }
+                            Button { Text: "Close", On_Click { Action: Close } }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,34 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# The Clock twice: the local time with the date as its tooltip, and the time in Tokyo.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 16
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Spacer { }
+                            Clock { format: "%a %d %b  %H:%M", tooltip_format: "%A, %d %B %Y" }
+                            Clock { timezone: "Asia/Tokyo", format: "Tokyo %H:%M" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

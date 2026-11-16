@@ -1,0 +1,23 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# One Bar along the top of every monitor, with one line of text in it.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: "#1b222b" }
+                Children {
+                    Text { Text: "Hello, shell", Foreground: "#e4eaf1", Margin: [12, 8, 0, 0] }
+                }
+            }
+        }
+    }
+}

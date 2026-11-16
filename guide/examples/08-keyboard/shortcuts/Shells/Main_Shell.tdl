@@ -1,0 +1,58 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# The surfaces the shortcuts name. Toggle_Launcher names the Launcher, which the shell adds
+# itself because this file writes no Panel of that name. A surface may also carry its own key:
+# Shortcut on a Panel or a Frame, as Scratch does (the same as Toggle_<Name>).
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Audio { }
+                            Spacer { }
+                            Clock { }
+                        }
+                    }
+                }
+            }
+            Panel {
+                Name: Notes
+                Layer: TOP
+                Anchor: [TOP, RIGHT]
+                Inset: [0, 40, 12, 0]
+                Width: 280
+                Height: 160
+                Visible: false
+                Style { Background: $color.surface_raised, Corner_Radius: 8 }
+                Children { Label { Text: "Notes", Margin: 12 } }
+            }
+            Panel {
+                Name: Scratch
+                Layer: TOP
+                Anchor: [BOTTOM, LEFT]
+                Inset: [12, 0, 0, 12]
+                Width: 220
+                Height: 100
+                Visible: false
+                Shortcut: "Meta+S"
+                Style { Background: $color.surface_raised, Corner_Radius: 8 }
+                Children { Label { Text: "Opened by its own Shortcut key", Margin: 12 } }
+            }
+        }
+    }
+}

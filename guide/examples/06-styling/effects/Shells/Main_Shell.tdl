@@ -1,0 +1,41 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# Shadows, and a change that is animated: the tile's Fill eases over 200 ms when the pointer
+# comes (the :hovered rule of the stylesheet below) and goes. With reduced motion it is instant.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface, Elevation: 20% }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Rectangle {
+                                Class: tile
+                                Width: 80
+                                Height: 24
+                                Corner_Radius: 6
+                                Transition: [Fill]
+                                Duration: 200
+                                Easing: STANDARD
+                                Shadows { Shadow { Color: "#00000055", X: 0, Y: 2, Blur: 6, Spread: 0 } }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

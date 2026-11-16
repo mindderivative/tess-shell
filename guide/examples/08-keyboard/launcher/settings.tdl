@@ -1,0 +1,10 @@
+---
+TDL: 0.2
+Name: Settings
+---
+# One line gives a launcher: the shell adds the Panel Launcher to the first monitor because this
+# file names it and writes no Panel of that name.
+Settings {
+    Appearance { Stylesheets: [Default] }
+    Shortcuts { Toggle_Launcher: "Meta+Space" }
+}

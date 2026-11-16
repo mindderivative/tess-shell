@@ -1,0 +1,11 @@
+---
+TDL: 0.2
+Name: Mine
+---
+# Rules pick blocks by type ("Text"), by class (".warn"), by name ("#Face") or by a module's
+# part ("Button::label"), each with an optional state (":hovered", ":pressed", ":disabled").
+Stylesheet {
+    Rule { Selector: ".warn", Foreground: $color.warning, Font_Weight: 700 }
+    Rule { Selector: ".chip", Background: $color.surface_raised, Corner_Radius: $shape.medium }
+    Rule { Selector: ".chip:hovered", Background: $color.primary }
+}

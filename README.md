@@ -162,6 +162,8 @@ uv run pytest
 
 ## Documentation
 
+The **user guide** for a person who wants a bar on their desktop is in [`guide/`](guide/README.md): install and start, the configuration folder, a first Bar, every surface and module with its keys, styling, `settings.tdl`, shortcuts, the command line and troubleshooting. Its tables are generated from the shell's schema and command line, and every example in it is checked by the test suite (`python -m tests.guide_tables` writes the tables again after a change in the code). The guide is not part of `docs/` and the docs site does not publish it.
+
 The design documentation is in [`docs/`](docs/README.md). Start at [Home](docs/00%20Home/Home.md) for the current status, decisions and open questions.
 
 `docs/` is generated from the maintainer's design notes (an Obsidian vault) by [`tools/sync_docs.py`](tools/sync_docs.py). Edits made in `docs/` are overwritten the next time the tool runs.

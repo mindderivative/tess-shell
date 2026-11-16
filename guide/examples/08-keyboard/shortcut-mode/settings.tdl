@@ -1,0 +1,14 @@
+---
+TDL: 0.2
+Name: Settings
+---
+Settings {
+    Appearance { Stylesheets: [Default] }
+    Shortcuts {
+        Enter_Shortcut_Mode: "Ctrl+Alt+Shift+F9"
+        Exit_Shortcut_Mode: "Ctrl+Q"
+        Set_Shortcut_Mode: "Ctrl+Enter"
+        Next_Focus: "Tab"
+        Previous_Focus: "Shift+Tab"
+    }
+}

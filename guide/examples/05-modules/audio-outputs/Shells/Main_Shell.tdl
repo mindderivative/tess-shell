@@ -1,0 +1,41 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# The shell provides the Popup Audio_Outputs by itself. Write one of the same name on a Monitor
+# to change how it looks: it replaces the shipped one whole.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Spacer { }
+                            Audio { }
+                        }
+                    }
+                }
+            }
+            Popup {
+                Name: Audio_Outputs
+                Attach: BOTTOM
+                Alignment: END
+                Gap: 6
+                Style { Background: $color.surface_raised, Corner_Radius: 12, Elevation: 30% }
+                Children { Audio_Outputs { } }
+            }
+        }
+    }
+}

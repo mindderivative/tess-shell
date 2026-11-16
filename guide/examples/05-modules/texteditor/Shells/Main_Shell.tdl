@@ -1,0 +1,32 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# The Panel asks for the keyboard when it is clicked, so the editor can be typed into.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Panel {
+                Name: Notes
+                Layer: TOP
+                Anchor: [TOP, RIGHT]
+                Inset: [0, 48, 24, 0]
+                Width: 360
+                Height: 160
+                Keyboard: ON_DEMAND
+                Style { Background: $color.surface, Corner_Radius: 8 }
+                Children {
+                    TextEditor {
+                        Label: "Notes"
+                        Placeholder: "Write a note"
+                        Width: 340
+                        Lines: 6
+                        Margin: 10
+                    }
+                }
+            }
+        }
+    }
+}

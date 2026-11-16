@@ -1,0 +1,46 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# The laptop's own screen gets a slim Bar, picked by its connector name; every other monitor gets
+# a taller one with the time. Index: default is "every monitor no other block names".
+Shell {
+    Monitor {
+        Name: Laptop
+        Connector: "eDP-1"
+        Children {
+            Bar {
+                Name: Laptop_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 28
+                Style { Background: $color.surface }
+            }
+        }
+    }
+    Monitor {
+        Name: Others
+        Index: default
+        Children {
+            Bar {
+                Name: Big_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 40
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Spacer { }
+                            Clock { }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

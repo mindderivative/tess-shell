@@ -1,0 +1,15 @@
+---
+TDL: 0.2
+Name: Greeting
+---
+# The layout of a module of your own: params, and a block tree that reads what the Python sends
+# with <| ... |>. This one greets by the time of day.
+Module {
+    Params {
+        name { Type: string, Default: "there" }
+    }
+    Text {
+        Text: <| greeting + ", " + params.name |>
+        Label: <| greeting + ", " + params.name |>
+    }
+}

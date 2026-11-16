@@ -1,0 +1,35 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# Icons: a name from the shipped mdi set, a name from a set of your own in the Icons folder
+# (mine:star, from Icons/mine.json), and a plain SVG file beside this one.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 12
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            SVG { Icon: "mdi:account", Width: 20, Height: 20, Style { Foreground: $color.on_surface } }
+                            SVG { Icon: "mine:star", Width: 20, Height: 20, Style { Foreground: $color.warning } }
+                            SVG { Source: "dot.svg", Width: 12, Height: 12, Style { Foreground: $color.primary } }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

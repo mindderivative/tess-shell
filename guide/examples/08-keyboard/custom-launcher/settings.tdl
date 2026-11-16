@@ -1,0 +1,8 @@
+---
+TDL: 0.2
+Name: Settings
+---
+Settings {
+    Appearance { Stylesheets: [Default] }
+    Shortcuts { Toggle_Launcher: "Meta+Space" }
+}
