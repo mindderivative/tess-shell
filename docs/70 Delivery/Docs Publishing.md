@@ -64,20 +64,21 @@ The publisher exports the vault's committed state (git `HEAD`), never uncommitte
 
 ## Facts that matter
 
-- Delay: about ten minutes of quiet, then the CI run of the pull request (the `tess-shell` suite runs on it too, which takes a few minutes), then the deploy.
+- Delay: about ten minutes of quiet, then a short CI run on the pull request, then the deploy. A pull request that changes only `docs/` skips lint, the test shards and the package check (`tess-shell` PR #24, 2026-11-15, maintainer's request): a `changes` job in `ci.yml` lists the pull request's files and, when every path is under `docs/`, skips those three jobs. The strict docs build and `CI result` still run, and `CI result` accepts a skip only when the `changes` job decided it. Any other change, a push, a tag (`release.yml` calls `ci.yml`), a manual run, or a failed file listing runs everything.
 - The code sessions read specs from `docs/` of their own worktrees, which come from `origin/main`, so they see a note after the pull request merges. The vault is the source of truth.
 - The earlier hook wrote the export into the `tess-shell` main checkout and left about 130 uncommitted files there. That is gone.
 - `docs/` is generated: edit the vault, not the files in `docs/`.
 
 ## Questions After Testing
 
-1. [ ] Should a docs-only pull request skip the `tess-shell` test shards? Context: `CI result` is required, so every export runs lint, four test shards and the package check, although only the docs build matters for it. A path filter inside `ci.yml` that still reports `CI result` would save the minutes. Recommendation: not now; the repository is public so the minutes are free, and the change touches the code repository's required check. Answered by: how long exports take to merge in the first week.
+1. [ ] Does a docs-only export merge within a few minutes? Context: the docs-only path skips the long jobs, so the wait should be the docs build plus the check itself. Recommendation: read the time between opening and merge on the first few exports and look again if it is over ten minutes. Answered by: the first exports after PR #24.
 
 ## Acceptance criteria
 
 - [x] `tess-docs-publish --dry-run` exports into its own clone and reports the changed file count without pushing (run 2026-11-15, 133 files).
-- [ ] A vault commit with no later commit for the quiet period opens or updates one pull request with auto-merge on, with nobody doing anything.
-- [ ] After the merge the site shows the note (checked on the live site).
+- [x] A vault commit with no later commit for the quiet period opens or updates one pull request with auto-merge on, with nobody doing anything (2026-11-15: vault commit `08960f4` opened pull request #23 with 4 files; run with a 5-second quiet period).
+- [x] After the merge the site shows the note (2026-11-15: #23 merged by auto-merge 5 minutes after it opened, the Deploy Docs run succeeded, and the live page `Docs Publishing` answers 200).
+- [ ] A docs-only pull request skips lint, test and package and still merges on a green `CI result` (checked on the first export after PR #24).
 - [ ] A broken export shows in the log and as a notification.
 
 ## Links
