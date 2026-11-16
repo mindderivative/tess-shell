@@ -1,0 +1,60 @@
+---
+TDL: 0.2
+Shell: 0.1
+Name: Task_Item
+---
+
+# One button of the Tasks row (Tasks Module): the application's icon and, with `show_title`, the
+# window's title in a text that scrolls when it is too long for the button. The Tasks module calls
+# it in a `For` and writes the handlers on the call, so they run the Tasks actions. `icon` is what
+# the Tasks module sends: an SVG document or `pixels:...` (an Icon shows both). The active window
+# takes the `:selected` look (the stylesheet's `.task_item:selected`), a minimised one is drawn
+# dimmed, and one that wants attention shows a small mark in the warning colour.
+Module {
+    Style: Task_Item_Style.tdl
+
+    Params {
+        icon { Type: icon, Default: "" }
+        title { Type: string, Default: "" }
+        # the accessible name: the title and the application, with the state in words
+        label { Type: string, Default: "" }
+        show_title { Type: boolean, Default: true }
+        # the button's width when it shows a title, in pixels
+        max_width { Type: number, Default: 180 }
+        icon_size { Type: number, Default: 18 }
+        active { Type: boolean, Default: false }
+        minimized { Type: boolean, Default: false }
+        attention { Type: boolean, Default: false }
+    }
+
+    FlexBox {
+        Name: Root
+        Class: task_item
+        Role: BUTTON
+        Label: <| params.label |>
+        Selected: <| params.active |>
+        Opacity: <| 0.5 if params.minimized else 1 |>
+        Flex: HORIZONTAL
+        Align_Items: CENTER
+        Spacing: 6
+        Children {
+            Icon { Name: Glyph, Icon: <| params.icon |>, Size: <| params.icon_size |> }
+            If <| params.show_title |> {
+                Marquee_Text {
+                    Name: Title
+                    Text: <| params.title |>
+                    Width: <| params.max_width - params.icon_size - 18 |>
+                }
+            }
+            FlexBox {
+                Name: Attention
+                Visible: <| params.attention |>
+                Width: 6
+                Height: 6
+                Corner_Radius: 3
+                Background: $color.warning
+                A11y_Hidden: true
+            }
+        }
+    }
+}

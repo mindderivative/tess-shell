@@ -292,6 +292,13 @@ def test_a_module_gets_only_the_lookups_and_the_theme_callback(tmp_path: Path) -
     icons, _ = service(tmp_path)
     helper = icons.for_module("Tray")
     public = {n for n in dir(helper) if not n.startswith("_")}
-    assert public == {"theme_icon", "pixmap_icon", "png_icon", "on_theme_changed", "close"}
+    assert public == {
+        "theme_icon",
+        "pixmap_icon",
+        "png_icon",
+        "app_icon",
+        "on_theme_changed",
+        "close",
+    }
     with pytest.raises(AttributeError):
         helper.invalidate  # type: ignore[attr-defined]  # noqa: B018

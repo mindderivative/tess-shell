@@ -1,0 +1,17 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Mind Derivative"
+            }
+        ],
+        "Description": "Tells Tesserae Shell which outputs have an active fullscreen window, and, while a Tasks module is in use, which windows are open",
+        "Icon": "preferences-system-windows-script-test",
+        "Id": "tesserae-shell-kwin",
+        "License": "MIT",
+        "Name": "Tesserae Shell",
+        "Version": "1"
+    },
+    "X-Plasma-API": "javascript"
+}

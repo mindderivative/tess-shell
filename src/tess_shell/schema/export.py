@@ -1013,6 +1013,7 @@ def _settings() -> dict[str, dict[str, Json]]:
     """settings.tdl by section; the keys are those of ``config.settings`` (its tuples)."""
     defaults = cfg.Settings(config_dir=Path("."))
     logging, appearance, debug = defaults.logging, defaults.appearance, defaults.debug
+    kwin = defaults.kwin
     folder: Json = {"mode": "folder", "absolute": True, "multiple": True}
 
     def block(section: str, name: str) -> Json:
@@ -1051,6 +1052,7 @@ def _settings() -> dict[str, dict[str, Json]]:
         "Control": boolean("Settings", "Control", defaults.control),
         "Shortcuts": block("Settings", "Shortcuts"),
         "Global_Shortcuts": boolean("Settings", "Global_Shortcuts", defaults.global_shortcuts),
+        "KWin": block("Settings", "KWin"),
     }
     assert tuple(root) == cfg.ROOT_KEYS  # the order of the loader's own tuple
     out: dict[str, dict[str, Json]] = {
@@ -1090,6 +1092,10 @@ def _settings() -> dict[str, dict[str, Json]]:
                 None,
             ),
             "Follow_Desktop": boolean("Appearance", "Follow_Desktop", appearance.follow_desktop),
+        },
+        "KWin": {
+            "Script": word("KWin", "Script", cfg.KWIN_SCRIPT, kwin.script),
+            "Hide_On_Fullscreen": boolean("KWin", "Hide_On_Fullscreen", kwin.hide_on_fullscreen),
         },
         "Debug": {
             "Panel_Hide": word("Debug", "Panel_Hide", cfg.PANEL_HIDE, debug.panel_hide),

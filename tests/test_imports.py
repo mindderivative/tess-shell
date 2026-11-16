@@ -82,6 +82,8 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.appearance",
         "tess_shell.schema.keys",  # services.shortcuts reads key strings (pure, no I/O)
     },
+    # the desktop-entry index follows the folders with the same file watcher the shell's files use
+    "services.desktop_entries": {"loguru", "tess_shell.watch"},
     "surfaces": set(),
     "surfaces.bar": {"tess_shell.binder.model"},
     "surfaces.panel": {"tess_shell.binder.model", "tess_shell.surfaces.bar"},
@@ -155,6 +157,14 @@ RULES: dict[str, set[str] | None] = {
     # client imports ``session``; ``app`` imports ``notify``)
     "session": {"tess_shell.exit_codes"},
     "notify": set(),
+    # the ``kwin`` commands: like the client, standard library and jeepney, and the pure KWin files
+    "kwin_commands": {
+        "jeepney",
+        "tess_shell.client",
+        "tess_shell.exit_codes",
+        "tess_shell.options",
+        "tess_shell.services.kwin_package",
+    },
     "commands": ANY,  # the shell's side of the control interface: it holds the model
     "scanner": ANY,
     "shortcuts": ANY,  # the actions the shell declares: settings and shell files put together

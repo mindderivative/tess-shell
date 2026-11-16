@@ -423,6 +423,9 @@ class HostState:
 class FrameState:
     plan: FramePlan
     hidden: bool = False  # closed by a Hide (or ``Visible: false``): no window at all
+    # hidden by an active fullscreen window on the Frame's output (``Frames.set_covered``): the
+    # same as ``hidden`` while it lasts, and apart from it, so the user's own Hide is kept
+    covered: bool = False
     size: tuple[float, float] = (0, 0)  # what the ring was last drawn for
     painter: LayerWindow | None = None
     nodes: list[TreNode] = field(default_factory=list)  # outer border, fill, inner border
@@ -666,7 +669,11 @@ class Frames:
                 self._close(self.states.pop(key))
                 st = None
             if st is None:
-                st = self.states[key] = FrameState(plan, hidden=not plan.frame.visible)
+                st = self.states[key] = FrameState(
+                    plan,
+                    hidden=not plan.frame.visible,
+                    covered=plan.output.name in self._m.covered_outputs,
+                )
                 hidden, tabs = plan.rest_sets()
                 st.hidden_melds, st.tab_melds = set(hidden), set(tabs)
             else:
@@ -702,6 +709,17 @@ class Frames:
                     st.size = plan.size  # the output changed: draw for it until tre configures
                 st.plan = plan
             self._reconcile(st)
+
+    def set_covered(self, covered: frozenset[str]) -> None:
+        """The outputs with an active fullscreen window are ``covered``: the Frame on one is closed
+        (its zones are released, windows use the whole output) like a Hide, and comes back when the
+        output is not named."""
+        for st in self.states.values():
+            now = st.plan.output.name in covered
+            if now != st.covered:
+                st.covered = now
+                logger.info(f"Frame {st.plan.where} {'covered' if now else 'uncovered'}")
+                self._reconcile(st)
 
     def set_look(self, look: Look) -> None:
         """The theme or the accent changed: every token is read again, the ring is redrawn in
@@ -832,7 +850,7 @@ class Frames:
 
     def _reconcile(self, st: FrameState) -> None:
         plan = st.plan
-        if st.hidden:
+        if st.hidden or st.covered:
             if st.painter is not None or st.reservers:
                 self._close(st)
             return

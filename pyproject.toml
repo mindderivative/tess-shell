@@ -81,6 +81,8 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.ruff.lint.per-file-ignores]
 # the checklist generators embed whole TDL files in strings
 "tests/kwin/*" = ["E501"]
+# the Node harness and the scenarios of the KWin script are JavaScript in strings
+"tests/test_kwin_script_js.py" = ["E501"]
 
 [tool.mypy]
 strict = true
