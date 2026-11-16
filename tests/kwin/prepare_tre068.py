@@ -1,27 +1,25 @@
-"""Regenerate the tre 0.6.8 KWin hand check in /tmp/tess-kwin-tre068 (not collected by pytest).
+"""Regenerate the tre 0.6.8 kit in /tmp/tess-kwin-tre068 (not collected by pytest).
 
 Run from the repo root: ``env -u WAYLAND_DISPLAY -u DISPLAY PYTHONDONTWRITEBYTECODE=1 uv run python
-tests/kwin/prepare_tre068.py``. It writes scratch configs and scripts under ``/tmp/tess-kwin-tre068``
-and starts nothing, reads nothing and touches nothing outside that folder. Only the scripts below
-do something, and only when YOU run them, on your real session:
+tests/kwin/prepare_tre068.py``. It writes the kit folder and starts nothing. Then
+``/tmp/tess-kwin-tre068/run-all.sh`` runs every step that needs no person, in a PRIVATE KWin inside
+a private ``dbus-run-session`` (``tests/kitlib.py``), and writes ``results.txt``:
 
-* ``run-tab.sh``: starts the SHELL on your session with a Panel holding a TextEditor, a TextInput
-  and a Button (TRE-REQ-018: Tab leaves a multi-line TextEditor). Stops with Ctrl+C.
-* ``run-popup.sh``: starts the SHELL with a Bar of two Buttons that open a Popup and close it in
-  the same turn, once and 20 times (TRE-REQ-019: a Popup closed before it is placed). Ctrl+C stops.
-* ``run-token.sh``: starts ``token_probe.py``, a THROWAWAY tre-only script (not the shell): a Bar
-  with one button. Only when you CLICK it does it start a real application (the first of konsole,
-  kate, dolphin that is installed) with ``XDG_ACTIVATION_TOKEN`` set. Ctrl+C in its terminal stops
-  the script; the application it started is a normal one that you close yourself.
-* ``check.sh``: ``tesserae-shell check`` on each shell config (reads files only).
-* ``checklist.txt``: every line to check, in one list.
+* ``1-check``: ``tesserae-shell check`` on both shell configs.
+* ``2-tab``: a Panel with a TextEditor, a TextInput and a Button; a click gives it the keyboard
+  (KWin's own fake input), Tab and Shift+Tab move the focus as the shell's focus log says
+  (TRE-REQ-018: Tab leaves a multi-line TextEditor).
+* ``3-popup``: a Popup opened and closed in the same turn, once and 20 times, leaves no
+  ``xdg_popup`` in the protocol trace (TRE-REQ-019), with a control that leaves one open.
+* ``4-token``: ``token_probe.py`` (a throwaway tre-only script) asks for an activation token on a
+  click and starts a FAKE program that writes its environment to a file: the token reaches it.
 
-The state directory is ``/tmp/tess-kwin-tre068/state``, never the real one. The scripts use the
-Python environment this generator runs in.
+``checklist.txt`` holds only what no session can do. Nothing starts konsole, kate or dolphin.
 """
 
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -29,10 +27,20 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
+from tests import kitlib  # noqa: E402
+from tests.kitlib import Step  # noqa: E402
 from tests.shell_samples import write_example  # noqa: E402
 
 ROOT = Path("/tmp/tess-kwin-tre068")
+# the environment this generator runs in, so that the kit runs this code
 BIN = Path(sys.executable).parent
+# tre's own virtual environment has pywayland, which the fake input needs
+TRE_PY = str(
+    Path(os.environ.get("TRE_DIR", Path.home() / "Projects/rustDev/projects/tre"))
+    / ".venv"
+    / "bin"
+    / "python"
+)
 SETTINGS = (
     "---\nTDL: 0.2\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: true }\n}\n"
@@ -112,6 +120,11 @@ class Probe(Module):
         self.ctx.popup("Menu", use=use)
 
     @action
+    def open_hold(self, event):
+        self.toggle()  # a toggle: opens when closed, closes when open (the control of the check)
+        self.ctx.log.info("Probe: Menu opened and left open (a second call closes it)")
+
+    @action
     def open_close(self, event):
         self.toggle()  # opens
         self.toggle()  # the open one: a toggle, so it closes in the same turn
@@ -171,27 +184,22 @@ Shell {
 
 TOKEN_PY = '''"""THROWAWAY tre-only script for the activation token check (not the shell; not collected by pytest).
 
-Run it with ``run-token.sh`` on your real session. It opens ONE layer surface (a bar at the top
-with one button) and starts NOTHING until you click the button. On click it asks the compositor for
-an activation token with ``window.request_activation_token(callback)`` and, in the callback, starts
-the first installed application of konsole, kate, dolphin with ``XDG_ACTIVATION_TOKEN`` set to the
-token, then prints what it did and the first 6 characters of the token. With no token (``None``)
-it prints "no token: the compositor did not offer xdg_activation_v1" and starts nothing.
-
-Stop it with Ctrl+C in this terminal. The application it started is a normal application: close it
-yourself. For the comparison without a token start the same application from a terminal.
+``drive_tre068.py token`` runs it in a private KWin. It opens ONE layer surface (a bar at the top
+with one button) and starts NOTHING until the button is clicked. On click it asks the compositor
+for an activation token with ``window.request_activation_token(callback)`` and, in the callback,
+starts the program named by ``$TOKEN_PROGRAM`` (the kit's FAKE program, which writes its
+environment to ``$TOKEN_ENV_OUT``) with ``XDG_ACTIVATION_TOKEN`` set to the token, then prints what
+it did and the first 6 characters of the token. With no token (``None``) it prints "no token: the
+compositor did not offer xdg_activation_v1" and starts nothing.
 """
 
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 import time
 
 import tess_re
-
-CANDIDATES = ("konsole", "kate", "dolphin")
 
 app = tess_re.App()
 handle = app.thread_handle()
@@ -208,10 +216,7 @@ def launch(token: str | None) -> None:
     if not token:
         say("no token: the compositor did not offer xdg_activation_v1")
         return
-    program = next((shutil.which(name) for name in CANDIDATES if shutil.which(name)), None)
-    if program is None:
-        say(f"token {token[:6]}... but none of {', '.join(CANDIDATES)} is installed: started nothing")
-        return
+    program = os.environ["TOKEN_PROGRAM"]
     env = {**os.environ, "XDG_ACTIVATION_TOKEN": token}
     subprocess.Popen([program], env=env, start_new_session=True)  # noqa: S603
     say(f"started {program} with XDG_ACTIVATION_TOKEN={token[:6]}... (length {len(token)})")
@@ -252,7 +257,7 @@ root.add_child(button)
 bar.root.add_child(root)
 app.add_window(bar)
 
-# the event loop blocks the main thread in the engine, so Ctrl+C needs the shell's signal watcher
+# the event loop blocks the main thread in the engine, so a signal needs the shell's watcher
 from tess_shell.signals import SignalWatcher  # noqa: E402
 
 
@@ -262,80 +267,21 @@ def force() -> None:
 
 watcher = SignalWatcher(handle.stop, force)  # type: ignore[arg-type]
 watcher.start()
-say("click the button to start an application with an activation token; Ctrl+C to stop")
+say("click the button to start the program with an activation token")
 try:
     app.run(keep_alive=True)
 finally:
-    watcher.stop()
+    watcher.close()
 '''
 
-CHECKLIST = """tre 0.6.8 checks: one list, every line to run.  Three parts; each has its own run script and
-every one runs on YOUR REAL SESSION and stops with Ctrl+C in its terminal.  check.sh only reads the
-two shell configs ("ok: 1 files checked" each).  Nothing starts by itself.  The state directory is
-/tmp/tess-kwin-tre068/state, not your real one.
+FAKE_APP = '#!/bin/sh\n# a FAKE program: writes its environment (NUL separated) to the file the check names\nenv -0 > "$TOKEN_ENV_OUT"\n'
 
-PART 1: Tab leaves a multi-line TextEditor (TRE-REQ-018)
- /tmp/tess-kwin-tre068/run-tab.sh starts the shell: a Bar with a clock and, below it, a Panel
- (Keyboard: ON_DEMAND) holding a TextEditor, a single-line TextInput and a Button, in that order.
- 1  Click into the TextEditor and type two lines: the text appears; Enter makes a new line.
- 2  Press Tab: focus moves to the next control (the TextInput shows its focus ring); no tab character
-    was typed into the TextEditor.
- 3  Press Shift+Tab: focus returns to the TextEditor with its text and caret unchanged.
- 4  Press Tab in the single-line TextInput: focus moves on (the Button), as before.
- 5  Press Tab from the last control (the Button): focus wraps or leaves as the focus rules say
-    (Focus and Keyboard).  Write down which.
- Stop the shell with Ctrl+C.
-
-PART 2: a popup closed before it is placed (TRE-REQ-019)
- /tmp/tess-kwin-tre068/run-popup.sh starts the shell: a Bar with two Buttons ("Open and close once",
- "Open and close 20 times") and a small blue block.  A button opens the red Popup beside the blue block
- and closes it in the SAME turn (ctx.popup twice: the second call toggles the open one closed).  A
- red box with "A popup is stuck" on screen means a Popup stayed.
- 6  Click "Open and close once": no popup is left on screen; the log has no warning about a popup
-    that stayed (the log shows "Probe: Menu opened and closed in one turn").
- 7  Click "Open and close 20 times": nothing is left on screen afterwards, and the compositor shows
-    no flash that stays (the log shows "Probe: Menu opened and closed 20 times in one turn").
- 8  Open and dismiss a tray menu with the keyboard (Escape straight after the click) 20 times: no menu
-    stays on screen.  (Use the tray of the M5f kit, or the tooltips of any gallery: this kit has no
-    tray of its own; run one of those kits instead of run-popup.sh for this line.)
- Stop the shell with Ctrl+C.
-
-PART 3: the activation token (Applications Module; the shell's launcher T-049 is not built)
- /tmp/tess-kwin-tre068/run-token.sh starts token_probe.py, a throwaway tre-only script, NOT the shell:
- a Bar at the top with one button.  It starts nothing until you click.  On click it asks for a token
- (Window.request_activation_token) and starts the first installed one of konsole, kate, dolphin with
- XDG_ACTIVATION_TOKEN set to it, and prints in its terminal what it did and the token's first 6
- characters.  The application it starts is normal: close it yourself.  Ctrl+C stops the script.
- 9  Click the button: the started application's window takes focus (its title bar active), not only
-    appears behind the current window.
-10  Start the same application from a terminal for comparison (for example: konsole &): without a
-    token KWin may leave the new window unfocused (focus-stealing prevention); this is the difference
-    the token fixes.
-11  Note the callback in the terminal: the token is a non-empty string (the first 6 characters are
-    printed); if it says "no token: the compositor did not offer xdg_activation_v1", the compositor
-    did not offer the protocol.  Write down which.
-
-Report pass or fail per line (and the log file of the shell if a line fails).
-"""
+CONFIGS: dict[str, str] = {"cfg-tab": TAB_BODY, "cfg-popup": POPUP_BODY}
 
 WARN_SHELL = (
     'echo "This starts the SHELL on your real session (Ctrl+C stops it). Ctrl+C within 3 s to cancel." >&2\n'
     "sleep 3\n"
 )
-WARN_TOKEN = (
-    'echo "This starts token_probe.py on your real session (Ctrl+C stops it)." >&2\n'
-    'echo "It starts a real application ONLY when you click its button." >&2\n'
-    "sleep 3\n"
-)
-
-# folder -> shell body
-CONFIGS: dict[str, str] = {"cfg-tab": TAB_BODY, "cfg-popup": POPUP_BODY}
-
-
-def script(root: Path, name: str, text: str) -> None:
-    path = root / name
-    path.write_text("#!/bin/sh\n" + text)
-    path.chmod(0o755)
 
 
 def write_config(cfg: Path, body: str) -> None:
@@ -349,28 +295,145 @@ def write_config(cfg: Path, body: str) -> None:
         (folder / "Probe_Module.py").write_text(PROBE_PY)
 
 
+OK = "^PASS "
+NO = (r"^FAIL ",)
+INTRO = (
+    "The unattended steps drive the shell in a private KWin with KWin's own fake input; the\n"
+    "rows of the vault's Hand Checks table for tre 0.6.8 that a session can decide are in\n"
+    "results.txt. Left for you: what needs a look at a real screen or a real session."
+)
+
+
+def drive(name: str) -> str:
+    return f'"$PY" drive_tre068.py {name}'
+
+
+def steps() -> list[Step]:
+    return [
+        Step(
+            "1-check",
+            "tesserae-shell check on both shell configs",
+            command=(
+                '"$BIN" check --config-dir "$KIT/cfg-tab" || exit 1\n'
+                '"$BIN" check --config-dir "$KIT/cfg-popup"\n'
+            ),
+            sandbox="bus",
+            expect=(r"ok: \d+ files? checked[\s\S]*ok: \d+ files? checked",),
+            forbid=("error", "warning"),
+        ),
+        Step(
+            "2-tab",
+            "Tab leaves a multi-line TextEditor (TRE-REQ-018): the focus moves in order, with a ring",
+            command=drive("tab"),
+            sandbox="kwin",
+            tools=(TRE_PY,),
+            expect=(OK + "1 ", OK + "2 ", OK + "3 ", OK + "4 ", OK + "5 ", OK + "6 ", OK + "7 "),
+            forbid=NO,
+            timeout=180,
+        ),
+        Step(
+            "3-popup",
+            "a popup closed in the same turn leaves no xdg_popup (TRE-REQ-019), once and 20 times",
+            command=drive("popup"),
+            sandbox="kwin",
+            tools=(TRE_PY,),
+            expect=(OK + "2 ", OK + "3 ", OK + "5 open_close:", OK + "5 open_close_20:", OK + "6 "),
+            forbid=NO,
+            timeout=180,
+        ),
+        Step(
+            "4-token",
+            "the activation token: a string or None, and the started program receives it",
+            command=drive("token"),
+            sandbox="kwin",
+            tools=(TRE_PY,),
+            expect=(OK + "1 ", OK + "2 ", r"^NOTE the compositor gave"),
+            forbid=NO,
+            timeout=180,
+        ),
+        Step(
+            "5-focus-ring",
+            "the focus ring is visible around the focused control",
+            kind="manual",
+            reason=(
+                "looking at the screen: step 2 asserts that tre reports focus_visible (the log says "
+                "'ring'), but whether the ring is drawn so a person sees it is a look at the "
+                "pixels on a real screen"
+            ),
+            expect=(
+                "run-tab.sh (the shell on your real session): the TextInput shows its focus ring after Tab",
+            ),
+        ),
+        Step(
+            "6-no-popup-on-screen",
+            "no stuck popup is visible on screen after the open-and-close buttons",
+            kind="manual",
+            reason=(
+                "looking at the screen: step 3 asserts through the protocol trace that every "
+                "xdg_popup is destroyed; whether the compositor draws nothing red is a look at a "
+                "real screen. Run run-popup.sh (the shell on your real session; Ctrl+C stops it) and "
+                "click 'Open and close once' and 'Open and close 20 times'"
+            ),
+            expect=("no red box with 'A popup is stuck' stays",),
+        ),
+        Step(
+            "7-real-app-focus",
+            "the window of a real application started with a token takes focus",
+            kind="manual",
+            reason=(
+                "needs a real application and your own KWin focus-stealing-prevention settings: "
+                "step 4 proves the token reaches a started program, never starting konsole, kate "
+                "or dolphin in a sandbox; whether KWin then focuses that application's window is "
+                "your session's policy"
+            ),
+            expect=(
+                "the started application's title bar is active",
+                "the same application from a terminal may stay unfocused",
+            ),
+        ),
+        Step(
+            "8-tray-menu-keyboard",
+            "a tray menu opened and dismissed with the keyboard (Escape right after the click) 20 times leaves nothing",
+            kind="manual",
+            reason=(
+                "needs a tray with an item and a menu, which this kit does not have (it belongs to "
+                "the tray kit of the M5f gallery, tests/kwin/prepare_m5f_gallery.py, which is not "
+                "converted yet); the popup mechanism itself is asserted by step 3"
+            ),
+            expect=("no menu stays on screen",),
+        ),
+    ]
+
+
 def write_kit(root: Path = ROOT) -> None:
     """Write every file of the kit under ``root`` (nothing outside it)."""
     root.mkdir(parents=True, exist_ok=True)
     for folder, body in CONFIGS.items():
         write_config(root / folder, body)
-    (root / "checklist.txt").write_text(CHECKLIST)
-    (root / "token_probe.py").write_text(TOKEN_PY)
     state = f"export XDG_STATE_HOME={root}/state\n"
-    for name, folder in (("run-tab.sh", "cfg-tab"), ("run-popup.sh", "cfg-popup")):
-        script(
-            root,
-            name,
-            state + WARN_SHELL + f"exec {BIN}/tesserae-shell run --config-dir {root / folder}\n",
-        )
-    script(root, "run-token.sh", state + WARN_TOKEN + f"exec {BIN}/python {root}/token_probe.py\n")
-    script(
+    # for the two looks that need your real screen: the shell on YOUR session, started by you
+    interactive = {"run-tab.sh": "cfg-tab", "run-popup.sh": "cfg-popup"}
+    files = {
+        "token_probe.py": TOKEN_PY,
+        "fake-app": FAKE_APP,
+        **{
+            name: "#!/bin/sh\n"
+            + state
+            + WARN_SHELL
+            + f"exec {BIN}/tesserae-shell run --config-dir {root / folder}\n"
+            for name, folder in interactive.items()
+        },
+    }
+    kitlib.write_kit(
         root,
-        "check.sh",
-        state
-        + "".join(
-            f"{BIN}/tesserae-shell check --config-dir {root}/{folder}\n" for folder in CONFIGS
-        ),
+        steps(),
+        title="tre 0.6.8 kit: Tab in a TextEditor, popups closed in the same turn, the token",
+        intro=INTRO,
+        files=files,
+        executable=("fake-app", *interactive),
+        variables={"BIN": str(BIN / "tesserae-shell"), "PY": sys.executable, "TRE_PY": TRE_PY},
+        support=("kitdrive.py", "fake_input_server.py", "kwin/drive_tre068.py"),
+        obsolete=("run-token.sh", "check.sh"),
     )
 
 
