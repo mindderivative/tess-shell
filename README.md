@@ -148,9 +148,12 @@ tesserae-shell install-session --remove   # disable the unit if enabled, remove 
 * `--remove` leaves `~/.config/tesserae-shell` alone and does not stop a running shell.
 * Tests write only into temporary folders and use a recording runner instead of `systemctl`; the
   code refuses the real `~/.config/systemd/user` and `~/.local/share/applications` and the real
-  `systemctl` while `PYTEST_CURRENT_TEST` is set. The one check of the real session is a kit:
-  `uv run python tests/kwin/prepare_install_session.py` writes `/tmp/tess-kwin-install-session`
-  (backup, print, install, verify, stale warning, enable, after login, undo).
+  `systemctl` while `PYTEST_CURRENT_TEST` is set. The hand-check kit
+  `uv run python tests/kwin/prepare_install_session.py` writes `/tmp/tess-kwin-install-session`;
+  its `run-all.sh` runs print, install, verify, the stale warning, enable, start (`Type=notify`),
+  restart, stop, disable and remove unattended in a private systemd user manager and a private
+  KWin, never in your session (`results.txt` has one line per step; `checklist.txt` keeps only
+  the login and the real portal).
 
 ## Development
 
