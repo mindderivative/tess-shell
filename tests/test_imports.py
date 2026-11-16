@@ -144,7 +144,17 @@ RULES: dict[str, set[str] | None] = {
     },
     # the control commands' client: the standard library and jeepney, nothing that costs time to
     # import (tests/test_client.py lists what a run imports)
-    "client": {"jeepney", "tess_shell.__version__", "tess_shell.exit_codes", "tess_shell.options"},
+    "client": {
+        "jeepney",
+        "tess_shell.__version__",
+        "tess_shell.exit_codes",
+        "tess_shell.options",
+        "tess_shell.session",  # the stale-unit warning of ``status``
+    },
+    # the two files of the desktop session and the systemd notice: standard library only (the
+    # client imports ``session``; ``app`` imports ``notify``)
+    "session": {"tess_shell.exit_codes"},
+    "notify": set(),
     "commands": ANY,  # the shell's side of the control interface: it holds the model
     "scanner": ANY,
     "shortcuts": ANY,  # the actions the shell declares: settings and shell files put together

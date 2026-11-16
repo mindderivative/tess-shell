@@ -1,0 +1,18 @@
+[Unit]
+Description=Tesserae Shell
+PartOf=graphical-session.target
+After=graphical-session.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=notify
+NotifyAccess=main
+ExecStart=/absolute/path/to/tesserae-shell run
+Restart=on-failure
+RestartSec=2
+RestartPreventExitStatus=1 2 4
+Slice=session.slice
+
+[Install]
+WantedBy=graphical-session.target

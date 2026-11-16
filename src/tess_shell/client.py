@@ -135,11 +135,27 @@ def _emit(options: Options, text: str, data: dict[str, Any]) -> None:
     print(json.dumps(data) if options.json else text)
 
 
-def _fail(options: Options, failure: Failure) -> int:
+def _unit_warnings() -> list[str]:
+    """What is wrong with the installed systemd unit's ``ExecStart`` (``tess_shell.session``)."""
+    from tess_shell import session
+
+    return session.installed_warnings()
+
+
+def _print_warnings(warnings: Sequence[str]) -> None:
+    for warning in warnings:
+        print(f"tesserae-shell: warning: {warning}", file=sys.stderr)
+
+
+def _fail(options: Options, failure: Failure, warnings: Sequence[str] = ()) -> int:
     if options.json:
-        print(json.dumps({"ok": False, "error": failure.message, "exit": int(failure.code)}))
+        data: dict[str, Any] = {"ok": False, "error": failure.message, "exit": int(failure.code)}
+        if warnings:
+            data["warnings"] = list(warnings)
+        print(json.dumps(data))
     else:
         print(f"tesserae-shell: {failure.message}", file=sys.stderr)
+        _print_warnings(warnings)
     return int(failure.code)
 
 
@@ -191,19 +207,22 @@ def text_status(status: dict[str, Any]) -> str:
 
 def run(command: str, args: Any, options: Options) -> int:
     """Run a control command; the exit code."""
+    warnings = _unit_warnings() if command == "status" else []
     try:
         shell = Shell(options.timeout)
     except Failure as failure:
-        return _fail(options, failure)
+        return _fail(options, failure, warnings)
     try:
-        return _run(shell, command, args, options)
+        return _run(shell, command, args, options, warnings)
     except Failure as failure:
-        return _fail(options, failure)
+        return _fail(options, failure, warnings)
     finally:
         shell.close()
 
 
-def _run(shell: Shell, command: str, args: Any, options: Options) -> int:
+def _run(
+    shell: Shell, command: str, args: Any, options: Options, warnings: Sequence[str] = ()
+) -> int:
     if command == "reload":
         ok, message = shell.call("Reload")
         return _answer(options, ok, message)
@@ -214,9 +233,15 @@ def _run(shell: Shell, command: str, args: Any, options: Options) -> int:
     if command == "status":
         (text,) = shell.call("Status")
         if options.json:
-            print(text)
+            # the shell's own text, unless the unit has something to say: then the same object
+            # with a "warnings" list (a key that is there only when there is a warning)
+            if warnings:
+                print(json.dumps({**json.loads(text), "warnings": list(warnings)}))
+            else:
+                print(text)
         else:
             print(text_status(json.loads(text)))
+            _print_warnings(warnings)
         return int(ExitCode.OK)
     if command in ("show", "hide", "toggle"):
         ok, message = shell.call(command.capitalize(), "s", [args.name])
