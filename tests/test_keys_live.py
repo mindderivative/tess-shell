@@ -76,7 +76,10 @@ def test_tab_reaches_a_button_and_a_slider_and_enter_space_and_the_arrows_operat
     shell.wait_for("running")
     pointer: live_pointer.VirtualPointer | None = None
     try:
-        time.sleep(2.0)  # the first layout
+        # the Bar is configured by the compositor, then laid out: a click or a key before that
+        # goes nowhere (a cold CI machine took longer than the 2 s this once waited)
+        shell.wait_for("Bar Top on HEADLESS-1 configured", timeout=60)
+        time.sleep(1.0)  # the first layout
         pointer = live_pointer.VirtualPointer(private_sway.env, *OUT)
         pointer.move(1000, 16)  # on the Bar, away from the widgets: it takes the keyboard
         pointer.click()
@@ -99,7 +102,8 @@ def test_tab_reaches_a_button_and_a_slider_and_enter_space_and_the_arrows_operat
             shell.process.kill()
     said = [m.group(1) for x in shell.seen if (m := re.search(r"\| Probe: (.*)$", x.rstrip()))]
     focus = [m.group(1) for x in shell.seen if (m := re.search(r"focus: \S+ '(.*)' \(ring\)", x))]
-    assert focus == ["Save", "Volume"], focus  # Tab: the keyboard moved the focus, with a ring
+    log = "".join(shell.seen)[-4000:]  # what the shell said, for a failure
+    assert focus == ["Save", "Volume"], f"{focus}\n{log}"  # Tab: the keyboard moved the focus
     assert said == [
         "Save clicked",  # Enter
         "Save clicked",  # Space
@@ -111,5 +115,5 @@ def test_tab_reaches_a_button_and_a_slider_and_enter_space_and_the_arrows_operat
         "Volume released at 51 (pressed at 52)",
         "Volume: 51 -> 100",  # End
         "Volume released at 100 (pressed at 51)",
-    ], said
+    ], f"{said}\n{log}"
     assert "| ERROR " not in "".join(shell.seen)
