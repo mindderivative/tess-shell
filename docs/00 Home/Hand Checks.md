@@ -20,6 +20,14 @@ tags: [quality, process, needs-verification]
 2. In the kit folder: `check.sh` checks the configuration, `run.sh` starts the shell on your session, and `checklist.txt` lists every line to check.
 3. A kit that registers shortcuts with the real service has a `backup.sh`: run it first.
 
+## The rule for checks (maintainer, 2026-11-16)
+
+> [!IMPORTANT]
+> **A check that a session can run and verify is the session's, not yours**
+> The maintainer wrote this after running the `install-session` kit by hand, where most lines were copying terminal output into a file for a session to read. A kit line that a script can run and judge is run and judged by the code session, with the output kept in a file the session reads. What is left for the maintainer is only what no session can do: looking at the screen, pressing physical keys, logging out and in, real hardware. If a session needs permission to run something on his real session, to use his terminal or to start a process outside its sandbox, it says so in his chat and asks once for that named action; with his yes it runs it itself and reports pass or fail. It never turns a verifiable step into a paste for him.
+
+What this means for a kit, and what the code session was asked to change on 2026-11-16: every script writes its result (command, output, exit code, pass or fail) to a file under the kit folder; one `run-all.sh` runs every line that can be run unattended, compares the output with what the checklist expects and writes `results.txt`; `checklist.txt` keeps only the lines that need the maintainer, each saying why a session cannot do it. The earlier rule that no session touches the real session without leave ([Orchestration Log](Orchestration%20Log.md) D-019) stands as the default: the grant is the maintainer's yes in chat, for the named action.
+
 ## The checks
 
 | Kit | Generator | Checks | State |
@@ -28,11 +36,14 @@ tags: [quality, process, needs-verification]
 | `/tmp/tess-kwin-m6a` | `prepare_m6a_gallery.py` | Focus: Tab order, `Tab_Index`, a Panel's TextInput and Checkbox | Optional; no result reported to the vault |
 | `/tmp/tess-kwin-m6c` | `prepare_m6c_shortcuts.py` | Global shortcuts with the real `kglobalaccel` (copy of `kglobalshortcutsrc` first) | Run 2026-11-15: lines 1 to 10, 12 and 14 passed; 13 not run; line 11 found a real gap, fixed in `tess-shell` PR #18 |
 | `/tmp/tess-kwin-m6d` | `prepare_m6d_mode.py` | Shortcut mode: the enter key, which keyboard mode KWin needs (`EXCLUSIVE` or `ON_DEMAND`) | No result reported to the vault |
-| tre 0.6.8 | `prepare_tre068.py`, **not written yet** (asked of the code session, 2026-11-16) | The three checks below | Waiting for the kit |
+| `/tmp/tess-kwin-install-session` | `prepare_install_session.py` (name from the kit's folder; not read) | `install-session`: files, verify, stale unit, enable, start, stop, log out and in, undo | Run by the maintainer 2026-11-15, lines 0 to 4 and 6 to 10 reported passing; line 5's output matches the spec, no verdict reported ([Packaging and Session Start](../70%20Delivery/Packaging%20and%20Session%20Start.md)) |
+| `/tmp/tess-kwin-m5g` | `prepare_m5g_*` (not read) | The KWin script in the real KWin, the rule file, names the code could not confirm from files | Exists; no result reported |
+| `/tmp/tess-kwin-launcher` | `prepare_m6d_launcher*` (not read) | The Launcher on KWin: open, search, start, focus; `real-start.sh` needs no desktop | Exists; no result reported |
+| `/tmp/tess-kwin-tre068` | `prepare_tre068.py` | The three tre 0.6.8 checks below (`run-tab.sh`, `run-popup.sh`, `run-token.sh`, `check.sh`) | Exists (written by the code session); no result reported |
 
-## tre 0.6.8 checks (the kit does not exist yet)
+## tre 0.6.8 checks
 
-No existing kit covers these: the M6a kit has a single-line `TextInput`, not a `TextEditor`, and no kit opens and closes a popup in one turn. What the new kit must contain, and what you do with it:
+The kit `/tmp/tess-kwin-tre068` exists (found on 2026-11-16; its `checklist.txt` matches the three parts below). Under the rule above, the lines a session can judge from the log or the accessibility tree should be run by it; the lines that need your eyes are the focus ring, a popup left on screen, and the application window taking focus:
 
 ### 1. Tab leaves a multi-line TextEditor ([TRE-REQ-018 Tab Leaves a Multi-Line Text Input](../80%20Requests/TRE-REQ-018%20Tab%20Leaves%20a%20Multi-Line%20Text%20Input.md))
 
