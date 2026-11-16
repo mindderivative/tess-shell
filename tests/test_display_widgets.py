@@ -59,7 +59,7 @@ def test_progressbar_fill_eases_over_the_medium_duration_and_not_under_reduced_m
         w.advance(500)
         assert fill.get("width") == "100%"
     with running(
-        "Driver { }", driver=driver, driver_py=code, appearance=Appearance(reduced_motion=True)
+        "Driver { }", driver=driver, driver_py=code, appearance=Appearance(animations=False)
     ) as w:
         w.send("v", 100)
         w.advance(16)
@@ -88,7 +88,7 @@ def test_marquee_scrolls_only_when_the_text_does_not_fit() -> None:
 
 def test_marquee_is_static_with_an_ellipsis_under_reduced_motion_and_when_disabled() -> None:
     body = 'Marquee_Text { Text: "a very long text that does not fit in a hundred pixels", Width: 100%s }'
-    for extra, look in ((", Enabled: false", None), ("", Appearance(reduced_motion=True))):
+    for extra, look in ((", Enabled: false", None), ("", Appearance(animations=False))):
         with running(body.replace("%s", extra), appearance=look) as w:
             (runner,) = w.view.runners.values()
             assert runner.state == "static" and runner.tooltip_gate() is True
@@ -295,7 +295,7 @@ def test_expander_on_changed_is_at_once_under_reduced_motion() -> None:
         "    @action\n    def changed(self, event):\n        self.seen.append(event.value)\n"
     )
     with running(
-        "Driver { }", driver=driver, driver_py=code, appearance=Appearance(reduced_motion=True)
+        "Driver { }", driver=driver, driver_py=code, appearance=Appearance(animations=False)
     ) as w:
         seen = w.host.loaded["Driver"].instance.seen  # type: ignore[attr-defined]
         w.send("open", True)

@@ -28,7 +28,7 @@ from tess_shell.config.settings import load_settings
 from tess_shell.schema import blocks, docs, export
 from tess_shell.schema.export import schema_dict, schema_json
 from tess_shell.schema.findings import Finding
-from tess_shell.schema.look import STYLE_UNION, read_stylesheet
+from tess_shell.schema.look import DEFAULT_FONT, STYLE_UNION, read_stylesheet
 from tess_shell.schema.shell import BAR_KEYS, read_module, read_shell
 from tess_shell.schema.values import ValueProblem, coerce
 
@@ -221,7 +221,7 @@ def every_key() -> list[tuple[str, str, str, dict[str, Any]]]:
 
 
 def test_top_level_shape() -> None:
-    assert D["schema_version"] == "1.5"
+    assert D["schema_version"] == "1.6"
     assert D["shell_version"]
     assert list(D) == [
         "schema_version",
@@ -234,6 +234,7 @@ def test_top_level_shape() -> None:
         "actions",
         "enums",
         "tokens",
+        "system_tokens",
         "modules",
         "popups",
         "shortcuts",
@@ -750,6 +751,17 @@ def test_no_doc_line_describes_a_key_nothing_accepts() -> None:
     assert set(docs.SPEC_NOTES) == set(D["roots"]) | set(D["blocks"])
 
 
+def test_the_font_the_shell_supplies_is_listed_apart_from_the_shipped_theme_tokens() -> None:
+    (token,) = D["system_tokens"]
+    assert token["name"] == "type.system.font_family"
+    assert token["ref"] == "$type.system.font_family"
+    assert token["kind"] == "font"
+    assert token["default"] == DEFAULT_FONT
+    assert token["theme_wins"] is True
+    assert token["doc"]
+    assert "system.font_family" not in D["tokens"]["type"]
+
+
 def test_a_key_is_in_one_group_only() -> None:
     seen: dict[str, str] = {}
     for group, keys in docs.GROUPS.items():
@@ -809,7 +821,7 @@ def test_the_command_prints_valid_json(capsys: pytest.CaptureFixture[str]) -> No
 
 def test_the_command_takes_json_before_the_command_too(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--json", "schema"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.5"
+    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.6"
 
 
 def test_out_writes_the_file_and_prints_nothing(

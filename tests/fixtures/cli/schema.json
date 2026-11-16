@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5",
+  "schema_version": "1.6",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -24227,6 +24227,17 @@
       }
     }
   },
+  "system_tokens": [
+    {
+      "name": "type.system.font_family",
+      "ref": "$type.system.font_family",
+      "kind": "font",
+      "default": "Roboto",
+      "doc": "The family of the desktop's UI font (the family of the Settings portal's font-name, without its style and size), for a Font_Family: $type.system.font_family. While the desktop names no font it holds the family the shell uses for text that sets none (the default, Roboto, which the shell's renderer bundles). A theme that sets this token itself keeps its own value over the desktop's.",
+      "theme_wins": true,
+      "multiple": true
+    }
+  ],
   "modules": {
     "Audio": {
       "doc": "The default sound output: an icon for its kind and level, mute on a click, the volume on the wheel, an optional percent and slider, and a menu of outputs.",

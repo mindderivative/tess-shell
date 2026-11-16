@@ -16,7 +16,7 @@ import difflib
 import math
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
@@ -513,6 +513,33 @@ class Popups:
         cur = self.current
         if cur is not None and (name is None or cur.popup.name == name):
             self.close(cur, "closed by a call")
+
+    def update_data(self, name: str, data: Mapping[str, Any]) -> bool:
+        """``ctx.update_popup(name, data)``: the open Popup ``name`` and the submenus open from it
+        read ``data`` as their ``caller.data`` from now on: the content is resolved again and
+        diffed into the open window (its size stays). A bad ``data`` is logged and changes
+        nothing. False when the Popup is not open."""
+        chain = [op for op in self.chain() if not op.closing and op.view is not None]
+        if not chain or chain[0].popup.name != name:
+            return False
+        try:
+            copy = args.copy_plain(data, "data")
+        except ValueError as exc:
+            logger.error(f"ctx.update_popup({name!r}): {exc}; the Popup keeps its data")
+            return True
+        for op in chain:
+            op.caller = replace(op.caller, data=copy)
+            op.record = op.caller.record(self._m._all_uses.get(op.caller.use))
+            op.live.caller = op.record
+            assert op.view is not None
+            try:
+                op.view.rebuild(op.live.resolve(op.plan.expanded))
+            except BindFailed as failed:
+                for error in failed.errors:
+                    logger.warning(
+                        f"{error.origin}: {error.message}; the Popup keeps what it shows"
+                    )
+        return True
 
     def is_open(self, name: str) -> bool:
         """Is the Popup ``name`` open now, as the outermost one or as a submenu?"""

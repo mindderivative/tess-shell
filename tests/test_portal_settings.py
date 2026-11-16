@@ -12,7 +12,7 @@ from dbus_fast import Variant
 from tess_shell.appearance import Appearance
 from tess_shell.binder import model as m
 from tess_shell.model.look import make_look, resolve
-from tess_shell.schema.look import GENERIC_FONT, SYSTEM_FONT, effective_tokens
+from tess_shell.schema.look import DEFAULT_FONT, SYSTEM_FONT, effective_tokens
 from tess_shell.services.bus import ServiceThread
 from tess_shell.services.icons import IconService
 from tess_shell.services.portal import (
@@ -105,13 +105,13 @@ def test_a_wrong_typed_key_does_not_stop_the_others() -> None:
     ("appearance", "reduced"),
     [
         (Appearance(), False),
-        (Appearance(reduced_motion=True), True),
+        (Appearance(_reduced_motion_key=True), True),
         (Appearance(animations=False), True),
-        (Appearance(reduced_motion=True, animations=False), True),
+        (Appearance(_reduced_motion_key=True, animations=False), True),
     ],
 )
 def test_either_source_gives_no_animation(appearance: Appearance, reduced: bool) -> None:
-    assert appearance.motion_reduced is reduced
+    assert appearance.reduced_motion is reduced
     durations = effective_tokens(theme(), appearance)["motion.duration.long"].value
     assert getattr(durations, "value", None) == (0 if reduced else 400)
     node = m.Node(
@@ -144,10 +144,21 @@ def test_the_desktop_font_is_a_token_and_a_layout_can_use_it() -> None:
     assert out.style["Font_Family"] == m.Text("Noto Sans")
 
 
-def test_without_a_desktop_font_the_token_is_generic_so_a_layout_still_resolves() -> None:
+def test_without_a_desktop_font_the_token_is_the_family_text_uses_when_none_is_set() -> None:
     # the check before the shell runs uses an Appearance with no font: it must not fail
     value = effective_tokens(theme(), Appearance())[SYSTEM_FONT].value
-    assert getattr(value, "value", None) == GENERIC_FONT
+    assert getattr(value, "value", None) == DEFAULT_FONT
+
+
+def test_the_default_family_is_the_one_tre_uses_for_text_that_sets_none() -> None:
+    import tess_re  # a headless window needs no compositor
+
+    window = tess_re.Window(200, 100)
+    text = "The quick brown fox"
+    unset = window.measure_text(text)
+    assert unset[0] > 0
+    assert window.measure_text(text, font_family=DEFAULT_FONT) == unset
+    assert window.measure_text(text, font_family="sans-serif") != unset  # tre does not know it
 
 
 def test_a_theme_that_sets_the_token_itself_keeps_its_own() -> None:
@@ -246,18 +257,17 @@ def test_the_reader_reads_the_interface_keys_at_start_and_follows_them() -> None
             portal.set("icon-theme", Variant("s", "Papirus"), INTERFACE_NAMESPACE)
             portal.set("font-name", Variant("s", "Noto Sans Bold 11"), INTERFACE_NAMESPACE)
             portal.set("enable-animations", Variant("b", False), INTERFACE_NAMESPACE)
-            assert wait_for(lambda: seen and seen[-1].motion_reduced, 10)
+            assert wait_for(lambda: seen and seen[-1].reduced_motion, 10)
             last = seen[-1]
             assert (last.icon_theme, last.font_family, last.animations) == (
                 "Papirus",
                 "Noto Sans",
                 False,
             )
-            assert last.reduced_motion is False  # the other key did not say so
             portal.set("enable-animations", Variant("b", True), INTERFACE_NAMESPACE)
+            assert wait_for(lambda: not seen[-1].reduced_motion, 10)  # animations are back
             portal.set("reduced-motion", Variant("u", 1))  # either one is enough
             assert wait_for(lambda: seen[-1].reduced_motion and seen[-1].animations, 10)
-            assert seen[-1].motion_reduced
         finally:
             reader.stop()
             service.stop()

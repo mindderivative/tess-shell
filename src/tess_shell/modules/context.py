@@ -51,6 +51,8 @@ class PopupPort(Protocol):
 
     def close_named(self, name: str | None = None) -> None: ...
 
+    def update_data(self, name: str, data: Mapping[str, Any]) -> bool: ...
+
     def is_open(self, name: str) -> bool: ...
 
 
@@ -175,6 +177,13 @@ class ModuleContext:
         port = self._popups() if self._popups else None
         if port is not None:
             port.close_named(name)
+
+    def update_popup(self, name: str, data: Mapping[str, Any]) -> bool:
+        """Give the open Popup ``name`` (and the submenus open from it) new ``caller.data``: its
+        content is resolved again and only what differs changes, so it stays open, in place, at its
+        size. False when it is not open (nothing happens). Loop thread only."""
+        port = self._popups() if self._popups else None
+        return port is not None and port.update_data(name, data)
 
     def is_popup_open(self, name: str) -> bool:
         """Is the Popup ``name`` open (or one of its submenus)? Loop thread only."""

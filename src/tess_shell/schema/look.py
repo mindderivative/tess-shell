@@ -27,7 +27,9 @@ GROUPS = ("Color", "Type", "Shape", "Space", "Elevation", "Motion")
 _MODE_BLOCKS = {"Light": "light", "Dark": "dark", "High_Contrast": "high_contrast"}
 _MODE_BLOCKS["Reduced_Motion"] = "reduced_motion"
 SYSTEM_FONT = "type.system.font_family"  # the desktop's UI font family (Portals)
-GENERIC_FONT = "sans-serif"  # what that token holds while the desktop names no font
+# the family tre's bundled font has and text uses when no ``Font_Family`` is set (the shell ships
+# no font of its own): what ``type.system.font_family`` holds while the desktop names none
+DEFAULT_FONT = "Roboto"
 DESKTOP = "DESKTOP"  # ``Accent: DESKTOP`` asks for the desktop's accent colour
 
 # the kind a token's written value is checked as, by its place in the theme
@@ -161,11 +163,12 @@ def effective_tokens(
     if fallback is not None and fallback is not theme:
         tokens = {**_effective(fallback, appearance), **tokens}
     # the desktop's UI font, offered to every theme (a theme that sets the token itself keeps it);
-    # with no desktop font a generic family, so a layout that uses it always resolves
+    # with no desktop font the family text uses when none is set, so a layout that uses it always
+    # resolves (a name tre does not know, such as the generic ``sans-serif``, measures as no text)
     tokens.setdefault(
         SYSTEM_FONT,
         Token(
-            tess_dl.String(appearance.font_family or GENERIC_FONT, ""),
+            tess_dl.String(appearance.font_family or DEFAULT_FONT, ""),
             m.Origin("<desktop font>", 1, 1),
         ),
     )
@@ -181,7 +184,7 @@ def _effective(theme: ThemeDef, appearance: Appearance) -> dict[str, Token]:
         order.append(appearance.scheme)
     if appearance.high_contrast:
         order.append("high_contrast")
-    if appearance.motion_reduced:
+    if appearance.reduced_motion:
         order.append("reduced_motion")
     for mode in order:
         tokens.update(theme.modes.get(mode, {}))
@@ -200,7 +203,7 @@ def _effective(theme: ThemeDef, appearance: Appearance) -> dict[str, Token]:
             tokens["color.accent"] = tokens["color.primary"]
         else:
             del tokens["color.accent"]
-    if appearance.motion_reduced:
+    if appearance.reduced_motion:
         for path, token in list(tokens.items()):
             if path.startswith("motion.duration."):
                 tokens[path] = Token(tess_dl.Number(0, "0"), token.origin)

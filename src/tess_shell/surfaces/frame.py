@@ -1394,7 +1394,7 @@ class Frames:
 
     def _reduced(self) -> bool:
         look = self._m._look
-        return bool(look is not None and look.appearance.motion_reduced)
+        return bool(look is not None and look.appearance.reduced_motion)
 
     def _timer(self, host: HostState, st: FrameState) -> None:
         """(Re)start the ``Hide_After`` timer of a shown melded Panel."""

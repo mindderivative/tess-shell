@@ -130,7 +130,7 @@ def test_high_contrast_applies_on_top_of_the_scheme() -> None:
 
 
 def test_reduced_motion_zeroes_every_duration() -> None:
-    tokens = effective_tokens(theme(), Appearance(reduced_motion=True))
+    tokens = effective_tokens(theme(), Appearance(animations=False))
     assert colour(tokens, "motion.duration.short") == 0
     assert colour(tokens, "motion.duration.long") == 0
     assert colour(effective_tokens(theme(), Appearance()), "motion.duration.long") == 400
