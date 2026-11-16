@@ -1,7 +1,7 @@
 {
- "vault_commit": "b549689fd1a34b94d71bc3d25b479cba4e814fa0",
- "vault_subject": "M5 Build Log: the accessibility pass (2026-11-16)",
- "exported_at": "2026-11-15 20:11:49",
+ "vault_commit": "abee954c8c4f269e395980948666173020d106b9",
+ "vault_subject": "M5 Build Log: the user guide, and the state after the work plan (2026-11-16)",
+ "exported_at": "2026-11-15 20:55:06",
  "files": {
   "00 Home/Build Logs.md": "7156839d84b290e7",
   "00 Home/Development Readiness.md": "843936a6b8913f1d",
@@ -21,7 +21,7 @@
   "00 Home/M4 Brief.md": "0fccf11ecda85971",
   "00 Home/M4 Build Log.md": "c9aa0e20b7ded289",
   "00 Home/M5 Brief.md": "2f6053b5e7998ac6",
-  "00 Home/M5 Build Log.md": "ed9479999fe5f8d1",
+  "00 Home/M5 Build Log.md": "bddb5e1b95df8d7b",
   "00 Home/M6 Brief.md": "4e6ec021585e0977",
   "00 Home/M6 Build Log.md": "ff0be5ed06bcd2ab",
   "00 Home/Next Work Plan.md": "0a1090db1a471d70",
