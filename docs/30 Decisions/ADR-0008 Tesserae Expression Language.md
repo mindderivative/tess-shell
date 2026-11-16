@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-10-25
-updated: 2026-11-03
+updated: 2026-11-16
 tags: [adr, architecture]
 ---
 
@@ -69,6 +69,18 @@ Details, decided by the maintainer in chat on 2026-10-25:
 > [!CAUTION]
 > **Scope risk**
 > A language of one's own can grow without limit and runs from a configuration file. Keep it to values and structure with a sandbox, and test that the Python front-end and the TDL file give the same tree ([ADR-0007 Shell UI Layer > View format: a full expression language, and Python as an equal front-end (2026-10-25)](ADR-0007%20Shell%20UI%20Layer.md#view-format-a-full-expression-language-and-python-as-an-equal-front-end-2026-10-25)).
+
+## Amendment of 2026-11-16: TEL has no template form
+
+> [!IMPORTANT]
+> **Maintainer's decision, 2026-11-16**
+> TEL is an expression language only. It does not define or parse a template delimiter, and it does not know how a host writes a slot. The host (TDL for the shell, and Tesserae UI for its own files) finds the expressions inside text, splits the text into parts and hands each expression to TEL as plain expression text with its position. The maintainer asked for this after seeing that the shell already works this way, and said Tesserae UI can change how it does things if the change causes it a problem.
+
+- Removed from TEL: the `Template` class and `compile_template` (TEL's decision D3, "the template delimiter is `{{ }}`"), which were built for hosts without a parser of their own. The code session in the `tess-el` repository does the removal. It is a breaking change to TEL's public API, so TEL's next version is a minor bump (0.2.0 while TEL is below 1.0); the version, the tag and the release are the maintainer's.
+- No change for the shell: it calls only `compile_expression`, `compile_condition` and `compile_repeater_parts` (read from `tess-shell` `origin/main`, 2026-11-16) and splits text itself from the parts TDL gives it ([TEL Integration](../20%20Architecture/TEL%20Integration.md)). Its pin `tesserae-el>=0.1.2,<0.2` moves to the new range when 0.2.0 is out.
+- Change for Tesserae UI: its `{{ }}` bindings layer (`tess_ui.binding`) stops using TEL's template and does its own splitting on top of `compile_expression`. Until it bumps its pin of `tesserae-el`, nothing breaks.
+- Not changed: the expression language itself, `Expression`, `Condition`, `Repeater`, `Origin`, `Scope`, tracking and limits.
+- What else in TEL leans on the template code (for example `compile_repeater_parts` and the Python form of expressions, TEL decision D18) is for the `tess-el` session to find and report before it removes anything.
 
 ## Links
 

@@ -5,7 +5,7 @@ type: adr
 status: accepted
 owner: phil
 created: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-16
 tags: [adr, integration/audio]
 ---
 
@@ -41,7 +41,7 @@ B adds two packages and `libpulse` for the same five commands. D is unproven for
 
 ## Decision
 
-Decided by the orchestrator on 2026-11-13 under the [Tesserae Shell Directive](../00%20Home/Tesserae%20Shell%20Directive.md) (rule 7, Tier 1: the choice is inside `tess-shell` and adds no shared dependency), on the code session's recommendation:
+Confirmed by the maintainer on 2026-11-16 ("Orchestrator's decisions stand"). Decided by the orchestrator on 2026-11-13 under the [Tesserae Shell Directive](../00%20Home/Tesserae%20Shell%20Directive.md) (rule 7, Tier 1: the choice is inside `tess-shell` and adds no shared dependency), on the code session's recommendation:
 
 1. Option A. [ADR-0019 Dependency Policy](ADR-0019%20Dependency%20Policy.md) is met: five commands and a notification are a few hundred lines of our own code, not a project of their own.
 2. Option C is the fallback, not built unless A fails on a real server.

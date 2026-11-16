@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-11-13
-updated: 2026-11-14
+updated: 2026-11-16
 tags: [moc, process]
 ---
 
@@ -13,7 +13,7 @@ tags: [moc, process]
 
 > [!WARNING]
 > **Withdrawn on 2026-11-14**
-> The maintainer withdrew the [Tesserae Shell Directive](Tesserae%20Shell%20Directive.md) on 2026-11-14 and took the project back over. This log is closed: it is the record of 2026-11-13 and 2026-11-14. The decisions D-001 to D-059 were made by the orchestrator under the directive, not by the maintainer; each stands only as far as he keeps it. Tasks marked assigned, queued or "written, not sent" are not assigned by anyone now.
+> The maintainer withdrew the [Tesserae Shell Directive](Tesserae%20Shell%20Directive.md) on 2026-11-14 and took the project back over. This log is closed: it is the record of 2026-11-13 and 2026-11-14. The decisions D-001 to D-059 were made by the orchestrator under the directive, not by the maintainer; each stands only as far as he keeps it. **Confirmed on 2026-11-16: the maintainer said "Orchestrator's decisions stand"**, so D-001 to D-059 and [ADR-0021 Audio Access](../30%20Decisions/ADR-0021%20Audio%20Access.md) stand as made; a later change is a new decision of his. Tasks marked assigned, queued or "written, not sent" are not assigned by anyone now.
 
 > [!NOTE]
 > The record of what this session does as `tess-shell-vault`, the orchestrator under the [Tesserae Shell Directive](Tesserae%20Shell%20Directive.md): every task it assigns, every decision it makes, every vote it convenes, and every report it receives. The maintainer asked on 2026-11-13 that everything be logged. A row is added in the same task as the action it records; nothing is removed. Reports from sessions are their own statements, not checked here unless a row says so.

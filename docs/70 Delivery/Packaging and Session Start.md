@@ -5,7 +5,7 @@ type: delivery
 status: accepted
 owner: phil
 created: 2026-11-13
-updated: 2026-11-15
+updated: 2026-11-16
 tags: [delivery, needs-verification]
 ---
 
@@ -68,6 +68,8 @@ X-KDE-Wayland-Interfaces=
 Description=Tesserae Shell
 PartOf=graphical-session.target
 After=graphical-session.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=notify
@@ -76,8 +78,6 @@ ExecStart=/absolute/path/to/tesserae-shell run
 Restart=on-failure
 RestartSec=2
 RestartPreventExitStatus=1 2 4
-StartLimitIntervalSec=60
-StartLimitBurst=5
 Slice=session.slice
 
 [Install]
@@ -86,6 +86,7 @@ WantedBy=graphical-session.target
 
 - `Type=notify` uses the `READY=1` and `STOPPING=1` notices the shell already sends ([Shell Start and Stop > Telling systemd (decided 2026-10-28)](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md#telling-systemd-decided-2026-10-28)).
 - `Restart=on-failure` is the supervisor that [Shell Start and Stop](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md) left as a later item: a crash restarts the shell after 2 seconds, at most 5 times in 60 seconds. A configuration error (exit code 1), an environment error (2) and "another shell is already running" (4) do not restart, because the same start would fail again; an internal error (70) and a kill by a signal do ([Shell Start and Stop > Exit Codes](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md#exit-codes)).
+- `StartLimitIntervalSec=` and `StartLimitBurst=` belong in `[Unit]`: the systemd manual lists them under `systemd.unit` (read 2026-11-16), and in `[Service]` systemd ignores them, which leaves the default limit of 5 starts in 10 seconds instead of 5 in 60. The first version of this note put them in `[Service]`. The session that built the command reported the mistake on 2026-11-16, put them in `[Unit]` in the shell and added a test that fails if they move back; the note was corrected the same day.
 - `PartOf=graphical-session.target` stops the shell when the session ends.
 - No `WatchdogSec`: the shell does not send watchdog pings, so a hung loop is logged by the shell's own watchdog and not restarted. Adding the ping is a later item, not part of this note.
 - The directives are from the systemd manual ([systemd.service](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html), [systemd.special](https://www.freedesktop.org/software/systemd/man/latest/systemd.special.html)); the unit was not run on a session. #needs-verification
@@ -125,6 +126,7 @@ WantedBy=graphical-session.target
 - [ ] The unit passes `systemd-analyze --user verify` on a copy in a temporary folder (a read-only check).
 - [ ] The desktop file passes `desktop-file-validate`, when that tool is installed.
 - [ ] No test calls `systemctl` or writes outside its temporary folder.
+- [ ] A test fails if `StartLimitIntervalSec` or `StartLimitBurst` appears in the `[Service]` section of the generated unit, and passes with both in `[Unit]` (reported built 2026-11-16, not run in the vault).
 
 ## Checks Only the Maintainer Can Run
 
