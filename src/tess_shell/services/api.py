@@ -339,6 +339,15 @@ class ModuleIcons(Protocol):
         naming ``source``) when it cannot be decoded."""
         ...
 
+    def app_icon(self, app: str, size: int) -> str:
+        """The icon of the application whose desktop file is ``app`` (``org.kde.dolphin``, with or
+        without ``.desktop``; a window's class is tried as a last name): the desktop entry's
+        ``Icon=`` through :meth:`theme_icon`, else ``app`` as an icon name, else the shipped
+        ``mdi:application-outline``. Always a reference an ``Icon:`` shows. The entries come from
+        the ``applications`` folders of ``XDG_DATA_HOME`` and ``XDG_DATA_DIRS``, read once and kept
+        (the launcher uses the same index). Same threading as :meth:`theme_icon`."""
+        ...
+
     def on_theme_changed(self, callback: Callable[[], None]) -> Subscription:
         """Call ``callback()`` when the desktop's icon theme changed (the Settings portal's
         ``icon-theme``): every reference made before it came from the old theme, so make the
@@ -382,3 +391,69 @@ class TrayPort(Protocol):
     """What the module host needs of the tray host service."""
 
     def for_module(self, module: str) -> ModuleTray: ...
+
+
+# -- the window list from the shell's KWin script (Tasks Module) -----------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class WindowInfo:
+    """One window of the script's list (Tasks Module > What the script sends)."""
+
+    id: str  # the window's UUID, bare
+    title: str
+    app: str  # the desktop file name, else the resource class
+    active: bool
+    minimized: bool
+    desktops: tuple[str, ...]  # ids of the virtual desktops the window is on; empty: all of them
+    output: str  # the name of the output the window is on
+    attention: bool  # the window wants attention
+
+
+class ModuleWindows(Protocol):
+    """``ctx.windows``: the open windows, from the shell's KWin script. The list is turned on while
+    at least one module is subscribed (``on_changed``) and off when the last one cancels; with no
+    subscriber the script sends no title, class or id. Loop thread only. Nothing connects until
+    the first subscription."""
+
+    @property
+    def available(self) -> bool:
+        """KWin's script is loaded and answering (false on another compositor, with the script
+        off or refused, or silent)."""
+        ...
+
+    @property
+    def ready(self) -> bool:
+        """The first list has arrived since the list was turned on."""
+        ...
+
+    def list(self) -> tuple[WindowInfo, ...]:
+        """The last list, in the order the windows were opened; empty until ``ready``."""
+        ...
+
+    def on_changed(self, callback: Callable[[], None]) -> Subscription:
+        """``callback()`` on the loop thread when the list changed (read it with :meth:`list`) and
+        when ``available`` changed. A burst of lists is one call. The first subscription turns
+        the list on."""
+        ...
+
+    def activate(self, window_id: str) -> concurrent.futures.Future[bool]:
+        """Activate the window (un-minimising it): a one-shot KWin script, started at once. The
+        future is whether KWin loaded the script; the list changes when KWin has acted."""
+        ...
+
+    def minimize(self, window_id: str) -> concurrent.futures.Future[bool]: ...
+
+    def close_window(self, window_id: str) -> concurrent.futures.Future[bool]:
+        """Ask the window to close (the application may ask the user first)."""
+        ...
+
+    def close(self) -> None:
+        """Cancel every subscription of the module."""
+        ...
+
+
+class WindowsPort(Protocol):
+    """What the module host needs of the window service: one helper per module."""
+
+    def for_module(self, module: str) -> ModuleWindows: ...

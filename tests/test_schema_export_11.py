@@ -465,7 +465,7 @@ def test_every_shipped_module_is_listed_with_all_its_params() -> None:
             assert entry["doc"].strip(), (name, param)
             assert entry["kind"] in D["kinds"], (name, param)
         assert D["modules"][name]["doc"].strip(), name
-    assert total == 98  # Button's Expandable and Expanded (M6b) are the last two
+    assert total == 113  # Tasks (6) and Task_Item (9) are the last two modules
 
 
 def test_a_param_default_passes_the_check_of_its_kind() -> None:

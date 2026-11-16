@@ -33,6 +33,7 @@ import tess_utils
 from loguru import logger
 
 from tess_shell.services.api import ModuleIcons, Subscription
+from tess_shell.services.desktop_entries import ApplicationIndex
 
 Register = Callable[[int, int, bytes], str]  # (width, height, RGBA) -> a reference to the pixels
 MAX_SIDE = 1024  # an icon larger than this in either side is refused
@@ -40,6 +41,7 @@ MAX_SVG = 2 * 1024 * 1024  # an SVG larger than this is not read
 MAX_FILE = 16 * 1024 * 1024  # a png larger than this is not read
 HICOLOR = "hicolor"
 PIXMAPS = Path("/usr/share/pixmaps")
+FALLBACK = "mdi:application-outline"  # what an application with no icon at all shows
 SUFFIXES = (".svg", ".png")  # what a flat folder is searched for, in this order
 
 
@@ -170,6 +172,7 @@ class IconService:
         bases: Sequence[Path] | None = None,
         pixmaps: Path | None = PIXMAPS,
         config_home: Path | None = None,
+        apps: ApplicationIndex | None = None,
     ) -> None:
         self._register = register
         self._theme = theme  # fixed by the caller: beats the portal and kdeglobals
@@ -182,6 +185,7 @@ class IconService:
         self._config_home = config_home or Path(
             env.get("XDG_CONFIG_HOME") or Path(env.get("HOME", "~")).expanduser() / ".config"
         )
+        self._apps = apps  # the desktop-entry index; made from the environment on first use
         self._lock = threading.RLock()
         self._themes: dict[tuple[str, tuple[Path, ...]], _Theme] = {}
         self._cache: dict[tuple[str, int, str], _Cached] = {}
@@ -192,6 +196,33 @@ class IconService:
     def for_module(self, module: str) -> ModuleIcons:
         """The helper for one module (``ctx.icons``)."""
         return _ModuleIcons(self)
+
+    # -- applications ---------------------------------------------------------------------------
+
+    @property
+    def apps(self) -> ApplicationIndex:
+        """The desktop-entry index the application icons come from (shared with the launcher)."""
+        with self._lock:
+            if self._apps is None:
+                self._apps = ApplicationIndex()
+            return self._apps
+
+    def app_icon(self, app: str, size: int) -> str:
+        """The icon of the application whose desktop file is ``app`` (``org.kde.dolphin``, with or
+        without ``.desktop``; a window class is tried too): the entry's ``Icon=`` through
+        :meth:`theme_icon`, else ``app`` itself as an icon name, else the shipped
+        ``application-outline``. Reads files on first use: not on the loop thread."""
+        entry = self.apps.for_window(app)
+        names: list[str] = []
+        if entry is not None and entry.icon:
+            names.append(entry.icon)
+        if app and "/" not in app:  # a window's class is no path: only an entry's Icon= may be
+            names.extend(n for n in (app, app.lower()) if n not in names)
+        for name in names:
+            found = self.theme_icon(name, size)
+            if found is not None:
+                return found
+        return FALLBACK
 
     # -- the theme ------------------------------------------------------------------------------
 
@@ -501,3 +532,6 @@ class _ModuleIcons:
 
     def png_icon(self, data: bytes, source: str = "") -> str | None:
         return self._service.png_icon(data, source)
+
+    def app_icon(self, app: str, size: int) -> str:
+        return self._service.app_icon(app, size)

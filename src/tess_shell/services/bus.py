@@ -188,6 +188,12 @@ class Bus:
     # -- state ----------------------------------------------------------------------------------
 
     @property
+    def address(self) -> str | None:
+        """The bus address this bus was given (a test's private bus), or ``None``: the bus as the
+        environment gives it."""
+        return self._address
+
+    @property
     def connected(self) -> bool:
         return self._conn is not None and self._conn.connected
 

@@ -51,10 +51,12 @@ from tess_shell.services.audio import AudioService
 from tess_shell.services.bus import ServiceThread
 from tess_shell.services.control import NAME, ControlService, ErrorLog
 from tess_shell.services.icons import IconService
+from tess_shell.services.kwin import KWinService
 from tess_shell.services.layer import Layer
 from tess_shell.services.portal import PortalReader
 from tess_shell.services.shortcuts import STOP_TIMEOUT, Action, ShortcutService
 from tess_shell.services.tray import TrayService
+from tess_shell.services.windows import WindowService
 from tess_shell.shortcuts import (
     drop_failed,
     mode_keys,
@@ -188,10 +190,13 @@ def _start_control(
     reloader: Reloader,
     commands: ShellCommands,
     errors: ErrorLog,
+    kwin: KWinService | None = None,
 ) -> ControlService | None:
     """Export the control interface and own its bus name (Shell Start and Stop). ``None`` when
     the session bus cannot be reached: the shell runs without control commands and says so."""
-    control = ControlService(service, handle.call_soon, commands, tess_shell.__version__, errors)
+    control = ControlService(
+        service, handle.call_soon, commands, tess_shell.__version__, errors, kwin
+    )
     try:
         service.submit(control.start()).result(timeout=START_TIMEOUT)
     except (ServiceUnavailable, TimeoutError, OSError) as exc:
@@ -218,6 +223,29 @@ def _stop_control(service: ServiceThread, control: ControlService) -> None:
 
 
 START_TIMEOUT = 6.0  # seconds the shell waits for the bus when it takes its name
+
+
+def _start_kwin(service: ServiceThread, kwin: KWinService) -> None:
+    """Check KWin and load its script, once the shell owns its name (KWin Integration > Loading the
+    script). Never waited for: the shell starts whether or not KWin answers, and a KWin that does
+    not is one line in the log."""
+
+    def done(future: Any) -> None:
+        if future.cancelled():
+            return
+        problem = future.exception()
+        if problem is not None:
+            logger.warning(f"kwin: the script was not loaded ({problem})")
+
+    service.submit(kwin.start()).add_done_callback(done)
+
+
+def _stop_kwin(service: ServiceThread, kwin: KWinService) -> None:
+    """Unload the script (mode R) before the shell lets go of its name."""
+    try:
+        service.submit(kwin.stop()).result(timeout=START_TIMEOUT)
+    except Exception as exc:
+        logger.debug(f"kwin: stopping did not go through ({exc!r})")
 
 
 def _start_shortcuts(
@@ -384,6 +412,19 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         icon_box.append(icon_service)
         host.icons = icon_service
         host.tray = TrayService(service)  # ctx.tray: the shell as a StatusNotifier host
+        # the shell's KWin script: fullscreen hiding and the window list (ctx.windows). It is
+        # loaded after the control interface owns its name (below); the surfaces hide on its word
+        kwin = KWinService(
+            service,
+            handle.call_soon,
+            mode=settings.kwin.script,
+            hide_on_fullscreen=settings.kwin.hide_on_fullscreen,
+        )
+        kwin.on_fullscreen = manager.set_fullscreen
+        windows = WindowService(kwin)
+        windows.on_module_error = note_module_error
+        host.windows = windows
+        icon_service.apps.watch()  # a desktop entry that comes or goes: the icons read it again
         host.call_soon = handle.call_soon  # ctx.call_soon: back to the loop thread
         host.focus = manager.mode  # ctx.focus: shortcut mode and the default focus
         # a file the shell registers for the first time gets a UID in its metadata (G8)
@@ -469,7 +510,7 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         taken = False
         ready = False  # READY=1 was sent: STOPPING=1 follows it
         if settings.control:
-            control = _start_control(service, handle, manager, reloader, commands, errors)
+            control = _start_control(service, handle, manager, reloader, commands, errors, kwin)
             taken = control is not None and not control.owned
         if taken:
             _fail(
@@ -484,6 +525,8 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
                 service, handle, commands, call_problems, result.shortcuts, settings
             )
             reloader.shortcuts = shortcuts
+            if control is not None and control.owned:  # the script calls the shell's interface
+                _start_kwin(service, kwin)
             logger.info("running")
             if control is not None:
                 control.set_state("running")
@@ -506,11 +549,13 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
             shortcuts.begin_stop()  # a press from here on is dropped
         if control is not None:
             control.set_state("stopping")
+            _stop_kwin(service, kwin)
             _stop_control(service, control)
         if shortcuts is not None:
             _stop_shortcuts(service, shortcuts)
         host.stop_all()
         ticks.close()
+        icon_service.apps.unwatch()
         if portal is not None:
             portal.stop()
         service.stop()

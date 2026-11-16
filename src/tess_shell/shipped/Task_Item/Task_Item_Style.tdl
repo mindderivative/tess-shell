@@ -1,0 +1,15 @@
+---
+TDL: 0.2
+Shell: 0.1
+Name: Task_Item_Style
+---
+
+Style {
+    Classes {
+        task_item {
+            Kind: FlexBox
+            Padding: [6, 3, 6, 3]
+            Corner_Radius: 6
+        }
+    }
+}

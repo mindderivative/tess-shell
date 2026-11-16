@@ -976,6 +976,7 @@ def test_the_settings_are_the_keys_of_the_readers_tuples() -> None:
     assert tuple(s["Logging"]) == cfg.LOGGING_KEYS
     assert tuple(s["Appearance"]) == cfg.APPEARANCE_KEYS
     assert tuple(s["Debug"]) == cfg.DEBUG_KEYS
+    assert tuple(s["KWin"]) == cfg.KWIN_KEYS
     assert tuple(s["Validation"]) == cfg.VALIDATION_KEYS
     assert tuple(s["Directories"]) == FOLDERS
     assert tuple(s["Shortcuts"]) == cfg.FIXED_SHORTCUTS
@@ -987,11 +988,12 @@ def test_the_settings_are_the_keys_of_the_readers_tuples() -> None:
         "Appearance",
         "Debug",
         "Shortcuts",
+        "KWin",
     }
 
 
 @pytest.mark.parametrize(
-    "section", ["Settings", "Directories", "Logging", "Validation", "Appearance", "Debug"]
+    "section", ["Settings", "Directories", "Logging", "Validation", "Appearance", "Debug", "KWin"]
 )
 def test_settings_takes_the_exported_keys_and_no_other(tmp_path: Path, section: str) -> None:
     pool = [w for w in PROP_POOL if not w.isupper()]

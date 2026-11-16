@@ -1,7 +1,7 @@
 """The context (``self.ctx``): a module's whole view of the shell (Module Context).
 
 M2 offers ``name``, ``uid``, ``config``, ``log``, ``uses``, ``send`` and ``on_tick``; later
-milestones add ``popup``, ``dbus``, ``audio``, ``icons``, ``tray`` and ``focus``.
+milestones add ``popup``, ``dbus``, ``audio``, ``icons``, ``tray``, ``focus`` and ``windows``.
 """
 
 from __future__ import annotations
@@ -22,7 +22,9 @@ from tess_shell.services.api import (
     ModuleDBus,
     ModuleIcons,
     ModuleTray,
+    ModuleWindows,
     TrayPort,
+    WindowsPort,
 )
 
 
@@ -112,6 +114,7 @@ class ModuleContext:
         tray: Callable[[], TrayPort | None] | None = None,
         call_soon: Callable[[], Callable[[Callable[[], None]], None] | None] | None = None,
         focus: Callable[[], FocusPort | None] | None = None,
+        windows: Callable[[], WindowsPort | None] | None = None,
     ) -> None:
         self.name = name
         self.caller: UseRecord | None = None  # the use whose block raised the event being handled
@@ -124,6 +127,8 @@ class ModuleContext:
         self._icons: ModuleIcons | None = None
         self._tray_port = tray
         self._tray: ModuleTray | None = None
+        self._windows_port = windows
+        self._windows: ModuleWindows | None = None
         self._call_soon = call_soon
         self._focus_port = focus
         self._focus: ModuleFocus | None = None
@@ -270,6 +275,19 @@ class ModuleContext:
             self._tray = port.for_module(self.name)
         return self._tray
 
+    @property
+    def windows(self) -> ModuleWindows:
+        """The open windows from the shell's KWin script (Tasks Module): ``on_changed(callback)``,
+        ``list()``, ``activate(id)``, ``minimize(id)``, ``close_window(id)``, ``available`` and
+        ``ready``. The first ``on_changed`` turns the list on; with no subscriber the script sends
+        no title, class or id. Loop thread only."""
+        if self._windows is None:
+            port = self._windows_port() if self._windows_port else None
+            if port is None:
+                raise RuntimeError("the shell has no window service")
+            self._windows = port.for_module(self.name)
+        return self._windows
+
     def send_available(self, use: UseRecord) -> None:
         """Give a use that appeared after the layer sent ``available`` its current value (the
         host calls it for each new use of a module that has used ``ctx.dbus``)."""
@@ -329,3 +347,6 @@ class ModuleContext:
         if self._tray is not None:
             self._tray.close()
             self._tray = None
+        if self._windows is not None:
+            self._windows.close()
+            self._windows = None

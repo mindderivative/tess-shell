@@ -770,6 +770,13 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
     "first.",
     ("Appearance", "Follow_Desktop"): "Follows the desktop's colour scheme, accent, contrast "
     "and reduced-motion settings.",
+    ("Settings", "KWin"): "What the shell does with KWin: its script and fullscreen hiding.",
+    ("KWin", "Script"): "How the shell's KWin script runs: RUNTIME loads it into KWin when the "
+    "shell starts and unloads it at stop, PERSISTENT leaves it to the one installed by "
+    "tesserae-shell kwin script install, OFF loads nothing (no fullscreen hiding, no window list). "
+    "A restart applies it.",
+    ("KWin", "Hide_On_Fullscreen"): "Hides the shell's surfaces on an output while a fullscreen "
+    "window is active there, and shows them again when it leaves. A restart applies it.",
     ("Debug", "Panel_Hide"): "How a Panel is hidden: KEEP leaves the surface mapped and draws "
     "nothing, CLOSE destroys the window.",
     ("Debug", "Frame_Join"): "How the join of a melded Panel animates: PARAM, SMIL, CONCAVE, "
@@ -966,6 +973,9 @@ MODULE_NOTES: dict[str, str] = {
     "Network": "How the machine is connected, as NetworkManager reports it.",
     "ProgressBar": "A bar that shows a value between a minimum and a maximum.",
     "Slider": "A control that sets a value between a minimum and a maximum by dragging.",
+    "Task_Item": "One button of the Tasks row: an application's icon and a window's title.",
+    "Tasks": "The open windows as a row of buttons, from the shell's KWin script; a click "
+    "activates, minimises or closes a window.",
     "TextBox": "Several lines of text that can wrap, be cut and be selected.",
     "TextEditor": "A multi-line text field.",
     "TextInput": "A single-line text field.",
@@ -1073,6 +1083,24 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("TextInput", "Password"): "Shows dots instead of the text and blocks copy and cut.",
     ("TextInput", "Enabled"): "False disables the field.",
     ("TextInput", "Width"): "The width in pixels.",
+    ("Task_Item", "icon"): "The icon: an SVG document or pixels the shell holds (Tasks sends it).",
+    ("Task_Item", "title"): "The window's title, scrolled when it is longer than the button.",
+    ("Task_Item", "label"): "The name assistive technology reads aloud: the title and the "
+    "application, with the state in words.",
+    ("Task_Item", "show_title"): "Shows the title beside the icon.",
+    ("Task_Item", "max_width"): "The button's width when it shows a title, in pixels.",
+    ("Task_Item", "icon_size"): "The icon's size in pixels.",
+    ("Task_Item", "active"): "The window is the active one: the block takes the :selected look.",
+    ("Task_Item", "minimized"): "The window is minimised: the button is drawn dimmed.",
+    ("Task_Item", "attention"): "The window wants attention: a small mark in the warning colour.",
+    ("Tasks", "show_title"): "Shows each window's title beside its icon.",
+    ("Tasks", "max_width"): "The widest a button gets, in pixels.",
+    ("Tasks", "icon_size"): "The size of each icon in pixels.",
+    ("Tasks", "monitor"): "THIS shows the windows on the module's own monitor, ALL those on "
+    "every monitor.",
+    ("Tasks", "desktop"): "CURRENT shows the windows on the current virtual desktop (and those "
+    "on all desktops), ALL those on every desktop.",
+    ("Tasks", "show_empty"): "Keeps the module's space when there is no window.",
     ("Toggle", "Checked"): "Whether the switch is on; set from outside.",
     ("Toggle", "Label"): "The name assistive technology reads aloud for the switch.",
     ("Tray", "icon_size"): "The size of each icon in pixels.",

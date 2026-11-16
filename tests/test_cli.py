@@ -43,9 +43,10 @@ def test_version_json_keys() -> None:
     }
 
 
-def test_stub_command_reports_not_implemented(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["kwin"]) == 1
-    assert "'kwin' is not implemented in M0" in capsys.readouterr().err
+def test_kwin_needs_a_group_and_an_action() -> None:
+    with pytest.raises(SystemExit) as stopped:
+        main(["kwin"])
+    assert stopped.value.code == 2
 
 
 @pytest.mark.parametrize("argv", [["--json", "version"], ["version", "--json"]])

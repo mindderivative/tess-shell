@@ -35,9 +35,24 @@ _CONTROL: dict[str, tuple[str, list[tuple[str, str | None]]]] = {
     ),
     "log-level": ("change the log level until the next reload of settings.tdl", [("level", None)]),
 }
-# not built yet
-_STUBS: dict[str, tuple[str, list[tuple[str, str | None]], list[str]]] = {
-    "kwin": ("KWin helpers", [("args", "*")], []),
+# the ``kwin`` commands (``tess_shell.kwin_commands``): group, then action
+_KWIN: dict[str, tuple[str, dict[str, str]]] = {
+    "script": (
+        "the shell's KWin script, installed for KWin to run from login (mode P)",
+        {
+            "install": "copy the script to KWin's scripts folder and enable it in kwinrc",
+            "remove": "take the script and its kwinrc switch away",
+            "status": "report the package, the kwinrc switch and whether KWin has it loaded",
+        },
+    ),
+    "rule": (
+        "the one window rule that keeps the shell's surfaces above Plasma panels (opt-in)",
+        {
+            "show": "print the rule group the shell would write to kwinrulesrc",
+            "install": "write that group (shows it and asks first, or takes --yes)",
+            "remove": "take exactly that group out of kwinrulesrc",
+        },
+    ),
 }
 
 
@@ -108,15 +123,34 @@ def _build_parser() -> argparse.ArgumentParser:
                 p.add_argument(arg)
             else:
                 p.add_argument(arg, nargs=nargs)
-    for name, (help_, positionals, flags) in _STUBS.items():
-        p = add(name, help_)
-        for arg, nargs in positionals:
-            if nargs is None:
-                p.add_argument(arg)
+    kwin = add("kwin", "KWin helpers: the script and the window rule (no shell needs to run)")
+    groups = kwin.add_subparsers(dest="group", metavar="GROUP", required=True)
+    for group, (group_help, actions) in _KWIN.items():
+        group_parser = groups.add_parser(group, help=group_help)
+        action_parsers = group_parser.add_subparsers(dest="action", metavar="ACTION", required=True)
+        for action_name, action_help in actions.items():
+            p = action_parsers.add_parser(action_name, help=action_help, parents=[parent])
+            for option in p._actions:
+                if option.dest in {"config_dir", "json", "quiet", "timeout"}:
+                    option.default = argparse.SUPPRESS
+            p.set_defaults(
+                rules_file=None, kwinrc=None, scripts_dir=None, yes=False, no_reload=False
+            )
+            if group == "rule":
+                p.add_argument(
+                    "--rules-file", type=Path, metavar="PATH", help="the rule file (kwinrulesrc)"
+                )
             else:
-                p.add_argument(arg, nargs=nargs)
-        for flag in flags:
-            p.add_argument(flag)
+                p.add_argument("--kwinrc", type=Path, metavar="PATH", help="KWin's kwinrc")
+                p.add_argument(
+                    "--scripts-dir", type=Path, metavar="PATH", help="KWin's scripts folder"
+                )
+            if action_name != "show" and action_name != "status":
+                p.add_argument(
+                    "--no-reload", action="store_true", help="do not ask KWin to reload afterwards"
+                )
+            if (group, action_name) == ("rule", "install"):
+                p.add_argument("--yes", action="store_true", help="write without asking")
     return parser
 
 
@@ -201,9 +235,10 @@ def main(argv: Sequence[str] | None = None, *, runner: Runner | None = None) -> 
         from tess_shell import client
 
         return client.run(command, args, options)
-    if command in _STUBS:
-        print(f"tesserae-shell: '{command}' is not implemented in M0", file=sys.stderr)
-        return ExitCode.CONFIG
+    if command == "kwin":
+        from tess_shell import kwin_commands
+
+        return kwin_commands.run(args, options)
     from tess_shell import app
 
     return app.check(options) if command == "check" else app.run(options)

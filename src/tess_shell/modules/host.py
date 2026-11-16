@@ -31,7 +31,7 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.blocks import BUILTIN_ACTIONS
 from tess_shell.schema.findings import Finding, nearest
 from tess_shell.schema.model import ModuleDef
-from tess_shell.services.api import AudioPort, DBusPort, IconsPort, TrayPort
+from tess_shell.services.api import AudioPort, DBusPort, IconsPort, TrayPort, WindowsPort
 
 PACKAGE = "tess_shell_user_modules"
 
@@ -159,6 +159,7 @@ class ModuleHost:
         self.icons: IconsPort | None = None  # set by the app: the icon lookup (ctx.icons)
         self.tray: TrayPort | None = None  # set by the app: the tray host (ctx.tray)
         self.focus: FocusPort | None = None  # set by the app: shortcut mode (ctx.focus)
+        self.windows: WindowsPort | None = None  # set by the app: the window list (ctx.windows)
         # set by the app: run a function on the loop thread (ctx.call_soon)
         self.call_soon: Callable[[Callable[[], None]], None] | None = None
         # the uses made for the entries of a For: they come and go while the shell runs, so a
@@ -291,6 +292,7 @@ class ModuleHost:
             lambda: self.tray,
             lambda: self.call_soon,
             lambda: self.focus,
+            lambda: self.windows,
         )
         instance = classes[0].__new__(classes[0])
         instance.ctx = ctx

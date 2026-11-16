@@ -11,7 +11,7 @@ from __future__ import annotations
 import dataclasses
 import difflib
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -155,6 +155,7 @@ class Surface:
     timer: Any = None  # the pending ``Hide_After`` timer of a Panel
     trace: Any = None  # (label, start, frames left to log): the first frames after a change
     generation: int = 0  # counts shows and hides, so an animation that was replaced stays silent
+    covered: bool = False  # hidden by a fullscreen window on its output (``set_fullscreen``)
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -541,6 +542,9 @@ class SurfaceManager:
         # hidden (``name``, ``"shown"`` or ``"hidden"``); the errors the last ``check`` found
         self.on_surface: Callable[[str, str], None] | None = None
         self.check_errors: list[BindError] = []
+        # the outputs with an active fullscreen window: the surfaces on them draw nothing, take no
+        # input and reserve no space until it leaves (KWin Integration, ``set_fullscreen``)
+        self._covered: frozenset[str] = frozenset()
 
     def _dispatch(
         self, handler: Handler, key: str, raw: Any, caller: Mapping[str, Any] | None = None
@@ -988,6 +992,8 @@ class SurfaceManager:
             else:
                 self._arm_hide_after(surface)
                 surface.window.after(1, lambda: self._fire(surface, "On_Visible"))
+        if output.name in self._covered:  # a surface opened on an output with a fullscreen window
+            self._cover_state(surface)
         return surface
 
     # -- Panel: hide, show, Hide_After, Escape (D44) ----------------------------------------------
@@ -1245,6 +1251,8 @@ class SurfaceManager:
                 keyboard=_keyboard(bar, False, holds_text_field(s.planned.expanded.nodes)),
             )
             self._arm_hide_after(s)
+            if s.output in self._covered:
+                self._cover_state(s)
             self._trace(s, "shown")
             logger.info(f"Panel {s.planned.where} shown (surface kept)")
             self._enter(s)
@@ -1259,6 +1267,8 @@ class SurfaceManager:
         self._panel_events(s)
         self._watch_frames(s)
         self._arm_hide_after(s)
+        if s.output in self._covered:
+            self._cover_state(s)
         self._trace(s, "shown")
         logger.info(f"Panel {s.planned.where} shown (window created)")
         self._enter(s)
@@ -1369,6 +1379,65 @@ class SurfaceManager:
             logger.exception(f"{handler.origin}: {key} on Panel {s.name} raised")
         finally:
             self._depth -= 1
+
+    # -- fullscreen (KWin Integration > The KWin script) ---------------------------------------
+    #
+    # An active fullscreen window covers every shell element on its output: Bars, Panels, the
+    # Frame, Popups. KWin itself covers the `top` layer; the `overlay` layer and the space the Bar
+    # and the Frame reserve are the shell's to give up. A covered surface keeps its window and its
+    # tree (the KEEP route of Panel hiding: the root is not visible, no input, no keyboard) and
+    # reserves no space; showing it again puts back what the file and the user's own Show and Hide
+    # say. The user's own state (a Panel hidden by a command) is never changed by it.
+
+    @property
+    def covered_outputs(self) -> frozenset[str]:
+        """The outputs whose surfaces are hidden by a fullscreen window now."""
+        return self._covered
+
+    def set_fullscreen(self, outputs: Iterable[str]) -> None:
+        """Loop thread: ``outputs`` are the names of the outputs that have an active fullscreen
+        window now (the full state; an output that is not named is shown again)."""
+        covered = frozenset(outputs)
+        if covered == self._covered:
+            return
+        changed = self._covered ^ covered
+        self._covered = covered
+        logger.info(
+            f"fullscreen: the shell is hidden on {', '.join(sorted(covered))}"
+            if covered
+            else "fullscreen: the shell is shown everywhere"
+        )
+        for s in self.surfaces:
+            if s.output in changed:
+                self._cover_state(s)
+        self.frames.set_covered(covered)
+
+    def _cover_state(self, s: Surface) -> None:
+        """Bring one surface to the state its output's fullscreen window asks for. Idempotent: it
+        is also called after anything that writes the window's properties again."""
+        window, planned = s.window, s.planned
+        if window is None or planned is None:
+            return
+        bar = planned.bar
+        if s.output in self._covered:
+            if not s.covered:
+                s.covered = True
+                self.popups.parent_closed(s)  # a Popup does not stay open without its parent
+                self.mode.gone(s.name)  # nor does shortcut mode stay on a surface nobody sees
+            window.root.set(visible=False)
+            window.set(input_region=[], keyboard="none", exclusive_zone=0)
+            return
+        if not s.covered:
+            return
+        s.covered = False
+        window.set(exclusive_zone=s.geometry.exclusive_zone)
+        if s.hidden:  # the user's own Hide stands: only the space comes back
+            return
+        window.root.set(visible=True)
+        window.set(
+            input_region=_input_for(bar, s.geometry, self._output_size(s)),
+            keyboard=self._keyboard_word(planned, False),
+        )
 
     # -- the control interface ----------------------------------------------------------------
 
@@ -1676,6 +1745,8 @@ class SurfaceManager:
             if s.window.get("keyboard") != word and not self.mode.holds(s.window):
                 s.window.set(keyboard=word)  # shortcut mode holds it while it is on
                 logger.info(f"{_kind(bar)} {where}: keyboard {word}")
+        if s.output in self._covered:  # the writes above brought back what the cover took away
+            self._cover_state(s)
 
     # -- the desktop's look changed ------------------------------------------------------------
 

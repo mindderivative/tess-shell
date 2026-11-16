@@ -22873,6 +22873,19 @@
         "built": true,
         "group": "Settings",
         "tokens": []
+      },
+      "KWin": {
+        "kind": "block",
+        "choices": null,
+        "enum": null,
+        "default": null,
+        "doc": "What the shell does with KWin: its script and fullscreen hiding.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Settings",
+        "block": "KWin",
+        "tokens": []
       }
     },
     "Directories": {
@@ -23188,6 +23201,36 @@
         "required": false,
         "built": true,
         "group": "Appearance",
+        "tokens": []
+      }
+    },
+    "KWin": {
+      "Script": {
+        "kind": "enum",
+        "choices": [
+          "RUNTIME",
+          "PERSISTENT",
+          "OFF"
+        ],
+        "enum": null,
+        "default": "RUNTIME",
+        "doc": "How the shell's KWin script runs: RUNTIME loads it into KWin when the shell starts and unloads it at stop, PERSISTENT leaves it to the one installed by tesserae-shell kwin script install, OFF loads nothing (no fullscreen hiding, no window list). A restart applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "KWin",
+        "tokens": []
+      },
+      "Hide_On_Fullscreen": {
+        "kind": "bool",
+        "choices": null,
+        "enum": null,
+        "default": "true",
+        "doc": "Hides the shell's surfaces on an output while a fullscreen window is active there, and shows them again when it leaves. A restart applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "KWin",
         "tokens": []
       }
     },
@@ -25812,6 +25855,259 @@
         "Tab_Index"
       ],
       "actions": []
+    },
+    "Task_Item": {
+      "doc": "One button of the Tasks row: an application's icon and a window's title.",
+      "params": {
+        "icon": {
+          "type": "icon",
+          "kind": "icon",
+          "default": "\"\"",
+          "doc": "The icon: an SVG document or pixels the shell holds (Tasks sends it).",
+          "required": false
+        },
+        "title": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The window's title, scrolled when it is longer than the button.",
+          "required": false
+        },
+        "label": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The name assistive technology reads aloud: the title and the application, with the state in words.",
+          "required": false
+        },
+        "show_title": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "true",
+          "doc": "Shows the title beside the icon.",
+          "required": false
+        },
+        "max_width": {
+          "type": "number",
+          "kind": "number",
+          "default": "180",
+          "doc": "The button's width when it shows a title, in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "icon_size": {
+          "type": "number",
+          "kind": "number",
+          "default": "18",
+          "doc": "The icon's size in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "active": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "The window is the active one: the block takes the :selected look.",
+          "required": false
+        },
+        "minimized": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "The window is minimised: the button is drawn dimmed.",
+          "required": false
+        },
+        "attention": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "The window wants attention: a small mark in the warning colour.",
+          "required": false
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live",
+        "Focusable",
+        "Tab_Index"
+      ],
+      "actions": []
+    },
+    "Tasks": {
+      "doc": "The open windows as a row of buttons, from the shell's KWin script; a click activates, minimises or closes a window.",
+      "params": {
+        "show_title": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "true",
+          "doc": "Shows each window's title beside its icon.",
+          "required": false
+        },
+        "max_width": {
+          "type": "number",
+          "kind": "number",
+          "default": "180",
+          "doc": "The widest a button gets, in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "icon_size": {
+          "type": "number",
+          "kind": "number",
+          "default": "18",
+          "doc": "The size of each icon in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "monitor": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"THIS\"",
+          "doc": "THIS shows the windows on the module's own monitor, ALL those on every monitor.",
+          "required": false
+        },
+        "desktop": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"CURRENT\"",
+          "doc": "CURRENT shows the windows on the current virtual desktop (and those on all desktops), ALL those on every desktop.",
+          "required": false
+        },
+        "show_empty": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Keeps the module's space when there is no window.",
+          "required": false
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live",
+        "Focusable",
+        "Tab_Index"
+      ],
+      "actions": [
+        {
+          "name": "activate",
+          "doc": "A click on a button: the active window is minimised, any other is activated (un-minimising it). The row changes when KWin has acted and the script reports.",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "close",
+          "doc": "A middle click: ask the window to close.",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "cycle",
+          "doc": "The wheel over a row: activate the next (``delta`` > 0, a step down) or the previous window of that row, wrapping round.",
+          "args": [
+            {
+              "name": "delta",
+              "required": false
+            }
+          ],
+          "kwargs": false
+        }
+      ]
     },
     "TextBox": {
       "doc": "Several lines of text that can wrap, be cut and be selected.",

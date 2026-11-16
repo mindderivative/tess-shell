@@ -40,7 +40,10 @@ ROOT_KEYS = (
     "Control",
     "Shortcuts",
     "Global_Shortcuts",
+    "KWin",
 )
+KWIN_KEYS = ("Script", "Hide_On_Fullscreen")
+KWIN_SCRIPT = ("RUNTIME", "PERSISTENT", "OFF")
 DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend", "Mode_Keyboard")
 PANEL_HIDE = ("CLOSE", "KEEP")
 FRAME_JOIN = ("SMIL", "CONCAVE", "SHADER", "STRUCTURE", "PARAM")
@@ -89,6 +92,18 @@ class AppearanceSettings:
     theme: str | None = None  # a theme's metadata Name; None: the shell's default theme
     stylesheets: tuple[str, ...] = ()  # stylesheets' metadata Names, lowest priority first
     follow_desktop: bool = True  # read the Settings portal (Portals > Configuration)
+
+
+@dataclass(frozen=True, slots=True)
+class KWinSettings:
+    """What the shell does with KWin (KWin Integration > Configuration)."""
+
+    # RUNTIME loads the script into KWin at start and unloads it at stop; PERSISTENT leaves it to
+    # the install of ``tesserae-shell kwin script install`` (KWin runs it from login); OFF loads
+    # nothing and the shell hides nothing on a fullscreen window. A restart applies it.
+    script: str = "RUNTIME"
+    # hide the shell's surfaces on an output with an active fullscreen window
+    hide_on_fullscreen: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,6 +170,7 @@ class Settings:
     # Configuration): false makes no call to it at all; hot reload applies it
     global_shortcuts: bool = True
     shortcuts: tuple[ShortcutEntry, ...] = ()  # the ``Shortcuts { }`` block, in file order
+    kwin: KWinSettings = field(default_factory=KWinSettings)
 
 
 class _Reader:
@@ -475,6 +491,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     control = True
     global_shortcuts = True
     shortcuts: tuple[ShortcutEntry, ...] = ()
+    kwin = KWinSettings()
     main_origin: Origin | None = None
     if root is not None:
         reader.unknown_keys(root, ROOT_KEYS, "Settings")
@@ -521,6 +538,16 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             logging = _logging(reader, blk)
         if (blk := reader.block(root, "Appearance")) is not None:
             appearance = _appearance(reader, blk)
+        if (blk := reader.block(root, "KWin")) is not None:
+            reader.unknown_keys(blk, KWIN_KEYS, "KWin")
+            script_prop = find_property(blk, "Script")
+            hide_prop = find_property(blk, "Hide_On_Fullscreen")
+            script_word = None if script_prop is None else reader.enum(script_prop, KWIN_SCRIPT)
+            hide_flag = None if hide_prop is None else reader.boolean(hide_prop)
+            kwin = KWinSettings(
+                script=script_word or kwin.script,
+                hide_on_fullscreen=kwin.hide_on_fullscreen if hide_flag is None else hide_flag,
+            )
         if (blk := reader.block(root, "Debug")) is not None:
             reader.unknown_keys(blk, DEBUG_KEYS, "Debug")
             hide, join = find_property(blk, "Panel_Hide"), find_property(blk, "Frame_Join")
@@ -592,6 +619,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             control=control,
             global_shortcuts=global_shortcuts,
             shortcuts=shortcuts,
+            kwin=kwin,
         ),
         [],
     )
