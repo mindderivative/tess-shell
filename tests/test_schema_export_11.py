@@ -465,7 +465,7 @@ def test_every_shipped_module_is_listed_with_all_its_params() -> None:
             assert entry["doc"].strip(), (name, param)
             assert entry["kind"] in D["kinds"], (name, param)
         assert D["modules"][name]["doc"].strip(), name
-    assert total == 113  # Tasks (6) and Task_Item (9) are the last two modules
+    assert total == 117  # Applications (4) is the first module; Tasks (6), Task_Item (9) the last
 
 
 def test_a_param_default_passes_the_check_of_its_kind() -> None:
@@ -587,6 +587,6 @@ def test_the_cli_schema_is_regenerated_to_a_file(tmp_path: Path) -> None:
     import json
 
     data = json.loads(target.read_text(encoding="utf-8"))
-    assert data["schema_version"] == "1.7" and "modules" in data
+    assert data["schema_version"] == "1.8" and "modules" in data
     assert list(data)[-1] == "shortcuts"
     _ = (CONTEXTS, run)  # the probes of the first suite are shared

@@ -1,5 +1,5 @@
 """The shell's schema as plain JSON, for a configuration application that builds forms from it
-(``tesserae-shell schema --json``; the shape is version 1.7, see ``schema_version``).
+(``tesserae-shell schema --json``; the shape is version 1.8, see ``schema_version``).
 
 Everything is read from the tables the loader uses, so there is no second list of keys to drift:
 :mod:`tess_shell.schema.blocks` (blocks, surfaces, kinds, choices, required keys, events, what is
@@ -34,7 +34,7 @@ from tess_shell.binder import model as m
 from tess_shell.binder.defaults import tre_defaults
 from tess_shell.config import settings as cfg
 from tess_shell.config.paths import FOLDERS
-from tess_shell.schema import blocks, default_popups, docs
+from tess_shell.schema import blocks, default_panels, default_popups, docs
 from tess_shell.schema import keys as chords
 from tess_shell.schema.look import DEFAULT_FONT, STYLE_UNION, SYSTEM_FONT, read_theme, token_kind
 from tess_shell.schema.look import GROUPS as THEME_GROUPS
@@ -57,7 +57,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.7"
+SCHEMA_VERSION = "1.8"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -1457,14 +1457,23 @@ def _modules() -> dict[str, Json]:
     return out
 
 
-def _popups() -> Json:
-    """The Popups the shell provides (``schema.default_popups``), and which Monitors get them."""
+def _stubs() -> dict[str, Any]:
     stubs = {}
     for name, (document, _source) in _shipped_modules().items():
         found = read_module_params(document, f"{name}_Module.tdl")
         assert found is not None
         stubs[name] = found
-    return {"monitors": default_popups.MONITORS, "popups": default_popups.describe(stubs)}
+    return stubs
+
+
+def _popups() -> Json:
+    """The Popups the shell provides (``schema.default_popups``), and which Monitors get them."""
+    return {"monitors": default_popups.MONITORS, "popups": default_popups.describe(_stubs())}
+
+
+def _panels() -> Json:
+    """The Panels the shell provides (``schema.default_panels``), and when a shell gets them."""
+    return {"when": default_panels.WHEN, "panels": default_panels.describe(_stubs())}
 
 
 def _shortcuts() -> Json:
@@ -1527,6 +1536,7 @@ def schema_dict() -> Json:
         "tokens": _tokens(),
         "system_tokens": _system_tokens(),
         "modules": _modules(),
+        "panels": _panels(),
         "popups": _popups(),
         "shortcuts": _shortcuts(),
     }

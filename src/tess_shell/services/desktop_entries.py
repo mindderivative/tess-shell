@@ -291,6 +291,7 @@ class ApplicationIndex:
         self._by_class: dict[str, DesktopEntry] = {}
         self._listeners: list[Callable[[], None]] = []
         self._stop_watch: Callable[[], None] | None = None
+        self.watching = False  # the folders are followed with inotify (every folder was watched)
         self.scans = 0  # how many times the folders were read (the tests, the measurements)
 
     # -- reading ----------------------------------------------------------------------------
@@ -412,9 +413,11 @@ class ApplicationIndex:
         watcher = Watcher(trees, self._changed, debounce=debounce)
         watcher.start()
         self._stop_watch = watcher.stop
+        self.watching = watcher.ok
 
     def unwatch(self) -> None:
         stop, self._stop_watch = self._stop_watch, None
+        self.watching = False
         if stop is not None:
             stop()
 

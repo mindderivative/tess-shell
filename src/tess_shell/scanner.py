@@ -30,6 +30,7 @@ from tess_shell.files.loader import (
 )
 from tess_shell.model.icons import RuntimeIcons
 from tess_shell.model.look import Look, check_parts, check_states, check_tokens, make_look
+from tess_shell.schema.default_panels import with_shipped_panels
 from tess_shell.schema.findings import Finding, nearest, render_findings
 from tess_shell.schema.graph import module_cycles
 from tess_shell.schema.look import effective_tokens
@@ -185,8 +186,17 @@ def scan(settings: Settings, config: Path) -> Scan:
         Finding("Icons", 1, 1, "warning", "icon-set-invalid", problem, "the set is skipped")
         for problem in icons.problems
     )
-    findings.extend(_check_look(settings, themes, stylesheets, shells, modules))
     main = shells.get(settings.main_shell_path) if settings.main_shell_path else None
+    if main is not None and settings.main_shell_path is not None:
+        # the shipped Panels (the launcher) the main shell asks for and does not write
+        targets = [e.target for e in settings.shortcuts if e.kind in ("toggle", "show", "hide")]
+        main, problems = with_shipped_panels(main, registry, targets)
+        shells[settings.main_shell_path] = main
+        for problem in problems:
+            findings.append(
+                Finding("<shipped Panels>", 1, 1, "error", "shipped-panel", problem, "")
+            )
+    findings.extend(_check_look(settings, themes, stylesheets, shells, modules))
     shortcuts, found = build_plan(
         settings.shortcuts, main, {name: mf.definition for name, mf in modules.items()}
     )

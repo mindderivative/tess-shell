@@ -31,7 +31,15 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.blocks import BUILTIN_ACTIONS
 from tess_shell.schema.findings import Finding, nearest
 from tess_shell.schema.model import ModuleDef
-from tess_shell.services.api import AudioPort, DBusPort, IconsPort, TrayPort, WindowsPort
+from tess_shell.services.api import (
+    AppsPort,
+    AudioPort,
+    DBusPort,
+    IconsPort,
+    SurfacePort,
+    TrayPort,
+    WindowsPort,
+)
 
 PACKAGE = "tess_shell_user_modules"
 
@@ -160,6 +168,8 @@ class ModuleHost:
         self.tray: TrayPort | None = None  # set by the app: the tray host (ctx.tray)
         self.focus: FocusPort | None = None  # set by the app: shortcut mode (ctx.focus)
         self.windows: WindowsPort | None = None  # set by the app: the window list (ctx.windows)
+        self.apps: AppsPort | None = None  # set by the app: the application index (ctx.apps)
+        self.surfaces: SurfacePort | None = None  # set by the app: the surfaces (ctx.surface)
         # set by the app: run a function on the loop thread (ctx.call_soon)
         self.call_soon: Callable[[Callable[[], None]], None] | None = None
         # the uses made for the entries of a For: they come and go while the shell runs, so a
@@ -293,6 +303,8 @@ class ModuleHost:
             lambda: self.call_soon,
             lambda: self.focus,
             lambda: self.windows,
+            lambda: self.apps,
+            lambda: self.surfaces,
         )
         instance = classes[0].__new__(classes[0])
         instance.ctx = ctx
@@ -445,6 +457,13 @@ class ModuleHost:
             value=getattr(raw, "value", None),
             delta=getattr(raw, "delta", None),
             rect=getattr(raw, "rect", None),
+            key=getattr(raw, "key", None),
+            ctrl=bool(getattr(raw, "ctrl", False)),
+            shift=bool(getattr(raw, "shift", False)),
+            alt=bool(getattr(raw, "alt", False)),
+            meta=bool(getattr(raw, "meta", False)),
+            repeat=bool(getattr(raw, "repeat", False)),
+            _raw=raw,
         )
         started = time.monotonic()
         loaded.ctx.caller = loaded.ctx.uses.get(handler.use)  # what ctx.popup() calls from

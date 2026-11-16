@@ -254,11 +254,12 @@ def test_a_module_in_an_if_in_a_for_comes_and_goes_with_the_entry_s_condition() 
 def test_a_call_in_a_for_is_checked_when_the_file_is_read_not_on_the_first_entry() -> None:
     import pytest
 
-    # Item's root is a FlexBox: it raises no On_Key_Down
-    bad = FOR.replace("On_Click", "On_Key_Down")
+    # On_Hover is no event of the shell (On_Key_Down was this test's example until the field's
+    # event of that name was built, M6d): a call in a For is refused when the file is read
+    bad = FOR.replace("On_Click", "On_Hover")
     with pytest.raises(AssertionError) as raised, run(bad):
         pass
-    assert "On_Key_Down" in str(raised.value) or "does not raise" in str(raised.value)
+    assert "On_Hover" in str(raised.value) or "does not raise" in str(raised.value)
 
 
 def test_modules_that_call_themselves_through_a_for_are_a_cycle() -> None:

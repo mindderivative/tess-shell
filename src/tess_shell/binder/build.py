@@ -876,10 +876,12 @@ class View:
             box.tre.set(focusable=False)
 
     def _ensure_field_events(self, entry: Entry) -> None:
-        """The text input's ``change``, ``submit`` and ``input`` listeners (``On_Changed``,
-        ``On_Submit``, ``On_Text_Commit``), one each, once the node has a handler for it. A
-        disabled field raises nothing, a read-only one raises no commit, and a commit that left
-        the text as it was (``Max_Length`` refused the edit) raises none either."""
+        """The text input's ``change``, ``submit``, ``input`` and ``key_down`` listeners
+        (``On_Changed``, ``On_Submit``, ``On_Text_Commit``, ``On_Key_Down``), one each, once the
+        node has a handler for it (``key_down`` is the node's one: tre gives it every key before
+        the field acts and cannot be vetoed; the handler's ``event.stop()`` keeps the key from the
+        surface above). A disabled field raises nothing, a read-only one raises no commit, and a
+        commit that left the text as it was (``Max_Length`` refused the edit) raises none either."""
         wire, tre = entry.wire, entry.tre
         if tre is None or wire is None:
             return
@@ -889,6 +891,7 @@ class View:
             ("change", "On_Changed"),
             ("submit", "On_Submit"),
             ("input", "On_Text_Commit"),
+            ("key_down", "On_Key_Down"),
         ):
             token = f"field:{event}"
             # a node has one listener for an event, so ``change`` is always listened to: it keeps

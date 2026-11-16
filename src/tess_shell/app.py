@@ -47,6 +47,7 @@ from tess_shell.reloader import Reloader
 from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
 from tess_shell.schema.findings import Finding
 from tess_shell.services.api import ServiceUnavailable
+from tess_shell.services.apps import AppService
 from tess_shell.services.audio import AudioService
 from tess_shell.services.bus import ServiceThread
 from tess_shell.services.control import NAME, ControlService, ErrorLog
@@ -425,6 +426,15 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         windows.on_module_error = note_module_error
         host.windows = windows
         icon_service.apps.watch()  # a desktop entry that comes or goes: the icons read it again
+        # ctx.apps: the launcher's search and start over the same index; the list is built on the
+        # first use, on a worker; the start counts live in the state folder
+        apps = AppService(
+            icon_service.apps,
+            counts=state_dir() / "launcher-counts.json",
+            call_soon=handle.call_soon,
+        )
+        host.apps = apps
+        host.surfaces = manager  # ctx.surface: hide, focus and shown, for the module's own Panel
         host.call_soon = handle.call_soon  # ctx.call_soon: back to the loop thread
         host.focus = manager.mode  # ctx.focus: shortcut mode and the default focus
         # a file the shell registers for the first time gets a UID in its metadata (G8)
@@ -554,6 +564,7 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         if shortcuts is not None:
             _stop_shortcuts(service, shortcuts)
         host.stop_all()
+        apps.stop()
         ticks.close()
         icon_service.apps.unwatch()
         if portal is not None:

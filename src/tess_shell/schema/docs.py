@@ -666,6 +666,10 @@ EVENT_DOCS: dict[str, str] = {
     "On_Change": "Reserved: the old spelling of On_Changed.",
     "On_Submit": "Enter in a single-line TextField.",
     "On_Text_Commit": "Committed text in a TextField, such as an input-method composition.",
+    "On_Key_Down": "A key went down in a TextField (event.key, event.ctrl, event.shift, "
+    "event.alt, event.meta, event.repeat), before the field acts on it; the field acts whatever "
+    "the handler does, and event.stop() keeps the surface above from hearing the key (a Panel's "
+    "Escape).",
 }
 
 ACTION_DOCS: dict[str, str] = {
@@ -953,6 +957,9 @@ PREFERRED_TOKENS: dict[str, tuple[str, ...]] = {
 # -- the shipped modules ----------------------------------------------------------------------
 
 MODULE_NOTES: dict[str, str] = {
+    "Applications": "The launcher: a text field over a list of the installed applications that "
+    "narrows as you type; Down and Up move the selection, Enter or a click starts it, Escape "
+    "clears the field and then hides the Panel. The shipped Panel Launcher holds it.",
     "Audio": "The default sound output: an icon for its kind and level, mute on a click, the "
     "volume on the wheel, an optional percent and slider, and a menu of outputs.",
     "Audio_Outputs": "The content of the Audio module's outputs Popup: one row per output.",
@@ -1093,6 +1100,10 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Task_Item", "active"): "The window is the active one: the block takes the :selected look.",
     ("Task_Item", "minimized"): "The window is minimised: the button is drawn dimmed.",
     ("Task_Item", "attention"): "The window wants attention: a small mark in the warning colour.",
+    ("Applications", "max_results"): "The most rows shown; Page Down and Page Up move by them.",
+    ("Applications", "show_comment"): "Shows the generic name, else the comment, under each name.",
+    ("Applications", "icon_size"): "The size of each application icon in pixels.",
+    ("Applications", "placeholder"): "The hint the empty text field shows.",
     ("Tasks", "show_title"): "Shows each window's title beside its icon.",
     ("Tasks", "max_width"): "The widest a button gets, in pixels.",
     ("Tasks", "icon_size"): "The size of each icon in pixels.",

@@ -27,7 +27,14 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.look import read_stylesheet, read_theme
 from tess_shell.schema.model import ModuleDef, StyleDef
 from tess_shell.schema.shell import read_module, read_module_params, read_shell, read_style
-from tess_shell.services.api import AudioPort, DBusPort, IconsPort, TrayPort, WindowsPort
+from tess_shell.services.api import (
+    AppsPort,
+    AudioPort,
+    DBusPort,
+    IconsPort,
+    TrayPort,
+    WindowsPort,
+)
 from tess_shell.surfaces.manager import SurfaceManager
 from tests.shell_samples import HEADER
 from tests.test_panel import StubApp
@@ -63,6 +70,7 @@ STANDARD = (
     "Tray_Menu",
     "Tasks",
     "Task_Item",
+    "Applications",
 )
 THEME = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text()
 DEFAULT_SHEET = (SHIPPED / "Stylesheets" / "Default_Stylesheet.tdl").read_text()
@@ -201,6 +209,8 @@ def running(
     icon_port: IconsPort | None = None,
     tray: TrayPort | None = None,
     windows: WindowsPort | None = None,
+    apps: AppsPort | None = None,
+    uid_of: Callable[[str], str] | None = None,
     call_soon: Callable[[Callable[[], None]], None] | None = None,
     extra_py: dict[str, str] | None = None,
     body: str | None = None,
@@ -234,7 +244,7 @@ def running(
         sheets.append(parsed)
     look = make_look(the_theme, sheets, appearance or Appearance(), None, RuntimeIcons(icons))
     store = ValueStore()
-    manager = SurfaceManager(StubApp(), defs, lambda k: k, store, look)  # type: ignore[arg-type]
+    manager = SurfaceManager(StubApp(), defs, uid_of or (lambda k: k), store, look)  # type: ignore[arg-type]
     with tempfile.TemporaryDirectory() as tmp:
         host = ModuleHost(store, TimeSource(), Path(tmp))
 
@@ -251,6 +261,8 @@ def running(
         host.icons = icon_port
         host.tray = tray
         host.windows = windows
+        host.apps = apps
+        host.surfaces = manager  # ctx.surface: hide, focus and shown
         host.call_soon = call_soon or getattr(dbus, "call_soon", None)  # a Layer has one
         live = Widgets(manager, host, store, home=home)
         sink = logger.add(lambda message: live.lines.append(str(message).rstrip()), level="DEBUG")

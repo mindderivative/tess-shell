@@ -342,7 +342,7 @@ FIELD_INPUT_KEYS = frozenset(
     }
 )
 FIELD_SIZE_KEYS = frozenset({"Lines", "Font_Family", "Font_Size", "Font_Weight"})
-FIELD_EVENTS = ("On_Changed", "On_Submit", "On_Text_Commit")
+FIELD_EVENTS = ("On_Changed", "On_Submit", "On_Text_Commit", "On_Key_Down")
 _FIELD_INPUT_PROPS: dict[str, str] = {
     "Text": "text",
     "Placeholder": "text",
@@ -519,6 +519,7 @@ EVENT_KEYS = (
     "On_Change",
     "On_Submit",
     "On_Text_Commit",
+    "On_Key_Down",
 )
 # A tre text node takes no listener of its own (a click on it reaches the nearest box above it,
 # measured on tre 0.6.1), so a Text raises nothing: put the handler on the box around it.
