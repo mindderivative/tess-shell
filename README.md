@@ -58,9 +58,11 @@ default, event, action, theme token and `settings.tdl` key the loader accepts, w
 documentation for each, so a configuration application can build its forms from it. It is read from
 the loader's own tables (`tess_shell.schema.export.schema_json()`; `schema_dict()` is the same as
 plain data), so it cannot list a key the loader refuses or miss one it accepts, and two runs give the
-same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.6 (the notes below say what each version added).
+same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.7 (the notes below say what each version added).
 
 Since 1.1: a key's `default` is what tre reads on a bare block (the binder builds it headless and
+
+Since 1.7 (additive): the `KWin` settings section (`Script`, `Hide_On_Fullscreen`) and the shipped modules `Tasks` and `Task_Item` (their params, `modules` section).
 
 Since 1.6 (additive): `system_tokens`, a list beside `tokens` of the tokens the shell supplies to every theme (today `type.system.font_family`: `name`, `ref`, `kind`, `default` (`Roboto`), `doc`, `theme_wins` (a theme that sets it keeps its value), and the kind's own fields); `tokens` still equals the shipped theme's tokens.
 `node.get` reads it back; a few shell-owned keys are authored and pinned by tests), `min`/`max` come
