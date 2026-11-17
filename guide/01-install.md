@@ -1,12 +1,12 @@
 # 1. Install and start
 
 <!-- BEGIN generated: version-info -->
-This guide describes tesserae-shell 0.1.1 (schema version 1.9, the one `tesserae-shell schema --json` prints).
+This guide describes tesserae-shell 0.1.2 (schema version 1.9, the one `tesserae-shell schema --json` prints).
 
 <!-- END generated: version-info -->
 
 <!-- BEGIN generated: release-state -->
-The code this guide describes is a little **ahead of the 0.1.1 release** on PyPI: the CHANGELOG lists the difference under *Unreleased*. The pages mark what was added after 0.1.1; a package installed from PyPI at 0.1.1 does not have it until the next release.
+The code this guide describes is the released version, 0.1.2.
 
 <!-- END generated: release-state -->
 

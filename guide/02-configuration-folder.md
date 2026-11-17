@@ -170,8 +170,6 @@ Module {
 }
 ```
 
-The folder also holds `Modules/Greeting/__pycache__/Greeting_Module.cpython-314.pyc`, which are not shown.
-
 <!-- END generated: example-set:02-config-folder/my-config -->
 
 * The `Params` block lists what a use may set (`Greeting { name: "Ada" }`). A param has a `Type` (`string`, `number`, `boolean`, `path` or `icon`) and an optional `Default`; a param with no default must be given.
