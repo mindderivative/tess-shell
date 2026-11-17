@@ -5,7 +5,7 @@ type: spec
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-11-14
+updated: 2026-11-16
 tags: [spec/runtime, needs-verification]
 ---
 
@@ -81,12 +81,12 @@ The `tess-el` session reported the release over the mailbox (information, not an
 | Version and language version | Package 0.1.0; TEL language version 0.1 |
 | Pin in the shell's dependencies | `tesserae-el==0.1.0`, as `tess-el` recommends; a range is the maintainer's choice (delivery notes) |
 | What `TEL:` in a TDL file means | The minimum TEL language version, `0.1` ([TDL Language > The Metadata Block](../../41%20TDL%20Reference/TDL%20Language.md#the-metadata-block)); the package pin is separate |
-| Position | `Origin(file, line, column)` on `compile_expression` and `compile_template` (T17) |
-| Template | `compile_template` always returns a `Template`; `Template.is_text` is true for plain text |
+| Position | `Origin(file, line, column)` on `compile_expression` (T17); `compile_template` was removed in TEL 0.2.0 |
+| Template | Removed in TEL 0.2.0 (maintainer's decision of 2026-11-16, [ADR-0008 Tesserae Expression Language > Amendment of 2026-11-16 TEL has no template form](../../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md#amendment-of-2026-11-16-tel-has-no-template-form)): TEL has no template form, and the host splits text around slots itself |
 | Tracking | `evaluate_tracked(scope)` gives `Tracked`; `Tracked.names` has the top-level names (T20) |
 | Conditions | `compile_condition` with `select` and `select_tracked` for `If`/`Else` chains (D64) |
 | Repeats | `compile_repeater_parts(names, items, key=, name=, names_origin=, items_origin=, key_origin=)` takes the `For` slots separately; `compile_repeater` takes one `item in items` header; `Repeater.reconcile(scope, RepeaterState)` returns entries named `<name>_0001` onward (never reused) with status new, kept, moved (fewest) or removed (D65); `Entry.scope(parent)` is the children's scope, and reads through the item are reported as written (for example `w.title`), which the shell re-bases |
-| Python form (P5) | `fill`, `fill_template`, `literal` (text with `$name` placeholders, each value a checked literal) and `Expression.canonical` / `Template.canonical` to compare two spellings. The tree builder and the parity test against the TDL parser stay the shell's |
+| Python form (P5) | `fill`, `literal` (text with `$name` placeholders, each value a checked literal) and `Expression.canonical` (`fill_template` and `Template.canonical` were removed in 0.2.0) to compare two spellings. The tree builder and the parity test against the TDL parser stay the shell's |
 | `?:` | Accepted as a second spelling of `a if cond else b` (T19) |
 
 TEL 0.1.1 followed on PyPI the same day (reported by `tess-el`, 2026-11-02, information only; the shell has not run its tests against it): the same language (0.1) and the same API, with one change that can touch the shell. A repeater `Item` and `Entry` are now tuples (`index`, `key`, `value`, `bindings`, and for an entry `name`, `status`). Attribute access is unchanged, they can be indexed, unpacked and compared by value, and they are not hashable (`bindings` is a dict), so the binder must not put them in a set or use them as dictionary keys. They stay immutable and cannot be pickled. `items()` is about 14% faster, `reconcile()` about 9%. The minimum is now `tesserae-el>=0.1.2`, the first release that imports as `tess_el` (published, checked 2026-11-03); 0.1.1 and earlier import as `tel` ([Roadmap > Working Mode: Fluid Dependencies](../../00%20Home/Roadmap.md#working-mode-fluid-dependencies)). The PyPI version was checked on 2026-11-02: 0.1.1 is the latest.
