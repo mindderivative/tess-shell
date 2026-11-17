@@ -2,7 +2,7 @@
 title: Next Work Plan
 aliases: [Work Plan, Plan After M6c]
 type: moc
-status: accepted
+status: stable
 owner: phil
 created: 2026-11-16
 updated: 2026-11-16
@@ -10,6 +10,10 @@ tags: [moc, process]
 ---
 
 # Next Work Plan
+
+> [!TIP]
+> **Done on 2026-11-16 (code session's reports)**
+> All five items and the portal follow-ups and the tre 0.6.8 kit are merged: PRs #28 (install-session), #30 (tre 0.6.8 kit), #31 (portal follow-ups), #33 (M5g), #35 (launcher), #37 (accessibility pass), #39 (user guide), #44 (self-running kits). `tesserae-shell` 0.1.2 is on PyPI. This note is the record of the plan.
 
 > [!NOTE]
 > What the `tess-shell` code session builds next, in order, with the spec each task follows and the proof that closes it. Written on 2026-11-16 at the maintainer's request ("plan as suggested and send the plans"), after the code session reported an empty queue. The specs are accepted and have no open questions; each task's acceptance criteria are in its spec. The maintainer decides what is merged; a code session follows its own `AGENTS.md` for pushes and merges.
