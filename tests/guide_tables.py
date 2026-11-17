@@ -696,12 +696,22 @@ def set_files(folder: Path) -> list[Path]:
         first = relative.split("/", 1)[0]
         return (order.index(first) if first in order else len(order), relative)
 
-    files = [p for p in folder.rglob("*") if p.is_file() and p.suffix in TEXT_SUFFIXES]
+    files = [
+        p
+        for p in folder.rglob("*")
+        if p.is_file() and p.suffix in TEXT_SUFFIXES and "__pycache__" not in p.parts
+    ]
     return sorted(files, key=rank)
 
 
 def assets(folder: Path) -> list[Path]:
-    return sorted(p for p in folder.rglob("*") if p.is_file() and p.suffix not in TEXT_SUFFIXES)
+    """The files of an example folder that the page does not print (not its bytecode: running the
+    examples makes ``__pycache__``, and a page must not depend on whether that happened first)."""
+    return sorted(
+        p
+        for p in folder.rglob("*")
+        if p.is_file() and p.suffix not in TEXT_SUFFIXES and "__pycache__" not in p.parts
+    )
 
 
 def block_example_set(_: dict[str, Any], name: str) -> str:
