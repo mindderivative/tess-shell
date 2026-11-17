@@ -548,15 +548,19 @@ def layer() -> int:
     if changed_window:
         if control.get("bar") == 4 and base.get("bar") != 4:
             report.note(
-                "ANSWER: the layer rule DOES apply to a layer-shell surface when its class matches; "
-                "the shell's rule (wmclass tesserae-shell.) does not match what KWin lists as the "
-                "surface's class (empty), so it changes nothing"
+                "OBSERVED IN THIS SANDBOX: the layer rule applies to a layer-shell surface when its "
+                "class matches; the shell's rule (wmclass tesserae-shell.) does not match what this "
+                "private KWin lists as the surface's class (empty), so it changed nothing here. "
+                "The maintainer saw the rule work on his real KWin (2026-11-16), so this sandbox "
+                "does not reproduce the real session: do not read this line as a verdict"
             )
         else:
             report.note(
-                "ANSWER: the layer rule does NOT apply to a layer-shell surface: with a rule that "
-                f"matches it and its client neighbour, the window went to 4 and the surface stayed "
-                f"at {control.get('bar')}"
+                "OBSERVED IN THIS SANDBOX: with a rule that matches it and its client neighbour, the "
+                f"window went to 4 and the surface stayed at {control.get('bar')}. The maintainer "
+                "saw the layer rule work on his real KWin (2026-11-16), so this private KWin does "
+                "not reproduce the real session (what differs is not known): do not read this "
+                "line as a verdict"
             )
     return int(report.code)
 
