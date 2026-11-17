@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-11-10
-updated: 2026-11-15
+updated: 2026-11-16
 tags: [spec/integration, needs-verification]
 ---
 
@@ -83,6 +83,8 @@ Decided: A (maintainer, 2026-11-10, "as recommended"). The live test of [Global 
 A Popup that opens from a focused block takes focus; when it closes, focus returns to the opener ([Accessibility](../../60%20Quality/Accessibility.md) rule 12). A Popup opened by a key never grabs ([Global Shortcuts > A Key Press](Global%20Shortcuts.md#a-key-press): a key opens a Panel and never a Popup), with one exception: a Menu opened from the keyboard takes focus, closes on Escape and returns focus to its opener (maintainer, 2026-11-10). The pointer-only case needs nothing.
 
 Keyboard mode of the mode (maintainer, 2026-11-15): while shortcut mode is on, the Frame's surface uses `EXCLUSIVE`. `Debug { Mode_Keyboard: ON_DEMAND }` switches it for a test. This stands until a KWin check says `ON_DEMAND` is enough ([Questions After Testing](#questions-after-testing) 2).
+
+Selectable text (maintainer, 2026-11-16, relayed by the code session): a `Text` with `Selectable` is not a Tab stop. Nothing is built, it shows no focus ring, and the Tab-stop question left open by M6a and the accessibility pass is closed.
 
 Tab in a `TextEditor`: tre 0.6.8 has the property `tab_navigates` on a multi-line text input, and the shell sets it on every `TextEditor`, so Tab and Shift+Tab leave the field instead of typing a tab character ([TRE-REQ-018 Tab Leaves a Multi-Line Text Input](../../80%20Requests/TRE-REQ-018%20Tab%20Leaves%20a%20Multi-Line%20Text%20Input.md), by the code session's report of 2026-11-15).
 

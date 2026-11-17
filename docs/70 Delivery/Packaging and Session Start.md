@@ -36,6 +36,12 @@ The shell must run on the released versions named there. Work merged in tre and 
 
 `tess-shell` `main` is ready for version 0.1.0 (PRs #11 and #12, CI green). The workflow `release.yml` runs the tests, a build check, then a PyPI job that uses Trusted Publishing in the environment `pypi` (a reviewer approves it), then makes the GitHub release. The tag push is the maintainer's. The wheel is tagged `manylinux_2_36`: `auditwheel` found a glibc symbol (`GLIBC_ABI_DT_RELR`) in the vendored `tess_utils`, so a user needs glibc 2.36 or newer. By the shell's report of 2026-11-15 that floor goes away with the next release, because the wheel is pure Python once `tesserae-utils` comes from PyPI. Published on 2026-11-15 (the maintainer's statement, checked against PyPI's JSON page the same day): `tesserae-shell` 0.1.0, Python 3.14 or later, as the wheel `tesserae_shell-0.1.0-cp314-cp314-manylinux_2_36_x86_64.whl` (1.4 MB) and the sdist `tesserae_shell-0.1.0.tar.gz` (1.4 MB). The vault did not install it. `install-session` (T-055) is not built, so a user still writes the desktop file and the unit by hand.
 
+### Releases since (code session's report, 2026-11-16; PyPI read by the vault)
+
+- 0.1.1 and 0.1.2 are on PyPI as `py3-none-any` wheels with sdists (PyPI's JSON page lists `0.1.0`, `0.1.1`, `0.1.2`). The code session reports 0.1.2 released on 2026-11-16 after the maintainer approved the `pypi` environment, the tag `v0.1.2` on `235ca55`, a clean install in a fresh Python 3.14 venv running `tesserae-shell version` and `install-session --print` (the unit data is in the wheel). 0.1.2 carries `install-session`, the KWin script and window list, Tasks, the launcher, the accessibility pass, the user guide, the portal follow-ups, schema 1.9 and the self-running hand-check kits.
+- The glibc 2.36 floor belonged to the 0.1.0 platform wheel only. The maintainer is to yank 0.1.0 from PyPI himself (his account; a session cannot, decided 2026-11-16).
+- A release bump must regenerate the guide's generated pages (`python -m tests.guide_tables`): they depend on the version and on `guide/examples/`.
+
 ## Why a Second Step
 
 A wheel can carry data files, but where they land depends on how it is installed: a virtual environment or a `uv tool` or `pipx` install puts them under that environment, where the desktop and systemd do not look. So the wheel carries the two files as package data, and a command writes them to the user's own folders with the right path to the command in them.

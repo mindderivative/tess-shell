@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-29
-updated: 2026-11-13
+updated: 2026-11-16
 tags: [spec/integration, integration/kwin, needs-verification]
 ---
 
@@ -193,7 +193,7 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 
 ## Questions After Testing
 
-1. [ ] Which key names does the rule file use, and does the rule raise the shell's surfaces above other windows? Context: the rule is opt-in and its keys are not written yet. Recommendation: use the key names KWin writes when the same rule is made in System Settings, copied from a backed-up `kwinrulesrc`, and keep the rule to one group. Answered by: the rule test of question 8 with the live KWin 6.8.1. #needs-verification
+1. [ ] Which key names does the rule file use, and does the rule raise the shell's surfaces above other windows? Context: the rule is opt-in and its keys are not written yet. Recommendation: use the key names KWin writes when the same rule is made in System Settings, copied from a backed-up `kwinrulesrc`, and keep the rule to one group. Answered by: the rule test of question 8 with the live KWin 6.8.1. Update, 2026-11-16: the maintainer says the rule does apply on his real KWin and that every overlay-layer surface (Popups and Panels with `Layer: OVERLAY`) sat above the Plasma panels in all his testing. A private `kwin_wayland --virtual` run by the code session showed otherwise (the shell's surface listed with an empty class); the code session withdrew that claim, since a private KWin does not reproduce how the real one classifies or stacks things. The rule file's keys were created from the shell's own `kwin rule show`, and whether KWin applies a rule change without a logout is not recorded. #needs-verification
 
 ## Acceptance Criteria
 
@@ -211,3 +211,7 @@ All seven were answered on 2026-10-28 or 2026-10-29 (as recommended).
 ## Links
 
 - [Integration](Integration.md) · [Wayland Protocols](Wayland%20Protocols.md) · [ADR-0012 Keeping the Shell Above Plasma Panels](../../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md) · [ADR-0013 Control Interface](../../30%20Decisions/ADR-0013%20Control%20Interface.md) · [IPC and CLI](../Runtime/IPC%20and%20CLI.md) · [Surface Types](../Surfaces/Surface%20Types.md) · [System Context](../../20%20Architecture/System%20Context.md)
+
+## KWin Names Confirmed by the Maintainer's M5g Check (2026-11-16)
+
+The maintainer ran the M5g kit on KWin 6.8.2 (lines 0 to 18 pass, code session's report, not run in the vault). Read-only introspection (`introspect.sh`) on the real KWin confirmed: the object `/Scripting`, the interface `org.kde.kwin.Scripting` (lower-case `kwin`), `isScriptLoaded(s) -> b`, `loadScript(s) -> i` and `loadScript(ss) -> i`, `start()` with no arguments, `unloadScript(s) -> b`; script objects at `/Scripting/Script0` and `/Script1`; `supportInformation` gives the version the shell reads. The `#needs-verification` marks on those names no longer apply. Still open: that `/KWin reconfigure` reloads `kwinrulesrc` (the spec called `reloadConfig` a method; KWin's XML lists it as a signal), and what mode P does after a reconfigure. Line 4 (the active window marked) showed no mark because the kit's config did not name the Default stylesheet: a kit bug fixed in `tess-shell` PR #41, not a shell bug.
