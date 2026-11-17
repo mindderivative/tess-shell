@@ -5,7 +5,7 @@ type: api
 status: draft
 owner: phil
 created: 2026-10-26
-updated: 2026-11-14
+updated: 2026-11-16
 tags: [api, needs-verification]
 ---
 
@@ -88,7 +88,7 @@ For("item", expr("tray.items"),
     body=[Icon(svg=expr("item.icon"))])
 ```
 
-- `expr(...)` and `tpl(...)` stand for a TEL expression and a TEL template, however the TEL Python form builds them (P5).
+- `expr(...)` stands for a TEL expression, however the TEL Python form builds it (P5). `tpl(...)` stood for a TEL template; TEL has no template form since 0.2.0 ([ADR-0008 Tesserae Expression Language > Amendment of 2026-11-16 TEL has no template form](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md#amendment-of-2026-11-16-tel-has-no-template-form)), so a text with slots is a list of literal parts and expressions that the builder keeps itself, as TDL's slot parts do.
 - `If` and `For` carry structure only and run no code, as in the file form. `For` binds one name; its `key` is required; `Else If` does not exist (nest an `If` in `otherwise`). The reserved words `If`, `Else`, `For`, `In` and `Key` apply to block names in both forms.
 - `then`, `otherwise` and `body` take the same children a `Children { }` block takes.
 

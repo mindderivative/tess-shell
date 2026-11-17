@@ -5,7 +5,7 @@ type: spec
 status: accepted
 owner: phil
 created: 2026-11-13
-updated: 2026-11-15
+updated: 2026-11-16
 tags: [spec/module, needs-verification]
 ---
 
@@ -84,8 +84,9 @@ After an application is started the field is cleared and the Panel hides.
 ### Opening
 
 - The Panel opens from a shortcut action, `Toggle_Launcher` ([Global Shortcuts > Action Names and Forms (Decided 2026-11-13)](../Integration/Global%20Shortcuts.md#action-names-and-forms-decided-2026-11-13)), or from a click on any block with `On_Click { Action: Toggle, Target: Launcher }`.
-- When the Panel shows, the text field takes the keyboard focus and its text is selected, so typing starts a new search. This is the default-focus call of [Focus and Keyboard > Python Contract](../Integration/Focus%20and%20Keyboard.md#python-contract). The Panel's `Keyboard` is `ON_DEMAND`, and `EXCLUSIVE` for as long as it is open if the compositor does not hand focus over (the rule already decided for shortcut mode, 2026-11-10).
-- A click outside the Panel hides it.
+- When the Panel shows, the text field takes the keyboard focus and its text is selected, so typing starts a new search. This is the default-focus call of [Focus and Keyboard > Python Contract](../Integration/Focus%20and%20Keyboard.md#python-contract). The Panel's `Keyboard` is `EXCLUSIVE` (decided by the maintainer on 2026-11-16, "proceed as recommended"): it is verified on his real KWin, where the keyboard is gained at once, while `ON_DEMAND` got no keys without a click on sway and was never tried on KWin.
+- Closing: Escape, starting an application and the shortcut toggle close the Panel. A click outside the Panel does not hide it, and nothing is built for that (maintainer, 2026-11-16). If it is wanted later it is shell-side and needs no tre request: a transparent full-output click-catcher Panel under the Launcher, with stacking untested.
+- The Panel's size is fixed at 480 by 400; it is not content-sized (maintainer, 2026-11-16).
 
 ### Starting an Application
 
@@ -142,7 +143,7 @@ A sketch; the code session aligns the spellings with what is built. The shipped 
 Panel {
     Name: Launcher
     Visible: false
-    Keyboard: ON_DEMAND
+    Keyboard: EXCLUSIVE
     Width: 480
     Children { Applications { } }
 }
@@ -219,7 +220,7 @@ Decided by the orchestrator on 2026-11-13 ([Tesserae Shell Directive](../../00%2
 ## Questions After Testing
 
 1. [ ] Does KWin give a started application's window focus when the launcher passes an activation token? Context: `tess_re` could not request a token (report of 2026-11-13); the call is being added (T-051) and its round trip is testable on sway, but KWin's behaviour is not. Recommendation: use the token when present and start without one otherwise. Answered by: a hand check on KWin once T-051 is merged.
-2. [ ] Does KWin hand keyboard focus to the Panel when it opens from a global key? Context: the same question as shortcut mode ([Focus and Keyboard > Questions After Testing](../Integration/Focus%20and%20Keyboard.md#questions-after-testing)). Recommendation: `ON_DEMAND` first, `EXCLUSIVE` while open if needed. Answered by: a hand check on KWin.
+2. [x] Does KWin hand keyboard focus to the Panel when it opens from a global key? Answered 2026-11-16 for `EXCLUSIVE`: yes, the Launcher opened from a global key gets the keyboard at once on the maintainer's real KWin (the code session's real-session run, with his yes); `ON_DEMAND` was not tried there, and the maintainer chose `EXCLUSIVE`. Original text: Context: the same question as shortcut mode ([Focus and Keyboard > Questions After Testing](../Integration/Focus%20and%20Keyboard.md#questions-after-testing)). Recommendation: `ON_DEMAND` first, `EXCLUSIVE` while open if needed. Answered by: a hand check on KWin.
 
 ## Acceptance Criteria
 
