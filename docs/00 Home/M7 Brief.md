@@ -22,6 +22,20 @@ tags: [moc, roadmap, brief]
 > **Sent to the code session on 2026-11-17**
 > The parts that need no new spec (M7c, M7e, M7f, M7h and the M7g kit with its three exact-step lines) were sent to `tess-shell` at the maintainer's request. M7a, M7a2, M7b and M7d wait for the vault's specs.
 
+## Progress (code session's reports, 2026-11-17, not run in the vault)
+
+| Part | State |
+|---|---|
+| M7e licences | Merged (`tess-shell` PR #58, CI result green): a `NOTICE` file in the wheel and sdist covering the in-package assets (the mdi icon set under Apache-2.0, three handle SVGs, `error.png`), what `tesserae-engine` 0.6.9 bundles (four fonts, 495 Rust crates, five `auditwheel` libraries) and the dependency closure; `tests/test_notice.py` (9 tests) fails when a dependency, an asset, a licence or a range is missing, each proved by mutation |
+| M7g real-hardware kit | PR #57 green, being rebased |
+| M7f gaps | First half merged-ready (PR #59), being rebased |
+| M7h volume OSD | PR #60, one latency test flaked at 104 ms against 100 ms, re-running |
+| M7d version policy and migrate | PR #61: CI found a real regression (the reload client imported `tess_dl`); sent back to its builder |
+| M7a security model | Still being built |
+| M7b, M7a2, M7c | Not reported yet |
+| M7i, M7j | Wait for tre's release of 022 and 023 |
+| M7k click-away | Started from tre's answer to 024 |
+
 ## State this plan starts from
 
 Read from `tess-shell` `origin/main`, PyPI and the vault on 2026-11-17; the code session's reports, not run in the vault.
@@ -51,9 +65,9 @@ Design first, then build. The vault session writes the two missing specs; the co
 | M7f | The known gaps above: import of another `_Shell.tdl`, `Reveal_Key`, Clock `hour_cycle`, the stale README and Tray text | Code session | Each is built or removed from the schema and the docs, with a test |
 | M7g | The real-hardware lines: three checks that need a physical device and so cannot run in the sandbox, listed in [What the Real-Hardware Lines Are](#what-the-real-hardware-lines-are) ([Hand Checks](Hand%20Checks.md)). Each line is written as exact steps (what to start, what to press or plug in, what to listen for or read, the literal expected result, how to report pass or fail) so the maintainer does only the device part. Multi-monitor and hot-plug are tested in the sandbox on virtual outputs, never on his monitors (R-33) | Code session builds the kit; the maintainer runs the three lines | Every line has a result in the build log |
 | M7h | The volume OSD, a shipped module (maintainer, 2026-11-17: yes): shown when the Audio module's volume or mute changes, a click-through Panel that disappears after a moment; brightness is added when a brightness service is | Code session | The module's criteria pass headless; an example in the guide |
-| M7i | Content-sized Panels that follow their content, padding included, and the Launcher on `Height: AUTO` (maintainer, 2026-11-17: "I want these built"). Waits for tre: [TRE-REQ-022 Content-Sized Layer Surface](../80%20Requests/TRE-REQ-022%20Content-Sized%20Layer%20Surface.md). Shell side: [Panel > Content-Sized Panels That Follow Their Content (Decided 2026-11-17; Needs TRE-REQ-022)](../40%20Specifications/Surfaces/Panel.md#content-sized-panels-that-follow-their-content-decided-2026-11-17-needs-tre-req-022) | Code session, after tre | A Launcher with 3 results is shorter than with 10; the padding stays at every size; no flicker in a screenshot sequence |
+| M7i | Content-sized Panels that follow their content, padding included, and the Launcher on `Height: AUTO` (maintainer, 2026-11-17: "I want these built"). Waits for tre's release: [TRE-REQ-022 Content-Sized Layer Surface](../80%20Requests/TRE-REQ-022%20Content-Sized%20Layer%20Surface.md) is built on a local branch (2026-11-17). Shell side: [Panel > Content-Sized Panels That Follow Their Content (Decided 2026-11-17; Needs TRE-REQ-022)](../40%20Specifications/Surfaces/Panel.md#content-sized-panels-that-follow-their-content-decided-2026-11-17-needs-tre-req-022) | Code session, after tre | A Launcher with 3 results is shorter than with 10; the padding stays at every size; no flicker in a screenshot sequence |
 | M7j | The active-descendant relation: the Launcher and any text field with a list name the selected row. Waits for tre: [TRE-REQ-023 Active Descendant](../80%20Requests/TRE-REQ-023%20Active%20Descendant.md) | Code session, after tre | the focused-state move to the selected row in a test through the accessibility tree (tre's AccessKit expresses the relation that way, not by `ActiveDescendantChanged`); the polite message stays as the fallback |
-| M7k | Click-away closing for the Launcher from whichever signal tre builds: [TRE-REQ-024 Outside Press and Keyboard Leave on Layer Surfaces](../80%20Requests/TRE-REQ-024%20Outside%20Press%20and%20Keyboard%20Leave%20on%20Layer%20Surfaces.md) (either `outside_press` or `keyboard_leave`; both are technically difficult) | Code session, after tre | A click on the desktop closes the Launcher if tre builds `outside_press`; a keyboard taken away closes it if tre builds `keyboard_leave` |
+| M7k | Click-away closing for the Launcher, built shell-side from tre's answer to [TRE-REQ-024 Outside Press and Keyboard Leave on Layer Surfaces](../80%20Requests/TRE-REQ-024%20Outside%20Press%20and%20Keyboard%20Leave%20on%20Layer%20Surfaces.md): the `active` event (keyboard taken away) and the popup-grab recipe (a click elsewhere, which swallows the click, is one-shot and misses the shell's own surfaces). Works with tre 0.6.9, no release needed | Code session, now | A click on the desktop or another application closes the Launcher in a private sway; KWin is a hand-check line
 
 Suggested order: the M7a and M7b specs (vault) while M7c, M7e, M7f and M7h are built; then the M7a2 test, which settles the posture; then the M7a, M7b and M7d builds; M7g last.
 

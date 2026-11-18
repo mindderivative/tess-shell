@@ -243,6 +243,7 @@ The maintainer asked on 2026-11-17 for a layer surface sized to its content (the
 - `Max_Width` and `Max_Height` clamp it (pixels, or `%` of the output as for a Popup); content beyond the clamp scrolls.
 - When the content's size changes while the Panel is open, the Panel resizes in the same frame as the redraw, from the anchored edge; an unanchored Panel stays centred.
 - A fixed `Width` or `Height` keeps its value; `(480, AUTO)` follows only the height.
+- tre built it on a local branch on 2026-11-17 (unreleased; [TRE-REQ-022 Content-Sized Layer Surface](../../80%20Requests/TRE-REQ-022%20Content-Sized%20Layer%20Surface.md)): `size` takes `'content'` per axis with `min_size` and `max_size`, the root node's padding is included, and the root must be given no size of its own on a content axis. On wlroots one transitional frame shows the old content half a step off when a centred or bottom-anchored surface resizes; settled frames are exact. Not seen on KWin yet.
 - Until tre has the request, the shell keeps the one-time fit at creation and a Panel does not follow later content changes; the Launcher stays 480 by 400.
 - The Launcher then uses `Width: 480` and `Height: AUTO` with a `Max_Height` of 400 ([Applications Module](../Modules/Applications%20Module.md)).
 
