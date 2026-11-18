@@ -83,6 +83,9 @@ select = ["E", "F", "I", "B", "UP"]
 "tests/kwin/*" = ["E501"]
 # the Node harness and the scenarios of the KWin script are JavaScript in strings
 "tests/test_kwin_script_js.py" = ["E501"]
+# the module process test: the report's markdown and its tables are long lines in strings
+"tests/perf/module_process_test.py" = ["E501"]
+"tests/perf/proto/*" = ["E501"]
 
 [tool.mypy]
 strict = true
