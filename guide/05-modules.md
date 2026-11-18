@@ -40,6 +40,7 @@ Each section below says what the module shows, lists its parameters (generated f
 | [Tray](#tray) | The system tray: |
 | [Tray_Item](#tray_item) | One icon of the Tray, with a tooltip |
 | [Tray_Menu](#tray_menu) | The content of the Popups that draw a tray item's menu, one level of it |
+| [Volume_OSD](#volume_osd) | The volume on-screen display: |
 | [Workspaces](#workspaces) | The virtual desktops as buttons: |
 
 <!-- END generated: module-index -->
@@ -52,7 +53,7 @@ Each section below says what the module shows, lists its parameters (generated f
 * **Modules that depend on a service hide themselves** when the service is not there: Battery without a battery or UPower, Workspaces without KWin, Network without NetworkManager, Media without a player, Audio without a sound server, Tray without a StatusNotifier watcher or items, Tasks without KWin's script or windows. A hidden module takes no space in the Bar, not even the `Spacing` beside it, and shows no placeholder. It returns when the service does.
 * **Look.** The modules are styled by the `Default` stylesheet (name it in `settings.tdl`, as the examples do) and the theme's tokens, so they follow light and dark. A stylesheet rule addresses a module by name (`Button`), a part of it (`Slider::handle`) and a state (`Button:hovered`); see [Styling and themes](06-styling.md). A module of your own with the same name in your `Modules/` folder replaces the shipped one.
 * **Accessibility.** The modules name themselves and carry their state for assistive technology (a Toggle says whether it is checked, a Slider its value). `Media`, `Audio` and `Tasks` can also make polite spoken announcements with `announce: true`; `Network`, `Battery` and `Applications` announce without a parameter.
-* **Added after 0.1.1** (not in the package on PyPI at 0.1.1): the [Tasks](#tasks) and [Applications](#applications) modules, the `announce` parameters, `Value_Text` of the Slider and the `Label` of TextInput and TextEditor ([Install and start](01-install.md#what-is-newer-than-the-011-release)).
+* **Added after 0.1.1** (not in the package on PyPI at 0.1.1): the [Tasks](#tasks), [Applications](#applications) and [Volume_OSD](#volume_osd) modules, the `announce` parameters, `Value_Text` of the Slider and the `Label` of TextInput and TextEditor ([Install and start](01-install.md#what-is-newer-than-the-011-release)).
 
 The common keys of every module use are:
 
@@ -1806,6 +1807,102 @@ Shell {
 ```
 
 <!-- END generated: example-set:05-modules/audio-outputs -->
+
+## Volume_OSD
+
+The volume on-screen display: when the default output's **volume or mute changes**, a small card appears for a moment with an icon, the output's name, a bar and the percent (or the word *Muted*), and goes away by itself. It reads the sound server itself, so it shows what changed the volume (a volume key, the Audio module's wheel, `pavucontrol`, another program) and needs no Audio module beside it. It shows **nothing at start**, for the first reading of the server, when the default output is switched (the new output's volume is the starting point) or when the microphone or the list of outputs changes. Muted is told by the word, by the icon's shape (a crossed speaker) and by the dimmed bar, never by colour alone.
+
+The module goes in a **Panel** that you write: `Visible: false` (it starts hidden), `Input_Region: []` (clicks pass through it) and `Keyboard: NONE` (it never takes the keyboard), on `Layer: OVERLAY` so it shows over other windows. The module shows that Panel when something changes and hides it `duration` milliseconds after the last change (a change in that time starts the time again); this `duration` replaces the Panel's own `Hide_After`. The Panel gives the size, the place and the card (`Style`); the module fills it. A `Volume_OSD` in a Bar has no Panel to show: the shell says so once in its log. In a Panel that does not start hidden the card is on screen from the start until the first change and the time after it.
+
+The module **says nothing aloud**, so a screen reader is not told twice: set `announce: true` on an [Audio](#audio) module if you want the changes spoken. To assistive technology the card is a group named for example "Volume, Razer Leviathan V2 X, 45 %" (or "..., muted") that holds one progress bar named "Volume"; the icon and the two texts are hidden from it because the name already says them. Brightness is not part of it: the shell has no brightness service.
+
+<!-- BEGIN generated: module:Volume_OSD -->
+The volume on-screen display: the output, a bar and the percent (or Muted) for a moment when the default output's volume or mute changes; it goes in a click-through Panel.
+
+| Param | Type | Default | What it does |
+|---|---|---|---|
+| `duration` | number | `1500` | Milliseconds the Panel stays after the last change of the volume or mute (more than 0, at most 60000). |
+| `show_name` | boolean | `true` | Shows the output's name above the bar. |
+
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+
+<!-- END generated: module:Volume_OSD -->
+
+<!-- BEGIN generated: example-set:05-modules/volume-osd -->
+File `settings.tdl`:
+
+```tdl
+---
+TDL: 0.2
+Name: Settings
+---
+# The volume keys change the volume through the Audio module in the Bar; the on-screen display
+# shows for a moment each time the volume or the mute changes, whatever changed it.
+Settings {
+    Appearance { Stylesheets: [Default] }
+    Shortcuts {
+        Volume_Up { Keys: "AudioRaiseVolume", Action: Call, Target: "Audio.step", delta: 5 }
+        Volume_Down { Keys: "AudioLowerVolume", Action: Call, Target: "Audio.step", delta: -5 }
+        Mute { Keys: "AudioMute", Action: Call, Target: "Audio.toggle_mute" }
+    }
+}
+```
+
+File `Shells/Main_Shell.tdl`:
+
+```tdl
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# Volume_OSD goes in a Panel that starts hidden (Visible: false), takes no pointer (Input_Region: [])
+# and no keyboard (Keyboard: NONE) and sits on the overlay layer. The module shows the Panel when the
+# volume or mute changes and the Panel hides itself after `duration` milliseconds.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Spacer { }
+                            Audio { }
+                        }
+                    }
+                }
+            }
+            Panel {
+                Name: Volume_Panel
+                Layer: OVERLAY
+                Keyboard: NONE
+                Input_Region: []
+                Visible: false
+                Anchor: [BOTTOM]
+                Inset: [0, 0, 0, 80]
+                Width: 300
+                Height: 64
+                Style { Background: $color.surface_raised, Corner_Radius: 12, Elevation: 20% }
+                Children {
+                    Volume_OSD { duration: 1500, show_name: true }
+                }
+            }
+        }
+    }
+}
+```
+
+<!-- END generated: example-set:05-modules/volume-osd -->
 
 ## Tray
 

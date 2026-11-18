@@ -1,0 +1,14 @@
+---
+TDL: 0.2
+Name: Settings
+---
+# The volume keys change the volume through the Audio module in the Bar; the on-screen display
+# shows for a moment each time the volume or the mute changes, whatever changed it.
+Settings {
+    Appearance { Stylesheets: [Default] }
+    Shortcuts {
+        Volume_Up { Keys: "AudioRaiseVolume", Action: Call, Target: "Audio.step", delta: 5 }
+        Volume_Down { Keys: "AudioLowerVolume", Action: Call, Target: "Audio.step", delta: -5 }
+        Mute { Keys: "AudioMute", Action: Call, Target: "Audio.toggle_mute" }
+    }
+}

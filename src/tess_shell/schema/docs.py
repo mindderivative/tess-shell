@@ -991,6 +991,9 @@ MODULE_NOTES: dict[str, str] = {
     "and menu; the shell is a second tray host beside Plasma's.",
     "Tray_Item": "One icon of the Tray, with a tooltip.",
     "Tray_Menu": "The content of the Popups that draw a tray item's menu, one level of it.",
+    "Volume_OSD": "The volume on-screen display: the output, a bar and the percent (or Muted) for "
+    "a moment when the default output's volume or mute changes; it goes in a click-through "
+    "Panel.",
     "Workspaces": "The virtual desktops as buttons: the current one is marked, a click switches.",
 }
 
@@ -1002,6 +1005,9 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Audio", "show_slider"): "Shows a volume slider.",
     ("Audio", "show_mic"): "Shows a microphone mark while the default input is muted.",
     ("Audio", "step"): "The percent one wheel step changes the volume by.",
+    ("Volume_OSD", "duration"): "Milliseconds the Panel stays after the last change of the volume "
+    "or mute (more than 0, at most 60000).",
+    ("Volume_OSD", "show_name"): "Shows the output's name above the bar.",
     ("Badge", "Count"): "The number shown; 0 shows nothing unless Show_Zero is true.",
     ("Badge", "Show_Zero"): "Shows the badge for a count of 0.",
     ("Badge", "Max"): "The largest number shown; above it the badge reads that number and a plus.",

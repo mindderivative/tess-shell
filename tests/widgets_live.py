@@ -71,6 +71,7 @@ STANDARD = (
     "Tasks",
     "Task_Item",
     "Applications",
+    "Volume_OSD",
 )
 THEME = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text()
 DEFAULT_SHEET = (SHIPPED / "Stylesheets" / "Default_Stylesheet.tdl").read_text()
