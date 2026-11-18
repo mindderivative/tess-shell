@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -29,6 +30,7 @@ from tess_shell.files.loader import (
     load_stylesheet_file,
     load_theme_file,
     register_module,
+    shell_importer,
 )
 from tess_shell.model.icons import RuntimeIcons
 from tess_shell.model.look import Look, check_parts, check_states, check_tokens, make_look
@@ -81,10 +83,23 @@ class Scan:
     stylesheets: dict[str, StylesheetDef] = field(default_factory=dict)
     icons: RuntimeIcons | None = None  # the icon sets, for a name a module sends
     shortcuts: tuple[Action, ...] = ()  # the global shortcuts to declare (``tess_shell.shortcuts``)
+    # every file a shell file's ``Import:`` named, found or not, as its path is written (a reload
+    # watches them, and each one that exists gets a UID)
+    imported: tuple[Path, ...] = ()
 
     @property
     def errors(self) -> list[Finding]:
         return [f for f in self.findings if f.severity == "error"]
+
+    @property
+    def shell_files(self) -> list[Path]:
+        """Every shell file that was read: the discovered ones, and the imported ones that no
+        ``Shells`` folder holds (an import may name any file inside the configuration folders)."""
+        known = {os.path.realpath(p) for p in self.shells}
+        return [
+            *self.shells,
+            *(p for p in self.imported if p.is_file() and os.path.realpath(p) not in known),
+        ]
 
 
 def scan(settings: Settings, config: Path) -> Scan:
@@ -171,22 +186,42 @@ def scan(settings: Settings, config: Path) -> Scan:
             findings.extend(found)
             if sheet is not None:
                 findings.extend(_register(stylesheets, sheet_shipped, sheet, path, config))
+    imported: dict[Path, None] = {}
+    import_shell = shell_importer(
+        config, versions, confine, importer, lambda p: imported.setdefault(p)
+    )
+    # a file of surfaces is read alone and by the shell that imports it: one finding, not two
+    shell_findings: dict[Finding, None] = {}
     for path in paths:
         if path.name.endswith("_Shell.tdl"):
             shell, found = load_shell_file(
-                path, config, versions, confine, registry, importer(path), icons
+                path, config, versions, confine, registry, importer(path), icons, import_shell
             )
             if shell is not None:
                 shells[path] = shell
-            findings.extend(found)
+            shell_findings.update(dict.fromkeys(found))
         elif path.name.endswith("_Style.tdl"):
             _, found = load_file(path, config)
             findings.extend(found)
+    findings.extend(shell_findings)
     findings.extend(
         Finding("Icons", 1, 1, "warning", "icon-set-invalid", problem, "the set is skipped")
         for problem in icons.problems
     )
     main = shells.get(settings.main_shell_path) if settings.main_shell_path else None
+    if main is not None and main.surfaces_only:
+        findings.append(
+            Finding(
+                main.file,
+                1,
+                1,
+                "error",
+                "main-shell-surfaces",
+                f"{main.file} holds surface blocks and no Monitor: it is a file to import, and "
+                "the main shell would show nothing",
+                "write Monitor { Name: ..., Children { Import: this file } } in the main shell",
+            )
+        )
     if main is not None and settings.main_shell_path is not None:
         # the shipped Panels (the launcher) the main shell asks for and does not write
         targets = [e.target for e in settings.shortcuts if e.kind in ("toggle", "show", "hide")]
@@ -212,6 +247,7 @@ def scan(settings: Settings, config: Path) -> Scan:
         stylesheets,
         RuntimeIcons(icons),
         shortcuts,
+        tuple(imported),
     )
 
 

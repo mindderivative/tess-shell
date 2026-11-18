@@ -1,0 +1,25 @@
+---
+TDL: 0.2
+Name: Dock_Shell
+---
+# A file to import: surface blocks and no Monitor. It could import more files; a path is relative
+# to the file that writes it. Its names (Dock) are unique across the whole shell.
+Shell {
+    Bar {
+        Name: Dock
+        Edge: BOTTOM
+        Width: 480
+        Height: 40
+        Gap: 8
+        Style { Background: $color.surface }
+        Children {
+            FlexBox {
+                Width: EXPAND
+                Flex: HORIZONTAL
+                Align_Items: CENTER
+                Padding: [12, 0, 12, 0]
+                Children { Text { Text: "A dock, from its own file" } }
+            }
+        }
+    }
+}

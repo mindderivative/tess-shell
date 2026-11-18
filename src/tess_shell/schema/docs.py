@@ -827,6 +827,11 @@ SHORTCUT_FORMS: dict[str, str] = {
 SPEC_NOTES: dict[str, str] = {
     "Shell": "The root block of a shell file: monitors.",
     "Monitor": "One monitor, chosen by Connector, Description or Index, and the surfaces on it.",
+    "Imported_Shell": "The root block of a shell file made to be imported: surface blocks and "
+    "Import lines, no Monitor. A Monitor's Children write Import: Top_Shell.tdl (one file or a "
+    "list, a path relative to the file that writes it, inside the configuration folders), and "
+    "the surfaces of the file come in at that position, on that Monitor. A file is imported once "
+    "into a shell, because a Name is unique across it; imports nest, and a circle is an error.",
     "Bar": "A strip along a screen edge that reserves its space.",
     "Panel": "A surface placed by anchors or against a target; a launcher, an OSD, a dock. Width "
     "and Height size it, or Depth and Length with Meld: true.",
@@ -871,6 +876,9 @@ EXAMPLES: dict[str, str] = {
     "Shell": "Shell {\n    Monitor { Name: Main, Index: default, Children { } }\n}",
     "Monitor": "Monitor {\n    Name: Main\n    Index: default\n    Children {\n"
     "        Bar { Name: Top_Bar, Edge: TOP, Width: EXPAND, Height: 32 }\n    }\n}",
+    "Imported_Shell": "Shell {\n"
+    "    Bar { Name: Bottom_Bar, Edge: BOTTOM, Width: EXPAND, Height: 24 }\n"
+    "    Import: More_Shell.tdl\n}",
     "Bar": "Bar {\n    Name: Top_Bar\n    Edge: TOP\n    Width: EXPAND\n    Height: 32\n"
     '    Style { Background: $color.surface }\n    Children { Text { Text: "Hello" } }\n}',
     "Panel": "Panel {\n    Name: Launcher\n    Anchor: [TOP, LEFT]\n    Inset: [8, 40, 0, 0]\n"

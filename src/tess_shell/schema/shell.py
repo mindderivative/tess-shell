@@ -10,7 +10,8 @@ from __future__ import annotations
 import dataclasses
 import os
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from pathlib import Path
 
 import tess_dl
 from tess_dl import Block, Document, Property
@@ -19,6 +20,7 @@ from tess_shell.binder import model as m
 from tess_shell.config.confine import PathOutsideConfig
 from tess_shell.schema import blocks
 from tess_shell.schema.findings import Finding, Severity, nearest
+from tess_shell.schema.imports import ImportBroken, ImportedShell, ImportMissing, ShellImporter
 from tess_shell.schema.model import (
     PARAM_TYPES,
     BarDef,
@@ -70,6 +72,8 @@ class _Ctx:
         load_style: Callable[[str], StyleDef | None] | None = None,
         icons: IconSource | None = None,
         resolve_path: Callable[[str], str] | None = None,
+        import_shell: ShellImporter | None = None,
+        path: Path | None = None,
     ) -> None:
         self.load_style = load_style
         self.icons = icons
@@ -86,6 +90,34 @@ class _Ctx:
         self.names: dict[str, m.Origin] = {}
         self.selectors: dict[tuple[str, str], m.Origin] = {}
         self.parts: dict[str, m.Origin] = {}  # a module's ``Part:`` names, where each was written
+        # the shell files an ``Import:`` reads, and the file this context reads: ``path`` is its
+        # absolute path (``None``: no imports can be followed), ``chain`` the files that import
+        # one another down to it (name and identity, the first is the file read by ``read_shell``)
+        self.import_shell = import_shell
+        self.path = path
+        self.chain: tuple[tuple[Path, str], ...] = ()
+        self.imported: dict[Path, m.Origin] = {}  # identity of each imported file -> its Import
+        self.follow_imports = True
+
+    def for_import(self, imported: ImportedShell) -> _Ctx:
+        """The context for reading ``imported``: its own file name and paths, the findings, the
+        names (unique across the shell) and the imports seen so far shared with this one."""
+        sub = _Ctx(
+            imported.name,
+            imported.read_text,
+            self.modules,
+            imported.import_module,
+            self.load_style,
+            self.icons,
+            imported.resolve_path,
+            self.import_shell,
+            imported.path,
+        )
+        sub.findings = self.findings
+        sub.names = self.names
+        sub.imported = self.imported
+        sub.chain = (*self.chain, (imported.identity, imported.name))
+        return sub
 
     def origin(self, o: tess_dl.Origin | None) -> m.Origin:
         line, column = position(o)
@@ -414,7 +446,12 @@ def _imports(ctx: _Ctx, entry: Property) -> list[Child]:
             ctx.add(entry.value_origin, "bad-value", "Import names a file", "write a file name")
             continue
         if text.endswith("_Shell.tdl"):
-            ctx.not_built(item.origin or entry.value_origin, "Import of a shell file")
+            ctx.add(
+                item.origin or entry.value_origin,
+                "import-misplaced",
+                f"Import: {text} is a shell file, and a surface's Children import modules",
+                "import a shell file in a Monitor's Children: Monitor { Children { Import: ... } }",
+            )
             continue
         try:
             found = ctx.import_module(text) if ctx.import_module is not None else None
@@ -2517,9 +2554,7 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
     index: int | str | None = None
     connector: str | None = None
     description: str | None = None
-    surfaces: list[BarDef | PanelDef] = []
-    popups: list[PopupDef] = []
-    frames: list[FrameDef] = []
+    taken = _Surfaces()
     saw_name = False
     for entry in block.entries:
         if isinstance(entry, Property):
@@ -2553,47 +2588,14 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
                 ctx.unknown(entry.key_origin, key, allowed, "key in Monitor")
         elif isinstance(entry, Block):
             if entry.type == "Children":
-                for child in entry.entries:
-                    if isinstance(child, Block):
-                        if child.type == "Bar":
-                            bar = _bar(ctx, child)
-                            if bar is not None:
-                                surfaces.append(bar)
-                        elif child.type == "Panel":
-                            panel = _panel(ctx, child)
-                            if panel is not None:
-                                surfaces.append(panel)
-                        elif child.type == "Popup":
-                            popup = _popup(ctx, child)
-                            if popup is not None:
-                                popups.append(popup)
-                        elif child.type == "Frame":
-                            frame = _frame(ctx, child)
-                            if frame is not None and frames:
-                                ctx.add(
-                                    child.origin,
-                                    "frame-duplicate",
-                                    f"Monitor has a second Frame ({frame.name}); the first is "
-                                    f"{frames[0].name}",
-                                    "a Monitor has one Frame",
-                                )
-                            elif frame is not None:
-                                frames.append(frame)
-                        else:
-                            ctx.unknown(child.origin, child.type, list(_SURFACES), "surface")
-                    elif isinstance(child, Property) and child.key == "Import":
-                        ctx.not_built(child.key_origin, "Import")
-                    elif isinstance(child, Property):
-                        ctx.unknown(child.key_origin, child.key, list(_SURFACES), "surface")
-                    elif isinstance(child, tess_dl.If | tess_dl.For):
-                        ctx.not_built(child.origin, "If and For")
+                _surface_entries(ctx, entry.entries, taken)
             else:
                 ctx.unknown(entry.origin, entry.type, allowed, "block in Monitor")
     if not saw_name:
         ctx.add(block.origin, "missing-key", "a Monitor needs a Name", "write Name: Main")
     if name is None:
         return None
-    surfaces, frames = _host_melds(ctx, surfaces, frames)
+    surfaces, frames = _host_melds(ctx, taken.surfaces, taken.frames)
     here = ctx.origin(block.origin)
     for kind, value in (
         ("Index", None if index is None else str(index)),
@@ -2620,9 +2622,137 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
         connector=connector,
         description=description,
         surfaces=tuple(surfaces),
-        popups=tuple(popups),
+        popups=tuple(taken.popups),
         frames=tuple(frames),
     )
+
+
+class _Surfaces:
+    """What a Monitor's ``Children`` hold, in the order written: the surfaces of its own file and
+    those of every file imported at the position of the ``Import``."""
+
+    def __init__(self) -> None:
+        self.surfaces: list[BarDef | PanelDef] = []
+        self.popups: list[PopupDef] = []
+        self.frames: list[FrameDef] = []
+
+
+def _surface_entries(ctx: _Ctx, entries: Iterable[object], into: _Surfaces) -> None:
+    """The entries of a Monitor's ``Children``, or of an imported shell file's root: surface
+    blocks and ``Import`` of other shell files."""
+    for child in entries:
+        if isinstance(child, Block):
+            if child.type == "Bar":
+                bar = _bar(ctx, child)
+                if bar is not None:
+                    into.surfaces.append(bar)
+            elif child.type == "Panel":
+                panel = _panel(ctx, child)
+                if panel is not None:
+                    into.surfaces.append(panel)
+            elif child.type == "Popup":
+                popup = _popup(ctx, child)
+                if popup is not None:
+                    into.popups.append(popup)
+            elif child.type == "Frame":
+                frame = _frame(ctx, child)
+                if frame is not None and into.frames:
+                    ctx.add(
+                        child.origin,
+                        "frame-duplicate",
+                        f"Monitor has a second Frame ({frame.name}); the first is "
+                        f"{into.frames[0].name}",
+                        "a Monitor has one Frame",
+                    )
+                elif frame is not None:
+                    into.frames.append(frame)
+            elif child.type == "Monitor" and len(ctx.chain) > 1:
+                ctx.add(
+                    child.origin,
+                    "import-monitor",
+                    "an imported shell file holds surface blocks, not a Monitor",
+                    "the Monitor that imports the file chooses the monitor",
+                )
+            else:
+                ctx.unknown(child.origin, child.type, list(_SURFACES), "surface")
+        elif isinstance(child, Property) and child.key == "Import":
+            _import_shells(ctx, child, into)
+        elif isinstance(child, Property):
+            ctx.unknown(child.key_origin, child.key, list(_SURFACES), "surface")
+        elif isinstance(child, tess_dl.If | tess_dl.For):
+            ctx.not_built(child.origin, "If and For")
+
+
+def _import_shells(ctx: _Ctx, entry: Property, into: _Surfaces) -> None:
+    """``Import: Top_Shell.tdl`` (one file or a list) in a Monitor's ``Children``: the surfaces of
+    each file, read as if written here, in this order (Shell File > Structure, D22). A file is
+    imported once into a shell, because a surface's ``Name`` is unique across it."""
+    if not ctx.follow_imports:
+        return  # a file read alone (nothing imports it yet): the importing shell reads its imports
+    value = entry.value
+    items = list(value.items) if isinstance(value, tess_dl.List) else [value]
+    for item in items:
+        text = item.value if isinstance(item, tess_dl.String) else getattr(item, "text", None)
+        where = item.origin or entry.value_origin
+        if not isinstance(text, str):
+            ctx.add(where, "bad-value", "Import names a file", "write a file name")
+            continue
+        if not text.endswith("_Shell.tdl"):
+            ctx.add(
+                where,
+                "import-misplaced",
+                f"Import: {text} is not a shell file, and a Monitor's Children import shell files",
+                "a module is imported in a surface's Children; a shell file ends in _Shell.tdl",
+            )
+            continue
+        try:
+            if ctx.import_shell is None or ctx.path is None:
+                raise ImportMissing(text)
+            imported = ctx.import_shell(ctx.path, text)
+        except PathOutsideConfig as exc:
+            ctx.outside(where, exc)
+            continue
+        except ImportMissing as exc:
+            ctx.add(
+                where,
+                "import-not-found",
+                f"Import: {text} names a file that does not exist: {exc.tried}",
+                "a path is relative to the file that writes the Import",
+            )
+            continue
+        except ImportBroken as exc:
+            ctx.findings.extend(exc.findings)
+            ctx.add(
+                where,
+                "import-failed",
+                f"Import: {text} could not be read; the findings in that file say why",
+                "",
+            )
+            continue
+        here = ctx.origin(entry.key_origin)
+        for i, (identity, _) in enumerate(ctx.chain):
+            if identity == imported.identity:
+                circle = [name for _, name in ctx.chain[i:]] + [imported.name]
+                ctx.add(
+                    where,
+                    "import-cycle",
+                    f"shell files import each other in a circle: {' -> '.join(circle)}",
+                    "remove one of the imports",
+                )
+                break
+        else:
+            first = ctx.imported.get(imported.identity)
+            if first is not None:
+                ctx.add(
+                    where,
+                    "import-twice",
+                    f"{imported.name} is imported twice, first at {first}",
+                    "a surface's Name is unique across the shell, so a file of surfaces is "
+                    "imported once; give each Monitor its own file",
+                )
+                continue
+            ctx.imported[imported.identity] = here
+            _surface_entries(ctx.for_import(imported), imported.document.root.entries, into)
 
 
 def _host_melds(
@@ -2660,12 +2790,24 @@ def read_shell(
     import_module: Callable[[str], str | None] | None = None,
     icons: IconSource | None = None,
     resolve_path: Callable[[str], str] | None = None,
+    import_shell: ShellImporter | None = None,
+    path: Path | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Type a parsed shell file. ``read_text`` reads a file named in the shell file (an SVG's
     ``Source``) and raises ``OSError``; the schema does no I/O of its own. ``resolve_path`` makes
     a path written in the file (an image's ``Source``) absolute. ``modules`` are the known module
-    files by call name: a block with such a head is a module call."""
-    ctx = _Ctx(file, read_text, modules, import_module, None, icons, resolve_path)
+    files by call name: a block with such a head is a module call. ``import_shell`` reads the
+    shell file an ``Import:`` in a Monitor's ``Children`` names, relative to ``path``, the absolute
+    path of this file.
+
+    A root that holds surface blocks and ``Import`` and no ``Monitor`` is a file of surfaces, made
+    to be imported (Shell File > Structure, D22). Read alone it is checked block by block and
+    follows no import (the shell that imports it does); it has no monitors."""
+    ctx = _Ctx(
+        file, read_text, modules, import_module, None, icons, resolve_path, import_shell, path
+    )
+    if path is not None:
+        ctx.chain = ((Path(os.path.realpath(path)), file),)
     root = document.root
     if root.type != "Shell":
         ctx.add(
@@ -2676,6 +2818,14 @@ def read_shell(
         )
         return None, ctx.findings
     monitors: list[MonitorDef] = []
+    if _is_surface_file(root):
+        ctx.follow_imports = False
+        _surface_entries(ctx, root.entries, _Surfaces())
+        name = document.metadata.get("Name")
+        shell_name = getattr(name, "text", None) or getattr(name, "value", "") or ""
+        if any(f.severity == "error" for f in ctx.findings):
+            return None, ctx.findings
+        return ShellDef(file, shell_name, (), surfaces_only=True), ctx.findings
     for entry in root.entries:
         if isinstance(entry, Block):
             if entry.type == "Monitor":
@@ -2684,6 +2834,13 @@ def read_shell(
                     monitors.append(monitor)
             else:
                 ctx.unknown(entry.origin, entry.type, ["Monitor"], "block in Shell")
+        elif isinstance(entry, Property) and entry.key == "Import":
+            ctx.add(
+                entry.key_origin,
+                "import-misplaced",
+                "Import in Shell is not read: a Monitor's Children import shell files",
+                "write Monitor { Children { Import: Top_Shell.tdl } }",
+            )
         elif isinstance(entry, Property):
             ctx.unknown(entry.key_origin, entry.key, ["Monitor"], "key in Shell")
     _check_attach(ctx, monitors)
@@ -2694,6 +2851,15 @@ def read_shell(
     if any(f.severity == "error" for f in ctx.findings):
         return None, ctx.findings
     return ShellDef(file, shell_name, tuple(monitors)), ctx.findings
+
+
+def _is_surface_file(root: Block) -> bool:
+    """A shell file whose root holds surfaces (or imports) and no Monitor: a file to import."""
+    kinds = [
+        e.type if isinstance(e, Block) else e.key if isinstance(e, Property) else ""
+        for e in root.entries
+    ]
+    return "Monitor" not in kinds and any(k in (*_SURFACES, "Import") for k in kinds)
 
 
 def _check_attach(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
