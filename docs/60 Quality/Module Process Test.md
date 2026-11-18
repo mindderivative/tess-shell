@@ -89,16 +89,38 @@ The code session writes the report in the shell repository (`tests/perf/module-p
 
 ## Results
 
-Not run yet.
+The full measurement has not run. The prototype and harness are merged (code session's report of `tess-shell` PR #71, 2026-11-17, CI green; not run in the vault), and the numbers wait for a run alone on an idle machine (about 80 minutes) once the other merges are done.
+
+### What was built
+
+- Everything is new under `tests/` and no `src/` file was touched. `tests/perf/proto/` is a prototype of posture B (a Python child process per module file; JSON lines over a socketpair, recorded as the wire format; B1: each child opens its own D-Bus and PulseAudio connections; B2: the parent keeps the connections and proxies calls and signals) and of C (shipped modules in process, each user module as B). It runs the default shell's 22 module files (the eight default modules, Applications, and the widget and popup modules they use) in B, and a user module in a child in C, verified against the fakes including real pointer clicks and the Tray menu in B1 and B2.
+- `tests/perf/module_process_test.py` measures A, B and C (start, idle CPU, wake-ups, PSS and RSS over the tree, value to screen with p50, p95 and p99, throughput, hang and crash containment, reload). It refuses to start above a load of 0.5 unless `--allow-load`, runs on a private sway and private buses with private data folders, and writes `tests/perf/module-process-results.md` with a computed verdict table against the starting thresholds, kept as named constants. It states that the maintainer decides. 19 collected tests (18 s) and 6 perf-marked end-to-end ones (2 minutes).
+
+### A smoke run (indicative only, not a result)
+
+B costs about 360 MB more PSS (22 processes of about 17 MB each, which is where the memory goes), a start 180 to 270 ms later, a latency from under a millisecond to 1 ms at p95, and a hung and a killed module are contained and restarted. C with the default shell equals A. Against the thresholds of this note: memory fails (150 MB allowed), start passes (300 ms), latency passes, containment passes.
+
+### Where the prototype departs from this note (code session's list)
+
+1. JSON lines, not a framed binary format (not needed for the numbers).
+2. A hung module process is killed at 5 s (the stall is logged at 2 s), not at the shell-wide 10 s, because only that module restarts; the 1 s poll adds about 1 wake-up per second (an adaptive watchdog is possible).
+3. B hosts every module file, including the 13 small widget and popup modules: the literal reading of one process per module file, and where the memory goes. A "lean B", where modules with no code of their own stay in the shell, is not measured; C is the nearest measured form.
+4. The first `start()` blocks the loop until the child answers, so `READY=1` means the modules ran `start`; a real design needs `READY=1` to wait for the children without blocking the loop.
+5. The paint measure is taken from outside (a screenshot of the Bar), so it says "painting", not the engine's frame rate.
+6. Memory is PSS summed over the tree; wake-ups are context switches over all threads, an over-count (the engine's software-renderer threads add a burst after the start, hence a 10 s settle).
+- Not built in the prototype: `ctx.focus`, `Event.stop()`, the result of an `@action` through a process, and the `many-threads` and `slow-module` warnings for module processes. A candidate for tre: a frame counter readable from another thread (the code session notes `Window.frame_stats()` is documented as thread safe) would let the hang test read the engine's own frames.
+
 
 ## Open Questions
 
 1. [x] Is a process per module one process per module file, or per use? Context: today one instance serves every use of a file (`ctx.uses`). Recommendation: per module file, as today, so the memory is the lowest and the contract is the same. Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note.
 2. [x] Are the thresholds above the maintainer's? That is [M7 Brief > Open Questions](../00%20Home/M7%20Brief.md#open-questions) 6, open there. Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note.
 
+3. [ ] Should the measurement include a lean B before the verdict? Context: as built, B puts 22 module files in 22 processes, including 13 small widget and popup modules that have no Python of their own, which is where the memory goes (about 360 MB, over the 150 MB threshold). A lean B keeps the modules with no code of their own in the shell and runs only modules with Python in children (nine for the default shell), which is the form a real design would take. The code session proposes deciding this before the verdict, since the full run takes about 80 minutes. Recommendation: yes, add a lean B (B1 and B2 if the cost allows) to the same run.
+
 ## Acceptance criteria
 
-- [ ] The prototype runs the eight default modules and the Launcher in B, and C runs a user module in a child with the shipped ones in process.
+- [x] The prototype runs the eight default modules and the Launcher in B, and C runs a user module in a child with the shipped ones in process (merged, PR #71).
 - [ ] Every measure above has a number for A, B and C with its spread and the machine description.
 - [ ] The 10 s hang and the killed module are measured for A (the watchdog restart of [Crash Recovery and Watchdog](Crash%20Recovery%20and%20Watchdog.md)), B and C.
 - [ ] The report names the B1 or B2 services variant and what the prototype leaves out.
