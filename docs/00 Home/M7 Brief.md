@@ -31,7 +31,7 @@ tags: [moc, roadmap, brief]
 | M7f gaps | First half merged (`tess-shell` PR #59, CI green): `Reveal_Key` removed (schema 1.9 to 1.10, a removal), Clock `hour_cycle: desktop` follows the locale, the README and the Tray header corrected. Not built: import of another `_Shell.tdl`, which waits for M7a's path rules |
 | M7h volume OSD | PR #60, one latency test flaked at 104 ms against 100 ms, re-running |
 | M7d version policy and migrate | PR #61: CI found a real regression (the reload client imported `tess_dl`); sent back to its builder |
-| M7a security model | Still being built |
+| M7a security model | Merged (`tess-shell` PR #63, CI green): posture A, controls 1 to 8, `check --strict`, `path-outside-config`, per-module failure back-off, the user-facing statement in the guide and README; five questions from the build in [Security Model](../60%20Quality/Security%20Model.md). M7b is in a PR (CI running); the M7a2 prototype is being built |
 | M7b, M7a2, M7c | Not reported yet |
 | M7i, M7j | Wait for tre's release of 022 and 023 |
 | M7k click-away | Started from tre's answer to 024 |
