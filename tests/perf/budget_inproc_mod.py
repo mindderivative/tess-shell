@@ -371,8 +371,16 @@ def measure_b20(quick: bool) -> list[Reading]:
 
 def clock_units(fmt: str) -> list[str]:
     """The tick units a started Clock with format ``fmt`` subscribes to."""
-    from tests.test_clock import clock
+    from loguru import logger
+    from tests import test_clock
 
-    instance, _use, _sent, _lines = clock({"format": fmt})
-    instance.start()
-    return sorted(s.unit for s in instance.ctx._ticks._subs)  # type: ignore[attr-defined]
+    # test_clock.clock() adds a log sink and records its id in a list that only test_clock's own
+    # fixture empties: take the sink away again, or a later test_clock test removes a stale id
+    kept = len(test_clock._SINKS)
+    try:
+        instance, _use, _sent, _lines = test_clock.clock({"format": fmt})
+        instance.start()
+        return sorted(s.unit for s in instance.ctx._ticks._subs)  # type: ignore[attr-defined]
+    finally:
+        while len(test_clock._SINKS) > kept:
+            logger.remove(test_clock._SINKS.pop())
