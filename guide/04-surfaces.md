@@ -159,7 +159,6 @@ A strip along a screen edge that reserves its space.
 | `Min_Height` | length | none |  | The least height of the Bar, in pixels. |
 | `Max_Width` | length | none |  | The greatest width of the Bar, in pixels. |
 | `Max_Height` | length | none |  | The greatest height of the Bar, in pixels. |
-| `Reveal_Key` | key | none |  | The global key that shows the Bar, written as Ctrl+Shift+B; the same as Show_&lt;Name> in Shortcuts. The Shortcuts entry wins when both are written. |
 | `Keyboard` | `NONE` `ON_DEMAND` | `NONE` |  | Whether the Bar takes the keyboard: NONE never (Tab does nothing in it), ON_DEMAND on a click. |
 | `Tab_Index` | whole number | none |  | The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces. |
 | `Shortcut_Mode` | true or false | `false` |  | Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it. |

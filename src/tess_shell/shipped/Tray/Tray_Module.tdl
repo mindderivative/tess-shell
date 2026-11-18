@@ -14,12 +14,13 @@ Name: Tray
 #
 # The menu of an item is the Popup named `Tray_Menu` of the same Monitor (a Popup with
 # `Tray_Menu { }` as its content, see that module) and, for a submenu, the Popups `Tray_Menu_2` and
-# `Tray_Menu_3` (`Tray_Menu { Level: 2 }` and `Level: 3`): a menu shows its first three levels. The
-# Popup's `Max_Height` makes a long menu scroll. Without these Popups the secondary click logs one
-# error and nothing else happens. An item that needs attention takes the `:selected` look.
+# `Tray_Menu_3` (`Tray_Menu { Level: 2 }` and `Level: 3`): a menu shows its first three levels.
+# The shell provides the three (`schema/default_popups.py`: below the icon, `Max_Height: 60%` so a
+# long menu scrolls) to a Monitor that shows the Tray and writes none of that name; a Popup of the
+# same name in the user's file replaces it entirely. An item that needs attention takes the
+# `:selected` look.
 #
-# The tray's Popup opens beside the whole row (the specification's anchor is the icon; a module
-# is not told where an entry's block is), so give the Popup `Alignment: END` or `CENTER`.
+# The menu opens beside the icon that was clicked (the event carries the icon's rectangle).
 Module {
     Params {
         # the icon's size in pixels

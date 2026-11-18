@@ -211,3 +211,69 @@ def test_hovering_the_shipped_clock_opens_a_tooltip_with_the_text_the_clock_sent
     assert op.window.get("anchor_rect")[:2] == tuple(
         round(float(bar.view.nodes[block].get(k))) for k in ("layout_x", "layout_y")
     )
+
+
+# -- hour_cycle: desktop is the time format of the locale (Clock Module > Configuration) -----------
+
+T_FMT = {"C": "%H:%M:%S", "en_US.UTF-8": "%r", "de_DE.UTF-8": "%T", "en_GB.UTF-8": "%T"}
+
+
+def fake_time_locales(monkeypatch: pytest.MonkeyPatch, module: ModuleType) -> FakeLocale:
+    """Installed: en_US, de_DE and en_GB; each has its own ``T_FMT``, read as the real one is,
+    from whatever LC_TIME is set when it is asked."""
+    fake = FakeLocale({"en_US.UTF-8", "de_DE.UTF-8", "en_GB.UTF-8"})
+    monkeypatch.setattr(locale, "setlocale", fake.setlocale)
+    monkeypatch.setattr(locale, "nl_langinfo", lambda item: T_FMT[fake.current])
+    for variable in ("LC_ALL", "LC_TIME", "LANG"):
+        monkeypatch.delenv(variable, raising=False)
+    return fake
+
+
+def shown(
+    monkeypatch: pytest.MonkeyPatch, params: dict[str, Any], **env: str
+) -> tuple[object, FakeLocale]:
+    module = load_clock()
+    fake = fake_time_locales(monkeypatch, module)
+    for variable, value in env.items():
+        monkeypatch.setenv(variable, value)
+    instance, use, sent, _ = clock({"hour_cycle": "desktop", "format": "", **params}, module)
+    instance.show(use, FRIDAY.astimezone())
+    return sent_value(sent, "time"), fake
+
+
+def test_desktop_is_12_hours_when_the_locale_of_the_use_counts_to_12(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    text, fake = shown(monkeypatch, {"locale": "en_US"})
+    assert text == "02:05 PM"
+    assert fake.current == "C"  # the process's own locale is back
+
+
+def test_desktop_is_24_hours_when_the_locale_of_the_use_counts_to_24(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert shown(monkeypatch, {"locale": "de_DE"})[0] == "14:05"
+    assert shown(monkeypatch, {"locale": "en_GB"})[0] == "14:05"  # English, 24 hours
+
+
+def test_desktop_without_a_locale_follows_the_environments_locale(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert shown(monkeypatch, {}, LANG="en_US.UTF-8")[0] == "02:05 PM"
+    assert shown(monkeypatch, {}, LANG="en_US.UTF-8", LC_TIME="de_DE.UTF-8")[0] == "14:05"
+    assert shown(monkeypatch, {}, LANG="de_DE.UTF-8", LC_ALL="en_US.UTF-8")[0] == "02:05 PM"
+
+
+@pytest.mark.parametrize("env", [{}, {"LANG": "C"}, {"LANG": "POSIX"}, {"LANG": "fr_FR.UTF-8"}])
+def test_desktop_is_24_hours_when_no_locale_is_set_or_it_is_not_installed(
+    monkeypatch: pytest.MonkeyPatch, env: dict[str, str]
+) -> None:
+    assert shown(monkeypatch, {}, **env)[0] == "14:05"
+
+
+def test_an_explicit_hour_cycle_or_format_wins_over_the_desktop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert shown(monkeypatch, {"hour_cycle": "24"}, LANG="en_US.UTF-8")[0] == "14:05"
+    assert shown(monkeypatch, {"hour_cycle": "12"}, LANG="de_DE.UTF-8")[0] == "02:05 PM"
+    assert shown(monkeypatch, {"format": "%H.%M"}, LANG="en_US.UTF-8")[0] == "14.05"

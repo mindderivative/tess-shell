@@ -1161,8 +1161,6 @@ BAR_KEYS: dict[str, str] = {
     "Min_Height": "bound",
     "Max_Width": "bound",
     "Max_Height": "bound",
-    # the global key that shows the Bar: the same as ``Show_<Name>`` in ``Shortcuts``
-    "Reveal_Key": "key_chord",
     "Keyboard": "enum",
     "Tab_Index": "tab_index",
     "Shortcut_Mode": "bool",
@@ -1203,6 +1201,13 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
                 name = ctx.name(entry)
             elif key == "Style":
                 ctx.not_built(entry.key_origin, "a Style file")
+            elif key in blocks.BAR_REMOVED:
+                ctx.add(
+                    entry.key_origin,
+                    "removed-key",
+                    f"the Bar key {key} was removed",
+                    blocks.BAR_REMOVED[key],
+                )
             elif key in blocks.BAR_NOT_BUILT:
                 ctx.not_built(entry.key_origin, f"the Bar key {key}", "warning")
             elif key in BAR_KEYS:
@@ -1223,6 +1228,13 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
                 style = _scalar_block_keys(ctx, entry, blocks.BAR_STYLE, "Bar")
             elif entry.type == "Children":
                 children = _children(ctx, entry, lambda b: _block(ctx, b))
+            elif entry.type in blocks.BAR_REMOVED:
+                ctx.add(
+                    entry.origin,
+                    "removed-key",
+                    f"the Bar key {entry.type} was removed",
+                    blocks.BAR_REMOVED[entry.type],
+                )
             elif entry.type in blocks.BAR_NOT_BUILT:
                 ctx.not_built(entry.origin, f"the Bar key {entry.type}", "warning")
             else:
@@ -1274,7 +1286,6 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         shortcut_mode=_shortcut_mode(values),
         style=style,
         children=tuple(children),
-        reveal_key=reveal if isinstance(reveal := values.get("Reveal_Key"), m.Text) else None,
     )
 
 

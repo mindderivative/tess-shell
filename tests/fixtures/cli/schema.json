@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.9",
+  "schema_version": "1.10",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -912,20 +912,6 @@
             "%"
           ],
           "negative": false,
-          "tokens": [],
-          "preferred_tokens": []
-        },
-        "Reveal_Key": {
-          "kind": "key_chord",
-          "choices": null,
-          "enum": null,
-          "default": null,
-          "doc": "The global key that shows the Bar, written as Ctrl+Shift+B; the same as Show_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
-          "slot": false,
-          "required": false,
-          "built": true,
-          "group": "Behaviour",
-          "example": "Ctrl+Shift+F1",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -25128,7 +25114,7 @@
           "type": "string",
           "kind": "string",
           "default": "\"desktop\"",
-          "doc": "desktop, 12 or 24.",
+          "doc": "desktop, 12 or 24. desktop is 12 hours when the time format of the locale (the locale param, else LC_ALL, LC_TIME or LANG) counts to 12, as en_US does, and 24 otherwise or when no locale is set.",
           "required": false
         },
         "timezone": {
@@ -27354,10 +27340,6 @@
       "Frame": {
         "key": "Shortcut",
         "same_as": "Toggle_<Name>"
-      },
-      "Bar": {
-        "key": "Reveal_Key",
-        "same_as": "Show_<Name>"
       }
     },
     "doc": "A surface's own key and a Shortcuts entry for the same action: the entry wins, with one warning. Two actions with the same key (any case, order or alias) are both left without it, with one warning. A name that matches no surface is a warning and the shortcut is not registered."

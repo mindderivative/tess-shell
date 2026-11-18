@@ -5,6 +5,7 @@ sends the text of its tooltip too (the layout's ``Tooltip`` shows it on hover)."
 from __future__ import annotations
 
 import locale
+import os
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
@@ -19,18 +20,40 @@ if TYPE_CHECKING:
 FALLBACK = "--:--"
 
 
-def pattern(params: Mapping[str, Any]) -> str:
+def pattern(params: Mapping[str, Any], desktop_12: bool = False) -> str:
     """The strftime pattern of a use: its ``format``, else one chosen by ``hour_cycle``.
 
-    ``desktop`` follows 24 hours until KDE's regional setting is read (Clock Module, open)."""
+    ``desktop`` is 12 hours when ``desktop_12`` (the locale's own time format counts hours to 12,
+    see :func:`uses_12_hours`) and 24 hours otherwise."""
     if params["format"]:
         return str(params["format"])
-    return "%I:%M %p" if params["hour_cycle"] == "12" else "%H:%M"
+    twelve = params["hour_cycle"] == "12" or (params["hour_cycle"] == "desktop" and desktop_12)
+    return "%I:%M %p" if twelve else "%H:%M"
 
 
-def render(params: Mapping[str, Any], now: datetime) -> str:
+def render(params: Mapping[str, Any], now: datetime, desktop_12: bool = False) -> str:
     zone = ZoneInfo(params["timezone"]) if params["timezone"] else None
-    return now.astimezone(zone).strftime(pattern(params))
+    return now.astimezone(zone).strftime(pattern(params, desktop_12))
+
+
+def environment_locale() -> str:
+    """The locale name the environment gives time (``LC_ALL``, then ``LC_TIME``, then ``LANG``, the
+    first that is not empty, as the C library reads them); empty when none is set. The shell
+    does not call ``setlocale`` for itself, so this is the desktop session's locale, not the
+    process's."""
+    for variable in ("LC_ALL", "LC_TIME", "LANG"):
+        value = os.environ.get(variable, "")
+        if value:
+            return value
+    return ""
+
+
+def uses_12_hours() -> bool:
+    """Whether the time format of the current ``LC_TIME`` locale counts hours to 12: its
+    ``T_FMT`` (``%r`` or ``%I:%M:%S %p`` in en_US, ``%T`` in de_DE) names ``%p``, ``%P``, ``%r``,
+    ``%I`` or ``%l``."""
+    fmt = locale.nl_langinfo(locale.T_FMT)
+    return any(token in fmt for token in ("%p", "%P", "%r", "%I", "%l"))
 
 
 def render_tooltip(params: Mapping[str, Any], now: datetime) -> str:
@@ -89,6 +112,23 @@ class Clock(Module):
                 )
         return self._spellings[name]
 
+    def desktop_12(self, params: Mapping[str, Any]) -> bool:
+        """What ``hour_cycle: desktop`` means for a use: 12 hours when the time format of its
+        locale counts to 12. The locale is the use's ``locale`` param, else the environment's
+        (``LC_ALL``, ``LC_TIME``, ``LANG``); one that is unset, ``C`` or not installed gives 24.
+        The shell reads no clock-format value from the desktop (the Settings portal values it
+        follows are appearance ones), so the locale's own time format is the source."""
+        if params["hour_cycle"] != "desktop" or params["format"]:
+            return False
+        name = params["locale"] or environment_locale()
+        if name in ("", "C", "POSIX"):
+            return False
+        spelling = self.spelling(params["locale"]) if params["locale"] else installed(name)
+        if spelling is None:
+            return False
+        with time_names(spelling):
+            return uses_12_hours()
+
     def start(self) -> None:
         self.tick()
         self.ctx.on_tick("minute", self.tick)
@@ -111,9 +151,10 @@ class Clock(Module):
         self.spelling(use.params["locale"])  # warns once when it is not installed
 
     def show(self, use: UseRecord, now: datetime) -> None:
+        twelve = self.desktop_12(use.params)
         with time_names(self.spelling(use.params["locale"])):
             try:
-                text = render(use.params, now)
+                text = render(use.params, now, twelve)
             except Exception:
                 text = FALLBACK
             try:

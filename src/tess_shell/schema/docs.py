@@ -189,8 +189,6 @@ KEY_DOCS: dict[str, str] = {
     "Auto_Hide": "Slides the Bar out when the pointer leaves it. Not built.",
     "Auto_Hide_Delay": "How long the pointer is away before the Bar hides, in milliseconds. Not "
     "built.",
-    "Reveal_Key": "The global key that shows the Bar, written as Ctrl+Shift+B; the same as "
-    "Show_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
     "Shortcut": "The global key that toggles the Panel or Frame, written as Meta+Space; the same "
     "as Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
     "Shortcut_Mode": "Whether this surface is the one in shortcut mode: the shell's keyboard "
@@ -556,7 +554,6 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Handle_Opacity",
         "Auto_Hide",
         "Auto_Hide_Delay",
-        "Reveal_Key",
         "Shortcut",
         "Shortcut_Mode",
         "Text_Rotation",
@@ -1024,7 +1021,9 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Clock", "format"): "A strftime pattern; empty is chosen by hour_cycle.",
     ("Clock", "locale"): "A locale name such as de_DE for month and day names; empty is the "
     "process's own. The system must have it; a missing one is warned about and ignored.",
-    ("Clock", "hour_cycle"): "desktop, 12 or 24.",
+    ("Clock", "hour_cycle"): "desktop, 12 or 24. desktop is 12 hours when the time format of the "
+    "locale (the locale param, else LC_ALL, LC_TIME or LANG) counts to 12, as en_US does, and "
+    "24 otherwise or when no locale is set.",
     ("Clock", "timezone"): "An IANA zone such as Europe/Berlin; empty is the local zone.",
     ("Clock", "tooltip_format"): "A strftime pattern for the text of the tooltip the pointer "
     "opens on the clock.",

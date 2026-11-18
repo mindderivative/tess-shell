@@ -13,7 +13,7 @@ Module {
         # a locale name such as de_DE for month and day names; empty is the process's own. The
         # system must have it (`locale -a`); a missing one is warned about and ignored
         locale { Type: string, Default: "" }
-        # desktop, 12 or 24
+        # desktop (12 hours when the locale's time format counts to 12, else 24), 12 or 24
         hour_cycle { Type: string, Default: desktop }
         # an IANA zone such as Europe/Berlin; empty is the local zone
         timezone { Type: string, Default: "" }
