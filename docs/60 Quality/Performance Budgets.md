@@ -5,7 +5,7 @@ type: quality
 status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-10
+updated: 2026-11-17
 tags: [quality, performance]
 ---
 
@@ -63,7 +63,7 @@ Recommendations, each with its reason. None is measured on the shell, because th
 | Resident memory of the default shell | To be set after the first build | The measured parts are per window (18 MiB for a bar, 177 MiB for a 4K overlay, 0.5.8); a total needs the real surface count |
 | Looping icons at once | At most 2 per output, none on hidden surfaces | One looping icon cost about 30% of a core on software drawing ([Risk Register](../00%20Home/Risk%20Register.md) R-24); applies only when `mli` ships |
 | Module callback on the loop | Under 4 ms | A 60 Hz frame is 16.7 ms; leaves room for paint ([Process Model and Threading > Performance Notes](../20%20Architecture/Process%20Model%20and%20Threading.md#performance-notes)) |
-| Watchdog | A stall of 2 s logs; 10 s restarts the loop (to confirm with the supervisor design, R-01) | No number exists; the stop timeout is 10 s |
+| Watchdog | A stall of 2 s logs; 10 s restarts the shell by `WATCHDOG=trigger` under systemd with `WatchdogSec=15` ([Crash Recovery and Watchdog](Crash%20Recovery%20and%20Watchdog.md), draft 2026-11-17; R-01) | No number exists; the stop timeout is 10 s |
 | Motion durations | `Duration.Short` 100 ms, `Medium` 200 ms, `Long` 400 ms | The Panel example uses 200 ms and the fade-out test 400 ms ([Style Schema](../41%20TDL%20Reference/Style%20Schema.md) names the tokens with no values) |
 
 ## Disagreements to Reconcile

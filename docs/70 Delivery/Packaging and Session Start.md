@@ -5,7 +5,7 @@ type: delivery
 status: accepted
 owner: phil
 created: 2026-11-13
-updated: 2026-11-16
+updated: 2026-11-17
 tags: [delivery, needs-verification]
 ---
 
@@ -27,7 +27,7 @@ tags: [delivery, needs-verification]
 | Name, command | `tesserae-shell`; the command `tesserae-shell` runs `tess_shell.cli:main` |
 | Python | 3.14 or later |
 | Kind | Pure Python (`py3-none-any`) after PR #15, which removed the vendored compiled `tess_utils` ([ADR-0017 Shared Utilities](../30%20Decisions/ADR-0017%20Shared%20Utilities.md)); 0.1.0 on PyPI was a platform wheel (`manylinux_2_36`) |
-| Depends on | `tesserae-engine` 0.6.8 up to 0.7 (the floor moved from 0.6.7 with the shell's PR #16, 2026-11-15), `tesserae-el` 0.1.2 up to 0.2, `tesserae-dl` 0.2.0 up to 0.3 (since `e30bfe3`, 2026-11-14), `tesserae-utils[image]` 0.2.1 up to 0.3 (from PyPI since the shell's PR #15, 2026-11-15; Pillow comes through the extra), `loguru`, `inotify-simple`, `dbus-fast`, `pillow`, `jeepney` |
+| Depends on | `tesserae-engine` 0.6.8 up to 0.7 (the floor moved from 0.6.7 with the shell's PR #16, 2026-11-15), `tesserae-el` 0.2.0 up to 0.3 (the maintainer's choice, `tess-shell` PR #53, 2026-11-17; 0.1.x is no longer accepted), `tesserae-dl` 0.2.0 up to 0.3 (since `e30bfe3`, 2026-11-14), `tesserae-utils[image]` 0.2.1 up to 0.3 (from PyPI since the shell's PR #15, 2026-11-15; Pillow comes through the extra), `loguru`, `inotify-simple`, `dbus-fast`, `pillow`, `jeepney` |
 | Licence | MIT |
 
 The shell must run on the released versions named there. Work merged in tre and tess-dl after those releases is used only when present ([Orchestration Log](../00%20Home/Orchestration%20Log.md) D-051).

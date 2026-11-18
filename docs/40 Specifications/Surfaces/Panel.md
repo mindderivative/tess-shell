@@ -5,7 +5,7 @@ type: spec
 status: stable
 owner: phil
 created: 2026-10-27
-updated: 2026-11-14
+updated: 2026-11-17
 tags: [spec/surface, needs-verification]
 ---
 
@@ -234,6 +234,17 @@ Panel {
 ```
 
 An illustration only: the module params (`Value`, a Slider's params) are not designed here; a module use is written with the module's name as the head ([Module File > Using a Module](../../41%20TDL%20Reference/Module%20File.md#using-a-module)). `true` in `Movable: true` and `false` in `Visible: false` are bare words that the parser keeps as a string and the key's declared type turns into a boolean, and `[]` in `Input_Region: []` is the empty list (D2, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)).
+
+## Content-Sized Panels That Follow Their Content (Decided 2026-11-17; Needs TRE-REQ-022)
+
+The maintainer asked on 2026-11-17 for a layer surface sized to its content (the Launcher's short result list should leave no empty space). `Width: AUTO` and `Height: AUTO` already fit the content once, at creation; this is the rule for following the content while the Panel is open, once tre builds [TRE-REQ-022 Content-Sized Layer Surface](../../80%20Requests/TRE-REQ-022%20Content-Sized%20Layer%20Surface.md).
+
+- The Panel's size on an `AUTO` axis is the content's size plus the Panel's `Padding` on that axis. A Panel with `Padding: 16` and 200 by 80 of content is 232 by 112; the space inside the Panel is kept at every size. This is the maintainer's condition.
+- `Max_Width` and `Max_Height` clamp it (pixels, or `%` of the output as for a Popup); content beyond the clamp scrolls.
+- When the content's size changes while the Panel is open, the Panel resizes in the same frame as the redraw, from the anchored edge; an unanchored Panel stays centred.
+- A fixed `Width` or `Height` keeps its value; `(480, AUTO)` follows only the height.
+- Until tre has the request, the shell keeps the one-time fit at creation and a Panel does not follow later content changes; the Launcher stays 480 by 400.
+- The Launcher then uses `Width: 480` and `Height: AUTO` with a `Max_Height` of 400 ([Applications Module](../Modules/Applications%20Module.md)).
 
 ## Python Contract
 

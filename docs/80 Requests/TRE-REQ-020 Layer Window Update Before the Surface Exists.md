@@ -2,10 +2,10 @@
 title: TRE-REQ-020 Layer Window Update Before the Surface Exists
 aliases: [TRE-REQ-020, LayerWindow.set dropped, layer window set before created]
 type: engine-request
-status: draft
+status: accepted
 owner: phil
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-17
 tags: [engine-request, spec/surface, needs-verification]
 ---
 
@@ -13,6 +13,10 @@ tags: [engine-request, spec/surface, needs-verification]
 
 > [!NOTE]
 > `LayerWindow.set(...)` called before tre has told Python that the layer surface exists is stored and then dropped: the compositor never receives it. The shell lost the Launcher's keyboard request this way (2 of 10 runs under heavy CPU load, and once on a CI runner). The request: when the surface comes into being, tre applies the stored configuration if it differs from the one the surface was created with, or queues the update until the surface id is known, the way [TRE-REQ-019 Popup Close Before Placement](TRE-REQ-019%20Popup%20Close%20Before%20Placement.md) now remembers a close. Drafted on 2026-11-16 from the code session's report, at the maintainer's request; the maintainer carries it to tre.
+
+## Built by tre 0.6.9 (tre's report, 2026-11-17)
+
+The `tess-re` session reports `tesserae-engine` 0.6.9 on PyPI (tag `v0.6.9`; I read PyPI's version list for 0.6.8 and 0.6.9, not tre's code). The created hook now sends the stored configuration, in the order the `set` calls were made. It reproduced the bug first with `WAYLAND_DEBUG`: `get('keyboard')` said exclusive while the compositor received mode 0, and now it receives 1. It covers keyboard, input region, margin, anchor, size and exclusive zone, since they go through the same config. The shell's workaround (re-sending a shown Panel's keyboard and input region at the first configure) can be dropped. Not verified by tre on KWin. This note stays `accepted` until the maintainer has tested it and confirms it; then it becomes `stable`.
 
 ## Shell Need
 
