@@ -1,0 +1,21 @@
+---
+TDL: 0.2
+Shell: 0.1
+Name: Volume_OSD_Style
+---
+
+Style {
+    Classes {
+        osd_name {
+            Kind: Text
+            Overflow: ELLIPSIS
+            Font_Size: 12
+            Foreground: $color.on_surface_muted
+        }
+        osd_value {
+            Kind: Text
+            Font_Size: 16
+            Font_Weight: 600
+        }
+    }
+}

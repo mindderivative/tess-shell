@@ -465,7 +465,8 @@ def test_every_shipped_module_is_listed_with_all_its_params() -> None:
             assert entry["doc"].strip(), (name, param)
             assert entry["kind"] in D["kinds"], (name, param)
         assert D["modules"][name]["doc"].strip(), name
-    assert total == 123  # 117, and E1's six: Label (2), Value_Text, announce (3)
+    # 117, and E1's six: Label (2), Value_Text, announce (3); M7h's two: Volume_OSD
+    assert total == 125
 
 
 def test_a_param_default_passes_the_check_of_its_kind() -> None:

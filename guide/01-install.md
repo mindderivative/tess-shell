@@ -83,7 +83,7 @@ python <version>
 These parts of the guide describe features added after the 0.1.1 package was published (the CHANGELOG's *Unreleased* section has the details). A package from PyPI at 0.1.1 does not have them:
 
 * the `tesserae-shell install-session` command ([below](#starting-with-your-session));
-* the `tesserae-shell kwin ...` commands, the `KWin` block of `settings.tdl`, and the [Tasks](05-modules.md#tasks) module;
+* the `tesserae-shell kwin ...` commands, the `KWin` block of `settings.tdl`, and the [Tasks](05-modules.md#tasks) and [Volume_OSD](05-modules.md#volume_osd) modules;
 * the [Applications](05-modules.md#applications) module and the shipped `Launcher` Panel ([the Launcher](08-keyboard.md#the-launcher));
 * the accessibility additions: `Value_Text` of Slider, `Label` of TextInput and TextEditor, and `announce` of Media, Audio and Tasks.
 

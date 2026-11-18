@@ -1064,14 +1064,16 @@ class SurfaceManager:
         if self._positions is not None:
             self._positions.set_position(self._position_key(s.planned.group, s.name), position)
 
-    def _arm_hide_after(self, s: Surface) -> None:
-        """(Re)start the ``Hide_After`` timer: showing a Panel again resets it."""
+    def _arm_hide_after(self, s: Surface, after: float | None = None) -> None:
+        """(Re)start the ``Hide_After`` timer: showing a Panel again resets it. ``after`` (ms) is
+        a caller's own time (``ctx.surface.show``) in place of the Panel's ``Hide_After``."""
         if s.timer is not None:
             s.timer.cancel()
             s.timer = None
         panel = s.planned.bar if s.planned else None
-        if s.window is not None and isinstance(panel, PanelDef) and panel.hide_after is not None:
-            s.timer = s.window.after(panel.hide_after, lambda: self.hide(s))
+        delay = after if after is not None else getattr(panel, "hide_after", None)
+        if s.window is not None and isinstance(panel, PanelDef) and delay is not None:
+            s.timer = s.window.after(delay, lambda: self.hide(s))
 
     def _watch_frames(self, s: Surface) -> None:
         """Log the first frames a Panel draws after a show or a hide (DEBUG): what tells a late
@@ -1251,11 +1253,11 @@ class SurfaceManager:
             logger.info(f"Panel {s.planned.where} hidden (window closed)")
         self._fire(s, "On_Hidden")  # after: it is hidden
 
-    def show(self, s: Surface) -> None:
+    def show(self, s: Surface, hide_after: float | None = None) -> None:
         if s.planned is None:
             return
         if not s.hidden:
-            self._arm_hide_after(s)  # shown again: the timer starts over
+            self._arm_hide_after(s, hide_after)  # shown again: the timer starts over
             return
         target = self._target_of(s)
         if target is not None and target.hidden:
@@ -1272,7 +1274,7 @@ class SurfaceManager:
                 input_region=_input_for(bar, s.geometry, self._output_size(s)),
                 keyboard=_keyboard(bar, False, holds_text_field(s.planned.expanded.nodes)),
             )
-            self._arm_hide_after(s)
+            self._arm_hide_after(s, hide_after)
             if s.output in self._covered:
                 self._cover_state(s)
             self._trace(s, "shown")
@@ -1289,7 +1291,7 @@ class SurfaceManager:
         self._app.add_window(s.window)
         self._panel_events(s)
         self._watch_frames(s)
-        self._arm_hide_after(s)
+        self._arm_hide_after(s, hide_after)
         if s.output in self._covered:
             self._cover_state(s)
         self._trace(s, "shown")
@@ -1487,6 +1489,16 @@ class SurfaceManager:
             logger.error(f"ctx.surface.hide(): {use_key} is not on a Panel")
             return False
         self.hide(s)
+        return True
+
+    def show_use(self, use_key: str, hide_after: float | None = None) -> bool:
+        """``ctx.surface.show()``: show the Panel the use is on (as ``Show`` does); shown already,
+        its ``Hide_After`` time (or ``hide_after``, in milliseconds) starts over."""
+        s = self._surface_of_use(use_key)
+        if s is None or s.planned is None or _kind(s.planned.bar) != "Panel":
+            logger.error(f"ctx.surface.show(): {use_key} is not on a Panel")
+            return False
+        self.show(s, hide_after)
         return True
 
     def watch_shown(self, callback: Callable[[tuple[str, ...]], None]) -> _Cancel:

@@ -27132,6 +27132,73 @@
         }
       ]
     },
+    "Volume_OSD": {
+      "doc": "The volume on-screen display: the output, a bar and the percent (or Muted) for a moment when the default output's volume or mute changes; it goes in a click-through Panel.",
+      "params": {
+        "duration": {
+          "type": "number",
+          "kind": "number",
+          "default": "1500",
+          "doc": "Milliseconds the Panel stays after the last change of the volume or mute (more than 0, at most 60000).",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "show_name": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "true",
+          "doc": "Shows the output's name above the bar.",
+          "required": false
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live",
+        "Focusable",
+        "Tab_Index"
+      ],
+      "actions": []
+    },
     "Workspaces": {
       "doc": "The virtual desktops as buttons: the current one is marked, a click switches.",
       "params": {

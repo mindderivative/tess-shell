@@ -193,6 +193,14 @@ class ModuleSurface:
         key = self._key(use, "hide")
         return key is not None and self._port.hide_use(key)
 
+    def show(self, use: UseRecord | str | None = None, *, hide_after: float | None = None) -> bool:
+        """Show the Panel the use is on (as ``Show`` does). A Panel that is shown already stays
+        so and its ``Hide_After`` time starts over; ``hide_after`` (milliseconds) is that time in
+        place of the Panel's own, for this show. False, with one error logged, when the use is on
+        no Panel."""
+        key = self._key(use, "show")
+        return key is not None and self._port.show_use(key, hide_after)
+
     def focus(
         self, name: str, *, select_all: bool = False, use: UseRecord | str | None = None
     ) -> bool:
