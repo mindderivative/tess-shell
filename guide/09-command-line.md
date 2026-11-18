@@ -32,9 +32,8 @@ The commands, with the arguments and options each adds:
 | Command | Its own arguments and options | What it does |
 |---|---|---|
 | `tesserae-shell run` | none | start the shell (default) |
-| `tesserae-shell check` | `--strict` | validate settings and shell files |
 | `tesserae-shell migrate` | `--check` `--force` | bring the configuration files to the current format (--check lists what would change) |
-| `tesserae-shell check` | none | validate settings and shell files |
+| `tesserae-shell check` | `--strict` | validate settings and shell files |
 | `tesserae-shell version` | none | print versions |
 | `tesserae-shell schema` | `--out FILE` | print the schema of the shell's files as JSON (with --json) |
 | `tesserae-shell install-session` | `--print` `--enable` `--remove` `--force` | write the desktop file and the systemd user unit (--enable, --remove, --print) |
