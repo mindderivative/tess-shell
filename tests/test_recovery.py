@@ -12,14 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from tess_shell.recovery import (
-    CRASH_LOG,
-    MARKER,
-    STATE_FILE,
-    UNCLEAN_WINDOW,
-    Recovery,
-    summary,
-)
+from tess_shell.recovery import CRASH_LOG, Recovery
+from tess_shell.recovery_state import MARKER, STATE_FILE, UNCLEAN_WINDOW, summary
 
 
 class Clock:
@@ -278,3 +272,15 @@ def test_a_killed_run_leaves_an_empty_crash_file_that_does_not_push_a_real_one_o
         again.open_crash_log()
     assert (state / f"{CRASH_LOG}.1").read_text() == real
     assert not (state / f"{CRASH_LOG}.2").exists()
+
+
+def test_the_clients_state_folder_is_the_shells(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The thin client may not import ``config.paths``, so it repeats its rule: they must agree."""
+    from tess_shell.config.paths import state_dir
+    from tess_shell.recovery_state import state_folder
+
+    for value in ("/tmp/xdg-state", "relative/path", ""):
+        monkeypatch.setenv("XDG_STATE_HOME", value)
+        assert state_folder() == state_dir()
+    monkeypatch.delenv("XDG_STATE_HOME")
+    assert state_folder() == state_dir()

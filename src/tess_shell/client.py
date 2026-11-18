@@ -153,10 +153,9 @@ def _stopped_recovery(command: str, failure: Failure) -> dict[str, Any] | None:
     start is a safe start. Read from the state folder; ``None`` when there is nothing to say."""
     if command != "status" or failure.code != ExitCode.NOT_RUNNING:
         return None
-    from tess_shell.config.paths import state_dir
-    from tess_shell.recovery import iso, summary
+    from tess_shell.recovery_state import iso, state_folder, summary
 
-    found = summary(state_dir(), shell_running=False)
+    found = summary(state_folder(), shell_running=False)
     if not found.unclean and found.last_crash is None:
         return None
     return {

@@ -12,8 +12,8 @@ Three small files in the state directory (``$XDG_STATE_HOME/tesserae-shell``):
   reaches the top. The previous file is kept as ``crash.log.1`` and one older as ``crash.log.2``; a
   run that leaves it empty removes it, so clean runs never push a real crash record out.
 
-``summary`` reads the same files for ``tesserae-shell status`` with no shell running. Standard
-library only: the command-line client imports this module.
+``tess_shell.recovery_state`` reads the same files for ``tesserae-shell status`` with no shell
+running (standard library only, imported by the client); this module writes them.
 """
 
 from __future__ import annotations
@@ -27,17 +27,23 @@ import traceback
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from types import TracebackType
 from typing import IO
 
-MARKER = "running"
-STATE_FILE = "recovery.json"
+from tess_shell.recovery_state import (
+    MARKER,
+    STATE_FILE,
+    UNCLEAN_LIMIT,
+    in_window,
+    marker_id,
+    number_of,
+    read_state,
+    times_of,
+)
+
 CRASH_LOG = "crash.log"
 
-UNCLEAN_LIMIT = 3  # unclean starts in a row that make the next start a safe start ...
-UNCLEAN_WINDOW = 600.0  # ... when they all fall within this many seconds
 OLDER_CRASH_LOGS = 2  # crash.log.1 and crash.log.2; nothing older is kept
 _KEPT_STARTS = 20  # times kept in recovery.json: more than the limit needs, fewer than a loop makes
 
@@ -54,28 +60,6 @@ class Start:
     last_crash: float | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class Summary:
-    """The facts ``status`` shows: ``unclean`` starts since the last clean stop, the time of the
-    ``last_crash`` (``None`` when there never was one) and whether the next start would be a safe
-    start."""
-
-    unclean: int
-    last_crash: float | None
-    next_safe: bool
-
-
-def iso(moment: float | None) -> str | None:
-    """A time as ``status --json`` prints it: local, ISO 8601, whole seconds."""
-    if moment is None:
-        return None
-    return datetime.fromtimestamp(moment).astimezone().isoformat(timespec="seconds")
-
-
-def clock_text(moment: float) -> str:
-    return datetime.fromtimestamp(moment).strftime("%Y-%m-%d %H:%M:%S")
-
-
 def _write(path: Path, text: str) -> None:
     """A temporary file in the same folder, then a rename: a kill leaves the old file or the new."""
     fd, name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
@@ -86,57 +70,6 @@ def _write(path: Path, text: str) -> None:
     except BaseException:
         Path(name).unlink(missing_ok=True)
         raise
-
-
-def _read_state(directory: Path) -> dict[str, object]:
-    try:
-        data = json.loads((directory / STATE_FILE).read_text(encoding="utf-8"))
-    except OSError, ValueError:
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
-def _times(state: dict[str, object]) -> list[float]:
-    raw = state.get("unclean")
-    if not isinstance(raw, list):
-        return []
-    return [float(t) for t in raw if isinstance(t, int | float) and not isinstance(t, bool)]
-
-
-def _number(state: dict[str, object], key: str) -> float | None:
-    value = state.get(key)
-    return float(value) if isinstance(value, int | float) and not isinstance(value, bool) else None
-
-
-def _marker_id(directory: Path) -> str | None:
-    try:
-        data = json.loads((directory / MARKER).read_text(encoding="utf-8"))
-    except OSError, ValueError:
-        return None
-    ident = data.get("id") if isinstance(data, dict) else None
-    return str(ident) if isinstance(ident, str) else ""
-
-
-def _in_window(times: list[float], now: float) -> int:
-    return sum(1 for t in times if now - t <= UNCLEAN_WINDOW)
-
-
-def summary(directory: Path, *, shell_running: bool, now: float | None = None) -> Summary:
-    """The recovery facts of ``directory``. With no shell running, a marker that is still there is
-    one more unclean end that no start has counted yet."""
-    now = time.time() if now is None else now
-    state = _read_state(directory)
-    times = _times(state)
-    last = _number(state, "last_crash")
-    if not shell_running:
-        ident = _marker_id(directory)
-        if ident is not None and ident != state.get("counted"):
-            times = [*times, now]
-            try:
-                last = max(last or 0.0, (directory / MARKER).stat().st_mtime)
-            except OSError:
-                pass
-    return Summary(len(times), last, _in_window(times, now) >= UNCLEAN_LIMIT)
 
 
 class Recovery:
@@ -156,12 +89,12 @@ class Recovery:
         marker. Never raises for a missing or corrupt file: an unreadable state is an empty one."""
         self.directory.mkdir(parents=True, exist_ok=True)
         now = self._clock()
-        state = _read_state(self.directory)
-        times = _times(state)
-        last = _number(state, "last_crash")
+        state = read_state(self.directory)
+        times = times_of(state)
+        last = number_of(state, "last_crash")
         counted = state.get("counted") if isinstance(state.get("counted"), str) else ""
         previous: float | None = None
-        ident = _marker_id(self.directory)
+        ident = marker_id(self.directory)
         if ident is not None:
             try:
                 previous = (self.directory / MARKER).stat().st_mtime
@@ -171,7 +104,7 @@ class Recovery:
                 times = [*times, now][-_KEPT_STARTS:]
                 last = max(last or 0.0, previous, self._crash_time(previous))
                 counted = ident
-        safe = _in_window(times, now) >= UNCLEAN_LIMIT
+        safe = in_window(times, now) >= UNCLEAN_LIMIT
         marker = uuid.uuid4().hex
         _write(
             self.directory / STATE_FILE,
@@ -195,8 +128,8 @@ class Recovery:
 
     def finish(self) -> None:
         """A clean stop: the marker goes and the count starts again from zero."""
-        state = _read_state(self.directory)
-        last = _number(state, "last_crash")
+        state = read_state(self.directory)
+        last = number_of(state, "last_crash")
         try:
             _write(
                 self.directory / STATE_FILE,

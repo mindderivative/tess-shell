@@ -22,7 +22,6 @@ from typing import Any
 from loguru import logger
 
 from tess_shell.binder import model as m
-from tess_shell.config.discovery import is_shipped
 from tess_shell.logging import note_finding, note_module_error
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
@@ -185,6 +184,9 @@ class ModuleHost:
         # safe start (Crash Recovery and Watchdog > A Crash Loop): the Python of a user module is
         # not run; ``safe_skipped`` names the modules whose Python was left alone
         self.safe_start = False
+        # whether a module's Python file ships with the package (set by the app: the modules
+        # package does not import the config package); nothing is shipped until it is told
+        self.is_shipped: Callable[[Path], bool] = lambda path: False
         self.safe_skipped: list[str] = []
         self.popups: PopupPort | None = None  # set by the app once the surfaces exist
         self.dbus: DBusPort | None = None  # set by the app: the D-Bus service layer
@@ -261,7 +263,7 @@ class ModuleHost:
         self, definition: ModuleDef, py_path: Path, uid: str, uses: list[Use]
     ) -> tuple[LoadedModule | None, list[Finding]]:
         """Import ``py_path`` and make the instance. Returns the findings of a bad module."""
-        if self.safe_start and not is_shipped(py_path):
+        if self.safe_start and not self.is_shipped(py_path):
             if definition.name not in self.safe_skipped:
                 self.safe_skipped.append(definition.name)
             return None, []

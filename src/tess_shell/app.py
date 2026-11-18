@@ -24,6 +24,7 @@ from tess_shell.appearance import Appearance
 from tess_shell.binder.images import IMAGES
 from tess_shell.binder.model import Handler
 from tess_shell.commands import ShellCommands
+from tess_shell.config.discovery import is_shipped
 from tess_shell.config.lock import InstanceLock
 from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir, state_dir
 from tess_shell.config.registry import Registry, RegistryError
@@ -44,7 +45,8 @@ from tess_shell.modules.host import ModuleHost, report
 from tess_shell.modules.ticks import TimeSource
 from tess_shell.notify import READY, STOPPING, notify
 from tess_shell.options import Options
-from tess_shell.recovery import Recovery, Start, clock_text, iso
+from tess_shell.recovery import Recovery, Start
+from tess_shell.recovery_state import clock_text, iso
 from tess_shell.reloader import Reloader
 from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
 from tess_shell.schema.findings import Finding
@@ -427,6 +429,7 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         log_finding(exc.finding)
         print_findings([exc.finding], cfg)
         return ExitCode.CONFIG
+    registry.warn = logger.warning  # a write that fails later (the registry never imports the log)
     if registry.recovered is not None:
         logger.warning(
             f"registry: {settings.registry} was rebuilt because {registry.recovered}; the UIDs "
@@ -507,6 +510,7 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         )
         manager_box.append(manager)
         host = ModuleHost(store, ticks, cfg)
+        host.is_shipped = is_shipped  # what safe start leaves alone: the shipped modules
         host.safe_start = start.safe  # after repeated crashes: no user Python (Crash Recovery)
         watchdog = Watchdog.from_environment(
             Heartbeat(), host.callbacks.running, handle.call_soon, os.environ
