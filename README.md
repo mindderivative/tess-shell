@@ -172,6 +172,10 @@ The design documentation is in [`docs/`](docs/README.md). Start at [Home](docs/0
 
 `docs/` is generated from the maintainer's design notes (an Obsidian vault) by [`tools/sync_docs.py`](tools/sync_docs.py). Edits made in `docs/` are overwritten the next time the tool runs.
 
+## Licence and third-party notices
+
+The shell is MIT licensed ([`LICENSE`](LICENSE)). The assets it ships follow that unless they say otherwise: the three peek handle icons (`shipped/Handles/`) and the fallback image `shipped/Images/error.png` were made for Tesserae Shell and are MIT; the icon set `shipped/Icons/mdi.json` is Material Design Icons by Pictogrammers, under Apache-2.0 (with the licence text, `MDI-LICENSE.txt`, next to it). The package ships no font; text is drawn with the fonts bundled in `tesserae-engine` (Roboto, Noto Sans Arabic and Hack Nerd Font Mono). [`NOTICE`](NOTICE) lists every shipped or required third-party asset and runtime dependency with its licence and source; it is in the wheel (`dist-info/licenses/NOTICE`) and the sdist, and `tests/test_notice.py` fails when an asset or a dependency is added without a line in it. When you add a dependency or an asset, add its line to `NOTICE` in the same change.
+
 ## Display widgets (M4b)
 
 Label, TextBox, ProgressBar, Badge, Marquee_Text, Icon, Image and Expander ship as standard modules (an Expander call may write `On_Changed`, raised when its opening or closing has finished, `event.value` true when open); `Tooltip: "text"` is the short form of a tooltip (a slot is written unquoted: `Tooltip: <| params.Text |>`); a disabled block opens no tooltip unless it writes `Tooltip_When_Disabled: true`; a disabled Marquee (so `Marquee_Text`) whose text is cut with an ellipsis always shows its whole text. Colours come from the Default stylesheet (`Appearance { Stylesheets: [Default] }`). The gallery: `uv run python tests/kwin/prepare_m4b_gallery.py`, then `/tmp/tess-kwin-m4b/run.sh`.
