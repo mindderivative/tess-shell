@@ -5,7 +5,7 @@ type: api
 status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-11-14
+updated: 2026-11-17
 tags: [api, needs-verification]
 ---
 
@@ -26,6 +26,7 @@ tags: [api, needs-verification]
 | `ctx.send(key, value, use=None)`                   | Send a value to the shell. Thread-safe, coalesced, never blocks                                                                                                   | Decided that an entry point exists; signature proposed                                                     |
 | `ctx.uses`                                         | The places this module is used, keyed `<Module>@<uid>` (for example `Clock@<uid>`); each record has the use's `Name:`, monitor, UID and `params`                  | Key form decided ([ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules), item 12); Python always gets and passes back this key (D23, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)); record shape proposed |
 | `ctx.dbus`                                         | A helper over the shared `dbus-fast` service thread                                                                                                               | Decided that it exists ([ADR-0009 D-Bus Client Library](../30%20Decisions/ADR-0009%20D-Bus%20Client%20Library.md)); shape proposed                           |
+| `ctx.announce(text, *, politeness='polite', use=None)` | Say one message to a screen reader through `Window.announce` ([TRE-REQ-021 Announce Without a Node](../80%20Requests/TRE-REQ-021%20Announce%20Without%20a%20Node.md)), on the window of the use; with no `use` it is said for the module's first use on an open window, so a module on two Bars is read once. Thread safe (it hops to the loop); the same text twice running is said twice; works for a hidden block; empty text or a politeness other than `polite` or `assertive` raises `ValueError`. Built in `tess-shell` PR #56 (code session's report, 2026-11-17) | Built |
 | `ctx.thread(fn, ...)`                              | Start a thread that catches and logs its exceptions and is joined on `stop`                                                                                       | Proposed                                                                                                   |
 | `ctx.every(seconds, fn)`, `ctx.after(seconds, fn)` | Timers that run `fn` on the loop thread                                                                                                                           | Proposed                                                                                                   |
 | `ctx.on_tick(unit, fn)`                            | Subscribe to the shell's shared time source (`second` or `minute`)                                                                                                | Decided that a shared source exists (2026-10-27); shape proposed ([A shared time source](#a-shared-time-source)) |
