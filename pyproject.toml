@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Tesserae Shell: build desktop shells (bars, panels, docks, launchers, OSDs) from TDL files."
 readme = "README.md"
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE"]
 requires-python = ">=3.14"
 authors = [{ name = "Mind Derivative" }]
 classifiers = [
@@ -56,7 +56,7 @@ path = "src/tess_shell/__init__.py"
 packages = ["src/tess_shell"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/LICENSE", "/README.md", "/CHANGELOG.md", "/pyproject.toml"]
+include = ["/src", "/LICENSE", "/NOTICE", "/README.md", "/CHANGELOG.md", "/pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
