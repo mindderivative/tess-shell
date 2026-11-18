@@ -32,8 +32,8 @@ tags: [moc, roadmap, brief]
 | M7h volume OSD | Merged (`tess-shell` PR #60, CI green): the shipped module `Volume_OSD`, spec [Volume OSD Module](../40%20Specifications/Modules/Volume%20OSD%20Module.md) (written after the build, with six decisions for the maintainer); it added `ctx.surface.show(use=None, *, hide_after=None)` to the module contract |
 | M7d version policy and migrate | PR #61: CI found a real regression (the reload client imported `tess_dl`) and a latent race in `test_kill_strays` (it now waits); both fixed |
 | M7a security model | Merged (`tess-shell` PR #63, CI green): posture A, controls 1 to 8, `check --strict`, `path-outside-config`, per-module failure back-off, the user-facing statement in the guide and README; five questions from the build in [Security Model](../60%20Quality/Security%20Model.md). M7b is in a PR (CI running); the M7a2 prototype is being built |
-| M7b crash recovery | PR #67, being fixed for the import-rule test |
-| M7a2, M7c | M7a2's prototype is in progress; M7c not reported. M7f's import of another `_Shell.tdl` is in PR #69 |
+| M7b crash recovery | Merged (`tess-shell` PR #67, CI green): the watchdog, `WatchdogSec=15`, the crash record, safe start, registry written within 0.2 s, exit 69 for a lost compositor; observed in a private systemd user manager ([Crash Recovery and Watchdog > As Built (code session's report of `tess-shell` PR #67, merged 2026-11-17, CI green; not run in the vault)](../60%20Quality/Crash%20Recovery%20and%20Watchdog.md#as-built-code-sessions-report-of-tess-shell-pr-67-merged-2026-11-17-ci-green-not-run-in-the-vault)) |
+| M7a2, M7c, M7d, M7f import | M7a2's prototype (A, B1, B2) is being built; M7c runs last, alone, on an idle machine; M7d (PR #61) and M7f's import (PR #69) are rebased and in CI |
 | M7i, M7j | Wait for tre's release of 022 and 023 |
 | M7k click-away | Started from tre's answer to 024 |
 

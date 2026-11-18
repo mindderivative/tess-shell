@@ -117,8 +117,26 @@ The heartbeat is one timer at most once a second and one store; the watchdog thr
 
 ## Questions After Testing
 
-1. [ ] Does a user manager restart a `Type=notify` service that misses `WATCHDOG=1`, with `SIGABRT` and a restart after 2 s? Context: read from the manual, not run. Recommendation: test it in the private user manager of the kits with a module that sleeps 20 s. Answered by: the M7b kit line.
-2. [ ] What does the shell do today when the Wayland connection drops, and with which exit code? Answered by: reading the code, then a kit line that kills the private KWin.
+1. [x] Does a user manager restart a `Type=notify` service that misses `WATCHDOG=1`, with `SIGABRT` and a restart after 2 s? Answered 2026-11-17 in a private systemd user manager: `SIGABRT` at 15.06 s and a restart 2.27 s later (see As Built). Context: read from the manual, not run. Recommendation: test it in the private user manager of the kits with a module that sleeps 20 s. Answered by: the M7b kit line.
+2. [x] What does the shell do today when the Wayland connection drops, and with which exit code? Answered 2026-11-17: it exited 2 with no stop sequence, which the unit never restarts; now it exits 69 after a stop sequence. Answered by: reading the code, then a kit line that kills the private KWin.
+
+## As Built (code session's report of `tess-shell` PR #67, merged 2026-11-17, CI green; not run in the vault)
+
+- **Watchdog.** `watchdog.py`: a heartbeat and a watchdog thread, started on the loop's first turn (after start step 12). A stall of 2 s logs one warning naming the module, the entry point and how long (from M7a's `host.callbacks.running()`) with every thread's traceback (`faulthandler`), again every 5 s while it lasts. At 10 s it sends `WATCHDOG=trigger` when `NOTIFY_SOCKET` and `WATCHDOG_USEC` are set, else it logs "loop stalled for 10 s, no supervisor can restart it" and dumps tracebacks every 30 s. With `WATCHDOG_USEC` unset nothing goes to `NOTIFY_SOCKET`. `WATCHDOG=1` is sent every half interval only while the heartbeat is under 5 s old. A test-only variable scales the times.
+- **Unit.** The unit `install-session` writes has `WatchdogSec=15` in `[Service]`; the start-limit keys stay in `[Unit]`, and the existing test still fails if one moves. The guide and README are updated.
+- **Crash record.** `recovery.py`: `crash.log` in the state directory (`faulthandler`, all threads; `.1` and `.2` kept); the `running` marker written after the instance lock and removed at a clean stop; "previous run ended uncleanly" logged and counted; `status` shows the count, the last crash and safe start, also when no shell runs.
+- **Safe start (built as decided).** Shipped modules only, with the skipped user modules named in one warning; a reload or `SIGHUP` ends it; a clean stop resets the count; it fires on the start that finds the marker of the third run that ended uncleanly within 10 minutes.
+- **Registry.** Written within 0.2 s of any change, off the loop, with a temporary file and a rename (the `UID:` writes already were; now tested).
+- **Lost compositor.** Before this the shell exited 2 with no stop sequence, which the unit never restarts. Now it stops the modules, saves the registry and exits 69 (`EX_UNAVAILABLE`), which the unit restarts; 69 is in the exit-code table and the guide.
+- **Observed in a private systemd user manager** (kit `tests/kwin/prepare_m7b_watchdog.py`, 9 of 9 steps in 3 runs; the first two exposed kit bugs, fixed): a `Type=notify` service that never pings gets `SIGABRT` 15.06 s after it starts and is restarted 2.27 s later (`Result=watchdog`); the shell with a module sleeping 20 s is named at 2 s (module and entry point), asks systemd at 10 s with `WATCHDOG=trigger`, and is back with its surfaces 12.8 s after the call (the manager acts at once on a trigger, so the restart is not at 15 s); `crash.log.1` holds the traceback; a killed private sway makes the shell exit 69 (`status=69/UNAVAILABLE`), restarted 2.7 s later and not counted as a crash. 13 of 14 mutations were caught outright; the 14th needed an added test with a `SIGKILL`ed run.
+- **Limit:** a loop blocked in a C extension that holds the GIL cannot be seen by a Python thread; the abort-time traceback goes only to `crash.log`, not the journal.
+
+### Decisions from the build (code session's list)
+
+- A corrupt `registry.json` is moved aside as `registry.json.corrupt-<time>` and rebuilt. This note says rebuild; [Config Discovery and Registry](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md) and [Shell Start and Stop](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md) say exit 1; a registry from a newer shell is still refused. Recommendation: as built; those two notes are to be corrected.
+- `status` with no shell running keeps exit 3 and prints the crash lines to stderr only when there is something to say.
+- The heartbeat uses `call_soon`, not `window.every`, because a shell with no windows has no timer. Wake-ups are not measured yet (M7c).
+- After a lost compositor the restarted shell exits 2, and the unit stays down if no compositor is up within `RestartSec=2`. A longer delay or a polling wait is open; [TRE-REQ-026 Lost Connection Signal and Layer Shell Re-Probe](../80%20Requests/TRE-REQ-026%20Lost%20Connection%20Signal%20and%20Layer%20Shell%20Re-Probe.md) is the engine side. The report's "not built" item was cut off in what the vault read.
 
 ## Acceptance criteria
 
