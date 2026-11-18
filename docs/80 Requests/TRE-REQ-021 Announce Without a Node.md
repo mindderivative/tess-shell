@@ -2,10 +2,10 @@
 title: TRE-REQ-021 Announce Without a Node
 aliases: [TRE-REQ-021, Window.announce, screen reader announcement]
 type: engine-request
-status: draft
+status: accepted
 owner: phil
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-17
 tags: [engine-request, quality/accessibility, needs-verification]
 ---
 
@@ -13,6 +13,10 @@ tags: [engine-request, quality/accessibility, needs-verification]
 
 > [!NOTE]
 > tre 0.6.8 can announce only through a live node: a node announces when its name changes or when it enters the tree. The shell therefore announces through a 1x1 absolute Box per module. The request: `Window.announce(text, politeness)` (and the same on `LayerWindow` and `PopupWindow`) that raises one live announcement for that window through AccessKit, with no node. Drafted on 2026-11-16 from the code session's report, at the maintainer's request; the maintainer carries it to tre.
+
+## Built by tre 0.6.9 (tre's report, 2026-11-17)
+
+The `tess-re` session reports `Window.announce(text, politeness='polite')` in 0.6.9, with politeness `polite` or `assertive`, also on `LayerWindow` and `PopupWindow`. Each call is exactly one announcement and needs no node, so it works for a hidden module and a repeated identical message with no zero-width-space toggle; removing duplicates is the caller's job. An empty text or another politeness raises `ValueError`. AccessKit 0.25 has no announce call, so tre adds an internal live Group node under the window root for one accessibility update and removes it in the next; it is raised with the next frame the window draws, and nothing is heard unless a screen reader is connected. tre verified real AT-SPI `Announcement` signals on a private bus, including with a hidden module present. Not verified: Orca, NVDA, VoiceOver, KWin. The three candidates listed under "Not part of this request" were not built. This note stays `accepted` until the maintainer has heard it with Orca and confirms it; then it becomes `stable`.
 
 ## Shell Need
 

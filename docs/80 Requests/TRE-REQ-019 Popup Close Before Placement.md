@@ -5,7 +5,7 @@ type: engine-request
 status: accepted
 owner: phil
 created: 2026-11-15
-updated: 2026-11-15
+updated: 2026-11-17
 tags: [engine-request, spec/surface, needs-verification]
 ---
 
@@ -16,7 +16,7 @@ tags: [engine-request, spec/surface, needs-verification]
 
 ## Built by tre 0.6.8 (tre's migration notes, 2026-11-15)
 
-The migration notes of `tesserae-engine` 0.6.8 (read by the vault session in the tre repository) say: a popup or layer window closed before it is placed now closes. `close()` called in the same loop turn as `App.add_window`, before the compositor's first configure, was ignored, and neither `close_requested` nor `closed` came. The close is now remembered and made when the surface exists, with the same events (`closed`, reason `"app"`) (tre's task T-019). Code that guarded its own close can drop the guard: the shell did (`tess-shell` PR #16, by the code session's report). The request's note about a `LayerWindow` is covered too. The vault has not run tre. This note stays `accepted` until the maintainer has tested it and confirms it; then it becomes `stable`.
+The migration notes of `tesserae-engine` 0.6.8 (read by the vault session in the tre repository) say: a popup or layer window closed before it is placed now closes. `close()` called in the same loop turn as `App.add_window`, before the compositor's first configure, was ignored, and neither `close_requested` nor `closed` came. The close is now remembered and made when the surface exists, with the same events (`closed`, reason `"app"`) (tre's task T-019). Code that guarded its own close can drop the guard: the shell did (`tess-shell` PR #16, by the code session's report). The request's note about a `LayerWindow` is covered too. The vault has not run tre. This note stays `accepted` until the maintainer has tested it and confirms it; then it becomes `stable`. `tess-re` confirms (2026-11-17) that it first reproduced the gap (a 120x80 popup left 9,600 pixels of its fill in a screenshot, and 0 after) and that `close()` on a `PopupWindow` or `LayerWindow` before placement is remembered and made when the surface exists, with `close_requested` then `closed` with reason `"app"`; a second `close()` is harmless. Not verified by tre on KWin.
 
 ## Shell Need
 

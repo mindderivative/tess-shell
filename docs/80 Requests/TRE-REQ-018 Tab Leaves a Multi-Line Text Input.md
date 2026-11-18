@@ -5,7 +5,7 @@ type: engine-request
 status: accepted
 owner: phil
 created: 2026-11-15
-updated: 2026-11-15
+updated: 2026-11-17
 tags: [engine-request, design/widgets, needs-verification]
 ---
 
@@ -16,7 +16,7 @@ tags: [engine-request, design/widgets, needs-verification]
 
 ## Built by tre 0.6.8 (tre's migration notes, 2026-11-15)
 
-`tesserae-engine` 0.6.8 is on PyPI (read from PyPI's JSON page on 2026-11-15) and its migration notes (`docs/migrating-0.6.md` in the tre repository, read by the vault session) say: a new property `tab_navigates` on a multiline `text_input` makes Tab and Shift+Tab move focus out of the input instead of typing a tab character, as from a single-line input. It is off by default, so every existing multiline input behaves as before (tre's task T-018). The shell sets it on every multi-line `TextEditor` (`tess-shell` PR #16, by the code session's report, whose strict expected-failure test now passes). The property was chosen from the two options the request offered. The vault has not run tre or the shell. This note stays `accepted` until the maintainer has tested it and confirms it; then it becomes `stable`.
+`tesserae-engine` 0.6.8 is on PyPI (read from PyPI's JSON page on 2026-11-15) and its migration notes (`docs/migrating-0.6.md` in the tre repository, read by the vault session) say: a new property `tab_navigates` on a multiline `text_input` makes Tab and Shift+Tab move focus out of the input instead of typing a tab character, as from a single-line input. It is off by default, so every existing multiline input behaves as before (tre's task T-018). The shell sets it on every multi-line `TextEditor` (`tess-shell` PR #16, by the code session's report, whose strict expected-failure test now passes). The property was chosen from the two options the request offered. The vault has not run tre or the shell. This note stays `accepted` until the maintainer has tested it and confirms it; then it becomes `stable`. `tess-re` confirms (2026-11-17) that it first reproduced the gap on 0.6.7 (a multi-line input typed the tab and kept focus, a single-line input let Tab leave) and built `tab_navigates` as option 1: default `False`, settable and readable while the input lives, a single-line input is unchanged, and any other node kind raises `ValueError`.
 
 ## Shell Need
 

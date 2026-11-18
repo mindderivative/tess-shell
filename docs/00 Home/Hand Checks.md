@@ -5,7 +5,7 @@ type: quality
 status: review
 owner: phil
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-17
 tags: [quality, process, needs-verification]
 ---
 
@@ -27,6 +27,10 @@ tags: [quality, process, needs-verification]
 > The maintainer wrote this after running the `install-session` kit by hand, where most lines were copying terminal output into a file for a session to read. A kit line that a script can run and judge is run and judged by the code session, with the output kept in a file the session reads. What is left for the maintainer is only what no session can do: looking at the screen, pressing physical keys, logging out and in, real hardware. If a session needs permission to run something on his real session, to use his terminal or to start a process outside its sandbox, it says so in his chat and asks once for that named action; with his yes it runs it itself and reports pass or fail. It never turns a verifiable step into a paste for him.
 
 What this means for a kit, and what the code session did on 2026-11-16 (`tess-shell` PR #44, reported; not run in the vault): every script writes its result (command, output, exit code, pass or fail) to a file under the kit folder; one `run-all.sh` runs every line that can be run unattended, compares the output with what the checklist expects and writes `results.txt`; `checklist.txt` keeps only the lines that need the maintainer, each saying why a session cannot do it. The earlier rule that no session touches the real session without leave ([Orchestration Log](Orchestration%20Log.md) D-019) stands as the default: the grant is the maintainer's yes in chat, for the named action.
+
+> [!CAUTION]
+> **Never a physical hot-plug (maintainer, 2026-11-17)**
+> No kit, checklist or session asks the maintainer to plug or pull a monitor cable or a monitor's power. There is a real risk of an electrical surge ruining a monitor. Multi-monitor and hot-plug are tested on virtual outputs in the sandbox ([Risk Register](Risk%20Register.md) R-33). The maintainer's own real tests (monitors switched off and on, monitor power removed and restored) worked as expected on 2026-11-17: the shell came back each time.
 
 ## State of the kits (code session's reports, 2026-11-16)
 
