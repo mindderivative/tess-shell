@@ -178,7 +178,7 @@ Module {
 
 This guide stops at the shape of a module. Writing one is covered by the design notes ([Module File](../docs/41%20TDL%20Reference/Module%20File.md) and the Python API notes in `docs/`).
 
-You can also use a module by file path instead of by name: `Import: ../Modules/Greeting/Greeting_Module.tdl` in place of the `Greeting { }` line, with a path relative to the shell file. `Import:` of another shell file is not built yet.
+You can also use a module by file path instead of by name: `Import: ../Modules/Greeting/Greeting_Module.tdl` in place of the `Greeting { }` line, with a path relative to the shell file. Another shell file is imported in a `Monitor`'s `Children` ([page 4](04-surfaces.md#a-shell-in-several-files)).
 
 ## Trust and security
 

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.10",
+  "schema_version": "1.11",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -682,6 +682,26 @@
       ],
       "module_calls": false,
       "example": "Monitor {\n    Name: Main\n    Index: default\n    Children {\n        Bar { Name: Top_Bar, Edge: TOP, Width: EXPAND, Height: 32 }\n    }\n}",
+      "not_built": []
+    },
+    "Imported_Shell": {
+      "doc": "The root block of a shell file made to be imported: surface blocks and Import lines, no Monitor. A Monitor's Children write Import: Top_Shell.tdl (one file or a list, a path relative to the file that writes it, inside the configuration folders), and the surfaces of the file come in at that position, on that Monitor. A file is imported once into a shell, because a Name is unique across it; imports nest, and a circle is an error.",
+      "heads": [
+        "Shell"
+      ],
+      "keys": {},
+      "style": {},
+      "events": [],
+      "required": [],
+      "repeatable": false,
+      "allowed_children": [
+        "Bar",
+        "Panel",
+        "Popup",
+        "Frame"
+      ],
+      "module_calls": false,
+      "example": "Shell {\n    Bar { Name: Bottom_Bar, Edge: BOTTOM, Width: EXPAND, Height: 24 }\n    Import: More_Shell.tdl\n}",
       "not_built": []
     },
     "Bar": {

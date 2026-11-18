@@ -43,6 +43,9 @@ Messages are written `level: text`. **ERROR** and **WARNING** need your attentio
 | `version-pin`: "this file needs TDL ... or newer" | The file needs a newer shell or `tesserae-dl`. Upgrade the package. |
 | `unknown-key` ("unknown key in Bar Colour", hint "did you mean ...?") | A typo or a key that does not exist. The hint lists the nearest keys; the tables in this guide list all of them. |
 | `not-built` ("the Bar key Auto_Hide is not built in M1") | The key exists in the design but is not built yet. Remove it. |
+| `import-cycle` | Files import each other in a circle, or a file imports itself. The message prints the chain of files; remove one import. |
+| `import-not-found`, `import-failed` | A shell file named in `Import:` does not exist (the message gives the path that was looked at, relative to the file that writes the `Import:`), or exists and has errors, which are listed at that file's own line and column ([page 4](04-surfaces.md#a-shell-in-several-files)). |
+| `import-twice`, `import-monitor`, `import-misplaced`, `main-shell-surfaces` | A file of surfaces is imported once into a shell (a `Name` is unique across it); an imported file holds surface blocks, not a `Monitor`; a shell file is imported in a `Monitor`'s `Children` and a module in a surface's; and `Main_Shell` needs a `Monitor`. |
 | `shell-root-suffix` | The root block does not match the file's ending (a `Theme { }` in a `_Shell.tdl`). |
 | `name-duplicate` | Two of your files have the same `Name`. |
 | `theme-not-found`, `stylesheet-not-found` | `Appearance` names a theme or stylesheet no file has as its `Name`. The hint lists the ones there are. |

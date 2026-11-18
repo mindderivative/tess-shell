@@ -221,7 +221,7 @@ def every_key() -> list[tuple[str, str, str, dict[str, Any]]]:
 
 
 def test_top_level_shape() -> None:
-    assert D["schema_version"] == "1.10"
+    assert D["schema_version"] == "1.11"
     assert D["shell_version"]
     assert list(D) == [
         "schema_version",
@@ -822,7 +822,7 @@ def test_the_command_prints_valid_json(capsys: pytest.CaptureFixture[str]) -> No
 
 def test_the_command_takes_json_before_the_command_too(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--json", "schema"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.10"
+    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.11"
 
 
 def test_out_writes_the_file_and_prints_nothing(
@@ -1177,6 +1177,8 @@ def example_findings(name: str, text: str) -> list[Finding]:
             return run("shell", text)
         case "Monitor":
             return run("shell", f"Shell {{ {text} }}")
+        case "Imported_Shell":
+            return run("shell", text)
         case "Bar" | "Panel" | "Popup" | "Frame":
             return run("shell", f"Shell {{ Monitor {{ Name: M, Children {{ {text} }} }} }}")
         case "Peek":

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,6 +13,7 @@ from tess_dl import Document
 from tess_shell.config.confine import Confinement
 from tess_shell.files.header import check_header
 from tess_shell.schema.findings import Finding
+from tess_shell.schema.imports import ImportBroken, ImportedShell, ImportMissing, ShellImporter
 from tess_shell.schema.look import read_stylesheet, read_theme
 from tess_shell.schema.model import (
     IconSource,
@@ -136,6 +138,42 @@ def load_stylesheet_file(
     return read_stylesheet(document, name, module_names)
 
 
+def shell_importer(
+    base: Path,
+    installed: Mapping[str, str],
+    confine: Confinement,
+    module_importer: Callable[[Path], Callable[[str], str | None]],
+    on_target: Callable[[Path], None],
+) -> ShellImporter:
+    """The reader of the shell file an ``Import:`` names (stages 1 to 3: read, parse, header; the
+    schema reads what is in it). The path is relative to the file that writes it and must end
+    inside ``confine``. ``module_importer(file)`` is the module finder for the paths ``file``
+    writes; ``on_target`` hears of every file named, found or not, so a reload can watch it."""
+
+    def load(importer: Path, text: str) -> ImportedShell:
+        target = confine.target(importer, text)
+        on_target(target)
+        if not target.is_file():
+            raise ImportMissing(str(target))
+        document, findings = load_file(target, base)
+        name = display_name(target, base)
+        if document is not None:
+            findings = check_header(document, name, installed)
+        if document is None or findings:
+            raise ImportBroken(findings)
+        return ImportedShell(
+            target,
+            Path(os.path.realpath(target)),
+            name,
+            document,
+            confine.read_text(target),
+            confine.resolve_path(target),
+            module_importer(target),
+        )
+
+    return load
+
+
 def load_shell_file(
     path: Path,
     base: Path,
@@ -144,9 +182,11 @@ def load_shell_file(
     modules: Mapping[str, ModuleDef] | None = None,
     import_module: Callable[[str], str | None] | None = None,
     icons: IconSource | None = None,
+    import_shell: ShellImporter | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Stages 1 to 4 for a ``*_Shell.tdl``: read, parse, header, schema. A file that fails an
-    earlier stage is not checked further. A path the file writes must end inside ``confine``."""
+    earlier stage is not checked further. A path the file writes must end inside ``confine``;
+    ``import_shell`` reads the shell files its Monitors import."""
     document, findings = load_file(path, base)
     if document is None:
         return None, findings
@@ -163,6 +203,8 @@ def load_shell_file(
         import_module,
         icons,
         confine.resolve_path(path),
+        import_shell,
+        path,
     )
     return shell, findings
 

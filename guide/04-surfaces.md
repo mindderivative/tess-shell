@@ -137,6 +137,102 @@ Shell {
 
 <!-- END generated: example-set:04-surfaces/monitors -->
 
+### A shell in several files
+
+A shell file can import another, so a large shell is not one long file. The file that imports is the one `Main_Shell` names, or any other with `Monitor` blocks. The imported file holds surface blocks and no `Monitor`; it is a `_Shell.tdl` with `Shell { }` as its root, and its surfaces come in on the `Monitor` that writes the `Import:`.
+
+* **Where.** `Import: Parts/Dock_Shell.tdl` (one file, or a list `Import: [A_Shell.tdl, B_Shell.tdl]`) goes among the `Children` of a `Monitor`. The path is relative to the file that writes it and must end inside your configuration folder (or a folder of `Directories`) after `..` and symbolic links are resolved; anything else is `path-outside-config`. The file may lie in `Shells/`, in a folder below it, or anywhere else in the folder.
+* **Order.** The surfaces of the imported file come in at the place of the `Import:`, in the order they are written, as if they were written there. A `Panel` of one file may `Attach_To` a `Bar` of the other: the names are those of one `Monitor`.
+* **Names.** A `Name` is unique across the whole shell, files included. A name used in both files is `name-duplicate`, reported in the file that uses it second, with the position of the first. For the same reason a file is imported once into a shell; a second `Import:` of it (under another `Monitor`, or through another imported file) is `import-twice`, with the position of the first.
+* **Nesting.** An imported file may import further files, written the same way, in its own root: `Shell { Bar { ... } Import: More_Shell.tdl }`. A circle (`A` imports `B` imports `A`, or a file importing itself) is `import-cycle`, and the message prints the chain of files.
+* **Errors.** A mistake in an imported file is reported at that file's own path, line and column, and the `Import:` that brought it in is reported as `import-failed`. A file that does not exist is `import-not-found`, with the path that was looked at. A `Monitor` block in an imported file is `import-monitor`. A file with only surfaces cannot be `Main_Shell` (`main-shell-surfaces`: it would show nothing). A shell file named in a surface's `Children`, or a module file named in a `Monitor`'s, is `import-misplaced`.
+* **Reload.** Saving an imported file reloads the shell, wherever in the configuration folder it is (the shell watches each file it imports). A file with no `Import:` that names it, in `Shells/`, is checked by itself and not shown.
+* **UIDs.** Each imported file gets a `UID:` line in its metadata, like every shell file ([page 2](02-configuration-folder.md#identifiers-and-backups)).
+
+<!-- BEGIN generated: example-set:04-surfaces/split -->
+File `settings.tdl`:
+
+```tdl
+---
+TDL: 0.2
+Name: Settings
+---
+Settings {
+    Appearance { Stylesheets: [Default] }
+}
+```
+
+File `Shells/Main_Shell.tdl`:
+
+```tdl
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# One Monitor. The top Bar is written here; the dock at the bottom is in its own file, and the
+# Import brings its surfaces in at that position, on this Monitor.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Spacer { }
+                            Clock { }
+                        }
+                    }
+                }
+            }
+            Import: Parts/Dock_Shell.tdl
+        }
+    }
+}
+```
+
+File `Shells/Parts/Dock_Shell.tdl`:
+
+```tdl
+---
+TDL: 0.2
+Name: Dock_Shell
+---
+# A file to import: surface blocks and no Monitor. It could import more files; a path is relative
+# to the file that writes it. Its names (Dock) are unique across the whole shell.
+Shell {
+    Bar {
+        Name: Dock
+        Edge: BOTTOM
+        Width: 480
+        Height: 40
+        Gap: 8
+        Style { Background: $color.surface }
+        Children {
+            FlexBox {
+                Width: EXPAND
+                Flex: HORIZONTAL
+                Align_Items: CENTER
+                Padding: [12, 0, 12, 0]
+                Children { Text { Text: "A dock, from its own file" } }
+            }
+        }
+    }
+}
+```
+
+<!-- END generated: example-set:04-surfaces/split -->
+
 ## Bar
 
 A Bar is along one edge, as wide as the edge (`Width: EXPAND`) or shorter, and it keeps its space free: windows do not cover it. It is drawn in the layer you choose.

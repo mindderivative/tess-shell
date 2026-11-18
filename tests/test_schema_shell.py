@@ -112,16 +112,11 @@ def test_two_monitors_selecting_the_same_monitor() -> None:
     assert [f.rule for f in fs] == ["monitor-duplicate"]
 
 
-@pytest.mark.parametrize(
-    ("snippet", "what"),
-    [
-        ("Import: Other_Shell.tdl", "Import"),
-    ],
-)
-def test_surfaces_and_forms_not_built_in_m1_are_refused(snippet: str, what: str) -> None:
+def test_an_import_with_no_loader_to_read_it_is_an_error_at_the_import() -> None:
+    snippet = "Import: Other_Shell.tdl"
     body = BODY.replace("            Bar {", f"            {snippet}\n            Bar {{", 1)
     (f,) = errors(body)
-    assert f.rule == "not-built" and what in f.message
+    assert f.rule == "import-not-found" and "Other_Shell.tdl" in f.message
 
 
 def test_if_and_for_in_children_are_typed_with_their_slots_and_bodies() -> None:

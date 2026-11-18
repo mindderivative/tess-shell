@@ -39,7 +39,7 @@ from tess_shell.shortcuts import (
     shortcut_modules,
 )
 from tess_shell.surfaces.manager import SurfaceManager
-from tess_shell.watch import OwnWrites
+from tess_shell.watch import OwnWrites, by_directory
 
 MAX_FINDINGS = 50
 
@@ -92,6 +92,9 @@ class Reloader:
     # the global shortcuts (``services.shortcuts``): told the actions after every reload, or
     # ``None`` when none are made (a test)
     shortcuts: ShortcutService | None = None
+    # the file watcher's ``watch_files``: told the files the shell files import after every scan,
+    # so an imported file outside the watched folders reloads the shell too (``None``: no watcher)
+    watch_files: Callable[[Mapping[Path, frozenset[str]]], None] | None = None
     _lock: threading.Lock = dataclasses.field(default_factory=threading.Lock)
 
     # -- the calling thread: read, parse, validate ---------------------------------------------
@@ -131,6 +134,9 @@ class Reloader:
             global_shortcuts=fresh.global_shortcuts,
         )
         result = scan(running, self.cfg)
+        if self.watch_files is not None:
+            # also when the scan found errors: the file that is wrong may be one just imported
+            self.watch_files(by_directory(result.imported))
         if result.errors:
             return Rejected(result.findings, f"{len(result.errors)} errors")
         for f in result.findings[:MAX_FINDINGS]:
@@ -263,7 +269,7 @@ class Reloader:
         planned, uses = checked
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         file_uids, problems = assign_uids(
-            [*own_files, *result.shells],
+            [*own_files, *result.shell_files],
             self.cfg,
             lambda key: self.registry.uid_for(key, "file"),
             state_dir() / "backups",

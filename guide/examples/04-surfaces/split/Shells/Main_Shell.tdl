@@ -1,0 +1,34 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# One Monitor. The top Bar is written here; the dock at the bottom is in its own file, and the
+# Import brings its surfaces in at that position, on this Monitor.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Spacer { }
+                            Clock { }
+                        }
+                    }
+                }
+            }
+            Import: Parts/Dock_Shell.tdl
+        }
+    }
+}

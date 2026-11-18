@@ -199,6 +199,7 @@ class ShellDef:
     file: str
     name: str
     monitors: tuple[MonitorDef, ...]
+    surfaces_only: bool = False  # a file of surfaces made to be imported: it has no monitors
 
 
 # ``path`` is the path of a file, written relative to the file that names it and kept absolute;

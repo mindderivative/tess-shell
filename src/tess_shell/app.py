@@ -71,7 +71,7 @@ from tess_shell.shortcuts import (
 )
 from tess_shell.signals import EarlyStop, LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
-from tess_shell.watch import OwnWrites, Watcher
+from tess_shell.watch import OwnWrites, Watcher, by_directory
 from tess_shell.watchdog import Heartbeat, Watchdog
 
 MIN_ENGINE = (0, 6, 0)
@@ -561,7 +561,7 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         own_writes = OwnWrites()
         file_uids, uid_problems = assign_uids(
-            [*own_files, *result.shells],
+            [*own_files, *result.shell_files],
             cfg,
             lambda key: registry.uid_for(key, "file"),
             state_dir() / "backups",
@@ -631,6 +631,8 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
             )
             own_writes.clear()  # the writes of the start made no event: nothing to drop yet
             file_watcher.start()
+            file_watcher.watch_files(by_directory(result.imported))  # outside the trees too
+            reloader.watch_files = file_watcher.watch_files
             if not file_watcher.ok:
                 logger.warning("some folders are not watched; SIGHUP still reloads everything")
         control: ControlService | None = None
