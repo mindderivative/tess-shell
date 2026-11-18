@@ -74,4 +74,4 @@ def test_a_run_with_no_unplug_is_reported(tmp_path: Path) -> None:
     quiet = [x for x in NORMAL if "output" not in x.split("|")[-1][:8]]
     quiet = [x for x in quiet if " removed" not in x and " added" not in x]
     got = verdicts(run(tmp_path, quiet))
-    assert got["the run contains an unplug and a plug (output removed, output added)"] == "FAIL"
+    assert got["the run contains an output removed and an output added"] == "FAIL"
