@@ -5,7 +5,7 @@ type: moc
 status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-14
+updated: 2026-11-17
 tags: [moc, roadmap]
 ---
 
@@ -52,7 +52,8 @@ Each milestone is a vertical slice that runs, so the design is tested early. The
 | M4 | Widgets ([M4 Brief](M4%20Brief.md)) | Every V1 block and standard module (Label, TextBox, TextInput, TextEditor, Icon, Image, Button, Toggle, Checkbox, Slider, ProgressBar, Badge, Tooltip, List, Menu, MenuItem, Marquee text, Spacer, Expander) operated by the pointer, `Enabled`, `:disabled` and `::part`, single-line and multi-line text input, `Call`, popup submenus and a widgets gallery on KWin (decided 2026-11-08: the basic widgets first) | [Standard Modules](../50%20Design%20System/Standard%20Modules.md) (draft), [Accessibility](../60%20Quality/Accessibility.md) (draft), [Events and Actions](../42%20Python%20API/Events%20and%20Actions.md), [V1 Widgets](../50%20Design%20System/V1%20Widgets.md) |
 | M5 | Services and desktop integration, one milestone in parts M5a to M5h ([M5 Brief](M5%20Brief.md)) | The D-Bus service layer, then Battery with Workspaces, Network, Media, Audio and Tray, then the KWin script, fullscreen hiding and Tasks, then portal settings (moved from M4, 2026-11-08) | [D-Bus Service Layer](../40%20Specifications/Integration/D-Bus%20Service%20Layer.md), the module specs, [KWin Integration](../40%20Specifications/Integration/KWin%20Integration.md), [Portals](../40%20Specifications/Integration/Portals.md) |
 | M6 | Focus and keyboard ([M6 Brief](M6%20Brief.md)) | The focus model, keyboard operation of every widget, the user's `Shortcuts` in `settings.tdl`, keyboard-only access to the shell and the launcher (decided 2026-11-08) | `Focus and Keyboard`, [Global Shortcuts](../40%20Specifications/Integration/Global%20Shortcuts.md) (action names), [Settings File](../41%20TDL%20Reference/Settings%20File.md) |
-| M7 | Release | Packaging, autostart, the `.desktop` file, version policy, security model | `70 Delivery` (to write) |
+| M7 | Hardening for 1.0 ([M7 Brief](M7%20Brief.md)) | Packaging and the release path are done ([Packaging and Session Start](../70%20Delivery/Packaging%20and%20Session%20Start.md), 0.1.2 on PyPI); left: the security model, crash recovery with a systemd watchdog, idle budgets measured, a version policy and `migrate`, notices, the known gaps, real-hardware checks | [M7 Brief](M7%20Brief.md) (draft) |
+| M8 | The use-case sweep ([M7 Brief](M7%20Brief.md)) | UC1 to UC11 each proved by an example and a test; the OSD and movable widgets if missing; the 1.0 criteria | [M7 Brief](M7%20Brief.md) (draft) |
 
 M0 and M1 are the smallest steps that prove the layering: a file is read by `tess_dl`, bound to tre by the binder, and shown on screen.
 
