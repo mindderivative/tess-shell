@@ -60,6 +60,8 @@ class ShellCommands:
         # (``surfaces/mode_driver.py``). An action with no entry is "not built" and a press of it
         # does nothing
         self.fixed_actions: dict[str, Callable[[], None]] = manager.mode.actions()
+        # what the shell kept of its crashes (``recovery.py``): set by the app; ``None`` in a test
+        self.recovery: Callable[[], dict[str, Any]] | None = None
 
     # -- loop thread ------------------------------------------------------------------------------
 
@@ -102,6 +104,7 @@ class ShellCommands:
         monitors: dict[tuple[str, str], None] = {}
         for i in infos:
             monitors[(i.monitor, i.output)] = None
+        recovery = {} if self.recovery is None else {"recovery": self.recovery()}
         return {
             "version": versions(),
             "monitors": [{"name": m, "output": o} for m, o in monitors],
@@ -111,6 +114,7 @@ class ShellCommands:
             ],
             "modules": sorted(self.host.loaded),
             "errors": self._errors(),
+            **recovery,
         }
 
     def surface(self, action: str, name: str) -> tuple[bool, str]:

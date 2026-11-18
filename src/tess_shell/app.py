@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 import sys
 import threading
 from collections.abc import Callable
@@ -43,6 +44,7 @@ from tess_shell.modules.host import ModuleHost, report
 from tess_shell.modules.ticks import TimeSource
 from tess_shell.notify import READY, STOPPING, notify
 from tess_shell.options import Options
+from tess_shell.recovery import Recovery, Start, clock_text, iso
 from tess_shell.reloader import Reloader
 from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
 from tess_shell.schema.findings import Finding
@@ -68,6 +70,7 @@ from tess_shell.shortcuts import (
 from tess_shell.signals import EarlyStop, LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
 from tess_shell.watch import OwnWrites, Watcher
+from tess_shell.watchdog import Heartbeat, Watchdog
 
 MIN_ENGINE = (0, 6, 0)
 MIN_PYTHON = (3, 14)
@@ -134,15 +137,30 @@ def _preflight() -> tuple[Path, bool]:
     return runtime
 
 
+# the files of this run's crash record (``recovery.py``), once the instance lock is held; a list so
+# that the excepthooks and a forced exit reach it without it being passed around
+_RECOVERY: list[Recovery] = []
+
+
+def _record_crash(
+    exc_type: type[BaseException], exc: BaseException, tb: TracebackType | None, where: str = ""
+) -> None:
+    if _RECOVERY:
+        _RECOVERY[0].record_exception(exc_type, exc, tb, where)
+
+
 def _install_excepthooks() -> None:
     def hook(exc_type: type[BaseException], exc: BaseException, tb: TracebackType | None) -> None:
         logger.opt(exception=(exc_type, exc, tb)).critical("unhandled exception")
+        _record_crash(exc_type, exc, tb)
 
     def thread_hook(args: threading.ExceptHookArgs) -> None:
         if args.exc_type is not SystemExit and args.exc_value is not None:
+            name = args.thread.name if args.thread else "?"
             logger.opt(exception=(args.exc_type, args.exc_value, args.exc_traceback)).critical(
-                f"unhandled exception in thread {args.thread.name if args.thread else '?'}"
+                f"unhandled exception in thread {name}"
             )
+            _record_crash(args.exc_type, args.exc_value, args.exc_traceback, f" in thread {name}")
 
     sys.excepthook = hook
     threading.excepthook = thread_hook
@@ -160,30 +178,56 @@ def _fail(message: str) -> None:
 
 
 def _force_exit() -> NoReturn:
-    """A second signal: leave at once, as the ``SignalWatcher`` does."""
+    """A second signal: leave at once, as the ``SignalWatcher`` does. The user asked for it, so it
+    is not a crash: the marker goes."""
+    _end_recovery(ExitCode.FORCED)
     shutdown_logging()
     os._exit(int(ExitCode.FORCED))
 
 
+def _end_recovery(code: ExitCode) -> None:
+    """The run ends with ``code``: a stop the user asked for (0, 130) is a clean stop and the count
+    of unclean starts starts again; a refusal the shell chose (1, 2, 4, 69) leaves the count; an
+    internal error (70) leaves the marker too, so the next start counts it. Never raises."""
+    if not _RECOVERY:
+        return
+    recovery = _RECOVERY.pop()
+    try:
+        recovery.close_crash_log()
+        if code in (ExitCode.OK, ExitCode.FORCED):
+            recovery.finish()
+        elif code != ExitCode.INTERNAL:
+            recovery.leave()
+    except OSError as exc:
+        logger.warning(f"recovery: could not update the state files ({exc})")
+
+
 def run(options: Options) -> int:
     lock = InstanceLock()
+    _RECOVERY.clear()
     early = EarlyStop(_force_exit)
     early.install()  # the first signal of the start is held for the watcher (EarlyStop)
+    code = ExitCode.INTERNAL
     try:
         _install_excepthooks()
-        return int(_run(options, lock, early))
+        code = _run(options, lock, early)
+        return int(code)
     except ShellError as exc:
         _fail(str(exc))
-        return int(exc.exit_code)
+        code = exc.exit_code
+        return int(code)
     except KeyboardInterrupt:
-        return int(ExitCode.FORCED)
+        code = ExitCode.FORCED
+        return int(code)
     except Exception as exc:
         if current_state() is None:
             print(f"tesserae-shell: unexpected error: {exc!r}", file=sys.stderr)
         else:
             logger.opt(exception=True).critical("unexpected error")
+        _record_crash(type(exc), exc, exc.__traceback__)
         return int(ExitCode.INTERNAL)
     finally:
+        _end_recovery(code)
         early.uninstall()
         shutdown_logging()
         lock.release()
@@ -289,6 +333,46 @@ def _stop_shortcuts(service: ServiceThread, shortcuts: ShortcutService) -> None:
         logger.debug(f"shortcuts: stopping did not go through ({exc!r})")
 
 
+def _compositor_is_gone() -> bool:
+    """Nobody answers on the Wayland socket any more (``tess_re.supports`` caches its first answer,
+    so the socket itself is tried: the file is a stale one, or gone, once the compositor died)."""
+    display = os.environ.get("WAYLAND_DISPLAY") or "wayland-0"
+    path = (
+        display if os.path.isabs(display) else f"{os.environ.get('XDG_RUNTIME_DIR', '')}/{display}"
+    )
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.settimeout(1.0)
+            sock.connect(path)
+    except OSError:
+        return True
+    return False
+
+
+def _say_safe_start(start: Start, host: ModuleHost, result: Any) -> None:
+    """A safe start loads no user module: say which were left alone and why (a warning)."""
+    skipped = [
+        f"{name} ({result.modules[name].path})"
+        for name in host.safe_skipped
+        if name in result.modules
+    ]
+    logger.warning(
+        f"safe start: {start.unclean} unclean starts in a row within 10 minutes, so the Python of "
+        f"user modules was not run: {', '.join(skipped) if skipped else 'none are used'}. "
+        "The files are untouched; `tesserae-shell reload` or a restart tries them again."
+    )
+
+
+def _recovery_status(start: Start, host: ModuleHost) -> dict[str, Any]:
+    """The ``recovery`` part of ``status``."""
+    return {
+        "unclean_starts": start.unclean,
+        "last_crash": iso(start.last_crash),
+        "safe_start": host.safe_start,
+        "skipped_modules": sorted(host.safe_skipped),
+    }
+
+
 def _tell_systemd(state: str) -> None:
     """``READY=1`` or ``STOPPING=1`` to ``NOTIFY_SOCKET`` when systemd set it (Type=notify). A
     failed send is a warning: the shell runs on, and the unit gives up waiting by itself."""
@@ -322,6 +406,20 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
     lock.acquire(runtime_dir)
     if lock.sticky_refused:
         logger.warning("the lock file could not be given the sticky bit")
+    # the crash record (after the lock, so a second shell touches nothing of the first one's)
+    recovery = Recovery(state_dir())
+    try:
+        start = recovery.begin()
+        recovery.open_crash_log()
+    except OSError as exc:
+        logger.warning(f"recovery: the crash record cannot be kept ({exc}); starting without it")
+        start = Start(0, None, False)
+    _RECOVERY.append(recovery)
+    if start.previous is not None:
+        logger.warning(
+            f"previous run ended uncleanly (its marker is from {clock_text(start.previous)}); "
+            f"unclean starts since the last clean stop: {start.unclean}"
+        )
     # 6. the registry
     try:
         registry = Registry.open(settings.registry)
@@ -329,6 +427,13 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         log_finding(exc.finding)
         print_findings([exc.finding], cfg)
         return ExitCode.CONFIG
+    if registry.recovered is not None:
+        logger.warning(
+            f"registry: {settings.registry} was rebuilt because {registry.recovered}; the UIDs "
+            "the files carry are kept, the saved positions are lost"
+        )
+    elif registry.created:
+        logger.info(f"registry: {settings.registry} was missing and was created")
     # 7. check and load every shell file
     result = scan(settings, cfg)
     for f in result.findings[:MAX_FINDINGS]:
@@ -354,6 +459,7 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         stopper.request, _force_exit, lambda: reload_signal[-1]() if reload_signal else None
     )
     watcher.start(early)
+    watchdog: Watchdog | None = None
     try:
         store = ValueStore()
         ticks = TimeSource()
@@ -401,6 +507,10 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         )
         manager_box.append(manager)
         host = ModuleHost(store, ticks, cfg)
+        host.safe_start = start.safe  # after repeated crashes: no user Python (Crash Recovery)
+        watchdog = Watchdog.from_environment(
+            Heartbeat(), host.callbacks.running, handle.call_soon, os.environ
+        )
 
         def route(handler: Handler, key: str, raw: object) -> None:
             # a shell action (Show, Hide, Toggle) is the manager's; any other name is an @action
@@ -474,6 +584,8 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         )
         report(call_problems)
         report(host.start_all())
+        if host.safe_start:
+            _say_safe_start(start, host, result)
         store.flush()  # what the modules sent while starting, before the first build
         logger.info(f"step 10 (model): {len(uses)} module uses, {len(host.loaded)} modules")
         # 11. surfaces
@@ -521,9 +633,11 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         shortcuts: ShortcutService | None = None
         errors = ErrorLog()
         commands = ShellCommands(manager, host, reloader, stopper.request, errors.last)
+        commands.recovery = lambda: _recovery_status(start, host)
         manager.mode.set_keys(mode_keys(result.shortcuts))  # the keys of shortcut mode
         manager.mode.watch_focus = True  # a real compositor: warn when it does not hand focus over
         taken = False
+        lost = False  # the loop ended with no stop request: the compositor went away
         ready = False  # READY=1 was sent: STOPPING=1 follows it
         if settings.control:
             control = _start_control(service, handle, manager, reloader, commands, errors, kwin)
@@ -548,15 +662,32 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
                 control.set_state("running")
             _tell_systemd(READY)
             ready = True
+            # the heartbeat starts when the loop does, so the start sequence is not judged
+            handle.call_soon(watchdog.start)
+            gone: str | None = None  # why the loop ended with no stop request
             try:
                 app.run(keep_alive=True)
+            except RuntimeError as exc:
+                # a compositor that dies while the first frame is made ends the run with an error
+                # about the GPU adapter and the surface: if the compositor is gone, it is the same
+                if not _compositor_is_gone():
+                    raise
+                gone = f"the run failed: {exc}"
             finally:
+                watchdog.begin_stop()  # the stop sequence is not a stall
                 stopper.loop_finished()
                 if file_watcher is not None:
                     file_watcher.stop()
-            if not stopper.requested.is_set():
-                _fail("event loop ended without a stop request")
-                return ExitCode.ENVIRONMENT
+            if gone is None and not stopper.requested.is_set():
+                gone = "the event loop ended without a stop request"
+            if gone is not None:
+                # tre ends the loop when the Wayland connection breaks (the compositor went away):
+                # stop what runs, then leave with a code that asks a supervisor for a restart
+                _fail(
+                    f"the Wayland connection was lost ({gone}); stopping with exit code "
+                    f"{int(ExitCode.LOST_COMPOSITOR)} so that a supervisor restarts the shell"
+                )
+                lost = True
         # stop sequence: modules, then the time source (no D-Bus yet)
         logger.info("stopping")
         if ready:
@@ -582,6 +713,10 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
             _fail(f"cannot save the registry: {exc}")
             return ExitCode.CONFIG
         logger.info("stopped")
+        if lost:
+            return ExitCode.LOST_COMPOSITOR
         return ExitCode.ALREADY_RUNNING if taken else ExitCode.OK
     finally:
+        if watchdog is not None:
+            watchdog.stop()
         watcher.close()

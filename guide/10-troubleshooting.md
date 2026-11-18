@@ -27,6 +27,10 @@ Messages are written `level: text`. **ERROR** and **WARNING** need your attentio
 | `<folder> is not mode 0700` (warning) | The runtime folder is more open than it should be; the shell runs anyway. |
 | `another tesserae-shell is already running (pid N)` | One shell per session. Quit the other (`tesserae-shell quit`) or stop the `systemd` unit. Exit code 4. |
 | `config directory does not exist: ...` | `check` was given a folder that is not there. Exit code 2. |
+| `previous run ended uncleanly (its marker is from ...); unclean starts since the last clean stop: N` (warning) | The run before this one did not stop cleanly: it was killed, crashed or was ended by the watchdog. See [when the shell hangs or crashes](#when-the-shell-hangs-or-crashes). |
+| `safe start: N unclean starts in a row within 10 minutes, so the Python of user modules was not run: ...` (warning) | The shell started without your modules after crashing three times in a row; it names the modules. See below. |
+| `registry: ... was rebuilt because ...; the UIDs the files carry are kept, the saved positions are lost` (warning) | `registry.json` was not valid JSON. The unreadable file is kept next to it as `registry.json.corrupt-<time>`; panels you had moved are back at their file positions. |
+| `the Wayland connection was lost (...); stopping with exit code 69 so that a supervisor restarts the shell` (error) | The compositor went away. The shell stopped what it runs and exited; the `systemd` unit starts it again. |
 | `no Main_Shell.tdl found; nothing to show` | The shell runs with no shell file. Write `Shells/Main_Shell.tdl` ([Your first Bar](03-first-bar.md)). |
 | `no outputs: no surface was opened` (warning) | The compositor reported no monitor. |
 | `control: no commands: the session bus is not reachable (...)` (info) | There is no session bus, so the shell runs without its control commands (`status`, `reload`, `toggle`, ...) and without the desktop services. A normal desktop session has one. |
@@ -125,6 +129,20 @@ Messages are written `level: text`. **ERROR** and **WARNING** need your attentio
 
 **The shell does not start with the session.** Run `tesserae-shell status` (it warns about a stale unit), `systemctl --user status tesserae-shell.service` and `journalctl --user -u tesserae-shell`. After moving or reinstalling the shell, run `tesserae-shell install-session --force`. The unit does not restart after exit code 1, 2 or 4, so a file error needs fixing first (`tesserae-shell check`). Not yet checked on a real session.
 
+## When the shell hangs or crashes
+
+**A hung loop.** A thread watches the shell's event loop once a second. When a callback keeps the loop for 2 seconds the log has one warning, `loop stalled for 2 s: module NAME, entry point ENTRY, running for N s`, followed by the Python traceback of every thread, and the warning again every 5 seconds while it lasts. At 10 seconds, under the `systemd` unit that `install-session` writes, the shell asks `systemd` to restart it (`WATCHDOG=trigger`) and `systemd` ends it with `SIGABRT` and starts it again two seconds later. Without a `systemd` watchdog (the shell started by hand or by another autostart) nothing can restart it: the log says `loop stalled for 10 s, no supervisor can restart it` and dumps the tracebacks every 30 seconds. A module whose callback blocks for long should do the waiting on a thread of its own.
+
+**The record of a crash.** In `$XDG_STATE_HOME/tesserae-shell` (default `~/.local/state/tesserae-shell`):
+
+* `crash.log` holds the traceback of every thread when the process gets a fatal signal (including the watchdog's `SIGABRT`) and the traceback of an exception that reaches the top. The previous file is kept as `crash.log.1` and the one before as `crash.log.2`; a run that stops cleanly leaves no `crash.log`.
+* `running` exists while the shell runs and is removed when it stops. A start that finds it logs `previous run ended uncleanly` and counts it. `tesserae-shell status` shows the count since the last clean stop and the time of the last crash, also when no shell runs.
+* `journalctl --user -u tesserae-shell` has the log lines (the stall warning with its tracebacks is there).
+
+**A crash loop and safe start.** After three unclean starts in a row within 10 minutes the next start is a safe start: the Python of your own modules is not run (the shipped modules are), the warning names the modules left out, and your files are not touched. `status` says `safe start` and names them. Fix the module, then run `tesserae-shell reload` (or restart the shell with `systemctl --user restart tesserae-shell`); the reload loads your modules at once, and a clean stop of the shell ends the count. Without this, `systemd` stops the unit after five starts in 60 seconds and the bar is gone while you work on it.
+
+**The registry.** `registry.json` is written within a second of any change (a Panel you moved, a new UID) and replaced as a whole, so killing the shell never leaves half a file. A `UID:` line the shell adds to one of your files is written the same way, after a backup in the state folder.
+
 ## Reporting a bug
 
 Open an issue on the project's repository, <https://github.com/mindderivative/tess-shell>, and include:
@@ -136,4 +154,4 @@ Open an issue on the project's repository, <https://github.com/mindderivative/te
 * `tesserae-shell status --json` if the shell is running; it lists only names, kinds and flags, never a parameter value or a line of the log;
 * the smallest shell file that shows the problem.
 
-If the shell crashes, the log has a line `unhandled exception` or `unexpected error` with a traceback; include it. Exit code 70 means the shell hit an unexpected error.
+If the shell crashes, the log has a line `unhandled exception` or `unexpected error` with a traceback; include it, and `crash.log` from the state folder ([above](#when-the-shell-hangs-or-crashes)). Exit code 70 means the shell hit an unexpected error.

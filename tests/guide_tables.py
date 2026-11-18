@@ -78,6 +78,11 @@ EXIT_NOTES: dict[str, str] = {
     "NOT_RUNNING": "A control command found no running shell.",
     "ALREADY_RUNNING": "A second `run`: another shell holds the instance lock.",
     "TIMEOUT": "A control command got no answer within `--timeout` seconds.",
+    "LOST_COMPOSITOR": (
+        "The Wayland connection was lost (the compositor went away). The shell stops what it "
+        "runs first, then leaves with this code so that `Restart=on-failure` of the systemd unit "
+        "starts it again."
+    ),
     "INTERNAL": "An unexpected error inside the shell (it is in the log).",
     "FORCED": "A second signal made the shell leave at once.",
 }

@@ -8,6 +8,7 @@ StartLimitBurst=5
 [Service]
 Type=notify
 NotifyAccess=main
+WatchdogSec=15
 ExecStart=/absolute/path/to/tesserae-shell run
 Restart=on-failure
 RestartSec=2

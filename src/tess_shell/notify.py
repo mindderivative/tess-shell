@@ -1,4 +1,5 @@
-"""Telling systemd that the shell is ready or stopping (Shell Start and Stop > Telling Systemd).
+"""Telling systemd that the shell is ready, stopping or alive (Shell Start and Stop > Telling
+Systemd; Crash Recovery and Watchdog > The systemd side).
 
 The protocol of ``sd_notify(3)`` is one datagram on the Unix socket named by ``NOTIFY_SOCKET``, so
 the shell needs no library for it. With the variable unset nothing is sent. A name that starts with
@@ -15,6 +16,8 @@ from collections.abc import Mapping
 
 READY = "READY=1"
 STOPPING = "STOPPING=1"
+WATCHDOG = "WATCHDOG=1"  # the keep-alive ping (WatchdogSec=)
+WATCHDOG_TRIGGER = "WATCHDOG=trigger"  # "I am hung": the manager acts as if a ping was missed
 
 SEND_TIMEOUT = 1.0  # seconds; a full receive queue must not hold the start or the stop
 
@@ -31,8 +34,23 @@ def notify_address(environ: Mapping[str, str] | None = None) -> str | None:
     return None
 
 
+def watchdog_interval(environ: Mapping[str, str] | None = None) -> float | None:
+    """The watchdog interval in seconds that ``WatchdogSec=`` gave this process (``WATCHDOG_USEC``),
+    or ``None`` when there is none: the variable is unset, not a positive integer, or
+    ``WATCHDOG_PID`` names another process (it was meant for a child of the manager's service)."""
+    env = os.environ if environ is None else environ
+    text = env.get("WATCHDOG_USEC", "")
+    if not text.isdigit() or int(text) <= 0:
+        return None
+    pid = env.get("WATCHDOG_PID", "")
+    if pid and pid != str(os.getpid()):
+        return None
+    return int(text) / 1_000_000
+
+
 def notify(state: str, environ: Mapping[str, str] | None = None) -> bool | None:
-    """Send ``state`` (``READY=1``, ``STOPPING=1``) to ``NOTIFY_SOCKET``.
+    """Send ``state`` (``READY=1``, ``STOPPING=1``, ``WATCHDOG=1``, ``WATCHDOG=trigger``) to
+    ``NOTIFY_SOCKET``.
 
     ``None``: the variable is unset (or not an address): nothing was sent and nothing is wrong.
     ``True``: the datagram was sent. ``False``: the variable is set and the send failed; the shell

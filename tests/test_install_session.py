@@ -594,6 +594,26 @@ def test_systemd_analyze_catches_a_unit_with_a_key_in_the_wrong_section(tmp_path
     assert "Unknown key" in done.stdout + done.stderr
 
 
+@pytest.mark.skipif(shutil.which("systemd-analyze") is None, reason="systemd-analyze is missing")
+def test_systemd_analyze_catches_the_watchdog_key_in_the_wrong_section(tmp_path: Path) -> None:
+    """WatchdogSec belongs to [Service]; the same check fails when it sits in [Unit]."""
+    _, unit, _ = rendered(tmp_path, False)
+    text = (
+        unit.read_text()
+        .replace("WatchdogSec=15\n", "")
+        .replace("StartLimitBurst=5\n", "StartLimitBurst=5\nWatchdogSec=15\n")
+    )
+    unit.write_text(text)
+    done = subprocess.run(
+        ["systemd-analyze", "--user", "verify", str(unit)],
+        env=temporary_env(tmp_path),
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert "Unknown key" in done.stdout + done.stderr
+
+
 @pytest.mark.skipif(
     shutil.which("desktop-file-validate") is None, reason="desktop-file-validate is not installed"
 )
@@ -622,6 +642,7 @@ def test_the_files_keep_what_the_note_asks_for(tmp_path: Path) -> None:
         "After=graphical-session.target",
         "Type=notify",
         "NotifyAccess=main",
+        "WatchdogSec=15",
         f"ExecStart={command} run",
         "Restart=on-failure",
         "RestartSec=2",
@@ -632,10 +653,12 @@ def test_the_files_keep_what_the_note_asks_for(tmp_path: Path) -> None:
         "WantedBy=graphical-session.target",
     ):
         assert line in text.splitlines(), line
-    assert "WatchdogSec" not in text
-    # the two start-limit keys are in [Unit]: in [Service] systemd ignores them
-    unit_section = text.split("[Service]")[0]
+    # the two start-limit keys are in [Unit]: in [Service] systemd ignores them; WatchdogSec is a
+    # [Service] key and the other way round (Crash Recovery and Watchdog > The systemd side)
+    unit_section, service_section = text.split("[Service]")
     assert "StartLimitIntervalSec=60" in unit_section and "StartLimitBurst=5" in unit_section
+    assert "StartLimit" not in service_section
+    assert "WatchdogSec=15" in service_section and "WatchdogSec" not in unit_section
 
 
 # -- the wheel carries the files ----------------------------------------------------------------

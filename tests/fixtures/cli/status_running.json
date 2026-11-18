@@ -31,5 +31,11 @@
   "modules": [
     "Clock"
   ],
-  "errors": []
+  "errors": [],
+  "recovery": {
+    "unclean_starts": 0,
+    "last_crash": null,
+    "safe_start": false,
+    "skipped_modules": []
+  }
 }
