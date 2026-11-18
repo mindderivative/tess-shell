@@ -152,6 +152,26 @@ def records(path: Path) -> list[dict[str, Any]]:
 
 
 @pytest.mark.parametrize("systemd_run", [True, False], ids=["scope", "plain"])
+def test_the_launchers_exclusive_keyboard_reaches_the_compositor_when_it_is_shown(
+    desk: Make,  # noqa: F811 - the fixture
+    private_sway: PrivateSway,
+    tmp_path: Path,
+    systemd_run: bool,
+) -> None:
+    """tre 0.6.9 applies a ``LayerWindow.set`` made before the surface exists once it does
+    (TRE-REQ-020), so the shell no longer sends a Panel's keyboard a second time at its first
+    ``configure``. ``WAYLAND_DEBUG`` shows the request on the wire (1 is exclusive)."""
+    d = desk()
+    prepare(d, tmp_path, systemd_run=systemd_run)
+    d.env["WAYLAND_DEBUG"] = "1"  # the client side of the protocol, on the shell's stderr
+    shell = d.start()
+    d.fake.press("Toggle_Launcher")
+    wait_n(shell, "Panel Launcher on HEADLESS-1 shown")
+    wait_n(shell, ".set_keyboard_interactivity(1)")
+    assert d.finish() == 0
+
+
+@pytest.mark.parametrize("systemd_run", [True, False], ids=["scope", "plain"])
 def test_the_launcher_opens_with_the_shortcut_searches_moves_starts_and_closes_by_keys_only(
     desk: Make,  # noqa: F811 - the fixture
     private_sway: PrivateSway,

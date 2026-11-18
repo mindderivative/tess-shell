@@ -1,7 +1,9 @@
 """The accessibility pass (M6 Brief, E1): the role, name, description and state of the
-shipped modules, and each announcement, read back through the accessibility tree of a headless tre
-window (``node.get``: tre publishes exactly what was set, and a node with ``live`` is announced when
-its label changes). The announcements are polite live regions named ``Announcer``."""
+shipped modules, read back through the accessibility tree of a headless tre window (``node.get``:
+tre publishes exactly what was set), and each announcement a module makes with ``ctx.announce``
+(``Window.announce`` of the window of its use, tre 0.6.9). A headless window has no screen reader
+to hear it, so :class:`Said` records each call on its way to the window; the AT-SPI signal itself
+is read in ``tests/test_announce_atspi.py``."""
 
 from __future__ import annotations
 
@@ -21,13 +23,35 @@ from tests.widgets_live import Widgets, running
 needs_daemon = pytest.mark.skipif(not HAVE_DAEMON, reason="dbus-daemon is not installed")
 
 
-def announcer(w: Widgets, module: str, index: int = 0) -> Any:
-    return w.of_use(module, "Announcer", index)
+class Said:
+    """Stands in for ``host.surfaces``: records each ``ctx.announce`` (the use keys, the text and
+    the politeness) and passes it on, so the real window gets ``announce`` too."""
+
+    def __init__(self, port: Any) -> None:
+        self.port = port
+        self.calls: list[tuple[tuple[str, ...], str, str]] = []
+
+    def announce(self, use_keys: Any, text: str, politeness: str) -> bool:
+        self.calls.append((tuple(use_keys), text, politeness))
+        return bool(self.port.announce(use_keys, text, politeness))
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.port, name)
+
+    @property
+    def texts(self) -> list[str]:
+        return [text for _, text, _ in self.calls]
+
+    @property
+    def last(self) -> str | None:
+        return self.calls[-1][1] if self.calls else None
 
 
-def heard(w: Widgets, module: str) -> str | None:
-    """What the module's live region says now."""
-    return announcer(w, module).get("label") or None
+def listen(w: Widgets) -> Said:
+    """Record what the modules of this running shell announce, from now on."""
+    said = Said(w.host.surfaces)
+    w.host.surfaces = said  # type: ignore[assignment]
+    return said
 
 
 # -- the static modules: role, name, state -------------------------------------------------------
@@ -197,42 +221,39 @@ def test_the_launcher_names_its_field_its_rows_and_its_list(tmp_path: Path) -> N
 
 def test_the_launcher_says_the_selected_row_as_the_selection_moves(tmp_path: Path) -> None:
     with launcher_desk(tmp_path, BROWSERS) as d:
+        said = listen(d.w)
         d.toggle()
-
-        def say() -> Any:
-            return next(
-                n.get("label") for k, n in d.panel.view.nodes.items() if k.endswith("/Announcer")
-            )
-
-        assert say() in (None, "")  # opening says nothing: the dialog and the field do
+        assert said.calls == []  # opening says nothing: the dialog and the field do
         d.press("arrow_down")
-        assert say() == "Fire Dragon, 2 of 4"
+        assert said.last == "Fire Dragon, 2 of 4"
         d.press("arrow_down")
-        assert say() == "Firefox, 3 of 4"
+        assert said.last == "Firefox, 3 of 4"
         d.press("arrow_up")
-        assert say() == "Fire Dragon, 2 of 4"
-        live = next(n for k, n in d.panel.view.nodes.items() if k.endswith("/Announcer"))
-        assert live.get("live") == "polite"
+        assert said.last == "Fire Dragon, 2 of 4"
+        assert said.texts == ["Fire Dragon, 2 of 4", "Firefox, 3 of 4", "Fire Dragon, 2 of 4"]
+        assert {p for _, _, p in said.calls} == {"polite"}
 
 
 def test_the_launcher_says_no_results_and_a_typed_first_row_after_a_second(
     tmp_path: Path,
 ) -> None:
     with launcher_desk(tmp_path, BROWSERS) as d:
+        said = listen(d.w)
         d.toggle()
-        live = next(n for k, n in d.panel.view.nodes.items() if k.endswith("/Announcer"))
         d.type("fire")
-        assert not live.get("label")  # typing is not one announcement a key
+        assert said.calls == []  # typing is not one announcement a key
         (tick,) = d.w.host.ticks._subs
         tick.fn()  # the next second
+        d.loop.drain()  # the announcement goes to the loop thread
         d.w.flush()
         d.window.advance(16)
-        assert live.get("label") == "Fire Dragon, 1 of 2"
+        assert said.texts == ["Fire Dragon, 1 of 2"]
         d.type("zzz")
-        assert d.message() == "No results" and live.get("label") == "No results"
+        assert d.message() == "No results" and said.last == "No results"
+        before = len(said.calls)
         d.toggle()  # hide
         d.toggle()  # show again: nothing said before is said again
-        assert not live.get("label")
+        assert len(said.calls) == before
 
 
 # -- Tasks ---------------------------------------------------------------------------------------
@@ -253,19 +274,36 @@ def test_tasks_announces_a_window_that_opens_closes_or_wants_attention_when_aske
     tmp_path: Path,
 ) -> None:
     with tasks_desk(tmp_path) as t, tasks_shell(t, "Tasks { announce: true }\nTasks { }") as w:
+        said = listen(w)
         t.fake.script.windows = [a(1, title="One")]
         start(t, w)
         assert t.settle(w, lambda: len(buttons(w)) == 1)
-        assert not heard(w, "Tasks")  # the first list says nothing
-        assert announcer(w, "Tasks").get("live") == "polite"
+        assert said.calls == []  # the first list says nothing
         lists(t, w, a(1, title="One"), a(2, title="Two"))
-        assert t.settle(w, lambda: heard(w, "Tasks") == "Two opened")
+        assert t.settle(w, lambda: said.last == "Two opened")
         lists(t, w, a(1, title="One", attention=True), a(2, title="Two"))
-        assert t.settle(w, lambda: heard(w, "Tasks") == "One wants attention")
+        assert t.settle(w, lambda: said.last == "One wants attention")
         lists(t, w, a(1, title="One", attention=True))
-        assert t.settle(w, lambda: heard(w, "Tasks") == "Two closed")
-        # the second use has not asked: it has no live region at all
-        assert len([k for k in w.view.nodes if k.endswith("/Announcer")]) == 1
+        assert t.settle(w, lambda: said.last == "Two closed")
+        assert {p for _, _, p in said.calls} == {"polite"}
+        # the second use has not asked: every announcement was for the first use
+        assert len({keys for keys, _, _ in said.calls}) == 1 and len(said.calls) == 3
+
+
+@needs_daemon
+def test_tasks_says_the_last_window_closing_although_its_row_is_then_hidden(
+    tmp_path: Path,
+) -> None:
+    """The row is out of the accessibility tree while no window is open, so a live block of the
+    layout could never say this; ``Window.announce`` has no node."""
+    with tasks_desk(tmp_path) as t, tasks_shell(t, "Tasks { announce: true }") as w:
+        said = listen(w)
+        t.fake.script.windows = [a(1, title="Only")]
+        start(t, w)
+        assert t.settle(w, lambda: len(buttons(w)) == 1)
+        lists(t, w)
+        assert t.settle(w, lambda: said.last == "Only closed")
+        assert buttons(w) == []
 
 
 # -- Network, Battery ---------------------------------------------------------------------------
@@ -277,21 +315,36 @@ def test_network_says_connected_and_disconnected_once_and_not_a_signal_change() 
         fake, net = d.network()
         fake.up()
         with shell(d, "Network { }") as w:
+            said = listen(w)
             assert d.settle(w, lambda: w.of_use("Network", "Root").get("visible"))
             root = w.of_use("Network", "Root")
             assert root.get("description") == "Wired connection 1, ethernet, connected"
-            assert not heard(w, "Network")  # the first reading says nothing
-            assert announcer(w, "Network").get("live") == "polite"
+            assert said.calls == []  # the first reading says nothing
             net.nothing()
-            assert d.settle(w, lambda: heard(w, "Network") == "Network disconnected")
+            assert d.settle(w, lambda: said.last == "Network disconnected")
             net.wifi(72)
-            assert d.settle(
-                w, lambda: str(heard(w, "Network")).startswith("Network connected, Wi-Fi")
-            )
-            said = heard(w, "Network")
+            assert d.settle(w, lambda: str(said.last).startswith("Network connected, Wi-Fi"))
+            count = len(said.calls)
             net.ap["one"].set("Strength", 30)  # a weaker signal is not the news
             d.settle(w, lambda: False, 0.3)
-            assert heard(w, "Network") == said
+            assert len(said.calls) == count
+            assert {p for _, _, p in said.calls} == {"polite"}
+
+
+@needs_daemon
+def test_a_module_on_two_bars_is_read_once() -> None:
+    """Two uses used to be two live regions, so a screen reader said the change twice; one
+    ``ctx.announce`` is one call, on the first use's window."""
+    with desk() as d:
+        fake, net = d.network()
+        fake.up()
+        with shell(d, "Network { }\nNetwork { }") as w:
+            said = listen(w)
+            assert d.settle(w, lambda: w.of_use("Network", "Root").get("visible"))
+            net.nothing()
+            assert d.settle(w, lambda: said.last == "Network disconnected")
+            d.settle(w, lambda: False, 0.3)
+            assert said.texts == ["Network disconnected"]
 
 
 @needs_daemon
@@ -300,17 +353,17 @@ def test_battery_says_critical_once_and_a_change_of_percent_never() -> None:
         fake, obj = d.battery(percentage=15.0)
         fake.up()
         with shell(d, "Battery { }") as w:
+            said = listen(w)
             assert d.settle(w, lambda: w.of_use("Battery", "Root").get("visible"))
             root = w.of_use("Battery", "Root")
             assert root.get("description") == "15 %, discharging, 2 h 14 min left"
-            assert not heard(w, "Battery")
+            assert said.calls == []
             obj.set("Percentage", 12.0)
             d.settle(w, lambda: False, 0.3)
-            assert not heard(w, "Battery")
+            assert said.calls == []
             obj.set("WarningLevel", 4)
-            said = "Battery critical, 12 percent, discharging"
-            assert d.settle(w, lambda: heard(w, "Battery") == said)
-            assert announcer(w, "Battery").get("live") == "polite"
+            assert d.settle(w, lambda: said.texts == ["Battery critical, 12 percent, discharging"])
+            assert said.calls[0][2] == "polite"
 
 
 # -- Media -------------------------------------------------------------------------------------
@@ -324,15 +377,16 @@ def test_media_says_a_new_track_only_when_asked_and_its_position_in_words() -> N
         p = d.player("vlc", status="Playing", meta=metadata("Song", ["Ann"]))
         p.up()
         with shell(d, "Media { announce: true, show_position: true }\nMedia { }") as w:
+            said = listen(w)
             assert d.settle(w, lambda: w.of_use("Media", "Root").get("visible"))
             tip = w.of_use("Media", "Root").get("description")
             assert tip == "Song, Ann (Fake Player), playing"
             slider = next(n for k, n in w.view.nodes.items() if k.endswith(".Position/Root"))
             assert d.settle(w, lambda: str(slider.get("value_text")).endswith(" of 3:20"))
-            assert not heard(w, "Media")
+            assert said.calls == []
             p.track(title="Next", artist=["Bo"])
-            assert d.settle(w, lambda: heard(w, "Media") == "Track changed: Next, Bo")
-            assert len([k for k in w.view.nodes if k.endswith("/Announcer")]) == 1
+            assert d.settle(w, lambda: said.last == "Track changed: Next, Bo")
+            assert len(said.calls) == 1  # one use asked, so one announcement
 
 
 # -- Audio -------------------------------------------------------------------------------------
@@ -348,17 +402,19 @@ def test_audio_says_mute_at_once_and_a_settled_volume_when_asked(
     T.maintainers_desktop(fake_pulse)
     body = "Audio { announce: true, show_slider: true }"
     with T.desk(fake_pulse) as d, T.shell(d, body) as w:
+        said = listen(w)
         assert d.settle(w, lambda: T.icon_of(w) == "volume-medium")
         assert w.of_use("Audio", "Root").get("description") == "Razer Leviathan V2 X, 45 %"
         slider = next(n for k, n in w.view.nodes.items() if k.endswith(".Volume/Root"))
         assert slider.get("value_text") == "45 percent"
-        assert not heard(w, "Audio") and announcer(w, "Audio").get("live") == "polite"
+        assert said.calls == []
         w.window.simulate("click", node=w.of_use("Audio", "Toggle"))
-        assert d.settle(w, lambda: heard(w, "Audio") == "Muted")
+        assert d.settle(w, lambda: said.last == "Muted")
         w.window.simulate("click", node=w.of_use("Audio", "Toggle"))
-        assert d.settle(w, lambda: heard(w, "Audio") == "Unmuted, 45 percent")
+        assert d.settle(w, lambda: said.last == "Unmuted, 45 percent")
         w.window.simulate("wheel", node=w.of_use("Audio", "Root"), delta_y=-120)
         assert d.settle(w, lambda: w.host.ticks._subs != [])  # one tick waits to say it
         w.host.ticks._subs[0].fn()
-        assert d.settle(w, lambda: heard(w, "Audio") == "Volume 50 percent")
+        assert d.settle(w, lambda: said.last == "Volume 50 percent")
         assert w.host.ticks._subs == []
+        assert {p for _, _, p in said.calls} == {"polite"}

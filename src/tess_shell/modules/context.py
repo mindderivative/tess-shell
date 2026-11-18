@@ -326,6 +326,52 @@ class ModuleContext:
         port = self._popups() if self._popups else None
         return port is not None and port.is_open(name)
 
+    def announce(
+        self, text: str, *, politeness: str = "polite", use: UseRecord | str | None = None
+    ) -> None:
+        """Say ``text`` through assistive technology, once: a screen reader reads it (nothing
+        happens when none is connected). ``politeness`` is ``"polite"`` (waits for the reader to
+        finish) or ``"assertive"`` (interrupts). With no ``use`` it is said for the module's first
+        use that is on an open window, so a module used on two Bars is not read twice; with ``use``
+        for that use's window (``ctx.caller`` is not consulted). It is said even when the
+        module's block is hidden, and the same text twice running is said twice. Safe from any
+        thread. Nothing is said, with one debug line, when no use is on an open window. A text that
+        is empty or a politeness other than the two raises ``ValueError``."""
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("ctx.announce needs a text that is not empty")
+        if politeness not in ("polite", "assertive"):
+            raise ValueError(
+                f"ctx.announce: politeness is 'polite' or 'assertive', not {politeness!r}"
+            )
+        if use is None:
+            keys = list(self.uses)
+        else:
+            keys = [use.key if isinstance(use, UseRecord) else use]
+        port = self._surfaces() if self._surfaces else None
+        if port is None or not keys:
+            self.log.debug(f"ctx.announce({text!r}): no surface to say it on")
+            return
+
+        def say() -> None:
+            if not port.announce(keys, text, politeness):
+                self.log.debug(f"ctx.announce({text!r}): no use of the module is on an open window")
+
+        hop = self._call_soon() if self._call_soon else None
+        if hop is None:
+            say()
+            return
+
+        def run() -> None:
+            if self._closed:
+                return
+            try:
+                say()
+            except Exception as exc:
+                self.log.opt(exception=True).error("ctx.announce raised")
+                note_module_error(self.name, "ctx.announce", exc)
+
+        hop(run)
+
     def call_soon(self, fn: Callable[[], None]) -> None:
         """Run ``fn`` on the loop thread soon, from any thread (a callback of the ``dbus``
         thread that must open a Popup does it this way). An exception is logged with the module's

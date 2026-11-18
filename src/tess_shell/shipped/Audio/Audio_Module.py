@@ -8,9 +8,9 @@ Keys sent: ``ready`` (a sound server is connected), ``volume`` (percent, the mea
 above 100 as the server says), ``volume_text`` (``"45 %"``), ``muted``, ``kind`` (``SPEAKER``,
 ``HEADPHONES``, ``HDMI``, ``BLUETOOTH`` or ``OTHER``), ``name`` (the output's description),
 ``mic_muted``, ``has_mic``, ``outputs`` (a list of ``id``, ``name``, ``kind``, ``icon``,
-``current``), ``icon``, ``tooltip``, ``label`` (the accessible name) and ``announcement`` (the words
-said by a use with ``announce``: mute and unmute at once, a new volume once it has settled). A
-layout shows itself with ``Visible: <| ready |>``.
+``current``), ``icon``, ``tooltip`` and ``label`` (the accessible name). A use with ``announce``
+has the module say, politely, with ``ctx.announce``: mute and unmute at once, a new volume once it
+has settled (once, even when several uses ask). A layout shows itself with ``Visible: <| ready |>``.
 
 The module does not predict a change: the setters call the server and the values change when its
 event arrives. While the user drags a slider the module sends no ``volume`` for that use (the
@@ -103,7 +103,7 @@ class Audio(Module):
 
     def start(self) -> None:
         # defaults, so a layout reading any key has a value before the server has answered
-        self.publish({**self.values(None), "announcement": ""})
+        self.publish(self.values(None))
         self.subscription = self.ctx.audio.on_changed(self.changed)
 
     def stop(self) -> None:
@@ -118,8 +118,7 @@ class Audio(Module):
     def use_added(self, use: UseRecord) -> None:
         with self.send_lock:
             for key, value in list(self.sent.items()):
-                # the last announcement is not said again to a use that is added later
-                self.ctx.send(key, "" if key == "announcement" else value, use=use)
+                self.ctx.send(key, value, use=use)
 
     def use_removed(self, use: UseRecord) -> None:
         self.dragging.discard(use.key)
@@ -129,15 +128,21 @@ class Audio(Module):
     def changed(self, state: AudioState | None) -> None:
         self.state = state
         values = self.values(state)
-        said = self.announce(state)
-        if said is not None:
-            values["announcement"] = said
+        said = self.words(state)
         self.publish(values)
+        if said is not None:
+            self.say(said)
+
+    def say(self, text: str) -> None:
+        """Announce ``text`` for the first use that asked for it with ``announce``."""
+        asking = next((u for u in list(self.ctx.uses.values()) if u.params.get("announce")), None)
+        if asking is not None:
+            self.ctx.announce(text, use=asking)
 
     def announcing(self) -> bool:
         return any(use.params.get("announce") for use in list(self.ctx.uses.values()))
 
-    def announce(self, state: AudioState | None) -> str | None:
+    def words(self, state: AudioState | None) -> str | None:
         """The words to say now for this state, or ``None`` (Accessibility, rule 6, ``POLITE``):
         mute and unmute at once; a new volume of the same output starts a tick that says it at the
         next second (:meth:`settled`), at most once a second however the volume moves."""
@@ -165,7 +170,7 @@ class Audio(Module):
                 self.settle_sub = None
         state = self.state
         if state is not None and state.output is not None and not state.muted:
-            self.publish({"announcement": f"Volume {state.volume} percent"})
+            self.say(f"Volume {state.volume} percent")
 
     def values(self, state: AudioState | None) -> dict[str, Any]:
         if state is None:
