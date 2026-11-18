@@ -281,6 +281,8 @@ class Reloader:
         self.scan, self.file_uids = result, file_uids
         sources = {name: self._source(name) for name in by_module}
         everything = {p for s in sources.values() for p in (s.py_path, *s.tdl_paths)}
+        if changed is None:  # a reload the user asked for (SIGHUP, ``reload``) ends a safe start
+            self.host.end_safe_start()
         sync_problems = self.host.sync(
             sources, by_module, everything if changed is None else changed
         )

@@ -50,6 +50,13 @@ def test_the_status_fixtures_show_what_a_tool_has_to_handle() -> None:
         "surfaces",
         "modules",
         "errors",
+        "recovery",
+    }
+    assert running["recovery"] == {
+        "unclean_starts": 0,
+        "last_crash": None,
+        "safe_start": False,
+        "skipped_modules": [],
     }
     assert {s["name"]: s["kind"] for s in running["surfaces"]} == {
         "Launcher": "panel",

@@ -7,6 +7,7 @@ import stat
 from datetime import datetime
 from pathlib import Path
 
+import pytest
 import tess_dl
 
 from tess_shell.config.paths import state_dir
@@ -92,6 +93,32 @@ def test_an_unwritable_file_keeps_its_registry_uid_and_is_reported(tmp_path: Pat
     (f,) = findings
     assert f.severity == "warning" and f.rule == "uid-write"
     assert path.read_bytes() == TEXT.encode()
+
+
+def test_the_uid_write_is_a_whole_temporary_file_renamed_over_the_original(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Crash Recovery and Watchdog: a shell killed at any moment of the write leaves the old file
+    or the new one, whole. At the instant of the rename the target is still the complete old text
+    and the complete new text is already in a temporary file of the same folder (so the rename is
+    atomic); a write that dies at that instant leaves the old file and no half file."""
+    config, path, backups = make(tmp_path)
+    seen: dict[str, object] = {}
+
+    def watching(src: str | os.PathLike[str], dst: str | os.PathLike[str]) -> None:
+        seen["target"] = Path(dst).read_bytes()
+        seen["temp"] = Path(src).read_bytes()
+        seen["same_folder"] = Path(src).parent == Path(dst).parent
+        raise KeyboardInterrupt  # killed right here
+
+    monkeypatch.setattr(os, "replace", watching)
+    with pytest.raises(KeyboardInterrupt):
+        assign_uids([path], config, lambda key: "UID-9", backups)
+    assert seen["target"] == TEXT.encode()
+    assert b"UID: UID-9" in seen["temp"]  # type: ignore[operator]
+    assert seen["same_folder"] is True
+    assert path.read_bytes() == TEXT.encode()
+    assert [p.name for p in path.parent.iterdir()] == ["Main_Shell.tdl"]  # the temporary is gone
 
 
 def test_the_registry_hands_out_one_uid_per_key_and_keeps_it(tmp_path: Path) -> None:

@@ -90,7 +90,7 @@ binding costs about 55 ms from process start to exit:
 ```sh
 tesserae-shell reload                       # check every file and apply, answering after the apply
 tesserae-shell quit                         # stop the shell (exit 0 once it has been asked)
-tesserae-shell status [--json]              # state, versions, monitors, surfaces, module names, last errors
+tesserae-shell status [--json]              # state, versions, monitors, surfaces, module names, last errors, crash record
 tesserae-shell show|hide|toggle NAME        # a Panel, a Frame or a melded Panel by its Name
 tesserae-shell call MODULE ACTION [ARG ...] # run an @action of a module (each ARG a JSON value, else text)
 tesserae-shell log-level LEVEL              # TRACE to CRITICAL, until the next settings.tdl reload
@@ -130,8 +130,10 @@ tesserae-shell install-session --remove   # disable the unit if enabled, remove 
   `tesserae-shell run` with `graphical-session.target`: `Type=notify` (the shell sends `READY=1`
   to `$NOTIFY_SOCKET` once it runs and `STOPPING=1` when it begins to stop, with the standard
   library and no `sd_notify` library; nothing is sent when the variable is unset),
-  `Restart=on-failure` after 2 s, at most 5 starts in 60 s, and no restart after exit codes 1
-  (configuration), 2 (environment) and 4 (another shell is running).
+  `WatchdogSec=15` (see below), `Restart=on-failure` after 2 s, at most 5 starts in 60 s, and no
+  restart after exit codes 1 (configuration), 2 (environment) and 4 (another shell is running). A
+  lost Wayland connection ends the shell, after it stopped what it runs, with exit code 69, which
+  does restart it.
 * The command is the `tesserae-shell` script that ran it (a link is kept, not followed), else the
   one beside the interpreter (`python -m tess_shell` in a virtual environment), else
   `<python> -m tess_shell`. `--config-dir PATH`, when given, is carried into both `Exec` lines.
@@ -157,6 +159,48 @@ tesserae-shell install-session --remove   # disable the unit if enabled, remove 
   restart, stop, disable and remove unattended in a private systemd user manager and a private
   KWin, never in your session (`results.txt` has one line per step; `checklist.txt` keeps only
   the login and the real portal).
+
+### Crash recovery and the watchdog
+
+Crash Recovery and Watchdog (M7b of the M7 Brief), built in `tess_shell/watchdog.py` and
+`tess_shell/recovery.py`.
+
+* **The watchdog thread** (started on the loop's first turn, after the start sequence, so the start
+  is not judged) asks the loop once a second to store a counter and a monotonic time and reads how
+  old they are. At 2 s it logs one warning `loop stalled for N s` naming the module, the entry point
+  and how long it has been running (the module host's running-callback record) plus the traceback
+  of every thread (`faulthandler.dump_traceback`), again every 5 s while it lasts. At 10 s, when
+  `NOTIFY_SOCKET` and `WATCHDOG_USEC` are both set, it sends `WATCHDOG=trigger` (systemd ends the
+  shell with `SIGABRT` and restarts it); otherwise it logs `loop stalled for 10 s, no supervisor can
+  restart it` and dumps the tracebacks every 30 s, and it sends **nothing** to `NOTIFY_SOCKET`.
+  `WATCHDOG=1` goes out every half `WATCHDOG_USEC` (the unit has `WatchdogSec=15`: 7.5 s) only
+  while the heartbeat is under 5 s old, so a stalled loop stops the pings by itself. The stop
+  sequence is not judged. `TESS_SHELL_TEST_WATCHDOG_SCALE` (a number; set only by the tests)
+  multiplies every one of these times.
+* **The files** in `$XDG_STATE_HOME/tesserae-shell`: `crash.log` (`faulthandler` with all threads,
+  plus the traceback of an exception that reaches the top; the previous file is `crash.log.1`, one
+  more `crash.log.2`, and a clean run leaves none), `running` (the unclean-exit marker, written
+  after the instance lock and removed at a stop the shell chose) and `recovery.json` (the times of
+  the unclean starts since the last clean stop). A start that finds the marker logs `previous run
+  ended uncleanly` (warning) and counts it. A clean stop (exit 0, or 130) resets the count; exit 1,
+  2, 4 or 69 removes the marker and leaves it; exit 70 keeps the marker.
+* **Safe start:** the third unclean start within 10 minutes (three runs ended uncleanly) loads
+  shipped modules only; the Python of every user module is skipped, one warning names them, the
+  files are untouched. `tesserae-shell reload` (SIGHUP too) ends it; a clean stop resets the count.
+  `status` (and `status --json`, key `recovery`: `unclean_starts`, `last_crash`, `safe_start`,
+  `skipped_modules`) shows it; with no shell running it still prints the count from the state
+  folder.
+* **The registry** is written within 0.2 s of any change, off the loop thread, to a temporary file
+  that is renamed over it. An unreadable or malformed `registry.json` is moved aside as
+  `registry.json.corrupt-<time>` and rebuilt (the UIDs the files carry are kept, saved positions
+  are lost, one warning). A registry from a newer shell is still refused (exit 1).
+* **A lost compositor:** tre ends the loop when the Wayland connection breaks; the shell then stops
+  what runs (modules, the registry) and exits with code **69**, which `Restart=on-failure` restarts
+  (it was exit 2 with no stop sequence before).
+* The hand-check kit `uv run python tests/kwin/prepare_m7b_watchdog.py` writes
+  `/tmp/tess-kwin-m7b-watchdog`; its `run-all.sh` hangs a module for 20 s under a private systemd
+  user manager and a private sway and checks the restart, `crash.log` and the lost-compositor exit
+  (`results.txt`, nothing touches your session).
 
 ## Development
 

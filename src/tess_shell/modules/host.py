@@ -22,6 +22,7 @@ from typing import Any
 from loguru import logger
 
 from tess_shell.binder import model as m
+from tess_shell.config.discovery import is_shipped
 from tess_shell.logging import note_finding, note_module_error
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
@@ -181,6 +182,10 @@ class ModuleHost:
         self._restart_sub: Subscription | None = None
         self._thread_warned: set[str] = set()
         self._stopping = False
+        # safe start (Crash Recovery and Watchdog > A Crash Loop): the Python of a user module is
+        # not run; ``safe_skipped`` names the modules whose Python was left alone
+        self.safe_start = False
+        self.safe_skipped: list[str] = []
         self.popups: PopupPort | None = None  # set by the app once the surfaces exist
         self.dbus: DBusPort | None = None  # set by the app: the D-Bus service layer
         self.audio: AudioPort | None = None  # set by the app: the sound service (ctx.audio)
@@ -195,6 +200,16 @@ class ModuleHost:
         # the uses made for the entries of a For: they come and go while the shell runs, so a
         # reload (which brings the modules to the uses the files give) must not drop them
         self._dynamic: dict[str, Use] = {}
+
+    def end_safe_start(self) -> None:
+        """A reload the user asked for: user modules load again from now on (the next ``sync``)."""
+        if self.safe_start:
+            logger.warning(
+                "safe start ends: a reload was asked for, so user modules load now "
+                f"({', '.join(self.safe_skipped) or 'none were skipped'})"
+            )
+            self.safe_start = False
+            self.safe_skipped.clear()
 
     def run_callback(self, module: str, fn: Callable[[], None]) -> None:
         """Call ``fn`` as a callback of ``module`` on the loop thread, named in the record while it
@@ -246,6 +261,10 @@ class ModuleHost:
         self, definition: ModuleDef, py_path: Path, uid: str, uses: list[Use]
     ) -> tuple[LoadedModule | None, list[Finding]]:
         """Import ``py_path`` and make the instance. Returns the findings of a bad module."""
+        if self.safe_start and not is_shipped(py_path):
+            if definition.name not in self.safe_skipped:
+                self.safe_skipped.append(definition.name)
+            return None, []
         if not py_path.is_file():
             return None, [
                 self._finding(
@@ -377,6 +396,8 @@ class ModuleHost:
             o = h.origin
             loaded = self.loaded.get(module)
             if loaded is None:
+                if module in self.safe_skipped:
+                    continue  # its Python was left alone on purpose (safe start)
                 if h.module:
                     out.append(
                         Finding(

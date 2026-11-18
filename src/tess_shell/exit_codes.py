@@ -10,6 +10,7 @@ class ExitCode(IntEnum):
     NOT_RUNNING = 3  # a control command found no shell: the bus name has no owner
     ALREADY_RUNNING = 4
     TIMEOUT = 5  # a control command timed out
+    LOST_COMPOSITOR = 69  # EX_UNAVAILABLE: the Wayland connection was lost; a supervisor restarts
     INTERNAL = 70
     FORCED = 130
 

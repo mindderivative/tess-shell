@@ -62,7 +62,7 @@ The full `--help` of the program and of each command are at the end of this page
 
 ### `run`
 
-Starts the shell and keeps running in the foreground. It stops cleanly on `SIGTERM` or `SIGINT` (`Ctrl+C`) or on `tesserae-shell quit`; a second signal makes it leave at once with exit code 130. It needs a Wayland compositor with layer-shell and a usable `XDG_RUNTIME_DIR`. Under `systemd` it tells the manager when it is ready and when it is stopping. See [Install and start](01-install.md#the-first-run).
+Starts the shell and keeps running in the foreground. It stops cleanly on `SIGTERM` or `SIGINT` (`Ctrl+C`) or on `tesserae-shell quit`; a second signal makes it leave at once with exit code 130. It needs a Wayland compositor with layer-shell and a usable `XDG_RUNTIME_DIR`. Under `systemd` it tells the manager when it is ready and when it is stopping, and, when the unit has a watchdog, keeps telling it that the loop is alive. If the Wayland connection is lost (the compositor went away) it stops what it runs and exits with code 69. While it runs it keeps a record of crashes in `$XDG_STATE_HOME/tesserae-shell` ([when the shell hangs or crashes](10-troubleshooting.md#when-the-shell-hangs-or-crashes)). See [Install and start](01-install.md#the-first-run).
 
 ### `check`
 
@@ -108,7 +108,7 @@ A control command asks the running shell, which owns the session bus name `io.gi
 |---|---|
 | `tesserae-shell reload` | Checks every file and applies it, and answers after the apply: `reloaded (...) in N ms`, or the errors and exit 1. |
 | `tesserae-shell quit` | Stops the shell (`stopping`; exit 0 once it has been asked). |
-| `tesserae-shell status` | Shows the state, the versions, the monitors, the surfaces, the modules and the last errors. `--json` prints the shell's own JSON. |
+| `tesserae-shell status` | Shows the state, the versions, the monitors, the surfaces, the modules, the last errors and what the shell knows of its crashes (the unclean starts since the last clean stop, the time of the last crash, and whether it is in safe start). `--json` prints the shell's own JSON. |
 | `tesserae-shell show NAME`, `hide NAME`, `toggle NAME` | Shows, hides or toggles a Panel, a Frame, a melded Panel or a strip by its `Name`. See [Surfaces](04-surfaces.md#showing-hiding-and-toggling) for what it answers. |
 | `tesserae-shell call MODULE ACTION [ARG ...]` | Runs an `@action` of a module. Each `ARG` is a JSON value (`40`, `true`, `"text"`) or, if it is not valid JSON, the text itself. The answer is printed. |
 | `tesserae-shell log-level LEVEL` | Changes the log level of the running shell, `TRACE` to `CRITICAL`, until the next reload of `settings.tdl`. |
@@ -124,7 +124,11 @@ surfaces:
   Top_Bar  bar  shown  eDP-1
 modules: Clock
 last errors: none
+unclean starts since the last clean stop: 0
+last crash: none
 ```
+
+An unclean start is a start that found the previous run ended without a clean stop (`SIGKILL`, a crash, the watchdog). With no shell running, `status` still prints the same two lines after `no shell is running` (and `--json` adds a `recovery` object to its error answer) when the state folder holds a crash, so a unit that gave up still shows why. In safe start a third line says so and names the user modules that were not loaded.
 
 It never lists a parameter's value or a line of the log. It also warns on standard error when the installed `systemd` unit points at a command that no longer exists, or at another installation than the one you ran `status` from, even when no shell is running.
 
@@ -161,6 +165,7 @@ The `kwin` commands, like `install-session`, were added after 0.1.1 ([Install an
 | 3 | `NOT_RUNNING` | A control command found no running shell. |
 | 4 | `ALREADY_RUNNING` | A second `run`: another shell holds the instance lock. |
 | 5 | `TIMEOUT` | A control command got no answer within `--timeout` seconds. |
+| 69 | `LOST_COMPOSITOR` | The Wayland connection was lost (the compositor went away). The shell stops what it runs first, then leaves with this code so that `Restart=on-failure` of the systemd unit starts it again. |
 | 70 | `INTERNAL` | An unexpected error inside the shell (it is in the log). |
 | 130 | `FORCED` | A second signal made the shell leave at once. |
 
