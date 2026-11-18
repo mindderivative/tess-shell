@@ -86,6 +86,16 @@ def _build_parser() -> argparse.ArgumentParser:
         return p
 
     add("run", "start the shell (default)")
+    migrate = add(
+        "migrate",
+        "bring the configuration files to the current format (--check lists what would change)",
+    )
+    migrate.add_argument(
+        "--check", action="store_true", help="change nothing; exit 1 if any file would change"
+    )
+    migrate.add_argument(
+        "--force", action="store_true", help="migrate even while a shell is running"
+    )
     check = add("check", "validate settings and shell files")
     check.add_argument(
         "--strict", action="store_true", help="a warning fails the check too (exit code 1)"
@@ -216,6 +226,12 @@ def _install_session(args: argparse.Namespace, options: Options, runner: Runner 
     )
 
 
+def _migrate(args: argparse.Namespace, options: Options) -> int:
+    from tess_shell.migrate import run as migrate_run
+
+    return migrate_run.run(options, check=args.check, force=args.force)
+
+
 def main(argv: Sequence[str] | None = None, *, runner: Runner | None = None) -> int:
     """``runner`` is the hook of ``install-session``: what would run ``systemctl --user ...``.
     Tests pass a recording one; a run from the command line uses the real one."""
@@ -229,10 +245,17 @@ def main(argv: Sequence[str] | None = None, *, runner: Runner | None = None) -> 
         strict=getattr(args, "strict", False),
     )
     command = args.command or "run"
+    from tess_shell.schema.deprecations import command_warning
+
+    warning = command_warning(command)
+    if warning is not None:
+        print(warning, file=sys.stderr)
     if command == "version":
         return _version(options)
     if command == "schema":
         return _schema(options, getattr(args, "out", None))
+    if command == "migrate":
+        return _migrate(args, options)
     if command == "install-session":
         return _install_session(args, options, runner)
     if command in _CONTROL:

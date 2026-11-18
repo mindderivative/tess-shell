@@ -49,7 +49,7 @@ Shell {
 }
 ```
 
-* `TDL: 0.2` is the version of the language. The shell reads TDL 0.2 only. A file that says `TDL: 0.1` is refused with `tdl-old-version` ("this file is written for TDL 0.1; the shell reads TDL 0.2") and a hint on how to migrate it; one that says a newer version is refused with `version-pin`.
+* `TDL: 0.2` is the version of the language. The shell reads TDL 0.2 only. A file that says `TDL: 0.1` is refused with `tdl-old-version` ("this file is written for TDL 0.1; the shell reads TDL 0.2") and the hint to run `tesserae-shell migrate`, which rewrites it; one that says a newer version is refused with `version-pin`. `Shell: 0.2` is the minimum shell release the file needs; a file that asks for a newer one is refused with `shell-too-old` ("install tesserae-shell X.Y or later").
 * `Name:` is the file's name. For a theme or a stylesheet it is what `settings.tdl` refers to (`Theme: Dusk`), and for a module it is the name you use it by. Letters, digits and `_`, starting with a letter.
 * `Shell: 0.1` (optional) is a minimum-version pin: the shell refuses the file if it is older than that.
 * `UID:` is written by the shell, as described below.

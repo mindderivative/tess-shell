@@ -54,8 +54,18 @@ tesserae-shell version   # versions of the shell, tess_re, tess_el, tess_dl and 
 tesserae-shell check     # validate settings.tdl and every shell file (syntax, header, schema)
 tesserae-shell run       # start the shell (needs a Wayland compositor with layer-shell)
 tesserae-shell schema --json [--out FILE]  # the shell's schema as JSON, for configuration tools
+tesserae-shell migrate [--check] [--json] [--force]  # bring your files to the current format (backup first)
 tesserae-shell install-session [--print|--enable|--remove] [--force]  # the desktop file and the systemd user unit
 ```
+
+`migrate` rewrites the files of an older release for this one: step `0001` turns the TDL 0.1 slot
+`{{ expression }}` into `<| expression |>` (and `TDL: 0.1` into `TDL: 0.2`), changing no other byte.
+`--check` changes nothing and exits 1 if any file would change; otherwise the originals are copied to
+`<config>/.migrate-backup/<timestamp>/` first and each file is replaced through a temporary file and
+a rename. It refuses while a shell runs (exit 4) unless `--force`, exits 2 when a file could not be
+migrated, and prints the verdict of `check` on the result. A file that says `TDL: 0.1` is refused by
+`check` and `run` with `tdl-old-version` and the hint to run it; a file whose `Shell:` pin is newer
+than the shell is refused with `shell-too-old`.
 
 `schema --json` prints (or, with `--out FILE`, writes) every block, surface, key, kind, choice,
 default, event, action, theme token and `settings.tdl` key the loader accepts, with a line of
@@ -202,6 +212,49 @@ Crash Recovery and Watchdog (M7b of the M7 Brief), built in `tess_shell/watchdog
   `/tmp/tess-kwin-m7b-watchdog`; its `run-all.sh` hangs a module for 20 s under a private systemd
   user manager and a private sway and checks the restart, `crash.log` and the lost-compositor exit
   (`results.txt`, nothing touches your session).
+## Version policy
+
+### The version numbers
+
+| Number | Where it is written | Covers |
+|---|---|---|
+| Shell release | `__version__`, `pyproject.toml`, the changelog, the tag `vX.Y.Z` | The package as a whole |
+| TDL language version | `TDL:` in a file's metadata block (major.minor, a string) | The punctuation and structure of a file; owned by `tess-dl` |
+| TEL language version | `TEL:` in the block, and `tess_el.LANGUAGE` | What an expression may say |
+| Schema export version | `schema_version` in `tesserae-shell schema --json` | The keys, blocks, kinds, tokens and modules the shell knows; the configuration application reads it |
+| Module contract | The shell release; `Shell:` in a module file | `Module`, `ctx`, `@action`, events |
+| Registry format | `"registry": 1` in `registry.json` | The shell's own file; you do not edit it |
+| Control interface | The bus name `io.github.mindderivative.TesseraeShell` and its interface version | The D-Bus methods and properties |
+
+### What a release promises
+
+| | Before 1.0 (0.x) | From 1.0 |
+|---|---|---|
+| A patch (0.x.Y) | Fixes only; no file, command or API change | Same |
+| A minor (0.X.0) | May change anything below, each change listed under "Changed" or "Removed" in the changelog, with a `migrate` step when it touches your files | New features and additions; nothing removed or renamed; a deprecation may start |
+| A major | Not used | May remove what was deprecated for at least two minors, each with a `migrate` step |
+| Command line | May change in a minor | A command, option, exit code or `--json` shape never changes in a minor |
+| Schema export | Version bumps minor for an addition, major for a change or a removal | Same; the configuration application checks the major |
+| Your TDL files | A key rename or a language change comes with `migrate` | A file valid for 1.X stays valid for 1.Y |
+| Module contract | May change in a minor, with `migrate` where code can be rewritten | Additions only within 1.x |
+
+The maintainer decides what goes into a minor; the policy decides how it is told.
+
+### Deprecation
+
+* A renamed or replaced key, block, parameter or command keeps working under its old name for one minor before 1.0 and two minors after, with the warning `deprecated-key` (or `deprecated-command` on the command line) naming the replacement and the release that removes it.
+* The schema export marks it (`deprecated: {since, removed_in, use}`) so the configuration application can show it.
+* `migrate` rewrites the old name to the new one wherever it can do so without losing meaning. It does not rewrite your module Python: the changelog lists a contract change and the warning names the replacement.
+
+### The `Shell:` pin
+
+`Shell:` in a file's metadata block is the minimum shell release the file needs. The shell compares it with its own release (major.minor):
+
+* A pin newer than the shell is the error `shell-too-old` with `file:line:column` and the hint "install tesserae-shell X.Y or later". The file is refused, like any file with an error.
+* A `TDL:` version the installed `tesserae-dl` does not read is the library's own version error (`version-pin`), with its hint.
+* A file for an older language version (today `TDL: 0.1`) is refused with `tdl-old-version` and the hint to run `tesserae-shell migrate`. The shell does not read such a file and warn: a file that parses differently from what its author wrote is worse than a clear stop.
+
+The same text is in the user guide ([The command line](guide/09-command-line.md#versions-and-what-a-release-promises)).
 
 ## Development
 

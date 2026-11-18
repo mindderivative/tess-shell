@@ -29,9 +29,28 @@ def check_header(document: Document, file: str, installed: Mapping[str, str]) ->
         if not isinstance(entry, Property) or entry.key not in installed:
             continue
         text = value_text(entry.value)
-        if text is None or parse_version(text) <= parse_version(installed[entry.key]):
+        if text is None:
             continue
         line, column = position(entry.key_origin)
+        if entry.key == "Shell":
+            # the pin is a major.minor release: a patch of the pin never makes a file too new
+            if parse_version(text)[:2] > parse_version(installed["Shell"])[:2]:
+                needed = ".".join(map(str, parse_version(text)[:2]))
+                out.append(
+                    Finding(
+                        file,
+                        line,
+                        column,
+                        "error",
+                        "shell-too-old",
+                        f"this file needs tesserae-shell {text} or newer; "
+                        f"{installed['Shell']} is installed",
+                        f"install tesserae-shell {needed} or later",
+                    )
+                )
+            continue
+        if parse_version(text) <= parse_version(installed[entry.key]):
+            continue
         out.append(
             Finding(
                 file,

@@ -37,6 +37,17 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.schema",
     },
     "files": {"tess_dl", "tess_shell.schema", "tess_shell.config", "tess_shell.files"},
+    # ``migrate`` rewrites a user's files as text (``slots`` needs the standard library only);
+    # ``run`` is the command, which reads the settings, locks and options
+    "migrate": {
+        "tess_dl",
+        "tess_shell.config",
+        "tess_shell.exit_codes",
+        "tess_shell.migrate",
+        "tess_shell.options",
+        "tess_shell.schema",
+        "tess_shell.app",  # ``run`` asks ``check`` for its verdict on the result
+    },
     "config": {
         "tess_dl",
         "tess_shell.schema",

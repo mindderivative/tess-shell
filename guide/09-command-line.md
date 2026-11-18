@@ -8,7 +8,7 @@ tesserae-shell [OPTIONS] COMMAND [ARGUMENTS]
 
 The commands fall into three groups:
 
-* **Files and installation**, which need no running shell: `run`, `check`, `version`, `schema`, `install-session`, and the `kwin` commands.
+* **Files and installation**, which need no running shell: `run`, `check`, `version`, `schema`, `migrate`, `install-session`, and the `kwin` commands.
 * **Control commands**, which talk to a running shell over the session bus: `reload`, `quit`, `status`, `show`, `hide`, `toggle`, `call` and `log-level`. They import only the standard library and a small D-Bus client, so they start fast enough to be bound to a key.
 * `run` itself, the shell.
 
@@ -33,6 +33,8 @@ The commands, with the arguments and options each adds:
 |---|---|---|
 | `tesserae-shell run` | none | start the shell (default) |
 | `tesserae-shell check` | `--strict` | validate settings and shell files |
+| `tesserae-shell migrate` | `--check` `--force` | bring the configuration files to the current format (--check lists what would change) |
+| `tesserae-shell check` | none | validate settings and shell files |
 | `tesserae-shell version` | none | print versions |
 | `tesserae-shell schema` | `--out FILE` | print the schema of the shell's files as JSON (with --json) |
 | `tesserae-shell install-session` | `--print` `--enable` `--remove` `--force` | write the desktop file and the systemd user unit (--enable, --remove, --print) |
@@ -96,6 +98,22 @@ Prints the versions of the shell, `tess_re`, `tess_el`, `tess_dl` and Python. `-
 
 `tesserae-shell schema --json` prints everything the loader accepts, as JSON: every block, surface, key, kind, choice, default, event, action, theme token and `settings.tdl` key, each with a line of documentation, so a configuration tool can build its forms. `--out FILE` writes it to a file instead. It is the data this guide's tables are generated from. Without `--json` the command answers `schema writes JSON only; add --json` and exits 1.
 
+### `migrate`
+
+```text
+tesserae-shell migrate [--config-dir DIR] [--check] [--json] [--force]
+```
+
+Brings your files to the current format after an upgrade. It reads every `.tdl` file under the configuration folder (and the other folders `settings.tdl` names, when it can read it) and never the registry, and applies an ordered list of numbered steps, each of which rewrites text only and does nothing to a file that is already at its target. Step `0001` is TDL 0.1 to 0.2: a slot written `{{ expression }}` becomes `<| expression |>` and `TDL: 0.1` becomes `TDL: 0.2`; no other byte changes (comments, layout, line endings, quoted text that looks like a slot). A slot whose text holds `|>` outside a quote cannot be written in the new form: it is reported and the whole file is left as it was. Step `0002` writes a deprecated key or block under its new name (nothing is deprecated yet).
+
+* `--check` changes nothing and exits 1 if any file would change.
+* Before it writes, the originals are copied to `<config>/.migrate-backup/<timestamp>/` with their relative paths; nothing is deleted. Each file is replaced through a temporary file and a rename, so a file is either as it was or fully migrated. If a run is interrupted the backup holds every original, and a second run is safe.
+* It prints each file changed and the step applied, then a summary, then the verdict of `check` on the result. `--json` prints `{"ok", "config_dir", "check", "steps": [{"step", "from", "to", "files": [{"path", "state"}]}], "skipped": [...], "backup", "result"}`; `state` is `changed` or `would-change`, and `result` is the `check --json` object after the rewrite (`null` when nothing was written).
+* It refuses to run while a shell holds the instance lock (exit 4), because a reload would read half-migrated files; `--force` runs anyway. `--check` never refuses.
+* It writes only inside the configuration folders (a link that leads out of one is left alone) and never starts a shell.
+
+Exit codes: 0 nothing to do, or done; 1 `--check` found work; 2 a file could not be migrated (the others still are; the report names it) or the configuration folder does not exist; 4 a shell is running.
+
 ### `install-session`
 
 Writes the desktop file and the `systemd` user unit that start the shell with your session. See [Install and start](01-install.md#starting-with-your-session).
@@ -154,16 +172,60 @@ The `kwin` commands, like `install-session`, were added after 0.1.1 ([Install an
 
 > **Not yet checked on KWin:** both the KWin script and the window rule are built and tested with temporary files and a fake KWin, but have not been confirmed on a real KWin by the maintainer's hand checks. Use `kwin rule show` first and read what it would write. You never need either for the shell to run: with the default `KWin { Script: RUNTIME }` the shell loads its script itself while it runs.
 
+## Versions and what a release promises
+
+What each version number of Tesserae Shell promises, how a file says which shell it needs, and a command, `tesserae-shell migrate`, that brings your files from an older format to the current one. The policy first governs release 0.2.0.
+
+### The version numbers
+
+| Number | Where it is written | Covers |
+|---|---|---|
+| Shell release | `__version__`, `pyproject.toml`, the changelog, the tag `vX.Y.Z` | The package as a whole |
+| TDL language version | `TDL:` in a file's metadata block (major.minor, a string) | The punctuation and structure of a file; owned by `tess-dl` |
+| TEL language version | `TEL:` in the block, and `tess_el.LANGUAGE` | What an expression may say |
+| Schema export version | `schema_version` in `tesserae-shell schema --json` | The keys, blocks, kinds, tokens and modules the shell knows; the configuration application reads it |
+| Module contract | The shell release; `Shell:` in a module file | `Module`, `ctx`, `@action`, events |
+| Registry format | `"registry": 1` in `registry.json` | The shell's own file; you do not edit it |
+| Control interface | The bus name `io.github.mindderivative.TesseraeShell` and its interface version | The D-Bus methods and properties |
+
+### What a release promises
+
+| | Before 1.0 (0.x) | From 1.0 |
+|---|---|---|
+| A patch (0.x.Y) | Fixes only; no file, command or API change | Same |
+| A minor (0.X.0) | May change anything below, each change listed under "Changed" or "Removed" in the changelog, with a `migrate` step when it touches your files | New features and additions; nothing removed or renamed; a deprecation may start |
+| A major | Not used | May remove what was deprecated for at least two minors, each with a `migrate` step |
+| Command line | May change in a minor | A command, option, exit code or `--json` shape never changes in a minor |
+| Schema export | Version bumps minor for an addition, major for a change or a removal | Same; the configuration application checks the major |
+| Your TDL files | A key rename or a language change comes with `migrate` | A file valid for 1.X stays valid for 1.Y |
+| Module contract | May change in a minor, with `migrate` where code can be rewritten | Additions only within 1.x |
+
+The maintainer decides what goes into a minor; the policy decides how it is told.
+
+### Deprecation
+
+* A renamed or replaced key, block, parameter or command keeps working under its old name for one minor before 1.0 and two minors after, with the warning `deprecated-key` (or `deprecated-command` on the command line) naming the replacement and the release that removes it.
+* The schema export marks it (`deprecated: {since, removed_in, use}`) so the configuration application can show it.
+* `migrate` rewrites the old name to the new one wherever it can do so without losing meaning. It does not rewrite your module Python: the changelog lists a contract change and the warning names the replacement.
+
+### The `Shell:` pin
+
+`Shell:` in a file's metadata block is the minimum shell release the file needs. The shell compares it with its own release (major.minor):
+
+* A pin newer than the shell is the error `shell-too-old` with `file:line:column` and the hint "install tesserae-shell X.Y or later". The file is refused, like any file with an error.
+* A `TDL:` version the installed `tesserae-dl` does not read is the library's own version error (`version-pin`), with its hint.
+* A file for an older language version (today `TDL: 0.1`) is refused with `tdl-old-version` and the hint to run `tesserae-shell migrate`. The shell does not read such a file and warn: a file that parses differently from what its author wrote is worse than a clear stop.
+
 ## Exit codes
 
 <!-- BEGIN generated: exit-codes -->
 | Code | Name | Meaning |
 |---|---|---|
 | 0 | `OK` | Done. |
-| 1 | `CONFIG` | The files have errors (`check`, `run`, `reload`), a control command ran and failed (an unknown name, an action that raised), or `install-session` kept a file that differs. |
-| 2 | `ENVIRONMENT` | The machine cannot run it: no Wayland compositor with layer-shell, no session bus, `XDG_RUNTIME_DIR` unusable, the config folder missing (`check`), or `systemctl` missing or refusing (`install-session`). |
+| 1 | `CONFIG` | The files have errors (`check`, `run`, `reload`), a control command ran and failed (an unknown name, an action that raised), `install-session` kept a file that differs, or `migrate --check` found files to change. |
+| 2 | `ENVIRONMENT` | The machine cannot run it: no Wayland compositor with layer-shell, no session bus, `XDG_RUNTIME_DIR` unusable, the config folder missing (`check`, `migrate`), `systemctl` missing or refusing (`install-session`), or a file `migrate` could not migrate. |
 | 3 | `NOT_RUNNING` | A control command found no running shell. |
-| 4 | `ALREADY_RUNNING` | A second `run`: another shell holds the instance lock. |
+| 4 | `ALREADY_RUNNING` | A second `run`: another shell holds the instance lock. `migrate` refuses for the same reason, unless `--force`. |
 | 5 | `TIMEOUT` | A control command got no answer within `--timeout` seconds. |
 | 69 | `LOST_COMPOSITOR` | The Wayland connection was lost (the compositor went away). The shell stops what it runs first, then leaves with this code so that `Restart=on-failure` of the systemd unit starts it again. |
 | 70 | `INTERNAL` | An unexpected error inside the shell (it is in the log). |
@@ -184,6 +246,8 @@ usage: tesserae-shell [-h] [--config-dir PATH] [--json] [--quiet]
 positional arguments:
   COMMAND
     run              start the shell (default)
+    migrate          bring the configuration files to the current format
+                     (--check lists what would change)
     check            validate settings and shell files
     version          print versions
     schema           print the schema of the shell's files as JSON (with
@@ -230,6 +294,23 @@ options:
   --quiet            only warnings and errors
   --timeout SECONDS  how long a control command waits for the shell (default
                      5)
+```
+
+#### tesserae-shell migrate --help
+
+```text
+usage: tesserae-shell migrate [-h] [--config-dir PATH] [--json] [--quiet]
+                              [--timeout SECONDS] [--check] [--force]
+
+options:
+  -h, --help         show this help message and exit
+  --config-dir PATH  configuration directory
+  --json             machine readable output
+  --quiet            only warnings and errors
+  --timeout SECONDS  how long a control command waits for the shell (default
+                     5)
+  --check            change nothing; exit 1 if any file would change
+  --force            migrate even while a shell is running
 ```
 
 #### tesserae-shell check --help
