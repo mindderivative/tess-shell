@@ -106,9 +106,30 @@ The controls add no work to the loop beyond one record per callback (two stores 
 2. [x] Should the shell warn about a module that imports `subprocess`, `os.system` or `ctypes`? Context: it would warn about most useful modules and give a false sense of safety. Recommendation: no. Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note.
 3. [x] Is the user-facing statement above the wording the maintainer wants in the guide? Recommendation: yes; it is short and states the risk without alarm. Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note.
 
+### Questions from the Build (code session's report of `tess-shell` PR #63, 2026-11-17)
+
+4. [ ] Is a path outside the config folder to be allowed for images, SVG and styles, by a list? Context: control 3 is built as written, so an absolute or `~/` path to an image, SVG or style outside the config folder (for example `~/Pictures/wall.png`) is now `path-outside-config` and the reload is refused. Only the M4b gallery kit used one (it now copies its images into the config folder), but a user's wallpapers and icons elsewhere stop working. Recommendation: an allow-list in `settings.tdl` of extra read-only folders for assets (`Asset_Directories`), named by the user, never for `Import` and never for module Python; `~/Pictures` is one line to add.
+5. [ ] Should a module's sibling helper imports be built? Context: the note says a module may import its own helpers from its own folder; none work today (the code session left it). Recommendation: build it, from the module's folder only, as control 1 says.
+6. [ ] Should DEBUG lines avoid titles and typed text too? Context: control 7 says logs carry no content. One DEBUG line in `binder/build.py` prints a block's accessible label, which for a Tasks entry is a window title, and two Applications DEBUG lines log typed text and keys; live tests use them. Recommendation: remove the content from those lines now and let the tests read the state another way; a DEBUG level is still on a user's disk when they report a bug.
+7. [ ] Is group-write a warning when the group is the user's private group? Context: with umask 002 and user-private groups every new file is group-writable and warned. Recommendation: refine: a file or folder writable by its group is fine when that group is the user's private group (the group has only the user as a member); warn for any other group or for others.
+8. [ ] Should an unchanged `insecure-permissions` warning repeat on every hot reload? Context: it is logged again on each save. Recommendation: log once per path until the finding changes, and again at the next start.
+
 ## Questions After Testing
 
 1. [ ] Does a callback record cost anything measurable on the loop? Context: it is two stores and a clock read per callback. Recommendation: measure in M7c; keep it unless it is over 1% of the 4 ms callback budget. Answered by: the M7c measurement.
+
+## As Built (code session's report of `tess-shell` PR #63, merged 2026-11-17, CI green; not run in the vault)
+
+Posture A is built from this note. Controls 2, 3, 5, 6, 7 and 8 are built; controls 1 and 4 were verified and not changed (modules were already imported by file path, a `json.py` beside a module does not shadow the standard library, `sys.path` is untouched, `ctx` gives no tre node or window).
+
+- `insecure-permissions` is a warning for the config directory, the module search folders, each user module's folder and file, once per scan, at start, at reload and in `check`; a new `check --strict` turns warnings into exit 1; the shell starts.
+- `path-outside-config` is an error with `file:line:column` from one helper (`config/confine.py`) behind `Import`, `Style`, SVG and Bitmap `Source`, path params and icon files.
+- The running-callback record is `host.callbacks.running()` giving the module, the entry point and a monotonic start time, readable from any thread (M7b's watchdog uses it). A callback over 4 ms is logged at debug; more than 100 overruns a minute gives the `slow-module` warning naming the module and the entry point most often over.
+- A lifecycle failure (start, stop, reload, `use_added`, `use_removed`) marks only that module failed, logged with its UID; it restarts from a fresh import after 1, 2, 4, 8 and 16 seconds (cap 60, five tries) and then stays failed until a reload. `many-threads` warns once. An exception in an action, a tick, a `call_soon` or a service callback is logged with the module name and the module keeps running (the Module Contract's failure table says so; failing a Clock because a click handler raised would be wrong).
+- `ctx.announce` no longer logs the spoken text; the Applications service logs ids only, tested with secret `Exec` arguments on all four start paths.
+- The user-facing statement is verbatim in `guide/02` (a "Trust and security" section) and the README, with a test; the four codes are in the troubleshooting page. 13 deliberate bugs were each caught by the new tests. Two public handles remain (`ctx.log` is a loguru logger with `add` and `remove`; `ctx.dbus.layer` is the shell-wide D-Bus layer) and were left.
+- Absolute paths in `settings.tdl` (`Registry`, `Logging.Directory`, `Directories`) are not confined; shipped files are exempt because they live under `shipped/`. The back-off granularity is the 1 s tick.
+- A behaviour change the maintainer must know: an absolute or `~/` path to an image, SVG or style outside the config folder is now an error and the reload is refused (question 4).
 
 ## Acceptance criteria
 
@@ -118,7 +139,7 @@ The controls add no work to the loop beyond one record per callback (two stores 
 - [ ] A module that sleeps in a callback is named in the stall log of [Crash Recovery and Watchdog](Crash%20Recovery%20and%20Watchdog.md).
 - [ ] A module that raises is marked failed alone and restarts with back-off, five tries, then stays failed until a reload.
 - [ ] `slow-module` and `many-threads` fire once with the module's name.
-- [ ] The guide and README carry the user-facing statement.
+- [x] The guide and README carry the user-facing statement (built, PR #63).
 - [ ] [Risk Register](../00%20Home/Risk%20Register.md) R-19 points at this note and says "posture A, decided 2026-11-17".
 
 ## Links
