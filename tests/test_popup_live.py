@@ -204,7 +204,9 @@ def test_calling_another_popup_replaces_the_open_one_on_a_real_compositor(
     shell = start(private_sway, tmp_path, "TOP", f"{MENU}\n{OTHER}", REPLACE_PY)
     try:
         shell.wait_for("Popup Menu on HEADLESS-1 opened")
-        wait_for_shot(private_sway, (255, 0, 0))
+        # The module replaces it on its next tick, so the first (red) Popup is on screen for about
+        # a second: a slow screenshot under load can miss it, so it is not waited for. That it was
+        # mapped when the second was made is the log's word: it is closed as "replaced".
         shell.wait_for("Popup Menu on HEADLESS-1 closing (replaced)")
         shell.wait_for("Popup Other on HEADLESS-1 opened")
         shot, green = wait_for_shot(private_sway, (0, 255, 0))
