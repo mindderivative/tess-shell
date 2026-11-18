@@ -127,6 +127,21 @@ A module author sees nothing new except `deprecated-*` warnings and, for a contr
 2. [x] Does `migrate` also rewrite a renamed key in a user's module Python? Context: Python source cannot be rewritten safely by text. Recommendation: no; the changelog lists the contract change and the warning names the replacement. Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note.
 3. [x] Is a refusal of `TDL: 0.1` files at start the right behaviour, or should the shell read them and warn until `migrate` is run? Context: the shell refuses them today (by report). Recommendation: keep the refusal; a file that parses differently from what its author wrote is worse than a clear stop with the command to run. Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note.
 
+## As Built (code session's report of `tess-shell` PR #61, merged 2026-11-17, CI green; not run in the vault)
+
+- `tesserae-shell migrate [--check] [--json] [--force] [--config-dir]`. Step 0001 is the TDL 0.1 to 0.2 slot rewrite with the shell's own scanner behind one function (`migrate/slots.py`: `rewrite_slots(text, *, path)`), verified against `tesserae-dl` 0.1.1 on 213 generated valid files, so it can be swapped for `tess_dl`'s function later ([TDL-REQ-001 Slot Migration in the Library](../80%20Requests/TDL-REQ-001%20Slot%20Migration%20in%20the%20Library.md) stays unsent). Step 0002 is the deprecated renames; its table is empty in 0.2.0, so it is machinery only.
+- A backup goes to `.migrate-backup/<timestamp>` (files outside the config folder go under the same stamp with the absolute path stripped of the root). Writes use a temporary file and a rename. It refuses while a shell runs (the lock) unless `--force`. `--check` changes nothing and exits 1 if any file would change; `--json` is available; it is idempotent; the post-migration `check` verdict is printed.
+- A shell file that asks for a newer shell (the `Shell:` pin) is the error `shell-too-old`; it compares major.minor, so a pin of 0.2.9 is not too new for 0.2.0. `tdl-old-version` carries a `migrate` hint, also for a 0.1 file with slots. `deprecated-key` and `deprecated-command` findings and a `deprecated` mark in the schema export appear only when a row exists (none in 0.2.0, so M7d bumps no schema version).
+- The version policy text is in `guide/09` and the README as this note gives it.
+- CI found two things: a real regression in the first push (the thin reload client imported `tess_dl` through `schema/deprecations.py`; fixed with lazy imports; the toggle end to end is 59 ms median), and a latent race in `test_kill_strays` (`Popen` returns slightly before the kernel fills `/proc/PID/environ`; 0 of 40 failures locally under load, 2 in CI on one shard; the test now waits).
+
+### Decisions from the build (code session's list; the report is cut off after the fourth)
+
+1. Exit 2 serves both "a file could not be migrated" and "missing config directory". Recommendation: as built.
+2. A refusal because a shell runs uses exit 4 (`ALREADY_RUNNING`); this note named no code. Recommendation: as built.
+3. The exit stays 0 after a successful rewrite even if the post-migration `check` fails; the verdict is printed and in the JSON result; only `--check` uses exit 1. Recommendation: as built.
+4. Discovery is the config folder tree plus the `Directories` folders of the settings (the rest of this item was cut off in what the vault read; it ends with a reference to the note's answer 3, module Python).
+
 ## Acceptance criteria
 
 - [ ] `tesserae-shell migrate --check` on a 0.1-era configuration folder exits 1 and lists the files; `migrate` rewrites them, writes the backup, and the result passes `check`.
