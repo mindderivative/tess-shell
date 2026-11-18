@@ -152,12 +152,20 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.__version__",
         "tess_shell.exit_codes",
         "tess_shell.options",
+        "tess_shell.recovery_state",  # the crash lines of ``status`` with no shell running
         "tess_shell.session",  # the stale-unit warning of ``status``
     },
     # the two files of the desktop session and the systemd notice: standard library only (the
     # client imports ``session``; ``app`` imports ``notify``)
     "session": {"tess_shell.exit_codes"},
     "notify": set(),
+    # the crash record: the writer takes the names it shares with the reader (which the client
+    # imports, so the reader is standard library only); nothing else, no log: the app reports
+    "recovery": {"tess_shell.recovery_state"},
+    "recovery_state": set(),
+    # the watchdog thread: reads the module host's running-callback record (a plain dataclass in
+    # modules.running), sends through ``notify`` and logs; it never touches the engine or a node
+    "watchdog": {"loguru", "tess_shell.modules.running", "tess_shell.notify"},
     # the ``kwin`` commands: like the client, standard library and jeepney, and the pure KWin files
     "kwin_commands": {
         "jeepney",

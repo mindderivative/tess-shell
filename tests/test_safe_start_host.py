@@ -7,7 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from tess_shell.binder.model import Handler
-from tess_shell.config.discovery import shipped_dir
+from tess_shell.config.discovery import is_shipped, shipped_dir
 from tess_shell.modules.host import LoadedModule, ModuleHost
 from tess_shell.schema.findings import Finding
 from tests.test_module_host import Rig, definition, use
@@ -40,6 +40,7 @@ def load(
 
 def test_a_user_module_is_not_imported_and_nothing_is_reported(tmp_path: Path) -> None:
     rig = Rig(tmp_path)
+    rig.host.is_shipped = is_shipped
     rig.host.safe_start = True
     py, marker = user_module(rig)
     loaded, findings = load(rig.host, py)
@@ -50,6 +51,7 @@ def test_a_user_module_is_not_imported_and_nothing_is_reported(tmp_path: Path) -
 
 def test_a_shipped_module_still_loads_in_a_safe_start(tmp_path: Path) -> None:
     rig = Rig(tmp_path)
+    rig.host.is_shipped = is_shipped
     rig.host.safe_start = True
     clock_py = shipped_dir() / "Clock" / "Clock_Module.py"
     assert clock_py.is_file()
@@ -62,6 +64,7 @@ def test_a_call_to_a_module_that_was_skipped_is_not_an_error_but_a_missing_one_s
     tmp_path: Path,
 ) -> None:
     rig = Rig(tmp_path)
+    rig.host.is_shipped = is_shipped
     rig.host.safe_start = True
     py, _ = user_module(rig)
     load(rig.host, py)
@@ -73,6 +76,7 @@ def test_a_call_to_a_module_that_was_skipped_is_not_an_error_but_a_missing_one_s
 
 def test_a_reload_the_user_asked_for_ends_it_and_the_module_loads_then(tmp_path: Path) -> None:
     rig = Rig(tmp_path)
+    rig.host.is_shipped = is_shipped
     rig.host.safe_start = True
     py, marker = user_module(rig)
     load(rig.host, py)

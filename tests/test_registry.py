@@ -178,8 +178,11 @@ def test_a_write_that_fails_keeps_the_old_file_and_is_tried_again(
         real(src, dst)  # type: ignore[arg-type]
 
     monkeypatch.setattr(os, "replace", flaky)
+    warned: list[str] = []
+    reg.warn = warned.append  # the app gives the registry the log
     reg._flush()  # the timer's job, run now: it fails
     assert path.read_text() == before
+    assert len(warned) == 1 and "disk full" in warned[0]  # told through the callback, not a log
     assert [p.name for p in tmp_path.iterdir()] == ["registry.json"]  # no temporary file left
     reg._flush()  # the failed write left the registry marked unsaved: the next write has it
     assert "use:a" in path.read_text()

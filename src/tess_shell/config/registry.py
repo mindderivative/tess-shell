@@ -15,11 +15,10 @@ import stat
 import tempfile
 import threading
 import uuid
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-
-from loguru import logger
 
 from tess_shell.schema.findings import Finding
 
@@ -65,6 +64,9 @@ class Registry:
         self.data = data
         # why this registry was rebuilt from an unreadable file (the shell warns), or ``None``
         self.recovered = recovered
+        # told (one line) when a background write fails; the app gives it the log (this package
+        # imports the standard library only)
+        self.warn: Callable[[str], None] | None = None
         self.created = False  # the file was missing and was made now (the usual first start)
         self._lock = threading.Lock()  # the data and the flag: the loop writes, a timer reads
         self._write_lock = threading.Lock()  # one write to the file at a time
@@ -210,4 +212,5 @@ class Registry:
         except OSError as exc:
             with self._lock:
                 self._dirty = True  # the next change (or the stop) tries again
-            logger.warning(f"registry: could not write {self.path} ({exc}); it is tried again")
+            if self.warn is not None:
+                self.warn(f"registry: could not write {self.path} ({exc}); it is tried again")
