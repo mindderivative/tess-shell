@@ -920,15 +920,9 @@ class SurfaceManager:
         window.root.set(label=label)
         if kind == "Panel" and bar.keyboard == "EXCLUSIVE":
             body.set(role="dialog", label=label)
-        made: list[Surface] = []  # the Surface of this window, once it is made (below)
-        first_configure = [True]
 
         def configured(e: Any, n: str = where, k: str = kind) -> None:
             logger.info(f"{k} {n} configured {int(e.width)}x{int(e.height)}")
-            if first_configure:
-                first_configure.clear()
-                if made and k == "Panel":
-                    self._reassert_shown(made[0])
 
         window.on("configure", configured)
 
@@ -980,24 +974,7 @@ class SurfaceManager:
             planned,
             extra,
         )
-        made.append(surface)
         return surface
-
-    def _reassert_shown(self, s: Surface) -> None:
-        """A kept Panel that was shown before its window had its first ``configure`` has not had
-        its keyboard and input region sent. tre drops a ``LayerWindow.set`` made before it has
-        told Python the surface exists (the id is set by the ``created`` hook, which can run late
-        on a busy machine: the Launcher then never got the keyboard), and does not apply the
-        stored values afterwards. The first ``configure`` comes after that hook, so the state of
-        a Panel that is shown by then is sent again (nothing changes if it was sent already)."""
-        window, planned = s.window, s.planned
-        if window is None or planned is None or s.hidden or s.covered:
-            return
-        window.set(
-            input_region=_input_for(planned.bar, s.geometry, self._output_size(s)),
-            keyboard=_keyboard(planned.bar, False, holds_text_field(planned.expanded.nodes)),
-        )
-        logger.debug(f"Panel {planned.where}: keyboard and input region sent again at configure")
 
     def _open(self, planned: Planned, all_uses: Mapping[str, Use]) -> Surface:
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
@@ -1567,6 +1544,17 @@ class SurfaceManager:
                     pass
             return True
         logger.debug(f"ctx.surface.focus({name!r}): {use_key} has no such block")
+        return False
+
+    def announce(self, use_keys: Sequence[str], text: str, politeness: str) -> bool:
+        """``ctx.announce``: one announcement, on the window of the first of ``use_keys`` that is
+        on an open surface (the module is then not read twice when it is on two Bars)."""
+        for key in use_keys:
+            s = self._surface_of_use(key)
+            window = s.window if s is not None else None
+            if window is not None:
+                window.announce(text, politeness)
+                return True
         return False
 
     def request_token(self, use_key: str, callback: Callable[[str | None], None]) -> None:

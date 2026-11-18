@@ -38,14 +38,12 @@ class State:
     __slots__ = (
         "heard",
         "heard_message",
-        "last",
         "message",
         "pending",
         "query",
         "results",
         "selected",
         "sent",
-        "zero_width",
     )
 
     def __init__(self) -> None:
@@ -56,8 +54,6 @@ class State:
         self.sent: dict[str, Any] = {}  # the last value sent, by key
         self.heard: str | None = None  # the id of the row last said (None: no row chosen yet)
         self.heard_message = ""  # the message last said (or there when the Panel was shown)
-        self.last = ""  # the words last put in the live region, without the mark
-        self.zero_width = False  # the mark is on them (see :meth:`Applications.words`)
         self.pending = False  # a narrowed list's row waits for the next second to be said
 
 
@@ -119,8 +115,7 @@ class Applications(Module):
     def shown(self, use: UseRecord) -> None:
         """The Panel was shown: the list is made again if the folders are not watched, and the
         field takes the focus with its text selected, so typing starts a new search. Nothing said
-        before is said again: the announcement is cleared (the live region is in the tree only
-        while the Panel is shown) and the row and the message that are there now count as heard."""
+        before is said again: the row and the message that are there now count as heard."""
         self.ctx.apps.refresh()
         state = self.states.get(use.key)
         if state is not None and state.message:
@@ -129,8 +124,7 @@ class Applications(Module):
         if state is not None:
             state.heard = state.results[state.selected].id if state.results else None
             state.heard_message = self.empty_text(state)
-            state.last, state.zero_width, state.pending = "", False, False
-            self.send(use, "announcement", "")
+            state.pending = False
         self.ctx.surface.focus(FIELD, select_all=True, use=use)
 
     def theme_changed(self) -> None:
@@ -230,13 +224,11 @@ class Applications(Module):
             "list_height": len(rows) * ROW_HEIGHT,
             "message": message,
         }
-        if "announcement" not in state.sent:
-            values["announcement"] = ""  # a value before the first announcement
         said = self.announcement(state, rows, chosen, message, settle)
-        if said:
-            values["announcement"] = said
         for key, value in values.items():
             self.send(use, key, value)
+        if said:
+            self.ctx.announce(said, use=use)
 
     def announcement(
         self, state: State, rows: list[dict[str, Any]], chosen: str, message: str, settle: bool
@@ -250,7 +242,7 @@ class Applications(Module):
         if message != state.heard_message:
             state.heard_message = message
             if message:
-                return self.words(state, message)
+                return message
         if not chosen:
             return ""
         if state.heard is None:
@@ -265,17 +257,7 @@ class Applications(Module):
             return ""
         state.heard, state.pending = chosen, False
         name = rows[state.selected]["name"]
-        return self.words(state, f"{name}, {state.selected + 1} of {len(rows)}")
-
-    @staticmethod
-    def words(state: State, text: str) -> str:
-        """``text`` for the live region; the same words twice in a row get an invisible mark added
-        and taken off in turn, because only a change of the label is announced."""
-        if text == state.last:
-            state.zero_width = not state.zero_width
-        else:
-            state.last, state.zero_width = text, False
-        return text + ("\u200b" if state.zero_width else "")
+        return f"{name}, {state.selected + 1} of {len(rows)}"
 
     def settled(self) -> None:
         """Loop thread, the second after the list narrowed under typing: say the row now chosen

@@ -101,13 +101,14 @@ jobs:
       # GPU, so Mesa's software Vulkan (lavapipe) gives it an adapter, as tre's own CI does.
       # libwayland-dev: wayland.xml, which tre's virtual-pointer helper generates bindings from.
       # locales: the Clock module's German test.
+      # at-spi2-core: at-spi2-registryd, for the test that reads the accessibility announcements.
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             sway wtype grim dbus systemd \
             mesa-vulkan-drivers libgl1-mesa-dri libegl1 libxkbcommon0 \
-            fontconfig fonts-dejavu-core libwayland-dev locales
+            fontconfig fonts-dejavu-core libwayland-dev locales at-spi2-core
           sudo locale-gen de_DE.UTF-8
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:

@@ -10,9 +10,10 @@ Keys sent: ``has_player``, ``status`` (``PLAYING``, ``PAUSED``, ``STOPPED``), ``
 ``mpris:artUrl`` that exists, else empty), ``length`` and ``position`` (seconds),
 ``position_text`` (the position as a time, ``1:23 of 3:45``: the slider's accessible value),
 ``can_play_pause``, ``can_next``, ``can_previous``, ``can_seek``, ``icon``, ``tooltip``,
-``label`` and ``announcement`` (the words said when a new track follows one that was shown).
-``available`` is the layer's: true while the session bus can be reached. A layout shows
-itself with ``Visible: <| available and has_player |>``.
+``label``. A use with the param ``announce`` has the module say, politely, with ``ctx.announce``,
+a new track that follows one that was shown (once, even when several uses ask). ``available`` is
+the layer's: true while the session bus can be reached. A layout shows itself with
+``Visible: <| available and has_player |>``.
 
 The position is not signalled by MPRIS while a track plays: it is the stored ``Position`` plus the
 time since it was stored times ``Rate``. A tick of one second runs only while the chosen player is
@@ -193,15 +194,14 @@ class Media(Module):
 
     def start(self) -> None:
         # defaults, so a layout reading any key has a value before a player has answered
-        self.publish({**self.values(None), "announcement": ""})
+        self.publish(self.values(None))
         self.bus: Bus = self.ctx.dbus.session()
         self.position_uses = {k for k, u in self.ctx.uses.items() if u.params.get("show_position")}
         self.bus.watch_prefix(PREFIX, self.added, self.removed)
 
     def use_added(self, use: UseRecord) -> None:
         for key, value in list(self.sent.items()):
-            # the last announcement is not said again to a use that is added later
-            self.ctx.send(key, "" if key == "announcement" else value, use=use)
+            self.ctx.send(key, value, use=use)
         if use.params.get("show_position"):
             self.position_uses.add(use.key)
             self.sync_timer()
@@ -325,12 +325,16 @@ class Media(Module):
         player = self.players.get(chosen) if chosen is not None else None
         values = self.values(player)
         # a new track after one was shown is announced once, politely (Media Module >
-        # Accessibility; a use shows the announcer only with its param ``announce``)
+        # Accessibility; only a use with its param ``announce`` asks for it)
         before = (self.sent.get("title", ""), self.sent.get("artist", ""))
         now = (values["title"], values["artist"])
-        if any(before) and values["title"] and now != before:
-            values["announcement"] = announcement_text(*now)
+        new_track = bool(any(before) and values["title"] and now != before)
         self.publish(values)
+        if new_track:
+            uses = list(self.ctx.uses.values())
+            asking = next((u for u in uses if u.params.get("announce")), None)
+            if asking is not None:
+                self.ctx.announce(announcement_text(*now), use=asking)
         self.sync_timer()
 
     def current(self, player: Playing) -> float:

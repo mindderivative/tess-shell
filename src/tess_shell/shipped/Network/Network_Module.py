@@ -9,8 +9,8 @@ read), ``state`` (``CONNECTED``, ``LIMITED``, ``PORTAL``, ``CONNECTING``, ``DISC
 ``DISABLED`` or ``UNKNOWN``), ``kind`` (``ETHERNET``, ``WIFI``, ``MOBILE``, ``BLUETOOTH``,
 ``OTHER`` or ``NONE``), ``name``, ``strength`` (percent, -1 when the connection is not Wi-Fi; sent
 only when the icon step or the tooltip's value changes), ``vpn``, ``icon``, ``tooltip``,
-``label`` (the accessible name) and ``announcement`` (the words of the polite announcement made
-when ``state`` goes to or from ``CONNECTED``; nothing for a change of ``strength``).
+``label`` (the accessible name). When ``state`` goes to or from ``CONNECTED`` the module says it,
+politely, with ``ctx.announce`` (nothing for a change of ``strength``).
 ``available`` is the layer's: true while NetworkManager is on the system bus. A layout shows
 itself with ``Visible: <| available and ready |>``.
 """
@@ -267,7 +267,6 @@ class Network(Module):
                 "icon": FALLBACK_ICON,
                 "tooltip": "",
                 "label": "Network",
-                "announcement": "",
             }
         )
         self.bus = self.ctx.dbus.system()
@@ -279,8 +278,7 @@ class Network(Module):
 
     def use_added(self, use: UseRecord) -> None:
         for key, value in list(self.sent.items()):
-            # the last announcement is not said again to a use that is added later
-            self.ctx.send(key, "" if key == "announcement" else value, use=use)
+            self.ctx.send(key, value, use=use)
 
     # -- on the dbus thread -------------------------------------------------------------------
 
@@ -410,10 +408,11 @@ class Network(Module):
             self.basis = basis
             values["strength"] = strength
         previous = self.sent.get("state") if self.sent.get("ready") else None
-        if previous is not None and (previous == "CONNECTED") != (state == "CONNECTED"):
-            values["announcement"] = announcement_text(kind, state, name, vpn_name)
+        changed = previous is not None and (previous == "CONNECTED") != (state == "CONNECTED")
         values["ready"] = True
         self.publish(values)
+        if changed:
+            self.ctx.announce(announcement_text(kind, state, name, vpn_name))
 
     def byte(self, value: object) -> int:
         percent = number(value)

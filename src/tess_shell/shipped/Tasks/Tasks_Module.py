@@ -12,8 +12,8 @@ Keys sent, for each use and filtered for it (its ``monitor`` and ``desktop``): `
 list has arrived and the script is answering), ``windows`` (a record per shown window, in the order
 the windows were opened: ``id``, ``title``, ``app``, ``name`` (the application's ``Name`` from its
 desktop entry, the desktop file name until it is read), ``icon``, ``active``, ``minimized``,
-``attention``, ``label``), ``has_windows`` and ``announcement`` (what a use with ``announce`` says
-aloud: a window opened, closed or wanting attention). ``available`` is the
+``attention``, ``label``) and ``has_windows``. A use with ``announce`` has the module say, politely,
+with ``ctx.announce``, a window opened, closed or wanting attention. ``available`` is the
 layer's: KWin is on the session bus. The icons and names come from ``ctx.icons`` on the worker and
 are made again when the desktop's icon theme changes; until an icon is read a button shows the
 shipped ``application-outline``.
@@ -241,16 +241,14 @@ class Tasks(Module):
             rows = self.rows(use, windows)
             self.shown[use.key] = [row["id"] for row in rows]
             values: dict[str, Any] = {"ready": ready, "windows": rows, "has_windows": bool(rows)}
-            if (use.key, "announcement") not in self.sent:
-                values["announcement"] = ""  # a value before the first announcement
-            if use.params.get("announce"):
-                said = self.announcement(use, ready, rows, windows)
-                if said:
-                    values["announcement"] = said
+            asked = bool(use.params.get("announce"))
+            said = self.announcement(use, ready, rows, windows) if asked else ""
             for key, value in values.items():
                 if self.sent.get((use.key, key)) != value or (use.key, key) not in self.sent:
                     self.sent[(use.key, key)] = value
                     self.ctx.send(key, value, use=use)
+            if said:
+                self.ctx.announce(said, use=use)
         self.all_ids = {window.id for window in windows}
 
     def announcement(
@@ -264,9 +262,9 @@ class Tasks(Module):
         opened, closed or came to want attention, in one message (the first three events, then a
         count). Nothing for the first list, for a change of the active window (the desktop says
         that itself) or for a window that only left the row (another desktop or monitor):
-        ``all_ids`` is the list of the whole shell before this one. The module is out of the
-        accessibility tree while the row is hidden (no window, or no script), so the last window's
-        closing and a script that stops are never heard: the layout cannot say them."""
+        ``all_ids`` is the list of the whole shell before this one. It is said through the surface's
+        window, not through a block, so the last window's closing is heard although the row is
+        then hidden."""
         if not self.sent.get((use.key, "ready")) or not ready:
             return ""
         before = {row["id"]: row for row in self.sent.get((use.key, "windows"), [])}

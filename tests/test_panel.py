@@ -369,29 +369,3 @@ def test_keep_mode_escape_hides_without_closing() -> None:
 
 def test_the_default_hide_route_is_the_kept_surface() -> None:
     assert SurfaceManager(StubApp(), {}, lambda k: k, ValueStore()).hide_mode == "KEEP"  # type: ignore[arg-type]
-
-
-def test_a_shown_panels_keyboard_is_sent_again_at_the_first_configure() -> None:
-    """tre drops a ``LayerWindow.set`` made before it has told Python the surface exists, and does
-    not apply it afterwards (the Launcher, shown on a busy machine before that, never had the
-    keyboard). The first ``configure`` makes the shell send a shown Panel's state again."""
-    m = manager()
-    s = surface(m, "Launcher")
-    m.show(s)
-    assert s.window is not None and s.window.get("keyboard") == "exclusive"
-    s.window.set(keyboard="none")  # what tre holds when the set at show time was dropped
-    m._reassert_shown(s)
-    assert s.window.get("keyboard") == "exclusive"
-
-
-def test_the_first_configure_leaves_a_covered_panel_and_a_hidden_one_alone() -> None:
-    m = manager()
-    s = surface(m, "Launcher")
-    m._reassert_shown(s)  # hidden: no window at all, nothing to send
-    assert s.window is None
-    m.show(s)
-    assert s.window is not None
-    s.covered = True  # a fullscreen window covers it: keyboard and input stay off
-    s.window.set(keyboard="none")
-    m._reassert_shown(s)
-    assert s.window.get("keyboard") == "none"
