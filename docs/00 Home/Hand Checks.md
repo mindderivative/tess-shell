@@ -40,6 +40,14 @@ What this means for a kit, and what the code session did on 2026-11-16 (`tess-sh
 - The maintainer ran the M5g kit: lines 0 to 18 pass. Line 13 of m6c stays manual or covered by the fake, because KWin 6.8.2 hosts `org.kde.kglobalaccel` itself and the shortcut service cannot be restarted alone.
 - A private KWin tests the shell's KWin protocol (script, window list, actions, input, shortcuts), not how the real KWin stacks or classifies things: where it contradicts the maintainer's own observation, the sandbox is wrong (the rule-layer claim was withdrawn).
 
+## The M7g Kit (code session's report, 2026-11-17, not run in the vault)
+
+- **Line 1, Orca:** the shell runs on the real session with a fake NetworkManager and a fake UPower on one private system bus (so nothing real is touched), with three battery and network states and a Launcher list (Kit Alpha, Beta, Gamma). One command per event (`orca-3-say.sh network-down`, `network-up`, `battery-critical`, `launcher-open`). The literal texts come from the modules' own functions: "Network disconnected", "Network connected, ethernet Wired connection 1", "Battery critical, 4 percent, discharging", "Kit Beta, 2 of 3", "Kit Gamma, 3 of 3", "No results". A checker reads Orca's own debug file (`orca --debug-file`) and records PASS or FAIL per text, or SKIP if that Orca writes no speech lines, and then the maintainer says what he heard. The texts are proved in the sandbox against real AT-SPI announcement signals; that run found and fixed two kit bugs.
+- **Orca is not installed on the maintainer's machine** (finding): `pacman -Q orca` is empty, there is no `/usr/bin/orca`, and the `orca` command on his PATH is a shim to an unrelated AppImage (`orca-ide`). The kit calls `/usr/bin/orca` and says to install it with `sudo pacman -S orca`. Installing a package is his action.
+- **Line 2, real Wi-Fi:** his wired connection is kept. The kit takes read-only snapshots (`nmcli`, `ip`) before and after joining and leaving Wi-Fi and passes only if the wired device, connection, address and default route are exactly as before. With the cable in, wired stays the main connection, so the Wi-Fi bars and a captive portal cannot be shown on his machine without taking wired down, which the kit never does; the fake covers those states (the M5c kit).
+- **Line 3, real audio:** speakers and a Bluetooth headset. `audio-2-expect.sh` prints, from the real default output and the shell's own functions, the icon and tooltip the Audio module must show (for example `bluetooth-audio` and "Phone Headset, 40 %").
+- **No hot-plug line.** No kit asks for a cable or power pull any more: the M5c lines that asked to unplug the Ethernet cable now point at the fake, the M3c hot-plug check says a monitor is switched off and on, never unplugged, and a test scans the checklists for it.
+
 ## The checks
 
 | Kit | Generator | Checks | State |
@@ -51,6 +59,7 @@ What this means for a kit, and what the code session did on 2026-11-16 (`tess-sh
 | `/tmp/tess-kwin-install-session` | `prepare_install_session.py` (name from the kit's folder; not read) | `install-session`: files, verify, stale unit, enable, start, stop, log out and in, undo | Run by the maintainer 2026-11-15, lines 0 to 4 and 6 to 10 reported passing; line 5's output matches the spec, no verdict reported ([Packaging and Session Start](../70%20Delivery/Packaging%20and%20Session%20Start.md)) |
 | `/tmp/tess-kwin-m5g` | `prepare_m5g_*` (not read) | The KWin script in the real KWin, the rule file, names the code could not confirm from files | Exists; no result reported |
 | `/tmp/tess-kwin-launcher` | `prepare_m6d_launcher*` (not read) | The Launcher on KWin: open, search, start, focus; `real-start.sh` needs no desktop | Exists; no result reported |
+| `/tmp/tess-kwin-m7g` | `tests/kwin/prepare_m7g_hardware.py` (starts nothing) | The three real-hardware lines: Orca, real Wi-Fi with the wired connection kept, real audio with speakers and a Bluetooth headset. Every script writes to `results/` and one line to `results.txt`; no copying from a terminal | Merged 2026-11-17 (`tess-shell` PR #57), not run by the maintainer yet. Orca is not installed on his machine (see below) |
 | `/tmp/tess-kwin-tre068` | `prepare_tre068.py` | The three tre 0.6.8 checks below (`run-tab.sh`, `run-popup.sh`, `run-token.sh`, `check.sh`) | Exists (written by the code session); no result reported |
 
 ## tre 0.6.8 checks
