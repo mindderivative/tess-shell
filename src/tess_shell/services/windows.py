@@ -27,6 +27,9 @@ class WindowService:
         self._ready = False
         # told of an exception a module's callback raised: (module, what, exception)
         self.on_module_error: Callable[[str, str, Exception], None] | None = None
+        # runs a module's callback ``(module, callback)`` so the host can name it while it runs
+        # (the app sets it: the running-callback record); ``None`` calls it directly
+        self.run_callback: Callable[[str, Callable[[], None]], None] | None = None
         kwin.on_windows = self._windows
         kwin.on_state = self._state
 
@@ -63,7 +66,10 @@ class WindowService:
     def _notify(self) -> None:
         for module, callback in list(self._listeners):
             try:
-                callback()
+                if self.run_callback is not None:
+                    self.run_callback(module, callback)
+                else:
+                    callback()
             except Exception as exc:
                 logger.opt(exception=True).error(f"windows: a callback of {module} raised")
                 if self.on_module_error is not None:

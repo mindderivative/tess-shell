@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,6 +9,7 @@ from pathlib import Path
 import tess_dl
 from tess_dl import Document
 
+from tess_shell.config.confine import Confinement
 from tess_shell.files.header import check_header
 from tess_shell.schema.findings import Finding
 from tess_shell.schema.look import read_stylesheet, read_theme
@@ -140,12 +140,13 @@ def load_shell_file(
     path: Path,
     base: Path,
     installed: Mapping[str, str],
+    confine: Confinement,
     modules: Mapping[str, ModuleDef] | None = None,
     import_module: Callable[[str], str | None] | None = None,
     icons: IconSource | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Stages 1 to 4 for a ``*_Shell.tdl``: read, parse, header, schema. A file that fails an
-    earlier stage is not checked further."""
+    earlier stage is not checked further. A path the file writes must end inside ``confine``."""
     document, findings = load_file(path, base)
     if document is None:
         return None, findings
@@ -154,14 +155,14 @@ def load_shell_file(
     if header:
         return None, header
 
-    def read_text(relative: str) -> str:
-        return (path.parent / relative).read_text(encoding="utf-8")
-
-    def resolve_path(relative: str) -> str:
-        return os.path.abspath(path.parent / os.path.expanduser(relative))
-
     shell, findings = read_shell(
-        document, name, read_text, modules, import_module, icons, resolve_path
+        document,
+        name,
+        confine.read_text(path),
+        modules,
+        import_module,
+        icons,
+        confine.resolve_path(path),
     )
     return shell, findings
 

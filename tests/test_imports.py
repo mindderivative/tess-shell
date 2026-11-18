@@ -18,6 +18,7 @@ RULES: dict[str, set[str] | None] = {
     "schema": {
         "tess_dl",
         "tess_shell.appearance",
+        "tess_shell.config.confine",  # PathOutsideConfig: a path that leaves the folders
         "tess_shell.schema",
         "tess_shell.binder.model",
         "tess_shell.binder.convert",

@@ -14,6 +14,7 @@ from typing import Any, Protocol
 from loguru import logger
 
 from tess_shell.logging import note_module_error
+from tess_shell.modules.running import CallbackRecord, entry_name
 from tess_shell.modules.ticks import Subscription, TimeSource
 from tess_shell.services.api import (
     AppInfo,
@@ -151,7 +152,7 @@ class ModuleApps:
         surfaces.request_token(key, got)
 
     def on_changed(self, callback: Callable[[], None]) -> ServiceSubscription:
-        sub = self._port.on_changed(callback)
+        sub = self._port.on_changed(lambda: self._ctx.run_callback(callback))
         self._subscriptions.append(sub)
         return sub
 
@@ -211,7 +212,7 @@ class ModuleSurface:
             for key in keys:
                 use = self._ctx.uses.get(key)
                 if use is not None:
-                    callback(use)
+                    self._ctx.run_callback(callback, use)
 
         sub = self._port.watch_shown(shown)
         self._subscriptions.append(sub)
@@ -242,8 +243,10 @@ class ModuleContext:
         windows: Callable[[], WindowsPort | None] | None = None,
         apps: Callable[[], AppsPort | None] | None = None,
         surfaces: Callable[[], SurfacePort | None] | None = None,
+        callbacks: CallbackRecord | None = None,
     ) -> None:
         self.name = name
+        self._callbacks = callbacks  # the host's record of the callback that is running
         self.caller: UseRecord | None = None  # the use whose block raised the event being handled
         self._popups = popups
         self._dbus_port = dbus
@@ -349,12 +352,13 @@ class ModuleContext:
             keys = [use.key if isinstance(use, UseRecord) else use]
         port = self._surfaces() if self._surfaces else None
         if port is None or not keys:
-            self.log.debug(f"ctx.announce({text!r}): no surface to say it on")
+            # never the text: it can be a window title or a track
+            self.log.debug("ctx.announce: no surface to say it on")
             return
 
         def say() -> None:
             if not port.announce(keys, text, politeness):
-                self.log.debug(f"ctx.announce({text!r}): no use of the module is on an open window")
+                self.log.debug("ctx.announce: no use of the module is on an open window")
 
         hop = self._call_soon() if self._call_soon else None
         if hop is None:
@@ -384,7 +388,7 @@ class ModuleContext:
             if self._closed:
                 return
             try:
-                fn()
+                self.run_callback(fn)
             except Exception as exc:
                 self.log.opt(exception=True).error("a call_soon callback raised")
                 note_module_error(self.name, "a call_soon callback", exc)
@@ -511,7 +515,7 @@ class ModuleContext:
         if self._closed or fn is None:
             return
         try:
-            fn(name)
+            self.run_callback(fn, name, entry=what)
         except Exception as exc:
             self.log.opt(exception=True).error(f"{what}({name!r}) raised")
             note_module_error(self.name, what, exc)
@@ -523,10 +527,18 @@ class ModuleContext:
         self._subscriptions.append(sub)
         return sub
 
+    def run_callback(self, fn: Callable[..., Any], *args: Any, entry: str | None = None) -> None:
+        """Call ``fn(*args)`` as a callback of this module on the loop thread: the host's record
+        names it (module and entry point, ``entry`` or ``fn``'s name) while it runs."""
+        if self._callbacks is None:
+            fn(*args)
+        else:
+            self._callbacks.run(self.name, entry or entry_name(fn), fn, *args)
+
     def _guard(self, fn: Callable[[], None]) -> Callable[[], None]:
         def run() -> None:
             try:
-                fn()
+                self.run_callback(fn)
             except Exception as exc:
                 self.log.opt(exception=True).error("a tick callback raised")
                 note_module_error(self.name, "a tick callback", exc)

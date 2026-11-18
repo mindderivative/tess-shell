@@ -46,6 +46,8 @@ Messages are written `level: text`. **ERROR** and **WARNING** need your attentio
 | `missing-directory`, `unresolved-path`, `relative-path` | A path in `settings.tdl` is not a folder, uses a variable that is not set, or is not absolute. |
 | `icon-not-found` (warning) | No icon set has that icon name. The hint offers close names. At run time the shell shows a broken-image icon and logs `no icon named ...; showing the broken-image icon`. |
 | `icon-set-invalid` (warning) | A `.json` file in an `Icons` folder cannot be read as an icon set; it is skipped. |
+| `insecure-permissions` (warning) | Your configuration folder, a folder that holds modules, a module's folder or its Python file can be written by group or others, or belongs to another user. Write access to a module's Python is code execution as you: `chmod go-w PATH`. The shell starts anyway; `check --strict` fails on it ([page 2](02-configuration-folder.md#trust-and-security)). |
+| `path-outside-config` | An `Import:`, `Style:`, `Source:` or a `path` param names a file outside your configuration folder (after `..` and symbolic links are resolved). Put the file inside the folder, or add its folder to `Directories`. |
 | `uid-write` (warning) | The shell could not add the `UID:` line to a file; your file is unchanged ([page 2](02-configuration-folder.md#identifiers-and-backups)). |
 | `reload refused (N errors); the shell keeps what it shows` (error) | A reload found errors in some file and changed nothing. Fix them; they are printed just above and listed by `status` under "last errors". |
 | `settings.tdl: Debug applies after a restart` (also `Directories and Registry`, `Main_Shell`, `Appearance.Follow_Desktop`) | A setting that a reload cannot apply. Restart the shell. |
@@ -97,6 +99,9 @@ Messages are written `level: text`. **ERROR** and **WARNING** need your attentio
 | `a Button with only an icon needs a Label, so assistive technology can name it` (warning) | Add `Label: "..."` to the button. |
 | `locale 'xx_XX' is not installed (see `locale -a`): the Clock shows the default month and day names` (warning) | The `locale` of a Clock is not generated on your system. |
 | `Call: the module M is not loaded, so A cannot run` / `Call: the module M has no action A` (error) | A handler names a module that no Bar or Panel uses, or an action it does not have. The hint lists the module's actions. |
+| `slow-module` (warning) | More than 100 callbacks of the module took over 4 ms on the loop in a minute; the message names the entry point. Hand slow work to a thread and bring the result back with `ctx.call_soon`. |
+| `many-threads` (warning) | The module has more than 16 live threads of its own. Join or stop the ones it no longer needs. |
+| `module M (UID u) failed: restart N of 5 in S s`, then `failed again after 5 restarts; it stays failed until a reload` | The module's `start()` (or another lifecycle method) raised; the shell starts it again with a back-off and gives up after five tries. Fix the Python and save it: a reload tries again. |
 | An error with a traceback, "module M: ... raised" | A module's Python failed. The shell keeps running and the traceback is in the log; the last errors also show in `tesserae-shell status`. If it is a shipped module, report it ([below](#reporting-a-bug)). |
 
 ## Common problems

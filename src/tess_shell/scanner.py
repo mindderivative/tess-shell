@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from importlib.metadata import version
+from itertools import chain
 from pathlib import Path
 
 import tess_el
@@ -14,7 +14,9 @@ from tess_dl import Document
 
 import tess_shell
 from tess_shell.appearance import Appearance
+from tess_shell.config.confine import Confinement
 from tess_shell.config.discovery import discover, is_shipped, shipped_dir
+from tess_shell.config.permissions import permission_findings
 from tess_shell.config.settings import Settings
 from tess_shell.files.icons import IconSets
 from tess_shell.files.loader import (
@@ -113,14 +115,22 @@ def scan(settings: Settings, config: Path) -> Scan:
     stubs = {name: mf.definition for name, mf in modules.items()}
     names_by_path = {mf.path.resolve(): name for name, mf in modules.items()}
 
+    # every path a file writes (Import, Style, Source, a path param) ends inside these folders
+    confine = Confinement.of(
+        [config, *chain.from_iterable(settings.directories.values())], shipped_dir()
+    )
+
     def importer(file: Path) -> Callable[[str], str | None]:
-        return lambda text: names_by_path.get((file.parent / text).resolve())
+        def find(text: str) -> str | None:
+            return names_by_path.get(confine.target(file, text).resolve())
+
+        return find
 
     styles: dict[Path, StyleDef | None] = {}
 
     def style_loader(module_path: Path) -> Callable[[str], StyleDef | None]:
         def load(text: str) -> StyleDef | None:
-            path = (module_path.parent / text).resolve()
+            path = confine.target(module_path, text).resolve()
             if path not in styles:
                 styles[path], found = load_style_file(path, config, versions)
                 findings.extend(found)
@@ -128,20 +138,8 @@ def scan(settings: Settings, config: Path) -> Scan:
 
         return load
 
-    def file_readers(
-        module_path: Path,
-    ) -> tuple[Callable[[str], str], Callable[[str], str]]:
-        def read_text(relative: str) -> str:
-            return (module_path.parent / relative).read_text(encoding="utf-8")
-
-        def resolve_path(relative: str) -> str:
-            return os.path.abspath(module_path.parent / os.path.expanduser(relative))
-
-        return read_text, resolve_path
-
     # pass 2: the layouts, with every module known
     for name, mf in list(modules.items()):
-        read_text, resolve_path = file_readers(mf.path)
         full, found = read_module(
             documents[mf.path],
             display_name(mf.path, config),
@@ -149,8 +147,8 @@ def scan(settings: Settings, config: Path) -> Scan:
             importer(mf.path),
             style_loader(mf.path),
             icons,
-            read_text,
-            resolve_path,
+            confine.read_text(mf.path),
+            confine.resolve_path(mf.path),
         )
         findings.extend(found)
         modules[name] = ModuleFile(full, mf.path, mf.shipped) if full else mf
@@ -175,7 +173,9 @@ def scan(settings: Settings, config: Path) -> Scan:
                 findings.extend(_register(stylesheets, sheet_shipped, sheet, path, config))
     for path in paths:
         if path.name.endswith("_Shell.tdl"):
-            shell, found = load_shell_file(path, config, versions, registry, importer(path), icons)
+            shell, found = load_shell_file(
+                path, config, versions, confine, registry, importer(path), icons
+            )
             if shell is not None:
                 shells[path] = shell
             findings.extend(found)
@@ -201,6 +201,7 @@ def scan(settings: Settings, config: Path) -> Scan:
         settings.shortcuts, main, {name: mf.definition for name, mf in modules.items()}
     )
     findings.extend(found)
+    findings.extend(permission_findings(permission_paths(config, settings, modules)))
     own = sum(1 for path in paths if not is_shipped(path))  # the user's files, not the shipped ones
     return Scan(
         own,
@@ -212,6 +213,19 @@ def scan(settings: Settings, config: Path) -> Scan:
         RuntimeIcons(icons),
         shortcuts,
     )
+
+
+def permission_paths(
+    config: Path, settings: Settings, modules: dict[str, ModuleFile]
+) -> list[Path]:
+    """What write access to would be code execution as the user: the configuration folder, the
+    folders that hold modules, each of your modules' folders and Python files (never the shipped
+    ones)."""
+    paths = [config, *settings.directories.get("Modules", ())]
+    for mf in modules.values():
+        if not mf.shipped and mf.python.is_file():
+            paths.extend((mf.python.parent, mf.python))
+    return paths
 
 
 def _register[T: (ThemeDef, StylesheetDef)](
