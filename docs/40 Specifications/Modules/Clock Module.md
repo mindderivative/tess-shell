@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-11-14
+updated: 2026-11-17
 tags: [spec/module, needs-verification]
 ---
 
@@ -175,7 +175,7 @@ A use is named by its head alone; `Name:` gives it a unique name, and an unnamed
 
 > [!NOTE]
 > **As built in M2 (accepted 2026-11-04, D20)**
-> `hour_cycle: desktop` follows 24 hours until the KDE regional setting is read, with the `locale` param in M3. `locale` and `tooltip_format` are M3b; `format`, `hour_cycle` and `timezone` are built.
+> `hour_cycle: desktop` means 12 hours when the Clock's locale counts to 12 hours (the `locale` param, else the first of `LC_ALL`, `LC_TIME` and `LANG` that is set) and 24 hours for an unset, `C`, `POSIX` or uninstalled locale; an explicit `12`, `24` or `format` still wins (`tess-shell` PR #59, 2026-11-17, code session's report; the KDE regional setting in `kdeglobals` or a portal key would be the real source and is not read). Before that it followed 24 hours with the `locale` param in M3. `locale` and `tooltip_format` are M3b; `format`, `hour_cycle` and `timezone` are built.
 
 ## Python Contract
 

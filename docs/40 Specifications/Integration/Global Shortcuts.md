@@ -5,7 +5,7 @@ type: spec
 status: accepted
 owner: phil
 created: 2026-11-02
-updated: 2026-11-15
+updated: 2026-11-17
 tags: [spec/integration, integration/dbus, needs-verification]
 ---
 
@@ -74,7 +74,7 @@ A surface or a module declares a default key; the user changes it in System Sett
 
 | Place | Key | Registers |
 |---|---|---|
-| Bar | `Reveal_Key: Meta+B` ([Bar](../Surfaces/Bar.md) table; default none) | `show.<Bar name>` (a reveal key reveals; whether a second press hides is a [Bar](../Surfaces/Bar.md) question) |
+| Bar | `Reveal_Key: Meta+B` (removed 2026-11-17, [Bar](../Surfaces/Bar.md); shown for history) | `show.<Bar name>` (a reveal key reveals; whether a second press hides is a [Bar](../Surfaces/Bar.md) question) |
 | Panel | `Shortcut: Meta+Space` (proposed key, a Panel that opens from a key, [Panel](../Surfaces/Panel.md)) | `toggle.<Panel name>` |
 | A module action | `Shortcut` on the action in the module's TDL (proposed) | `call.<Module>.<action>` |
 
