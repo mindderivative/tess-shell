@@ -84,7 +84,10 @@ def check(options: Options) -> int:
     if settings is not None:
         result = scan(settings, config)
         count, findings = result.count, result.findings
-    failed = any(f.severity == "error" for f in findings)
+    # ``--strict``: a warning (``insecure-permissions``, ``image-not-found``, ...) fails it too
+    failed = any(
+        f.severity == "error" or (options.strict and f.severity == "warning") for f in findings
+    )
     if options.json:
         shown = findings[:MAX_FINDINGS]
         print(
@@ -101,6 +104,8 @@ def check(options: Options) -> int:
     else:
         if findings:
             print_findings(findings, config)
+        if failed and not any(f.severity == "error" for f in findings):
+            print("tesserae-shell: --strict: the warnings above fail the check", file=sys.stderr)
         if not failed and not options.quiet:
             print(f"ok: {count} files checked")
     return int(ExitCode.CONFIG if failed else ExitCode.OK)
@@ -424,6 +429,7 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         kwin.on_fullscreen = manager.set_fullscreen
         windows = WindowService(kwin)
         windows.on_module_error = note_module_error
+        windows.run_callback = host.run_callback
         host.windows = windows
         icon_service.apps.watch()  # a desktop entry that comes or goes: the icons read it again
         # ctx.apps: the launcher's search and start over the same index; the list is built on the

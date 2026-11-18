@@ -11,6 +11,7 @@ from tess_dl import Number as DlNumber
 from tess_shell.binder import convert
 from tess_shell.binder import model as m
 from tess_shell.binder.model import BindError
+from tess_shell.config.confine import PathOutsideConfig
 from tess_shell.schema.findings import nearest
 from tess_shell.schema.keys import ChordError, parse_chord
 from tess_shell.schema.ranges import plain, range_of, scoped
@@ -254,6 +255,8 @@ def _coerce_kind(
                 assert read_text is not None
                 try:
                     return m.Text(read_text(text), origin=origin)
+                except PathOutsideConfig as exc:
+                    raise ValueProblem("path-outside-config", str(exc), exc.HINT) from exc
                 except OSError as exc:
                     raise ValueProblem(
                         "bad-value",

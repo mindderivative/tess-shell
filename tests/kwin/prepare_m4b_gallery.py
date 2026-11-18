@@ -210,7 +210,11 @@ def script(name: str, text: str) -> None:
 
 def write_gallery(cfg: Path) -> None:
     shutil.rmtree(cfg, ignore_errors=True)
-    write_example(cfg, BODY)
+    # a path in a shell file must end inside the configuration folder (Security Model, control 3):
+    # the images the gallery shows are copied in and named from there
+    images = cfg / "Shells" / "fixtures"
+    shutil.copytree(FIX, images, ignore=shutil.ignore_patterns("cli", "__pycache__"))
+    write_example(cfg, BODY.replace(str(FIX), str(images)))
     (cfg / "settings.tdl").write_text(SETTINGS)
     folder = cfg / "Modules" / "Toggler"
     folder.mkdir(parents=True)

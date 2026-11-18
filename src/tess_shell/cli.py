@@ -86,7 +86,10 @@ def _build_parser() -> argparse.ArgumentParser:
         return p
 
     add("run", "start the shell (default)")
-    add("check", "validate settings and shell files")
+    check = add("check", "validate settings and shell files")
+    check.add_argument(
+        "--strict", action="store_true", help="a warning fails the check too (exit code 1)"
+    )
     add("version", "print versions")
     schema = add("schema", "print the schema of the shell's files as JSON (with --json)")
     schema.add_argument(
@@ -223,6 +226,7 @@ def main(argv: Sequence[str] | None = None, *, runner: Runner | None = None) -> 
         json=getattr(args, "json", False),
         quiet=getattr(args, "quiet", False),
         timeout=getattr(args, "timeout", 5.0),
+        strict=getattr(args, "strict", False),
     )
     command = args.command or "run"
     if command == "version":

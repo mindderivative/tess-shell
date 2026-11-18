@@ -10,3 +10,4 @@ class Options:
     json: bool = False
     quiet: bool = False
     timeout: float = 5.0  # seconds a control command waits for the shell
+    strict: bool = False  # ``check``: a warning fails it too

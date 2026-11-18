@@ -27,9 +27,11 @@ from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.module import Event, Module
 from tess_shell.modules.context import FocusPort, ModuleContext, PopupPort, UseRecord
-from tess_shell.modules.ticks import TimeSource
+from tess_shell.modules.running import CallbackRecord, entry_name
+from tess_shell.modules.supervise import MANY_THREADS, MAX_TRIES, Restarts, thread_counts
+from tess_shell.modules.ticks import Subscription, TimeSource
 from tess_shell.schema.blocks import BUILTIN_ACTIONS
-from tess_shell.schema.findings import Finding, nearest
+from tess_shell.schema.findings import Finding, ModuleFinding, nearest
 from tess_shell.schema.model import ModuleDef
 from tess_shell.services.api import (
     AppsPort,
@@ -156,11 +158,29 @@ def _where(exc: BaseException, py_path: Path) -> tuple[int, str]:
 
 
 class ModuleHost:
-    def __init__(self, store: ValueStore, ticks: TimeSource, config_root: Path) -> None:
+    def __init__(
+        self,
+        store: ValueStore,
+        ticks: TimeSource,
+        config_root: Path,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        """``clock`` (monotonic seconds) times the running-callback record and the restarts of a
+        failed module; a test passes its own."""
         self.store = store
         self.ticks = ticks
         self.config_root = config_root
         self.loaded: dict[str, LoadedModule] = {}
+        # the module callback that is running on the loop (Security Model, control 5): the
+        # watchdog reads ``callbacks.running()`` from its own thread
+        self.callbacks = CallbackRecord(
+            self._module_warning, clock=clock, periodic=self._check_threads
+        )
+        # a failed module comes back after 1, 2, 4 ... seconds, five times (control 6)
+        self.restarts = Restarts(clock)
+        self._restart_sub: Subscription | None = None
+        self._thread_warned: set[str] = set()
+        self._stopping = False
         self.popups: PopupPort | None = None  # set by the app once the surfaces exist
         self.dbus: DBusPort | None = None  # set by the app: the D-Bus service layer
         self.audio: AudioPort | None = None  # set by the app: the sound service (ctx.audio)
@@ -175,6 +195,11 @@ class ModuleHost:
         # the uses made for the entries of a For: they come and go while the shell runs, so a
         # reload (which brings the modules to the uses the files give) must not drop them
         self._dynamic: dict[str, Use] = {}
+
+    def run_callback(self, module: str, fn: Callable[[], None]) -> None:
+        """Call ``fn`` as a callback of ``module`` on the loop thread, named in the record while it
+        runs. For a service on the loop thread that calls a module's callback (the window list)."""
+        self.callbacks.run(module, entry_name(fn), fn)
 
     def _finding(
         self, definition: ModuleDef, rule: str, message: str, hint: str = "", line: int = 0
@@ -198,7 +223,8 @@ class ModuleHost:
             # compiled from the source every time, never from a bytecode cache: a file saved twice
             # in one second at the same size would otherwise load the old code
             code = compile(py_path.read_text(encoding="utf-8"), str(py_path), "exec")
-            exec(code, module.__dict__)  # noqa: S102 - this is what loading a module is
+            # this is what loading a module is: its file runs, as the user, in this process
+            self.callbacks.run(definition.name, "import", exec, code, module.__dict__)  # noqa: S102
         except (Exception, SyntaxError) as exc:
             if previous is not None:
                 sys.modules[name] = previous
@@ -305,11 +331,12 @@ class ModuleHost:
             lambda: self.windows,
             lambda: self.apps,
             lambda: self.surfaces,
+            self.callbacks,
         )
         instance = classes[0].__new__(classes[0])
         instance.ctx = ctx
         try:
-            instance.__init__()  # type: ignore[misc]
+            self.callbacks.run(definition.name, "__init__", instance.__init__)  # type: ignore[misc]
         except Exception as exc:
             line, _ = _where(exc, py_path)
             return None, [
@@ -467,6 +494,7 @@ class ModuleHost:
         )
         started = time.monotonic()
         loaded.ctx.caller = loaded.ctx.uses.get(handler.use)  # what ctx.popup() calls from
+        previous = self.callbacks.enter(module, handler.action)
         try:
             # the arguments the method declares arrive as keywords too; ``event.args`` is whole
             fn(event, **action_spec(fn).keywords(event.args))
@@ -476,6 +504,7 @@ class ModuleHost:
             )
             note_module_error(module, f"{module}.{handler.action}", exc)
         finally:
+            self.callbacks.leave(previous)
             loaded.ctx.caller = None
         took = time.monotonic() - started
         if took > SLOW_ACTION:
@@ -567,12 +596,15 @@ class ModuleHost:
         event = Event("call", "", args)
         started = time.monotonic()
         loaded.ctx.caller = None
+        previous = self.callbacks.enter(module, action)
         try:
             result = fn(event, **spec.keywords(args))
         except Exception as exc:
             logger.opt(exception=True).error(f"{module}.{action} raised on {why}")
             note_module_error(module, f"{module}.{action}", exc)
             raise ActionError(f"{module}.{action} raised {type(exc).__name__}: {exc}") from exc
+        finally:
+            self.callbacks.leave(previous)
         took = time.monotonic() - started
         if took > SLOW_ACTION:
             logger.warning(f"{module}.{action} took {took * 1000:.0f} ms on the loop ({why})")
@@ -581,22 +613,126 @@ class ModuleHost:
     # -- lifecycle ------------------------------------------------------------------------------
 
     def _call(self, loaded: LoadedModule, what: str, fn: Callable[[], Any]) -> Finding | None:
+        """Call one of the module's lifecycle methods. One that raises marks only this module
+        failed (the others run on) and, unless it was ``stop``, starts the back-off that brings it
+        up again (:meth:`_schedule`)."""
+        name = loaded.definition.name
         try:
-            fn()
+            self.callbacks.run(name, what, fn)
         except Exception as exc:
             line, _ = _where(exc, loaded.py_path)
             loaded.state = "failed"
             loaded.ctx.close()
+            if what != "stop":
+                self._schedule(name, loaded.ctx.uid)
             return Finding(
                 str(loaded.py_path),
                 line,
                 1,
                 "error",
                 f"module-{what}",
-                f"{loaded.definition.name}: {what}() raised {type(exc).__name__}: {exc}",
-                "the module is marked failed; its surfaces keep their last values",
+                f"{name}: {what}() raised {type(exc).__name__}: {exc}",
+                f"the module is marked failed (UID {loaded.ctx.uid}); its surfaces keep their "
+                "last values",
             )
         return None
+
+    # -- faults are per module: restart with a back-off ----------------------------------------
+
+    def _schedule(self, name: str, uid: str) -> None:
+        """``name`` failed: plan its restart, or say that the tries are used up."""
+        if self._stopping:
+            return
+        wait = self.restarts.failed(name)
+        if wait is None:
+            logger.error(
+                f"module {name} (UID {uid}): failed again after {MAX_TRIES} restarts; it stays "
+                "failed until a reload"
+            )
+            return
+        tries = self.restarts.tries(name)
+        logger.warning(
+            f"module {name} (UID {uid}) failed: restart {tries} of {MAX_TRIES} in {wait:g} s"
+        )
+        if self._restart_sub is None:
+            # the shared time source, only while a restart waits: it costs no wake-up otherwise
+            self._restart_sub = self.ticks.subscribe("second", self.restart_due)
+
+    def restart_due(self) -> None:
+        """Loop thread, from the time source each second while a restart waits: start every failed
+        module whose back-off is over."""
+        for name in self.restarts.due():
+            self._restart(name)
+        if not self.restarts.waiting() and self._restart_sub is not None:
+            self._restart_sub.cancel()
+            self._restart_sub = None
+
+    def _restart(self, name: str) -> None:
+        """A new instance of the failed module from its file as it is now, started like the first.
+        A failure schedules the next try (the lifecycle call does; a failed import is here)."""
+        failed = self.loaded.get(name)
+        if failed is None or failed.state != "failed" or self._stopping:
+            self.restarts.reset(name)
+            return
+        uid = failed.ctx.uid
+        logger.info(f"module {name} (UID {uid}): restarting")
+        new, problems = self.load(failed.definition, failed.py_path, uid, failed.uses)
+        if new is None:
+            report(problems)
+            self._schedule(name, uid)
+            return
+        problems += self.start(new)
+        if new.state == "running":
+            self.restarts.started(name)
+        report(problems)
+
+    # -- threads: a module with many of its own (control 6) -------------------------------------
+
+    def _check_threads(self) -> None:
+        """Once a minute, at the end of a callback: warn once for a module with more than
+        :data:`MANY_THREADS` live threads of its own."""
+        own = {
+            name: (loaded.py_path, loaded.py_path.parent.name == name)
+            for name, loaded in self.loaded.items()
+            if loaded.state != "stopped"
+        }
+        if not own:
+            return
+        try:
+            counts = thread_counts(own)
+        except Exception:
+            logger.opt(exception=True).debug("counting the modules' threads failed")
+            return
+        for name, count in sorted(counts.items()):
+            if count > MANY_THREADS and name not in self._thread_warned:
+                self._thread_warned.add(name)
+                self._module_warning(
+                    name,
+                    "many-threads",
+                    f"{name}: {count} live threads of its own (more than {MANY_THREADS})",
+                )
+
+    def _module_warning(self, module: str, rule: str, message: str) -> None:
+        """A warning about ``module`` (``slow-module``, ``many-threads``), logged with its name."""
+        loaded = self.loaded.get(module)
+        hints = {
+            "slow-module": "hand slow work to a thread; bring the result back with ctx.call_soon",
+            "many-threads": "join or stop the threads the module no longer needs (in stop())",
+        }
+        report(
+            [
+                ModuleFinding(
+                    str(loaded.py_path) if loaded else module,
+                    1,
+                    1,
+                    "warning",
+                    rule,
+                    message,
+                    hints.get(rule, ""),
+                    module=module,
+                )
+            ]
+        )
 
     def start(self, loaded: LoadedModule) -> list[Finding]:
         """Validate each use, then ``start()``. A failure marks only this module failed."""
@@ -604,7 +740,9 @@ class ModuleHost:
         for use in loaded.uses:
             record = loaded.ctx.uses[use.key]
             try:
-                loaded.instance.validate_use(record)
+                self.callbacks.run(
+                    loaded.definition.name, "validate_use", loaded.instance.validate_use, record
+                )
             except ValueError as exc:
                 findings.append(
                     self._finding(
@@ -640,7 +778,9 @@ class ModuleHost:
         new one ``available`` and ``use_added``."""
         findings: list[Finding] = []
         try:
-            loaded.instance.validate_use(record)
+            self.callbacks.run(
+                loaded.definition.name, "validate_use", loaded.instance.validate_use, record
+            )
         except ValueError as exc:
             findings.append(self._finding(loaded.definition, "module-use", f"{record.name}: {exc}"))
         if appeared and loaded.state == "running":
@@ -674,6 +814,10 @@ class ModuleHost:
     def _replace(self, old: LoadedModule, src: ModuleSource, uses: list[Use]) -> list[Finding]:
         """The module's Python changed: import the new code first; only if that works stop the old
         instance (Module Contract > Lifecycle, code reload)."""
+        name = src.definition.name
+        self.restarts.reset(name)  # a reload gives a failed module its five tries again
+        self._thread_warned.discard(name)
+        self.callbacks.forget(name)
         new, problems = self.load(src.definition, src.py_path, src.uid, uses)
         if new is None:
             self.loaded[src.definition.name] = old  # the old instance keeps running
@@ -700,6 +844,9 @@ class ModuleHost:
         resolved = {p.resolve() for p in changed}
         for name in [n for n in self.loaded if n not in uses_by_module]:
             gone = self.loaded.pop(name)
+            self.restarts.reset(name)
+            self._thread_warned.discard(name)
+            self.callbacks.forget(name)
             if gone.state == "running":
                 self._call(gone, "stop", gone.instance.stop)
             gone.ctx.close()
@@ -786,6 +933,11 @@ class ModuleHost:
         return [*uses, *(u for u in self._dynamic.values() if u.module == name)]
 
     def stop_all(self) -> None:
+        self._stopping = True  # a module that fails while stopping is not started again
+        self.restarts.clear()
+        if self._restart_sub is not None:
+            self._restart_sub.cancel()
+            self._restart_sub = None
         for loaded in self.loaded.values():
             if loaded.state == "running":
                 found = self._call(loaded, "stop", loaded.instance.stop)
@@ -799,6 +951,7 @@ def report(findings: list[Finding], source: Mapping[str, str] | None = None) -> 
     """Log each finding as ``file:line: message``."""
     for f in findings:
         note_finding(f)
-        logger.error(
-            f"{f.file}:{f.line}:{f.column}: {f.message}" + (f" ({f.hint})" if f.hint else "")
+        logger.log(
+            "WARNING" if f.severity == "warning" else "INFO" if f.severity == "info" else "ERROR",
+            f"{f.file}:{f.line}:{f.column}: {f.message}" + (f" ({f.hint})" if f.hint else ""),
         )

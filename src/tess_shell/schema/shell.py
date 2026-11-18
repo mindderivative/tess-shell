@@ -16,6 +16,7 @@ import tess_dl
 from tess_dl import Block, Document, Property
 
 from tess_shell.binder import model as m
+from tess_shell.config.confine import PathOutsideConfig
 from tess_shell.schema import blocks
 from tess_shell.schema.findings import Finding, Severity, nearest
 from tess_shell.schema.model import (
@@ -106,6 +107,10 @@ class _Ctx:
 
     def problem(self, o: tess_dl.Origin | None, key: str, exc: ValueProblem) -> None:
         self.add(o, exc.rule, f"{key}: {exc.message}", exc.hint)
+
+    def outside(self, o: tess_dl.Origin | None, exc: PathOutsideConfig) -> None:
+        """A path this file wrote leaves the configured directories (Security Model)."""
+        self.add(o, "path-outside-config", str(exc), PathOutsideConfig.HINT)
 
     def name(self, prop: Property) -> str | None:
         value = prop.value
@@ -248,7 +253,11 @@ def _image(ctx: _Ctx, prop: Property, slot: m.SlotValue | None) -> m.Value | Non
     if not isinstance(name, str) or not name:
         ctx.add(prop.value_origin, "bad-value", f"{prop.key} is the path of an image file", "")
         return None
-    path = ctx.resolve_path(name)
+    try:
+        path = ctx.resolve_path(name)
+    except PathOutsideConfig as exc:
+        ctx.outside(prop.value_origin, exc)
+        return None
     if not os.path.isfile(path):
         ctx.add(
             prop.value_origin,
@@ -407,7 +416,11 @@ def _imports(ctx: _Ctx, entry: Property) -> list[Child]:
         if text.endswith("_Shell.tdl"):
             ctx.not_built(item.origin or entry.value_origin, "Import of a shell file")
             continue
-        found = ctx.import_module(text) if ctx.import_module is not None else None
+        try:
+            found = ctx.import_module(text) if ctx.import_module is not None else None
+        except PathOutsideConfig as exc:
+            ctx.outside(item.origin or entry.value_origin, exc)
+            continue
         if found is None:
             ctx.add(
                 item.origin or entry.value_origin,
@@ -470,10 +483,14 @@ def _param_value(ctx: _Ctx, module: str, decl: ParamDecl, entry: Property) -> m.
     except ValueProblem as exc:
         ctx.problem(entry.value_origin, entry.key, exc)
         return None
-    if decl.type == "path" and isinstance(value, m.Text) and value.value:
-        return m.Text(ctx.resolve_path(value.value), origin=origin)
-    if decl.type == "icon" and isinstance(value, m.Text) and value.value:
-        return _icon_param(ctx, entry, value.value, origin)
+    try:
+        if decl.type == "path" and isinstance(value, m.Text) and value.value:
+            return m.Text(ctx.resolve_path(value.value), origin=origin)
+        if decl.type == "icon" and isinstance(value, m.Text) and value.value:
+            return _icon_param(ctx, entry, value.value, origin)
+    except PathOutsideConfig as exc:
+        ctx.outside(entry.value_origin, exc)
+        return None
     return value
 
 
@@ -2799,8 +2816,13 @@ def _param_decls(ctx: _Ctx, block: Block) -> dict[str, ParamDecl]:
                 default = coerce(
                     _PARAM_KINDS[type_word], default_prop.value, ctx.origin(default_prop.key_origin)
                 )
+                if type_word == "path" and isinstance(default, m.Text) and default.value:
+                    # a call's path is made absolute (``_param_value``); so is the default
+                    default = m.Text(ctx.resolve_path(default.value), origin=default.origin)
             except ValueProblem as exc:
                 ctx.problem(default_prop.value_origin, "Default", exc)
+            except PathOutsideConfig as exc:
+                ctx.outside(default_prop.value_origin, exc)
         out[entry.type] = ParamDecl(entry.type, type_word, default, ctx.origin(entry.origin))
     return out
 
@@ -2869,14 +2891,19 @@ def read_module(
                     ctx.not_built(entry.key_origin, "a Style file here")
                 else:
                     style_file = text
-                    style = ctx.load_style(text)
-                    if style is None:
-                        ctx.add(
-                            entry.value_origin,
-                            "style-not-found",
-                            f"the style file {text} could not be read",
-                            "a path is relative to the module file; the findings above say why",
-                        )
+                    try:
+                        style = ctx.load_style(text)
+                    except PathOutsideConfig as exc:
+                        ctx.outside(entry.value_origin, exc)
+                        style = None
+                    else:
+                        if style is None:
+                            ctx.add(
+                                entry.value_origin,
+                                "style-not-found",
+                                f"the style file {text} could not be read",
+                                "a path is relative to the module file; the findings above say why",
+                            )
             elif entry.key == "Import":
                 ctx.not_built(entry.key_origin, "Import")
             else:

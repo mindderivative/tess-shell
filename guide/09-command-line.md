@@ -32,7 +32,7 @@ The commands, with the arguments and options each adds:
 | Command | Its own arguments and options | What it does |
 |---|---|---|
 | `tesserae-shell run` | none | start the shell (default) |
-| `tesserae-shell check` | none | validate settings and shell files |
+| `tesserae-shell check` | `--strict` | validate settings and shell files |
 | `tesserae-shell version` | none | print versions |
 | `tesserae-shell schema` | `--out FILE` | print the schema of the shell's files as JSON (with --json) |
 | `tesserae-shell install-session` | `--print` `--enable` `--remove` `--force` | write the desktop file and the systemd user unit (--enable, --remove, --print) |
@@ -74,6 +74,8 @@ ok: 3 files checked
 
 or, for each finding, the file, line and column, the severity, the message, the offending line with a caret and a hint (see [hot reload](02-configuration-folder.md#hot-reload) for an example). It counts only your own files. A finding is an **error** (exit code 1) or a **warning**, which is printed but does not fail the check. At most 50 findings are printed, then `... and N more`. `--quiet` leaves out the `ok:` line.
 
+`--strict` makes a warning fail the check too: the warnings are printed and the exit code is 1 (for a script or a git hook that wants a folder with no `insecure-permissions` or `image-not-found`).
+
 If `settings.tdl` has an error, `check` stops there and reports only that.
 
 With `--json` it prints one object:
@@ -82,7 +84,7 @@ With `--json` it prints one object:
 {"ok": true, "config_dir": "...", "files": 3, "errors": [], "omitted": 0}
 ```
 
-Each entry of `errors` (warnings are in the list too) has `file`, `line`, `column`, `severity`, `rule`, `message` and `hint`. Exit codes: 0 no errors, 1 errors, 2 the configuration folder does not exist.
+Each entry of `errors` (warnings are in the list too) has `file`, `line`, `column`, `severity`, `rule`, `message` and `hint`. Exit codes: 0 no errors, 1 errors (or, with `--strict`, warnings), 2 the configuration folder does not exist.
 
 `check` proves a file is valid, which includes that every key, module parameter and theme token named in it exists. It does not run modules or contact the desktop, so it cannot tell you that a `Call` names an action a module lacks (that is reported when the shell starts or reloads) or that a monitor name exists.
 
@@ -229,7 +231,7 @@ options:
 
 ```text
 usage: tesserae-shell check [-h] [--config-dir PATH] [--json] [--quiet]
-                            [--timeout SECONDS]
+                            [--timeout SECONDS] [--strict]
 
 options:
   -h, --help         show this help message and exit
@@ -238,6 +240,7 @@ options:
   --quiet            only warnings and errors
   --timeout SECONDS  how long a control command waits for the shell (default
                      5)
+  --strict           a warning fails the check too (exit code 1)
 ```
 
 #### tesserae-shell version --help
