@@ -20,7 +20,7 @@ classifiers = [
 ]
 dependencies = [
     "tesserae-engine>=0.6.8,<0.7",
-    "tesserae-el>=0.1.2,<0.2",
+    "tesserae-el>=0.2.0,<0.3",
     "tesserae-dl>=0.2.0,<0.3",
     "loguru>=0.7.3,<0.8",
     "inotify-simple>=2.0.1,<3",

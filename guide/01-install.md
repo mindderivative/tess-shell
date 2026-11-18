@@ -6,7 +6,7 @@ This guide describes tesserae-shell 0.1.2 (schema version 1.9, the one `tesserae
 <!-- END generated: version-info -->
 
 <!-- BEGIN generated: release-state -->
-The code this guide describes is the released version, 0.1.2.
+The code this guide describes is a little **ahead of the 0.1.2 release** on PyPI: the CHANGELOG lists the difference under *Unreleased*. The pages mark what was added after 0.1.2; a package installed from PyPI at 0.1.2 does not have it until the next release.
 
 <!-- END generated: release-state -->
 
@@ -28,7 +28,7 @@ Python `>=3.14` is required.
 | Package | Version | What it is for |
 |---|---|---|
 | `tesserae-engine` | `>=0.6.8,<0.7` | the rendering engine (imported as `tess_re`) |
-| `tesserae-el` | `>=0.1.2,<0.2` | the expression language of the `<\| \|>` slots (imported as `tess_el`) |
+| `tesserae-el` | `>=0.2.0,<0.3` | the expression language of the `<\| \|>` slots (imported as `tess_el`) |
 | `tesserae-dl` | `>=0.2.0,<0.3` | the reader of TDL files (imported as `tess_dl`) |
 | `loguru` | `>=0.7.3,<0.8` | the log |
 | `inotify-simple` | `>=2.0.1,<3` | notices a saved file, for hot reload |
