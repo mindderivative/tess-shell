@@ -8,7 +8,7 @@ This guide describes tesserae-shell 0.1.2 (schema version 1.9, the one `tesserae
 <!-- END generated: version-info -->
 
 <!-- BEGIN generated: release-state -->
-The code this guide describes is the released version, 0.1.2.
+The code this guide describes is a little **ahead of the 0.1.2 release** on PyPI: the CHANGELOG lists the difference under *Unreleased*. The pages mark what was added after 0.1.2; a package installed from PyPI at 0.1.2 does not have it until the next release.
 
 <!-- END generated: release-state -->
 
