@@ -43,7 +43,6 @@ class BarDef:
     shortcut_mode: Origin | None = None  # where ``Shortcut_Mode: true`` is written; None: false
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
-    reveal_key: Text | None = None  # ``Reveal_Key``: the canonical key string, where it is written
 
 
 @dataclass(frozen=True, slots=True)

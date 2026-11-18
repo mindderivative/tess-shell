@@ -17,8 +17,9 @@ the layer's: the watcher is on the session bus. A layout shows itself with
 
 The clicks are actions on the loop thread: ``activate``, ``secondary``, ``scroll`` and ``menu``. The
 item's menu is the shell's own: ``AboutToShow`` and ``GetLayout`` of its ``com.canonical.dbusmenu``,
-then the Popup ``Tray_Menu`` opens beside the tray with the tree in ``caller.data`` (the module
-``Tray_Menu`` draws it, and sends the click back). While it is open a ``LayoutUpdated`` or
+then the Popup ``Tray_Menu`` opens beside the clicked icon with the tree in ``caller.data``
+(the module ``Tray_Menu`` draws it, and sends the click back). While it is open a
+``LayoutUpdated`` or
 ``ItemsPropertiesUpdated`` of that menu closes and opens it again with the new tree; an item that
 leaves while its menu is open closes it. A change of the desktop's icon theme while it is open
 makes the icons of its entries again (on the worker) and gives them to the open Popup, which stays

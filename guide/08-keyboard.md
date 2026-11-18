@@ -119,7 +119,6 @@ The five fixed actions are `Enter_Shortcut_Mode`, `Exit_Shortcut_Mode`, `Set_Sho
 |---|---|---|
 | `Panel` | `Shortcut` | the same as `Toggle_<Name>` |
 | `Frame` | `Shortcut` | the same as `Toggle_<Name>` |
-| `Bar` | `Reveal_Key` | the same as `Show_<Name>` |
 
 A surface's own key and a Shortcuts entry for the same action: the entry wins, with one warning. Two actions with the same key (any case, order or alias) are both left without it, with one warning. A name that matches no surface is a warning and the shortcut is not registered.
 
@@ -212,7 +211,7 @@ Shell {
 
 <!-- END generated: example-set:08-keyboard/shortcuts -->
 
-In this example `Toggle_Notes` and `Hide_Notes` toggle and hide the Panel `Notes`; `Toggle_Launcher` names the shipped Launcher ([below](#the-launcher)); `Volume_Up`, `Volume_Down`, `Mute` and `Play_Pause` are handlers of your own that call actions of the Audio and Media modules (each module's actions are listed on [page 5](05-modules.md)); and the Panel `Scratch` carries its own `Shortcut` key, which is the same as `Toggle_Scratch`. A Bar has a `Reveal_Key`, the same as `Show_<Name>`; since a Bar is always shown (`Auto_Hide` is not built), a key that shows a Bar has nothing to do yet, and `Hide_<Name>` takes a Panel or a Frame, not a Bar. A handler entry's name is what System Settings shows for the action. A `Call` handler loads its module even when no Bar or Panel uses it.
+In this example `Toggle_Notes` and `Hide_Notes` toggle and hide the Panel `Notes`; `Toggle_Launcher` names the shipped Launcher ([below](#the-launcher)); `Volume_Up`, `Volume_Down`, `Mute` and `Play_Pause` are handlers of your own that call actions of the Audio and Media modules (each module's actions are listed on [page 5](05-modules.md)); and the Panel `Scratch` carries its own `Shortcut` key, which is the same as `Toggle_Scratch`. A Bar has no key of its own: it is always shown (`Auto_Hide` is not built), so the old `Reveal_Key` was removed and a Bar that still writes it is an error naming the key. `Show_<Name>` for a Bar has nothing to do yet, and `Hide_<Name>` takes a Panel or a Frame, not a Bar. A handler entry's name is what System Settings shows for the action. A `Call` handler loads its module even when no Bar or Panel uses it.
 
 How a key is chosen:
 

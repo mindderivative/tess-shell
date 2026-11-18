@@ -2,9 +2,9 @@
 collected (Global Shortcuts > Action Names and Forms, Failure Modes).
 
 The sources are the ``Shortcuts { }`` block of ``settings.tdl`` and the keys the surfaces declare
-(a Panel's or Frame's ``Shortcut``, a Bar's ``Reveal_Key``). They are put together when the
-shell files are known (``scanner.scan``), so a name that matches no surface and two actions
-that share a key are found at load, before anything is registered, and
+(a Panel's or Frame's ``Shortcut``; a Bar has none, it is always shown). They are put
+together when the shell files are known (``scanner.scan``), so a name that matches no
+surface and two actions that share a key are found at load, before anything is registered, and
 ``tesserae-shell check`` reports them:
 
 * ``Toggle_<Name>``, ``Show_<Name>``, ``Hide_<Name>`` name a Panel, Bar or Frame; a name that
@@ -54,16 +54,17 @@ class _Declared:
 
 def _surfaces(
     shell: ShellDef | None,
-) -> tuple[dict[str, str], set[str], list[BarDef | PanelDef | FrameDef]]:
+) -> tuple[dict[str, str], set[str], list[PanelDef | FrameDef]]:
     """The Names a ``Toggle_<Name>`` may use (Bars, Panels, Frames, melded Panels) with their kind,
     the Popup names (no key opens a Popup), and the Bars, Panels and Frames (for their own keys)."""
     kinds: dict[str, str] = {}
     popups: set[str] = set()
-    keyed: list[BarDef | PanelDef | FrameDef] = []
+    keyed: list[PanelDef | FrameDef] = []
     for monitor in shell.monitors if shell is not None else ():
         for surface in monitor.surfaces:
             kinds[surface.name] = "bar" if isinstance(surface, BarDef) else "panel"
-            keyed.append(surface)
+            if not isinstance(surface, BarDef):  # a Bar has no key of its own
+                keyed.append(surface)
         for frame in monitor.frames:
             kinds[frame.name] = "frame"
             keyed.append(frame)
@@ -89,15 +90,14 @@ def build_plan(
     kinds, popups, keyed = _surfaces(shell)
     declared: dict[str, _Declared] = {}
 
-    def own(surface: BarDef | PanelDef | FrameDef) -> None:
-        key = surface.reveal_key if isinstance(surface, BarDef) else surface.shortcut
+    def own(surface: PanelDef | FrameDef) -> None:
+        key = surface.shortcut
         if key is None:
             return
-        verb = "show" if isinstance(surface, BarDef) else "toggle"
-        id_ = f"{VERBS[verb]}_{surface.name}"
+        id_ = f"{VERBS['toggle']}_{surface.name}"
         o = key.origin
         where = f"{o.file}:{o.line}:{o.column}"
-        action = Action(id_, friendly_text(id_), verb, surface.name, (), where=where)
+        action = Action(id_, friendly_text(id_), "toggle", surface.name, (), where=where)
         declared[id_] = _Declared(action, parse_chord(key.value), o.file, o.line, o.column, True)
 
     for surface in keyed:

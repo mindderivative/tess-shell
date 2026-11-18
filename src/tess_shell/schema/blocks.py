@@ -429,6 +429,11 @@ BAR_NOT_BUILT = (
     "Padding",
     "Class",
 )
+# Surface keys a Bar once read and no longer does: an error naming the key, with this hint. A Bar
+# is always shown (Auto_Hide is not built), so a key that reveals it had nothing to do.
+BAR_REMOVED: dict[str, str] = {
+    "Reveal_Key": "delete it: a Bar is always shown, so no key reveals it (Auto_Hide is not built)",
+}
 BAR_STYLE: dict[str, str] = {
     "Background": "color",
     "Fill": "color",

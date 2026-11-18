@@ -65,7 +65,7 @@ The common keys of every module use are:
 
 ## Clock
 
-The time, with a tooltip that shows the date. With no `format` the shell uses `%H:%M`, or `%I:%M %p` when `hour_cycle` is `12`; `desktop` (the default) currently means 24 hours, because the desktop's own regional setting is not read yet. A `locale` the system lacks is warned about once and ignored (see `locale -a` for the ones you have). A format with seconds (`%S`) makes it update every second, otherwise once a minute.
+The time, with a tooltip that shows the date. With no `format` the shell uses `%H:%M`, or `%I:%M %p` when `hour_cycle` is `12`; `desktop` (the default) follows the locale: 12 hours when the time format of the Clock's locale counts to 12 (`en_US` does, `de_DE` and `en_GB` do not), else 24. The locale is the `locale` param, or, when that is empty, the one the environment names (`LC_ALL`, then `LC_TIME`, then `LANG`); with none set, `C` or one the system lacks, it is 24 hours. The shell reads no 12/24-hour switch of System Settings (the Settings portal values it follows are appearance ones: colour scheme, accent, fonts, icon theme, animations). A `locale` the system lacks is warned about once and ignored (see `locale -a` for the ones you have). A format with seconds (`%S`) makes it update every second, otherwise once a minute.
 
 <!-- BEGIN generated: module:Clock -->
 The time, with a tooltip that shows the date.
@@ -74,7 +74,7 @@ The time, with a tooltip that shows the date.
 |---|---|---|---|
 | `format` | string | `""` | A strftime pattern; empty is chosen by hour_cycle. |
 | `locale` | string | `""` | A locale name such as de_DE for month and day names; empty is the process's own. The system must have it; a missing one is warned about and ignored. |
-| `hour_cycle` | string | `"desktop"` | desktop, 12 or 24. |
+| `hour_cycle` | string | `"desktop"` | desktop, 12 or 24. desktop is 12 hours when the time format of the locale (the locale param, else LC_ALL, LC_TIME or LANG) counts to 12, as en_US does, and 24 otherwise or when no locale is set. |
 | `timezone` | string | `""` | An IANA zone such as Europe/Berlin; empty is the local zone. |
 | `tooltip_format` | string | `"%A, %d %B %Y"` | A strftime pattern for the text of the tooltip the pointer opens on the clock. |
 

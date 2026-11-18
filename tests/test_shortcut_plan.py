@@ -265,15 +265,24 @@ def test_a_bar_cannot_be_hidden_or_toggled_by_a_key(tmp_path: Path) -> None:
     assert len(warnings(findings, "shortcut-bar")) == 2
 
 
-def test_the_keys_a_panel_and_a_bar_declare_are_the_equal_entries(tmp_path: Path) -> None:
-    actions, findings = plan(
-        tmp_path, "", panel_key='Shortcut: "meta+space",', bar_key='Reveal_Key: "Ctrl+Alt+B",'
-    )
+def test_the_key_a_panel_declares_is_the_equal_entry(tmp_path: Path) -> None:
+    actions, findings = plan(tmp_path, "", panel_key='Shortcut: "meta+space",')
     assert findings == []
-    assert list(actions) == ["Show_Top_Bar", "Toggle_Launcher"]
+    assert list(actions) == ["Toggle_Launcher"]
     assert actions["Toggle_Launcher"].keys == (parse_chord("Meta+Space"),)
-    assert actions["Toggle_Launcher"].kind == "toggle" and actions["Show_Top_Bar"].kind == "show"
-    assert actions["Show_Top_Bar"].keys == (parse_chord("Ctrl+Alt+B"),)
+    assert actions["Toggle_Launcher"].kind == "toggle"
+
+
+def test_a_bar_that_still_names_reveal_key_is_an_error_at_the_key(tmp_path: Path) -> None:
+    write(tmp_path, "", bar_key='Reveal_Key: "Ctrl+Alt+B",')
+    result, findings = load(tmp_path)
+    removed = [f for f in findings if f.rule == "removed-key"]
+    assert len(removed) == 1 and removed[0].severity == "error", findings
+    assert "Reveal_Key was removed" in removed[0].message
+    assert "always shown" in removed[0].hint
+    where = f"{removed[0].line}:{removed[0].column}"
+    assert where == at(tmp_path / "Shells" / "Main_Shell.tdl", "Reveal_Key")
+    assert result is None or result.shortcuts == ()
 
 
 def test_a_frame_declares_toggle_with_its_shortcut_key(tmp_path: Path) -> None:
