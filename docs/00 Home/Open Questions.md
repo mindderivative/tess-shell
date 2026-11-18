@@ -127,6 +127,7 @@ The same notes as a plain list, with no JavaScript:
 - [TRE-REQ-022 Content-Sized Layer Surface](../80%20Requests/TRE-REQ-022%20Content-Sized%20Layer%20Surface.md)
 - [TRE-REQ-023 Active Descendant](../80%20Requests/TRE-REQ-023%20Active%20Descendant.md)
 - [TRE-REQ-024 Outside Press and Keyboard Leave on Layer Surfaces](../80%20Requests/TRE-REQ-024%20Outside%20Press%20and%20Keyboard%20Leave%20on%20Layer%20Surfaces.md)
+- [TRE-REQ-025 Third-Party Licence Notices in the Wheel](../80%20Requests/TRE-REQ-025%20Third-Party%20Licence%20Notices%20in%20the%20Wheel.md)
 - [V1 Scope](../10%20Vision/V1%20Scope.md)
 - [Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)
 - [Value Types and Conversion](../42%20Python%20API/Value%20Types%20and%20Conversion.md)
