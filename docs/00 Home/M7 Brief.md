@@ -28,7 +28,7 @@ tags: [moc, roadmap, brief]
 |---|---|
 | M7e licences | Merged (`tess-shell` PR #58, CI result green): a `NOTICE` file in the wheel and sdist covering the in-package assets (the mdi icon set under Apache-2.0, three handle SVGs, `error.png`), what `tesserae-engine` 0.6.9 bundles (four fonts, 495 Rust crates, five `auditwheel` libraries) and the dependency closure; `tests/test_notice.py` (9 tests) fails when a dependency, an asset, a licence or a range is missing, each proved by mutation |
 | M7g real-hardware kit | Merged (`tess-shell` PR #57, 2026-11-17): `/tmp/tess-kwin-m7g`, three lines, all scripted ([Hand Checks > The M7g Kit (code session's report, 2026-11-17, not run in the vault)](Hand%20Checks.md#the-m7g-kit-code-sessions-report-2026-11-17-not-run-in-the-vault)). Orca is not installed on the maintainer's machine; the captive-portal part cannot be shown without taking his wired connection down, so the fake covers it |
-| M7f gaps | First half merged-ready (PR #59), being rebased |
+| M7f gaps | First half merged (`tess-shell` PR #59, CI green): `Reveal_Key` removed (schema 1.9 to 1.10, a removal), Clock `hour_cycle: desktop` follows the locale, the README and the Tray header corrected. Not built: import of another `_Shell.tdl`, which waits for M7a's path rules |
 | M7h volume OSD | PR #60, one latency test flaked at 104 ms against 100 ms, re-running |
 | M7d version policy and migrate | PR #61: CI found a real regression (the reload client imported `tess_dl`); sent back to its builder |
 | M7a security model | Still being built |

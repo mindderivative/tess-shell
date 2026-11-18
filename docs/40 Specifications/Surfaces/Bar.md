@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-11-05
+updated: 2026-11-17
 tags: [spec/surface, needs-verification]
 ---
 
@@ -130,9 +130,13 @@ A Bar belongs to a `Monitor` block, and so to one monitor ([Shell File](../../41
 | `Visible`                                            | `true` (the default) starts the Bar shown; `false` starts it hidden. The opposite of the earlier `Hidden`                                                                                                                                                                                                        | Decided (key name accepted 2026-10-29; renamed from `Hidden`, 2026-11-02)                                        |
 | `Auto_Hide`                                          | Slide out after the delay when the pointer leaves; default true                                                                                                                                                                                                                                                  | Decided (on by default, opt-out, 2026-10-27)                                                                     |
 | `Auto_Hide_Delay`                                    | The delay in milliseconds                                                                                                                                                                                                                                                                                        | Decided that it exists; default 1000 ms proposed                                                                 |
-| `Reveal_Key`                                         | A keyboard shortcut that reveals the Bar; default none                                                                                                                                                                                                                                                           | Decided (default none, 2026-10-27); key accepted 2026-10-29                                                      |
+| `Reveal_Key` (removed 2026-11-17: see the note under this table)                                         | A keyboard shortcut that reveals the Bar; default none                                                                                                                                                                                                                                                           | Decided (default none, 2026-10-27); key accepted 2026-10-29                                                      |
 | `Text_Rotation`                                      | Rotate text on a vertical Bar; default off                                                                                                                                                                                                                                                                       | Decided (opt-in, 2026-10-27); key accepted 2026-10-29                                                            |
 | `Animation`                                          | Slide or fade, with a duration                                                                                                                                                                                                                                                                                   | Decided (key name accepted 2026-10-29)                                                                           |
+
+> [!WARNING]
+> **`Reveal_Key` is removed (code session's report of `tess-shell` PR #59, 2026-11-17)**
+> A Bar is always shown and `Auto_Hide` is not built, so `Reveal_Key` only registered a `Show_<Bar>` shortcut that did nothing. The shell removes the key: a Bar that still writes it gets the error `removed-key` at the key, with a hint to delete it. The schema export goes from 1.9 to 1.10, a removal and not an addition. The key returns with `Auto_Hide`, the hover strip and the reveal, which is a larger piece of work that the maintainer decides ([Global Shortcuts](../Integration/Global%20Shortcuts.md), [Validation and Errors](../Runtime/Validation%20and%20Errors.md)).
 
 The Bar has no `Margin` and no raw `Anchor` or `Size`: the shell computes tre's `anchor`, `size` and `margin` from the placement keys (Geometry). `Padding` is allowed, as on every element that has `Children` ([Common Keys and Conventions](../../41%20TDL%20Reference/Common%20Keys%20and%20Conventions.md)).
 
