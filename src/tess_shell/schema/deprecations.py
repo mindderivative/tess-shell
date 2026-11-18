@@ -13,12 +13,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
-from typing import Literal
-
-from tess_dl import Block, Document, Entry, For, If, Property
+from typing import TYPE_CHECKING, Literal
 
 from tess_shell.schema.findings import Finding
-from tess_shell.schema.tree import position
+
+if TYPE_CHECKING:  # the parser is imported inside the functions: the thin client never loads it
+    from tess_dl import Block, Document, Entry, Property
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +48,8 @@ DEPRECATIONS: tuple[Deprecation, ...] = ()
 
 
 def _blocks(entries: Iterable[Entry]) -> Iterator[Block]:
+    from tess_dl import Block, For, If
+
     for entry in entries:
         if isinstance(entry, Block):
             yield entry
@@ -66,6 +68,8 @@ def walk(root: Block) -> Iterator[Block]:
 
 def _entries_of(block: Block) -> Iterator[Property]:
     """The properties of ``block`` itself, also those inside its ``If`` and ``For`` bodies."""
+    from tess_dl import For, If, Property
+
     stack: list[Entry] = list(block.entries)
     while stack:
         entry = stack.pop(0)
@@ -82,6 +86,8 @@ def deprecation_findings(document: Document, file: str) -> list[Finding]:
     table = [d for d in DEPRECATIONS if d.kind in ("key", "block")]
     if not table:
         return []
+    from tess_shell.schema.tree import position
+
     out: list[Finding] = []
     for block in walk(document.root):
         for dep in table:
