@@ -195,7 +195,13 @@ def test_kill_strays_removes_a_process_that_outlives_its_sandbox() -> None:
     with kitlib.private_bus() as bus:
         sleeper = subprocess.Popen(["sleep", "300"], env=bus.env, start_new_session=True)
         try:
-            assert sleeper.pid in kitlib.processes_with_runtime(bus.runtime)
+            # exec closes Popen's error pipe a moment before the kernel fills in the new
+            # process's /proc/PID/environ, so a scan right away can miss it: wait for it
+            kitlib.wait_until(
+                lambda: sleeper.pid in kitlib.processes_with_runtime(bus.runtime),
+                10,
+                "the sleeper's environment to name the sandbox",
+            )
         finally:
             runtime = bus.runtime
     # the sandbox's own clean-up killed it (no bus, no sleeper)
