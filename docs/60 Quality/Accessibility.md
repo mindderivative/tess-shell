@@ -16,11 +16,11 @@ tags: [quality, accessibility, needs-verification]
 
 > [!NOTE]
 > **The active-descendant relation is requested (2026-11-17)**
-> A focused text field with a list should name the selected row as its active descendant, with no focus move ([TRE-REQ-023 Active Descendant](../80%20Requests/TRE-REQ-023%20Active%20Descendant.md)). Until tre builds it the Launcher announces the selection with polite messages.
+> A focused text field with a list should name the selected row as its active descendant, with no focus move ([TRE-REQ-023 Active Descendant](../80%20Requests/TRE-REQ-023%20Active%20Descendant.md)). tre built it on a local branch on 2026-11-17 (unreleased): the property is set on the field, and a screen reader sees the focused state move to the row while tre's focus stays on the field, not an `ActiveDescendantChanged` signal. Until it is released and tried with Orca the Launcher announces the selection with polite messages.
 
 > [!NOTE]
 > **tre 0.6.9 can announce without a node (2026-11-17)**
-> `Window.announce(text, politeness)` exists in `tesserae-engine` 0.6.9 ([TRE-REQ-021 Announce Without a Node](../80%20Requests/TRE-REQ-021%20Announce%20Without%20a%20Node.md)). The 1x1 live Box per module that the shell uses today, and its zero-width-space toggle, can be replaced by it once the shell's engine floor is 0.6.9. A hidden module and a repeated message then announce correctly. Not heard with Orca yet.
+> `Window.announce(text, politeness)` exists in `tesserae-engine` 0.6.9 ([TRE-REQ-021 Announce Without a Node](../80%20Requests/TRE-REQ-021%20Announce%20Without%20a%20Node.md)). The shell's engine floor is 0.6.9 (`tess-shell` PR #56, merged 2026-11-17, by the code session's report) and announcements are `Window.announce` now, not live regions: the 1x1 live Box per module, the `announcement` value and the zero-width-space toggle are gone. A hidden module, a repeated message and the last window closing (Tasks) are announced correctly. The code session tested it through a real AT-SPI bus (polite and assertive announcements, a repeated text heard each time, a hidden module heard). Not heard with Orca yet: that is the maintainer's M7g line.
 
 ## Purpose and Scope
 
