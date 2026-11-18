@@ -67,16 +67,20 @@ EXIT_NOTES: dict[str, str] = {
     "OK": "Done.",
     "CONFIG": (
         "The files have errors (`check`, `run`, `reload`), a control command ran and failed "
-        "(an unknown name, an action that raised), or `install-session` kept a file that "
-        "differs."
+        "(an unknown name, an action that raised), `install-session` kept a file that "
+        "differs, or `migrate --check` found files to change."
     ),
     "ENVIRONMENT": (
         "The machine cannot run it: no Wayland compositor with layer-shell, no session bus, "
-        "`XDG_RUNTIME_DIR` unusable, the config folder missing (`check`), or `systemctl` missing "
-        "or refusing (`install-session`)."
+        "`XDG_RUNTIME_DIR` unusable, the config folder missing (`check`, `migrate`), "
+        "`systemctl` missing or refusing (`install-session`), or a file `migrate` could not "
+        "migrate."
     ),
     "NOT_RUNNING": "A control command found no running shell.",
-    "ALREADY_RUNNING": "A second `run`: another shell holds the instance lock.",
+    "ALREADY_RUNNING": (
+        "A second `run`: another shell holds the instance lock. `migrate` refuses for the same "
+        "reason, unless `--force`."
+    ),
     "TIMEOUT": "A control command got no answer within `--timeout` seconds.",
     "LOST_COMPOSITOR": (
         "The Wayland connection was lost (the compositor went away). The shell stops what it "

@@ -12,6 +12,7 @@ from tess_dl import Document
 
 from tess_shell.config.confine import Confinement
 from tess_shell.files.header import check_header
+from tess_shell.schema.deprecations import deprecation_findings
 from tess_shell.schema.findings import Finding
 from tess_shell.schema.imports import ImportBroken, ImportedShell, ImportMissing, ShellImporter
 from tess_shell.schema.look import read_stylesheet, read_theme
@@ -24,6 +25,7 @@ from tess_shell.schema.model import (
     ThemeDef,
 )
 from tess_shell.schema.shell import read_shell, read_style
+from tess_shell.schema.tree import old_language_finding
 
 
 def display_name(path: Path, base: Path) -> str:
@@ -55,6 +57,10 @@ def load_file(path: Path, base: Path) -> tuple[Document | None, list[Finding]]:
             Finding(name, 1, 1, "error", "unreadable", f"cannot read: {exc.strerror}", "")
         ]
     result = tess_dl.parse(text, path=name)
+    if result.errors:
+        old = old_language_finding(text, name)
+        if old is not None:  # a 0.1 file does not parse as 0.2: say why, not where it breaks
+            return None, [old]
     findings = [
         Finding(name, e.origin.line, e.origin.column, "error", e.code, e.message, e.hint)
         for e in result.errors
@@ -80,8 +86,9 @@ def load_module_document(
     document, findings = load_file(path, base)
     if document is None:
         return None, findings
-    header = check_header(document, display_name(path, base), installed)
-    return (None, header) if header else (document, [])
+    name = display_name(path, base)
+    header = check_header(document, name, installed)
+    return (None, header) if header else (document, deprecation_findings(document, name))
 
 
 def load_style_file(
@@ -107,7 +114,8 @@ def load_style_file(
     header = check_header(document, name, installed)
     if header:
         return None, header
-    return read_style(document, name)
+    style, found = read_style(document, name)
+    return style, [*found, *deprecation_findings(document, name)]
 
 
 def load_theme_file(
@@ -121,7 +129,8 @@ def load_theme_file(
     header = check_header(document, name, installed)
     if header:
         return None, header
-    return read_theme(document, name)
+    theme, found = read_theme(document, name)
+    return theme, [*found, *deprecation_findings(document, name)]
 
 
 def load_stylesheet_file(
@@ -135,7 +144,8 @@ def load_stylesheet_file(
     header = check_header(document, name, installed)
     if header:
         return None, header
-    return read_stylesheet(document, name, module_names)
+    sheet, found = read_stylesheet(document, name, module_names)
+    return sheet, [*found, *deprecation_findings(document, name)]
 
 
 def shell_importer(
@@ -206,7 +216,7 @@ def load_shell_file(
         import_shell,
         path,
     )
-    return shell, findings
+    return shell, [*findings, *deprecation_findings(document, name)]
 
 
 @dataclass(frozen=True, slots=True)

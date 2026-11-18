@@ -39,8 +39,10 @@ Messages are written `level: text`. **ERROR** and **WARNING** need your attentio
 
 | Finding | What it means and what to do |
 |---|---|
-| `tdl-old-version`: "this file is written for TDL 0.1; the shell reads TDL 0.2" | The file's metadata says an older language version. Migrate it (the hint says how: a slot is written `<\| expression \|>`) and write `TDL: 0.2`. |
-| `version-pin`: "this file needs TDL ... or newer" | The file needs a newer shell or `tesserae-dl`. Upgrade the package. |
+| `tdl-old-version`: "this file is written for TDL 0.1; the shell reads TDL 0.2" | The file's metadata says an older language version. Run `tesserae-shell migrate` (`--check` first lists what it would change): a slot is written `<\| expression \|>` in TDL 0.2. |
+| `shell-too-old`: "this file needs tesserae-shell X.Y or newer" | The file's `Shell:` pin asks for a newer shell than the one installed. Install the release the hint names, or lower the pin. |
+| `version-pin`: "this file needs TDL ... or newer" | The file needs a newer `tesserae-dl` (or, for a `TRE:` or `TEL:` pin, a newer engine or language library). Upgrade the package. |
+| `deprecated-key` (a warning) | The key or block still works but is renamed; the message names the replacement and the release that removes the old name. `tesserae-shell migrate` rewrites it. |
 | `unknown-key` ("unknown key in Bar Colour", hint "did you mean ...?") | A typo or a key that does not exist. The hint lists the nearest keys; the tables in this guide list all of them. |
 | `not-built` ("the Bar key Auto_Hide is not built in M1") | The key exists in the design but is not built yet. Remove it. |
 | `import-cycle` | Files import each other in a circle, or a file imports itself. The message prints the chain of files; remove one import. |

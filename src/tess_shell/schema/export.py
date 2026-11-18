@@ -36,6 +36,7 @@ from tess_shell.config import settings as cfg
 from tess_shell.config.paths import FOLDERS
 from tess_shell.schema import blocks, default_panels, default_popups, docs
 from tess_shell.schema import keys as chords
+from tess_shell.schema.deprecations import mark_schema
 from tess_shell.schema.look import DEFAULT_FONT, STYLE_UNION, SYSTEM_FONT, read_theme, token_kind
 from tess_shell.schema.look import GROUPS as THEME_GROUPS
 from tess_shell.schema.model import (
@@ -1529,12 +1530,14 @@ def _shortcuts() -> Json:
 def schema_dict() -> Json:
     """The export as plain data (dicts, lists, strings, numbers, booleans, ``None``), in a stable
     order."""
+    block_specs = {name: _block_spec(name) for name in blocks.BLOCKS}
+    mark_schema(block_specs)  # a deprecated key or block carries ``deprecated`` (none in 0.2.0)
     return {
         "schema_version": SCHEMA_VERSION,
         "shell_version": __version__,
         "kinds": _kinds(),
         "roots": _roots(),
-        "blocks": {name: _block_spec(name) for name in blocks.BLOCKS},
+        "blocks": block_specs,
         "settings": _settings(),
         "events": _events(),
         "actions": _actions(),
