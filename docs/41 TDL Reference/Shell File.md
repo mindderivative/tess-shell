@@ -5,7 +5,7 @@ type: tdl-ref
 status: review
 owner: phil
 created: 2026-10-26
-updated: 2026-11-14
+updated: 2026-11-17
 tags: [tdl-ref, spec/surface, needs-verification]
 ---
 
@@ -148,6 +148,26 @@ Per-type keys (a Frame's side thicknesses and corner shapes, a Popup's gravity) 
 - A module use whose file is not found: error with the search paths tried.
 - An `Attach_To` that never resolves: error at load; a target that disappears while running: warning, the surface stays hidden.
 - A module with no matching `.py`: error naming both files.
+
+## Importing Another Shell File (Built in M7f, code session's report of `tess-shell` PR #69, 2026-11-17; not run in the vault)
+
+- A Monitor's `Children` write `Import: path_Shell.tdl` (one file or a list). The imported file's `Shell { }` root (surface blocks and further `Import`s, no `Monitor`) comes in at that position on that Monitor; imports nest.
+- The path goes through the config confinement helper ([Security Model](../60%20Quality/Security%20Model.md), control 3): an import outside the config folder is `path-outside-config`.
+- An error inside an imported file is reported at that file's own `path:line:column`, with `import-failed` at the `Import`.
+- New rules: `import-cycle` (the chain printed), `import-not-found` (the path looked at), `import-twice`, `import-monitor`, `import-misplaced`, `main-shell-surfaces`. A name used in two files is the existing `name-duplicate` error naming both positions. The not-built error for this `Import` is gone. The names `import-failed`, `import-twice`, `import-monitor`, `import-misplaced` and `main-shell-surfaces` are the code session's own; `import-cycle` and `import-not-found` reuse the module-import codes.
+- Hot reload: the watcher adds the directory of every imported file that no folder watch covers, refreshed after every scan (a refused one included), so saving an imported file reloads the shell. Imported files outside `Shells/` also get a `UID:`.
+- Schema export 1.11 (an addition: a new root `Imported_Shell`). `tess-ui`'s fixture needs re-recording at 1.11, after 1.10.
+- The guide's page 4 has a section and the example `guide/examples/04-surfaces/split`; 25 new tests, the live ones and the de-duplication mutation-checked.
+
+### Questions from the Build
+
+1. [ ] May one file be imported under two Monitors? Context: [V1 Scope](../10%20Vision/V1%20Scope.md) says a surface is defined once and referenced from several monitors (the maintainer's requirement of 2026-10-25), and the vault's own example does it. As built, the second `Import` of a file, under two Monitors or in a diamond, is `import-twice` naming the first. A file's names are the root of a dotted path ([TDL Language > The Metadata Block](TDL%20Language.md#the-metadata-block), `RootShell.DP1.Top_Bar`), so under two Monitors the same surface already has two distinct paths. Recommendation: allow the same file under different Monitors, with each instance addressed by its Monitor's path; keep `import-twice` for the same file imported twice under one Monitor (a diamond).
+2. [ ] Is the imported root `Shell { surfaces and Imports }` directly, with no `Children` wrapper and no Monitor? Recommendation: yes, as built.
+3. [ ] A `_Shell.tdl` in `Shells/` that nothing imports: the note says it is not loaded, with an info line; the code, before and after, checks every shell file and logs no info line. Recommendation: build what the note says: check it, but do not load it, and say so once.
+4. [ ] A surfaces-only file is also read alone and then follows no import, so cross-file checks (`name-duplicate`, `Attach_To`, `import-twice`, cycles) happen only through an importer; a cycle between two files nothing imports is not reported. Recommendation: accept; report a cycle only when a Monitor reaches it.
+5. [ ] [Hot Reload](../40%20Specifications/Runtime/Hot%20Reload.md) names an importer map while D24 says a full rescan. Built: D24 plus watching the imported directories. Recommendation: as built.
+6. [ ] A symlinked import is watched at the link's own directory only (the report is cut off after this point in what the vault read). Recommendation: accept, and record the limit.
+7. [ ] `If` and `For` among surfaces stay not built. Recommendation: unchanged.
 
 ## Open
 
