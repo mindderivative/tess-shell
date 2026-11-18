@@ -27,7 +27,7 @@ tags: [moc, roadmap, brief]
 | Part | State |
 |---|---|
 | M7e licences | Merged (`tess-shell` PR #58, CI result green): a `NOTICE` file in the wheel and sdist covering the in-package assets (the mdi icon set under Apache-2.0, three handle SVGs, `error.png`), what `tesserae-engine` 0.6.9 bundles (four fonts, 495 Rust crates, five `auditwheel` libraries) and the dependency closure; `tests/test_notice.py` (9 tests) fails when a dependency, an asset, a licence or a range is missing, each proved by mutation |
-| M7g real-hardware kit | PR #57 green, being rebased |
+| M7g real-hardware kit | Merged (`tess-shell` PR #57, 2026-11-17): `/tmp/tess-kwin-m7g`, three lines, all scripted ([Hand Checks > The M7g Kit (code session's report, 2026-11-17, not run in the vault)](Hand%20Checks.md#the-m7g-kit-code-sessions-report-2026-11-17-not-run-in-the-vault)). Orca is not installed on the maintainer's machine; the captive-portal part cannot be shown without taking his wired connection down, so the fake covers it |
 | M7f gaps | First half merged-ready (PR #59), being rebased |
 | M7h volume OSD | PR #60, one latency test flaked at 104 ms against 100 ms, re-running |
 | M7d version policy and migrate | PR #61: CI found a real regression (the reload client imported `tess_dl`); sent back to its builder |
@@ -78,7 +78,7 @@ Almost every check now runs by itself in a sandbox: a private session bus, a rea
 | Line | What he does | Notes |
 |---|---|---|
 | Orca | Start the Orca screen reader and listen to the announcements: Network, Battery critical, the Launcher's selected row | The kit gives the exact command, the order of actions, and the literal text Orca should speak |
-| Real Wi-Fi and a captive portal | Join his Wi-Fi network and watch the Network module's states | He uses a wired connection normally. The kit gives steps that do not break his wired session and that return it exactly; the captive-portal part needs a network that shows a login page, and is run only if he has one |
+| Real Wi-Fi (the captive portal is covered by the fake) | Join his Wi-Fi network with the wired connection kept; the kit checks it is unchanged | He uses a wired connection normally. The kit gives steps that do not break his wired session and that return it exactly; the captive-portal part needs a network that shows a login page, and is run only if he has one |
 | Real audio and Bluetooth | Switch the output between the monitor or system speakers and his Bluetooth phone headset; change the volume | The kit gives the steps and what the Audio module must show for each device |
 
 Not a line, by the maintainer's decision: two outputs and a physical hot-plug. He has declined it before: the M3c hot-plug checklist of 2026-11-08 offered "unplug DP-1 (cable, or off in System Settings)", and he recorded a hard power-off and power-on of the monitor instead ([M3 Build Log](M3%20Build%20Log.md)). The wording "cable" in that checklist and in its kit (`prepare_m3c_hotplug.py`) is to be removed; no kit offers a cable pull. He will not plug or pull a monitor cable or power, because of the risk of an electrical surge ruining a monitor ([Risk Register](Risk%20Register.md) R-33). Multi-monitor and hot-plug are tested on virtual outputs in the sandbox, and that is the best that can be done. His power and switch tests on the real monitors (off and on, power removed and restored) all worked as expected, and the shell came back each time.
