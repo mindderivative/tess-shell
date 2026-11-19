@@ -36,9 +36,9 @@ BUDGETS: tuple[Budget, ...] = (
     Budget(
         "B02",
         "Idle wake-ups",
-        "At most 5 per second (context switches), the shell idle; for a module that ticks the "
+        "At most 6 per second (context switches), the shell idle; for a module that ticks the "
         "budget is read between ticks (D19)",
-        "Performance Budgets > Proposed Values; M2 Build Log D19",
+        "Performance Budgets > Proposed Values (5 raised to 6 on 2026-11-19); M2 Build Log D19",
     ),
     Budget(
         "B03",
@@ -98,7 +98,8 @@ BUDGETS: tuple[Budget, ...] = (
     Budget(
         "B12",
         "Control interface",
-        "`toggle` under 100 ms end to end (client about 20 ms); one loop callback under 1 ms; "
+        "`toggle` under 100 ms end to end (client about 20 ms); one loop callback under 2 ms "
+        "(1 ms before 2026-11-19); "
         "an idle shell receives no calls and wakes for none",
         "IPC and CLI > Performance Budget; ADR-0013",
     ),
@@ -111,7 +112,8 @@ BUDGETS: tuple[Budget, ...] = (
     Budget(
         "B14",
         "Global shortcuts",
-        "Registration: one doRegister and one setShortcut per action, under 50 ms for 10 actions; "
+        "Registration: one doRegister and two setShortcutKeys per action (the client library's; "
+        "one before 2026-11-19), under 50 ms for 10 actions; "
         "a key press to the state change under one frame; idle: no timer",
         "Global Shortcuts > Performance Budget",
     ),

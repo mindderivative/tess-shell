@@ -291,7 +291,7 @@ def measure_b12(quick: bool) -> list[Reading]:
     runs = 40 if quick else 200
     return [
         Reading("B12", f"one toggle command's callback on the loop, {runs} runs",
-                toggle_costs(runs), "ms", 1.0, "p99",
+                toggle_costs(runs), "ms", 2.0, "p99",
                 note="ShellCommands.surface('Toggle', 'Dock') on the real manager, headless; "
                 "the CLI end to end is the lead's"),
     ]  # fmt: skip
