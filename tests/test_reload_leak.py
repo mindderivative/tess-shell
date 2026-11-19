@@ -106,5 +106,7 @@ def test_a_reload_that_changes_only_a_style_opens_and_closes_no_window(
 ) -> None:
     before, after = style_only
     assert after.counts == before.counts == {name: before.counts[name] for name in TYPES}
-    assert after.counts["LayerWindow"] == 10  # the Bar and the nine Panels, as at the start
+    # not an absolute count of LayerWindow: tre keeps every closed window of the process, so a test
+    # that ran earlier in the same process leaves its own windows in the count; no change between
+    # the two readings (the line above) is the point
     assert after.heap - before.heap <= 256 * 1024
