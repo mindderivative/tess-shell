@@ -22,12 +22,16 @@ INTERACTIVE_ROLES = frozenset(
     {"BUTTON", "CHECKBOX", "RADIO", "SWITCH", "SLIDER", "LINK", "TAB", "LIST", "MENU"},
 )
 
+_ROLE_KEYS = frozenset({"Role", "Toggles", "Slides"})
+
 
 def default_focusable(node: Node) -> bool:
     """Whether a block with no ``Focusable`` key takes focus: a block with an interactive role, a
     block a control makes a switch or a slider (``Toggles``, ``Slides``). A TextField's text input
     is focusable in tre already. (A Text the pointer may select is not one yet: a Text takes no
     ``Shadows``, so it has no way to show the ring.)"""
+    if _ROLE_KEYS.isdisjoint(node.props):  # most blocks: none of the keys written
+        return False
     role = node.props.get("Role")
     if isinstance(role, Enum) and role.name in INTERACTIVE_ROLES:
         return True

@@ -56,9 +56,14 @@ def plain(event: Any) -> bool:
     return not any(getattr(event, name, False) for name in ("ctrl", "alt", "meta"))
 
 
+_KEYS = frozenset({"Toggles", "Selection_Mode", "Slides", "Menu_Item", "Reveals"})
+
+
 def kind_of(entry: Entry) -> str:
     """The control this block is: ``toggle``, ``select``, ``slide``, ``item``, ``expand`` or
     empty."""
+    if _KEYS.isdisjoint(entry.typed.props):  # most blocks: no control key written
+        return ""
     if _flag(entry, "Toggles"):
         return "toggle"
     if _word(entry, "Selection_Mode") == "SINGLE":

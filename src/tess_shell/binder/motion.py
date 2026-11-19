@@ -85,6 +85,8 @@ def _written(node: Node, key: str) -> Value | None:
 def motion_of(node: Node) -> Motion | None:
     """The transition ``node`` asks for, or ``None``: no ``Transition``, a ``Duration`` of 0 or a
     list that names no key that can ease."""
+    if "Transition" not in node.style and "Transition" not in node.props:
+        return None
     row = BLOCKS.get(node.kind)
     listed = _written(node, "Transition")
     if row is None or listed is None:
