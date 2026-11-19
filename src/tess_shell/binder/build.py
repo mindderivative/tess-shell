@@ -2,7 +2,8 @@
 
 All problems are collected first, each at the position of its key; if there are any, nothing is
 built, so a surface never half-builds. tre's own ``ValueError`` (which names a path such as
-``spec.children[2]``) is translated back to a position through an index made while planning.
+``spec.children[2]``) is translated back to a position through an index made by planning the
+failed tree again (a build that works never pays for it).
 """
 
 from __future__ import annotations
@@ -47,7 +48,7 @@ from tess_shell.binder.motion import Motion, motion_of
 from tess_shell.binder.motion import check as check_motion
 from tess_shell.binder.motion import start as start_motion
 from tess_shell.binder.shapes import POSTS
-from tess_shell.binder.tables import BLOCKS, BlockRow, KeyRow
+from tess_shell.binder.tables import ALLOWED, BLOCKS, BlockRow, KeyRow
 
 _POINTER_EVENTS = frozenset({"On_Click", "On_Secondary_Click", "On_Middle_Click", "On_Scroll"})
 
@@ -71,7 +72,6 @@ class _Index:
 
     nodes: dict[str, Origin] = field(default_factory=dict)
     props: dict[tuple[str, str], Origin] = field(default_factory=dict)
-    named: dict[str, tuple[str, dict[str, Any]]] = field(default_factory=dict)
 
 
 # tre's pointer events that move a node between its style states, and what each does to the wire
@@ -491,11 +491,48 @@ class Entry:
     typed: Node
     tre: TreNode | None
     props: dict[str, Any]
-    children: list[Entry] = field(default_factory=list)
+    children: Sequence[Entry] = ()  # a leaf shares the one empty tuple
     wire: Wire | None = None
     states: dict[str, dict[str, Any]] = field(default_factory=dict)  # tre props per style state
     motion: Motion | None = None  # what eases when a value of the node changes
     rank: int = 0  # the tre ``tab_index`` the view gave the node (0: its place in tree order)
+
+
+# the kinds whose nodes always listen for something, and the keys of a block that make it a control
+# or give it a ``Tooltip_When_Disabled``
+_WIRED_KINDS = frozenset({FIELD, FIELD_INPUT, MARQUEE, MARQUEE_TEXT})
+_WIRING_KEYS = frozenset(
+    {"Toggles", "Selection_Mode", "Slides", "Menu_Item", "Reveals", "Tooltip_When_Disabled"}
+)
+
+
+def _inert(entry: Entry) -> bool:
+    """Whether a built node needs no wire: it listens for nothing, is nobody's control, has no
+    name for a tooltip or a slot to find it by, is not disabled, focusable or checked, and no
+    state style or transition touches it. Such a node never changes what the user sees or what
+    a handler hears, so it gets no wire (a large tree is mostly such nodes); a reload that gives
+    it one of those things gives it a wire then."""
+    typed = entry.typed
+    if (
+        typed.name is not None
+        or typed.handlers
+        or typed.tooltip is not None
+        or typed.part is not None
+        or entry.states
+        or entry.motion is not None
+        or typed.kind in _WIRED_KINDS
+    ):
+        return False
+    props = entry.props
+    if (
+        props.get("disabled")
+        or props.get("focusable")
+        or props.get("checked")
+        or props.get("selected")
+        or props.get("role") == "button"
+    ):
+        return False
+    return _WIRING_KEYS.isdisjoint(typed.props)
 
 
 def field_input(box: Entry) -> Entry | None:
@@ -545,31 +582,36 @@ class View:
         self.dynamic.clear()  # a rebuild resolved every slot: the typed props are current
         self.roots = [e.tre for e in self.entries if e.tre is not None]
 
-        def walk(entries: list[Entry]) -> None:
+        flat: list[Entry] = []  # the entries that have a tre node, in document order (``_flat``)
+
+        def walk(entries: Sequence[Entry]) -> None:
             for e in entries:
                 self._wire(e)
-                if e.tre is not None and e.props.get("visible") is False:
-                    # tre 0.6.7 lays out a node that is built hidden when it also has an explicit
-                    # ``display`` (every FlexBox does): it keeps its space until ``visible`` is
-                    # set again. Setting it once more takes it out of the layout, so a hidden
-                    # module root takes no Bar Spacing.
-                    e.tre.set(visible=False)
-                name = e.typed.name
-                if name is not None and e.tre is not None:
-                    self.nodes[name] = e.tre
-                    self.kinds[name] = e.typed.kind
-                    self.applied[name] = e.props  # the same dict: an update changes both
-                    if e.wire is not None:
-                        self.wires[name] = e.wire
-                    if e.motion is not None:
-                        self.motions[name] = e.motion
+                tre = e.tre
+                if tre is not None:
+                    flat.append(e)
+                    if e.props.get("visible") is False:
+                        # tre 0.6.7 lays out a node that is built hidden when it also has an
+                        # explicit ``display`` (every FlexBox does): it keeps its space until
+                        # ``visible`` is set again. Setting it once more takes it out of the
+                        # layout, so a hidden module root takes no Bar Spacing.
+                        tre.set(visible=False)
+                    name = e.typed.name
+                    if name is not None:
+                        self.nodes[name] = tre
+                        self.kinds[name] = e.typed.kind
+                        self.applied[name] = e.props  # the same dict: an update changes both
+                        if e.wire is not None:
+                            self.wires[name] = e.wire
+                        if e.motion is not None:
+                            self.motions[name] = e.motion
                 walk(e.children)
 
         walk(self.entries)
-        self._controls()
+        self._controls(flat)
         self._sync(self.entries)
-        self._marquees()
-        self._tab_order()
+        self._marquees(flat)
+        self._tab_order(flat)
 
     def set_expanded(self, node_id: str, open_: bool) -> None:
         """The accessibility state ``expanded`` of a menu row whose submenu opened or closed."""
@@ -587,7 +629,7 @@ class View:
         """Every built entry that has a tre node, in document order."""
         out: list[Entry] = []
 
-        def walk(entries: list[Entry]) -> None:
+        def walk(entries: Sequence[Entry]) -> None:
             for e in entries:
                 if e.tre is not None:
                     out.append(e)
@@ -598,21 +640,25 @@ class View:
 
     def _tab_index_of(self, entry: Entry) -> int | None:
         """The ``Tab_Index`` of a block: the one a slot last set, else the one it was built with."""
-        value = entry.typed.props.get("Tab_Index")
-        if entry.typed.name is not None:
-            value = self.dynamic.get(entry.typed.name, {}).get("Tab_Index", value)
+        typed = entry.typed
+        if typed.name is None and "Tab_Index" not in typed.props:
+            return None
+        value = typed.props.get("Tab_Index")
+        if typed.name is not None:
+            value = self.dynamic.get(typed.name, {}).get("Tab_Index", value)
         if isinstance(value, Number) and isinstance(value.value, int):
             return value.value
         return None
 
-    def _tab_order(self) -> None:
+    def _tab_order(self, flat: list[Entry] | None = None) -> None:
         """Give tre the Tab order the blocks' ``Tab_Index`` keys ask for (Focus and Keyboard > Tab
         Order). tre walks its focusable nodes with a positive ``tab_index`` first, ascending, and
         then the rest in tree order, so the blocks that have a ``Tab_Index`` get the ranks 1, 2,
         ... in the shell's order (ascending, equal ones in document order) and the others keep 0.
         This is derived data, held on the entries and made again at every build and rebuild; tre
         does the walking, nothing runs per frame."""
-        flat = self._flat()
+        if flat is None:
+            flat = self._flat()
         indexed = [(e, i) for e in flat if (i := self._tab_index_of(e)) is not None]
         ranks = {
             id(indexed[pos][0]): rank
@@ -727,61 +773,51 @@ class View:
         )
         self._run_click(entry.wire, node, event)
 
-    def _controls(self) -> None:
+    def _controls(self, flat: list[Entry] | None = None) -> None:
         """Keep one control per block that has one (``Toggles``, ``Slides``, ``Selection_Mode``):
         a new block gets one, a kept block is told what it is now, a block that is gone loses
         its control. The first of the block's entries that carries a control key wins."""
         live: dict[TreNode, controls.Control] = {}
+        entries = self._flat() if flat is None else flat
 
-        def walk(entries: list[Entry]) -> None:
-            for e in entries:
-                if e.tre is not None and controls.kind_of(e):
-                    ctl = self.controls.get(e.tre)
-                    if ctl is None:
-                        ctl = controls.make(self, e)
-                    if ctl is not None:
-                        live[e.tre] = ctl
-                walk(e.children)
-
-        walk(self.entries)
+        for e in entries:
+            if e.tre is not None and controls.kind_of(e):
+                ctl = self.controls.get(e.tre)
+                if ctl is None:
+                    ctl = controls.make(self, e)
+                if ctl is not None:
+                    live[e.tre] = ctl
         for tre, ctl in self.controls.items():
             if tre not in live:
                 ctl.stop()
         self.controls = live
 
-        def configure(entries: list[Entry]) -> None:
+        if live:
             for e in entries:
                 ctl = live.get(e.tre) if e.tre is not None else None
                 if ctl is not None:
                     ctl.configure(e)
                     ctl.listen_keys()
-                configure(e.children)
 
-        configure(self.entries)
-
-    def _marquees(self) -> None:
+    def _marquees(self, flat: list[Entry] | None = None) -> None:
         """Keep one scroll runner per Marquee, configured from its block, and let each measure and
         begin, change or end its scroll if what decides it changed."""
         live: dict[TreNode, MarqueeRunner] = {}
         fresh: list[MarqueeRunner] = []
 
-        def walk(entries: list[Entry]) -> None:
-            for e in entries:
-                if e.typed.kind == MARQUEE and e.tre is not None and e.children:
-                    text = e.children[0].tre
-                    if text is not None:
-                        runner = self.runners.get(e.tre)
-                        if runner is None:
-                            runner = MarqueeRunner(self.window, e.tre, text)
-                            fresh.append(runner)
-                        runner.text = text
-                        live[e.tre] = runner
-                        runner.configure(e.typed, e.wire.blocked if e.wire else False)
-                        if e.wire is not None:
-                            e.wire.tooltip_gate = runner.tooltip_gate
-                walk(e.children)
-
-        walk(self.entries)
+        for e in self._flat() if flat is None else flat:
+            if e.typed.kind == MARQUEE and e.tre is not None and e.children:
+                text = e.children[0].tre
+                if text is not None:
+                    runner = self.runners.get(e.tre)
+                    if runner is None:
+                        runner = MarqueeRunner(self.window, e.tre, text)
+                        fresh.append(runner)
+                    runner.text = text
+                    live[e.tre] = runner
+                    runner.configure(e.typed, e.wire.blocked if e.wire else False)
+                    if e.wire is not None:
+                        e.wire.tooltip_gate = runner.tooltip_gate
         for box, runner in self.runners.items():
             if box not in live:
                 runner.stop()
@@ -798,6 +834,8 @@ class View:
         if entry.tre is None:
             return
         if entry.wire is None:
+            if _inert(entry):
+                return
             entry.wire = Wire(
                 entry.typed.handlers,
                 tre=entry.tre,
@@ -919,7 +957,7 @@ class View:
 
     def _sync(
         self,
-        entries: list[Entry],
+        entries: Sequence[Entry],
         inherited: bool = False,
         flags: Mapping[str, tuple[bool, bool]] | None = None,
     ) -> None:
@@ -929,6 +967,10 @@ class View:
         disabled block gets a ``click`` listener whatever its handlers, to swallow the click."""
         flags = flags or {}
         for e in entries:
+            if e.wire is None and e.tre is not None:  # inert (``_inert``): nothing to tell
+                if e.children:
+                    self._sync(e.children, inherited, flags)
+                continue
             own = bool(e.props.get("disabled"))
             owner = e.typed.owner or ""
             seen = flags.get(owner, (False, False))
@@ -1200,12 +1242,17 @@ def _suggest(word: str, choices: Sequence[str]) -> str:
     return f"allowed: {', '.join(sorted(choices))}"
 
 
+_UNRESOLVED = (SlotValue, TokenRef)  # a value the model should have resolved before binding
+
+
 def _convert(key: str, row: KeyRow, value: Value, errors: list[BindError]) -> dict[str, Any] | None:
-    if isinstance(value, SlotValue):
-        errors.append(BindError(f"{key}: a slot was not evaluated", value.origin))
-        return None
-    if isinstance(value, TokenRef):
-        errors.append(BindError(f"{key}: the token ${value.path} was not resolved", value.origin))
+    if isinstance(value, _UNRESOLVED):
+        if isinstance(value, SlotValue):
+            errors.append(BindError(f"{key}: a slot was not evaluated", value.origin))
+        else:
+            errors.append(
+                BindError(f"{key}: the token ${value.path} was not resolved", value.origin)
+            )
         return None
     try:
         return CONVERTERS[row.convert](value, row.tre, row.choices)
@@ -1244,6 +1291,8 @@ def convert_states(node: Node, errors: list[BindError]) -> dict[str, dict[str, A
 def entry_states(node: Node) -> dict[str, dict[str, Any]]:
     """What a built node shows and listens for: its converted state styles. A kind tre sends no
     pointer events (a ``Text``) has no ``hovered`` or ``pressed``; its ``disabled`` still shows."""
+    if not node.states:
+        return {}
     states = convert_states(node, [])
     if node.kind in NO_POINTER_BLOCKS:
         return {s: v for s, v in states.items() if s in FLAG_STATES}
@@ -1253,23 +1302,26 @@ def entry_states(node: Node) -> dict[str, dict[str, Any]]:
 def _plan(
     node: Node | UseNode | IfNode | ForNode,
     path: str,
-    extra: dict[str, Any],
+    extra: Mapping[str, Any],
     errors: list[BindError],
-    index: _Index,
+    index: _Index | None,
     seen: dict[str, Origin],
 ) -> dict[str, Any] | None:
-    if isinstance(node, UseNode):
-        hint = "the model expands a module call before binding"
-        errors.append(
-            BindError(f"the module call {node.module} was not expanded", node.origin, hint)
-        )
-        return None
-    if isinstance(node, IfNode | ForNode):
+    """The spec ``Window.build`` takes for ``node``; ``index`` (when given) records where each
+    path and tre property came from, which only the translation of a tre error needs."""
+    if not isinstance(node, Node):
+        if isinstance(node, UseNode):
+            hint = "the model expands a module call before binding"
+            errors.append(
+                BindError(f"the module call {node.module} was not expanded", node.origin, hint)
+            )
+            return None
         word = "If" if isinstance(node, IfNode) else "For"
         hint = "the model resolves it to the blocks that show before binding"
         errors.append(BindError(f"{word} was not resolved", node.origin, hint))
         return None
-    index.nodes[path] = node.origin
+    if index is not None:
+        index.nodes[path] = node.origin
     row: BlockRow | None = BLOCKS.get(node.kind)
     if row is None:
         errors.append(
@@ -1278,17 +1330,19 @@ def _plan(
         return None
 
     props: dict[str, Any] = {}
-    for key in node.props.keys() & node.style.keys():
-        errors.append(
-            BindError(
-                f"{key} is written both in the block and in its Style",
-                node.style[key].origin,
-                f"keep one; the other is at {node.props[key].origin}",
+    node_props, node_style = node.props, node.style
+    if node_props and node_style:
+        for key in node_props.keys() & node_style.keys():
+            errors.append(
+                BindError(
+                    f"{key} is written both in the block and in its Style",
+                    node_style[key].origin,
+                    f"keep one; the other is at {node_props[key].origin}",
+                )
             )
-        )
     for scope, values, allowed in (
-        ("", node.props, {**row.style, **row.keys}),  # a style key may be written on the block
-        ("Style ", node.style, row.style),
+        ("", node_props, ALLOWED[node.kind]),  # a style key may be written on the block
+        ("Style ", node_style, row.style),
     ):
         for key, value in values.items():
             key_row = allowed.get(key)
@@ -1301,14 +1355,24 @@ def _plan(
                     )
                 )
                 continue
-            converted = _convert(key, key_row, value, errors)
-            if converted is None:
-                continue
+            if isinstance(value, _UNRESOLVED):
+                converted = _convert(key, key_row, value, errors)
+                if converted is None:
+                    continue
+            else:  # as ``_convert``, without the call
+                try:
+                    converted = CONVERTERS[key_row.convert](value, key_row.tre, key_row.choices)
+                except BindError as exc:
+                    errors.append(BindError(f"{key}: {exc.message}", exc.origin, exc.hint))
+                    continue
             props.update(converted)
-            for tre_name in converted:
-                index.props[(path, tre_name)] = value.origin
-    convert_states(node, errors)  # a state style is checked like the base style
-    errors.extend(check_motion(node))
+            if index is not None:
+                for tre_name in converted:
+                    index.props[(path, tre_name)] = value.origin
+    if node.states:
+        convert_states(node, errors)  # a state style is checked like the base style
+    if "Transition" in node_style or "Transition" in node_props:
+        errors.extend(check_motion(node))
     for need in row.required:
         options = (need,) if isinstance(need, str) else need
         if not any(k in node.props or k in node.style for k in options):
@@ -1338,21 +1402,21 @@ def _plan(
         POSTS[row.post](props, node)
 
     spec: dict[str, Any] = {"kind": row.tre_kind, "props": props}
-    block_word = node.kind
     if node.name is not None:
         if node.name in seen:
             errors.append(BindError(f'the name "{node.name}" is used twice', node.origin))
         seen[node.name] = node.origin
         spec["id"] = node.name
-        index.named[node.name] = (block_word, props)
-    children: list[dict[str, Any]] = []
-    for child in node.children:
-        child_path = f"{path}.children[{len(children)}]"
-        planned = _plan(child, child_path, dict(row.child_props), errors, index, seen)
-        if planned is not None:
-            children.append(planned)
-    if children:
-        spec["children"] = children
+    if node.children:
+        children: list[dict[str, Any]] = []
+        child_extra = row.child_props
+        for child in node.children:
+            child_path = f"{path}.children[{len(children)}]" if index is not None else ""
+            planned = _plan(child, child_path, child_extra, errors, index, seen)
+            if planned is not None:
+                children.append(planned)
+        if children:
+            spec["children"] = children
     return spec
 
 
@@ -1379,31 +1443,31 @@ def build(
     """Bind ``nodes`` under ``parent`` (default ``window.root``). Raises :class:`BindFailed` and
     builds nothing if any value is wrong."""
     errors: list[BindError] = []
-    plans: list[tuple[dict[str, Any], _Index, Origin]] = []
+    plans: list[tuple[Node, dict[str, Any]]] = []
     seen: dict[str, Origin] = {}
     for node in nodes:
-        index = _Index()
-        spec = _plan(node, "spec", {}, errors, index, seen)
-        if spec is not None:
-            plans.append((spec, index, node.origin))
+        spec = _plan(node, "spec", {}, errors, None, seen)
+        if spec is not None and isinstance(node, Node):
+            plans.append((node, spec))
     if errors:
         errors.sort(key=lambda e: (e.origin.file, e.origin.line, e.origin.column))
         raise BindFailed(errors)
 
-    built: list[tuple[TreNode, dict[str, TreNode]]] = []
+    built: list[TreNode] = []
     try:
-        for spec, index, origin in plans:
+        for node, spec in plans:
             try:
-                built.append(window.build(spec))
+                built.append(window.build(spec)[0])
             except ValueError as exc:
-                raise BindFailed([_translate(exc, index, origin)]) from exc
+                index = _Index()
+                _plan(node, "spec", {}, [], index, {})
+                raise BindFailed([_translate(exc, index, node.origin)]) from exc
     except BindFailed:
-        for root, _ in built:
+        for root in built:
             root.destroy()
         raise
     view = View(window, [], {}, parent=parent)
-    typed_roots = [n for n in nodes if isinstance(n, Node)]
-    for node, (spec, _, _), (root, _named) in zip(typed_roots, plans, built, strict=True):
+    for (node, spec), root in zip(plans, built, strict=True):
         view.entries.append(make_entry(node, spec, root))
         (parent or window.root).add_child(root)
     view.reindex()
@@ -1412,15 +1476,15 @@ def build(
 
 def make_entry(node: Node, spec: dict[str, Any], tre: TreNode) -> Entry:
     """The entry of a built node and, below it, of its children (the spec and the tre node mirror
-    the typed tree one to one)."""
-    kids = [c for c in node.children if isinstance(c, Node)]
-    specs = spec.get("children", [])
-    tre_kids = tre.children() if kids else []
-    return Entry(
-        node,
-        tre,
-        dict(spec["props"]),
-        [make_entry(c, sp, t) for c, sp, t in zip(kids, specs, tre_kids, strict=True)],
-        states=entry_states(node),
-        motion=motion_of(node),
-    )
+    the typed tree one to one). The entry takes the spec's props: the spec is not used again."""
+    children: Sequence[Entry] = ()
+    if node.children:
+        kids = [c for c in node.children if isinstance(c, Node)]
+        if kids:
+            children = [
+                make_entry(c, sp, t)
+                for c, sp, t in zip(kids, spec.get("children", []), tre.children(), strict=True)
+            ]
+    states = entry_states(node) if node.states else {}
+    motion = motion_of(node) if "Transition" in node.style or "Transition" in node.props else None
+    return Entry(node, tre, spec["props"], children, states=states, motion=motion)

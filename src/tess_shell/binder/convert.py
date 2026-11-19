@@ -40,6 +40,10 @@ from tess_shell.binder.shadow import DEFAULT_MAX, scale
 Converted = dict[str, Any]
 Converter = Callable[[Value, tuple[str, ...], tuple[str, ...]], Converted]
 
+# ``isinstance`` with a tuple: ``A | B`` would build a new union object at every call
+_LENGTH_OR_PERCENT = (Length, Percent)
+_NUMBER_OR_LENGTH = (Number, Length)
+
 
 def _what(value: Value) -> str:
     return type(value).__name__.lower()
@@ -95,7 +99,7 @@ def text_length(value: Value, names: tuple[str, ...], choices: tuple[str, ...] =
 
 def bound(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
     """A bound (``Min_Width``): pixels or a percentage."""
-    if isinstance(value, Length | Percent):
+    if isinstance(value, _LENGTH_OR_PERCENT):
         return length(value, names)
     raise _bad(value, "a length or a percentage")
 
@@ -123,7 +127,7 @@ def whole(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
 
 def positive(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
     result = number(value, names)
-    if not isinstance(value, Number | Length):
+    if not isinstance(value, _NUMBER_OR_LENGTH):
         raise _bad(value, "a number")
     if (value.value if isinstance(value, Number) else value.px) <= 0:
         raise BindError("must be greater than 0", value.origin)
@@ -329,7 +333,7 @@ def sides(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
     """Four-sided values, left, top, right, bottom, become tre's top, right, bottom, left."""
     if len(names) != 4:
         raise ValueError("a sides row names four tre properties")  # a table bug
-    if isinstance(value, Length | Number):
+    if isinstance(value, _NUMBER_OR_LENGTH):
         written: float | tuple[float, float, float, float] = (
             value.px if isinstance(value, Length) else value.value
         )
@@ -351,7 +355,7 @@ def sides(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
 def radius(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
     """One number, or four from the top-left corner clockwise."""
     (name,) = names
-    if isinstance(value, Length | Number):
+    if isinstance(value, _NUMBER_OR_LENGTH):
         one = value.px if isinstance(value, Length) else value.value
         if one < 0:
             raise BindError("a radius cannot be negative", value.origin)
@@ -359,7 +363,7 @@ def radius(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) 
     if isinstance(value, Seq) and len(value.items) == 4:
         numbers: list[float] = []
         for item in value.items:
-            if not isinstance(item, Length | Number):
+            if not isinstance(item, _NUMBER_OR_LENGTH):
                 raise _bad(item, "a number")
             n = item.px if isinstance(item, Length) else item.value
             if n < 0:

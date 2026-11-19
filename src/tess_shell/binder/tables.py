@@ -449,3 +449,8 @@ BLOCKS: Mapping[str, BlockRow] = {
     name: dataclasses.replace(row, defaults={"disabled": False, **row.defaults})
     for name, row in _ROWS.items()
 }
+
+# the keys a block accepts as properties: its own keys and, written on the block, its style keys
+ALLOWED: Mapping[str, Mapping[str, KeyRow]] = {
+    name: {**row.style, **row.keys} for name, row in BLOCKS.items()
+}

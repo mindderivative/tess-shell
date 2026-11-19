@@ -14,7 +14,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from tess_shell.binder.build import Entry, View, Wire, _Index, _plan, entry_states, make_entry
+from tess_shell.binder.build import Entry, View, Wire, _plan, entry_states, make_entry
 from tess_shell.binder.model import (
     FIELD_INPUT,
     BindError,
@@ -68,7 +68,7 @@ class _Plan:
 
 
 def _diff(
-    old: list[Entry],
+    old: Sequence[Entry],
     new_nodes: list[Node],
     specs: list[dict[str, Any]],
     parent: TreNode,
@@ -141,7 +141,7 @@ def rebuild(view: View, nodes: Sequence[Node | UseNode | IfNode | ForNode]) -> R
     seen: dict[str, Origin] = {}
     typed: list[Node] = []
     for node in nodes:
-        spec = _plan(node, "spec", {}, errors, _Index(), seen)
+        spec = _plan(node, "spec", {}, errors, None, seen)
         if spec is not None and isinstance(node, Node):
             specs.append(spec)
             typed.append(node)
