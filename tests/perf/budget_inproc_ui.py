@@ -80,10 +80,16 @@ def count_objects(*names: str) -> dict[str, int]:
 
 
 def popup_rig() -> Any:
+    from tests.reload_rig import RealApp
     from tests.test_popup import CARD, rig
 
     logger.remove()
-    return next(rig(f"Popup {{ Name: Menu, Gap: 4, Alignment: END, Children {{ {CARD} }} }}"))
+    # a real ``tess_re.App`` that is given every window: the stub app ignores ``add_window`` and
+    # hid what tre's App keeps of a closed Popup (tests/test_popup_leak.py)
+    popups = f"Popup {{ Name: Menu, Gap: 4, Alignment: END, Children {{ {CARD} }} }}"
+    r = next(rig(popups, app=RealApp()))
+    logger.remove()  # the rig's log sink keeps every line
+    return r
 
 
 def open_costs(count: int) -> tuple[list[float], list[float]]:
@@ -132,31 +138,52 @@ def measure_b16(quick: bool) -> list[Reading]:
 
 
 def popup_residue(cycles: int) -> dict[str, int]:
-    """What ``cycles`` open/close turns leave behind (differences after minus before)."""
+    """What ``cycles`` open/close turns leave behind (differences after minus before), on the real
+    ``tess_re.App`` of :func:`popup_rig`. The headless window sends no ``closed``; the cycle sends
+    it the way tre does, after the shell asked for the close."""
+    import tracemalloc
+
     r = popup_rig()
 
     def cycle() -> None:
         op = r.call()
         op.window.advance(16)
-        del op
         r.call()
+        op.window.simulate("closed")
         r.advance(16)
 
     for _ in range(5):  # warm up: imports, caches, first measure
         cycle()
-    gc.collect()
-    before = (open_threads(), open_descriptors(), len(r.bar.view.nodes), sys.getallocatedblocks())
-    objects = count_objects("OpenPopup", "PopupWindow")
-    for _ in range(cycles):
-        cycle()
-    gc.collect()
-    after = (open_threads(), open_descriptors(), len(r.bar.view.nodes), sys.getallocatedblocks())
+    tracemalloc.start()
+    try:
+        gc.collect()
+        before = (
+            open_threads(),
+            open_descriptors(),
+            len(r.bar.view.nodes),
+            sys.getallocatedblocks(),
+            tracemalloc.get_traced_memory()[0],
+        )
+        objects = count_objects("OpenPopup", "PopupWindow")
+        for _ in range(cycles):
+            cycle()
+        gc.collect()
+        after = (
+            open_threads(),
+            open_descriptors(),
+            len(r.bar.view.nodes),
+            sys.getallocatedblocks(),
+            tracemalloc.get_traced_memory()[0],
+        )
+    finally:
+        tracemalloc.stop()
     left = count_objects("OpenPopup", "PopupWindow")
     return {
         "threads": after[0] - before[0],
         "fds": after[1] - before[1],
         "bar_nodes": after[2] - before[2],
         "blocks_per_cycle": (after[3] - before[3]) // cycles,
+        "heap_bytes_per_cycle": (after[4] - before[4]) // cycles,
         "open_popups": left["OpenPopup"] - objects["OpenPopup"],
         "popup_windows": left["PopupWindow"] - objects["PopupWindow"],
         "live_trees": len(r.popups.lives()),
@@ -168,11 +195,22 @@ def measure_b16_closed(quick: bool) -> list[Reading]:
     res = popup_residue(cycles)
     note = f"after {cycles} open/close cycles, headless"
     out = []
-    for key in ("threads", "fds", "bar_nodes", "open_popups", "popup_windows", "live_trees"):
+    for key in ("threads", "fds", "bar_nodes", "open_popups", "live_trees"):
         out.append(
             Reading("B16", f"closed Popup holds nothing: growth of {key}", [float(res[key])],
                     "count", 0.0, "max", note=note)
         )  # fmt: skip
+    out.append(
+        Reading("B16", "closed Popup: PopupWindow objects left per cycle (tre's App keeps them)",
+                [res["popup_windows"] / cycles], "count",
+                note=f"{note}; 1 per cycle is tre's, TRE-REQ-028 (candidate tre request)")
+    )  # fmt: skip
+    out.append(
+        Reading("B16", "closed Popup: Python heap left per cycle",
+                [float(res["heap_bytes_per_cycle"])], "bytes", 3072.0, "max",
+                note=f"{note}, tracemalloc; tre keeps about 1 KiB of Python heap per closed "
+                "window (the shell's part was 5 KiB before the fix); limit is mine")
+    )  # fmt: skip
     out.append(
         Reading("B16", "closed Popup holds nothing: Python blocks left per cycle",
                 [float(res["blocks_per_cycle"])], "blocks",

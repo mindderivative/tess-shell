@@ -321,6 +321,7 @@ def rig(
     children: str = "Btn { Name: Btn_One }",
     btn: str = BTN,
     edge: str = "TOP",
+    app: Any = None,
 ) -> Iterator[Rig]:
     shell, findings = read(
         (SHELL % (children, popups)).replace("Edge: TOP", f"Edge: {edge}"),
@@ -332,7 +333,7 @@ def rig(
     theme, _ = read_theme(doc, "T_Theme.tdl")
     look = make_look(theme, [], Appearance())
     store = ValueStore()
-    manager = SurfaceManager(StubApp(), {"Btn": module(btn)}, lambda k: k, store, look)  # type: ignore[arg-type]
+    manager = SurfaceManager(app or StubApp(), {"Btn": module(btn)}, lambda k: k, store, look)  # type: ignore[arg-type]
     lines: list[str] = []
     _SINKS.append(logger.add(lambda message: lines.append(str(message).rstrip()), level="DEBUG"))
     uses = manager.plan(shell)

@@ -35,6 +35,7 @@ from tess_shell.model.uses import Use
 from tess_shell.schema.default_popups import default_popups
 from tess_shell.schema.model import ModuleDef, PopupDef, ShellDef
 from tess_shell.surfaces.bar import Rect, surface_rect
+from tess_shell.surfaces.manager import free_window
 from tess_shell.surfaces.popup_measure import measure_menu
 
 if TYPE_CHECKING:
@@ -927,6 +928,9 @@ class Popups:
         self._free(op)
         op.closing = True
         logger.info(f"Popup {op.where} closed ({reason})")
+        # tre keeps the window object for good: take the shell's listeners and nodes off it, or it
+        # keeps this OpenPopup, its content tree and its LiveTree
+        free_window(op.window)
         if reason == "failed":
             logger.warning(
                 f"Popup {op.where}: tre closed it with reason failed: its parent "
