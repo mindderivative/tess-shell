@@ -5,7 +5,7 @@ type: quality
 status: accepted
 owner: phil
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [quality, security, needs-verification]
 ---
 
@@ -68,7 +68,7 @@ Posture B runs each module's Python in its own child process, which talks to the
 - B does **not** give security isolation by itself. A child running as the same user can read the same files and start the same processes. Real isolation needs more (a namespace sandbox such as `bwrap`, a seccomp filter or Landlock), which is a larger decision and is not promised.
 - B costs memory, start time and a hop for every value ([Module Process Test](Module%20Process%20Test.md) measures exactly this).
 
-The maintainer's rule (2026-11-17): if the cost of B is insignificant, the shell moves to B before 1.0. Posture C is the pragmatic middle: the shipped modules stay in process (they are the package's own code), and user modules run in child processes. Its benefit lands where the risk is: S3 and S4 for code the shell did not ship.
+Decided on 2026-11-19 from the M7a2 numbers: the shell moves to posture C ([Module Process Test](Module%20Process%20Test.md)). The maintainer's rule (2026-11-17): if the cost of B is insignificant, the shell moves to B before 1.0. Posture C is the pragmatic middle: the shipped modules stay in process (they are the package's own code), and user modules run in child processes. Its benefit lands where the risk is: S3 and S4 for code the shell did not ship.
 
 ## The User-Facing Statement
 
