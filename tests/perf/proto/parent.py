@@ -9,7 +9,9 @@ unchanged code (``load``, ``check_calls``, ``dispatch``, ``start``, ``sync``, ``
 every other method forwards a message. No product file is edited.
 
 Postures: ``A`` patches nothing; ``B`` runs every module file in a child; ``C`` runs only the modules
-that are not shipped with the package (the user's own files) in a child.
+that are not shipped with the package (the user's own files) in a child; ``L`` (lean B) runs in a
+child every module file that has Python of its own (``has_own_code``) and keeps the files with none
+(a class that is only ``pass``: the TDL-only widget and popup modules) in the shell.
 Services: ``B1`` gives each child its own D-Bus, PulseAudio and tray connections; ``B2`` keeps them in
 the shell and proxies calls and signals. Popups, surfaces, windows, the application index and the
 icon registry are the shell's in both (they are tre's or the shell's state, not connections).
@@ -58,6 +60,10 @@ WATCH_INTERVAL = float(os.environ.get("TESS_PROTO_WATCH", "1.0"))  # seconds bet
 START_TIMEOUT = 15.0  # a first start that has not answered by then marks the module failed
 STOP_TIMEOUT = 2.0  # a module's stop() gets this long before the process is killed
 ALLOWED = {"B1", "B2"}
+POSTURES = {"B", "C", "L"}
+RULES = ("strict", "validate")  # the lean B's test of "Python of its own" (``has_own_code``)
+LEAN_RULE = os.environ.get("TESS_PROTO_LEAN_RULE", "strict")
+DECISIONS = os.environ.get("TESS_PROTO_DECISIONS")  # a file: one line ``<module> child|shell``
 
 
 # -- a module file read without running it ---------------------------------------------------------
@@ -115,6 +121,79 @@ def scan(py_path: Path) -> dict[str, dict[str, inspect.Signature]]:
                     actions[item.name] = _signature(item)
             found[node.name] = actions
     return found
+
+
+def _trivial(node: ast.stmt) -> bool:
+    """A statement that is no code: ``pass``, a docstring or ``...``."""
+    return isinstance(node, ast.Pass) or (
+        isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)
+    )
+
+
+def _only_imports(nodes: list[ast.stmt]) -> bool:
+    return all(isinstance(n, ast.Import | ast.ImportFrom) or _trivial(n) for n in nodes)
+
+
+def _literal(node: ast.expr) -> bool:
+    try:
+        ast.literal_eval(node)
+    except ValueError, TypeError, SyntaxError, RecursionError:
+        return False
+    return True
+
+
+def has_own_code(py_path: Path, rule: str = "strict") -> bool:
+    """Does the module file have Python of its own? Read from the syntax tree, as ``scan`` does.
+
+    ``strict`` (the lean B as the maintainer described it, the TDL-only modules): NO when every
+    top-level statement is an import (also under ``if TYPE_CHECKING:``), a docstring, ``pass``, or
+    a class extending ``Module`` whose body is only ``pass``, a docstring or ``...``. A missing file
+    has none. Anything else (a method, a constant, a function, a second class) is code of its own,
+    and so is a file that does not parse: its child reports the error, as in B.
+
+    ``validate``: as ``strict``, and a literal constant at the top level and a class body that
+    holds a ``validate_use`` method are no code of their own either: the widget modules whose
+    Python is only the check of their parameters (Button, Image, Slider, ...). That check then runs
+    in the shell, as it does in A, when a use is added."""
+    if rule not in RULES:
+        raise ValueError(f"lean rule {rule!r}: use {' or '.join(RULES)}")
+    validate = rule == "validate"
+    if not py_path.is_file():
+        return False
+    try:
+        tree = ast.parse(py_path.read_text(encoding="utf-8"), str(py_path))
+    except SyntaxError:
+        return True
+    for node in tree.body:
+        if _trivial(node) or isinstance(node, ast.Import | ast.ImportFrom):
+            continue
+        if isinstance(node, ast.If) and _only_imports(node.body) and _only_imports(node.orelse):
+            continue
+        if (
+            validate
+            and isinstance(node, ast.Assign | ast.AnnAssign)
+            and node.value is not None
+            and _literal(node.value)
+        ):
+            continue
+        if (
+            isinstance(node, ast.ClassDef)
+            and any(_is_name(b, "Module") for b in node.bases)
+            and not node.decorator_list
+            and all(
+                _trivial(item)
+                or (
+                    validate
+                    and isinstance(item, ast.FunctionDef)
+                    and item.name == "validate_use"
+                    and not item.decorator_list
+                )
+                for item in node.body
+            )
+        ):
+            continue
+        return True
+    return False
 
 
 def event_fields(event: Any) -> dict[str, Any]:
@@ -251,6 +330,8 @@ class Child:
                 str(child_sock.fileno()),
                 "--shm",
                 str(self.shm_fd),
+                "--name",
+                name,
             ],
             pass_fds=(child_sock.fileno(), self.shm_fd),
             cwd=REPO,
@@ -505,8 +586,19 @@ class Launcher:
     # -- the choice -------------------------------------------------------------------------------
 
     def wants(self, py_path: Path) -> bool:
+        """Does the posture run this module file in a child (recorded for the harness)?"""
+        child = self._wants(py_path)
+        if DECISIONS:
+            name = py_path.parent.name
+            with open(DECISIONS, "a") as out:
+                out.write(f"{name} {'child' if child else 'shell'}\n")
+        return child
+
+    def _wants(self, py_path: Path) -> bool:
         if self.posture == "B":
             return True
+        if self.posture == "L":
+            return has_own_code(py_path, LEAN_RULE)
         if self.posture == "C":
             try:
                 py_path.resolve().relative_to(SHIPPED)
@@ -644,8 +736,10 @@ def install(posture: str, services: str) -> None:
     """Patch ``ModuleHost._import`` for the posture; ``A`` patches nothing."""
     if posture == "A":
         return
-    if posture not in ("B", "C") or services not in ALLOWED:
-        raise SystemExit(f"posture {posture!r} services {services!r}: use A, B or C and B1 or B2")
+    if posture not in POSTURES or services not in ALLOWED:
+        raise SystemExit(
+            f"posture {posture!r} services {services!r}: use A, B, C or L and B1 or B2"
+        )
     original = ModuleHost._import
 
     def _import(self: ModuleHost, definition: Any, py_path: Path) -> Any:

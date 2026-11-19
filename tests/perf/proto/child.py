@@ -578,6 +578,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fd", type=int, required=True)
     parser.add_argument("--shm", type=int, required=True)
+    parser.add_argument("--name", default="", help="the module (shown in ps; not read)")
     args = parser.parse_args()
     sock = socket.socket(fileno=args.fd)
     mm = mmap.mmap(args.shm, 4096)

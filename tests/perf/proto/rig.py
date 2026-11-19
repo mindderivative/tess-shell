@@ -252,6 +252,7 @@ class Shell:
         wrapper: bool = False,
         probe_out: Path | None = None,
         probe_dir: Path | None = None,
+        decisions: Path | None = None,
         watch: float | None = None,
         stall: float | None = None,
         kill: float | None = None,
@@ -271,6 +272,10 @@ class Shell:
             more["TESS_PROTO_SERVICES"] = services
             if probe_out is not None:
                 more["TESS_PROTO_PROBE_OUT"] = str(probe_out)
+            if decisions is not None:
+                more["TESS_PROTO_DECISIONS"] = str(decisions)
+            if "TESS_PROTO_LEAN_RULE" in os.environ:  # the lean B's rule (the harness sets it)
+                more["TESS_PROTO_LEAN_RULE"] = os.environ["TESS_PROTO_LEAN_RULE"]
             if watch is not None:
                 more["TESS_PROTO_WATCH"] = str(watch)
             if stall is not None:
@@ -374,6 +379,20 @@ def tree_pids(root: int) -> list[int]:
     for pid in found:
         found.extend(tree.get(pid, ()))
     return found
+
+
+def child_names(root: int) -> list[str]:
+    """The modules of the module processes below ``root`` (the ``--name`` of their command line),
+    sorted."""
+    names: list[str] = []
+    for pid in tree_pids(root):
+        try:
+            argv = Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0")
+        except OSError:
+            continue
+        if b"tests.perf.proto.child" in argv and b"--name" in argv:
+            names.append(argv[argv.index(b"--name") + 1].decode())
+    return sorted(names)
 
 
 def read_env(pid: int) -> Mapping[str, str]:

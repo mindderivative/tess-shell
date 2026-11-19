@@ -1,6 +1,7 @@
 """The module process test (M7a2; ``60 Quality/Module Process Test.md``): the shell with every module
-in its process (A), with one process per module file (B) and with only the user's modules in
-processes (C), on the same default shell, on one machine.
+in its process (A), with one process per module file (B), with only the user's modules in
+processes (C) and with a lean B, only the module files that have Python of their own in processes
+(L), on the same default shell, on one machine.
 
 Not collected by pytest (``tests/perf/conftest.py``). The smoke test of the harness is
 ``tests/test_module_process_smoke.py``. Run from the repository root, on an IDLE machine:
@@ -12,6 +13,14 @@ run that only proves the harness works:
 
     env -u WAYLAND_DISPLAY -u DISPLAY uv run python tests/perf/module_process_test.py --smoke \\
         --out /tmp/module-process-smoke.md
+
+The lean B only (A as the baseline; every flag of the full run applies; ``--out`` keeps the default
+report as it is; ``--lean-rule=validate`` also keeps the widget modules whose Python is only a
+``validate_use`` check in the shell, see ``has_own_code`` in ``tests/perf/proto/parent.py``):
+
+    env -u WAYLAND_DISPLAY -u DISPLAY uv run python tests/perf/module_process_test.py \\
+        --postures=A,L1,L2 --reps=3 --latency-reps=1 --contain-reps=2 --start-runs=15 \\
+        --out tests/perf/module-process-results-lean.md
 
 Everything runs on a private headless sway and private buses (``tests/perf/proto/rig.py``), never
 the user's session. The 1-minute load average must be 0.5 or less at the start, or the harness
@@ -44,6 +53,7 @@ sys.path.insert(0, str(REPO))
 
 from tests.perf.proto import measure as M  # noqa: E402
 from tests.perf.proto import rig as R  # noqa: E402
+from tests.perf.proto.parent import RULES, SHIPPED, has_own_code  # noqa: E402
 
 # -- the decision rule's starting thresholds (Module Process Test > Decision Rule): change them HERE
 START_EXTRA_MS = 300.0  # the whole default shell ready no more than this much later than A
@@ -58,10 +68,38 @@ BUDGET_WAKEUPS_PER_S = 5.0
 BUDGET_READY_S = 2.0
 LOAD_LIMIT = 0.5  # the 1-minute load average the harness starts under
 
-DEFAULT_CELLS = ("A", "B1", "B2", "C1")  # the default shell
+LEGACY_CELLS = ("B1", "B2", "C1", "C2")  # the cells of the first full measurement
+LEAN_CELLS = ("L1", "L2")  # lean B: the module files with Python of their own in processes
+DEFAULT_CELLS = ("A", "B1", "B2", "C1", "L1", "L2")  # the default shell
 PLUS3_CELLS = ("A", "C1", "C2")  # the default shell and three user modules
-PROBE_CELLS = ("A", "B1", "B2", "C1", "C2")  # the latency probe and the containment victim
+# the latency probe and the containment victim
+PROBE_CELLS = ("A", "B1", "B2", "C1", "C2", "L1", "L2")
 ALL_MEASURES = ("start", "idle", "latency", "contain")
+# the lean B run of the lead: A as the baseline and L1, L2; three repetitions of start and idle, fewer
+# of latency and containment (a report of its own: the default file keeps the full run)
+LEAN_RUN = (
+    "--postures=A,L1,L2",
+    "--reps=3",
+    "--latency-reps=1",
+    "--contain-reps=2",
+    "--start-runs=15",
+    "--out=tests/perf/module-process-results-lean.md",
+)
+# the same with the rule `validate` (the widget modules whose Python is only the check of their
+# parameters stay in the shell too): a report of its own
+LEAN_RUN_VALIDATE = (
+    *LEAN_RUN[:-1],
+    "--lean-rule=validate",
+    "--out=tests/perf/module-process-results-lean-validate.md",
+)
+# what a step costs beyond its own window, in seconds (measured on the machine: a start to READY=1
+# and its stop about 1.5 s; an idle repetition of 60 s + 10 s settle took 70.7 s; a latency repetition
+# at the default flags 45.0 s for 43 s of windows; a containment repetition 22.8 s in L1 and 17.0 s in
+# A against 13 s of baseline and hang); only for the "expected duration" of the report
+EST_START_RUN_S = 1.5
+EST_IDLE_EXTRA_S = 1.5
+EST_LATENCY_EXTRA_S = 2.0
+EST_CONTAIN_EXTRA_S = 10.0
 
 SMOKE = dict(
     start_runs=2,
@@ -87,10 +125,16 @@ def parse(argv: Sequence[str] | None) -> argparse.Namespace:
     known, _ = pre.parse_known_args(argv)
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("--smoke", action="store_true", help="short durations: proves the harness works")
-    p.add_argument("--postures", default="A,B1,B2,C1,C2", help="cells to run (default: all)")
+    p.add_argument(
+        "--postures",
+        default="A,B1,B2,C1,C2",
+        help="cells to run (default: A,B1,B2,C1,C2; the lean B is L1,L2, e.g. A,L1,L2)",
+    )
     p.add_argument("--measures", default=",".join(ALL_MEASURES), help="start,idle,latency,contain")
     p.add_argument("--reps", type=int, default=3, help="repetitions of idle, latency, containment")
     p.add_argument("--start-runs", type=int, default=20, help="starts for the start time")
+    p.add_argument("--latency-reps", type=int, default=None, help="repetitions of latency (--reps)")
+    p.add_argument("--contain-reps", type=int, default=None, help="repetitions of containment")
     p.add_argument("--idle", type=float, default=60.0, help="seconds of the idle window")
     p.add_argument("--settle", type=float, default=10.0, help="seconds of rest before the window")
     p.add_argument("--singles", type=int, default=1000, help="single updates for the latency")
@@ -104,6 +148,13 @@ def parse(argv: Sequence[str] | None) -> argparse.Namespace:
     p.add_argument("--kill", type=float, default=5.0, help="B/C watchdog: seconds to kill")
     p.add_argument("--baseline", type=float, default=3.0, help="seconds of paint before the tests")
     p.add_argument("--allow-load", action="store_true", help="start although the load is above 0.5")
+    p.add_argument(
+        "--lean-rule",
+        choices=RULES,
+        default="strict",
+        help="L1, L2: which module files have Python of their own (strict: no class body but pass; "
+        "validate: also a literal constant and a validate_use method)",
+    )
     p.add_argument("--out", type=Path, default=HERE / "module-process-results.md")
     if known.smoke:
         p.set_defaults(**SMOKE)
@@ -189,7 +240,9 @@ def plan(args: argparse.Namespace) -> Plan:
         if c not in M.ALL:
             sys.exit(f"unknown posture {c!r}: use {', '.join(M.ALL)}")
     cells = [(c, "default") for c in DEFAULT_CELLS if c in wanted]
-    cells += [(c, "plus3") for c in PLUS3_CELLS if c in wanted]
+    plus3 = [c for c in PLUS3_CELLS if c in wanted]
+    if any(c != "A" for c in plus3):  # A alone has no use there: it is the base of C's rows
+        cells += [(c, "plus3") for c in plus3]
     return Plan(cells, cells, [c for c in PROBE_CELLS if c in wanted])
 
 
@@ -199,7 +252,10 @@ def say(text: str) -> None:
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
     wanted = set(args.measures.split(","))
+    latency_reps = args.latency_reps or args.reps
+    contain_reps = args.contain_reps or args.reps
     todo = plan(args)
+    os.environ["TESS_PROTO_LEAN_RULE"] = args.lean_rule  # read by the shell (rig.Shell passes it)
     res: dict[str, Any] = {
         "args": {k: str(v) for k, v in vars(args).items()},
         "start": {},
@@ -253,9 +309,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             ladder = [float(x) for x in args.ladder.split(",") if x]
             for label in todo.probe:
                 reps = []
-                for n in range(args.reps):
+                for n in range(latency_reps):
                     got = attempt(
-                        f"latency {label} rep {n + 1}/{args.reps}",
+                        f"latency {label} rep {n + 1}/{latency_reps}",
                         M.measure_latency,
                         rig,
                         M.ALL[label],
@@ -273,9 +329,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         if "contain" in wanted:
             for label in todo.probe:
                 reps = []
-                for n in range(args.reps):
+                for n in range(contain_reps):
                     got = attempt(
-                        f"containment {label} rep {n + 1}/{args.reps}",
+                        f"containment {label} rep {n + 1}/{contain_reps}",
                         M.measure_containment,
                         rig,
                         M.ALL[label],
@@ -288,6 +344,42 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                         reps.append(got)
                 res["contain"][label] = reps
     return res
+
+
+def estimate_parts(args: argparse.Namespace) -> dict[str, float]:
+    """Seconds each measure of the run takes, from the flags and the step times above."""
+    wanted = set(args.measures.split(","))
+    todo = plan(args)
+    ladder = [x for x in args.ladder.split(",") if x]
+    parts = {
+        "start": len(todo.start) * args.start_runs * EST_START_RUN_S if "start" in wanted else 0,
+        "idle": len(todo.idle)
+        * args.reps
+        * (args.settle + args.idle + EST_IDLE_EXTRA_S)
+        * ("idle" in wanted),
+        "latency": len(todo.probe)
+        * (args.latency_reps or args.reps)
+        * (
+            EST_LATENCY_EXTRA_S
+            + args.singles * args.gap_ms / 1000
+            + args.burst_seconds
+            + len(ladder) * args.ladder_seconds
+        )
+        * ("latency" in wanted),
+        "containment": len(todo.probe)
+        * (args.contain_reps or args.reps)
+        * (EST_CONTAIN_EXTRA_S + args.baseline + args.hang)
+        * ("contain" in wanted),
+    }
+    return parts
+
+
+def estimate_minutes(args: argparse.Namespace) -> float:
+    return sum(estimate_parts(args).values()) / 60
+
+
+def estimate_text(args: argparse.Namespace) -> str:
+    return ", ".join(f"{k} {v / 60:.1f}" for k, v in estimate_parts(args).items()) + " minutes"
 
 
 # -- numbers -----------------------------------------------------------------------------------
@@ -386,13 +478,40 @@ def cost_rows(res: dict[str, Any], label: str, kind: str, base: str, note: str) 
     return out
 
 
+def asked(res: dict[str, Any]) -> set[str] | None:
+    """The cells the run was asked for (``--postures``); None for results that do not say."""
+    got = res.get("args", {}).get("postures")
+    return {c for c in str(got).split(",") if c} if got else None
+
+
+def has_rows(res: dict[str, Any], label: str) -> bool:
+    """Does ``label`` have rows in the verdict table? The cells of the first full measurement
+    always do (a cell that was not measured shows ``not measured``), except in a lean run (the
+    lean cells and no other): B and C were not asked for there. A lean cell has rows when it was
+    asked for, or, when the results do not say, when any of its numbers is there."""
+    want = asked(res)
+    if label in LEAN_CELLS:
+        if want is not None:
+            return label in want
+        return any(
+            f"{label}/default" in res[s] if s in ("start", "idle") else label in res[s]
+            for s in ("start", "idle", "latency", "contain")
+        )
+    lean_run = want is not None and bool(want & set(LEAN_CELLS)) and not want & set(LEGACY_CELLS)
+    return not lean_run
+
+
 def verdicts(res: dict[str, Any]) -> list[Row]:
     rows: list[Row] = []
-    for label in ("B1", "B2", "C1"):
-        rows += cost_rows(res, label, "default", "A/default", "")
+    for label in ("B1", "B2", "C1", "L1", "L2"):
+        if has_rows(res, label):
+            rows += cost_rows(res, label, "default", "A/default", "")
     for label in ("C1", "C2"):
-        rows += cost_rows(res, label, "plus3", "A/plus3", " (+3 user modules)")
-    for label in ("B1", "B2", "C1", "C2"):
+        if has_rows(res, label):
+            rows += cost_rows(res, label, "plus3", "A/plus3", " (+3 user modules)")
+    for label in ("B1", "B2", "C1", "C2", "L1", "L2"):
+        if not has_rows(res, label):
+            continue
         for name, field in (
             ("Value to screen, single", "single_ms"),
             ("Value to screen, burst", "burst_ms"),
@@ -433,7 +552,12 @@ def verdicts(res: dict[str, Any]) -> list[Row]:
 
 
 def decision(rows: list[Row]) -> list[str]:
-    """What the decision rule gives for the numbers, as a computed sentence; the maintainer decides."""
+    """What the decision rule gives for the numbers, as a computed sentence; the maintainer decides.
+
+    The rule: B passes every row: B. B fails a row and L (lean B: only the files with Python of
+    their own in processes) passes every row: L. B fails and C passes: C. None passes: A stays. A
+    run that has no B rows (a lean run) cannot apply the first step: it says what L gives and what
+    follows from B's result in the other run."""
     out: list[str] = []
     by_cell: dict[str, list[Row]] = {}
     for r in rows:
@@ -445,18 +569,55 @@ def decision(rows: list[Row]) -> list[str]:
             return None
         return all(bool(r.ok) for r in got)
 
-    b = {c: passes(c) for c in ("B1", "B2")}
-    c = {k: passes(k) for k in ("C1", "C2")}
-    if any(v is None for v in (*b.values(), *c.values())):
+    def failed(cell: str) -> str:
+        names = sorted({r.test for r in by_cell.get(cell, []) if r.ok is False})
+        return f"{cell} fails {', '.join(names)}"
+
+    got = {k: passes(k) for k in ("B1", "B2", "C1", "C2", "L1", "L2") if k in by_cell}
+    if any(v is None for v in got.values()):
         out.append("Some rows were not measured in this run, so the rule cannot be applied.")
+        return out
+    b = {k: v for k, v in got.items() if k[0] == "B"}
+    c = {k: v for k, v in got.items() if k[0] == "C"}
+    lean = {k: v for k, v in got.items() if k[0] == "L"}
+    pass_l = ", ".join(k for k, v in lean.items() if v)
+    pass_c = ", ".join(k for k, v in c.items() if v)
+    if not b and lean:
+        if pass_l:
+            out.append(
+                f"B was not measured in this run, so the rule's first step is not applied here. "
+                f"L passes every row ({pass_l}): if B fails a row (see the B rows of the full "
+                "measurement), by the rule the shell moves to L; if B passes every row, it moves "
+                "to B."
+            )
+        else:
+            out.append(
+                "B was not measured in this run. L does not pass every row "
+                f"({'; '.join(failed(k) for k in lean)}): by the rule L is not the answer to a B "
+                "that fails; C (not measured here) or A follows."
+            )
         return out
     if any(b.values()):
         which = ", ".join(k for k, v in b.items() if v)
         out.append(f"B passes every row ({which}): by the rule the shell moves to B before 1.0.")
-    elif any(c.values()):
-        which = ", ".join(k for k, v in c.items() if v)
+    elif pass_l:
         out.append(
-            f"B fails a row and C passes every row ({which}): by the rule the shell moves to C."
+            f"B fails a row and L passes every row ({pass_l}): by the rule the shell moves to L."
+        )
+        if pass_c:
+            out.append(
+                f"C passes every row too ({pass_c}). The rule as written gives L when B fails and L "
+                "passes; the maintainer chooses between L (every module with Python of its own "
+                "in a process) and C (only the user's modules)."
+            )
+    elif any(c.values()):
+        out.append(
+            f"B fails a row and C passes every row ({pass_c}): by the rule the shell moves to C."
+        )
+    elif lean:
+        out.append(
+            "No form passes every row: by the rule A stays and the vault records why "
+            f"({'; '.join(failed(k) for k in lean)})."
         )
     else:
         out.append(
@@ -582,6 +743,143 @@ def code_cost() -> tuple[str, str]:
     return table, text
 
 
+def variant_table(res: dict[str, Any], labels: Sequence[str]) -> str:
+    """Start, wake-ups, memory, processes and single-update latency of the cells on the default
+    shell, one row each."""
+    rows = []
+    for label in labels:
+        k = f"{label}/default"
+        rows.append(
+            [
+                label,
+                fmt_cell(res, "start", k, "ready_ms", 0),
+                span(idle_values(res, k, "wakeups_per_s"), 2),
+                span(idle_values(res, k, "pss_mb"), 0),
+                span(idle_values(res, k, "processes"), 0),
+                span(lat_pool(res, label, "single_ms", 0.95), 2),
+            ]
+        )
+    return md_table(
+        ["Variant", "Start ms", "Wake-ups / s", "PSS MB", "Processes", "Single p95 ms"], rows
+    )
+
+
+def better_variant(res: dict[str, Any], rows: list[Row], a: str, b: str, noun: str) -> str:
+    """Which of the two services variants (``a``, ``b``) is better on this run: the one that passes
+    more rows, else the one with less memory; empty when one of them has no rows."""
+    ok = {
+        c: all(bool(r.ok) for r in rows if r.cell == c)
+        for c in (a, b)
+        if any(r.cell == c for r in rows)
+    }
+    if len(ok) != 2:
+        return ""
+    pa = med(idle_values(res, f"{a}/default", "pss_mb"))
+    pb = med(idle_values(res, f"{b}/default", "pss_mb"))
+    if ok[a] != ok[b]:
+        return f"By the rows above **{a if ok[a] else b}** is the better {noun} (it passes more of them).\n"
+    fails = {c: sorted({r.test for r in rows if r.cell == c and r.ok is False}) for c in ok}
+    if len(fails[a]) != len(fails[b]):
+        fewer = a if len(fails[a]) < len(fails[b]) else b
+        return (
+            f"By the rows above **{fewer}** is the better {noun} (it fails fewer of them: "
+            f"{a} fails {', '.join(fails[a])}; {b} fails {', '.join(fails[b])}).\n"
+        )
+    if math.isnan(pa) or math.isnan(pb):
+        return ""
+    same = (
+        "pass the same rows"
+        if not fails[a]
+        else "fail the same rows"
+        if fails[a] == fails[b]
+        else f"fail different rows ({a}: {', '.join(fails[a])}; {b}: {', '.join(fails[b])})"
+    )
+    return (
+        f"The two variants {same}; **{a if pa < pb else b}** uses less memory "
+        f"({min(pa, pb):.0f} MB against {max(pa, pb):.0f} MB of PSS) and is the better {noun} "
+        "on this run.\n"
+    )
+
+
+def own_lines(name: str) -> str:
+    """Non-blank lines of the Python of a shipped module file (``-``: a user's file)."""
+    path = SHIPPED / name / f"{name}_Module.py"
+    if not path.is_file():
+        return "-"
+    return str(sum(1 for line in path.read_text().splitlines() if line.strip()))
+
+
+def lean_split(res: dict[str, Any]) -> tuple[list[str], list[str]] | None:
+    """``(module files in processes, module files in the shell)`` of the lean cells, as the
+    posture decided them in the first idle repetition."""
+    for label in LEAN_CELLS:
+        for rep in res["idle"].get(f"{label}/default", []):
+            if rep.get("children") is not None:
+                return rep["children"], rep["in_shell"]
+    return None
+
+
+def lean_counts(names: Sequence[str]) -> dict[str, tuple[int, int]]:
+    """``{rule: (module files in processes, module files in the shell)}`` for the shipped module
+    files among ``names``, by each rule of ``has_own_code``."""
+    out: dict[str, tuple[int, int]] = {}
+    for rule in RULES:
+        own = [
+            has_own_code(SHIPPED / n / f"{n}_Module.py", rule)
+            for n in names
+            if (SHIPPED / n / f"{n}_Module.py").is_file()
+        ]
+        out[rule] = (sum(own), len(own) - sum(own))
+    return out
+
+
+def lean_section(res: dict[str, Any]) -> str:
+    got = lean_split(res)
+    if got is None:
+        return ""
+    kids, stay = got
+    total = len(kids) + len(stay)
+    rule = res.get("args", {}).get("lean_rule", "strict")
+    counts = lean_counts([*kids, *stay])
+    text = (
+        "## Lean B: which module files run in a process\n\n"
+        "**How a file is told to have Python of its own** (`has_own_code` in "
+        "`tests/perf/proto/parent.py`, read from the file's syntax tree, nothing runs). Rule "
+        "`strict`: a file has none when every top-level statement is an import (also under "
+        "`if TYPE_CHECKING:`), a docstring, `pass`, or a class extending `Module` whose body is only "
+        "`pass`, a docstring or `...`; a missing file has none (the product refuses a module with no "
+        "Python file, so it cannot occur for a shipped module). Anything else (a method such as "
+        "`validate_use`, a constant, a function) is Python of its own and the file runs in a "
+        "process, as in B. Rule `validate`: as `strict`, and a literal constant and a "
+        "`validate_use` method are no Python of its own either (the widget modules whose Python is "
+        "only the check of their parameters); that check then runs in the shell when a use is "
+        "added, as it does in A. A file that does not parse runs in a process, which reports the "
+        "error as in B. **This run used the rule `" + rule + "`** (`--lean-rule`).\n\n"
+        f"The default shell loads **{total}** module files: **{len(kids)} run in a process** and "
+        f"**{len(stay)} stay in the shell**. The maintainer's expectation (Module Process Test, open "
+        "question 3) was 13 TDL-only files staying and 9 in processes"
+        + (
+            "; the count of this run is the same.\n\n"
+            if len(stay) == 13
+            else f"; this run gives {len(stay)} staying and {len(kids)} in processes.\n\n"
+        )
+        + "The same module files by each rule (the shipped ones): "
+        + "; ".join(f"`{r}`: {k} in processes, {s} in the shell" for r, (k, s) in counts.items())
+        + ".\n\n"
+    )
+    rows = [[n, "process", own_lines(n)] for n in kids] + [[n, "shell", own_lines(n)] for n in stay]
+    return text + md_table(["Module file", "Runs in", "Python lines (not blank)"], rows)
+
+
+def forms_table(res: dict[str, Any]) -> str:
+    cells = [
+        label
+        for label in ("A", "B1", "B2", "C1", "L1", "L2")
+        if res["idle"].get(f"{label}/default")
+    ]
+    return variant_table(res, cells) if len(cells) > 1 else ""
+
+
 def report(
     res: dict[str, Any], info: dict[str, str], args: argparse.Namespace, loaded: bool
 ) -> str:
@@ -613,6 +911,8 @@ def report(
     w(
         f"\nCommand flags: `{' '.join(f'--{k.replace(chr(95), chr(45))}={v}' for k, v in res['args'].items() if k not in ('out',))}`\n"
     )
+    if res.get("elapsed_s"):
+        w(f"Run time of this measurement: {res['elapsed_s'] / 60:.1f} minutes.\n")
     loads = [
         v
         for section in (
@@ -650,6 +950,10 @@ def report(
         "default shell loads, 22 of them, runs its `Module` in a child; the shell holds a stub class "
         "built from the file's syntax tree, so no module code runs in the shell.\n"
         "- **C**: the shipped modules stay in the shell, each USER module file runs as in B.\n"
+        "- **L**, lean B: a module file whose Python has code of its own (a method, a constant, a "
+        "function: see the section on the lean B) runs in a child as in B; a file with none (a class "
+        "that is only `pass`: the TDL-only widget and popup modules) stays in the shell and is imported "
+        "there by the product's own code. `L1` and `L2` are L with the processes on B1 or B2.\n"
         "- **Services.** `B1`: each process opens its own connections (a D-Bus connection and service "
         "thread when it uses `ctx.dbus`, a PulseAudio connection for `ctx.audio`, a tray host name). `B2`: "
         "the shell keeps the connections and the process proxies calls and signals over the pipe. In "
@@ -662,7 +966,7 @@ def report(
         "joins what is queued into one `sendall`, so a burst is one syscall and an idle process wakes for "
         "nothing. The shell's reader thread calls the same `ValueStore.send`, so the per-key coalescing and "
         "the one `call_soon` flush are exactly A's.\n"
-        "- **Watchdog (B and C).** The process records the callback it runs in shared memory (a memfd the "
+        "- **Watchdog (B, C and L).** The process records the callback it runs in shared memory (a memfd the "
         f"shell passes in: two stores per callback); a watchdog thread of the shell reads it every "
         f"{os.environ.get('TESS_PROTO_WATCH', '1.0')} s, logs a stall at {args.stall:g} s and kills the "
         f"process at {args.kill:g} s; the existing back-off then restarts the module (first try after 1 s). "
@@ -747,7 +1051,7 @@ def report(
         "the probe module writes `<seq>:<monotonic ns>` as its value and logs every send; a wrapper "
         "around `ValueStore._turn` (the flush and the surfaces' property set, `on_change`) logs the time "
         "after the set and the value it showed. A value that another overtook inside one flush counts to "
-        "that flush. The probe runs in the shell's process in A and in a module process in B and C. "
+        "that flush. The probe runs in the shell's process in A and in a module process in B, C and L. "
         "Single updates are isolated "
         f"({args.singles} values, {args.gap_ms} ms apart); the burst is {args.burst_rate:g} values a second "
         f"for {args.burst_seconds:g} s.\n"
@@ -915,46 +1219,22 @@ def report(
         w(f"**Rule applied to these numbers:** {line}\n")
     w(
         "Rows compare with A as measured in this run (start, wake-ups and memory on the default shell, "
-        "C1 being C with no user module). B1/B2 and C1/C2 are the services variants. "
+        "C1 being C with no user module). B1/B2, C1/C2 and L1/L2 are the services variants. "
         "The rule is applied to the numbers as measured, not to how the prototype looks.\n"
     )
-    w("## Which B: B1 or B2\n")
-    b_rows = []
-    for key in ("default",):
-        for label in ("B1", "B2"):
-            k = f"{label}/{key}"
-            b_rows.append(
-                [
-                    label,
-                    fmt_cell(res, "start", k, "ready_ms", 0),
-                    span(idle_values(res, k, "wakeups_per_s"), 2),
-                    span(idle_values(res, k, "pss_mb"), 0),
-                    span(idle_values(res, k, "processes"), 0),
-                    span(lat_pool(res, label, "single_ms", 0.95), 2),
-                ]
-            )
-    w(
-        md_table(
-            ["Variant", "Start ms", "Wake-ups / s", "PSS MB", "Processes", "Single p95 ms"], b_rows
-        )
-    )
-    ok = {
-        c: all(bool(r.ok) for r in rows if r.cell == c)
-        for c in ("B1", "B2")
-        if any(r.cell == c for r in rows)
-    }
-    if len(ok) == 2:
-        b1p = med(idle_values(res, "B1/default", "pss_mb"))
-        b2p = med(idle_values(res, "B2/default", "pss_mb"))
-        if ok["B1"] != ok["B2"]:
-            better = "B1" if ok["B1"] else "B2"
-            w(f"By the rows above **{better}** is the better B (it passes more of them).\n")
-        elif not math.isnan(b1p) and not math.isnan(b2p):
-            better = "B1" if b1p < b2p else "B2"
-            w(
-                f"The two variants pass the same rows; **{better}** uses less memory "
-                f"({min(b1p, b2p):.0f} MB against {max(b1p, b2p):.0f} MB of PSS) and is the better B on this run.\n"
-            )
+    if any(f"{label}/default" in res["idle"] for label in ("B1", "B2")):
+        w("## Which B: B1 or B2\n")
+        w(variant_table(res, ("B1", "B2")))
+        w(better_variant(res, rows, "B1", "B2", "B"))
+    if any(f"{label}/default" in res["idle"] for label in LEAN_CELLS):
+        w("## Which lean B: L1 or L2\n")
+        w(variant_table(res, LEAN_CELLS))
+        w(better_variant(res, rows, "L1", "L2", "lean B"))
+    side = forms_table(res)
+    if side:
+        w("## The forms side by side (default shell)\n")
+        w(side)
+    w(lean_section(res))
     w(
         "What each costs to build: "
         f"**B1** needs nothing new for the three services (the shell's own `Layer`, `AudioService` and "
@@ -994,6 +1274,35 @@ def report(
         "run leaves `tmp-proc-*` folders and processes whose environment names the private runtime "
         "directory).\n"
     )
+    lean = parse(LEAN_RUN)
+    plus_lean = parse(["--postures=A,B1,B2,C1,C2,L1,L2"])
+    w("### The lean B only (A as the baseline)\n")
+    w(
+        "The first full measurement already has A, B and C; the lean B needs only A beside it. This "
+        "runs A, L1 and L2 (the default shell only: no user modules) and writes a report of its own, "
+        "so the report of the full run stays as it is. Three repetitions of start and idle, which "
+        "carry the memory and the wake-ups, and fewer of latency and containment, which the rows "
+        "pass by a wide margin or fail outright:\n\n"
+        "```\n"
+        "unset VIRTUAL_ENV; export UV_PROJECT_ENVIRONMENT=$HOME/Projects/pyDev/pyEnvs/tess-shell-lean\n"
+        "env -u WAYLAND_DISPLAY -u DISPLAY uv run --no-sync python tests/perf/module_process_test.py "
+        + " ".join(LEAN_RUN)
+        + "\n```\n\n"
+        "With the rule `validate` (the module files whose only Python is a `validate_use` check "
+        "and literal constants stay in the shell too; see the section on the lean B for the counts "
+        "of each rule), the same run and its own report file:\n\n"
+        "```\n"
+        "env -u WAYLAND_DISPLAY -u DISPLAY uv run --no-sync python tests/perf/module_process_test.py "
+        + " ".join(LEAN_RUN_VALIDATE)
+        + "\n```\n\n"
+        f"Expected duration about {estimate_minutes(lean):.0f} minutes (an estimate from the step "
+        "times measured on this machine: "
+        + estimate_text(lean)
+        + "). The same cells with three repetitions of everything take about "
+        f"{estimate_minutes(parse([*LEAN_RUN, '--latency-reps=3', '--contain-reps=3'])):.0f} minutes. "
+        "Adding L1 and L2 to the full run (`--postures=A,B1,B2,C1,C2,L1,L2`) adds about "
+        f"{estimate_minutes(plus_lean) - estimate_minutes(parse([])):.0f} minutes to it.\n"
+    )
     return "\n".join(out)
 
 
@@ -1001,7 +1310,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parse(argv)
     loaded = refuse_when_loaded(args.allow_load)
     info = machine()
+    began = time.monotonic()
     res = run(args)
+    res["elapsed_s"] = time.monotonic() - began
     text = report(res, info, args, loaded)
     args.out.write_text(text)
     args.out.with_suffix(".json").write_text(json.dumps({"machine": info, **res}, indent=1))

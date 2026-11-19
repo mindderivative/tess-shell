@@ -32,7 +32,7 @@ BAR_REGION = "0,0 1280x34"  # the Bar of the test shells: where the scrolling te
 
 @dataclass(frozen=True, slots=True)
 class Cell:
-    """One posture of the process test: ``posture`` is ``A``, ``B`` or ``C``; ``services`` ``B1`` or
+    """One posture of the process test: ``posture`` is ``A``, ``B``, ``C`` or ``L``; ``services`` ``B1`` or
     ``B2`` (for A it means nothing); ``label`` is what the report calls it."""
 
     label: str
@@ -50,7 +50,9 @@ B1 = Cell("B1", "B", "B1")
 B2 = Cell("B2", "B", "B2")
 C1 = Cell("C1", "C", "B1")
 C2 = Cell("C2", "C", "B2")
-ALL = {c.label: c for c in (A, B1, B2, C1, C2)}
+L1 = Cell("L1", "L", "B1")  # lean B: only the files with Python of their own run in a process
+L2 = Cell("L2", "L", "B2")
+ALL = {c.label: c for c in (A, B1, B2, C1, C2, L1, L2)}
 
 
 @dataclass(frozen=True, slots=True)
@@ -190,6 +192,7 @@ def running(
             wrapper=not cell.plain,
             probe_out=out,
             probe_dir=probe_dir,
+            decisions=root / "decisions.log" if not cell.plain else None,
             stall=stall,
             kill=kill,
             watch=watch,
@@ -198,6 +201,18 @@ def running(
             yield shell, shell.wait_ready(), root
         finally:
             shell.stop()
+
+
+def read_decisions(path: Path) -> dict[str, str]:
+    """``{module file: "child" or "shell"}`` as the posture decided at the loads of a shell (the
+    last decision of a module wins: a reload decides again)."""
+    out: dict[str, str] = {}
+    if path.exists():
+        for row in path.read_text().splitlines():
+            name, _, where = row.partition(" ")
+            if where:
+                out[name] = where
+    return out
 
 
 def load1() -> float:
@@ -227,7 +242,8 @@ def measure_idle(
     """Idle CPU, wake-ups and memory of the whole tree over ``seconds``, after ``settle`` seconds
     with nothing happening."""
     load = load1()
-    with running(rig, cell, kind) as (shell, ready, _):
+    with running(rig, cell, kind) as (shell, ready, root):
+        split = read_decisions(root / "decisions.log")
         time.sleep(settle)
         first = sample_tree(shell.pid)
         time.sleep(seconds)
@@ -241,6 +257,8 @@ def measure_idle(
             "rss_mb": last.rss_mb,
             "processes": len(last.pids),
             "threads": last.threads,
+            "children": sorted(n for n, w in split.items() if w == "child"),
+            "in_shell": sorted(n for n, w in split.items() if w == "shell"),
             "load": load,
         }
 
