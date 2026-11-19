@@ -117,6 +117,23 @@ By the rule of this note, B fails one row (memory) and C passes every row, so th
 - **Caveats:** the paint measure is taken from outside, so it says "painting", not the engine's frame rate; fakes only, no real hardware, KWin's window script is off so Tasks shows no windows. The prototype is not a product: it leaves out `ctx.focus`, `Event.stop()`, the result of an `@action` through `Call` (a module in a process returns null to the CLI), actions inherited from another user class, `check`'s load-time findings for module processes, the `many-threads` and `slow-module` warnings, and JSON's loss of tuples. A real B needs a reply path (an RPC with a timeout) for `update_popup`, `is_popup_open`, `surface.*`, `apps.search` and `Call`, and `READY=1` that waits for the children without blocking the loop.
 - **Lean B, not yet measured:** 22 files minus the 13 TDL-only ones leaves about 9 processes, about 9 x 18 = 160 MB PSS above A, a little over the +150 MB limit. The code session builds a lean B only delta (start, idle memory, latency, containment), about 15 to 20 minutes on the same harness, and sends it as a separate table. Close to the limit, so measure, do not guess.
 
+### The lean B (code session's report, 2026-11-19; PR #82 adds L1 and L2 to the harness, CI running; not run in the vault)
+
+A, L1 and L2, 3 repetitions, 15 start runs, a lean-only run on an idle machine at the start. Reports `/tmp/m7/lean-strict.md` and `/tmp/m7/lean-validate.md`.
+
+- **A correction first:** this note's "the 13 TDL-only modules stay in the shell" does not match the code. Counted on the live default shell, the strict rule (a class that is only `pass` or a docstring) puts 19 of 22 files in children and keeps only 3 in the shell (Menu, Task_Item, Tray_Item), so it is almost B. The validate rule (which also keeps widgets whose only Python is a `validate_use` check and literal constants) puts 11 in children and keeps 11 in the shell. The 13 holds only as "22 minus the 8 default modules and Applications", and two of those (Audio_Outputs, Tray_Menu) have real Python.
+
+| Against A of the same run | Start (+300) | Wake-ups (+2) | Memory (+150) |
+|---|---|---|---|
+| Strict L1 | +207 ms | +0.95 | **+325 MB FAIL** |
+| Strict L2 | +156 ms | +1.03 | **+313 MB FAIL** |
+| Validate L1 (11 children, 13 processes) | +178 ms | **+2.86 FAIL** | **+199 MB FAIL** |
+| Validate L2 | +119 ms | +0.98 | **+185 MB FAIL** (35 MB, 23 percent over) |
+
+Value to screen p95 is 0.42 to 1.12 ms and containment (hang, kill, restart) passes in every L cell.
+
+**Bottom line:** lean B does not pass the memory row either. The best variant (validate, L2) is +185 MB against 150, so by this note's rule (if B fails on cost and C passes, move to C) the outcome stays C: shipped modules in the shell, only user modules in processes, which passed every row in the first run, at -2 MB for the default shell and about +17 MB PSS per user module. The decision is the maintainer's.
+
 ### What was built
 
 - Everything is new under `tests/` and no `src/` file was touched. `tests/perf/proto/` is a prototype of posture B (a Python child process per module file; JSON lines over a socketpair, recorded as the wire format; B1: each child opens its own D-Bus and PulseAudio connections; B2: the parent keeps the connections and proxies calls and signals) and of C (shipped modules in process, each user module as B). It runs the default shell's 22 module files (the eight default modules, Applications, and the widget and popup modules they use) in B, and a user module in a child in C, verified against the fakes including real pointer clicks and the Tray menu in B1 and B2.

@@ -130,6 +130,7 @@ The same notes as a plain list, with no JavaScript:
 - [TRE-REQ-025 Third-Party Licence Notices in the Wheel](../80%20Requests/TRE-REQ-025%20Third-Party%20Licence%20Notices%20in%20the%20Wheel.md)
 - [TRE-REQ-026 Lost Connection Signal and Layer Shell Re-Probe](../80%20Requests/TRE-REQ-026%20Lost%20Connection%20Signal%20and%20Layer%20Shell%20Re-Probe.md)
 - [TRE-REQ-027 Announce Keeps Call Order](../80%20Requests/TRE-REQ-027%20Announce%20Keeps%20Call%20Order.md)
+- [TRE-REQ-028 App Drops Closed Windows](../80%20Requests/TRE-REQ-028%20App%20Drops%20Closed%20Windows.md)
 - [V1 Scope](../10%20Vision/V1%20Scope.md)
 - [Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)
 - [Value Types and Conversion](../42%20Python%20API/Value%20Types%20and%20Conversion.md)
