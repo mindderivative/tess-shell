@@ -5,7 +5,7 @@ type: quality
 status: accepted
 owner: phil
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [quality, security, performance]
 ---
 
@@ -116,7 +116,7 @@ B costs about 360 MB more PSS (22 processes of about 17 MB each, which is where 
 1. [x] Is a process per module one process per module file, or per use? Context: today one instance serves every use of a file (`ctx.uses`). Recommendation: per module file, as today, so the memory is the lowest and the contract is the same. Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note.
 2. [x] Are the thresholds above the maintainer's? That is [M7 Brief > Open Questions](../00%20Home/M7%20Brief.md#open-questions) 6, open there. Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note.
 
-3. [ ] Should the measurement include a lean B before the verdict? Context: as built, B puts 22 module files in 22 processes, including 13 small widget and popup modules that have no Python of their own, which is where the memory goes (about 360 MB, over the 150 MB threshold). A lean B keeps the modules with no code of their own in the shell and runs only modules with Python in children (nine for the default shell), which is the form a real design would take. The code session proposes deciding this before the verdict, since the full run takes about 80 minutes. Recommendation: yes, add a lean B (B1 and B2 if the cost allows) to the same run.
+3. [x] Should the measurement include a lean B before the verdict? Context: as built, B puts 22 module files in 22 processes, including 13 small widget and popup modules that have no Python of their own, which is where the memory goes (about 360 MB, over the 150 MB threshold). A lean B keeps the modules with no code of their own in the shell and runs only modules with Python in children (nine for the default shell), which is the form a real design would take. The code session proposes deciding this before the verdict, since the full run takes about 80 minutes. Recommendation: yes, add a lean B (B1 and B2 if the cost allows) to the same run. Answered by the maintainer on 2026-11-19: yes, add a lean B to the same run, with B1 and B2 if the cost allows.
 
 ## Acceptance criteria
 
