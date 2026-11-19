@@ -2,16 +2,17 @@
 title: TRE-REQ-025 Third-Party Licence Notices in the Wheel
 aliases: [TRE-REQ-025, THIRD_PARTY_NOTICES, font licences in the wheel, engine licence notices]
 type: engine-request
-status: draft
+status: accepted
 owner: phil
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [engine-request, delivery, needs-verification]
 ---
 
 # TRE-REQ-025: Ship the Licence Texts and Notices of What the Engine Bundles
 
 > [!NOTE]
+> **The maintainer reviewed it and passed it to tre himself; on 2026-11-19 he said tre is building it for 0.6.10.**
 > The `tesserae-engine` wheel embeds fonts and compiled Rust crates under licences that ask for their text or copyright notice to travel with them, and its `dist-info/licenses` holds only the project's own MIT `LICENSE`. Tesserae Shell had to assemble a `NOTICE` for what the engine bundles from outside the wheel (M7e, `tess-shell` PR #58). The request: the engine ships the notices itself. Drafted on 2026-11-17 from the code session's report of the M7e work and offered to the maintainer to carry; not sent to tre.
 
 ## Shell Need

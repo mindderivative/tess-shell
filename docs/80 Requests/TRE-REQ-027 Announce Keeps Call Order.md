@@ -2,7 +2,7 @@
 title: TRE-REQ-027 Announce Keeps Call Order
 aliases: [TRE-REQ-027, Window.announce order, announce burst scrambled]
 type: engine-request
-status: review
+status: accepted
 owner: phil
 created: 2026-11-17
 updated: 2026-11-19
@@ -49,6 +49,19 @@ Not built. The code session would not build it if tre fixes this soon. Until the
 ## Acceptance
 
 A test that calls `announce` six times in one loop turn and reads six AT-SPI `Announcement` signals in call order, three runs in a row; the same across two windows of one `App` if that is supported.
+
+## Built (tre's report, 2026-11-19; not run in the vault)
+
+Fixed on tre's local branch `fix/req-027` (`952851f1`, off main after PR #307); not pushed, merged or released; it ships in 0.6.10.
+
+- **Reproduced first** on 0.6.9: six calls in one loop turn were heard as A4 A3 A2 A6 A1 A5, A2 A3 A1 A6 A4 A5, A1 A4 A5 A2 A3 A6 in three runs on a private AT-SPI bus.
+- **Cause:** one layer lower than tre's queue. tre put every queued message into one accessibility update in call order, but AccessKit keeps the nodes one update adds in a hash set (`accesskit_consumer` `added_node_ids`, `accesskit_atspi_common` `added_nodes`), so the signals leave in hash order. Calls one loop turn apart are separate updates, hence in order.
+- **Fix:** each update carries only the oldest waiting message, and the window keeps drawing frames until the queue is empty. Six messages are six frames (about 100 ms at 60 Hz). No batching or deduplication; the queue cap of 16 (newest kept) stays.
+- **After:** A1 to A6 in order in all three runs. Five Rust unit tests, a live AT-SPI regression test, `cargo test --workspace` 855 passed, full pytest in a private sway 1588 passed, 13 skipped, 0 failed.
+- **Limit:** ordering is per window. Each window has its own tree and updates, so order across the windows of one `App` is not guaranteed; announce from one window if that is needed.
+- **Not verified:** Orca, NVDA, VoiceOver, KWin.
+
+The shell-side queue is not needed. A burst of six now takes about 100 ms to be heard, which is a latency the shell should know about.
 
 ## Links
 

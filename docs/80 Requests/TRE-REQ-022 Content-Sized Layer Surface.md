@@ -5,13 +5,14 @@ type: engine-request
 status: accepted
 owner: phil
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [engine-request, spec/surface, needs-verification]
 ---
 
 # TRE-REQ-022: A Layer Surface Sized to Its Content, Padding Included, Kept in Step as the Content Changes
 
 > [!NOTE]
+> **The maintainer said on 2026-11-19 that it ships in tre 0.6.10.**
 > A `LayerWindow` takes a fixed `size`. The shell works around this by measuring the content once in a headless window before the surface exists and fixing that size; when the content changes while the surface is open (the Launcher's result list as the user types) the size cannot follow. The request: tre sizes a layer surface to its content on either axis, includes the root node's padding in that size, and re-requests the size as the content changes, in the same frame as the redraw and without flicker. Written on 2026-11-17 at the maintainer's request ("I want these built"), from the code session's report and the maintainer's own description; the vault session sent it to tre on the maintainer's standing order (2026-11-17), and tre begins work on receipt.
 
 ## Built by tre, not yet released (tre's report, 2026-11-17)
