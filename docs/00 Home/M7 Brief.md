@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [moc, roadmap, brief]
 ---
 
@@ -36,7 +36,7 @@ tags: [moc, roadmap, brief]
 | M7f second half | Merged (`tess-shell` PR #69, CI green): the import of another `_Shell.tdl`, schema 1.11 ([Shell File > Importing Another Shell File (Built in M7f, code session's report of `tess-shell` PR #69, 2026-11-17; not run in the vault)](../41%20TDL%20Reference/Shell%20File.md#importing-another-shell-file-built-in-m7f-code-sessions-report-of-tess-shell-pr-69-2026-11-17-not-run-in-the-vault)) |
 | M7d version policy and migrate | Merged (`tess-shell` PR #61, CI green): `tesserae-shell migrate` with the 0.1 to 0.2 step and the shell's own scanner, `shell-too-old`, `tdl-old-version`, the deprecation machinery (empty table); no schema bump ([Version Policy and Migration](../70%20Delivery/Version%20Policy%20and%20Migration.md)) |
 | M7a2 process per module | Prototype and harness merged (`tess-shell` PR #71, CI green); no result yet. A smoke run (indicative only): B +360 MB (over the 150 MB threshold), start +180 to 270 ms, latency about 1 ms p95, containment works, C equals A for the default shell. One question for the maintainer before the full run: add a lean B ([Module Process Test](../60%20Quality/Module%20Process%20Test.md)) |
-| M7c idle budgets | PR #75 in CI (it had two faults of its own, fixed); its reading and M7a2's full run (about 80 minutes) go alone on an idle machine once the merges are done |
+| M7c idle budgets | Real reading done (full mode, 22 min): 17 of 26 budgets pass, 4 recorded, 1 not measured, 4 miss (B02, B12, B14, B18); the heartbeat need not be slowed; a possible 7 MiB reload leak ([Performance Budgets > M7c Reading (code session's report, 2026-11-19; not run in the vault)](../60%20Quality/Performance%20Budgets.md#m7c-reading-code-sessions-report-2026-11-19-not-run-in-the-vault)). The M7a2 full run is next |
 | M7i, M7j | Wait for tre's release of 022 and 023 |
 | M7k click-away | Started from tre's answer to 024 |
 

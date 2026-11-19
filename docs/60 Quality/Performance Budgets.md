@@ -5,7 +5,7 @@ type: quality
 status: review
 owner: phil
 created: 2026-11-02
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [quality, performance]
 ---
 
@@ -83,11 +83,27 @@ These are inconsistencies between notes, found by the sweep. I have not edited t
 | 9 | The auto-hide delay is "1000 ms proposed" in one place and "open" in another | Accept 1000 ms or leave it open in both |
 | 10 | Several specs point at `[[60 Quality]]` for budgets; the folder now exists but holds only this ledger | This note is the target |
 
+## M7c Reading (code session's report, 2026-11-19; not run in the vault)
+
+Full mode, 22.4 minutes, a private sway and private buses with fakes, load 0.23 at the start. The file is `tests/perf/budget-results.md` in the harness's worktree (a copy at `/tmp/m7/budget-results-real.md`); committing it needs a PR, which the code session asks you to say yes to. 26 budgets: 17 pass, 4 recorded, 1 not measured (B08: `mli` is not shipped), 4 fail.
+
+| Budget | Reading | Limit | Result |
+|---|---|---|---|
+| B02 idle wake-ups, one Bar with a minute Clock and a Text | 5.16 per s between ticks (spread 4.13 to 6.2 over 2 runs); the default shell reads 4.07, 4.51 under the systemd watchdog; no surface 2.03 | at most 5 | Fails by 0.16 (3%) |
+| B12 loop callback of toggling the Launcher | 1.75 ms p99 (the CLI end to end is 57.9 ms median, passes 100 ms; the plain Dock Panel toggle is 0.08 ms) | at most 1 ms | Fails |
+| B14 `setShortcutKeys` calls per action | 2 (the shell sends two like the client library, flags 2 and 8); `doRegister` 1 passes; 10 actions in 3.8 ms; key press to callback 0.41 ms p95 | 1 | Fails; the note's 1 may be wrong rather than the code |
+| B18 bind of a typed tree of 3,101 nodes | 34.4 ms median (spread 32 to 112), 34 tre calls; the 5-node example binds in 0.08 ms | 15 ms | Fails |
+
+Recorded: default shell memory 209 MiB RSS, 141 MiB PSS (one Bar also 141 PSS; no surface 64 RSS, 50 PSS); idle CPU 0.03% of one core (limit 0.5); time to ready 0.264 s median (limit 2 s); the callback record costs about 0.14 microseconds per callback, so it stays.
+
+Findings not fixed: a reload that removes and re-adds nine Panels retains about 7 MiB per cycle in Python objects, a possible leak that needs a separate look (unconfirmed: the builder's report is lost, see [SHELL-REQ-001 Reload Memory Retention](../80%20Requests/SHELL-REQ-001%20Reload%20Memory%20Retention.md)); logging adds two threads where [Crash Recovery and Watchdog](Crash%20Recovery%20and%20Watchdog.md) says one.
+
 ## Open Questions
 
 1. [ ] Do you accept the proposed values above, or change them? Context: see [Proposed Values for the Missing Numbers](#proposed-values-for-the-missing-numbers). Recommendation: accept them as the v1 starting values and revise after the first measurements.
 2. [ ] Are the budgets checked in automated tests (a headless idle-CPU test) or only measured by hand in v1? Context: AGENTS > 12. Design Completeness Checklist lists testing through `window.simulate`. Recommendation: measure by hand in v1 and add the headless idle-CPU test once the budgets have held through one milestone.
 3. [ ] Which machine counts as the reference: the maintainer's AMD desktop, or a slower laptop? Context: the budgets are only meaningful against one machine. Recommendation: the AMD desktop sets the numbers; spot-check on a slower laptop before release.
+4. [x] For the four misses, do you change the budget or ask for a fix? Context: see [M7c Reading (code session's report, 2026-11-19; not run in the vault)](#m7c-reading-code-sessions-report-2026-11-19-not-run-in-the-vault). Recommendation: B02 raise to 6 (it misses by 3% in one artificial Bar, and the default shell reads 4.07); B12 change to 2 ms p99 (the CLI end to end is 58 ms against 100); B14 change to 2 calls, because the shell matches the client library; B18 keep 15 ms as a target and ask the code session for a fix or a cheaper bind of large trees. Separately, ask for a look at the 7 MiB reload retention. Answered by the maintainer on 2026-11-19: use the recommendation. B02 is now at most 6 wake-ups per second, B12 at most 2 ms p99, B14 2 calls per action, B18 stays 15 ms as a target with a fix requested, and the reload retention gets a look.
 
 ## Acceptance Criteria
 

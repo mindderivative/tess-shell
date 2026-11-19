@@ -2,17 +2,17 @@
 title: TRE-REQ-027 Announce Keeps Call Order
 aliases: [TRE-REQ-027, Window.announce order, announce burst scrambled]
 type: engine-request
-status: draft
+status: review
 owner: phil
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [engine-request, quality/accessibility, bug, needs-verification]
 ---
 
 # TRE-REQ-027: `Window.announce` Must Emit in the Order of the Calls
 
 > [!NOTE]
-> Several `Window.announce` calls made in one loop turn reach a screen reader in a scrambled order. A user can hear "Network connected" before "Network disconnected", or a Launcher row before an earlier one, whenever two announcements of one window fall in one update. This is a bug in the behaviour built for [TRE-REQ-021 Announce Without a Node](TRE-REQ-021%20Announce%20Without%20a%20Node.md) (tre 0.6.9), found by `tess-shell` CI. The code session offered it as a candidate request (it called it 025; that number was taken by [TRE-REQ-025 Third-Party Licence Notices in the Wheel](TRE-REQ-025%20Third-Party%20Licence%20Notices%20in%20the%20Wheel.md)). Drafted on 2026-11-17 and offered to the maintainer to carry; not sent to tre.
+> Several `Window.announce` calls made in one loop turn reach a screen reader in a scrambled order. A user can hear "Network connected" before "Network disconnected", or a Launcher row before an earlier one, whenever two announcements of one window fall in one update. This is a bug in the behaviour built for [TRE-REQ-021 Announce Without a Node](TRE-REQ-021%20Announce%20Without%20a%20Node.md) (tre 0.6.9), found by `tess-shell` CI. The code session offered it as a candidate request (it called it 025; that number was taken by [TRE-REQ-025 Third-Party Licence Notices in the Wheel](TRE-REQ-025%20Third-Party%20Licence%20Notices%20in%20the%20Wheel.md)). Drafted on 2026-11-17. On 2026-11-19 the maintainer had the vault session inform tre by message and said he will confirm it with tre himself.
 
 ## Shell Need
 

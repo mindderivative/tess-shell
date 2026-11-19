@@ -5,7 +5,7 @@ type: quality
 status: accepted
 owner: phil
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [quality, needs-verification]
 ---
 
@@ -113,7 +113,7 @@ The heartbeat is one timer at most once a second and one store; the watchdog thr
 
 1. [x] Does the shell start in safe start after repeated crashes (above)? Answered by the maintainer on 2026-11-17: yes, we want a safe start; it is built as written (3 unclean starts in 10 minutes, user modules skipped and named). The code session already proceeds on this recommendation, so nothing changes for it. Original text: Context: a crash loop is most often a user module; without it the user has no bar while they fix it. Recommendation: yes, 3 unclean starts in 10 minutes, user modules skipped, clearly logged.
 2. [x] Is `WatchdogSec=15` right? Context: the shell decides at 10 s and systemd backs it up at 15 s; a slow machine or a long blocking start could trip it. Recommendation: 15 s, with the heartbeat started only after step 12 of the start sequence so that startup is not judged ([Shell Start and Stop > Start Sequence](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md#start-sequence)). Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note.
-3. [x] May the heartbeat be slowed to once every 2 s if M7c shows the idle wake-up budget at risk? Context: about 2 wake-ups per second of its own against a budget of 5 for the shell. Recommendation: yes; a 10 s stall decision needs no finer resolution than 2 s. Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note.
+3. [x] May the heartbeat be slowed to once every 2 s if M7c shows the idle wake-up budget at risk? Context: about 2 wake-ups per second of its own against a budget of 5 for the shell. Recommendation: yes; a 10 s stall decision needs no finer resolution than 2 s. Accepted as recommended by the maintainer on 2026-11-17, with his acceptance of the note. Superseded on 2026-11-19: after the M7c reading he decided not to slow it.
 
 ## Questions After Testing
 
@@ -135,6 +135,7 @@ The heartbeat is one timer at most once a second and one store; the watchdog thr
 
 - A corrupt `registry.json` is moved aside as `registry.json.corrupt-<time>` and rebuilt. This note says rebuild; [Config Discovery and Registry](../40%20Specifications/Runtime/Config%20Discovery%20and%20Registry.md) and [Shell Start and Stop](../40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md) say exit 1; a registry from a newer shell is still refused. Recommendation: as built; those two notes are to be corrected.
 - `status` with no shell running keeps exit 3 and prints the crash lines to stderr only when there is something to say.
+- M7c measured the wake-ups (code session's report, 2026-11-19): the watchdog thread and the loop together cost 2.06 per second; a 2 s heartbeat would give 3.11 (saves 0.96), and the default shell is at 4.07 (4.51 under the systemd unit), so the budget of 5 holds without slowing it. Decided by the maintainer on 2026-11-19: do not slow the heartbeat; it stays at once a second. If the budget is ever lowered, slowing needs a pending-beat stall rule, because `Timing.tick=2.0` alone would warn falsely at every look. Logging adds two threads where this note says one.
 - The heartbeat uses `call_soon`, not `window.every`, because a shell with no windows has no timer. Wake-ups are not measured yet (M7c).
 - After a lost compositor the restarted shell exits 2, and the unit stays down if no compositor is up within `RestartSec=2`. A longer delay or a polling wait is open; [TRE-REQ-026 Lost Connection Signal and Layer Shell Re-Probe](../80%20Requests/TRE-REQ-026%20Lost%20Connection%20Signal%20and%20Layer%20Shell%20Re-Probe.md) is the engine side. The report's "not built" item was cut off in what the vault read.
 
