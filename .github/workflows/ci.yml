@@ -44,12 +44,12 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           # docs_only is true only for a pull request whose every changed path (a renamed file's
-          # old path too) is under docs/. Anything else, or any error, means "run everything".
+          # old path too) is under docs/design/ (the vault's export). Anything else, or any error, means "run everything".
           docs_only=false
           if [ "$EVENT" = pull_request ]; then
             files=$(gh api "repos/$REPO/pulls/$PR/files" --paginate \
               --jq '.[] | .filename, (.previous_filename // empty)') || files=""
-            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qv '^docs/'; then
+            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qv '^docs/design/'; then
               docs_only=true
             fi
           fi

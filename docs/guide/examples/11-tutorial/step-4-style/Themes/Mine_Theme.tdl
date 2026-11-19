@@ -1,0 +1,26 @@
+---
+TDL: 0.2
+Name: Mine
+---
+# Only what differs from the Default theme. The base values are the dark look; Modes.Light
+# changes them when the desktop is in its light colour scheme.
+Theme {
+    Color {
+        Surface: "#14211f"
+        Surface_Raised: "#1f332f"
+        Primary: "#5fd3b4"
+        On_Primary: "#06201a"
+        Accent: DESKTOP
+    }
+    Modes {
+        Light {
+            Color {
+                Surface: "#eef7f4"
+                Surface_Raised: "#ffffff"
+                On_Surface: "#13241f"
+                Primary: "#0f7a62"
+                On_Primary: "#ffffff"
+            }
+        }
+    }
+}

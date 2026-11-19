@@ -1,0 +1,14 @@
+---
+TDL: 0.2
+Name: Uptime_Style
+---
+# The module's own look: a class its layout uses. A rule of your stylesheet still wins over it.
+Style {
+    Classes {
+        uptime_text {
+            Kind: Text
+            Font_Size: 13
+            Font_Weight: 500
+        }
+    }
+}
