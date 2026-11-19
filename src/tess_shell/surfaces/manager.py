@@ -485,6 +485,25 @@ def _log_errors(errors: Sequence[BindError]) -> None:
         )
 
 
+# the window and root-node events the manager listens to on a surface's window
+_WINDOW_EVENTS = ("configure", "closed", "active", "moved", "frame")
+_ROOT_EVENTS = ("key_down", "pointer_down", "pointer_up")
+
+
+def free_window(window: Any) -> None:
+    """Free what the shell hung on a window that is closed and that no surface names any more:
+    its listeners (their closures hold the surface) and its nodes (with their listeners, which
+    hold the view). tre's ``App`` keeps every window it was given for good, so without this a
+    closed Panel keeps its whole tree for the life of the shell."""
+    for event in _WINDOW_EVENTS:
+        window.off(event)
+    root = window.root
+    for event in _ROOT_EVENTS:
+        root.off(event)
+    for child in root.children():
+        child.destroy()
+
+
 class SurfaceManager:
     """Two steps at start, so the modules can start between them: :meth:`plan` expands each Bar and
     finds the module uses; :meth:`build` evaluates the slots, binds and opens the windows.
@@ -531,6 +550,9 @@ class SurfaceManager:
         self.mode = ModeDriver(self)
         self.mode.set_keyboard(mode_keyboard)
         self._handle: Any = None
+        # windows that ended one way: ``closed`` (tre closed it) or ``dropped`` (no surface names
+        # it); the second event frees it (:meth:`_ended`)
+        self._ending: dict[int, str] = {}
         self._all_uses: Mapping[str, Use] = {}
         from tess_shell.surfaces.popup import PopupPlan, Popups  # popup.py imports this module
 
@@ -929,6 +951,7 @@ class SurfaceManager:
         def closed(e: Any, n: str = where, k: str = kind, name: str = bar.name) -> None:
             logger.info(f"{k} {n} closed ({getattr(e, 'reason', '')})")
             self._surface_gone(name, window)
+            self._ended(window, "closed")
 
         window.on("closed", closed)
         window.on("active", lambda e, name=bar.name: self._surface_active(name, bool(e.active)))
@@ -1250,6 +1273,7 @@ class SurfaceManager:
         else:
             s.window, s.view, s.body = None, None, None
             window.close()
+            self._ended(window, "dropped")
             logger.info(f"Panel {s.planned.where} hidden (window closed)")
         self._fire(s, "On_Hidden")  # after: it is hidden
 
@@ -1795,6 +1819,16 @@ class SurfaceManager:
         )
         logger.info(f"surface {name} had the keyboard focus and closed; next: {self.focused}")
 
+    def _ended(self, window: Any, how: str) -> None:
+        """A surface's window ended in one of two ways: tre closed it (``closed``) or the manager
+        let go of it (``dropped``). Either may come first; when both have, nothing can use its
+        nodes and they are freed."""
+        other = "dropped" if how == "closed" else "closed"
+        if self._ending.pop(id(window), None) == other:
+            free_window(window)
+        else:
+            self._ending[id(window)] = how
+
     def _close(self, s: Surface) -> None:
         self.popups.parent_closed(s)
         s.generation += 1  # an animation that was running ends silent
@@ -1807,6 +1841,7 @@ class SurfaceManager:
                 s.window.close()
             except Exception:  # tre already closed it (its output went away): nothing to do
                 logger.debug(f"closing {s.name} on {s.output}: already gone", exc_info=True)
+            self._ended(s.window, "dropped")
 
     def _update(self, s: Surface, p: Planned, all_uses: Mapping[str, Use]) -> None:
         live = self.new_live(all_uses)

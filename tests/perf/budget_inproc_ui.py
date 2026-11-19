@@ -181,6 +181,88 @@ def measure_b16_closed(quick: bool) -> list[Reading]:
     return out
 
 
+def reload_residue(cycles: int) -> dict[str, float]:
+    """What ``cycles`` reload cycles leave behind, per cycle (after minus before, after 3 cycles
+    to warm up). A cycle is two reloads of a Bar and nine Panels: one with the Panels taken away,
+    one with them back (``tests/reload_rig.py``: the real reloader over a real, never run
+    ``tess_re.App``)."""
+    import tracemalloc
+
+    from tests.perf.budget_rig import memory_kib
+    from tests.reload_rig import ReloadRig, count_objects, private_session, step
+
+    names = ("Surface", "View", "LiveTree", "LayerWindow")
+    with tempfile.TemporaryDirectory(prefix="tmp-reload-") as root, private_session(Path(root)):
+        rig = ReloadRig(Path(root))
+        tracemalloc.start()
+        try:
+            for index in range(1, 7):
+                step(rig, index)
+            counts = count_objects(*names)
+            before = (
+                tracemalloc.get_traced_memory()[0],
+                len(gc.get_objects()),
+                sys.getallocatedblocks(),
+                memory_kib(os.getpid())[1],
+            )
+            for index in range(7, 7 + 2 * cycles):
+                step(rig, index)
+            left = count_objects(*names)
+            after = (
+                tracemalloc.get_traced_memory()[0],
+                len(gc.get_objects()),
+                sys.getallocatedblocks(),
+                memory_kib(os.getpid())[1],
+            )
+        finally:
+            tracemalloc.stop()
+    out = {f"{name}_per_cycle": (left[name] - counts[name]) / cycles for name in names}
+    out["heap_bytes_per_cycle"] = (after[0] - before[0]) / cycles
+    out["gc_objects_per_cycle"] = (after[1] - before[1]) / cycles
+    out["blocks_per_cycle"] = (after[2] - before[2]) / cycles
+    out["pss_kib_per_cycle"] = (after[3] - before[3]) / cycles
+    return out
+
+
+def measure_b16_reload(quick: bool) -> list[Reading]:
+    cycles = 6 if quick else 30
+    res = reload_residue(cycles)
+    note = (
+        f"after {cycles} reload cycles (a Bar and 9 Panels, the Panels away and back), "
+        "headless, tracemalloc after gc.collect"
+    )
+    out = []
+    for name in ("Surface", "View", "LiveTree"):
+        out.append(
+            Reading("B16", f"a reload keeps no closed {name}: growth per cycle",
+                    [res[f"{name}_per_cycle"]], "count", 0.0, "max", note=note)
+        )  # fmt: skip
+    out.append(
+        Reading("B16", "a reload keeps the Python heap: bytes per cycle",
+                [res["heap_bytes_per_cycle"]], "bytes", 16384.0, "max",
+                note=note + "; tre keeps a few hundred bytes of Python heap per closed window")
+    )  # fmt: skip
+    out.append(
+        Reading("B16", "a reload keeps no closed window object (tre's App keeps them): per cycle",
+                [res["LayerWindow_per_cycle"]], "count",
+                note=note + "; 9 per cycle is tre's, see SHELL-REQ-001 (candidate tre request)")
+    )  # fmt: skip
+    out.append(
+        Reading("B16", "reload: gc-tracked objects left per cycle",
+                [res["gc_objects_per_cycle"]], "objects", note=note)
+    )  # fmt: skip
+    out.append(
+        Reading("B16", "reload: Python blocks left per cycle",
+                [res["blocks_per_cycle"]], "blocks", note=note)
+    )  # fmt: skip
+    out.append(
+        Reading("B16", "reload: proportional set size left per cycle",
+                [res["pss_kib_per_cycle"]], "KiB",
+                note=note + "; PSS moves in allocator steps: read the trend over many cycles")
+    )  # fmt: skip
+    return out
+
+
 # -- B18 ----------------------------------------------------------------------------------------
 
 

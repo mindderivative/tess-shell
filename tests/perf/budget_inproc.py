@@ -29,6 +29,7 @@ STEPS: tuple[tuple[str, Callable[[bool], list[Reading]]], ...] = (
     ("B15", dbus.measure_b15),
     ("B16", ui.measure_b16),
     ("B16", ui.measure_b16_closed),
+    ("B16", ui.measure_b16_reload),
     ("B18", ui.measure_b18),
     ("B19", ui.measure_b19),
     ("B20", mod.measure_b20),
