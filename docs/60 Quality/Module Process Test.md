@@ -83,6 +83,10 @@ Applied by the maintainer to the report. The numbers are his to set ([M7 Brief >
 
 If B passes every row, the shell moves to B before 1.0. If B fails on cost but C passes, the shell moves to C. If neither passes, A stays and the vault records why, with the numbers. The rule is applied to the numbers as measured, not to how the prototype looks.
 
+> [!TIP]
+> **Decided (maintainer, 2026-11-19)**
+> B fails the memory row (+372 and +357 MB), and the best lean B variant fails it too (+185 MB against 150); C passes every row. By this rule the shell moves to C: shipped modules stay in the shell, and only user modules run in child processes (about +17 MB PSS each, and the three-module cell stays inside every limit). The build of C is a separate task ([M7 Brief](../00%20Home/M7%20Brief.md)); it needs the reply path listed under the caveats in Results. The results file goes in a PR with the lean B delta.
+
 ## Report
 
 The code session writes the report in the shell repository (`tests/perf/module-process-results.md`) and a build-log entry; the vault session folds the table into this note under "Results" and into [Performance Budgets](Performance%20Budgets.md). The report contains: the machine, every number above with its spread, which services variant (B1 or B2) was used, what the prototype does not support, and the cost in code of the move (lines changed, the `ctx` members that needed a different design).

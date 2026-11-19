@@ -2,7 +2,7 @@
 title: TRE-REQ-028 App Drops Closed Windows
 aliases: [TRE-REQ-028, App.remove_window, closed windows retained]
 type: engine-request
-status: draft
+status: review
 owner: phil
 created: 2026-11-19
 updated: 2026-11-19
@@ -12,7 +12,7 @@ tags: [engine-request, quality/performance, bug, needs-verification]
 # TRE-REQ-028: `App` Must Drop a Window Once It Is Closed
 
 > [!NOTE]
-> tre's `App.add_window` only ever pushes onto `App.windows` and never removes a closed window, so a long-running shell grows with every Panel it closes and opens again. The shell's fix ([SHELL-REQ-001 Reload Memory Retention](SHELL-REQ-001%20Reload%20Memory%20Retention.md)) frees what it holds on a closed window, but the window objects themselves stay in tre. This request asks tre to release them. Written 2026-11-19 from the code session's report (`tess-shell` PR #83); not sent. The maintainer decides whether to carry it, and whether it joins 0.6.10.
+> tre's `App.add_window` only ever pushes onto `App.windows` and never removes a closed window, so a long-running shell grows with every Panel it closes and opens again. The shell's fix ([SHELL-REQ-001 Reload Memory Retention](SHELL-REQ-001%20Reload%20Memory%20Retention.md)) frees what it holds on a closed window, but the window objects themselves stay in tre. This request asks tre to release them. Written 2026-11-19 from the code session's report (`tess-shell` PR #83); The maintainer will carry it to tre himself, for 0.6.11 (2026-11-19).
 
 ## Need
 
