@@ -2,16 +2,17 @@
 title: TRE-REQ-006 Repeating Gradients
 aliases: [TRE-REQ-006, tre Gradient Repeat, Tiling Gradient]
 type: engine-request
-status: draft
+status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-11-19
 tags: [engine-request, needs-verification]
 ---
 
 # TRE-REQ-006: Repeating Gradients
 
 > [!NOTE]
+> **On 2026-11-19 the maintainer said tre is building this for 0.6.10.**
 > Let a `tre.Gradient` repeat its ramp a set number of times across the node's bounds, so a gradient border or fill can tile (stripes, repeated colour cycles around a ring). The underlying graphics library already supports a repeat mode; tre does not expose it. Written for the future: the maintainer will carry it to tre later, and the shell works without it.
 
 > [!NOTE]

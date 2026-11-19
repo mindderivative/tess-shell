@@ -2,16 +2,17 @@
 title: TRE-REQ-026 Lost Connection Signal and Layer Shell Re-Probe
 aliases: [TRE-REQ-026, wayland connection lost, supports layer_shell re-probe]
 type: engine-request
-status: draft
+status: accepted
 owner: phil
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [engine-request, quality, needs-verification]
 ---
 
 # TRE-REQ-026: Tell the Application That the Wayland Connection Was Lost, and Let `supports('layer_shell')` Re-Probe
 
 > [!NOTE]
+> **The maintainer reviewed it and passed it to tre himself; on 2026-11-19 he said tre is building it for 0.6.10.**
 > When the compositor goes away, the shell finds out only because tre's windows close and the loop ends. Two small additions would let it recover cleanly: a signal that the Wayland connection was lost, and a `supports('layer_shell')` that asks again instead of keeping its first answer. Drafted on 2026-11-17 from the code session's report of the M7b work (`tess-shell` PR #67) and offered to the maintainer to carry; not sent to tre.
 
 ## Shell Need

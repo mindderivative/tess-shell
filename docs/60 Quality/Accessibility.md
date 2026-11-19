@@ -5,7 +5,7 @@ type: quality
 status: accepted
 owner: phil
 created: 2026-11-08
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [quality, accessibility, needs-verification]
 ---
 
@@ -21,6 +21,10 @@ tags: [quality, accessibility, needs-verification]
 > [!NOTE]
 > **tre 0.6.9 can announce without a node (2026-11-17)**
 > `Window.announce(text, politeness)` exists in `tesserae-engine` 0.6.9 ([TRE-REQ-021 Announce Without a Node](../80%20Requests/TRE-REQ-021%20Announce%20Without%20a%20Node.md)). The shell's engine floor is 0.6.9 (`tess-shell` PR #56, merged 2026-11-17, by the code session's report) and announcements are `Window.announce` now, not live regions: the 1x1 live Box per module, the `announcement` value and the zero-width-space toggle are gone. A hidden module, a repeated message and the last window closing (Tasks) are announced correctly. The code session tested it through a real AT-SPI bus (polite and assertive announcements, a repeated text heard each time, a hidden module heard). Not heard with Orca yet: that is the maintainer's M7g line.
+
+> [!NOTE]
+> **Announcements go through one window (maintainer, 2026-11-19)**
+> tre keeps the order of `Window.announce` calls within one window, one message per update, about 100 ms for six ([TRE-REQ-027 Announce Keeps Call Order](../80%20Requests/TRE-REQ-027%20Announce%20Keeps%20Call%20Order.md), built on tre's branch for 0.6.10). Order across the windows of one App is not guaranteed. The maintainer chose that the shell sends every `ctx.announce` through a single window, so the order holds for everything the shell says. The window is the highest surface in the tree, whichever is first built and at the top: a Frame if the shell uses one, otherwise a Bar (maintainer, 2026-11-19); whether Orca reads an announcement from a window that is not focused is untested and goes on the Orca line of [Hand Checks](../00%20Home/Hand%20Checks.md). Built after tre releases 0.6.10.
 
 ## Purpose and Scope
 

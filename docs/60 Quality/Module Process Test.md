@@ -91,6 +91,32 @@ The code session writes the report in the shell repository (`tests/perf/module-p
 
 The full measurement has not run. The prototype and harness are merged (code session's report of `tess-shell` PR #71, 2026-11-17, CI green; not run in the vault), and the numbers wait for a run alone on an idle machine (about 80 minutes) once the other merges are done.
 
+### The full measurement (code session's report, 2026-11-19; not run in the vault)
+
+Run 10:38 to 11:21 (about 43 minutes) on a private sway, load 0.35 at the start; the harness's own earlier cells raised the load (median 1-minute load 0.91, highest 4.96). Cells: A, B1, B2, C1, C2; 3 repetitions, 20 start runs. The file is `/tmp/m7/module-process-results-real.md` (284 lines), not committed. The lean B is not in this run: it started before the decision reached the code session and cannot be changed mid-run.
+
+By the rule of this note, B fails one row (memory) and C passes every row, so the shell moves to C. You decide.
+
+| Row (default shell, against A in the same run) | Limit | B1 | B2 | C1 | C2 |
+|---|---|---|---|---|---|
+| Start | +300 ms | +226 ms | +173 ms | +8 ms | |
+| Start with 3 user modules | +300 ms | | | +62 ms | +47 ms |
+| Wake-ups per second | +2 | +0.75 | +0.98 | -0.17 | |
+| Wake-ups with 3 user modules | +2 | | | +1.18 | +1.10 |
+| Memory (PSS of the tree) | +150 MB | **+372 MB, FAIL** | **+357 MB, FAIL** | -2 MB | |
+| Memory with 3 user modules | +150 MB | | | +51 MB | +49 MB |
+
+- **Value to screen** (limit p95 16.7 ms), single value and burst: A 0.37 and 0.25 ms; B1 0.53 and 0.55; B2 0.52 and 0.65; C1 1.04 and 1.12; C2 0.54 and 0.70. Every cell passes by a factor of 15 or more. Throughput reaches 10,000 values per second in every cell at p95 under 1 ms (the top of the ladder).
+- **Hang containment:** in A a 10 s hang freezes the picture for the whole 10.00 s (0% of captures changed) and there is no watchdog in A (the shell-wide one is M7b). In B and C the test node kept painting in 100% of captures (longest stop 0.03 s); the stall was named after 2.9 s, the process killed at 5 s, and a new instance was running 8.06 s after the hang began.
+- **A killed module process (SIGKILL):** surfaces keep painting (99%), the module restarts in 1.09 to 1.31 s, with the log line "the module process (pid N) ended: exit code -9; its surfaces keep their last values".
+- **Reload** (file saved to the new instance running): A 0.239 s, B 0.30 s.
+- **B1 against B2:** B2 uses less memory (508 against 523 MB PSS) and starts faster (423 against 475 ms), but needs 162 lines of proxies and brokers against about 22 for B1. Both pass the same rows.
+- **Where the memory goes:** the process count. 22 module files become 22 children of about 17 to 19 MB PSS each (a bare interpreter is 5.2 MB; an interpreter with a module context 19.2 MB): 24 processes and 225 threads against 2 and 81 in A.
+- **Idle CPU:** 0.03 to 0.05% in every cell. The wake-up counts here (about 10 per second even in A) are not comparable with M7c's 4.07: this harness counts context switches of every thread, including the engine's software-renderer threads, so only the differences to A matter.
+- **C means** shipped modules in the shell and only user module files in processes. It costs nothing for the default shell, which has no user module.
+- **Caveats:** the paint measure is taken from outside, so it says "painting", not the engine's frame rate; fakes only, no real hardware, KWin's window script is off so Tasks shows no windows. The prototype is not a product: it leaves out `ctx.focus`, `Event.stop()`, the result of an `@action` through `Call` (a module in a process returns null to the CLI), actions inherited from another user class, `check`'s load-time findings for module processes, the `many-threads` and `slow-module` warnings, and JSON's loss of tuples. A real B needs a reply path (an RPC with a timeout) for `update_popup`, `is_popup_open`, `surface.*`, `apps.search` and `Call`, and `READY=1` that waits for the children without blocking the loop.
+- **Lean B, not yet measured:** 22 files minus the 13 TDL-only ones leaves about 9 processes, about 9 x 18 = 160 MB PSS above A, a little over the +150 MB limit. The code session builds a lean B only delta (start, idle memory, latency, containment), about 15 to 20 minutes on the same harness, and sends it as a separate table. Close to the limit, so measure, do not guess.
+
 ### What was built
 
 - Everything is new under `tests/` and no `src/` file was touched. `tests/perf/proto/` is a prototype of posture B (a Python child process per module file; JSON lines over a socketpair, recorded as the wire format; B1: each child opens its own D-Bus and PulseAudio connections; B2: the parent keeps the connections and proxies calls and signals) and of C (shipped modules in process, each user module as B). It runs the default shell's 22 module files (the eight default modules, Applications, and the widget and popup modules they use) in B, and a user module in a child in C, verified against the fakes including real pointer clicks and the Tray menu in B1 and B2.

@@ -5,13 +5,14 @@ type: engine-request
 status: accepted
 owner: phil
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-19
 tags: [engine-request, spec/surface, needs-verification]
 ---
 
 # TRE-REQ-024: Tell the Application When a Press Lands Outside a Layer Surface, or When the Keyboard Leaves It (Either One)
 
 > [!NOTE]
+> **The maintainer said on 2026-11-19 that it ships in tre 0.6.10.**
 > A Panel that holds the keyboard exclusively (the Launcher) cannot learn that the user clicked elsewhere, so it cannot hide itself the way a menu does. The request: tre gives the application **one of two signals, whichever it can deliver**: that a pointer press landed outside the `LayerWindow` (`outside_press`), or that keyboard focus left it (`keyboard_leave`). The maintainer said on 2026-11-17 that the two are alternatives and that both sound technically difficult, so the request asks for the one tre can build reliably and a written reason for the other. Written at the maintainer's request ("I want these built"); the vault session sent it to tre on the maintainer's standing order (2026-11-17), and tre begins work on receipt.
 
 ## Answered by tre (tre's report, 2026-11-17)

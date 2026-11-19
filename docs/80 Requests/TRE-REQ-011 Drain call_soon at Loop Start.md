@@ -2,16 +2,17 @@
 title: TRE-REQ-011 Drain call_soon at Loop Start
 aliases: [TRE-REQ-011, call_soon before run]
 type: engine-request
-status: draft
+status: review
 owner: phil
 created: 2026-11-03
-updated: 2026-11-10
+updated: 2026-11-19
 tags: [engine-request, design, needs-verification]
 ---
 
 # TRE-REQ-011: Drain call_soon at Loop Start
 
 > [!NOTE]
+> **On 2026-11-19 the maintainer said tre is building this for 0.6.10.**
 > A callback queued with `LoopHandle.call_soon` before `App.run()` starts is not run when the loop starts; it waits until something else wakes the loop. Reported by the `tess-shell` code session while building M0 and checked by the vault session on 2026-11-03. Draft for the maintainer to carry to the tre project; nothing is filed from this vault (AGENTS > 6. Requests Between Projects).
 
 > [!TIP]
