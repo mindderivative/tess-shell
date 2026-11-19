@@ -2,7 +2,7 @@
 title: SHELL-REQ-001 Reload Memory Retention
 aliases: [SHELL-REQ-001, reload leak, 7 MiB per reload]
 type: engine-request
-status: draft
+status: accepted
 owner: phil
 created: 2026-11-19
 updated: 2026-11-19
@@ -13,6 +13,20 @@ tags: [engine-request, quality/performance, bug]
 
 > [!NOTE]
 > The M7c reading found that a reload which removes and re-adds nine Panels leaves about 7 MiB more in Python objects after each cycle. If that holds over many reloads, a shell that is edited all day grows without limit. The code session reported it as a possible leak that needs a separate look. This request asks `tess-shell` to reproduce it, find what holds the memory, fix it, and add a test that fails while it leaks. The sender is the vault session on the maintainer's instruction (2026-11-19). Drafted by the vault; sent to `tess-shell` on the maintainer's standing order for work of this kind. Nothing here was run in the vault.
+
+## Built (code session's report of `tess-shell` PR #83, merged 2026-11-19, CI green; not run in the vault)
+
+It was a real, steady, linear leak, and only when Panels close and open; a reload that changes nothing or only a style never leaks. The 7 MiB was a Python heap reading (`tracemalloc`) per cycle of nine Panels away and back (two reloads).
+
+- **Before the fix:** +5.0 MiB heap, +13,000 `gc` objects (exactly linear), +9 each of Surface, View, LiveTree and LayerWindow, +142 tre Node wrappers, about +5.8 MiB resident of the real shell on a private sway. The first three reloads add about 12 MiB once (a warming cache, not the leak).
+- **Why M7c missed it:** the stub app the tests and probes use ignores `add_window`, so nothing grew. The fix's tests use a real `tess_re.App`.
+- **Cause:** tre's `App.add_window` only pushes onto `App.windows` and never removes a closed window. The shell's listeners on each closed Panel's window (App to LayerWindow to the `_panel_events.on_key` closure to the Surface and View) held the whole Surface, View and tree.
+- **Fix:** `free_window` in `surfaces/manager.py` takes the shell's listeners off a closed window and destroys the root's children once both tre has closed it and the manager has dropped it, in either order. A window a live surface still names is never touched.
+- **After:** Surface, View and LiveTree constant, about 6 KiB heap per cycle; the real shell over 40 reloads keeps Surface at 10, View at 10, Node at 285, and about 0.26 MiB resident per cycle after reload 20 (5.8 before).
+- **What stays is tre's:** 9 `LayerWindow` objects per cycle, about 7 KiB heap and 0.3 to 0.45 MiB resident. Drafted as [TRE-REQ-028 App Drops Closed Windows](TRE-REQ-028%20App%20Drops%20Closed%20Windows.md).
+- **Tests:** `tests/test_reload_leak.py` (30 reloads, 12 s, no sway) fails without the fix (Surface 37 to 145, heap +60,494 KiB) and passes with it. A strict expected failure marks tre's window objects and turns red the day tre fixes it. B16 now has the reload case beside the Popup case.
+
+Decisions from the build: see [Performance Budgets](../60%20Quality/Performance%20Budgets.md).
 
 ## What Is Known
 

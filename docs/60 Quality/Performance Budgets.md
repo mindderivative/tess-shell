@@ -98,7 +98,14 @@ Merged (code session's report, `tess-shell` PR #79, 2026-11-19, CI green; not ru
 
 Recorded: default shell memory 209 MiB RSS, 141 MiB PSS (one Bar also 141 PSS; no surface 64 RSS, 50 PSS); idle CPU 0.03% of one core (limit 0.5); time to ready 0.264 s median (limit 2 s); the callback record costs about 0.14 microseconds per callback, so it stays.
 
-Findings not fixed: a reload that removes and re-adds nine Panels retains about 7 MiB per cycle in Python objects, a possible leak that needs a separate look (unconfirmed: the builder's report is lost, see [SHELL-REQ-001 Reload Memory Retention](../80%20Requests/SHELL-REQ-001%20Reload%20Memory%20Retention.md)); logging adds two threads where [Crash Recovery and Watchdog](Crash%20Recovery%20and%20Watchdog.md) says one.
+Reload retention (code session's report, `tess-shell` PR #83, merged 2026-11-19; not run in the vault): confirmed as a real, linear leak, fixed in the shell ([SHELL-REQ-001 Reload Memory Retention](../80%20Requests/SHELL-REQ-001%20Reload%20Memory%20Retention.md)). What stays is tre's closed window objects ([TRE-REQ-028 App Drops Closed Windows](../80%20Requests/TRE-REQ-028%20App%20Drops%20Closed%20Windows.md), draft). Four decisions for the maintainer from the build:
+
+1. The same retention exists elsewhere and is not fixed: Popups (100 open and close cycles keep 100 `OpenPopup` and 100 `PopupWindow`, about 5.7 KiB each), Frame painters, and Panels with `Panel_Hide: CLOSE` (the default `KEEP` never closes the window). Fix in the shell now with the same `free_window` idea, or wait for tre's `remove_window`? Recommendation: fix Popups now (they are the most used), leave the rest for tre's answer.
+2. Keep the strict expected failure in the collected suite? Recommendation: yes; it turns red the day tre fixes it, which is the point.
+3. The heap limits (512 KiB in the test, 16 KiB per cycle in B16) are the code session's; this note gives none. Recommendation: accept them.
+4. `window.after` timers pending on a closed Panel are not cancelled, because tre gives no list; one closure each until tre drops the window. Recommendation: accept, and it is in the request to tre.
+
+Findings not fixed (the first is now answered above): a reload that removes and re-adds nine Panels retains about 7 MiB per cycle in Python objects, a possible leak that needs a separate look (unconfirmed: the builder's report is lost, see [SHELL-REQ-001 Reload Memory Retention](../80%20Requests/SHELL-REQ-001%20Reload%20Memory%20Retention.md)); logging adds two threads where [Crash Recovery and Watchdog](Crash%20Recovery%20and%20Watchdog.md) says one.
 
 ## Open Questions
 
