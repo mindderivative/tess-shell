@@ -5,8 +5,13 @@ pytest). Everything after the module name is the shell's own command line::
 
 Read ONLY here and in ``parent.install``:
 
-* ``TESS_PROTO_POSTURE``: ``A`` (default: nothing is patched), ``B`` or ``C``;
+* ``TESS_PROTO_POSTURE``: ``A`` (default: nothing is patched), ``B``, ``C`` or ``L`` (lean B: only the
+  module files with Python of their own in a process);
 * ``TESS_PROTO_SERVICES``: ``B1`` (default) or ``B2``;
+* ``TESS_PROTO_LEAN_RULE``: ``strict`` (default) or ``validate``, what ``L`` takes for "Python of
+  its own" (``parent.has_own_code``);
+* ``TESS_PROTO_DECISIONS``: a file; each module file the posture decides appends ``<module> child``
+  or ``<module> shell`` (the harness reads which files run in a process);
 * ``TESS_PROTO_PROBE_OUT``: a file; each time the value store hands a value of the ``Probe`` module's
   ``probe`` key to the surfaces, one line ``<monotonic ns after the property set> <value>`` is
   appended (the harness's clock for the value-to-screen latency; the value carries the send time);

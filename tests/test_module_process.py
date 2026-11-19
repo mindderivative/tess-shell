@@ -1,6 +1,7 @@
 """The module process test, the fast part: the posture B prototype against the fakes, and the
 harness's own logic. Under 30 seconds in all. The slow part (every posture end to end, the C form
 with user modules, the reload measure) is ``tests/test_module_process_smoke.py``, marked ``perf``.
+The lean B (L1, L2) has its own fast tests in ``tests/test_module_process_lean.py``.
 
 * The prototype (B1, one process per module file): the default shell's modules start in processes,
   one value reaches the surfaces, a hung module and a killed module leave the surfaces painting and
@@ -124,11 +125,18 @@ def canned(
     p95: float = 1.0,
     contain: dict[str, Any] | None = None,
     only: tuple[str, ...] = ("B1", "B2", "C1", "C2"),
+    cells: dict[str, dict[str, Any]] | None = None,
+    postures: str | None = None,
 ) -> dict[str, Any]:
     """Results of a run: A at 300 ms, 2 wake-ups a second and 160 MB, and every other cell ``start``
     ms later, ``wake`` a second more and ``pss`` MB more (B1, B2 and C1 on the default shell, C1 and
-    C2 on the shell with three user modules)."""
+    C2 on the shell with three user modules, L1 and L2 on the default shell). ``cells`` overrides
+    the numbers of one cell (``start``, ``wake``, ``pss``, ``p95``, ``contain``); ``postures`` is
+    what the run was asked for (``--postures``), which the results of a real run say."""
+    own = cells or {}
     res: dict[str, Any] = {"start": {}, "idle": {}, "latency": {}, "contain": {}}
+    if postures is not None:
+        res["args"] = {"postures": postures}
 
     def cell(label: str, kind: str, extra: tuple[float, float, float]) -> None:
         res["start"][f"{label}/{kind}"] = {"ready_ms": [300.0 + extra[0]] * 3}
@@ -142,14 +150,23 @@ def canned(
         ("B1", "default"),
         ("B2", "default"),
         ("C1", "default"),
+        ("L1", "default"),
+        ("L2", "default"),
         ("C1", "plus3"),
         ("C2", "plus3"),
     ):
         if label in only:
-            cell(label, kind, (start, wake, pss))
+            mine = own.get(label, {})
+            cell(
+                label,
+                kind,
+                (mine.get("start", start), mine.get("wake", wake), mine.get("pss", pss)),
+            )
     for label in only:
-        res["latency"][label] = [{"single_ms": [p95] * 20, "burst_ms": [p95] * 20}]
-        res["contain"][label] = [contain or rep()]
+        mine = own.get(label, {})
+        value = mine.get("p95", p95)
+        res["latency"][label] = [{"single_ms": [value] * 20, "burst_ms": [value] * 20}]
+        res["contain"][label] = [mine.get("contain", contain or rep())]
     return res
 
 
