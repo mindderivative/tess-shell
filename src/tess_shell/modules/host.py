@@ -26,7 +26,9 @@ from tess_shell.logging import note_finding, note_module_error
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.module import Event, Module
+from tess_shell.modules.actions import action_spec, actions_of
 from tess_shell.modules.context import FocusPort, ModuleContext, PopupPort, UseRecord
+from tess_shell.modules.process_port import ProcessPort, RemoteModule
 from tess_shell.modules.running import CallbackRecord, entry_name
 from tess_shell.modules.supervise import MANY_THREADS, MAX_TRIES, Restarts, thread_counts
 from tess_shell.modules.ticks import Subscription, TimeSource
@@ -66,6 +68,12 @@ class LoadedModule:
     state: str = "created"  # created, running, failed, stopped
     uses: list[Use] = field(default_factory=list)
 
+    @property
+    def remote(self) -> RemoteModule | None:
+        """The process behind the module when it runs in one (the stub's ``_process``)."""
+        found: RemoteModule | None = getattr(self.instance, "_process", None)
+        return found
+
 
 class ActionError(Exception):
     """A control call that did not run an action, or whose action raised; the text names the
@@ -73,52 +81,6 @@ class ActionError(Exception):
 
 
 SLOW_ACTION = 0.05  # seconds; a handler runs on the loop thread, so a slow one is logged
-
-
-@dataclass(frozen=True, slots=True)
-class ActionSpec:
-    """What an ``@action`` method declares after ``event`` (Events and Actions > Call): the
-    arguments a handler may write. ``names`` are its parameters after ``event`` (the ones a call
-    can pass by keyword), ``required`` those with no default, ``kwargs`` whether it has
-    ``**kwargs``. An action with no parameter after ``event`` and no ``**kwargs`` declares nothing
-    and takes any arguments through ``event.args``; one with ``**kwargs`` takes any arguments too,
-    and gets them as keywords."""
-
-    first: str
-    names: tuple[str, ...] = ()
-    required: frozenset[str] = frozenset()
-    kwargs: bool = False
-
-    @property
-    def checked(self) -> bool:
-        """Whether a handler's argument names are checked against ``names`` at load."""
-        return bool(self.names) and not self.kwargs
-
-    def keywords(self, args: Mapping[str, object]) -> dict[str, object]:
-        """The arguments a call passes as keywords: the declared ones (all that are identifiers,
-        for ``**kwargs``). ``event.args`` holds every argument whatever this gives."""
-        if self.kwargs:
-            return {k: v for k, v in args.items() if k.isidentifier() and k != self.first}
-        return {k: args[k] for k in self.names if k in args}
-
-
-def action_spec(fn: Callable[..., Any]) -> ActionSpec:
-    """The :class:`ActionSpec` of a bound method marked ``@action``: its first parameter is the
-    event, the others are the arguments."""
-    params = list(inspect.signature(fn).parameters.values())
-    if not params:
-        return ActionSpec("event")
-    names: list[str] = []
-    required: set[str] = set()
-    kwargs = False
-    for p in params[1:]:
-        if p.kind is inspect.Parameter.VAR_KEYWORD:
-            kwargs = True
-        elif p.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY):
-            names.append(p.name)
-            if p.default is inspect.Parameter.empty:
-                required.add(p.name)
-    return ActionSpec(params[0].name, tuple(names), frozenset(required), kwargs)
 
 
 def handlers_of(children: tuple[object, ...]) -> list[m.Handler]:
@@ -136,15 +98,6 @@ def handlers_of(children: tuple[object, ...]) -> list[m.Handler]:
         elif isinstance(node, m.ForNode):
             found.extend(handlers_of(node.body))
     return found
-
-
-def actions_of(cls: type) -> list[str]:
-    """The names of the methods of ``cls`` marked ``@action``, sorted."""
-    return sorted(
-        name
-        for name, member in inspect.getmembers(cls, callable)
-        if getattr(member, "__tess_action__", False)
-    )
 
 
 def _where(exc: BaseException, py_path: Path) -> tuple[int, str]:
@@ -174,7 +127,7 @@ class ModuleHost:
         # the module callback that is running on the loop (Security Model, control 5): the
         # watchdog reads ``callbacks.running()`` from its own thread
         self.callbacks = CallbackRecord(
-            self._module_warning, clock=clock, periodic=self._check_threads
+            self.module_warning, clock=clock, periodic=self._check_threads
         )
         # a failed module comes back after 1, 2, 4 ... seconds, five times (control 6)
         self.restarts = Restarts(clock)
@@ -188,6 +141,12 @@ class ModuleHost:
         # package does not import the config package); nothing is shipped until it is told
         self.is_shipped: Callable[[Path], bool] = lambda path: False
         self.safe_skipped: list[str] = []
+        # set by the app: the module processes (a user module runs in a child process of its own);
+        # ``None`` leaves every module in this process
+        self.processes: ProcessPort | None = None
+        # a reload of a module that runs in a process: the new module, imported but not yet
+        # swapped in, by name (the old one runs until the new one has imported)
+        self._pending: dict[str, LoadedModule] = {}
         self.popups: PopupPort | None = None  # set by the app once the surfaces exist
         self.dbus: DBusPort | None = None  # set by the app: the D-Bus service layer
         self.audio: AudioPort | None = None  # set by the app: the sound service (ctx.audio)
@@ -260,9 +219,17 @@ class ModuleHost:
         return module, None
 
     def load(
-        self, definition: ModuleDef, py_path: Path, uid: str, uses: list[Use]
+        self,
+        definition: ModuleDef,
+        py_path: Path,
+        uid: str,
+        uses: list[Use],
+        *,
+        replacing: bool = False,
     ) -> tuple[LoadedModule | None, list[Finding]]:
-        """Import ``py_path`` and make the instance. Returns the findings of a bad module."""
+        """Import ``py_path`` and make the instance. Returns the findings of a bad module.
+        ``replacing``: the module is a new version of one that runs; a module in a process is not
+        put in ``loaded`` (the old one stays until the new one has imported: :meth:`_replace`)."""
         if self.safe_start and not self.is_shipped(py_path):
             if definition.name not in self.safe_skipped:
                 self.safe_skipped.append(definition.name)
@@ -276,7 +243,12 @@ class ModuleHost:
                     f"a module is {definition.file} plus {py_path.name} next to it",
                 )
             ]
-        module, finding = self._import(definition, py_path)
+        if self.processes is not None and self.processes.wants(py_path):
+            # nothing of a user module's file runs here: the process imports it; this reads its
+            # syntax tree and returns a stub class that talks to the process
+            module, finding = self.processes.stub(definition, py_path)
+        else:
+            module, finding = self._import(definition, py_path)
         if module is None:
             return None, [finding] if finding else []
         classes = [
@@ -367,7 +339,8 @@ class ModuleHost:
             ]
         ctx.set_service_hooks(instance.on_service_lost, instance.on_service_found)
         loaded = LoadedModule(definition, py_path, instance, ctx, uses=uses)
-        self.loaded[definition.name] = loaded
+        if not (replacing and loaded.remote is not None):
+            self.loaded[definition.name] = loaded
         return loaded, []
 
     def check_calls(self, handlers: Sequence[m.Handler]) -> list[Finding]:
@@ -396,7 +369,7 @@ class ModuleHost:
                 continue
             seen.add(key)
             o = h.origin
-            loaded = self.loaded.get(module)
+            loaded = self._pending.get(module) or self.loaded.get(module)
             if loaded is None:
                 if module in self.safe_skipped:
                     continue  # its Python was left alone on purpose (safe start)
@@ -694,7 +667,7 @@ class ModuleHost:
         """A new instance of the failed module from its file as it is now, started like the first.
         A failure schedules the next try (the lifecycle call does; a failed import is here)."""
         failed = self.loaded.get(name)
-        if failed is None or failed.state != "failed" or self._stopping:
+        if failed is None or failed.state != "failed" or self._stopping or name in self._pending:
             self.restarts.reset(name)
             return
         uid = failed.ctx.uid
@@ -705,8 +678,8 @@ class ModuleHost:
             self._schedule(name, uid)
             return
         problems += self.start(new)
-        if new.state == "running":
-            self.restarts.started(name)
+        if new.state == "running" and new.remote is None:
+            self.restarts.started(name)  # a process says so when it has started: process_started
         report(problems)
 
     # -- threads: a module with many of its own (control 6) -------------------------------------
@@ -729,13 +702,13 @@ class ModuleHost:
         for name, count in sorted(counts.items()):
             if count > MANY_THREADS and name not in self._thread_warned:
                 self._thread_warned.add(name)
-                self._module_warning(
+                self.module_warning(
                     name,
                     "many-threads",
                     f"{name}: {count} live threads of its own (more than {MANY_THREADS})",
                 )
 
-    def _module_warning(self, module: str, rule: str, message: str) -> None:
+    def module_warning(self, module: str, rule: str, message: str) -> None:
         """A warning about ``module`` (``slow-module``, ``many-threads``), logged with its name."""
         loaded = self.loaded.get(module)
         hints = {
@@ -841,9 +814,17 @@ class ModuleHost:
         self.restarts.reset(name)  # a reload gives a failed module its five tries again
         self._thread_warned.discard(name)
         self.callbacks.forget(name)
-        new, problems = self.load(src.definition, src.py_path, src.uid, uses)
+        self._drop_pending(name)
+        new, problems = self.load(src.definition, src.py_path, src.uid, uses, replacing=True)
         if new is None:
             self.loaded[src.definition.name] = old  # the old instance keeps running
+            return problems
+        remote = new.remote
+        if remote is not None:
+            # a module in a process: the new process imports beside the old one; the old one is
+            # stopped and the new one started only when the import worked (:meth:`_imported`)
+            self._pending[name] = new
+            remote.when_imported(lambda finding: self._imported(name, old, new, finding))
             return problems
         if old.state == "running":
             found = self._call(old, "stop", old.instance.stop)
@@ -853,6 +834,119 @@ class ModuleHost:
         old.state = "stopped"
         logger.info(f"module {src.definition.name}: the code was replaced")
         return [*problems, *self.start(new)]
+
+    def _drop_pending(self, name: str) -> None:
+        """A reload that has not finished is replaced or its module is gone: its process ends."""
+        waiting = self._pending.pop(name, None)
+        if waiting is not None:
+            if waiting.remote is not None:
+                waiting.remote.cancel()
+            waiting.ctx.close()
+            waiting.state = "stopped"
+
+    def _imported(
+        self, name: str, old: LoadedModule, new: LoadedModule, finding: Finding | None
+    ) -> None:
+        """Loop thread: the new process of a reload answered. A failed import leaves the old module
+        running (Module Contract: a bad code reload); a good one is swapped in once the old one
+        has stopped."""
+        if self._pending.get(name) is not new:
+            return  # replaced since
+        if finding is not None:
+            del self._pending[name]
+            if new.remote is not None:
+                new.remote.cancel()
+            new.ctx.close()
+            new.state = "stopped"
+            report([finding])
+            return
+        if self.loaded.get(name) is not old:
+            self._drop_pending(name)  # the module was removed meanwhile
+            return
+        remote = old.remote
+        if old.state == "running" and remote is not None:
+            remote.stop_then(lambda: self._commit(name, old, new))
+            return
+        if old.state == "running":
+            found = self._call(old, "stop", old.instance.stop)
+            if found is not None:
+                logger.error(f"{found.file}:{found.line}: {found.message}")
+        self._commit(name, old, new)
+
+    def _commit(self, name: str, old: LoadedModule, new: LoadedModule) -> None:
+        """Loop thread: the old module has stopped; the new one takes its place and starts. The uses
+        the old one has now are given to the new one (without the hooks: a fresh instance only
+        sees ``start``)."""
+        if self._pending.get(name) is not new:
+            return
+        del self._pending[name]
+        if self.loaded.get(name) is not old:
+            new.ctx.close()
+            new.state = "stopped"
+            return
+        old.ctx.close()
+        old.state = "stopped"
+        self.restarts.reset(name)
+        mine = new.ctx.uses
+        assert isinstance(mine, dict)
+        theirs = old.ctx.uses
+        for key in [k for k in mine if k not in theirs]:
+            mine.pop(key)
+        for key, record in theirs.items():
+            if mine.get(key) != record:
+                mine[key] = record
+        new.uses = old.uses
+        self.loaded[name] = new
+        logger.info(f"module {name}: the code was replaced")
+        report(self.start(new))
+
+    # -- a module in a process: what it tells the host --------------------------------------------
+
+    def process_started(self, name: str, remote: RemoteModule) -> None:
+        """Loop thread: the process ran ``start()``: the restart that brought it up counts."""
+        loaded = self.loaded.get(name)
+        if loaded is not None and loaded.remote is remote:
+            self.restarts.started(name)
+
+    def process_failed(
+        self, name: str, remote: RemoteModule, finding: Finding, restart: bool = True
+    ) -> None:
+        """Loop thread: a lifecycle method raised in the process (``finding`` says which and
+        where). The module is marked failed alone and restarts with the back-off, as
+        :meth:`_call` does for a module in the shell (a failed ``stop`` is only logged)."""
+        loaded = self.loaded.get(name)
+        if loaded is None or loaded.remote is not remote or loaded.state in ("failed", "stopped"):
+            return
+        loaded.state = "failed"
+        loaded.ctx.close()
+        if restart:
+            self._schedule(name, loaded.ctx.uid)
+        report([finding])
+
+    def process_ended(self, name: str, remote: RemoteModule, pid: int, why: str) -> None:
+        """Loop thread: the process ended by itself (a crash, a kill) or was killed as hung. The
+        surfaces keep their last values; the module restarts with the back-off."""
+        loaded = self.loaded.get(name)
+        if loaded is None or loaded.remote is not remote or loaded.state in ("failed", "stopped"):
+            return
+        loaded.state = "failed"
+        loaded.ctx.close()
+        if not self._stopping:
+            self._schedule(name, loaded.ctx.uid)
+        report(
+            [
+                ModuleFinding(
+                    str(loaded.py_path),
+                    1,
+                    1,
+                    "error",
+                    "module-process",
+                    f"module {name} (UID {loaded.ctx.uid}): the module process (pid {pid}) "
+                    f"ended: {why}; its surfaces keep their last values",
+                    module=name,
+                )
+            ]
+        )
 
     def sync(
         self,
@@ -867,6 +961,7 @@ class ModuleHost:
         resolved = {p.resolve() for p in changed}
         for name in [n for n in self.loaded if n not in uses_by_module]:
             gone = self.loaded.pop(name)
+            self._drop_pending(name)
             self.restarts.reset(name)
             self._thread_warned.discard(name)
             self.callbacks.forget(name)
@@ -958,6 +1053,8 @@ class ModuleHost:
     def stop_all(self) -> None:
         self._stopping = True  # a module that fails while stopping is not started again
         self.restarts.clear()
+        for name in list(self._pending):
+            self._drop_pending(name)
         if self._restart_sub is not None:
             self._restart_sub.cancel()
             self._restart_sub = None
@@ -968,6 +1065,8 @@ class ModuleHost:
                     logger.error(f"{found.file}:{found.line}: {found.message}")
             loaded.ctx.close()
             loaded.state = "stopped"
+        if self.processes is not None:
+            self.processes.wait_all()  # the processes were told to stop and to leave
 
 
 def report(findings: list[Finding], source: Mapping[str, str] | None = None) -> None:

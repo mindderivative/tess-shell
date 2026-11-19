@@ -12,11 +12,23 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Protocol
 
 from loguru import logger
 
 UNITS = ("second", "minute")
 _SLACK = 0.005  # wake just after the boundary, so the clock reads the new second
+
+
+class Cancellable(Protocol):
+    def cancel(self) -> None: ...
+
+
+class TickSource(Protocol):
+    """What ``ctx.on_tick`` needs: the shell's :class:`TimeSource`, or the proxy of a module
+    process, which asks the shell's one source for a message at each tick."""
+
+    def subscribe(self, unit: str, fn: Callable[[], None]) -> Cancellable: ...
 
 
 @dataclass(slots=True)

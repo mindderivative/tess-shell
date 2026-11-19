@@ -791,6 +791,9 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
     "shell is in shortcut mode: EXCLUSIVE (the one way a layer surface takes the keyboard without "
     "a click) or ON_DEMAND (for a compositor that hands focus over after a global key). A "
     "restart applies it.",
+    ("Debug", "User_Modules_In_Process"): "Keeps the Python of your own modules in the shell's "
+    "process instead of a process each (the default, false): a module that hangs or crashes then "
+    "freezes or ends the shell, and Event.stop() works. A restart applies it.",
     ("Settings", "Shortcuts"): 'The shell\'s global keys, one Name: "keys" entry for each action; '
     "a hot reload applies it.",
     ("Settings", "Global_Shortcuts"): "Whether the shell registers its keys with the desktop's "

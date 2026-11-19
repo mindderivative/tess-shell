@@ -25,6 +25,7 @@ asked for on it, so a reconnect brings both back (``Bus.on_reconnect``).
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import inspect
 import json
 from collections import deque
@@ -348,11 +349,25 @@ class ControlService:
             if not done.done():  # a timed out call is no longer waited for
                 setter(value)
 
+        later = [False]  # the answer is a future (an action of a module in a process)
+
         def run() -> None:
             try:
                 result = fn()
             except BaseException as exc:
                 aio.call_soon_threadsafe(settle, done.set_exception, exc)
+                return
+            if isinstance(result, concurrent.futures.Future):
+                later[0] = True
+
+                def arrived(finished: concurrent.futures.Future[Any]) -> None:
+                    exc = finished.exception()
+                    if exc is not None:
+                        aio.call_soon_threadsafe(settle, done.set_exception, exc)
+                    else:
+                        aio.call_soon_threadsafe(settle, done.set_result, finished.result())
+
+                result.add_done_callback(arrived)
             else:
                 aio.call_soon_threadsafe(settle, done.set_result, result)
 
@@ -360,9 +375,9 @@ class ControlService:
         try:
             return await asyncio.wait_for(done, self.loop_timeout)
         except TimeoutError:
+            who = "the module's process" if later[0] else "the shell's loop"
             raise DBusError(
-                ERROR + "Timeout",
-                f"the shell's loop did not answer within {self.loop_timeout:g} s",
+                ERROR + "Timeout", f"{who} did not answer within {self.loop_timeout:g} s"
             ) from None
         except CommandError as exc:
             raise DBusError(ERROR + exc.name, str(exc)) from exc

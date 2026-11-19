@@ -52,7 +52,11 @@ C1 = Cell("C1", "C", "B1")
 C2 = Cell("C2", "C", "B2")
 L1 = Cell("L1", "L", "B1")  # lean B: only the files with Python of their own run in a process
 L2 = Cell("L2", "L", "B2")
-ALL = {c.label: c for c in (A, B1, B2, C1, C2, L1, L2)}
+# the product's own posture C (user modules in a process each, ``tess_shell/modproc``): no patch, no
+# ``Debug { User_Modules_In_Process }``; services are the shell's (B2). The cells above keep every module
+# in the shell's configuration (the setting) and let the prototype decide.
+P = Cell("P", "P", "B2")
+ALL = {c.label: c for c in (A, B1, B2, C1, C2, L1, L2, P)}
 
 
 @dataclass(frozen=True, slots=True)
@@ -182,7 +186,7 @@ def running(
     """A shell of ``kind`` in ``cell`` that has said ``READY=1``: ``(shell, seconds to ready,
     scratch folder)``."""
     with scratch() as root:
-        cfg = R.write_config(root, kind)
+        cfg = R.write_config(root, kind, in_process=cell.posture != "P")
         out = root / "probe-out.log" if probe else None
         shell = R.Shell(
             rig,

@@ -243,6 +243,17 @@ def text_status(status: dict[str, Any]) -> str:
             f"  {s['name']}  {s['kind']}  {'shown' if s['shown'] else 'hidden'}  {s['output']}"
         )
     lines.append("modules: " + (", ".join(status.get("modules", [])) or "none"))
+    processes = status.get("module_processes", [])
+    if processes:
+        lines.append(
+            "module processes: "
+            + ", ".join(
+                f"{p['module']} (pid {p['pid']}, {p['state']}"
+                + (f", restart {p['tries']} of 5" if p.get("tries") else "")
+                + ")"
+                for p in processes
+            )
+        )
     errors = status.get("errors", [])
     lines.append("last errors:" + ("" if errors else " none"))
     for e in errors:

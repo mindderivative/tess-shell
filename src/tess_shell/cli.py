@@ -100,6 +100,11 @@ def _build_parser() -> argparse.ArgumentParser:
     check.add_argument(
         "--strict", action="store_true", help="a warning fails the check too (exit code 1)"
     )
+    check.add_argument(
+        "--import-modules",
+        action="store_true",
+        help="also import your modules' Python in throwaway processes (runs its top-level code)",
+    )
     add("version", "print versions")
     schema = add("schema", "print the schema of the shell's files as JSON (with --json)")
     schema.add_argument(
@@ -243,6 +248,7 @@ def main(argv: Sequence[str] | None = None, *, runner: Runner | None = None) -> 
         quiet=getattr(args, "quiet", False),
         timeout=getattr(args, "timeout", 5.0),
         strict=getattr(args, "strict", False),
+        import_modules=getattr(args, "import_modules", False),
     )
     command = args.command or "run"
     from tess_shell.schema.deprecations import command_warning

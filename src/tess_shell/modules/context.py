@@ -15,7 +15,7 @@ from loguru import logger
 
 from tess_shell.logging import note_module_error
 from tess_shell.modules.running import CallbackRecord, entry_name
-from tess_shell.modules.ticks import Subscription, TimeSource
+from tess_shell.modules.ticks import Cancellable, TickSource
 from tess_shell.services.api import (
     AppInfo,
     AppsPort,
@@ -240,7 +240,7 @@ class ModuleContext:
         config: Mapping[str, Any],
         uses: Mapping[str, UseRecord],
         send: Callable[[str | None, str, object], None],
-        ticks: TimeSource,
+        ticks: TickSource,
         popups: Callable[[], PopupPort | None] | None = None,
         dbus: Callable[[], DBusPort | None] | None = None,
         audio: Callable[[], AudioPort | None] | None = None,
@@ -283,7 +283,7 @@ class ModuleContext:
         self.log = logger.bind(source=f"module:{name}")
         self._send = send
         self._ticks = ticks
-        self._subscriptions: list[Subscription] = []
+        self._subscriptions: list[Cancellable] = []
 
     def send(self, key: str, value: object, use: UseRecord | str | None = None) -> None:
         """Send one value, for one use or (with no ``use``) for every use of this module. Thread
@@ -528,7 +528,7 @@ class ModuleContext:
             self.log.opt(exception=True).error(f"{what}({name!r}) raised")
             note_module_error(self.name, what, exc)
 
-    def on_tick(self, unit: str, fn: Callable[[], None]) -> Subscription:
+    def on_tick(self, unit: str, fn: Callable[[], None]) -> Cancellable:
         """Call ``fn`` at the start of each ``"second"`` or ``"minute"``, on the loop thread."""
         guarded = self._guard(fn)
         sub = self._ticks.subscribe(unit, guarded)

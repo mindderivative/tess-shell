@@ -35,7 +35,7 @@ from tess_shell import Module, action
 
 if TYPE_CHECKING:
     from tess_shell.modules.context import UseRecord
-    from tess_shell.modules.ticks import Subscription as TickSubscription
+    from tess_shell.modules.ticks import Cancellable as TickSubscription
     from tess_shell.services.api import Bus, Proxy, Subscription
 
 PREFIX = "org.mpris.MediaPlayer2."

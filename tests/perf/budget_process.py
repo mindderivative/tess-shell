@@ -953,6 +953,15 @@ def measure_watchdog(plan: Plan, rig: br.Rig) -> list[Reading]:
         )
         shell_file = cfg / "Shells" / "Main_Shell.tdl"
         shell_file.write_text(shell_file.read_text().replace("Spacer { }", "Spacer { } Stall { }"))
+        # the shell-wide watchdog watches the loop, and only a module that runs on it can hang it:
+        # a user module runs in a process of its own unless this setting keeps it in the shell
+        settings = cfg / "settings.tdl"
+        settings.write_text(
+            settings.read_text().replace(
+                "KWin { Script: OFF } }",
+                "KWin { Script: OFF } Debug { User_Modules_In_Process: true } }",
+            )
+        )
         probe = rig.root / f"stall-{run}"
         probe.mkdir()
         env = {

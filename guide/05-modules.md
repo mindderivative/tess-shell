@@ -2211,4 +2211,19 @@ Shell {
 
 <!-- END generated: example-set:08-keyboard/launcher -->
 
+## Your own modules and the process they run in
+
+A module of your own is a `<Name>_Module.tdl` and a `<Name>_Module.py` in `Modules/<Name>/` of your configuration folder. Its Python is one class that extends `Module` (`from tess_shell import Module, action`), and it runs in **a process of its own**, started with the shell, one process per module file however many times the module is used. The modules on this page are the shell's own and run inside it.
+
+What that means for you:
+
+* A callback that hangs does not freeze the bars. A callback that runs for 2 seconds is named in the log; one that runs for 5 seconds gets the process killed and the module starts again after 1, 2, 4, 8 and 16 seconds (five tries; a save of the file gives it five new ones). `tesserae-shell status` lists each process with its state.
+* `ctx` is the same: `ctx.send`, `ctx.uses`, `ctx.popup`, `ctx.dbus`, `ctx.audio`, `ctx.windows`, `ctx.apps`, `ctx.icons`, `ctx.tray`, `ctx.surface`, `ctx.focus`, `ctx.announce`, `ctx.on_tick`, `ctx.call_soon` and `ctx.log`. The services stay in the shell (the module has no connection of its own to open); a member whose contract says it answers at once on the loop (`ctx.is_popup_open`, `ctx.update_popup`, `ctx.apps.search`, `ctx.icons.theme_icon`, `ctx.surface.hide`, `ctx.focus.set_mode` ...) now waits for the shell for a moment, and raises `ShellCallTimeout`, naming the module and the call, if the shell does not answer within 2 seconds. "The loop" is the process's main thread: every callback of the module still runs one at a time.
+* Everything that crosses to the shell is plain data (strings, numbers, booleans, lists, dictionaries with string keys; a tuple stays a tuple). A value you send in `start()` can appear a moment after the bar's first paint.
+* `Event.stop()` has no effect (the shell's handler has returned before your action runs); one warning in the log says so. An `@action` that returns something returns it to `tesserae-shell call` when it has run.
+* Write each action as a method marked `@action` in the class body of the file: the shell reads the file's text (it does not import it) to know which actions exist and what arguments they take, so a `Call` that names one can be checked before anything runs. An action added another way is found when the process imports the file and reported as `module-actions`.
+* `ctx.log` lines come out of the shell's log under the module's name, at most 200 a second; `print` and the process's standard error go where the shell's go (the journal, under systemd).
+* `tesserae-shell check` reads your module's Python without running it; `tesserae-shell check --import-modules` imports it in a throwaway process.
+* A process costs about 20 MB. It is fault containment, **not a sandbox**: it runs as you. `Debug { User_Modules_In_Process: true }` in `settings.tdl` keeps your modules in the shell's own process ([page 7](07-settings.md)).
+
 Next: [styling and themes](06-styling.md).

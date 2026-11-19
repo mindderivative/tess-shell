@@ -23,7 +23,7 @@ from tess_shell import Module, action
 if TYPE_CHECKING:
     from tess_shell.module import Event
     from tess_shell.modules.context import UseRecord
-    from tess_shell.modules.ticks import Subscription as TickSubscription
+    from tess_shell.modules.ticks import Cancellable as TickSubscription
     from tess_shell.services.api import AppInfo, LaunchResult, Subscription
 
 FALLBACK_ICON = "mdi:application-outline"

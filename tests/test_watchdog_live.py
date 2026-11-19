@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 
 from tess_shell.watchdog import SCALE_VARIABLE
+from tests import kitlib
 from tests.fake_dbus import HAVE_DAEMON, FakeBus
 from tests.shell_samples import BODY, HEADER, write_example
 from tests.sway import PrivateSway
@@ -65,11 +66,15 @@ class Ran(Module):
 """
 
 
-def write_config(cfg: Path, modules: dict[str, str]) -> None:
+def write_config(cfg: Path, modules: dict[str, str], in_process: bool = False) -> None:
+    """``in_process``: the user modules stay in the shell (``Debug { User_Modules_In_Process }``):
+    the shell-wide watchdog watches the loop, and only a module that runs on it can hang it (a
+    user module is in a process of its own otherwise: ``tests/test_modproc_failures.py``)."""
     uses = "\n".join(f"{name} {{ }}" for name in modules)
     write_example(cfg, BODY.replace(TEXT_LINE, uses))
+    debug = " Debug { User_Modules_In_Process: true }" if in_process else ""
     (cfg / "settings.tdl").write_text(
-        "---\nTDL: 0.2\nName: S\n---\nSettings { Logging { Level: DEBUG } }\n"
+        f"---\nTDL: 0.2\nName: S\n---\nSettings {{ Logging {{ Level: DEBUG }}{debug} }}\n"
     )
     for name, python in modules.items():
         folder = cfg / "Modules" / name
@@ -137,7 +142,7 @@ def test_a_hung_module_is_named_with_tracebacks_then_systemd_is_asked_and_pings_
     notify_socket: tuple[socket.socket, str],  # noqa: F811
 ) -> None:
     sock, path = notify_socket
-    write_config(rig.cfg, {"Hang": HANG_PY})
+    write_config(rig.cfg, {"Hang": HANG_PY}, in_process=True)
     shell = rig.start(NOTIFY_SOCKET=path, WATCHDOG_USEC="2000000", **hang_env(rig.tmp))
     sock.settimeout(30)
     assert sock.recv(256) == b"READY=1"
@@ -183,7 +188,7 @@ def test_with_no_watchdog_the_same_hang_is_logged_and_nothing_is_sent(
     notify_socket: tuple[socket.socket, str],  # noqa: F811
 ) -> None:
     sock, path = notify_socket
-    write_config(rig.cfg, {"Hang": HANG_PY})
+    write_config(rig.cfg, {"Hang": HANG_PY}, in_process=True)
     env = {k: v for k, v in rig.env.items() if k != "WATCHDOG_USEC"}
     rig.env = env
     shell = rig.start(NOTIFY_SOCKET=path, **hang_env(rig.tmp))
@@ -295,7 +300,8 @@ def test_three_unclean_starts_in_a_row_start_without_user_modules_and_a_reload_e
 
     # the user fixed the module and asks for a reload: user modules load, the safe start ends
     assert rig.command("reload", **env).returncode == 0
-    assert ran.exists()
+    # the module's process imports it a moment after the reload has answered
+    kitlib.wait_until(ran.exists, 15, "the module's Python to run after the reload")
     after = json.loads(rig.command("--json", "status", **env).stdout)
     assert after["recovery"]["safe_start"] is False
     safe.process.send_signal(signal.SIGTERM)

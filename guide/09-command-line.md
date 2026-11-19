@@ -33,7 +33,7 @@ The commands, with the arguments and options each adds:
 |---|---|---|
 | `tesserae-shell run` | none | start the shell (default) |
 | `tesserae-shell migrate` | `--check` `--force` | bring the configuration files to the current format (--check lists what would change) |
-| `tesserae-shell check` | `--strict` | validate settings and shell files |
+| `tesserae-shell check` | `--strict` `--import-modules` | validate settings and shell files |
 | `tesserae-shell version` | none | print versions |
 | `tesserae-shell schema` | `--out FILE` | print the schema of the shell's files as JSON (with --json) |
 | `tesserae-shell install-session` | `--print` `--enable` `--remove` `--force` | write the desktop file and the systemd user unit (--enable, --remove, --print) |
@@ -87,7 +87,7 @@ With `--json` it prints one object:
 
 Each entry of `errors` (warnings are in the list too) has `file`, `line`, `column`, `severity`, `rule`, `message` and `hint`. Exit codes: 0 no errors, 1 errors (or, with `--strict`, warnings), 2 the configuration folder does not exist.
 
-`check` proves a file is valid, which includes that every key, module parameter and theme token named in it exists. It does not run modules or contact the desktop, so it cannot tell you that a `Call` names an action a module lacks (that is reported when the shell starts or reloads) or that a monitor name exists.
+`check` proves a file is valid, which includes that every key, module parameter and theme token named in it exists. It does not contact the desktop, so it cannot tell you that a `Call` names an action a module lacks (that is reported when the shell starts or reloads) or that a monitor name exists. It reads the Python of your own modules without running it (`module-import` for a file that does not parse, `module-classes` for none or more than one class extending `Module`, `module-no-python` for a missing file). `--import-modules` also imports each of your modules in a throwaway process, one at a time and 5 seconds each, for what only running the file finds (an `ImportError`, an exception at the top of the file or in `__init__`: `module-import`, `module-init`); that runs the top-level code of your modules, which is why it is asked for. The modules that ship with the shell are never read this way.
 
 ### `version`
 
@@ -125,7 +125,7 @@ A control command asks the running shell, which owns the session bus name `io.gi
 |---|---|
 | `tesserae-shell reload` | Checks every file and applies it, and answers after the apply: `reloaded (...) in N ms`, or the errors and exit 1. |
 | `tesserae-shell quit` | Stops the shell (`stopping`; exit 0 once it has been asked). |
-| `tesserae-shell status` | Shows the state, the versions, the monitors, the surfaces, the modules, the last errors and what the shell knows of its crashes (the unclean starts since the last clean stop, the time of the last crash, and whether it is in safe start). `--json` prints the shell's own JSON. |
+| `tesserae-shell status` | Shows the state, the versions, the monitors, the surfaces, the modules, the modules that run in a process of their own (name, process id, state, restarts used), the last errors and what the shell knows of its crashes (the unclean starts since the last clean stop, the time of the last crash, and whether it is in safe start). `--json` prints the shell's own JSON. |
 | `tesserae-shell show NAME`, `hide NAME`, `toggle NAME` | Shows, hides or toggles a Panel, a Frame, a melded Panel or a strip by its `Name`. See [Surfaces](04-surfaces.md#showing-hiding-and-toggling) for what it answers. |
 | `tesserae-shell call MODULE ACTION [ARG ...]` | Runs an `@action` of a module. Each `ARG` is a JSON value (`40`, `true`, `"text"`) or, if it is not valid JSON, the text itself. The answer is printed. |
 | `tesserae-shell log-level LEVEL` | Changes the log level of the running shell, `TRACE` to `CRITICAL`, until the next reload of `settings.tdl`. |
@@ -139,7 +139,8 @@ monitors: Main (eDP-1)
 surfaces:
   Launcher  panel  hidden  eDP-1
   Top_Bar  bar  shown  eDP-1
-modules: Clock
+modules: Clock, Pomodoro
+module processes: Pomodoro (pid 4312, running)
 last errors: none
 unclean starts since the last clean stop: 0
 last crash: none
@@ -316,7 +317,7 @@ options:
 
 ```text
 usage: tesserae-shell check [-h] [--config-dir PATH] [--json] [--quiet]
-                            [--timeout SECONDS] [--strict]
+                            [--timeout SECONDS] [--strict] [--import-modules]
 
 options:
   -h, --help         show this help message and exit
@@ -326,6 +327,8 @@ options:
   --timeout SECONDS  how long a control command waits for the shell (default
                      5)
   --strict           a warning fails the check too (exit code 1)
+  --import-modules   also import your modules' Python in throwaway processes
+                     (runs its top-level code)
 ```
 
 #### tesserae-shell version --help

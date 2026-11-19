@@ -34,6 +34,7 @@ from tess_shell.exit_codes import EnvironmentFailure, ExitCode, ShellError
 from tess_shell.logging import (
     configure_logging,
     current_state,
+    effective_level,
     finding_sinks,
     log_finding,
     note_module_error,
@@ -41,6 +42,8 @@ from tess_shell.logging import (
 )
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
+from tess_shell.modproc.probe import module_findings
+from tess_shell.modproc.supervisor import ModuleProcesses
 from tess_shell.modules.host import ModuleHost, report
 from tess_shell.modules.ticks import TimeSource
 from tess_shell.notify import READY, STOPPING, notify
@@ -89,6 +92,12 @@ def check(options: Options) -> int:
     if settings is not None:
         result = scan(settings, config)
         count, findings = result.count, result.findings
+        # the Python of your own modules: read from its syntax tree (nothing runs), or imported in
+        # throwaway processes with ``--import-modules``
+        findings = [
+            *findings,
+            *module_findings(result.modules.values(), import_modules=options.import_modules),
+        ]
     # ``--strict``: a warning (``insecure-permissions``, ``image-not-found``, ...) fails it too
     failed = any(
         f.severity == "error" or (options.strict and f.severity == "warning") for f in findings
@@ -515,6 +524,17 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
         watchdog = Watchdog.from_environment(
             Heartbeat(), host.callbacks.running, handle.call_soon, os.environ
         )
+        # a user module's Python runs in a process of its own (posture C); the watchdog's thread
+        # also reads each process's record of the callback it is running, so they cost no thread
+        processes = ModuleProcesses(
+            host,
+            is_shipped,
+            enabled=not settings.debug.user_modules_in_process,
+            own_thread=False,
+            level=effective_level,
+        )
+        host.processes = processes
+        watchdog.on_poll = processes.watch
 
         def route(handler: Handler, key: str, raw: object) -> None:
             # a shell action (Show, Hide, Toggle) is the manager's; any other name is an @action
@@ -663,13 +683,20 @@ def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
             reloader.shortcuts = shortcuts
             if control is not None and control.owned:  # the script calls the shell's interface
                 _start_kwin(service, kwin)
-            logger.info("running")
-            if control is not None:
-                control.set_state("running")
-            _tell_systemd(READY)
-            ready = True
-            # the heartbeat starts when the loop does, so the start sequence is not judged
-            handle.call_soon(watchdog.start)
+
+            def open_gate() -> None:
+                nonlocal ready
+                logger.info("running")
+                if control is not None:
+                    control.set_state("running")
+                _tell_systemd(READY)
+                ready = True
+                # the heartbeat starts when the loop does, so the start sequence is not judged
+                handle.call_soon(watchdog.start)
+
+            # with no module process this is at once, here, as ever; with some, from the loop
+            # when each has answered (or after 10 s): the loop is never held for a process
+            processes.when_settled(open_gate)
             gone: str | None = None  # why the loop ended with no stop request
             try:
                 app.run(keep_alive=True)
