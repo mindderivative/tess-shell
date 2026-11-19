@@ -154,6 +154,15 @@ def set_level(level: str) -> bool:
     return True
 
 
+def effective_level() -> str:
+    """The level the sinks log at now (``set_level``'s, else the file's): what a module process is
+    told, so a line below it is not built there."""
+    state = _state
+    if state is None:
+        return "INFO"
+    return state.level or state.settings.level
+
+
 def level_overridden() -> bool:
     """Whether ``set_level`` changed the level since logging was configured."""
     return _state is not None and _state.level is not None

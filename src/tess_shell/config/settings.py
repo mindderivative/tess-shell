@@ -44,7 +44,7 @@ ROOT_KEYS = (
 )
 KWIN_KEYS = ("Script", "Hide_On_Fullscreen")
 KWIN_SCRIPT = ("RUNTIME", "PERSISTENT", "OFF")
-DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend", "Mode_Keyboard")
+DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend", "Mode_Keyboard", "User_Modules_In_Process")
 PANEL_HIDE = ("CLOSE", "KEEP")
 FRAME_JOIN = ("SMIL", "CONCAVE", "SHADER", "STRUCTURE", "PARAM")
 FRAME_BLEND = ("SRGB", "LINEAR")
@@ -131,6 +131,12 @@ class DebugSettings:
     # one way a layer surface takes the keyboard without a click; ON_DEMAND is for a compositor
     # that hands focus over after a global key (KWin, to be checked by hand). A restart applies it.
     mode_keyboard: str = "EXCLUSIVE"
+    # a user module's Python (a module file that does not ship with the shell) runs in a process of
+    # its own, so a module that hangs or crashes does not freeze the surfaces (Module Process
+    # Test, posture C). True keeps every module in the shell's own process (posture A), for a
+    # module that needs ``Event.stop()`` or for finding out whether the process is the cause of a
+    # problem. A restart applies it.
+    user_modules_in_process: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -553,15 +559,20 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             hide, join = find_property(blk, "Panel_Hide"), find_property(blk, "Frame_Join")
             blend = find_property(blk, "Frame_Blend")
             mode_kb = find_property(blk, "Mode_Keyboard")
+            in_process = find_property(blk, "User_Modules_In_Process")
             hide_word = None if hide is None else reader.enum(hide, PANEL_HIDE)
             join_word = None if join is None else reader.enum(join, FRAME_JOIN)
             blend_word = None if blend is None else reader.enum(blend, FRAME_BLEND)
             mode_word = None if mode_kb is None else reader.enum(mode_kb, MODE_KEYBOARD)
+            in_process_flag = None if in_process is None else reader.boolean(in_process)
             debug = DebugSettings(
                 panel_hide=hide_word or debug.panel_hide,
                 frame_join=join_word or debug.frame_join,
                 frame_blend=blend_word or debug.frame_blend,
                 mode_keyboard=mode_word or debug.mode_keyboard,
+                user_modules_in_process=debug.user_modules_in_process
+                if in_process_flag is None
+                else in_process_flag,
             )
         if (blk := reader.block(root, "Validation")) is not None:
             reader.unknown_keys(blk, VALIDATION_KEYS, "Validation")

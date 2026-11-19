@@ -129,6 +129,9 @@ class Watchdog:
         self._ping_failed = False
         self._thread: threading.Thread | None = None
         self._done = threading.Event()
+        # one more look on each tick, on this thread: the shell's module processes read the record
+        # of the callback each one is running (``modproc.supervisor``), so they cost no thread
+        self.on_poll: Callable[[], None] | None = None
 
     @classmethod
     def from_environment(
@@ -202,6 +205,11 @@ class Watchdog:
     # -- one look --------------------------------------------------------------------------------
 
     def poll(self) -> None:
+        if self.on_poll is not None:
+            try:
+                self.on_poll()
+            except Exception:
+                logger.opt(exception=True).debug("watchdog: the extra look raised")
         now = self._clock()
         beat = self.heartbeat
         age = now - beat.last

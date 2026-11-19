@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.11",
+  "schema_version": "1.12",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -23481,6 +23481,18 @@
         "enum": null,
         "default": "EXCLUSIVE",
         "doc": "The keyboard mode the surface that has the focus takes while the shell is in shortcut mode: EXCLUSIVE (the one way a layer surface takes the keyboard without a click) or ON_DEMAND (for a compositor that hands focus over after a global key). A restart applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Debug",
+        "tokens": []
+      },
+      "User_Modules_In_Process": {
+        "kind": "bool",
+        "choices": null,
+        "enum": null,
+        "default": "false",
+        "doc": "Keeps the Python of your own modules in the shell's process instead of a process each (the default, false): a module that hangs or crashes then freezes or ends the shell, and Event.stop() works. A restart applies it.",
         "slot": false,
         "required": false,
         "built": true,

@@ -29,7 +29,7 @@ from tess_shell import Module, action
 if TYPE_CHECKING:
     from tess_shell.module import Event
     from tess_shell.modules.context import UseRecord
-    from tess_shell.modules.ticks import Subscription as TickSubscription
+    from tess_shell.modules.ticks import Cancellable as TickSubscription
     from tess_shell.services.api import AudioState, Output, Subscription
 
 DRAG_EVERY = 0.05  # seconds between two volume writes of one drag: at most 20 a second

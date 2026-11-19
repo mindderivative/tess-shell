@@ -92,6 +92,42 @@ def test_a_hung_module_and_a_killed_module_are_contained_and_restarted(sandbox: 
     assert "ended" in got["crash_log"] and "Victim" in got["crash_log"]
 
 
+@pytest.mark.tre
+@pytest.mark.skipif(not HAVE_DAEMON, reason="no dbus-daemon")
+def test_the_products_user_module_value_reaches_the_surfaces(sandbox: R.Rig) -> None:
+    """Cell ``P``: the shell as built (posture C, a process per user module, no patch)."""
+    got = M.measure_latency(
+        sandbox,
+        M.P,
+        singles=5,
+        gap_ms=5,
+        burst_rate=200,
+        burst_seconds=0.5,
+        ladder=[],
+        ladder_seconds=1,
+        frame_ms=h.LATENCY_P95_MS,
+    )
+    assert len(got["single_ms"]) == 5 and len(got["burst_ms"]) > 20
+    assert all(0 < ms < 1000 for ms in got["single_ms"] + got["burst_ms"])
+
+
+@pytest.mark.tre
+@pytest.mark.skipif(not HAVE_DAEMON, reason="no dbus-daemon")
+@pytest.mark.skipif(shutil.which("grim") is None, reason="no grim (the paint of the node)")
+def test_the_products_hung_and_killed_user_module_are_contained_and_restarted(
+    sandbox: R.Rig,
+) -> None:
+    got = M.measure_containment(
+        sandbox, M.P, hang_seconds=1.5, stall=0.3, kill=1.0, baseline=1.0, reload=False
+    )
+    assert got["base"]["changed"] > 0.5
+    for phase in ("hang_paint", "crash_paint"):
+        assert got[phase]["changed"] > 0.5 and got[phase]["max_gap_s"] < 1.0, (phase, got[phase])
+    assert got["hang_detect_s"] is not None and got["hang_recover_s"] is not None
+    assert got["crash_restart_s"] > 0
+    assert "ended" in got["crash_log"] and "Victim" in got["crash_log"]
+
+
 # -- the harness: refusal and the verdict table ---------------------------------------------------
 
 

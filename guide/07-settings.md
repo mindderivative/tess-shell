@@ -52,6 +52,7 @@ Settings {
         Panel_Hide: KEEP
         Frame_Blend: LINEAR
         Mode_Keyboard: EXCLUSIVE
+        User_Modules_In_Process: false
     }
 }
 ```
@@ -218,11 +219,14 @@ Switches for finding a fault, and a few choices that were left open so they coul
 | `Frame_Join` | `SMIL` `CONCAVE` `SHADER` `STRUCTURE` `PARAM` | `PARAM` | How the join of a melded Panel animates: PARAM, SMIL, CONCAVE, SHADER or STRUCTURE. A restart applies it. |
 | `Frame_Blend` | `SRGB` `LINEAR` | `LINEAR` | How the Frame's ring is blended: LINEAR in linear light or SRGB. A restart applies it. |
 | `Mode_Keyboard` | `EXCLUSIVE` `ON_DEMAND` | `EXCLUSIVE` | The keyboard mode the surface that has the focus takes while the shell is in shortcut mode: EXCLUSIVE (the one way a layer surface takes the keyboard without a click) or ON_DEMAND (for a compositor that hands focus over after a global key). A restart applies it. |
+| `User_Modules_In_Process` | true or false | `false` | Keeps the Python of your own modules in the shell's process instead of a process each (the default, false): a module that hangs or crashes then freezes or ends the shell, and Event.stop() works. A restart applies it. |
 
 <!-- END generated: settings:Debug -->
 
 * `Panel_Hide`: `KEEP` leaves a hidden Panel's window mapped and draws nothing, so it keeps its state; `CLOSE` destroys the window and makes a new one when it is shown.
 * `Frame_Join` and `Frame_Blend` choose how a melded Panel's join with the Frame, and the Frame's ring, are drawn. `Frame_Blend: LINEAR` (the default) draws the ring in one shader that blends in linear light, so a light border is as wide on a curve as on a straight; the shell falls back to drawing with paths, with one warning saying why, for a Frame the shader cannot draw (a translucent colour, an `Opacity` below 1, a Panel with `FADE`, more than eight melded bodies). `SRGB` draws paths throughout.
 * `Mode_Keyboard` is the keyboard mode the surface in shortcut mode asks the compositor for: `EXCLUSIVE` (the default; on Wayland a layer surface cannot take the keyboard without a click or an exclusive request) or `ON_DEMAND`, for a compositor that hands focus over after a global key. **Not yet checked on KWin:** which of the two KWin needs. If shortcut mode's keys do not arrive, try the other.
+
+* `User_Modules_In_Process` (default `false`): your own modules' Python (a module file in your configuration folder, not one that ships with the shell) runs in a process of its own, so a module that hangs or crashes does not freeze the bars ([page 2](02-configuration-folder.md#trust-and-security)). `true` keeps it in the shell's own process, as before: for a module that needs `Event.stop()`, or to find out whether the process is the cause of a problem. A restart applies it.
 
 Next: [keyboard and shortcuts](08-keyboard.md).

@@ -24,7 +24,7 @@ from tess_shell.config.paths import state_dir
 from tess_shell.config.registry import Registry
 from tess_shell.config.settings import Settings, load_settings
 from tess_shell.config.uids import assign_uids
-from tess_shell.logging import configure_logging, level_overridden, log_finding
+from tess_shell.logging import configure_logging, effective_level, level_overridden, log_finding
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.modules.host import ModuleHost, ModuleSource, report
@@ -225,6 +225,8 @@ class Reloader:
         if fresh.logging != old.logging or level_overridden():  # SetLogLevel lasts to here
             configure_logging(fresh.logging, quiet=self.quiet, default_directory=self.cfg / "logs")
             logger.info("settings.tdl: the logging settings were applied")
+            if self.host.processes is not None:
+                self.host.processes.set_level(effective_level())
 
     def _apply_shortcuts(
         self, actions: Sequence[Action], fresh: Settings, checked: Sequence[Finding]

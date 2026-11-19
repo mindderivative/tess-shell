@@ -58,7 +58,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.11"
+SCHEMA_VERSION = "1.12"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -1110,6 +1110,9 @@ def _settings() -> dict[str, dict[str, Json]]:
             "Frame_Join": word("Debug", "Frame_Join", cfg.FRAME_JOIN, debug.frame_join),
             "Frame_Blend": word("Debug", "Frame_Blend", cfg.FRAME_BLEND, debug.frame_blend),
             "Mode_Keyboard": word("Debug", "Mode_Keyboard", cfg.MODE_KEYBOARD, debug.mode_keyboard),
+            "User_Modules_In_Process": boolean(
+                "Debug", "User_Modules_In_Process", debug.user_modules_in_process
+            ),
         },
     }
     return out

@@ -50,7 +50,7 @@ def install_probe(path: str) -> None:
 def main() -> int:
     posture = os.environ.get("TESS_PROTO_POSTURE", "A")
     services = os.environ.get("TESS_PROTO_SERVICES", "B1")
-    if posture != "A":
+    if posture not in ("A", "P"):  # P is the product: nothing is patched
         from tests.perf.proto.parent import install
 
         install(posture, services)

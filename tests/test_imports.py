@@ -177,6 +177,44 @@ RULES: dict[str, set[str] | None] = {
     # the watchdog thread: reads the module host's running-callback record (a plain dataclass in
     # modules.running), sends through ``notify`` and logs; it never touches the engine or a node
     "watchdog": {"loguru", "tess_shell.modules.running", "tess_shell.notify"},
+    # user modules in child processes (posture C): the shell's side holds the host, the model and
+    # the findings; the two files both sides read are standard library only
+    "modproc": {
+        "loguru",
+        "tess_shell.logging",
+        "tess_shell.model",
+        "tess_shell.module",
+        "tess_shell.modproc",
+        "tess_shell.modules",
+        "tess_shell.schema",
+        "tess_shell.services.api",
+        "tess_shell.watchdog",
+    },
+    "modproc.broker": {
+        "dbus_fast",  # a ``v`` argument of a D-Bus call is rebuilt from its signature
+        "loguru",
+        "tess_shell.modproc",
+    },
+    "modproc.static": set(),
+    "modproc.wire": set(),
+    # the module process imports nothing of the shell's services, binder, surfaces or the engine:
+    # what the context and the contract need, and the pipe (tests/test_modproc_child.py lists what
+    # a process really imports)
+    "modproc.child": {
+        "loguru",
+        "tess_shell.logging",
+        "tess_shell.model.store",
+        "tess_shell.modproc.childctx",
+        "tess_shell.modproc.wire",
+        "tess_shell.module",
+        "tess_shell.modules.actions",
+        "tess_shell.modules.context",
+        "tess_shell.modules.running",
+        "tess_shell.modules.supervise",
+        "tess_shell.modules.ticks",
+        "tess_shell.schema.findings",
+    },
+    "modproc.childctx": {"loguru", "tess_shell.modproc.wire", "tess_shell.services.api"},
     # the ``kwin`` commands: like the client, standard library and jeepney, and the pure KWin files
     "kwin_commands": {
         "jeepney",

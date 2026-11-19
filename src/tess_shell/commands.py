@@ -7,6 +7,7 @@ with ``call_soon``); ``reload_validate`` runs on a worker thread, ``quit`` on an
 
 from __future__ import annotations
 
+import concurrent.futures
 import difflib
 import sys
 from collections.abc import Callable
@@ -38,6 +39,23 @@ def versions() -> dict[str, str]:
         "tess_dl": tess_dl.__version__,
         "python": ".".join(map(str, sys.version_info[:3])),
     }
+
+
+def _as_command_result(future: concurrent.futures.Future[Any]) -> concurrent.futures.Future[Any]:
+    """``future`` with its ``ActionError`` as the ``CommandError`` of a failed control call."""
+    out: concurrent.futures.Future[Any] = concurrent.futures.Future()
+
+    def done(finished: concurrent.futures.Future[Any]) -> None:
+        exc = finished.exception()
+        if isinstance(exc, ActionError):
+            out.set_exception(CommandError(str(exc), "ActionFailed"))
+        elif exc is not None:
+            out.set_exception(exc)
+        else:
+            out.set_result(finished.result())
+
+    future.add_done_callback(done)
+    return out
 
 
 class ShellCommands:
@@ -105,6 +123,9 @@ class ShellCommands:
         for i in infos:
             monitors[(i.monitor, i.output)] = None
         recovery = {} if self.recovery is None else {"recovery": self.recovery()}
+        # the modules that run in a process of their own: only when there are some
+        listed = [] if self.host.processes is None else self.host.processes.status()
+        processes = {"module_processes": listed} if listed else {}
         return {
             "version": versions(),
             "monitors": [{"name": m, "output": o} for m, o in monitors],
@@ -113,6 +134,7 @@ class ShellCommands:
                 for i in infos
             ],
             "modules": sorted(self.host.loaded),
+            **processes,
             "errors": self._errors(),
             **recovery,
         }
@@ -125,9 +147,13 @@ class ShellCommands:
 
     def call(self, module: str, action: str, values: list[Any]) -> Any:
         try:
-            return self.host.call_action(module, action, values)
+            result = self.host.call_action(module, action, values)
         except ActionError as exc:
             raise CommandError(str(exc), "ActionFailed") from exc
+        if isinstance(result, concurrent.futures.Future):
+            # an action of a module in a process: it answers later
+            return _as_command_result(result)
+        return result
 
     def set_log_level(self, level: str) -> None:
         name = level.upper()
@@ -139,6 +165,8 @@ class ShellCommands:
             )
         if not set_level(name):
             raise CommandError("logging is not configured", "Failed")
+        if self.host.processes is not None:
+            self.host.processes.set_level(name)  # the module processes log at the same level
 
     def reload_apply(self, ticket: Any) -> tuple[bool, str]:
         outcome = self.reloader.apply_for_control(ticket)

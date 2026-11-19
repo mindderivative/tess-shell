@@ -40,5 +40,6 @@ Settings {
         Panel_Hide: KEEP
         Frame_Blend: LINEAR
         Mode_Keyboard: EXCLUSIVE
+        User_Modules_In_Process: false
     }
 }

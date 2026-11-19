@@ -106,8 +106,10 @@ def shell_text(extra_bar: str = "", launcher: bool = True) -> str:
     )
 
 
-def write_config(root: Path, kind: str) -> Path:
-    """``root/cfg``: the shell of ``kind``.
+def write_config(root: Path, kind: str, in_process: bool = True) -> Path:
+    """``root/cfg``: the shell of ``kind``. ``in_process``: ``Debug { User_Modules_In_Process: true
+    }``, the user modules stay in the shell and the posture of the prototype (or posture A) decides
+    where they run; false is the product's own posture C (cell ``P`` of ``measure.py``).
 
     * ``default``: the eight modules and the Launcher;
     * ``plus3``: that and three user modules (Pomodoro, DiskUse, DeskName);
@@ -117,7 +119,14 @@ def write_config(root: Path, kind: str) -> Path:
     """
     cfg = root / "cfg"
     (cfg / "Shells").mkdir(parents=True)
-    (cfg / "settings.tdl").write_text(SETTINGS)
+    (cfg / "settings.tdl").write_text(
+        SETTINGS.replace(
+            "KWin { Script: OFF } }",
+            "KWin { Script: OFF } Debug { User_Modules_In_Process: true } }",
+        )
+        if in_process
+        else SETTINGS
+    )
     users: list[str] = []
     extra = ""
     if kind == "plus3":
@@ -282,6 +291,8 @@ class Shell:
                 more["TESS_PROTO_STALL"] = str(stall)
             if kill is not None:
                 more["TESS_PROTO_KILL"] = str(kill)
+                if posture == "P":  # the product's own times (2 s and 5 s), scaled to the kill time
+                    more["TESS_SHELL_TEST_WATCHDOG_SCALE"] = str(kill / 5.0)
         module = "tests.perf.proto.run_shell" if proto else "tess_shell"
         self.started = time.monotonic()
         self.process = subprocess.Popen(
