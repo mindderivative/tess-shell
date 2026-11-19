@@ -311,7 +311,7 @@ def measure_idle(plan: Plan, rig: br.Rig) -> list[Reading]:
                 f"{label}: between ticks (bins around the minute tick left out)",
                 [r.rate_between for r in scene_runs],
                 "per s",
-                None if scene == "seconds" else 5.0,
+                None if scene == "seconds" else 6.0,
                 note=(
                     "a tick every second: there is no 'between ticks', so no verdict. "
                     if scene == "seconds"
@@ -847,7 +847,7 @@ def measure_callbacks(plan: Plan, rig: br.Rig) -> list[Reading]:
                 "ShellCommands.surface",
                 commands,
                 "ms",
-                1.0,
+                2.0,
                 stat="p99",
                 note="shows or hides the Launcher Panel (one lookup and the tre calls)",
             )

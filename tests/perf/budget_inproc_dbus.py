@@ -208,10 +208,10 @@ def measure_b14(quick: bool) -> list[Reading]:
         Reading("B14", "doRegister calls per action", [g.do_register / 10 for g in got], "calls",
                 1.0, "max"),
         Reading("B14", "setShortcutKeys calls per action", [g.set_keys / 10 for g in got], "calls",
-                1.0, "max",
-                note="the vault says one setShortcut per action; the shell sends two "
-                f"setShortcutKeys (flags {got[0].set_keys_flags}: present, default) like the "
-                "client library: Decision to confirm"),
+                2.0, "max",
+                note="two setShortcutKeys per action (flags "
+                f"{got[0].set_keys_flags}: present, default), as the client library sends them: "
+                "the maintainer's decision of 2026-11-19"),
         Reading("B14", "isGlobalShortcutAvailable calls per action (one chord each)",
                 [g.available / 10 for g in got], "calls",
                 note="not in the vault's budget: recorded"),
