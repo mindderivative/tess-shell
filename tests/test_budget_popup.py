@@ -10,19 +10,21 @@ from tests.perf.budget_inproc_ui import FRAME_MS, open_costs, popup_residue
 
 
 def test_a_closed_popup_holds_no_thread_descriptor_node_or_object() -> None:
-    """After 20 open/close cycles: no thread, file descriptor, Bar node, ``OpenPopup``,
-    ``PopupWindow`` or live content tree is left, and the Python blocks left per cycle stay
-    far under a leaked view (about 20 today; the guard is 100) (about 1 s)."""
+    """After 20 open/close cycles on a real ``tess_re.App``: no thread, file descriptor, Bar node,
+    ``OpenPopup`` or live content tree is left, the ``PopupWindow`` objects tre's App keeps are
+    at most one per cycle, and the Python blocks and heap left per cycle stay far under a leaked
+    popup (about 20 blocks and 1 KiB today; the guards are 100 and 3 KiB) (about 1 s)."""
     res = popup_residue(20)
-    assert {k: v for k, v in res.items() if k != "blocks_per_cycle"} == {
+    assert {k: res[k] for k in ("threads", "fds", "bar_nodes", "open_popups", "live_trees")} == {
         "threads": 0,
         "fds": 0,
         "bar_nodes": 0,
         "open_popups": 0,
-        "popup_windows": 0,
         "live_trees": 0,
     }
+    assert res["popup_windows"] <= 20, res  # tre's: TRE-REQ-028
     assert res["blocks_per_cycle"] < 100, res
+    assert res["heap_bytes_per_cycle"] < 3072, res
 
 
 def test_opening_a_popup_takes_the_loop_well_under_two_frames() -> None:
