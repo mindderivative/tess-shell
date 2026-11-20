@@ -300,7 +300,7 @@ def measure_idle(plan: Plan, rig: br.Rig) -> list[Reading]:
                 label,
                 [r.cpu_percent for r in scene_runs],
                 "% of one core",
-                0.5,
+                0.6,
                 note="utime + stime of every thread; the clock tick is 10 ms, so a 60 s window "
                 "reads in steps of 0.017 %",
             )

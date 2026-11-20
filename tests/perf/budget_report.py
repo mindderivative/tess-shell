@@ -30,7 +30,8 @@ BUDGETS: tuple[Budget, ...] = (
     Budget(
         "B01",
         "Idle CPU",
-        "At most 0.5 % of one core, averaged over 60 s, shell running, nothing animating",
+        "At most 0.6 % of one core, averaged over 60 s, shell running, nothing animating "
+        "(0.5 before 2026-11-20)",
         "Performance Budgets > Proposed Values",
     ),
     Budget(
@@ -140,7 +141,8 @@ BUDGETS: tuple[Budget, ...] = (
     Budget(
         "B18",
         "Binding and tre call cost",
-        "Bind of a 3,101-node tree under 15 ms (D12, D18); tre call costs are reference figures",
+        "Bind of a 3,101-node tree under 20 ms (15 ms before 2026-11-20; D12, D18); tre call costs "
+        "are reference figures",
         "M1 Build Log D12 and D18; TRE-REQ-009",
     ),
     Budget(

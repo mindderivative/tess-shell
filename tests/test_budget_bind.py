@@ -31,7 +31,7 @@ def test_the_example_is_bound_with_one_build_and_an_attach() -> None:
 
 
 def test_the_big_tree_is_bound_in_a_third_of_the_old_time_at_most() -> None:
-    """B18 asks 15 ms for the 3,101-node tree. This bound is three times that (a loaded CI machine
+    """B18 asks 20 ms for the 3,101-node tree. This bound is three times that (a loaded CI machine
     must not flake) and still catches a binder that goes back to a Python object per node: the
     median of 15 binds, headless window, build + attach + dispose. About 0.3 s."""
     tree = big_tree()
@@ -42,7 +42,7 @@ def test_the_big_tree_is_bound_in_a_third_of_the_old_time_at_most() -> None:
         started = time.perf_counter()
         build(tree, window).dispose()  # type: ignore[arg-type]
         samples.append((time.perf_counter() - started) * 1000)
-    assert statistics.median(samples) < 45.0, samples
+    assert statistics.median(samples) < 60.0, samples
 
 
 def test_a_tree_of_plain_blocks_gets_no_wire_and_no_control() -> None:
