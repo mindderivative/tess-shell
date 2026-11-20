@@ -5,7 +5,7 @@ type: delivery
 status: accepted
 owner: phil
 created: 2026-11-19
-updated: 2026-11-19
+updated: 2026-11-20
 tags: [delivery/docs]
 ---
 
@@ -114,6 +114,14 @@ Contributing                      contributing.md
 5. [x] Does the site name the project as pre-alpha? Recommendation: yes, one line on the Overview, as the guide does.
 
 All five questions answered by the maintainer on 2026-11-19: screenshots from the private sway first is fine, and 2 to 5 as recommended.
+
+## Built (vault session, 2026-11-19; local branch `docs/site-rebuild` of a clone at `~/.cache/tess-shell-site`, commit `ba68a95`, opened as `tess-shell` PR #92 on the maintainer's yes, 2026-11-19, and merged 2026-11-20 as `8196c05` after all checks passed; the Deploy Docs run succeeded and the live pages answer 200, with the new navigation and the screenshot)
+
+- The site follows the structure above. New pages: Overview, Tutorial (five steps, five checked example folders under `docs/guide/examples/11-tutorial/`), Multiple monitors, Hot reload, Start with your session, Security and trust, Writing a module (with a checked example `12-modules/tally`), Module API, Python Builder (a short page: no Python builder exists), Messages (every finding by name), the schema export page, Architecture, Upgrading (with the changelog included), Contributing, Examples. The guide pages and the checked tables moved to `docs/guide/` without their numbers; `README.md` is now short.
+- The vault export is at `docs/design/`; `tools/sync_docs.py` writes only there. The navigation is `docs/.nav.yml` (the `mkdocs-awesome-nav` plugin, docs group only), with the Design folder listed by itself. The CI skip for docs-only pull requests now covers `docs/design/` only, because the guide has tests.
+- Checked: `mkdocs build --strict` passes; `test_guide_tables`, `test_guide_examples` and `test_security_docs` pass (276 tests); lint passes. Screenshots come from a private sway with software rendering and made-up applications, not KWin.
+- Findings from the writing, for the code session: `Class:` on a module call is refused; a module's style file must sit in `Styles/`; no command opens a Popup; `ctx.send` refuses `None`, a `datetime` and a colour tuple, and the vault's Module Context note says otherwise; `ctx.config` holds only the name; `ctx.thread`, `ctx.every` and `ctx.after` do not exist; `stop()` has no timeout; a reload refusal sends no desktop notification.
+- Publishing resumed on 2026-11-20; `tess-docs-publish` stages `docs/design/` only.
 
 ## Acceptance Criteria
 

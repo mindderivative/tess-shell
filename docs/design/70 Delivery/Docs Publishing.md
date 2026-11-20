@@ -5,7 +5,7 @@ type: delivery
 status: accepted
 owner: phil
 created: 2026-11-15
-updated: 2026-11-19
+updated: 2026-11-20
 tags: [delivery, process]
 ---
 
@@ -14,9 +14,9 @@ tags: [delivery, process]
 > [!NOTE]
 > Every commit in this vault ends up on the design site (`https://mindderivative.github.io/tess-shell/`) with no manual step. A hook starts `tess-docs-publish`, which exports the vault into `docs/` of the `tess-shell` repository, opens one pull request and turns on auto-merge. GitHub merges it when the required check `CI result` is green, and the merge deploys the site. Decided and built on 2026-11-15 at the maintainer's request: he had done the export, branch, pull request and merge by hand once and said he never wants to again.
 
-> [!WARNING]
-> **Paused (maintainer, 2026-11-19)**
-> While the docs site is rebuilt ([Docs Site Plan](Docs%20Site%20Plan.md)) no vault commit opens a pull request into `docs/`. The tool `tess-docs-publish` exits at once while the file `~/.cache/tess-shell-docs-publish/PAUSED` exists; the hook still stamps each commit. Resume with `rm ~/.cache/tess-shell-docs-publish/PAUSED`, after the site's pull request has merged and the tool is changed to stage `docs/design/` only.
+> [!NOTE]
+> **The site is now a product site (2026-11-20)**
+> `tess-shell` PR #92 merged on 2026-11-20 and the site deployed ([Docs Site Plan](Docs%20Site%20Plan.md)). The vault export now goes to `docs/design/` and `tess-docs-publish` stages only that folder, so a vault commit never touches a hand-written page. Publishing was paused from 2026-11-19 while the site was rebuilt and resumed on 2026-11-20 (the pause file `~/.cache/tess-shell-docs-publish/PAUSED` is gone; creating it pauses again).
 
 ## Purpose and scope
 

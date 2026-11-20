@@ -74,7 +74,21 @@ Decided on 2026-11-19 from the M7a2 numbers: the shell moves to posture C ([Modu
 
 To go in the guide and the README, in this wording (decided with posture A):
 
-> A module is Python that runs inside the shell with your rights. It can read your files and start programs. Write modules yourself or read them before you add them. TDL files cannot run code. Keep your configuration folder writable by you only: the shell warns if it is not.
+> A module is Python that runs with your rights. The modules that ship with the shell run inside it; a module you write or add runs in a process of its own, so a module that hangs or crashes does not freeze your bars. That is not a sandbox: it can still read your files and start programs. Write modules yourself or read them before you add them. TDL files cannot run code. Keep your configuration folder writable by you only: the shell warns if it is not.
+
+This is the wording of posture C, decided on 2026-11-19 and built in `tess-shell` PR #91; it replaces the posture A wording of 2026-11-17 ("runs inside the shell"), which the guide and the README carried until then. A test pins it word for word in both.
+
+## As Built for Posture C (code session's report of `tess-shell` PR #91, merged 2026-11-19, CI green; not run in the vault)
+
+- **What runs where:** a user module file (not under `shipped/`) runs in a child process of its own, per module file. The shipped modules and the default shell are unchanged. The child is fault containment, not a sandbox: it runs as you and can read your files and start programs.
+- **The package:** `src/tess_shell/modproc/` (static, wire, child, childctx, broker, stub, supervisor, probe) and one port on `ModuleHost`. The shell reads the file's syntax tree and loads a stub class through the unchanged host; the wire is JSON lines over a socketpair, with tags for tuples, bytes and non-string keys, and never pickle. The shell keeps all services (B2); ticks are forwarded from the shell's one time source.
+- **`ctx`:** every member works. The synchronous ones have a 2 s timeout whose error, `ShellCallTimeout`, names the module and the call. `ShellCallTimeout` is not exported from `tess_shell` (a module author catches `RuntimeError`); exporting it needs a light module `__init__` can import, a question for you below.
+- **Hang and crash:** `READY=1` waits for the children from a loop callback (10 s backstop) and never blocks the loop. A hung callback is named at 2 s and the process killed at 5 s, with tracebacks dumped first. A killed process restarts with the M7a back-off. `slow-module` and `many-threads` come through from the child under the same codes.
+- **Reload:** the new child starts beside the old one and the old stops only after the new has imported, so a bad file keeps the old module.
+- **`check`:** a static pass for user modules, and the opt-in `--import-modules`. `Debug { User_Modules_In_Process: true }` keeps user modules in the shell. The schema is 1.12 (tess-ui's fixture needs re-recording). `status` shows `module_processes` only when there are some.
+- **What CI and the full suite found, fixed:** `check` now reads a user module's Python (an empty `.py` is `module-classes`, a missing one `module-no-python`); a user module's first values arrive after the first paint, so the layout's "name is not defined" warning fired at every start, and `ValueStore.settling(module)` now holds it back until the process answered (a race: 4 of 30 gallery runs under 48 busy loops before, 0 of 30 after); 31 mutations were caught. The whole suite locally: 6154 passed, 22 failed, of which 20 are `tests/test_kwin_script_js.py` (this machine's `/usr/bin/node` fails to load `libsimdjson.so.36`, an environment fault) and one `test_kwin_tre068_kit` step failed once and passed 7 of 7 alone.
+- **Differences from the plan:** `windows.available`, `windows.ready` and `audio.available` are one round trip; a real child measures 20.7 MB PSS (the guides say about 20 MB). Not done: `ctx.tdl`, `ctx.state_dir`, `ctx.every`, `ctx.after` and `ctx.thread` do not exist in A either. The full measurement of the product cell P is the code session's to run.
+- **A question for you:** should `ShellCallTimeout` be exported from `tess_shell`? Recommendation: yes, once `tess_shell/__init__` can import a light module that holds it, so a module author can catch it by name rather than `RuntimeError`. Decided by the maintainer on 2026-11-19: yes, export it; sent to `tess-shell`.
 
 ## Python Contract
 

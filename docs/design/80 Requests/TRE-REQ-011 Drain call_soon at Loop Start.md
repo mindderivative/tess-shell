@@ -12,7 +12,7 @@ tags: [engine-request, design, needs-verification]
 # TRE-REQ-011: Drain call_soon at Loop Start
 
 > [!NOTE]
-> **On 2026-11-19 the maintainer said tre is building this for 0.6.10.**
+> **On 2026-11-19 the maintainer said tre is building this for 0.6.10. Built by tre (2026-11-19, PR #311, merged to main, unreleased, ships in 0.6.10): with no window the loop is now woken once at start, so callbacks queued before `App.run` run when the loop starts, in queue order. Reproduced first on 0.6.9 (ran at 1.0 s); after the fix 0.006 s. A `stop()` before `run()` still queues nothing. Not verified on macOS or Windows. The shell's 50 ms retry of `stop()` can go once it runs on 0.6.10.**
 > A callback queued with `LoopHandle.call_soon` before `App.run()` starts is not run when the loop starts; it waits until something else wakes the loop. Reported by the `tess-shell` code session while building M0 and checked by the vault session on 2026-11-03. Draft for the maintainer to carry to the tre project; nothing is filed from this vault (AGENTS > 6. Requests Between Projects).
 
 > [!TIP]
