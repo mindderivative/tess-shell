@@ -104,6 +104,6 @@ A module of yours (a `Name_Module.py` that does not ship with the shell) now run
 
 ## Changelog
 
-Every release in order, oldest first, with *Unreleased* (the next release) at the end. It says what changed and what was removed.
+Every release in order, oldest first, with an *Unreleased* section (the next release) at the end whenever there are changes not yet released. It says what changed and what was removed.
 
 --8<-- "CHANGELOG.md:3:"
