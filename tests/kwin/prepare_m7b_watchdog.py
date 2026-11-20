@@ -81,7 +81,11 @@ class Hang(Module):
     def sleep(self, event):
         time.sleep(20)
 '''
-SETTINGS = "---\nTDL: 0.2\nName: Settings\n---\nSettings { Logging { Level: INFO } }\n"
+# the hanging module must run in the shell: the watchdog under test watches the loop
+SETTINGS = (
+    "---\nTDL: 0.2\nName: Settings\n---\n"
+    "Settings { Logging { Level: INFO } Debug { User_Modules_In_Process: true } }\n"
+)
 SILENT_PY = '''"""A Type=notify service that says READY=1 and then never pings the watchdog."""
 import os
 import signal

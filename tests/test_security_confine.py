@@ -21,6 +21,9 @@ def cfg(tmp_path: Path) -> Path:
     """A configuration folder with a real file outside it, ``tmp_path/outside/Out_Module.tdl``."""
     (tmp_path / "outside").mkdir()
     (tmp_path / "outside" / "Out_Module.tdl").write_text(HEAD.format(name="Out") + LABEL)
+    (tmp_path / "outside" / "Out_Module.py").write_text(
+        "from tess_shell import Module\n\nclass O(Module):\n    pass\n"
+    )
     (tmp_path / "outside" / "pic.png").write_bytes(b"not really a png")
     (tmp_path / "outside" / "dot.svg").write_text("<svg xmlns='http://www.w3.org/2000/svg'/>")
     (tmp_path / "cfg").mkdir()

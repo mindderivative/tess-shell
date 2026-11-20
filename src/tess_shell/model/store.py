@@ -62,6 +62,12 @@ class ValueStore:
     _scheduled: bool = False
     # the uses that ended lately (an entry of a For, a Popup's): a send to one is not a mistake
     _ended: dict[str, None] = field(default_factory=dict)
+    # whether a module's process has not answered yet (``modproc``): its first values are on the
+    # way, so a slot that reads one is not yet an error. ``None``: every module is in this process
+    settling: Callable[[str], bool] | None = None
+    # the warnings that were held back for it: (use, name, text); the supervisor says the ones whose
+    # name the module still has not sent when it has started
+    deferred: list[tuple[str, str, str]] = field(default_factory=list)
 
     def add_use(self, module: str, use: str) -> None:
         self._ended.pop(use, None)
