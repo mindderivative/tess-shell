@@ -331,14 +331,14 @@ def test_a_synchronous_request_the_shell_does_not_answer_times_out_naming_the_mo
     raises ``ShellCallTimeout``, and the message says which module asked what."""
     monkeypatch.setenv("TESS_SHELL_TEST_WATCHDOG_SCALE", "0.1")
     code = """
-from tess_shell import Module, action
+from tess_shell import Module, ShellCallTimeout, action
 
 class Slow(Module):
     @action
     def ask(self, event):
         try:
             self.ctx.is_popup_open("menu")
-        except Exception as exc:
+        except ShellCallTimeout as exc:  # caught by name: it is part of the module API
             self.ctx.send("error", [type(exc).__name__, str(exc)])
 """
     shell.run("Slow", code)
@@ -649,3 +649,14 @@ def test_dbus_calls_properties_signals_and_the_hooks_go_through_the_shells_layer
             assert rig.wait_value("Db@u1", "found") == [NAME, True]
         finally:
             world.close()
+
+
+def test_shell_call_timeout_is_exported_and_is_a_runtime_error_in_both_places() -> None:
+    """A module author imports it from ``tess_shell``; the class the child raises is that class, and
+    it stays a ``RuntimeError``, so an ``except RuntimeError`` written before the export works."""
+    import tess_shell
+    from tess_shell.modproc import childctx
+
+    assert tess_shell.ShellCallTimeout is childctx.ShellCallTimeout
+    assert issubclass(tess_shell.ShellCallTimeout, RuntimeError)
+    assert "ShellCallTimeout" in tess_shell.__all__

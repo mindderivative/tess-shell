@@ -46,6 +46,7 @@ from tess_shell.services.api import (
     ServiceState,
     ServiceTimeout,
     ServiceUnavailable,
+    ShellCallTimeout,
     WindowInfo,
 )
 
@@ -61,11 +62,6 @@ def _scale() -> float:
 
 SHELL_CALL_TIMEOUT = 2.0 * _scale()  # seconds a synchronous member waits (below the 5 s hang)
 AWAIT_SLACK = 2.0  # seconds a coroutine waits beyond the timeout the call itself has
-
-
-class ShellCallTimeout(RuntimeError):
-    """The shell did not answer a synchronous call of the module in time. The message names the
-    module and the call."""
 
 
 class Loop:

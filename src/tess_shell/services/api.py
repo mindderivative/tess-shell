@@ -46,6 +46,13 @@ class ServiceTimeout(ServiceError):
     """The call did not finish within its timeout (default 5 s)."""
 
 
+class ShellCallTimeout(RuntimeError):
+    """A module that runs in its own process asked the shell something that answers at once in the
+    shell's own process (``update_popup``, ``is_popup_open``, ``focus``, ``surface.hide``,
+    ``apps.search``, ``icons.*``) and the shell did not answer in time (2 s). The message names the
+    module and the call. Never raised for a module that runs in the shell. A ``RuntimeError``."""
+
+
 class ServiceUnavailable(ServiceError):
     """The service has no owner on the bus (``ServiceUnknown``, ``NameHasNoOwner``, ``NoReply``) or
     the bus is not reachable. The layer has set the service's state to ``UNAVAILABLE``."""

@@ -7,6 +7,7 @@ from tess_shell.services.api import (  # noqa: E402
     ServiceState,
     ServiceTimeout,
     ServiceUnavailable,
+    ShellCallTimeout,
 )
 
 __all__ = [
@@ -17,6 +18,7 @@ __all__ = [
     "ServiceState",
     "ServiceTimeout",
     "ServiceUnavailable",
+    "ShellCallTimeout",
     "__version__",
     "action",
 ]
