@@ -204,7 +204,7 @@ What the shell does with KWin:
 
 The shell loads a small **KWin script** when it starts (`Script: RUNTIME`) and unloads it when it stops. The script reports which monitors have an active fullscreen window, on which the shell hides its Bars, Panels, Frame and Popups (`Hide_On_Fullscreen`), and, only while a [Tasks](modules.md#tasks) module is in use, the list of open windows. `PERSISTENT` leaves loading to the script that `tesserae-shell kwin script install` puts in KWin's scripts folder, so KWin runs it from login; `OFF` loads nothing, so there is no fullscreen hiding and no window list. A restart applies the setting. See [the command line](command-line.md#the-kwin-commands) for the install commands.
 
-The `KWin` block and the script it controls were added after 0.1.1 ([Install and start](install.md#what-is-newer-than-the-011-release)).
+The `KWin` block and the script it controls were added in 0.1.2 ([Install and start](install.md#what-needs-a-recent-release)).
 
 > **Not yet checked on KWin:** loading the script into a real KWin, its fullscreen reports and the `kwin script` commands have been built and tested against fakes; the maintainer's hand check of them is still open. If KWin is not found the shell logs `kwin: org.kde.KWin is not on the session bus ...` at INFO and runs on without them.
 

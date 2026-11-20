@@ -1091,6 +1091,6 @@ The shell adds them to the main shell's first Monitor when added to the main she
 
 <!-- END generated: shipped-panels -->
 
-The [Launcher](keyboard.md#the-launcher) is described with the keyboard (it was added after 0.1.1).
+The [Launcher](keyboard.md#the-launcher) is described with the keyboard (it was added in 0.1.2).
 
 Next: [modules](modules.md).
