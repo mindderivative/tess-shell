@@ -134,6 +134,7 @@ The same notes as a plain list, with no JavaScript:
 - [V1 Scope](../10%20Vision/V1%20Scope.md)
 - [Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)
 - [Value Types and Conversion](../42%20Python%20API/Value%20Types%20and%20Conversion.md)
+- [Vault Reference](Vault%20Reference.md)
 - [Version Policy and Migration](../70%20Delivery/Version%20Policy%20and%20Migration.md)
 - [Wayland Protocols](../40%20Specifications/Integration/Wayland%20Protocols.md)
 - [Workspaces Module](../40%20Specifications/Modules/Workspaces%20Module.md)
