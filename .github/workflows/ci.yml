@@ -2,10 +2,13 @@ name: CI
 
 # Also called by release.yml, so a tagged release runs the same checks on the tagged commit.
 # No paths-ignore: "CI result" is a required check on main (a ruleset, 2026-11-15), and a workflow
-# that does not run would leave it pending for ever. A pull request that changes only docs/ (the
-# vault's generated export) therefore still runs this workflow, but skips lint, the test shards and
-# the package check, which cannot be affected; the docs build and "CI result" still run. Every
-# other change, and every push, tag and manual run, runs everything.
+# that does not run would leave it pending for ever. A pull request that changes only documentation
+# (docs/ except docs/guide/, AGENTS.md, CLAUDE.md) therefore still runs this workflow, but skips
+# lint, the test shards and the package check, which cannot be affected; the docs build and "CI
+# result" still run. Not on that list, because tests read them: docs/guide/ (the generated tables
+# and the example sets), README.md and CHANGELOG.md (tests/test_security_docs.py,
+# tests/guide_tables.py), LICENSE (the wheel's licence files, tests/test_notice.py). Every other
+# change, and every push, tag and manual run, runs everything.
 on:
   push:
     branches: [main]
@@ -44,12 +47,13 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           # docs_only is true only for a pull request whose every changed path (a renamed file's
-          # old path too) is under docs/design/ (the vault's export). Anything else, or any error, means "run everything".
+          # old path too) is documentation no test reads: under docs/ but not docs/guide/, or
+          # AGENTS.md or CLAUDE.md. Anything else, or any error, means "run everything".
           docs_only=false
           if [ "$EVENT" = pull_request ]; then
             files=$(gh api "repos/$REPO/pulls/$PR/files" --paginate \
               --jq '.[] | .filename, (.previous_filename // empty)') || files=""
-            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qv '^docs/design/'; then
+            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qvP '^(docs/(?!guide/)|AGENTS\.md$|CLAUDE\.md$)'; then
               docs_only=true
             fi
           fi
