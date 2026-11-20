@@ -1,6 +1,6 @@
 # Module API
 
-The Python API of a module: what a module's Python file imports, the class it writes, the context object it receives, the event an action gets, and the values it may send. For a walk through, with a module you can copy, read [Writing a module](../guide/writing-a-module.md). Every signature on this page was read from the code of tesserae-shell 0.1.2 and its unreleased changes; where the design notes say more than the code does, the page says what the code does ([What is not built](#what-is-not-built)).
+The Python API of a module: what a module's Python file imports, the class it writes, the context object it receives, the event an action gets, and the values it may send. For a walk through, with a module you can copy, read [Writing a module](../guide/writing-a-module.md). Every signature on this page was read from the code of tesserae-shell 0.2.0; where the design notes say more than the code does, the page says what the code does ([What is not built](#what-is-not-built)).
 
 A module's Python runs as you, with no sandbox. A module of your own runs in a process of its own; the shell's own modules run inside the shell ([Two kinds of module](#two-kinds-of-module), [Security](../guide/security.md)).
 

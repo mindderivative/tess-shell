@@ -168,7 +168,7 @@ These help the shell work with KWin. None needs a running shell.
 * `tesserae-shell kwin script install | remove | status`: installs the shell's KWin script so that KWin runs it from login (the `PERSISTENT` mode of `KWin { Script }`). `install` copies the script's package into KWin's scripts folder, switches it on in `kwinrc` and asks KWin to reload; `remove` undoes exactly that; `status` reports the package, the `kwinrc` switch and whether KWin has the script loaded now. Options: `--kwinrc PATH`, `--scripts-dir PATH` to point at other files, `--no-reload`.
 * `tesserae-shell kwin rule show | install | remove`: an **opt-in** window rule that keeps the shell's surfaces above Plasma's panels. `show` prints the rule group the shell would write to `kwinrulesrc`; `install` shows it, asks first (or takes `--yes`) and writes that group; `remove` takes exactly that group out. No other group is ever touched. If KWin cannot be asked to reload after a write, the file is put back as it was. Options: `--rules-file PATH`, `--no-reload`, `--yes`.
 
-The `kwin` commands, like `install-session`, were added after 0.1.1 ([Install and start](install.md#what-is-newer-than-the-011-release)).
+The `kwin` commands, like `install-session`, were added in 0.1.2 ([Install and start](install.md#what-needs-a-recent-release)).
 
 > **Not yet checked on KWin:** both the KWin script and the window rule are built and tested with temporary files and a fake KWin, but have not been confirmed on a real KWin by the maintainer's hand checks. Use `kwin rule show` first and read what it would write. You never need either for the shell to run: with the default `KWin { Script: RUNTIME }` the shell loads its script itself while it runs.
 

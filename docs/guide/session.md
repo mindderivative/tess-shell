@@ -14,7 +14,7 @@ pipx install --python python3.14 tesserae-shell
 ~/.local/share/tesserae-shell-venv/bin/pip install tesserae-shell   # in a venv of your own
 ```
 
-`install-session` is newer than the 0.1.1 release; if the command is unknown to you, [install the current code](install.md#what-is-newer-than-the-011-release).
+`install-session` arrived in 0.1.2; if the command is unknown to you, [upgrade or install the current code](install.md#what-needs-a-recent-release).
 
 ## Write the session files
 

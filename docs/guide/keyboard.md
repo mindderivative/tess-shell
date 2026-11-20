@@ -465,7 +465,7 @@ Shell {
 * **The list** is built from the desktop entries in `XDG_DATA_HOME` and `XDG_DATA_DIRS` on first use and follows changes with inotify: an application you install appears with no restart.
 * **Not in this version:** files, a calculator, web search, desktop actions of an entry, categories, a grid, pinned favourites.
 
-The Launcher and the Applications module were added after 0.1.1 ([Install and start](install.md#what-is-newer-than-the-011-release)).
+The Launcher and the Applications module were added in 0.1.2 ([Install and start](install.md#what-needs-a-recent-release)).
 
 > **Not yet checked on KWin:** the Launcher's keyboard when it opens from a global key (it asks for `EXCLUSIVE` keyboard for that reason), and a real start of an application with focus after it. The shell never starts a process during its tests; a kit for the hand check exists but has not been reported yet.
 

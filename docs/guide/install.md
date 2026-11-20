@@ -78,16 +78,16 @@ python <version>
 
 `tesserae-shell version --json` prints the same as one JSON object, and adds `config_dir`, the folder the shell would read.
 
-## What is newer than the 0.1.1 release
+## What needs a recent release
 
-These parts of the guide describe features added after the 0.1.1 package was published (the CHANGELOG's *Unreleased* section has the details). A package from PyPI at 0.1.1 does not have them:
+These parts of the guide describe features added after the 0.1.1 package (the CHANGELOG has the details; the Volume_OSD module needs 0.2.0, the rest 0.1.2 or later). A package from PyPI at 0.1.1 does not have them:
 
 * the `tesserae-shell install-session` command ([below](#starting-with-your-session));
 * the `tesserae-shell kwin ...` commands, the `KWin` block of `settings.tdl`, and the [Tasks](modules.md#tasks) and [Volume_OSD](modules.md#volume_osd) modules;
 * the [Applications](modules.md#applications) module and the shipped `Launcher` Panel ([the Launcher](keyboard.md#the-launcher));
 * the accessibility additions: `Value_Text` of Slider, `Label` of TextInput and TextEditor, and `announce` of Media, Audio and Tasks.
 
-If a command or key from this guide is "unknown" to your installation, you probably have the released package. To run the current code, install from the repository (it needs `git`):
+If a command or key from this guide is "unknown" to your installation, you probably have an old package: upgrade it (`uv tool upgrade tesserae-shell`). To run the current code instead, install from the repository (it needs `git`):
 
 ```sh
 uv tool install --python 3.14 git+https://github.com/mindderivative/tess-shell
@@ -120,7 +120,7 @@ Only one shell runs at a time per session. A second `run` stops with `another te
 
 ## Starting with your session
 
-A terminal is fine for trying things out. To have the shell start when you log in, the desktop and `systemd` need two small files. The wheel carries them as package data, but `pip`, `uv tool` and `pipx` put package data inside the environment, where neither the desktop nor `systemd` looks. So a command writes them where they are read (this command was added after 0.1.1; see [above](#what-is-newer-than-the-011-release)):
+A terminal is fine for trying things out. To have the shell start when you log in, the desktop and `systemd` need two small files. The wheel carries them as package data, but `pip`, `uv tool` and `pipx` put package data inside the environment, where neither the desktop nor `systemd` looks. So a command writes them where they are read (this command was added after 0.1.1; see [above](#what-needs-a-recent-release)):
 
 ```sh
 tesserae-shell install-session --print    # show both files and their paths; write nothing
