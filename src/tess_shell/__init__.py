@@ -1,4 +1,4 @@
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 from tess_shell.module import Event, Module, action  # noqa: E402
 from tess_shell.services.api import (  # noqa: E402
