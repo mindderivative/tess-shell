@@ -1,0 +1,12 @@
+---
+TDL: 0.2
+Name: Settings
+---
+Settings {
+    Appearance {
+        Theme: Mine
+        Stylesheets: [Default, Mine]
+        Follow_Desktop: true
+    }
+    Shortcuts { Toggle_Launcher: "Meta+Space" }
+}

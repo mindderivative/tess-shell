@@ -1,4 +1,4 @@
-"""The tables and example listings of the user guide (``guide/``), generated from the code.
+"""The tables and example listings of the user guide (``docs/guide/``), generated from the code.
 
 The guide's pages are written by hand, except for the parts between a pair of marker comments
 
@@ -8,9 +8,9 @@ The guide's pages are written by hand, except for the parts between a pair of ma
 
 which this module writes from what the shell itself says: the schema export
 (``tess_shell.schema.export.schema_dict()``), the argparse parser of ``tess_shell.cli``, the exit
-codes, ``pyproject.toml`` and the example folders under ``guide/examples/``. Nothing a table holds
-(a default, a count, a key name) is typed by hand, so a change in the code that the guide does not
-follow fails ``tests/test_guide_tables.py`` until the pages are generated again with
+codes, ``pyproject.toml`` and the example folders under ``docs/guide/examples/``. Nothing a table
+holds (a default, a count, a key name) is typed by hand, so a change in the code that the guide
+does not follow fails ``tests/test_guide_tables.py`` until the pages are generated again with
 
     env -u WAYLAND_DISPLAY -u DISPLAY python -m tests.guide_tables
 
@@ -40,7 +40,7 @@ from tess_shell.exit_codes import ExitCode
 from tess_shell.schema.export import schema_dict
 
 REPO = Path(__file__).resolve().parents[1]
-GUIDE = REPO / "guide"
+GUIDE = REPO / "docs" / "guide"
 EXAMPLES = GUIDE / "examples"
 
 MARKER = re.compile(
@@ -183,7 +183,7 @@ KIND_HELP: dict[str, str] = {
     "color": (
         "A quoted colour in one of these forms: {forms}, or `rgba(r g b a)` with alpha from 0.0 "
         "to 1.0. Where a table lists theme tokens, a token such as `$color.surface` also works "
-        "([Styling and themes](06-styling.md#tokens))."
+        "([Styling and themes](styling.md#tokens))."
     ),
     "enum": "One upper-case word of the choices the table lists.",
     "list": (
@@ -204,9 +204,9 @@ KIND_HELP: dict[str, str] = {
     "monitor_index": "A whole number from 0, or the word `default`.",
     "key_chord": (
         'A key press: modifiers and one key joined by `+`, such as `"Ctrl+Shift+F1"` '
-        "([Keyboard and shortcuts](08-keyboard.md#key-names))."
+        "([Keyboard and shortcuts](keyboard.md#key-names))."
     ),
-    "token_ref": "`$group.name`, a theme token ([Styling and themes](06-styling.md#tokens)).",
+    "token_ref": "`$group.name`, a theme token ([Styling and themes](styling.md#tokens)).",
     "expression": "`<| ... |>`, an expression that a module's layout uses to show a value.",
 }
 
@@ -688,7 +688,7 @@ def block_exit_codes(_: dict[str, Any]) -> str:
 
 
 def example_sets() -> list[Path]:
-    """Every example set: a folder two levels under ``guide/examples/`` that is a configuration
+    """Every example set: a folder two levels under ``docs/guide/examples/`` that is a configuration
     folder."""
     return sorted(
         p for page in EXAMPLES.iterdir() if page.is_dir() for p in page.iterdir() if p.is_dir()
@@ -820,10 +820,10 @@ def required_markers(schema: dict[str, Any]) -> dict[str, list[str]]:
     the schema lists, so a module or a settings section added to the code must be added to the
     guide too."""
     return {
-        "README.md": ["version-info", "release-state"],
-        "01-install.md": ["version-info", "release-state", "dependencies"],
-        "03-first-bar.md": ["blocks"],
-        "04-surfaces.md": [
+        "index.md": ["version-info", "release-state"],
+        "install.md": ["version-info", "release-state", "dependencies"],
+        "first-bar.md": ["blocks"],
+        "surfaces.md": [
             "kinds",
             *(f"surface:{r}" for r in SURFACE_ROOTS),
             "actions",
@@ -831,15 +831,15 @@ def required_markers(schema: dict[str, Any]) -> dict[str, list[str]]:
             "shipped-panels",
             "shipped-popups",
         ],
-        "05-modules.md": [
+        "modules.md": [
             "module-index",
             "module-common-keys",
             *(f"module:{m}" for m in schema["modules"]),
         ],
-        "06-styling.md": ["tokens", "system-tokens", "style-keys"],
-        "07-settings.md": [f"settings:{s}" for s in SETTINGS_SECTIONS],
-        "08-keyboard.md": ["shortcut-forms", "key-names"],
-        "09-command-line.md": [
+        "styling.md": ["tokens", "system-tokens", "style-keys"],
+        "settings.md": [f"settings:{s}" for s in SETTINGS_SECTIONS],
+        "keyboard.md": ["shortcut-forms", "key-names"],
+        "command-line.md": [
             "cli-global-options",
             "cli-commands",
             "cli-help",

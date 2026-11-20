@@ -24,17 +24,23 @@ from tests import guide_tables as g
 SCHEMA = schema_dict()
 PAGES = g.pages()
 PAGE_NAMES = (
-    "README.md",
-    "01-install.md",
-    "02-configuration-folder.md",
-    "03-first-bar.md",
-    "04-surfaces.md",
-    "05-modules.md",
-    "06-styling.md",
-    "07-settings.md",
-    "08-keyboard.md",
-    "09-command-line.md",
-    "10-troubleshooting.md",
+    "index.md",
+    "install.md",
+    "configuration-folder.md",
+    "first-bar.md",
+    "surfaces.md",
+    "modules.md",
+    "styling.md",
+    "settings.md",
+    "keyboard.md",
+    "command-line.md",
+    "troubleshooting.md",
+    "tutorial.md",
+    "monitors.md",
+    "hot-reload.md",
+    "session.md",
+    "security.md",
+    "writing-a-module.md",
 )
 FENCE = re.compile(r"^```")
 
@@ -82,7 +88,8 @@ def test_every_example_set_is_shown_on_a_page() -> None:
 
 
 def test_every_example_file_is_inside_a_set() -> None:
-    """A file straight under ``guide/examples/`` or under a page folder belongs to no set, so no
+    """A file straight under ``docs/guide/examples/`` or under a page folder belongs to no set, so
+    no
     page would show it."""
     for path in g.EXAMPLES.iterdir():
         assert path.is_dir(), f"{path.name} is not in an example set"

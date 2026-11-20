@@ -1,6 +1,7 @@
 """Every example of the user guide is a configuration folder that passes ``tesserae-shell check``.
 
-An example is a folder two levels under ``guide/examples/`` (``<page>/<set>/``): a configuration
+An example is a folder two levels under ``docs/guide/examples/`` (``<page>/<set>/``): a
+configuration
 folder with a ``settings.tdl``, ``Shells/``, ``Modules/`` and so on, exactly what a person would
 copy. Each is checked, in process, on a temporary copy, so nothing real is read or written. A
 warning fails the test too, unless the page says the example has one (``ALLOWED`` below says which).

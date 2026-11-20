@@ -21,7 +21,7 @@ STATEMENT = (
 )
 
 
-@pytest.mark.parametrize("page", ["guide/02-configuration-folder.md", "README.md"])
+@pytest.mark.parametrize("page", ["docs/guide/configuration-folder.md", "README.md"])
 def test_the_statement_is_in_the_guide_and_the_readme_word_for_word(page: str) -> None:
     text = " ".join((ROOT / page).read_text(encoding="utf-8").split())
     assert STATEMENT in text
@@ -39,5 +39,5 @@ def test_the_statement_is_in_the_guide_and_the_readme_word_for_word(page: str) -
     ],
 )
 def test_every_security_code_is_explained_in_the_troubleshooting_page(code: str) -> None:
-    page = (ROOT / "guide" / "10-troubleshooting.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "guide" / "troubleshooting.md").read_text(encoding="utf-8")
     assert f"`{code}`" in page

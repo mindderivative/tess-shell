@@ -1,260 +1,80 @@
 # tess-shell
 
-Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launchers, OSDs and widgets) that run alongside an installed desktop environment, with KDE Plasma on Wayland as the first target. It is built on the [tre](https://github.com/mindderivative/tre) rendering engine, with Python for logic and its own data language, TDL, for describing shells.
+Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launchers, on-screen displays and widgets) that run alongside an installed desktop environment, with KDE Plasma on Wayland as the first target. You describe a shell in TDL files, add Python where you want logic, and the [tre](https://github.com/mindderivative/tre) rendering engine draws it.
 
-**Design documentation:** https://mindderivative.github.io/tess-shell/ (the vision, architecture, decisions, specifications and the TDL reference, built with MkDocs from `docs/`; `docs/` is generated from the design vault, so edit the notes there). To build it locally: `uv sync --only-group docs && uv run --no-sync mkdocs serve`.
+**Documentation: https://mindderivative.github.io/tess-shell/**: installation, a tutorial, the user guide, the reference, the module API and the design record.
 
-## Status
+> Pre-alpha software. Keep a way back to your usual Plasma panel.
 
-Milestones M0 (the skeleton), M1 (a static Bar), M2 (live and modular) and M3 (more surfaces: the look, `Panel`, `Popup`, the `Frame` with strips, melding and peek, monitor hot-plug) are built and accepted on KWin. `run` opens a `Bar` from `Main_Shell.tdl` on the matched monitor through `tess_dl`, the schema, the binder and tre, reserves its space, and stops cleanly on SIGTERM or SIGINT. On top of that:
+## Install
 
-- **Modules:** a `<Name>_Module.tdl` plus `<Name>_Module.py` in `Modules/<Name>/`; a use is written `Clock { format: "%H:%M" }` or `Import: <path>_Module.tdl`. The Python sends values with `ctx.send`; a `<| |>` slot in the layout reads them, and only the node properties that changed are set. The shell ships a Clock (`format`, `locale`, `hour_cycle`, `timezone`, `tooltip_format`); a module of the same name in your `Modules/` folder overrides it.
-- **A shell in several files (M7f):** a `Monitor`'s `Children` may write `Import: Parts/Dock_Shell.tdl` (one file or a list; a path relative to the file that writes it, inside the configuration folders after `..` and links are resolved, else `path-outside-config`). The imported `_Shell.tdl` is a `Shell { }` that holds surface blocks (`Bar`, `Panel`, `Popup`, `Frame`) and further `Import:` lines and no `Monitor`; its surfaces come in at the place of the `Import:`, on that Monitor, in the order written, and a `Panel` may `Attach_To` a Bar of the other file. A `Name` is unique across the shell, so a name used in two files is `name-duplicate` (both positions) and a file imported twice is `import-twice`; a circle is `import-cycle` (the chain of files is printed), a missing file `import-not-found` (the path that was looked at), a `Monitor` inside an imported file `import-monitor`, a file of surfaces named as `Main_Shell` `main-shell-surfaces`, and a mistake inside an imported file is reported at that file's own `path:line:column` (`import-failed` at the `Import:` that brought it in). `check`, `run` and a reload read every imported file; saving one reloads the shell, also from a folder no `Directories` entry names (the shell watches each file it imports), and a file that is wrong when it is first imported is watched too. Each imported file gets a `UID:` like any shell file. A file of surfaces in `Shells/` that nothing imports is checked by itself and not shown.
-- **Structure and look:** `If`/`Else` and `For` (keyed lists) in a module's layout, style files (`Style: <Name>_Style.tdl` with `Classes`) and `SVG { Icon: "mdi:account" }`: the `mdi` set ships in the package, and Iconify-style JSON sets in the `Icons` folder come first.
-- **Hot reload:** saving a shell, module, style or icon file updates the running shell about 200 ms later, once; a file with an error changes nothing and is reported as `file:line:column`. `SIGHUP` reloads everything. `settings.tdl` keys: `Hot_Reload` (default true), `Reload_Debounce` (milliseconds, default 200); `Logging` applies at once, `Directories`, `Registry` and `Main_Shell` need a restart.
-- **Security:** A module is Python that runs with your rights. The modules that ship with the shell run inside it; a module you write or add runs in a process of its own, so a module that hangs or crashes does not freeze your bars. That is not a sandbox: it can still read your files and start programs. Write modules yourself or read them before you add them. TDL files cannot run code. Keep your configuration folder writable by you only: the shell warns if it is not. The shell loads a module's Python by file path from its own folder (never from `sys.path`), warns with `insecure-permissions` at start, at reload and in `check` (`check --strict` fails on warnings), refuses a path in a shell file that leaves the configuration folders (`path-outside-config`), names a module that stalls or floods the loop (`slow-module`, `many-threads`), and restarts a module that failed with a back-off (1, 2, 4 ... seconds, five tries, then failed until a reload). See [the guide](guide/02-configuration-folder.md#trust-and-security). Your own modules' Python (a module file that does not ship with the shell) runs in a process of its own, one per module file: a hang is named after 2 seconds and the process is killed after 5 and started again, `check` reads their Python without running it (`check --import-modules` imports it in throwaway processes), and `Debug { User_Modules_In_Process: true }` keeps them in the shell. See page 2 of the guide.
-- **Identity:** the first time the shell registers one of your files it adds a `UID:` line to its metadata, after copying the file to `$XDG_STATE_HOME/tesserae-shell/backups`.
+You need a KDE Plasma desktop on Wayland and Python 3.14 or newer.
 
-- **Look:** a `Theme` file holds colour, type, shape, space, elevation and motion tokens, with `Light`, `Dark`, `High_Contrast` and `Reduced_Motion` modes; a style value `$color.surface` reads one. A `Stylesheet` holds `Rule { Selector: "Text" | ".class" | "#name", ... }` blocks, each with an optional `:hovered` or `:pressed` state. The shell ships a `Default` theme and stylesheet; `Appearance { Theme: ..., Stylesheets: [...], Follow_Desktop: true }` in `settings.tdl` names the ones in use, and the desktop's colour scheme, accent, contrast and reduced-motion settings (the Settings portal) pick the mode live. The portal's `enable-animations: false` (GNOME's interface namespace, which KDE also serves) counts as reduced motion too: either one is enough, and the one public flag is the combined `Appearance.reduced_motion` (the portal's own `reduced-motion` key is private to the portal reader). The desktop's UI font family is the token `$type.system.font_family` (while the desktop names none it holds `Roboto`, the family text uses when no `Font_Family` is set, which tre bundles; a theme that sets the token itself keeps its own value; no shipped theme or stylesheet uses it, `Font_Family: $type.system.font_family` does, and the schema export lists it apart from the theme's tokens in `system_tokens`), and the portal's `icon-theme` is the icon theme of the Tray (before `kdeglobals`, then `hicolor`); a change of either follows live (an open Tray menu takes the new icons too, in place), and a changed icon theme makes the Tray's icons again. `Elevation: 20%` or `Shadows { Shadow { ... } }` on a Bar draws its shadow in a transparent margin; the reserved space does not change.
+```sh
+uv tool install --python 3.14 tesserae-shell      # or: pipx install --python python3.14 tesserae-shell
+```
 
-- **Events:** `On_Click: open_it` (or `On_Click { Action: pick, Which: "b" }`) on a box, `Rectangle`, `Spacer` or `SVG` in a module's layout calls the module's `@action` method with an `Event`; `On_Secondary_Click` does the same for the right button (`event.button == "secondary"`) and `On_Scroll` for one wheel step (`event.delta` is +1 down, -1 up: `On_Scroll { Action: step, delta: <| event.delta |> }`); the other events and the shell's own actions come with the Panel.
+## Try it
 
-- **Panels:** `Panel { Name: Volume_OSD, Layer: OVERLAY, Anchor: [BOTTOM], Inset: [0, 0, 0, 80], Width: 260, Height: 60, Input_Region: [], Hide_After: 1500 }` opens an anchored or centred surface; `Visible: false` starts it hidden, `On_Click { Action: Toggle, Target: Volume_OSD }` on a block shows and hides it, and Escape hides one that takes the keyboard. `Attach_To: Top_Bar, Attach: BOTTOM, Gap: 8, Alignment: START` places a Panel against a Bar, another Panel or a module used in a Bar (`Name: Clock_One`). `Animation { Type: SLIDE, Duration: 300 }` slides or fades it in and out, `Movable: true` lets the pointer move it and remembers where, and `On_Open`, `On_Visible`, `On_Close` and `On_Hidden` run shell actions around it.
-- **Announcements:** a module says something to a screen reader with `self.ctx.announce("Battery critical")` (once; `politeness="assertive"` interrupts; `use=` names a use; with none it is said for the module's first use on an open window). The shipped modules do it for Network, Battery, the Launcher's selected row and, with `announce`, Media, Audio and Tasks.
-- **Popups and tooltips:** `Popup { Name: Menu, Gap: 4, Children { ... } }` is opened by a module with `self.ctx.popup("Menu")` from an `@action` (a click on its block), beside that block, upward under a bottom Bar; `On_Click: Close` inside it closes it, an outside click or Escape dismisses it. `Tooltip: true` on a Popup, with `Tooltip: Name` or an inline `Tooltip { Children { ... } }` on a block or module use, opens it after `Enter_Delay` of hovering. The Clock shows its date as a tooltip (`tooltip_format`, `locale`).
-- **Monitor hot-plug:** plugging an output in opens only the surfaces of the `Monitor` blocks that match it (`Connector`, `Description`, `Index`, `Index: default`), unplugging one closes only its surfaces, and an output whose size or scale changes gets its surfaces' geometry set live. The other monitors' windows are never recreated. A Panel that comes back is a new window at the position saved for `<Monitor>@<output>`, clamped to the output; the modules follow the uses that came or went as a hot reload does. `Index` is evaluated again on every change.
+Save this as `~/.config/tesserae-shell/Shells/Main_Shell.tdl`:
 
-- **Frame:** `Frame { Name: Screen_Frame, Thickness: [10, 20, 30, 40], Margin: 5, Corner_Radius: 0, Inner_Radius: 14, Inner_Border { Width: 2, Color: "#89b4fa" }, Outer_Border { ... }, Style { Background: "#1e1e2e" } }` in a `Monitor` draws a ring around the output (one painter window, with the opening taking no clicks) and reserves each side's thickness plus borders plus margin (four thin reserver windows, one per side with a thickness; a side of 0 has none). `Thickness` and `Margin` are a number, four sides (left, top, right, bottom) or named sides; the radii are one number or four corners clockwise from the top-left, and one too large for the ring is reduced with a warning. A reload changes zones, radii and colours without opening the painter again; tokens (`$color.surface`) follow the theme; `Visible: false` starts it hidden and `Show`, `Hide` and `Toggle` with `Target: <Frame name>` act on it. `tests/kwin/measure_frame.py` measures its cost.
-- **Frame strips and melded Panels:** `Edges { Top { Thickness: 34, Padding: 4, Children { ... } }, Left { ... } }` makes a side a strip: its `Children` (blocks and module uses, with live values, reload and hot-plug like a Bar's, Popups and tooltips included) are laid out in a box in that side's band inside the Frame's painter; the top and bottom strips own the corners and run the full width, the left and right strips run between them and lay their children out vertically, text is not rotated. `Padding` (on the Frame for every strip, or on an edge) is the space between a strip's children and its sides; an edge's `Thickness` replaces the Frame's for that side. `Panel { Name: Dock, Meld: true, Attach_To: Screen_Frame, Attach: BOTTOM, Alignment: CENTER, Length: 320, Depth: 56, Style { Corner_Radius: 12 } }` is drawn inside the Frame's surface as a body grown from that side into the opening, in the Frame's colour and border, as part of the ring's one contour with a fillet (the Frame's `Inner_Radius`) at each join; `Show`, `Hide` and `Toggle` with `Target: Dock` take it out of the contour and put it back, with `Animation { Type: SLIDE | FADE | NONE, Duration: 300 }` (the body grows out of the Frame's edge with its joins growing with it, tre morphing the contour in the engine; or fades; instant with reduced motion), `Hide_After` and the Panel events (`On_Open`, `On_Close`, `On_Visible`, `On_Hidden`, `On_Toggle`, `On_Anim_Start`, `On_Anim_End`); a `Margin`, `Movable`, `Keyboard` or `Input_Region` on it is an error. `Keyboard: NONE | ON_DEMAND` on the Frame sets the painter's keyboard mode (default `NONE`). `Debug { Frame_Join: SMIL | CONCAVE | SHADER | STRUCTURE | PARAM }` in `settings.tdl` (default `PARAM`; a restart applies it, a reload warns) chooses how that join is drawn while the body slides, so the five ways tre 0.6.4 offers can be compared: an svg whose `d` is morphed by SMIL, boxes with concave corners moved by `scale`/`corner_radius`, one shader with an exact fillet and an animated uniform, path data morphed command by command (`morph="structure"`), and a path template whose parameters tre animates. All five end in the ring's one contour (`surfaces/join.py` and `join_*.py`). `tests/kwin/compare_join.py` prints the comparison (frames as PNGs, hit shape, frame cost, memory, code size). `tests/kwin/prepare_m3c_strips.py` writes a KWin check (with `run-strips-join.sh OPTION` and `compare-join.sh`).
-- **Frame blend:** `Debug { Frame_Blend: SRGB | LINEAR }` in `settings.tdl` (default `LINEAR` since 2026-11-12; a restart applies it, a reload warns, like `Frame_Join`) chooses how the Frame's ring is blended. `SRGB` draws the three bands as paths and tre blends their anti-aliased edges in sRGB, so a 2 px light border on the dark ring is thinner to the eye on a curve than on a straight (summed linear light 1.69 of 2.00 at 1x and 1.79 at 1.5x at the opening corner; `tests/kwin/repro_srgb_edge_blend.py`). `LINEAR` (the maintainer's interim, TRE-REQ-015 option 2) replaces the three path nodes by one shader node (`surfaces/frame_shader.py`; the fill band's path node stays under it at alpha 1 as the ring's input region) that draws the outer border, the fill, the inner border and every melded body or peeking strip as distance fields, mixes the colours in linear light and writes the encoded result, with the same positions, margins, thicknesses, radii, reserved zones and click shape as the paths, and the same PARAM-shaped slide (the body's depth is a uniform that tre animates with `Shader.animate`, `sd_round_union` makes the fillets). What it fixes is an edge between two colours the shader paints itself: the border's outer edge, against the ring (that edge loses 0.27 px of width at 1x with paths, 0.18 px at 1.5x, and none with the shader); the border's inner edge is against the opening, where the desktop is, and the compositor blends that in sRGB, so over a dark desktop a curve reads 1.88 of 2.00 at 1x and 1.93 at 1.5x with `LINEAR` (the compositor's own screenshot agrees to 0.001). A Frame the shader cannot draw keeps the paths and logs one WARNING with the reason: a translucent `Background` or border colour, an `Opacity` below 1, a Panel with `Animation: FADE`, more than 8 melded bodies (strips that peek count), a `Frame_Join` other than `PARAM`, or a painter larger than 8192 physical px; a state with a melded body as deep as the opening is drawn with paths while it lasts. Cost on the private sway (software rendering, 1920 x 1080): a frame of a slide draws in 2.7 ms instead of 0.5 ms, the shader node's texture is 7.8 MiB of video memory, and a window that is still draws no frame, as before.
-- **Peek:** `Peek { Size: 24, Enter_Delay: 150, Exit_Delay: 300 }` (all three optional) in a melded Panel or in an `Edges` entry makes it rest as a sliver and come out when the pointer stays on it. A melded Panel rests as a tab: only `Size` pixels of its body stand out of the Frame's edge, part of the ring's one contour with its fillets and the border following (the tab shows no content); the pointer on the tab for `Enter_Delay` ms brings the whole body out, with the same `Animation` as a show, and leaving the Panel for `Exit_Delay` ms sends it back; a quick in and out, or out and in, cancels the timer and nothing flickers, and a change of mind mid-slide turns round from where it is. `Show` brings it fully out, `Hide` and `Hide_After` back to the tab, `Toggle` flips, with the usual events (`On_Open`/`On_Visible` going out, `On_Close`/`On_Hidden` back, `On_Anim_*`); `Visible: false` hides it altogether (then `Hide` goes back to nothing). A strip (`Edges { Top { Thickness: 34, Name: Top_Strip, Children { ... }, Peek { Size: 6 } } }`) rests as a `Size` px sliver (that is what the side holds and reserves) with its children not drawn, and the pointer on the sliver pushes it out over the windows to its `Thickness` without moving them (reserved space is the same in every state); `Name` on the entry is what `Show`, `Hide` and `Toggle` target, the keyboard way in (with `Keyboard: ON_DEMAND` on the Frame the painter takes keys). `Size` is 1 px or more and smaller than the Depth or Thickness, delays 0 ms or more, and a Panel in a window of its own has no peek. Peek works with every `Debug { Frame_Join }` that can start from a tab: PARAM, SMIL and STRUCTURE; SHADER and CONCAVE warn once and a Panel that peeks is drawn with PARAM. Reduced motion switches at once (the delays stay). While a Popup hanging off a peeking Panel is open it stays out.
-- **Peek triggers and handles:** `Peek { Trigger: HOVER | CLICK | DRAG, Handle: AUTO | NONE | DOTS | BAR | CHEVRON, Slide_From: TOP | RIGHT | BOTTOM | LEFT }` (defaults `HOVER`, `AUTO`, the attached edge; one value each, a list is a clear not-built error). `HOVER` is as above. `CLICK`: a click on the tab (or on the handle strip of the open body, the `Size` px at its far edge) opens it, another closes it; hovering does nothing, and `Enter_Delay`/`Exit_Delay` (which apply to `HOVER` only) are ignored with a load warning. `DRAG`: a press on the tab captures the pointer and, past 4 px, the body follows it along the slide (the contour, the content and the handle together, set from the pointer events: no per-frame Python); released at half the way or more it finishes opening, else it goes back, taking time in proportion to what is left; a press that moves under 4 px is a click. The handle is drawn on the middle of the tab and moves with the far edge as it slides: `DOTS` three 6 px dots side by side (`AUTO` for `HOVER`), `BAR` a 22 x 4 px rounded bar (`DRAG`); the three icons are the maintainer's own artwork, flattened copies in `shipped/Handles/`, `CHEVRON` the maintainer's chevron (a wide flat filled triangle, 22 x 6.7 px) that points away from the Frame at rest and towards it when out, turning during the slide on the join's clock (`animate_param`); in the Frame's border colour (else a light or dark that shows on the fill), dim until the pointer is on the tab. A handle is not drawn, with one DEBUG line and no error, when the tab `Size` or the Frame's side is thinner than 8 px (dots, bar, chevron). The tab is the click target, never the handle. A strip takes `Trigger` and `Handle` too. `Slide_From` is for a Panel in a Frame corner (`Alignment: START` or `END`): the other edge it touches, where it slides out and where its tab and handle are (an edge it does not touch is an error; a strip has none). `DRAG` needs a join that can be set at a progress: PARAM, SMIL, STRUCTURE (SHADER and CONCAVE warn once and a dragged host takes PARAM). No keyboard way in beyond `Show`/`Hide`/`Toggle` (not designed yet).
-- **Handle opacity and the content fade:** `Peek { Handle_Opacity: 0.6 }` (0 to 1, default 0.6, also on a strip) is how bright the handle is at rest; hovering the tab raises it to full and leaving lowers it back to that value. The content of a melded Panel or a strip fades with its slide: its opacity is the slide's progress (0 collapsed or at the tab, 1 fully out), on the slide's duration and easing, set in the same call as the contour while a drag follows the pointer and animated on tre's clock otherwise, with either `Debug { Frame_Blend }`; a plain `Show` and `Hide` of a Panel without a `Peek` fades too, and the content is not shown in the tab. On by default; `Content_Fade: false` (a key of a melded `Panel` or of an `Edges` entry) keeps it opaque; with reduced motion there is no fade. A Panel in a window of its own already fades its whole surface with its animation, so `Content_Fade` there is a load warning. An Expander's content fades by its own `Content_Fade` module parameter.
+```tdl
+---
+TDL: 0.2
+Name: Main_Shell
+---
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Spacer { }
+                            Clock { format: "%H:%M" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
 
-- **Text fields:** `TextField { Text: "hi", Placeholder: "Name", Max_Length: 20, On_Changed { Action: Call, Target: "Search.typed" } }`, multi-line with `Multiline: true, Wrap: WORD | NONE, Lines: 4`, single-line `Style { Overflow: SCROLL | ELLIPSIS | CLIP }`; the shipped `TextInput` and `TextEditor` modules wrap them (`TextInput { Placeholder: "Search", Password: true }`). A clicked field takes typed, pasted and input-method text and reports it with `On_Changed` (`event.old`, `event.new`), `On_Submit` and `On_Text_Commit`; a Bar or Panel that holds one takes the keyboard `on_demand`. Tab and the focus ring are M6.
-- **Enabled and `:disabled` (M4a):** `Enabled: false` on any block (a value or a `<| |>` slot, live) sets tre's `disabled` accessibility state, shows the block's `:disabled` style (`Rule { Selector: ".tile:disabled", Opacity: 0.5 }`, which wins over `:hovered` and `:pressed`) and stops its pointer: no hover or pressed look, no tooltip, and a click on it or on a block under it runs no `On_Click` and reaches no block above or behind it. Turning it on while the pointer is over the block restores the look it had before the state, exactly; a reload that flips or drops `Enabled` changes the node in place.
-- **Parts (M4a):** a module's layout names blocks with `Part: track`; a stylesheet addresses them as `Rule { Selector: "Slider::track", ... }` and `"Slider::handle:hovered"` (a part rule beats a class or type rule on that block; a state adds to the base rule), at every use of the module; a part also takes the module's `:disabled` when the module's root is disabled. A rule that names a part the module does not declare is an error with the nearest part names.
-- **Call and `caller.data` (M4a):** `On_Click { Action: Call, Target: "Clock.cycle_format", Format: "24h", Id: <| item.id |> }` runs the `@action` `cycle_format` of the module `Clock` (it must have a use in the shell); the other keys arrive in `event.args`. An argument written as a slot is evaluated when the event fires, with `event`, the use's params and values, the `For` variables around the block and, in a Popup, `caller` in scope. A module opens a Popup with `self.ctx.popup("Menu", data={"Title": "Hello"})` and the Popup's content reads `<| caller.data.Title |>` (also `caller.module`, `caller.use.name`, `caller.use.params`, `caller.rect`, `caller.source`); data is a plain copy made when the Popup opens. A `Show` that carries `Data { }` and popup submenus wait for the Menu (M4c).
-- **D-Bus service layer (M5a, internal):** `self.ctx.dbus.session()` and `.system()` give a module a bus; `bus.proxy(name, path, interface)` has `get`, `call` (5 s timeout, `ServiceTimeout` / `ServiceUnavailable`), `set`, `on_property_changed` and `on_signal`, all on one `dbus` thread, and a module that makes a proxy for a service gets `available` (true/false) sent for it, `on_service_lost(name)` and `on_service_found(name)` when the service leaves or returns (`optional=True` leaves a service out of `available`). A module's `Children` wrap in `If <| available |>` to hide with its service; the Settings portal reader runs on it.
-- **Battery and Workspaces (M5b):** `Battery { show_percent: true }` shows UPower's display device (icon, `82 %`, a tooltip with the state and the time left; the number takes the theme's warning and error colour at UPower's low and critical levels) and hides itself when there is no battery or no UPower. `Workspaces { label: name }` (or `number`) shows KWin's virtual desktops as buttons, marks the current one and switches on a click (it sets KWin's `current`); it hides itself without KWin. A hidden one takes no space in the Bar (`Visible: false` on its root, which a module of your own can write too). `Icon: <| name |>` (an `SVG` block or an `Icon`, `Button` or `MenuItem` call inside a module) shows the icon a module sends by name, from the same icon sets as a name written in a file. Both follow the services' signals, with no timer. The KWin check: `uv run python tests/kwin/prepare_m5b_gallery.py`, then `/tmp/tess-kwin-m5b/checklist.txt`.
-- **Network (M5c):** `Network { show_name: false, show_vpn: true }` shows how the machine is connected, as NetworkManager reports it (read-only, on the system bus, no polling): an icon for the kind (ethernet, Wi-Fi with four signal steps, mobile, Bluetooth, other) and the state (no internet or a sign-in wanted in the theme's warning colour, disconnected or networking off muted), a second `vpn` icon while a VPN is up, an optional connection name, and a tooltip such as `Home-WiFi, Wi-Fi 70 %, connected` (the percent in steps of 5). It stays visible when disconnected and hides only when NetworkManager is absent (no space taken). The KWin check: `uv run python tests/kwin/prepare_m5c_gallery.py`, then `/tmp/tess-kwin-m5c/checklist.txt`.
-- **Media (M5d):** `Media { show_art: false, show_title: true, show_controls: true, show_position: false, max_width: 240 }` shows what an MPRIS media player (a browser, Elisa, VLC, mpv...) plays on the session bus: previous, play or pause and next as buttons, the title in a scrolling text, optionally the cover (a `file://` URL only; a web address is never fetched) and a position slider, with a tooltip such as `Song, Artist (Google Chrome), paused`. One player is shown (the one that plays; then the last shown; then the paused one that changed last), a browser's integration player counts once, and with no player the module hides and takes no space. **The buttons and the slider act on the real player**; the look changes only when the player says so, never on a guess. With `show_position` a one-second tick runs only while the player plays; with none there is no wake-up. The KWin check: `uv run python tests/kwin/prepare_m5d_gallery.py`, then `/tmp/tess-kwin-m5d/checklist.txt`.
-- **Audio (M5e):** `Audio { show_percent: false, show_slider: false, show_mic: true, step: 5 }` shows the default sound output through the shell's own client of the PulseAudio native protocol (`pipewire-pulse` or PulseAudio; no library, no tool, no polling): an icon for the kind (speaker, headphones, HDMI, Bluetooth) and the level, muted in the muted colour; a click mutes, a scroll steps the volume, a secondary click opens a menu of outputs (the shell provides the Popup `Audio_Outputs`; write one of that name to change it), the slider writes while dragged at most 20 times a second; a crossed microphone while the input is muted. Hidden when there is no sound server, back when it starts or restarts. Its tests use an in-process fake server; nothing in the suite reaches a real one.
-- **Volume OSD (M7h):** `Volume_OSD { duration: 1500, show_name: true }` is the volume on-screen display as a shipped module: put it in a Panel that starts hidden, is click-through and takes no keyboard, on the overlay layer (`Panel { Name: Volume_Panel, Layer: OVERLAY, Keyboard: NONE, Input_Region: [], Visible: false, Anchor: [BOTTOM], Inset: [0, 0, 0, 80], Width: 300, Height: 64, Children { Volume_OSD { } } }`; the Panel's `Style` makes the card, the example is `guide/examples/05-modules/volume-osd`). It reads the sound server itself (`ctx.audio`; no Audio use is needed) and, when the default output's volume or mute changes, shows an icon, the output's name, a bar and the percent (or *Muted*: the word, a crossed speaker and a dimmed bar) and hides the Panel `duration` milliseconds after the last change (a change in that time starts it again; it replaces the Panel's `Hide_After`). Nothing is shown at start, for the first reading of the server, for a switch of the default output or for a microphone or output-list change. It announces nothing (the Audio module's `announce` does, so a screen reader hears each change once); its card is a group named `Volume, <output>, <45 %|muted>` that holds a progress bar named `Volume`. A module asks its own Panel to show with the new `ctx.surface.show(use=None, *, hide_after=None)` (False and one error logged for a use on no Panel; `hide_after` is milliseconds for that show). There is no brightness part: the shell has no brightness service.
-- **Tray (T-030):** `Tray { icon_size: 18, show_passive: false, spacing: 6 }` shows the system tray: one icon per application that registers a StatusNotifierItem, with its tooltip, a click (`Activate`), a middle click, the wheel and a secondary click that opens the item's own menu, drawn by the shell from `com.canonical.dbusmenu` in the Popups `Tray_Menu`, `Tray_Menu_2` and `Tray_Menu_3` (the shell provides these three, so a shell file writes none; a Popup of the same name you write replaces the shipped one; a menu shows three levels and scrolls at 60 % of the output's height, `Max_Height: 60%`) beside the clicked icon, and `Activate` gets the icon's centre. The shell is a second tray host beside Plasma's (it owns `org.kde.StatusNotifierHost-<pid>`, never starts a watcher); icons come from the desktop's icon theme (`ctx.icons`), the item's own folder or its pixmap. **A click calls the real application and a menu entry runs in it.** Hidden when there is no watcher or item. Its tests use a fake watcher, items and menu on a private bus.
-- **A module inside `If` and `For`:** in a module's layout, `If <| show |> { Clock { } }` shows or hides the module's blocks (the module keeps running and keeps its values) and `For item In <| items |> Key <| item.id |> { Clock { format: <| item.fmt |> } }` makes one use of the module for each entry, while the entry lasts; params, handler arguments and `Children` may read `item`, and the module hears of each use with `use_added(use)` and `use_removed(use)`. With several names, `For i, item In <| enumerate(items) |> Key <| item.id |> { ... }`, each item of the list is unpacked over the names (an item must be a list or a tuple with one value for each name; `enumerate` and `zip` give such items), and `i`, `item` and the `Key` slot all read them. A reorder keeps each entry's use and nodes. The same inside a Popup: a menu module's `For` over `caller.data.items` makes its `MenuItem` uses when the Popup opens and ends them when it closes.
-- **Global shortcuts (M6c):** the shell registers its keys with KDE's shortcut service (`org.kde.kglobalaccel`, one component, `tesserae-shell`), so they work while no shell surface has focus. `Settings { Shortcuts { Toggle_Launcher: "Meta+Space", Show_Top_Bar: "Ctrl+Alt+B", Volume_Up { Keys: "AudioRaiseVolume", Action: Call, Target: "Audio.step", delta: 5 } } }`; `Toggle_<Name>`, `Show_<Name>` and `Hide_<Name>` name a Panel, Bar or Frame, `Enter_Shortcut_Mode`, `Exit_Shortcut_Mode`, `Set_Shortcut_Mode`, `Next_Focus` and `Previous_Focus` are the five fixed actions of shortcut mode (see Shortcut mode (M6d) below: only the Enter key is registered with the desktop), and a block entry is a handler (`Show`, `Hide`, `Toggle`, `Call`; a `Call` loads its module even when no Bar or Panel uses it). A key is modifiers and one key joined by `+` (`Ctrl+Shift+F1`, any case or order; `Plus` for the plus key; media keys by their X names without `XF86`: `AudioMute`, `MonBrightnessUp`); `Panel { Shortcut: "Meta+Space" }` is `Toggle_<Name>` (a Bar has no key of its own: it is always shown, and `Reveal_Key` was removed, naming it is an error). The desktop wins: a key it already uses is not taken (the action stays registered with no key, one warning; a key you cleared in System Settings is not a taken key and gives no warning), and two shell actions with the same key both lose it (one warning naming both). A key you change in System Settings is kept across restarts. `Settings { Global_Shortcuts: false }` makes no call to the service. A hot reload applies changes with no restart; with no service on the bus the shell starts, warns once, and `tesserae-shell toggle NAME` still works. Its tests use a fake service on a private bus; the one live check is `uv run python tests/kwin/prepare_m6c_shortcuts.py` and `/tmp/tess-kwin-m6c/checklist.txt` (it starts with a copy of `~/.config/kglobalshortcutsrc`). A Frame takes `Shortcut: "Ctrl+Alt+F"` like a Panel (the same as `Toggle_<Name>`; the `Shortcuts` entry wins when both are written).
+```sh
+tesserae-shell check    # validate every file; needs no compositor
+tesserae-shell run      # start the shell
+```
 
-Not built yet (each checked against the schema tables, `tesserae-shell schema --json` and the code): strip expand and contract (reserved-space changes); a Bar melded to the Frame (a Panel with `Meld: true` is built); a gradient as a Frame's `Background`; the Frame's `Children`, `Border_Tile`, shadows (`Elevation`, `Shadows`, `Shadow_Bleed`), `Exclusive_Zone`, `Input_Region` and `Class`; on a Bar the keys `Auto_Hide` and `Auto_Hide_Delay` (a Bar is always shown), `Visible`, `Exclusive_Zone`, `Input_Region`, `Attach_To`, `Animation`, `Text_Rotation`, `Padding` and `Class` (read, a warning, no effect); on a Panel `Margin`, `Padding`, `Class`, `Open_With_Target` and `Exclusive_Zone`; a Popup's `Attach_To` and `Animation`; the events `On_Focus` and `On_Unfocus` (accepted, never raised). Built since this paragraph was first written, and no longer listed: popup submenus and `Data { }` on `Show`, the `:focused` state, keyboard focus and shortcut mode with its five actions (M6d), the click, secondary click, middle click, scroll, changed, released, submit, text-commit and key-down events, and the display and interactive standard widget modules (Label, Icon, Image, Badge, Button, Checkbox, Toggle, Slider, ProgressBar, List, Menu, TextInput, TextEditor, TextBox, Marquee_Text, Expander). The design is in `docs/`.
+A bar with a clock appears along the top of every monitor, and saving the file changes it about 200 ms later. The [documentation](https://mindderivative.github.io/tess-shell/) goes on from there.
 
 ## Commands
 
 ```sh
 tesserae-shell version   # versions of the shell, tess_re, tess_el, tess_dl and Python
-tesserae-shell check     # validate settings.tdl and every shell file (syntax, header, schema)
+tesserae-shell check     # validate settings.tdl and every shell file
 tesserae-shell run       # start the shell (needs a Wayland compositor with layer-shell)
 tesserae-shell schema --json [--out FILE]  # the shell's schema as JSON, for configuration tools
 tesserae-shell migrate [--check] [--json] [--force]  # bring your files to the current format (backup first)
 tesserae-shell install-session [--print|--enable|--remove] [--force]  # the desktop file and the systemd user unit
 ```
 
-`migrate` rewrites the files of an older release for this one: step `0001` turns the TDL 0.1 slot
-`{{ expression }}` into `<| expression |>` (and `TDL: 0.1` into `TDL: 0.2`), changing no other byte.
-`--check` changes nothing and exits 1 if any file would change; otherwise the originals are copied to
-`<config>/.migrate-backup/<timestamp>/` first and each file is replaced through a temporary file and
-a rename. It refuses while a shell runs (exit 4) unless `--force`, exits 2 when a file could not be
-migrated, and prints the verdict of `check` on the result. A file that says `TDL: 0.1` is refused by
-`check` and `run` with `tdl-old-version` and the hint to run it; a file whose `Shell:` pin is newer
-than the shell is refused with `shell-too-old`.
+The [command line page](https://mindderivative.github.io/tess-shell/guide/command-line/) lists every command, option and exit code.
 
-`schema --json` prints (or, with `--out FILE`, writes) every block, surface, key, kind, choice,
-default, event, action, theme token and `settings.tdl` key the loader accepts, with a line of
-documentation for each, so a configuration application can build its forms from it. It is read from
-the loader's own tables (`tess_shell.schema.export.schema_json()`; `schema_dict()` is the same as
-plain data), so it cannot list a key the loader refuses or miss one it accepts, and two runs give the
-same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.9 (the notes below say what each version added).
+## Security
 
-Since 1.1: a key's `default` is what tre reads on a bare block (the binder builds it headless and
-
-Since 1.8 (additive): the shipped module `Applications` (its four params, `modules` section), the event `On_Key_Down` (a TextField raises it; `events` section) and `panels`, a section beside `popups` that lists the Panels the shell provides (`Launcher`: the module it holds, its layer and keyboard, one line of documentation, and `when` it is added to a shell).
-
-Since 1.9 (additive): the accessibility pass. The block key `Value_Text` (the value in words, `45 percent`; set by a module, so it is in the accessibility group of the keys and a shell file may not write it) and six module params: `Label` of `TextInput` and `TextEditor` (the field's accessible name; without one it is the `Placeholder`), `Value_Text` of `Slider`, and `announce` of `Media`, `Audio` and `Tasks` (polite live announcements, off by default). The Network, Battery and Applications modules announce without a param. Every module that shows a tooltip also gives it as the accessible description. Announcements are live regions: a 1 by 1 pixel `Announcer` block with `Live: POLITE` whose label the module changes.
-
-Since 1.7 (additive): the `KWin` settings section (`Script`, `Hide_On_Fullscreen`) and the shipped modules `Tasks` and `Task_Item` (their params, `modules` section).
-
-Since 1.6 (additive): `system_tokens`, a list beside `tokens` of the tokens the shell supplies to every theme (today `type.system.font_family`: `name`, `ref`, `kind`, `default` (`Roboto`), `doc`, `theme_wins` (a theme that sets it keeps its value), and the kind's own fields); `tokens` still equals the shipped theme's tokens.
-`node.get` reads it back; a few shell-owned keys are authored and pinned by tests), `min`/`max` come
-from the one table of ranges (`schema/ranges.py`) that the loader also judges a written value or a
-slot by (`Opacity` 0 to 1, `Scale` above 0, `Flex_Grow` 0 or more, `Font_Weight` 1 to 1000, lengths,
-sides and radii 0 or more, ...), each key lists `preferred_tokens` (the theme tokens a form should
-offer first, next to the mechanical `tokens`), and a `modules` section lists every shipped module
-with its params (type, default, doc), the events a call may handle, the common keys it may write
-and the `@action`s `Call` may run.
-
-### Control commands
-
-A running shell owns the session bus name `io.github.mindderivative.TesseraeShell` (object
-`/io/github/mindderivative/TesseraeShell`, interface `io.github.mindderivative.TesseraeShell1`) and
-these commands talk to it. They import only the standard library and `jeepney`, so one from a key
-binding costs about 55 ms from process start to exit:
-
-```sh
-tesserae-shell reload                       # check every file and apply, answering after the apply
-tesserae-shell quit                         # stop the shell (exit 0 once it has been asked)
-tesserae-shell status [--json]              # state, versions, monitors, surfaces, module names, last errors, crash record
-tesserae-shell show|hide|toggle NAME        # a Panel, a Frame or a melded Panel by its Name
-tesserae-shell call MODULE ACTION [ARG ...] # run an @action of a module (each ARG a JSON value, else text)
-tesserae-shell log-level LEVEL              # TRACE to CRITICAL, until the next settings.tdl reload
-```
-
-`--timeout SECONDS` (default 5) bounds the wait. Exit codes: 0 done, 1 the command ran and failed
-(an unknown name, an action that raised, errors in the files: the message names the module or the
-`file:line`), 2 no session bus (`DBUS_SESSION_BUS_ADDRESS` is not set), 3 no shell is running, 4 a
-second `run` (the instance lock, or the bus name when the shell is run from another runtime
-directory), 5 timeout. With `--json` an error is also one object on standard output:
-`{"ok": false, "error": "...", "exit": 3}`. `status` never lists a param value or a line of the
-log. No command opens a Popup, and `call` reaches only methods marked `@action`.
-`Settings { Control: false }` exports nothing (no bus name; the commands exit 3).
-
-Global options: `--config-dir PATH`, `--json`, `--quiet`, `--timeout SECONDS`. The `kwin`
-subcommand named in the design reports that it is not implemented yet.
-
-### Starting with the session (`install-session`)
-
-A virtual environment, `uv tool` or `pipx` puts the wheel's data files under that environment, where
-neither the desktop nor systemd look. So the wheel carries two files as package data
-(`tess_shell/data/`) and a command writes them where they are read, with the absolute path of the
-command that ran it:
-
-```sh
-tesserae-shell install-session            # write both files; enable and start nothing
-tesserae-shell install-session --print    # show both files and their paths; write nothing
-tesserae-shell install-session --enable   # also: systemctl --user enable tesserae-shell.service
-tesserae-shell install-session --remove   # disable the unit if enabled, remove both files
-```
-
-* `$XDG_DATA_HOME/applications/io.github.mindderivative.TesseraeShell.desktop` (default
-  `~/.local/share/applications/`) gives the shell its application id: the Settings portal's
-  `Register` call wants a desktop file with the id the shell registers (`NoDisplay=true`: it is not
-  an application to start from a menu).
-* `$XDG_CONFIG_HOME/systemd/user/tesserae-shell.service` (default `~/.config/systemd/user/`) starts
-  `tesserae-shell run` with `graphical-session.target`: `Type=notify` (the shell sends `READY=1`
-  to `$NOTIFY_SOCKET` once it runs and `STOPPING=1` when it begins to stop, with the standard
-  library and no `sd_notify` library; nothing is sent when the variable is unset),
-  `WatchdogSec=15` (see below), `Restart=on-failure` after 2 s, at most 5 starts in 60 s, and no
-  restart after exit codes 1 (configuration), 2 (environment) and 4 (another shell is running). A
-  lost Wayland connection ends the shell, after it stopped what it runs, with exit code 69, which
-  does restart it.
-* The command is the `tesserae-shell` script that ran it (a link is kept, not followed), else the
-  one beside the interpreter (`python -m tess_shell` in a virtual environment), else
-  `<python> -m tess_shell`. `--config-dir PATH`, when given, is carried into both `Exec` lines.
-* A file that exists with other content is kept: the command names it, changes nothing and exits 1;
-  `--force` replaces it. The same content is "unchanged", so running it twice is fine. Each file is
-  written to a temporary name and renamed. `--json` gives
-  `{"ok", "action": "install"|"remove"|"print", "files": [{"kind", "path", "result"}], "enabled",
-  "exec_start", "notes"}` (`--print` lists `state` and `content` for each file); an error is
-  `{"ok": false, "error", "exit"}`. Exit codes: 0 done, 1 a differing file kept or a file that
-  cannot be written, 2 `systemctl` missing or refused (the files are written and listed; a failed
-  `disable` removes nothing).
-* After moving or reinstalling the shell, run `install-session --force` again. `tesserae-shell
-  status` warns on standard error (and adds a `"warnings"` list to its `--json` answer, only when
-  there is one) when the unit's `ExecStart` names a path that does not exist, a script whose
-  interpreter is gone, or another install than the one running `status`; it says so also when no
-  shell is running, which is when a stale unit shows.
-* `--remove` leaves `~/.config/tesserae-shell` alone and does not stop a running shell.
-* Tests write only into temporary folders and use a recording runner instead of `systemctl`; the
-  code refuses the real `~/.config/systemd/user` and `~/.local/share/applications` and the real
-  `systemctl` while `PYTEST_CURRENT_TEST` is set. The hand-check kit
-  `uv run python tests/kwin/prepare_install_session.py` writes `/tmp/tess-kwin-install-session`;
-  its `run-all.sh` runs print, install, verify, the stale warning, enable, start (`Type=notify`),
-  restart, stop, disable and remove unattended in a private systemd user manager and a private
-  KWin, never in your session (`results.txt` has one line per step; `checklist.txt` keeps only
-  the login and the real portal).
-
-### Crash recovery and the watchdog
-
-Crash Recovery and Watchdog (M7b of the M7 Brief), built in `tess_shell/watchdog.py` and
-`tess_shell/recovery.py`.
-
-* **The watchdog thread** (started on the loop's first turn, after the start sequence, so the start
-  is not judged) asks the loop once a second to store a counter and a monotonic time and reads how
-  old they are. At 2 s it logs one warning `loop stalled for N s` naming the module, the entry point
-  and how long it has been running (the module host's running-callback record) plus the traceback
-  of every thread (`faulthandler.dump_traceback`), again every 5 s while it lasts. At 10 s, when
-  `NOTIFY_SOCKET` and `WATCHDOG_USEC` are both set, it sends `WATCHDOG=trigger` (systemd ends the
-  shell with `SIGABRT` and restarts it); otherwise it logs `loop stalled for 10 s, no supervisor can
-  restart it` and dumps the tracebacks every 30 s, and it sends **nothing** to `NOTIFY_SOCKET`.
-  `WATCHDOG=1` goes out every half `WATCHDOG_USEC` (the unit has `WatchdogSec=15`: 7.5 s) only
-  while the heartbeat is under 5 s old, so a stalled loop stops the pings by itself. The stop
-  sequence is not judged. `TESS_SHELL_TEST_WATCHDOG_SCALE` (a number; set only by the tests)
-  multiplies every one of these times.
-* **The files** in `$XDG_STATE_HOME/tesserae-shell`: `crash.log` (`faulthandler` with all threads,
-  plus the traceback of an exception that reaches the top; the previous file is `crash.log.1`, one
-  more `crash.log.2`, and a clean run leaves none), `running` (the unclean-exit marker, written
-  after the instance lock and removed at a stop the shell chose) and `recovery.json` (the times of
-  the unclean starts since the last clean stop). A start that finds the marker logs `previous run
-  ended uncleanly` (warning) and counts it. A clean stop (exit 0, or 130) resets the count; exit 1,
-  2, 4 or 69 removes the marker and leaves it; exit 70 keeps the marker.
-* **Safe start:** the third unclean start within 10 minutes (three runs ended uncleanly) loads
-  shipped modules only; the Python of every user module is skipped, one warning names them, the
-  files are untouched. `tesserae-shell reload` (SIGHUP too) ends it; a clean stop resets the count.
-  `status` (and `status --json`, key `recovery`: `unclean_starts`, `last_crash`, `safe_start`,
-  `skipped_modules`) shows it; with no shell running it still prints the count from the state
-  folder.
-* **The registry** is written within 0.2 s of any change, off the loop thread, to a temporary file
-  that is renamed over it. An unreadable or malformed `registry.json` is moved aside as
-  `registry.json.corrupt-<time>` and rebuilt (the UIDs the files carry are kept, saved positions
-  are lost, one warning). A registry from a newer shell is still refused (exit 1).
-* **A lost compositor:** tre ends the loop when the Wayland connection breaks; the shell then stops
-  what runs (modules, the registry) and exits with code **69**, which `Restart=on-failure` restarts
-  (it was exit 2 with no stop sequence before).
-* The hand-check kit `uv run python tests/kwin/prepare_m7b_watchdog.py` writes
-  `/tmp/tess-kwin-m7b-watchdog`; its `run-all.sh` hangs a module for 20 s under a private systemd
-  user manager and a private sway and checks the restart, `crash.log` and the lost-compositor exit
-  (`results.txt`, nothing touches your session).
-## Version policy
-
-### The version numbers
-
-| Number | Where it is written | Covers |
-|---|---|---|
-| Shell release | `__version__`, `pyproject.toml`, the changelog, the tag `vX.Y.Z` | The package as a whole |
-| TDL language version | `TDL:` in a file's metadata block (major.minor, a string) | The punctuation and structure of a file; owned by `tess-dl` |
-| TEL language version | `TEL:` in the block, and `tess_el.LANGUAGE` | What an expression may say |
-| Schema export version | `schema_version` in `tesserae-shell schema --json` | The keys, blocks, kinds, tokens and modules the shell knows; the configuration application reads it |
-| Module contract | The shell release; `Shell:` in a module file | `Module`, `ctx`, `@action`, events |
-| Registry format | `"registry": 1` in `registry.json` | The shell's own file; you do not edit it |
-| Control interface | The bus name `io.github.mindderivative.TesseraeShell` and its interface version | The D-Bus methods and properties |
-
-### What a release promises
-
-| | Before 1.0 (0.x) | From 1.0 |
-|---|---|---|
-| A patch (0.x.Y) | Fixes only; no file, command or API change | Same |
-| A minor (0.X.0) | May change anything below, each change listed under "Changed" or "Removed" in the changelog, with a `migrate` step when it touches your files | New features and additions; nothing removed or renamed; a deprecation may start |
-| A major | Not used | May remove what was deprecated for at least two minors, each with a `migrate` step |
-| Command line | May change in a minor | A command, option, exit code or `--json` shape never changes in a minor |
-| Schema export | Version bumps minor for an addition, major for a change or a removal | Same; the configuration application checks the major |
-| Your TDL files | A key rename or a language change comes with `migrate` | A file valid for 1.X stays valid for 1.Y |
-| Module contract | May change in a minor, with `migrate` where code can be rewritten | Additions only within 1.x |
-
-The maintainer decides what goes into a minor; the policy decides how it is told.
-
-### Deprecation
-
-* A renamed or replaced key, block, parameter or command keeps working under its old name for one minor before 1.0 and two minors after, with the warning `deprecated-key` (or `deprecated-command` on the command line) naming the replacement and the release that removes it.
-* The schema export marks it (`deprecated: {since, removed_in, use}`) so the configuration application can show it.
-* `migrate` rewrites the old name to the new one wherever it can do so without losing meaning. It does not rewrite your module Python: the changelog lists a contract change and the warning names the replacement.
-
-### The `Shell:` pin
-
-`Shell:` in a file's metadata block is the minimum shell release the file needs. The shell compares it with its own release (major.minor):
-
-* A pin newer than the shell is the error `shell-too-old` with `file:line:column` and the hint "install tesserae-shell X.Y or later". The file is refused, like any file with an error.
-* A `TDL:` version the installed `tesserae-dl` does not read is the library's own version error (`version-pin`), with its hint.
-* A file for an older language version (today `TDL: 0.1`) is refused with `tdl-old-version` and the hint to run `tesserae-shell migrate`. The shell does not read such a file and warn: a file that parses differently from what its author wrote is worse than a clear stop.
-
-The same text is in the user guide ([The command line](guide/09-command-line.md#versions-and-what-a-release-promises)).
+A module is Python that runs with your rights. The modules that ship with the shell run inside it; a module you write or add runs in a process of its own, so a module that hangs or crashes does not freeze your bars. That is not a sandbox: it can still read your files and start programs. Write modules yourself or read them before you add them. TDL files cannot run code. Keep your configuration folder writable by you only: the shell warns if it is not.
 
 ## Development
 
@@ -264,89 +84,8 @@ uv sync
 uv run pytest
 ```
 
-## Documentation
-
-The **user guide** for a person who wants a bar on their desktop is in [`guide/`](guide/README.md): install and start, the configuration folder, a first Bar, every surface and module with its keys, styling, `settings.tdl`, shortcuts, the command line and troubleshooting. Its tables are generated from the shell's schema and command line, and every example in it is checked by the test suite (`python -m tests.guide_tables` writes the tables again after a change in the code). The guide is not part of `docs/` and the docs site does not publish it.
-
-The design documentation is in [`docs/`](docs/README.md). Start at [Home](docs/00%20Home/Home.md) for the current status, decisions and open questions.
-
-`docs/` is generated from the maintainer's design notes (an Obsidian vault) by [`tools/sync_docs.py`](tools/sync_docs.py). Edits made in `docs/` are overwritten the next time the tool runs.
+`docs/` is the documentation site (MkDocs); `docs/design/` is generated from the maintainer's design notes by [`tools/sync_docs.py`](tools/sync_docs.py). The [contributing page](https://mindderivative.github.io/tess-shell/contributing/) has the rest. To build the site locally: `uv sync --only-group docs && uv run --no-sync mkdocs serve`.
 
 ## Licence and third-party notices
 
 The shell is MIT licensed ([`LICENSE`](LICENSE)). The assets it ships follow that unless they say otherwise: the three peek handle icons (`shipped/Handles/`) and the fallback image `shipped/Images/error.png` were made for Tesserae Shell and are MIT; the icon set `shipped/Icons/mdi.json` is Material Design Icons by Pictogrammers, under Apache-2.0 (with the licence text, `MDI-LICENSE.txt`, next to it). The package ships no font; text is drawn with the fonts bundled in `tesserae-engine` (Roboto, Noto Sans Arabic and Hack Nerd Font Mono). [`NOTICE`](NOTICE) lists every shipped or required third-party asset and runtime dependency with its licence and source; it is in the wheel (`dist-info/licenses/NOTICE`) and the sdist, and `tests/test_notice.py` fails when an asset or a dependency is added without a line in it. When you add a dependency or an asset, add its line to `NOTICE` in the same change.
-
-## Display widgets (M4b)
-
-Label, TextBox, ProgressBar, Badge, Marquee_Text, Icon, Image and Expander ship as standard modules (an Expander call may write `On_Changed`, raised when its opening or closing has finished, `event.value` true when open); `Tooltip: "text"` is the short form of a tooltip (a slot is written unquoted: `Tooltip: <| params.Text |>`); a disabled block opens no tooltip unless it writes `Tooltip_When_Disabled: true`; a disabled Marquee (so `Marquee_Text`) whose text is cut with an ellipsis always shows its whole text. Colours come from the Default stylesheet (`Appearance { Stylesheets: [Default] }`). The gallery: `uv run python tests/kwin/prepare_m4b_gallery.py`, then `/tmp/tess-kwin-m4b/run.sh`.
-
-## Interactive widgets (M4c)
-
-Button, Toggle, Checkbox, Slider, List, Menu and MenuItem ship as standard modules and `ScrollBox` is a block. They are operated by the pointer and by the keyboard ([Keyboard operation (M6b)](#keyboard-operation-m6b)); `Enabled: false` shows `:disabled`, ignores the pointer and takes no focus and no key. A Toggle, a Checkbox, a Slider or a List raises `On_Changed` (`event.old`, `event.new`, `event.value`) when the user changes it and never when a module sets `Checked`, `Value` or `Selected`. A Slider also raises `On_Released` once when the press that moved it ends (also when the button is let go outside the slider), with the final value in `event.value`: use it for an action that must happen once, such as a seek. A Menu is the content of a `Popup`; a Button opens it with `On_Click { Action: Show, Target: File_Menu, Data { Id: 7 } }` and a `MenuItem { Submenu: Share_Menu }` opens another Popup beside it. The gallery: `uv run python tests/kwin/prepare_m4c_gallery.py`, then `/tmp/tess-kwin-m4c-widgets/run.sh`.
-
-## Focus (M6a)
-
-`Tab` and `Shift+Tab` walk the focusable blocks of a surface that takes the keyboard (`Keyboard: ON_DEMAND`; a Bar takes `NONE` or `ON_DEMAND`, a Panel also `EXCLUSIVE`, and a surface that holds a TextField takes `ON_DEMAND` whatever it says); `Tab_Index` (0 to 2147483647) sets the order, `Focusable` switches a block in or out, and `:focused` styles the ring that keyboard focus shows (a click focuses without it). Every interactive standard module is one Tab stop (a List and a Menu one each; the arrow keys inside them are in [Keyboard operation](#keyboard-operation-m6b)); a disabled block, a block that is not visible and the content of a closed Expander are none. A block shows the ring only when it takes `Shadows` (a Box, FlexBox, Rectangle, ScrollBox or TextField), so put `Focusable` on one of those. A reload keeps focus on a block that is still there; when it is gone nothing is focused and Tab starts again at the first stop. A Popup gives focus back to the block it was opened from. Shortcut mode and moving focus between surfaces are M6c and M6d. Set `Logging { Level: DEBUG }` to see `focus:` lines in the log.
-
-## Keyboard operation (M6b)
-
-What a focused widget takes (Standard Modules > Keyboard Operation). A key with Ctrl, Alt or Meta is the user's shortcut and no widget's, except the Ctrl keys a text field takes itself:
-
-| Widget | Keys |
-|---|---|
-| Button | Enter and Space press it: `On_Click` runs, and `:pressed` and the accessibility state `pressed` show while the key is held. A Button that controls an Expander writes `Expandable: true, Expanded: <\| open \|>` and carries the accessibility state `expanded`. |
-| Toggle, Checkbox | Space flips it and raises `On_Changed` once (a held key does not repeat the flip); Enter does nothing. |
-| Slider | Left and Down take a step off, Right and Up put one on (also upright), Page Up and Page Down ten steps, Home and End go to `Min` and `Max`. Each key that moves the value raises `On_Changed` and then, at once, `On_Released`, both with `old` the value before the step; a key that cannot move it (at an end) raises nothing. |
-| List | One Tab stop. Up and Down move the chosen entry (the first Down chooses the first entry, the first Up the last), Page Up and Page Down by a page, Home and End go to the ends, Enter and Space choose the first entry when none is chosen, and letters typed jump to the next entry whose text starts with them (a space inside a search is a letter of it; a second without a key ends the search). Each move is a choice: `On_Changed` fires, the entry takes `:selected` and scrolls into view. A disabled entry is passed over; `Selection: NONE` takes no key. |
-| Menu, MenuItem | A Menu opened from the keyboard takes the focus. Up and Down move the lit row (round the ends; a disabled row and a separator are passed over), Home and End go to the first and the last, Enter and Space run it (a row with a submenu opens it), Right opens the submenu of the lit row (its first row is lit), Left closes a submenu and Escape closes the innermost level; Escape on the first menu closes it and gives the focus back to the block it was opened from. A row that opens a submenu says `expanded`. The pointer on a row takes the light from the keys. |
-| TextInput | tre's: typing, the arrows, Home and End, Shift selects, Ctrl+A, Ctrl+C, Ctrl+X, Ctrl+V; Enter raises `On_Submit`; Tab leaves the field. A character raises `On_Text_Commit` (`event.text`) and then `On_Changed` (`event.old`, `event.new`). |
-| TextEditor | As TextInput; Enter inserts a newline and raises `On_Changed`. Tab and Shift+Tab leave the field like any other (the shell sets tre 0.6.8's `tab_navigates` on it), so no tab character can be typed. |
-| Expander | No keys of its own: Enter and Space on the Button that controls it toggle it. |
-
-A widget that takes keys listens for `key_down` on its block, and tre then gives it every key: the arrow keys do not scroll a ScrollBox around a focused Button, Toggle, Checkbox, Slider or List. The keys of a Menu go to the Popup's window; a Popup that holds no Menu ignores them. The widgets are operated by key events only, on the M4 galleries, in `tests/test_keys.py` (headless) and, for a Button and a Slider, on the private sway in `tests/test_keys_live.py`; no test touches the real clipboard, so Ctrl+C, Ctrl+X and Ctrl+V are not tested.
-## Shortcut mode (M6d)
-
-A keyboard mode of the whole shell, for reaching the surfaces without the pointer. Name the one global key in `settings.tdl` (a key the desktop does not use: `Ctrl+Alt+Shift+F9` is rare), and the keys of the mode beside it:
-
-```tdl
-Settings {
-  Shortcuts {
-    Enter_Shortcut_Mode: "Ctrl+Alt+Shift+F9"   # the one global key (registered with the desktop)
-    Exit_Shortcut_Mode: "Ctrl+Q"               # the four below act inside the mode only
-    Set_Shortcut_Mode: "Ctrl+Enter"
-    Next_Focus: "Tab"
-    Previous_Focus: "Shift+Tab"
-  }
-}
-```
-
-- **Enter** puts the Frame (the lowest level; with no Frame, the first surface in `Tab_Index` order) in the mode, with the focus on it, and shows every peek of the Frame at once (a peeking strip and a peeking melded Panel; `Hide_After`, the hover and a `Trigger` do not send one back while the mode is on, and a peek that was out before stays out after it). The surface that has the focus asks the compositor for the keyboard for the length of the mode (`Debug { Mode_Keyboard: EXCLUSIVE }`, the default: on Wayland a layer surface cannot take the keyboard without a click or an exclusive request; `ON_DEMAND` is the choice for a compositor that hands focus over after a global key, to be checked on KWin), and has its written `Keyboard` again when the mode ends. While the mode is on, your other windows get no typing: Escape leaves it.
-- **The keys of the mode are not global keys.** Only `Enter_Shortcut_Mode` is registered with the desktop; the other four are declared with no key (the desktop's settings list them, and a key you give one there runs it), and the keys you wrote arrive as key events on the surface that has the keyboard. `Escape` leaves the mode when the Frame is the surface in it.
-- **Next_Focus / Previous_Focus** (the Frame in the mode) move the focus through the surfaces in `Tab_Index` order (Bars, Panels, the Frame, a strip as `<Frame>.<side>`), going round, skipping a hidden Panel; the ring shows on the first Tab stop of the surface that has the focus. Outside the mode, and in a surface's own mode, they do nothing (the surface's own Tab applies).
-- **Set_Shortcut_Mode** toggles `Shortcut_Mode` of the focused surface. False to true on a Panel moves the mode to it: the Frame's mode is off (its peeks go back to rest) and the Panel's own keys apply. True to false turns the whole shell's mode off (it does not return to the Frame: press the Enter key again for that). **Exit_Shortcut_Mode** sets every `Shortcut_Mode` false.
-- **`Shortcut_Mode: true`** on a Bar, Panel, Frame or strip (`Edges { Top { Shortcut_Mode: true } }`) starts the shell in the mode on that surface. At most one is true: two written true are one load warning naming both with `file:line:column`, and the first in document order keeps it; a reload that changes a written value follows the same rules, and a reload that changes nothing leaves the mode as the run made it. A surface that closes or hides while it has the focus passes the focus to the next surface in order; if it was the one in the mode, the mode ends.
-- **From a module:** `self.ctx.focus.default = "Dock"` names the surface that has the focus when the mode is entered (`None`: the Frame), and `self.ctx.focus.set_mode("Dock", True)` puts that surface in the mode (False on the one in the mode leaves it); both on the loop thread, a name that is no surface is one logged error naming the nearest.
-- Entering and leaving the mode, and each move, set a polite status text on the window that has the focus. `Next_Focus` and the like are logged at `Logging { Level: DEBUG }` (`shortcut mode: mode Screen_Frame, focus Notes`).
-
-## Launcher (M6d)
-
-A text field over the installed applications, opened by a key and operated from the keyboard alone. The module is `Applications`; the shell ships a Panel named `Launcher` that holds it, so one line in `settings.tdl` gives you a launcher:
-
-```tdl
-Settings {
-  Shortcuts { Toggle_Launcher: "Meta+Space" }   # or: Button { On_Click { Action: Toggle, Target: Launcher } }
-}
-```
-
-The shipped Panel is added to the main shell's first Monitor when a `Shortcuts` entry (`Toggle_`, `Show_` or `Hide_Launcher`) or a `Show`, `Hide` or `Toggle` handler names `Launcher` and the file writes no Panel of that name (a shell that never names it gets no extra surface; a Panel you write called `Launcher` replaces it whole; `tesserae-shell schema --json` has it under `panels`). It is a floating 480 by 400 Panel on the overlay layer with `Keyboard: EXCLUSIVE` (so the field has the keyboard when it opens from a global key on a compositor that does not hand focus to an `ON_DEMAND` layer surface; hidden, it takes none).
-
-- **Opening.** The field takes the keyboard focus and its text is selected, so typing starts a new search. **Typing** narrows the list within one frame (every word of the query must match, without case and accents; best rank first: start of the name, start of a word of the name, anywhere in the name, start of a word of the generic name or a keyword, anywhere in the generic name, a keyword or the comment; equal ranks by how often you started the application, then by name) and selects the first row. An empty query lists the most started first, then the rest by name; `max_results` (8), `show_comment` (the generic name, else the comment, under the name), `icon_size` (24) and `placeholder` are the module's params.
-- **Keys.** Down and Up move the selection and wrap; Page Down and Page Up move by the rows shown and stop at the ends; Enter starts the selected row; **Escape** clears the field and, with it empty, hides the Panel. A click on a row starts it; hovering a row changes nothing. The text field keeps the keyboard throughout: the list's keys reach the module through `On_Key_Down` of the field.
-- **Starting.** The application is started detached, so it outlives the shell: in a transient user scope named `app-<id>-<random>.scope` when `systemd-run --user --scope` works, else as a plain process in a session of its own with no standard streams; the working folder is the entry's `Path` (else your home); the environment is the shell's without the shell's own variables (`NOTIFY_SOCKET`, `INVOCATION_ID`, `TESS_SHELL_*`...); `XDG_ACTIVATION_TOKEN` is the token the Panel's window asked the compositor for inside the Enter or click (`Window.request_activation_token`, tre 0.6.8), and without one (the callback gets `None`) the application starts without it and the log says so at debug. `Exec` follows the Desktop Entry Specification: its quoting rules, `%f %F %u %U` removed, `%i` as `--icon <Icon>`, `%c` the name, `%k` the file's path, `%%`; `Terminal=true` runs through `xdg-terminal-exec` (not on the path: one warning, nothing starts). A program that is not there, or a missing `Exec`, keeps the Panel open with "Could not start <name>". After a start the field is empty and the Panel hidden; the count of starts per application is a JSON file in the state folder (`launcher-counts.json`).
-- **The index** is the desktop-entry index of the icon lookup (`XDG_DATA_HOME` and `XDG_DATA_DIRS`, built on a worker thread on first use, followed with inotify: an entry file that comes or goes changes the list with no restart; without a watch the list is built again when the Panel opens). `ctx.apps` gives a module `ready`, `search(query, limit)`, `get(id)`, `launch(id)`, `on_changed(callback)`; `ctx.surface` gives `hide()`, `focus(name, select_all=...)` and `on_shown(callback)` for the Panel a module is on.
-- **Not in v1:** files, a calculator, web search, desktop actions of an entry, categories, a grid, pinned favourites; a click outside the Panel does not hide it (the Panel has the keyboard exclusively; Escape or the key hides it).
-- **Tests never start a process:** the real starter refuses while a test runs (`PYTEST_CURRENT_TEST`), or appends what it would have started to the file `TESS_SHELL_LAUNCH_RECORD` names; `tests/kwin/prepare_launcher.py` writes `/tmp/tess-kwin-launcher` (starts nothing), the hand check of a real start and of focus after it.
-
-## KWin integration and Tasks (M5g)
-
-The shell loads a small KWin script at start (`KWin { Script: RUNTIME }`, the default; `PERSISTENT` and `OFF` in `settings.tdl`). It reports the outputs with an active fullscreen window, on which the shell hides its Bars, Panels, Frame and Popups (`Hide_On_Fullscreen`), and, only while a Tasks module is in use, the open windows for `Tasks`. `tesserae-shell kwin script install|remove|status` installs the script for KWin to run from login; `tesserae-shell kwin rule show|install|remove` manages the opt-in window rule that keeps the shell's surfaces above Plasma panels.

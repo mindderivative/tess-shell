@@ -1,0 +1,68 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# Step 3: a Tray in the Bar (its menus are Popups the shell provides) and a Popup of your own.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 12
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Button { Icon: "mdi:magnify", Label: "Applications", On_Click { Action: Toggle, Target: Launcher } }
+                            Spacer { }
+                            Tray { icon_size: 18, spacing: 6 }
+                            Button { Icon: "mdi:tune", Label: "Quick", On_Click { Action: Show, Target: Quick } }
+                            Clock { format: "%H:%M" }
+                        }
+                    }
+                }
+            }
+            Panel {
+                Name: Launcher
+                Layer: OVERLAY
+                Anchor: [TOP]
+                Inset: [0, 80, 0, 0]
+                Width: 520
+                Height: 460
+                Keyboard: EXCLUSIVE
+                Visible: false
+                Style { Background: $color.surface_raised, Corner_Radius: 12, Elevation: 30% }
+                Children { Applications { max_results: 10, icon_size: 28 } }
+            }
+            Popup {
+                Name: Quick
+                Attach: BOTTOM
+                Alignment: END
+                Gap: 4
+                Max_Width: 280
+                Style { Background: $color.surface_raised, Corner_Radius: 8, Elevation: 20% }
+                Children {
+                    FlexBox {
+                        Flex: VERTICAL
+                        Padding: 12
+                        Spacing: 10
+                        Children {
+                            Audio { show_percent: true, show_slider: true }
+                            Network { show_name: true }
+                            Battery { }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

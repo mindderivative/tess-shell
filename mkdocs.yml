@@ -1,12 +1,12 @@
 site_name: Tesserae Shell
 site_description: >-
-  Tesserae Shell: build desktop shells (bars, panels, docks, launchers, OSDs, widgets) from TDL
-  files. The design record: vision, architecture, decisions, specifications and the TDL reference.
+  Tesserae Shell: build desktop shells (bars, panels, docks, launchers, OSDs, widgets) for KDE
+  Plasma from TDL files and a little Python, drawn by the Tesserae Render Engine.
 site_url: https://mindderivative.github.io/tess-shell/
 repo_url: https://github.com/mindderivative/tess-shell
 repo_name: mindderivative/tess-shell
-# docs/ is generated from the design vault by tools/sync_docs.py and overwritten each time, so
-# there is no "edit this page" link (edit_uri): the notes are edited in the vault.
+# docs/ is the documentation site, written by hand; docs/design/ is the design vault's export
+# (tools/sync_docs.py), overwritten each time, so there is no "edit this page" link.
 docs_dir: docs
 
 theme:
@@ -26,7 +26,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-  # the notes' front matter has status: draft, review, accepted, stable or superseded; Material
+  # the design notes' front matter (docs/design/) has status: draft, review, accepted, stable or superseded; Material
   # shows it as an icon beside the page in the navigation, labelled by extra.status below
   icon:
     status:
@@ -54,6 +54,7 @@ extra:
 
 plugins:
   - search
+  - awesome-nav # the navigation is docs/.nav.yml; the Design section lists its folder by itself
   - gh-admonitions # the export writes GitHub alerts (> [!NOTE]); this makes them admonitions
 
 markdown_extensions:
@@ -70,5 +71,9 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.snippets:
+      base_path: [.]
+      check_paths: true
   - pymdownx.highlight
   - pymdownx.inlinehilite
+
