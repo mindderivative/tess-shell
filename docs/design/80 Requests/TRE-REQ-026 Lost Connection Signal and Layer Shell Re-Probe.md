@@ -12,7 +12,7 @@ tags: [engine-request, quality, needs-verification]
 # TRE-REQ-026: Tell the Application That the Wayland Connection Was Lost, and Let `supports('layer_shell')` Re-Probe
 
 > [!NOTE]
-> **The maintainer reviewed it and passed it to tre himself; on 2026-11-19 he said tre is building it for 0.6.10.**
+> **The maintainer reviewed it and passed it to tre himself; on 2026-11-19 he said tre is building it for 0.6.10. Built by tre on a local branch off main (`feat/req-026`), not pushed, merged or released, for 0.6.10 (tre's report, 2026-11-19; not run in the vault): `app.on('connection_lost', fn)`: reproduced first on a private sway (a killed compositor made `run()` return silently). Now `fn()` is called once from inside `run()`, then every open window and layer surface hears `closed` with reason `'connection_lost'`, then `run()` returns normally; not called for `stop()` or a run that found no display. `tess_re.supports('layer_shell', refresh=True)` re-probes (the first answer, a no too, was cached for ever) and updates the cache `LayerWindow` creation reads. The acceptance test passed on a private sway (kill, one callback, a second sway, refresh true). Unverified: KWin, a compositor that crashes rather than exits, macOS and Windows.**
 > When the compositor goes away, the shell finds out only because tre's windows close and the loop ends. Two small additions would let it recover cleanly: a signal that the Wayland connection was lost, and a `supports('layer_shell')` that asks again instead of keeping its first answer. Drafted on 2026-11-17 from the code session's report of the M7b work (`tess-shell` PR #67) and offered to the maintainer to carry; not sent to tre.
 
 ## Shell Need

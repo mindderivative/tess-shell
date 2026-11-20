@@ -95,6 +95,10 @@ The code session writes the report in the shell repository (`tests/perf/module-p
 
 The full measurement has not run. The prototype and harness are merged (code session's report of `tess-shell` PR #71, 2026-11-17, CI green; not run in the vault), and the numbers wait for a run alone on an idle machine (about 80 minutes) once the other merges are done.
 
+> [!NOTE]
+> **Merged and building (code session's report, 2026-11-19)**
+> The first full run, A, B1, B2, C1 and C2, with your posture C decision at the top, and both lean B tables are merged in `tess-shell` PR #85. Posture C itself merged as PR #91 (2026-11-19, CI green; see [Security Model](Security%20Model.md)): user module files run in a child process each, the shipped modules and the default shell are unchanged, and all 13 plan decisions are as you accepted them. The first CI run found five existing tests broken, since fixed (`check` reports extra module-class findings for fixture modules, the gallery starts log warnings, and a live test sees a user module's first value arrive asynchronously); the builder is fixing them and running the whole suite. The full measurement of the built product, cell P, takes about 80 minutes on an idle machine and is still to run.
+
 ### The full measurement (code session's report, 2026-11-19; not run in the vault)
 
 Run 10:38 to 11:21 (about 43 minutes) on a private sway, load 0.35 at the start; the harness's own earlier cells raised the load (median 1-minute load 0.91, highest 4.96). Cells: A, B1, B2, C1, C2; 3 repetitions, 20 start runs. The file is `/tmp/m7/module-process-results-real.md` (284 lines), not committed. The lean B is not in this run: it started before the decision reached the code session and cannot be changed mid-run.
