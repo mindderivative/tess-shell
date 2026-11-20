@@ -4,7 +4,7 @@
 - Tesserae Shell: builds desktop shells (bars, panels, docks, launchers, OSDs, widgets) beside an installed DE, KDE Plasma on Wayland first. PyPI `tesserae-shell`, import `tess_shell`, command `tesserae-shell` (or `python -m tess_shell`), repo `mindderivative/tess-shell` (public).
 - Renders via `tess_re` (`tesserae-engine`), reads TDL (`tess_dl`, `tesserae-dl`), evaluates TEL (`tess_el`, `tesserae-el`). No dependency on Tesserae UI (ADR-0006).
 - Current state: run `tools/status.sh`, read the tree and the vault. Do not describe or assume code, tests or tools not in the tree.
-- Decided (vault wins if it differs): Python `>=3.14`; hatchling, `src/` layout; deps `tesserae-engine>=0.6.0,<0.7`, `tesserae-el>=0.1.2,<0.2`, `tesserae-dl>=0.1.1,<0.2`, `loguru`, `dbus-fast` from M4; no `jsonschema` (ADR-0020).
+- Decided (vault wins if it differs): Python `>=3.14`; hatchling, `src/` layout; deps (floors in `pyproject.toml`, which wins) `tesserae-engine>=0.6.9,<0.7`, `tesserae-el>=0.2.0,<0.3`, `tesserae-dl>=0.2.0,<0.3`, `tesserae-utils[image]>=0.2.1,<0.3`, `loguru`, `dbus-fast`, `inotify-simple`, `pillow`, `jeepney`; no `jsonschema` (ADR-0020).
 - Import rules: `tess_shell/binder/` imports only `tess_re`, `tess_utils`, stdlib; a module never imports `tess_re`; a test enforces this (see the layout note).
 
 ## Design record and scope
