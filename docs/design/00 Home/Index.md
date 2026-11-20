@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-10-18
-updated: 2026-11-04
+updated: 2026-11-20
 tags: [moc]
 ---
 
@@ -26,6 +26,7 @@ Operating rules for agents: AGENTS.
 | [Open Questions](Open%20Questions.md) | Unknowns and `#needs-verification` items                  |
 | [Risk Register](Risk%20Register.md) | Technical debt and design hazards                         |
 | [Glossary](Glossary.md) | Canonical terms                                           |
+| [Vault Reference](Vault%20Reference.md) | Reference material moved out of AGENTS: projects, layering, folder map, templates, naming |
 
 ## Folders
 
