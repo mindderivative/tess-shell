@@ -215,3 +215,58 @@ def test_the_schema_export_lists_the_setting_with_its_default() -> None:
 
     key = schema_dict()["settings"]["Debug"]["User_Modules_In_Process"]
     assert key["default"] in (False, "false") and key["kind"] == "bool"
+
+
+# -- the order of a module's first values and the process's answer -------------------------
+
+
+def held_back(rig: ProcRig, use: str, name: str) -> None:
+    """A slot of ``use`` read ``name`` before the module sent it: the warning was held back."""
+    rig.store.deferred.append((use, name, f"Q_Module.tdl:1:1: '{name}' is not defined"))
+
+
+def test_the_held_back_warning_waits_for_the_values_the_module_sent_before_it_answered(
+    rig: ProcRig,
+) -> None:
+    """The process wrote its values before its answer, and the shell's reader gave them to the
+    store first; but the store applies them at the next flush, which can come after the answer
+    (the loop had not started yet, or the answer was queued first). A name that is in the store's
+    queue when the answer is handled is not missing: no warning for it, and one for a name that
+    never comes."""
+    seen: list[str] = []
+    sink = logger.add(lambda m: seen.append(m.record["message"]), level="WARNING")
+    try:
+        loaded = start(rig, "Q", QUICK)
+        rig.wait_value("Q@u1", "up")  # the module is running; the store is quiet
+        handle = loaded.remote
+        held_back(rig, "Q@u1", "said")
+        held_back(rig, "Q@u1", "never")
+        rig.store.send("Q", "Q@u1", "said", "hello")  # sent before the answer, applied at the flush
+        rig.processes.started(handle)
+        assert not any("is not defined" in m for m in seen), "the value is queued: not missing"
+        rig.pump(lambda: any("'never' is not defined" in m for m in seen))
+        assert not any("'said' is not defined" in m for m in seen)
+        assert rig.store.deferred == [], "nothing is held back for ever"
+    finally:
+        logger.remove(sink)
+
+
+def test_a_callback_after_the_flush_sees_every_value_queued_before_it_was_asked_for() -> None:
+    from tess_shell.model.store import ValueStore
+
+    store = ValueStore()
+    store.add_use("M", "M@1")
+    seen: list[Any] = []
+    store.send("M", "M@1", "name", "v")  # no loop yet: it waits for a flush
+    store.when_flushed(lambda: seen.append(store.values["M@1"].get("name")))
+    assert seen == []
+    store.flush()
+    assert seen == ["v"]
+    store.flush()
+    assert seen == ["v"], "once"
+    woken: list[Any] = []
+    store.attach_loop(woken.append)  # nothing queued, a callback asked for: the loop is woken
+    store.when_flushed(lambda: seen.append("again"))
+    assert len(woken) == 1
+    woken[0]()
+    assert seen == ["v", "again"]
