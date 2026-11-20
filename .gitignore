@@ -20,3 +20,4 @@ htmlcov/
 .omp/
 .pi/
 graphify-out/
+.mcp.json
