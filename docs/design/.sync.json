@@ -1,14 +1,14 @@
 {
- "vault_commit": "9eb61ab17acf80955c02297965fa1258dcfdf9e1",
- "vault_subject": "Move AGENTS reference material to Vault Reference; shrink AGENTS.md",
- "exported_at": "2026-11-20 11:30:04",
+ "vault_commit": "a404cda26ff145d981e58c1ad5eab042297af621",
+ "vault_subject": "Gitignore .mcp.json and graphify-out",
+ "exported_at": "2026-11-20 13:43:19",
  "files": {
   "00 Home/Build Logs.md": "7156839d84b290e7",
   "00 Home/Development Readiness.md": "0932f105a9ba8d72",
   "00 Home/Glossary.md": "6f265f9d59ef1db2",
   "00 Home/Hand Checks.md": "dc042bd73fb11b10",
   "00 Home/Home.base": "cf6ecb41cc27f8c6",
-  "00 Home/Home.md": "4cce9f6e5a524cef",
+  "00 Home/Home.md": "1484442dc91086f7",
   "00 Home/Index.md": "a74669a86a9242ea",
   "00 Home/M0 Brief.md": "7691afaf0bd68f43",
   "00 Home/M0 Build Log.md": "25acd858bbb7cf94",
