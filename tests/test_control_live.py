@@ -35,7 +35,7 @@ SECRET = "hunter2-not-for-status"
 PROBE_TDL = """
 Module {
     Params { token { Type: string, Default: "" } }
-    Text { Text: {{ label }} }
+    Text { Text: <| label |> }
 }
 """
 PROBE_PY = """
@@ -73,7 +73,7 @@ def write_config(cfg: Path, *, control: bool = True, probe: bool = True) -> None
     write_example(cfg, body)
     extra = "" if control else "Control: false,"
     (cfg / "settings.tdl").write_text(
-        f"---\nTDL: 0.1\nName: S\n---\nSettings {{ {extra} Logging {{ Level: DEBUG }} }}\n"
+        f"---\nTDL: 0.2\nName: S\n---\nSettings {{ {extra} Logging {{ Level: DEBUG }} }}\n"
     )
     if probe:
         folder = cfg / "Modules" / "Probe"
@@ -272,8 +272,10 @@ def test_control_false_exports_nothing(desk: Make) -> None:
     d.start()
     out = d.run("status")
     assert out.returncode == 3 and "no shell is running" in out.stderr
-    assert "control: owning" not in d.shell.log_text()  # type: ignore[union-attr]
     assert d.finish() == 0
+    # after the shell has ended: while it runs the file log can lag the console, and a line that is
+    # not there yet would let this pass whatever the shell did
+    assert "control: owning" not in d.shell.log_text()  # type: ignore[union-attr]
 
 
 def test_a_second_shell_on_the_same_bus_exits_4(desk: Make, private_sway: PrivateSway) -> None:

@@ -91,6 +91,10 @@ _COMMON: dict[str, KeyRow] = {
     # a disabled block's tooltip opens (the block says so); the shell's own key, nothing for tre
     "Tooltip_When_Disabled": _k((), "bool"),
     "A11y_Hidden": _k("a11y_hidden", "bool"),
+    # focus (Focus and Keyboard): a block that takes input is focusable unless it says otherwise
+    # (``binder.focus``); the Tab order is ranked over the whole tree (``View.reindex``)
+    "Focusable": _k("focusable", "bool"),
+    "Tab_Index": _k((), "tab_index"),
     "Opacity": _k("opacity", "number"),
     "Position": _k("position", "enum", "RELATIVE", "ABSOLUTE"),
     "Left": _k("left", "length"),
@@ -110,6 +114,7 @@ _COMMON: dict[str, KeyRow] = {
     "Value_Min": _k("value_min", "number"),
     "Value_Max": _k("value_max", "number"),
     "Value_Step": _k("value_step", "number"),
+    "Value_Text": _k("value_text", "text"),
     "Checked": _k("checked", "bool"),
     "Selected": _k("selected", "bool"),
     "Expanded": _k("expanded", "bool"),
@@ -230,7 +235,12 @@ _ROWS: dict[str, BlockRow] = {
             "Orientation": _k("orientation", "enum", "VERTICAL", "HORIZONTAL"),
             "Scroll_Offset": _k("scroll_offset", "number"),
         },
-        style={**_MOTION, "Opacity": _COMMON["Opacity"]},
+        style={
+            **_MOTION,
+            "Opacity": _COMMON["Opacity"],
+            "Elevation": _k("shadows", "elevation"),
+            "Shadows": _k("shadows", "shadows"),
+        },
         defaults={"orientation": "vertical"},
         children_ok=True,
     ),
@@ -356,7 +366,9 @@ _FONT: dict[str, KeyRow] = {
     "Font_Size": _TEXT_STYLE["Font_Size"],
     "Font_Weight": _TEXT_STYLE["Font_Weight"],
 }
-_FIELD_BOX_KEYS: dict[str, KeyRow] = {k: v for k, v in _COMMON.items() if k != "Label"}
+_FIELD_BOX_KEYS: dict[str, KeyRow] = {
+    k: v for k, v in _COMMON.items() if k not in ("Label", "Focusable", "Tab_Index")
+}
 _FIELD_CHILD = {"grid_column": 1, "grid_row": 1}
 _ROWS["TextField"] = BlockRow(
     "box",
@@ -389,8 +401,17 @@ _ROWS["TextField.size"] = BlockRow(
 )
 _ROWS["TextField.input"] = BlockRow(
     "text_input",
-    # over the line box, exactly as large: it is not in the flow, so the size text sets the height
-    fixed={"position": "absolute", "left": 0, "top": 0, "right": 0, "bottom": 0},
+    # over the line box, exactly as large: it is not in the flow, so the size text sets the height;
+    # Tab leaves a multi-line field like every other widget (tre 0.6.8, TRE-REQ-018; a single-line
+    # one ignores it)
+    fixed={
+        "position": "absolute",
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "tab_navigates": True,
+    },
     keys={
         "Text": _k("text", "text"),
         "Placeholder": _k("placeholder", "text"),
@@ -402,6 +423,8 @@ _ROWS["TextField.input"] = BlockRow(
         "Max_Length": _k("max_length", "max_length"),
         "Password": _k("obscured", "bool"),
         "Label": _COMMON["Label"],
+        "Focusable": _COMMON["Focusable"],
+        "Tab_Index": _COMMON["Tab_Index"],
     },
     style={
         "Foreground": _TEXT_STYLE["Foreground"],
@@ -425,4 +448,9 @@ _ROWS["TextField.input"] = BlockRow(
 BLOCKS: Mapping[str, BlockRow] = {
     name: dataclasses.replace(row, defaults={"disabled": False, **row.defaults})
     for name, row in _ROWS.items()
+}
+
+# the keys a block accepts as properties: its own keys and, written on the block, its style keys
+ALLOWED: Mapping[str, Mapping[str, KeyRow]] = {
+    name: {**row.style, **row.keys} for name, row in BLOCKS.items()
 }

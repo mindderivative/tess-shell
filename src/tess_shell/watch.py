@@ -75,6 +75,19 @@ class Watcher:
             if child.is_dir() and child.name not in IGNORED_DIRS and not child.name.startswith("."):
                 self._watch_tree(child)
 
+    def watch_files(self, files: Mapping[Path, frozenset[str]]) -> None:
+        """Also notice these names in these directories, after :meth:`start`: a file a shell
+        file imports may sit outside every watched tree. A directory that is watched whole needs
+        nothing; one watched for names only gets the new ones as well. Safe to call again with
+        the files that are imported now (a reload may import another)."""
+        for directory, names in files.items():
+            wd = next((w for w, d in self._dirs.items() if d == directory), None)
+            if wd is None:
+                if directory.is_dir():
+                    self._watch(directory, _FILE_MASK, names)
+            elif wd in self._only:
+                self._only[wd] = self._only[wd] | names
+
     def start(self) -> None:
         for tree in self._trees:
             self._watch_tree(tree)
@@ -143,6 +156,14 @@ class Watcher:
                     self._on_change(changed)
                 except Exception:
                     logger.opt(exception=True).error("the reload callback raised")
+
+
+def by_directory(paths: Iterable[Path]) -> dict[Path, frozenset[str]]:
+    """``paths`` as the directory -> names map :class:`Watcher` takes."""
+    out: dict[Path, set[str]] = {}
+    for path in paths:
+        out.setdefault(path.parent, set()).add(path.name)
+    return {directory: frozenset(names) for directory, names in out.items()}
 
 
 def hash_of(path: Path) -> str | None:

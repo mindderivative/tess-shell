@@ -14,13 +14,13 @@ from tess_shell.scanner import build_look, scan
 from tests.shell_samples import BODY, write_example
 
 THEME = """---
-TDL: 0.1
+TDL: 0.2
 Name: Mine
 ---
 Theme { Color { Surface: "#202020", On_Surface: "#f0f0f0" } Space { Step_3: 8 } }
 """
 SHEET = """---
-TDL: 0.1
+TDL: 0.2
 Name: Mine_Rules
 ---
 Stylesheet { Rule { Selector: "Text", Foreground: $color.on_surface } }
@@ -29,7 +29,7 @@ Stylesheet { Rule { Selector: "Text", Foreground: $color.on_surface } }
 
 def settings_file(cfg: Path, appearance: str) -> None:
     (cfg / "settings.tdl").write_text(
-        f"---\nTDL: 0.1\nName: S\n---\nSettings {{ Appearance {{ {appearance} }} }}\n"
+        f"---\nTDL: 0.2\nName: S\n---\nSettings {{ Appearance {{ {appearance} }} }}\n"
     )
 
 
@@ -135,7 +135,7 @@ def test_a_good_themed_config_checks_clean(
 
 
 STATE_SHEET = """---
-TDL: 0.1
+TDL: 0.2
 Name: Mine_Rules
 ---
 Stylesheet {

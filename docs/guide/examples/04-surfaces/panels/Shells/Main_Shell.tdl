@@ -1,0 +1,81 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# A button in the Bar shows and hides the Panel Notes; Volume_OSD is a small overlay that hides
+# itself 1.5 seconds after it is shown (a command or a shortcut shows it).
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Button {
+                                Text: "Notes"
+                                On_Click { Action: Toggle, Target: Notes }
+                            }
+                        }
+                    }
+                }
+            }
+            Panel {
+                Name: Notes
+                Layer: TOP
+                Anchor: [TOP, LEFT]
+                Inset: [12, 44, 0, 0]
+                Width: 280
+                Height: 160
+                Visible: false
+                Animation { Type: SLIDE, Duration: 200 }
+                Style { Background: $color.surface_raised, Corner_Radius: 8, Elevation: 30% }
+                Children {
+                    FlexBox {
+                        Flex: VERTICAL
+                        Padding: 12
+                        Spacing: 8
+                        Children {
+                            Label { Text: "Notes" }
+                            Button { Text: "Close", On_Click { Action: Hide, Target: Notes } }
+                        }
+                    }
+                }
+            }
+            Panel {
+                Name: Volume_OSD
+                Layer: OVERLAY
+                Anchor: [BOTTOM]
+                Inset: [0, 0, 0, 80]
+                Width: 260
+                Height: 60
+                Visible: false
+                Input_Region: []
+                Hide_After: 1500
+                Style { Background: $color.surface_raised, Corner_Radius: 12 }
+                Children {
+                    FlexBox {
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: 16
+                        Spacing: 12
+                        Children {
+                            Icon { Icon: "mdi:volume-high", Size: 24 }
+                            ProgressBar { Value: 70, Width: 180, Label: "Volume" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

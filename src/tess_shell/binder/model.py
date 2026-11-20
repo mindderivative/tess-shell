@@ -141,7 +141,7 @@ class TokenRef:
 
 @dataclass(frozen=True, slots=True)
 class SlotPart:
-    """One ``{{ }}`` slot: its source text and the origin of that text (not of the braces)."""
+    """One ``<| |>`` slot: its source text and the origin of that text (not of the braces)."""
 
     text: str
     origin: Origin = _origin()
@@ -156,7 +156,7 @@ class SlotValue:
     parts: tuple[str | SlotPart, ...]
     origin: Origin = _origin()
     # the key of the module use whose scope the slot reads, when it is not the use of the block it
-    # stands on: a common key written on a module call (``Button { Enabled: {{ can_next }} }``) is
+    # stands on: a common key written on a module call (``Button { Enabled: <| can_next |> }``) is
     # placed on the callee's root block but reads the scope of the module that holds the call
     use: str = field(default="", compare=False)
 
@@ -184,13 +184,17 @@ Value = (
 
 # The style states a stylesheet rule can name after a colon (``Button:hovered``), weakest first: a
 # checked or chosen block shows its values under the pointer's, a pressed block that is also
-# hovered shows both, the pressed values on top, and a disabled block shows its ``disabled``
-# values over everything (it takes no pointer, so it is never hovered or pressed while it is
-# disabled).
-STATES = ("checked", "selected", "hovered", "pressed", "disabled")
+# hovered shows both, the pressed values on top, a focused block (keyboard focus only: a click
+# gives none) shows its ring over those, and a disabled block shows its ``disabled`` values over
+# everything (it takes no pointer and no focus, so it is never hovered, pressed or focused while it
+# is disabled).
+STATES = ("checked", "selected", "hovered", "pressed", "focused", "disabled")
 # the states that do not come from the pointer: a control sets ``checked`` and ``selected`` (a
-# Toggle that is on, the chosen entry of a list), ``disabled`` is ``Enabled: false``
-FLAG_STATES = ("checked", "selected", "disabled")
+# Toggle that is on, the chosen entry of a list), ``focused`` is keyboard focus, ``disabled`` is
+# ``Enabled: false``
+FLAG_STATES = ("checked", "selected", "focused", "disabled")
+# the largest ``Tab_Index``: the largest signed 32-bit integer (Focus and Keyboard > Tab Order)
+TAB_INDEX_MAX = 2_147_483_647
 
 # A TextField is built as four nodes (``model.field``): its box, a line box in the box's cell, a
 # text in the line that gives it the height of the field's lines, and the text input over the
@@ -210,7 +214,7 @@ CONTENT = "Content"
 
 # A Bitmap's ``Source`` that starts with this names pixels the shell decoded and registered
 # (``ImageCache.register``), not a file: an icon from the desktop's theme or an item's pixmap
-# (Tray Module > Icons). ``Icon: {{ ref }}`` and ``Source: {{ ref }}`` take such a reference.
+# (Tray Module > Icons). ``Icon: <| ref |>`` and ``Source: <| ref |>`` take such a reference.
 PIXELS_PREFIX = "pixels:"
 
 # Blocks that tre sends no pointer events: a listener on a ``text`` node is accepted and never
@@ -234,7 +238,7 @@ class Handler:
     # ``Call``: the module whose ``@action`` runs, when it is not the block's own (empty: the
     # module of ``use``)
     module: str = ""
-    # arguments written as ``{{ }}`` slots: evaluated when the event fires (Events and Actions >
+    # arguments written as ``<| |>`` slots: evaluated when the event fires (Events and Actions >
     # Call), with ``event`` in scope, the module's values and the enclosing ``For`` variables
     slots: Mapping[str, SlotValue] = field(default_factory=dict, compare=False)
     # the ``For`` entries around the block, outermost first (set by the model): what a slot in
@@ -309,7 +313,7 @@ class UseNode:
 
 @dataclass(frozen=True, slots=True)
 class IfNode:
-    """``If {{ cond }} { ... } Else { ... }``. The model picks the branch; the binder refuses an
+    """``If <| cond |> { ... } Else { ... }``. The model picks the branch; the binder refuses an
     unresolved one."""
 
     condition: SlotPart | None = None
@@ -321,10 +325,12 @@ class IfNode:
 
 @dataclass(frozen=True, slots=True)
 class ForNode:
-    """``For w In {{ items }} Key {{ w.id }} { ... }``. ``name`` is what the entries are called
-    (``<name>_0001``): the head of the body's first block, else ``For``."""
+    """``For w In <| items |> Key <| w.id |> { ... }``. ``name`` is what the entries are called
+    (``<name>_0001``): the head of the body's first block, else ``For``. ``variables`` are the
+    names written before ``In``; with several (``For i, w In <| enumerate(items) |>``) each item
+    of the list is unpacked over them."""
 
-    variable: str = ""
+    variables: tuple[str, ...] = ()
     items: SlotPart | None = None
     key: SlotPart | None = None
     name: str = "For"

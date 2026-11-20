@@ -9,15 +9,15 @@
 
 ## Design record and scope
 - The vault `~/Projects/Obsidian/Tesserae Shell` is the source of truth; read it freely. Edit only your build log for the current milestone (`00 Home/M<n> Build Log.md`) and that brief's checkboxes; rules in `00 Home/Build Logs.md`. Stage explicit paths in the vault and commit only those.
-- Never edit specs, ADRs, Home, indexes, Roadmap, Risk Register, requests or `docs/` (generated export of the vault).
+- Never edit specs, ADRs, Home, indexes, Roadmap, Risk Register, requests or `docs/design/` (generated export of the vault). The rest of `docs/` is the hand-written product site and user guide; maintain it.
 - Never edit, move or rename `tools/sync_docs.py` (the vault hook runs it).
-- Code may change only in: `src/`, `tests/`, `pyproject.toml`, `README.md`, `CHANGELOG.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, `.graphifyignore`, `tools/status.sh`, `tools/graphify_*`.
+- Code may change only in: `src/`, `tests/`, `docs/` (except `docs/design/`), `pyproject.toml`, `README.md`, `CHANGELOG.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, `.graphifyignore`, `tools/status.sh`, `tools/graphify_*`.
 - Design gap (wrong, unclear, missing): stop and tell the owner or the Orchestrator; never decide silently. A design change is a dated vault amendment.
 - Never invent engine API: check installed `tess_re`, `tess_el`, `tess_dl` first. If missing, report it as a `TRE-REQ-###`/`TEL-REQ-###`/`TDL-REQ-###` candidate. Never file upstream issues or message upstream projects.
 - Sibling repos (`~/Projects/rustDev/projects/tre`, `tess-el`, `tess-dl`, `tesserae`): read only; never edit or import by path.
 
 ## Git and GitHub
-- Commit locally when a task or feature is done: short imperative subject (match `git log`), explicit file list; never `git add -A` or `git add .` (leave changed `docs/` files uncommitted).
+- Commit locally when a task or feature is done: short imperative subject (match `git log`), explicit file list; never `git add -A` or `git add .` (leave changed `docs/design/` files uncommitted).
 - After local verification push to `feat/<task-id>` or `fix/<task-id>`; never to `main`, never force-push. Open a PR and report it to `bot:Orchestrator` by Orca message.
 - Never merge (only the owner and the Orchestrator merge). Never bump a version, tag, release, publish (PyPI) or change repo visibility or settings without the owner.
 - `gh`: authenticated as `mindderivative`; use `-R mindderivative/tess-shell`; ask before any write. Issues here are public: show a draft first. No board exists; do not create one.

@@ -2,7 +2,7 @@
 
 Pure functions over :mod:`tess_shell.binder.model`. The forms that several Tesserae projects share
 (a colour's written forms, four-sided values and their order, corner radii, enum words) belong to
-``tess_utils`` (the carried compiled file, ``tess_shell._vendor``); what is left here wraps them in
+``tess_utils`` (the ``tesserae-utils`` package from PyPI); what is left here wraps them in
 the shell's typed values and raises :class:`BindError` at the value's origin. Each converter takes
 the value and the tre property names of the key's row and returns
 ``{tre property: tre value}``. The parsers at the end turn written forms into typed values; the
@@ -14,9 +14,11 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from tess_shell._vendor import tess_utils
+import tess_utils
+
 from tess_shell.binder.images import IMAGES
 from tess_shell.binder.model import (
+    TAB_INDEX_MAX,
     Auto,
     BindError,
     Bool,
@@ -38,6 +40,10 @@ from tess_shell.binder.shadow import DEFAULT_MAX, scale
 Converted = dict[str, Any]
 Converter = Callable[[Value, tuple[str, ...], tuple[str, ...]], Converted]
 
+# ``isinstance`` with a tuple: ``A | B`` would build a new union object at every call
+_LENGTH_OR_PERCENT = (Length, Percent)
+_NUMBER_OR_LENGTH = (Number, Length)
+
 
 def _what(value: Value) -> str:
     return type(value).__name__.lower()
@@ -49,6 +55,16 @@ def _bad(value: Value, expected: str) -> BindError:
 
 def _num(x: float) -> int | float:
     return int(x) if float(x).is_integer() else x
+
+
+def tab_index(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
+    """``Tab_Index``: a whole number from 0 to 2 147 483 647. It gives tre nothing of its own: the
+    order is the whole tree's, so the view ranks the blocks that have one (``View.reindex``)."""
+    if isinstance(value, Number) and isinstance(value.value, int):
+        if 0 <= value.value <= TAB_INDEX_MAX:
+            return {}
+        raise BindError(f"must be from 0 to {TAB_INDEX_MAX}", value.origin)
+    raise _bad(value, "a whole number")
 
 
 def length(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
@@ -83,7 +99,7 @@ def text_length(value: Value, names: tuple[str, ...], choices: tuple[str, ...] =
 
 def bound(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
     """A bound (``Min_Width``): pixels or a percentage."""
-    if isinstance(value, Length | Percent):
+    if isinstance(value, _LENGTH_OR_PERCENT):
         return length(value, names)
     raise _bad(value, "a length or a percentage")
 
@@ -111,7 +127,7 @@ def whole(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
 
 def positive(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
     result = number(value, names)
-    if not isinstance(value, Number | Length):
+    if not isinstance(value, _NUMBER_OR_LENGTH):
         raise _bad(value, "a number")
     if (value.value if isinstance(value, Number) else value.px) <= 0:
         raise BindError("must be greater than 0", value.origin)
@@ -317,7 +333,7 @@ def sides(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
     """Four-sided values, left, top, right, bottom, become tre's top, right, bottom, left."""
     if len(names) != 4:
         raise ValueError("a sides row names four tre properties")  # a table bug
-    if isinstance(value, Length | Number):
+    if isinstance(value, _NUMBER_OR_LENGTH):
         written: float | tuple[float, float, float, float] = (
             value.px if isinstance(value, Length) else value.value
         )
@@ -339,7 +355,7 @@ def sides(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -
 def radius(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
     """One number, or four from the top-left corner clockwise."""
     (name,) = names
-    if isinstance(value, Length | Number):
+    if isinstance(value, _NUMBER_OR_LENGTH):
         one = value.px if isinstance(value, Length) else value.value
         if one < 0:
             raise BindError("a radius cannot be negative", value.origin)
@@ -347,7 +363,7 @@ def radius(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) 
     if isinstance(value, Seq) and len(value.items) == 4:
         numbers: list[float] = []
         for item in value.items:
-            if not isinstance(item, Length | Number):
+            if not isinstance(item, _NUMBER_OR_LENGTH):
                 raise _bad(item, "a number")
             n = item.px if isinstance(item, Length) else item.value
             if n < 0:
@@ -411,6 +427,7 @@ CONVERTERS: Mapping[str, Converter] = {
     "positive": positive,
     "bool": boolean,
     "max_length": max_length,
+    "tab_index": tab_index,
     "lines": lines,
     "selection": selection,
     "image": image,

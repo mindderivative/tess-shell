@@ -1,0 +1,9 @@
+---
+TDL: 0.2
+Name: Settings
+---
+Settings {
+    Appearance { Stylesheets: [Default] }
+    # Meta+Space toggles the Panel named Launcher. `tesserae-shell toggle Launcher` does the same.
+    Shortcuts { Toggle_Launcher: "Meta+Space" }
+}

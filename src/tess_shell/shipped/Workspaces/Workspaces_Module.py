@@ -6,7 +6,7 @@ desktop signals: no timer, no thread. The callbacks run on the ``dbus`` thread; 
 Keys sent: ``desktops`` (a list of records ``id``, ``number`` (1-based), ``name``, ``label``,
 ``current``), ``current`` (an id) and ``ready`` (a valid list was read). ``available`` is the
 layer's: true while KWin is on the session bus. A layout shows itself with
-``If {{ available and ready }}``.
+``If <| available and ready |>``.
 """
 
 from __future__ import annotations

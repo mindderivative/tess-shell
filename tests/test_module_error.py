@@ -26,7 +26,7 @@ from tests.widgets_live import running
 
 DRIVER = (
     "Module { FlexBox { Name: Root, Width: 40, Height: 20, "
-    "On_Click { Action: boom, n: {{ 1 }} } } }"
+    "On_Click { Action: boom, n: <| 1 |> } } }"
 )
 DRIVER_PY = """
 from tess_shell import Module, action

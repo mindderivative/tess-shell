@@ -174,7 +174,7 @@ def test_two_calls_keep_their_own_text_and_events() -> None:
 
 def test_a_module_that_uses_a_text_input_names_its_own_actions() -> None:
     host = (
-        "---\nTDL: 0.1\nName: Host\n---\n"
+        "---\nTDL: 0.2\nName: Host\n---\n"
         "Module { FlexBox { Children { "
         'TextInput { Text: "q", On_Changed: changed, On_Submit: submit, On_Text_Commit: commit } '
         "} } }"
@@ -189,7 +189,7 @@ def test_a_module_that_uses_a_text_input_names_its_own_actions() -> None:
 
 
 def test_a_module_whose_root_cannot_raise_the_event_is_an_error_at_the_handler() -> None:
-    plain = "---\nTDL: 0.1\nName: Plain\n---\nModule { FlexBox { Width: 10, Height: 10 } }"
+    plain = "---\nTDL: 0.2\nName: Plain\n---\nModule { FlexBox { Width: 10, Height: 10 } }"
     code = {"Plain": "from tess_shell import Module\nclass Plain(Module): pass\n"}
     with running(
         'Plain { On_Changed { Action: Call, Target: "Host.changed" } }',
@@ -205,7 +205,7 @@ def test_a_module_whose_root_cannot_raise_the_event_is_an_error_at_the_handler()
 
 def test_the_placeholder_part_colours_the_hint_and_its_disabled_state_does() -> None:
     sheet = (
-        "---\nTDL: 0.1\nName: G\n---\nStylesheet {\n"
+        "---\nTDL: 0.2\nName: G\n---\nStylesheet {\n"
         '  Rule { Selector: "TextInput::placeholder", Foreground: "#102030" }\n'
         '  Rule { Selector: "TextInput::placeholder:disabled", Foreground: "#405060" }\n}\n'
     )
@@ -223,7 +223,7 @@ def test_the_placeholder_part_colours_the_hint_and_its_disabled_state_does() -> 
 
 def test_a_rule_on_the_module_restyles_it_and_overflow_is_a_style_key() -> None:
     sheet = (
-        "---\nTDL: 0.1\nName: G\n---\nStylesheet {\n"
+        "---\nTDL: 0.2\nName: G\n---\nStylesheet {\n"
         '  Rule { Selector: "TextInput", Overflow: ELLIPSIS, Background: "#0a0b0c", '
         'Foreground: "#ffeedd", Border_Width: 3 }\n'
         '  Rule { Selector: "TextEditor", Background: "#0c0b0a" }\n}\n'
@@ -238,7 +238,7 @@ def test_a_rule_on_the_module_restyles_it_and_overflow_is_a_style_key() -> None:
 
 def test_a_rule_on_the_block_reaches_both_modules() -> None:
     sheet = (
-        "---\nTDL: 0.1\nName: G\n---\nStylesheet {\n"
+        "---\nTDL: 0.2\nName: G\n---\nStylesheet {\n"
         '  Rule { Selector: "TextField", Corner_Radius: 10, Padding: 2 }\n}\n'
     )
     with running("TextInput { Text: x }\nTextEditor { Text: y }", sheet=sheet) as r:

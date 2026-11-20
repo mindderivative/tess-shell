@@ -1,5 +1,5 @@
 ---
-TDL: 0.1
+TDL: 0.2
 Shell: 0.1
 Name: Audio
 ---
@@ -8,7 +8,8 @@ Name: Audio
 # toggle on click, a volume step on scroll, the list of outputs on a secondary click, an optional
 # percent number and slider, and a mark while the microphone is muted. The Python sends `ready`,
 # `volume`, `volume_text`, `muted`, `kind`, `name`, `mic_muted`, `has_mic`, `outputs`, `icon`,
-# `tooltip` and `label`. With no sound server `ready` is false and the module is hidden: its root
+# `tooltip` (the accessible description) and `label`; the param `announce` has the module say mute,
+# unmute and a settled volume aloud (ctx.announce). With no sound server `ready` is false and the module is hidden: its root
 # is `Visible: false`, which takes no space in the Bar and shows no placeholder.
 #
 # A scroll step changes the volume by `step` percent, up for a scroll up (`event.delta` is +1 for
@@ -32,17 +33,21 @@ Module {
         show_mic { Type: boolean, Default: true }
         # percent per scroll step
         step { Type: number, Default: 5 }
+        # mute, unmute and a settled new volume are announced, politely (off by default: the
+        # specification names no announcement; Accessibility, rule 6)
+        announce { Type: boolean, Default: false }
     }
 
     FlexBox {
         Name: Root
-        Visible: {{ ready }}
+        Visible: <| ready |>
         Role: GROUP
-        Label: {{ label }}
+        Label: <| label |>
+        Description: <| tooltip |>
         Flex: HORIZONTAL
         Align_Items: CENTER
         Spacing: 4
-        On_Scroll { Action: step, delta: {{ 0 - event.delta * params.step }} }
+        On_Scroll { Action: step, delta: <| 0 - event.delta * params.step |> }
         On_Secondary_Click: show_outputs
         Tooltip {
             Alignment: CENTER
@@ -57,7 +62,7 @@ Module {
                     Padding: [12, 8, 12, 8]
                     Children {
                         Text {
-                            Text: {{ tooltip }}
+                            Text: <| tooltip |>
                             Width: AUTO
                             Height: AUTO
                             Font_Size: 14
@@ -71,7 +76,7 @@ Module {
             FlexBox {
                 Name: Toggle
                 Role: BUTTON
-                Label: {{ "Unmute" if muted else "Mute" }}
+                Label: <| "Unmute" if muted else "Mute" |>
                 Width: 32
                 Height: 32
                 Align_Items: CENTER
@@ -80,16 +85,16 @@ Module {
                 Children {
                     SVG {
                         Name: Glyph
-                        Icon: {{ icon }}
-                        Visible: {{ not muted }}
+                        Icon: <| icon |>
+                        Visible: <| not muted |>
                         Width: 16
                         Height: 16
                         A11y_Hidden: true
                     }
                     SVG {
                         Name: Glyph_Muted
-                        Icon: {{ icon }}
-                        Visible: {{ muted }}
+                        Icon: <| icon |>
+                        Visible: <| muted |>
                         Width: 16
                         Height: 16
                         A11y_Hidden: true
@@ -97,23 +102,24 @@ Module {
                     }
                 }
             }
-            If {{ params.show_percent }} {
-                Text { Name: Percent, Class: audio_text, Text: {{ volume_text }} }
+            If <| params.show_percent |> {
+                Text { Name: Percent, Class: audio_text, Text: <| volume_text |> }
             }
-            If {{ params.show_slider }} {
+            If <| params.show_slider |> {
                 Slider {
                     Name: Volume
                     Label: "Volume"
-                    Value: {{ volume }}
+                    Value: <| volume |>
+                    Value_Text: <| str(volume) + " percent" |>
                     Max: 100
-                    On_Changed { Action: drag, percent: {{ event.value }} }
-                    On_Released { Action: set_volume, percent: {{ event.value }} }
+                    On_Changed { Action: drag, percent: <| event.value |> }
+                    On_Released { Action: set_volume, percent: <| event.value |> }
                 }
             }
             SVG {
                 Name: Mic
                 Icon: "mdi:microphone-off"
-                Visible: {{ params.show_mic and mic_muted }}
+                Visible: <| params.show_mic and mic_muted |>
                 Width: 16
                 Height: 16
                 Foreground: $color.on_surface_muted

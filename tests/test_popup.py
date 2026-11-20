@@ -124,7 +124,7 @@ def test_a_popup_name_is_unique_across_the_shell() -> None:
 BTN = 'Module { FlexBox { Name: Root, Width: 60, Height: 20, Style { Background: "#336699" } } }'
 BTN_TIP = (
     "Module { FlexBox { Name: Root, Width: 60, Height: 20, Tooltip { Children { Text { "
-    "Text: {{ note }}, Width: AUTO, Height: AUTO } } } } }"
+    "Text: <| note |>, Width: AUTO, Height: AUTO } } } } }"
 )
 
 
@@ -321,6 +321,7 @@ def rig(
     children: str = "Btn { Name: Btn_One }",
     btn: str = BTN,
     edge: str = "TOP",
+    app: Any = None,
 ) -> Iterator[Rig]:
     shell, findings = read(
         (SHELL % (children, popups)).replace("Edge: TOP", f"Edge: {edge}"),
@@ -332,7 +333,7 @@ def rig(
     theme, _ = read_theme(doc, "T_Theme.tdl")
     look = make_look(theme, [], Appearance())
     store = ValueStore()
-    manager = SurfaceManager(StubApp(), {"Btn": module(btn)}, lambda k: k, store, look)  # type: ignore[arg-type]
+    manager = SurfaceManager(app or StubApp(), {"Btn": module(btn)}, lambda k: k, store, look)  # type: ignore[arg-type]
     lines: list[str] = []
     _SINKS.append(logger.add(lambda message: lines.append(str(message).rstrip()), level="DEBUG"))
     uses = manager.plan(shell)
@@ -350,7 +351,10 @@ _SINKS: list[int] = []
 def _remove_log_sinks() -> Iterator[None]:
     yield
     while _SINKS:
-        logger.remove(_SINKS.pop())
+        try:
+            logger.remove(_SINKS.pop())
+        except ValueError:  # a test that cleared every handler (the shell's own logging setup)
+            pass
 
 
 @pytest.fixture
@@ -641,6 +645,9 @@ class Port:
     def close_named(self, name: str | None = None) -> None:
         self.closed.append(name)
 
+    def update_data(self, name: str, data: Any) -> bool:
+        return False
+
     def is_open(self, name: str) -> bool:
         return False
 
@@ -673,7 +680,7 @@ def test_ctx_popup_opens_beside_the_use_whose_action_runs_and_close_popup_closes
     from tess_shell.binder.model import NO_ORIGIN, Handler
 
     layout = (
-        "---\nTDL: 0.1\nName: Menu_Button\n---\n"
+        "---\nTDL: 0.2\nName: Menu_Button\n---\n"
         "Module { FlexBox { Width: 10, Height: 10, On_Click: open_menu } }\n"
     )
     result = tess_dl.parse(layout, path="Modules/Menu_Button_Module.tdl")

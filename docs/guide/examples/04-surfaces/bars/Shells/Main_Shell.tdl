@@ -1,0 +1,57 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# A bar across the top that keeps its space free, and a short floating bar in the middle of the
+# bottom edge that lies above the windows' space by Gap pixels.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Workspaces { }
+                            Spacer { }
+                            Clock { }
+                        }
+                    }
+                }
+            }
+            Bar {
+                Name: Dock_Bar
+                Edge: BOTTOM
+                Width: 360
+                Height: 44
+                Alignment: CENTER
+                Gap: 8
+                Style { Background: $color.surface_raised, Elevation: 20% }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Justify_Content: CENTER
+                        Spacing: 12
+                        Children {
+                            Icon { Icon: "mdi:firefox", Size: 28, Label: "Browser" }
+                            Icon { Icon: "mdi:folder", Size: 28, Label: "Files" }
+                            Icon { Icon: "mdi:console", Size: 28, Label: "Terminal" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

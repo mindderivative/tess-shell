@@ -25,12 +25,12 @@ from tests.shell_samples import HEADER, SVG  # noqa: E402
 ROOT = Path("/tmp/tess-kwin-m3c")
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
+    "---\nTDL: 0.2\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default] }\n}\n"
 )
 
 PROBE_TDL = """---
-TDL: 0.1
+TDL: 0.2
 Name: Probe
 ---
 
@@ -195,13 +195,14 @@ echo "== what the shell saw and did"
 grep -E "output .* (added|removed|changed)|Bar .* (is opened|closed|configured)|Panel .* (is opened|closed|configured|moved)|monitor .* matches no output|no outputs" "$log"
 echo "== the module's life cycle (probe.log)"
 cat $root/probe.log 2>/dev/null || echo "(none)"
-echo "== verdicts"
+echo "== verdicts (an output removed and added: switch the monitor off and on in System Settings"
+echo "== or with its own button; never pull a cable or its power)"
 fail=0
 check() { if eval "$2"; then echo "PASS $1"; else echo "FAIL $1"; fail=1; fi; }
 check "Main_Bar opened exactly once (never recreated by a plug or unplug of the other screen)" \
   '[ "$(grep -c "Bar Main_Bar on HDMI-A-1 configured" "$log")" = 1 ]'
 # the shell's own shutdown logs "closed (stopped)" for every window: only a close before it counts
-check "the run contains an unplug and a plug (output removed, output added)" \
+check "the run contains an output removed and an output added" \
   'grep -qE "output [^ ]+ removed" "$log" && grep -qE "output [^ ]+ added" "$log"'
 check "Main_Bar never closed (apart from the shell's own stop at the end)" \
   '! grep "Bar Main_Bar on HDMI-A-1 closed" "$log" | grep -qv "closed (stopped)"'

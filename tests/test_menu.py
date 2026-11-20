@@ -22,7 +22,7 @@ Popup {{
             MenuItem {{ Text: "Share", Submenu: Share_Menu }}
             MenuItem {{ Text: "Archive", Submenu: Archive_Menu }}
             MenuItem {{ Text: "Off", Enabled: false, {CALL} }}
-            MenuItem {{ Text: "Id", {CALL.replace("}", ", Id: {{ caller.data.Id }} }")} }}
+            MenuItem {{ Text: "Id", {CALL.replace("}", ", Id: <| caller.data.Id |> }")} }}
         }} }}
     }}
 }}
@@ -214,11 +214,11 @@ def test_data_belongs_on_show_and_toggle_only() -> None:
             pass
     # a slot is allowed in Data and nowhere else on Show
     ok = (
-        "Button { Text: x, On_Click { Action: Show, Target: File_Menu, Data { Id: {{ 1 + 1 }} } } }"
+        "Button { Text: x, On_Click { Action: Show, Target: File_Menu, Data { Id: <| 1 + 1 |> } } }"
     )
     with running(ok, popups=POPUPS):
         pass
-    bad = "Button { Text: x, On_Click { Action: Show, Target: File_Menu, Id: {{ 1 }} } }"
+    bad = "Button { Text: x, On_Click { Action: Show, Target: File_Menu, Id: <| 1 |> } }"
     with (
         pytest.raises(AssertionError, match="takes literal arguments"),
         running(bad, popups=POPUPS),
@@ -243,7 +243,7 @@ def test_a_module_inside_a_popup_opens_a_submenu_with_ctx_popup() -> None:
         "        self.ctx.popup('Share_Menu', use=next(iter(self.ctx.uses)))\n"
     )
     popups = POPUPS.replace(
-        'MenuItem {{ Text: "Share", Submenu: Share_Menu }}'.replace("{{", "{").replace("}}", "}"),
+        'MenuItem { Text: "Share", Submenu: Share_Menu }',
         'Driver { } MenuItem { Text: "Share", Submenu: Share_Menu }',
     )
     with running(
@@ -261,7 +261,7 @@ def test_a_module_inside_a_popup_opens_a_submenu_with_ctx_popup() -> None:
 def test_a_submenu_reads_the_data_of_the_menu_that_opened_it_and_cannot_change_it() -> None:
     popups = POPUPS.replace(
         'MenuItem { Text: "Mail", On_Click { Action: Call, Target: "Driver.pressed" } }',
-        'MenuItem { Text: "Mail", On_Click { Action: Call, Target: "Driver.pressed", Id: {{ caller.data.Id }} } }',
+        'MenuItem { Text: "Mail", On_Click { Action: Call, Target: "Driver.pressed", Id: <| caller.data.Id |> } }',
     )
     assert popups != POPUPS
     with running(BAR, popups=popups) as w:

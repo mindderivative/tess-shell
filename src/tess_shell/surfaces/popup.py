@@ -16,7 +16,7 @@ import difflib
 import math
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
@@ -24,6 +24,7 @@ from loguru import logger
 from tess_shell.binder import convert
 from tess_shell.binder import model as m
 from tess_shell.binder.build import View, Wire, build
+from tess_shell.binder.controls import plain
 from tess_shell.binder.model import BindError, BindFailed, Handler
 from tess_shell.binder.shadow import DEFAULT_MAX, style_bleed, style_shadows
 from tess_shell.model import args
@@ -34,6 +35,7 @@ from tess_shell.model.uses import Use
 from tess_shell.schema.default_popups import default_popups
 from tess_shell.schema.model import ModuleDef, PopupDef, ShellDef
 from tess_shell.surfaces.bar import Rect, surface_rect
+from tess_shell.surfaces.manager import free_window
 from tess_shell.surfaces.popup_measure import measure_menu
 
 if TYPE_CHECKING:
@@ -314,6 +316,10 @@ class OpenPopup:
     item: str = ""
     sub: OpenPopup | None = None
     rest: Any = None  # the pending hover timer of a menu item (opens a submenu, closes one)
+    # the block that had keyboard focus when the Popup opened from it, with whether its ring was
+    # showing, and the view it is in: focus goes back to it when the Popup closes (Accessibility,
+    # rule 12)
+    opener: tuple[TreNode, bool, View] | None = None
 
     @property
     def popup(self) -> PopupDef:
@@ -508,6 +514,33 @@ class Popups:
         cur = self.current
         if cur is not None and (name is None or cur.popup.name == name):
             self.close(cur, "closed by a call")
+
+    def update_data(self, name: str, data: Mapping[str, Any]) -> bool:
+        """``ctx.update_popup(name, data)``: the open Popup ``name`` and the submenus open from it
+        read ``data`` as their ``caller.data`` from now on: the content is resolved again and
+        diffed into the open window (its size stays). A bad ``data`` is logged and changes
+        nothing. False when the Popup is not open."""
+        chain = [op for op in self.chain() if not op.closing and op.view is not None]
+        if not chain or chain[0].popup.name != name:
+            return False
+        try:
+            copy = args.copy_plain(data, "data")
+        except ValueError as exc:
+            logger.error(f"ctx.update_popup({name!r}): {exc}; the Popup keeps its data")
+            return True
+        for op in chain:
+            op.caller = replace(op.caller, data=copy)
+            op.record = op.caller.record(self._m._all_uses.get(op.caller.use))
+            op.live.caller = op.record
+            assert op.view is not None
+            try:
+                op.view.rebuild(op.live.resolve(op.plan.expanded))
+            except BindFailed as failed:
+                for error in failed.errors:
+                    logger.warning(
+                        f"{error.origin}: {error.message}; the Popup keeps what it shows"
+                    )
+        return True
 
     def is_open(self, name: str) -> bool:
         """Is the Popup ``name`` open now, as the outermost one or as a submenu?"""
@@ -704,6 +737,13 @@ class Popups:
             op, event, block, opens
         )
         self._listen(op)
+        if popup.focus and holder is not None and found is not None:
+            held = holder.focus_holder(found)  # the block it was opened from, if it has focus
+            if held is not None:
+                ring = holder.ring_shown(held)
+                op.opener = (held, ring, holder)
+                if ring:  # opened from the keyboard: the Popup's first Tab stop takes the focus
+                    op.view.focus_first()
         if parent is not None:
             parent.sub = op
             if parent.view is not None:
@@ -760,8 +800,56 @@ class Popups:
     def _key(self, op: OpenPopup, event: Any) -> None:
         key = getattr(event, "key", None)
         logger.debug(f"Popup {op.where}: key {key}")
-        if key == "escape":
+        if key == "escape":  # the innermost level closes: a submenu alone, the root with focus back
             self.close(op, "escape")
+        elif isinstance(key, str) and plain(event) and not op.closing and op.view is not None:
+            self._menu_key(op, key)
+
+    def _menu_key(self, op: OpenPopup, key: str) -> None:
+        """The keys of a menu (Standard Modules > Keyboard Operation): Up and Down move the lit
+        row (round the ends), Home and End go to the first and the last, Enter and Space run the
+        row (a row with a submenu opens it), Right opens the submenu of the lit row and Left
+        closes this one when it is a submenu. A submenu opened from the keyboard takes the focus
+        and lights its first row."""
+        assert op.view is not None
+        rows = op.view.menu_rows()
+        if not rows:
+            return
+        lit = op.view.marked_row()
+        at = next((i for i, row in enumerate(rows) if row is lit), None)
+        if key in ("arrow_down", "arrow_up", "home", "end"):
+            if key == "home" or (key == "arrow_down" and at is None):
+                to = 0
+            elif key == "end" or (key == "arrow_up" and at is None):
+                to = len(rows) - 1
+            else:
+                assert at is not None
+                to = (at + (1 if key == "arrow_down" else -1)) % len(rows)
+            op.view.mark_row(rows[to])
+        elif key in ("enter", "space", "arrow_right") and lit is not None:
+            ctl = op.view.controls.get(lit.tre) if lit.tre is not None else None
+            opens = getattr(ctl, "opens", "")
+            if key == "arrow_right":
+                if opens:
+                    self._open_item(op, lit.typed.name or "", opens)
+                    self._enter_submenu(op)
+            else:
+                op.view.activate(lit)
+                if opens:
+                    self._enter_submenu(op)
+        elif key == "arrow_left" and op.parent_op is not None:
+            self.close(op, "left")
+
+    def _enter_submenu(self, op: OpenPopup) -> None:
+        """The submenu ``op`` has just opened from the keyboard takes the focus and lights its
+        first row."""
+        sub = op.sub
+        if sub is None or sub.view is None or sub.closing:
+            return
+        sub.view.focus_first()
+        rows = sub.view.menu_rows()
+        if rows:
+            sub.view.mark_row(rows[0])
 
     def _configured(self, op: OpenPopup, event: Any) -> None:
         x, y = int(getattr(event, "x", 0)), int(getattr(event, "y", 0))
@@ -825,6 +913,10 @@ class Popups:
         op.closing = True
         op.live.release()
         self._m.settle_dynamic()  # the uses made for its entries end with it
+        opener, op.opener = op.opener, None
+        if opener is not None:  # focus goes back to the block the Popup was opened from
+            node, ring, view = opener
+            view.restore_focus(node, ring)
 
     def _closed(self, op: OpenPopup, reason: str) -> None:
         """tre's ``closed``: the compositor dismissed it (``dismissed``), the parent was not open
@@ -836,6 +928,9 @@ class Popups:
         self._free(op)
         op.closing = True
         logger.info(f"Popup {op.where} closed ({reason})")
+        # tre keeps the window object for good: take the shell's listeners and nodes off it, or it
+        # keeps this OpenPopup, its content tree and its LiveTree
+        free_window(op.window)
         if reason == "failed":
             logger.warning(
                 f"Popup {op.where}: tre closed it with reason failed: its parent "
@@ -1076,6 +1171,7 @@ class Popups:
             op.rest = None
         window = op.window
         if event == "enter":
+            op.view.mark_row(None)  # the pointer is on a row: the keys' row gives way to it
             if opens:
                 if op.sub is None or op.sub.item != block:
                     op.rest = window.after(OPEN_REST_MS, lambda: self._open_item(op, block, opens))

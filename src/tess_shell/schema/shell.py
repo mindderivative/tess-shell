@@ -10,14 +10,17 @@ from __future__ import annotations
 import dataclasses
 import os
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from pathlib import Path
 
 import tess_dl
 from tess_dl import Block, Document, Property
 
 from tess_shell.binder import model as m
+from tess_shell.config.confine import PathOutsideConfig
 from tess_shell.schema import blocks
 from tess_shell.schema.findings import Finding, Severity, nearest
+from tess_shell.schema.imports import ImportBroken, ImportedShell, ImportMissing, ShellImporter
 from tess_shell.schema.model import (
     PARAM_TYPES,
     BarDef,
@@ -69,6 +72,8 @@ class _Ctx:
         load_style: Callable[[str], StyleDef | None] | None = None,
         icons: IconSource | None = None,
         resolve_path: Callable[[str], str] | None = None,
+        import_shell: ShellImporter | None = None,
+        path: Path | None = None,
     ) -> None:
         self.load_style = load_style
         self.icons = icons
@@ -85,6 +90,34 @@ class _Ctx:
         self.names: dict[str, m.Origin] = {}
         self.selectors: dict[tuple[str, str], m.Origin] = {}
         self.parts: dict[str, m.Origin] = {}  # a module's ``Part:`` names, where each was written
+        # the shell files an ``Import:`` reads, and the file this context reads: ``path`` is its
+        # absolute path (``None``: no imports can be followed), ``chain`` the files that import
+        # one another down to it (name and identity, the first is the file read by ``read_shell``)
+        self.import_shell = import_shell
+        self.path = path
+        self.chain: tuple[tuple[Path, str], ...] = ()
+        self.imported: dict[Path, m.Origin] = {}  # identity of each imported file -> its Import
+        self.follow_imports = True
+
+    def for_import(self, imported: ImportedShell) -> _Ctx:
+        """The context for reading ``imported``: its own file name and paths, the findings, the
+        names (unique across the shell) and the imports seen so far shared with this one."""
+        sub = _Ctx(
+            imported.name,
+            imported.read_text,
+            self.modules,
+            imported.import_module,
+            self.load_style,
+            self.icons,
+            imported.resolve_path,
+            self.import_shell,
+            imported.path,
+        )
+        sub.findings = self.findings
+        sub.names = self.names
+        sub.imported = self.imported
+        sub.chain = (*self.chain, (imported.identity, imported.name))
+        return sub
 
     def origin(self, o: tess_dl.Origin | None) -> m.Origin:
         line, column = position(o)
@@ -106,6 +139,10 @@ class _Ctx:
 
     def problem(self, o: tess_dl.Origin | None, key: str, exc: ValueProblem) -> None:
         self.add(o, exc.rule, f"{key}: {exc.message}", exc.hint)
+
+    def outside(self, o: tess_dl.Origin | None, exc: PathOutsideConfig) -> None:
+        """A path this file wrote leaves the configured directories (Security Model)."""
+        self.add(o, "path-outside-config", str(exc), PathOutsideConfig.HINT)
 
     def name(self, prop: Property) -> str | None:
         value = prop.value
@@ -199,7 +236,7 @@ def _choices(block: str, key: str) -> tuple[str, ...]:
 
 
 def slot_value(ctx: _Ctx, prop: Property) -> m.SlotValue | None:
-    """A value written with ``{{ }}`` slots, or ``None`` for a plain value."""
+    """A value written with ``<| |>`` slots, or ``None`` for a plain value."""
     value = prop.value
     parts: list[str | m.SlotPart] = []
     if isinstance(value, tess_dl.Slot):
@@ -248,7 +285,11 @@ def _image(ctx: _Ctx, prop: Property, slot: m.SlotValue | None) -> m.Value | Non
     if not isinstance(name, str) or not name:
         ctx.add(prop.value_origin, "bad-value", f"{prop.key} is the path of an image file", "")
         return None
-    path = ctx.resolve_path(name)
+    try:
+        path = ctx.resolve_path(name)
+    except PathOutsideConfig as exc:
+        ctx.outside(prop.value_origin, exc)
+        return None
     if not os.path.isfile(path):
         ctx.add(
             prop.value_origin,
@@ -375,15 +416,16 @@ def _for(ctx: _Ctx, entry: tess_dl.For) -> m.ForNode:
         if isinstance(n, m.Node | m.UseNode)
     ]
     head = heads[0] if heads else "For"
-    if not _NAME.match(entry.variable):
-        ctx.add(
-            entry.origin,
-            "bad-name",
-            f"the loop variable {entry.variable!r} must be letters, digits and _",
-            "write For item In {{ items }} Key {{ item.id }}",
-        )
+    for variable in entry.variables:
+        if not _NAME.match(variable):
+            ctx.add(
+                entry.origin,
+                "bad-name",
+                f"the loop variable {variable!r} must be letters, digits and _",
+                "write For item In <| items |> Key <| item.id |>",
+            )
     return m.ForNode(
-        variable=entry.variable,
+        variables=entry.variables,
         items=_part(ctx, entry.items),
         key=_part(ctx, entry.key),
         name=head,
@@ -404,9 +446,18 @@ def _imports(ctx: _Ctx, entry: Property) -> list[Child]:
             ctx.add(entry.value_origin, "bad-value", "Import names a file", "write a file name")
             continue
         if text.endswith("_Shell.tdl"):
-            ctx.not_built(item.origin or entry.value_origin, "Import of a shell file")
+            ctx.add(
+                item.origin or entry.value_origin,
+                "import-misplaced",
+                f"Import: {text} is a shell file, and a surface's Children import modules",
+                "import a shell file in a Monitor's Children: Monitor { Children { Import: ... } }",
+            )
             continue
-        found = ctx.import_module(text) if ctx.import_module is not None else None
+        try:
+            found = ctx.import_module(text) if ctx.import_module is not None else None
+        except PathOutsideConfig as exc:
+            ctx.outside(item.origin or entry.value_origin, exc)
+            continue
         if found is None:
             ctx.add(
                 item.origin or entry.value_origin,
@@ -457,7 +508,7 @@ _FALLBACK_ICON = "mdi:image-broken-variant"
 
 
 def _param_value(ctx: _Ctx, module: str, decl: ParamDecl, entry: Property) -> m.Value | None:
-    """The value a call gives a param. A ``{{ }}`` slot is kept (the model evaluates it in the scope
+    """The value a call gives a param. A ``<| |>`` slot is kept (the model evaluates it in the scope
     of the place that wrote the call); a ``path`` becomes absolute; an ``icon`` becomes the SVG
     document of the named icon or file, or the absolute path of a bitmap file."""
     slot = slot_value(ctx, entry)
@@ -469,10 +520,14 @@ def _param_value(ctx: _Ctx, module: str, decl: ParamDecl, entry: Property) -> m.
     except ValueProblem as exc:
         ctx.problem(entry.value_origin, entry.key, exc)
         return None
-    if decl.type == "path" and isinstance(value, m.Text) and value.value:
-        return m.Text(ctx.resolve_path(value.value), origin=origin)
-    if decl.type == "icon" and isinstance(value, m.Text) and value.value:
-        return _icon_param(ctx, entry, value.value, origin)
+    try:
+        if decl.type == "path" and isinstance(value, m.Text) and value.value:
+            return m.Text(ctx.resolve_path(value.value), origin=origin)
+        if decl.type == "icon" and isinstance(value, m.Text) and value.value:
+            return _icon_param(ctx, entry, value.value, origin)
+    except PathOutsideConfig as exc:
+        ctx.outside(entry.value_origin, exc)
+        return None
     return value
 
 
@@ -829,6 +884,19 @@ def _handler(
                 else "put On_Released on the call of a Slider",
             )
             return None
+    return _action_handler(ctx, key, origin, value)
+
+
+def _action_handler(
+    ctx: _Ctx,
+    key: str,
+    origin: tess_dl.Origin | None,
+    value: tess_dl.Value | Block,
+    skip: tuple[str, ...] = (),
+) -> m.Handler | None:
+    """The action a handler value names, with its arguments: the part of :func:`_handler` that is
+    the same wherever the handler is written (``skip`` are keys of the block that are not
+    arguments, such as a shortcut's ``Keys``)."""
     args: dict[str, object] = {}
     slots: dict[str, m.SlotValue] = {}
     if isinstance(value, Block):
@@ -857,7 +925,7 @@ def _handler(
                     "",
                 )
                 return None
-            if not isinstance(e, Property) or e.key == "Action":
+            if not isinstance(e, Property) or e.key == "Action" or e.key in skip:
                 continue
             slot = slot_value(ctx, e)
             if slot is not None:
@@ -868,8 +936,7 @@ def _handler(
                 ctx.add(
                     e.value_origin,
                     "bad-value",
-                    f"{e.key}: an argument is a string, a number, true or false, or a "
-                    "{{ }} slot",
+                    f"{e.key}: an argument is a string, a number, true or false, or a <| |> slot",
                     "",
                 )
                 return None
@@ -904,7 +971,7 @@ def _handler(
             ctx.add(
                 at,
                 "bad-value",
-                f"{name} takes literal arguments: a {{{{ }}}} slot is for the arguments of Call "
+                f"{name} takes literal arguments: a <| |> slot is for the arguments of Call "
                 "and of a module's own action (and for the Data of Show and Toggle)",
                 "",
             )
@@ -945,7 +1012,7 @@ def _data_block(
             ctx.add(
                 e.origin,
                 "bad-value",
-                "Data holds Name: value entries: text, numbers, true or false, or a {{ }} slot",
+                "Data holds Name: value entries: text, numbers, true or false, or a <| |> slot",
                 "",
             )
             return False
@@ -958,7 +1025,7 @@ def _data_block(
             ctx.add(
                 e.value_origin,
                 "bad-value",
-                f"Data.{e.key}: a string, a number, true or false, or a {{{{ }}}} slot",
+                f"Data.{e.key}: a string, a number, true or false, or a <| |> slot",
                 "",
             )
             return False
@@ -1148,12 +1215,31 @@ BAR_KEYS: dict[str, str] = {
     "Min_Height": "bound",
     "Max_Width": "bound",
     "Max_Height": "bound",
+    "Keyboard": "enum",
+    "Tab_Index": "tab_index",
+    "Shortcut_Mode": "bool",
 }
 BAR_CHOICES: dict[str, tuple[str, ...]] = {
     "Edge": ("TOP", "BOTTOM", "LEFT", "RIGHT"),
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),
     "Alignment": ("START", "CENTER", "END"),
+    # a Bar takes the keyboard on a click or not at all: EXCLUSIVE would take every key of the
+    # desktop, as for the Frame's painter
+    "Keyboard": ("NONE", "ON_DEMAND"),
 }
+
+
+def _tab_index(values: Mapping[str, m.Value]) -> int | None:
+    """The ``Tab_Index`` a surface wrote (already judged 0 to 2 147 483 647), or ``None``."""
+    value = values.get("Tab_Index")
+    return int(value.value) if isinstance(value, m.Number) else None
+
+
+def _shortcut_mode(values: Mapping[str, m.Value]) -> m.Origin | None:
+    """Where a surface writes ``Shortcut_Mode: true`` (the key's position), or ``None``: it wrote
+    false or nothing."""
+    value = values.get("Shortcut_Mode")
+    return value.origin if isinstance(value, m.Bool) and value.value else None
 
 
 def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
@@ -1169,6 +1255,13 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
                 name = ctx.name(entry)
             elif key == "Style":
                 ctx.not_built(entry.key_origin, "a Style file")
+            elif key in blocks.BAR_REMOVED:
+                ctx.add(
+                    entry.key_origin,
+                    "removed-key",
+                    f"the Bar key {key} was removed",
+                    blocks.BAR_REMOVED[key],
+                )
             elif key in blocks.BAR_NOT_BUILT:
                 ctx.not_built(entry.key_origin, f"the Bar key {key}", "warning")
             elif key in BAR_KEYS:
@@ -1189,6 +1282,13 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
                 style = _scalar_block_keys(ctx, entry, blocks.BAR_STYLE, "Bar")
             elif entry.type == "Children":
                 children = _children(ctx, entry, lambda b: _block(ctx, b))
+            elif entry.type in blocks.BAR_REMOVED:
+                ctx.add(
+                    entry.origin,
+                    "removed-key",
+                    f"the Bar key {entry.type} was removed",
+                    blocks.BAR_REMOVED[entry.type],
+                )
             elif entry.type in blocks.BAR_NOT_BUILT:
                 ctx.not_built(entry.origin, f"the Bar key {entry.type}", "warning")
             else:
@@ -1234,6 +1334,10 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         min_height=px("Min_Height"),
         max_width=px("Max_Width"),
         max_height=px("Max_Height"),
+        keyboard=word("Keyboard", "NONE") or "NONE",
+        keyboard_written="Keyboard" in values,
+        tab_index=_tab_index(values),
+        shortcut_mode=_shortcut_mode(values),
         style=style,
         children=tuple(children),
     )
@@ -1496,7 +1600,10 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         duration=float(animation[1]),
         peek=peek,
         content_fade=fade.value if isinstance(fade, m.Bool) else True,
+        tab_index=_tab_index(values),
+        shortcut_mode=_shortcut_mode(values),
         handlers=handlers,
+        shortcut=hotkey if isinstance(hotkey := values.get("Shortcut"), m.Text) else None,
     )
 
 
@@ -1723,7 +1830,7 @@ def _tooltip_name(
 
 def _tooltip_text(ctx: _Ctx, entry: Property) -> m.TooltipRef | None:
     """``Tooltip: "Save the file"``: the short form of an inline tooltip Popup that holds the text
-    on one line (Standard Modules > Tooltip). The text may hold ``{{ }}`` slots in a module. It is
+    on one line (Standard Modules > Tooltip). The text may hold ``<| |>`` slots in a module. It is
     also the block's accessible description (Accessibility, rule 11)."""
     o = ctx.origin(entry.key_origin)
     slot = slot_value(ctx, entry)
@@ -1990,6 +2097,38 @@ def _check_tooltips(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
                     )
 
 
+def _check_shortcut_mode(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
+    """At most one surface is in shortcut mode (Focus and Keyboard, rule 1): two or more written
+    ``Shortcut_Mode: true`` are one warning that names them all, and the first in document order
+    keeps it (the others start false). A surface is a Bar, a Panel, a Frame or a strip, named as the
+    focus order names it."""
+    written: list[tuple[m.Origin, str, str]] = []
+    for monitor in monitors:
+        for surface in monitor.surfaces:
+            if surface.shortcut_mode is not None:
+                kind = "Bar" if isinstance(surface, BarDef) else "Panel"
+                written.append((surface.shortcut_mode, kind, surface.name))
+        for frame in monitor.frames:
+            if frame.shortcut_mode is not None:
+                written.append((frame.shortcut_mode, "Frame", frame.name))
+            for side, edge in frame.edges.items():
+                if edge.shortcut_mode is not None:
+                    written.append((edge.shortcut_mode, "strip", f"{frame.name}.{side}"))
+    if len(written) < 2:
+        return
+    written.sort(key=lambda w: (w[0].line, w[0].column))
+    named = ", ".join(f"{kind} {name} ({where})" for where, kind, name in written)
+    first = written[0]
+    ctx.add(
+        first[0],
+        "shortcut-mode-twice",
+        f"Shortcut_Mode: true is written on {len(written)} surfaces: {named}; at most one surface "
+        f"is in shortcut mode, so {first[2]} keeps it and the others start false",
+        "write Shortcut_Mode: true on one surface only",
+        "warning",
+    )
+
+
 def _sides_of(value: m.Value | None) -> tuple[float, float, float, float]:
     if isinstance(value, m.Length):
         return (float(value.px),) * 4
@@ -2225,6 +2364,9 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         keyboard=keyboard.name if isinstance(keyboard, m.Enum) else "NONE",
         keyboard_written=keyboard is not None,
         edges=edges,
+        tab_index=_tab_index(values),
+        shortcut_mode=_shortcut_mode(values),
+        shortcut=hotkey if isinstance(hotkey := values.get("Shortcut"), m.Text) else None,
     )
 
 
@@ -2252,7 +2394,18 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
         edge_name: str | None = None
         peek: PeekDef | None = None
         content_fade = True
-        keys = ["Name", "Thickness", "Padding", "Children", "Peek", "Content_Fade"]
+        tab_index: int | None = None
+        shortcut_mode: m.Origin | None = None
+        keys = [
+            "Name",
+            "Thickness",
+            "Padding",
+            "Children",
+            "Peek",
+            "Content_Fade",
+            "Tab_Index",
+            "Shortcut_Mode",
+        ]
         for sub in entry.entries:
             if isinstance(sub, Property):
                 if sub.key == "Name":
@@ -2278,6 +2431,26 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
                         continue
                     assert isinstance(value, m.Number)
                     thickness = float(value.value)
+                elif sub.key == "Tab_Index":
+                    try:
+                        index = coerce(
+                            "tab_index", sub.value, ctx.origin(sub.key_origin), key="Tab_Index"
+                        )
+                    except ValueProblem as exc:
+                        ctx.problem(sub.value_origin, sub.key, exc)
+                        continue
+                    assert isinstance(index, m.Number)
+                    tab_index = int(index.value)
+                elif sub.key == "Shortcut_Mode":
+                    try:
+                        flag = coerce(
+                            "bool", sub.value, ctx.origin(sub.key_origin), key="Shortcut_Mode"
+                        )
+                    except ValueProblem as exc:
+                        ctx.problem(sub.value_origin, sub.key, exc)
+                        continue
+                    assert isinstance(flag, m.Bool)
+                    shortcut_mode = flag.origin if flag.value else None
                 elif sub.key == "Padding":
                     try:
                         value = coerce(
@@ -2332,6 +2505,8 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
             edge_name,
             peek,
             content_fade,
+            tab_index,
+            shortcut_mode,
         )
     return out
 
@@ -2379,9 +2554,7 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
     index: int | str | None = None
     connector: str | None = None
     description: str | None = None
-    surfaces: list[BarDef | PanelDef] = []
-    popups: list[PopupDef] = []
-    frames: list[FrameDef] = []
+    taken = _Surfaces()
     saw_name = False
     for entry in block.entries:
         if isinstance(entry, Property):
@@ -2415,47 +2588,14 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
                 ctx.unknown(entry.key_origin, key, allowed, "key in Monitor")
         elif isinstance(entry, Block):
             if entry.type == "Children":
-                for child in entry.entries:
-                    if isinstance(child, Block):
-                        if child.type == "Bar":
-                            bar = _bar(ctx, child)
-                            if bar is not None:
-                                surfaces.append(bar)
-                        elif child.type == "Panel":
-                            panel = _panel(ctx, child)
-                            if panel is not None:
-                                surfaces.append(panel)
-                        elif child.type == "Popup":
-                            popup = _popup(ctx, child)
-                            if popup is not None:
-                                popups.append(popup)
-                        elif child.type == "Frame":
-                            frame = _frame(ctx, child)
-                            if frame is not None and frames:
-                                ctx.add(
-                                    child.origin,
-                                    "frame-duplicate",
-                                    f"Monitor has a second Frame ({frame.name}); the first is "
-                                    f"{frames[0].name}",
-                                    "a Monitor has one Frame",
-                                )
-                            elif frame is not None:
-                                frames.append(frame)
-                        else:
-                            ctx.unknown(child.origin, child.type, list(_SURFACES), "surface")
-                    elif isinstance(child, Property) and child.key == "Import":
-                        ctx.not_built(child.key_origin, "Import")
-                    elif isinstance(child, Property):
-                        ctx.unknown(child.key_origin, child.key, list(_SURFACES), "surface")
-                    elif isinstance(child, tess_dl.If | tess_dl.For):
-                        ctx.not_built(child.origin, "If and For")
+                _surface_entries(ctx, entry.entries, taken)
             else:
                 ctx.unknown(entry.origin, entry.type, allowed, "block in Monitor")
     if not saw_name:
         ctx.add(block.origin, "missing-key", "a Monitor needs a Name", "write Name: Main")
     if name is None:
         return None
-    surfaces, frames = _host_melds(ctx, surfaces, frames)
+    surfaces, frames = _host_melds(ctx, taken.surfaces, taken.frames)
     here = ctx.origin(block.origin)
     for kind, value in (
         ("Index", None if index is None else str(index)),
@@ -2482,9 +2622,137 @@ def _monitor(ctx: _Ctx, block: Block) -> MonitorDef | None:
         connector=connector,
         description=description,
         surfaces=tuple(surfaces),
-        popups=tuple(popups),
+        popups=tuple(taken.popups),
         frames=tuple(frames),
     )
+
+
+class _Surfaces:
+    """What a Monitor's ``Children`` hold, in the order written: the surfaces of its own file and
+    those of every file imported at the position of the ``Import``."""
+
+    def __init__(self) -> None:
+        self.surfaces: list[BarDef | PanelDef] = []
+        self.popups: list[PopupDef] = []
+        self.frames: list[FrameDef] = []
+
+
+def _surface_entries(ctx: _Ctx, entries: Iterable[object], into: _Surfaces) -> None:
+    """The entries of a Monitor's ``Children``, or of an imported shell file's root: surface
+    blocks and ``Import`` of other shell files."""
+    for child in entries:
+        if isinstance(child, Block):
+            if child.type == "Bar":
+                bar = _bar(ctx, child)
+                if bar is not None:
+                    into.surfaces.append(bar)
+            elif child.type == "Panel":
+                panel = _panel(ctx, child)
+                if panel is not None:
+                    into.surfaces.append(panel)
+            elif child.type == "Popup":
+                popup = _popup(ctx, child)
+                if popup is not None:
+                    into.popups.append(popup)
+            elif child.type == "Frame":
+                frame = _frame(ctx, child)
+                if frame is not None and into.frames:
+                    ctx.add(
+                        child.origin,
+                        "frame-duplicate",
+                        f"Monitor has a second Frame ({frame.name}); the first is "
+                        f"{into.frames[0].name}",
+                        "a Monitor has one Frame",
+                    )
+                elif frame is not None:
+                    into.frames.append(frame)
+            elif child.type == "Monitor" and len(ctx.chain) > 1:
+                ctx.add(
+                    child.origin,
+                    "import-monitor",
+                    "an imported shell file holds surface blocks, not a Monitor",
+                    "the Monitor that imports the file chooses the monitor",
+                )
+            else:
+                ctx.unknown(child.origin, child.type, list(_SURFACES), "surface")
+        elif isinstance(child, Property) and child.key == "Import":
+            _import_shells(ctx, child, into)
+        elif isinstance(child, Property):
+            ctx.unknown(child.key_origin, child.key, list(_SURFACES), "surface")
+        elif isinstance(child, tess_dl.If | tess_dl.For):
+            ctx.not_built(child.origin, "If and For")
+
+
+def _import_shells(ctx: _Ctx, entry: Property, into: _Surfaces) -> None:
+    """``Import: Top_Shell.tdl`` (one file or a list) in a Monitor's ``Children``: the surfaces of
+    each file, read as if written here, in this order (Shell File > Structure, D22). A file is
+    imported once into a shell, because a surface's ``Name`` is unique across it."""
+    if not ctx.follow_imports:
+        return  # a file read alone (nothing imports it yet): the importing shell reads its imports
+    value = entry.value
+    items = list(value.items) if isinstance(value, tess_dl.List) else [value]
+    for item in items:
+        text = item.value if isinstance(item, tess_dl.String) else getattr(item, "text", None)
+        where = item.origin or entry.value_origin
+        if not isinstance(text, str):
+            ctx.add(where, "bad-value", "Import names a file", "write a file name")
+            continue
+        if not text.endswith("_Shell.tdl"):
+            ctx.add(
+                where,
+                "import-misplaced",
+                f"Import: {text} is not a shell file, and a Monitor's Children import shell files",
+                "a module is imported in a surface's Children; a shell file ends in _Shell.tdl",
+            )
+            continue
+        try:
+            if ctx.import_shell is None or ctx.path is None:
+                raise ImportMissing(text)
+            imported = ctx.import_shell(ctx.path, text)
+        except PathOutsideConfig as exc:
+            ctx.outside(where, exc)
+            continue
+        except ImportMissing as exc:
+            ctx.add(
+                where,
+                "import-not-found",
+                f"Import: {text} names a file that does not exist: {exc.tried}",
+                "a path is relative to the file that writes the Import",
+            )
+            continue
+        except ImportBroken as exc:
+            ctx.findings.extend(exc.findings)
+            ctx.add(
+                where,
+                "import-failed",
+                f"Import: {text} could not be read; the findings in that file say why",
+                "",
+            )
+            continue
+        here = ctx.origin(entry.key_origin)
+        for i, (identity, _) in enumerate(ctx.chain):
+            if identity == imported.identity:
+                circle = [name for _, name in ctx.chain[i:]] + [imported.name]
+                ctx.add(
+                    where,
+                    "import-cycle",
+                    f"shell files import each other in a circle: {' -> '.join(circle)}",
+                    "remove one of the imports",
+                )
+                break
+        else:
+            first = ctx.imported.get(imported.identity)
+            if first is not None:
+                ctx.add(
+                    where,
+                    "import-twice",
+                    f"{imported.name} is imported twice, first at {first}",
+                    "a surface's Name is unique across the shell, so a file of surfaces is "
+                    "imported once; give each Monitor its own file",
+                )
+                continue
+            ctx.imported[imported.identity] = here
+            _surface_entries(ctx.for_import(imported), imported.document.root.entries, into)
 
 
 def _host_melds(
@@ -2522,12 +2790,24 @@ def read_shell(
     import_module: Callable[[str], str | None] | None = None,
     icons: IconSource | None = None,
     resolve_path: Callable[[str], str] | None = None,
+    import_shell: ShellImporter | None = None,
+    path: Path | None = None,
 ) -> tuple[ShellDef | None, list[Finding]]:
     """Type a parsed shell file. ``read_text`` reads a file named in the shell file (an SVG's
     ``Source``) and raises ``OSError``; the schema does no I/O of its own. ``resolve_path`` makes
     a path written in the file (an image's ``Source``) absolute. ``modules`` are the known module
-    files by call name: a block with such a head is a module call."""
-    ctx = _Ctx(file, read_text, modules, import_module, None, icons, resolve_path)
+    files by call name: a block with such a head is a module call. ``import_shell`` reads the
+    shell file an ``Import:`` in a Monitor's ``Children`` names, relative to ``path``, the absolute
+    path of this file.
+
+    A root that holds surface blocks and ``Import`` and no ``Monitor`` is a file of surfaces, made
+    to be imported (Shell File > Structure, D22). Read alone it is checked block by block and
+    follows no import (the shell that imports it does); it has no monitors."""
+    ctx = _Ctx(
+        file, read_text, modules, import_module, None, icons, resolve_path, import_shell, path
+    )
+    if path is not None:
+        ctx.chain = ((Path(os.path.realpath(path)), file),)
     root = document.root
     if root.type != "Shell":
         ctx.add(
@@ -2538,6 +2818,14 @@ def read_shell(
         )
         return None, ctx.findings
     monitors: list[MonitorDef] = []
+    if _is_surface_file(root):
+        ctx.follow_imports = False
+        _surface_entries(ctx, root.entries, _Surfaces())
+        name = document.metadata.get("Name")
+        shell_name = getattr(name, "text", None) or getattr(name, "value", "") or ""
+        if any(f.severity == "error" for f in ctx.findings):
+            return None, ctx.findings
+        return ShellDef(file, shell_name, (), surfaces_only=True), ctx.findings
     for entry in root.entries:
         if isinstance(entry, Block):
             if entry.type == "Monitor":
@@ -2546,15 +2834,32 @@ def read_shell(
                     monitors.append(monitor)
             else:
                 ctx.unknown(entry.origin, entry.type, ["Monitor"], "block in Shell")
+        elif isinstance(entry, Property) and entry.key == "Import":
+            ctx.add(
+                entry.key_origin,
+                "import-misplaced",
+                "Import in Shell is not read: a Monitor's Children import shell files",
+                "write Monitor { Children { Import: Top_Shell.tdl } }",
+            )
         elif isinstance(entry, Property):
             ctx.unknown(entry.key_origin, entry.key, ["Monitor"], "key in Shell")
     _check_attach(ctx, monitors)
     _check_tooltips(ctx, monitors)
+    _check_shortcut_mode(ctx, monitors)
     name = document.metadata.get("Name")
     shell_name = getattr(name, "text", None) or getattr(name, "value", "") or ""
     if any(f.severity == "error" for f in ctx.findings):
         return None, ctx.findings
     return ShellDef(file, shell_name, tuple(monitors)), ctx.findings
+
+
+def _is_surface_file(root: Block) -> bool:
+    """A shell file whose root holds surfaces (or imports) and no Monitor: a file to import."""
+    kinds = [
+        e.type if isinstance(e, Block) else e.key if isinstance(e, Property) else ""
+        for e in root.entries
+    ]
+    return "Monitor" not in kinds and any(k in (*_SURFACES, "Import") for k in kinds)
 
 
 def _check_attach(ctx: _Ctx, monitors: list[MonitorDef]) -> None:
@@ -2677,8 +2982,13 @@ def _param_decls(ctx: _Ctx, block: Block) -> dict[str, ParamDecl]:
                 default = coerce(
                     _PARAM_KINDS[type_word], default_prop.value, ctx.origin(default_prop.key_origin)
                 )
+                if type_word == "path" and isinstance(default, m.Text) and default.value:
+                    # a call's path is made absolute (``_param_value``); so is the default
+                    default = m.Text(ctx.resolve_path(default.value), origin=default.origin)
             except ValueProblem as exc:
                 ctx.problem(default_prop.value_origin, "Default", exc)
+            except PathOutsideConfig as exc:
+                ctx.outside(default_prop.value_origin, exc)
         out[entry.type] = ParamDecl(entry.type, type_word, default, ctx.origin(entry.origin))
     return out
 
@@ -2747,14 +3057,19 @@ def read_module(
                     ctx.not_built(entry.key_origin, "a Style file here")
                 else:
                     style_file = text
-                    style = ctx.load_style(text)
-                    if style is None:
-                        ctx.add(
-                            entry.value_origin,
-                            "style-not-found",
-                            f"the style file {text} could not be read",
-                            "a path is relative to the module file; the findings above say why",
-                        )
+                    try:
+                        style = ctx.load_style(text)
+                    except PathOutsideConfig as exc:
+                        ctx.outside(entry.value_origin, exc)
+                        style = None
+                    else:
+                        if style is None:
+                            ctx.add(
+                                entry.value_origin,
+                                "style-not-found",
+                                f"the style file {text} could not be read",
+                                "a path is relative to the module file; the findings above say why",
+                            )
             elif entry.key == "Import":
                 ctx.not_built(entry.key_origin, "Import")
             else:
@@ -2811,3 +3126,25 @@ def read_module_params(document: Document, file: str) -> ModuleDef | None:
         if isinstance(entry, Block) and entry.type == "Params":
             params = _param_decls(ctx, entry)
     return ModuleDef(name, file, ctx.origin(root.origin), params, ())
+
+
+def read_shortcut_handler(
+    block: Block, file: str, modules: Mapping[str, ModuleDef]
+) -> tuple[m.Handler | None, list[Finding]]:
+    """The handler of a ``Shortcuts`` block entry (``Volume_Up { Keys: "...", Action: Call,
+    Target: "Audio.step", delta: 5 }``, Global Shortcuts > Action Names and Forms): the form of
+    Events and Actions > A Handler, with ``Keys`` beside it. A key press has no event and no value,
+    so a ``<| |>`` argument is refused; the checks of the ``Call`` target are those of any other
+    ``Call``."""
+    ctx = _Ctx(file, lambda p: "", modules)
+    handler = _action_handler(ctx, block.type, block.origin, block, skip=("Keys",))
+    if handler is not None and handler.slots:
+        slot = next(iter(handler.slots))
+        ctx.add(
+            block.origin,
+            "bad-value",
+            f"{block.type}: {slot} is a <| |> slot, and a key press has no event or value to read",
+            "write the argument as a plain value",
+        )
+        return None, ctx.findings
+    return handler, ctx.findings

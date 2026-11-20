@@ -1,6 +1,6 @@
 """Icon names that arrive at run time (Standard Modules > Icon; Battery Module).
 
-``Icon: "mdi:home"`` written in a file is looked up when the file is read. ``Icon: {{ icon }}``
+``Icon: "mdi:home"`` written in a file is looked up when the file is read. ``Icon: <| icon |>``
 is a name a module sends: it is looked up here each time the slot is evaluated, through the same
 icon sets, so a name that works written works sent. A name no set has shows the
 ``image-broken-variant`` icon, with one warning naming it (once for each name, however often it is

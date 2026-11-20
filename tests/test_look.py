@@ -14,7 +14,7 @@ from tess_shell.schema.findings import Finding
 from tess_shell.schema.look import effective_tokens, read_stylesheet, read_theme
 from tess_shell.schema.model import StylesheetDef, ThemeDef
 
-HEADER = "---\nTDL: 0.1\nName: T\n---\n\n"
+HEADER = "---\nTDL: 0.2\nName: T\n---\n\n"
 THEME = (
     HEADER
     + """
@@ -130,7 +130,7 @@ def test_high_contrast_applies_on_top_of_the_scheme() -> None:
 
 
 def test_reduced_motion_zeroes_every_duration() -> None:
-    tokens = effective_tokens(theme(), Appearance(reduced_motion=True))
+    tokens = effective_tokens(theme(), Appearance(animations=False))
     assert colour(tokens, "motion.duration.short") == 0
     assert colour(tokens, "motion.duration.long") == 0
     assert colour(effective_tokens(theme(), Appearance()), "motion.duration.long") == 400
@@ -294,12 +294,10 @@ def test_a_bad_rule_is_reported(body: str, needle: str) -> None:
     assert any(needle in f.message + f.hint for f in findings), findings
 
 
-def test_the_focused_state_is_skipped_with_a_warning_that_says_why() -> None:
+def test_the_focused_state_is_a_built_state() -> None:
     s, findings = sheet('Stylesheet { Rule { Selector: "Text:focused", Foreground: "#fff" } }')
-    assert s.rules == ()
-    (f,) = findings
-    assert f.severity == "warning" and f.rule == "not-built"
-    assert "no block can take focus" in f.message
+    assert findings == []
+    assert [r.state for r in s.rules] == ["focused"]
 
 
 def test_disabled_and_a_part_of_a_module_are_built() -> None:

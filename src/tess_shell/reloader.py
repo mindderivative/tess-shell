@@ -14,7 +14,7 @@ import dataclasses
 import sys
 import threading
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -24,14 +24,22 @@ from tess_shell.config.paths import state_dir
 from tess_shell.config.registry import Registry
 from tess_shell.config.settings import Settings, load_settings
 from tess_shell.config.uids import assign_uids
-from tess_shell.logging import configure_logging, level_overridden, log_finding
+from tess_shell.logging import configure_logging, effective_level, level_overridden, log_finding
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
 from tess_shell.modules.host import ModuleHost, ModuleSource, report
 from tess_shell.scanner import Scan, build_look, scan, source_line
 from tess_shell.schema.findings import Finding, render_findings
+from tess_shell.services.shortcuts import Action, ShortcutService
+from tess_shell.shortcuts import (
+    drop_failed,
+    mode_keys,
+    registered,
+    shortcut_handlers,
+    shortcut_modules,
+)
 from tess_shell.surfaces.manager import SurfaceManager
-from tess_shell.watch import OwnWrites
+from tess_shell.watch import OwnWrites, by_directory
 
 MAX_FINDINGS = 50
 
@@ -81,6 +89,12 @@ class Reloader:
     reloads: int = 0
     # told after every reload (the control interface's ``Reloaded`` signal); any thread
     on_reloaded: Callable[[bool, str], None] | None = None
+    # the global shortcuts (``services.shortcuts``): told the actions after every reload, or
+    # ``None`` when none are made (a test)
+    shortcuts: ShortcutService | None = None
+    # the file watcher's ``watch_files``: told the files the shell files import after every scan,
+    # so an imported file outside the watched folders reloads the shell too (``None``: no watcher)
+    watch_files: Callable[[Mapping[Path, frozenset[str]]], None] | None = None
     _lock: threading.Lock = dataclasses.field(default_factory=threading.Lock)
 
     # -- the calling thread: read, parse, validate ---------------------------------------------
@@ -113,9 +127,16 @@ class Reloader:
         if fresh is None:
             return Rejected(findings, "settings.tdl")
         running = dataclasses.replace(
-            self.settings, main_shell_path=fresh.main_shell_path, appearance=fresh.appearance
+            self.settings,
+            main_shell_path=fresh.main_shell_path,
+            appearance=fresh.appearance,
+            shortcuts=fresh.shortcuts,
+            global_shortcuts=fresh.global_shortcuts,
         )
         result = scan(running, self.cfg)
+        if self.watch_files is not None:
+            # also when the scan found errors: the file that is wrong may be one just imported
+            self.watch_files(by_directory(result.imported))
         if result.errors:
             return Rejected(result.findings, f"{len(result.errors)} errors")
         for f in result.findings[:MAX_FINDINGS]:
@@ -185,6 +206,8 @@ class Reloader:
             by_module.setdefault(use.module, []).append(use)
         for name in self.manager.dynamic_module_names():
             by_module.setdefault(name, [])
+        for name in shortcut_modules(self.scan.shortcuts):
+            by_module.setdefault(name, [])
         sources = {name: self._source(name) for name in by_module if name in self.scan.modules}
         report(self.host.sync(sources, {n: u for n, u in by_module.items() if n in sources}, set()))
         self.store.flush()
@@ -202,6 +225,19 @@ class Reloader:
         if fresh.logging != old.logging or level_overridden():  # SetLogLevel lasts to here
             configure_logging(fresh.logging, quiet=self.quiet, default_directory=self.cfg / "logs")
             logger.info("settings.tdl: the logging settings were applied")
+            if self.host.processes is not None:
+                self.host.processes.set_level(effective_level())
+
+    def _apply_shortcuts(
+        self, actions: Sequence[Action], fresh: Settings, checked: Sequence[Finding]
+    ) -> None:
+        """The global shortcuts of the new files: a new action is registered, a changed key
+        replaced, a removed action unregistered, an unchanged one left alone (``Global_Shortcuts``
+        false makes them all inactive). An action whose ``Call`` the module check refused is not
+        registered. The keys of shortcut mode are read again too."""
+        self.manager.mode.set_keys(mode_keys(actions))
+        if self.shortcuts is not None:
+            self.shortcuts.update(registered(drop_failed(actions, checked)), fresh.global_shortcuts)
 
     def _apply(self, prepared: Prepared) -> Outcome:
         try:
@@ -219,6 +255,7 @@ class Reloader:
         shell = result.shells.get(fresh.main_shell_path) if fresh.main_shell_path else None
         if shell is None:
             logger.info("reload: there is no main shell file; nothing to show")
+            self._apply_shortcuts(result.shortcuts, fresh, [])
             return Outcome(True, "reloaded: there is no main shell file; nothing to show")
         module_defs = {name: mf.definition for name, mf in result.modules.items()}
         look = build_look(result, fresh, self.manager.look.appearance)
@@ -234,7 +271,7 @@ class Reloader:
         planned, uses = checked
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         file_uids, problems = assign_uids(
-            [*own_files, *result.shells],
+            [*own_files, *result.shell_files],
             self.cfg,
             lambda key: self.registry.uid_for(key, "file"),
             state_dir() / "backups",
@@ -247,19 +284,28 @@ class Reloader:
             self.store.add_use(use.module, use.key)
         for name in self.manager.dynamic_module_names(planned):
             by_module.setdefault(name, [])  # called in a For: loaded, with no use until an entry
+        for name in shortcut_modules(result.shortcuts):
+            by_module.setdefault(name, [])  # named by a Call shortcut: loaded, with no use
         self.scan, self.file_uids = result, file_uids
         sources = {name: self._source(name) for name in by_module}
         everything = {p for s in sources.values() for p in (s.py_path, *s.tdl_paths)}
+        if changed is None:  # a reload the user asked for (SIGHUP, ``reload``) ends a safe start
+            self.host.end_safe_start()
         sync_problems = self.host.sync(
             sources, by_module, everything if changed is None else changed
         )
         report(sync_problems)
-        report(self.host.check_calls(self.manager.planned_handlers(planned)))
+        handlers = [*self.manager.planned_handlers(planned), *shortcut_handlers(result.shortcuts)]
+        checked_calls = self.host.check_calls(handlers)
+        report(checked_calls)
+        self._apply_shortcuts(result.shortcuts, fresh, checked_calls)
         self.store.flush()  # what modules sent while changing; the Bars below are resolved from it
         self.manager.apply(planned, module_defs, uses, look)
         self.settings = dataclasses.replace(
             self.settings,
             logging=fresh.logging,
+            global_shortcuts=fresh.global_shortcuts,
+            shortcuts=fresh.shortcuts,
             main_shell_path=fresh.main_shell_path,
             appearance=dataclasses.replace(
                 fresh.appearance, follow_desktop=self.settings.appearance.follow_desktop

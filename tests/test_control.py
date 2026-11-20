@@ -250,17 +250,22 @@ def test_introspection_lists_the_methods_properties_and_signals() -> None:
         "ClosePopup",
         "Call",
         "SetLogLevel",
+        "FullscreenState",  # the KWin script reports a fullscreen window per output
+        "WindowsState",  # and the window list (M5g)
     }
     assert props == {"State", "Version", "ApiVersion"}
     assert signals == {"Reloaded", "ErrorReported", "SurfaceChanged"}
-    # not the methods the spec leaves out: no FullscreenState, no events, no kwin
-    assert not {"FullscreenState", "Events", "Kwin", "KWin"} & (methods | props | signals)
+    # not the methods the spec leaves out: no events, no kwin object (the script's two callbacks,
+    # FullscreenState and WindowsState, are here since M5g)
+    assert not {"Events", "Kwin", "KWin"} & (methods | props | signals)
     signatures = {
         m.get("name"): "".join(a.get("type", "") for a in m) for m in iface.findall("method")
     }
     assert signatures["Call"] == "sssas".replace("as", "s")  # three strings in, one out
     assert signatures["Show"] == "sbs"  # the name in, (ok, message) out
     assert signatures["Reload"] == "bs"
+    assert signatures["FullscreenState"] == "ss"  # a string in, a string out (the script's JSON)
+    assert signatures["WindowsState"] == "ss"
     (reported,) = [x for x in iface.findall("signal") if x.get("name") == "ErrorReported"]
     assert (
         "".join(a.get("type", "") for a in reported) == "ssiss"

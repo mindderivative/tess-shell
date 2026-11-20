@@ -46,6 +46,13 @@ class ServiceTimeout(ServiceError):
     """The call did not finish within its timeout (default 5 s)."""
 
 
+class ShellCallTimeout(RuntimeError):
+    """A module that runs in its own process asked the shell something that answers at once in the
+    shell's own process (``update_popup``, ``is_popup_open``, ``focus``, ``surface.hide``,
+    ``apps.search``, ``icons.*``) and the shell did not answer in time (2 s). The message names the
+    module and the call. Never raised for a module that runs in the shell. A ``RuntimeError``."""
+
+
 class ServiceUnavailable(ServiceError):
     """The service has no owner on the bus (``ServiceUnknown``, ``NameHasNoOwner``, ``NoReply``) or
     the bus is not reachable. The layer has set the service's state to ``UNAVAILABLE``."""
@@ -339,6 +346,33 @@ class ModuleIcons(Protocol):
         naming ``source``) when it cannot be decoded."""
         ...
 
+    def app_icon(self, app: str, size: int) -> str:
+        """The icon of the application whose desktop file is ``app`` (``org.kde.dolphin``, with or
+        without ``.desktop``; a window's class is tried as a last name): the desktop entry's
+        ``Icon=`` through :meth:`theme_icon`, else ``app`` as an icon name, else the shipped
+        ``mdi:application-outline``. Always a reference an ``Icon:`` shows. The entries come from
+        the ``applications`` folders of ``XDG_DATA_HOME`` and ``XDG_DATA_DIRS``, read once and kept
+        (the launcher uses the same index). Same threading as :meth:`theme_icon`."""
+        ...
+
+    def app_name(self, app: str) -> str:
+        """The ``Name`` of the application whose desktop file is ``app`` (as :meth:`app_icon`
+        takes it), in the user's language: what a person calls it, for an accessible name. ``app``
+        itself when no desktop entry is found. Same index and same threading as
+        :meth:`app_icon`."""
+        ...
+
+    def on_theme_changed(self, callback: Callable[[], None]) -> Subscription:
+        """Call ``callback()`` when the desktop's icon theme changed (the Settings portal's
+        ``icon-theme``): every reference made before it came from the old theme, so make the
+        icons again. It runs on the thread that learned of the change: do no blocking work in it.
+        The shell cancels the subscription when the module stops."""
+        ...
+
+    def close(self) -> None:
+        """Cancel every subscription of the module."""
+        ...
+
 
 class IconsPort(Protocol):
     """What the module host needs of the icon service."""
@@ -371,3 +405,191 @@ class TrayPort(Protocol):
     """What the module host needs of the tray host service."""
 
     def for_module(self, module: str) -> ModuleTray: ...
+
+
+# -- the window list from the shell's KWin script (Tasks Module) -----------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class WindowInfo:
+    """One window of the script's list (Tasks Module > What the script sends)."""
+
+    id: str  # the window's UUID, bare
+    title: str
+    app: str  # the desktop file name, else the resource class
+    active: bool
+    minimized: bool
+    desktops: tuple[str, ...]  # ids of the virtual desktops the window is on; empty: all of them
+    output: str  # the name of the output the window is on
+    attention: bool  # the window wants attention
+
+
+class ModuleWindows(Protocol):
+    """``ctx.windows``: the open windows, from the shell's KWin script. The list is turned on while
+    at least one module is subscribed (``on_changed``) and off when the last one cancels; with no
+    subscriber the script sends no title, class or id. Loop thread only. Nothing connects until
+    the first subscription."""
+
+    @property
+    def available(self) -> bool:
+        """KWin's script is loaded and answering (false on another compositor, with the script
+        off or refused, or silent)."""
+        ...
+
+    @property
+    def ready(self) -> bool:
+        """The first list has arrived since the list was turned on."""
+        ...
+
+    def list(self) -> tuple[WindowInfo, ...]:
+        """The last list, in the order the windows were opened; empty until ``ready``."""
+        ...
+
+    def on_changed(self, callback: Callable[[], None]) -> Subscription:
+        """``callback()`` on the loop thread when the list changed (read it with :meth:`list`) and
+        when ``available`` changed. A burst of lists is one call. The first subscription turns
+        the list on."""
+        ...
+
+    def activate(self, window_id: str) -> concurrent.futures.Future[bool]:
+        """Activate the window (un-minimising it): a one-shot KWin script, started at once. The
+        future is whether KWin loaded the script; the list changes when KWin has acted."""
+        ...
+
+    def minimize(self, window_id: str) -> concurrent.futures.Future[bool]: ...
+
+    def close_window(self, window_id: str) -> concurrent.futures.Future[bool]:
+        """Ask the window to close (the application may ask the user first)."""
+        ...
+
+    def close(self) -> None:
+        """Cancel every subscription of the module."""
+        ...
+
+
+class WindowsPort(Protocol):
+    """What the module host needs of the window service: one helper per module."""
+
+    def for_module(self, module: str) -> ModuleWindows: ...
+
+
+# -- the applications (Applications Module) --------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class AppInfo:
+    """One application of the index, as a module sees it (Applications Module > The Application
+    Index): the desktop entry's keys the launcher shows."""
+
+    id: str  # the desktop file's id, ``org.kde.dolphin.desktop``
+    name: str
+    generic_name: str
+    comment: str
+    icon: str  # the entry's ``Icon=`` (a theme name or a path): ``ctx.icons.app_icon(id, size)``
+    keywords: tuple[str, ...]
+    terminal: bool
+    path: str  # the ``.desktop`` file
+
+
+@dataclass(frozen=True, slots=True)
+class LaunchResult:
+    """How a start ended: ``ok``, else ``error`` says why; ``name`` is the application's."""
+
+    ok: bool
+    error: str
+    name: str
+
+
+class AppsPort(Protocol):
+    """What the module host needs of the application service (``services.apps.AppService``)."""
+
+    @property
+    def ready(self) -> bool: ...
+
+    @property
+    def watching(self) -> bool: ...
+
+    def start(self) -> None:
+        """Build the list on a worker thread (the first use); safe to call again."""
+        ...
+
+    def search(self, query: str, limit: int = ...) -> list[AppInfo]: ...
+
+    def get(self, entry_id: str) -> AppInfo | None: ...
+
+    def launch(
+        self,
+        entry_id: str,
+        token: str | None = ...,
+        on_done: Callable[[LaunchResult], None] | None = ...,
+    ) -> None: ...
+
+    def on_changed(self, callback: Callable[[], None]) -> Subscription: ...
+
+    def refresh(self) -> None: ...
+
+
+class ModuleApps(Protocol):
+    """``ctx.apps``: the installed applications. The list is built on a worker thread on the first
+    use (``ready``); ``search`` reads it from memory and may run on the loop thread; ``launch`` asks
+    the surface the module is on for an activation token, starts the application on a worker and
+    calls ``on_done(result)`` on the loop thread. Loop thread only."""
+
+    @property
+    def ready(self) -> bool:
+        """The list is built."""
+        ...
+
+    def search(self, query: str, limit: int = 8) -> list[AppInfo]:
+        """The applications that match ``query``, best first, at most ``limit``: every word of the
+        query (compared without case and accents) must match; a word ranks by the start of the
+        name, the start of a word of the name, anywhere in the name, the start of a word of the
+        generic name or a keyword, anywhere in the generic name, a keyword or the comment. Equal
+        ranks: the most started first, then by name. An empty query lists the most started first,
+        then the rest by name."""
+        ...
+
+    def get(self, app: str) -> AppInfo | None:
+        """The application with this desktop id (with or without ``.desktop``), or ``None``."""
+        ...
+
+    def launch(
+        self,
+        app: str,
+        *,
+        use: str | None = None,
+        on_done: Callable[[LaunchResult], None] | None = None,
+    ) -> None:
+        """Start the application detached from the shell. ``use`` is the use whose surface asks for
+        the activation token (default: ``ctx.caller``); with none, or when the surface cannot get
+        one, it starts without a token."""
+        ...
+
+    def on_changed(self, callback: Callable[[], None]) -> Subscription:
+        """``callback()`` on the loop thread when the list was built or built again (an entry file
+        came or went, or a start changed the order). The shell cancels it when the module stops."""
+        ...
+
+    def refresh(self) -> None:
+        """Build the list again when the folders are not watched (a no-op while they are)."""
+        ...
+
+    def close(self) -> None:
+        """Cancel every subscription of the module."""
+        ...
+
+
+class SurfacePort(Protocol):
+    """What the module host needs of the surface manager for ``ctx.surface``."""
+
+    def hide_use(self, use_key: str) -> bool: ...
+
+    def show_use(self, use_key: str, hide_after: float | None = ...) -> bool: ...
+
+    def watch_shown(self, callback: Callable[[tuple[str, ...]], None]) -> Subscription: ...
+
+    def focus_block(self, use_key: str, name: str, select_all: bool = ...) -> bool: ...
+
+    def request_token(self, use_key: str, callback: Callable[[str | None], None]) -> None: ...
+
+    def announce(self, use_keys: Sequence[str], text: str, politeness: str) -> bool: ...

@@ -103,9 +103,12 @@ def test_plugging_and_unplugging_an_output_opens_and_closes_only_its_windows(
 
         # it goes: exactly its windows close
         private_sway.unplug(plugged)
-        shell.wait_for(f"Bar Side_Bar on {plugged} closed (output_removed)")
-        shell.wait_for(f"Panel Side_Dock on {plugged} closed (output_removed)")
-        shell.wait_for(f"Panel Side_Dock on {plugged} closed: ")  # the shell's own record of it
+        # the shell's own record of closing them. The reason in the window's "closed (...)" line is
+        # ``output_removed`` when the compositor's event reaches the window first and ``app`` when
+        # the shell has already closed it: either order is right, so the test does not wait for
+        # one (a slower machine showed the second)
+        shell.wait_for(f"Bar Side_Bar on {plugged} closed: output {plugged} was removed")
+        shell.wait_for(f"Panel Side_Dock on {plugged} closed: output {plugged} was removed")
 
         # a screen comes back as the second one: Index 1 is evaluated again, new windows open
         again = private_sway.create_output()
@@ -125,7 +128,7 @@ def test_plugging_and_unplugging_an_output_opens_and_closes_only_its_windows(
 
 
 PROBE_TDL = (
-    "---\nTDL: 0.1\nName: {name}\n---\n"
+    "---\nTDL: 0.2\nName: {name}\n---\n"
     'Module {{ Rectangle {{ Width: 10, Height: 10, Fill: "#808080" }} }}\n'
 )
 PROBE_PY = """from pathlib import Path

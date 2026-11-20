@@ -1,0 +1,33 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# A Bar that holds a text field takes the keyboard when the field is clicked.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 16
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            TextInput { Placeholder: "Search", Width: 200 }
+                            TextInput { Label: "Password", Placeholder: "Password", Password: true, Width: 160 }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

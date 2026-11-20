@@ -53,3 +53,21 @@ def _read_pid(fd: int) -> int | None:
             return int(text)
         time.sleep(0.05)
     return None
+
+
+def is_held(runtime_dir: Path) -> bool:
+    """Whether a shell holds the single instance lock now. Looks only: it never creates the lock
+    file or its folder, and a lock it takes for the test is dropped at once."""
+    try:
+        fd = os.open(runtime_dir / "tesserae-shell" / "lock", os.O_RDONLY)
+    except OSError:
+        return False
+    try:
+        fcntl.flock(fd, fcntl.LOCK_SH | fcntl.LOCK_NB)
+    except BlockingIOError:
+        return True
+    except OSError:
+        return False
+    finally:
+        os.close(fd)  # closing the descriptor also drops a lock taken above
+    return False

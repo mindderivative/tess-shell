@@ -228,7 +228,7 @@ def test_reduced_motion_switches_at_once() -> None:
     app, store = StubApp(), ValueStore()
     from tess_shell.appearance import Appearance
 
-    quiet = look().with_appearance(Appearance(scheme="dark", reduced_motion=True))
+    quiet = look().with_appearance(Appearance(scheme="dark", animations=False))
     m = SurfaceManager(app, module(), lambda key: key[-1], store, quiet, blend_mode="SRGB")  # type: ignore[arg-type]
     m.sink = lambda handler, key, raw: m.run_builtin(handler)
     m.plan(shell_of(frame()))

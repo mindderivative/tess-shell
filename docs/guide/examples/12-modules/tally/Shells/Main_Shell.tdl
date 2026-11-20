@@ -1,0 +1,36 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# The module Tally is in Modules/Tally/. It is used like any other: its name, and its params as keys.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 16
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Tally { step: 1 }
+                            Tally { step: 5, Tooltip: "Counts in fives" }
+                            Spacer { }
+                            Button { Text: "Reset all", On_Click { Action: Call, Target: "Tally.reset" } }
+                            Clock { }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

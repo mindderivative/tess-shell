@@ -252,7 +252,7 @@ def test_holds_text_field_finds_a_field_in_a_branch() -> None:
     field_node = node()
     assert holds_text_field([m.Node("Box", children=(field_node,))])
     assert holds_text_field([m.IfNode(body=(field_node,))])
-    assert holds_text_field([m.ForNode("x", body=(m.Node("Box", children=(field_node,)),))])
+    assert holds_text_field([m.ForNode(("x",), body=(m.Node("Box", children=(field_node,)),))])
     assert not holds_text_field([m.Node("Box", children=(m.Node("Text"),))])
 
 
@@ -805,7 +805,7 @@ def test_a_handler_added_by_a_reload_runs_and_one_removed_stops() -> None:
 
 def test_two_way_typing_at_the_start_keeps_the_order_whichever_way_the_echo_arrives() -> None:
     """tess-ui found that a text set equal to the one the input holds moves the caret to the end.
-    A module that stores what was typed and sends it back (``Text: {{ value }}``) must not make
+    A module that stores what was typed and sends it back (``Text: <| value |>``) must not make
     typing after Home jump to the end: Home, type two characters, they are in order at the start.
     The echo reaches the field by a property update and by a keyed rebuild; both must skip the set
     (the shell does not rely on tre making an identical set a no-op)."""

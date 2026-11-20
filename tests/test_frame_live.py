@@ -20,7 +20,7 @@ from tests.test_surfaces_live import workspace_rect
 
 pytestmark = pytest.mark.tre
 
-SETTINGS = "---\nTDL: 0.1\nName: S\n---\nSettings { Logging { Level: DEBUG } }\n"
+SETTINGS = "---\nTDL: 0.2\nName: S\n---\nSettings { Logging { Level: DEBUG } }\n"
 OUT = (1280, 720)  # the headless output
 BEHIND = (
     "Panel { Name: Behind, Layer: BOTTOM, Anchor: [TOP, LEFT], Width: 1280, Height: 720,"

@@ -7,10 +7,13 @@ with ``call_soon``); ``reload_validate`` runs on a worker thread, ``quit`` on an
 
 from __future__ import annotations
 
+import concurrent.futures
 import difflib
 import sys
 from collections.abc import Callable
 from typing import Any
+
+from loguru import logger
 
 from tess_shell import __version__
 from tess_shell.config.settings import LEVELS
@@ -18,6 +21,7 @@ from tess_shell.logging import set_level
 from tess_shell.modules.host import ActionError, ModuleHost
 from tess_shell.reloader import Outcome, Reloader
 from tess_shell.services.control import CommandError
+from tess_shell.services.shortcuts import Action
 from tess_shell.surfaces.manager import SurfaceManager
 
 
@@ -37,6 +41,23 @@ def versions() -> dict[str, str]:
     }
 
 
+def _as_command_result(future: concurrent.futures.Future[Any]) -> concurrent.futures.Future[Any]:
+    """``future`` with its ``ActionError`` as the ``CommandError`` of a failed control call."""
+    out: concurrent.futures.Future[Any] = concurrent.futures.Future()
+
+    def done(finished: concurrent.futures.Future[Any]) -> None:
+        exc = finished.exception()
+        if isinstance(exc, ActionError):
+            out.set_exception(CommandError(str(exc), "ActionFailed"))
+        elif exc is not None:
+            out.set_exception(exc)
+        else:
+            out.set_result(finished.result())
+
+    future.add_done_callback(done)
+    return out
+
+
 class ShellCommands:
     """The shell's side of the control interface."""
 
@@ -53,8 +74,46 @@ class ShellCommands:
         self.reloader = reloader
         self._stop = stop
         self._errors = errors
+        # the five fixed shortcut actions (Focus and Keyboard), run by a global key: shortcut mode
+        # (``surfaces/mode_driver.py``). An action with no entry is "not built" and a press of it
+        # does nothing
+        self.fixed_actions: dict[str, Callable[[], None]] = manager.mode.actions()
+        # what the shell kept of its crashes (``recovery.py``): set by the app; ``None`` in a test
+        self.recovery: Callable[[], dict[str, Any]] | None = None
 
     # -- loop thread ------------------------------------------------------------------------------
+
+    def press(self, action: Action) -> None:
+        """A global shortcut was pressed (``services.shortcuts``, on the loop thread): the same
+        command the control interface runs for ``Toggle``, ``Show``, ``Hide`` and ``Call``, with no
+        trip through the bus. A key press never opens a Popup (``control_surface`` refuses one)."""
+        if action.kind == "fixed":
+            hook = self.fixed_actions.get(action.target)
+            if hook is None:
+                logger.debug(f"shortcut {action.id}: not built; nothing done")
+                return
+            hook()
+            return
+        if action.kind in ("toggle", "show", "hide"):
+            self._surface_press(action, action.kind.title(), action.target)
+            return
+        handler = action.handler
+        if handler is None:
+            logger.debug(f"shortcut {action.id}: no handler")
+        elif handler.builtin:
+            self._surface_press(action, handler.action, str(handler.args.get("Target", "")))
+        else:
+            try:
+                self.host.call_named(handler.module, handler.action, handler.args)
+            except ActionError as exc:
+                logger.warning(f"shortcut {action.id} ({action.where}): {exc}")
+
+    def _surface_press(self, action: Action, verb: str, name: str) -> None:
+        ok, message = self.manager.control_surface(verb, name)
+        if ok:
+            logger.debug(f"shortcut {action.id}: {message}")
+        else:
+            logger.warning(f"shortcut {action.id} ({action.where}): {message}")
 
     def status(self) -> dict[str, Any]:
         """The state of the shell: versions, monitors, surfaces, module names, last errors. Names,
@@ -63,6 +122,10 @@ class ShellCommands:
         monitors: dict[tuple[str, str], None] = {}
         for i in infos:
             monitors[(i.monitor, i.output)] = None
+        recovery = {} if self.recovery is None else {"recovery": self.recovery()}
+        # the modules that run in a process of their own: only when there are some
+        listed = [] if self.host.processes is None else self.host.processes.status()
+        processes = {"module_processes": listed} if listed else {}
         return {
             "version": versions(),
             "monitors": [{"name": m, "output": o} for m, o in monitors],
@@ -71,7 +134,9 @@ class ShellCommands:
                 for i in infos
             ],
             "modules": sorted(self.host.loaded),
+            **processes,
             "errors": self._errors(),
+            **recovery,
         }
 
     def surface(self, action: str, name: str) -> tuple[bool, str]:
@@ -82,9 +147,13 @@ class ShellCommands:
 
     def call(self, module: str, action: str, values: list[Any]) -> Any:
         try:
-            return self.host.call_action(module, action, values)
+            result = self.host.call_action(module, action, values)
         except ActionError as exc:
             raise CommandError(str(exc), "ActionFailed") from exc
+        if isinstance(result, concurrent.futures.Future):
+            # an action of a module in a process: it answers later
+            return _as_command_result(result)
+        return result
 
     def set_log_level(self, level: str) -> None:
         name = level.upper()
@@ -96,6 +165,8 @@ class ShellCommands:
             )
         if not set_level(name):
             raise CommandError("logging is not configured", "Failed")
+        if self.host.processes is not None:
+            self.host.processes.set_level(name)  # the module processes log at the same level
 
     def reload_apply(self, ticket: Any) -> tuple[bool, str]:
         outcome = self.reloader.apply_for_control(ticket)

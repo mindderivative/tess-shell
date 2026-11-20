@@ -44,7 +44,7 @@ CFG = ROOT / "gallery"
 CFG_OVERRIDE = ROOT / "gallery-override"
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
+    "---\nTDL: 0.2\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: true }\n}\n"
 )
 BAR = """

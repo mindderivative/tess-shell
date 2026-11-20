@@ -11,7 +11,7 @@ from __future__ import annotations
 import dataclasses
 import difflib
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -41,7 +41,9 @@ from tess_shell.surfaces.bar import (
     input_region,
     surface_rect,
 )
+from tess_shell.surfaces.focus import next_surface, surface_order
 from tess_shell.surfaces.frame import FramePlan, Frames
+from tess_shell.surfaces.mode_driver import ModeDriver
 from tess_shell.surfaces.panel import PanelSpec, panel_geometry, px_size
 
 if TYPE_CHECKING:
@@ -133,6 +135,18 @@ def conflicts(
     return _resolve(monitors, outputs)[1]
 
 
+class _Cancel:
+    """A subscription that runs one function."""
+
+    __slots__ = ("_fn",)
+
+    def __init__(self, fn: Callable[[], None]) -> None:
+        self._fn = fn
+
+    def cancel(self) -> None:
+        self._fn()
+
+
 @dataclass(slots=True)
 class Surface:
     key: str  # the Bar's dotted path, with the output when a block opens on several
@@ -153,6 +167,7 @@ class Surface:
     timer: Any = None  # the pending ``Hide_After`` timer of a Panel
     trace: Any = None  # (label, start, frames left to log): the first frames after a change
     generation: int = 0  # counts shows and hides, so an animation that was replaced stays silent
+    covered: bool = False  # hidden by a fullscreen window on its output (``set_fullscreen``)
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -302,13 +317,14 @@ def _place(
 
 
 def _keyboard(bar: BarDef | PanelDef, hidden: bool = False, text_field: bool = False) -> str:
-    """tre's ``keyboard`` word: a Panel's ``Keyboard``, ``none`` for a Bar or a hidden Panel. A
-    surface that holds a TextField and has no keyboard mode of its own (a Bar has none, a Panel's
-    is ``NONE``) takes ``on_demand``: the compositor gives it the keyboard when the field is
-    clicked. ``EXCLUSIVE`` is only ever written."""
+    """tre's ``keyboard`` word: the surface's ``Keyboard``, ``none`` for a hidden Panel. A surface
+    that holds a TextField and has ``Keyboard: NONE`` (the default) takes ``on_demand``: the
+    compositor gives it the keyboard when the field is clicked. A surface with focusable blocks
+    and no ``Keyboard`` takes none: Tab does nothing there (Focus and Keyboard > Focusable Things
+    and the Focus Ring). ``EXCLUSIVE`` is only ever written."""
     if hidden:
         return "none"
-    mode = bar.keyboard.lower() if isinstance(bar, PanelDef) else "none"
+    mode = bar.keyboard.lower()
     return "on_demand" if mode == "none" and text_field else mode
 
 
@@ -469,6 +485,25 @@ def _log_errors(errors: Sequence[BindError]) -> None:
         )
 
 
+# the window and root-node events the manager listens to on a surface's window
+_WINDOW_EVENTS = ("configure", "closed", "active", "moved", "frame")
+_ROOT_EVENTS = ("key_down", "pointer_down", "pointer_up")
+
+
+def free_window(window: Any) -> None:
+    """Free what the shell hung on a window that is closed and that no surface names any more:
+    its listeners (their closures hold the surface) and its nodes (with their listeners, which
+    hold the view). tre's ``App`` keeps every window it was given for good, so without this a
+    closed Panel keeps its whole tree for the life of the shell."""
+    for event in _WINDOW_EVENTS:
+        window.off(event)
+    root = window.root
+    for event in _ROOT_EVENTS:
+        root.off(event)
+    for child in root.children():
+        child.destroy()
+
+
 class SurfaceManager:
     """Two steps at start, so the modules can start between them: :meth:`plan` expands each Bar and
     finds the module uses; :meth:`build` evaluates the slots, binds and opens the windows.
@@ -486,6 +521,7 @@ class SurfaceManager:
         positions: PositionStore | None = None,
         join_mode: str = "PARAM",
         blend_mode: str = "LINEAR",
+        mode_keyboard: str = "EXCLUSIVE",
     ) -> None:
         self._app = app
         self._positions = positions  # where the user left each Movable Panel (the registry)
@@ -504,7 +540,19 @@ class SurfaceManager:
         self.surfaces: list[Surface] = []
         self._planned: list[Planned] = []
         self._kb_warned: set[str] = set()  # surfaces whose ``Keyboard: NONE`` was overridden
+        # keyboard focus between surfaces (Focus and Keyboard): the order of the shell's surfaces
+        # by ``Tab_Index`` (derived from the planned shell, never a file), and the ``Name`` of the
+        # surface that has the OS's keyboard focus (``None``: none of ours)
+        self.focus_order: list[str] = []
+        self.focused: str | None = None
+        self._shown_listeners: list[Callable[[tuple[str, ...]], None]] = []
+        # shortcut mode: the rules, and what a change does to the windows (surfaces/mode_driver.py)
+        self.mode = ModeDriver(self)
+        self.mode.set_keyboard(mode_keyboard)
         self._handle: Any = None
+        # windows that ended one way: ``closed`` (tre closed it) or ``dropped`` (no surface names
+        # it); the second event frees it (:meth:`_ended`)
+        self._ending: dict[int, str] = {}
         self._all_uses: Mapping[str, Use] = {}
         from tess_shell.surfaces.popup import PopupPlan, Popups  # popup.py imports this module
 
@@ -529,6 +577,9 @@ class SurfaceManager:
         # hidden (``name``, ``"shown"`` or ``"hidden"``); the errors the last ``check`` found
         self.on_surface: Callable[[str, str], None] | None = None
         self.check_errors: list[BindError] = []
+        # the outputs with an active fullscreen window: the surfaces on them draw nothing, take no
+        # input and reserve no space until it leaves (KWin Integration, ``set_fullscreen``)
+        self._covered: frozenset[str] = frozenset()
 
     def _dispatch(
         self, handler: Handler, key: str, raw: Any, caller: Mapping[str, Any] | None = None
@@ -806,6 +857,8 @@ class SurfaceManager:
     def plan(self, shell: ShellDef) -> list[Use]:
         planned, uses = self._plan_bars(shell, self._modules, self._look)
         self._shell = shell
+        self.focus_order = surface_order(shell)
+        self.mode.configure(shell)
         for use in uses:
             self._store.add_use(use.module, use.key)
         self._planned = planned
@@ -824,7 +877,33 @@ class SurfaceManager:
             self.surfaces.append(self._open(planned, all_uses))
         self.frames.sync(self._frame_plans, self._look)
         self.settle_dynamic()
+        self.mode.start()  # a surface the files write ``Shortcut_Mode: true`` has the mode now
         return self.surfaces
+
+    def _keyboard_word(self, planned: Planned, hidden: bool = False, say: bool = False) -> str:
+        """tre's ``keyboard`` word for a Bar or Panel as planned: its ``Keyboard``, or ``on_demand``
+        when it holds a TextField and says ``NONE``, with one warning when the file wrote the
+        ``NONE`` (M4 Brief, question 17). Made at the surface's creation (``say``: and logged) and
+        at every reload, so a reload that changes ``Keyboard`` or adds or removes a field reaches
+        the window."""
+        bar, where = planned.bar, planned.where
+        kind = _kind(bar)
+        found = first_text_field(planned.expanded.nodes)
+        field = found is not None
+        word = _keyboard(bar, hidden, field)
+        if field and not hidden and word != _keyboard(bar):
+            if getattr(bar, "keyboard_written", False) and planned.key not in self._kb_warned:
+                # ``Keyboard: NONE`` is written, and a field needs the keyboard to be typed in:
+                # the override is said once, not silent
+                self._kb_warned.add(planned.key)
+                logger.warning(
+                    f"{bar.origin}: {kind} {where}: Keyboard: NONE is written, but it holds "
+                    f"{describe_text_field(found)}; the surface takes the keyboard on_demand "
+                    "(a click on the field gives it the keyboard)"
+                )
+            if say:
+                logger.info(f"{kind} {where}: keyboard on_demand, it holds a text field")
+        return word
 
     def _make_window(self, planned: Planned, live: LiveTree, hidden: bool = False) -> Surface:
         """Create the window of a Bar or a Panel and bind its tree. The window is not added to the
@@ -833,19 +912,6 @@ class SurfaceManager:
 
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
         kind = _kind(bar)
-        found = first_text_field(planned.expanded.nodes)
-        field = found is not None
-        if field and not hidden and _keyboard(bar, False, True) != _keyboard(bar):
-            if getattr(bar, "keyboard_written", False) and planned.key not in self._kb_warned:
-                # ``Keyboard: NONE`` is written, and a field needs the keyboard to be typed in
-                # (M4 Brief, question 17): the override is said once, not silent
-                self._kb_warned.add(planned.key)
-                logger.warning(
-                    f"{bar.origin}: {kind} {where}: Keyboard: NONE is written, but it holds "
-                    f"{describe_text_field(found)}; the surface takes the keyboard on_demand "
-                    "(a click on the field gives it the keyboard)"
-                )
-            logger.info(f"{kind} {where}: keyboard on_demand, it holds a text field")
         window = LayerWindow(
             f"tesserae-shell.{kind.lower()}.{bar.name}",
             layer=bar.layer.lower(),  # type: ignore[arg-type]
@@ -854,7 +920,7 @@ class SurfaceManager:
             margin=geometry.margin,
             exclusive_zone=geometry.exclusive_zone,
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
-            keyboard=_keyboard(bar, hidden, field),  # type: ignore[arg-type]
+            keyboard=self._keyboard_word(planned, hidden, say=True),  # type: ignore[arg-type]
             input_region=_input_for(bar, geometry, (output.width, output.height), hidden),
             output=output,
         )
@@ -869,14 +935,29 @@ class SurfaceManager:
             **_body_style(geometry, fill, shadows, extra),
         )
         window.root.add_child(body)
-        window.on(
-            "configure",
-            lambda e, n=where: logger.info(f"{kind} {n} configured {int(e.width)}x{int(e.height)}"),
-        )
-        window.on(
-            "closed",
-            lambda e, n=where: logger.info(f"{kind} {n} closed ({getattr(e, 'reason', '')})"),
-        )
+        # what assistive technology says when the surface is reached (Bar > Accessibility: the
+        # window node of a layer surface has no name of its own, so the shell names it): the
+        # surface's name in words, and a Panel that takes the keyboard exclusively is a dialog
+        label = bar.name.replace("_", " ")
+        window.root.set(label=label)
+        if kind == "Panel" and bar.keyboard == "EXCLUSIVE":
+            body.set(role="dialog", label=label)
+
+        def configured(e: Any, n: str = where, k: str = kind) -> None:
+            logger.info(f"{k} {n} configured {int(e.width)}x{int(e.height)}")
+
+        window.on("configure", configured)
+
+        def closed(e: Any, n: str = where, k: str = kind, name: str = bar.name) -> None:
+            logger.info(f"{k} {n} closed ({getattr(e, 'reason', '')})")
+            self._surface_gone(name, window)
+            self._ended(window, "closed")
+
+        window.on("closed", closed)
+        window.on("active", lambda e, name=bar.name: self._surface_active(name, bool(e.active)))
+        # the keys of shortcut mode arrive here when this surface has the keyboard (a Panel's own
+        # handler, set after this one, asks the mode first)
+        window.root.on("key_down", lambda e: self.mode.on_key(e))
 
         def pointer_trace(e: Any, n: str = where, k: str = kind, p: str = "") -> None:
             logger.debug(
@@ -900,7 +981,7 @@ class SurfaceManager:
         _log_errors(errors)
         if view is None:
             logger.error(f"{kind} {where} is empty: its contents did not bind")
-        return Surface(
+        surface = Surface(
             planned.key,
             bar.name,
             output.name,
@@ -916,6 +997,7 @@ class SurfaceManager:
             planned,
             extra,
         )
+        return surface
 
     def _open(self, planned: Planned, all_uses: Mapping[str, Use]) -> Surface:
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
@@ -955,6 +1037,8 @@ class SurfaceManager:
             else:
                 self._arm_hide_after(surface)
                 surface.window.after(1, lambda: self._fire(surface, "On_Visible"))
+        if output.name in self._covered:  # a surface opened on an output with a fullscreen window
+            self._cover_state(surface)
         return surface
 
     # -- Panel: hide, show, Hide_After, Escape (D44) ----------------------------------------------
@@ -969,6 +1053,8 @@ class SurfaceManager:
         assert s.window is not None
 
         def on_key(event: Any) -> None:
+            if self.mode.on_key(event):  # a key of shortcut mode: the mode's, not the Panel's
+                return
             current = s.planned.bar if s.planned else None
             if (
                 getattr(event, "key", None) == "escape"
@@ -1001,14 +1087,16 @@ class SurfaceManager:
         if self._positions is not None:
             self._positions.set_position(self._position_key(s.planned.group, s.name), position)
 
-    def _arm_hide_after(self, s: Surface) -> None:
-        """(Re)start the ``Hide_After`` timer: showing a Panel again resets it."""
+    def _arm_hide_after(self, s: Surface, after: float | None = None) -> None:
+        """(Re)start the ``Hide_After`` timer: showing a Panel again resets it. ``after`` (ms) is
+        a caller's own time (``ctx.surface.show``) in place of the Panel's ``Hide_After``."""
         if s.timer is not None:
             s.timer.cancel()
             s.timer = None
         panel = s.planned.bar if s.planned else None
-        if s.window is not None and isinstance(panel, PanelDef) and panel.hide_after is not None:
-            s.timer = s.window.after(panel.hide_after, lambda: self.hide(s))
+        delay = after if after is not None else getattr(panel, "hide_after", None)
+        if s.window is not None and isinstance(panel, PanelDef) and delay is not None:
+            s.timer = s.window.after(delay, lambda: self.hide(s))
 
     def _watch_frames(self, s: Surface) -> None:
         """Log the first frames a Panel draws after a show or a hide (DEBUG): what tells a late
@@ -1166,6 +1254,7 @@ class SurfaceManager:
             s.timer = None
         self._fire(s, "On_Close")  # before: the request is made
         s.hidden = True
+        self.mode.gone(s.name)  # shortcut mode does not stay on a hidden Panel
         self.changed(s.name, False)
         if self.hide_mode == "KEEP":  # a hiding Panel takes no input, whatever its animation
             s.window.set(input_region=[], keyboard="none")
@@ -1184,14 +1273,15 @@ class SurfaceManager:
         else:
             s.window, s.view, s.body = None, None, None
             window.close()
+            self._ended(window, "dropped")
             logger.info(f"Panel {s.planned.where} hidden (window closed)")
         self._fire(s, "On_Hidden")  # after: it is hidden
 
-    def show(self, s: Surface) -> None:
+    def show(self, s: Surface, hide_after: float | None = None) -> None:
         if s.planned is None:
             return
         if not s.hidden:
-            self._arm_hide_after(s)  # shown again: the timer starts over
+            self._arm_hide_after(s, hide_after)  # shown again: the timer starts over
             return
         target = self._target_of(s)
         if target is not None and target.hidden:
@@ -1208,10 +1298,13 @@ class SurfaceManager:
                 input_region=_input_for(bar, s.geometry, self._output_size(s)),
                 keyboard=_keyboard(bar, False, holds_text_field(s.planned.expanded.nodes)),
             )
-            self._arm_hide_after(s)
+            self._arm_hide_after(s, hide_after)
+            if s.output in self._covered:
+                self._cover_state(s)
             self._trace(s, "shown")
             logger.info(f"Panel {s.planned.where} shown (surface kept)")
             self._enter(s)
+            self._shown(s)
             return
         fresh = self._make_window(s.planned, self.new_live(self._all_uses))
         assert fresh.window is not None
@@ -1222,10 +1315,13 @@ class SurfaceManager:
         self._app.add_window(s.window)
         self._panel_events(s)
         self._watch_frames(s)
-        self._arm_hide_after(s)
+        self._arm_hide_after(s, hide_after)
+        if s.output in self._covered:
+            self._cover_state(s)
         self._trace(s, "shown")
         logger.info(f"Panel {s.planned.where} shown (window created)")
         self._enter(s)
+        self._shown(s)
 
     # -- Panel: animation (Panel > Configuration, Animation) -------------------------------------
     #
@@ -1334,7 +1430,180 @@ class SurfaceManager:
         finally:
             self._depth -= 1
 
+    # -- fullscreen (KWin Integration > The KWin script) ---------------------------------------
+    #
+    # An active fullscreen window covers every shell element on its output: Bars, Panels, the
+    # Frame, Popups. KWin itself covers the `top` layer; the `overlay` layer and the space the Bar
+    # and the Frame reserve are the shell's to give up. A covered surface keeps its window and its
+    # tree (the KEEP route of Panel hiding: the root is not visible, no input, no keyboard) and
+    # reserves no space; showing it again puts back what the file and the user's own Show and Hide
+    # say. The user's own state (a Panel hidden by a command) is never changed by it.
+
+    @property
+    def covered_outputs(self) -> frozenset[str]:
+        """The outputs whose surfaces are hidden by a fullscreen window now."""
+        return self._covered
+
+    def set_fullscreen(self, outputs: Iterable[str]) -> None:
+        """Loop thread: ``outputs`` are the names of the outputs that have an active fullscreen
+        window now (the full state; an output that is not named is shown again)."""
+        covered = frozenset(outputs)
+        if covered == self._covered:
+            return
+        changed = self._covered ^ covered
+        self._covered = covered
+        logger.info(
+            f"fullscreen: the shell is hidden on {', '.join(sorted(covered))}"
+            if covered
+            else "fullscreen: the shell is shown everywhere"
+        )
+        for s in self.surfaces:
+            if s.output in changed:
+                self._cover_state(s)
+        self.frames.set_covered(covered)
+
+    def _cover_state(self, s: Surface) -> None:
+        """Bring one surface to the state its output's fullscreen window asks for. Idempotent: it
+        is also called after anything that writes the window's properties again."""
+        window, planned = s.window, s.planned
+        if window is None or planned is None:
+            return
+        bar = planned.bar
+        if s.output in self._covered:
+            if not s.covered:
+                s.covered = True
+                self.popups.parent_closed(s)  # a Popup does not stay open without its parent
+                self.mode.gone(s.name)  # nor does shortcut mode stay on a surface nobody sees
+            window.root.set(visible=False)
+            window.set(input_region=[], keyboard="none", exclusive_zone=0)
+            return
+        if not s.covered:
+            return
+        s.covered = False
+        window.set(exclusive_zone=s.geometry.exclusive_zone)
+        if s.hidden:  # the user's own Hide stands: only the space comes back
+            return
+        window.root.set(visible=True)
+        window.set(
+            input_region=_input_for(bar, s.geometry, self._output_size(s)),
+            keyboard=self._keyboard_word(planned, False),
+        )
+
     # -- the control interface ----------------------------------------------------------------
+
+    # -- what a module asks of its own surface (ctx.surface, ctx.apps) -----------------------------
+
+    def _find_use(self, use_key: str) -> tuple[Surface, Use] | None:
+        """The Bar, Panel or hosted surface that holds the module use ``use_key``, and the use."""
+        for s in self.every_surface():
+            expanded = s.planned.expanded if s.planned is not None else s.expanded
+            for use in expanded.uses:
+                if use.key == use_key:
+                    return s, use
+        return None
+
+    def _surface_of_use(self, use_key: str) -> Surface | None:
+        found = self._find_use(use_key)
+        return found[0] if found else None
+
+    def hide_use(self, use_key: str) -> bool:
+        """``ctx.surface.hide()``: hide the Panel the use is on."""
+        s = self._surface_of_use(use_key)
+        if s is None or s.planned is None or _kind(s.planned.bar) != "Panel":
+            logger.error(f"ctx.surface.hide(): {use_key} is not on a Panel")
+            return False
+        self.hide(s)
+        return True
+
+    def show_use(self, use_key: str, hide_after: float | None = None) -> bool:
+        """``ctx.surface.show()``: show the Panel the use is on (as ``Show`` does); shown already,
+        its ``Hide_After`` time (or ``hide_after``, in milliseconds) starts over."""
+        s = self._surface_of_use(use_key)
+        if s is None or s.planned is None or _kind(s.planned.bar) != "Panel":
+            logger.error(f"ctx.surface.show(): {use_key} is not on a Panel")
+            return False
+        self.show(s, hide_after)
+        return True
+
+    def watch_shown(self, callback: Callable[[tuple[str, ...]], None]) -> _Cancel:
+        """``ctx.surface.on_shown``: ``callback(use keys)`` for each Panel that is shown again."""
+        self._shown_listeners.append(callback)
+
+        def cancel() -> None:
+            if callback in self._shown_listeners:
+                self._shown_listeners.remove(callback)
+
+        return _Cancel(cancel)
+
+    def _shown(self, s: Surface) -> None:
+        keys = tuple(u.key for u in (s.planned.expanded.uses if s.planned else ()))
+        for callback in list(self._shown_listeners):
+            try:
+                callback(keys)
+            except Exception:
+                logger.opt(exception=True).error(f"a Panel {s.name} shown listener raised")
+
+    def focus_block(self, use_key: str, name: str, select_all: bool = False) -> bool:
+        """``ctx.surface.focus``: focus the block ``Name: name`` of the use (a TextField gives its
+        text input the focus), and with ``select_all`` select the field's text. A block of the
+        use's own layout is named ``Name``; a module the layout calls with ``Name: name`` is a use
+        of its own (its path is the use's, then ``.name``), and its blocks are what this finds."""
+        located = self._find_use(use_key)
+        view = located[0].view if located is not None else None
+        if located is None or view is None:
+            return False
+        surface, use = located
+        expanded = surface.planned.expanded if surface.planned is not None else surface.expanded
+        called = next((u.key for u in expanded.uses if u.name == f"{use.name}.{name}"), None)
+
+        def of_the_use(key: str) -> bool:
+            parts = key.split("/")
+            return (parts[-1] == name and use_key in parts[:-1]) or parts[0] == called
+
+        found = [key for key in view.nodes if of_the_use(key)]
+        for key in found:
+            wire = view.wires.get(key)
+            if wire is not None and wire.focus_target is not None:
+                found = [key]
+                break
+        for key in found:
+            wire = view.wires.get(key)
+            node = view.nodes[key]
+            target = wire.focus_target if wire is not None and wire.focus_target else node
+            if not target.get("focusable"):
+                continue
+            target.focus()
+            if select_all:
+                try:
+                    target.set(selection=(0, len(str(target.get("text") or ""))))
+                except ValueError, TypeError:  # not a text input
+                    pass
+            return True
+        logger.debug(f"ctx.surface.focus({name!r}): {use_key} has no such block")
+        return False
+
+    def announce(self, use_keys: Sequence[str], text: str, politeness: str) -> bool:
+        """``ctx.announce``: one announcement, on the window of the first of ``use_keys`` that is
+        on an open surface (the module is then not read twice when it is on two Bars)."""
+        for key in use_keys:
+            s = self._surface_of_use(key)
+            window = s.window if s is not None else None
+            if window is not None:
+                window.announce(text, politeness)
+                return True
+        return False
+
+    def request_token(self, use_key: str, callback: Callable[[str | None], None]) -> None:
+        """``ctx.apps.launch``: ask the engine for an activation token from the surface the use is
+        on (inside the key or click handler that starts the application). ``callback(None)`` when
+        the surface has no window or the engine has none to give."""
+        s = self._surface_of_use(use_key)
+        window = s.window if s is not None else None
+        if window is None:
+            logger.debug(f"activation token: {use_key} is on no open window")
+            callback(None)
+            return
+        window.request_activation_token(callback)
 
     def changed(self, name: str, shown: bool) -> None:
         """A Panel or a Frame was shown or hidden: tell the control interface (it makes the
@@ -1490,6 +1759,8 @@ class SurfaceManager:
         tree that does not bind leaves that surface as it was."""
         self._modules = modules
         self._shell = self._planned_shell  # the shell ``check`` just planned
+        if self._shell is not None:
+            self.focus_order = surface_order(self._shell)
         if look is not None:
             self._look = look
         self.popups.set_plans(self._popup_plans)  # the plans of the check just made
@@ -1518,10 +1789,45 @@ class SurfaceManager:
             self._close(s)
         self.surfaces = out
         self.frames.sync(self._frame_plans, self._look)
+        self.mode.configure(self._shell)  # what the files now write of ``Shortcut_Mode``
         self.settle_dynamic()
         keep = {u.key for u in store_uses} | set(self._dyn_registered)
         for key in [k for k in self._store.values if k not in keep]:
             self._store.remove_use(key)
+
+    def _surface_active(self, name: str, active: bool) -> None:
+        """The OS gave a surface of ours the keyboard focus (``active``), or took it away."""
+        logger.debug(f"surface {name}: keyboard {'gained' if active else 'lost'}")
+        if active:
+            self.focused = name
+        elif self.focused == name:
+            self.focused = None
+
+    def _surface_gone(self, name: str, window: Any = None) -> None:
+        """A surface closed. When it had the keyboard focus, focus goes to the next surface in the
+        shell's order, or to none when no other is left (Focus and Keyboard > Failure Modes). The
+        compositor decides which layer surface has the keyboard; moving it there is the shortcut
+        mode's, which is told as well (``window`` is the one that closed: a surface made again
+        under the same name is not gone)."""
+        self.mode.closed(name, window)
+        if self.focused != name:
+            return
+        open_names = {s.name for s in self.surfaces if s.window is not None}
+        open_names |= {st.plan.frame.name for st in self.frames.states.values() if st.painter}
+        self.focused = next_surface(
+            [n for n in self.focus_order if n == name or n in open_names], name
+        )
+        logger.info(f"surface {name} had the keyboard focus and closed; next: {self.focused}")
+
+    def _ended(self, window: Any, how: str) -> None:
+        """A surface's window ended in one of two ways: tre closed it (``closed``) or the manager
+        let go of it (``dropped``). Either may come first; when both have, nothing can use its
+        nodes and they are freed."""
+        other = "dropped" if how == "closed" else "closed"
+        if self._ending.pop(id(window), None) == other:
+            free_window(window)
+        else:
+            self._ending[id(window)] = how
 
     def _close(self, s: Surface) -> None:
         self.popups.parent_closed(s)
@@ -1535,6 +1841,7 @@ class SurfaceManager:
                 s.window.close()
             except Exception:  # tre already closed it (its output went away): nothing to do
                 logger.debug(f"closing {s.name} on {s.output}: already gone", exc_info=True)
+            self._ended(s.window, "dropped")
 
     def _update(self, s: Surface, p: Planned, all_uses: Mapping[str, Use]) -> None:
         live = self.new_live(all_uses)
@@ -1577,8 +1884,8 @@ class SurfaceManager:
     def _sync_body(
         self, s: Surface, bar: BarDef | PanelDef, geometry: Geometry, where: str
     ) -> None:
-        """Bring a kept surface's body (fill, shadows, margin) and its window geometry to what the
-        Bar asks for; each is set only when it differs."""
+        """Bring a kept surface's body (fill, shadows, margin), its window geometry and its
+        keyboard mode to what the Bar asks for; each is set only when it differs."""
         if s.window is None:
             return
         fill, shadows = _body_props(bar, self._look)
@@ -1609,6 +1916,13 @@ class SurfaceManager:
                 )
             except ValueError as exc:
                 logger.error(f"{_kind(bar)} {where}: {exc}; the geometry was not changed")
+        if s.planned is not None:
+            word = self._keyboard_word(s.planned, s.hidden)
+            if s.window.get("keyboard") != word and not self.mode.holds(s.window):
+                s.window.set(keyboard=word)  # shortcut mode holds it while it is on
+                logger.info(f"{_kind(bar)} {where}: keyboard {word}")
+        if s.output in self._covered:  # the writes above brought back what the cover took away
+            self._cover_state(s)
 
     # -- the desktop's look changed ------------------------------------------------------------
 

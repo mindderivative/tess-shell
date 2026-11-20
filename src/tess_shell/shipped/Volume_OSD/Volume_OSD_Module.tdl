@@ -1,0 +1,101 @@
+---
+TDL: 0.2
+Shell: 0.1
+Name: Volume_OSD
+---
+
+# The volume on-screen display (M7h): what a Panel shows for a moment when the default output's
+# volume or mute changes: an icon, the output's name, a bar and the percent, or "Muted". The module
+# follows the sound server itself (ctx.audio, as the Audio module does; no Audio use is needed).
+# It shows nothing at start, for the first reading of the server, for a change of the default
+# output (the new output is the baseline) or for a change of the microphone or the list of
+# outputs. On a volume or mute change it shows the Panel that holds it (ctx.surface.show) and the
+# Panel hides itself `duration` milliseconds after the last change; a change in that time starts
+# the time again. It says nothing aloud: the Audio module's `announce` does that (so it is not
+# said twice) and the Panel never takes the keyboard.
+#
+# Put it in a Panel that starts hidden, is click-through and has no keyboard, on the overlay
+# layer (the guide's example):
+#
+#   Panel { Name: Volume_Panel, Layer: OVERLAY, Keyboard: NONE, Input_Region: [], Visible: false,
+#           Anchor: [BOTTOM], Inset: [0, 0, 0, 80], Width: 300, Height: 64,
+#           Style { Background: $color.surface_raised, Corner_Radius: 12, Elevation: 20% },
+#           Children { Volume_OSD { } } }
+#
+# The Python sends `ready`, `volume`, `bar` (the volume held to 0 to 100), `volume_text`
+# ("45 %"), `readout` (the volume text, or "Muted"), `muted`, `icon`, `name` (the output) and
+# `label` (the accessible name). Muted is shown by the icon's shape, by the word and by the bar
+# drawn dimmed: never by colour alone.
+#
+# Accessibility: the module is a GROUP named "Volume, <output>, <45 %|muted>" that holds a
+# PROGRESSBAR named "Volume"; the icon and the two texts are hidden from assistive technology (the
+# group's name says them). There is no live region: nothing is announced by the module.
+Module {
+    Style: Volume_OSD_Style.tdl
+
+    Params {
+        # milliseconds the Panel stays after the last change
+        duration { Type: number, Default: 1500 }
+        # the output's name above the bar
+        show_name { Type: boolean, Default: true }
+    }
+
+    FlexBox {
+        Name: Root
+        Width: 100%
+        Height: 100%
+        Role: GROUP
+        Label: <| label |>
+        Flex: HORIZONTAL
+        Align_Items: CENTER
+        Spacing: 12
+        Padding: [16, 8, 16, 8]
+        Children {
+            SVG {
+                Name: Glyph
+                Icon: <| icon |>
+                Width: 24
+                Height: 24
+                A11y_Hidden: true
+            }
+            FlexBox {
+                Name: Body
+                Flex: VERTICAL
+                Flex_Grow: 1
+                Justify_Content: CENTER
+                Spacing: 6
+                Children {
+                    If <| params.show_name |> {
+                        Text {
+                            Name: Output
+                            Class: osd_name
+                            Text: <| name |>
+                            Wrap: NONE
+                            Width: 100%
+                            Height: AUTO
+                            A11y_Hidden: true
+                        }
+                    }
+                    ProgressBar {
+                        Name: Bar
+                        Label: "Volume"
+                        Value: <| bar |>
+                        Max: 100
+                        Width: 100%
+                        Opacity: <| 0.4 if muted else 1 |>
+                    }
+                }
+            }
+            Text {
+                Name: Value
+                Class: osd_value
+                Text: <| readout |>
+                Wrap: NONE
+                Width: 64
+                Height: AUTO
+                Text_Align: END
+                A11y_Hidden: true
+            }
+        }
+    }
+}

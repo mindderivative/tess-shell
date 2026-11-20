@@ -13,14 +13,17 @@ shows: an SVG document or ``pixels:...``; the attention icon while the status is
 and the item has one), ``tooltip_title``, ``tooltip_text``, ``attention``, ``label`` (the accessible
 name: the title, and "needs attention") and ``description`` (the tooltip's text). ``available`` is
 the layer's: the watcher is on the session bus. A layout shows itself with
-``Visible: {{ available and has_items }}``.
+``Visible: <| available and has_items |>``.
 
 The clicks are actions on the loop thread: ``activate``, ``secondary``, ``scroll`` and ``menu``. The
 item's menu is the shell's own: ``AboutToShow`` and ``GetLayout`` of its ``com.canonical.dbusmenu``,
-then the Popup ``Tray_Menu`` opens beside the tray with the tree in ``caller.data`` (the module
-``Tray_Menu`` draws it, and sends the click back). While it is open a ``LayoutUpdated`` or
+then the Popup ``Tray_Menu`` opens beside the clicked icon with the tree in ``caller.data``
+(the module ``Tray_Menu`` draws it, and sends the click back). While it is open a
+``LayoutUpdated`` or
 ``ItemsPropertiesUpdated`` of that menu closes and opens it again with the new tree; an item that
-leaves while its menu is open closes it. Icon files are read on a worker thread, never on the loop
+leaves while its menu is open closes it. A change of the desktop's icon theme while it is open
+makes the icons of its entries again (on the worker) and gives them to the open Popup, which stays
+open as it is. Icon files are read on a worker thread, never on the loop
 or the ``dbus`` thread.
 """
 
@@ -146,6 +149,7 @@ class Tray(Module):
         self.menu_opening = False  # the first tree is on its way
         self.menu_busy = False  # a refresh of the open menu is under way
         self.menu_dirty = False  # it changed while a read was under way
+        self.menu_layout: list[Any] | None = None  # the tree the open menu was built from
         self.monotonic = time.monotonic  # a test swaps it
 
     # -- start and stop -------------------------------------------------------------------------
@@ -160,6 +164,7 @@ class Tray(Module):
             watcher.on_signal("StatusNotifierItemRegistered", self.registered),
             watcher.on_signal("StatusNotifierItemUnregistered", self.unregistered),
             self.ctx.tray.on_host(self.host_changed),
+            self.ctx.icons.on_theme_changed(self.theme_changed),  # the desktop's icon theme changed
         ]
 
     def stop(self) -> None:
@@ -268,6 +273,47 @@ class Tray(Module):
     def sizes(self) -> set[int]:
         sizes = {int(u.params.get("icon_size") or 18) for u in list(self.ctx.uses.values())}
         return sizes or {18}
+
+    def theme_changed(self) -> None:
+        """The icon theme changed (any thread): the items' icons are made again, and so are the
+        icons of an open menu."""
+        self.resolve_all()
+        self.ctx.call_soon(self.refresh_menu_icons)
+
+    def refresh_menu_icons(self) -> None:
+        """Loop thread: an open menu keeps its place and its tree and takes the icons of the new
+        theme (made on the worker, then handed to the open Popup). A menu that is closed, or one
+        whose tree is on its way, needs nothing: the tree on its way is made after the change."""
+        opened, layout = self.menu_item, self.menu_layout
+        item = self.items.get(opened[0]) if opened is not None else None
+        if item is None or layout is None or not self.ctx.is_popup_open(POPUP):
+            return
+        if self.menu_opening or self.menu_busy:  # read again after it, with the new icons
+            self.menu_dirty = True
+            return
+        path = item.menu_path
+        if path is None or self.pool is None:
+            return
+        try:
+            self.pool.submit(self.remake_menu, item, path, layout)
+        except RuntimeError:  # the pool was shut down: the module stopped
+            pass
+
+    def remake_menu(self, item: Item, path: str, layout: list[Any]) -> None:
+        """Worker thread: the open menu's entries again, with the icons of the current theme."""
+        try:
+            data = self.build_menu(item, path, layout)
+        except Exception:
+            self.ctx.log.opt(exception=True).error(f"menu icons of {item.id} failed")
+            return
+        self.ctx.call_soon(partial(self.update_menu, item.id, layout, data))
+
+    def update_menu(self, item_id: str, layout: list[Any], data: dict[str, Any]) -> None:
+        """Loop thread: show them, unless the menu closed or read a newer tree meanwhile."""
+        opened = self.menu_item
+        if opened is None or opened[0] != item_id or self.menu_layout is not layout:
+            return
+        self.ctx.update_popup(POPUP, data)
 
     def resolve_all(self) -> None:
         for item in list(self.items.values()):
@@ -466,7 +512,7 @@ class Tray(Module):
             return self.menu_failed(refresh)
         loop = asyncio.get_running_loop()
         data = await loop.run_in_executor(self.pool, self.build_menu, item, path, layout)
-        self.ctx.call_soon(partial(self.show_menu, item.id, use_key, data, refresh))
+        self.ctx.call_soon(partial(self.show_menu, item.id, use_key, data, refresh, layout))
 
     def menu_failed(self, refresh: bool) -> None:
         """No tree: nothing opens; an open menu that could not be refreshed stays as it is."""
@@ -474,7 +520,9 @@ class Tray(Module):
         if not refresh:
             self.ctx.call_soon(self.forget_menu)
 
-    def show_menu(self, item_id: str, use_key: str, data: dict[str, Any], refresh: bool) -> None:
+    def show_menu(
+        self, item_id: str, use_key: str, data: dict[str, Any], refresh: bool, layout: list[Any]
+    ) -> None:
         """Loop thread: open the Popup (again, when the menu changed while it was open)."""
         self.menu_busy = False
         item = self.items.get(item_id)
@@ -485,6 +533,7 @@ class Tray(Module):
             return  # it was closed while the new tree was on its way
         if refresh:
             self.ctx.close_popup(POPUP)
+        self.menu_layout = layout
         self.ctx.popup(POPUP, data=data, use=use_key, anchor=self.menu_anchor)
         self.menu_opening = False
         if self.menu_dirty:  # it changed again while this tree was on its way
@@ -538,6 +587,7 @@ class Tray(Module):
 
     def forget_menu(self) -> None:
         self.menu_item = None
+        self.menu_layout = None
         self.menu_anchor = None
         self.menu_opening = self.menu_busy = self.menu_dirty = False
         for sub in self.menu_subs:

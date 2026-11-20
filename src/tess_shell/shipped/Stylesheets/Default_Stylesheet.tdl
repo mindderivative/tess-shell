@@ -1,5 +1,5 @@
 ---
-TDL: 0.1
+TDL: 0.2
 Name: Default
 ---
 
@@ -108,6 +108,14 @@ Stylesheet {
         Selector: ".tray_item:selected"
         Border_Width: 2
         Border_Color: $color.warning
+    }
+
+    Rule { Selector: ".task_item:hovered", Background: $color.surface_raised }
+    Rule {
+        Selector: ".task_item:selected"
+        Background: $color.surface_raised
+        Border_Width: 2
+        Border_Color: $color.primary
     }
 
     Rule { Selector: "MenuItem:hovered", Background: $color.outline }

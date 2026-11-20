@@ -89,17 +89,17 @@ def test_both_errors_are_reported_and_an_optional_one_may_be_left_out(tmp_path: 
 
 
 def test_a_slot_argument_is_checked_by_its_name_only(tmp_path: Path) -> None:
-    assert problems(tmp_path, call("go", "Id: {{ event.name }}")) == []
-    (f,) = problems(tmp_path, call("go", "Id: 1, Mod: {{ event.name }}"))
+    assert problems(tmp_path, call("go", "Id: <| event.name |>")) == []
+    (f,) = problems(tmp_path, call("go", "Id: 1, Mod: <| event.name |>"))
     assert f.rule == "unknown-argument" and "Mod" in f.message
-    (f,) = problems(tmp_path, call("go", "Mode: {{ event.name }}"))
+    (f,) = problems(tmp_path, call("go", "Mode: <| event.name |>"))
     assert f.rule == "missing-argument"  # a slot named Mode does not give Id
 
 
 def test_an_action_with_only_event_or_with_kwargs_takes_any_names(tmp_path: Path) -> None:
     assert problems(tmp_path, call("free", "A: 1, B: 2")) == []
     assert problems(tmp_path, call("free", "")) == []
-    assert problems(tmp_path, call("anything", "A: 1, B: {{ event.name }}")) == []
+    assert problems(tmp_path, call("anything", "A: 1, B: <| event.name |>")) == []
     assert problems(tmp_path, call("anything", "")) == []
 
 
@@ -122,9 +122,9 @@ def test_a_call_in_a_module_layout_in_a_for_and_in_a_popup_is_checked_too(tmp_pa
         "Other": OTHER,
         "Btn": (
             "Module { FlexBox { Name: Root, Flex: VERTICAL, Children {\n"
-            "For item In {{ items }} Key {{ item.id }} {\n"
+            "For item In <| items |> Key <| item.id |> {\n"
             "FlexBox { Width: 40, Height: 10, "
-            + call("go", "Id: {{ item.id }}, Moed: {{ item.id }}")
+            + call("go", "Id: <| item.id |>, Moed: <| item.id |>")
             + " }\n} } } }"
         ),
     }
@@ -175,7 +175,7 @@ def test_the_declared_arguments_arrive_as_keywords_and_event_args_stays_whole(
 ) -> None:
     r = running(
         tmp_path,
-        children=shell_box(call("go", "Id: {{ event.name }}")),
+        children=shell_box(call("go", "Id: <| event.name |>")),
         layouts={"Other": OTHER},
         code={"Other": OTHER_PY},
     )

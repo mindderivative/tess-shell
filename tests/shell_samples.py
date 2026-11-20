@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-HEADER = "---\nTDL: 0.1\nShell: 0.1\nName: Main_Shell\n---\n"
+HEADER = "---\nTDL: 0.2\nShell: 0.1\nName: Main_Shell\n---\n"
 
 SVG = (
     "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4'>"

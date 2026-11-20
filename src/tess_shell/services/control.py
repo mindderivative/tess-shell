@@ -25,6 +25,7 @@ asked for on it, so a reconnect brings both back (``Bus.on_reconnect``).
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import inspect
 import json
 from collections import deque
@@ -46,6 +47,7 @@ API_VERSION = 1  # the ``1`` of the interface name: a breaking change makes 2
 LOOP_TIMEOUT = 5.0  # seconds a command waits for the loop
 STATES = ("starting", "running", "stopping")
 LAST_ERRORS = 20
+NO_WINDOWS = '{"windows": false}'  # the KWin script's answer when nothing wants the window list
 
 
 class CommandError(Exception):
@@ -79,6 +81,15 @@ class Commands(Protocol):
 
     def quit(self) -> None:
         """Any thread: ask the engine to stop."""
+
+
+class ScriptReports(Protocol):
+    """What the shell's KWin script reports (``tess_shell.services.kwin.KWinService``): each call
+    runs on the ``dbus`` thread and returns the small JSON answer the script reads."""
+
+    def fullscreen_state(self, raw: str) -> str: ...
+
+    def windows_state(self, raw: str) -> str: ...
 
 
 class Reported(Protocol):
@@ -178,6 +189,7 @@ class ControlService:
         commands: Commands,
         version: str,
         errors: ErrorLog | None = None,
+        script: ScriptReports | None = None,
         *,
         loop_timeout: float = LOOP_TIMEOUT,
     ) -> None:
@@ -188,6 +200,7 @@ class ControlService:
         self.loop_timeout = loop_timeout
         self.state = "starting"
         self.errors = errors if errors is not None else ErrorLog()
+        self.script = script
         self.owned = False  # the shell owns the bus name now
         self.exported = 0  # connections the object was exported on (tests)
         self._iface: ServiceInterface | None = None
@@ -308,6 +321,8 @@ class ControlService:
             "ClosePopup": _method("ClosePopup", [], "", self._close_popup),
             "Call": _method("Call", ["s", "s", "s"], "s", self._call),
             "SetLogLevel": _method("SetLogLevel", ["s"], "", self._set_log_level),
+            "FullscreenState": _method("FullscreenState", ["s"], "s", self._fullscreen_state),
+            "WindowsState": _method("WindowsState", ["s"], "s", self._windows_state),
             "State": _property("State", "s", lambda: self.state),
             "Version": _property("Version", "s", lambda: self.version),
             "ApiVersion": _property("ApiVersion", "u", lambda: API_VERSION),
@@ -334,11 +349,25 @@ class ControlService:
             if not done.done():  # a timed out call is no longer waited for
                 setter(value)
 
+        later = [False]  # the answer is a future (an action of a module in a process)
+
         def run() -> None:
             try:
                 result = fn()
             except BaseException as exc:
                 aio.call_soon_threadsafe(settle, done.set_exception, exc)
+                return
+            if isinstance(result, concurrent.futures.Future):
+                later[0] = True
+
+                def arrived(finished: concurrent.futures.Future[Any]) -> None:
+                    exc = finished.exception()
+                    if exc is not None:
+                        aio.call_soon_threadsafe(settle, done.set_exception, exc)
+                    else:
+                        aio.call_soon_threadsafe(settle, done.set_result, finished.result())
+
+                result.add_done_callback(arrived)
             else:
                 aio.call_soon_threadsafe(settle, done.set_result, result)
 
@@ -346,9 +375,9 @@ class ControlService:
         try:
             return await asyncio.wait_for(done, self.loop_timeout)
         except TimeoutError:
+            who = "the module's process" if later[0] else "the shell's loop"
             raise DBusError(
-                ERROR + "Timeout",
-                f"the shell's loop did not answer within {self.loop_timeout:g} s",
+                ERROR + "Timeout", f"{who} did not answer within {self.loop_timeout:g} s"
             ) from None
         except CommandError as exc:
             raise DBusError(ERROR + exc.name, str(exc)) from exc
@@ -414,3 +443,17 @@ class ControlService:
     async def _set_log_level(self, level: str) -> None:
         self._require_running()
         await self.on_loop(lambda: self.commands.set_log_level(level))
+
+    # the KWin script's two reports: answered at once on this thread (the work for the loop is
+    # handed to it by the service); the state of the shell does not matter, the script may call
+    # while the shell starts or stops. With no service behind them they answer "no window list".
+
+    async def _fullscreen_state(self, outputs: str) -> str:
+        if self.script is None:
+            return NO_WINDOWS
+        return self.script.fullscreen_state(outputs)
+
+    async def _windows_state(self, windows: str) -> str:
+        if self.script is None:
+            return NO_WINDOWS
+        return self.script.windows_state(windows)

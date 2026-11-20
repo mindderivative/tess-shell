@@ -1,0 +1,25 @@
+---
+TDL: 0.2
+Name: Tally
+---
+# A counter. A click adds `step`, a secondary click (right button) takes it back to 0. The Python
+# sends `count` and `text`; the layout shows `text` and says it again as the accessible name.
+Module {
+    Params {
+        step { Type: number, Default: 1 }
+    }
+    FlexBox {
+        Name: Root
+        Role: BUTTON
+        Label: <| text |>
+        Padding: [10, 4, 10, 4]
+        On_Click { Action: bump, amount: <| params.step |> }
+        On_Secondary_Click: reset
+        Children {
+            Text {
+                Name: Face
+                Text: <| text |>
+            }
+        }
+    }
+}

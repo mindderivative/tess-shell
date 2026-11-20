@@ -1,0 +1,66 @@
+---
+TDL: 0.2
+Shell: 0.1
+Name: Tasks
+---
+
+# The open windows as a row of buttons (Tasks Module): one button per window with the application's
+# icon and, with `show_title`, the window's title; a click on a window that is not active activates
+# it (un-minimising it), a click on the active window minimises it, a middle click closes it, and
+# the wheel over the row activates the next or the previous window. The list comes from the shell's
+# KWin script (`ctx.windows`): KWin has no call that lists windows. The Python sends `ready` (the
+# first list has arrived), `windows` (a record per shown window, for each use: `id`, `title`, `app`,
+# `name` (the application's name from its desktop entry), `icon`, `active`, `minimized`,
+# `attention`, `label` (the button's accessible name: the title and that name, with "active",
+# "minimised" or "wants attention" said in words)), `has_windows`; the param
+# `announce` has the module say a window that opens, closes or wants attention (ctx.announce); the layer sends
+# `available` (KWin is on the session bus). With no KWin, no script, no window yet or (unless
+# `show_empty`) no window the module is hidden: its root is `Visible: false`, which takes no space
+# in the Bar. Task_Item is the button; the module's own `monitor` and `desktop` choose the windows.
+Module {
+    Params {
+        # the window's title beside the icon
+        show_title { Type: boolean, Default: true }
+        # the widest a button gets, in pixels
+        max_width { Type: number, Default: 180 }
+        # the icon's size in pixels
+        icon_size { Type: number, Default: 18 }
+        # THIS: the windows on the module's own monitor; ALL: on every monitor
+        monitor { Type: string, Default: THIS }
+        # CURRENT: the windows on the current virtual desktop (and those on all desktops); ALL
+        desktop { Type: string, Default: CURRENT }
+        # keep the module's space when there is no window
+        show_empty { Type: boolean, Default: false }
+        # say aloud, politely, a window that opens, closes or wants attention (off by default:
+        # the specification names no announcement)
+        announce { Type: boolean, Default: false }
+    }
+
+    FlexBox {
+        Name: Root
+        Visible: <| available and ready and (has_windows or params.show_empty) |>
+        Role: GROUP
+        Label: "Tesserae Shell windows"
+        Flex: HORIZONTAL
+        Align_Items: CENTER
+        Spacing: 4
+        On_Scroll { Action: cycle, delta: <| event.delta |> }
+        Children {
+            For w In <| windows |> Key <| w.id |> {
+                Task_Item {
+                    icon: <| w.icon |>
+                    title: <| w.title |>
+                    label: <| w.label |>
+                    active: <| w.active |>
+                    minimized: <| w.minimized |>
+                    attention: <| w.attention |>
+                    show_title: <| params.show_title |>
+                    max_width: <| params.max_width |>
+                    icon_size: <| params.icon_size |>
+                    On_Click { Action: activate, id: <| w.id |> }
+                    On_Middle_Click { Action: close, id: <| w.id |> }
+                }
+            }
+        }
+    }
+}

@@ -18,7 +18,7 @@ from tests.test_surfaces_live import workspace_rect
 
 pytestmark = pytest.mark.tre
 
-SETTINGS = "---\nTDL: 0.1\nName: Settings\n---\nSettings {{ Logging {{ Level: DEBUG }} {extra} }}\n"
+SETTINGS = "---\nTDL: 0.2\nName: Settings\n---\nSettings {{ Logging {{ Level: DEBUG }} {extra} }}\n"
 
 PROBE_PY = """
 from tess_shell import Module
@@ -39,7 +39,7 @@ class Probe(Module):
 PROBE_TDL = """
 Module {
     Style: Probe_Style.tdl
-    Text { Name: Face, Class: look, Text: {{ label }} }
+    Text { Name: Face, Class: look, Text: <| label |> }
 }
 """
 

@@ -21,7 +21,7 @@ from tess_shell.schema.shell import read_module
 from tests.test_events import ACTION_PY, host_module
 from tests.test_module_host import Rig
 
-HEAD = "---\nTDL: 0.1\nName: Btn\n---\n"
+HEAD = "---\nTDL: 0.2\nName: Btn\n---\n"
 KEYS = ("On_Click", "On_Secondary_Click", "On_Middle_Click", "On_Scroll")
 
 
@@ -73,7 +73,7 @@ def test_a_module_layout_accepts_the_keys_on_a_box(key: str) -> None:
     ok, errors = module_findings("Module { Rectangle { Width: 4, Height: 4, " + key + ": go } }")
     assert ok and errors == []
     ok, errors = module_findings(
-        "Module { FlexBox { " + key + " { Action: step, delta: {{ event.delta }} } } }"
+        "Module { FlexBox { " + key + " { Action: step, delta: <| event.delta |> } } }"
     )
     assert ok and errors == []
 
@@ -243,7 +243,7 @@ def test_the_action_receives_delta_and_button(tmp_path: Path) -> None:
     )
     r = Rig(tmp_path)
     (loaded, findings), _, u = host_module(
-        r, "On_Scroll { Action: step, delta: {{ event.delta }} }", code
+        r, "On_Scroll { Action: step, delta: <| event.delta |> }", code
     )
     assert loaded is not None and findings == []
     r.host.start(loaded)

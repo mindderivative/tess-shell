@@ -1,0 +1,16 @@
+---
+TDL: 0.2
+Name: Settings
+---
+Settings {
+    Appearance { Stylesheets: [Default] }
+    Shortcuts {
+        Toggle_Launcher: "Meta+Space"
+        Toggle_Notes: "Meta+N"
+        Hide_Notes: "Meta+Shift+N"
+        Volume_Up { Keys: "AudioRaiseVolume", Action: Call, Target: "Audio.step", delta: 5 }
+        Volume_Down { Keys: "AudioLowerVolume", Action: Call, Target: "Audio.step", delta: -5 }
+        Mute { Keys: "AudioMute", Action: Call, Target: "Audio.toggle_mute" }
+        Play_Pause { Keys: "AudioPlay", Action: Call, Target: "Media.play_pause" }
+    }
+}

@@ -15,7 +15,7 @@ from tess_shell.schema.findings import Finding
 from tess_shell.schema.model import ModuleDef
 from tess_shell.schema.shell import read_module
 
-LAYOUT = "---\nTDL: 0.1\nName: {name}\n---\nModule {{\n    Text {{ Text: {{{{ time }}}} }}\n}}\n"
+LAYOUT = "---\nTDL: 0.2\nName: {name}\n---\nModule {{\n    Text {{ Text: <| time |> }}\n}}\n"
 
 
 def definition(name: str) -> ModuleDef:

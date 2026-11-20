@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Tesserae Shell
+Comment=Bars, panels and widgets beside the desktop
+Exec=/absolute/path/to/tesserae-shell run
+Icon=io.github.mindderivative.TesseraeShell
+NoDisplay=true
+X-KDE-Wayland-Interfaces=

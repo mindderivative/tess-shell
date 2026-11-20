@@ -22,13 +22,24 @@ KEY_DOCS: dict[str, str] = {
     "Tooltip": "What opens when the pointer rests on the block: the Name of a Popup, a short text "
     "or an inline Tooltip block.",
     "Key": "The name of an entry of a list in a module's layout; an entry of a For has its "
-    "repeater's key unless it writes one.",
+    "repeater's key unless it writes one. A For may name several variables (For i, item In "
+    "<| enumerate(items) |>): each item is unpacked over them.",
     "Visible": "False hides the block from everyone, assistive technology included, and it takes "
     "no space.",
     "Enabled": "False disables the block: it ignores input, takes the disabled style state and "
     "is announced as disabled.",
     "Tooltip_When_Disabled": "Lets a disabled block open its tooltip; without it a disabled "
     "block opens none.",
+    "Focusable": "Whether the block takes keyboard focus. A block that takes input is focusable "
+    "unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a "
+    "TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one "
+    "that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a "
+    "shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or "
+    "TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+    "Tab_Index": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: "
+    "a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items "
+    "with no number come after all the others. A surface holds one order for its blocks and the "
+    "shell holds one for its surfaces.",
     # size
     "Width": "The width: pixels, a percentage, AUTO (fit the content) or EXPAND (take the free "
     "space).",
@@ -96,6 +107,8 @@ KEY_DOCS: dict[str, str] = {
     "Value_Min": "The least value of a control, for assistive technology; set by a module.",
     "Value_Max": "The greatest value of a control, for assistive technology; set by a module.",
     "Value_Step": "The step of a control's value, for assistive technology; set by a module.",
+    "Value_Text": "The value of a control in words for assistive technology ('45 percent', "
+    "'1:23 of 3:45'); set by a module.",
     "Checked": "Whether the block is checked, for a toggle or a checkbox; set by a module.",
     "Selected": "Whether the block is the selected entry of a list; set by a module.",
     "Expanded": "Whether the block's submenu or section is open; set by a module.",
@@ -119,7 +132,7 @@ KEY_DOCS: dict[str, str] = {
     "Justify_Content": "How the children share the space along the stacking direction.",
     "Spacing": "The space between the children, in pixels.",
     # text
-    "Text": "The words; may hold {{ }} slots in a module.",
+    "Text": "The words; may hold <| |> slots in a module.",
     "Selectable": "Lets the user select the text.",
     "Max_Lines": "Cuts the text after this many lines; 0 is no limit.",
     "Font_Family": "A font family name, or a list of them in the order of fallback.",
@@ -176,7 +189,14 @@ KEY_DOCS: dict[str, str] = {
     "Auto_Hide": "Slides the Bar out when the pointer leaves it. Not built.",
     "Auto_Hide_Delay": "How long the pointer is away before the Bar hides, in milliseconds. Not "
     "built.",
-    "Reveal_Key": "A shortcut that reveals a hidden Bar. Not built.",
+    "Shortcut": "The global key that toggles the Panel or Frame, written as Meta+Space; the same "
+    "as Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
+    "Shortcut_Mode": "Whether this surface is the one in shortcut mode: the shell's keyboard "
+    "mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces "
+    "(Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is "
+    "true at a time: setting one true sets every other false, and writing it false on the one "
+    "that is true leaves the mode. Written true on a surface it makes the shell start in the "
+    "mode on that surface; two surfaces written true are a warning and the first keeps it.",
     "Text_Rotation": "Rotates the text of a vertical Bar. Not built.",
     "Attach_To": "The Name of the Bar, Panel or Frame this Panel is placed against.",
     "Attach": "The edge of the target the surface meets: LEFT, RIGHT, TOP or BOTTOM.",
@@ -245,7 +265,8 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     ("Bar", "Max_Width"): "The greatest width of the Bar, in pixels.",
     ("Bar", "Max_Height"): "The greatest height of the Bar, in pixels.",
     ("Bar", "Visible"): "Starts the Bar shown or hidden. Not built.",
-    ("Bar", "Keyboard"): "Whether the Bar takes the keyboard. Not built.",
+    ("Bar", "Keyboard"): "Whether the Bar takes the keyboard: NONE never (Tab does nothing in "
+    "it), ON_DEMAND on a click.",
     ("Bar", "Input_Region"): "Which part of the Bar takes the pointer. Not built.",
     ("Bar", "Meld"): "Draws the Bar inside its Frame. Not built.",
     ("Bar", "Padding"): "Space between the Bar's children and its sides. Not built.",
@@ -382,7 +403,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Type",
         "Default",
     ),
-    "State": ("Visible", "Enabled", "Tooltip_When_Disabled"),
+    "State": ("Visible", "Enabled", "Tooltip_When_Disabled", "Focusable", "Tab_Index"),
     "Size": (
         "Width",
         "Height",
@@ -504,6 +525,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Value_Min",
         "Value_Max",
         "Value_Step",
+        "Value_Text",
         "Checked",
         "Selected",
         "Expanded",
@@ -532,7 +554,8 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Handle_Opacity",
         "Auto_Hide",
         "Auto_Hide_Delay",
-        "Reveal_Key",
+        "Shortcut",
+        "Shortcut_Mode",
         "Text_Rotation",
     ),
 }
@@ -606,6 +629,10 @@ LITERAL_DEFAULTS: dict[tuple[str, str], str] = {
     ("Marquee", "Animated"): "true",
     ("Popup", "Adjust"): "[FLIP_Y, SLIDE_X]",  # PopupDef.adjust, written the way the file does
     ("Popup", "Focus"): "true",  # false for a tooltip
+    ("Bar", "Shortcut_Mode"): "false",  # the model holds where it is written true, or None
+    ("Panel", "Shortcut_Mode"): "false",
+    ("Frame", "Shortcut_Mode"): "false",
+    ("Edge", "Shortcut_Mode"): "false",
 }
 
 # -- the events, the actions, the tokens -----------------------------------------------------------
@@ -629,14 +656,20 @@ EVENT_DOCS: dict[str, str] = {
     "takes it); event.delta is +1 for a step down and -1 for a step up.",
     "On_Anim_Start": "A Panel's animation started.",
     "On_Anim_End": "A Panel's animation ended.",
-    "On_Changed": "A control's value changed by the user: a toggle flipped, an entry chosen, a "
-    "slider moved; for each new value while the pointer moves. A TextField raises it for each "
-    "change of its text. An Expander raises it when an opening or a closing has finished "
-    "(event.value is whether it is open), whoever set the new state.",
-    "On_Released": "A slider's press ended, once, with the final value.",
+    "On_Changed": "A control's value changed by the user: a toggle flipped (a click, or Space), "
+    "an entry chosen (a click, or an arrow key), a slider moved (for each new value while the "
+    "pointer moves, and for each key step). A TextField raises it for each change of its text. "
+    "An Expander raises it when an opening or a closing has finished (event.value is whether it "
+    "is open), whoever set the new state.",
+    "On_Released": "A slider's press ended, once, with the final value; a key step (an arrow, "
+    "Page Up or Down, Home or End) raises it at once after its On_Changed.",
     "On_Change": "Reserved: the old spelling of On_Changed.",
     "On_Submit": "Enter in a single-line TextField.",
     "On_Text_Commit": "Committed text in a TextField, such as an input-method composition.",
+    "On_Key_Down": "A key went down in a TextField (event.key, event.ctrl, event.shift, "
+    "event.alt, event.meta, event.repeat), before the field acts on it; the field acts whatever "
+    "the handler does, and event.stop() keeps the surface above from hearing the key (a Panel's "
+    "Escape).",
 }
 
 ACTION_DOCS: dict[str, str] = {
@@ -645,6 +678,14 @@ ACTION_DOCS: dict[str, str] = {
     "Toggle": "Shows the Panel or strip named by Target if it is hidden, else hides it.",
     "Close": "Closes the Popup that holds the block.",
     "Call": "Runs a module's @action: Target is Module.action, the other keys are its arguments.",
+}
+
+SYSTEM_TOKEN_DOCS: dict[str, str] = {
+    "type.system.font_family": "The family of the desktop's UI font (the family of the Settings "
+    "portal's font-name, without its style and size), for a Font_Family: $type.system.font_family. "
+    "While the desktop names no font it holds the family the shell uses for text that sets none "
+    "(the default, Roboto, which the shell's renderer bundles). A theme that sets this token "
+    "itself keeps its own value over the desktop's.",
 }
 
 TOKEN_DOCS: dict[str, str] = {
@@ -733,12 +774,55 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
     "first.",
     ("Appearance", "Follow_Desktop"): "Follows the desktop's colour scheme, accent, contrast "
     "and reduced-motion settings.",
+    ("Settings", "KWin"): "What the shell does with KWin: its script and fullscreen hiding.",
+    ("KWin", "Script"): "How the shell's KWin script runs: RUNTIME loads it into KWin when the "
+    "shell starts and unloads it at stop, PERSISTENT leaves it to the one installed by "
+    "tesserae-shell kwin script install, OFF loads nothing (no fullscreen hiding, no window list). "
+    "A restart applies it.",
+    ("KWin", "Hide_On_Fullscreen"): "Hides the shell's surfaces on an output while a fullscreen "
+    "window is active there, and shows them again when it leaves. A restart applies it.",
     ("Debug", "Panel_Hide"): "How a Panel is hidden: KEEP leaves the surface mapped and draws "
     "nothing, CLOSE destroys the window.",
     ("Debug", "Frame_Join"): "How the join of a melded Panel animates: PARAM, SMIL, CONCAVE, "
     "SHADER or STRUCTURE. A restart applies it.",
     ("Debug", "Frame_Blend"): "How the Frame's ring is blended: LINEAR in linear light or SRGB. "
     "A restart applies it.",
+    ("Debug", "Mode_Keyboard"): "The keyboard mode the surface that has the focus takes while the "
+    "shell is in shortcut mode: EXCLUSIVE (the one way a layer surface takes the keyboard without "
+    "a click) or ON_DEMAND (for a compositor that hands focus over after a global key). A "
+    "restart applies it.",
+    ("Debug", "User_Modules_In_Process"): "Keeps the Python of your own modules in the shell's "
+    "process instead of a process each (the default, false): a module that hangs or crashes then "
+    "freezes or ends the shell, and Event.stop() works. A restart applies it.",
+    ("Settings", "Shortcuts"): 'The shell\'s global keys, one Name: "keys" entry for each action; '
+    "a hot reload applies it.",
+    ("Settings", "Global_Shortcuts"): "Whether the shell registers its keys with the desktop's "
+    "shortcut service; false makes no call to it at all. A hot reload applies it.",
+    ("Shortcuts", "Enter_Shortcut_Mode"): "The key that puts the shell in shortcut mode: the "
+    "one global key of the mode, registered with the desktop.",
+    ("Shortcuts", "Exit_Shortcut_Mode"): "The key that leaves shortcut mode. It acts inside the "
+    "mode only (a key event on the surface that has the keyboard); it is not registered with the "
+    "desktop.",
+    ("Shortcuts", "Set_Shortcut_Mode"): "The key that turns shortcut mode on or off for the "
+    "focused surface. It acts inside the mode only; it is not registered with the desktop.",
+    (
+        "Shortcuts",
+        "Next_Focus",
+    ): "The key that moves focus to the next surface in shortcut mode. It acts inside the mode "
+    "only; it is not registered with the desktop.",
+    ("Shortcuts", "Previous_Focus"): "The key that moves focus to the previous surface in "
+    "shortcut mode. It acts inside the mode only; it is not registered with the desktop.",
+}
+
+# the forms of an entry of ``Shortcuts { }`` that are not a fixed key (the ``shortcuts`` section of
+# the export): Toggle_<Name>, Show_<Name>, Hide_<Name> and a block that holds a handler
+SHORTCUT_FORMS: dict[str, str] = {
+    "Toggle": 'Toggle_<Name>: "keys" toggles the Panel, Bar or Frame called <Name>.',
+    "Show": 'Show_<Name>: "keys" shows the Panel, Bar or Frame called <Name>.',
+    "Hide": 'Hide_<Name>: "keys" hides the Panel or Frame called <Name>; a Bar cannot be hidden.',
+    "Handler": '<Any_Name> { Keys: "keys", Action: ... } runs a handler of Events and Actions '
+    "(Show, Hide, Toggle or Call, with its arguments) when the key is pressed; its name is what "
+    "the desktop's shortcut settings show.",
 }
 
 # -- what each spec is, and an example that loads ---------------------------------------------
@@ -746,6 +830,11 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
 SPEC_NOTES: dict[str, str] = {
     "Shell": "The root block of a shell file: monitors.",
     "Monitor": "One monitor, chosen by Connector, Description or Index, and the surfaces on it.",
+    "Imported_Shell": "The root block of a shell file made to be imported: surface blocks and "
+    "Import lines, no Monitor. A Monitor's Children write Import: Top_Shell.tdl (one file or a "
+    "list, a path relative to the file that writes it, inside the configuration folders), and "
+    "the surfaces of the file come in at that position, on that Monitor. A file is imported once "
+    "into a shell, because a Name is unique across it; imports nest, and a circle is an error.",
     "Bar": "A strip along a screen edge that reserves its space.",
     "Panel": "A surface placed by anchors or against a target; a launcher, an OSD, a dock. Width "
     "and Height size it, or Depth and Length with Meld: true.",
@@ -790,6 +879,9 @@ EXAMPLES: dict[str, str] = {
     "Shell": "Shell {\n    Monitor { Name: Main, Index: default, Children { } }\n}",
     "Monitor": "Monitor {\n    Name: Main\n    Index: default\n    Children {\n"
     "        Bar { Name: Top_Bar, Edge: TOP, Width: EXPAND, Height: 32 }\n    }\n}",
+    "Imported_Shell": "Shell {\n"
+    "    Bar { Name: Bottom_Bar, Edge: BOTTOM, Width: EXPAND, Height: 24 }\n"
+    "    Import: More_Shell.tdl\n}",
     "Bar": "Bar {\n    Name: Top_Bar\n    Edge: TOP\n    Width: EXPAND\n    Height: 32\n"
     '    Style { Background: $color.surface }\n    Children { Text { Text: "Hello" } }\n}',
     "Panel": "Panel {\n    Name: Launcher\n    Anchor: [TOP, LEFT]\n    Inset: [8, 40, 0, 0]\n"
@@ -876,6 +968,9 @@ PREFERRED_TOKENS: dict[str, tuple[str, ...]] = {
 # -- the shipped modules ----------------------------------------------------------------------
 
 MODULE_NOTES: dict[str, str] = {
+    "Applications": "The launcher: a text field over a list of the installed applications that "
+    "narrows as you type; Down and Up move the selection, Enter or a click starts it, Escape "
+    "clears the field and then hides the Panel. The shipped Panel Launcher holds it.",
     "Audio": "The default sound output: an icon for its kind and level, mute on a click, the "
     "volume on the wheel, an optional percent and slider, and a menu of outputs.",
     "Audio_Outputs": "The content of the Audio module's outputs Popup: one row per output.",
@@ -896,6 +991,9 @@ MODULE_NOTES: dict[str, str] = {
     "Network": "How the machine is connected, as NetworkManager reports it.",
     "ProgressBar": "A bar that shows a value between a minimum and a maximum.",
     "Slider": "A control that sets a value between a minimum and a maximum by dragging.",
+    "Task_Item": "One button of the Tasks row: an application's icon and a window's title.",
+    "Tasks": "The open windows as a row of buttons, from the shell's KWin script; a click "
+    "activates, minimises or closes a window.",
     "TextBox": "Several lines of text that can wrap, be cut and be selected.",
     "TextEditor": "A multi-line text field.",
     "TextInput": "A single-line text field.",
@@ -904,15 +1002,23 @@ MODULE_NOTES: dict[str, str] = {
     "and menu; the shell is a second tray host beside Plasma's.",
     "Tray_Item": "One icon of the Tray, with a tooltip.",
     "Tray_Menu": "The content of the Popups that draw a tray item's menu, one level of it.",
+    "Volume_OSD": "The volume on-screen display: the output, a bar and the percent (or Muted) for "
+    "a moment when the default output's volume or mute changes; it goes in a click-through "
+    "Panel.",
     "Workspaces": "The virtual desktops as buttons: the current one is marked, a click switches.",
 }
 
 # (module, param) -> one line
 PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Audio", "show_percent"): "Shows the volume as a number next to the icon.",
+    ("Audio", "announce"): "Says aloud, politely, mute and unmute and a new volume once it has "
+    "settled (off by default).",
     ("Audio", "show_slider"): "Shows a volume slider.",
     ("Audio", "show_mic"): "Shows a microphone mark while the default input is muted.",
     ("Audio", "step"): "The percent one wheel step changes the volume by.",
+    ("Volume_OSD", "duration"): "Milliseconds the Panel stays after the last change of the volume "
+    "or mute (more than 0, at most 60000).",
+    ("Volume_OSD", "show_name"): "Shows the output's name above the bar.",
     ("Badge", "Count"): "The number shown; 0 shows nothing unless Show_Zero is true.",
     ("Badge", "Show_Zero"): "Shows the badge for a count of 0.",
     ("Badge", "Max"): "The largest number shown; above it the badge reads that number and a plus.",
@@ -922,13 +1028,19 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Button", "Icon"): "An icon name such as mdi:home, or a file path, shown beside the text.",
     ("Button", "Icon_Position"): "Where the icon sits: START (before the text) or END (after it).",
     ("Button", "Label"): "The name assistive technology reads aloud; the text when it is empty.",
+    ("Button", "Expandable"): "True when the button controls an Expander: it then carries the "
+    "accessibility state expanded, with the value of Expanded.",
+    ("Button", "Expanded"): "Whether the Expander the button controls is open; read only when "
+    "Expandable is true.",
     ("Checkbox", "Checked"): "Whether the box is checked; set from outside.",
     ("Checkbox", "Text"): "A label beside the box; a click on it flips the checkbox too.",
     ("Checkbox", "Label"): "The name assistive technology reads aloud; the text when it is empty.",
     ("Clock", "format"): "A strftime pattern; empty is chosen by hour_cycle.",
     ("Clock", "locale"): "A locale name such as de_DE for month and day names; empty is the "
     "process's own. The system must have it; a missing one is warned about and ignored.",
-    ("Clock", "hour_cycle"): "desktop, 12 or 24.",
+    ("Clock", "hour_cycle"): "desktop, 12 or 24. desktop is 12 hours when the time format of the "
+    "locale (the locale param, else LC_ALL, LC_TIME or LANG) counts to 12, as en_US does, and "
+    "24 otherwise or when no locale is set.",
     ("Clock", "timezone"): "An IANA zone such as Europe/Berlin; empty is the local zone.",
     ("Clock", "tooltip_format"): "A strftime pattern for the text of the tooltip the pointer "
     "opens on the clock.",
@@ -957,6 +1069,8 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Media", "show_position"): "Shows the seek slider; it turns on the one-second tick while "
     "the player plays.",
     ("Media", "max_width"): "The title's width in pixels.",
+    ("Media", "announce"): "Says aloud, politely, a new track after one that was shown (off by "
+    "default).",
     ("Menu", "Label"): "The name assistive technology reads aloud for the menu.",
     ("MenuItem", "Text"): "The words of the row.",
     ("MenuItem", "Icon"): "An icon name or a file path shown before the text.",
@@ -979,12 +1093,16 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Slider", "Step"): "The increment; a drag snaps to it.",
     ("Slider", "Orientation"): "The direction: HORIZONTAL or VERTICAL.",
     ("Slider", "Label"): "The name assistive technology reads aloud for the slider.",
+    ("Slider", "Value_Text"): "The value in words for assistive technology ('45 percent'); without "
+    "one it reads the number.",
     ("TextBox", "Text"): "The words.",
     ("TextBox", "Wrap"): "WORD wraps at word ends; NONE keeps the lines as written.",
     ("TextBox", "Max_Lines"): "Cuts the text after this many lines; 0 is no limit.",
     ("TextBox", "Selectable"): "Lets the user select the text.",
     ("TextEditor", "Text"): "The value, set from outside; edits come out through On_Changed.",
     ("TextEditor", "Placeholder"): "The text shown while the editor is empty.",
+    ("TextEditor", "Label"): "The name assistive technology reads aloud for the editor; without "
+    "one it is the Placeholder.",
     ("TextEditor", "Read_Only"): "The text can be selected and copied but not changed.",
     ("TextEditor", "Max_Length"): "The most characters the editor takes; 0 is no limit.",
     ("TextEditor", "Wrap"): "WORD wraps at the width by word; NONE does not wrap and scrolls "
@@ -994,11 +1112,37 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("TextEditor", "Width"): "The width in pixels.",
     ("TextInput", "Text"): "The value, set from outside; edits come out through On_Changed.",
     ("TextInput", "Placeholder"): "The text shown while the field is empty.",
+    ("TextInput", "Label"): "The name assistive technology reads aloud for the field; without one "
+    "it is the Placeholder.",
     ("TextInput", "Read_Only"): "The text can be selected and copied but not changed.",
     ("TextInput", "Max_Length"): "The most characters the field takes; 0 is no limit.",
     ("TextInput", "Password"): "Shows dots instead of the text and blocks copy and cut.",
     ("TextInput", "Enabled"): "False disables the field.",
     ("TextInput", "Width"): "The width in pixels.",
+    ("Task_Item", "icon"): "The icon: an SVG document or pixels the shell holds (Tasks sends it).",
+    ("Task_Item", "title"): "The window's title, scrolled when it is longer than the button.",
+    ("Task_Item", "label"): "The name assistive technology reads aloud: the title and the "
+    "application, with the state in words.",
+    ("Task_Item", "show_title"): "Shows the title beside the icon.",
+    ("Task_Item", "max_width"): "The button's width when it shows a title, in pixels.",
+    ("Task_Item", "icon_size"): "The icon's size in pixels.",
+    ("Task_Item", "active"): "The window is the active one: the block takes the :selected look.",
+    ("Task_Item", "minimized"): "The window is minimised: the button is drawn dimmed.",
+    ("Task_Item", "attention"): "The window wants attention: a small mark in the warning colour.",
+    ("Applications", "max_results"): "The most rows shown; Page Down and Page Up move by them.",
+    ("Applications", "show_comment"): "Shows the generic name, else the comment, under each name.",
+    ("Applications", "icon_size"): "The size of each application icon in pixels.",
+    ("Applications", "placeholder"): "The hint the empty text field shows.",
+    ("Tasks", "show_title"): "Shows each window's title beside its icon.",
+    ("Tasks", "max_width"): "The widest a button gets, in pixels.",
+    ("Tasks", "icon_size"): "The size of each icon in pixels.",
+    ("Tasks", "monitor"): "THIS shows the windows on the module's own monitor, ALL those on "
+    "every monitor.",
+    ("Tasks", "desktop"): "CURRENT shows the windows on the current virtual desktop (and those "
+    "on all desktops), ALL those on every desktop.",
+    ("Tasks", "show_empty"): "Keeps the module's space when there is no window.",
+    ("Tasks", "announce"): "Says aloud, politely, a window of the row that opens, closes or wants "
+    "attention, once for a change (off by default).",
     ("Toggle", "Checked"): "Whether the switch is on; set from outside.",
     ("Toggle", "Label"): "The name assistive technology reads aloud for the switch.",
     ("Tray", "icon_size"): "The size of each icon in pixels.",

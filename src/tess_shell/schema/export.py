@@ -1,5 +1,5 @@
 """The shell's schema as plain JSON, for a configuration application that builds forms from it
-(``tesserae-shell schema --json``; the shape is version 1.2, see ``schema_version``).
+(``tesserae-shell schema --json``; the shape is version 1.11, see ``schema_version``).
 
 Everything is read from the tables the loader uses, so there is no second list of keys to drift:
 :mod:`tess_shell.schema.blocks` (blocks, surfaces, kinds, choices, required keys, events, what is
@@ -34,9 +34,11 @@ from tess_shell.binder import model as m
 from tess_shell.binder.defaults import tre_defaults
 from tess_shell.config import settings as cfg
 from tess_shell.config.paths import FOLDERS
-from tess_shell.schema import blocks, default_popups, docs
+from tess_shell.schema import blocks, default_panels, default_popups, docs
+from tess_shell.schema import keys as chords
+from tess_shell.schema.deprecations import mark_schema
+from tess_shell.schema.look import DEFAULT_FONT, STYLE_UNION, SYSTEM_FONT, read_theme, token_kind
 from tess_shell.schema.look import GROUPS as THEME_GROUPS
-from tess_shell.schema.look import STYLE_UNION, read_theme, token_kind
 from tess_shell.schema.model import (
     PARAM_TYPES,
     BarDef,
@@ -56,7 +58,8 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.2"
+SCHEMA_VERSION = "1.12"
+EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
 
@@ -103,7 +106,7 @@ _KINDS: dict[str, tuple[str, str]] = {
     # export kind: (widget hint, note); the loader kinds each one covers come from LOADER_KINDS
     "string": (
         "text",
-        "A string, written quoted or as one word; a module's layout may hold {{ }} slots in it.",
+        "A string, written quoted or as one word; a module's layout may hold <| |> slots in it.",
     ),
     "text_or_number": ("text", "A number or a string."),
     "name": ("text", "An identifier: letters, digits and _, starting with a letter."),
@@ -157,6 +160,12 @@ _KINDS: dict[str, tuple[str, str]] = {
     "block": ("block", "A block of its own: block names the spec in roots."),
     "tooltip": ("tooltip", "A Popup's Name, a short quoted text or an inline Tooltip block."),
     "monitor_index": ("text", "A whole number 0 or more, or the word default."),
+    "key_chord": (
+        "key",
+        'A key press written as modifiers and one key joined by +, such as "Ctrl+Shift+F1": '
+        "modifiers lists the modifiers in the written order, keys the key names by group, "
+        "aliases the other names that are read and never written; any case and order is read.",
+    ),
     "token_ref": (
         "token",
         "$group.name, a reference to a theme token; valid where the key's "
@@ -164,7 +173,7 @@ _KINDS: dict[str, tuple[str, str]] = {
     ),
     "expression": (
         "expression",
-        "{{ }}: an expression of the module's values, evaluated in a "
+        "<| |>: an expression of the module's values, evaluated in a "
         "module's layout; a key with slot true takes it.",
     ),
 }
@@ -202,7 +211,7 @@ def _length_units(spec: str, key: str, model_kind: str) -> list[str]:
 _PIXEL_ONLY = {(s, k) for s in ("Popup", "Tooltip") for k in ("Max_Width",)}
 
 
-WHOLE_KINDS = ("whole", "max_length", "lines", "diameter")
+WHOLE_KINDS = ("whole", "max_length", "lines", "tab_index", "diameter")
 
 
 def _bounds(model_kind: str, key: str) -> Json:
@@ -251,7 +260,7 @@ def _kind_fields(
             return "color", {"alpha": True, "forms": list(COLOR_FORMS)}
         case "number" | "positive" | "unit":
             return "number", {**_bounds(model_kind, rkey), "step": None, "unit": unit}
-        case "whole" | "max_length" | "lines" | "diameter":
+        case "whole" | "max_length" | "lines" | "tab_index" | "diameter":
             return "whole", {
                 **_bounds(model_kind, rkey),
                 "step": 1,
@@ -334,6 +343,8 @@ def _kind_fields(
             return "tooltip", {}
         case "monitor_index":
             return "monitor_index", {"min": 0, "word": "default"}
+        case "key_chord":
+            return "key_chord", {"example": EXAMPLE_CHORD}
         case _ if model_kind.startswith("block:"):
             return "block", {"block": model_kind.split(":", 1)[1]}
     raise AssertionError(f"no output kind for the loader kind {model_kind!r}")  # a table bug
@@ -433,6 +444,7 @@ _FIELDS: dict[tuple[str, str], tuple[type, str]] = {
     ("Bar", "Layer"): (BarDef, "layer"),
     ("Bar", "Gap"): (BarDef, "gap"),
     ("Bar", "Reserve"): (BarDef, "reserve"),
+    ("Bar", "Keyboard"): (BarDef, "keyboard"),
     ("Panel", "Layer"): (PanelDef, "layer"),
     ("Panel", "Inset"): (PanelDef, "inset"),
     ("Panel", "Keyboard"): (PanelDef, "keyboard"),
@@ -757,6 +769,13 @@ def _roots() -> dict[str, Json]:
         required=[["Name"]],
         allowed_children=["Bar", "Panel", "Popup", "Frame"],
     )
+    # a shell file made to be imported: the same root head, surfaces in place of Monitors
+    roots["Imported_Shell"] = _spec(
+        "Imported_Shell",
+        heads=["Shell"],
+        repeatable=False,
+        allowed_children=["Bar", "Panel", "Popup", "Frame"],
+    )
     # a Bar
     bar_keys = {
         "Name": _key("Bar", "Name", "name", required=True),
@@ -862,6 +881,10 @@ def _roots() -> dict[str, Json]:
             "Padding": _key("Edge", "Padding", "sides"),
             "Content_Fade": _key(
                 "Edge", "Content_Fade", "bool", default=_default("Edge", "Content_Fade")
+            ),
+            "Tab_Index": _key("Edge", "Tab_Index", "tab_index"),
+            "Shortcut_Mode": _key(
+                "Edge", "Shortcut_Mode", "bool", default=_default("Edge", "Shortcut_Mode")
             ),
             "Peek": _key("Edge", "Peek", "block:Edge_Peek"),
         },
@@ -998,6 +1021,7 @@ def _settings() -> dict[str, dict[str, Json]]:
     """settings.tdl by section; the keys are those of ``config.settings`` (its tuples)."""
     defaults = cfg.Settings(config_dir=Path("."))
     logging, appearance, debug = defaults.logging, defaults.appearance, defaults.debug
+    kwin = defaults.kwin
     folder: Json = {"mode": "folder", "absolute": True, "multiple": True}
 
     def block(section: str, name: str) -> Json:
@@ -1034,6 +1058,9 @@ def _settings() -> dict[str, dict[str, Json]]:
         "Appearance": block("Settings", "Appearance"),
         "Debug": block("Settings", "Debug"),
         "Control": boolean("Settings", "Control", defaults.control),
+        "Shortcuts": block("Settings", "Shortcuts"),
+        "Global_Shortcuts": boolean("Settings", "Global_Shortcuts", defaults.global_shortcuts),
+        "KWin": block("Settings", "KWin"),
     }
     assert tuple(root) == cfg.ROOT_KEYS  # the order of the loader's own tuple
     out: dict[str, dict[str, Json]] = {
@@ -1059,6 +1086,10 @@ def _settings() -> dict[str, dict[str, Json]]:
             "Capture_Stderr": boolean("Logging", "Capture_Stderr", logging.capture_stderr),
         },
         "Validation": {"Enabled": boolean("Validation", "Enabled", defaults.validation_enabled)},
+        "Shortcuts": {
+            name: _settings_key("Shortcuts", name, "key_chord", {"example": EXAMPLE_CHORD}, None)
+            for name in cfg.FIXED_SHORTCUTS
+        },
         "Appearance": {
             "Theme": _settings_key("Appearance", "Theme", "string", {}, None),
             "Stylesheets": _settings_key(
@@ -1070,10 +1101,18 @@ def _settings() -> dict[str, dict[str, Json]]:
             ),
             "Follow_Desktop": boolean("Appearance", "Follow_Desktop", appearance.follow_desktop),
         },
+        "KWin": {
+            "Script": word("KWin", "Script", cfg.KWIN_SCRIPT, kwin.script),
+            "Hide_On_Fullscreen": boolean("KWin", "Hide_On_Fullscreen", kwin.hide_on_fullscreen),
+        },
         "Debug": {
             "Panel_Hide": word("Debug", "Panel_Hide", cfg.PANEL_HIDE, debug.panel_hide),
             "Frame_Join": word("Debug", "Frame_Join", cfg.FRAME_JOIN, debug.frame_join),
             "Frame_Blend": word("Debug", "Frame_Blend", cfg.FRAME_BLEND, debug.frame_blend),
+            "Mode_Keyboard": word("Debug", "Mode_Keyboard", cfg.MODE_KEYBOARD, debug.mode_keyboard),
+            "User_Modules_In_Process": boolean(
+                "Debug", "User_Modules_In_Process", debug.user_modules_in_process
+            ),
         },
     }
     return out
@@ -1138,6 +1177,23 @@ def _tokens() -> dict[str, dict[str, Json]]:
             **fields,
         }
     return out
+
+
+def _system_tokens() -> list[Json]:
+    """The tokens the shell supplies to every theme (not written in the shipped theme, so not in
+    ``tokens``): a theme's own value for one wins over the shell's."""
+    kind, fields = _kind_fields("font_family", "Theme", "font_family", ())
+    return [
+        {
+            "name": SYSTEM_FONT,
+            "ref": f"${SYSTEM_FONT}",
+            "kind": kind,
+            "default": DEFAULT_FONT,
+            "doc": docs.SYSTEM_TOKEN_DOCS[SYSTEM_FONT],
+            "theme_wins": True,
+            **fields,
+        }
+    ]
 
 
 # -- events, actions ------------------------------------------------------------------------------
@@ -1212,6 +1268,7 @@ LOADER_KINDS = (
     "whole",
     "max_length",
     "lines",
+    "tab_index",
     "diameter",
     "length",
     "text_length",
@@ -1237,6 +1294,7 @@ LOADER_KINDS = (
     "class",
     "tooltip",
     "monitor_index",
+    "key_chord",
     "block:Block",
 )
 
@@ -1246,10 +1304,12 @@ def _kinds() -> dict[str, Json]:
     for model_kind in LOADER_KINDS:
         kind, _ = _kind_fields(model_kind, "", "", ())
         covers.setdefault(kind, []).append(model_kind)
-    return {
+    out: dict[str, Json] = {
         kind: {"ui": ui, "note": note, "model_kinds": covers.get(kind, [])}
         for kind, (ui, note) in _KINDS.items()
     }
+    out["key_chord"].update(chords.key_names())  # the names a key string may use
+    return out
 
 
 # -- preferred tokens ---------------------------------------------------------------------------
@@ -1408,14 +1468,63 @@ def _modules() -> dict[str, Json]:
     return out
 
 
-def _popups() -> Json:
-    """The Popups the shell provides (``schema.default_popups``), and which Monitors get them."""
+def _stubs() -> dict[str, Any]:
     stubs = {}
     for name, (document, _source) in _shipped_modules().items():
         found = read_module_params(document, f"{name}_Module.tdl")
         assert found is not None
         stubs[name] = found
-    return {"monitors": default_popups.MONITORS, "popups": default_popups.describe(stubs)}
+    return stubs
+
+
+def _popups() -> Json:
+    """The Popups the shell provides (``schema.default_popups``), and which Monitors get them."""
+    return {"monitors": default_popups.MONITORS, "popups": default_popups.describe(_stubs())}
+
+
+def _panels() -> Json:
+    """The Panels the shell provides (``schema.default_panels``), and when a shell gets them."""
+    return {"when": default_panels.WHEN, "panels": default_panels.describe(_stubs())}
+
+
+def _shortcuts() -> Json:
+    """The forms of an entry of ``Shortcuts { }`` (``config.settings.FIXED_SHORTCUTS``,
+    ``SHORTCUT_VERBS``) and the keys a surface declares; the key names are those of the
+    ``key_chord`` kind."""
+    named = {"kind": "name_ref", "doc": "The Name of the surface, written exactly."}
+    forms: list[Json] = [
+        {
+            "form": f"{verb}_<Name>",
+            "verb": verb,
+            "value": "key_chord",
+            "target": named,
+            "targets": ["Panel", "Frame"] if verb == "Hide" else ["Panel", "Bar", "Frame"],
+            "doc": docs.SHORTCUT_FORMS[verb],
+        }
+        for verb in cfg.SHORTCUT_VERBS
+    ]
+    forms.append(
+        {
+            "form": "<Any_Name> { Keys, Action }",
+            "verb": None,
+            "value": "block",
+            "keys": {"kind": "key_chord", "key": "Keys", "required": True},
+            "actions": ["Show", "Hide", "Toggle", "Call"],
+            "doc": docs.SHORTCUT_FORMS["Handler"],
+        }
+    )
+    return {
+        "fixed": list(cfg.FIXED_SHORTCUTS),
+        "forms": forms,
+        "surface_keys": {
+            "Panel": {"key": "Shortcut", "same_as": "Toggle_<Name>"},
+            "Frame": {"key": "Shortcut", "same_as": "Toggle_<Name>"},
+        },
+        "doc": "A surface's own key and a Shortcuts entry for the same action: the entry wins, "
+        "with one warning. Two actions with the same key (any case, order or alias) are both "
+        "left without it, with one warning. A name that matches no surface is a warning and "
+        "the shortcut is not registered.",
+    }
 
 
 # -- the whole ------------------------------------------------------------------------------------
@@ -1424,19 +1533,24 @@ def _popups() -> Json:
 def schema_dict() -> Json:
     """The export as plain data (dicts, lists, strings, numbers, booleans, ``None``), in a stable
     order."""
+    block_specs = {name: _block_spec(name) for name in blocks.BLOCKS}
+    mark_schema(block_specs)  # a deprecated key or block carries ``deprecated`` (none in 0.2.0)
     return {
         "schema_version": SCHEMA_VERSION,
         "shell_version": __version__,
         "kinds": _kinds(),
         "roots": _roots(),
-        "blocks": {name: _block_spec(name) for name in blocks.BLOCKS},
+        "blocks": block_specs,
         "settings": _settings(),
         "events": _events(),
         "actions": _actions(),
         "enums": {name: list(words) for name, words in NAMED_ENUMS.items()},
         "tokens": _tokens(),
+        "system_tokens": _system_tokens(),
         "modules": _modules(),
+        "panels": _panels(),
         "popups": _popups(),
+        "shortcuts": _shortcuts(),
     }
 
 

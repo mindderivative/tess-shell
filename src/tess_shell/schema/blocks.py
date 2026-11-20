@@ -45,6 +45,7 @@ A11Y_STATE: dict[str, str] = {
     "Value_Min": "number",
     "Value_Max": "number",
     "Value_Step": "number",
+    "Value_Text": "text",
     "Checked": "bool",
     "Selected": "bool",
     "Expanded": "bool",
@@ -101,6 +102,10 @@ COMMON: dict[str, str] = {
     "Role": "enum",
     "Description": "text",
     "Live": "enum",
+    # focus (Focus and Keyboard): whether the block takes keyboard focus (true by default on
+    # an interactive block) and its place in the Tab order
+    "Focusable": "bool",
+    "Tab_Index": "tab_index",
     # the state a module sets on the block that has it (Block Reference > Accessibility: "set by
     # the block that has them, not written by the author"): a shell file may not write these
     **A11Y_STATE,
@@ -235,10 +240,11 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
     ),
     "Rectangle": ({**COMMON, **SHAPE}, SHAPE),
     # a clipped viewport that scrolls its one content child by the wheel (Block Reference >
-    # ScrollBox): it scrolls its one child; ``Scroll_Snap`` and ``On_Scroll`` are not built
+    # ScrollBox): it scrolls its one child; ``Scroll_Snap`` and ``On_Scroll`` are not built. It
+    # takes shadows so a List (a ScrollBox) can show the focus ring.
     "ScrollBox": (
         {**COMMON, "Orientation": "enum", "Scroll_Offset": "number"},
-        {**MOTION_STYLE, "Opacity": "number"},
+        {**MOTION_STYLE, "Opacity": "number", "Elevation": "elevation", "Shadows": "shadows"},
     ),
     "Spacer": (COMMON, {}),
     "SVG": (
@@ -312,7 +318,7 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
 # box in its cell that holds the size text and, over it, the text input); they are the kinds the
 # binder builds and the model addresses slots to. The words have a dot, so no file can name one.
 FIELD_BOX_KEYS = frozenset(
-    {*COMMON, "Padding", *BOX_STYLE} - {"Label"},
+    {*COMMON, "Padding", *BOX_STYLE} - {"Label", "Focusable", "Tab_Index"},
 )
 FIELD_INPUT_KEYS = frozenset(
     {
@@ -326,6 +332,8 @@ FIELD_INPUT_KEYS = frozenset(
         "Max_Length",
         "Password",
         "Label",
+        "Focusable",
+        "Tab_Index",
         "Foreground",
         "Font_Family",
         "Font_Size",
@@ -335,7 +343,7 @@ FIELD_INPUT_KEYS = frozenset(
     }
 )
 FIELD_SIZE_KEYS = frozenset({"Lines", "Font_Family", "Font_Size", "Font_Weight"})
-FIELD_EVENTS = ("On_Changed", "On_Submit", "On_Text_Commit")
+FIELD_EVENTS = ("On_Changed", "On_Submit", "On_Text_Commit", "On_Key_Down")
 _FIELD_INPUT_PROPS: dict[str, str] = {
     "Text": "text",
     "Placeholder": "text",
@@ -347,6 +355,8 @@ _FIELD_INPUT_PROPS: dict[str, str] = {
     "Max_Length": "max_length",
     "Password": "bool",
     "Label": "text",
+    "Focusable": "bool",
+    "Tab_Index": "tab_index",
 }
 _FIELD_INPUT_STYLE: dict[str, str] = {
     "Foreground": "color",
@@ -357,7 +367,9 @@ _FIELD_INPUT_STYLE: dict[str, str] = {
     "Placeholder_Foreground": "color",
 }
 _FIELD_BOX_PROPS: dict[str, str] = {
-    k: v for k, v in {**COMMON, "Padding": "sides"}.items() if k != "Label"
+    k: v
+    for k, v in {**COMMON, "Padding": "sides"}.items()
+    if k not in ("Label", "Focusable", "Tab_Index")
 }
 # the kinds the model and the binder meet after the composition: key tables per kind
 INTERNAL: dict[str, tuple[dict[str, str], dict[str, str]]] = {
@@ -403,14 +415,12 @@ REQUIRED: dict[str, tuple[str | tuple[str, ...], ...]] = {
     "Path": ("Data",),
 }
 
-# Surface keys of a Bar that M1 reads but does not build: accepted with a warning.
+# Surface keys of a Bar that are read but not built: accepted with a warning.
 BAR_NOT_BUILT = (
     "Exclusive_Zone",
-    "Keyboard",
     "Input_Region",
     "Auto_Hide",
     "Auto_Hide_Delay",
-    "Reveal_Key",
     "Visible",
     "Attach_To",
     "Meld",
@@ -419,6 +429,11 @@ BAR_NOT_BUILT = (
     "Padding",
     "Class",
 )
+# Surface keys a Bar once read and no longer does: an error naming the key, with this hint. A Bar
+# is always shown (Auto_Hide is not built), so a key that reveals it had nothing to do.
+BAR_REMOVED: dict[str, str] = {
+    "Reveal_Key": "delete it: a Bar is always shown, so no key reveals it (Auto_Hide is not built)",
+}
 BAR_STYLE: dict[str, str] = {
     "Background": "color",
     "Fill": "color",
@@ -442,6 +457,12 @@ FRAME_KEYS: dict[str, str] = {
     # the painter's keyboard mode (opt-in): EXCLUSIVE would take every key of the desktop, so
     # only NONE and ON_DEMAND (the compositor gives the painter focus on a click) are offered
     "Keyboard": "enum",
+    # the place of the Frame in the shell's focus order (Focus and Keyboard > Tab Order)
+    "Tab_Index": "tab_index",
+    # the global key that toggles the Frame: the same as ``Toggle_<Name>`` in ``Shortcuts``
+    "Shortcut": "key_chord",
+    # whether the Frame is the surface in shortcut mode (Focus and Keyboard > Shortcut Mode)
+    "Shortcut_Mode": "bool",
 }
 FRAME_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("TOP",),
@@ -457,7 +478,12 @@ FRAME_NOT_BUILT_ERROR = (
 FRAME_NOT_BUILT_WARNING = ("Class",)
 # an ``Edges`` entry: its own thickness, padding and the strip's children
 EDGE_SIDES = ("Left", "Top", "Right", "Bottom")
-EDGE_KEYS: dict[str, str] = {"Thickness": "number", "Padding": "sides"}
+EDGE_KEYS: dict[str, str] = {
+    "Thickness": "number",
+    "Padding": "sides",
+    "Tab_Index": "tab_index",
+    "Shortcut_Mode": "bool",
+}
 FRAME_BORDER_KEYS = ("Width", "Color")
 # A Frame's inline Style: the background, the shorthand for the inner border (``Border_Width``,
 # ``Border_Color`` or a ``Border { Width, Color }`` block, D78) and the opacity. Shadows are
@@ -499,6 +525,7 @@ EVENT_KEYS = (
     "On_Change",
     "On_Submit",
     "On_Text_Commit",
+    "On_Key_Down",
 )
 # A tre text node takes no listener of its own (a click on it reaches the nearest box above it,
 # measured on tre 0.6.1), so a Text raises nothing: put the handler on the box around it.
@@ -564,6 +591,12 @@ PANEL_KEYS: dict[str, str] = {
     # a melded Panel's size: ``Depth`` perpendicular to the Frame's edge, ``Length`` along it
     "Depth": "length",
     "Length": "length",
+    # the global key that toggles the Panel: the same as ``Toggle_<Name>`` in ``Shortcuts``
+    "Shortcut": "key_chord",
+    # the place of the Panel in the shell's focus order (Focus and Keyboard > Tab Order)
+    "Tab_Index": "tab_index",
+    # whether the Panel is the surface in shortcut mode (Focus and Keyboard > Shortcut Mode)
+    "Shortcut_Mode": "bool",
 }
 PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),
@@ -579,7 +612,9 @@ PANEL_NOT_BUILT_ERROR = (
     "Exclusive_Zone",
 )
 # keys of a Panel with ``Meld: true`` (hosted in its Frame's surface) that are not built
-PANEL_MELD_NOT_BUILT = ("Movable", "Keyboard", "Input_Region")
+# (a melded Panel is hosted in its Frame's painter: it has no window of its own to take the
+# keyboard, so it takes no ``Shortcut_Mode`` either; a Frame or a strip does)
+PANEL_MELD_NOT_BUILT = ("Movable", "Keyboard", "Input_Region", "Shortcut_Mode")
 # style keys a melded Panel does not use: it is drawn in the Frame's colour and border
 PANEL_MELD_IGNORED_STYLE = (
     "Background",

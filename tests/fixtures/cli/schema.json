@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.2",
+  "schema_version": "1.12",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
       "ui": "text",
-      "note": "A string, written quoted or as one word; a module's layout may hold {{ }} slots in it.",
+      "note": "A string, written quoted or as one word; a module's layout may hold <| |> slots in it.",
       "model_kinds": [
         "text"
       ]
@@ -61,6 +61,7 @@
         "whole",
         "max_length",
         "lines",
+        "tab_index",
         "diameter"
       ]
     },
@@ -187,6 +188,393 @@
         "monitor_index"
       ]
     },
+    "key_chord": {
+      "ui": "key",
+      "note": "A key press written as modifiers and one key joined by +, such as \"Ctrl+Shift+F1\": modifiers lists the modifiers in the written order, keys the key names by group, aliases the other names that are read and never written; any case and order is read.",
+      "model_kinds": [
+        "key_chord"
+      ],
+      "separator": "+",
+      "modifiers": [
+        "Ctrl",
+        "Alt",
+        "Shift",
+        "Meta"
+      ],
+      "case_sensitive": false,
+      "keys": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "F7",
+        "F8",
+        "F9",
+        "F10",
+        "F11",
+        "F12",
+        "F13",
+        "F14",
+        "F15",
+        "F16",
+        "F17",
+        "F18",
+        "F19",
+        "F20",
+        "F21",
+        "F22",
+        "F23",
+        "F24",
+        "Enter",
+        "Escape",
+        "Tab",
+        "Space",
+        "Backspace",
+        "Delete",
+        "Insert",
+        "Home",
+        "End",
+        "Left",
+        "Up",
+        "Right",
+        "Down",
+        "PageUp",
+        "PageDown",
+        "Plus",
+        "Print",
+        "Pause",
+        "Menu",
+        "AudioRaiseVolume",
+        "AudioLowerVolume",
+        "AudioMute",
+        "AudioMicMute",
+        "AudioPlay",
+        "AudioPause",
+        "AudioStop",
+        "AudioNext",
+        "AudioPrev",
+        "AudioRecord",
+        "AudioRewind",
+        "AudioForward",
+        "AudioMedia",
+        "MonBrightnessUp",
+        "MonBrightnessDown",
+        "KbdLightOnOff",
+        "KbdBrightnessUp",
+        "KbdBrightnessDown",
+        "PowerOff",
+        "WakeUp",
+        "Eject",
+        "ScreenSaver",
+        "WWW",
+        "Sleep",
+        "Suspend",
+        "Hibernate",
+        "Standby",
+        "HomePage",
+        "Favorites",
+        "Search",
+        "Mail",
+        "Calculator",
+        "Calendar",
+        "Explorer",
+        "Documents",
+        "Tools",
+        "Music",
+        "Video",
+        "Display",
+        "Battery",
+        "Bluetooth",
+        "WLAN",
+        "TouchpadToggle",
+        "ZoomIn",
+        "ZoomOut",
+        "Back",
+        "Forward",
+        "Refresh",
+        "Launch0",
+        "Launch1",
+        "Launch2",
+        "Launch3",
+        "Launch4",
+        "Launch5",
+        "Launch6",
+        "Launch7",
+        "Launch8",
+        "Launch9",
+        "LaunchA",
+        "LaunchB",
+        "LaunchC",
+        "LaunchD",
+        "LaunchE",
+        "LaunchF"
+      ],
+      "groups": {
+        "letters": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E",
+          "F",
+          "G",
+          "H",
+          "I",
+          "J",
+          "K",
+          "L",
+          "M",
+          "N",
+          "O",
+          "P",
+          "Q",
+          "R",
+          "S",
+          "T",
+          "U",
+          "V",
+          "W",
+          "X",
+          "Y",
+          "Z"
+        ],
+        "digits": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "function": [
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "F6",
+          "F7",
+          "F8",
+          "F9",
+          "F10",
+          "F11",
+          "F12",
+          "F13",
+          "F14",
+          "F15",
+          "F16",
+          "F17",
+          "F18",
+          "F19",
+          "F20",
+          "F21",
+          "F22",
+          "F23",
+          "F24"
+        ],
+        "named": [
+          "Enter",
+          "Escape",
+          "Tab",
+          "Space",
+          "Backspace",
+          "Delete",
+          "Insert",
+          "Home",
+          "End",
+          "Left",
+          "Up",
+          "Right",
+          "Down",
+          "PageUp",
+          "PageDown",
+          "Plus",
+          "Print",
+          "Pause",
+          "Menu"
+        ],
+        "hardware": [
+          "AudioRaiseVolume",
+          "AudioLowerVolume",
+          "AudioMute",
+          "AudioMicMute",
+          "AudioPlay",
+          "AudioPause",
+          "AudioStop",
+          "AudioNext",
+          "AudioPrev",
+          "AudioRecord",
+          "AudioRewind",
+          "AudioForward",
+          "AudioMedia",
+          "MonBrightnessUp",
+          "MonBrightnessDown",
+          "KbdLightOnOff",
+          "KbdBrightnessUp",
+          "KbdBrightnessDown",
+          "PowerOff",
+          "WakeUp",
+          "Eject",
+          "ScreenSaver",
+          "WWW",
+          "Sleep",
+          "Suspend",
+          "Hibernate",
+          "Standby",
+          "HomePage",
+          "Favorites",
+          "Search",
+          "Mail",
+          "Calculator",
+          "Calendar",
+          "Explorer",
+          "Documents",
+          "Tools",
+          "Music",
+          "Video",
+          "Display",
+          "Battery",
+          "Bluetooth",
+          "WLAN",
+          "TouchpadToggle",
+          "ZoomIn",
+          "ZoomOut",
+          "Back",
+          "Forward",
+          "Refresh",
+          "Launch0",
+          "Launch1",
+          "Launch2",
+          "Launch3",
+          "Launch4",
+          "Launch5",
+          "Launch6",
+          "Launch7",
+          "Launch8",
+          "Launch9",
+          "LaunchA",
+          "LaunchB",
+          "LaunchC",
+          "LaunchD",
+          "LaunchE",
+          "LaunchF"
+        ]
+      },
+      "aliases": {
+        "Return": "Enter",
+        "Esc": "Escape",
+        "Del": "Delete",
+        "Ins": "Insert",
+        "PgUp": "PageUp",
+        "PgDown": "PageDown",
+        "XF86AudioRaiseVolume": "AudioRaiseVolume",
+        "XF86AudioLowerVolume": "AudioLowerVolume",
+        "XF86AudioMute": "AudioMute",
+        "XF86AudioMicMute": "AudioMicMute",
+        "XF86AudioPlay": "AudioPlay",
+        "XF86AudioPause": "AudioPause",
+        "XF86AudioStop": "AudioStop",
+        "XF86AudioNext": "AudioNext",
+        "XF86AudioPrev": "AudioPrev",
+        "XF86AudioRecord": "AudioRecord",
+        "XF86AudioRewind": "AudioRewind",
+        "XF86AudioForward": "AudioForward",
+        "XF86AudioMedia": "AudioMedia",
+        "XF86MonBrightnessUp": "MonBrightnessUp",
+        "XF86MonBrightnessDown": "MonBrightnessDown",
+        "XF86KbdLightOnOff": "KbdLightOnOff",
+        "XF86KbdBrightnessUp": "KbdBrightnessUp",
+        "XF86KbdBrightnessDown": "KbdBrightnessDown",
+        "XF86PowerOff": "PowerOff",
+        "XF86WakeUp": "WakeUp",
+        "XF86Eject": "Eject",
+        "XF86ScreenSaver": "ScreenSaver",
+        "XF86WWW": "WWW",
+        "XF86Sleep": "Sleep",
+        "XF86Suspend": "Suspend",
+        "XF86Hibernate": "Hibernate",
+        "XF86Standby": "Standby",
+        "XF86HomePage": "HomePage",
+        "XF86Favorites": "Favorites",
+        "XF86Search": "Search",
+        "XF86Mail": "Mail",
+        "XF86Calculator": "Calculator",
+        "XF86Calendar": "Calendar",
+        "XF86Explorer": "Explorer",
+        "XF86Documents": "Documents",
+        "XF86Tools": "Tools",
+        "XF86Music": "Music",
+        "XF86Video": "Video",
+        "XF86Display": "Display",
+        "XF86Battery": "Battery",
+        "XF86Bluetooth": "Bluetooth",
+        "XF86WLAN": "WLAN",
+        "XF86TouchpadToggle": "TouchpadToggle",
+        "XF86ZoomIn": "ZoomIn",
+        "XF86ZoomOut": "ZoomOut",
+        "XF86Back": "Back",
+        "XF86Forward": "Forward",
+        "XF86Refresh": "Refresh",
+        "XF86Launch0": "Launch0",
+        "XF86Launch1": "Launch1",
+        "XF86Launch2": "Launch2",
+        "XF86Launch3": "Launch3",
+        "XF86Launch4": "Launch4",
+        "XF86Launch5": "Launch5",
+        "XF86Launch6": "Launch6",
+        "XF86Launch7": "Launch7",
+        "XF86Launch8": "Launch8",
+        "XF86Launch9": "Launch9",
+        "XF86LaunchA": "LaunchA",
+        "XF86LaunchB": "LaunchB",
+        "XF86LaunchC": "LaunchC",
+        "XF86LaunchD": "LaunchD",
+        "XF86LaunchE": "LaunchE",
+        "XF86LaunchF": "LaunchF"
+      }
+    },
     "token_ref": {
       "ui": "token",
       "note": "$group.name, a reference to a theme token; valid where the key's tokens list names the group.",
@@ -194,7 +582,7 @@
     },
     "expression": {
       "ui": "expression",
-      "note": "{{ }}: an expression of the module's values, evaluated in a module's layout; a key with slot true takes it.",
+      "note": "<| |>: an expression of the module's values, evaluated in a module's layout; a key with slot true takes it.",
       "model_kinds": []
     }
   },
@@ -294,6 +682,26 @@
       ],
       "module_calls": false,
       "example": "Monitor {\n    Name: Main\n    Index: default\n    Children {\n        Bar { Name: Top_Bar, Edge: TOP, Width: EXPAND, Height: 32 }\n    }\n}",
+      "not_built": []
+    },
+    "Imported_Shell": {
+      "doc": "The root block of a shell file made to be imported: surface blocks and Import lines, no Monitor. A Monitor's Children write Import: Top_Shell.tdl (one file or a list, a path relative to the file that writes it, inside the configuration folders), and the surfaces of the file come in at that position, on that Monitor. A file is imported once into a shell, because a Name is unique across it; imports nest, and a circle is an error.",
+      "heads": [
+        "Shell"
+      ],
+      "keys": {},
+      "style": {},
+      "events": [],
+      "required": [],
+      "repeatable": false,
+      "allowed_children": [
+        "Bar",
+        "Panel",
+        "Popup",
+        "Frame"
+      ],
+      "module_calls": false,
+      "example": "Shell {\n    Bar { Name: Bottom_Bar, Edge: BOTTOM, Width: EXPAND, Height: 24 }\n    Import: More_Shell.tdl\n}",
       "not_built": []
     },
     "Bar": {
@@ -527,6 +935,52 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Keyboard": {
+          "kind": "enum",
+          "choices": [
+            "NONE",
+            "ON_DEMAND"
+          ],
+          "enum": null,
+          "default": "NONE",
+          "doc": "Whether the Bar takes the keyboard: NONE never (Tab does nothing in it), ON_DEMAND on a click.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Shortcut_Mode": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Exclusive_Zone": {
           "kind": null,
           "choices": null,
@@ -538,24 +992,6 @@
           "built": false,
           "refused": false,
           "group": "Placement",
-          "tokens": [],
-          "preferred_tokens": []
-        },
-        "Keyboard": {
-          "kind": "enum",
-          "choices": [
-            "NONE",
-            "ON_DEMAND",
-            "EXCLUSIVE"
-          ],
-          "enum": "Keyboard",
-          "default": null,
-          "doc": "Whether the Bar takes the keyboard. Not built.",
-          "slot": false,
-          "required": false,
-          "built": false,
-          "refused": false,
-          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -596,20 +1032,6 @@
           "enum": null,
           "default": null,
           "doc": "How long the pointer is away before the Bar hides, in milliseconds. Not built.",
-          "slot": false,
-          "required": false,
-          "built": false,
-          "refused": false,
-          "group": "Behaviour",
-          "tokens": [],
-          "preferred_tokens": []
-        },
-        "Reveal_Key": {
-          "kind": null,
-          "choices": null,
-          "enum": null,
-          "default": null,
-          "doc": "A shortcut that reveals a hidden Bar. Not built.",
           "slot": false,
           "required": false,
           "built": false,
@@ -911,11 +1333,9 @@
       "example": "Bar {\n    Name: Top_Bar\n    Edge: TOP\n    Width: EXPAND\n    Height: 32\n    Style { Background: $color.surface }\n    Children { Text { Text: \"Hello\" } }\n}",
       "not_built": [
         "Exclusive_Zone",
-        "Keyboard",
         "Input_Region",
         "Auto_Hide",
         "Auto_Hide_Delay",
-        "Reveal_Key",
         "Visible",
         "Attach_To",
         "Meld",
@@ -1232,6 +1652,50 @@
             "%"
           ],
           "negative": false,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Shortcut": {
+          "kind": "key_chord",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The global key that toggles the Panel or Frame, written as Meta+Space; the same as Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "example": "Ctrl+Shift+F1",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Shortcut_Mode": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -2886,6 +3350,50 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Shortcut": {
+          "kind": "key_chord",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The global key that toggles the Panel or Frame, written as Meta+Space; the same as Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "example": "Ctrl+Shift+F1",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Shortcut_Mode": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Inner_Border": {
           "kind": "block",
           "choices": null,
@@ -3304,6 +3812,36 @@
           "required": false,
           "built": true,
           "group": "Motion",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Shortcut_Mode": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -4763,7 +5301,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -5441,6 +5979,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -5525,6 +6099,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -6103,7 +6691,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -6781,6 +7369,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -6865,6 +7489,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -7547,7 +8185,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -8225,6 +8863,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -8309,6 +8983,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -8501,7 +9189,7 @@
           "choices": null,
           "enum": null,
           "default": "\"\"",
-          "doc": "The words; may hold {{ }} slots in a module.",
+          "doc": "The words; may hold <| |> slots in a module.",
           "slot": true,
           "required": false,
           "built": true,
@@ -8943,7 +9631,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -9621,6 +10309,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -9705,6 +10429,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -10402,7 +11140,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -11080,6 +11818,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -11164,6 +11938,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -11441,6 +12229,40 @@
             "motion"
           ],
           "preferred_tokens": []
+        },
+        "Elevation": {
+          "kind": "percent",
+          "choices": null,
+          "enum": null,
+          "default": "0%",
+          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": 0,
+          "max": 100,
+          "step": null,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Shadows": {
+          "kind": "shadows",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "A list of Shadow blocks, the first on top; it replaces Elevation when both are written.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "block": "Shadows",
+          "tokens": [
+            "elevation"
+          ],
+          "preferred_tokens": [
+            "elevation.max"
+          ]
         }
       },
       "events": [
@@ -11539,7 +12361,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -12217,6 +13039,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -12301,6 +13159,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -12536,7 +13408,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -13214,6 +14086,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -13298,6 +14206,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -13703,7 +14625,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -14381,6 +15303,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -14465,6 +15423,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -14828,7 +15800,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -15454,6 +16426,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -15538,6 +16546,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -16126,7 +17148,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -16752,6 +17774,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -16836,6 +17894,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -17374,7 +18446,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -18052,6 +19124,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -18136,6 +19244,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -18784,7 +19906,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -19462,6 +20584,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -19546,6 +20704,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -20124,7 +21296,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one.",
+          "doc": "The name of an entry of a list in a module's layout; an entry of a For has its repeater's key unless it writes one. A For may name several variables (For i, item In <| enumerate(items) |>): each item is unpacked over them.",
           "slot": true,
           "required": false,
           "built": true,
@@ -20802,6 +21974,42 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Focusable": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "true",
+          "doc": "Whether the block takes keyboard focus. A block that takes input is focusable unless it says false: a Button, a Toggle, a Checkbox, a Slider, a List, a Menu and a TextField (a List and a Menu are one stop each); a disabled block takes none, nor does one that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Tab_Index": {
+          "kind": "whole",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "min": 0,
+          "max": 2147483647,
+          "step": 1,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
         "Value": {
           "kind": "text_or_number",
           "choices": null,
@@ -20886,6 +22094,20 @@
             "elevation",
             "motion"
           ],
+          "preferred_tokens": []
+        },
+        "Value_Text": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The value of a control in words for assistive technology ('45 percent', '1:23 of 3:45'); set by a module.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Accessibility",
+          "tokens": [],
           "preferred_tokens": []
         },
         "Checked": {
@@ -21667,7 +22889,8 @@
         "On_Scroll",
         "On_Changed",
         "On_Submit",
-        "On_Text_Commit"
+        "On_Text_Commit",
+        "On_Key_Down"
       ],
       "required": [],
       "repeatable": true,
@@ -21813,6 +23036,44 @@
         "required": false,
         "built": true,
         "group": "Settings",
+        "tokens": []
+      },
+      "Shortcuts": {
+        "kind": "block",
+        "choices": null,
+        "enum": null,
+        "default": null,
+        "doc": "The shell's global keys, one Name: \"keys\" entry for each action; a hot reload applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Settings",
+        "block": "Shortcuts",
+        "tokens": []
+      },
+      "Global_Shortcuts": {
+        "kind": "bool",
+        "choices": null,
+        "enum": null,
+        "default": "true",
+        "doc": "Whether the shell registers its keys with the desktop's shortcut service; false makes no call to it at all. A hot reload applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Settings",
+        "tokens": []
+      },
+      "KWin": {
+        "kind": "block",
+        "choices": null,
+        "enum": null,
+        "default": null,
+        "doc": "What the shell does with KWin: its script and fullscreen hiding.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Settings",
+        "block": "KWin",
         "tokens": []
       }
     },
@@ -22025,6 +23286,73 @@
         "tokens": []
       }
     },
+    "Shortcuts": {
+      "Enter_Shortcut_Mode": {
+        "kind": "key_chord",
+        "choices": null,
+        "enum": null,
+        "default": null,
+        "doc": "The key that puts the shell in shortcut mode: the one global key of the mode, registered with the desktop.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Shortcuts",
+        "example": "Ctrl+Shift+F1",
+        "tokens": []
+      },
+      "Exit_Shortcut_Mode": {
+        "kind": "key_chord",
+        "choices": null,
+        "enum": null,
+        "default": null,
+        "doc": "The key that leaves shortcut mode. It acts inside the mode only (a key event on the surface that has the keyboard); it is not registered with the desktop.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Shortcuts",
+        "example": "Ctrl+Shift+F1",
+        "tokens": []
+      },
+      "Set_Shortcut_Mode": {
+        "kind": "key_chord",
+        "choices": null,
+        "enum": null,
+        "default": null,
+        "doc": "The key that turns shortcut mode on or off for the focused surface. It acts inside the mode only; it is not registered with the desktop.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Shortcuts",
+        "example": "Ctrl+Shift+F1",
+        "tokens": []
+      },
+      "Next_Focus": {
+        "kind": "key_chord",
+        "choices": null,
+        "enum": null,
+        "default": null,
+        "doc": "The key that moves focus to the next surface in shortcut mode. It acts inside the mode only; it is not registered with the desktop.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Shortcuts",
+        "example": "Ctrl+Shift+F1",
+        "tokens": []
+      },
+      "Previous_Focus": {
+        "kind": "key_chord",
+        "choices": null,
+        "enum": null,
+        "default": null,
+        "doc": "The key that moves focus to the previous surface in shortcut mode. It acts inside the mode only; it is not registered with the desktop.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Shortcuts",
+        "example": "Ctrl+Shift+F1",
+        "tokens": []
+      }
+    },
     "Appearance": {
       "Theme": {
         "kind": "string",
@@ -22062,6 +23390,36 @@
         "required": false,
         "built": true,
         "group": "Appearance",
+        "tokens": []
+      }
+    },
+    "KWin": {
+      "Script": {
+        "kind": "enum",
+        "choices": [
+          "RUNTIME",
+          "PERSISTENT",
+          "OFF"
+        ],
+        "enum": null,
+        "default": "RUNTIME",
+        "doc": "How the shell's KWin script runs: RUNTIME loads it into KWin when the shell starts and unloads it at stop, PERSISTENT leaves it to the one installed by tesserae-shell kwin script install, OFF loads nothing (no fullscreen hiding, no window list). A restart applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "KWin",
+        "tokens": []
+      },
+      "Hide_On_Fullscreen": {
+        "kind": "bool",
+        "choices": null,
+        "enum": null,
+        "default": "true",
+        "doc": "Hides the shell's surfaces on an output while a fullscreen window is active there, and shows them again when it leaves. A restart applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "KWin",
         "tokens": []
       }
     },
@@ -22108,6 +23466,33 @@
         "enum": null,
         "default": "LINEAR",
         "doc": "How the Frame's ring is blended: LINEAR in linear light or SRGB. A restart applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Debug",
+        "tokens": []
+      },
+      "Mode_Keyboard": {
+        "kind": "enum",
+        "choices": [
+          "EXCLUSIVE",
+          "ON_DEMAND"
+        ],
+        "enum": null,
+        "default": "EXCLUSIVE",
+        "doc": "The keyboard mode the surface that has the focus takes while the shell is in shortcut mode: EXCLUSIVE (the one way a layer surface takes the keyboard without a click) or ON_DEMAND (for a compositor that hands focus over after a global key). A restart applies it.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Debug",
+        "tokens": []
+      },
+      "User_Modules_In_Process": {
+        "kind": "bool",
+        "choices": null,
+        "enum": null,
+        "default": "false",
+        "doc": "Keeps the Python of your own modules in the shell's process instead of a process each (the default, false): a module that hangs or crashes then freezes or ends the shell, and Event.stop() works. A restart applies it.",
         "slot": false,
         "required": false,
         "built": true,
@@ -22262,7 +23647,7 @@
       ]
     },
     "On_Changed": {
-      "doc": "A control's value changed by the user: a toggle flipped, an entry chosen, a slider moved; for each new value while the pointer moves. A TextField raises it for each change of its text. An Expander raises it when an opening or a closing has finished (event.value is whether it is open), whoever set the new state.",
+      "doc": "A control's value changed by the user: a toggle flipped (a click, or Space), an entry chosen (a click, or an arrow key), a slider moved (for each new value while the pointer moves, and for each key step). A TextField raises it for each change of its text. An Expander raises it when an opening or a closing has finished (event.value is whether it is open), whoever set the new state.",
       "module_only": true,
       "needs": [
         "Toggles",
@@ -22279,7 +23664,7 @@
       ]
     },
     "On_Released": {
-      "doc": "A slider's press ended, once, with the final value.",
+      "doc": "A slider's press ended, once, with the final value; a key step (an arrow, Page Up or Down, Home or End) raises it at once after its On_Changed.",
       "module_only": true,
       "needs": [
         "Slides"
@@ -22307,6 +23692,14 @@
     },
     "On_Text_Commit": {
       "doc": "Committed text in a TextField, such as an input-method composition.",
+      "module_only": false,
+      "needs": [],
+      "raised_by": [
+        "TextField"
+      ]
+    },
+    "On_Key_Down": {
+      "doc": "A key went down in a TextField (event.key, event.ctrl, event.shift, event.alt, event.meta, event.repeat), before the field acts on it; the field acts whatever the handler does, and event.stop() keeps the surface above from hearing the key (a Panel's Escape).",
       "module_only": false,
       "needs": [],
       "raised_by": [
@@ -23086,41 +24479,56 @@
       }
     }
   },
+  "system_tokens": [
+    {
+      "name": "type.system.font_family",
+      "ref": "$type.system.font_family",
+      "kind": "font",
+      "default": "Roboto",
+      "doc": "The family of the desktop's UI font (the family of the Settings portal's font-name, without its style and size), for a Font_Family: $type.system.font_family. While the desktop names no font it holds the family the shell uses for text that sets none (the default, Roboto, which the shell's renderer bundles). A theme that sets this token itself keeps its own value over the desktop's.",
+      "theme_wins": true,
+      "multiple": true
+    }
+  ],
   "modules": {
-    "Audio": {
-      "doc": "The default sound output: an icon for its kind and level, mute on a click, the volume on the wheel, an optional percent and slider, and a menu of outputs.",
+    "Applications": {
+      "doc": "The launcher: a text field over a list of the installed applications that narrows as you type; Down and Up move the selection, Enter or a click starts it, Escape clears the field and then hides the Panel. The shipped Panel Launcher holds it.",
       "params": {
-        "show_percent": {
-          "type": "boolean",
-          "kind": "bool",
-          "default": "false",
-          "doc": "Shows the volume as a number next to the icon.",
-          "required": false
-        },
-        "show_slider": {
-          "type": "boolean",
-          "kind": "bool",
-          "default": "false",
-          "doc": "Shows a volume slider.",
-          "required": false
-        },
-        "show_mic": {
-          "type": "boolean",
-          "kind": "bool",
-          "default": "true",
-          "doc": "Shows a microphone mark while the default input is muted.",
-          "required": false
-        },
-        "step": {
+        "max_results": {
           "type": "number",
           "kind": "number",
-          "default": "5",
-          "doc": "The percent one wheel step changes the volume by.",
+          "default": "8",
+          "doc": "The most rows shown; Page Down and Page Up move by them.",
           "required": false,
           "min": null,
           "max": null,
           "step": null,
           "unit": null
+        },
+        "show_comment": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "true",
+          "doc": "Shows the generic name, else the comment, under each name.",
+          "required": false
+        },
+        "icon_size": {
+          "type": "number",
+          "kind": "number",
+          "default": "24",
+          "doc": "The size of each application icon in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "placeholder": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"Search applications\"",
+          "doc": "The hint the empty text field shows.",
+          "required": false
         }
       },
       "root_block": "FlexBox",
@@ -23162,7 +24570,132 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
+      ],
+      "actions": [
+        {
+          "name": "key",
+          "doc": "``On_Key_Down`` of the field (it comes before the field acts, which it does whatever this does): the list's keys are moved from it, and Escape is the module's (clear, then hide). A key this module uses goes no further, so the Panel's own Escape does not also hide a Panel that was only cleared.",
+          "args": [],
+          "kwargs": false
+        },
+        {
+          "name": "launch",
+          "doc": "A click on a row: start that application.",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "launch_selected",
+          "doc": "Enter in the field: start the selected row.",
+          "args": [],
+          "kwargs": false
+        },
+        {
+          "name": "search",
+          "doc": "Typing in the field: the list narrows and the first row is selected.",
+          "args": [
+            {
+              "name": "text",
+              "required": false
+            }
+          ],
+          "kwargs": false
+        }
+      ]
+    },
+    "Audio": {
+      "doc": "The default sound output: an icon for its kind and level, mute on a click, the volume on the wheel, an optional percent and slider, and a menu of outputs.",
+      "params": {
+        "show_percent": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Shows the volume as a number next to the icon.",
+          "required": false
+        },
+        "show_slider": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Shows a volume slider.",
+          "required": false
+        },
+        "show_mic": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "true",
+          "doc": "Shows a microphone mark while the default input is muted.",
+          "required": false
+        },
+        "step": {
+          "type": "number",
+          "kind": "number",
+          "default": "5",
+          "doc": "The percent one wheel step changes the volume by.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "announce": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Says aloud, politely, mute and unmute and a new volume once it has settled (off by default).",
+          "required": false
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -23271,7 +24804,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -23366,7 +24901,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23420,7 +24957,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23453,6 +24992,20 @@
           "kind": "string",
           "default": "\"\"",
           "doc": "The name assistive technology reads aloud; the text when it is empty.",
+          "required": false
+        },
+        "Expandable": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "True when the button controls an Expander: it then carries the accessibility state expanded, with the value of Expanded.",
+          "required": false
+        },
+        "Expanded": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Whether the Expander the button controls is open; read only when Expandable is true.",
           "required": false
         }
       },
@@ -23495,7 +25048,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23564,7 +25119,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23589,7 +25146,7 @@
           "type": "string",
           "kind": "string",
           "default": "\"desktop\"",
-          "doc": "desktop, 12 or 24.",
+          "doc": "desktop, 12 or 24. desktop is 12 hours when the time format of the locale (the locale param, else LC_ALL, LC_TIME or LANG) counts to 12, as en_US does, and 24 otherwise or when no locale is set.",
           "required": false
         },
         "timezone": {
@@ -23646,7 +25203,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23726,7 +25285,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23791,7 +25352,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23861,7 +25424,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23910,7 +25475,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -23979,7 +25546,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24069,7 +25638,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24114,6 +25685,13 @@
           "max": null,
           "step": null,
           "unit": null
+        },
+        "announce": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Says aloud, politely, a new track after one that was shown (off by default).",
+          "required": false
         }
       },
       "root_block": "FlexBox",
@@ -24155,7 +25733,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -24261,7 +25841,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24357,7 +25939,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24418,7 +26002,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24498,7 +26084,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24562,6 +26150,13 @@
           "default": "\"\"",
           "doc": "The name assistive technology reads aloud for the slider.",
           "required": false
+        },
+        "Value_Text": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The value in words for assistive technology ('45 percent'); without one it reads the number.",
+          "required": false
         }
       },
       "root_block": "Box",
@@ -24605,9 +26200,271 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
+    },
+    "Task_Item": {
+      "doc": "One button of the Tasks row: an application's icon and a window's title.",
+      "params": {
+        "icon": {
+          "type": "icon",
+          "kind": "icon",
+          "default": "\"\"",
+          "doc": "The icon: an SVG document or pixels the shell holds (Tasks sends it).",
+          "required": false
+        },
+        "title": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The window's title, scrolled when it is longer than the button.",
+          "required": false
+        },
+        "label": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The name assistive technology reads aloud: the title and the application, with the state in words.",
+          "required": false
+        },
+        "show_title": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "true",
+          "doc": "Shows the title beside the icon.",
+          "required": false
+        },
+        "max_width": {
+          "type": "number",
+          "kind": "number",
+          "default": "180",
+          "doc": "The button's width when it shows a title, in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "icon_size": {
+          "type": "number",
+          "kind": "number",
+          "default": "18",
+          "doc": "The icon's size in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "active": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "The window is the active one: the block takes the :selected look.",
+          "required": false
+        },
+        "minimized": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "The window is minimised: the button is drawn dimmed.",
+          "required": false
+        },
+        "attention": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "The window wants attention: a small mark in the warning colour.",
+          "required": false
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live",
+        "Focusable",
+        "Tab_Index"
+      ],
+      "actions": []
+    },
+    "Tasks": {
+      "doc": "The open windows as a row of buttons, from the shell's KWin script; a click activates, minimises or closes a window.",
+      "params": {
+        "show_title": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "true",
+          "doc": "Shows each window's title beside its icon.",
+          "required": false
+        },
+        "max_width": {
+          "type": "number",
+          "kind": "number",
+          "default": "180",
+          "doc": "The widest a button gets, in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "icon_size": {
+          "type": "number",
+          "kind": "number",
+          "default": "18",
+          "doc": "The size of each icon in pixels.",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "monitor": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"THIS\"",
+          "doc": "THIS shows the windows on the module's own monitor, ALL those on every monitor.",
+          "required": false
+        },
+        "desktop": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"CURRENT\"",
+          "doc": "CURRENT shows the windows on the current virtual desktop (and those on all desktops), ALL those on every desktop.",
+          "required": false
+        },
+        "show_empty": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Keeps the module's space when there is no window.",
+          "required": false
+        },
+        "announce": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "Says aloud, politely, a window of the row that opens, closes or wants attention, once for a change (off by default).",
+          "required": false
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live",
+        "Focusable",
+        "Tab_Index"
+      ],
+      "actions": [
+        {
+          "name": "activate",
+          "doc": "A click on a button: the active window is minimised, any other is activated (un-minimising it). The row changes when KWin has acted and the script reports.",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "close",
+          "doc": "A middle click: ask the window to close.",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "cycle",
+          "doc": "The wheel over a row: activate the next (``delta`` > 0, a step down) or the previous window of that row, wrapping round.",
+          "args": [
+            {
+              "name": "delta",
+              "required": false
+            }
+          ],
+          "kwargs": false
+        }
+      ]
     },
     "TextBox": {
       "doc": "Several lines of text that can wrap, be cut and be selected.",
@@ -24679,7 +26536,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24698,6 +26557,13 @@
           "kind": "string",
           "default": "\"\"",
           "doc": "The text shown while the editor is empty.",
+          "required": false
+        },
+        "Label": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The name assistive technology reads aloud for the editor; without one it is the Placeholder.",
           "required": false
         },
         "Read_Only": {
@@ -24763,7 +26629,8 @@
         "On_Scroll",
         "On_Changed",
         "On_Submit",
-        "On_Text_Commit"
+        "On_Text_Commit",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -24797,7 +26664,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24816,6 +26685,13 @@
           "kind": "string",
           "default": "\"\"",
           "doc": "The text shown while the field is empty.",
+          "required": false
+        },
+        "Label": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The name assistive technology reads aloud for the field; without one it is the Placeholder.",
           "required": false
         },
         "Read_Only": {
@@ -24870,7 +26746,8 @@
         "On_Scroll",
         "On_Changed",
         "On_Submit",
-        "On_Text_Commit"
+        "On_Text_Commit",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -24904,7 +26781,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -24966,7 +26845,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -25042,7 +26923,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -25191,7 +27074,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": []
     },
@@ -25249,7 +27134,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -25276,6 +27163,73 @@
           "kwargs": false
         }
       ]
+    },
+    "Volume_OSD": {
+      "doc": "The volume on-screen display: the output, a bar and the percent (or Muted) for a moment when the default output's volume or mute changes; it goes in a click-through Panel.",
+      "params": {
+        "duration": {
+          "type": "number",
+          "kind": "number",
+          "default": "1500",
+          "doc": "Milliseconds the Panel stays after the last change of the volume or mute (more than 0, at most 60000).",
+          "required": false,
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null
+        },
+        "show_name": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "true",
+          "doc": "Shows the output's name above the bar.",
+          "required": false
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live",
+        "Focusable",
+        "Tab_Index"
+      ],
+      "actions": []
     },
     "Workspaces": {
       "doc": "The virtual desktops as buttons: the current one is marked, a click switches.",
@@ -25327,7 +27281,9 @@
         "Clip_Children",
         "Role",
         "Description",
-        "Live"
+        "Live",
+        "Focusable",
+        "Tab_Index"
       ],
       "actions": [
         {
@@ -25337,6 +27293,18 @@
           "kwargs": false
         }
       ]
+    }
+  },
+  "panels": {
+    "when": "added to the main shell's first Monitor when a Shortcuts entry or a handler names it and no Panel of the same name is written",
+    "panels": {
+      "Launcher": {
+        "content": "Applications",
+        "layer": "OVERLAY",
+        "keyboard": "EXCLUSIVE",
+        "visible": false,
+        "doc": "The launcher: the Applications module in a hidden Panel. Open it with Toggle_Launcher in Shortcuts or a Toggle of Launcher."
+      }
     }
   },
   "popups": {
@@ -25391,5 +27359,88 @@
         "doc": "The list of sound outputs the Audio module's secondary click opens."
       }
     }
+  },
+  "shortcuts": {
+    "fixed": [
+      "Enter_Shortcut_Mode",
+      "Exit_Shortcut_Mode",
+      "Set_Shortcut_Mode",
+      "Next_Focus",
+      "Previous_Focus"
+    ],
+    "forms": [
+      {
+        "form": "Toggle_<Name>",
+        "verb": "Toggle",
+        "value": "key_chord",
+        "target": {
+          "kind": "name_ref",
+          "doc": "The Name of the surface, written exactly."
+        },
+        "targets": [
+          "Panel",
+          "Bar",
+          "Frame"
+        ],
+        "doc": "Toggle_<Name>: \"keys\" toggles the Panel, Bar or Frame called <Name>."
+      },
+      {
+        "form": "Show_<Name>",
+        "verb": "Show",
+        "value": "key_chord",
+        "target": {
+          "kind": "name_ref",
+          "doc": "The Name of the surface, written exactly."
+        },
+        "targets": [
+          "Panel",
+          "Bar",
+          "Frame"
+        ],
+        "doc": "Show_<Name>: \"keys\" shows the Panel, Bar or Frame called <Name>."
+      },
+      {
+        "form": "Hide_<Name>",
+        "verb": "Hide",
+        "value": "key_chord",
+        "target": {
+          "kind": "name_ref",
+          "doc": "The Name of the surface, written exactly."
+        },
+        "targets": [
+          "Panel",
+          "Frame"
+        ],
+        "doc": "Hide_<Name>: \"keys\" hides the Panel or Frame called <Name>; a Bar cannot be hidden."
+      },
+      {
+        "form": "<Any_Name> { Keys, Action }",
+        "verb": null,
+        "value": "block",
+        "keys": {
+          "kind": "key_chord",
+          "key": "Keys",
+          "required": true
+        },
+        "actions": [
+          "Show",
+          "Hide",
+          "Toggle",
+          "Call"
+        ],
+        "doc": "<Any_Name> { Keys: \"keys\", Action: ... } runs a handler of Events and Actions (Show, Hide, Toggle or Call, with its arguments) when the key is pressed; its name is what the desktop's shortcut settings show."
+      }
+    ],
+    "surface_keys": {
+      "Panel": {
+        "key": "Shortcut",
+        "same_as": "Toggle_<Name>"
+      },
+      "Frame": {
+        "key": "Shortcut",
+        "same_as": "Toggle_<Name>"
+      }
+    },
+    "doc": "A surface's own key and a Shortcuts entry for the same action: the entry wins, with one warning. Two actions with the same key (any case, order or alias) are both left without it, with one warning. A name that matches no surface is a warning and the shortcut is not registered."
   }
 }

@@ -1,12 +1,13 @@
 import tess_dl
 
-from tess_shell.files.header import check_header, parse_version
+from tess_shell.files.header import check_header
+from tess_shell.schema.tree import parse_version
 
 INSTALLED = {"Shell": "0.1.0.dev0", "TRE": "0.6.1", "TEL": "0.1.2"}
 
 
 def doc(meta: str, root: str = "Shell") -> tess_dl.Document:
-    result = tess_dl.parse(f"---\nTDL: 0.1\nName: X\n{meta}---\n{root} {{\n}}\n")
+    result = tess_dl.parse(f"---\nTDL: 0.2\nName: X\n{meta}---\n{root} {{\n}}\n")
     assert result.document is not None
     return result.document
 
@@ -36,3 +37,10 @@ def test_root_block_must_agree_with_the_suffix() -> None:
 
 def test_a_matching_root_passes() -> None:
     assert check_header(doc("", root="Shell"), "Shells/Main_Shell.tdl", INSTALLED) == []
+
+
+def test_a_newer_language_than_the_installed_one_is_a_version_pin() -> None:
+    result = tess_dl.parse("---\nTDL: 0.3\nName: X\n---\nShell {\n}\n")
+    assert result.document is not None
+    (f,) = check_header(result.document, "a_Shell.tdl", INSTALLED)
+    assert f.rule == "version-pin" and "TDL 0.3" in f.message

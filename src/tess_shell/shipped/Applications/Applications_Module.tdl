@@ -1,0 +1,117 @@
+---
+TDL: 0.2
+Shell: 0.1
+Name: Applications
+---
+
+# The launcher (Applications Module): a text field over a list of the installed applications that
+# narrows as the user types. The text field keeps the keyboard focus; Down, Up, Page Down and Page
+# Up move the selection from the field, Enter starts the selected application, a click on a row
+# starts that one, Escape clears the field and, with the field empty, hides the Panel that holds
+# the module. When the Panel shows, the field takes the focus and its text is selected. The Python
+# sends, for each use: `ready` (the list of applications is built), `query` (the field's text),
+# `results` (a record per row: `id`, `name`, `comment`, `icon`), `selected` (the selected row's
+# index), `selected_id` (its id, which the List marks), `has_results`, `list_height` (the rows'
+# height in pixels), `message` ("No results", "No applications found" or "Could not start <name>";
+# empty otherwise). The module says aloud, politely (ctx.announce), the selected row, "No
+# results" and "Could not start <name>". The shipped Panel `Launcher` holds this module; bind a key
+# to open it (`Shortcuts { Toggle_Launcher: "Meta+Space" }`).
+#
+# Accessibility: the text field's name is its placeholder, the list is named "Results" and each row
+# (role LISTITEM, state `selected`) is named by the application's name and its comment.
+Module {
+    Style: Applications_Style.tdl
+
+    Params {
+        # the most rows shown
+        max_results { Type: number, Default: 8 }
+        # the generic name or comment under each name
+        show_comment { Type: boolean, Default: true }
+        # the application icon's size in pixels
+        icon_size { Type: number, Default: 24 }
+        # the hint the empty text field shows
+        placeholder { Type: string, Default: "Search applications" }
+    }
+
+    FlexBox {
+        Name: Root
+        Role: GROUP
+        Label: "Applications"
+        Flex: VERTICAL
+        Spacing: 8
+        Padding: 12
+        Children {
+            TextInput {
+                Name: query
+                Text: <| query |>
+                Placeholder: <| params.placeholder |>
+                Width: 456
+                On_Changed { Action: search, text: <| event.new |> }
+                On_Submit: launch_selected
+                On_Key_Down: key
+            }
+            If <| has_results |> {
+                List {
+                    Name: results
+                    Label: "Results"
+                    Selected: <| selected_id |>
+                    Width: 456
+                    Height: <| list_height |>
+                    Children {
+                        For app In <| results |> Key <| app.id |> {
+                            FlexBox {
+                                Name: Row
+                                Class: list_item
+                                Height: 40
+                                Flex: HORIZONTAL
+                                Align_Items: CENTER
+                                Spacing: 10
+                                On_Click { Action: launch, id: <| app.id |> }
+                                Label: <| app.name + ", " + app.comment if params.show_comment and app.comment != "" else app.name |>
+                                Children {
+                                    Icon { Name: Glyph, Icon: <| app.icon |>, Size: <| params.icon_size |> }
+                                    FlexBox {
+                                        Name: Words
+                                        Flex: VERTICAL
+                                        Flex_Grow: 1
+                                        Children {
+                                            Text {
+                                                Name: Title
+                                                Class: app_name
+                                                Text: <| app.name |>
+                                                Wrap: NONE
+                                                Width: <| 400 - params.icon_size |>
+                                                Height: AUTO
+                                            }
+                                            If <| params.show_comment and app.comment != "" |> {
+                                                Text {
+                                                    Name: Detail
+                                                    Class: app_comment
+                                                    Text: <| app.comment |>
+                                                    Wrap: NONE
+                                                    Width: <| 400 - params.icon_size |>
+                                                    Height: AUTO
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            If <| message != "" |> {
+                Text {
+                    Name: Message
+                    Class: app_message
+                    Text: <| message |>
+                    Label: <| message |>
+                    Wrap: NONE
+                    Width: 456
+                    Height: AUTO
+                }
+            }
+        }
+    }
+}

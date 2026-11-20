@@ -252,7 +252,7 @@ def test_a_reload_that_adds_a_handler_to_a_disabled_block_still_swallows() -> No
 
 # -- the schema -------------------------------------------------------------------------------
 
-HEAD = "---\nTDL: 0.1\nName: Btn\n---\n"
+HEAD = "---\nTDL: 0.2\nName: Btn\n---\n"
 
 
 def read(body: str) -> tuple[Any, list[Any]]:
@@ -264,7 +264,7 @@ def read(body: str) -> tuple[Any, list[Any]]:
 def test_enabled_is_read_on_a_block_as_a_value_and_as_a_slot() -> None:
     found, findings = read(
         "Module { Params { on { Type: boolean, Default: true } }\n"
-        "FlexBox { Enabled: false, Children { Spacer { Enabled: {{ params.on }} } } } }"
+        "FlexBox { Enabled: false, Children { Spacer { Enabled: <| params.on |> } } } }"
     )
     assert found is not None and findings == []
     (root,) = found.children
@@ -298,14 +298,13 @@ def sheet(text: str, modules: set[str] | None = None) -> Any:
     return read_stylesheet(result.document, "S_Stylesheet.tdl", modules or set())
 
 
-def test_disabled_is_a_built_state_and_focused_is_still_skipped() -> None:
+def test_disabled_and_focused_are_built_states() -> None:
     s, findings = sheet(
         'Stylesheet { Rule { Selector: "FlexBox:disabled", Background: "#fff" }\n'
         'Rule { Selector: "FlexBox:focused", Background: "#fff" } }'
     )
-    assert [r.state for r in s.rules] == ["disabled"]
-    (f,) = findings
-    assert f.severity == "warning" and ":focused" in f.message and "M6" in f.message
+    assert findings == []
+    assert [r.state for r in s.rules] == ["disabled", "focused"]
 
 
 def test_a_disabled_rule_folds_in_by_the_precedence_of_the_other_states() -> None:

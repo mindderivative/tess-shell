@@ -21,7 +21,7 @@ from tests.test_run import Shell
 pytestmark = pytest.mark.tre
 
 BTN_TDL = (
-    "---\nTDL: 0.1\nName: Btn\n---\n"
+    "---\nTDL: 0.2\nName: Btn\n---\n"
     'Module { Rectangle { Width: 60, Height: 20, Fill: "#0000ff" } }\n'
 )
 # opens the Popup from the first second tick, as an @action would from a click (use= is what the
@@ -79,9 +79,14 @@ def grab(sway: PrivateSway) -> bytes:
 
 
 def wait_for_shot(
-    sway: PrivateSway, colour: tuple[int, int, int], timeout: float = 5
+    sway: PrivateSway, colour: tuple[int, int, int], timeout: float = 30
 ) -> tuple[bytes, tuple[int, int, int, int]]:
-    """Screenshots until a rectangle of ``colour`` is on screen (the popup takes a few frames)."""
+    """Screenshots until a rectangle of ``colour`` is on screen (the popup takes a few frames).
+
+    An upper bound, not a delay: it returns at once when the colour is there. 30 s because the
+    first graphics work in a fresh CI machine (software Vulkan shaders and caches not built yet)
+    took 16 s for this whole test where the later runs took 3, and a test that lands first in a
+    CI shard pays it."""
     deadline = time.monotonic() + timeout
     while True:
         shot = grab(sway)
@@ -199,7 +204,9 @@ def test_calling_another_popup_replaces_the_open_one_on_a_real_compositor(
     shell = start(private_sway, tmp_path, "TOP", f"{MENU}\n{OTHER}", REPLACE_PY)
     try:
         shell.wait_for("Popup Menu on HEADLESS-1 opened")
-        wait_for_shot(private_sway, (255, 0, 0))
+        # The module replaces it on its next tick, so the first (red) Popup is on screen for about
+        # a second: a slow screenshot under load can miss it, so it is not waited for. That it was
+        # mapped when the second was made is the log's word: it is closed as "replaced".
         shell.wait_for("Popup Menu on HEADLESS-1 closing (replaced)")
         shell.wait_for("Popup Other on HEADLESS-1 opened")
         shot, green = wait_for_shot(private_sway, (0, 255, 0))

@@ -1,4 +1,4 @@
-"""An icon name a module sends (``Icon: {{ icon }}``): the same lookup as a name written in a
+"""An icon name a module sends (``Icon: <| icon |>``): the same lookup as a name written in a
 file, in an ``SVG`` block, in an ``Icon`` call's param, inside ``If`` and ``For`` (Standard Modules
 > Icon; Battery Module). Headless, through the real binder."""
 
@@ -16,11 +16,11 @@ ACCOUNT = SETS.lookup("mdi:account")
 
 DRIVER = (
     "Module { FlexBox { Name: Root, Children { "
-    "SVG { Name: Plain, Icon: {{ ic }}, Width: 16, Height: 16 } "
-    "Icon { Name: Called, Icon: {{ ic }} } "
-    "If {{ show }} { SVG { Name: Shown, Icon: {{ ic }}, Width: 16, Height: 16 } } "
-    "For r In {{ rows }} Key {{ r.id }} { "
-    "SVG { Name: Row, Icon: {{ r.icon }}, Width: 16, Height: 16 } } "
+    "SVG { Name: Plain, Icon: <| ic |>, Width: 16, Height: 16 } "
+    "Icon { Name: Called, Icon: <| ic |> } "
+    "If <| show |> { SVG { Name: Shown, Icon: <| ic |>, Width: 16, Height: 16 } } "
+    "For r In <| rows |> Key <| r.id |> { "
+    "SVG { Name: Row, Icon: <| r.icon |>, Width: 16, Height: 16 } } "
     "} } }"
 )
 CODE = (

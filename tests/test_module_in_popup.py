@@ -10,12 +10,12 @@ from typing import Any
 from tests.widgets_live import Widgets, running
 
 TRAY_TDL = (
-    "---\nTDL: 0.1\nName: TrayMenu\n---\n"
+    "---\nTDL: 0.2\nName: TrayMenu\n---\n"
     "Module { FlexBox { Name: Root, Flex: VERTICAL, Children { "
     "Menu { Children { "
-    "For e In {{ caller.data.items }} Key {{ e.id }} { "
-    "MenuItem { Text: {{ e.text }}, On_Click { Action: pick, Id: {{ e.id }} } } } "
-    "For x In {{ extra }} Key {{ x.id }} { MenuItem { Text: {{ x.text }} } } "
+    "For e In <| caller.data.items |> Key <| e.id |> { "
+    "MenuItem { Text: <| e.text |>, On_Click { Action: pick, Id: <| e.id |> } } } "
+    "For x In <| extra |> Key <| x.id |> { MenuItem { Text: <| x.text |> } } "
     "} } } } }\n"
 )
 TRAY_PY = """
@@ -199,8 +199,8 @@ def test_two_popups_with_the_same_module_do_not_collide() -> None:
 
 def test_a_submenu_from_an_entry_hangs_off_the_entry_and_closes_with_its_parent() -> None:
     tray = TRAY_TDL.replace(
-        "MenuItem { Text: {{ e.text }}, On_Click",
-        "MenuItem { Text: {{ e.text }}, Submenu: Sub_Menu, On_Click",
+        "MenuItem { Text: <| e.text |>, On_Click",
+        "MenuItem { Text: <| e.text |>, Submenu: Sub_Menu, On_Click",
     )
     sub = (
         "Popup { Name: Sub_Menu, Style { Background: $color.surface_raised }, "
@@ -231,12 +231,12 @@ def test_a_submenu_from_an_entry_reads_that_entry_as_caller_use_not_the_for_pref
     """The row's block id starts with the ``For`` prefix (``for3.7/...``): the submenu's ``caller``
     is the row's own use, so ``caller.use.params`` are its params (the Tray menu reads ``Id``)."""
     tray = TRAY_TDL.replace(
-        "MenuItem { Text: {{ e.text }}, On_Click",
-        "MenuItem { Text: {{ e.text }}, Id: {{ e.id }}, Submenu: Sub_Menu, On_Click",
+        "MenuItem { Text: <| e.text |>, On_Click",
+        "MenuItem { Text: <| e.text |>, Id: <| e.id |>, Submenu: Sub_Menu, On_Click",
     )
     sub = (
         "Popup { Name: Sub_Menu, Style { Background: $color.surface_raised }, "
-        "Children { Menu { Children { MenuItem { Text: {{ caller.use.params.Id }} } } } } }"
+        "Children { Menu { Children { MenuItem { Text: <| caller.use.params.Id |> } } } } }"
     )
     with running(
         "Driver { }",

@@ -1,0 +1,222 @@
+---
+title: TDL Language
+aliases: [TDL Reference, Tesserae Data Language, TDL Syntax]
+type: tdl-ref
+status: draft
+owner: phil
+created: 2026-10-29
+updated: 2026-11-14
+tags: [tdl-ref, tdl, needs-verification]
+---
+
+# TDL Language
+
+> [!NOTE]
+> The Tesserae Data Language (TDL) is a structure-only data language. It is its own project, like TEL, and until that project has a repository this note defines it (D25 in [ADR-0014 Shell File Language > Second-Sketch Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#second-sketch-decisions-2026-10-30)). TDL has no knowledge of bars or monitors: the shell and Tesserae UI each define the blocks and keys they accept on top of it. Expressions are TEL's ([ADR-0008 Tesserae Expression Language](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md)); TDL only marks where one starts. The decisions are the maintainer's (2026-10-29 and 2026-10-30); this note states them as rules and does not re-argue them.
+
+> [!NOTE]
+> **The language text moved to `tess-dl` (2026-11-02)**
+> The `tess-dl` project is the source of truth for TDL (D66, D92): `~/Projects/pyDev/projects/tess-dl/docs/language.md` (decisions in `docs/decisions.md`, G1 to G18). This note keeps what is the shell's: how a file is used as a shell file, the typed value forms, the name registry, monitors, sizes and the shell's acceptance criteria. The punctuation, lexical rules and syntax errors are there, not here ([tess-dl Handover](tess-dl%20Handover.md)).
+
+## Two Layers
+
+| Layer                     | Defines                                                                                                                     | Where                                                                                                   |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| TDL (the language)        | The metadata block, punctuation, values, names, the root block, `Children`, `Import`, `If`, `Else`, `For`, `In`, `Key`, case rules, errors | This note                                                                                               |
+| The shell's schema        | `Shell`, `Monitor`, `Bar`, `Frame`, `Panel`, `Popup`, the building blocks, modules and their keys                                  | [Shell File](Shell%20File.md), [Module File](Module%20File.md), [Building Blocks](../50%20Design%20System/Building%20Blocks.md), [Style Schema](Style%20Schema.md), [Settings File](Settings%20File.md)                |
+| Tesserae UI's schema      | `View` and its blocks                                                                                                       | Not designed here                                                                                       |
+
+## A File
+
+A file is a metadata block, then one root block.
+
+```
+---
+TDL: 0.2                # Tesserae Data Language version
+TEL: 0.1                # Tesserae Expression Language version
+TRE: 0.5.9              # Tesserae Rendering Engine version
+Shell: 0.1              # Tesserae Shell version (a shell app)
+Name: Shell_Root        # Unique name of this file's root
+UID: <UUIDv7>           # Written by the shell
+---
+
+# This is a comment
+
+Shell {
+  Monitor {
+    Name: Main
+    Connector: DP-1
+    Children {
+      Import: TopBar_Module.tdl
+      Bar {
+        Name: Top_Bar
+        Edge: TOP
+        Width: EXPAND
+        Height: 32
+        Style {
+          Border { Color: "#1e1e1e", Width: [2, 2, 2, 2] }
+          Background: "#1f1f1f"
+          Corner_Radius: [8, 8, 8, 8]
+        }
+        Children {
+          Label { text: Battery <| battery.percent |>% }
+        }
+      }
+    }
+  }
+}
+```
+
+This is an illustration: the version values are made up, and the keys inside `Bar` follow the notes linked under "Where the Keys Are". The version fields are minimum versions (D37); which are required depends on what the file builds (see "The Metadata Block").
+
+## The Metadata Block
+
+| Rule                                                                                                                                                                                          | Source             |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|
+| Every file starts with a block between two lines that hold only `---`. The block is required.                                                                                                | ADR-0014 item 1    |
+| `TDL:` is the language version. Required. Versions are strings, never numbers.                                                                                                               | Items 1 and 3      |
+| `TEL:`, `TRE:`, `TUIF:` and `Shell:` are minimum versions of the other projects (`Shell:` is the Tesserae Shell release). A shell requires `TEL`, `TRE` and `Shell`; a Tesserae app requires `TEL`, `TRE` and `TUIF`. A shell adds `TUIF` to use something from an app, and an app adds `Shell` to use something from the shell (D37, D38). | Second sketch      |
+| There is no file-type key. The root block names the file type (see below).                                                                                                                   | D26                |
+| `Name:` is required in every file (D39). It is the unique name of the file's root (`RootShell`, a module's call name) and the root of a dotted path, so the parser and TEL reach elements of the file by name: `RootShell.DP1.Top_Bar`. It follows the name rules below.                                                                         | Second sketch, D28 |
+| `UID:` is written here by the shell when the file is first registered; authors do not write it. It goes directly after the last version field.                                               | D10                |
+| Other keys are allowed. The shell keeps them and ignores them, so a user can add their own metadata and read it from `<Name>_Module.py`.                                                     | Item 14            |
+
+## The Root Block
+
+| Root block   | File                                              | Suffix                     |
+|--------------|---------------------------------------------------|----------------------------|
+| `Shell`      | A shell: `Monitor` blocks                         | `<Name>_Shell.tdl`         |
+| `View`       | A Tesserae app (not designed here)                | `<Name>_View.tdl`          |
+| `Module`     | A module: params, layout                          | `<Name>_Module.tdl`        |
+| `Style`      | A style file                                      | `<Name>_Style.tdl`         |
+| `Stylesheet` | A stylesheet                                      | `<Name>_Stylesheet.tdl`    |
+| `Theme`      | A theme                                           | `<Name>_Theme.tdl`         |
+
+The root block is authoritative. A mismatch with the suffix is a load error that names both; the shell raises it as `shell-root-suffix` (D91), because the language does not look at file names. A file has exactly one root block. The settings file `settings.tdl` has the root block `Settings` (D20 of the 2026-10-30 decisions, with the file-type key replaced by the root block).
+
+## Punctuation
+
+The punctuation of TDL (`---`, `#` comments, `Name { }` blocks, `Key: value`, lists, quoted strings, `rgba(...)` calls, `<| |>` slots, escapes, line endings and the nesting limit) is defined by the `tess-dl` project in `~/Projects/pyDev/projects/tess-dl/docs/language.md`. It is not repeated here, so there is one definition ([tess-dl Handover](tess-dl%20Handover.md)).
+
+> [!IMPORTANT]
+> **TDL 0.2: the slot is written with `<|` and `|>`**
+> Since language 0.2 (`tesserae-dl` 0.2.0, 2026-11-14) a slot is `<| expression |>` on one line, and it ends at the first `|>` outside a quoted string. The double-brace form of 0.1 is no longer a slot: the parser refuses it with `tdl-unexpected-text` and a hint. Two closing braces are now just two closing braces, so the code `tdl-double-close` is gone and a slot may hold a dict or set literal. `For` takes several names, and `tdl-duplicate-variable` is new. A file says `TDL: 0.2`; the `tess-dl` repository's `tools/migrate_slots.py` rewrites a 0.1 file. Read from `docs/language.md` of `tess-dl` at `fcb1f21`; the shell is on it since `e30bfe3` and `4cbacd2` (read from its `origin/main`, not run in the vault). In a table in this vault the bars are written with a backslash so the table survives; a file has none.
+
+## Values
+
+| Kind          | Forms                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Length        | A whole number is pixels (`16`). A percentage is `<int>%` (`50%`). The keywords `AUTO` and `EXPAND` apply where a key allows them (D34). There is no unit suffix; a float is never a length                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Number        | A float is for values that are not lengths (`Opacity: 0.9`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Colour        | `"#RRGGBB"`, `"#RRGGBBAA"`, or `rgba(r g b a)` with red, green and blue 0 to 255 and alpha 0.0 to 1.0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| String        | An unquoted word, or `"..."` / `'...'`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Enum          | A full upper-case bare word: `LEFT`, `TOP`, `RIGHT`, `BOTTOM`, `OVERLAY`, `HORIZONTAL` (D33)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Boolean, null | `true`, `false` and `null` are lowercase bare words. The parser keeps them as strings; the key's declared type in the schema makes them a boolean or null (D2)                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Four-sided    | One number, a list of four in the order left, top, right, bottom, or a block of named sides: `Thickness { Left: 24, Top: 8 }` (D7, D50). A list of two or three items is an error with the slug `bad-sides` ([Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)); its hint says: "Use one number, four items (left, top, right, bottom) or named sides. CSS orders its sides top, right, bottom, left and accepts two or three items; this language does not." The order left, top, right, bottom matches Flutter, Qt and WPF and differs from CSS and SwiftUI #needs-verification. Four corner radii run from the top-left corner clockwise |
+| List          | `[a, b, c]` or `[]`; an item may sit on its own line                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Expression    | `<\| ... \|>`. A value that is exactly one slot keeps its type; text with a slot inside is a string                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+
+A percentage plus pixels (tre's `calc(100% - 16)`) has no form in v1 (D6). A style token such as `$color.on_surface` is a plain string that the style engine resolves by theme key; it is not a variable, and matching ignores case (D16).
+
+The lexical kinds a file is read into (Word, String, Number, Percent, Call, List, Slot, Template) and their rules are in the `tess-dl` reference. The table above is the shell's typed view of those kinds.
+
+## Names and the Registry
+
+- **Case.** Built-in syntax is Capitalised. A key of several words Capitalises each word and joins them with `_`: `Name`, `Children`, `Exclusive_Zone`, `Corner_Radius`, `Attach_To`. There is one spelling per key (D32). Tre's names stay lowercase (`exclusive_zone`); the shell maps between them. Enum values are full upper case.
+- **Unique names.** A `Name:` is unique across the shell. It uses letters, digits and `_` only, and starts with a letter, so `DP-1` is not a name. A dotted path of names (`Shell_Root.Main.Top_Bar`) is then valid in TDL and in a TEL expression (D28).
+- **A block's head is its type.** `Panel { Name: Unique_Panel_Name }` needs no `Kind:` or `Type:`. `Name:` is the unique name.
+- **One registry of names** holds the built-in blocks, the surface types and every module. They are treated the same way. The shell's built-in names:
+
+  | Group     | Names                                                                                                              |
+  |-----------|--------------------------------------------------------------------------------------------------------------------|
+  | Top level | Shell, Monitor                                                                                                     |
+  | Surfaces  | Bar, Frame, Panel, Popup ([Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md))                                                                       |
+  | Blocks    | Box, FlexBox, Grid, Text, TextField, Bitmap, SVG, Square, Rectangle, Triangle, Hexagon, Circle, Ellipse, Ring, Path, Terminal, Canvas ([Building Blocks](../50%20Design%20System/Building%20Blocks.md)) |
+  | Modules   | The shipped modules (Label, Icon, Button, ... , [V1 Widgets](../50%20Design%20System/V1%20Widgets.md)) and every module with a `Name:` in its metadata   |
+
+- **Kind has one meaning.** `Kind:` references a type by its exact name (`Kind: Panel`, `Kind: Clock`), where a type is named by value rather than by a block head, such as a style class.
+- A name registered twice is a load error. A user module of the same name overrides a shipped module ([ADR-0007 Shell UI Layer > Module Call, Shipped Modules and Path (2026-10-26)](../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#module-call-shipped-modules-and-path-2026-10-26)).
+- **Repeats.** The same block or module name may appear many times in one `Children { }`. Entries are ordered by position and named from it (`Square_1`, `Square_2`). Siblings are separated by a newline or `,`.
+- **For entries.** The entries of a `For`: TEL names each entry `<name>_0001`, `<name>_0002` and so on from a counter that only grows; a key that disappears and returns gets a new number (D65). The entry is identified by its `Key`, which may be any value; only the generated name is limited to letters, digits and `_`. The `<name>` is the `Name:` of the `For` block when it has one, else the head of its child (for example `Icon_0001`), else `For`.
+- **Modules and surfaces.** A user module may hold a surface as its root: a module `Top_Bar` can hold a `Bar` and be used under several `Monitor` blocks. Surfaces do not nest inside surfaces (D29).
+- **Instances.** Python keys each use by the module name and the UID, `Clock@<uid>`. The shell writes `UID:` into a block only if it has a `Name:` and the user asks for stable identity across reordering (D30).
+
+## Structure Words
+
+| Word                                               | Use                                                                                                             |
+|----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `Children`                                         | The only holder of contents                                                                                     |
+| `Import`                                           | One file name or a list: `Import: Applications_Module.tdl`, or `Import: [A_Module.tdl, B_Module.tdl,]`. Paths are relative to the importing file; imports nest. The spelling is `Import` (the sketch also wrote `import:`, which is open) |
+| `If`, `Else`                                       | `If <\| cond \|> { ... } Else { ... }`; no `Else If`; nest an `If` inside `Else`                                   |
+| `For`, `In`, `Key`                                 | `For item In <\| list \|> Key <\| item.id \|> { ... }`. `Key` is required: it gives each entry a stable identity. Several names unpack each item: `For i, item In <\| enumerate(list) \|> Key <\| item.id \|> { ... }`; a name used twice is `tdl-duplicate-variable` (TDL 0.2) |
+
+`If`, `Else`, `For`, `In` and `Key` cannot be the name of a block or module. The rules for conditions and repeats are in [ADR-0014 Shell File Language > Conditions and Repeats (Decided)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#conditions-and-repeats-decided).
+
+## Monitors (Shell Schema)
+
+`Monitor { }` is a block of the shell's schema, one per monitor; several may appear under `Shell`. A `Monitor` names its monitor with one of three selectors and has its own `Name:` (D27):
+
+| Selector       | Matches                                                                                       |
+|----------------|-----------------------------------------------------------------------------------------------|
+| `Index: 0`     | The position in the compositor's output array: `0` for the first (or only) monitor, then `1` |
+| `Connector:`   | The connector name, for example `DP-1`                                                        |
+| `Description:` | The display description                                                                       |
+
+- `Index: default` applies to every monitor no other `Monitor` block names.
+- A `Monitor` with no selector is ignored.
+- If a block has several selectors, the shell tries `Connector`, then `Description`, then `Index` and uses the first match.
+- `Index:` is not a stable name: the position can change after a hot-plug, a wake or a reboot. This is [Risk Register](../00%20Home/Risk%20Register.md) R-21 and why `Connector:` and `Description:` exist.
+
+## Sizes (Shell Schema)
+
+A `Width` or `Height` is a number of pixels, a percentage, `AUTO` or `EXPAND`. `AUTO` shrinks to wrap the content on that axis. `EXPAND` stretches edge to edge along the edge a surface is attached to; across that axis it cannot stretch, so a top Bar with `Height: EXPAND` resolves to `Max_Height`, else `Min_Height`, else 0 px. `Max_Width`, `Max_Height`, `Min_Width` and `Min_Height` bound a size (D34). A resolved size of 0 is invalid for a layer surface unless it is anchored to both opposite edges, so such a Bar is not created (D46, verified against the protocol 2026-10-31).
+
+## Errors
+
+The syntax errors of the `tess_dl` library (22 codes, `tdl-` prefix, each with a message, a hint and a position) are defined in the `tess-dl` reference ("Errors" in `~/Projects/pyDev/projects/tess-dl/docs/language.md`, accepted by the maintainer on 2026-11-02, D52, D93). The shell adds its own errors for schema, names and loading, with the same `file:line:column` position: `shell-root-suffix` (the root block disagrees with the file suffix, D91), `bad-sides` (a four-sided list of two or three items), unknown keys, duplicate names and import cycles ([Validation and Errors](../40%20Specifications/Runtime/Validation%20and%20Errors.md)).
+
+## Editor Support
+
+No language server in v1. A small TextMate grammar ships in v1 for highlighting in Kate and VS Code. Its content comes from this note once the open items are settled ([ADR-0014 Shell File Language > What TDL Is (Decided)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#what-tdl-is-decided), item 18).
+
+## Where the Keys Are
+
+| Note                                      | Holds                                              |
+|-------------------------------------------|----------------------------------------------------|
+| [Common Keys and Conventions](Common%20Keys%20and%20Conventions.md)           | Keys every file has, value forms, names, errors    |
+| [Shell File](Shell%20File.md)                            | `Monitor` and the surface keys                     |
+| [Module File](Module%20File.md)                           | The module file, params, data slots                |
+| [Style, Theme and Stylesheet Files](Style%2C%20Theme%20and%20Stylesheet%20Files.md)     | Style, theme and stylesheet files                  |
+| [Style Schema](Style%20Schema.md)                          | Style properties                                   |
+| [Settings File](Settings%20File.md)                         | `settings.tdl`                                     |
+
+These notes were revised on 2026-10-30 to the decisions of [ADR-0014 Shell File Language > Third-Round Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#third-round-decisions-2026-10-30) and [ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30): the root block names the file type, enum values are upper case, four-sided values run left, top, right, bottom, and the Bar uses `Edge`, `Width`, `Height`, `Gap` and `Offset`.
+
+## Open
+
+Decided on 2026-10-30 and removed from this list: the version pins are minimums (D37), `Name:` is required in every file (D39), the spelling is `Import` (D40), `Margin`, `Gap`, `Offset` and `Padding` meanings (D41 to D45), and `calc` is out of v1 (D47).
+
+- [x] The names and slugs of TDL syntax errors: the list under "Errors" is accepted (D52).
+- [ ] The full list of shipped modules and their registry names: after the building blocks are worked out (D48, [V1 Widgets](../50%20Design%20System/V1%20Widgets.md)).
+- [ ] How a collapsed or hidden Bar keeps a layer surface: accepted in [Bar > Mapping to tre](../40%20Specifications/Surfaces/Bar.md#mapping-to-tre) (D61): the window keeps its size and slides by a negative margin. The protocol makes a 0 size without opposite anchors an error, so D46 stands (verified 2026-10-31).
+- [x] `Gap` is the distance to what a surface is attached to, and a layout's child spacing is `Spacing` (D49). The four-sided order is Left, Top, Right, Bottom (D50). A Bar's `Offset` is one number; a Panel's four-sided position is `Inset` (D51, D89) ([ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30)).
+
+## Acceptance Criteria
+
+The language-level criteria (syntax errors, slots, comments, limits, the exact round trip) are cases in the `tess-dl` conformance corpus, which `tess-dl` owns (D92). These remain the shell's.
+
+- A root block that disagrees with the suffix is a load error naming both (`shell-root-suffix`).
+- `Panel { Name: p1 }` loads with no `Kind:` or `Type:`.
+- Two `Monitor` blocks under `Shell` load. Two that give the same selector value (for example the same `Connector`) are an error naming both places. Two that select different values but resolve to the same output at run time cannot be seen by `check`: the shell logs a warning naming both blocks at start and the first one wins (maintainer, 2026-11-04, D11).
+- A name registered twice is a load error naming both; a user module of a shipped module's name overrides it.
+- `Index: default` applies to a monitor no other block names.
+- A metadata key the shell does not know is kept and ignored.
+- `Edge: top` is an error that says enum values are upper case; `Edge: TOP` loads.
+- `true`, `false` and `null` are accepted where the schema declares a boolean or null, and refused (with the expected type) where it declares a string or number.
+- `Thickness { Top: 8, Left: 24 }`, `Thickness: 8` and `Thickness: [8, 8, 8, 8]` load to the same four-sided value shape.
+- A top Bar with `Height: EXPAND` resolves to its `Max_Height`, else its `Min_Height`, else 0 px.
+- `Margin: [8, 4]` and a three-item list are refused with `bad-sides`, and the hint tells the author to use one number, four items or named sides and says that CSS orders its sides top, right, bottom, left and accepts two or three; one number, four items and named sides load.
+
+## Links
+
+- [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md) · [41 TDL Reference](41%20TDL%20Reference.md) · [Common Keys and Conventions](Common%20Keys%20and%20Conventions.md) · [Shell File Syntax Comparison](../90%20Research/Shell%20File%20Syntax%20Comparison.md) · [Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md) · [Risk Register](../00%20Home/Risk%20Register.md)

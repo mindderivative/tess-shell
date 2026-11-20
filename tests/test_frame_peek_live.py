@@ -69,7 +69,7 @@ def run(sway: PrivateSway, cfg: Path, blend: str) -> list[str]:
     body = f"\nShell {{ Monitor {{ Name: Main, Index: 0, Children {{ {FRAME} }} }} }}\n"
     (cfg / "Shells" / "Main_Shell.tdl").write_text(HEADER + body)
     (cfg / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\n"
+        "---\nTDL: 0.2\nName: S\n---\n"
         f"Settings {{ Logging {{ Level: DEBUG }} Debug {{ Frame_Blend: {blend} }} }}\n"
     )
     sway.msg("output", "*", "resolution", f"{OUT[0]}x{OUT[1]}")
@@ -168,15 +168,21 @@ def test_every_peek_trigger_works_with_a_real_pointer_and_the_same_with_either_b
     assert got["LINEAR"] == want, got
 
 
+# The pointer drags at x = 100 and some compositors (sway 1.9 on wlroots 0.17, the one on GitHub's
+# runners) draw the cursor into a screenshot: its tip would cover the contour's edge there. The
+# edge is flat from about x = 10 to x = 200, so it is read clear of the cursor.
+EDGE_X = 150
+
+
 def edge_and_dot(shot: tuple[int, int, bytes]) -> tuple[int | None, int | None]:
-    """The row of the contour's far edge (the border's colour) at x = 100 and of the content's
+    """The row of the contour's far edge (the border's colour) at EDGE_X and of the content's
     first row (Tray's dot, #89dceb) in the Tray body's columns."""
 
     def near(p: tuple[int, int, int], c: tuple[int, int, int], d: int) -> bool:
         return all(abs(a - b) < d for a, b in zip(p, c, strict=True))
 
     edge = next(
-        (y for y in range(950, 1075) if near(pixel(shot, 100, y), (0x89, 0xB4, 0xFA), 12)), None
+        (y for y in range(950, 1075) if near(pixel(shot, EDGE_X, y), (0x89, 0xB4, 0xFA), 12)), None
     )
     for y in range(950, 1075):
         if any(near(pixel(shot, x, y), (0x89, 0xDC, 0xEB), 6) for x in range(10, 211, 2)):
@@ -197,7 +203,7 @@ def test_dragging_the_tray_the_contour_and_the_content_move_together(
     body = f"\nShell {{ Monitor {{ Name: Main, Index: 0, Children {{ {FRAME} }} }} }}\n"
     (tmp_path / "Shells" / "Main_Shell.tdl").write_text(HEADER + body)
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\n"
+        "---\nTDL: 0.2\nName: S\n---\n"
         f"Settings {{ Logging {{ Level: DEBUG }} Debug {{ Frame_Blend: {blend} }} }}\n"
     )
     private_sway.msg("output", "*", "resolution", f"{OUT[0]}x{OUT[1]}")
@@ -242,9 +248,9 @@ def test_dragging_the_tray_the_contour_and_the_content_move_together(
 
 
 def edge_row(shot: tuple[int, int, bytes]) -> int | None:
-    """The row of the contour's far edge (the border's colour) at x = 100, in the Tray's range."""
+    """The row of the contour's far edge (the border's colour) at EDGE_X, in the Tray's range."""
     for y in range(950, 1075):
-        p = pixel(shot, 100, y)
+        p = pixel(shot, EDGE_X, y)
         if all(abs(a - b) < 12 for a, b in zip(p, (0x89, 0xB4, 0xFA), strict=True)):
             return y
     return None
@@ -273,7 +279,7 @@ def test_dragging_the_tray_the_content_fades_with_the_contour(
     body = f"\nShell {{ Monitor {{ Name: Main, Index: 0, Children {{ {FRAME} }} }} }}\n"
     (tmp_path / "Shells" / "Main_Shell.tdl").write_text(HEADER + body)
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\n"
+        "---\nTDL: 0.2\nName: S\n---\n"
         f"Settings {{ Logging {{ Level: DEBUG }} Debug {{ Frame_Blend: {blend} }} }}\n"
     )
     private_sway.msg("output", "*", "resolution", f"{OUT[0]}x{OUT[1]}")

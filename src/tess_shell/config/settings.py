@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
@@ -11,7 +12,15 @@ from tess_dl import Block, List, Number, Origin, Property, Value
 
 from tess_shell.config.paths import FOLDERS, PathError, expand_path
 from tess_shell.schema.findings import Finding, nearest
-from tess_shell.schema.tree import child_blocks, find_property, position, properties, value_text
+from tess_shell.schema.keys import Chord, ChordError, parse_chord
+from tess_shell.schema.tree import (
+    child_blocks,
+    find_property,
+    language_finding,
+    position,
+    properties,
+    value_text,
+)
 
 SETTINGS_FILE = "settings.tdl"
 LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
@@ -29,11 +38,17 @@ ROOT_KEYS = (
     "Appearance",
     "Debug",
     "Control",
+    "Shortcuts",
+    "Global_Shortcuts",
+    "KWin",
 )
-DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend")
+KWIN_KEYS = ("Script", "Hide_On_Fullscreen")
+KWIN_SCRIPT = ("RUNTIME", "PERSISTENT", "OFF")
+DEBUG_KEYS = ("Panel_Hide", "Frame_Join", "Frame_Blend", "Mode_Keyboard", "User_Modules_In_Process")
 PANEL_HIDE = ("CLOSE", "KEEP")
 FRAME_JOIN = ("SMIL", "CONCAVE", "SHADER", "STRUCTURE", "PARAM")
 FRAME_BLEND = ("SRGB", "LINEAR")
+MODE_KEYBOARD = ("EXCLUSIVE", "ON_DEMAND")
 APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop")
 LOGGING_KEYS = (
     "Level",
@@ -46,6 +61,19 @@ LOGGING_KEYS = (
 )
 _BOOL_KEYS = ("Diagnose", "Console", "Capture_Stderr")
 VALIDATION_KEYS = ("Enabled",)
+# the five actions of Focus and Keyboard, written in ``Shortcuts { }`` with the keys of the user
+FIXED_SHORTCUTS = (
+    "Enter_Shortcut_Mode",
+    "Exit_Shortcut_Mode",
+    "Set_Shortcut_Mode",
+    "Next_Focus",
+    "Previous_Focus",
+)
+# ``Toggle_<Name>``, ``Show_<Name>``, ``Hide_<Name>``: the verb is the text before the first
+# underscore, the rest is the Name of a surface
+SHORTCUT_VERBS = ("Toggle", "Show", "Hide")
+_VERB_FORM = re.compile(r"^(Toggle|Show|Hide)_([A-Za-z][A-Za-z0-9_]*)$")
+_ENTRY_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,6 +92,18 @@ class AppearanceSettings:
     theme: str | None = None  # a theme's metadata Name; None: the shell's default theme
     stylesheets: tuple[str, ...] = ()  # stylesheets' metadata Names, lowest priority first
     follow_desktop: bool = True  # read the Settings portal (Portals > Configuration)
+
+
+@dataclass(frozen=True, slots=True)
+class KWinSettings:
+    """What the shell does with KWin (KWin Integration > Configuration)."""
+
+    # RUNTIME loads the script into KWin at start and unloads it at stop; PERSISTENT leaves it to
+    # the install of ``tesserae-shell kwin script install`` (KWin runs it from login); OFF loads
+    # nothing and the shell hides nothing on a fullscreen window. A restart applies it.
+    script: str = "RUNTIME"
+    # hide the shell's surfaces on an output with an active fullscreen window
+    hide_on_fullscreen: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,6 +126,33 @@ class DebugSettings:
     # anti-aliased edges in sRGB (a light line on a dark ground looks thinner on a curve). A
     # Frame the shader cannot draw falls back to paths with one warning. A restart applies it.
     frame_blend: str = "LINEAR"
+    # the keyboard word the surface that has the focus in shortcut mode is given for the length of
+    # the mode (Focus and Keyboard > How mode keys are delivered): EXCLUSIVE, the default, is the
+    # one way a layer surface takes the keyboard without a click; ON_DEMAND is for a compositor
+    # that hands focus over after a global key (KWin, to be checked by hand). A restart applies it.
+    mode_keyboard: str = "EXCLUSIVE"
+    # a user module's Python (a module file that does not ship with the shell) runs in a process of
+    # its own, so a module that hangs or crashes does not freeze the surfaces (Module Process
+    # Test, posture C). True keeps every module in the shell's own process (posture A), for a
+    # module that needs ``Event.stop()`` or for finding out whether the process is the cause of a
+    # problem. A restart applies it.
+    user_modules_in_process: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class ShortcutEntry:
+    """One entry of ``Shortcuts { }`` (Global Shortcuts > Action Names and Forms). ``kind`` is
+    ``fixed`` (one of ``FIXED_SHORTCUTS``), ``toggle``, ``show`` or ``hide`` (``target`` is the Name
+    of a surface) or ``handler`` (a block: ``block`` holds it, ``target`` is empty). ``line`` and
+    ``column`` are where the entry's name is written, for the warnings that name it."""
+
+    name: str
+    kind: str
+    target: str
+    chord: Chord
+    line: int
+    column: int
+    block: Block | None = field(default=None, compare=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,6 +172,11 @@ class Settings:
     # export the shell's own D-Bus interface (IPC and CLI > Configuration): false runs the shell
     # with no bus name and no control commands; a restart applies it
     control: bool = True
+    # register the shell's shortcuts with the desktop's shortcut service (Global Shortcuts >
+    # Configuration): false makes no call to it at all; hot reload applies it
+    global_shortcuts: bool = True
+    shortcuts: tuple[ShortcutEntry, ...] = ()  # the ``Shortcuts { }`` block, in file order
+    kwin: KWinSettings = field(default_factory=KWinSettings)
 
 
 class _Reader:
@@ -281,6 +353,96 @@ def _directories(reader: _Reader, block: Block, config: Path) -> dict[str, tuple
     return result
 
 
+def _chord(reader: _Reader, origin: Origin | None, text: str | None) -> Chord | None:
+    if text is None:
+        reader.error(origin, "bad-value", 'keys are a string such as "Ctrl+Space"', "")
+        return None
+    try:
+        return parse_chord(text)
+    except ChordError as exc:
+        reader.error(origin, "bad-value", exc.message, exc.hint)
+        return None
+
+
+def _shortcuts(reader: _Reader, block: Block) -> tuple[ShortcutEntry, ...]:
+    """``Shortcuts { Toggle_Launcher: "Meta+Space", Volume_Up { Keys: "...", Action: ... } }``
+    (Global Shortcuts > Action Names and Forms). The keys are read here (a string that is no key
+    string is an error at its place); whether a surface named in a ``Toggle_<Name>`` exists, and the
+    handler of a block entry, are judged when the shell files are known (``tess_shell.shortcuts``).
+    """
+    entries: list[ShortcutEntry] = []
+    seen: dict[str, tuple[int, int]] = {}
+
+    def once(name: str, origin: Origin | None) -> bool:
+        line, column = position(origin)
+        if name in seen:
+            first = seen[name]
+            reader.error(
+                origin,
+                "shortcut-duplicate",
+                f"the shortcut {name} is written twice, first at {first[0]}:{first[1]}",
+                "an action has one entry",
+            )
+            return False
+        seen[name] = (line, column)
+        return True
+
+    for prop in properties(block):
+        verb = _VERB_FORM.match(prop.key)
+        if prop.key not in FIXED_SHORTCUTS and verb is None:
+            close = nearest(prop.key, FIXED_SHORTCUTS)
+            hint = (
+                f"did you mean {', '.join(close)}?"
+                if close
+                else f"the actions: {', '.join(FIXED_SHORTCUTS)}, Toggle_<Name>, Show_<Name>, "
+                "Hide_<Name>; or a block with Keys and Action"
+            )
+            reader.error(prop.key_origin, "unknown-key", f"unknown shortcut {prop.key}", hint)
+            continue
+        chord = _chord(reader, prop.value_origin, value_text(prop.value))
+        if chord is None or not once(prop.key, prop.key_origin):
+            continue
+        line, column = position(prop.key_origin)
+        if verb is None:
+            entries.append(ShortcutEntry(prop.key, "fixed", prop.key, chord, line, column))
+        else:
+            entries.append(ShortcutEntry(prop.key, verb[1].lower(), verb[2], chord, line, column))
+    for child in child_blocks(block):
+        name = child.type
+        if name in FIXED_SHORTCUTS or _VERB_FORM.match(name):
+            reader.error(
+                child.origin,
+                "bad-name",
+                f"{name} is written as a block, which is a handler of your own: its name may "
+                "not be one of the fixed actions or start with Toggle_, Show_ or Hide_",
+                f'write {name}: "keys" for the shell\'s own action, or rename the handler',
+            )
+            continue
+        keys = find_property(child, "Keys")
+        if keys is None:
+            reader.error(
+                child.origin,
+                "missing-key",
+                f"the shortcut {name} needs Keys",
+                f'write {name} {{ Keys: "Ctrl+Alt+T", Action: ... }}',
+            )
+            continue
+        chord = _chord(reader, keys.value_origin, value_text(keys.value))
+        if chord is None or not once(name, child.origin):
+            continue
+        line, column = position(child.origin)
+        entries.append(ShortcutEntry(name, "handler", "", chord, line, column, child))
+    for entry in block.entries:
+        if isinstance(entry, tess_dl.If | tess_dl.For):
+            reader.error(
+                entry.origin,
+                "unsupported-entry",
+                "Shortcuts does not take 'If' or 'For'",
+                "write plain entries",
+            )
+    return tuple(sorted(entries, key=lambda e: (e.line, e.column)))
+
+
 def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     """Read ``<config>/settings.tdl``. A missing file means defaults.
 
@@ -310,6 +472,9 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
                 )
                 for e in result.errors
             ]
+        stale = language_finding(result.document, SETTINGS_FILE)
+        if stale is not None:
+            return None, [stale]
         root = result.document.root
         if root.type != "Settings":
             reader.error(
@@ -330,6 +495,9 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     appearance = AppearanceSettings()
     debug = DebugSettings()
     control = True
+    global_shortcuts = True
+    shortcuts: tuple[ShortcutEntry, ...] = ()
+    kwin = KWinSettings()
     main_origin: Origin | None = None
     if root is not None:
         reader.unknown_keys(root, ROOT_KEYS, "Settings")
@@ -376,23 +544,46 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             logging = _logging(reader, blk)
         if (blk := reader.block(root, "Appearance")) is not None:
             appearance = _appearance(reader, blk)
+        if (blk := reader.block(root, "KWin")) is not None:
+            reader.unknown_keys(blk, KWIN_KEYS, "KWin")
+            script_prop = find_property(blk, "Script")
+            hide_prop = find_property(blk, "Hide_On_Fullscreen")
+            script_word = None if script_prop is None else reader.enum(script_prop, KWIN_SCRIPT)
+            hide_flag = None if hide_prop is None else reader.boolean(hide_prop)
+            kwin = KWinSettings(
+                script=script_word or kwin.script,
+                hide_on_fullscreen=kwin.hide_on_fullscreen if hide_flag is None else hide_flag,
+            )
         if (blk := reader.block(root, "Debug")) is not None:
             reader.unknown_keys(blk, DEBUG_KEYS, "Debug")
             hide, join = find_property(blk, "Panel_Hide"), find_property(blk, "Frame_Join")
             blend = find_property(blk, "Frame_Blend")
+            mode_kb = find_property(blk, "Mode_Keyboard")
+            in_process = find_property(blk, "User_Modules_In_Process")
             hide_word = None if hide is None else reader.enum(hide, PANEL_HIDE)
             join_word = None if join is None else reader.enum(join, FRAME_JOIN)
             blend_word = None if blend is None else reader.enum(blend, FRAME_BLEND)
+            mode_word = None if mode_kb is None else reader.enum(mode_kb, MODE_KEYBOARD)
+            in_process_flag = None if in_process is None else reader.boolean(in_process)
             debug = DebugSettings(
                 panel_hide=hide_word or debug.panel_hide,
                 frame_join=join_word or debug.frame_join,
                 frame_blend=blend_word or debug.frame_blend,
+                mode_keyboard=mode_word or debug.mode_keyboard,
+                user_modules_in_process=debug.user_modules_in_process
+                if in_process_flag is None
+                else in_process_flag,
             )
         if (blk := reader.block(root, "Validation")) is not None:
             reader.unknown_keys(blk, VALIDATION_KEYS, "Validation")
             en = find_property(blk, "Enabled")
             if en is not None and (b := reader.boolean(en)) is not None:
                 validation = b
+        gs = find_property(root, "Global_Shortcuts")
+        if gs is not None and (flag := reader.boolean(gs)) is not None:
+            global_shortcuts = flag
+        if (blk := reader.block(root, "Shortcuts")) is not None:
+            shortcuts = _shortcuts(reader, blk)
 
     search: dict[str, tuple[Path, ...]] = {}
     for folder in FOLDERS:
@@ -437,6 +628,9 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             appearance=appearance,
             debug=debug,
             control=control,
+            global_shortcuts=global_shortcuts,
+            shortcuts=shortcuts,
+            kwin=kwin,
         ),
         [],
     )

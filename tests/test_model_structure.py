@@ -14,21 +14,21 @@ from tess_shell.model.live import LiveTree
 from tess_shell.model.store import ValueStore
 from tess_shell.schema.shell import read_module, read_shell
 
-HEAD = "---\nTDL: 0.1\nName: {name}\n---\n"
+HEAD = "---\nTDL: 0.2\nName: {name}\n---\n"
 
 TODO = """
 Module {
     FlexBox {
         Name: Row
         Children {
-            Text { Name: Clock, Text: {{ time }} }
-            If {{ flag }} {
+            Text { Name: Clock, Text: <| time |> }
+            If <| flag |> {
                 Text { Name: Yes, Text: yes }
             } Else {
                 Text { Name: No, Text: no }
             }
-            For w In {{ items }} Key {{ w.id }} {
-                Text { Text: {{ w.title }}, Foreground: "#ffffff" }
+            For w In <| items |> Key <| w.id |> {
+                Text { Text: <| w.title |>, Foreground: "#ffffff" }
             }
         }
     }
@@ -221,7 +221,7 @@ def test_a_failing_header_shows_no_entries_and_keeps_the_rest() -> None:
 
 
 def test_an_if_outside_a_module_is_an_error_at_expand() -> None:
-    bad = SHELL.replace("Children { Todo { } }", "Children { If {{ true }} { Spacer { } } }")
+    bad = SHELL.replace("Children { Todo { } }", "Children { If <| true |> { Spacer { } } }")
     sdoc = tess_dl.parse(HEAD.format(name="S") + bad, path="S.tdl")
     assert sdoc.document is not None
     shell, _ = read_shell(sdoc.document, "S.tdl", lambda _: "", {})

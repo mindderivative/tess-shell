@@ -27,12 +27,12 @@ ROOT = Path("/tmp/tess-kwin-m4c-widgets")
 CFG = ROOT / "gallery"
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
+    "---\nTDL: 0.2\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: true }\n}\n"
 )
 
 PROBE_TDL = """---
-TDL: 0.1
+TDL: 0.2
 Name: Probe
 ---
 
@@ -45,8 +45,8 @@ Module {
         Width: 330
         Children {
             Text { Text: "last event", Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
-            Text { Name: Last, Text: {{ last }}, Width: 330, Height: AUTO, Font_Size: 13 }
-            Text { Name: Count, Text: {{ count }}, Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
+            Text { Name: Last, Text: <| last |>, Width: 330, Height: AUTO, Font_Size: 13 }
+            Text { Name: Count, Text: <| count |>, Width: AUTO, Height: AUTO, Font_Size: 12, Foreground: $color.on_surface_muted }
         }
     }
 }
@@ -187,7 +187,7 @@ FILE_MENU = f"""Popup {{
         Menu {{
             Label: "File"
             Children {{
-                MenuItem {{ Text: {{{{ "Menu for " + caller.data.Title }}}}, Enabled: false }}
+                MenuItem {{ Text: <| "Menu for " + caller.data.Title |>, Enabled: false }}
                 {action_item("New", Icon='"mdi:home"', Shortcut_Text='"Ctrl+N"')}
                 {action_item("Open", Shortcut_Text='"Ctrl+O"')}
                 MenuItem {{ Separator: true }}
@@ -303,6 +303,18 @@ each widget raised.
     again, then press anywhere outside: every menu closes. Press "File", then "Edit": the first
     closes and the second opens (one at a time).
 10  Switch Plasma light to dark: everything follows. The log has no ERROR.
+11  Keys (M6b). The Panels say no Keyboard, so first write `Keyboard: ON_DEMAND,` in the keys of
+    both Panels in gallery/Shells/Main_Shell.tdl (the shell reloads), then click a widget. Tab
+    walks Save, Open, Next, Account, the toggles and checkboxes, the sliders and
+    the lists, never the faint ones; a blue ring shows keyboard focus. Button: Enter and Space press
+    it ("Save clicked"). Toggle and Checkbox: Space flips it, Enter does nothing. Slider: Left and
+    Down take a step off, Right and Up put one on, Page Up and Page Down ten, Home and End go to
+    the ends; each key gives a "changed" line and then a "released" line, none at an end. List:
+    Up, Down, Home, End move the chosen entry and scroll it into view; typing "e" jumps on.
+    Menu: focus "File", press Enter: the menu opens with a ring; Up and Down move the lit row
+    (over the faint ones), Enter runs it; Right on "Share" opens its submenu, Left closes it,
+    Escape closes the innermost level; Escape on the first menu closes it and the ring is back on
+    "File".
 """
 
 

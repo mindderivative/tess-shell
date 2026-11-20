@@ -2,7 +2,8 @@
 
 All problems are collected first, each at the position of its key; if there are any, nothing is
 built, so a surface never half-builds. tre's own ``ValueError`` (which names a path such as
-``spec.children[2]``) is translated back to a position through an index made while planning.
+``spec.children[2]``) is translated back to a position through an index made by planning the
+failed tree again (a build that works never pays for it).
 """
 
 from __future__ import annotations
@@ -14,8 +15,11 @@ from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
+from loguru import logger
+
 from tess_shell.binder import controls
 from tess_shell.binder.convert import CONVERTERS
+from tess_shell.binder.focus import default_focusable, tab_order
 from tess_shell.binder.marquee import MarqueeRunner
 from tess_shell.binder.model import (
     DECORATIVE,
@@ -26,12 +30,14 @@ from tess_shell.binder.model import (
     MARQUEE,
     MARQUEE_TEXT,
     NO_POINTER_BLOCKS,
+    TAB_INDEX_MAX,
     BindError,
     BindFailed,
     ForNode,
     Handler,
     IfNode,
     Node,
+    Number,
     Origin,
     SlotValue,
     TokenRef,
@@ -42,7 +48,7 @@ from tess_shell.binder.motion import Motion, motion_of
 from tess_shell.binder.motion import check as check_motion
 from tess_shell.binder.motion import start as start_motion
 from tess_shell.binder.shapes import POSTS
-from tess_shell.binder.tables import BLOCKS, BlockRow, KeyRow
+from tess_shell.binder.tables import ALLOWED, BLOCKS, BlockRow, KeyRow
 
 _POINTER_EVENTS = frozenset({"On_Click", "On_Secondary_Click", "On_Middle_Click", "On_Scroll"})
 
@@ -66,7 +72,6 @@ class _Index:
 
     nodes: dict[str, Origin] = field(default_factory=dict)
     props: dict[tuple[str, str], Origin] = field(default_factory=dict)
-    named: dict[str, tuple[str, dict[str, Any]]] = field(default_factory=dict)
 
 
 # tre's pointer events that move a node between its style states, and what each does to the wire
@@ -159,6 +164,20 @@ class Wire:
     # wire that shows the box's hover and press (the text input's style states follow the box)
     focus_target: TreNode | None = None
     mirror: Wire | None = None
+    # keyboard focus (``:focused``): whether the node has it and the keyboard moved it there (a
+    # click gives focus and no ring); ``override`` makes the next focus event show the ring or not
+    # whatever tre says (the focus given back to a block: tre calls a programmatic focus a keyboard
+    # one or a pointer one by the last input); a text input tells its box too
+    focused: bool = False
+    override: bool | None = None
+    label: str = ""  # the block's id, for the log line of a focus change
+    focus_to: Wire | None = None
+    # the keyboard's share of the states: ``active`` is a menu row the arrow keys are on (it shows
+    # what the pointer's ``hovered`` shows), ``held`` is the Enter or Space held down on a Button
+    # (it shows ``pressed``); ``announced`` is whether tre's accessibility ``pressed`` says so
+    active: bool = False
+    held: str | None = None
+    announced: bool = False
     # a Marquee's box: whether its tooltip may open now (it shows the whole text that is cut)
     tooltip_gate: Callable[[], bool] | None = None
     # ``Tooltip_When_Disabled: true`` (any block), or a Marquee's box (always): the pointer hooks
@@ -283,7 +302,8 @@ class Wire:
         self.in_checked, self.in_selected = in_checked, in_selected
         newly = self.blocked and not was
         if newly:
-            self.hovered = self.pressed = False
+            self.hovered = self.pressed = self.active = False
+            self.held = None
         self.refresh()
         if newly:
             if was_pressed:
@@ -297,6 +317,41 @@ class Wire:
         """The press became a move or resize of the window: no up or click follows."""
         self.up()
 
+    def set_active(self, on: bool) -> None:
+        """A menu row the arrow keys are on (or have left): it shows the ``hovered`` look."""
+        if on != self.active:
+            self.active = on and not self.blocked
+            self.refresh()
+
+    def listen_keys(self) -> None:
+        """A block with the role BUTTON, once: Enter or Space held down on it shows ``pressed``
+        (the style state and tre's accessibility ``pressed``) until the key goes up or the focus
+        goes. tre clicks the focused block itself for both keys, after the ``key_down``, so the
+        handler runs while it is held. The listener is the block's one ``key_down``: tre then
+        gives the block every key, and the arrow keys no longer scroll a scroll view around it."""
+        tre = self.tre
+        if tre is None or "keys" in self.wired:
+            return
+        self.wired.add("keys")
+
+        def down(event: Any) -> None:
+            key = getattr(event, "key", None)
+            if key in ("enter", "space") and event.target == tre and not self.blocked:
+                self.press_key(key)
+
+        def up(event: Any) -> None:
+            if getattr(event, "key", None) == self.held:
+                self.press_key(None)
+
+        tre.on("key_down", down)
+        tre.on("key_up", up)
+
+    def press_key(self, key: str | None) -> None:
+        """Enter or Space went down (``key``) on the block, or the held one went up (``None``)."""
+        if key != self.held:
+            self.held = key
+            self.refresh()
+
     def focus_field(self) -> None:
         """A press on a TextField's box (its padding, or its border) gives the text input the
         focus, as a press on the text itself does."""
@@ -309,20 +364,63 @@ class Wire:
         if self.mirror is not None:
             getattr(self.mirror, event)()
 
+    def listen_focus(self) -> None:
+        """Listen for the node's keyboard focus, once: tre's ``focus`` says by ``focus_visible``
+        whether the keyboard moved focus here (a ring) or a pointer press did (none); ``unfocus``
+        ends it. ``focus`` and ``unfocus`` bubble, so one that began in a node below is not this
+        node's."""
+        tre = self.tre
+        if tre is None or "focus" in self.wired:
+            return
+        self.wired.add("focus")
+
+        def gained(event: Any) -> None:
+            if event.target != tre:
+                return
+            visible = bool(getattr(event, "focus_visible", False))
+            if self.override is not None:
+                visible = self.override
+            logger.debug(
+                f"focus: {self.label} {tre.get('label') or ''!r} "
+                f"({'ring' if visible else 'no ring'})"
+            )
+            self.set_focused(visible)
+
+        def lost(event: Any) -> None:
+            if event.target == tre:
+                logger.debug(f"focus: {self.label} {tre.get('label') or ''!r} lost")
+                self.set_focused(False)
+                if self.held is not None:  # the key went up where nobody hears it
+                    self.press_key(None)
+
+        tre.on("focus", gained)
+        tre.on("unfocus", lost)
+
+    def set_focused(self, visible: bool) -> None:
+        """The node has keyboard focus (``visible``: with a ring) or has lost it. A text input
+        passes it on to its box, which draws the ring."""
+        if visible != self.focused:
+            self.focused = visible
+            self.refresh()
+        if self.focus_to is not None:
+            self.focus_to.set_focused(visible)
+
     def wanted(self) -> dict[str, Any]:
-        """The properties the current state forces: hovered's, with pressed's on top and, when
-        the block is disabled, disabled's over both. A part of a module takes ``disabled`` when
-        the module is disabled, not only when the part itself is (Style Schema > Stylesheet
-        Selectors, ``Slider::handle:disabled``)."""
+        """The properties the current state forces: hovered's, with pressed's on top, then the
+        focus ring's and, when the block is disabled, disabled's over all of them. A part of a
+        module takes ``disabled`` when the module is disabled, not only when the part itself is
+        (Style Schema > Stylesheet Selectors, ``Slider::handle:disabled``)."""
         out: dict[str, Any] = {}
         if self.checked or (self.part and self.in_checked):
             out.update(self.states.get("checked", {}))
         if self.selected or (self.part and self.in_selected):
             out.update(self.states.get("selected", {}))
-        if self.hovered or self.pressed:
+        if self.hovered or self.pressed or self.active or self.held is not None:
             out.update(self.states.get("hovered", {}))
-        if self.pressed:
+        if self.pressed or self.held is not None:
             out.update(self.states.get("pressed", {}))
+        if self.focused and not self.blocked:  # a disabled block shows no ring
+            out.update(self.states.get("focused", {}))
         if self.disabled or (self.part and self.inherited):
             out.update(self.states.get("disabled", {}))
         return out
@@ -332,6 +430,11 @@ class Wire:
         tre, window = self.tre, self.window
         if tre is None or window is None:
             return
+        press = self.pressed or self.held is not None
+        if press != self.announced:  # a Button says it is pressed while it is held
+            self.announced = press
+            if tre.get("role") == "button":
+                tre.set(pressed=True if press else None)
         wanted = self.wanted()
         changes: dict[str, Any] = {n: self.saved.pop(n) for n in self.shown if n not in wanted}
         for name, value in wanted.items():
@@ -369,6 +472,17 @@ class Wire:
         self.refresh()
 
 
+def _shown(node: TreNode) -> bool:
+    """Whether neither ``node`` nor a node above it is hidden (``visible`` false): tre's Tab skips
+    a hidden block and everything under it."""
+    cur: TreNode | None = node
+    while cur is not None:
+        if not cur.get("visible"):
+            return False
+        cur = cur.parent()
+    return True
+
+
 @dataclass(slots=True)
 class Entry:
     """One built node: its typed source, the tre node, the tre props it was given, and its
@@ -377,10 +491,48 @@ class Entry:
     typed: Node
     tre: TreNode | None
     props: dict[str, Any]
-    children: list[Entry] = field(default_factory=list)
+    children: Sequence[Entry] = ()  # a leaf shares the one empty tuple
     wire: Wire | None = None
     states: dict[str, dict[str, Any]] = field(default_factory=dict)  # tre props per style state
     motion: Motion | None = None  # what eases when a value of the node changes
+    rank: int = 0  # the tre ``tab_index`` the view gave the node (0: its place in tree order)
+
+
+# the kinds whose nodes always listen for something, and the keys of a block that make it a control
+# or give it a ``Tooltip_When_Disabled``
+_WIRED_KINDS = frozenset({FIELD, FIELD_INPUT, MARQUEE, MARQUEE_TEXT})
+_WIRING_KEYS = frozenset(
+    {"Toggles", "Selection_Mode", "Slides", "Menu_Item", "Reveals", "Tooltip_When_Disabled"}
+)
+
+
+def _inert(entry: Entry) -> bool:
+    """Whether a built node needs no wire: it listens for nothing, is nobody's control, has no
+    name for a tooltip or a slot to find it by, is not disabled, focusable or checked, and no
+    state style or transition touches it. Such a node never changes what the user sees or what
+    a handler hears, so it gets no wire (a large tree is mostly such nodes); a reload that gives
+    it one of those things gives it a wire then."""
+    typed = entry.typed
+    if (
+        typed.name is not None
+        or typed.handlers
+        or typed.tooltip is not None
+        or typed.part is not None
+        or entry.states
+        or entry.motion is not None
+        or typed.kind in _WIRED_KINDS
+    ):
+        return False
+    props = entry.props
+    if (
+        props.get("disabled")
+        or props.get("focusable")
+        or props.get("checked")
+        or props.get("selected")
+        or props.get("role") == "button"
+    ):
+        return False
+    return _WIRING_KEYS.isdisjoint(typed.props)
 
 
 def field_input(box: Entry) -> Entry | None:
@@ -430,30 +582,36 @@ class View:
         self.dynamic.clear()  # a rebuild resolved every slot: the typed props are current
         self.roots = [e.tre for e in self.entries if e.tre is not None]
 
-        def walk(entries: list[Entry]) -> None:
+        flat: list[Entry] = []  # the entries that have a tre node, in document order (``_flat``)
+
+        def walk(entries: Sequence[Entry]) -> None:
             for e in entries:
                 self._wire(e)
-                if e.tre is not None and e.props.get("visible") is False:
-                    # tre 0.6.7 lays out a node that is built hidden when it also has an explicit
-                    # ``display`` (every FlexBox does): it keeps its space until ``visible`` is
-                    # set again. Setting it once more takes it out of the layout, so a hidden
-                    # module root takes no Bar Spacing.
-                    e.tre.set(visible=False)
-                name = e.typed.name
-                if name is not None and e.tre is not None:
-                    self.nodes[name] = e.tre
-                    self.kinds[name] = e.typed.kind
-                    self.applied[name] = e.props  # the same dict: an update changes both
-                    if e.wire is not None:
-                        self.wires[name] = e.wire
-                    if e.motion is not None:
-                        self.motions[name] = e.motion
+                tre = e.tre
+                if tre is not None:
+                    flat.append(e)
+                    if e.props.get("visible") is False:
+                        # tre 0.6.7 lays out a node that is built hidden when it also has an
+                        # explicit ``display`` (every FlexBox does): it keeps its space until
+                        # ``visible`` is set again. Setting it once more takes it out of the
+                        # layout, so a hidden module root takes no Bar Spacing.
+                        tre.set(visible=False)
+                    name = e.typed.name
+                    if name is not None:
+                        self.nodes[name] = tre
+                        self.kinds[name] = e.typed.kind
+                        self.applied[name] = e.props  # the same dict: an update changes both
+                        if e.wire is not None:
+                            self.wires[name] = e.wire
+                        if e.motion is not None:
+                            self.motions[name] = e.motion
                 walk(e.children)
 
         walk(self.entries)
-        self._controls()
+        self._controls(flat)
         self._sync(self.entries)
-        self._marquees()
+        self._marquees(flat)
+        self._tab_order(flat)
 
     def set_expanded(self, node_id: str, open_: bool) -> None:
         """The accessibility state ``expanded`` of a menu row whose submenu opened or closed."""
@@ -465,60 +623,201 @@ class View:
         """A control changed a flag state of a block: its parts and its entries show it."""
         self._sync(self.entries)
 
-    def _controls(self) -> None:
+    # -- keyboard focus -----------------------------------------------------------------------
+
+    def _flat(self) -> list[Entry]:
+        """Every built entry that has a tre node, in document order."""
+        out: list[Entry] = []
+
+        def walk(entries: Sequence[Entry]) -> None:
+            for e in entries:
+                if e.tre is not None:
+                    out.append(e)
+                walk(e.children)
+
+        walk(self.entries)
+        return out
+
+    def _tab_index_of(self, entry: Entry) -> int | None:
+        """The ``Tab_Index`` of a block: the one a slot last set, else the one it was built with."""
+        typed = entry.typed
+        if typed.name is None and "Tab_Index" not in typed.props:
+            return None
+        value = typed.props.get("Tab_Index")
+        if typed.name is not None:
+            value = self.dynamic.get(typed.name, {}).get("Tab_Index", value)
+        if isinstance(value, Number) and isinstance(value.value, int):
+            return value.value
+        return None
+
+    def _tab_order(self, flat: list[Entry] | None = None) -> None:
+        """Give tre the Tab order the blocks' ``Tab_Index`` keys ask for (Focus and Keyboard > Tab
+        Order). tre walks its focusable nodes with a positive ``tab_index`` first, ascending, and
+        then the rest in tree order, so the blocks that have a ``Tab_Index`` get the ranks 1, 2,
+        ... in the shell's order (ascending, equal ones in document order) and the others keep 0.
+        This is derived data, held on the entries and made again at every build and rebuild; tre
+        does the walking, nothing runs per frame."""
+        if flat is None:
+            flat = self._flat()
+        indexed = [(e, i) for e in flat if (i := self._tab_index_of(e)) is not None]
+        ranks = {
+            id(indexed[pos][0]): rank
+            for rank, pos in enumerate(tab_order([i for _, i in indexed]), 1)
+        }
+        changes: list[tuple[TreNode, dict[str, Any]]] = []
+        for e in flat:
+            want = ranks.get(id(e), 0)
+            if want != e.rank and e.tre is not None:
+                e.rank = want
+                changes.append((e.tre, {"tab_index": want}))
+        if changes:
+            self.window.apply(changes)
+
+    def tab_stops(self) -> list[TreNode]:
+        """The focusable nodes in the order Tab visits them (the first is where Tab starts): the
+        ones tre's Tab reaches, so a node under a hidden block (``Visible: false``, the content of
+        a closed Expander) is not one."""
+        stops = [(e.rank or TAB_INDEX_MAX + 1, n, e) for n, e in enumerate(self._flat())]
+        stops.sort(key=lambda t: (t[0], t[1]))
+        return [
+            e.tre
+            for _, _, e in stops
+            if e.tre is not None and e.tre.get("focusable") and _shown(e.tre)
+        ]
+
+    def focus_holder(self, node: TreNode) -> TreNode | None:
+        """The node that has keyboard focus, if it is ``node`` or one of the nodes above it (a
+        click on a block's icon focuses the block that holds it)."""
+        cur: TreNode | None = node
+        while cur is not None:
+            if cur.get("focused"):
+                return cur
+            cur = cur.parent()
+        return None
+
+    def ring_shown(self, node: TreNode) -> bool:
+        """Whether ``node`` has focus with its ring (the keyboard moved it there)."""
+        for e in self._flat():
+            if e.tre == node:
+                return e.wire is not None and e.wire.focused
+        return False
+
+    def restore_focus(self, node: TreNode, ring: bool) -> bool:
+        """Give ``node`` the keyboard focus back, with its ring or without: the block a Popup was
+        opened from, when the Popup closes (Accessibility, rule 12). ``False`` when the node is no
+        longer one of this view's, or the view is gone."""
+        if self.disposed:
+            return False
+        for e in self._flat():
+            if e.tre == node:
+                wire = e.wire
+                if wire is not None:
+                    wire.override = ring
+                try:
+                    node.focus()
+                finally:
+                    if wire is not None:
+                        wire.override = None
+                return True
+        return False
+
+    def focus_first(self) -> bool:
+        """Give the first Tab stop the keyboard focus, ring shown (a Popup opened from the
+        keyboard takes focus). ``False`` when the view has no focusable block."""
+        stops = self.tab_stops()
+        if not stops or self.disposed:
+            return False
+        return self.restore_focus(stops[0], ring=True)
+
+    # -- a menu from the keyboard -------------------------------------------------------------
+
+    def menu_rows(self) -> list[Entry]:
+        """The rows of the menu (the blocks with ``Menu_Item``) the keys can reach, in document
+        order: a disabled row, and a separator (it is no row), is passed over."""
+        return [
+            e
+            for e in self._flat()
+            if e.tre is not None
+            and isinstance(self.controls.get(e.tre), controls.Item)
+            and (e.wire is None or not e.wire.blocked)
+        ]
+
+    def mark_row(self, row: Entry | None) -> None:
+        """The one row the arrow keys are on (``None``: none), lit as a hovered row is."""
+        for e in self._flat():
+            if e.wire is not None and e is not row and e.wire.active:
+                e.wire.set_active(False)
+        if row is not None and row.wire is not None:
+            row.wire.set_active(True)
+
+    def marked_row(self) -> Entry | None:
+        """The row the arrow keys are on, else the one the pointer rests on."""
+        rows = self.menu_rows()
+        return next((e for e in rows if e.wire and e.wire.active), None) or next(
+            (e for e in rows if e.wire and e.wire.hovered), None
+        )
+
+    def activate(self, entry: Entry) -> None:
+        """What a click on the block does, with no pointer: a menu row chosen with Enter."""
+        node = entry.tre
+        if node is None or entry.wire is None:
+            return
+        event = SimpleNamespace(
+            target=node,
+            current=node,
+            button=None,
+            x=None,
+            y=None,
+            window_x=None,
+            window_y=None,
+        )
+        self._run_click(entry.wire, node, event)
+
+    def _controls(self, flat: list[Entry] | None = None) -> None:
         """Keep one control per block that has one (``Toggles``, ``Slides``, ``Selection_Mode``):
         a new block gets one, a kept block is told what it is now, a block that is gone loses
         its control. The first of the block's entries that carries a control key wins."""
         live: dict[TreNode, controls.Control] = {}
+        entries = self._flat() if flat is None else flat
 
-        def walk(entries: list[Entry]) -> None:
-            for e in entries:
-                if e.tre is not None and controls.kind_of(e):
-                    ctl = self.controls.get(e.tre)
-                    if ctl is None:
-                        ctl = controls.make(self, e)
-                    if ctl is not None:
-                        live[e.tre] = ctl
-                walk(e.children)
-
-        walk(self.entries)
+        for e in entries:
+            if e.tre is not None and controls.kind_of(e):
+                ctl = self.controls.get(e.tre)
+                if ctl is None:
+                    ctl = controls.make(self, e)
+                if ctl is not None:
+                    live[e.tre] = ctl
         for tre, ctl in self.controls.items():
             if tre not in live:
                 ctl.stop()
         self.controls = live
 
-        def configure(entries: list[Entry]) -> None:
+        if live:
             for e in entries:
                 ctl = live.get(e.tre) if e.tre is not None else None
                 if ctl is not None:
                     ctl.configure(e)
-                configure(e.children)
+                    ctl.listen_keys()
 
-        configure(self.entries)
-
-    def _marquees(self) -> None:
+    def _marquees(self, flat: list[Entry] | None = None) -> None:
         """Keep one scroll runner per Marquee, configured from its block, and let each measure and
         begin, change or end its scroll if what decides it changed."""
         live: dict[TreNode, MarqueeRunner] = {}
         fresh: list[MarqueeRunner] = []
 
-        def walk(entries: list[Entry]) -> None:
-            for e in entries:
-                if e.typed.kind == MARQUEE and e.tre is not None and e.children:
-                    text = e.children[0].tre
-                    if text is not None:
-                        runner = self.runners.get(e.tre)
-                        if runner is None:
-                            runner = MarqueeRunner(self.window, e.tre, text)
-                            fresh.append(runner)
-                        runner.text = text
-                        live[e.tre] = runner
-                        runner.configure(e.typed, e.wire.blocked if e.wire else False)
-                        if e.wire is not None:
-                            e.wire.tooltip_gate = runner.tooltip_gate
-                walk(e.children)
-
-        walk(self.entries)
+        for e in self._flat() if flat is None else flat:
+            if e.typed.kind == MARQUEE and e.tre is not None and e.children:
+                text = e.children[0].tre
+                if text is not None:
+                    runner = self.runners.get(e.tre)
+                    if runner is None:
+                        runner = MarqueeRunner(self.window, e.tre, text)
+                        fresh.append(runner)
+                    runner.text = text
+                    live[e.tre] = runner
+                    runner.configure(e.typed, e.wire.blocked if e.wire else False)
+                    if e.wire is not None:
+                        e.wire.tooltip_gate = runner.tooltip_gate
         for box, runner in self.runners.items():
             if box not in live:
                 runner.stop()
@@ -535,7 +834,14 @@ class View:
         if entry.tre is None:
             return
         if entry.wire is None:
-            entry.wire = Wire(entry.typed.handlers, tre=entry.tre, window=self.window)
+            if _inert(entry):
+                return
+            entry.wire = Wire(
+                entry.typed.handlers,
+                tre=entry.tre,
+                window=self.window,
+                label=entry.typed.name or entry.typed.kind,
+            )
         wire = entry.wire
         wire.states = entry.states
         wire.motion = entry.motion
@@ -544,9 +850,14 @@ class View:
         wire.tip_auto = entry.typed.kind == MARQUEE
         if entry.typed.kind == FIELD_INPUT:
             self._ensure_field_events(entry)  # its states follow its box, which listens
+            wire.listen_focus()  # its box draws the ring (``_wire_field`` links them)
         else:
             if any(state not in FLAG_STATES for state in wire.states):  # no pointer needed
                 wire.listen()
+            if entry.props.get("focusable"):
+                wire.listen_focus()
+            if str(entry.props.get("role")) == "button":
+                wire.listen_keys()
             self._ensure_click(entry)
             if entry.typed.kind == FIELD:
                 self._wire_field(entry)
@@ -562,6 +873,8 @@ class View:
             self._wire(inner)  # the walk reaches the children after their box
         wire.focus_target = inner.tre if inner is not None else None
         wire.mirror = inner.wire if inner is not None else None
+        if inner is not None and inner.wire is not None:
+            inner.wire.focus_to = wire
         if "field" not in wire.wired:
             wire.wired.add("field")
             wire.add_hook("down", wire.focus_field)
@@ -590,6 +903,7 @@ class View:
             "hit_testable": not blocked,
             "disabled": blocked or bool(declared.get("disabled")),
             "read_only": blocked or bool(declared.get("read_only")),
+            "focusable": not blocked and declared.get("focusable", True) is not False,
         }
         self.window.apply([(inner.tre, changes)])
         if blocked and inner.tre.get("focused"):
@@ -600,10 +914,12 @@ class View:
             box.tre.set(focusable=False)
 
     def _ensure_field_events(self, entry: Entry) -> None:
-        """The text input's ``change``, ``submit`` and ``input`` listeners (``On_Changed``,
-        ``On_Submit``, ``On_Text_Commit``), one each, once the node has a handler for it. A
-        disabled field raises nothing, a read-only one raises no commit, and a commit that left
-        the text as it was (``Max_Length`` refused the edit) raises none either."""
+        """The text input's ``change``, ``submit``, ``input`` and ``key_down`` listeners
+        (``On_Changed``, ``On_Submit``, ``On_Text_Commit``, ``On_Key_Down``), one each, once the
+        node has a handler for it (``key_down`` is the node's one: tre gives it every key before
+        the field acts and cannot be vetoed; the handler's ``event.stop()`` keeps the key from the
+        surface above). A disabled field raises nothing, a read-only one raises no commit, and a
+        commit that left the text as it was (``Max_Length`` refused the edit) raises none either."""
         wire, tre = entry.wire, entry.tre
         if tre is None or wire is None:
             return
@@ -613,6 +929,7 @@ class View:
             ("change", "On_Changed"),
             ("submit", "On_Submit"),
             ("input", "On_Text_Commit"),
+            ("key_down", "On_Key_Down"),
         ):
             token = f"field:{event}"
             # a node has one listener for an event, so ``change`` is always listened to: it keeps
@@ -640,7 +957,7 @@ class View:
 
     def _sync(
         self,
-        entries: list[Entry],
+        entries: Sequence[Entry],
         inherited: bool = False,
         flags: Mapping[str, tuple[bool, bool]] | None = None,
     ) -> None:
@@ -650,6 +967,10 @@ class View:
         disabled block gets a ``click`` listener whatever its handlers, to swallow the click."""
         flags = flags or {}
         for e in entries:
+            if e.wire is None and e.tre is not None:  # inert (``_inert``): nothing to tell
+                if e.children:
+                    self._sync(e.children, inherited, flags)
+                continue
             own = bool(e.props.get("disabled"))
             owner = e.typed.owner or ""
             seen = flags.get(owner, (False, False))
@@ -666,6 +987,12 @@ class View:
                 self._ensure_pointer(e, "On_Scroll", "wheel")
                 self._ensure_middle(e)
                 mine = (seen[0] or e.wire.checked, seen[1] or e.wire.selected)
+            if e.tre is not None and e.typed.kind != FIELD_INPUT and e.props.get("focusable"):
+                # tre's ``disabled`` blocks no focus: a disabled block, and every block under one,
+                # leaves the Tab order (a TextField's text input does it in ``_block_field``)
+                free = not (own or inherited)
+                if e.tre.get("focusable") != free:
+                    e.tre.set(focusable=free)
             self._sync(e.children, inherited or own, {**flags, owner: mine} if owner else flags)
 
     def _ensure_click(self, entry: Entry) -> None:
@@ -683,24 +1010,33 @@ class View:
 
         def listener(event: Any, wire: Wire = wire) -> None:
             stop = getattr(event, "stop", None)
-            if wire.blocked:
-                if stop is not None:
-                    stop()
-                return
-            handler = wire.handlers.get("On_Click")
-            ctl = self.controls.get(tre)
-            if handler is None and ctl is None:  # the node was disabled once, and has no handler
-                return
+            taken = True  # a raising handler takes the click too
             try:
-                if ctl is not None:  # the control first: the handler sees the new state
-                    ctl.clicked(event)
-                if handler is not None and self.sink is not None:
-                    self.sink(handler, "On_Click", Raised(event, self.window, layout_rect(tre)))
+                taken = self._run_click(wire, tre, event)
             finally:
-                if stop is not None:
+                if taken and stop is not None:
                     stop()
 
         entry.tre.on("click", listener)
+
+    def _run_click(self, wire: Wire, tre: TreNode, event: Any) -> bool:
+        """What a click on the block does: nothing for a disabled block, else the control first (the
+        handler sees the new state), then ``On_Click``; a control may refuse a click (an Enter on a
+        Toggle). ``False`` when the block has no handler and no control (the click goes on to the
+        blocks above)."""
+        if wire.blocked:
+            return True
+        handler = wire.handlers.get("On_Click")
+        ctl = self.controls.get(tre)
+        if handler is None and ctl is None:  # the node was disabled once, and has no handler
+            return False
+        if ctl is not None:
+            if not ctl.accepts(event):
+                return True
+            ctl.clicked(event)
+        if handler is not None and self.sink is not None:
+            self.sink(handler, "On_Click", Raised(event, self.window, layout_rect(tre)))
+        return True
 
     def _ensure_middle(self, entry: Entry) -> None:
         """``On_Middle_Click``: tre has no middle click event, only ``pointer_down`` and
@@ -854,7 +1190,7 @@ class View:
                 if left:  # tre could not ease these: they jump
                     self.nodes[node_id].set(**left)
             touched.update(i for i, p in by_node.items() if p.keys() & CONTROL_PROPS)
-            if any("disabled" in props for props in by_node.values()):
+            if any("disabled" in props or "focusable" in props for props in by_node.values()):
                 self._sync(self.entries)  # a block above may have been disabled or enabled
                 self._marquees()
             else:
@@ -869,6 +1205,8 @@ class View:
                 ctl.sync()
         if touched:
             self._sync(self.entries)
+        if any(key == "Tab_Index" for _, key, _ in changes):
+            self._tab_order()
         return errors
 
     def _runner_of(self, node_id: str) -> MarqueeRunner | None:
@@ -904,12 +1242,17 @@ def _suggest(word: str, choices: Sequence[str]) -> str:
     return f"allowed: {', '.join(sorted(choices))}"
 
 
+_UNRESOLVED = (SlotValue, TokenRef)  # a value the model should have resolved before binding
+
+
 def _convert(key: str, row: KeyRow, value: Value, errors: list[BindError]) -> dict[str, Any] | None:
-    if isinstance(value, SlotValue):
-        errors.append(BindError(f"{key}: a slot was not evaluated", value.origin))
-        return None
-    if isinstance(value, TokenRef):
-        errors.append(BindError(f"{key}: the token ${value.path} was not resolved", value.origin))
+    if isinstance(value, _UNRESOLVED):
+        if isinstance(value, SlotValue):
+            errors.append(BindError(f"{key}: a slot was not evaluated", value.origin))
+        else:
+            errors.append(
+                BindError(f"{key}: the token ${value.path} was not resolved", value.origin)
+            )
         return None
     try:
         return CONVERTERS[row.convert](value, row.tre, row.choices)
@@ -948,6 +1291,8 @@ def convert_states(node: Node, errors: list[BindError]) -> dict[str, dict[str, A
 def entry_states(node: Node) -> dict[str, dict[str, Any]]:
     """What a built node shows and listens for: its converted state styles. A kind tre sends no
     pointer events (a ``Text``) has no ``hovered`` or ``pressed``; its ``disabled`` still shows."""
+    if not node.states:
+        return {}
     states = convert_states(node, [])
     if node.kind in NO_POINTER_BLOCKS:
         return {s: v for s, v in states.items() if s in FLAG_STATES}
@@ -957,23 +1302,26 @@ def entry_states(node: Node) -> dict[str, dict[str, Any]]:
 def _plan(
     node: Node | UseNode | IfNode | ForNode,
     path: str,
-    extra: dict[str, Any],
+    extra: Mapping[str, Any],
     errors: list[BindError],
-    index: _Index,
+    index: _Index | None,
     seen: dict[str, Origin],
 ) -> dict[str, Any] | None:
-    if isinstance(node, UseNode):
-        hint = "the model expands a module call before binding"
-        errors.append(
-            BindError(f"the module call {node.module} was not expanded", node.origin, hint)
-        )
-        return None
-    if isinstance(node, IfNode | ForNode):
+    """The spec ``Window.build`` takes for ``node``; ``index`` (when given) records where each
+    path and tre property came from, which only the translation of a tre error needs."""
+    if not isinstance(node, Node):
+        if isinstance(node, UseNode):
+            hint = "the model expands a module call before binding"
+            errors.append(
+                BindError(f"the module call {node.module} was not expanded", node.origin, hint)
+            )
+            return None
         word = "If" if isinstance(node, IfNode) else "For"
         hint = "the model resolves it to the blocks that show before binding"
         errors.append(BindError(f"{word} was not resolved", node.origin, hint))
         return None
-    index.nodes[path] = node.origin
+    if index is not None:
+        index.nodes[path] = node.origin
     row: BlockRow | None = BLOCKS.get(node.kind)
     if row is None:
         errors.append(
@@ -982,17 +1330,19 @@ def _plan(
         return None
 
     props: dict[str, Any] = {}
-    for key in node.props.keys() & node.style.keys():
-        errors.append(
-            BindError(
-                f"{key} is written both in the block and in its Style",
-                node.style[key].origin,
-                f"keep one; the other is at {node.props[key].origin}",
+    node_props, node_style = node.props, node.style
+    if node_props and node_style:
+        for key in node_props.keys() & node_style.keys():
+            errors.append(
+                BindError(
+                    f"{key} is written both in the block and in its Style",
+                    node_style[key].origin,
+                    f"keep one; the other is at {node_props[key].origin}",
+                )
             )
-        )
     for scope, values, allowed in (
-        ("", node.props, {**row.style, **row.keys}),  # a style key may be written on the block
-        ("Style ", node.style, row.style),
+        ("", node_props, ALLOWED[node.kind]),  # a style key may be written on the block
+        ("Style ", node_style, row.style),
     ):
         for key, value in values.items():
             key_row = allowed.get(key)
@@ -1005,14 +1355,24 @@ def _plan(
                     )
                 )
                 continue
-            converted = _convert(key, key_row, value, errors)
-            if converted is None:
-                continue
+            if isinstance(value, _UNRESOLVED):
+                converted = _convert(key, key_row, value, errors)
+                if converted is None:
+                    continue
+            else:  # as ``_convert``, without the call
+                try:
+                    converted = CONVERTERS[key_row.convert](value, key_row.tre, key_row.choices)
+                except BindError as exc:
+                    errors.append(BindError(f"{key}: {exc.message}", exc.origin, exc.hint))
+                    continue
             props.update(converted)
-            for tre_name in converted:
-                index.props[(path, tre_name)] = value.origin
-    convert_states(node, errors)  # a state style is checked like the base style
-    errors.extend(check_motion(node))
+            if index is not None:
+                for tre_name in converted:
+                    index.props[(path, tre_name)] = value.origin
+    if node.states:
+        convert_states(node, errors)  # a state style is checked like the base style
+    if "Transition" in node_style or "Transition" in node_props:
+        errors.extend(check_motion(node))
     for need in row.required:
         options = (need,) if isinstance(need, str) else need
         if not any(k in node.props or k in node.style for k in options):
@@ -1036,25 +1396,27 @@ def _plan(
         props.setdefault("hit_testable", bool(_POINTER_EVENTS & node.handlers.keys()))
     if node.kind in DECORATIVE:  # an image or a shape is not announced unless it has a Label
         props.setdefault("a11y_hidden", "label" not in props)
+    if "focusable" not in props and default_focusable(node):  # a block that takes input
+        props["focusable"] = True
     if row.post:
         POSTS[row.post](props, node)
 
     spec: dict[str, Any] = {"kind": row.tre_kind, "props": props}
-    block_word = node.kind
     if node.name is not None:
         if node.name in seen:
             errors.append(BindError(f'the name "{node.name}" is used twice', node.origin))
         seen[node.name] = node.origin
         spec["id"] = node.name
-        index.named[node.name] = (block_word, props)
-    children: list[dict[str, Any]] = []
-    for child in node.children:
-        child_path = f"{path}.children[{len(children)}]"
-        planned = _plan(child, child_path, dict(row.child_props), errors, index, seen)
-        if planned is not None:
-            children.append(planned)
-    if children:
-        spec["children"] = children
+    if node.children:
+        children: list[dict[str, Any]] = []
+        child_extra = row.child_props
+        for child in node.children:
+            child_path = f"{path}.children[{len(children)}]" if index is not None else ""
+            planned = _plan(child, child_path, child_extra, errors, index, seen)
+            if planned is not None:
+                children.append(planned)
+        if children:
+            spec["children"] = children
     return spec
 
 
@@ -1081,31 +1443,31 @@ def build(
     """Bind ``nodes`` under ``parent`` (default ``window.root``). Raises :class:`BindFailed` and
     builds nothing if any value is wrong."""
     errors: list[BindError] = []
-    plans: list[tuple[dict[str, Any], _Index, Origin]] = []
+    plans: list[tuple[Node, dict[str, Any]]] = []
     seen: dict[str, Origin] = {}
     for node in nodes:
-        index = _Index()
-        spec = _plan(node, "spec", {}, errors, index, seen)
-        if spec is not None:
-            plans.append((spec, index, node.origin))
+        spec = _plan(node, "spec", {}, errors, None, seen)
+        if spec is not None and isinstance(node, Node):
+            plans.append((node, spec))
     if errors:
         errors.sort(key=lambda e: (e.origin.file, e.origin.line, e.origin.column))
         raise BindFailed(errors)
 
-    built: list[tuple[TreNode, dict[str, TreNode]]] = []
+    built: list[TreNode] = []
     try:
-        for spec, index, origin in plans:
+        for node, spec in plans:
             try:
-                built.append(window.build(spec))
+                built.append(window.build(spec)[0])
             except ValueError as exc:
-                raise BindFailed([_translate(exc, index, origin)]) from exc
+                index = _Index()
+                _plan(node, "spec", {}, [], index, {})
+                raise BindFailed([_translate(exc, index, node.origin)]) from exc
     except BindFailed:
-        for root, _ in built:
+        for root in built:
             root.destroy()
         raise
     view = View(window, [], {}, parent=parent)
-    typed_roots = [n for n in nodes if isinstance(n, Node)]
-    for node, (spec, _, _), (root, _named) in zip(typed_roots, plans, built, strict=True):
+    for (node, spec), root in zip(plans, built, strict=True):
         view.entries.append(make_entry(node, spec, root))
         (parent or window.root).add_child(root)
     view.reindex()
@@ -1114,15 +1476,15 @@ def build(
 
 def make_entry(node: Node, spec: dict[str, Any], tre: TreNode) -> Entry:
     """The entry of a built node and, below it, of its children (the spec and the tre node mirror
-    the typed tree one to one)."""
-    kids = [c for c in node.children if isinstance(c, Node)]
-    specs = spec.get("children", [])
-    tre_kids = tre.children() if kids else []
-    return Entry(
-        node,
-        tre,
-        dict(spec["props"]),
-        [make_entry(c, sp, t) for c, sp, t in zip(kids, specs, tre_kids, strict=True)],
-        states=entry_states(node),
-        motion=motion_of(node),
-    )
+    the typed tree one to one). The entry takes the spec's props: the spec is not used again."""
+    children: Sequence[Entry] = ()
+    if node.children:
+        kids = [c for c in node.children if isinstance(c, Node)]
+        if kids:
+            children = [
+                make_entry(c, sp, t)
+                for c, sp, t in zip(kids, spec.get("children", []), tre.children(), strict=True)
+            ]
+    states = entry_states(node) if node.states else {}
+    motion = motion_of(node) if "Transition" in node.style or "Transition" in node.props else None
+    return Entry(node, tre, spec["props"], children, states=states, motion=motion)

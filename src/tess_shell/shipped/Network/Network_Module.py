@@ -8,9 +8,11 @@ Keys sent: ``ready`` (the manager, the primary connection, its device and access
 read), ``state`` (``CONNECTED``, ``LIMITED``, ``PORTAL``, ``CONNECTING``, ``DISCONNECTED``,
 ``DISABLED`` or ``UNKNOWN``), ``kind`` (``ETHERNET``, ``WIFI``, ``MOBILE``, ``BLUETOOTH``,
 ``OTHER`` or ``NONE``), ``name``, ``strength`` (percent, -1 when the connection is not Wi-Fi; sent
-only when the icon step or the tooltip's value changes), ``vpn``, ``icon``, ``tooltip`` and
-``label`` (the accessible name). ``available`` is the layer's: true while NetworkManager is on the
-system bus. A layout shows itself with ``Visible: {{ available and ready }}``.
+only when the icon step or the tooltip's value changes), ``vpn``, ``icon``, ``tooltip``,
+``label`` (the accessible name). When ``state`` goes to or from ``CONNECTED`` the module says it,
+politely, with ``ctx.announce`` (nothing for a change of ``strength``).
+``available`` is the layer's: true while NetworkManager is on the system bus. A layout shows
+itself with ``Visible: <| available and ready |>``.
 """
 
 from __future__ import annotations
@@ -190,6 +192,18 @@ def label_text(kind: str, state: str, name: str, strength: int, vpn_name: str | 
     if vpn_name is not None:
         parts.append(f"VPN {vpn_name}" if vpn_name else "VPN")
     return ", ".join(parts)
+
+
+def announcement_text(kind: str, state: str, name: str, vpn_name: str | None) -> str:
+    """The words said when the state goes to or from ``CONNECTED`` (Network Module >
+    Accessibility): ``Network connected, Wi-Fi Home-WiFi`` or ``Network disconnected``. The
+    signal's percent is left out: it is not the news."""
+    text = f"Network {STATE_WORDS[state]}"
+    if state == "CONNECTED" and kind != "NONE":
+        text += f", {KIND_WORDS[kind]} {name}" if name else f", {KIND_WORDS[kind]}"
+    if state == "CONNECTED" and vpn_name is not None:
+        text += f", VPN {vpn_name}" if vpn_name else ", VPN"
+    return text
 
 
 class Link:
@@ -393,8 +407,12 @@ class Network(Module):
         if basis != self.basis or "strength" not in self.sent:
             self.basis = basis
             values["strength"] = strength
+        previous = self.sent.get("state") if self.sent.get("ready") else None
+        changed = previous is not None and (previous == "CONNECTED") != (state == "CONNECTED")
         values["ready"] = True
         self.publish(values)
+        if changed:
+            self.ctx.announce(announcement_text(kind, state, name, vpn_name))
 
     def byte(self, value: object) -> int:
         percent = number(value)

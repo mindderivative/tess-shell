@@ -1,5 +1,5 @@
 ---
-TDL: 0.1
+TDL: 0.2
 Shell: 0.1
 Name: Tray_Menu
 ---
@@ -7,12 +7,13 @@ Name: Tray_Menu
 # The menu of a tray item (Tray Module > The Menu): one level of it, as the content of a Popup.
 # The Tray opens the Popup `Tray_Menu` with the item's menu tree in `caller.data`; a row with a
 # submenu opens the Popup `Tray_Menu_2` (and its rows `Tray_Menu_3`) beside it, which read the same
-# data and the row's `Id`. Write the three in the shell file, each with this module as its content:
-#   Popup Tray_Menu   { Attach: BOTTOM, Gap: 4, Max_Height: 600
+# data and the row's `Id`. The shell provides the three Popups (`schema/default_popups.py`), each
+# with this module as its content; a Popup of the same name in the shell file replaces one:
+#   Popup Tray_Menu   { Attach: BOTTOM, Gap: 4, Max_Height: 60%
 #       Style { Background: $color.surface_raised, Corner_Radius: 8 }
 #       Children { Tray_Menu { } } }
-#   Popup Tray_Menu_2 { Max_Height: 600, Style { ... }, Children { Tray_Menu { Level: 2 } } }
-#   Popup Tray_Menu_3 { Max_Height: 600, Style { ... }, Children { Tray_Menu { Level: 3 } } }
+#   Popup Tray_Menu_2 { Max_Height: 60%, Style { ... }, Children { Tray_Menu { Level: 2 } } }
+#   Popup Tray_Menu_3 { Max_Height: 60%, Style { ... }, Children { Tray_Menu { Level: 3 } } }
 # A row is a MenuItem: its label (an underscore, the mnemonic, is taken out), an icon (a theme icon
 # or the entry's own picture; a check mark or a radio button for a toggle entry), a key hint, an
 # arrow for a submenu, a rule for a separator. A disabled row takes no click. A click on a row sends
@@ -29,24 +30,24 @@ Module {
         Flex: VERTICAL
         Children {
             Menu {
-                Label: {{ caller.data.title }}
+                Label: <| caller.data.title |>
                 Children {
-                    For e In {{ caller.data.menus["0"] if params.Level == 1 else caller.data.menus[caller.use.params.Id] }} Key {{ e.id }} {
+                    For e In <| caller.data.menus["0"] if params.Level == 1 else caller.data.menus[caller.use.params.Id] |> Key <| e.id |> {
                         MenuItem {
-                            Text: {{ e.text }}
-                            Icon: {{ e.icon }}
-                            Shortcut_Text: {{ e.shortcut }}
-                            Separator: {{ e.separator }}
-                            Submenu: {{ e.submenu }}
-                            Id: {{ e.id }}
-                            Label: {{ e.label }}
-                            Enabled: {{ e.enabled }}
+                            Text: <| e.text |>
+                            Icon: <| e.icon |>
+                            Shortcut_Text: <| e.shortcut |>
+                            Separator: <| e.separator |>
+                            Submenu: <| e.submenu |>
+                            Id: <| e.id |>
+                            Label: <| e.label |>
+                            Enabled: <| e.enabled |>
                             On_Click {
                                 Action: pick
-                                id: {{ e.id }}
-                                submenu: {{ e.submenu }}
-                                service: {{ caller.data.service }}
-                                path: {{ caller.data.path }}
+                                id: <| e.id |>
+                                submenu: <| e.submenu |>
+                                service: <| caller.data.service |>
+                                path: <| caller.data.path |>
                             }
                         }
                     }

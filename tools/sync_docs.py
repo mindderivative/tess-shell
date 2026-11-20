@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Export the design vault into docs/ for GitHub.
+"""Export the design vault into docs/design/ for GitHub and the documentation site.
 
 The vault is an Obsidian vault (the source of truth, kept as it is). GitHub cannot render
 wikilinks, note embeds, Dataview blocks or most Obsidian callout types, so this tool writes a
-converted copy of the committed notes into docs/ of this repository.
+converted copy of the committed notes into docs/design/ of this repository. The rest of docs/ is the
+hand-written documentation site and is never touched by this tool.
 
 What it does, from the vault's committed state (git HEAD, or --rev):
 
@@ -14,15 +15,15 @@ What it does, from the vault's committed state (git HEAD, or --rev):
 * replaces Dataview blocks and Bases embeds with a short note;
 * drops the related and depends_on front matter keys (their links are in each note's body);
 * replaces /home/phil with ~ in every file;
-* writes docs/README.md and docs/.sync.json (the provenance of the copy).
+* writes docs/design/index.md and docs/design/.sync.json (the provenance of the copy).
 
-It writes only inside <clone>/docs/. It never commits, pushes or touches the vault. Files it wrote
-earlier and the vault no longer has are removed; with --prune every other file under docs/ that
+It writes only inside <clone>/docs/design/. It never commits, pushes or touches the vault. Files it wrote
+earlier and the vault no longer has are removed; with --prune every other file under docs/design/ that
 the vault does not have is removed too.
 
 Usage:
     python3 -I tools/sync_docs.py --vault "~/Projects/Obsidian/Tesserae Shell"
-    python3 -I tools/sync_docs.py --vault ... --out /tmp/check      # write to /tmp/check/docs
+    python3 -I tools/sync_docs.py --vault ... --out /tmp/check      # write to /tmp/check/docs/design
     python3 -I tools/sync_docs.py --vault ... --dry-run             # report only
 """
 
@@ -446,7 +447,7 @@ class Vault:
                 self.stats["local paths replaced"] += text.count(LOCAL_HOME)
                 text = text.replace(LOCAL_HOME, "~")
             out[p] = text.encode("utf8")
-        out["README.md"] = self.readme().encode("utf8")
+        out["index.md"] = self.readme().encode("utf8")
         return out
 
     def readme(self) -> str:
@@ -458,9 +459,9 @@ class Vault:
             rows.append(f"- {link}")
         home = "00 Home/Home.md"
         return (
-            "# Tesserae Shell design documentation\n\n"
+            "# Design\n\n"
             "> [!NOTE]\n"
-            "> This folder is generated from the design vault (an Obsidian vault) by `tools/sync_docs.py`. "
+            "> This section is the design record of Tesserae Shell: vision, architecture, decisions and specifications. It is generated from the design vault (an Obsidian vault) by `tools/sync_docs.py`. "
             "Edit the notes in the vault. Changes made here are overwritten the next time the tool runs.\n\n"
             f"Start at [Home]({urllib.parse.quote(home)}) for the current status. Folders:\n\n"
             + "\n".join(rows)
@@ -530,17 +531,17 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--vault", required=True, help="the vault's git repository")
     ap.add_argument("--clone", default=str(Path(__file__).resolve().parents[1]), help="this repository (default: the parent of tools/)")
-    ap.add_argument("--out", help="write <out>/docs instead of <clone>/docs (for testing)")
+    ap.add_argument("--out", help="write <out>/docs/design instead of <clone>/docs/design (for testing)")
     ap.add_argument("--rev", default="HEAD", help="vault revision to export (default HEAD)")
     ap.add_argument("--dry-run", action="store_true", help="report, write nothing")
-    ap.add_argument("--prune", action="store_true", help="also remove files under docs/ that the vault does not have")
+    ap.add_argument("--prune", action="store_true", help="also remove files under docs/design/ that the vault does not have")
     ap.add_argument("--quiet", action="store_true")
     ap.add_argument("--brief", action="store_true", help="print one summary line and any output problems (for the hook's log)")
     args = ap.parse_args()
 
     vault = Path(args.vault).expanduser().resolve()
     root = Path(args.out).expanduser().resolve() if args.out else Path(args.clone).expanduser().resolve()
-    docs = root / "docs"
+    docs = root / "docs" / "design"
     v = Vault(vault, args.rev)
     files = v.build()
     problems = check_output(files)

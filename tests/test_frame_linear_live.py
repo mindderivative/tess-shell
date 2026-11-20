@@ -60,7 +60,7 @@ def border_width(sway: PrivateSway, cfg: Path, blend: str, scale: float) -> tupl
     body = f"\nShell {{ Monitor {{ Name: Main, Index: 0, Children {{ {BEHIND}\n{FRAME} }} }} }}\n"
     (cfg / "Shells" / "Main_Shell.tdl").write_text(HEADER + body)
     (cfg / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\n"
+        "---\nTDL: 0.2\nName: S\n---\n"
         f"Settings {{ Logging {{ Level: DEBUG }} Debug {{ Frame_Blend: {blend} }} }}\n"
     )
     shell = Shell(cfg, sway.env)
@@ -136,7 +136,7 @@ def test_a_saved_change_of_colour_repaints_the_shader_ring_though_nothing_else_c
 
     save("#1e1e2e")
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: S\n---\n"
+        "---\nTDL: 0.2\nName: S\n---\n"
         "Settings { Logging { Level: DEBUG } Debug { Frame_Blend: LINEAR } }\n"
     )
     shell = Shell(tmp_path, private_sway.env)

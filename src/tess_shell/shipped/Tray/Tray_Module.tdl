@@ -1,5 +1,5 @@
 ---
-TDL: 0.1
+TDL: 0.2
 Shell: 0.1
 Name: Tray
 ---
@@ -14,12 +14,13 @@ Name: Tray
 #
 # The menu of an item is the Popup named `Tray_Menu` of the same Monitor (a Popup with
 # `Tray_Menu { }` as its content, see that module) and, for a submenu, the Popups `Tray_Menu_2` and
-# `Tray_Menu_3` (`Tray_Menu { Level: 2 }` and `Level: 3`): a menu shows its first three levels. The
-# Popup's `Max_Height` makes a long menu scroll. Without these Popups the secondary click logs one
-# error and nothing else happens. An item that needs attention takes the `:selected` look.
+# `Tray_Menu_3` (`Tray_Menu { Level: 2 }` and `Level: 3`): a menu shows its first three levels.
+# The shell provides the three (`schema/default_popups.py`: below the icon, `Max_Height: 60%` so a
+# long menu scrolls) to a Monitor that shows the Tray and writes none of that name; a Popup of the
+# same name in the user's file replaces it entirely. An item that needs attention takes the
+# `:selected` look.
 #
-# The tray's Popup opens beside the whole row (the specification's anchor is the icon; a module
-# is not told where an entry's block is), so give the Popup `Alignment: END` or `CENTER`.
+# The menu opens beside the icon that was clicked (the event carries the icon's rectangle).
 Module {
     Params {
         # the icon's size in pixels
@@ -32,26 +33,26 @@ Module {
 
     FlexBox {
         Name: Root
-        Visible: {{ available and has_items }}
+        Visible: <| available and has_items |>
         Role: GROUP
         Label: "Tesserae Shell tray"
         Flex: HORIZONTAL
         Align_Items: CENTER
-        Spacing: {{ params.spacing }}
+        Spacing: <| params.spacing |>
         Children {
-            For item In {{ items }} Key {{ item.id }} {
+            For item In <| items |> Key <| item.id |> {
                 Tray_Item {
-                    icon: {{ item.icon }}
-                    size: {{ params.icon_size }}
-                    tooltip_title: {{ item.tooltip_title }}
-                    tooltip_text: {{ item.tooltip_text }}
-                    label: {{ item.label }}
-                    description: {{ item.description }}
-                    attention: {{ item.attention }}
-                    On_Click { Action: activate, id: {{ item.id }} }
-                    On_Middle_Click { Action: secondary, id: {{ item.id }} }
-                    On_Secondary_Click { Action: menu, id: {{ item.id }} }
-                    On_Scroll { Action: scroll, id: {{ item.id }}, delta: {{ event.delta }} }
+                    icon: <| item.icon |>
+                    size: <| params.icon_size |>
+                    tooltip_title: <| item.tooltip_title |>
+                    tooltip_text: <| item.tooltip_text |>
+                    label: <| item.label |>
+                    description: <| item.description |>
+                    attention: <| item.attention |>
+                    On_Click { Action: activate, id: <| item.id |> }
+                    On_Middle_Click { Action: secondary, id: <| item.id |> }
+                    On_Secondary_Click { Action: menu, id: <| item.id |> }
+                    On_Scroll { Action: scroll, id: <| item.id |>, delta: <| event.delta |> }
                 }
             }
         }

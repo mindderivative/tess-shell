@@ -1,0 +1,182 @@
+---
+title: Hot Reload
+aliases: [Reload, File Watching, Live Reload]
+type: spec
+status: review
+owner: phil
+created: 2026-10-28
+updated: 2026-11-04
+tags: [spec/runtime, needs-verification]
+---
+
+# Hot Reload
+
+> [!NOTE]
+> The shell watches its files and applies a change to the running shell without a restart. A watcher thread notices a change, reads, parses (with the shell's TDL parser, [ADR-0014 Shell File Language](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md)) and validates it, and hands a finished result to the loop, which applies the difference: it changes live properties in place and reopens a window only when a property cannot change live. A bad file leaves the old state running. Decided: hot reload exists, a bad file keeps the old state, a changed module `.py` reloads at runtime, `settings.tdl` applies `logging` at once and needs a restart for `directories` and `main_shell`, and the shell's own UID write must not cause a loop ([Data Flow > Hot reload](../../20%20Architecture/Data%20Flow.md#hot-reload), [ADR-0007 Shell UI Layer > Events and module reload (2026-10-26)](../../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26), [Settings File](../../41%20TDL%20Reference/Settings%20File.md)). The name `settings.tdl` is confirmed (D20, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)). The mechanics below are proposals with recommendations.
+
+## Purpose and Scope
+
+- Define what is watched, how changes are noticed and coalesced, how a change is validated and diffed, what is applied live and what reopens a window, what state survives, and how a failure is handled.
+- Not in this note: the error format ([Validation and Errors](Validation%20and%20Errors.md)), the registry ([Config Discovery and Registry](Config%20Discovery%20and%20Registry.md)), and the module's own `reload()` hook ([Module Contract > Lifecycle](../../42%20Python%20API/Module%20Contract.md#lifecycle)).
+
+## Behaviour
+
+### What is Watched
+
+- Every directory that can hold a shell file: the config directory's `Shells/`, `Modules/` (and the module folders in it), `Styles/`, `Themes/`, `Stylesheets/`, the directories `settings.tdl` names (`Directories`), and `settings.tdl` itself ([Settings File](../../41%20TDL%20Reference/Settings%20File.md)). `schemas/`, `logs/` and `backups/` are not watched.
+- A change to an imported file is a change to every file that imports it: the shell keeps a map from each file to its importers and reloads the whole affected set together.
+- Watching is on by default. A key `Hot_Reload: false` in `settings.tdl` (`false` is a bare word that the key's declared type turns into a boolean, D2, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)) turns it off; a manual reload still works (the key is decided 2026-10-28; the rest of the settings list is deferred to the build, [Settings File](../../41%20TDL%20Reference/Settings%20File.md)).
+
+### How a Change is Noticed
+
+- **Library.** inotify, through `inotify_simple` (decided 2026-10-28). A spike on 2026-10-28 installed `inotify_simple` 2.0.1 (BSD-2-Clause, no dependencies, released 2025-08-25) and ran on Python 3.14.8. A plain write produced create, modify and close-write events. An editor's atomic save (write a temporary file, then rename it over the target) produced create, modify and close-write on the temporary file and then a moved-to event on the real name. So the watcher listens for close-write and moved-to on a directory, and ignores names that start with a dot or end in `~`, `.swp`, `.tmp` or `.bak`.
+- **Alternatives.** `watchfiles` 1.3.0 (MIT, 2026-09-21, Python 3.14 classifier; a Rust extension and one dependency) has debouncing built in; `watchdog` 6.0.0 was last released 2024-11-01 and has no 3.14 classifier; `pyinotify` was last released in 2015. The shell is Linux-only, so inotify's limits do not matter. Decided 2026-10-28: `inotify_simple` with the shell's own debounce, for the smallest surface. #needs-verification on a target distribution.
+- **Debounce.** A change is acted on 200 ms after the last event for it (decided 2026-10-28), so an editor's burst of events, or a multi-file save, becomes one reload.
+- **The shell's own writes** (reported by `tess-shell`, 2026-11-04; proposal): the UID write changes a file the watcher watches, and the 200 ms debounce alone may not hide it. Before it writes a file the shell records the path and the hash of the content it is about to write; when the watcher's event for that path arrives, it compares the file's hash with the recorded one, ignores the event if they match, and forgets the record. A user edit during the same moment has a different hash and is not ignored. Acceptance: the shell's own UID write does not trigger a reload (below).
+- **inotify limits.** The number of watches is limited by `fs.inotify.max_user_watches`. Watches are per directory, a few dozen in all, so the limit is not close. If adding a watch fails, the shell logs a warning and runs without hot reload; a manual reload still works.
+- **Manual triggers.** `SIGHUP` and the `Reload` call on the shell's D-Bus interface (`tesserae-shell reload`) reload everything ([IPC and CLI](IPC%20and%20CLI.md)). Proposed.
+
+### The Shell's Own Writes
+
+The shell writes the registry and the `UID:` line into files ([Config Discovery and Registry > Writing the UID into a file](Config%20Discovery%20and%20Registry.md#writing-the-uid-into-a-file)). A write it makes must not cause a reload. The UID write patches the file text at the node's position and changes nothing else (D10, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30)), so the written bytes are the file's new content and one hash covers them. The writer records the content hash it wrote; when the watcher sees an event whose file now has that hash, it drops the event. A change by anyone else has a different hash and passes. This settles the open item about a reload loop ([ADR-0007 Shell UI Layer > Open items](../../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)).
+
+### The Reload Pipeline
+
+```mermaid
+sequenceDiagram
+    participant W as Watcher thread
+    participant V as Validation
+    participant L as Loop thread
+    participant T as tre
+    W->>W: events, wait 200 ms of quiet
+    W->>V: read, parse, validate the affected set
+    alt any error
+        W->>L: call_soon(report errors, keep old state)
+    else valid
+        W->>L: call_soon(apply the new model)
+        L->>L: diff against the current model
+        L->>T: set() live properties, reopen windows that must reopen
+        L->>L: module reload hooks, restyle, re-evaluate
+    end
+```
+
+- Reading, parsing and validating run on the watcher thread. Only a finished model or a finished report crosses into the loop ([Process Model and Threading > The rules](../../20%20Architecture/Process%20Model%20and%20Threading.md#the-rules)). tre nodes belong to the loop thread, so the new nodes are built there. TEL compilation runs on the watcher thread: it does all its work and returns the compiled result, so nothing it holds is shared (maintainer, 2026-10-28; recorded as requirement T16 in [Expression Language Requirements](Expression%20Language%20Requirements.md)).
+- **Atomic.** The new model is built completely and validated before anything changes. A file that fails stages 1 to 7 changes nothing ([Validation and Errors > The pipeline](Validation%20and%20Errors.md#the-pipeline)).
+- **A reload is one turn of the loop for the diff,** so a view never shows a half-applied change. Proposed budget: the apply step stays within a few frames on a normal shell; measured in testing.
+
+### The Diff
+
+The new model is compared with the current one to decide what to change. Decided 2026-10-28: match by identity, then by name, then by position.
+
+- **By identity.** A file by its UID; a named entry (a surface, a module use, a popup) by its unique name within its file ([Config Discovery and Registry > Identity and UIDs](Config%20Discovery%20and%20Registry.md#identity-and-uids)).
+- **By position.** A block that repeats a name in one `Children { }` is named from its position (`Label_1`, `Label_2`) ([ADR-0007 Shell UI Layer > Open items](../../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#open-items)), so reordering such blocks looks like changes. The note says so and suggests giving blocks that must survive a reorder their own names. Open question 1.
+- An entry that is new is created; one that is gone is closed; one that matches is compared property by property.
+
+### What is Applied Live and what Reopens
+
+| Change                                                                                                                           | Result                                                                                                                                                                                                                                                                                      |
+|----------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| A tre layer-window property, written in the file as `Layer`, `Exclusive_Zone`, `Keyboard`, `Input_Region`, a Bar's `Edge`, `Width`, `Height`, `Max_Width`, `Max_Height`, `Min_Width`, `Min_Height`, `Alignment`, `Offset` and `Gap`, a Panel's `Inset` and `Margin`, a Frame's `Margin` | Set live in one commit ([TRE-REQ-001 Layer Surface Window > Proposed API](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#proposed-api)). The shell turns these keys into tre's `anchor`, `size` and margins itself; which of them can change on an open window and which need a new one follows that mapping, which is an open item ([ADR-0014 Shell File Language > Fourth-Round Decisions (2026-10-30)](../../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#fourth-round-decisions-2026-10-30)). #needs-verification                                                                                                                                                                                                                            |
+| The namespace, or the output the surface sits on (a different `Monitor` block, or a `Monitor` selector that now matches another output) | The window is closed and created again; tre's `namespace` and `output` are constructor-only                                                                                                                                                                                                                           |
+| A node property, a style value, a token, a theme                                                                                 | Set on the nodes; tre redraws only what changed                                                                                                                                                                                                                                             |
+| A module's TDL only                                                                                                             | The module's layout is rebuilt; the module's `reload()` hook runs and the instance stays ([Module Contract > Lifecycle](../../42%20Python%20API/Module%20Contract.md#lifecycle))                                                                                                                                                          |
+| A module's `.py`                                                                                                                 | Code reload: import the new code and check it has the class, then `stop` the old instance and join its threads, purge the module's own modules from `sys.modules`, create the new instance and `start` it; a failed import keeps the old instance ([ADR-0007 Shell UI Layer > Events and module reload (2026-10-26)](../../30%20Decisions/ADR-0007%20Shell%20UI%20Layer.md#events-and-module-reload-2026-10-26)) |
+| A change to a Popup entry                                                                                                        | An open Popup is closed; the next open uses the new definition ([Popup](../Surfaces/Popup.md))                                                                                                                                                                                    |
+| `settings.tdl`: `Logging`                                                                                                       | Applied at once                                                                                                                                                                                                                                                                             |
+| `settings.tdl`: `Directories`, `Main_Shell`, `Registry`                                                                         | Reported as needing a restart; nothing changes until then ([Settings File](../../41%20TDL%20Reference/Settings%20File.md))                                                                                                                                                                                         |
+
+### State that Survives
+
+- A module instance survives a TDL-only change, and its last sent values stay in the value store until the new instance sends ([Data Flow > Hot reload](../../20%20Architecture/Data%20Flow.md#hot-reload)).
+- A Panel's visibility (shown, hidden, collapsed) survives by name; a floating Panel's position is in the registry and survives ([Panel > Position and attachment](../Surfaces/Panel.md#position-and-attachment)).
+- An open Popup does not survive a reload that touches it.
+- Animations in progress finish or jump to their end state (proposed); a reload is not animated.
+- A surface that was hidden stays hidden.
+
+### Failure and Recovery
+
+- A file that fails validation: the old state keeps running and the errors are reported, with a desktop notification (opt-out) ([Validation and Errors > Where it goes](Validation%20and%20Errors.md#where-it-goes)).
+- A failure while applying (a tre error on one window): the shell logs it and tries to bring the affected window back to the old definition; if that also fails the window is closed and the rest continues. tre calls cannot be rolled back, so validation before applying is the protection. Open question 4.
+- A module whose new code fails to import keeps its old instance ([Process Model and Threading > Failure and recovery](../../20%20Architecture/Process%20Model%20and%20Threading.md#failure-and-recovery)).
+
+## As Built at M2b (Reported by `tess-shell`, 2026-11-04)
+
+Checked against the repository's history and its 663 passing tests; the behaviour is as reported. Details in [M2 Build Log](../../00%20Home/M2%20Build%20Log.md).
+
+- **The watcher:** one thread on one inotify descriptor (`inotify_simple`), close-write, moved-to, moved-from and delete; it ignores dot files, `~`, `.swp`, `.tmp`, `.bak` and the `schemas`, `logs` and `backups` folders, and watches folders created later; one callback with the set of paths after 200 ms of quiet. A watch that cannot be added turns the feature off with a warning.
+- **Pipeline:** the watcher thread parses and validates; the loop applies. Validation runs on every file again, not only the affected set, and keeps no map from a file to its importers (a rescan takes about 5 ms; D24, accepted 2026-11-04). Slots compile on the loop thread when the surface is resolved, not on the watcher thread (D25, accepted 2026-11-04; `check` does not compile slots, so a slot's syntax error shows when the surface is resolved).
+- **Apply:** modules first (a module no longer used is stopped, a new one is started, a changed `.py` is imported first and replaces the instance only if the import works, a changed module or style TDL calls `reload()` and keeps the instance), then each Bar is kept (rebuilt by the keyed diff, its geometry set live in one `set()`), closed or opened. An error anywhere changes nothing and is reported at `file:line:column`.
+- **Own writes:** built as proposed above (the hash of what the shell wrote is compared when the event arrives, then forgotten), with two additions: a record expires after 5 seconds, and the records are cleared when the watcher starts, because the writes of the start made no event. Without them, restoring a file to content the shell once wrote was dropped as the shell's own write.
+- **Settings and signals:** `Hot_Reload` (default true) and `Reload_Debounce` (default 200 ms) are built. A change of `Directories`, `Registry` or `Main_Shell` is reported as needing a restart; `Logging` applies at once. `SIGHUP` reloads everything, also with `Hot_Reload: false`; the D-Bus `Reload` call is not built.
+- **The log line** (maintainer, 2026-11-04): a reload that applied cleanly logs `reloaded (<files>) in <ms>`; a reload during which an error was reported logs `reloaded with errors (<files>)`, so the line never reads as success when a module or file was kept as it was. The exact text is the code session's.
+- **Measured:** a saved `Height` is applied a median of 206 ms after the save (best 205, worst 208 over 10 saves): 200 ms of debounce plus about 5 ms to validate, diff and set; the Bar's reserved zone follows in one reflow.
+
+## Configuration
+
+`settings.tdl`: `Hot_Reload` (default true), `Reload_Debounce` (milliseconds, default 200). Both keys decided 2026-10-28; the global settings list is built while the shell is built ([Settings File](../../41%20TDL%20Reference/Settings%20File.md)).
+
+## Python Contract
+
+`reload()` is for a changed TDL configuration and does not restart the module ([Module Contract](../../42%20Python%20API/Module%20Contract.md)). A module never watches files itself for its own config; it reads `self.ctx.config` again in `reload()`.
+
+## Integration
+
+- The watcher thread and its place among the threads: [Process Model and Threading > Threads](../../20%20Architecture/Process%20Model%20and%20Threading.md#threads).
+- tre: `set()` for live properties; closing and recreating a window for constructor-only ones ([TRE-REQ-001 Layer Surface Window](../../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md)).
+- The registry and the UID write: [Config Discovery and Registry](Config%20Discovery%20and%20Registry.md).
+
+## Design
+
+None. A reload can show a short, optional notice that it applied (off by default, decided 2026-10-28); the shell does not animate a reload.
+
+## Accessibility
+
+A reload that fails is announced by the notification as well as the log ([Validation and Errors > Accessibility](Validation%20and%20Errors.md#accessibility)). A reload never moves keyboard focus.
+
+## Performance Budget
+
+- Idle cost of the watcher: it blocks in a read and wakes only on a file event ([Goals and Non-Goals](../../10%20Vision/Goals%20and%20Non-Goals.md) G4). Measured in testing.
+- Apply step: proposed to stay within a few frames; the build of new nodes is the cost.
+- A debounce of 200 ms means a change appears about a fifth of a second after the save.
+
+## Failure Modes and Recovery
+
+| Failure                                         | Result                                                        |
+|-------------------------------------------------|---------------------------------------------------------------|
+| A bad file                                      | Old state kept; errors reported                               |
+| A file removed that something imports           | Error naming the importer; old state kept                     |
+| The inotify watch limit is reached              | Warning; no automatic reload; manual reload works             |
+| An event storm (a build tool writes many files) | One reload after 200 ms of quiet                              |
+| A reload while another is running               | Queued; the second runs after the first with the newest files |
+| A module's new code fails to import             | The old instance keeps running; the error is logged           |
+| A change to `Directories` in `settings.tdl`    | Reported as needing a restart                                 |
+
+## Open Questions
+
+All seven were answered on 2026-10-28.
+
+1. [x] **The diff key:** by identity, then name, then position. Giving blocks that must survive a reorder is the author's job.
+2. [x] **Watcher library:** `inotify_simple` with a 200 ms debounce.
+3. [x] **Panel state across a reload:** shown, hidden and collapsed survive by name.
+4. [x] **A failed apply:** try to restore the window, then close it and continue.
+5. [x] **A notice when a reload applies:** off by default.
+6. [x] **Settings keys:** `Hot_Reload` and `Reload_Debounce`.
+7. [x] **TEL compile on a worker thread:** yes; TEL does all the work and reports the answer (maintainer, 2026-10-28). Still to confirm in the TEL project: no shared mutable state.
+
+## Acceptance Criteria
+
+- [ ] Saving a changed style file from an editor that saves atomically updates the running surface within about 300 ms, with one reload.
+- [ ] Saving a file with a TDL error leaves the shell unchanged and reports `file:line:column`.
+- [ ] Changing a top Bar's `Height` (or its `Gap`) changes its reserved zone live, with one reflow of windows.
+- [ ] Moving a Panel into another `Monitor` block closes and recreates its window.
+- [ ] Changing an imported file reloads every file that imports it, once.
+- [ ] A module's TDL change calls its `reload()` and keeps the instance; a `.py` change replaces the instance; a `.py` with a syntax error keeps the old instance.
+- [ ] The shell's own UID write does not trigger a reload.
+- [ ] A change to `Directories` in `settings.tdl` is reported as needing a restart and changes nothing else.
+- [ ] With the watch limit exhausted, the shell warns and still reloads on `SIGHUP`.
+- [ ] A reload applies in one turn: no frame shows half the change.
+- [ ] An open Popup whose definition changed is closed.
+
+## Links
+
+- [Runtime](Runtime.md) · [Data Flow](../../20%20Architecture/Data%20Flow.md) · [Process Model and Threading](../../20%20Architecture/Process%20Model%20and%20Threading.md) · [Validation and Errors](Validation%20and%20Errors.md) · [Config Discovery and Registry](Config%20Discovery%20and%20Registry.md) · [Settings File](../../41%20TDL%20Reference/Settings%20File.md) · [Shell Start and Stop](Shell%20Start%20and%20Stop.md)

@@ -21,11 +21,11 @@ BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 LABEL = 'Text { Text: "14:05", Font_Size: 14, Foreground: "#ffffff" }'
 FILL = 'Style { Fill: "#1f1f1f" }'
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\nSettings {{\n  Logging {{ Level: DEBUG }}\n"
+    "---\nTDL: 0.2\nName: Settings\n---\nSettings {{\n  Logging {{ Level: DEBUG }}\n"
     "  Appearance {{ {appearance} }}\n}}\n"
 )
 WARM = """---
-TDL: 0.1
+TDL: 0.2
 Name: Warm
 ---
 Theme {

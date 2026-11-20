@@ -42,7 +42,7 @@ POPUPS: dict[str, tuple[tuple[str, str], ...]] = {
     ),
 }
 SHIPPED_POPUP_MODULES = frozenset(POPUPS)  # the modules that bring shipped Popups with them
-HEADER = "---\nTDL: 0.1\nShell: 0.1\nName: Default_Popups\n---\n"
+HEADER = "---\nTDL: 0.2\nShell: 0.1\nName: Default_Popups\n---\n"
 
 
 def default_popups(

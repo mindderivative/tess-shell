@@ -18,6 +18,7 @@ RULES: dict[str, set[str] | None] = {
     "schema": {
         "tess_dl",
         "tess_shell.appearance",
+        "tess_shell.config.confine",  # PathOutsideConfig: a path that leaves the folders
         "tess_shell.schema",
         "tess_shell.binder.model",
         "tess_shell.binder.convert",
@@ -36,6 +37,17 @@ RULES: dict[str, set[str] | None] = {
         "tess_shell.schema",
     },
     "files": {"tess_dl", "tess_shell.schema", "tess_shell.config", "tess_shell.files"},
+    # ``migrate`` rewrites a user's files as text (``slots`` needs the standard library only);
+    # ``run`` is the command, which reads the settings, locks and options
+    "migrate": {
+        "tess_dl",
+        "tess_shell.config",
+        "tess_shell.exit_codes",
+        "tess_shell.migrate",
+        "tess_shell.options",
+        "tess_shell.schema",
+        "tess_shell.app",  # ``run`` asks ``check`` for its verdict on the result
+    },
     "config": {
         "tess_dl",
         "tess_shell.schema",
@@ -47,6 +59,7 @@ RULES: dict[str, set[str] | None] = {
         "loguru",
         "tess_shell.appearance",
         "tess_shell.binder.model",
+        "tess_shell.binder.focus",
         "tess_shell.binder.shadow",
         "tess_shell.schema",
         "tess_shell.model",
@@ -70,20 +83,35 @@ RULES: dict[str, set[str] | None] = {
     "exit_codes": set(),
     "options": set(),
     "signals": set(),
-    "binder": {"tess_re", "loguru", "tess_shell._vendor.tess_utils", "tess_shell.binder"},
-    "_vendor": set(),
+    "binder": {"tess_re", "loguru", "tess_utils", "tess_shell.binder"},
     "appearance": set(),
     "services": {
         "dbus_fast",
         "inotify_simple",
         "loguru",
-        "tess_shell._vendor.tess_utils",  # services.icons decodes a png the way the Image path does
+        "tess_utils",  # services.icons decodes a png the way the Image path does
         "tess_shell.services",
         "tess_shell.appearance",
+        "tess_shell.schema.keys",  # services.shortcuts reads key strings (pure, no I/O)
     },
+    # the desktop-entry index follows the folders with the same file watcher the shell's files use
+    "services.desktop_entries": {"loguru", "tess_shell.watch"},
     "surfaces": set(),
     "surfaces.bar": {"tess_shell.binder.model"},
     "surfaces.panel": {"tess_shell.binder.model", "tess_shell.surfaces.bar"},
+    # the order of the shell's surfaces for keyboard focus: pure, over the shell definition
+    "surfaces.focus": {"tess_shell.binder.focus", "tess_shell.schema.model"},
+    # shortcut mode: the rules are pure (keys and the surface order); the driver applies a change
+    # to the windows it is given
+    "surfaces.mode": {"tess_shell.schema.keys", "tess_shell.surfaces.focus"},
+    "surfaces.mode_driver": {
+        "loguru",
+        "tess_shell.binder",  # the View whose first Tab stop gets the ring (a type only)
+        "tess_shell.schema.findings",  # nearest names for ``ctx.focus``
+        "tess_shell.schema.keys",
+        "tess_shell.schema.model",
+        "tess_shell.surfaces",
+    },
     "surfaces.manager": {
         "tess_re",
         "loguru",
@@ -130,9 +158,74 @@ RULES: dict[str, set[str] | None] = {
     },
     # the control commands' client: the standard library and jeepney, nothing that costs time to
     # import (tests/test_client.py lists what a run imports)
-    "client": {"jeepney", "tess_shell.__version__", "tess_shell.exit_codes", "tess_shell.options"},
+    "client": {
+        "jeepney",
+        "tess_shell.__version__",
+        "tess_shell.exit_codes",
+        "tess_shell.options",
+        "tess_shell.recovery_state",  # the crash lines of ``status`` with no shell running
+        "tess_shell.session",  # the stale-unit warning of ``status``
+    },
+    # the two files of the desktop session and the systemd notice: standard library only (the
+    # client imports ``session``; ``app`` imports ``notify``)
+    "session": {"tess_shell.exit_codes"},
+    "notify": set(),
+    # the crash record: the writer takes the names it shares with the reader (which the client
+    # imports, so the reader is standard library only); nothing else, no log: the app reports
+    "recovery": {"tess_shell.recovery_state"},
+    "recovery_state": set(),
+    # the watchdog thread: reads the module host's running-callback record (a plain dataclass in
+    # modules.running), sends through ``notify`` and logs; it never touches the engine or a node
+    "watchdog": {"loguru", "tess_shell.modules.running", "tess_shell.notify"},
+    # user modules in child processes (posture C): the shell's side holds the host, the model and
+    # the findings; the two files both sides read are standard library only
+    "modproc": {
+        "loguru",
+        "tess_shell.logging",
+        "tess_shell.model",
+        "tess_shell.module",
+        "tess_shell.modproc",
+        "tess_shell.modules",
+        "tess_shell.schema",
+        "tess_shell.services.api",
+        "tess_shell.watchdog",
+    },
+    "modproc.broker": {
+        "dbus_fast",  # a ``v`` argument of a D-Bus call is rebuilt from its signature
+        "loguru",
+        "tess_shell.modproc",
+    },
+    "modproc.static": set(),
+    "modproc.wire": set(),
+    # the module process imports nothing of the shell's services, binder, surfaces or the engine:
+    # what the context and the contract need, and the pipe (tests/test_modproc_child.py lists what
+    # a process really imports)
+    "modproc.child": {
+        "loguru",
+        "tess_shell.logging",
+        "tess_shell.model.store",
+        "tess_shell.modproc.childctx",
+        "tess_shell.modproc.wire",
+        "tess_shell.module",
+        "tess_shell.modules.actions",
+        "tess_shell.modules.context",
+        "tess_shell.modules.running",
+        "tess_shell.modules.supervise",
+        "tess_shell.modules.ticks",
+        "tess_shell.schema.findings",
+    },
+    "modproc.childctx": {"loguru", "tess_shell.modproc.wire", "tess_shell.services.api"},
+    # the ``kwin`` commands: like the client, standard library and jeepney, and the pure KWin files
+    "kwin_commands": {
+        "jeepney",
+        "tess_shell.client",
+        "tess_shell.exit_codes",
+        "tess_shell.options",
+        "tess_shell.services.kwin_package",
+    },
     "commands": ANY,  # the shell's side of the control interface: it holds the model
     "scanner": ANY,
+    "shortcuts": ANY,  # the actions the shell declares: settings and shell files put together
     "reloader": ANY,
     "app": ANY,
     "cli": ANY,
@@ -205,6 +298,4 @@ def test_shell_modules_never_import_the_engine() -> None:
 
 def test_only_tess_utils_imports_pillow() -> None:
     for path in SOURCES:
-        if "tess_utils" in path.parts:
-            continue
         assert not any(n.split(".")[0] == "PIL" for n in external_imports(path)), path

@@ -423,6 +423,9 @@ class HostState:
 class FrameState:
     plan: FramePlan
     hidden: bool = False  # closed by a Hide (or ``Visible: false``): no window at all
+    # hidden by an active fullscreen window on the Frame's output (``Frames.set_covered``): the
+    # same as ``hidden`` while it lasts, and apart from it, so the user's own Hide is kept
+    covered: bool = False
     size: tuple[float, float] = (0, 0)  # what the ring was last drawn for
     painter: LayerWindow | None = None
     nodes: list[TreNode] = field(default_factory=list)  # outer border, fill, inner border
@@ -440,6 +443,11 @@ class FrameState:
     kb_warned: bool = False  # ``Keyboard: NONE`` was overridden and said so
     # the whole bodies of the melded Panels that peek, for the plan and size they were made for
     full_rects: tuple[Any, ...] = ()
+    # shortcut mode (Focus and Keyboard, rule 7): the Frame is the surface in the mode, so every
+    # peek is out and stays out; ``mode_shown`` are the ones the mode brought out (they go back
+    # when it ends; one that was out before stays out)
+    mode_held: bool = False
+    mode_shown: set[str] = field(default_factory=set)
 
 
 class Frames:
@@ -661,7 +669,11 @@ class Frames:
                 self._close(self.states.pop(key))
                 st = None
             if st is None:
-                st = self.states[key] = FrameState(plan, hidden=not plan.frame.visible)
+                st = self.states[key] = FrameState(
+                    plan,
+                    hidden=not plan.frame.visible,
+                    covered=plan.output.name in self._m.covered_outputs,
+                )
                 hidden, tabs = plan.rest_sets()
                 st.hidden_melds, st.tab_melds = set(hidden), set(tabs)
             else:
@@ -697,6 +709,17 @@ class Frames:
                     st.size = plan.size  # the output changed: draw for it until tre configures
                 st.plan = plan
             self._reconcile(st)
+
+    def set_covered(self, covered: frozenset[str]) -> None:
+        """The outputs with an active fullscreen window are ``covered``: the Frame on one is closed
+        (its zones are released, windows use the whole output) like a Hide, and comes back when the
+        output is not named."""
+        for st in self.states.values():
+            now = st.plan.output.name in covered
+            if now != st.covered:
+                st.covered = now
+                logger.info(f"Frame {st.plan.where} {'covered' if now else 'uncovered'}")
+                self._reconcile(st)
 
     def set_look(self, look: Look) -> None:
         """The theme or the accent changed: every token is read again, the ring is redrawn in
@@ -775,7 +798,41 @@ class Frames:
 
     # -- windows --------------------------------------------------------------------------------
 
+    # -- shortcut mode: every peek of the Frame shows (Focus and Keyboard, rule 7) -----------------
+
+    def hold_peeks(self, frame: str, on: bool) -> None:
+        """The Frame ``frame`` is now the surface in shortcut mode (``on``) or no longer is: every
+        peek (a melded Panel with a ``Peek``, a strip with one) comes out and stays out, whatever
+        its ``Trigger``, ``Hide_After`` or the pointer says, and goes back to rest when the mode
+        ends. A peek that was out before the mode stays out. Each peek uses its own slide, so they
+        come out together."""
+        for st in self.states.values():
+            if st.plan.frame.name != frame:
+                continue
+            st.mode_held = on
+            if on:
+                self._show_peeks(st)
+            else:
+                self._release_peeks(st)
+
+    def _show_peeks(self, st: FrameState) -> None:
+        if st.painter is None:
+            return
+        for host in list(st.hosts.values()):
+            name = host.plan.name
+            if host.plan.peek is None or name in st.mode_shown or self._is_out(st, host):
+                continue
+            st.mode_shown.add(name)
+            self._meld_to(st, host, True)
+
+    def _release_peeks(self, st: FrameState) -> None:
+        shown, st.mode_shown = st.mode_shown, set()
+        for host in list(st.hosts.values()):
+            if host.plan.name in shown and not host.inside:  # the pointer on it keeps it out
+                self._meld_to(st, host, False)
+
     def _close(self, st: FrameState) -> None:
+        st.mode_shown.clear()
         self._drop_hosts(st)
         painter, reservers = st.painter, list(st.reservers.values())
         st.painter, st.nodes, st.reservers, st.zones, st.drawn = None, [], {}, {}, None
@@ -793,7 +850,7 @@ class Frames:
 
     def _reconcile(self, st: FrameState) -> None:
         plan = st.plan
-        if st.hidden:
+        if st.hidden or st.covered:
             if st.painter is not None or st.reservers:
                 self._close(st)
             return
@@ -866,6 +923,7 @@ class Frames:
 
         def closed(event: Any, st: FrameState = st, window: Any = window) -> None:
             logger.info(f"Frame {where} painter closed ({getattr(event, 'reason', '')})")
+            self._m._surface_gone(plan.frame.name, window)
             if st.painter is window:
                 self._drop_hosts(st)
                 st.painter = None  # a later sync makes it again
@@ -875,9 +933,11 @@ class Frames:
 
         def key_down(event: Any) -> None:
             logger.debug(f"Frame {where} painter key {getattr(event, 'key', None)!r}")
+            self._m.mode.on_key(event)
 
         window.on("configure", configure)
         window.on("closed", closed)
+        window.on("active", lambda e: self._m._surface_active(plan.frame.name, bool(e.active)))
         window.root.on("pointer_down", pointer_down)
         window.root.on("key_down", key_down)  # a key bubbles up from the focused node
         self._m._app.add_window(window)
@@ -936,7 +996,8 @@ class Frames:
                     "(a click on the field gives it the keyboard)"
                 )
         if mode != st.keyboard:
-            st.painter.set(keyboard=mode)
+            if not self._m.mode.holds(st.painter):  # shortcut mode has the keyboard: it gives it
+                st.painter.set(keyboard=mode)  # back what the Frame asks for when it ends
             st.keyboard = mode
             logger.info(f"Frame {st.plan.where}: painter keyboard {mode}")
 
@@ -1359,6 +1420,8 @@ class Frames:
         if surface.timer is not None:
             surface.timer.cancel()
             surface.timer = None
+        if st.mode_held and host.plan.peek is not None:
+            return  # shortcut mode keeps every peek out
         panel = surface.planned.bar if surface.planned else None
         if st.painter is not None and isinstance(panel, PanelDef) and panel.hide_after is not None:
             surface.timer = st.painter.after(int(panel.hide_after), lambda: self._expire(st, host))
@@ -1428,7 +1491,7 @@ class Frames:
 
     def _exit(self, st: FrameState, host: HostState) -> None:
         host.exit_timer = None
-        if host.inside:
+        if host.inside or st.mode_held:
             return
         popup = self._m.popups.current
         peek = host.plan.peek
@@ -1843,6 +1906,7 @@ class Frames:
 
     def _drop_host(self, st: FrameState, host: HostState) -> None:
         st.hosts.pop(host.plan.key, None)
+        st.mode_shown.discard(host.plan.name)
         host.anim = None
         host.surface.generation += 1  # an animation that was running ends silent
         host.drag = None
@@ -1888,6 +1952,8 @@ class Frames:
             else:
                 self._update_host(st, host, hp)
         self._draw(st)
+        if st.mode_held:  # a peek the reload brought: the Frame is still in shortcut mode
+            self._show_peeks(st)
 
     def _open_host(self, st: FrameState, hp: HostPlan) -> None:
         from tess_shell.surfaces.manager import Surface

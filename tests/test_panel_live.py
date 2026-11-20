@@ -32,7 +32,7 @@ def start(sway: PrivateSway, cfg: Path, panels: str, hide: str | None = None) ->
     write_example(cfg, body)
     if hide is not None:
         (cfg / "settings.tdl").write_text(
-            "---\nTDL: 0.1\nName: S\n---\n"
+            "---\nTDL: 0.2\nName: S\n---\n"
             f"Settings {{ Logging {{ Level: DEBUG }} Debug {{ Panel_Hide: {hide} }} }}\n"
         )
     return Shell(cfg, sway.env)
@@ -226,7 +226,7 @@ def test_an_attached_panel_lands_on_the_pixels_its_geometry_names(
 
 
 TILE_TDL = (
-    "---\nTDL: 0.1\nName: Tile\n---\n"
+    "---\nTDL: 0.2\nName: Tile\n---\n"
     'Module { Rectangle { Width: 60, Height: 20, Fill: "#0000ff" } }\n'
 )
 TILE_PY = "from tess_shell import Module\n\n\nclass Tile(Module):\n    pass\n"

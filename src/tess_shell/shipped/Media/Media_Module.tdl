@@ -1,5 +1,5 @@
 ---
-TDL: 0.1
+TDL: 0.2
 Shell: 0.1
 Name: Media
 ---
@@ -7,8 +7,11 @@ Name: Media
 # What an MPRIS media player plays, and its controls (Media Module): previous, play or pause and
 # next as icon Buttons, the title in a Marquee text, optionally the artwork and a position slider,
 # and a tooltip with the title, the artist, the player and its state. The Python sends `has_player`,
-# `status`, `title`, `artist`, `album`, `player`, `art`, `length`, `position`, `can_play_pause`,
-# `can_next`, `can_previous`, `can_seek`, `icon`, `tooltip` and `label`; the layer sends `available`
+# `status`, `title`, `artist`, `album`, `player`, `art`, `length`, `position`, `position_text` (the
+# position said as a time, `1:23 of 3:45`, the Slider's accessible value), `can_play_pause`,
+# `can_next`, `can_previous`, `can_seek`, `icon`, `tooltip` (the accessible description), `label`;
+# the param `announce` has the module say a new track, politely (ctx.announce); the layer sends
+# `available`
 # (the session bus can be reached). With no player the module is hidden: its root is
 # `Visible: false`, which takes no space in the Bar and shows no placeholder.
 #
@@ -33,13 +36,17 @@ Module {
         show_position { Type: boolean, Default: false }
         # the title's width in pixels
         max_width { Type: number, Default: 240 }
+        # a new track is announced once, politely (a screen reader user may want it; it is off by
+        # default: Media Module > Accessibility)
+        announce { Type: boolean, Default: false }
     }
 
     FlexBox {
         Name: Root
-        Visible: {{ available and has_player }}
+        Visible: <| available and has_player |>
         Role: GROUP
-        Label: {{ label }}
+        Label: <| label |>
+        Description: <| tooltip |>
         Flex: HORIZONTAL
         Align_Items: CENTER
         Spacing: 4
@@ -56,7 +63,7 @@ Module {
                     Padding: [12, 8, 12, 8]
                     Children {
                         Text {
-                            Text: {{ tooltip }}
+                            Text: <| tooltip |>
                             Width: AUTO
                             Height: AUTO
                             Font_Size: 14
@@ -67,44 +74,45 @@ Module {
             }
         }
         Children {
-            If {{ params.show_art }} {
-                Image { Name: Art, Source: {{ art }}, Placeholder: "mdi:music", Width: 24, Height: 24 }
+            If <| params.show_art |> {
+                Image { Name: Art, Source: <| art |>, Placeholder: "mdi:music", Width: 24, Height: 24 }
             }
-            If {{ params.show_controls }} {
+            If <| params.show_controls |> {
                 Button {
                     Name: Previous
                     Icon: "mdi:skip-previous"
                     Label: "Previous"
-                    Enabled: {{ can_previous }}
+                    Enabled: <| can_previous |>
                     On_Click: previous
                 }
                 Button {
                     Name: Play
-                    Icon: {{ icon }}
-                    Label: {{ "Pause" if status == "PLAYING" else "Play" }}
-                    Enabled: {{ can_play_pause }}
+                    Icon: <| icon |>
+                    Label: <| "Pause" if status == "PLAYING" else "Play" |>
+                    Enabled: <| can_play_pause |>
                     On_Click: play_pause
                 }
                 Button {
                     Name: Next
                     Icon: "mdi:skip-next"
                     Label: "Next"
-                    Enabled: {{ can_next }}
+                    Enabled: <| can_next |>
                     On_Click: next
                 }
             }
-            If {{ params.show_title }} {
-                Marquee_Text { Name: Title, Text: {{ title }}, Width: {{ params.max_width }} }
+            If <| params.show_title |> {
+                Marquee_Text { Name: Title, Text: <| title |>, Width: <| params.max_width |> }
             }
-            If {{ params.show_position }} {
+            If <| params.show_position |> {
                 Slider {
                     Name: Position
                     Label: "Position"
-                    Value: {{ position }}
-                    Max: {{ length }}
-                    Enabled: {{ can_seek }}
-                    On_Changed { Action: drag, position: {{ event.value }} }
-                    On_Released { Action: release, position: {{ event.value }} }
+                    Value: <| position |>
+                    Value_Text: <| position_text |>
+                    Max: <| length |>
+                    Enabled: <| can_seek |>
+                    On_Changed { Action: drag, position: <| event.value |> }
+                    On_Released { Action: release, position: <| event.value |> }
                 }
             }
         }

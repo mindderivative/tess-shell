@@ -1,4 +1,4 @@
-"""``Call`` and a handler's ``{{ }}`` arguments (Events and Actions > Call, caller.data and
+"""``Call`` and a handler's ``<| |>`` arguments (Events and Actions > Call, caller.data and
 Submenus): the schema, the module host's check, and the click that runs a module's action with its
 arguments, through a manager with real tre windows and no compositor."""
 
@@ -34,7 +34,7 @@ from tests.test_popup import SHELL, read
 
 # -- the schema -------------------------------------------------------------------------------
 
-HEAD = "---\nTDL: 0.1\nName: Btn\n---\n"
+HEAD = "---\nTDL: 0.2\nName: Btn\n---\n"
 
 
 def layout(body: str, modules: dict[str, ModuleDef] | None = None) -> tuple[Any, list[Any]]:
@@ -64,7 +64,7 @@ def test_call_names_a_module_action_and_keeps_the_other_keys_as_its_arguments() 
 def test_an_argument_may_be_a_slot_that_is_kept_for_the_moment_the_event_fires() -> None:
     found, findings = layout(
         "Module { Params { p { Type: string, Default: x } }\nFlexBox { On_Click { "
-        'Action: Call, Target: "Btn.go", Id: {{ item.id }}, Tag: a{{ params.p }}b, Fixed: 1 } } }',
+        'Action: Call, Target: "Btn.go", Id: <| item.id |>, Tag: a<| params.p |>b, Fixed: 1 } } }',
         known("Btn"),
     )
     assert found is not None and findings == [], findings
@@ -75,7 +75,7 @@ def test_an_argument_may_be_a_slot_that_is_kept_for_the_moment_the_event_fires()
 
 def test_a_module_own_action_may_take_slot_arguments_too() -> None:
     found, _ = layout(
-        "Module { FlexBox { On_Click { Action: go, Who: {{ event.name }} } } }", known("Btn")
+        "Module { FlexBox { On_Click { Action: go, Who: <| event.name |> } } }", known("Btn")
     )
     h = found.children[0].handlers["On_Click"]
     assert h.action == "go" and h.module == "" and set(h.slots) == {"Who"}
@@ -168,7 +168,7 @@ def test_copy_plain_copies_deep_turns_tuples_into_lists_and_refuses_the_rest() -
 BTN = (
     "Module { Params { label { Type: string, Default: L } }\n"
     'FlexBox { Name: Root, Width: 60, Height: 20, On_Click { Action: Call, Target: "Btn.picked", '
-    'Who: "me", N: 3, Label: {{ params.label }}, Kind: {{ event.name }} } } }'
+    'Who: "me", N: 3, Label: <| params.label |>, Kind: <| event.name |> } } }'
 )
 
 PY = """
@@ -315,7 +315,7 @@ def test_a_click_runs_the_modules_action_with_its_arguments(tmp_path: Path) -> N
 def test_a_slot_reads_the_values_as_they_are_when_the_event_fires(tmp_path: Path) -> None:
     layouts = {
         "Btn": "Module { FlexBox { Name: Root, Width: 60, Height: 20, On_Click { Action: Call, "
-        'Target: "Btn.picked", Count: {{ count }} } } }'
+        'Target: "Btn.picked", Count: <| count |> } } }'
     }
     r = running(tmp_path, layouts=layouts)
     r.store.send("Btn", r.uses[0], "count", 1)
@@ -330,9 +330,9 @@ def test_a_slot_reads_the_values_as_they_are_when_the_event_fires(tmp_path: Path
 def test_a_for_variable_is_in_scope_of_an_argument_slot(tmp_path: Path) -> None:
     layouts = {
         "Btn": "Module { FlexBox { Name: Root, Flex: VERTICAL, Children {\n"
-        "For item In {{ items }} Key {{ item.id }} {\n"
+        "For item In <| items |> Key <| item.id |> {\n"
         'FlexBox { Width: 40, Height: 10, On_Click { Action: Call, Target: "Btn.picked", '
-        "Id: {{ item.id }}, Title: {{ item.title }} } }\n} } } }"
+        "Id: <| item.id |>, Title: <| item.title |> } }\n} } } }"
     }
     r = running(tmp_path, layouts=layouts)
     r.store.send(
@@ -354,7 +354,7 @@ def test_a_slot_that_fails_is_logged_at_its_position_and_the_action_does_not_run
 ) -> None:
     layouts = {
         "Btn": "Module { FlexBox { Name: Root, Width: 60, Height: 20, On_Click { Action: Call, "
-        'Target: "Btn.picked", Id: {{ nothing_here }} } } }'
+        'Target: "Btn.picked", Id: <| nothing_here |> } } }'
     }
     r = running(tmp_path, layouts=layouts)
     r.click(r.root())
@@ -387,7 +387,7 @@ def test_a_call_from_a_shell_file_block_runs_the_action_with_no_use(tmp_path: Pa
     children = (
         "Btn { Name: Btn_One } "
         "FlexBox { Name: Shell_Box, Width: 30, Height: 10, On_Click { Action: Call, "
-        'Target: "Btn.picked", Where: "shell", Kind: {{ event.name }} } }'
+        'Target: "Btn.picked", Where: "shell", Kind: <| event.name |> } }'
     )
     r = running(tmp_path, children=children)
     r.click("Shell_Box")

@@ -1,0 +1,33 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# logo.png sits beside this file; the second Image has no Source and shows its Placeholder colour.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 16
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Image { Source: "logo.png", Width: 32, Height: 32 }
+                            Image { Placeholder: "#334455", Width: 32, Height: 32 }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

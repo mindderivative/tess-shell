@@ -1,0 +1,55 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# Three ways to a tooltip: the short form, an inline Tooltip block, and a Popup with Tooltip: true
+# that blocks name.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 16
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Icon { Icon: "mdi:information-outline", Tooltip: "The short form", Label: "Information" }
+                            FlexBox {
+                                Padding: 8
+                                Tooltip {
+                                    Gap: 4
+                                    Enter_Delay: 300
+                                    Style { Background: $color.surface_raised, Corner_Radius: 6 }
+                                    Children { Label { Text: "A Tooltip block", Margin: 8 } }
+                                }
+                                Children { Label { Text: "Hover me" } }
+                            }
+                            FlexBox {
+                                Padding: 8
+                                Tooltip: Shared_Tip
+                                Children { Label { Text: "Or me" } }
+                            }
+                        }
+                    }
+                }
+            }
+            Popup {
+                Name: Shared_Tip
+                Tooltip: true
+                Gap: 4
+                Style { Background: $color.surface_raised, Corner_Radius: 6 }
+                Children { Label { Text: "A Popup that is a tooltip", Margin: 8 } }
+            }
+        }
+    }
+}

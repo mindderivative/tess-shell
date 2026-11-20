@@ -1,97 +1,80 @@
 # tess-shell
 
-Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launchers, OSDs and widgets) that run alongside an installed desktop environment, with KDE Plasma on Wayland as the first target. It is built on the [tre](https://github.com/mindderivative/tre) rendering engine, with Python for logic and its own data language, TDL, for describing shells.
+Tesserae Shell is a tool for building desktop shells (bars, panels, docks, launchers, on-screen displays and widgets) that run alongside an installed desktop environment, with KDE Plasma on Wayland as the first target. You describe a shell in TDL files, add Python where you want logic, and the [tre](https://github.com/mindderivative/tre) rendering engine draws it.
 
-## Status
+**Documentation: https://mindderivative.github.io/tess-shell/**: installation, a tutorial, the user guide, the reference, the module API and the design record.
 
-Milestones M0 (the skeleton), M1 (a static Bar), M2 (live and modular) and M3 (more surfaces: the look, `Panel`, `Popup`, the `Frame` with strips, melding and peek, monitor hot-plug) are built and accepted on KWin. `run` opens a `Bar` from `Main_Shell.tdl` on the matched monitor through `tess_dl`, the schema, the binder and tre, reserves its space, and stops cleanly on SIGTERM or SIGINT. On top of that:
+> Pre-alpha software. Keep a way back to your usual Plasma panel.
 
-- **Modules:** a `<Name>_Module.tdl` plus `<Name>_Module.py` in `Modules/<Name>/`; a use is written `Clock { format: "%H:%M" }` or `Import: <path>_Module.tdl`. The Python sends values with `ctx.send`; a `{{ }}` slot in the layout reads them, and only the node properties that changed are set. The shell ships a Clock (`format`, `locale`, `hour_cycle`, `timezone`, `tooltip_format`); a module of the same name in your `Modules/` folder overrides it.
-- **Structure and look:** `If`/`Else` and `For` (keyed lists) in a module's layout, style files (`Style: <Name>_Style.tdl` with `Classes`) and `SVG { Icon: "mdi:account" }`: the `mdi` set ships in the package, and Iconify-style JSON sets in the `Icons` folder come first.
-- **Hot reload:** saving a shell, module, style or icon file updates the running shell about 200 ms later, once; a file with an error changes nothing and is reported as `file:line:column`. `SIGHUP` reloads everything. `settings.tdl` keys: `Hot_Reload` (default true), `Reload_Debounce` (milliseconds, default 200); `Logging` applies at once, `Directories`, `Registry` and `Main_Shell` need a restart.
-- **Identity:** the first time the shell registers one of your files it adds a `UID:` line to its metadata, after copying the file to `$XDG_STATE_HOME/tesserae-shell/backups`.
+## Install
 
-- **Look:** a `Theme` file holds colour, type, shape, space, elevation and motion tokens, with `Light`, `Dark`, `High_Contrast` and `Reduced_Motion` modes; a style value `$color.surface` reads one. A `Stylesheet` holds `Rule { Selector: "Text" | ".class" | "#name", ... }` blocks, each with an optional `:hovered` or `:pressed` state. The shell ships a `Default` theme and stylesheet; `Appearance { Theme: ..., Stylesheets: [...], Follow_Desktop: true }` in `settings.tdl` names the ones in use, and the desktop's colour scheme, accent, contrast and reduced-motion settings (the Settings portal) pick the mode live. `Elevation: 20%` or `Shadows { Shadow { ... } }` on a Bar draws its shadow in a transparent margin; the reserved space does not change.
+You need a KDE Plasma desktop on Wayland and Python 3.14 or newer.
 
-- **Events:** `On_Click: open_it` (or `On_Click { Action: pick, Which: "b" }`) on a box, `Rectangle`, `Spacer` or `SVG` in a module's layout calls the module's `@action` method with an `Event`; `On_Secondary_Click` does the same for the right button (`event.button == "secondary"`) and `On_Scroll` for one wheel step (`event.delta` is +1 down, -1 up: `On_Scroll { Action: step, delta: {{ event.delta }} }`); the other events and the shell's own actions come with the Panel.
+```sh
+uv tool install --python 3.14 tesserae-shell      # or: pipx install --python python3.14 tesserae-shell
+```
 
-- **Panels:** `Panel { Name: Volume_OSD, Layer: OVERLAY, Anchor: [BOTTOM], Inset: [0, 0, 0, 80], Width: 260, Height: 60, Input_Region: [], Hide_After: 1500 }` opens an anchored or centred surface; `Visible: false` starts it hidden, `On_Click { Action: Toggle, Target: Volume_OSD }` on a block shows and hides it, and Escape hides one that takes the keyboard. `Attach_To: Top_Bar, Attach: BOTTOM, Gap: 8, Alignment: START` places a Panel against a Bar, another Panel or a module used in a Bar (`Name: Clock_One`). `Animation { Type: SLIDE, Duration: 300 }` slides or fades it in and out, `Movable: true` lets the pointer move it and remembers where, and `On_Open`, `On_Visible`, `On_Close` and `On_Hidden` run shell actions around it.
-- **Popups and tooltips:** `Popup { Name: Menu, Gap: 4, Children { ... } }` is opened by a module with `self.ctx.popup("Menu")` from an `@action` (a click on its block), beside that block, upward under a bottom Bar; `On_Click: Close` inside it closes it, an outside click or Escape dismisses it. `Tooltip: true` on a Popup, with `Tooltip: Name` or an inline `Tooltip { Children { ... } }` on a block or module use, opens it after `Enter_Delay` of hovering. The Clock shows its date as a tooltip (`tooltip_format`, `locale`).
-- **Monitor hot-plug:** plugging an output in opens only the surfaces of the `Monitor` blocks that match it (`Connector`, `Description`, `Index`, `Index: default`), unplugging one closes only its surfaces, and an output whose size or scale changes gets its surfaces' geometry set live. The other monitors' windows are never recreated. A Panel that comes back is a new window at the position saved for `<Monitor>@<output>`, clamped to the output; the modules follow the uses that came or went as a hot reload does. `Index` is evaluated again on every change.
+## Try it
 
-- **Frame:** `Frame { Name: Screen_Frame, Thickness: [10, 20, 30, 40], Margin: 5, Corner_Radius: 0, Inner_Radius: 14, Inner_Border { Width: 2, Color: "#89b4fa" }, Outer_Border { ... }, Style { Background: "#1e1e2e" } }` in a `Monitor` draws a ring around the output (one painter window, with the opening taking no clicks) and reserves each side's thickness plus borders plus margin (four thin reserver windows, one per side with a thickness; a side of 0 has none). `Thickness` and `Margin` are a number, four sides (left, top, right, bottom) or named sides; the radii are one number or four corners clockwise from the top-left, and one too large for the ring is reduced with a warning. A reload changes zones, radii and colours without opening the painter again; tokens (`$color.surface`) follow the theme; `Visible: false` starts it hidden and `Show`, `Hide` and `Toggle` with `Target: <Frame name>` act on it. `tests/kwin/measure_frame.py` measures its cost.
-- **Frame strips and melded Panels:** `Edges { Top { Thickness: 34, Padding: 4, Children { ... } }, Left { ... } }` makes a side a strip: its `Children` (blocks and module uses, with live values, reload and hot-plug like a Bar's, Popups and tooltips included) are laid out in a box in that side's band inside the Frame's painter; the top and bottom strips own the corners and run the full width, the left and right strips run between them and lay their children out vertically, text is not rotated. `Padding` (on the Frame for every strip, or on an edge) is the space between a strip's children and its sides; an edge's `Thickness` replaces the Frame's for that side. `Panel { Name: Dock, Meld: true, Attach_To: Screen_Frame, Attach: BOTTOM, Alignment: CENTER, Length: 320, Depth: 56, Style { Corner_Radius: 12 } }` is drawn inside the Frame's surface as a body grown from that side into the opening, in the Frame's colour and border, as part of the ring's one contour with a fillet (the Frame's `Inner_Radius`) at each join; `Show`, `Hide` and `Toggle` with `Target: Dock` take it out of the contour and put it back, with `Animation { Type: SLIDE | FADE | NONE, Duration: 300 }` (the body grows out of the Frame's edge with its joins growing with it, tre morphing the contour in the engine; or fades; instant with reduced motion), `Hide_After` and the Panel events (`On_Open`, `On_Close`, `On_Visible`, `On_Hidden`, `On_Toggle`, `On_Anim_Start`, `On_Anim_End`); a `Margin`, `Movable`, `Keyboard` or `Input_Region` on it is an error. `Keyboard: NONE | ON_DEMAND` on the Frame sets the painter's keyboard mode (default `NONE`). `Debug { Frame_Join: SMIL | CONCAVE | SHADER | STRUCTURE | PARAM }` in `settings.tdl` (default `PARAM`; a restart applies it, a reload warns) chooses how that join is drawn while the body slides, so the five ways tre 0.6.4 offers can be compared: an svg whose `d` is morphed by SMIL, boxes with concave corners moved by `scale`/`corner_radius`, one shader with an exact fillet and an animated uniform, path data morphed command by command (`morph="structure"`), and a path template whose parameters tre animates. All five end in the ring's one contour (`surfaces/join.py` and `join_*.py`). `tests/kwin/compare_join.py` prints the comparison (frames as PNGs, hit shape, frame cost, memory, code size). `tests/kwin/prepare_m3c_strips.py` writes a KWin check (with `run-strips-join.sh OPTION` and `compare-join.sh`).
-- **Frame blend:** `Debug { Frame_Blend: SRGB | LINEAR }` in `settings.tdl` (default `LINEAR` since 2026-11-12; a restart applies it, a reload warns, like `Frame_Join`) chooses how the Frame's ring is blended. `SRGB` draws the three bands as paths and tre blends their anti-aliased edges in sRGB, so a 2 px light border on the dark ring is thinner to the eye on a curve than on a straight (summed linear light 1.69 of 2.00 at 1x and 1.79 at 1.5x at the opening corner; `tests/kwin/repro_srgb_edge_blend.py`). `LINEAR` (the maintainer's interim, TRE-REQ-015 option 2) replaces the three path nodes by one shader node (`surfaces/frame_shader.py`; the fill band's path node stays under it at alpha 1 as the ring's input region) that draws the outer border, the fill, the inner border and every melded body or peeking strip as distance fields, mixes the colours in linear light and writes the encoded result, with the same positions, margins, thicknesses, radii, reserved zones and click shape as the paths, and the same PARAM-shaped slide (the body's depth is a uniform that tre animates with `Shader.animate`, `sd_round_union` makes the fillets). What it fixes is an edge between two colours the shader paints itself: the border's outer edge, against the ring (that edge loses 0.27 px of width at 1x with paths, 0.18 px at 1.5x, and none with the shader); the border's inner edge is against the opening, where the desktop is, and the compositor blends that in sRGB, so over a dark desktop a curve reads 1.88 of 2.00 at 1x and 1.93 at 1.5x with `LINEAR` (the compositor's own screenshot agrees to 0.001). A Frame the shader cannot draw keeps the paths and logs one WARNING with the reason: a translucent `Background` or border colour, an `Opacity` below 1, a Panel with `Animation: FADE`, more than 8 melded bodies (strips that peek count), a `Frame_Join` other than `PARAM`, or a painter larger than 8192 physical px; a state with a melded body as deep as the opening is drawn with paths while it lasts. Cost on the private sway (software rendering, 1920 x 1080): a frame of a slide draws in 2.7 ms instead of 0.5 ms, the shader node's texture is 7.8 MiB of video memory, and a window that is still draws no frame, as before.
-- **Peek:** `Peek { Size: 24, Enter_Delay: 150, Exit_Delay: 300 }` (all three optional) in a melded Panel or in an `Edges` entry makes it rest as a sliver and come out when the pointer stays on it. A melded Panel rests as a tab: only `Size` pixels of its body stand out of the Frame's edge, part of the ring's one contour with its fillets and the border following (the tab shows no content); the pointer on the tab for `Enter_Delay` ms brings the whole body out, with the same `Animation` as a show, and leaving the Panel for `Exit_Delay` ms sends it back; a quick in and out, or out and in, cancels the timer and nothing flickers, and a change of mind mid-slide turns round from where it is. `Show` brings it fully out, `Hide` and `Hide_After` back to the tab, `Toggle` flips, with the usual events (`On_Open`/`On_Visible` going out, `On_Close`/`On_Hidden` back, `On_Anim_*`); `Visible: false` hides it altogether (then `Hide` goes back to nothing). A strip (`Edges { Top { Thickness: 34, Name: Top_Strip, Children { ... }, Peek { Size: 6 } } }`) rests as a `Size` px sliver (that is what the side holds and reserves) with its children not drawn, and the pointer on the sliver pushes it out over the windows to its `Thickness` without moving them (reserved space is the same in every state); `Name` on the entry is what `Show`, `Hide` and `Toggle` target, the keyboard way in (with `Keyboard: ON_DEMAND` on the Frame the painter takes keys). `Size` is 1 px or more and smaller than the Depth or Thickness, delays 0 ms or more, and a Panel in a window of its own has no peek. Peek works with every `Debug { Frame_Join }` that can start from a tab: PARAM, SMIL and STRUCTURE; SHADER and CONCAVE warn once and a Panel that peeks is drawn with PARAM. Reduced motion switches at once (the delays stay). While a Popup hanging off a peeking Panel is open it stays out.
-- **Peek triggers and handles:** `Peek { Trigger: HOVER | CLICK | DRAG, Handle: AUTO | NONE | DOTS | BAR | CHEVRON, Slide_From: TOP | RIGHT | BOTTOM | LEFT }` (defaults `HOVER`, `AUTO`, the attached edge; one value each, a list is a clear not-built error). `HOVER` is as above. `CLICK`: a click on the tab (or on the handle strip of the open body, the `Size` px at its far edge) opens it, another closes it; hovering does nothing, and `Enter_Delay`/`Exit_Delay` (which apply to `HOVER` only) are ignored with a load warning. `DRAG`: a press on the tab captures the pointer and, past 4 px, the body follows it along the slide (the contour, the content and the handle together, set from the pointer events: no per-frame Python); released at half the way or more it finishes opening, else it goes back, taking time in proportion to what is left; a press that moves under 4 px is a click. The handle is drawn on the middle of the tab and moves with the far edge as it slides: `DOTS` three 6 px dots side by side (`AUTO` for `HOVER`), `BAR` a 22 x 4 px rounded bar (`DRAG`); the three icons are the maintainer's own artwork, flattened copies in `shipped/Handles/`, `CHEVRON` the maintainer's chevron (a wide flat filled triangle, 22 x 6.7 px) that points away from the Frame at rest and towards it when out, turning during the slide on the join's clock (`animate_param`); in the Frame's border colour (else a light or dark that shows on the fill), dim until the pointer is on the tab. A handle is not drawn, with one DEBUG line and no error, when the tab `Size` or the Frame's side is thinner than 8 px (dots, bar, chevron). The tab is the click target, never the handle. A strip takes `Trigger` and `Handle` too. `Slide_From` is for a Panel in a Frame corner (`Alignment: START` or `END`): the other edge it touches, where it slides out and where its tab and handle are (an edge it does not touch is an error; a strip has none). `DRAG` needs a join that can be set at a progress: PARAM, SMIL, STRUCTURE (SHADER and CONCAVE warn once and a dragged host takes PARAM). No keyboard way in beyond `Show`/`Hide`/`Toggle` (not designed yet).
-- **Handle opacity and the content fade:** `Peek { Handle_Opacity: 0.6 }` (0 to 1, default 0.6, also on a strip) is how bright the handle is at rest; hovering the tab raises it to full and leaving lowers it back to that value. The content of a melded Panel or a strip fades with its slide: its opacity is the slide's progress (0 collapsed or at the tab, 1 fully out), on the slide's duration and easing, set in the same call as the contour while a drag follows the pointer and animated on tre's clock otherwise, with either `Debug { Frame_Blend }`; a plain `Show` and `Hide` of a Panel without a `Peek` fades too, and the content is not shown in the tab. On by default; `Content_Fade: false` (a key of a melded `Panel` or of an `Edges` entry) keeps it opaque; with reduced motion there is no fade. A Panel in a window of its own already fades its whole surface with its animation, so `Content_Fade` there is a load warning. An Expander's content fades by its own `Content_Fade` module parameter.
+Save this as `~/.config/tesserae-shell/Shells/Main_Shell.tdl`:
 
-- **Text fields:** `TextField { Text: "hi", Placeholder: "Name", Max_Length: 20, On_Changed { Action: Call, Target: "Search.typed" } }`, multi-line with `Multiline: true, Wrap: WORD | NONE, Lines: 4`, single-line `Style { Overflow: SCROLL | ELLIPSIS | CLIP }`; the shipped `TextInput` and `TextEditor` modules wrap them (`TextInput { Placeholder: "Search", Password: true }`). A clicked field takes typed, pasted and input-method text and reports it with `On_Changed` (`event.old`, `event.new`), `On_Submit` and `On_Text_Commit`; a Bar or Panel that holds one takes the keyboard `on_demand`. Tab and the focus ring are M6.
-- **Enabled and `:disabled` (M4a):** `Enabled: false` on any block (a value or a `{{ }}` slot, live) sets tre's `disabled` accessibility state, shows the block's `:disabled` style (`Rule { Selector: ".tile:disabled", Opacity: 0.5 }`, which wins over `:hovered` and `:pressed`) and stops its pointer: no hover or pressed look, no tooltip, and a click on it or on a block under it runs no `On_Click` and reaches no block above or behind it. Turning it on while the pointer is over the block restores the look it had before the state, exactly; a reload that flips or drops `Enabled` changes the node in place.
-- **Parts (M4a):** a module's layout names blocks with `Part: track`; a stylesheet addresses them as `Rule { Selector: "Slider::track", ... }` and `"Slider::handle:hovered"` (a part rule beats a class or type rule on that block; a state adds to the base rule), at every use of the module; a part also takes the module's `:disabled` when the module's root is disabled. A rule that names a part the module does not declare is an error with the nearest part names.
-- **Call and `caller.data` (M4a):** `On_Click { Action: Call, Target: "Clock.cycle_format", Format: "24h", Id: {{ item.id }} }` runs the `@action` `cycle_format` of the module `Clock` (it must have a use in the shell); the other keys arrive in `event.args`. An argument written as a slot is evaluated when the event fires, with `event`, the use's params and values, the `For` variables around the block and, in a Popup, `caller` in scope. A module opens a Popup with `self.ctx.popup("Menu", data={"Title": "Hello"})` and the Popup's content reads `{{ caller.data.Title }}` (also `caller.module`, `caller.use.name`, `caller.use.params`, `caller.rect`, `caller.source`); data is a plain copy made when the Popup opens. A `Show` that carries `Data { }` and popup submenus wait for the Menu (M4c).
-- **D-Bus service layer (M5a, internal):** `self.ctx.dbus.session()` and `.system()` give a module a bus; `bus.proxy(name, path, interface)` has `get`, `call` (5 s timeout, `ServiceTimeout` / `ServiceUnavailable`), `set`, `on_property_changed` and `on_signal`, all on one `dbus` thread, and a module that makes a proxy for a service gets `available` (true/false) sent for it, `on_service_lost(name)` and `on_service_found(name)` when the service leaves or returns (`optional=True` leaves a service out of `available`). A module's `Children` wrap in `If {{ available }}` to hide with its service; the Settings portal reader runs on it.
-- **Battery and Workspaces (M5b):** `Battery { show_percent: true }` shows UPower's display device (icon, `82 %`, a tooltip with the state and the time left; the number takes the theme's warning and error colour at UPower's low and critical levels) and hides itself when there is no battery or no UPower. `Workspaces { label: name }` (or `number`) shows KWin's virtual desktops as buttons, marks the current one and switches on a click (it sets KWin's `current`); it hides itself without KWin. A hidden one takes no space in the Bar (`Visible: false` on its root, which a module of your own can write too). `Icon: {{ name }}` (an `SVG` block or an `Icon`, `Button` or `MenuItem` call inside a module) shows the icon a module sends by name, from the same icon sets as a name written in a file. Both follow the services' signals, with no timer. The KWin check: `uv run python tests/kwin/prepare_m5b_gallery.py`, then `/tmp/tess-kwin-m5b/checklist.txt`.
-- **Network (M5c):** `Network { show_name: false, show_vpn: true }` shows how the machine is connected, as NetworkManager reports it (read-only, on the system bus, no polling): an icon for the kind (ethernet, Wi-Fi with four signal steps, mobile, Bluetooth, other) and the state (no internet or a sign-in wanted in the theme's warning colour, disconnected or networking off muted), a second `vpn` icon while a VPN is up, an optional connection name, and a tooltip such as `Home-WiFi, Wi-Fi 70 %, connected` (the percent in steps of 5). It stays visible when disconnected and hides only when NetworkManager is absent (no space taken). The KWin check: `uv run python tests/kwin/prepare_m5c_gallery.py`, then `/tmp/tess-kwin-m5c/checklist.txt`.
-- **Media (M5d):** `Media { show_art: false, show_title: true, show_controls: true, show_position: false, max_width: 240 }` shows what an MPRIS media player (a browser, Elisa, VLC, mpv...) plays on the session bus: previous, play or pause and next as buttons, the title in a scrolling text, optionally the cover (a `file://` URL only; a web address is never fetched) and a position slider, with a tooltip such as `Song, Artist (Google Chrome), paused`. One player is shown (the one that plays; then the last shown; then the paused one that changed last), a browser's integration player counts once, and with no player the module hides and takes no space. **The buttons and the slider act on the real player**; the look changes only when the player says so, never on a guess. With `show_position` a one-second tick runs only while the player plays; with none there is no wake-up. The KWin check: `uv run python tests/kwin/prepare_m5d_gallery.py`, then `/tmp/tess-kwin-m5d/checklist.txt`.
-- **Audio (M5e):** `Audio { show_percent: false, show_slider: false, show_mic: true, step: 5 }` shows the default sound output through the shell's own client of the PulseAudio native protocol (`pipewire-pulse` or PulseAudio; no library, no tool, no polling): an icon for the kind (speaker, headphones, HDMI, Bluetooth) and the level, muted in the muted colour; a click mutes, a scroll steps the volume, a secondary click opens a menu of outputs (the shell provides the Popup `Audio_Outputs`; write one of that name to change it), the slider writes while dragged at most 20 times a second; a crossed microphone while the input is muted. Hidden when there is no sound server, back when it starts or restarts. Its tests use an in-process fake server; nothing in the suite reaches a real one.
-- **Tray (T-030):** `Tray { icon_size: 18, show_passive: false, spacing: 6 }` shows the system tray: one icon per application that registers a StatusNotifierItem, with its tooltip, a click (`Activate`), a middle click, the wheel and a secondary click that opens the item's own menu, drawn by the shell from `com.canonical.dbusmenu` in the Popups `Tray_Menu`, `Tray_Menu_2` and `Tray_Menu_3` (the shell provides these three, so a shell file writes none; a Popup of the same name you write replaces the shipped one; a menu shows three levels and scrolls at 60 % of the output's height, `Max_Height: 60%`) beside the clicked icon, and `Activate` gets the icon's centre. The shell is a second tray host beside Plasma's (it owns `org.kde.StatusNotifierHost-<pid>`, never starts a watcher); icons come from the desktop's icon theme (`ctx.icons`), the item's own folder or its pixmap. **A click calls the real application and a menu entry runs in it.** Hidden when there is no watcher or item. Its tests use a fake watcher, items and menu on a private bus.
-- **A module inside `If` and `For`:** in a module's layout, `If {{ show }} { Clock { } }` shows or hides the module's blocks (the module keeps running and keeps its values) and `For item In {{ items }} Key {{ item.id }} { Clock { format: {{ item.fmt }} } }` makes one use of the module for each entry, while the entry lasts; params, handler arguments and `Children` may read `item`, and the module hears of each use with `use_added(use)` and `use_removed(use)`. A reorder keeps each entry's use and nodes. The same inside a Popup: a menu module's `For` over `caller.data.items` makes its `MenuItem` uses when the Popup opens and ends them when it closes.
+```tdl
+---
+TDL: 0.2
+Name: Main_Shell
+---
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Spacer { }
+                            Clock { format: "%H:%M" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
 
-Not built yet: strip expand and contract (reserved-space changes), a Bar or a window-Panel melded to the Frame, gradients, popup submenus and `Data { }` on `Show`, most events and actions, the `:focused` state, keyboard focus and operation (M6), the display and interactive standard widget modules other than `TextInput` and `TextEditor`, services, shortcuts. The design is in `docs/`.
+```sh
+tesserae-shell check    # validate every file; needs no compositor
+tesserae-shell run      # start the shell
+```
+
+A bar with a clock appears along the top of every monitor, and saving the file changes it about 200 ms later. The [documentation](https://mindderivative.github.io/tess-shell/) goes on from there.
 
 ## Commands
 
 ```sh
 tesserae-shell version   # versions of the shell, tess_re, tess_el, tess_dl and Python
-tesserae-shell check     # validate settings.tdl and every shell file (syntax, header, schema)
+tesserae-shell check     # validate settings.tdl and every shell file
 tesserae-shell run       # start the shell (needs a Wayland compositor with layer-shell)
 tesserae-shell schema --json [--out FILE]  # the shell's schema as JSON, for configuration tools
+tesserae-shell migrate [--check] [--json] [--force]  # bring your files to the current format (backup first)
+tesserae-shell install-session [--print|--enable|--remove] [--force]  # the desktop file and the systemd user unit
 ```
 
-`schema --json` prints (or, with `--out FILE`, writes) every block, surface, key, kind, choice,
-default, event, action, theme token and `settings.tdl` key the loader accepts, with a line of
-documentation for each, so a configuration application can build its forms from it. It is read from
-the loader's own tables (`tess_shell.schema.export.schema_json()`; `schema_dict()` is the same as
-plain data), so it cannot list a key the loader refuses or miss one it accepts, and two runs give the
-same bytes. A field the model cannot give is `null`; the shape is `schema_version` 1.1.
+The [command line page](https://mindderivative.github.io/tess-shell/guide/command-line/) lists every command, option and exit code.
 
-Since 1.1: a key's `default` is what tre reads on a bare block (the binder builds it headless and
-`node.get` reads it back; a few shell-owned keys are authored and pinned by tests), `min`/`max` come
-from the one table of ranges (`schema/ranges.py`) that the loader also judges a written value or a
-slot by (`Opacity` 0 to 1, `Scale` above 0, `Flex_Grow` 0 or more, `Font_Weight` 1 to 1000, lengths,
-sides and radii 0 or more, ...), each key lists `preferred_tokens` (the theme tokens a form should
-offer first, next to the mechanical `tokens`), and a `modules` section lists every shipped module
-with its params (type, default, doc), the events a call may handle, the common keys it may write
-and the `@action`s `Call` may run.
+## Security
 
-### Control commands
-
-A running shell owns the session bus name `io.github.mindderivative.TesseraeShell` (object
-`/io/github/mindderivative/TesseraeShell`, interface `io.github.mindderivative.TesseraeShell1`) and
-these commands talk to it. They import only the standard library and `jeepney`, so one from a key
-binding costs about 55 ms from process start to exit:
-
-```sh
-tesserae-shell reload                       # check every file and apply, answering after the apply
-tesserae-shell quit                         # stop the shell (exit 0 once it has been asked)
-tesserae-shell status [--json]              # state, versions, monitors, surfaces, module names, last errors
-tesserae-shell show|hide|toggle NAME        # a Panel, a Frame or a melded Panel by its Name
-tesserae-shell call MODULE ACTION [ARG ...] # run an @action of a module (each ARG a JSON value, else text)
-tesserae-shell log-level LEVEL              # TRACE to CRITICAL, until the next settings.tdl reload
-```
-
-`--timeout SECONDS` (default 5) bounds the wait. Exit codes: 0 done, 1 the command ran and failed
-(an unknown name, an action that raised, errors in the files: the message names the module or the
-`file:line`), 2 no session bus (`DBUS_SESSION_BUS_ADDRESS` is not set), 3 no shell is running, 4 a
-second `run` (the instance lock, or the bus name when the shell is run from another runtime
-directory), 5 timeout. With `--json` an error is also one object on standard output:
-`{"ok": false, "error": "...", "exit": 3}`. `status` never lists a param value or a line of the
-log. No command opens a Popup, and `call` reaches only methods marked `@action`.
-`Settings { Control: false }` exports nothing (no bus name; the commands exit 3).
-
-Global options: `--config-dir PATH`, `--json`, `--quiet`, `--timeout SECONDS`. The `kwin`
-subcommand named in the design reports that it is not implemented yet.
+A module is Python that runs with your rights. The modules that ship with the shell run inside it; a module you write or add runs in a process of its own, so a module that hangs or crashes does not freeze your bars. That is not a sandbox: it can still read your files and start programs. Write modules yourself or read them before you add them. TDL files cannot run code. Keep your configuration folder writable by you only: the shell warns if it is not.
 
 ## Development
 
@@ -101,16 +84,8 @@ uv sync
 uv run pytest
 ```
 
-## Documentation
+`docs/` is the documentation site (MkDocs); `docs/design/` is generated from the maintainer's design notes by [`tools/sync_docs.py`](tools/sync_docs.py). The [contributing page](https://mindderivative.github.io/tess-shell/contributing/) has the rest. To build the site locally: `uv sync --only-group docs && uv run --no-sync mkdocs serve`.
 
-The design documentation is in [`docs/`](docs/README.md). Start at [Home](docs/00%20Home/Home.md) for the current status, decisions and open questions.
+## Licence and third-party notices
 
-`docs/` is generated from the maintainer's design notes (an Obsidian vault) by [`tools/sync_docs.py`](tools/sync_docs.py). Edits made in `docs/` are overwritten the next time the tool runs.
-
-## Display widgets (M4b)
-
-Label, TextBox, ProgressBar, Badge, Marquee_Text, Icon, Image and Expander ship as standard modules (an Expander call may write `On_Changed`, raised when its opening or closing has finished, `event.value` true when open); `Tooltip: "text"` is the short form of a tooltip (a slot is written unquoted: `Tooltip: {{ params.Text }}`); a disabled block opens no tooltip unless it writes `Tooltip_When_Disabled: true`; a disabled Marquee (so `Marquee_Text`) whose text is cut with an ellipsis always shows its whole text. Colours come from the Default stylesheet (`Appearance { Stylesheets: [Default] }`). The gallery: `uv run python tests/kwin/prepare_m4b_gallery.py`, then `/tmp/tess-kwin-m4b/run.sh`.
-
-## Interactive widgets (M4c)
-
-Button, Toggle, Checkbox, Slider, List, Menu and MenuItem ship as standard modules and `ScrollBox` is a block. They are operated by the pointer (keys and focus are M6); `Enabled: false` shows `:disabled` and ignores the pointer. A Toggle, a Checkbox, a Slider or a List raises `On_Changed` (`event.old`, `event.new`, `event.value`) when the user changes it and never when a module sets `Checked`, `Value` or `Selected`. A Slider also raises `On_Released` once when the press that moved it ends (also when the button is let go outside the slider), with the final value in `event.value`: use it for an action that must happen once, such as a seek. A Menu is the content of a `Popup`; a Button opens it with `On_Click { Action: Show, Target: File_Menu, Data { Id: 7 } }` and a `MenuItem { Submenu: Share_Menu }` opens another Popup beside it. The gallery: `uv run python tests/kwin/prepare_m4c_gallery.py`, then `/tmp/tess-kwin-m4c-widgets/run.sh`.
+The shell is MIT licensed ([`LICENSE`](LICENSE)). The assets it ships follow that unless they say otherwise: the three peek handle icons (`shipped/Handles/`) and the fallback image `shipped/Images/error.png` were made for Tesserae Shell and are MIT; the icon set `shipped/Icons/mdi.json` is Material Design Icons by Pictogrammers, under Apache-2.0 (with the licence text, `MDI-LICENSE.txt`, next to it). The package ships no font; text is drawn with the fonts bundled in `tesserae-engine` (Roboto, Noto Sans Arabic and Hack Nerd Font Mono). [`NOTICE`](NOTICE) lists every shipped or required third-party asset and runtime dependency with its licence and source; it is in the wheel (`dist-info/licenses/NOTICE`) and the sdist, and `tests/test_notice.py` fails when an asset or a dependency is added without a line in it. When you add a dependency or an asset, add its line to `NOTICE` in the same change.

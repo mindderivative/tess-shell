@@ -28,14 +28,14 @@ from tess_shell.config.settings import load_settings
 from tess_shell.schema import blocks, docs, export
 from tess_shell.schema.export import schema_dict, schema_json
 from tess_shell.schema.findings import Finding
-from tess_shell.schema.look import STYLE_UNION, read_stylesheet
+from tess_shell.schema.look import DEFAULT_FONT, STYLE_UNION, read_stylesheet
 from tess_shell.schema.shell import BAR_KEYS, read_module, read_shell
 from tess_shell.schema.values import ValueProblem, coerce
 
 D: dict[str, Any] = schema_dict()
 SVG = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4'><rect width='4' height='4'/></svg>"
-SHELL_HEAD = "---\nTDL: 0.1\nShell: 0.1\nName: Main_Shell\n---\n"
-FILE_HEAD = "---\nTDL: 0.1\nName: Probe\n---\n"
+SHELL_HEAD = "---\nTDL: 0.2\nShell: 0.1\nName: Main_Shell\n---\n"
+FILE_HEAD = "---\nTDL: 0.2\nName: Probe\n---\n"
 ORIGIN = m.Origin("", 1, 1)
 
 
@@ -49,7 +49,7 @@ class Icons:
 
 # the findings that say a key or its value was not taken as written
 BAD = {"unknown-key", "bad-value", "bad-token", "bad-sides", "bad-name"}
-REFUSED = {"unknown-key", "event-not-raised", "peek-slide-from"}
+REFUSED = {"unknown-key", "removed-key", "event-not-raised", "peek-slide-from"}
 
 
 # -- running the loader on a probe --------------------------------------------------------------
@@ -192,6 +192,8 @@ def sample(key: dict[str, Any]) -> str | None:
             return "[]"
         case "monitor_index":
             return "0"
+        case "key_chord":
+            return '"Ctrl+Alt+F5"'
         case "list":
             item, length = key["item_kind"], key.get("length")
             if item == "number" and length == 4:
@@ -219,7 +221,7 @@ def every_key() -> list[tuple[str, str, str, dict[str, Any]]]:
 
 
 def test_top_level_shape() -> None:
-    assert D["schema_version"] == "1.2"
+    assert D["schema_version"] == "1.12"
     assert D["shell_version"]
     assert list(D) == [
         "schema_version",
@@ -232,8 +234,11 @@ def test_top_level_shape() -> None:
         "actions",
         "enums",
         "tokens",
+        "system_tokens",
         "modules",
+        "panels",
         "popups",
+        "shortcuts",
     ]
     assert list(D["blocks"]) == list(blocks.BLOCKS)
     for spec in (*D["roots"].values(), *D["blocks"].values()):
@@ -343,7 +348,7 @@ def words() -> list[str]:
 
 def writable(shape: str) -> list[str]:
     """The words that can be written in ``shape`` (some are the language's own: ``If``, ``Key``)."""
-    head = "---\nTDL: 0.1\nName: P\n---\n"
+    head = "---\nTDL: 0.2\nName: P\n---\n"
     return [
         w
         for w in words()
@@ -521,7 +526,7 @@ def test_a_slot_is_taken_where_the_export_says() -> None:
             for key, entry in spec[part].items():
                 if entry["kind"] in ("block", "tooltip", "shadows"):
                     continue
-                found = probe(context, [f"{key}: {{{{ x }}}}"])[0]
+                found = probe(context, [f"{key}: <| x |>"])[0]
                 refused = any(f.rule in BAD for f in found)
                 if refused == entry["slot"]:
                     bad.append((name, part, key, entry["slot"]))
@@ -534,7 +539,7 @@ def test_a_surface_takes_no_slot() -> None:
             assert entry["slot"] is False
             if entry["kind"] in ("block", "tooltip", None) or not entry["built"]:
                 continue
-            found = probe(name, [f"{key}: {{{{ x }}}}"])[0]
+            found = probe(name, [f"{key}: <| x |>"])[0]
             assert any(f.rule in BAD for f in found), (name, key)
 
 
@@ -621,7 +626,7 @@ def test_named_enums_are_the_lists_the_keys_use() -> None:
 
 
 def accepts(kind: str, text: str, choices: tuple[str, ...] = ()) -> bool:
-    result = tess_dl.parse(f"---\nTDL: 0.1\nName: P\n---\nX {{ K: {text} }}")
+    result = tess_dl.parse(f"---\nTDL: 0.2\nName: P\n---\nX {{ K: {text} }}")
     assert not result.errors and result.document is not None, text
     (entry,) = result.document.root.entries
     assert isinstance(entry, tess_dl.Property)
@@ -747,6 +752,17 @@ def test_no_doc_line_describes_a_key_nothing_accepts() -> None:
     assert set(docs.SPEC_NOTES) == set(D["roots"]) | set(D["blocks"])
 
 
+def test_the_font_the_shell_supplies_is_listed_apart_from_the_shipped_theme_tokens() -> None:
+    (token,) = D["system_tokens"]
+    assert token["name"] == "type.system.font_family"
+    assert token["ref"] == "$type.system.font_family"
+    assert token["kind"] == "font"
+    assert token["default"] == DEFAULT_FONT
+    assert token["theme_wins"] is True
+    assert token["doc"]
+    assert "system.font_family" not in D["tokens"]["type"]
+
+
 def test_a_key_is_in_one_group_only() -> None:
     seen: dict[str, str] = {}
     for group, keys in docs.GROUPS.items():
@@ -806,7 +822,7 @@ def test_the_command_prints_valid_json(capsys: pytest.CaptureFixture[str]) -> No
 
 def test_the_command_takes_json_before_the_command_too(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--json", "schema"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.2"
+    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.12"
 
 
 def test_out_writes_the_file_and_prints_nothing(
@@ -934,7 +950,7 @@ def test_a_key_lists_the_token_groups_whose_values_it_can_read() -> None:
 
 
 def load(tmp_path: Path, body: str) -> list[Any]:
-    (tmp_path / "settings.tdl").write_text(f"---\nTDL: 0.1\nName: Settings\n---\n{body}")
+    (tmp_path / "settings.tdl").write_text(f"---\nTDL: 0.2\nName: Settings\n---\n{body}")
     return load_settings(tmp_path)[1]
 
 
@@ -961,13 +977,24 @@ def test_the_settings_are_the_keys_of_the_readers_tuples() -> None:
     assert tuple(s["Logging"]) == cfg.LOGGING_KEYS
     assert tuple(s["Appearance"]) == cfg.APPEARANCE_KEYS
     assert tuple(s["Debug"]) == cfg.DEBUG_KEYS
+    assert tuple(s["KWin"]) == cfg.KWIN_KEYS
     assert tuple(s["Validation"]) == cfg.VALIDATION_KEYS
     assert tuple(s["Directories"]) == FOLDERS
-    assert set(s) == {"Settings", "Directories", "Logging", "Validation", "Appearance", "Debug"}
+    assert tuple(s["Shortcuts"]) == cfg.FIXED_SHORTCUTS
+    assert set(s) == {
+        "Settings",
+        "Directories",
+        "Logging",
+        "Validation",
+        "Appearance",
+        "Debug",
+        "Shortcuts",
+        "KWin",
+    }
 
 
 @pytest.mark.parametrize(
-    "section", ["Settings", "Directories", "Logging", "Validation", "Appearance", "Debug"]
+    "section", ["Settings", "Directories", "Logging", "Validation", "Appearance", "Debug", "KWin"]
 )
 def test_settings_takes_the_exported_keys_and_no_other(tmp_path: Path, section: str) -> None:
     pool = [w for w in PROP_POOL if not w.isupper()]
@@ -980,6 +1007,8 @@ def settings_sample(tmp_path: Path, key: dict[str, Any]) -> str | None:
     match key["kind"]:
         case "bool":
             return "false"
+        case "key_chord":
+            return '"Ctrl+Shift+F1"'
         case "enum":
             return str(key["choices"][-1])
         case "number" | "whole":
@@ -1148,6 +1177,8 @@ def example_findings(name: str, text: str) -> list[Finding]:
             return run("shell", text)
         case "Monitor":
             return run("shell", f"Shell {{ {text} }}")
+        case "Imported_Shell":
+            return run("shell", text)
         case "Bar" | "Panel" | "Popup" | "Frame":
             return run("shell", f"Shell {{ Monitor {{ Name: M, Children {{ {text} }} }} }}")
         case "Peek":

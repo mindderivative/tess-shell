@@ -26,6 +26,10 @@ from tess_shell.schema.values import ValueProblem, coerce, named_shadows
 GROUPS = ("Color", "Type", "Shape", "Space", "Elevation", "Motion")
 _MODE_BLOCKS = {"Light": "light", "Dark": "dark", "High_Contrast": "high_contrast"}
 _MODE_BLOCKS["Reduced_Motion"] = "reduced_motion"
+SYSTEM_FONT = "type.system.font_family"  # the desktop's UI font family (Portals)
+# the family tre's bundled font has and text uses when no ``Font_Family`` is set (the shell ships
+# no font of its own): what ``type.system.font_family`` holds while the desktop names none
+DEFAULT_FONT = "Roboto"
 DESKTOP = "DESKTOP"  # ``Accent: DESKTOP`` asks for the desktop's accent colour
 
 # the kind a token's written value is checked as, by its place in the theme
@@ -158,6 +162,16 @@ def effective_tokens(
     tokens = _effective(theme, appearance)
     if fallback is not None and fallback is not theme:
         tokens = {**_effective(fallback, appearance), **tokens}
+    # the desktop's UI font, offered to every theme (a theme that sets the token itself keeps it);
+    # with no desktop font the family text uses when none is set, so a layout that uses it always
+    # resolves (a name tre does not know, such as the generic ``sans-serif``, measures as no text)
+    tokens.setdefault(
+        SYSTEM_FONT,
+        Token(
+            tess_dl.String(appearance.font_family or DEFAULT_FONT, ""),
+            m.Origin("<desktop font>", 1, 1),
+        ),
+    )
     return tokens
 
 
@@ -201,9 +215,6 @@ def _effective(theme: ThemeDef, appearance: Appearance) -> dict[str, Token]:
 _SELECTOR = re.compile(
     r"^(?P<head>[#.]?)(?P<name>[A-Za-z][A-Za-z0-9_]*)(?P<part>::[A-Za-z_]+)?(?P<state>:[A-Za-z_]+)?$"
 )
-
-# the states a rule can name that no block can be in yet, and why
-_STATES_NOT_BUILT = {"focused": "no block can take focus yet (keyboard focus is M6)"}
 
 # every style key of every block, with its kind; the kinds agree across blocks
 STYLE_UNION: dict[str, str] = {k: v for row in blocks.BLOCKS.values() for k, v in row[1].items()}
@@ -257,15 +268,6 @@ def _rule(ctx: _Ctx, block: Block, module_names: set[str]) -> Rule | None:
         )
         return None
     state = (found["state"] or ":")[1:]
-    if state in _STATES_NOT_BUILT:
-        ctx.add(
-            selector.value_origin,
-            "not-built",
-            f"the state :{state} is not built: {_STATES_NOT_BUILT[state]}",
-            "the rule is skipped",
-            "warning",
-        )
-        return None
     if state and state not in m.STATES:
         ctx.add(
             selector.value_origin,

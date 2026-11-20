@@ -1,14 +1,16 @@
 """The Audio: the default sound output (Audio Module). It follows the sound server through
 ``ctx.audio`` (the shell's own client of the PulseAudio native protocol, ADR-0021): the callback
 runs on the ``dbus`` thread when the server says something changed, derives the values and sends
-only the ones that changed. No timer, no thread, no subprocess. One instance serves every use.
+only the ones that changed. No timer, no thread, no subprocess (a tick of one second runs only
+while a new volume waits to be said). One instance serves every use.
 
 Keys sent: ``ready`` (a sound server is connected), ``volume`` (percent, the mean of the channels;
 above 100 as the server says), ``volume_text`` (``"45 %"``), ``muted``, ``kind`` (``SPEAKER``,
 ``HEADPHONES``, ``HDMI``, ``BLUETOOTH`` or ``OTHER``), ``name`` (the output's description),
 ``mic_muted``, ``has_mic``, ``outputs`` (a list of ``id``, ``name``, ``kind``, ``icon``,
-``current``), ``icon``, ``tooltip`` and ``label`` (the accessible name). A layout shows itself with
-``Visible: {{ ready }}``.
+``current``), ``icon``, ``tooltip`` and ``label`` (the accessible name). A use with ``announce``
+has the module say, politely, with ``ctx.announce``: mute and unmute at once, a new volume once it
+has settled (once, even when several uses ask). A layout shows itself with ``Visible: <| ready |>``.
 
 The module does not predict a change: the setters call the server and the values change when its
 event arrives. While the user drags a slider the module sends no ``volume`` for that use (the
@@ -27,6 +29,7 @@ from tess_shell import Module, action
 if TYPE_CHECKING:
     from tess_shell.module import Event
     from tess_shell.modules.context import UseRecord
+    from tess_shell.modules.ticks import Cancellable as TickSubscription
     from tess_shell.services.api import AudioState, Output, Subscription
 
 DRAG_EVERY = 0.05  # seconds between two volume writes of one drag: at most 20 a second
@@ -89,6 +92,9 @@ class Audio(Module):
         self.monotonic: Callable[[], float] = time.monotonic  # a test swaps it
         self.send_lock = threading.Lock()  # a callback and a drag are two threads
         self.subscription: Subscription | None = None
+        self.last_volume: int | None = None  # the volume of the last state of an output
+        self.settle_lock = threading.Lock()  # the dbus thread starts the tick, the loop ends it
+        self.settle_sub: TickSubscription | None = None
 
     def validate_use(self, use: UseRecord) -> None:
         step = use.params.get("step")
@@ -104,6 +110,10 @@ class Audio(Module):
         if self.subscription is not None:
             self.subscription.cancel()
             self.subscription = None
+        with self.settle_lock:
+            if self.settle_sub is not None:
+                self.settle_sub.cancel()
+                self.settle_sub = None
 
     def use_added(self, use: UseRecord) -> None:
         with self.send_lock:
@@ -117,7 +127,50 @@ class Audio(Module):
 
     def changed(self, state: AudioState | None) -> None:
         self.state = state
-        self.publish(self.values(state))
+        values = self.values(state)
+        said = self.words(state)
+        self.publish(values)
+        if said is not None:
+            self.say(said)
+
+    def say(self, text: str) -> None:
+        """Announce ``text`` for the first use that asked for it with ``announce``."""
+        asking = next((u for u in list(self.ctx.uses.values()) if u.params.get("announce")), None)
+        if asking is not None:
+            self.ctx.announce(text, use=asking)
+
+    def announcing(self) -> bool:
+        return any(use.params.get("announce") for use in list(self.ctx.uses.values()))
+
+    def words(self, state: AudioState | None) -> str | None:
+        """The words to say now for this state, or ``None`` (Accessibility, rule 6, ``POLITE``):
+        mute and unmute at once; a new volume of the same output starts a tick that says it at the
+        next second (:meth:`settled`), at most once a second however the volume moves."""
+        previous_volume, self.last_volume = self.last_volume, None
+        if state is None or state.output is None:
+            return None
+        self.last_volume = state.volume
+        known = self.sent.get("ready") and self.sent.get("name") == state.output.description
+        if not known or not self.announcing():
+            return None
+        if state.muted != self.sent.get("muted"):
+            return "Muted" if state.muted else f"Unmuted, {state.volume} percent"
+        if not state.muted and previous_volume is not None and state.volume != previous_volume:
+            with self.settle_lock:
+                if self.settle_sub is None:
+                    self.settle_sub = self.ctx.on_tick("second", self.settled)
+        return None
+
+    def settled(self) -> None:
+        """Loop thread, the second after a volume change: say the volume now, once, and stop the
+        tick (nothing wakes while the volume is still)."""
+        with self.settle_lock:
+            if self.settle_sub is not None:
+                self.settle_sub.cancel()
+                self.settle_sub = None
+        state = self.state
+        if state is not None and state.output is not None and not state.muted:
+            self.say(f"Volume {state.volume} percent")
 
     def values(self, state: AudioState | None) -> dict[str, Any]:
         if state is None:

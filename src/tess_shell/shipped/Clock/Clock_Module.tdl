@@ -1,5 +1,5 @@
 ---
-TDL: 0.1
+TDL: 0.2
 Shell: 0.1
 Name: Clock
 ---
@@ -13,7 +13,7 @@ Module {
         # a locale name such as de_DE for month and day names; empty is the process's own. The
         # system must have it (`locale -a`); a missing one is warned about and ignored
         locale { Type: string, Default: "" }
-        # desktop, 12 or 24
+        # desktop (12 hours when the locale's time format counts to 12, else 24), 12 or 24
         hour_cycle { Type: string, Default: desktop }
         # an IANA zone such as Europe/Berlin; empty is the local zone
         timezone { Type: string, Default: "" }
@@ -36,7 +36,7 @@ Module {
                     Padding: [12, 8, 12, 8]
                     Children {
                         Text {
-                            Text: {{ tooltip }}
+                            Text: <| tooltip |>
                             Width: AUTO
                             Height: AUTO
                             Font_Size: 14
@@ -50,7 +50,9 @@ Module {
             Text {
                 Name: Face
                 Class: clock_text
-                Text: {{ time }}
+                Text: <| time |>
+                Label: <| time |>
+                Description: <| tooltip |>
             }
         }
     }

@@ -22,12 +22,12 @@ ROOT = Path("/tmp/tess-kwin-m3b")
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 LABEL = 'Text { Text: "14:05", Font_Size: 14, Foreground: "#ffffff" }'
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
+    "---\nTDL: 0.2\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default] }\n}\n"
 )
 
 BUTTON_TDL = """---
-TDL: 0.1
+TDL: 0.2
 Name: Menu_Button
 ---
 
@@ -44,7 +44,7 @@ Module {
         Style { Background: $color.primary, Corner_Radius: 4 }
         On_Click: open_it
         Children {
-            Text { Text: {{ params.label }}, Width: AUTO, Height: AUTO, Font_Size: 13, Foreground: $color.on_primary }
+            Text { Text: <| params.label |>, Width: AUTO, Height: AUTO, Font_Size: 13, Foreground: $color.on_primary }
         }
     }
 }

@@ -1,0 +1,20 @@
+---
+TDL: 0.2
+Name: Uptime
+---
+# params say what a use may set; the block tree shows what the Python sends, in <| ... |>.
+Module {
+    Style: ../../Styles/Uptime_Style.tdl
+
+    Params {
+        label { Type: string, Default: "up" }
+    }
+    FlexBox {
+        Flex: HORIZONTAL
+        Spacing: 4
+        On_Click { Action: Call, Target: "Uptime.refresh" }
+        Children {
+            Text { Class: uptime_text, Text: <| params.label + " " + uptime |> }
+        }
+    }
+}

@@ -1,0 +1,65 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# A Frame: a ring around the screen. The top side is a strip that holds a Clock, the bottom side
+# is a thin line, and a Panel is melded into the bottom edge as a dock that rests as a tab.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Frame {
+                Name: Screen_Frame
+                Thickness: [6, 34, 6, 6]
+                Margin: 4
+                Corner_Radius: 0
+                Inner_Radius: 14
+                Inner_Border { Width: 2, Color: "#4682b4" }
+                Style { Background: "#12171d" }
+                Edges {
+                    Top {
+                        Thickness: 34
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            FlexBox {
+                                Width: EXPAND
+                                Flex: HORIZONTAL
+                                Align_Items: CENTER
+                                Children {
+                                    Spacer { }
+                                    Clock { }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Panel {
+                Name: Dock
+                Meld: true
+                Attach_To: Screen_Frame
+                Attach: BOTTOM
+                Alignment: CENTER
+                Length: 320
+                Depth: 56
+                Peek { Size: 12, Enter_Delay: 150, Exit_Delay: 300 }
+                Animation { Type: SLIDE, Duration: 250 }
+                Style { Corner_Radius: 12 }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Justify_Content: CENTER
+                        Spacing: 16
+                        Children {
+                            Icon { Icon: "mdi:folder", Size: 28, Label: "Files" }
+                            Icon { Icon: "mdi:console", Size: 28, Label: "Terminal" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

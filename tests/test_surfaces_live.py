@@ -129,7 +129,7 @@ def clock_config(tmp_path: Path, fmt: str) -> Path:
     )
     write_example(tmp_path, body)
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: Settings\n---\nSettings { Logging { Level: DEBUG } }\n"
+        "---\nTDL: 0.2\nName: Settings\n---\nSettings { Logging { Level: DEBUG } }\n"
     )
     return tmp_path
 
@@ -232,8 +232,8 @@ Module {
     FlexBox {
         Name: Row
         Children {
-            For w In {{ items }} Key {{ w.id }} {
-                Text { Text: {{ w.title }}, Foreground: "#ffffff" }
+            For w In <| items |> Key <| w.id |> {
+                Text { Text: <| w.title |>, Foreground: "#ffffff" }
             }
         }
     }
@@ -253,7 +253,7 @@ def test_a_for_follows_a_modules_list_while_the_shell_runs(
     (folder / "Todo_Module.tdl").write_text(HEADER.replace("Main_Shell", "Todo") + TODO_TDL)
     (folder / "Todo_Module.py").write_text(TODO_PY)
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: Settings\n---\nSettings { Logging { Level: DEBUG } }\n"
+        "---\nTDL: 0.2\nName: Settings\n---\nSettings { Logging { Level: DEBUG } }\n"
     )
     shell = start(private_sway, tmp_path)
     try:
@@ -267,11 +267,17 @@ def test_a_for_follows_a_modules_list_while_the_shell_runs(
 
     assert "Traceback" not in shell.stderr
     assert not re.search(r"^(ERROR|CRITICAL|WARNING)\s+\|", shell.stderr, re.M), shell.stderr
-    # B1: each appended item creates exactly one node and touches no other (the others are kept)
+    # B1: each appended item creates exactly one node and touches no other (the others are kept).
+    # The module runs in a process of its own and the surfaces do not wait for it: the first paint
+    # has no rows, and the first rebuild brings the two it started with (or three, when the first
+    # tick came in the same turn); every rebuild after that is one appended item
     stats = re.findall(
         r"rebuilt Bar Top_Bar: (\d+) changed, (\d+) created, (\d+) removed", shell.stderr
     )
-    assert len(stats) >= 3 and all(s == ("0", "1", "0") for s in stats), stats
+    assert len(stats) >= 3, stats
+    first = stats[0]
+    assert first[0] == "0" and first[2] == "0" and int(first[1]) >= 2, stats
+    assert all(s == ("0", "1", "0") for s in stats[1:]), stats
 
 
 def test_a_shadow_changes_neither_the_reserved_space_nor_the_body(
@@ -288,7 +294,7 @@ def test_a_shadow_changes_neither_the_reserved_space_nor_the_body(
         shell.wait_for("Bar Top_Bar on HEADLESS-1 configured")
         # Gap 8 + Height 32 reserved 48 without a shadow (D31); the same with one
         assert reserved_rect(private_sway, before)["y"] == before["y"] + 48
-        assert "size (0, 105)" in shell.log_text()  # 8 (shadow in the Gap) + 32 + 65 below
+        shell.wait_log("size (0, 105)")  # 8 (shadow in the Gap) + 32 + 65 below
         shell.process.send_signal(signal.SIGTERM)
         assert shell.finish() == 0
     finally:

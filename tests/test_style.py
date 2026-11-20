@@ -15,7 +15,7 @@ from tess_shell.schema.findings import Finding
 from tess_shell.schema.model import ModuleDef, StyleDef
 from tess_shell.schema.shell import read_module, read_style
 
-HEAD = "---\nTDL: 0.1\nName: {name}\n---\n"
+HEAD = "---\nTDL: 0.2\nName: {name}\n---\n"
 
 STYLE = """
 Style {

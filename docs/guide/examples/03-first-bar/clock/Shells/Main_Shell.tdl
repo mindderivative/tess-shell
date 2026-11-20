@@ -1,0 +1,32 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# One Bar along the top of every monitor, with the time at its right end.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Spacer { }
+                            Clock { format: "%H:%M" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

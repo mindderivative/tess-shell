@@ -1,0 +1,217 @@
+name: CI
+
+# Also called by release.yml, so a tagged release runs the same checks on the tagged commit.
+# No paths-ignore: "CI result" is a required check on main (a ruleset, 2026-11-15), and a workflow
+# that does not run would leave it pending for ever. A pull request that changes only docs/ (the
+# vault's generated export) therefore still runs this workflow, but skips lint, the test shards and
+# the package check, which cannot be affected; the docs build and "CI result" still run. Every
+# other change, and every push, tag and manual run, runs everything.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_call:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  changes:
+    name: What the pull request changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    # No job-level permissions: release.yml calls this workflow with only contents: read, and a
+    # called workflow cannot ask for more. The pull request's file list is public data, so the
+    # default token reads it; if the call ever fails, docs_only stays false and everything runs.
+    outputs:
+      docs_only: ${{ steps.files.outputs.docs_only }}
+    steps:
+      - id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          # docs_only is true only for a pull request whose every changed path (a renamed file's
+          # old path too) is under docs/design/ (the vault's export). Anything else, or any error, means "run everything".
+          docs_only=false
+          if [ "$EVENT" = pull_request ]; then
+            files=$(gh api "repos/$REPO/pulls/$PR/files" --paginate \
+              --jq '.[] | .filename, (.previous_filename // empty)') || files=""
+            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qv '^docs/design/'; then
+              docs_only=true
+            fi
+          fi
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+          echo "docs_only=$docs_only"
+
+  lint:
+    name: Lint & types
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      # pyproject.toml sets python-preference = "only-system" (the regular GIL build of CPython,
+      # never the free-threaded one), so uv will not download a Python: the runner needs one.
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - run: uv sync --locked --python 3.14
+      # src and tests only: docs/ is generated from the vault and tools/ is not linted.
+      - run: |
+          uv run ruff check src tests
+          uv run ruff format --check src tests
+          uv run mypy
+
+  test:
+    name: Test (shard ${{ matrix.group }} of 4)
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      # Every shard runs to the end so one run shows every failure (a shard is a few minutes).
+      fail-fast: false
+      matrix:
+        group: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      # The suite drives a private headless sway (WLR_BACKENDS=headless, pixman), private D-Bus
+      # daemons and a virtual keyboard (wtype). tre draws through wgpu and a hosted runner has no
+      # GPU, so Mesa's software Vulkan (lavapipe) gives it an adapter, as tre's own CI does.
+      # libwayland-dev: wayland.xml, which tre's virtual-pointer helper generates bindings from.
+      # locales: the Clock module's German test.
+      # at-spi2-core: at-spi2-registryd, for the test that reads the accessibility announcements.
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            sway wtype grim dbus systemd \
+            mesa-vulkan-drivers libgl1-mesa-dri libegl1 libxkbcommon0 \
+            fontconfig fonts-dejavu-core libwayland-dev locales at-spi2-core
+          sudo locale-gen de_DE.UTF-8
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - run: uv sync --locked --python 3.14
+      # The real-pointer live tests (peek, focus, keys, slider, tray, media, popup) skip unless
+      # tre's test helper and a virtual environment with pywayland exist (tests/live_pointer.py,
+      # TRE_DIR). They are the tests that found the peek-drag bug, so CI fetches the helper from
+      # the engine release the shell is pinned to (tesserae-engine 0.6.7).
+      - name: tre's virtual-pointer helper
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: mindderivative/tess-re
+          ref: 8e57a6ab1e1e53182817f655c9057dbf5e7088c1 # v0.6.7
+          path: tre
+          sparse-checkout: |
+            tests/wlr_pointer.py
+            tests/data
+          fetch-depth: 1
+          persist-credentials: false
+      - run: |
+          uv venv --python 3.14 tre/.venv
+          uv pip install --python tre/.venv/bin/python pywayland
+      # The suite refuses to run with WAYLAND_DISPLAY or DISPLAY set (tests/conftest.py); a hosted
+      # runner has neither. The 60 s idle tests and the PipeWire sandbox tests are deselected by
+      # default (pyproject addopts). pytest-split gives each shard the same share of the measured
+      # time (.test_durations; a test it has no time for counts as the average). -rs prints why a
+      # test was skipped, so a silently skipped group shows in the log.
+      - name: Tests
+        env:
+          TRE_DIR: ${{ github.workspace }}/tre
+        run: >
+          uv run pytest -q -rfEs
+          --splits 4 --group ${{ matrix.group }}
+          --durations-path .test_durations
+
+  package:
+    name: Wheel installs and imports in a clean environment
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - run: uv build --out-dir dist
+      # -I: no user site and no working directory on the path, so only the wheel's own files and
+      # its installed dependencies (tesserae-utils among them, from PyPI) can be imported.
+      - name: Install the wheel alone, import it and run the command
+        run: |
+          uv venv --python 3.14 /tmp/smoke
+          uv pip install --python /tmp/smoke/bin/python dist/*.whl
+          cd /tmp
+          /tmp/smoke/bin/python -I -c "import tess_shell, tess_utils"
+          /tmp/smoke/bin/tesserae-shell version
+
+  docs:
+    name: The docs site builds (mkdocs --strict)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      # Only the docs group: the docs never import the package. docs/ is the vault's generated
+      # export, so a broken link or an unreadable page in a new export fails here, before the
+      # merge, and not at the deploy.
+      - run: uv sync --locked --only-group docs
+      - run: uv run --no-sync mkdocs build --strict
+        env:
+          NO_MKDOCS_2_WARNING: "1"
+
+  result:
+    name: CI result
+    if: always()
+    needs: [changes, lint, test, package, docs]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # The one check to require: it does not change when the number of shards does.
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+          DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
+        run: |
+          echo "changes, lint, test, package, docs: $RESULTS (docs only: $DOCS_ONLY)"
+          for r in $RESULTS; do
+            case "$r" in
+              success) ;;
+              # Skipped is a pass only where the "changes" job decided the skip: a pull request that
+              # touches docs/ and nothing else. Any other skip (a failed dependency) is a failure.
+              skipped) [ "$DOCS_ONLY" = true ] || { echo "a job was skipped but the change is not docs-only"; exit 1; } ;;
+              *) echo "a job did not succeed ($r)"; exit 1 ;;
+            esac
+          done

@@ -1,0 +1,66 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# A Button in the Bar opens the Popup File_Menu; the Menu is the Popup's content.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Button {
+                                Text: "File"
+                                Icon: "mdi:menu-down"
+                                Icon_Position: END
+                                On_Click { Action: Toggle, Target: File_Menu }
+                            }
+                        }
+                    }
+                }
+            }
+            Popup {
+                Name: File_Menu
+                Gap: 4
+                Style { Background: $color.surface_raised, Corner_Radius: 8, Elevation: 20% }
+                Children {
+                    Menu {
+                        Label: "File"
+                        Children {
+                            MenuItem { Text: "New", Icon: "mdi:file-plus-outline", Shortcut_Text: "Ctrl+N" }
+                            MenuItem { Text: "Open", Shortcut_Text: "Ctrl+O" }
+                            MenuItem { Separator: true }
+                            MenuItem { Text: "Share", Submenu: Share_Menu }
+                            MenuItem { Text: "Print", Enabled: false }
+                        }
+                    }
+                }
+            }
+            Popup {
+                Name: Share_Menu
+                Gap: 4
+                Style { Background: $color.surface_raised, Corner_Radius: 8, Elevation: 20% }
+                Children {
+                    Menu {
+                        Children {
+                            MenuItem { Text: "Mail" }
+                            MenuItem { Text: "Chat" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

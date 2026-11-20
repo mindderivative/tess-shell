@@ -135,11 +135,54 @@ def _emit(options: Options, text: str, data: dict[str, Any]) -> None:
     print(json.dumps(data) if options.json else text)
 
 
-def _fail(options: Options, failure: Failure) -> int:
+def _unit_warnings() -> list[str]:
+    """What is wrong with the installed systemd unit's ``ExecStart`` (``tess_shell.session``)."""
+    from tess_shell import session
+
+    return session.installed_warnings()
+
+
+def _print_warnings(warnings: Sequence[str]) -> None:
+    for warning in warnings:
+        print(f"tesserae-shell: warning: {warning}", file=sys.stderr)
+
+
+def _stopped_recovery(command: str, failure: Failure) -> dict[str, Any] | None:
+    """What ``status`` can still say when no shell runs (Crash Recovery and Watchdog > The Crash
+    Record): the unclean starts since the last clean stop, the last crash, and whether the next
+    start is a safe start. Read from the state folder; ``None`` when there is nothing to say."""
+    if command != "status" or failure.code != ExitCode.NOT_RUNNING:
+        return None
+    from tess_shell.recovery_state import iso, state_folder, summary
+
+    found = summary(state_folder(), shell_running=False)
+    if not found.unclean and found.last_crash is None:
+        return None
+    return {
+        "unclean_starts": found.unclean,
+        "last_crash": iso(found.last_crash),
+        "next_start_safe": found.next_safe,
+    }
+
+
+def _fail(
+    options: Options,
+    failure: Failure,
+    warnings: Sequence[str] = (),
+    recovery: dict[str, Any] | None = None,
+) -> int:
     if options.json:
-        print(json.dumps({"ok": False, "error": failure.message, "exit": int(failure.code)}))
+        data: dict[str, Any] = {"ok": False, "error": failure.message, "exit": int(failure.code)}
+        if warnings:
+            data["warnings"] = list(warnings)
+        if recovery is not None:
+            data["recovery"] = recovery
+        print(json.dumps(data))
     else:
         print(f"tesserae-shell: {failure.message}", file=sys.stderr)
+        if recovery is not None:
+            print(*recovery_lines(recovery), sep="\n", file=sys.stderr)
+        _print_warnings(warnings)
     return int(failure.code)
 
 
@@ -163,6 +206,25 @@ def parse_argument(text: str) -> Any:
         return text
 
 
+def recovery_lines(recovery: dict[str, Any]) -> list[str]:
+    """The crash facts of ``status``, from the running shell's ``recovery`` object or from the
+    state folder (``next_start_safe`` instead of ``safe_start`` when no shell runs)."""
+    lines = [
+        "unclean starts since the last clean stop: " + str(recovery.get("unclean_starts", 0)),
+        "last crash: " + str(recovery.get("last_crash") or "none"),
+    ]
+    skipped = recovery.get("skipped_modules") or []
+    if recovery.get("safe_start"):
+        lines.append(
+            "safe start: user modules were not loaded"
+            + (f" ({', '.join(skipped)})" if skipped else "")
+            + "; `tesserae-shell reload` or a restart tries them again"
+        )
+    if recovery.get("next_start_safe"):
+        lines.append("the next start will be a safe start: user modules will not be loaded")
+    return lines
+
+
 def text_status(status: dict[str, Any]) -> str:
     version = status.get("version", {})
     lines = [
@@ -181,29 +243,45 @@ def text_status(status: dict[str, Any]) -> str:
             f"  {s['name']}  {s['kind']}  {'shown' if s['shown'] else 'hidden'}  {s['output']}"
         )
     lines.append("modules: " + (", ".join(status.get("modules", [])) or "none"))
+    processes = status.get("module_processes", [])
+    if processes:
+        lines.append(
+            "module processes: "
+            + ", ".join(
+                f"{p['module']} (pid {p['pid']}, {p['state']}"
+                + (f", restart {p['tries']} of 5" if p.get("tries") else "")
+                + ")"
+                for p in processes
+            )
+        )
     errors = status.get("errors", [])
     lines.append("last errors:" + ("" if errors else " none"))
     for e in errors:
         module = f" [{e['module']}]" if e.get("module") else ""
         lines.append(f"  {e['file']}:{e['line']}: {e['rule']}: {e['message']}{module}")
+    if isinstance(status.get("recovery"), dict):
+        lines.extend(recovery_lines(status["recovery"]))
     return "\n".join(lines)
 
 
 def run(command: str, args: Any, options: Options) -> int:
     """Run a control command; the exit code."""
+    warnings = _unit_warnings() if command == "status" else []
     try:
         shell = Shell(options.timeout)
     except Failure as failure:
-        return _fail(options, failure)
+        return _fail(options, failure, warnings)
     try:
-        return _run(shell, command, args, options)
+        return _run(shell, command, args, options, warnings)
     except Failure as failure:
-        return _fail(options, failure)
+        return _fail(options, failure, warnings, _stopped_recovery(command, failure))
     finally:
         shell.close()
 
 
-def _run(shell: Shell, command: str, args: Any, options: Options) -> int:
+def _run(
+    shell: Shell, command: str, args: Any, options: Options, warnings: Sequence[str] = ()
+) -> int:
     if command == "reload":
         ok, message = shell.call("Reload")
         return _answer(options, ok, message)
@@ -214,9 +292,15 @@ def _run(shell: Shell, command: str, args: Any, options: Options) -> int:
     if command == "status":
         (text,) = shell.call("Status")
         if options.json:
-            print(text)
+            # the shell's own text, unless the unit has something to say: then the same object
+            # with a "warnings" list (a key that is there only when there is a warning)
+            if warnings:
+                print(json.dumps({**json.loads(text), "warnings": list(warnings)}))
+            else:
+                print(text)
         else:
             print(text_status(json.loads(text)))
+            _print_warnings(warnings)
         return int(ExitCode.OK)
     if command in ("show", "hide", "toggle"):
         ok, message = shell.call(command.capitalize(), "s", [args.name])

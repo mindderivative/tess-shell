@@ -1,0 +1,31 @@
+nav:
+  - Overview: index.md
+  - Installation: guide/install.md
+  - Getting Started: guide/first-bar.md
+  - Tutorial: guide/tutorial.md
+  - Guide:
+      - Overview: guide/index.md
+      - The Configuration Folder: guide/configuration-folder.md
+      - Surfaces: guide/surfaces.md
+      - Multiple Monitors: guide/monitors.md
+      - Modules: guide/modules.md
+      - Writing a Module: guide/writing-a-module.md
+      - Styling and Themes: guide/styling.md
+      - Settings: guide/settings.md
+      - Keyboard and Shortcuts: guide/keyboard.md
+      - Hot Reload: guide/hot-reload.md
+      - Start with Your Session: guide/session.md
+      - Security and Trust: guide/security.md
+      - The Command Line: guide/command-line.md
+      - Troubleshooting: guide/troubleshooting.md
+  - Examples: examples.md
+  - Reference:
+      - Messages: reference/messages.md
+      - The Schema Export: reference/schema.md
+  - API:
+      - Module API: api/module-api.md
+      - Python Builder: api/python-builder.md
+  - Architecture: architecture.md
+  - Upgrading: upgrading.md
+  - Design: design
+  - Contributing: contributing.md

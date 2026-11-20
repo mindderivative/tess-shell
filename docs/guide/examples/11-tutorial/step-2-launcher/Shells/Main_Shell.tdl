@@ -1,0 +1,45 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# Step 2: the Bar of step 1 gets a button, and the shell gets a Panel named Launcher.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 32
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Button { Icon: "mdi:magnify", Label: "Applications", On_Click { Action: Toggle, Target: Launcher } }
+                            Spacer { }
+                            Clock { format: "%H:%M" }
+                        }
+                    }
+                }
+            }
+            Panel {
+                Name: Launcher
+                Layer: OVERLAY
+                Anchor: [TOP]
+                Inset: [0, 80, 0, 0]
+                Width: 520
+                Height: 460
+                Keyboard: EXCLUSIVE
+                Visible: false
+                Style { Background: $color.surface_raised, Corner_Radius: 12, Elevation: 30% }
+                Children { Applications { max_results: 10, icon_size: 28 } }
+            }
+        }
+    }
+}

@@ -87,7 +87,7 @@ def test_nearest_names_help_with_a_typo(tmp_path: Path) -> None:
 
 
 def module(text: str, sets: IconSets | None) -> tuple[m.Node | None, list[Finding]]:
-    doc = tess_dl.parse("---\nTDL: 0.1\nName: Ico\n---\n" + text, path="Ico_Module.tdl").document
+    doc = tess_dl.parse("---\nTDL: 0.2\nName: Ico\n---\n" + text, path="Ico_Module.tdl").document
     assert doc is not None
     found, findings = read_module(doc, "Ico_Module.tdl", icons=sets)
     node = found.children[0] if found else None
@@ -149,7 +149,7 @@ def test_the_config_icons_folder_comes_before_the_listed_directories(tmp_path: P
     (tmp_path / "Styles").mkdir()
     (tmp_path / "other").mkdir()
     (tmp_path / "settings.tdl").write_text(
-        "---\nTDL: 0.1\nName: Settings\n---\nSettings { Directories {\n"
+        "---\nTDL: 0.2\nName: Settings\n---\nSettings { Directories {\n"
         f'    Icons: "{tmp_path}/extra"\n    Styles: "{tmp_path}/other"\n}} }}\n'
     )
     settings, findings = load_settings(tmp_path)
@@ -164,11 +164,13 @@ def test_check_resolves_icons_from_the_config_folder(
     write_set(tmp_path / "Icons", "mdi", "mdi", {"dot": DOT})
     folder = tmp_path / "Modules" / "Ico"
     folder.mkdir(parents=True)
-    head = "---\nTDL: 0.1\nName: {n}\n---\n"
+    head = "---\nTDL: 0.2\nName: {n}\n---\n"
     (folder / "Ico_Module.tdl").write_text(
         head.format(n="Ico") + 'Module { SVG { Icon: "mdi:dot" } }\n'
     )
-    (folder / "Ico_Module.py").write_text("")
+    (folder / "Ico_Module.py").write_text(
+        "from tess_shell import Module\n\nclass I(Module):\n    pass\n"
+    )
     shells = tmp_path / "Shells"
     shells.mkdir()
     (shells / "Main_Shell.tdl").write_text(

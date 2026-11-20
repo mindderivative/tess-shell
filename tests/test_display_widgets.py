@@ -49,7 +49,7 @@ def test_progressbar_follows_its_value_with_role_and_range() -> None:
 
 
 def test_progressbar_fill_eases_over_the_medium_duration_and_not_under_reduced_motion() -> None:
-    driver = "Module { FlexBox { Children { ProgressBar { Name: P, Value: {{ v }} } } } }"
+    driver = "Module { FlexBox { Children { ProgressBar { Name: P, Value: <| v |> } } } }"
     code = "from tess_shell import Module\nclass Driver(Module):\n    def start(self):\n        self.ctx.send('v', 0)\n"
     with running("Driver { }", driver=driver, driver_py=code) as w:
         w.send("v", 100)
@@ -59,7 +59,7 @@ def test_progressbar_fill_eases_over_the_medium_duration_and_not_under_reduced_m
         w.advance(500)
         assert fill.get("width") == "100%"
     with running(
-        "Driver { }", driver=driver, driver_py=code, appearance=Appearance(reduced_motion=True)
+        "Driver { }", driver=driver, driver_py=code, appearance=Appearance(animations=False)
     ) as w:
         w.send("v", 100)
         w.advance(16)
@@ -88,7 +88,7 @@ def test_marquee_scrolls_only_when_the_text_does_not_fit() -> None:
 
 def test_marquee_is_static_with_an_ellipsis_under_reduced_motion_and_when_disabled() -> None:
     body = 'Marquee_Text { Text: "a very long text that does not fit in a hundred pixels", Width: 100%s }'
-    for extra, look in ((", Enabled: false", None), ("", Appearance(reduced_motion=True))):
+    for extra, look in ((", Enabled: false", None), ("", Appearance(animations=False))):
         with running(body.replace("%s", extra), appearance=look) as w:
             (runner,) = w.view.runners.values()
             assert runner.state == "static" and runner.tooltip_gate() is True
@@ -127,7 +127,7 @@ def test_a_disabled_marquee_opens_a_tooltip_with_the_whole_text() -> None:
 
 
 def test_expander_opens_and_closes_with_size_and_fade_and_rests() -> None:
-    driver = "Module { FlexBox { Children { Expander { Name: E, Expanded: {{ open }}, Children { Label { Text: inside } } } } } }"
+    driver = "Module { FlexBox { Children { Expander { Name: E, Expanded: <| open |>, Children { Label { Text: inside } } } } } }"
     code = "from tess_shell import Module\nclass Driver(Module):\n    def start(self):\n        self.ctx.send('open', False)\n"
     with running("Driver { }", driver=driver, driver_py=code) as w:
         root, body = w.of_use("Expander", "Root"), w.of_use("Expander", "Body")
@@ -235,7 +235,7 @@ def test_each_decode_is_timed_and_one_over_the_limit_is_logged_with_the_file(
 
 def test_expander_raises_on_changed_when_an_opening_and_a_closing_finish() -> None:
     driver = (
-        "Module { FlexBox { Children { Expander { Name: E, Expanded: {{ open }}, "
+        "Module { FlexBox { Children { Expander { Name: E, Expanded: <| open |>, "
         "On_Changed: changed, Children { Label { Text: inside } } } } } }"
     )
     code = (
@@ -263,7 +263,7 @@ def test_expander_raises_on_changed_when_an_opening_and_a_closing_finish() -> No
 
 def test_expander_reversed_half_way_raises_one_event_for_the_finish() -> None:
     driver = (
-        "Module { FlexBox { Children { Expander { Name: E, Expanded: {{ open }}, "
+        "Module { FlexBox { Children { Expander { Name: E, Expanded: <| open |>, "
         "On_Changed: changed, Children { Label { Text: inside } } } } } }"
     )
     code = (
@@ -284,7 +284,7 @@ def test_expander_reversed_half_way_raises_one_event_for_the_finish() -> None:
 
 def test_expander_on_changed_is_at_once_under_reduced_motion() -> None:
     driver = (
-        "Module { FlexBox { Children { Expander { Name: E, Expanded: {{ open }}, "
+        "Module { FlexBox { Children { Expander { Name: E, Expanded: <| open |>, "
         "On_Changed: changed, Children { Label { Text: inside } } } } } }"
     )
     code = (
@@ -295,7 +295,7 @@ def test_expander_on_changed_is_at_once_under_reduced_motion() -> None:
         "    @action\n    def changed(self, event):\n        self.seen.append(event.value)\n"
     )
     with running(
-        "Driver { }", driver=driver, driver_py=code, appearance=Appearance(reduced_motion=True)
+        "Driver { }", driver=driver, driver_py=code, appearance=Appearance(animations=False)
     ) as w:
         seen = w.host.loaded["Driver"].instance.seen  # type: ignore[attr-defined]
         w.send("open", True)
@@ -304,6 +304,6 @@ def test_expander_on_changed_is_at_once_under_reduced_motion() -> None:
 
 
 def test_expander_on_changed_on_a_call_in_a_shell_file() -> None:
-    body = "Expander { On_Changed { Action: Call, Target: \"Driver.pressed\" }, Children { Label { Text: x } } }"
+    body = 'Expander { On_Changed { Action: Call, Target: "Driver.pressed" }, Children { Label { Text: x } } }'
     with running(body) as w:
         assert w.problems == [] and w.warnings() == []

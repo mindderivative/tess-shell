@@ -10,9 +10,9 @@ from typing import Any
 from tests.widgets_live import Widgets, running
 
 ITEM_TDL = (
-    "---\nTDL: 0.1\nName: Item\n---\n"
+    "---\nTDL: 0.2\nName: Item\n---\n"
     "Module { Params { title { Type: string, Default: none } }\n"
-    "FlexBox { Name: Root, Children { Text { Name: T, Text: {{ label }} } } } }\n"
+    "FlexBox { Name: Root, Children { Text { Name: T, Text: <| label |> } } } }\n"
 )
 ITEM_PY = """
 from tess_shell import Module
@@ -54,16 +54,16 @@ DRIVER_PY = (
     "        self.ctx.send('rows', [{'id': 'a', 't': 'A'}, {'id': 'b', 't': 'B'}])\n"
 )
 FOR = (
-    "Module { FlexBox { Name: Root, Children { For r In {{ rows }} Key {{ r.id }} { "
-    "Item { title: {{ r.t }}, On_Click { Action: pick, Id: {{ r.id }} } } } } } }"
+    "Module { FlexBox { Name: Root, Children { For r In <| rows |> Key <| r.id |> { "
+    "Item { title: <| r.t |>, On_Click { Action: pick, Id: <| r.id |> } } } } } }"
 )
 IF = (
     "Module { FlexBox { Name: Root, Children { Text { Name: Before, Text: x } "
-    "If {{ show }} { Item { title: shown } } Else { Text { Name: Other, Text: other } } } } }"
+    "If <| show |> { Item { title: shown } } Else { Text { Name: Other, Text: other } } } } }"
 )
 IF_IN_FOR = (
-    "Module { FlexBox { Name: Root, Children { For r In {{ rows }} Key {{ r.id }} { "
-    "FlexBox { Children { If {{ r.on }} { Item { title: {{ r.t }} } } } } } } } }"
+    "Module { FlexBox { Name: Root, Children { For r In <| rows |> Key <| r.id |> { "
+    "FlexBox { Children { If <| r.on |> { Item { title: <| r.t |> } } } } } } } }"
 )
 
 
@@ -119,7 +119,7 @@ def test_a_module_in_an_if_shows_and_hides_with_its_condition_and_keeps_its_valu
 
 def test_a_module_in_the_else_branch_works_too() -> None:
     code = DRIVER_PY.replace("'show', True", "'show', False")
-    swapped = IF.replace("If {{ show }}", "If {{ not show }}")
+    swapped = IF.replace("If <| show |>", "If <| not show |>")
     with run(swapped, code) as w:
         assert labels(w) == ["x", "other"] or labels(w) == ["x", "item shown"]
         w.send("show", True)
@@ -254,11 +254,12 @@ def test_a_module_in_an_if_in_a_for_comes_and_goes_with_the_entry_s_condition() 
 def test_a_call_in_a_for_is_checked_when_the_file_is_read_not_on_the_first_entry() -> None:
     import pytest
 
-    # Item's root is a FlexBox: it raises no On_Key_Down
-    bad = FOR.replace("On_Click", "On_Key_Down")
+    # On_Hover is no event of the shell (On_Key_Down was this test's example until the field's
+    # event of that name was built, M6d): a call in a For is refused when the file is read
+    bad = FOR.replace("On_Click", "On_Hover")
     with pytest.raises(AssertionError) as raised, run(bad):
         pass
-    assert "On_Key_Down" in str(raised.value) or "does not raise" in str(raised.value)
+    assert "On_Hover" in str(raised.value) or "does not raise" in str(raised.value)
 
 
 def test_modules_that_call_themselves_through_a_for_are_a_cycle() -> None:
@@ -267,11 +268,11 @@ def test_modules_that_call_themselves_through_a_for_are_a_cycle() -> None:
     from tess_shell.schema.graph import module_cycles
     from tess_shell.schema.shell import read_module, read_module_params
 
-    HEAD = "---\nTDL: 0.1\nName: %s\n---\n"
+    HEAD = "---\nTDL: 0.2\nName: %s\n---\n"
     texts = {
         "A": HEAD % "A"
-        + "Module { FlexBox { Children { For r In {{ rows }} Key {{ r }} { B { } } } } }\n",
-        "B": HEAD % "B" + "Module { FlexBox { Children { If {{ x }} { A { } } } } }\n",
+        + "Module { FlexBox { Children { For r In <| rows |> Key <| r |> { B { } } } } }\n",
+        "B": HEAD % "B" + "Module { FlexBox { Children { If <| x |> { A { } } } } }\n",
     }
     docs = {n: tess_dl.parse(t, path=f"{n}.tdl").document for n, t in texts.items()}
     stubs = {n: read_module_params(d, f"{n}.tdl") for n, d in docs.items() if d is not None}
@@ -287,12 +288,12 @@ def test_modules_that_call_themselves_through_a_for_are_a_cycle() -> None:
 
 def test_a_module_with_a_tooltip_in_a_for_gets_one_per_entry() -> None:
     tip = (
-        "---\nTDL: 0.1\nName: Tipped\n---\n"
+        "---\nTDL: 0.2\nName: Tipped\n---\n"
         "Module { FlexBox { Name: Root, Tooltip { Children { Text { Text: tip } } }, "
-        "Children { Text { Text: {{ label }} } } } }\n"
+        "Children { Text { Text: <| label |> } } } }\n"
     )
     driver = (
-        "Module { FlexBox { Name: Root, Children { For r In {{ rows }} Key {{ r.id }} { "
+        "Module { FlexBox { Name: Root, Children { For r In <| rows |> Key <| r.id |> { "
         "Tipped { } } } } }"
     )
     code = (

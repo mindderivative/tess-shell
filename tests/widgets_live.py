@@ -27,7 +27,14 @@ from tess_shell.modules.ticks import TimeSource
 from tess_shell.schema.look import read_stylesheet, read_theme
 from tess_shell.schema.model import ModuleDef, StyleDef
 from tess_shell.schema.shell import read_module, read_module_params, read_shell, read_style
-from tess_shell.services.api import AudioPort, DBusPort, IconsPort, TrayPort
+from tess_shell.services.api import (
+    AppsPort,
+    AudioPort,
+    DBusPort,
+    IconsPort,
+    TrayPort,
+    WindowsPort,
+)
 from tess_shell.surfaces.manager import SurfaceManager
 from tests.shell_samples import HEADER
 from tests.test_panel import StubApp
@@ -61,6 +68,10 @@ STANDARD = (
     "Tray",
     "Tray_Item",
     "Tray_Menu",
+    "Tasks",
+    "Task_Item",
+    "Applications",
+    "Volume_OSD",
 )
 THEME = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text()
 DEFAULT_SHEET = (SHIPPED / "Stylesheets" / "Default_Stylesheet.tdl").read_text()
@@ -94,10 +105,14 @@ class Widgets:
     lines: list[str] = field(default_factory=list)
     problems: list[Any] = field(default_factory=list)
     uses: list[str] = field(default_factory=list)
+    home: str = "Top_Bar"  # the surface ``window``, ``view`` and ``advance`` are about
+
+    def surface(self, name: str) -> Any:
+        return next(s for s in self.manager.surfaces if s.name == name)
 
     @property
     def bar(self) -> Any:
-        return next(s for s in self.manager.surfaces if s.name == "Top_Bar")
+        return self.surface(self.home)
 
     @property
     def window(self) -> Any:
@@ -160,7 +175,7 @@ def _defs(driver: str, extra: dict[str, str]) -> dict[str, ModuleDef]:
     texts: dict[str, str] = {
         name: (SHIPPED / name / f"{name}_Module.tdl").read_text() for name in STANDARD
     }
-    texts["Driver"] = "---\nTDL: 0.1\nName: Driver\n---\n" + driver
+    texts["Driver"] = "---\nTDL: 0.2\nName: Driver\n---\n" + driver
     texts.update(extra)
     icons = IconSets([SHIPPED / "Icons"])
     stubs: dict[str, ModuleDef] = {}
@@ -194,13 +209,21 @@ def running(
     audio: AudioPort | None = None,
     icon_port: IconsPort | None = None,
     tray: TrayPort | None = None,
+    windows: WindowsPort | None = None,
+    apps: AppsPort | None = None,
+    uid_of: Callable[[str], str] | None = None,
     call_soon: Callable[[Callable[[], None]], None] | None = None,
     extra_py: dict[str, str] | None = None,
+    body: str | None = None,
+    home: str = "Top_Bar",
 ) -> Iterator[Widgets]:
     """The shell of ``tests.test_popup`` with ``children`` in its Bar, every standard module and a
-    ``Driver`` module (layout ``driver``, Python ``driver_py``) loaded by a real module host."""
+    ``Driver`` module (layout ``driver``, Python ``driver_py``) loaded by a real module host. A
+    ``body`` is a whole shell file (``Shell { ... }``) instead, as a gallery writes it, and
+    ``home`` the surface of it the ``window`` and ``view`` of the result are."""
     defs = _defs(driver, extra or {})
-    result = tess_dl.parse(HEADER + SHELL % (children, popups), path="Shells/Main_Shell.tdl")
+    shell_text = body if body is not None else SHELL % (children, popups)
+    result = tess_dl.parse(HEADER + shell_text, path="Shells/Main_Shell.tdl")
     assert not result.errors and result.document is not None
     icons = IconSets([SHIPPED / "Icons"])
     shell, findings = read_shell(
@@ -222,7 +245,7 @@ def running(
         sheets.append(parsed)
     look = make_look(the_theme, sheets, appearance or Appearance(), None, RuntimeIcons(icons))
     store = ValueStore()
-    manager = SurfaceManager(StubApp(), defs, lambda k: k, store, look)  # type: ignore[arg-type]
+    manager = SurfaceManager(StubApp(), defs, uid_of or (lambda k: k), store, look)  # type: ignore[arg-type]
     with tempfile.TemporaryDirectory() as tmp:
         host = ModuleHost(store, TimeSource(), Path(tmp))
 
@@ -238,8 +261,11 @@ def running(
         host.audio = audio
         host.icons = icon_port
         host.tray = tray
+        host.windows = windows
+        host.apps = apps
+        host.surfaces = manager  # ctx.surface: hide, focus and shown
         host.call_soon = call_soon or getattr(dbus, "call_soon", None)  # a Layer has one
-        live = Widgets(manager, host, store)
+        live = Widgets(manager, host, store, home=home)
         sink = logger.add(lambda message: live.lines.append(str(message).rstrip()), level="DEBUG")
         try:
             uses = manager.plan(shell)

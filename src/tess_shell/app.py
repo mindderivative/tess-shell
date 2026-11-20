@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 import sys
 import threading
 from collections.abc import Callable
@@ -23,15 +24,17 @@ from tess_shell.appearance import Appearance
 from tess_shell.binder.images import IMAGES
 from tess_shell.binder.model import Handler
 from tess_shell.commands import ShellCommands
+from tess_shell.config.discovery import is_shipped
 from tess_shell.config.lock import InstanceLock
 from tess_shell.config.paths import check_runtime_dir, config_dir, ensure_config_dir, state_dir
 from tess_shell.config.registry import Registry, RegistryError
-from tess_shell.config.settings import LoggingSettings, load_settings
+from tess_shell.config.settings import LoggingSettings, Settings, load_settings
 from tess_shell.config.uids import assign_uids
 from tess_shell.exit_codes import EnvironmentFailure, ExitCode, ShellError
 from tess_shell.logging import (
     configure_logging,
     current_state,
+    effective_level,
     finding_sinks,
     log_finding,
     note_module_error,
@@ -39,22 +42,40 @@ from tess_shell.logging import (
 )
 from tess_shell.model.store import ValueStore
 from tess_shell.model.uses import Use
+from tess_shell.modproc.probe import module_findings
+from tess_shell.modproc.supervisor import ModuleProcesses
 from tess_shell.modules.host import ModuleHost, report
 from tess_shell.modules.ticks import TimeSource
+from tess_shell.notify import READY, STOPPING, notify
 from tess_shell.options import Options
+from tess_shell.recovery import Recovery, Start
+from tess_shell.recovery_state import clock_text, iso
 from tess_shell.reloader import Reloader
 from tess_shell.scanner import MAX_FINDINGS, build_look, print_findings, scan
+from tess_shell.schema.findings import Finding
 from tess_shell.services.api import ServiceUnavailable
+from tess_shell.services.apps import AppService
 from tess_shell.services.audio import AudioService
 from tess_shell.services.bus import ServiceThread
 from tess_shell.services.control import NAME, ControlService, ErrorLog
 from tess_shell.services.icons import IconService
+from tess_shell.services.kwin import KWinService
 from tess_shell.services.layer import Layer
 from tess_shell.services.portal import PortalReader
+from tess_shell.services.shortcuts import STOP_TIMEOUT, Action, ShortcutService
 from tess_shell.services.tray import TrayService
-from tess_shell.signals import LoopStopper, SignalWatcher
+from tess_shell.services.windows import WindowService
+from tess_shell.shortcuts import (
+    drop_failed,
+    mode_keys,
+    registered,
+    shortcut_handlers,
+    shortcut_modules,
+)
+from tess_shell.signals import EarlyStop, LoopStopper, SignalWatcher
 from tess_shell.surfaces.manager import SurfaceManager
-from tess_shell.watch import OwnWrites, Watcher
+from tess_shell.watch import OwnWrites, Watcher, by_directory
+from tess_shell.watchdog import Heartbeat, Watchdog
 
 MIN_ENGINE = (0, 6, 0)
 MIN_PYTHON = (3, 14)
@@ -71,7 +92,16 @@ def check(options: Options) -> int:
     if settings is not None:
         result = scan(settings, config)
         count, findings = result.count, result.findings
-    failed = any(f.severity == "error" for f in findings)
+        # the Python of your own modules: read from its syntax tree (nothing runs), or imported in
+        # throwaway processes with ``--import-modules``
+        findings = [
+            *findings,
+            *module_findings(result.modules.values(), import_modules=options.import_modules),
+        ]
+    # ``--strict``: a warning (``insecure-permissions``, ``image-not-found``, ...) fails it too
+    failed = any(
+        f.severity == "error" or (options.strict and f.severity == "warning") for f in findings
+    )
     if options.json:
         shown = findings[:MAX_FINDINGS]
         print(
@@ -88,6 +118,8 @@ def check(options: Options) -> int:
     else:
         if findings:
             print_findings(findings, config)
+        if failed and not any(f.severity == "error" for f in findings):
+            print("tesserae-shell: --strict: the warnings above fail the check", file=sys.stderr)
         if not failed and not options.quiet:
             print(f"ok: {count} files checked")
     return int(ExitCode.CONFIG if failed else ExitCode.OK)
@@ -116,15 +148,30 @@ def _preflight() -> tuple[Path, bool]:
     return runtime
 
 
+# the files of this run's crash record (``recovery.py``), once the instance lock is held; a list so
+# that the excepthooks and a forced exit reach it without it being passed around
+_RECOVERY: list[Recovery] = []
+
+
+def _record_crash(
+    exc_type: type[BaseException], exc: BaseException, tb: TracebackType | None, where: str = ""
+) -> None:
+    if _RECOVERY:
+        _RECOVERY[0].record_exception(exc_type, exc, tb, where)
+
+
 def _install_excepthooks() -> None:
     def hook(exc_type: type[BaseException], exc: BaseException, tb: TracebackType | None) -> None:
         logger.opt(exception=(exc_type, exc, tb)).critical("unhandled exception")
+        _record_crash(exc_type, exc, tb)
 
     def thread_hook(args: threading.ExceptHookArgs) -> None:
         if args.exc_type is not SystemExit and args.exc_value is not None:
+            name = args.thread.name if args.thread else "?"
             logger.opt(exception=(args.exc_type, args.exc_value, args.exc_traceback)).critical(
-                f"unhandled exception in thread {args.thread.name if args.thread else '?'}"
+                f"unhandled exception in thread {name}"
             )
+            _record_crash(args.exc_type, args.exc_value, args.exc_traceback, f" in thread {name}")
 
     sys.excepthook = hook
     threading.excepthook = thread_hook
@@ -141,23 +188,58 @@ def _fail(message: str) -> None:
         print(f"tesserae-shell: {message}", file=sys.stderr)
 
 
+def _force_exit() -> NoReturn:
+    """A second signal: leave at once, as the ``SignalWatcher`` does. The user asked for it, so it
+    is not a crash: the marker goes."""
+    _end_recovery(ExitCode.FORCED)
+    shutdown_logging()
+    os._exit(int(ExitCode.FORCED))
+
+
+def _end_recovery(code: ExitCode) -> None:
+    """The run ends with ``code``: a stop the user asked for (0, 130) is a clean stop and the count
+    of unclean starts starts again; a refusal the shell chose (1, 2, 4, 69) leaves the count; an
+    internal error (70) leaves the marker too, so the next start counts it. Never raises."""
+    if not _RECOVERY:
+        return
+    recovery = _RECOVERY.pop()
+    try:
+        recovery.close_crash_log()
+        if code in (ExitCode.OK, ExitCode.FORCED):
+            recovery.finish()
+        elif code != ExitCode.INTERNAL:
+            recovery.leave()
+    except OSError as exc:
+        logger.warning(f"recovery: could not update the state files ({exc})")
+
+
 def run(options: Options) -> int:
     lock = InstanceLock()
+    _RECOVERY.clear()
+    early = EarlyStop(_force_exit)
+    early.install()  # the first signal of the start is held for the watcher (EarlyStop)
+    code = ExitCode.INTERNAL
     try:
         _install_excepthooks()
-        return int(_run(options, lock))
+        code = _run(options, lock, early)
+        return int(code)
     except ShellError as exc:
         _fail(str(exc))
-        return int(exc.exit_code)
+        code = exc.exit_code
+        return int(code)
     except KeyboardInterrupt:
-        return int(ExitCode.FORCED)
+        code = ExitCode.FORCED
+        return int(code)
     except Exception as exc:
         if current_state() is None:
             print(f"tesserae-shell: unexpected error: {exc!r}", file=sys.stderr)
         else:
             logger.opt(exception=True).critical("unexpected error")
+        _record_crash(type(exc), exc, exc.__traceback__)
         return int(ExitCode.INTERNAL)
     finally:
+        _end_recovery(code)
+        early.uninstall()
         shutdown_logging()
         lock.release()
 
@@ -166,15 +248,16 @@ def _start_control(
     service: ServiceThread,
     handle: Any,
     manager: SurfaceManager,
-    host: ModuleHost,
     reloader: Reloader,
-    stopper: LoopStopper,
+    commands: ShellCommands,
+    errors: ErrorLog,
+    kwin: KWinService | None = None,
 ) -> ControlService | None:
     """Export the control interface and own its bus name (Shell Start and Stop). ``None`` when
     the session bus cannot be reached: the shell runs without control commands and says so."""
-    errors = ErrorLog()
-    commands = ShellCommands(manager, host, reloader, stopper.request, errors.last)
-    control = ControlService(service, handle.call_soon, commands, tess_shell.__version__, errors)
+    control = ControlService(
+        service, handle.call_soon, commands, tess_shell.__version__, errors, kwin
+    )
     try:
         service.submit(control.start()).result(timeout=START_TIMEOUT)
     except (ServiceUnavailable, TimeoutError, OSError) as exc:
@@ -203,7 +286,115 @@ def _stop_control(service: ServiceThread, control: ControlService) -> None:
 START_TIMEOUT = 6.0  # seconds the shell waits for the bus when it takes its name
 
 
-def _run(options: Options, lock: InstanceLock) -> ExitCode:
+def _start_kwin(service: ServiceThread, kwin: KWinService) -> None:
+    """Check KWin and load its script, once the shell owns its name (KWin Integration > Loading the
+    script). Never waited for: the shell starts whether or not KWin answers, and a KWin that does
+    not is one line in the log."""
+
+    def done(future: Any) -> None:
+        if future.cancelled():
+            return
+        problem = future.exception()
+        if problem is not None:
+            logger.warning(f"kwin: the script was not loaded ({problem})")
+
+    service.submit(kwin.start()).add_done_callback(done)
+
+
+def _stop_kwin(service: ServiceThread, kwin: KWinService) -> None:
+    """Unload the script (mode R) before the shell lets go of its name."""
+    try:
+        service.submit(kwin.stop()).result(timeout=START_TIMEOUT)
+    except Exception as exc:
+        logger.debug(f"kwin: stopping did not go through ({exc!r})")
+
+
+def _start_shortcuts(
+    service: ServiceThread,
+    handle: Any,
+    commands: ShellCommands,
+    call_problems: list[Finding],
+    declared: tuple[Action, ...],
+    settings: Settings,
+) -> ShortcutService:
+    """Register the shell's global shortcuts with the desktop's shortcut service, after the
+    shell's own bus name is owned and before the surfaces are shown (Global Shortcuts >
+    Registration). A missing service or a refused call is a warning and no keys: the shell runs and
+    the commands work."""
+    shortcuts = ShortcutService(service, handle.call_soon, commands.press)
+    actions = registered(drop_failed(declared, call_problems))
+    try:
+        service.submit(shortcuts.start(actions, settings.global_shortcuts)).result(
+            timeout=START_TIMEOUT
+        )
+    except Exception as exc:
+        logger.opt(exception=True).warning(f"shortcuts: no global keys ({exc!r})")
+    else:
+        if settings.global_shortcuts:
+            logger.info(
+                f"shortcuts: {len(shortcuts.registered)} of {len(actions)} actions registered"
+            )
+    return shortcuts
+
+
+def _stop_shortcuts(service: ServiceThread, shortcuts: ShortcutService) -> None:
+    try:
+        service.submit(shortcuts.stop()).result(timeout=STOP_TIMEOUT + 0.5)
+    except Exception as exc:
+        logger.debug(f"shortcuts: stopping did not go through ({exc!r})")
+
+
+def _compositor_is_gone() -> bool:
+    """Nobody answers on the Wayland socket any more (``tess_re.supports`` caches its first answer,
+    so the socket itself is tried: the file is a stale one, or gone, once the compositor died)."""
+    display = os.environ.get("WAYLAND_DISPLAY") or "wayland-0"
+    path = (
+        display if os.path.isabs(display) else f"{os.environ.get('XDG_RUNTIME_DIR', '')}/{display}"
+    )
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.settimeout(1.0)
+            sock.connect(path)
+    except OSError:
+        return True
+    return False
+
+
+def _say_safe_start(start: Start, host: ModuleHost, result: Any) -> None:
+    """A safe start loads no user module: say which were left alone and why (a warning)."""
+    skipped = [
+        f"{name} ({result.modules[name].path})"
+        for name in host.safe_skipped
+        if name in result.modules
+    ]
+    logger.warning(
+        f"safe start: {start.unclean} unclean starts in a row within 10 minutes, so the Python of "
+        f"user modules was not run: {', '.join(skipped) if skipped else 'none are used'}. "
+        "The files are untouched; `tesserae-shell reload` or a restart tries them again."
+    )
+
+
+def _recovery_status(start: Start, host: ModuleHost) -> dict[str, Any]:
+    """The ``recovery`` part of ``status``."""
+    return {
+        "unclean_starts": start.unclean,
+        "last_crash": iso(start.last_crash),
+        "safe_start": host.safe_start,
+        "skipped_modules": sorted(host.safe_skipped),
+    }
+
+
+def _tell_systemd(state: str) -> None:
+    """``READY=1`` or ``STOPPING=1`` to ``NOTIFY_SOCKET`` when systemd set it (Type=notify). A
+    failed send is a warning: the shell runs on, and the unit gives up waiting by itself."""
+    sent = notify(state)
+    if sent is False:
+        logger.warning(f"systemd: could not send {state} to NOTIFY_SOCKET")
+    elif sent:
+        logger.debug(f"systemd: sent {state}")
+
+
+def _run(options: Options, lock: InstanceLock, early: EarlyStop) -> ExitCode:
     # 1. pre-flight
     runtime_dir, loose = _preflight()
     # 2. the config directory
@@ -226,6 +417,20 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
     lock.acquire(runtime_dir)
     if lock.sticky_refused:
         logger.warning("the lock file could not be given the sticky bit")
+    # the crash record (after the lock, so a second shell touches nothing of the first one's)
+    recovery = Recovery(state_dir())
+    try:
+        start = recovery.begin()
+        recovery.open_crash_log()
+    except OSError as exc:
+        logger.warning(f"recovery: the crash record cannot be kept ({exc}); starting without it")
+        start = Start(0, None, False)
+    _RECOVERY.append(recovery)
+    if start.previous is not None:
+        logger.warning(
+            f"previous run ended uncleanly (its marker is from {clock_text(start.previous)}); "
+            f"unclean starts since the last clean stop: {start.unclean}"
+        )
     # 6. the registry
     try:
         registry = Registry.open(settings.registry)
@@ -233,6 +438,14 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         log_finding(exc.finding)
         print_findings([exc.finding], cfg)
         return ExitCode.CONFIG
+    registry.warn = logger.warning  # a write that fails later (the registry never imports the log)
+    if registry.recovered is not None:
+        logger.warning(
+            f"registry: {settings.registry} was rebuilt because {registry.recovered}; the UIDs "
+            "the files carry are kept, the saved positions are lost"
+        )
+    elif registry.created:
+        logger.info(f"registry: {settings.registry} was missing and was created")
     # 7. check and load every shell file
     result = scan(settings, cfg)
     for f in result.findings[:MAX_FINDINGS]:
@@ -253,15 +466,12 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
     handle = app.thread_handle()
     stopper = LoopStopper(handle.stop)
 
-    def force() -> NoReturn:
-        shutdown_logging()
-        os._exit(int(ExitCode.FORCED))
-
     reload_signal: list[Callable[[], None]] = []
     watcher = SignalWatcher(
-        stopper.request, force, lambda: reload_signal[-1]() if reload_signal else None
+        stopper.request, _force_exit, lambda: reload_signal[-1]() if reload_signal else None
     )
-    watcher.start()
+    watcher.start(early)
+    watchdog: Watchdog | None = None
     try:
         store = ValueStore()
         ticks = TimeSource()
@@ -278,9 +488,12 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         portal: PortalReader | None = None
         appearance = Appearance()
         manager_box: list[SurfaceManager] = []
+        icon_box: list[IconService] = []
 
         def appearance_changed(new: Appearance) -> None:  # on the service thread
             def apply() -> None:
+                if icon_box:  # the portal's icon theme; a change makes the modules' icons again
+                    icon_box[0].set_portal_theme(new.icon_theme)
                 manager_box[0].set_look(manager_box[0].look.with_appearance(new))
 
             handle.call_soon(apply)
@@ -302,9 +515,26 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             positions=registry,
             join_mode=settings.debug.frame_join,
             blend_mode=settings.debug.frame_blend,
+            mode_keyboard=settings.debug.mode_keyboard,
         )
         manager_box.append(manager)
         host = ModuleHost(store, ticks, cfg)
+        host.is_shipped = is_shipped  # what safe start leaves alone: the shipped modules
+        host.safe_start = start.safe  # after repeated crashes: no user Python (Crash Recovery)
+        watchdog = Watchdog.from_environment(
+            Heartbeat(), host.callbacks.running, handle.call_soon, os.environ
+        )
+        # a user module's Python runs in a process of its own (posture C); the watchdog's thread
+        # also reads each process's record of the callback it is running, so they cost no thread
+        processes = ModuleProcesses(
+            host,
+            is_shipped,
+            enabled=not settings.debug.user_modules_in_process,
+            own_thread=False,
+            level=effective_level,
+        )
+        host.processes = processes
+        watchdog.on_poll = processes.watch
 
         def route(handler: Handler, key: str, raw: object) -> None:
             # a shell action (Show, Hide, Toggle) is the manager's; any other name is an @action
@@ -317,14 +547,41 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
         host.popups = manager.popups  # ctx.popup() opens a Popup of the surfaces
         host.dbus = layer  # ctx.dbus: the D-Bus service layer
         host.audio = AudioService(service)  # ctx.audio: the sound server, on the same thread
-        host.icons = IconService(IMAGES.register)  # ctx.icons: the theme lookup, files read here
+        icon_service = IconService(IMAGES.register)  # ctx.icons: the theme lookup, files read here
+        icon_service.set_portal_theme(appearance.icon_theme)
+        icon_box.append(icon_service)
+        host.icons = icon_service
         host.tray = TrayService(service)  # ctx.tray: the shell as a StatusNotifier host
+        # the shell's KWin script: fullscreen hiding and the window list (ctx.windows). It is
+        # loaded after the control interface owns its name (below); the surfaces hide on its word
+        kwin = KWinService(
+            service,
+            handle.call_soon,
+            mode=settings.kwin.script,
+            hide_on_fullscreen=settings.kwin.hide_on_fullscreen,
+        )
+        kwin.on_fullscreen = manager.set_fullscreen
+        windows = WindowService(kwin)
+        windows.on_module_error = note_module_error
+        windows.run_callback = host.run_callback
+        host.windows = windows
+        icon_service.apps.watch()  # a desktop entry that comes or goes: the icons read it again
+        # ctx.apps: the launcher's search and start over the same index; the list is built on the
+        # first use, on a worker; the start counts live in the state folder
+        apps = AppService(
+            icon_service.apps,
+            counts=state_dir() / "launcher-counts.json",
+            call_soon=handle.call_soon,
+        )
+        host.apps = apps
+        host.surfaces = manager  # ctx.surface: hide, focus and shown, for the module's own Panel
         host.call_soon = handle.call_soon  # ctx.call_soon: back to the loop thread
+        host.focus = manager.mode  # ctx.focus: shortcut mode and the default focus
         # a file the shell registers for the first time gets a UID in its metadata (G8)
         own_files = [mf.path for mf in result.modules.values() if not mf.shipped]
         own_writes = OwnWrites()
         file_uids, uid_problems = assign_uids(
-            [*own_files, *result.shells],
+            [*own_files, *result.shell_files],
             cfg,
             lambda key: registry.uid_for(key, "file"),
             state_dir() / "backups",
@@ -338,13 +595,21 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             by_module.setdefault(use.module, []).append(use)
         for name in manager.dynamic_module_names():
             by_module.setdefault(name, [])  # called in a For: loaded, with no use until an entry
+        for name in shortcut_modules(result.shortcuts):
+            by_module.setdefault(name, [])  # named by a Call shortcut: loaded, with no use
         for name, module_uses in by_module.items():
             mf = result.modules[name]
             uid = file_uids.get(mf.path) or registry.uid_for(f"module:{name}", "module")
             _, problems = host.load(mf.definition, mf.python, uid, module_uses)
             report(problems)
-        report(host.check_calls(manager.planned_handlers()))  # every Call names a loaded action
+        # every Call names a loaded action, the shortcuts' too
+        call_problems = host.check_calls(
+            [*manager.planned_handlers(), *shortcut_handlers(result.shortcuts)]
+        )
+        report(call_problems)
         report(host.start_all())
+        if host.safe_start:
+            _say_safe_start(start, host, result)
         store.flush()  # what the modules sent while starting, before the first build
         logger.info(f"step 10 (model): {len(uses)} module uses, {len(host.loaded)} modules")
         # 11. surfaces
@@ -386,12 +651,22 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             )
             own_writes.clear()  # the writes of the start made no event: nothing to drop yet
             file_watcher.start()
+            file_watcher.watch_files(by_directory(result.imported))  # outside the trees too
+            reloader.watch_files = file_watcher.watch_files
             if not file_watcher.ok:
                 logger.warning("some folders are not watched; SIGHUP still reloads everything")
         control: ControlService | None = None
+        shortcuts: ShortcutService | None = None
+        errors = ErrorLog()
+        commands = ShellCommands(manager, host, reloader, stopper.request, errors.last)
+        commands.recovery = lambda: _recovery_status(start, host)
+        manager.mode.set_keys(mode_keys(result.shortcuts))  # the keys of shortcut mode
+        manager.mode.watch_focus = True  # a real compositor: warn when it does not hand focus over
         taken = False
+        lost = False  # the loop ended with no stop request: the compositor went away
+        ready = False  # READY=1 was sent: STOPPING=1 follows it
         if settings.control:
-            control = _start_control(service, handle, manager, host, reloader, stopper)
+            control = _start_control(service, handle, manager, reloader, commands, errors, kwin)
             taken = control is not None and not control.owned
         if taken:
             _fail(
@@ -402,25 +677,66 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             if file_watcher is not None:
                 file_watcher.stop()
         else:
-            logger.info("running")
-            if control is not None:
-                control.set_state("running")
+            shortcuts = _start_shortcuts(
+                service, handle, commands, call_problems, result.shortcuts, settings
+            )
+            reloader.shortcuts = shortcuts
+            if control is not None and control.owned:  # the script calls the shell's interface
+                _start_kwin(service, kwin)
+
+            def open_gate() -> None:
+                nonlocal ready
+                logger.info("running")
+                if control is not None:
+                    control.set_state("running")
+                _tell_systemd(READY)
+                ready = True
+                # the heartbeat starts when the loop does, so the start sequence is not judged
+                handle.call_soon(watchdog.start)
+
+            # with no module process this is at once, here, as ever; with some, from the loop
+            # when each has answered (or after 10 s): the loop is never held for a process
+            processes.when_settled(open_gate)
+            gone: str | None = None  # why the loop ended with no stop request
             try:
                 app.run(keep_alive=True)
+            except RuntimeError as exc:
+                # a compositor that dies while the first frame is made ends the run with an error
+                # about the GPU adapter and the surface: if the compositor is gone, it is the same
+                if not _compositor_is_gone():
+                    raise
+                gone = f"the run failed: {exc}"
             finally:
+                watchdog.begin_stop()  # the stop sequence is not a stall
                 stopper.loop_finished()
                 if file_watcher is not None:
                     file_watcher.stop()
-            if not stopper.requested.is_set():
-                _fail("event loop ended without a stop request")
-                return ExitCode.ENVIRONMENT
+            if gone is None and not stopper.requested.is_set():
+                gone = "the event loop ended without a stop request"
+            if gone is not None:
+                # tre ends the loop when the Wayland connection breaks (the compositor went away):
+                # stop what runs, then leave with a code that asks a supervisor for a restart
+                _fail(
+                    f"the Wayland connection was lost ({gone}); stopping with exit code "
+                    f"{int(ExitCode.LOST_COMPOSITOR)} so that a supervisor restarts the shell"
+                )
+                lost = True
         # stop sequence: modules, then the time source (no D-Bus yet)
         logger.info("stopping")
+        if ready:
+            _tell_systemd(STOPPING)
+        if shortcuts is not None:
+            shortcuts.begin_stop()  # a press from here on is dropped
         if control is not None:
             control.set_state("stopping")
+            _stop_kwin(service, kwin)
             _stop_control(service, control)
+        if shortcuts is not None:
+            _stop_shortcuts(service, shortcuts)
         host.stop_all()
+        apps.stop()
         ticks.close()
+        icon_service.apps.unwatch()
         if portal is not None:
             portal.stop()
         service.stop()
@@ -430,6 +746,10 @@ def _run(options: Options, lock: InstanceLock) -> ExitCode:
             _fail(f"cannot save the registry: {exc}")
             return ExitCode.CONFIG
         logger.info("stopped")
+        if lost:
+            return ExitCode.LOST_COMPOSITOR
         return ExitCode.ALREADY_RUNNING if taken else ExitCode.OK
     finally:
+        if watchdog is not None:
+            watchdog.stop()
         watcher.close()

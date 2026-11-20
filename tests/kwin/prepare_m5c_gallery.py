@@ -7,8 +7,10 @@ theme tokens, so it follows Plasma's light and dark.
 
 * ``run.sh``: the shell on your real session bus and real system bus. The Network reads
   NetworkManager and **writes nothing**; it shows what your machine does. You change the state
-  yourself: unplug the cable, switch Wi-Fi off and on in Plasma's network applet, connect and
-  disconnect a VPN there.
+  yourself: connect and disconnect a VPN in Plasma's network applet. Nothing here asks you to pull
+  a cable: the cable-out and Wi-Fi states are shown by the fake (``run-fake.sh``), and the real
+  Wi-Fi is the second line of the real-hardware kit (``prepare_m7g_hardware.py``), which keeps your
+  wired connection.
 * ``run-fake.sh``: the shell on your real session bus (only the light/dark follow) and a PRIVATE
   system bus with a fake NetworkManager (``tests/kwin/fake_nm.py``), so every state can be shown.
   ``network-set.sh`` changes it (any words, in any order; an unknown word is refused) and
@@ -35,7 +37,7 @@ ROOT = Path("/tmp/tess-kwin-m5c")
 CFG = ROOT / "gallery"
 BIN = Path.home() / "Projects/pyDev/pyEnvs/tess-shell/bin"
 SETTINGS = (
-    "---\nTDL: 0.1\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
+    "---\nTDL: 0.2\nName: Settings\n---\nSettings {\n  Logging { Level: DEBUG }\n"
     "  Appearance { Stylesheets: [Default], Follow_Desktop: true }\n}\n"
 )
 
@@ -91,17 +93,13 @@ Reads your real system bus; writes nothing.  YOU change the state, in the way ea
     second shows "Wired connection 1" beside it; there is no second (VPN) icon; point at any of
     them: a tooltip opens with "Wired connection 1, ethernet, connected".  The log has no WARNING
     or ERROR line (`grep -E "WARNING|ERROR"` on the shell's output).
- 2  Unplug the cable: within a moment all three change to the cross-over-network icon in the muted
-    colour, the second loses its name, and the tooltip reads "Disconnected".  The modules stay
-    visible (they do not vanish).  Plug it in again: the plug icon and the tooltip return.
- 3  Switch Wi-Fi on in Plasma's network applet and connect to a network (cable out, or in: with
-    the cable in, wired stays the main connection; take the cable out to see the Wi-Fi): the Wi-Fi
-    icon shows with one to four bars, the second Network shows the network's name, and the tooltip
-    reads "<name>, Wi-Fi N %, connected" with N a multiple of 5.  Walk away from the router and
-    back: the bars change in steps and the tooltip's percent follows; the icon does not flicker
-    while the signal wobbles inside a step.
- 4  Switch Wi-Fi off in the applet with the cable out: the cross-over-network icon, "Disconnected".
-    Switch it on again: it reconnects and the Wi-Fi icon returns.
+ 2  Not asked on the real machine (nothing here pulls a cable): the cable-out state, the
+    cross-over-network icon in the muted colour with "Disconnected", is line 17 of PART 2, driven
+    by `network-set.sh none`.
+ 3  Not asked here: Wi-Fi on the real machine is the second line of the real-hardware kit, which
+    keeps your wired connection (wired stays the main connection while it is up).  Every Wi-Fi
+    state is shown by the fake: PART 2, lines 15 to 18.
+ 4  Not asked here: Wi-Fi off and on is PART 2, line 20 (`network-set.sh none wifioff`).
  5  OPTIONAL, disruptive, skip it if you do not want to risk your network: in the applet switch
     networking off (the applet's "Enable networking" or flight mode): the Wi-Fi-with-slash icon and
     the tooltip "Networking off"; switch it on: back to normal.

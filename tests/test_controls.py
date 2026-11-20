@@ -107,14 +107,14 @@ def test_toggle_thumb_eases_and_switches_at_once_under_reduced_motion() -> None:
         assert 3 < thumb.get("margin_left") < 21  # on its way
         w.advance(500)
         assert thumb.get("margin_left") == 21
-    with running("Toggle { }", appearance=Appearance(reduced_motion=True)) as w:
+    with running("Toggle { }", appearance=Appearance(animations=False)) as w:
         w.window.simulate("click", node=w.of_use("Toggle", "Root"))
         w.advance(16)
         assert w.of_use("Toggle", "Thumb").get("margin_left") == 21
 
 
 def test_toggle_set_from_a_param_moves_without_the_event_and_the_user_keeps_their_edit() -> None:
-    driver = "Module { FlexBox { Children { Toggle { Name: T, Checked: {{ on }}, On_Changed: changed } } } }"
+    driver = "Module { FlexBox { Children { Toggle { Name: T, Checked: <| on |>, On_Changed: changed } } } }"
     code = "from tess_shell import Module, action\nclass Driver(Module):\n    def __init__(self):\n        self.seen = []\n    def start(self):\n        self.ctx.send('on', False)\n    @action\n    def changed(self, event):\n        self.seen.append(event.value)\n"
     with running("Driver { }", driver=driver, driver_py=code) as w:
         root = w.of_use("Toggle", "Root")
@@ -223,7 +223,7 @@ def test_slider_handle_shows_hovered_pressed_and_released() -> None:
 
 
 def test_slider_value_set_from_a_param_moves_without_the_event_and_the_users_value_stays() -> None:
-    driver = "Module { FlexBox { Children { Slider { Name: S, Value: {{ v }}, On_Changed: changed } } } }"
+    driver = "Module { FlexBox { Children { Slider { Name: S, Value: <| v |>, On_Changed: changed } } } }"
     code = "from tess_shell import Module, action\nclass Driver(Module):\n    def __init__(self):\n        self.seen = []\n    def start(self):\n        self.ctx.send('v', 10)\n    @action\n    def changed(self, event):\n        self.seen.append(event.value)\n"
     with running("Driver { }", driver=driver, driver_py=code) as w:
         root = w.of_use("Slider", "Root")
@@ -334,7 +334,7 @@ def test_list_scrolls_by_the_wheel_chooses_by_a_click_and_marks_the_entry() -> N
 
 def test_list_selected_from_a_param_marks_without_the_event() -> None:
     driver = (
-        "Module { FlexBox { Children { List { Name: L, Selected: {{ pick }}, On_Changed: changed, "
+        "Module { FlexBox { Children { List { Name: L, Selected: <| pick |>, On_Changed: changed, "
         f"Children {{ {ENTRIES} }} }} }} }} }}"
     )
     code = "from tess_shell import Module, action\nclass Driver(Module):\n    def __init__(self):\n        self.seen = []\n    def start(self):\n        self.ctx.send('pick', 'k2')\n    @action\n    def changed(self, event):\n        self.seen.append(event.value)\n"
@@ -363,8 +363,8 @@ def test_list_with_selection_none_takes_no_choice_and_a_disabled_entry_is_skippe
 def test_a_for_entry_is_chosen_by_its_repeater_key() -> None:
     driver = (
         "Module { FlexBox { Children { List { Name: L, On_Changed: changed, Children { "
-        "For w In {{ rows }} Key {{ w.id }} { FlexBox { Class: list_item, Height: 30, "
-        "Children { Text { Text: {{ w.name }}, Width: AUTO, Height: AUTO } } } } } } } } }"
+        "For w In <| rows |> Key <| w.id |> { FlexBox { Class: list_item, Height: 30, "
+        "Children { Text { Text: <| w.name |>, Width: AUTO, Height: AUTO } } } } } } } } }"
     )
     code = "from tess_shell import Module, action\nclass Driver(Module):\n    def __init__(self):\n        self.seen = []\n    def start(self):\n        self.ctx.send('rows', [{'id': 'a', 'name': 'Alpha'}, {'id': 'b', 'name': 'Beta'}])\n    @action\n    def changed(self, event):\n        self.seen.append(event.value)\n"
     with running("Driver { }", driver=driver, driver_py=code) as w:
@@ -376,9 +376,9 @@ def test_a_for_entry_is_chosen_by_its_repeater_key() -> None:
 
 def test_a_controls_state_survives_a_rebuild_of_its_surface() -> None:
     driver = (
-        "Module { FlexBox { Children { Toggle { Name: T, Checked: {{ on }}, On_Changed: changed } "
-        "If {{ extra }} { Text { Text: more, Width: AUTO, Height: AUTO } } "
-        "Slider { Name: S, Value: {{ v }} } } } }"
+        "Module { FlexBox { Children { Toggle { Name: T, Checked: <| on |>, On_Changed: changed } "
+        "If <| extra |> { Text { Text: more, Width: AUTO, Height: AUTO } } "
+        "Slider { Name: S, Value: <| v |> } } } }"
     )
     code = (
         "from tess_shell import Module, action\n"
@@ -470,7 +470,7 @@ def test_a_disabled_slider_raises_no_released_and_one_disabled_mid_drag_ends_it_
         press(w, root, 100)
         w.window.simulate("pointer_up", node=root, x=100, y=10)
         assert seen(w) == []
-    driver = f"Module {{ FlexBox {{ Children {{ Slider {{ Name: S, Enabled: {{{{ on }}}}, {RELEASED} }} }} }} }}"
+    driver = f"Module {{ FlexBox {{ Children {{ Slider {{ Name: S, Enabled: <| on |>, {RELEASED} }} }} }} }}"
     code = (
         "from tess_shell import Module, action\nclass Driver(Module):\n"
         "    def __init__(self):\n        self.seen = []\n"
@@ -500,7 +500,7 @@ def test_a_call_to_released_with_an_unknown_argument_is_still_checked() -> None:
         "    @action\n    def released(self, event, position):\n"
         "        self.seen.append(position)\n"
     )
-    good = 'On_Released { Action: Call, Target: "Driver.released", position: {{ event.value }} }'
+    good = 'On_Released { Action: Call, Target: "Driver.released", position: <| event.value |> }'
     with running(f"Slider {{ Value: 0, {good} }}", driver_py=code) as w:
         assert w.problems == []
         root = w.of_use("Slider", "Root")

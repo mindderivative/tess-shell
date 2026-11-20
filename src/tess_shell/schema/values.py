@@ -11,8 +11,10 @@ from tess_dl import Number as DlNumber
 from tess_shell.binder import convert
 from tess_shell.binder import model as m
 from tess_shell.binder.model import BindError
+from tess_shell.config.confine import PathOutsideConfig
 from tess_shell.schema.findings import nearest
-from tess_shell.schema.ranges import range_of, scoped
+from tess_shell.schema.keys import ChordError, parse_chord
+from tess_shell.schema.ranges import plain, range_of, scoped
 
 SIDES_HINT = (
     "Use one number, four items (left, top, right, bottom) or named sides. CSS orders its "
@@ -102,6 +104,7 @@ def _numbers(value: m.Value) -> list[float]:
 _NOUNS = {
     "max_length": "a whole number",
     "lines": "a whole number",
+    "tab_index": "a whole number",
     "whole": "a whole number",
     "diameter": "a whole number of pixels",
     "duration": "a time in milliseconds",
@@ -128,7 +131,8 @@ def check_range(kind: str, key: str, typed: m.Value) -> None:
             unit = "%" if kind == "elevation" else ""
             raise ValueProblem(
                 "bad-value",
-                f"expected {_NOUNS.get(kind, 'a number')}, {rng.words(unit)}, found {n:g}{unit}",
+                f"expected {_NOUNS.get(kind, 'a number')}, {rng.words(unit)}, "
+                f"found {plain(n)}{unit}",
             )
 
 
@@ -184,7 +188,7 @@ def _coerce_kind(
             if n is None or isinstance(n, float):
                 raise _bad("a whole number", value)
             return m.Number(n, origin=origin)
-        case "max_length" | "lines":
+        case "max_length" | "lines" | "tab_index":
             n = _number(value)
             if n is None or isinstance(n, float):
                 raise _bad("a whole number", value)
@@ -251,6 +255,8 @@ def _coerce_kind(
                 assert read_text is not None
                 try:
                     return m.Text(read_text(text), origin=origin)
+                except PathOutsideConfig as exc:
+                    raise ValueProblem("path-outside-config", str(exc), exc.HINT) from exc
                 except OSError as exc:
                     raise ValueProblem(
                         "bad-value",
@@ -258,6 +264,14 @@ def _coerce_kind(
                         "the path is relative to this file",
                     ) from exc
             return m.Text(text, origin=origin)
+        case "key_chord":
+            keys = _word(value) if not isinstance(value, tess_dl.String) else value.value
+            if keys is None:
+                raise _bad("a string of keys", value, 'write "Ctrl+Space"')
+            try:
+                return m.Text(parse_chord(keys).text, origin=origin)
+            except ChordError as exc:
+                raise ValueProblem("bad-value", exc.message, exc.hint) from exc
         case "color":
             return _color(value, origin)
         case "enum":
@@ -452,7 +466,7 @@ def _from_python_kind(
             if n is None or (kind == "whole" and isinstance(n, float)):
                 raise bad("a whole number" if kind == "whole" else "a number")
             return m.Number(n, origin=origin)
-        case "max_length" | "lines":
+        case "max_length" | "lines" | "tab_index":
             n = _py_number(value)
             if n is None or isinstance(n, float):
                 raise bad("a whole number")

@@ -9,7 +9,7 @@ import pytest
 
 from tess_shell.cli import main
 
-HEAD = "---\nTDL: 0.1\nName: {name}\n---\n"
+HEAD = "---\nTDL: 0.2\nName: {name}\n---\n"
 
 SHELL = """
 Shell {{
@@ -95,12 +95,12 @@ def test_an_import_that_is_not_a_module_file_says_so_with_its_position(
     assert error["line"] == line and "Nope_Module.tdl" in error["message"]  # type: ignore[index]
 
 
-def test_importing_a_shell_file_is_not_built_yet(
+def test_a_shell_file_is_not_imported_into_a_bar_only_a_monitor_takes_one(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     shell(tmp_path, "Import: Other_Shell.tdl")
     code, report = check(tmp_path, capsys)
-    assert code == 1 and rules(report) == ["not-built"]
+    assert code == 1 and rules(report) == ["import-misplaced"]
 
 
 def test_a_module_may_call_another_in_any_file_order(
@@ -156,7 +156,9 @@ def test_two_user_modules_with_one_name_are_an_error_naming_both(
     other = tmp_path / "Modules" / "Copy"
     other.mkdir()
     (other / "Copy_Module.tdl").write_text(HEAD.format(name="Label") + LABEL)
-    (other / "Copy_Module.py").write_text("")
+    (other / "Copy_Module.py").write_text(
+        "from tess_shell import Module\n\nclass C(Module):\n    pass\n"
+    )
     code, report = check(tmp_path, capsys)
     assert code == 1 and rules(report) == ["name-duplicate"]
     error = report["errors"][0]  # type: ignore[index]

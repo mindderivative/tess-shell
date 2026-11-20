@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Tesserae Shell: build desktop shells (bars, panels, docks, launchers, OSDs) from TDL files."
 readme = "README.md"
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE"]
 requires-python = ">=3.14"
 authors = [{ name = "Mind Derivative" }]
 classifiers = [
@@ -19,12 +19,13 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "tesserae-engine>=0.6.7,<0.7",
-    "tesserae-el>=0.1.2,<0.2",
-    "tesserae-dl>=0.1.1,<0.2",
+    "tesserae-engine>=0.6.9,<0.7",
+    "tesserae-el>=0.2.0,<0.3",
+    "tesserae-dl>=0.2.0,<0.3",
     "loguru>=0.7.3,<0.8",
     "inotify-simple>=2.0.1,<3",
     "dbus-fast>=2.24,<4",
+    "tesserae-utils[image]>=0.2.1,<0.3",
     "pillow>=11,<14",
     "jeepney>=0.9,<0.10",
 ]
@@ -36,7 +37,18 @@ Repository = "https://github.com/mindderivative/tess-shell"
 tesserae-shell = "tess_shell.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "pytest-split>=0.10",
+]
+docs = [
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.5",
+    "mkdocs-github-admonitions-plugin>=0.1",
+    "mkdocs-awesome-nav>=3.3.0",
+]
 
 [tool.hatch.version]
 path = "src/tess_shell/__init__.py"
@@ -44,11 +56,8 @@ path = "src/tess_shell/__init__.py"
 [tool.hatch.build.targets.wheel]
 packages = ["src/tess_shell"]
 
-[tool.hatch.build.targets.wheel.hooks.custom]
-path = "hatch_build.py"
-
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/LICENSE", "/README.md", "/CHANGELOG.md", "/pyproject.toml"]
+include = ["/src", "/LICENSE", "/NOTICE", "/README.md", "/CHANGELOG.md", "/pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -64,7 +73,7 @@ addopts = "-m 'not perf and not manual and not compositor and not dbus and not a
 
 [tool.ruff]
 line-length = 100
-extend-exclude = ["tools", "docs", "graphify-out", "src/tess_shell/_vendor"]
+extend-exclude = ["tools", "docs", "graphify-out"]
 src = ["src", "tests"]
 
 [tool.ruff.lint]
@@ -73,6 +82,11 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.ruff.lint.per-file-ignores]
 # the checklist generators embed whole TDL files in strings
 "tests/kwin/*" = ["E501"]
+# the Node harness and the scenarios of the KWin script are JavaScript in strings
+"tests/test_kwin_script_js.py" = ["E501"]
+# the module process test: the report's markdown and its tables are long lines in strings
+"tests/perf/module_process_test.py" = ["E501"]
+"tests/perf/proto/*" = ["E501"]
 
 [tool.mypy]
 strict = true

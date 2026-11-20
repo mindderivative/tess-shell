@@ -55,7 +55,7 @@ def started(
     app, store = StubApp(), ValueStore()
     theme_look = look()
     if reduced:
-        theme_look = theme_look.with_appearance(Appearance(scheme="dark", reduced_motion=True))
+        theme_look = theme_look.with_appearance(Appearance(scheme="dark", animations=False))
     manager = SurfaceManager(
         app,
         module(),

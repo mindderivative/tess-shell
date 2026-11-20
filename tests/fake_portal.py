@@ -12,7 +12,14 @@ from typing import Any
 
 from dbus_fast import Variant
 
-from tess_shell.services.portal import NAMESPACE, PATH, PORTAL, REGISTRY, SETTINGS
+from tess_shell.services.portal import (
+    INTERFACE_NAMESPACE,
+    NAMESPACE,
+    PATH,
+    PORTAL,
+    REGISTRY,
+    SETTINGS,
+)
 from tests.fake_dbus import HAVE_DAEMON, FakeBus, FakeObject, fake_bus, wait_for
 
 __all__ = ["HAVE_DAEMON", "Portal", "fake_portal", "wait_for"]
@@ -28,6 +35,11 @@ class Portal:
             "accent-color": Variant("(ddd)", [0.25, 0.5, 1.0]),
             "contrast": Variant("u", 0),
             "reduced-motion": Variant("u", 0),
+        }
+        self.interface: dict[str, Variant] = {
+            "icon-theme": Variant("s", "breeze-dark"),
+            "font-name": Variant("s", "Hack Nerd Font  10"),
+            "enable-animations": Variant("b", True),
         }
         self.service = bus.service(PORTAL)
         self.calls: list[str] = []
@@ -50,7 +62,8 @@ class Portal:
 
     def _read_all(self, namespaces: list[str]) -> dict[str, dict[str, Variant]]:
         self.calls.append("ReadAll")
-        return {NAMESPACE: dict(self.values)}
+        every = {NAMESPACE: self.values, INTERFACE_NAMESPACE: self.interface}
+        return {ns: dict(keys) for ns, keys in every.items() if ns in namespaces}
 
     def _register(self, app_id: str, options: dict[str, Variant]) -> None:
         self.calls.append("Register")
@@ -62,9 +75,10 @@ class Portal:
     def down(self) -> None:
         self.service.down()
 
-    def set(self, key: str, value: Variant) -> None:
-        self.values[key] = value
-        self.settings.obj.emit("SettingChanged", NAMESPACE, key, value)
+    def set(self, key: str, value: Variant, namespace: str = NAMESPACE) -> None:
+        table = self.interface if namespace == INTERFACE_NAMESPACE else self.values
+        table[key] = value
+        self.settings.obj.emit("SettingChanged", namespace, key, value)
 
 
 class _Calls:

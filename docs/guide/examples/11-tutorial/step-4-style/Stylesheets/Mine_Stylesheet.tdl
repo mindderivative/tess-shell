@@ -1,0 +1,10 @@
+---
+TDL: 0.2
+Name: Mine
+---
+# The look of the blocks that carry Class: chip, taken from the theme's tokens, so it follows
+# light and dark with the theme.
+Stylesheet {
+    Rule { Selector: ".chip", Background: $color.surface_raised, Corner_Radius: $shape.full }
+    Rule { Selector: ".chip:hovered", Background: $color.primary }
+}

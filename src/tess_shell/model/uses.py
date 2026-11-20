@@ -17,7 +17,7 @@ class Use:
     params: Mapping[str, Any]  # plain Python values, defaults merged
     monitor: str
     origin: m.Origin
-    # params written as ``{{ }}`` slots on the call, each with the kind it is read as: the model
+    # params written as ``<| |>`` slots on the call, each with the kind it is read as: the model
     # evaluates them in the scope of the use that holds the call (``outer``, empty in a Popup's
     # own blocks) and ``params`` above keeps the default until it has
     slots: Mapping[str, tuple[m.SlotValue, str]] = field(default_factory=dict, compare=False)

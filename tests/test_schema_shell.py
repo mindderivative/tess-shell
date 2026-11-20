@@ -112,23 +112,18 @@ def test_two_monitors_selecting_the_same_monitor() -> None:
     assert [f.rule for f in fs] == ["monitor-duplicate"]
 
 
-@pytest.mark.parametrize(
-    ("snippet", "what"),
-    [
-        ("Import: Other_Shell.tdl", "Import"),
-    ],
-)
-def test_surfaces_and_forms_not_built_in_m1_are_refused(snippet: str, what: str) -> None:
+def test_an_import_with_no_loader_to_read_it_is_an_error_at_the_import() -> None:
+    snippet = "Import: Other_Shell.tdl"
     body = BODY.replace("            Bar {", f"            {snippet}\n            Bar {{", 1)
     (f,) = errors(body)
-    assert f.rule == "not-built" and what in f.message
+    assert f.rule == "import-not-found" and "Other_Shell.tdl" in f.message
 
 
 def test_if_and_for_in_children_are_typed_with_their_slots_and_bodies() -> None:
     body = BODY.replace(
         "Spacer { }",
-        "If {{ a > 1 }} { Spacer { } } Else { Text { Text: no } }\n"
-        "For w In {{ items }} Key {{ w.id }} { Text { Text: {{ w.t }} } }",
+        "If <| a > 1 |> { Spacer { } } Else { Text { Text: no } }\n"
+        "For w In <| items |> Key <| w.id |> { Text { Text: <| w.t |> } }",
     )
     shell, findings = read(body)
     assert findings == [] and shell is not None
@@ -140,7 +135,7 @@ def test_if_and_for_in_children_are_typed_with_their_slots_and_bodies() -> None:
     assert isinstance(cond, m.IfNode) and cond.condition is not None
     assert cond.condition.text == " a > 1 " and len(cond.body) == 1 and cond.else_body is not None
     assert isinstance(loop, m.ForNode)
-    assert (loop.variable, loop.name) == ("w", "Text")
+    assert (loop.variables, loop.name) == (("w",), "Text")
     assert loop.items is not None and loop.items.text == " items "
     assert loop.key is not None and loop.key.text == " w.id "
 
@@ -151,7 +146,7 @@ def test_a_module_call_inside_if_or_for_is_read_and_a_shell_file_still_has_no_st
     from tess_shell.schema.shell import read_shell as rs
 
     result = tess_dl.parse(
-        HEADER + BODY.replace("Spacer { }", "If {{ true }} { Clock { } }"),
+        HEADER + BODY.replace("Spacer { }", "If <| true |> { Clock { } }"),
         path="Shells/Main_Shell.tdl",
     )
     assert result.document is not None

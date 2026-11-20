@@ -462,7 +462,7 @@ class LiveTree:
         if pair is None:
             try:
                 repeater = tess_el.compile_repeater_parts(
-                    node.variable,
+                    ", ".join(node.variables),
                     node.items.text,
                     key=node.key.text,
                     name=node.name,
@@ -481,7 +481,8 @@ class LiveTree:
         try:
             tracked = repeater.reconcile_tracked(base, state)
         except tess_el.TelError as exc:
-            self._report(exc)
+            if not self._settling(use, exc):
+                self._report(exc)
             self.reads.setdefault(use, set()).update(getattr(exc, "reads", ()) or ())
             return []
         self.reads.setdefault(use, set()).update(tracked.reads)
@@ -509,12 +510,31 @@ class LiveTree:
 
     # -- evaluate -----------------------------------------------------------------------------
 
-    def _report(self, exc: Exception) -> None:
-        self.errors += 1
+    def _settling(self, use: str, exc: Exception) -> bool:
+        """``exc`` is a name the module has not sent yet and its process is still starting: the
+        value arrives a moment after the first paint (the surfaces do not wait for a module in a
+        process), and the slot is evaluated again then; it is no error."""
+        settling = self.store.settling
+        message = getattr(exc, "message", str(exc))
+        if settling is None or not message.endswith("is not defined"):
+            return False
+        if not settling(use.split("@", 1)[0]):
+            return False
+        item = (use, message.split("'")[1], self._text(exc))
+        if item not in self.store.deferred:
+            self.store.deferred.append(item)  # said when the module has started, if still true
+        return True
+
+    @staticmethod
+    def _text(exc: Exception) -> str:
         hint = getattr(exc, "hint", "")
         where = f"{getattr(exc, 'file', '')}:{getattr(exc, 'line', 0)}:{getattr(exc, 'column', 0)}"
         message = getattr(exc, "message", str(exc))
-        logger.warning(f"{where}: {message}" + (f" ({hint})" if hint else ""))
+        return f"{where}: {message}" + (f" ({hint})" if hint else "")
+
+    def _report(self, exc: Exception) -> None:
+        self.errors += 1
+        logger.warning(self._text(exc))
 
     def _icon(self, link: Link, value: object) -> m.Value | None:
         """An icon name a module sent, as the SVG document of the icon (the same lookup a name
@@ -545,7 +565,7 @@ class LiveTree:
                 tracked = part.evaluate_tracked(scope)
             except tess_el.TelError as exc:
                 reads.update(getattr(exc, "reads", ()) or ())
-                if not failed:
+                if not failed and not self._settling(link.use, exc):
                     self._report(exc)
                 failed = True
                 continue
@@ -557,7 +577,7 @@ class LiveTree:
         try:
             if link.single:
                 value = results[0]
-                if value is None:  # ``{{ x if y else None }}``: the key is left as it is
+                if value is None:  # ``<| x if y else None |>``: the key is left as it is
                     return None
             else:
                 value = "".join(r if isinstance(r, str) else str(r) for r in results)

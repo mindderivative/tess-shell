@@ -1,0 +1,49 @@
+---
+TDL: 0.2
+Name: Main_Shell
+---
+# Volume_OSD goes in a Panel that starts hidden (Visible: false), takes no pointer (Input_Region: [])
+# and no keyboard (Keyboard: NONE) and sits on the overlay layer. The module shows the Panel when the
+# volume or mute changes and the Panel hides itself after `duration` milliseconds.
+Shell {
+    Monitor {
+        Name: Main
+        Index: default
+        Children {
+            Bar {
+                Name: Top_Bar
+                Edge: TOP
+                Width: EXPAND
+                Height: 36
+                Style { Background: $color.surface }
+                Children {
+                    FlexBox {
+                        Width: EXPAND
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Padding: [12, 0, 12, 0]
+                        Children {
+                            Spacer { }
+                            Audio { }
+                        }
+                    }
+                }
+            }
+            Panel {
+                Name: Volume_Panel
+                Layer: OVERLAY
+                Keyboard: NONE
+                Input_Region: []
+                Visible: false
+                Anchor: [BOTTOM]
+                Inset: [0, 0, 0, 80]
+                Width: 300
+                Height: 64
+                Style { Background: $color.surface_raised, Corner_Radius: 12, Elevation: 20% }
+                Children {
+                    Volume_OSD { duration: 1500, show_name: true }
+                }
+            }
+        }
+    }
+}

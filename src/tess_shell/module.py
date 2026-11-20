@@ -46,6 +46,25 @@ class Event:
     # StatusNotifier ``Activate`` take). ``None`` for a block inside a Popup, where the shell
     # does not know the Popup's place, and for an event that is not a pointer event
     rect: tuple[float, float, float, float] | None = None
+    # ``On_Key_Down`` (a text field): the key as tre names it (``"arrow_down"``, ``"escape"``, or
+    # the character a character key makes) and the modifiers held
+    key: str | None = None
+    ctrl: bool = False
+    shift: bool = False
+    alt: bool = False
+    meta: bool = False
+    repeat: bool = False
+    # the tre event, for ``stop``
+    _raw: Any = field(default=None, repr=False, compare=False)
+
+    def stop(self) -> None:
+        """Keep the event from going further up the tree: the surface does not hear it (a Panel's
+        Escape that hides it, the keys of shortcut mode). Only while the handler runs. For an
+        ``On_Key_Down`` of a text field the key reaches the module before the field acts, and the
+        field acts on it whatever the module does: a stop cannot veto an edit."""
+        stop = getattr(self._raw, "stop", None)
+        if callable(stop):
+            stop()
 
 
 class Module:
