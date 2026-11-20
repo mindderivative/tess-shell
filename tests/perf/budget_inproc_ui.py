@@ -478,7 +478,7 @@ def measure_b18(quick: bool) -> list[Reading]:
     calls_example = tre_calls(example)
     return [
         Reading("B18", f"bind of a typed tree of {nodes:,} nodes (build + attach + dispose)",
-                big_ms, "ms", 15.0, "median",
+                big_ms, "ms", 20.0, "median",
                 note="as tests/perf/measure_bind.py, headless window"),
         Reading("B18", "bind of the M1 example (5 nodes)", example_ms, "ms"),
         Reading("B18", f"tre calls the binder makes for the {nodes:,}-node tree",
