@@ -19,7 +19,7 @@ Hot reload is on by default. `Hot_Reload: false` in `settings.tdl` turns the wat
 Applied at once on the next reload:
 
 * the shell files: Bars, Panels, Popups, Frames, their sizes, edges, margins and styles. A change of a surface's size, edge or similar is set on the open window. Moving a surface to another monitor, or changing which monitor a `Monitor` block selects, closes the window and opens a new one on the right screen; the other monitors' windows are not touched ([Multiple monitors](monitors.md));
-* modules: a module's layout (its `.tdl`) and its Python file. A change in the layout rebuilds the layout and keeps the module's running instance. A change in the Python file stops the old instance, loads the new code and starts it again; if the new code does not load, the old instance keeps running;
+* modules: a module's layout (its `.tdl`) and its Python file. A change in the layout rebuilds the layout and keeps the module's running instance. A change in the Python file loads the new code and starts it, after the old instance's `stop()`; if the new code does not load, the old instance keeps running. For a module of yours (which runs in a process of its own) the new process is started beside the old one and imports the file first, and the old process is stopped only when that import worked, so a file with an error never takes the running module away; the import finding arrives in the log a moment after the reload;
 * themes, stylesheets, tokens, icons;
 * `Logging`, `Appearance.Theme`, `Appearance.Stylesheets`, `Shortcuts` and `Global_Shortcuts`.
 

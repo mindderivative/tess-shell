@@ -181,14 +181,19 @@ See [Trust and security](../guide/configuration-folder.md#trust-and-security).
 
 ## At run time
 
-These appear when the shell starts or reloads, not in `check`, because they need the Python of a module or the registry. In the log each is a line with the module or file it is about; the last errors are also in `tesserae-shell status`.
+These appear when the shell starts or reloads. Most need the Python of a module or the registry, so `check` does not find them. The exceptions: `check` reads a module of yours without running it and finds `module-import` (a file that does not parse), `module-classes` and `module-no-python`; `check --import-modules` also imports it and finds `module-import` for an exception at the top of the file and `module-init`. In the log each is a line with the module or file it is about; the last errors are also in `tesserae-shell status`.
 
 | Name | Severity | What it means and what to do |
 |---|---|---|
 | `module-no-python` | error | A module has a layout `Name_Module.tdl` but no `Name_Module.py` next to it. |
-| `module-import` | error | The module's Python could not be imported (a syntax error, a missing library, no or more than one `Module` class). The message names the exception. The module does not load; the others do. |
+| `module-import` | error | The module's Python could not be imported: a syntax error (found without running the file), a missing library or an exception at the top of the file (found by running it). The message names the exception and the line. The module does not load; the others do. For one of your modules the finding of an exception at import arrives in the log a moment after the reload, and the module that ran before keeps running. |
+| `module-classes` | error | The Python file has no class that extends `Module`, or more than one. Keep exactly one. |
 | `module-init` | error | The module's class raised when it was created. |
-| `module-use` | error | The module refused a use of it: a param whose value it rejected. |
+| `module-use` | error | The module refused a use of it: a param whose value it rejected (`validate_use` raised `ValueError`). |
+| `module-start`, `module-stop`, `module-reload`, `module-use_added`, `module-use_removed` | error | That method of the module raised. The module is marked failed (not for `stop`) and starts again with the back-off (1, 2, 4, 8 and 16 seconds, five tries); the message gives the exception and the line. |
+| `module-process` | error | The process of one of your modules ended: it exited with a code or a signal (`SIGKILL` included), a callback did not return in 5 seconds and the shell killed it, its end of the pipe did not read, or it sent bad lines three times in a row. The module's surfaces keep their last values and it starts again with the back-off. Fix the callback that hangs or crashes; the traceback of its threads is in the process's standard error (the journal, under `systemd`). |
+| `module-actions` | warning | One of your modules has, once its process has imported the file, actions that the file's text does not show (added by assignment or `setattr`), lacks ones the text shows, or takes other arguments. The shell finds actions by reading the file, so a `Call` and `check` cannot see the others. Write each action as a method marked `@action` in the class body. |
+| `event-stop` | warning | A module of yours called `Event.stop()`, which has no effect there: the shell's handler has returned before the module's action runs. Logged once for the module. A module that must stop an event has to run in the shell (`Debug { User_Modules_In_Process: true }` in `settings.tdl`). |
 | `module-exception` | error | A module's Python raised while the shell runs. The traceback is in the log and the shell keeps running. If the module is a shipped one, report it. |
 | `action-clash` | error | The module has a method marked `@action` with the name of a built-in action (`Show`, `Hide`, `Toggle`, `Close`, `Call`). Rename the method. |
 | `unknown-action`, `unknown-argument`, `missing-argument` | error | A handler (`On_Click`, a `Call`) names an action the module does not have, an argument the action does not take, or leaves out one it needs. The hint lists the actions or arguments. |

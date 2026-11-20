@@ -8,22 +8,21 @@ The shell runs as you, with your rights and none of its own. This page says what
 |---|---|---|
 | A TDL file: a shell, a module's layout, a style, a theme, a stylesheet, `settings.tdl` | No | Say what to draw. TDL has no statements. Every `<\| \|>` slot goes to an expression language that can only read the module's values, and it has limits. |
 | A shipped module (Clock, Battery, Tasks ...) | Yes, it is the package's own Python | What the package says it does. It comes from the release you installed. |
-| A module of your own: `Modules/<Name>/<Name>_Module.py` | **Yes** | Anything your user can do. It runs in the shell's process. |
+| A module of your own: `Modules/<Name>/<Name>_Module.py` | **Yes** | Anything your user can do. It runs in a process of its own, as you. |
 | Another program of yours | n/a | Anything your user can. The shell does not defend its folder or its control commands against it: the session bus is per user. |
 
 So a shell file you got from someone else cannot run code, however odd it looks. It can only draw, and name modules. A module's Python is the part that matters.
 
-## Posture A: your modules are trusted code
+## Your modules are trusted code in a process of their own
 
-A module's Python file runs inside the shell's own process, with your rights. It can read and write your files, start programs and use the network. That is the same trust as a script you put in your home folder, and **the shell does not sandbox it**. The design calls this posture A, and it is the decided and built behaviour of this release.
-
-The design notes record a later decision to move user modules into child processes (posture C), so that a module that hangs or crashes takes down only its own process. It is not built yet, and it would give fault containment, not security: a child process still runs as you.
+A module's Python file runs with your rights. It can read and write your files, start programs and use the network. That is the same trust as a script you put in your home folder, and **the shell does not sandbox it**. What changed in this release is where it runs: the modules that ship with the shell run inside it, and a module you write or add runs in **a child process of its own** (one process for each module file), so that a module that hangs or crashes does not freeze your bars. That is fault containment, not security: the child process is started by the shell and runs as you, with all the rights you have.
 
 What follows from it:
 
 * Write modules yourself, or read them before you add them. A module you got from someone else is not supported in this release; sharing shells is not a feature yet.
-* A shipped module is not the same case: it is the package's code.
-* The module host gives a module a narrow `ctx` (no tre nodes, windows, surfaces, registry, config loader or expression language). That keeps the shell's own state consistent. It does not stop a module that wants to do harm, since Python can import anything.
+* A shipped module is not the same case: it is the package's code, and it runs in the shell.
+* The process boundary protects the shell's state from a module's mistakes, not you from a module's intent. A module cannot reach the shell's windows, registry or configuration loader, because its `ctx` is a narrow set of calls that the shell answers; Python in the process can still import anything and open your files.
+* `Debug { User_Modules_In_Process: true }` in `settings.tdl` puts your modules back in the shell's own process, as in earlier releases. The trust is the same; the containment is gone.
 
 ## What the shell checks around it
 
@@ -63,13 +62,16 @@ The effect is that a shell file you copy into your folder cannot make the shell 
 
 ### Where a module's Python comes from
 
-The shell loads a module's `.py` by its file path from that module's folder in `Modules/` (or a folder `Directories` adds for modules), never through Python's general import path. It puts neither your folder nor a module's folder on `sys.path`, so a file named `json.py` beside a module cannot replace Python's own `json`.
+The shell loads a module's `.py` by its file path from that module's folder in `Modules/` (or a folder `Directories` adds for modules), never through Python's general import path. It puts neither your folder nor a module's folder on `sys.path`, so a file named `json.py` beside a module cannot replace Python's own `json`. The process of one of your modules is started in Python's isolated mode (`-I`), which ignores `PYTHON*` environment variables and the user's site folder.
 
 ### When a module misbehaves
 
 * **It raises** in `start()`, `use_added()`, `use_removed()` or `reload()`: that module alone is marked failed and restarts after 1, 2, 4, 8 and 16 seconds, then stays failed until a reload (which gives five new tries). The others keep running and its surfaces keep their last values. An exception in an `@action` or a callback is logged with the module's name and does not fail it.
-* **It is slow.** A callback on the loop that takes more than 4 ms is logged at debug level; a module with more than 100 of them in a minute gets a `slow-module` warning that names it and the entry point. A callback that hangs the loop is named by the [watchdog](session.md#what-the-unit-does-when-something-goes-wrong) at two seconds, and the shell is restarted at ten.
+* **It hangs or crashes.** For a module of yours, the process alone is affected. A callback that has run for 2 seconds is named in the log; at 5 seconds the process is killed (`module-process`) and the module starts again with the same back-off, five tries. A crash or an exit of the process is the same finding. The shell's loop does not wait for it, so your bars stay as they are. A hung callback of a shipped module is named by the [watchdog](session.md#what-the-unit-does-when-something-goes-wrong) at two seconds, and the shell is restarted at ten.
+* **It is slow.** A callback that takes more than 4 ms is logged at debug level; a module with more than 100 of them in a minute gets a `slow-module` warning that names it and the entry point. The same count is kept inside the process of a module of yours.
 * **It starts threads.** More than 16 live threads of its own gives one `many-threads` warning.
+* **It asks the shell for something and gets no answer.** A call in the context that must answer at once waits 2 seconds, then raises `ShellCallTimeout`, which names the module and the call.
+* **It adds actions the file does not show.** The shell reads the file's text to know the actions, and warns `module-actions` when the process, once it has imported the file, has others (added by assignment or `setattr`).
 
 ### What the logs hold
 
@@ -92,9 +94,9 @@ A module is a folder in `Modules/` with a layout file, `<Name>_Module.tdl`, and 
 
 1. **Read the layout first.** The `.tdl` file shows what it draws and what params it takes. Check the `Style:` and `Source:` paths: they have to stay inside your configuration folder, or `check` refuses them.
 2. **Read every import at the top of the `.py` file.** `subprocess`, `os`, `shutil`, `socket`, `urllib`, `http`, `requests`, `ctypes`, `pickle`, `importlib` and `eval`/`exec` are the ones that reach outside. A clock needs none of them. A module that imports a package you do not know needs a look at that package too.
-3. **Find what it does when it starts.** Read the `start()` method and anything at the top level of the file: these run as soon as the shell loads it, before any click.
+3. **Find what it does when it starts.** Read the `start()` method and anything at the top level of the file: the top level runs when the module's process imports the file, as soon as the shell starts, before any click. `tesserae-shell check` does not run it; `check --import-modules` does, so use that option only on a module you have read.
 4. **Read the actions.** An `@action` is what `tesserae-shell call` and a block's action can run. See what each does with its arguments.
-5. **Look for the file system and the network.** Search for `open(`, `Path(`, `write_text`, `unlink`, `rmtree`, `connect(` and for any URL. The only place the shell gives a module for its own data is `ctx.state_dir`.
+5. **Look for the file system and the network.** Search for `open(`, `Path(`, `write_text`, `unlink`, `rmtree`, `connect(` and for any URL. The shell gives a module no place of its own for data: whatever it keeps, it keeps where it chooses.
 6. **Check the folder for anything else.** Extra `.py` files, binaries, hidden files. A module needs one `.py` file and its layout.
 7. **Run it where a mistake is cheap first.** `tesserae-shell check --config-dir ~/try-shell` and `tesserae-shell run --config-dir ~/try-shell` use a folder of their own; your real folder, and your files, are not touched. Keep it `chmod go-w` so the shell does not warn.
 

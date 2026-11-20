@@ -676,7 +676,7 @@ Read the files from the Python outward:
 * In `Uptime_Module.tdl`, `Params` lists what a use may set. The block tree shows what the Python sends: `<| params.label + " " + uptime |>` is a slot that reads the param and the sent value and is kept up to date. The `FlexBox`'s `On_Click { Action: Call, Target: "Uptime.refresh" }` runs the action.
 * `Style:` names the module's own look file, relative to the module file, and the file defines the class `uptime_text`. A rule in one of your stylesheets still wins over it.
 
-Save the files. You should see text like `up 3h 07m` (your own value; `12m` when the machine has been up less than an hour) just left of the clock chip, and a click on it reads the value again. A module's Python runs inside the shell with your rights and without a sandbox ([Trust and security](configuration-folder.md#trust-and-security)): write your own, or read one before you add it.
+Save the files. You should see text like `up 3h 07m` (your own value; `12m` when the machine has been up less than an hour) just left of the clock chip, and a click on it reads the value again. The shell starts your module's Python in a process of its own, so a module that hangs or crashes cannot freeze the bar; the value can appear a moment after the bar's first paint. That process runs with your rights and is not a sandbox ([Trust and security](configuration-folder.md#trust-and-security)): write your own, or read one before you add it.
 
 The detail: [A configuration folder with a module of your own](configuration-folder.md#a-configuration-folder-with-a-module-of-your-own). The design notes hold the full contract ([Module File](../design/41%20TDL%20Reference/Module%20File.md)).
 

@@ -2,7 +2,7 @@
 
 The Python API of a module: what a module's Python file imports, the class it writes, the context object it receives, the event an action gets, and the values it may send. For a walk through, with a module you can copy, read [Writing a module](../guide/writing-a-module.md). Every signature on this page was read from the code of tesserae-shell 0.1.2 and its unreleased changes; where the design notes say more than the code does, the page says what the code does ([What is not built](#what-is-not-built)).
 
-A module's Python runs inside the shell, as you, with no sandbox ([Security](../guide/security.md)).
+A module's Python runs as you, with no sandbox. A module of your own runs in a process of its own; the shell's own modules run inside the shell ([Two kinds of module](#two-kinds-of-module), [Security](../guide/security.md)).
 
 ## What a module imports
 
@@ -43,12 +43,12 @@ class Module:
     def on_service_found(self, name: str) -> None: ...
 ```
 
-Every method does nothing in the base class, so write only what you need. Every one is called on the shell's loop thread, one at a time, and a callback that is slow holds up the screen.
+Every method does nothing in the base class, so write only what you need. Every one is called on the module's loop thread, one at a time (in the shell's loop for a shipped module, in the main thread of the module's process for one of yours), and a callback that is slow holds up that loop.
 
 | Method | Called when | If it raises |
 |---|---|---|
 | `start()` | Once, after the files are read and the module's uses are known (`self.ctx.uses` is filled), after `validate_use` has run for each use. Return quickly. | The module is marked failed (`module-start`, with the line), and started again after a back-off ([Failure](#failure-and-restarts)). |
-| `stop()` | The shell quits, the module's Python is about to be replaced, or the module has no use left. Stop your own threads and close your own connections: the shell cancels the context's subscriptions, not your threads. It has no timeout; it must return. | Logged as `module-stop`; the module is not restarted. |
+| `stop()` | The shell quits, the module's Python is about to be replaced, or the module has no use left. Close your own files and connections: the shell cancels the context's subscriptions, not your threads. For a module of yours the process ends once `stop()` has returned, and takes your threads with it; if `stop()` has not returned in 3 seconds the process is killed. For a shipped module it has no timeout and must return. | Logged as `module-stop`; the module is not restarted. |
 | `reload()` | The module's layout (or its style file) changed and its Python did not. The module keeps running. `self.ctx.config` holds only `{"name": <module name>}` today, so there is not much to re-read; use it to start again from files of your own. | Marked failed, as `start`. |
 | `validate_use(use)` | For each use when the module starts, and again when a use's params change. Quick, no I/O. Raise `ValueError` with a message to reject the use. | Only `ValueError` is handled: it is reported as the error `module-use`, `<use name>: <message>`, naming the layout file; the module still starts. Any other exception is not caught here. |
 | `use_added(use)` | A use appeared while the module runs (a surface that shows it opened, or a reload added a use). Not called for the uses that exist when `start()` runs. The shell has sent `available` for it first if you use `ctx.dbus`. | Marked failed, as `start`. |
@@ -80,7 +80,20 @@ An exception in an `@action`, a tick callback, a `call_soon` callback, a service
 
 ### Code reload
 
-When the Python file changes the shell reads the new file first. If that works and has one class, `stop()` of the old instance runs, its context is closed (the tick and service subscriptions are cancelled, `call_soon` callbacks are dropped), and a new instance is created and started. If the new file fails to import or has no class, or two, the old instance keeps running and the findings are reported. The values the old instance sent stay in place until the new one sends.
+When the Python file changes the shell reads the new file first. If that works and has one class, `stop()` of the old instance runs, its context is closed (the tick and service subscriptions are cancelled, `call_soon` callbacks are dropped), and a new instance is created and started. If the new file fails to import or has no class, or two, the old instance keeps running and the findings are reported. The values the old instance sent stay in place until the new one sends. For a module of yours the new process is started beside the old one and imports the file first; the old process is stopped only after that import worked, so a file with an error never takes the running module away.
+
+## Two kinds of module
+
+A module whose Python file is one of the shell's own (under `shipped/` in the package) runs in the shell's process, as described above. A module whose Python file is any other runs in **a child process of its own**, one process for each module file however many uses it has, started with the shell. The class and `self.ctx` are the same, and a module needs no change to run in either. What differs:
+
+* **A hang or a crash stays in the process.** A callback that has run for 2 seconds is named in the log; one that has run for 5 seconds gets the process killed, as `module-process`, and the module starts again with the back-off of [Failure and restarts](#failure-and-restarts). An exit of the process, with a code or a signal, is the same finding. The bars keep running and keep the module's last values. `tesserae-shell status` lists each process with its state (`module_processes`).
+* **The services stay in the shell.** `ctx.dbus`, `ctx.audio`, `ctx.windows`, `ctx.apps`, `ctx.icons` and `ctx.tray` talk to the shell, which holds the connections; the module opens none of its own. A member whose contract says it answers at once on the loop (`ctx.is_popup_open`, `ctx.update_popup`, `ctx.apps.search`, `ctx.icons.theme_icon`, `ctx.surface.hide`, `ctx.focus.set_mode` and similar) waits for the shell, and raises `ShellCallTimeout` if the shell has not answered in 2 seconds. `ShellCallTimeout` is a subclass of `RuntimeError`, its message names the module and the call, and it is not exported from `tess_shell`: catch `RuntimeError` if you must catch it.
+* **Everything that crosses is plain data.** What `ctx.send`, a popup's `data` and an action's return value carry is written as JSON lines on the way to the shell, so it is strings, numbers, booleans, lists and dicts; a tuple stays a tuple (and bytes stay bytes) across the pipe. There is no pickle, so an object does not cross. What `ctx.send` accepts is the same as for a shipped module ([Values](#values)). A value sent in `start()` can appear a moment after the first paint of the bar.
+* **`Event.stop()` has no effect.** The shell's handler has returned before the module's action runs, so there is nothing to stop; the first call logs the warning `event-stop`, and a module that must stop an event has to run in the shell.
+* **Start, reload and stop go through the pipe.** `stop()` gets 3 seconds. The process ignores `SIGINT`, `SIGTERM` and `SIGHUP`, so that `systemd` stopping the unit lets the shell call `stop()` first; if the shell dies, the process is killed with it.
+* **A process costs about 20 MB.** It is fault containment, not a sandbox: it runs as you and can read what you can read.
+
+The file is read, not run, to find the actions ([Actions](#actions)), and `tesserae-shell check` reads it the same way; `check --import-modules` imports it in a throwaway process. `Debug { User_Modules_In_Process: true }` in `settings.tdl` keeps your modules in the shell's own process, with the behaviour of a shipped module ([Settings](../guide/settings.md)); the differences above then do not apply.
 
 ## Actions
 
@@ -152,7 +165,7 @@ The object is frozen. A field that does not apply to the event is `None` (`False
 | `delta` | `On_Scroll`: one wheel step, +1 scrolling down and -1 up. |
 | `rect` | A pointer event (`On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`): the block's `(x, y, width, height)` in the output's coordinates, what `ctx.popup(..., anchor=event.rect)` takes. `None` for a block inside a Popup, where the shell does not know the Popup's place. |
 | `key`, `ctrl`, `shift`, `alt`, `meta`, `repeat` | `On_Key_Down` of a text field: the key as the engine names it (`"arrow_down"`, `"escape"`, or the character), and the modifiers held. |
-| `stop()` | Keeps the event from going further up the tree (a Panel's Escape that hides it, the keys of shortcut mode), only while the handler runs. For a text field's `On_Key_Down` the module hears the key before the field acts, and the field acts whatever the module does: a stop cannot veto an edit. |
+| `stop()` | Keeps the event from going further up the tree (a Panel's Escape that hides it, the keys of shortcut mode), only while the handler runs. For a text field's `On_Key_Down` the module hears the key before the field acts, and the field acts whatever the module does: a stop cannot veto an edit. It has no effect at all in a module of your own ([Two kinds of module](#two-kinds-of-module)). |
 
 Which events exist, which blocks raise them and which of them are not raised yet (`On_Focus`, `On_Unfocus`, `On_Change`) is in the table in [Surfaces](../guide/surfaces.md#showing-hiding-and-toggling) and in each module's section of [Modules](../guide/modules.md). The built-in actions of a handler (`Show`, `Hide`, `Toggle`, `Close`, `Call`) are in the same place.
 
@@ -372,7 +385,7 @@ A param of the module is typed by its `Type` (`string`, `number`, `boolean`, `pa
 The design notes (the Python API section of the design record) go further than the code in these places. The code wins; this is what is missing today:
 
 * **No `ctx.thread`, `ctx.every` or `ctx.after`.** Threads are your own, timers are `ctx.on_tick` (seconds and minutes only).
-* **The shell does not join your threads and `stop()` has no timeout.** `stop()` is called directly on the loop; stop your own threads in it.
+* **A shipped module's `stop()` has no timeout and the shell does not join its threads.** It is called directly on the loop; stop the threads in it. For a module of yours the process ends after `stop()` (3 seconds at most), which ends its threads.
 * **`ctx.config` holds only the module's name.** The design says it holds the module's TDL values.
 * **`ctx.send` converts nothing on its own.** There are no hex-to-tuple, theme-token, float-component or `datetime` conversions on send: a colour is one of the strings above, a time is a string you format. The design's list of four conversions is not built as such. `None` is refused.
 * **No images through `send`.** An icon is a name or a reference from `ctx.icons`; a picture is a file path.

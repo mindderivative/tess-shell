@@ -108,10 +108,11 @@ Keep the panel until you have seen the shell start from the unit, and test the u
 <!-- END generated: exit-codes -->
 
 * **A hang.** The shell has a watchdog thread that checks, once a second, that its event loop is turning. After 2 seconds without a turn it logs `loop stalled for N s`, naming the module and the callback that is running, with the traceback of every thread; it repeats the warning every 5 seconds. After 10 seconds, under systemd, it asks systemd to restart it (`WATCHDOG=trigger`). The unit's `WatchdogSec=15` is the backstop: the shell sends keep-alive pings only while its loop is turning, and systemd ends a shell that has sent none for 15 seconds with `SIGABRT` and starts it again. Without systemd, a stall of 10 seconds is only logged (`loop stalled for 10 s, no supervisor can restart it`), with tracebacks every 30 seconds; nothing can safely restart the shell for you.
+* **A hang in a module of yours.** That is not a stall of the loop: your module's Python runs in a process of its own. The shell's watchdog names the callback after 2 seconds and kills that process after 5, and the module starts again with the back-off ([Security](security.md#when-a-module-misbehaves)). The shell's own modules run in the shell, so a hang in one of them is the stall above.
 * **A lost compositor.** If KWin restarts or crashes, the shell stops what it runs, saves the registry and exits with code 69, which the unit restarts. If no compositor is up yet when the shell starts again, it exits with code 2 and the unit stays down; start it with `systemctl --user start tesserae-shell.service` once the session is back.
-* **A module that raises.** Only that module fails; the shell keeps running. See [Trust and security](security.md).
+* **A module that raises or crashes.** Only that module fails; the shell keeps running, and for a module of yours its process ends and starts again. See [Trust and security](security.md).
 
-What survives a restart: your files, the registry (a Panel you moved is saved within a second of the move and replaced as a whole, so a kill never leaves half a file), and what a module keeps in its own state folder. What does not: open Popups, a shown Panel (it starts as its file says) and a module's values in memory.
+What survives a restart: your files, the registry (a Panel you moved is saved within a second of the move and replaced as a whole, so a kill never leaves half a file), and whatever a module of yours writes to files of its own. What does not: open Popups, a shown Panel (it starts as its file says), the processes of your modules (they start again with the shell) and a module's values in memory.
 
 ## The crash record
 

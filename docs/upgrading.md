@@ -91,6 +91,17 @@ A key, block, parameter or command that is renamed or replaced keeps working und
 
 **Nothing is deprecated in 0.2.0.** A removed key is an error, `removed-key`, whose hint says what to do; today that is a Bar's `Reveal_Key`.
 
+## What changed for the Python of your modules in 0.2.0
+
+A module of yours (a `Name_Module.py` that does not ship with the shell) now runs in **a process of its own**, one for each module file, instead of inside the shell. The modules that ship with the shell are unchanged. Nothing in your files has to change, and `migrate` does not touch Python. What you may notice:
+
+* A module that hangs or crashes no longer freezes the bars: a callback that runs for 2 seconds is named, at 5 seconds its process is killed (`module-process`), and the module starts again with the usual back-off.
+* It is not a sandbox. The process runs as you, as before ([Security and trust](guide/security.md)).
+* What a module sends is plain data; `Event.stop()` has no effect in a module of yours (`event-stop`); a `ctx` call that must answer at once raises `ShellCallTimeout` after 2 seconds; the first values of a module can appear just after the bar's first paint. [The module API](api/module-api.md#two-kinds-of-module) lists the differences.
+* `tesserae-shell check` now reads your modules' Python without running it (`module-import`, `module-classes`, `module-no-python`), and `check --import-modules` imports it in a throwaway process. [Messages](reference/messages.md#at-run-time) has the new findings `module-process`, `module-actions` and `event-stop`.
+* Each process costs about 20 MB. `Debug { User_Modules_In_Process: true }` in `settings.tdl` puts your modules back in the shell's process, as in 0.1.x; it applies after a restart.
+* The schema export version (`schema_version` in `tesserae-shell schema --json`) is 1.12; the changelog calls the change additive.
+
 ## Changelog
 
 Every release in order, oldest first, with *Unreleased* (the next release) at the end. It says what changed and what was removed.

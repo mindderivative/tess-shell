@@ -2,9 +2,11 @@
 
 This page explains, at the level of someone who writes shell files, what the Tesserae Shell program is, what it is made of and what happens between a file on disk and a surface on screen. It describes what the code does today. The [design notes](design/index.md) hold the reasons and the detail; the links below lead to them.
 
-## One process, one loop
+## One process, one loop, and a process for each module of yours
 
-`tesserae-shell run` is one Python process. It has one **event loop**, which is the loop of the Tesserae Render Engine (tre), on the main thread. Everything that touches a window or a node of the drawing tree runs on that loop, between frames: reading a file you saved, building the tree, evaluating a `<| ... |>` slot, calling a module's Python. Anything that waits (the desktop's message bus, the sound server, files, timers) runs on another thread and hands only a finished value to the loop.
+`tesserae-shell run` is one Python process. It has one **event loop**, which is the loop of the Tesserae Render Engine (tre), on the main thread. Everything that touches a window or a node of the drawing tree runs on that loop, between frames: reading a file you saved, building the tree, evaluating a `<| ... |>` slot, calling the Python of a module that ships with the shell. Anything that waits (the desktop's message bus, the sound server, files, timers) runs on another thread and hands only a finished value to the loop.
+
+The Python of a module **of yours** is not in that process. Each module file of yours runs in a child process of its own, which the shell starts, talks to over a socket pair in JSON lines, and watches. The shell keeps every service and all state; the child holds the module's class and a `ctx` whose calls the shell answers. A module that hangs or crashes there does not stop the loop ([Modules](#modules)).
 
 Two rules follow, and they are the ones a module author feels:
 
@@ -96,7 +98,7 @@ flowchart TD
     j --> k[READY: running]
 ```
 
-A failure before the loop starts is printed and stops the shell with an exit code ([Exit codes](guide/command-line.md#exit-codes)): `settings.tdl` or a file with errors gives 1, a machine that cannot run it gives 2, a second shell gives 4. From the loop on, a fault is local: a surface that fails is logged and skipped, a module that raises is marked failed and the others go on. `systemd`, when it starts the shell, is told when it is ready and when it is stopping. Stopping is the reverse: the surfaces close, the modules are stopped and their threads joined, the registry is written once, and the lock is released ([Install and start](guide/install.md)).
+A failure before the loop starts is printed and stops the shell with an exit code ([Exit codes](guide/command-line.md#exit-codes)): `settings.tdl` or a file with errors gives 1, a machine that cannot run it gives 2, a second shell gives 4. From the loop on, a fault is local: a surface that fails is logged and skipped, a module that raises is marked failed and the others go on. `systemd`, when it starts the shell, is told when it is ready and when it is stopping; it is told ready after the processes of your modules have started (or 10 seconds have passed). Stopping is the reverse: the surfaces close, the modules are stopped (a module of yours gets 3 seconds for `stop()` and then its process ends) and their threads joined, the registry is written once, and the lock is released ([Install and start](guide/install.md)).
 
 Detail: [Shell Start and Stop](design/40%20Specifications/Runtime/Shell%20Start%20and%20Stop.md).
 
@@ -117,14 +119,15 @@ A service that is not there does not stop the shell: the module that depends on 
 
 A module is a layout file, `Name_Module.tdl`, and optionally a Python file, `Name_Module.py`, next to it, with one class. The shell ships its modules (Clock, Battery, Tray and the rest); yours are in the `Modules` folder and a module of yours with a shipped one's name replaces it.
 
-* The module host imports the Python, creates the class once and calls `start()` after the model is built and `stop()` at the end. The Python of a module runs **inside the shell's process, as you**; the shell does not sandbox it ([Trust and security](guide/configuration-folder.md#trust-and-security)).
-* A module sends values (`ctx.send`); the layout reads them in slots. A click or other event on a block calls a method of the class marked `@action`.
-* A module that raises in `start()` is started again with a growing delay (1, 2, 4 seconds, up to 60), five times, and then stays failed until you save a file or run `reload`. Other modules and all surfaces keep running.
-* A module's callbacks are timed. More than 100 of them over 4 ms in a minute is the warning `slow-module`; more than 16 threads is `many-threads`.
+* The module host imports the Python of a module that ships with the shell, creates the class once and calls `start()` after the model is built and `stop()` at the end. For a module of yours the host starts a child process, which does the same with your file. The shell's own modules run **inside the shell's process, as you**; yours run in a **process of their own, also as you**. That process is fault containment, not a sandbox ([Trust and security](guide/configuration-folder.md#trust-and-security)).
+* A module sends values (`ctx.send`); the layout reads them in slots. A click or other event on a block calls a method of the class marked `@action`. For a module of yours, the values and the calls cross the process boundary as plain data, and a `ctx` member that must answer at once waits for the shell for at most 2 seconds (`ShellCallTimeout`).
+* A module that raises in `start()` is started again with a growing delay (1, 2, 4, 8 and 16 seconds), five times, and then stays failed until you save a file or run `reload`. Other modules and all surfaces keep running. The same back-off restarts the process of a module of yours that crashed or was killed.
+* A module's callbacks are timed. More than 100 of them over 4 ms in a minute is the warning `slow-module`; more than 16 threads is `many-threads`. A callback of one of your modules that has run for 2 seconds is named in the log, and at 5 seconds its process is killed (`module-process`).
+* Reload of the Python of one of your modules starts the new process beside the old one and stops the old one only after the new one has imported the file. `Debug { User_Modules_In_Process: true }` in `settings.tdl` runs your modules in the shell's process instead. A process costs about 20 MB. Detail: [the module API](api/module-api.md#two-kinds-of-module).
 
 ## The watchdog and crashes
 
-A thread outside the loop asks the loop once a second to store a heartbeat. If a callback keeps the loop for 2 seconds the log says so, with the module and the traceback of every thread. At 10 seconds, under the `systemd` unit that `install-session` writes, the shell asks `systemd` to restart it. The shell also keeps a record of unclean exits; after three in a row within 10 minutes the next start is a *safe start* that does not run the Python of your own modules, so a crash loop in a module of yours does not take the bar with it. See [When the shell hangs or crashes](guide/troubleshooting.md#when-the-shell-hangs-or-crashes) for what to do.
+A thread outside the loop asks the loop once a second to store a heartbeat. If a callback keeps the loop for 2 seconds the log says so, with the module and the traceback of every thread. At 10 seconds, under the `systemd` unit that `install-session` writes, the shell asks `systemd` to restart it. A hang in a module of yours never reaches this: the shell's loop does not wait for it, and the same thread that watches the loop watches each module process, naming a callback at 2 seconds and killing the process at 5. The shell also keeps a record of unclean exits; after three in a row within 10 minutes the next start is a *safe start* that does not run the Python of your own modules, so a crash loop in a module of yours does not take the bar with it. See [When the shell hangs or crashes](guide/troubleshooting.md#when-the-shell-hangs-or-crashes) for what to do.
 
 ## Where state lives
 
