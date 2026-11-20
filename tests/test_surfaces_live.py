@@ -267,11 +267,17 @@ def test_a_for_follows_a_modules_list_while_the_shell_runs(
 
     assert "Traceback" not in shell.stderr
     assert not re.search(r"^(ERROR|CRITICAL|WARNING)\s+\|", shell.stderr, re.M), shell.stderr
-    # B1: each appended item creates exactly one node and touches no other (the others are kept)
+    # B1: each appended item creates exactly one node and touches no other (the others are kept).
+    # The module runs in a process of its own and the surfaces do not wait for it: the first paint
+    # has no rows, and the first rebuild brings the two it started with (or three, when the first
+    # tick came in the same turn); every rebuild after that is one appended item
     stats = re.findall(
         r"rebuilt Bar Top_Bar: (\d+) changed, (\d+) created, (\d+) removed", shell.stderr
     )
-    assert len(stats) >= 3 and all(s == ("0", "1", "0") for s in stats), stats
+    assert len(stats) >= 3, stats
+    first = stats[0]
+    assert first[0] == "0" and first[2] == "0" and int(first[1]) >= 2, stats
+    assert all(s == ("0", "1", "0") for s in stats[1:]), stats
 
 
 def test_a_shadow_changes_neither_the_reserved_space_nor_the_body(

@@ -773,6 +773,7 @@ class ModuleProcesses:
         level: Callable[[], str] = lambda: "INFO",
     ) -> None:
         self.host = host
+        host.store.settling = self.starting
         self._is_shipped = is_shipped
         self.enabled = enabled
         self.timing = timing or timing_from_environment(os.environ)
@@ -799,6 +800,14 @@ class ModuleProcesses:
             return None, finding_for(definition, py_path, info.problems[0])
         self._layouts[definition.name] = definition.file
         return build_module(self, definition, py_path, info.classes), None
+
+    def starting(self, name: str) -> bool:
+        """Has the process of module ``name`` not answered (started or failed) yet?"""
+        with self._lock:
+            return any(
+                h.name == name and h.phase in ("importing", "imported", "starting")
+                for h in self.handles
+            )
 
     def layout_file(self, name: str) -> str:
         return self._layouts.get(name, "")
@@ -889,7 +898,21 @@ class ModuleProcesses:
 
     def started(self, handle: ProcessHandle) -> None:
         self.host.process_started(handle.name, handle)
+        self._say_deferred(handle.name)
         self._gate_check()
+
+    def _say_deferred(self, name: str) -> None:
+        """The module has started: a name its layout reads that it still has not sent is a warning
+        after all (the surfaces did not wait for it: it was held back while the process started)."""
+        store = self.host.store
+        rest = []
+        for item in store.deferred:
+            use, key, text = item
+            if use.split("@", 1)[0] != name:
+                rest.append(item)
+            elif key not in store.values.get(use, {}):
+                logger.warning(text)
+        store.deferred[:] = rest
 
     def settled(self) -> None:
         self._gate_check()

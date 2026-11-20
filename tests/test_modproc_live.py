@@ -216,6 +216,7 @@ def test_a_value_a_user_module_sends_reaches_the_screen(run: type[Run]) -> None:
     assert seen >= 80 * 24 // 2, f"the module's red rectangle was not drawn ({seen} red pixels)"
     assert r.stop() == 0
     assert "Traceback" not in r.shell.stderr, r.shell.stderr[-1500:]
+    assert "is not defined" not in r.shell.stderr, "a value on its way is no undefined name"
 
 
 HANG_IN_START = """
@@ -262,4 +263,22 @@ def test_saving_a_user_modules_python_replaces_its_process_and_the_screen_follow
         time.sleep(0.2)
     assert seen >= 80 * 24 // 2, "the new module's value reached the screen"
     r.shell.wait_for("the code was replaced")
+    assert r.stop() == 0
+
+
+NEVER_SENDS = """
+from tess_shell import Module
+
+class Lag(Module):
+    def start(self):
+        pass
+"""
+
+
+def test_a_name_the_module_never_sends_is_still_warned_about_once_it_has_started(
+    run: type[Run],
+) -> None:
+    r = run(NEVER_SENDS)
+    r.notify.wait("READY=1", 20)
+    r.shell.wait_for("'color' is not defined")
     assert r.stop() == 0

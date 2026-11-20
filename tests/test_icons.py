@@ -168,7 +168,9 @@ def test_check_resolves_icons_from_the_config_folder(
     (folder / "Ico_Module.tdl").write_text(
         head.format(n="Ico") + 'Module { SVG { Icon: "mdi:dot" } }\n'
     )
-    (folder / "Ico_Module.py").write_text("")
+    (folder / "Ico_Module.py").write_text(
+        "from tess_shell import Module\n\nclass I(Module):\n    pass\n"
+    )
     shells = tmp_path / "Shells"
     shells.mkdir()
     (shells / "Main_Shell.tdl").write_text(

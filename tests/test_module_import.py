@@ -156,7 +156,9 @@ def test_two_user_modules_with_one_name_are_an_error_naming_both(
     other = tmp_path / "Modules" / "Copy"
     other.mkdir()
     (other / "Copy_Module.tdl").write_text(HEAD.format(name="Label") + LABEL)
-    (other / "Copy_Module.py").write_text("")
+    (other / "Copy_Module.py").write_text(
+        "from tess_shell import Module\n\nclass C(Module):\n    pass\n"
+    )
     code, report = check(tmp_path, capsys)
     assert code == 1 and rules(report) == ["name-duplicate"]
     error = report["errors"][0]  # type: ignore[index]
