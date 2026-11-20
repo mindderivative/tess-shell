@@ -898,7 +898,11 @@ class ModuleProcesses:
 
     def started(self, handle: ProcessHandle) -> None:
         self.host.process_started(handle.name, handle)
-        self._say_deferred(handle.name)
+        # the values the module sent while it started are in the store's queue, not in its values,
+        # until the next flush (which can come after this answer: before the loop runs, or when the
+        # answer was queued first): look at the held-back names after it
+        name = handle.name
+        self.host.store.when_flushed(lambda: self._say_deferred(name))
         self._gate_check()
 
     def _say_deferred(self, name: str) -> None:

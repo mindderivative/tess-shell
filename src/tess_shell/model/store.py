@@ -68,6 +68,7 @@ class ValueStore:
     # the warnings that were held back for it: (use, name, text); the supervisor says the ones whose
     # name the module still has not sent when it has started
     deferred: list[tuple[str, str, str]] = field(default_factory=list)
+    _after: list[Callable[[], None]] = field(default_factory=list)  # run after the next flush
 
     def add_use(self, module: str, use: str) -> None:
         self._ended.pop(use, None)
@@ -95,9 +96,22 @@ class ValueStore:
         Before this, sends wait for an explicit :meth:`flush`."""
         with self._lock:
             self._wake = wake
-            pending = bool(self._queue)
+            pending = bool(self._queue) or bool(self._after)
             self._scheduled = pending
         if pending:
+            wake(self._turn)
+
+    def when_flushed(self, fn: Callable[[], None]) -> None:
+        """Run ``fn`` on the loop thread after the next flush, which applies every value queued
+        before this call (any thread). For a check that needs the values a module has sent so far
+        to be in ``values``, not still in the queue."""
+        with self._lock:
+            self._after.append(fn)
+            wake = self._wake
+            schedule = wake is not None and not self._scheduled
+            if schedule:
+                self._scheduled = True
+        if schedule and wake is not None:
             wake(self._turn)
 
     def send(self, module: str, use: str | None, key: str, value: object) -> None:
@@ -129,6 +143,7 @@ class ValueStore:
         """Loop thread: apply the queue, keeping the latest value per use and key."""
         with self._lock:
             queue, self._queue = self._queue, []
+            after, self._after = self._after, []
             self._scheduled = False
         before: dict[tuple[str, str], Any] = {}
         missing = object()
@@ -144,11 +159,17 @@ class ValueStore:
                 before.setdefault((target, key), self.values[target].get(key, missing))
                 self.values[target][key] = value
         # a value sent and then sent back inside one turn is not a change
-        return [
+        changes = [
             Change(use, key)
             for (use, key), old in before.items()
             if old is missing or self.values[use][key] != old
         ]
+        for hook in after:  # every value queued before the hook was asked for is in ``values``
+            try:
+                hook()
+            except Exception:
+                logger.opt(exception=True).error("a callback after a flush raised")
+        return changes
 
     def snapshot(self, use: str) -> Mapping[str, Any]:
         return self.values.get(use, {})
