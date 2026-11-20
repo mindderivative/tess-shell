@@ -97,6 +97,12 @@ def test_the_icon_is_drawn_in_the_colour_of_each_state_and_the_hidden_module_tak
     text = "".join(shell.seen)
     assert "| ERROR " not in text, text
     warned = [x for x in shell.seen if "| WARNING " in x]
-    # the only warnings allowed: the session bus is absent, and NetworkManager leaving, once
-    allowed = ("the session bus is not reachable", "org.freedesktop.NetworkManager left")
+    # the only warnings allowed: the session bus is absent, and NetworkManager leaving, once; and the
+    # shell's own note that a callback was slow ("a D-Bus callback took 147 ms"): that depends on how
+    # busy the machine is (a hosted CI runner printed it), not on what the test is about
+    allowed = (
+        "the session bus is not reachable",
+        "org.freedesktop.NetworkManager left",
+        "callback took",
+    )
     assert [x for x in warned if not any(a in x for a in allowed)] == [], warned
