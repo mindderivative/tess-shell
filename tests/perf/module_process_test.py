@@ -70,11 +70,21 @@ LOAD_LIMIT = 0.5  # the 1-minute load average the harness starts under
 
 LEGACY_CELLS = ("B1", "B2", "C1", "C2")  # the cells of the first full measurement
 LEAN_CELLS = ("L1", "L2")  # lean B: the module files with Python of their own in processes
-DEFAULT_CELLS = ("A", "B1", "B2", "C1", "L1", "L2")  # the default shell
-PLUS3_CELLS = ("A", "C1", "C2")  # the default shell and three user modules
+# the PRODUCT (posture C as built: ``tess_shell/modproc``, nothing patched, user modules in a process
+# each): on the default shell it equals A (no user module), on the shell with three user modules, the
+# latency probe and the containment victim it is the cell that differs
+PRODUCT_CELLS = ("P",)
+OPTIONAL_CELLS = (*LEAN_CELLS, *PRODUCT_CELLS)  # cells with rows only when the run asked for them
+DEFAULT_CELLS = ("A", "B1", "B2", "C1", "P", "L1", "L2")  # the default shell
+PLUS3_CELLS = ("A", "C1", "C2", "P")  # the default shell and three user modules
 # the latency probe and the containment victim
-PROBE_CELLS = ("A", "B1", "B2", "C1", "C2", "L1", "L2")
+PROBE_CELLS = ("A", "B1", "B2", "C1", "C2", "P", "L1", "L2")
 ALL_MEASURES = ("start", "idle", "latency", "contain")
+# the product run of the lead: A as the baseline and P, every measure at the default flags
+PRODUCT_RUN = (
+    "--postures=A,P",
+    "--out=tests/perf/module-process-results-product.md",
+)
 # the lean B run of the lead: A as the baseline and L1, L2; three repetitions of start and idle, fewer
 # of latency and containment (a report of its own: the default file keeps the full run)
 LEAN_RUN = (
@@ -128,7 +138,9 @@ def parse(argv: Sequence[str] | None) -> argparse.Namespace:
     p.add_argument(
         "--postures",
         default="A,B1,B2,C1,C2",
-        help="cells to run (default: A,B1,B2,C1,C2; the lean B is L1,L2, e.g. A,L1,L2)",
+        help="cells to run (default: A,B1,B2,C1,C2; the lean B is L1,L2, e.g. A,L1,L2; the product, "
+        "posture C as built, is P: A,P measures the default shell, the shell with three user modules, "
+        "the latency probe and the containment victim for A and P only)",
     )
     p.add_argument("--measures", default=",".join(ALL_MEASURES), help="start,idle,latency,contain")
     p.add_argument("--reps", type=int, default=3, help="repetitions of idle, latency, containment")
@@ -490,26 +502,28 @@ def has_rows(res: dict[str, Any], label: str) -> bool:
     lean cells and no other): B and C were not asked for there. A lean cell has rows when it was
     asked for, or, when the results do not say, when any of its numbers is there."""
     want = asked(res)
-    if label in LEAN_CELLS:
+    if label in OPTIONAL_CELLS:
         if want is not None:
             return label in want
         return any(
             f"{label}/default" in res[s] if s in ("start", "idle") else label in res[s]
             for s in ("start", "idle", "latency", "contain")
         )
-    lean_run = want is not None and bool(want & set(LEAN_CELLS)) and not want & set(LEGACY_CELLS)
+    lean_run = (
+        want is not None and bool(want & set(OPTIONAL_CELLS)) and not want & set(LEGACY_CELLS)
+    )
     return not lean_run
 
 
 def verdicts(res: dict[str, Any]) -> list[Row]:
     rows: list[Row] = []
-    for label in ("B1", "B2", "C1", "L1", "L2"):
+    for label in ("B1", "B2", "C1", "P", "L1", "L2"):
         if has_rows(res, label):
             rows += cost_rows(res, label, "default", "A/default", "")
-    for label in ("C1", "C2"):
+    for label in ("C1", "C2", "P"):
         if has_rows(res, label):
             rows += cost_rows(res, label, "plus3", "A/plus3", " (+3 user modules)")
-    for label in ("B1", "B2", "C1", "C2", "L1", "L2"):
+    for label in ("B1", "B2", "C1", "C2", "P", "L1", "L2"):
         if not has_rows(res, label):
             continue
         for name, field in (
@@ -573,10 +587,21 @@ def decision(rows: list[Row]) -> list[str]:
         names = sorted({r.test for r in by_cell.get(cell, []) if r.ok is False})
         return f"{cell} fails {', '.join(names)}"
 
-    got = {k: passes(k) for k in ("B1", "B2", "C1", "C2", "L1", "L2") if k in by_cell}
+    got = {k: passes(k) for k in ("B1", "B2", "C1", "C2", "P", "L1", "L2") if k in by_cell}
     if any(v is None for v in got.values()):
         out.append("Some rows were not measured in this run, so the rule cannot be applied.")
         return out
+    product = got.pop("P", None)
+    if product is not None:
+        out.append(
+            "P, the product (posture C as built), passes every row: the numbers of the prototype's "
+            "C hold for the shell as shipped."
+            if product
+            else f"P, the product, does NOT pass every row ({failed('P')}): the prototype's C "
+            "numbers do not hold for the shell as shipped."
+        )
+        if not got:
+            return out
     b = {k: v for k, v in got.items() if k[0] == "B"}
     c = {k: v for k, v in got.items() if k[0] == "C"}
     lean = {k: v for k, v in got.items() if k[0] == "L"}
@@ -764,6 +789,32 @@ def variant_table(res: dict[str, Any], labels: Sequence[str]) -> str:
     )
 
 
+def product_table(res: dict[str, Any]) -> str:
+    """P next to A and the prototype's C cells, on the default shell and on the shell with three user
+    modules (the cells that were measured): start, wake-ups, memory, processes, single-update p95."""
+    rows = []
+    for kind, labels in (("default", ("A", "C1", "P")), ("plus3", ("A", "C1", "C2", "P"))):
+        for label in labels:
+            k = f"{label}/{kind}"
+            if not res["idle"].get(k):
+                continue
+            rows.append(
+                [
+                    f"{label} / {kind}",
+                    fmt_cell(res, "start", k, "ready_ms", 0),
+                    span(idle_values(res, k, "wakeups_per_s"), 2),
+                    span(idle_values(res, k, "pss_mb"), 0),
+                    span(idle_values(res, k, "processes"), 0),
+                ]
+            )
+    note = (
+        "The default shell has no user module, so P equals A there; the +3 user modules rows are "
+        "where P differs from A (one process each). Latency, hang, crash and reload for P are in "
+        "their tables above.\n"
+    )
+    return md_table(["Cell", "Start ms", "Wake-ups / s", "PSS MB", "Processes"], rows) + note
+
+
 def better_variant(res: dict[str, Any], rows: list[Row], a: str, b: str, noun: str) -> str:
     """Which of the two services variants (``a``, ``b``) is better on this run: the one that passes
     more rows, else the one with less memory; empty when one of them has no rows."""
@@ -874,7 +925,7 @@ def lean_section(res: dict[str, Any]) -> str:
 def forms_table(res: dict[str, Any]) -> str:
     cells = [
         label
-        for label in ("A", "B1", "B2", "C1", "L1", "L2")
+        for label in ("A", "B1", "B2", "C1", "P", "L1", "L2")
         if res["idle"].get(f"{label}/default")
     ]
     return variant_table(res, cells) if len(cells) > 1 else ""
@@ -909,7 +960,7 @@ def report(
     w("## Machine and run\n")
     w(md_table(["", ""], [[k, v] for k, v in info.items()]))
     w(
-        f"\nCommand flags: `{' '.join(f'--{k.replace(chr(95), chr(45))}={v}' for k, v in res['args'].items() if k not in ('out',))}`\n"
+        f"\nCommand flags: `{' '.join(f'--{k.replace(chr(95), chr(45))}={v}' for k, v in res['args'].items())}`\n"
     )
     if res.get("elapsed_s"):
         w(f"Run time of this measurement: {res['elapsed_s'] / 60:.1f} minutes.\n")
@@ -1230,6 +1281,9 @@ def report(
         w("## Which lean B: L1 or L2\n")
         w(variant_table(res, LEAN_CELLS))
         w(better_variant(res, rows, "L1", "L2", "lean B"))
+    if "P/default" in res["idle"] or "P/plus3" in res["idle"]:
+        w("## Which C: the product (P) against the prototype's C1 and C2\n")
+        w(product_table(res))
     side = forms_table(res)
     if side:
         w("## The forms side by side (default shell)\n")
@@ -1274,8 +1328,23 @@ def report(
         "run leaves `tmp-proc-*` folders and processes whose environment names the private runtime "
         "directory).\n"
     )
+    product_run = parse(PRODUCT_RUN)
     lean = parse(LEAN_RUN)
     plus_lean = parse(["--postures=A,B1,B2,C1,C2,L1,L2"])
+    w("### The product only (cell P, A as the baseline)\n")
+    w(
+        "P is the shell as built: posture C, a process per user module, nothing patched. This runs A "
+        "and P on the default shell, on the shell with three user modules, and with the latency "
+        "probe and the containment victim, and writes a report of its own:\n\n"
+        "```\n"
+        "unset VIRTUAL_ENV; export UV_PROJECT_ENVIRONMENT=$HOME/Projects/pyDev/pyEnvs/tess-shell-pc\n"
+        "env -u WAYLAND_DISPLAY -u DISPLAY uv run --no-sync python tests/perf/module_process_test.py "
+        + " ".join(PRODUCT_RUN)
+        + "\n```\n\n"
+        f"Expected duration about {estimate_minutes(product_run):.0f} minutes ("
+        + estimate_text(product_run)
+        + ").\n"
+    )
     w("### The lean B only (A as the baseline)\n")
     w(
         "The first full measurement already has A, B and C; the lean B needs only A beside it. This "

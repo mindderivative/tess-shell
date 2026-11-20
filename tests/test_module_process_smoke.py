@@ -29,7 +29,7 @@ pytestmark = [
     pytest.mark.skipif(shutil.which("grim") is None, reason="no grim (the paint of the node)"),
 ]
 
-POSTURES = "A,B1,B2,C1,L1,L2"
+POSTURES = "A,B1,B2,C1,P,L1,L2"
 
 
 @pytest.fixture(scope="module")
@@ -57,6 +57,8 @@ def test_every_posture_gives_a_start_time_and_an_idle_row(
         "L2/default",
         "A/plus3",
         "C1/plus3",
+        "P/default",
+        "P/plus3",
     ):
         assert data["start"][cell]["ready_ms"] and all(
             ms > 0 for ms in data["start"][cell]["ready_ms"]
@@ -80,13 +82,15 @@ def test_the_postures_really_differ_in_how_many_processes_run_the_modules(
     assert count["L1/default"] == count["B1/default"] - 3
     assert count["L2/default"] == count["B2/default"] - 3
     assert count["C1/plus3"] == count["A/plus3"] + 3  # the three user modules, one process each
+    assert count["P/default"] == count["A/default"]  # the product: no user module, no process
+    assert count["P/plus3"] == count["A/plus3"] + 3  # and a process for each of the three
 
 
 def test_value_to_screen_is_timed_for_every_posture_in_one_clock(
     smoke: tuple[dict[str, Any], str],
 ) -> None:
     data, _ = smoke
-    for label in ("A", "B1", "B2", "C1", "L1", "L2"):
+    for label in ("A", "B1", "B2", "C1", "P", "L1", "L2"):
         (rep,) = data["latency"][label]
         for key in ("single_ms", "burst_ms"):
             assert len(rep[key]) > 10
@@ -105,7 +109,7 @@ def test_a_hang_freezes_the_surfaces_in_a_and_not_in_a_module_process(
     assert a["hang_paint"]["changed"] < 0.3  # A: the loop is stuck in the callback
     assert a["hang_paint"]["max_gap_s"] > 1.0
     assert a["hang_recover_s"] is None  # and nothing restarts it
-    for label in ("B1", "B2", "C1", "L1", "L2"):
+    for label in ("B1", "B2", "C1", "P", "L1", "L2"):
         (rep,) = data["contain"][label]
         assert rep["hang_paint"]["changed"] > 0.5, (label, rep["hang_paint"])
         assert rep["hang_paint"]["max_gap_s"] < 1.0, (label, rep["hang_paint"])
@@ -118,7 +122,7 @@ def test_a_saved_module_file_is_running_again_in_every_posture(
     smoke: tuple[dict[str, Any], str],
 ) -> None:
     data, _ = smoke
-    for label in ("A", "B1", "B2", "C1", "L1", "L2"):
+    for label in ("A", "B1", "B2", "C1", "P", "L1", "L2"):
         (rep,) = data["contain"][label]
         assert 0 < rep["reload_s"] < 30
 
@@ -132,6 +136,8 @@ def test_the_report_has_the_verdict_table_and_says_it_was_a_smoke_run(
     assert "**The maintainer decides**" in text
     assert "## What the prototype leaves out" in text and "## The cost in code of the move" in text
     # the lean B: its rows, the rule applied to them, the module files in and out of processes
+    assert "| Memory | P |" in text and "| Memory (+3 user modules) | P |" in text
+    assert "## Which C: the product (P)" in text and "P, the product" in text
     assert "| Memory | L1 |" in text and "## Which lean B: L1 or L2" in text
     assert "## Lean B: which module files run in a process" in text
     assert "**22** module files: **19 run in a process** and **3 stay in the shell**" in text

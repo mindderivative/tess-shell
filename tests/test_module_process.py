@@ -190,6 +190,8 @@ def canned(
         ("L2", "default"),
         ("C1", "plus3"),
         ("C2", "plus3"),
+        ("P", "default"),
+        ("P", "plus3"),
     ):
         if label in only:
             mine = own.get(label, {})
@@ -279,3 +281,84 @@ def test_the_decision_rule_follows_the_rows() -> None:
         res["idle"][f"{label}/default"] = [{"wakeups_per_s": 2.0, "pss_mb": 160.0 + 400}] * 3
     assert "moves to C" in h.decision(h.verdicts(res))[0]
     assert "cannot be applied" in h.decision(h.verdicts(canned(only=("B1",))))[0]
+
+
+# -- the product cell P ---------------------------------------------------------------------------
+
+P_RUN = ("P",)
+
+
+def product(**kw: Any) -> dict[str, Any]:
+    """The results of ``--postures=A,P``: A and P only."""
+    return canned(only=P_RUN, postures="A,P", **kw)
+
+
+def test_a_product_run_plans_p_on_the_default_shell_the_plus3_shell_and_the_probe_cells() -> None:
+    todo = h.plan(h.parse(["--postures=A,P"]))
+    assert (
+        todo.start
+        == todo.idle
+        == [
+            ("A", "default"),
+            ("P", "default"),
+            ("A", "plus3"),
+            ("P", "plus3"),
+        ]
+    )
+    assert todo.probe == ["A", "P"]
+    assert "P" in M.ALL and h.parse(list(h.PRODUCT_RUN)).out.name == (
+        "module-process-results-product.md"
+    )
+
+
+def test_the_full_run_with_p_adds_it_to_every_group_in_the_order_of_the_cells() -> None:
+    todo = h.plan(h.parse(["--postures=A,B1,B2,C1,C2,P"]))
+    assert ("P", "default") in todo.start and ("P", "plus3") in todo.start
+    assert todo.probe == ["A", "B1", "B2", "C1", "C2", "P"]
+
+
+@pytest.mark.parametrize(
+    ("test", "limit", "arg"),
+    [
+        ("Start", h.START_EXTRA_MS, "start"),
+        ("Wake-ups", h.WAKEUPS_EXTRA_PER_S, "wake"),
+        ("Memory", h.MEMORY_EXTRA_MB, "pss"),
+    ],
+)
+def test_the_products_cost_rows_have_the_same_thresholds_as_the_others(
+    test: str, limit: float, arg: str
+) -> None:
+    """P against A, on the default shell and with three user modules: at the limit it passes, just
+    over it fails."""
+    for name in (test, f"{test} (+3 user modules)"):
+        assert verdict(product(**{arg: limit}), name, "P") is True
+        assert verdict(product(**{arg: limit + 0.5}), name, "P") is False
+        assert verdict(product(**{arg: limit - 0.5}), name, "P") is True
+
+
+def test_the_products_latency_and_containment_rows_have_the_same_thresholds() -> None:
+    for name in ("Value to screen, single", "Value to screen, burst"):
+        assert verdict(product(p95=16.6), name, "P") is True
+        assert verdict(product(p95=16.8), name, "P") is False
+    assert verdict(product(contain=rep(hang=0.51)), "Containment", "P") is True
+    assert verdict(product(contain=rep(hang=0.49)), "Containment", "P") is False
+    assert verdict(product(contain=rep(crash_gap=1.1)), "Containment", "P") is False
+
+
+def test_a_product_run_has_no_rows_for_the_cells_it_did_not_ask_for() -> None:
+    cells = {r.cell for r in h.verdicts(product())}
+    assert cells == {"P"}
+
+
+def test_the_decision_for_a_product_run_says_whether_p_passes() -> None:
+    (passes,) = h.decision(h.verdicts(product()))
+    assert "P, the product" in passes and "passes every row" in passes
+    (fails,) = h.decision(h.verdicts(product(pss=h.MEMORY_EXTRA_MB + 1)))
+    assert "does NOT pass" in fails and "Memory" in fails
+    assert "cannot be applied" in h.decision(h.verdicts({**product(), "contain": {}}))[0]
+
+
+def test_p_beside_the_prototype_cells_adds_a_sentence_and_leaves_the_rule_alone() -> None:
+    res = canned(only=("B1", "B2", "C1", "C2", "P"), postures="A,B1,B2,C1,C2,P")
+    lines = h.decision(h.verdicts(res))
+    assert len(lines) == 2 and "P, the product" in lines[0] and "moves to B" in lines[1]
