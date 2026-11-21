@@ -312,3 +312,30 @@ def test_the_engine_runs_a_fade_out_and_the_panel_is_gone_when_it_ends(
         if shell.process.poll() is None:
             shell.process.kill()
     assert "| ERROR " not in "".join(shell.seen)
+
+
+def sized(panel_name: str, content: int, max_height: str = "") -> str:
+    return (
+        f"Panel {{ Name: {panel_name}, Layer: OVERLAY, Anchor: [BOTTOM], Inset: [0, 0, 0, 20], "
+        f'Width: 200, Height: AUTO, {max_height} Style {{ Fill: "#202020" }}, '
+        f"Children {{ FlexBox {{ Padding: 10, Children {{ Rectangle {{ Width: 100, "
+        f'Height: {content}, Fill: "#89b4fa" }} }} }} }} }}'
+    )
+
+
+def test_a_content_sized_panel_is_as_tall_as_its_content_and_padding_and_max_height_clamps_it(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    """M7i (tre 0.6.10, TRE-REQ-022): ``Height: AUTO`` is the content's outer size, padding
+    included, and ``Max_Height`` clamps it; the width stays what was written."""
+    shell = start(
+        private_sway, tmp_path, sized("Short", 60) + sized("Tall", 300, "Max_Height: 120,")
+    )
+    try:
+        # the surface is 1 pixel until the first layout, then the content's size
+        shell.wait_for("Panel Short on HEADLESS-1 configured 200x80")  # 60 + 2 x 10 of padding
+        shell.wait_for("Panel Tall on HEADLESS-1 configured 200x120")  # 300 clamped by Max_Height
+        finish(shell)
+    finally:
+        if shell.process.poll() is None:
+            shell.process.kill()

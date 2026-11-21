@@ -1434,7 +1434,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Panel's width in pixels or a percentage; AUTO and EXPAND are not built. 0 stretches between two opposite anchors.",
+          "doc": "The Panel's width in pixels or a percentage, or AUTO: the width of its content, padding included, followed while the Panel is open (not with Attach_To, Movable or Meld, or between two opposite anchors). EXPAND is not built. 0 stretches between two opposite anchors.",
           "slot": false,
           "required": false,
           "built": true,
@@ -1452,7 +1452,43 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Panel's height in pixels or a percentage; AUTO and EXPAND are not built. 0 stretches between two opposite anchors.",
+          "doc": "The Panel's height in pixels or a percentage, or AUTO: the height of its content, padding included, followed while the Panel is open (not with Attach_To, Movable or Meld, or between two opposite anchors). EXPAND is not built. 0 stretches between two opposite anchors.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Size",
+          "units": [
+            "px",
+            "%"
+          ],
+          "negative": false,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Max_Width": {
+          "kind": "length",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The greatest width of a Panel whose Width is AUTO, in pixels.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Size",
+          "units": [
+            "px",
+            "%"
+          ],
+          "negative": false,
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Max_Height": {
+          "kind": "length",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The greatest height of a Panel whose Height is AUTO, in pixels; content beyond it is clipped, so put it in a scroll view.",
           "slot": false,
           "required": false,
           "built": true,

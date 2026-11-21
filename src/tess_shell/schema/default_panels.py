@@ -25,9 +25,9 @@ from tess_shell.schema.shell import read_shell
 PANELS: dict[str, tuple[str, str]] = {
     "Launcher": (
         "Applications",
-        "Panel { Name: Launcher, Layer: OVERLAY, Keyboard: EXCLUSIVE, Width: 480, Height: 400, "
-        "Visible: false, Style { Background: $color.surface_raised, Corner_Radius: 12, "
-        "Elevation: 20% }, Children { Applications { } } }",
+        "Panel { Name: Launcher, Layer: OVERLAY, Keyboard: EXCLUSIVE, Width: 480, Height: AUTO, "
+        "Max_Height: 400, Visible: false, Style { Background: $color.surface_raised, "
+        "Corner_Radius: 12, Elevation: 20% }, Children { Applications { } } }",
     ),
 }
 HEADER = "---\nTDL: 0.2\nShell: 0.1\nName: Default_Panels\n---\n"

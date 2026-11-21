@@ -60,6 +60,10 @@ class Geometry:
         0,
         0,
     )  # the transparent margin, top right bottom left
+    # an axis the content sizes (``size`` there is a stand-in until tre's ``configure`` gives the
+    # real one) and the greatest surface size on each axis, bleed included (a Panel's ``AUTO``)
+    content: tuple[bool, bool] = (False, False)
+    max_size: tuple[int | None, int | None] = (None, None)
 
 
 @dataclass(frozen=True, slots=True)

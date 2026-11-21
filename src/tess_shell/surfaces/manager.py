@@ -44,7 +44,7 @@ from tess_shell.surfaces.bar import (
 from tess_shell.surfaces.focus import next_surface, surface_order
 from tess_shell.surfaces.frame import FramePlan, Frames
 from tess_shell.surfaces.mode_driver import ModeDriver
-from tess_shell.surfaces.panel import PanelSpec, panel_geometry, px_size
+from tess_shell.surfaces.panel import PanelSpec, is_auto, panel_geometry, px_size
 
 if TYPE_CHECKING:
     from tess_re import App, LayerWindow, Output
@@ -211,6 +211,8 @@ def _panel_spec(panel: PanelDef, look: Look | None) -> PanelSpec:
         attach=panel.attach if panel.attach_to else None,
         gap=panel.gap,
         alignment=panel.alignment,
+        max_width=panel.max_width,
+        max_height=panel.max_height,
     )
 
 
@@ -293,6 +295,12 @@ def _place(
                     pending.remove(bar)
                     progress = True
                     continue
+                held = next((b for b in bars if b.name == holder), None)
+                if isinstance(held, PanelDef) and (is_auto(held.width) or is_auto(held.height)):
+                    failed[bar.name] = f"its target {holder} is sized by its content (AUTO)"
+                    pending.remove(bar)
+                    progress = True
+                    continue
                 if holder not in rects:
                     continue  # the target is placed later in this pass, or not at all
                 target = rects[holder]
@@ -334,6 +342,21 @@ def _kind(bar: BarDef | PanelDef) -> str:
     return "Panel" if isinstance(bar, PanelDef) else "Bar"
 
 
+def _size_args(geometry: Geometry) -> dict[str, Any]:
+    """tre's ``size`` (and ``max_size``) of a surface: an axis the content sizes is ``"content"``
+    (TRE-REQ-022, tre 0.6.10), the surface being the root's outer size, the body's transparent
+    margin included."""
+    if not any(geometry.content):
+        return {"size": geometry.size}
+    size = tuple(
+        "content" if c else v for c, v in zip(geometry.content, geometry.size, strict=True)
+    )
+    args: dict[str, Any] = {"size": size}
+    if any(v is not None for v in geometry.max_size):
+        args["max_size"] = geometry.max_size
+    return args
+
+
 def _input_for(
     bar: BarDef | PanelDef, geometry: Geometry, output: tuple[int, int], hidden: bool = False
 ) -> Any:
@@ -346,6 +369,8 @@ def _input_for(
             return []
         if bar.input == "AUTO":
             return "auto"
+    if any(geometry.content):  # the size is the content's: the body is what the nodes cover
+        return "auto" if any(geometry.body_margin) else None
     return input_region(geometry, output)
 
 
@@ -918,7 +943,7 @@ class SurfaceManager:
             f"tesserae-shell.{kind.lower()}.{bar.name}",
             layer=bar.layer.lower(),  # type: ignore[arg-type]
             anchor=geometry.anchor,
-            size=geometry.size,
+            **_size_args(geometry),
             margin=geometry.margin,
             exclusive_zone=geometry.exclusive_zone,
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
@@ -945,8 +970,10 @@ class SurfaceManager:
         if kind == "Panel" and bar.keyboard == "EXCLUSIVE":
             body.set(role="dialog", label=label)
 
-        def configured(e: Any, n: str = where, k: str = kind) -> None:
+        def configured(e: Any, n: str = where, k: str = kind, name: str = bar.name) -> None:
             logger.info(f"{k} {n} configured {int(e.width)}x{int(e.height)}")
+            if any(geometry.content):  # the content sized it: that is its size now
+                self._content_sized(name, window, (int(e.width), int(e.height)))
 
         window.on("configure", configured)
 
@@ -1877,6 +1904,20 @@ class SurfaceManager:
         for key in [k for k in self._store.values if k not in keep]:
             self._store.remove_use(key)
 
+    def _content_sized(self, name: str, window: Any, size: tuple[int, int]) -> None:
+        """The compositor configured a content-sized surface (``Height: AUTO``): its size is the
+        content's, so places that take the surface's rectangle (a Popup beside a block, an attached
+        Panel's target) read this and not the stand-in."""
+        for s in self.surfaces:
+            if s.name == name and s.window is window:
+                kept = tuple(
+                    got if c else old
+                    for c, got, old in zip(s.geometry.content, size, s.geometry.size, strict=True)
+                )
+                s.geometry = dataclasses.replace(s.geometry, size=(kept[0], kept[1]))
+                if s.planned is not None:
+                    s.planned.geometry = s.geometry
+
     def _surface_active(self, name: str, active: bool) -> None:
         """The OS gave a surface of ours the keyboard focus (``active``), or took it away."""
         logger.debug(f"surface {name}: keyboard {'gained' if active else 'lost'}")
@@ -1988,11 +2029,19 @@ class SurfaceManager:
                 props["fill"] = (0, 0, 0, 0)  # tre cannot unset a fill: transparent is the default
             s.body.set(**props)
             s.fill, s.shadows, s.extra = fill, shadows, extra
+        if any(geometry.content):  # the size of a content axis is what tre last configured
+            kept = tuple(
+                old if c else new
+                for c, new, old in zip(
+                    geometry.content, geometry.size, s.geometry.size, strict=True
+                )
+            )
+            geometry = dataclasses.replace(geometry, size=(kept[0], kept[1]))
         if geometry != s.geometry:
             try:
                 s.window.set(
                     anchor=geometry.anchor,
-                    size=geometry.size,
+                    **_size_args(geometry),
                     margin=geometry.margin,
                     exclusive_zone=geometry.exclusive_zone,
                     input_region=_input_for(bar, geometry, self._output_size(s), s.hidden),

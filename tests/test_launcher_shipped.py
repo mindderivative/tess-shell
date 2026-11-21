@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from tess_shell.binder.model import Auto
 from tess_shell.cli import main
 from tess_shell.config.settings import load_settings
 from tess_shell.scanner import Scan, scan
@@ -57,7 +58,8 @@ def test_a_shortcut_entry_that_names_it_brings_the_shipped_panel_on_the_first_mo
     panel = shell.monitors[0].surfaces[1]
     assert (panel.layer, panel.keyboard) == ("OVERLAY", "EXCLUSIVE")
     assert panel.visible is False  # type: ignore[union-attr]
-    assert (panel.width.px, panel.height.px) == (480, 400)  # type: ignore[union-attr]
+    assert panel.width.px == 480  # type: ignore[union-attr]
+    assert isinstance(panel.height, Auto) and panel.max_height == 400  # content-sized (M7i)
     assert [getattr(c, "module", "") for c in panel.children] == ["Applications"]
 
 

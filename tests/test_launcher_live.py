@@ -251,3 +251,38 @@ def test_a_click_on_the_desktop_closes_the_launcher_every_time_it_was_shown(
         pointer.close()
     assert d.finish() == 0
     assert "| ERROR " not in "".join(shell.seen)
+
+
+def test_the_launcher_is_as_tall_as_its_results_and_follows_them_as_the_user_types(
+    desk: Make,  # noqa: F811 - the fixture
+    private_sway: PrivateSway,
+    tmp_path: Path,
+) -> None:
+    """M7i: the shipped Launcher is ``Height: AUTO`` with ``Max_Height: 400``: with three results
+    it is shorter than at its limit and with none shorter still, the same surface following the
+    list as the field's text changes."""
+    import re
+
+    d = desk()
+    prepare(d, tmp_path, systemd_run=False)
+    shell = d.start()
+    d.fake.press("Toggle_Launcher")
+    wait_n(shell, "Panel Launcher on HEADLESS-1 shown")
+    reach(private_sway, shell)
+
+    def heights() -> list[int]:
+        count(shell, "")  # drain the log
+        found = (re.search(r"Launcher on HEADLESS-1 configured \d+x(\d+)", x) for x in shell.seen)
+        return [int(m.group(1)) for m in found if m is not None]
+
+    keys(private_sway, "fake")  # two results
+    wait_n(shell, "search 'fake': 2 results")
+    keys(private_sway, "x")  # none
+    wait_n(shell, "search 'fakex': 0 results")
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline and len({h for h in heights() if h > 1}) < 2:
+        time.sleep(0.1)
+    seen = [h for h in heights() if h > 1]
+    assert len(set(seen)) >= 2 and seen[-1] < max(seen), seen  # it grew, then shrank
+    assert max(seen) < 400 + 22  # under Max_Height plus the shadow's margin
+    assert d.finish() == 0

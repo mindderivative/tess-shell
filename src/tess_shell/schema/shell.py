@@ -1462,14 +1462,42 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
                 else f"{key} only sizes a Panel with Meld: true",
                 hint,
             )
+    movable_value = values.get("Movable")
+    anchored = {a.upper() for a in anchors}
     for key in size_keys:
         v = values.get(key)
-        if isinstance(v, m.Auto | m.Expand):
+        if isinstance(v, m.Expand):
+            ctx.add(v.origin, "not-built", f"EXPAND as a Panel {key} is {_NOT_BUILT}", "")
+        elif isinstance(v, m.Auto):
+            low, high = ("LEFT", "RIGHT") if key == "Width" else ("TOP", "BOTTOM")
+            why = None
+            if is_meld:
+                why = "a melded Panel is sized by Depth and Length"
+            elif attach_to is not None:
+                why = "a Panel placed by Attach_To is placed from its size, which must be known"
+            elif isinstance(movable_value, m.Bool) and movable_value.value:
+                why = "a Movable Panel is kept on the output by its size, which must be known"
+            elif low in anchored and high in anchored:
+                why = f"a Panel anchored to {low} and {high} is stretched between them"
+            if why is not None:
+                ctx.add(v.origin, "bad-value", f"AUTO as this Panel's {key}: {why}", "write pixels")
+    for key, size_key in (("Max_Width", "Width"), ("Max_Height", "Height")):
+        v = values.get(key)
+        if v is None:
+            continue
+        if isinstance(v, m.Percent):
             ctx.add(
                 v.origin,
                 "not-built",
-                f"{type(v).__name__.upper()} as a Panel {key} is {_NOT_BUILT}",
-                "",
+                f"a percentage as a Panel {key} is {_NOT_BUILT}",
+                "write pixels",
+            )
+        elif not isinstance(values.get(size_key), m.Auto):
+            ctx.add(
+                v.origin,
+                "max-without-auto",
+                f"{key} clamps a Panel whose {size_key} is AUTO, and this one's is not",
+                f"write {size_key}: AUTO, or remove {key}",
             )
     if attach_to is not None:
         if "Attach" not in written:
@@ -1573,6 +1601,9 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
     visible = values.get("Visible")
     region = values.get("Input_Region")
     gap = values.get("Gap")
+    cap_w, cap_h = values.get("Max_Width"), values.get("Max_Height")
+    max_px = cap_w.px if isinstance(cap_w, m.Length) else None
+    max_py = cap_h.px if isinstance(cap_h, m.Length) else None
     return PanelDef(
         name=name,
         origin=ctx.origin(block.origin),
@@ -1581,6 +1612,8 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         inset=sides,
         width=values.get("Width"),  # type: ignore[arg-type]
         height=values.get("Height"),  # type: ignore[arg-type]
+        max_width=max_px,
+        max_height=max_py,
         depth=values.get("Depth"),  # type: ignore[arg-type]
         length=values.get("Length"),  # type: ignore[arg-type]
         keyboard=word("Keyboard", "NONE"),

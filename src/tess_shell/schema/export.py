@@ -201,14 +201,19 @@ def _tokens_accepted(model_kind: str, choices: tuple[str, ...]) -> list[str]:
 def _length_units(spec: str, key: str, model_kind: str) -> list[str]:
     if model_kind == "bound":
         return ["px"] if (spec, key) in _PIXEL_ONLY else ["px", "%"]
-    if spec in ("Panel",) and key in ("Width", "Height", "Depth", "Length"):
+    if spec in ("Panel",) and key in ("Width", "Height"):
+        return ["px", "%", "AUTO"]  # EXPAND is not built; AUTO is the content's size (M7i)
+    if spec in ("Panel",) and key in ("Depth", "Length"):
         return ["px", "%"]  # AUTO and EXPAND are not built (shell._panel)
     if spec in ("Popup", "Tooltip") and key in ("Width", "Height"):
         return ["px", "AUTO"]  # a percentage and EXPAND are not built (shell._popup)
     return ["px", "%", "AUTO", "EXPAND"] if key in ("Width", "Height") else ["px", "%", "AUTO"]
 
 
-_PIXEL_ONLY = {(s, k) for s in ("Popup", "Tooltip") for k in ("Max_Width",)}
+_PIXEL_ONLY = {(s, k) for s in ("Popup", "Tooltip") for k in ("Max_Width",)} | {
+    ("Panel", "Max_Width"),
+    ("Panel", "Max_Height"),
+}
 
 
 WHOLE_KINDS = ("whole", "max_length", "lines", "tab_index", "diameter")
