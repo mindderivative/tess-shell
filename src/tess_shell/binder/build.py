@@ -40,6 +40,7 @@ from tess_shell.binder.model import (
     Number,
     Origin,
     SlotValue,
+    Text,
     TokenRef,
     UseNode,
     Value,
@@ -772,6 +773,28 @@ class View:
             window_y=None,
         )
         self._run_click(entry.wire, node, event)
+
+    def point_fields(self, select: Any) -> None:
+        """The text fields that name the list ``select`` (their ``Active_Descendant`` is the id of
+        its block) take its chosen entry as their active descendant, or none when no entry is
+        chosen: a screen reader reads that row as the current item while the keyboard stays in the
+        field (tre 0.6.10; ADR-0023, proposed)."""
+        node_id = next((k for k, n in self.nodes.items() if n is select.tre), None)
+        if node_id is None:
+            return
+        chosen = next(
+            (c.tre for k, c in select.keys() if k == select.chosen and c.tre is not None), None
+        )
+        for e in self._flat():
+            if e.tre is None or "Active_Descendant" not in e.typed.props:
+                continue
+            named = self.dynamic.get(e.typed.name or "", {}).get("Active_Descendant")
+            named = named if named is not None else e.typed.props.get("Active_Descendant")
+            if not isinstance(named, Text) or named.value != node_id:
+                continue
+            target = e.wire.focus_target if e.wire is not None and e.wire.focus_target else e.tre
+            if target.get("active_descendant") != chosen:
+                target.set(active_descendant=chosen)
 
     def _controls(self, flat: list[Entry] | None = None) -> None:
         """Keep one control per block that has one (``Toggles``, ``Slides``, ``Selection_Mode``):

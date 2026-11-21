@@ -30,6 +30,10 @@ Module {
         Password { Type: boolean, Default: false }
         Enabled { Type: boolean, Default: true }
         Width { Type: number, Default: 240 }
+        # the Name of a List called in the same layout: the screen reader reads that List's chosen
+        # entry as the current item of this field while the keyboard stays in it (the active
+        # descendant). Proposed, ADR-0023; empty: none
+        Active_Descendant { Type: string, Default: "" }
     }
     TextField {
         Text: <| params.Text |>
@@ -39,6 +43,7 @@ Module {
         Max_Length: <| params.Max_Length |>
         Password: <| params.Password |>
         Enabled: <| params.Enabled |>
+        Active_Descendant: <| params.Active_Descendant |>
         Width: <| params.Width |>
     }
 }

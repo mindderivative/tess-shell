@@ -430,3 +430,82 @@ def test_a_launcher_that_had_the_keyboard_closes_when_another_surface_of_the_she
     )
     SurfaceManager._keyboard_taken(manager, "Other")  # type: ignore[arg-type]
     assert closed == ["Launcher"]
+
+
+# -- the active descendant (M7j, ADR-0023 proposed) ------------------------------------------------
+
+
+def test_the_field_names_the_selected_row_as_its_active_descendant_and_keeps_the_focus(
+    tmp_path: Path,
+) -> None:
+    with launcher_desk(tmp_path, BROWSERS) as d:
+        d.toggle()
+        field, rows = d.field(), d.rows()
+        assert len(rows) >= 2
+        selected = [r for r in rows if r.get("selected")]
+        assert len(selected) == 1 and field.get("active_descendant") == selected[0]
+        d.press("arrow_down")  # the selection moves; the relation follows it
+        moved = [r for r in d.rows() if r.get("selected")]
+        assert len(moved) == 1 and moved[0] != selected[0]
+        assert field.get("active_descendant") == moved[0]
+        assert field.get("focused")  # the keyboard did not move
+
+
+def test_the_relation_is_cleared_with_no_results_and_set_again_when_they_return(
+    tmp_path: Path,
+) -> None:
+    with launcher_desk(tmp_path, BROWSERS) as d:
+        d.toggle()
+        d.type("zzzz")  # nothing matches: no rows
+        assert d.rows() == [] and d.field().get("active_descendant") is None
+        d.press("escape")  # clears the field: the whole list is back
+        assert d.rows()
+        rows = d.rows()
+        assert rows
+        (selected,) = [r for r in rows if r.get("selected")]
+        assert d.field().get("active_descendant") == selected
+
+
+def test_an_active_descendant_that_names_no_list_is_an_error_with_the_nearest_names() -> None:
+    from tess_shell.binder import model as m
+    from tess_shell.model.expand import _link_active_descendants
+    from tess_shell.model.uses import Use
+
+    origin = m.Origin("Shells/Main_Shell.tdl", 1, 1)
+
+    def use(key: str, module: str, name: str, **params: object) -> Use:
+        return Use(key, module, name, params, "Main", origin, {}, "Outer@1")
+
+    class Out:
+        errors: list[m.BindError]
+
+        def __init__(self, uses: list[Use]) -> None:
+            self.uses, self.errors = uses, []
+
+    good = Out(
+        [
+            use("TextInput@1", "TextInput", "S.Outer_1.query", Active_Descendant="results"),
+            use("List@2", "List", "S.Outer_1.results"),
+        ]
+    )
+    _link_active_descendants(good)  # type: ignore[arg-type]
+    assert good.errors == [] and good.uses[0].params["Active_Descendant"] == "List@2/Root"
+    bad = Out(
+        [
+            use("TextInput@1", "TextInput", "S.Outer_1.query", Active_Descendant="resuls"),
+            use("List@2", "List", "S.Outer_1.results"),
+            use("Button@3", "Button", "S.Outer_1.go"),
+        ]
+    )
+    _link_active_descendants(bad)  # type: ignore[arg-type]
+    (error,) = bad.errors
+    assert "resuls" in error.message and "results" in error.hint
+    assert bad.uses[0].params["Active_Descendant"] == ""  # no relation is made
+    not_a_list = Out(
+        [
+            use("TextInput@1", "TextInput", "S.Outer_1.query", Active_Descendant="go"),
+            use("Button@3", "Button", "S.Outer_1.go"),
+        ]
+    )
+    _link_active_descendants(not_a_list)  # type: ignore[arg-type]
+    assert "not a List" in not_a_list.errors[0].message

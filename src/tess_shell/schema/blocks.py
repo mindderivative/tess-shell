@@ -56,6 +56,9 @@ A11Y_STATE: dict[str, str] = {
     "Toggles": "bool",
     "Selection_Mode": "enum",
     "Chosen": "text",
+    # the node a text field names as the current item of a list (``binder.controls.Select``); the
+    # expander turns the List's Name a module wrote into that node's id (ADR-0023, proposed)
+    "Active_Descendant": "text",
     "Slides": "enum",
     # ``Reveals`` makes the block an expander (``binder.controls.Expand``): OPEN or CLOSED is the
     # state the module wants; the block raises On_Changed when its size has finished easing there

@@ -507,6 +507,45 @@ class _Expander:
         return None
 
 
+ACTIVE_DESCENDANT = "Active_Descendant"  # a module param naming a List of the same layout
+
+
+def _link_active_descendants(out: Expanded) -> None:
+    """A use whose ``Active_Descendant`` param (a TextInput's) names a List called in the same
+    layout gets the node id of that List's block as the param, which is what its field reads (the
+    binder points the field's ``active_descendant`` at the List's chosen entry; ADR-0023,
+    proposed). A name that is no List of this layout is an error with the nearest names."""
+    import difflib
+
+    by_outer: dict[str, dict[str, Use]] = {}
+    for use in out.uses:
+        by_outer.setdefault(use.outer, {})[use.name.rsplit(".", 1)[-1]] = use
+    for i, use in enumerate(out.uses):
+        wanted = use.params.get(ACTIVE_DESCENDANT)
+        if not isinstance(wanted, str) or not wanted:
+            continue
+        siblings = by_outer.get(use.outer, {})
+        target = siblings.get(wanted)
+        if target is None or target.module != "List":
+            lists = sorted(n for n, u in siblings.items() if u.module == "List")
+            close = difflib.get_close_matches(wanted, lists, n=3, cutoff=0.5)
+            what = "which is not a List" if target is not None else "which is not called here"
+            out.errors.append(
+                m.BindError(
+                    f"{ACTIVE_DESCENDANT} names '{wanted}', {what} in this layout",
+                    use.origin,
+                    f"did you mean {', '.join(close)}?"
+                    if close
+                    else (f"the Lists called here: {', '.join(lists)}" if lists else "call a List"),
+                )
+            )
+            out.uses[i] = dataclasses.replace(use, params={**use.params, ACTIVE_DESCENDANT: ""})
+            continue
+        out.uses[i] = dataclasses.replace(
+            use, params={**use.params, ACTIVE_DESCENDANT: f"{target.key}/Root"}
+        )
+
+
 def expand(
     nodes: tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...],
     path: str,
@@ -524,5 +563,6 @@ def expand(
     ``in_popup`` says the children are a Popup's content, where a slot may read ``caller``."""
     expander = _Expander(modules, uid_of, monitor, rules, attach_targets, mark_roots, in_popup)
     expander.run(nodes, path)
+    _link_active_descendants(expander.out)
     expander.out.factory = CallFactory(modules, _ephemeral, monitor, rules, mark_roots)
     return expander.out

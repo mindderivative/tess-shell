@@ -118,6 +118,9 @@ KEY_DOCS: dict[str, str] = {
     "Selection_Mode": "SINGLE makes the block's children the entries of a list of which one is "
     "chosen; NONE is a plain block.",
     "Chosen": "The Key of the chosen entry of a list.",
+    "Active_Descendant": "The node id of the list whose chosen entry a screen reader reads as "
+    "the current item of this text field (the keyboard stays in the field). A module writes the "
+    "List's Name on the TextInput call; the shell turns it into the id.",
     "Slides": "Makes the block a slider along its axis: HORIZONTAL or VERTICAL; NONE is a plain "
     "block.",
     "Reveals": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the "
@@ -541,6 +544,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Toggles",
         "Selection_Mode",
         "Chosen",
+        "Active_Descendant",
         "Slides",
         "Reveals",
         "Menu_Item",
