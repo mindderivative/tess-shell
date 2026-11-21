@@ -14,7 +14,7 @@ Everything on this page is about the keyboard: moving focus between widgets, the
 `ON_DEMAND` means the keyboard goes to the surface after you click it. Then:
 
 * every interactive module (Button, Toggle, Checkbox, Slider, List, Menu, TextInput, TextEditor) is **one Tab stop**; a List and a Menu are one stop each and take the arrow keys inside. A disabled block, a block that is not visible and the content of a closed Expander are none;
-* `Tab_Index` (0 to 2147483647) sets the order, ascending; blocks with equal numbers keep their order in the file. `Focusable: true` puts a plain block in the order; `Enabled: false` takes one out;
+* The order is the order of the file: nothing reorders the stops (`Tab_Index` above 0 is an error; `tesserae-shell migrate` rewrites a file that has one). `Focusable: true` puts a plain block in the order; `Enabled: false` takes one out;
 * `:focused` styles the ring that keyboard focus shows. A click focuses a block without the ring. A block shows the ring only when it takes `Shadows`, so put `Focusable` on a `Box`, `FlexBox`, `Rectangle`, `ScrollBox` or `TextField`;
 * a reload keeps focus on a block that is still there; when it is gone nothing is focused and Tab starts again at the first stop. A Popup gives focus back to the block it was opened from.
 
@@ -38,9 +38,9 @@ File `Shells/Main_Shell.tdl`:
 TDL: 0.2
 Name: Main_Shell
 ---
-# Tab and Shift+Tab walk the focusable blocks of a surface that takes the keyboard. Tab_Index
-# puts "Save" before "Name"; Focusable puts a plain box in the order, and Enabled: false takes
-# a button out of it.
+# Tab and Shift+Tab walk the focusable blocks of a surface that takes the keyboard, in the order
+# of the file ("Save" before "Name"); Focusable puts a plain box in the order, and Enabled: false
+# takes a button out of it.
 Shell {
     Monitor {
         Name: Main
@@ -61,8 +61,8 @@ Shell {
                         Padding: 12
                         Spacing: 8
                         Children {
-                            Button { Text: "Save", Tab_Index: 1 }
-                            TextInput { Placeholder: "Name", Tab_Index: 2 }
+                            Button { Text: "Save" }
+                            TextInput { Placeholder: "Name" }
                             Button { Text: "Not now", Enabled: false }
                             FlexBox {
                                 Focusable: true
@@ -285,8 +285,9 @@ TDL: 0.2
 Name: Main_Shell
 ---
 # Shortcut mode walks the surfaces with the keyboard. Each surface that holds something to focus
-# takes the keyboard on demand and orders itself with Tab_Index.
+# takes the keyboard on demand; Focus_Order says which one shortcut mode visits first.
 Shell {
+    Focus_Order: [Top_Bar, Notes]
     Monitor {
         Name: Main
         Index: default
@@ -297,7 +298,6 @@ Shell {
                 Width: EXPAND
                 Height: 36
                 Keyboard: ON_DEMAND
-                Tab_Index: 1
                 Style { Background: $color.surface }
                 Children {
                     FlexBox {
@@ -321,7 +321,6 @@ Shell {
                 Width: 280
                 Height: 120
                 Keyboard: ON_DEMAND
-                Tab_Index: 2
                 Style { Background: $color.surface_raised, Corner_Radius: 8 }
                 Children {
                     FlexBox {
@@ -342,9 +341,10 @@ Shell {
 
 <!-- END generated: example-set:08-keyboard/shortcut-mode -->
 
-* **Enter.** `Enter_Shortcut_Mode` puts the Frame (or, with no Frame, the first surface in `Tab_Index` order) in the mode, gives it the focus and shows every peek of the Frame at once. The surface that has the focus asks the compositor for the keyboard for the length of the mode (`Debug { Mode_Keyboard }`). **While the mode is on, your other windows get no typing:** Escape leaves it.
+* **Enter.** `Enter_Shortcut_Mode` puts the Frame (or, with no Frame, the first surface in the order below) in the mode, gives it the focus and shows every peek of the Frame at once. The surface that has the focus asks the compositor for the keyboard for the length of the mode (`Debug { Mode_Keyboard }`). **While the mode is on, your other windows get no typing:** Escape leaves it.
 * **Only the Enter key is a global key.** The other four are declared with no key (System Settings lists them, and a key you give one there runs it), and the keys you wrote for them arrive as key events on the surface that has the keyboard.
-* **`Next_Focus` and `Previous_Focus`** move the focus through the surfaces in `Tab_Index` order (Bars, Panels, the Frame; a strip as `<Frame>.<side>`), going round and skipping a hidden Panel. The ring shows on the first Tab stop of the surface that has the focus.
+* **`Next_Focus` and `Previous_Focus`** move the focus through the surfaces in the shell's order (`Focus_Order` first, then the order of the file; Bars, Panels, the Frame; a strip as `<Frame>.<side>`), going round and skipping a hidden Panel. The ring shows on the first Tab stop of the surface that has the focus.
+* **`Focus_Order`** is a key of the `Shell` block: `Shell { Focus_Order: [Screen_Frame, Notes, Top_Bar] Monitor { ... } }`. The surfaces it names come first, in that order; the others follow in the order of the file. A name no surface has is a warning (`focus-order-unknown`) with the nearest names. An older file that ordered surfaces with `Tab_Index` is rewritten by `tesserae-shell migrate` (step 0003).
 * **`Set_Shortcut_Mode`** toggles the mode of the focused surface: turned on for a Panel it moves the mode to that Panel (the Frame's peeks go back to rest, the Panel's own keys apply); turned off it ends the whole mode (press the Enter key again to start over). **`Exit_Shortcut_Mode`** ends it.
 * **`Shortcut_Mode: true`** on a Bar, Panel, Frame or strip (`Edges { Top { Shortcut_Mode: true } }`) starts the shell in the mode on that surface. At most one surface may say it: two give one load warning naming both, and the first wins.
 * Entering and leaving the mode, and each move, set a polite status text on the window that has the focus. At `Logging { Level: DEBUG }` the log says `shortcut mode: ...`.

@@ -20,7 +20,7 @@ from loguru import logger
 
 from tess_shell.binder import controls
 from tess_shell.binder.convert import CONVERTERS
-from tess_shell.binder.focus import default_focusable, tab_order
+from tess_shell.binder.focus import default_focusable
 from tess_shell.binder.marquee import MarqueeRunner
 from tess_shell.binder.model import (
     DECORATIVE,
@@ -31,14 +31,12 @@ from tess_shell.binder.model import (
     MARQUEE,
     MARQUEE_TEXT,
     NO_POINTER_BLOCKS,
-    TAB_INDEX_MAX,
     BindError,
     BindFailed,
     ForNode,
     Handler,
     IfNode,
     Node,
-    Number,
     Origin,
     SlotValue,
     Text,
@@ -508,7 +506,6 @@ class Entry:
     wire: Wire | None = None
     states: dict[str, dict[str, Any]] = field(default_factory=dict)  # tre props per style state
     motion: Motion | None = None  # what eases when a value of the node changes
-    rank: int = 0  # the tre ``tab_index`` the view gave the node (0: its place in tree order)
 
 
 # the kinds whose nodes always listen for something, and the keys of a block that make it a control
@@ -643,7 +640,6 @@ class View:
         self._controls(flat)
         self._sync(self.entries)
         self._marquees(flat)
-        self._tab_order(flat)
 
     def set_expanded(self, node_id: str, open_: bool) -> None:
         """The accessibility state ``expanded`` of a menu row whose submenu opened or closed."""
@@ -670,50 +666,13 @@ class View:
         walk(self.entries)
         return out
 
-    def _tab_index_of(self, entry: Entry) -> int | None:
-        """The ``Tab_Index`` of a block: the one a slot last set, else the one it was built with."""
-        typed = entry.typed
-        if typed.name is None and "Tab_Index" not in typed.props:
-            return None
-        value = typed.props.get("Tab_Index")
-        if typed.name is not None:
-            value = self.dynamic.get(typed.name, {}).get("Tab_Index", value)
-        if isinstance(value, Number) and isinstance(value.value, int):
-            return value.value
-        return None
-
-    def _tab_order(self, flat: list[Entry] | None = None) -> None:
-        """Give tre the Tab order the blocks' ``Tab_Index`` keys ask for (Focus and Keyboard > Tab
-        Order). tre walks its focusable nodes with a positive ``tab_index`` first, ascending, and
-        then the rest in tree order, so the blocks that have a ``Tab_Index`` get the ranks 1, 2,
-        ... in the shell's order (ascending, equal ones in document order) and the others keep 0.
-        This is derived data, held on the entries and made again at every build and rebuild; tre
-        does the walking, nothing runs per frame."""
-        if flat is None:
-            flat = self._flat()
-        indexed = [(e, i) for e in flat if (i := self._tab_index_of(e)) is not None]
-        ranks = {
-            id(indexed[pos][0]): rank
-            for rank, pos in enumerate(tab_order([i for _, i in indexed]), 1)
-        }
-        changes: list[tuple[TreNode, dict[str, Any]]] = []
-        for e in flat:
-            want = ranks.get(id(e), 0)
-            if want != e.rank and e.tre is not None:
-                e.rank = want
-                changes.append((e.tre, {"tab_index": want}))
-        if changes:
-            self.window.apply(changes)
-
     def tab_stops(self) -> list[TreNode]:
         """The focusable nodes in the order Tab visits them (the first is where Tab starts): the
         ones tre's Tab reaches, so a node under a hidden block (``Visible: false``, the content of
         a closed Expander) is not one."""
-        stops = [(e.rank or TAB_INDEX_MAX + 1, n, e) for n, e in enumerate(self._flat())]
-        stops.sort(key=lambda t: (t[0], t[1]))
         return [
             e.tre
-            for _, _, e in stops
+            for e in self._flat()
             if e.tre is not None and e.tre.get("focusable") and _shown(e.tre)
         ]
 
@@ -1306,8 +1265,6 @@ class View:
                 ctl.sync()
         if touched:
             self._sync(self.entries)
-        if any(key == "Tab_Index" for _, key, _ in changes):
-            self._tab_order()
         return errors
 
     def _runner_of(self, node_id: str) -> MarqueeRunner | None:
