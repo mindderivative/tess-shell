@@ -30,3 +30,18 @@ def test_badge_is_a_6_dp_dot_and_a_16_dp_pill_with_the_caption_size() -> None:
         assert (dot.get("width"), dot.get("height")) == (6, 6)
         assert pill.get("height") == 16 and pill.get("min_width") == 16
         assert w.of_use("Badge", "Digits", 0).get("font_size") == 12
+
+
+def test_a_label_ends_an_overlong_text_with_an_ellipsis_by_default() -> None:
+    from tests.test_display_widgets import running
+
+    with running('Label { Text: "Hello", Width: 80 }') as w:
+        assert w.of_use("Label", "#0").get("overflow") == "ellipsis"
+
+
+def test_the_network_name_text_is_bounded_and_ends_with_an_ellipsis() -> None:
+    style = (SHIPPED / "Network" / "Network_Style.tdl").read_text(encoding="utf-8")
+    body = style.split("network_text {", 1)[1].split("}", 1)[0]
+    assert "Overflow: ELLIPSIS" in body
+    module = (SHIPPED / "Network" / "Network_Module.tdl").read_text(encoding="utf-8")
+    assert module.count("Class: network_text") == module.count("Max_Width: 160") == 3

@@ -5989,6 +5989,7 @@
     ],
     "font_size": 14,
     "label": "b",
+    "overflow": "ellipsis",
     "text": "b",
     "wrap": "none"
    },
@@ -6002,6 +6003,7 @@
     ],
     "font_size": 14,
     "label": "h",
+    "overflow": "ellipsis",
     "text": "h",
     "wrap": "none"
    },
@@ -6373,6 +6375,7 @@
          ],
          "font_size": 14,
          "label": "b",
+         "overflow": "ellipsis",
          "text": "b",
          "wrap": "none"
         },
@@ -6397,6 +6400,7 @@
          "font_size": 14.0,
          "hit_testable": true,
          "label": "b",
+         "overflow": "ellipsis",
          "pressed": null,
          "read_only": "!ValueError",
          "role": null,
@@ -7154,6 +7158,7 @@
        ],
        "font_size": 14,
        "label": "h",
+       "overflow": "ellipsis",
        "text": "h",
        "wrap": "none"
       },
@@ -7178,6 +7183,7 @@
        "font_size": 14.0,
        "hit_testable": true,
        "label": "h",
+       "overflow": "ellipsis",
        "pressed": null,
        "read_only": "!ValueError",
        "role": null,
@@ -7381,6 +7387,7 @@
     ],
     "font_size": 14,
     "label": "Hello",
+    "overflow": "ellipsis",
     "text": "Hello",
     "width": 80,
     "wrap": "none"
@@ -7399,6 +7406,7 @@
     ],
     "font_size": 14,
     "label": "x",
+    "overflow": "ellipsis",
     "text": "x",
     "wrap": "none"
    },
@@ -7512,6 +7520,7 @@
        ],
        "font_size": 14,
        "label": "Hello",
+       "overflow": "ellipsis",
        "text": "Hello",
        "width": 80,
        "wrap": "none"
@@ -7538,6 +7547,7 @@
        "font_size": 14.0,
        "hit_testable": true,
        "label": "Hello",
+       "overflow": "ellipsis",
        "pressed": null,
        "read_only": "!ValueError",
        "role": null,
@@ -7669,6 +7679,7 @@
      ],
      "font_size": 14,
      "label": "x",
+     "overflow": "ellipsis",
      "text": "x",
      "wrap": "none"
     },
@@ -7693,6 +7704,7 @@
      "font_size": 14.0,
      "hit_testable": true,
      "label": "x",
+     "overflow": "ellipsis",
      "pressed": null,
      "read_only": "!ValueError",
      "role": null,
@@ -10565,6 +10577,7 @@
     ],
     "font_size": 14,
     "label": "x",
+    "overflow": "ellipsis",
     "text": "x",
     "wrap": "none"
    },
@@ -13207,6 +13220,7 @@
          ],
          "font_size": 14,
          "label": "x",
+         "overflow": "ellipsis",
          "text": "x",
          "wrap": "none"
         },
@@ -13231,6 +13245,7 @@
          "font_size": 14.0,
          "hit_testable": true,
          "label": "x",
+         "overflow": "ellipsis",
          "pressed": null,
          "read_only": "!ValueError",
          "role": null,

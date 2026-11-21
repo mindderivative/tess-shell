@@ -318,6 +318,7 @@
 
 ## Unreleased
 
+- TSH-038: a Label ends a text that is wider than it with an ellipsis by default (was CLIP; `Overflow: CLIP` still cuts), and the Network connection name is bounded to 160 px and ends with an ellipsis.
 - TSH-036: the Badge dot is 6 by 6 and the pill 16 high (minimum width 16, 4 px side padding), its digits in the caption size at weight 500 (were 8, 18, 11 px at 600), as the Badge spec fixes.
 - TSH-024: a disabled control is drawn at opacity 0.38 (was 0.5), as the Motion/State spec fixes; the default stylesheet and the TextField default agree. Hovered and pressed (0.85, 0.7) are unchanged.
 - A shell with no `Appearance.Stylesheets` key now gets the shipped `Default` stylesheet (ADR-0022; before, no stylesheet, so a TextField or List, and so the shipped Launcher, showed the engine's black text, unreadable on a dark desktop). `Stylesheets: []` still means none, and `tesserae-shell check` prints the note `appearance-no-stylesheet` when it is empty and a TextField or List is in use. `Stylesheets: [Default]` can be dropped from a configuration; one that names it keeps working. The schema export is 1.13: the `Stylesheets` setting shows `[Default]` as its default.

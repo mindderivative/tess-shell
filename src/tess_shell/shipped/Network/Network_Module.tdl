@@ -89,6 +89,7 @@ Module {
                         Text {
                             Name: Label
                             Class: network_text
+                            Max_Width: 160
                             Text: <| name |>
                         }
                     }
@@ -122,6 +123,7 @@ Module {
                         Text {
                             Name: Label_Warn
                             Class: network_text
+                            Max_Width: 160
                             Text: <| name |>
                             Foreground: $color.warning
                         }
@@ -156,6 +158,7 @@ Module {
                         Text {
                             Name: Label_Muted
                             Class: network_text
+                            Max_Width: 160
                             Text: <| name |>
                             Foreground: $color.on_surface_muted
                         }
