@@ -37,7 +37,7 @@ tags: [spec/integration, integration/dbus, needs-verification]
 1. **Every call has a timeout.** The default is 5 seconds, the same as the control interface ([IPC and CLI > Threading](../Runtime/IPC%20and%20CLI.md#threading)). A module may pass a shorter one. A call that times out raises one `ServiceTimeout` error in the module and is logged once per service per minute.
 2. **A missing service is a state, not a crash.** `ServiceUnknown`, `NameHasNoOwner` and `NoReply` map to a service state `UNAVAILABLE`. A call to such a service raises `ServiceUnavailable`, with the state in `.state` and on `bus.state(name)` (maintainer, 2026-11-12, as recommended), and the module shows its empty or hidden state (the module specs decide what that looks like). The shell keeps running ([Goals and Non-Goals](../../10%20Vision/Goals%20and%20Non-Goals.md) G3).
 3. **No call from the loop thread.** A module that awaits a D-Bus call from a loop callback is a defect; the helper's blocking forms raise when called on the loop thread (proposed).
-4. **No polling when a signal exists.** A module that needs a value watches `PropertiesChanged` (the idle-CPU budget in AGENTS > 12. Design Completeness Checklist applies; the `60 Quality` budgets are not written).
+4. **No polling when a signal exists.** A module that needs a value watches `PropertiesChanged` (the idle-CPU budget in [Vault Reference > Design completeness checklist](../../00%20Home/Vault%20Reference.md#design-completeness-checklist) applies; the `60 Quality` budgets are not written).
 
 ### Listening and Name Owners
 

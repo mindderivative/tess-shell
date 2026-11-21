@@ -12,7 +12,7 @@ tags: [spec/runtime, needs-verification]
 # Validation and Errors
 
 > [!NOTE]
-> Every problem the shell finds in a file is reported with the file, line and column, says what is wrong and what to write, and goes to the console and the log. Checking runs in stages, from the file's bytes to a running module. At start any error stops the shell; on a reload any error keeps the old state ([Process Model and Threading > Lifecycle (proposed)](../../20%20Architecture/Process%20Model%20and%20Threading.md#lifecycle-proposed)). Decided: `file:line:column` (AGENTS > 3. Layering principle), JSON Schema for structure ([ADR-0011 JSON Schema for Shell Files](../../30%20Decisions/ADR-0011%20JSON%20Schema%20for%20Shell%20Files.md)), the schema cache ([JSON Schema and Editor Support](../../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md)), a bad `settings.tdl` stops the shell ([Settings File](../../41%20TDL%20Reference/Settings%20File.md)). Everything else is proposed with a recommendation.
+> Every problem the shell finds in a file is reported with the file, line and column, says what is wrong and what to write, and goes to the console and the log. Checking runs in stages, from the file's bytes to a running module. At start any error stops the shell; on a reload any error keeps the old state ([Process Model and Threading > Lifecycle (proposed)](../../20%20Architecture/Process%20Model%20and%20Threading.md#lifecycle-proposed)). Decided: `file:line:column` ([Vault Reference > Layering principle](../../00%20Home/Vault%20Reference.md#layering-principle)), JSON Schema for structure ([ADR-0011 JSON Schema for Shell Files](../../30%20Decisions/ADR-0011%20JSON%20Schema%20for%20Shell%20Files.md)), the schema cache ([JSON Schema and Editor Support](../../41%20TDL%20Reference/JSON%20Schema%20and%20Editor%20Support.md)), a bad `settings.tdl` stops the shell ([Settings File](../../41%20TDL%20Reference/Settings%20File.md)). Everything else is proposed with a recommendation.
 
 ## Purpose and Scope
 
@@ -150,7 +150,7 @@ A module reports a rejected param by raising `ValueError` in `validate_use` ([Mo
 
 ## Design
 
-The printed form is plain text and works without colour. No icons, and no emoji (AGENTS > 10. Writing style).
+The printed form is plain text and works without colour. No icons, and no emoji ([Vault Reference > Writing style](../../00%20Home/Vault%20Reference.md#writing-style)).
 
 ## Accessibility
 

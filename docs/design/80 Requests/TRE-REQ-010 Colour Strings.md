@@ -16,7 +16,7 @@ tags: [engine-request, design, needs-verification]
 > "I dont want tre to do the conversions." tre takes one standard form for each kind of value, and the framework converts; see [ADR-0018 One Entry Form in tre](../30%20Decisions/ADR-0018%20One%20Entry%20Form%20in%20tre.md). This note stays as the record. It is not carried to tre.
 
 > [!NOTE]
-> Ask tre to accept colour strings (`"#RRGGBB"`, `"#RRGGBBAA"`, `rgba(...)` and the other common CSS forms) anywhere it accepts an `(r, g, b, a)` tuple today, and to expose its colour parser as a function. Every project that sets a colour on a tre node converts a string to a tuple first: the shell will, and Tesserae UI already does. The maintainer proposed a shared utilities project for such helpers (2026-11-03); asking tre to take the colour part is the smaller change. Draft for the maintainer to carry to the tre project; nothing is filed from this vault (AGENTS > 6. Requests Between Projects).
+> Ask tre to accept colour strings (`"#RRGGBB"`, `"#RRGGBBAA"`, `rgba(...)` and the other common CSS forms) anywhere it accepts an `(r, g, b, a)` tuple today, and to expose its colour parser as a function. Every project that sets a colour on a tre node converts a string to a tuple first: the shell will, and Tesserae UI already does. The maintainer proposed a shared utilities project for such helpers (2026-11-03); asking tre to take the colour part is the smaller change. Draft for the maintainer to carry to the tre project; nothing is filed from this vault ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)).
 
 > [!TIP]
 > **Not blocking**

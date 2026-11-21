@@ -26,7 +26,7 @@ tags: [engine-request, integration/wayland, needs-verification]
 > **Was blocking one shell behaviour**
 > [Process Model and Threading > No windows: what tre offers](../20%20Architecture/Process%20Model%20and%20Threading.md#no-windows-what-tre-offers) depended on this request. The shell can now stay idle with no windows by using `run(keep_alive=True)` (tre 0.5.9). The stopgap (a 1x1 window) is no longer needed.
 
-This note is carried to the tre project by the maintainer (AGENTS > 6. Requests Between Projects). It is not filed from this vault. The `tre` session was told over the mailbox on 2026-10-26 where to find it.
+This note is carried to the tre project by the maintainer ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)). It is not filed from this vault. The `tre` session was told over the mailbox on 2026-10-26 where to find it.
 
 ## Shell Need
 
@@ -39,7 +39,7 @@ This note is carried to the tre project by the maintainer (AGENTS > 6. Requests 
 
 ## Why it Belongs in the Engine
 
-It is event-loop mechanism: when the loop runs and when it ends. The shell cannot decide it from outside: the exit decision is inside tre's platform loop, and the output watch runs on tre's layer thread only while the loop runs. This is mechanism, not meaning (AGENTS > 3. Layering principle).
+It is event-loop mechanism: when the loop runs and when it ends. The shell cannot decide it from outside: the exit decision is inside tre's platform loop, and the output watch runs on tre's layer thread only while the loop runs. This is mechanism, not meaning ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)).
 
 ## What Tre Does Today
 

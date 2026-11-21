@@ -11,7 +11,7 @@ tags: [moc, engine-request]
 
 # 80 Requests
 
-Scoped requests between the projects. The prefix names the project that receives the request: `TRE-REQ`, `TEL-REQ`, `TDL-REQ`, `SHELL-REQ` and `TUIF-REQ`, each with a three-digit counter; tre sends no requests (AGENTS > 6. Requests Between Projects). `TRE-REQ` notes and one `SHELL-REQ` exist so far. Each is written here and carried upstream by the maintainer; none is filed from this vault (AGENTS > 6. Requests Between Projects).
+Scoped requests between the projects. The prefix names the project that receives the request: `TRE-REQ`, `TEL-REQ`, `TDL-REQ`, `SHELL-REQ` and `TUIF-REQ`, each with a three-digit counter; tre sends no requests ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)). `TRE-REQ` notes and one `SHELL-REQ` exist so far. Each is written here and carried upstream by the maintainer; none is filed from this vault ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)).
 
 | Request                                 | Status                                                                 | Blocks                                                                                    | Decision                                                     |
 |-----------------------------------------|------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|--------------------------------------------------------------|

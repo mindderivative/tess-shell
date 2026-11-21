@@ -41,7 +41,7 @@ tags: [adr, spec/surface, integration/wayland, needs-verification]
 
 **Prior art.** Fabric, Quickshell, Wayle, Caelestia and DankMaterialShell all place their surfaces on `wlr-layer-shell`. None uses KWin rules or the Plasma shell protocol. GTK shells attach the layer role with `gtk-layer-shell` or `gtk4-layer-shell`; Quickshell has a built-in `WlrLayershell` behind a platform-neutral `PanelWindow`. Fabric exposes `layer`, `anchor`, `exclusivity`, `keyboard_mode`, `margin` and `monitor` to Python. Compositor-specific code (Hyprland, Niri, Sway) covers workspace and window state, not the surface. Details and gaps: [Prior Art - Linux Shell Surfaces](../90%20Research/Prior%20Art%20-%20Linux%20Shell%20Surfaces.md).
 
-**Constraint from the layering principle.** Mechanism belongs in the engine; meaning belongs in the shell (AGENTS > 3. Layering principle). Surface roles are windowing mechanism. The shell decides what a bar contains, not how a compositor places it.
+**Constraint from the layering principle.** Mechanism belongs in the engine; meaning belongs in the shell ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)). Surface roles are windowing mechanism. The shell decides what a bar contains, not how a compositor places it.
 
 ## Options
 

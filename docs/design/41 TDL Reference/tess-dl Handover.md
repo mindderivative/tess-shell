@@ -34,7 +34,7 @@ tags: [tdl-ref, tdl]
 ## How the Move Happens
 
 1. First slice in `tess-dl`. The `tess-dl` session writes the language reference (`docs/language.md`) and the conformance corpus from [TDL Language](TDL%20Language.md) and [TDL Library API](../42%20Python%20API/TDL%20Library%20API.md). The sources are the vault notes; the text is rewritten for readers from other UI frameworks ([ADR-0014 Shell File Language > Ninth-Round Decisions (2026-11-02)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#ninth-round-decisions-2026-11-02) D68).
-2. Differences are `TDL-REQ-###`. When the `tess-dl` text must differ from the vault, or a rule is unclear, it becomes a `TDL-REQ-###` in `80 Requests`, carried by the maintainer (AGENTS > 6. Requests Between Projects).
+2. Differences are `TDL-REQ-###`. When the `tess-dl` text must differ from the vault, or a rule is unclear, it becomes a `TDL-REQ-###` in `80 Requests`, carried by the maintainer ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)).
 3. **Hand over, section by section.** When a section is in `tess-dl` and its corpus passes, the matching section here becomes a short summary with a link to the `tess-dl` page, so there is one source of truth (rule 4). The vault keeps the shell's schema and the decisions that explain it.
 4. **The ADR stays.** [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md) records why the language is as it is; the decision history is not moved.
 5. **Until then,** the vault note is the working text and `tess-dl` may read it.

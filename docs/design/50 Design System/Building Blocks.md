@@ -79,7 +79,7 @@ The module `Text` was a mistake and is now TextBox, so no name is both a block a
 
 ## What Tre Offers
 
-From `reference/properties.md`, read 2026-10-26. tre's node kinds: `box`, `text`, `text_input`, `image`, `path`, `svg`, `canvas`, `scroll_view`, `virtual_list`, `terminal`. A canvas's `draw` callback runs when it is created, when its `draw` is set and on `redraw()`, not every frame. tre also has colour, gradients, shadows, corner radii, animation (including layout properties and springs), hit-testing options, accessibility properties and the layer-surface types. It has no widgets and no theme (AGENTS > 1. What Tesserae Shell is).
+From `reference/properties.md`, read 2026-10-26. tre's node kinds: `box`, `text`, `text_input`, `image`, `path`, `svg`, `canvas`, `scroll_view`, `virtual_list`, `terminal`. A canvas's `draw` callback runs when it is created, when its `draw` is set and on `redraw()`, not every frame. tre also has colour, gradients, shadows, corner radii, animation (including layout properties and springs), hit-testing options, accessibility properties and the layer-surface types. It has no widgets and no theme ([Vault Reference > The projects](../00%20Home/Vault%20Reference.md#the-projects)).
 
 ## What Tesserae Does
 

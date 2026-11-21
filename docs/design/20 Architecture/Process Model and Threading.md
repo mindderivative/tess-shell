@@ -43,8 +43,8 @@ tre also runs its own threads internally (the layer surface connection, for exam
 1. **Nothing blocking on the loop.** No D-Bus call, file read, subprocess or network call on the loop thread ([ADR-0003 Process Model](../30%20Decisions/ADR-0003%20Process%20Model.md)).
 2. **Only the loop touches nodes.** A thread that wants a change sends a value; it never holds a node.
 3. **Only finished data crosses.** A worker reads, parses or decodes; the loop applies.
-4. **Python is never in layout or paint** (AGENTS > 3. Layering principle). TEL expressions and module callbacks run in callbacks between frames and are short.
-5. **Every module spec states its thread** and how it crosses into the loop (AGENTS > 3. Layering principle).
+4. **Python is never in layout or paint** ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)). TEL expressions and module callbacks run in callbacks between frames and are short.
+5. **Every module spec states its thread** and how it crosses into the loop ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)).
 
 ## Handing a Value to the Loop (Proposed)
 

@@ -104,7 +104,7 @@ A Panel or Bar attached to the Frame looks as if it grows out of it, with rounde
 
 ### Shadows
 
-The painter covers the whole output, so a shadow cast from the ring onto the desktop is drawn inside the same surface; no oversize surface is needed, unlike a Bar or Panel ([Shadows on Layer Surfaces](../../90%20Research/Shadows%20on%20Layer%20Surfaces.md)). tre's painted hit shape is the fill and the stroke, so a shadow does not take clicks. Decided 2026-10-27: all shadows, on every surface and block, are excluded from the hit shape and the input region. #needs-verification that tre's `shadows` property is not part of the painted hit shape; if it is, that is an engine request (AGENTS > 6. Requests Between Projects).
+The painter covers the whole output, so a shadow cast from the ring onto the desktop is drawn inside the same surface; no oversize surface is needed, unlike a Bar or Panel ([Shadows on Layer Surfaces](../../90%20Research/Shadows%20on%20Layer%20Surfaces.md)). tre's painted hit shape is the fill and the stroke, so a shadow does not take clicks. Decided 2026-10-27: all shadows, on every surface and block, are excluded from the hit shape and the input region. #needs-verification that tre's `shadows` property is not part of the painted hit shape; if it is, that is an engine request ([Vault Reference > Requests between projects](../../00%20Home/Vault%20Reference.md#requests-between-projects)).
 
 ### What a Frame Holds (Decided 2026-10-27)
 
@@ -237,7 +237,7 @@ tre 0.6.4 (PyPI, 2026-11-07) ships the four mechanisms of [TRE-REQ-013 Structure
 | e | A structure-preserving path morph of the whole contour | `morph="structure"` (#271) | Not tried |
 | f | A parametric path driven by `animate_param` | Mechanism 4 (#272) | Not tried |
 
-Rows c to f are the new work. The comparison, on KWin and sway at scale 1.0 and 1.5: how the edge looks (smoothness, seams, chamfer, the fillets growing with the slide), `total_ms` per frame while animating, memory (RSS and video), frames drawn at idle (must be 0), the hit shape (clicks through the notches), easing, and how much shell code each needs. The result goes in this section as a table and the maintainer chooses (AGENTS > 2. Hard Rules rule 5): one, or a different way for a different case. Not decided; the build is the code session's, and the choice is the maintainer's.
+Rows c to f are the new work. The comparison, on KWin and sway at scale 1.0 and 1.5: how the edge looks (smoothness, seams, chamfer, the fillets growing with the slide), `total_ms` per frame while animating, memory (RSS and video), frames drawn at idle (must be 0), the hit shape (clicks through the notches), easing, and how much shell code each needs. The result goes in this section as a table and the maintainer chooses (AGENTS > Hard rules rule 5): one, or a different way for a different case. Not decided; the build is the code session's, and the choice is the maintainer's.
 
 ### KWin Retests and the Join Choice (maintainer, 2026-11-07)
 

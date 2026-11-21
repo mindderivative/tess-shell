@@ -17,7 +17,7 @@ tags: [engine-request, needs-verification]
 
 > [!NOTE]
 > **Not to be filed now**
-> The maintainer asked for this request to be written and kept (2026-10-27). It is not filed from this vault, and the `tre` session has not been told (AGENTS > 6. Requests Between Projects).
+> The maintainer asked for this request to be written and kept (2026-10-27). It is not filed from this vault, and the `tre` session has not been told ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)).
 
 ## Shell Need
 

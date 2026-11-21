@@ -5,7 +5,7 @@ type: architecture
 status: draft
 owner: phil
 created: 2026-10-25
-updated: 2026-11-14
+updated: 2026-11-21
 tags: [architecture]
 ---
 
@@ -76,8 +76,9 @@ The store is this note's addition. The ADR says a module sends data to shell ent
 1. tre, TEL and `tess_dl` do not import the shell. The shell imports both ([ADR-0008 Tesserae Expression Language](../30%20Decisions/ADR-0008%20Tesserae%20Expression%20Language.md)).
 2. The UI layer does not talk to D-Bus, files or sockets. Only modules and the runtime do.
 3. Modules do not touch tre nodes. They send values; the shell renders.
-4. Python never runs in layout or paint (AGENTS > 3. Layering principle). Expressions and module callbacks run between frames on the loop thread.
+4. Python never runs in layout or paint ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)). Expressions and module callbacks run between frames on the loop thread.
 5. Tesserae UI is not imported anywhere ([ADR-0006 Shell Independent of Tesserae UI](../30%20Decisions/ADR-0006%20Shell%20Independent%20of%20Tesserae%20UI.md)).
+6. tre never blocks a design change (maintainer, 2026-11-21; proposed as [ADR-0024 tre Never Blocks Design](../30%20Decisions/ADR-0024%20tre%20Never%20Blocks%20Design.md), not yet decided): every visual element and parameter of tre is adjustable from Python through properties, tokens or declarative hooks, with no per-frame Python. A missing hook is an engine request, not a reason to change the design. The shell's own look (surfaces, tooltips, state layers) stays under the shell's control through these hooks.
 
 ## Where Each Existing Decision Lands
 
