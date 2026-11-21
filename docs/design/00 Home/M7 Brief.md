@@ -39,25 +39,25 @@ tags: [moc, roadmap, brief]
 | M7c idle budgets | Merged (PR #79): the real reading and the new budget values. B18 bind cost fixed to about 16 ms under load (PR #88), re-read on an idle machine pending; Popup retention fixed (PR #86); the reload leak fixed (PR #83) ([Performance Budgets](../60%20Quality/Performance%20Budgets.md)) |
 | M7j active descendant | Merged (`tess-shell` PR #117, code session's report): `Active_Descendant` on `TextInput` ([ADR-0023 Active Descendant Key](../30%20Decisions/ADR-0023%20Active%20Descendant%20Key.md)), schema 1.15; `ctx.announce` goes through one window (Frame painter, else first Bar, else any open surface). Not tested with Orca |
 | M7j naming | Decided 2026-11-21 by the maintainer: [ADR-0023 Active Descendant Key](../30%20Decisions/ADR-0023%20Active%20Descendant%20Key.md), key `Active_Descendant: <List name>` on `TextInput`. Built in `tess-shell` PR #117 (code session's report; limit: not inside a `For` body; not tested with Orca) |
-| M7i content-sized Panels | Built in `tess-shell` PR #116 (code session's report): `Max_Width`/`Max_Height`, Launcher `Height: AUTO`, schema 1.14; see [Panel > As Built in PR 116](../40%20Specifications/Surfaces/Panel.md#as-built-in-pr-116). KWin not looked at |
+| M7i content-sized Panels | Built in `tess-shell` PR #116 (code session's report): `Max_Width`/`Max_Height`, Launcher `Height: AUTO`, schema 1.14; see [Panel > As Built in PR 116](../40%20Specifications/Surfaces/Panel.md#as-built-in-pr-116). KWin not looked at. Verified by the maintainer on real KWin 2026-11-21: resized to fit, no jump or flicker |
 | Decision 2026-11-21 | [ADR-0022 Default Stylesheet](../30%20Decisions/ADR-0022%20Default%20Stylesheet.md) accepted by the maintainer: an absent `Appearance.Stylesheets` means `[Default]`; `[]` means none, with a `check` Note. Found through the M7k KWin check (unreadable Launcher on a bare config). Built in `tess-shell` PR #114 (code session's report: schema export 1.13, finding `appearance-no-stylesheet`) |
-| M7k click-away | First build (PR #108, popup grab) reverted (PR #111): on KWin the grab took the keyboard and typing was impossible. Fix-forward PR #113: an output-sized transparent `TOP` layer surface under the panel. NOT verified on KWin until the maintainer reports (M7 Build Log) |
+| M7k click-away | First build (PR #108, popup grab) reverted (PR #111); fix-forward PR #113 (transparent `TOP` layer surface). Verified by the maintainer on real KWin, 2026-11-21 (reported via the Orchestrator): typing works, a click outside closes, a row click closes, Esc closes, search narrows as typed, clicks on or around the field do not close it. Tested with the fixed-height Launcher ([M7 Build Log](M7%20Build%20Log.md)) |
 
 ## Where M7 Stands (2026-11-21)
 
-Folded from the code session's reports and the M7 Build Log; none of it was run in the vault.
+Folded from the code session's reports and the [M7 Build Log](M7%20Build%20Log.md); none of it was run in the vault.
 
 | Part | Status |
 |---|---|
 | M7a, M7a2, M7b, M7d, M7e, M7f, M7g kit, M7h | Merged (see Progress). M7a2 decided posture C: user module files in a child process each |
 | M7c idle budgets | Merged; the idle-machine re-read of B18 and B01 is not done |
-| M7i content-sized Panels | Merged (PR #116); built headless, not seen on KWin |
+| M7i content-sized Panels | Merged (PR #116); verified by the maintainer on real KWin 2026-11-21: the Launcher resized to fit its content, no jump or flicker reported |
 | M7j active descendant and one-window `ctx.announce` | Merged (PR #117); not tried with Orca |
-| M7k click-away | First build reverted (PR #111) after the maintainer's KWin check failed; fix-forward in PR #113 (transparent `TOP` layer surface); not verified on KWin |
+| M7k click-away | First build reverted (PR #111); fix in PR #113. Verified by the maintainer on KWin 2026-11-21 |
 
 Schema export history in M7: 1.9 to 1.10 (`Reveal_Key` removed), 1.11 (import of another `_Shell.tdl`, M7f), 1.12 (M7a2 process per module), 1.13 (default stylesheet, [ADR-0022 Default Stylesheet](../30%20Decisions/ADR-0022%20Default%20Stylesheet.md)), 1.14 (content-sized Panels, M7i), 1.15 (`Active_Descendant`, M7j). M7d added no bump.
 
-Not yet confirmed by the maintainer on a real KWin: the M7k click-away re-check, M7i `AUTO` Panels (and the one-frame offset on wlroots), M7j with Orca. Attended measurements still to run on an idle machine: the M7a2 product cell P (about 80 minutes) and the M7c budgets B18 and B01. Only maintainer-reported results count for hand checks.
+M7k is verified (above). Not yet confirmed by the maintainer on a real KWin: M7j with Orca (M7i was verified on KWin 2026-11-21; the one-frame offset on wlroots was not looked at). The AT-SPI contract test is `tess-shell` PR #118. Attended measurements still to run on an idle machine: the M7a2 product cell P (about 80 minutes) and the M7c budgets B18 and B01. Only maintainer-reported results count for hand checks.
 
 ## State this plan starts from
 
