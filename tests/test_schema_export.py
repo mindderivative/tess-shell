@@ -866,6 +866,8 @@ def written(value: tess_dl.Value) -> str:
     match value:
         case tess_dl.String() | tess_dl.Number() | tess_dl.Percent() | tess_dl.Word():
             return value.text
+        case tess_dl.List():
+            return "[" + ", ".join(written(i) for i in value.items) + "]"
     raise AssertionError(value)
 
 
