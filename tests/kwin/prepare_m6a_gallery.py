@@ -2,7 +2,7 @@
 
 Run from the repo root: ``uv run python tests/kwin/prepare_m6a_gallery.py``. It writes a scratch
 config and scripts under ``/tmp/tess-kwin-m6a`` and starts nothing. The shell file has a Bar with
-``Keyboard: ON_DEMAND`` (three Buttons with ``Tab_Index`` in a different order from the page, a
+``Keyboard: ON_DEMAND`` (four Buttons, a
 Toggle and a Button that is disabled), a Panel with a TextInput and a Checkbox. Every colour is a
 theme token, so it follows Plasma's light and dark.
 
@@ -44,7 +44,6 @@ Shell {
                 Width: EXPAND
                 Height: 48
                 Keyboard: ON_DEMAND
-                Tab_Index: 1
                 Style { Background: $color.surface }
                 Children {
                     FlexBox {
@@ -54,12 +53,12 @@ Shell {
                         Padding: [12, 8, 12, 8]
                         Align_Items: CENTER
                         Children {
-                            Button { Name: First, Text: "First", Tab_Index: 3 }
-                            Button { Name: Second, Text: "Second", Tab_Index: 1 }
-                            Button { Name: Third, Text: "Third", Tab_Index: 2 }
+                            Button { Name: First, Text: "First" }
+                            Button { Name: Second, Text: "Second" }
+                            Button { Name: Third, Text: "Third" }
                             Toggle { Label: "Switch" }
                             Button { Text: "Disabled", Enabled: false }
-                            Button { Text: "Fourth", Tab_Index: 4 }
+                            Button { Text: "Fourth" }
                         }
                     }
                 }
@@ -71,7 +70,6 @@ Shell {
                 Width: 360
                 Height: 140
                 Keyboard: ON_DEMAND
-                Tab_Index: 2
                 Style { Background: $color.surface_raised, Corner_Radius: 8 }
                 Children {
                     FlexBox {
@@ -95,9 +93,9 @@ scheme; the ring is the theme's Primary colour, 2 px, outside the block).  Start
 /tmp/tess-kwin-m6a/run.sh.  The Bar has First, Second, Third, a switch, a disabled button and Fourth;
 below it a Panel with a text field and a checkbox.
 
- 1  Click the empty part of the Bar, then press Tab: the ring appears on Second, then Third, then
-    First, then Fourth (the order of their Tab_Index 1, 2, 3, 4), then on the switch (it has none:
-    it comes after the numbered ones), then round to Second again; it is never on Disabled.
+ 1  Click the empty part of the Bar, then press Tab: the ring appears on First, then Second, then
+    Third, then the switch, then Fourth (the order of the file), then round to First again; it is
+    never on Disabled.
  2  Shift+Tab walks the same ring backwards, and wraps from the first to the last.
  3  CLICK a button with the mouse: it has the keyboard focus (Enter or Space runs it) but NO ring.
     Press Tab: the ring appears on the next one.

@@ -147,7 +147,6 @@
          "font_size": 12,
          "text": "0.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -238,7 +237,6 @@
          "font_size": 12,
          "text": "0.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -284,7 +282,6 @@
          "font_size": 12,
          "text": "0.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -330,7 +327,6 @@
          "font_size": 12,
          "text": "0.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -376,7 +372,6 @@
          "font_size": 12,
          "text": "0.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -461,7 +456,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {
        "hovered": {
         "fill": [
@@ -558,7 +552,6 @@
          "font_size": 12,
          "text": "1.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -649,7 +642,6 @@
          "font_size": 12,
          "text": "1.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -695,7 +687,6 @@
          "font_size": 12,
          "text": "1.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -741,7 +732,6 @@
          "font_size": 12,
          "text": "1.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -787,7 +777,6 @@
          "font_size": 12,
          "text": "1.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -878,7 +867,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -954,7 +942,6 @@
          "font_size": 12,
          "text": "2.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -1045,7 +1032,6 @@
          "font_size": 12,
          "text": "2.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1091,7 +1077,6 @@
          "font_size": 12,
          "text": "2.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1137,7 +1122,6 @@
          "font_size": 12,
          "text": "2.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1183,7 +1167,6 @@
          "font_size": 12,
          "text": "2.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -1268,7 +1251,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -1342,7 +1324,6 @@
          "font_size": 12,
          "text": "3.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -1433,7 +1414,6 @@
          "font_size": 12,
          "text": "3.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1479,7 +1459,6 @@
          "font_size": 12,
          "text": "3.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1525,7 +1504,6 @@
          "font_size": 12,
          "text": "3.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1571,7 +1549,6 @@
          "font_size": 12,
          "text": "3.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -1662,7 +1639,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {
        "hovered": {
         "fill": [
@@ -1762,7 +1738,6 @@
          "font_size": 12,
          "text": "4.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -1853,7 +1828,6 @@
          "font_size": 12,
          "text": "4.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1899,7 +1873,6 @@
          "font_size": 12,
          "text": "4.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1945,7 +1918,6 @@
          "font_size": 12,
          "text": "4.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1991,7 +1963,6 @@
          "font_size": 12,
          "text": "4.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -2076,7 +2047,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -2150,7 +2120,6 @@
          "font_size": 12,
          "text": "5.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -2241,7 +2210,6 @@
          "font_size": 12,
          "text": "5.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -2287,7 +2255,6 @@
          "font_size": 12,
          "text": "5.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -2333,7 +2300,6 @@
          "font_size": 12,
          "text": "5.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -2379,7 +2345,6 @@
          "font_size": 12,
          "text": "5.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -2470,7 +2435,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -2537,7 +2501,6 @@
      "display": "flex",
      "width": 1000
     },
-    "rank": 1,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -2552,7 +2515,7 @@
      "read_only": "!ValueError",
      "role": null,
      "selected": null,
-     "tab_index": 1,
+     "tab_index": 0,
      "value": null,
      "visible": true,
      "width": 1000.0
@@ -2652,7 +2615,6 @@
      "visible": false,
      "width": 40
     },
-    "rank": 0,
     "states": {
      "hovered": {
       "fill": [
@@ -2745,7 +2707,6 @@
      "hit_testable": false,
      "width": 5
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -2785,7 +2746,6 @@
      "height": 5,
      "width": 5
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -3279,7 +3239,6 @@
        "top": 8,
        "width": 16
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": true,
@@ -3359,7 +3318,6 @@
        "text": "Open",
        "width": "fit-content"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -3451,7 +3409,6 @@
      ],
      "stroke_width": 1
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -3638,7 +3595,6 @@
        "text": "Off",
        "width": "fit-content"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -3730,7 +3686,6 @@
      ],
      "stroke_width": 1
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -3941,7 +3896,6 @@
        "top": 5,
        "width": "100%"
       },
-      "rank": 0,
       "states": {
        "checked": {
         "fill": [
@@ -4085,7 +4039,6 @@
        ],
        "width": 16
       },
-      "rank": 0,
       "states": {
        "checked": {
         "fill": [
@@ -4201,7 +4154,6 @@
      "role": "switch",
      "width": 40
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -4354,7 +4306,6 @@
          "stroke_width": 2,
          "width": "100%"
         },
-        "rank": 0,
         "states": {
          "checked": {
           "fill": [
@@ -4492,7 +4443,6 @@
          ],
          "width": 18
         },
-        "rank": 0,
         "states": {
          "checked": {
           "opacity": 1
@@ -4588,7 +4538,6 @@
        "height": 18,
        "width": 18
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -4661,7 +4610,6 @@
        "text": "Remember",
        "width": "fit-content"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -4735,7 +4683,6 @@
      "label": "Remember",
      "role": "checkbox"
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -4874,7 +4821,6 @@
        "top": 8,
        "width": "100%"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -4967,7 +4913,6 @@
        "top": 8,
        "width": 0
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "fill": [
@@ -5085,7 +5030,6 @@
        ],
        "width": 16
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "fill": [
@@ -5239,7 +5183,6 @@
      "value_step": 5,
      "width": 160
     },
-    "rank": 0,
     "states": {
      "focused": {
       "shadows": [
@@ -5368,7 +5311,6 @@
        "top": 8,
        "width": "100%"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -5465,7 +5407,6 @@
        "top": 8,
        "width": 0
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "fill": [
@@ -5597,7 +5538,6 @@
        ],
        "width": 16
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "fill": [
@@ -5765,7 +5705,6 @@
      "value_step": 1,
      "width": 160
     },
-    "rank": 0,
     "states": {
      "focused": {
       "shadows": [
@@ -6117,7 +6056,6 @@
          "text": "a",
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -6209,7 +6147,6 @@
        ],
        "stroke_width": 1
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -6397,7 +6334,6 @@
          "text": "b",
          "wrap": "none"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
@@ -6502,7 +6438,6 @@
            "top": 5,
            "width": "100%"
           },
-          "rank": 0,
           "states": {
            "checked": {
             "fill": [
@@ -6646,7 +6581,6 @@
            ],
            "width": 16
           },
-          "rank": 0,
           "states": {
            "checked": {
             "fill": [
@@ -6762,7 +6696,6 @@
          "role": "switch",
          "width": 40
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
@@ -6884,7 +6817,6 @@
        "disabled": false,
        "display": "flex"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -6915,7 +6847,6 @@
      "disabled": true,
      "display": "flex"
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -6980,7 +6911,6 @@
      "focusable": true,
      "role": "button"
     },
-    "rank": 2,
     "states": {
      "focused": {
       "shadows": [
@@ -7012,7 +6942,7 @@
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
-     "tab_index": 2,
+     "tab_index": 0,
      "value": null,
      "visible": true
     },
@@ -7078,7 +7008,6 @@
      "focusable": true,
      "role": "button"
     },
-    "rank": 1,
     "states": {
      "focused": {
       "shadows": [
@@ -7110,7 +7039,7 @@
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
-     "tab_index": 1,
+     "tab_index": 0,
      "value": null,
      "visible": true
     },
@@ -7186,7 +7115,6 @@
        "text": "h",
        "wrap": "none"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -7262,7 +7190,6 @@
      "display": "flex",
      "visible": false
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -7549,7 +7476,6 @@
        "width": 80,
        "wrap": "none"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -7626,7 +7552,6 @@
      "disabled": false,
      "display": "flex"
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -7707,7 +7632,6 @@
      "text": "x",
      "wrap": "none"
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -7803,7 +7727,6 @@
        "height": "100%",
        "width": "100%"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -7888,7 +7811,6 @@
        "height": "100%",
        "width": "50%"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "fill": [
@@ -7984,7 +7906,6 @@
      "value_min": 0,
      "width": 160
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -8069,7 +7990,6 @@
        "text": "7",
        "visible": true
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -8153,7 +8073,6 @@
      "visible": true,
      "width": "auto"
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -8247,7 +8166,6 @@
        "text": "0",
        "visible": false
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -8331,7 +8249,6 @@
      "visible": true,
      "width": 6
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -8425,7 +8342,6 @@
        ],
        "width": 24
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": true,
@@ -8469,7 +8385,6 @@
      "justify_content": "center",
      "width": 24
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -8552,7 +8467,6 @@
        "text": "a very long text that does not fit in a hundred pixels",
        "wrap": "none"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -8624,7 +8538,6 @@
      "min_width": 0,
      "width": 100
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -8718,7 +8631,6 @@
        "text": "fits",
        "wrap": "none"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -8790,7 +8702,6 @@
      "min_width": 0,
      "width": 100
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -9166,7 +9077,6 @@
          "text": "x",
          "wrap": "none"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -9228,7 +9138,6 @@
          "text": "abc",
          "top": 0
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -9310,7 +9219,6 @@
        "grid_column": 1,
        "grid_row": 1
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -9364,7 +9272,6 @@
      "stroke_width": 1,
      "width": 240
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -9523,7 +9430,6 @@
        "text": "g",
        "width": "fit-content"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -9615,7 +9521,6 @@
      ],
      "stroke_width": 1
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -9803,7 +9708,6 @@
          "text": "x\nx\nx\nx",
          "wrap": "none"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -9892,7 +9796,6 @@
          "top": 0,
          "wrap": "word"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -9974,7 +9877,6 @@
        "grid_column": 1,
        "grid_row": 1
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -10028,7 +9930,6 @@
      "stroke_width": 1,
      "width": 320
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -10191,7 +10092,6 @@
          "text": "x",
          "wrap": "none"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -10253,7 +10153,6 @@
          "text": "y",
          "top": 0
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -10335,7 +10234,6 @@
        "grid_column": 1,
        "grid_row": 1
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -10389,7 +10287,6 @@
      "stroke_width": 1,
      "width": 240
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -10905,7 +10802,6 @@
            "text": "Entry 1",
            "width": "fit-content"
           },
-          "rank": 0,
           "states": {},
           "tre": {
            "a11y_hidden": false,
@@ -10951,7 +10847,6 @@
          "padding_right": 10,
          "padding_top": 6
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
@@ -11087,7 +10982,6 @@
            "text": "Entry 2",
            "width": "fit-content"
           },
-          "rank": 0,
           "states": {},
           "tre": {
            "a11y_hidden": false,
@@ -11133,7 +11027,6 @@
          "padding_right": 10,
          "padding_top": 6
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
@@ -11269,7 +11162,6 @@
            "text": "Entry 3",
            "width": "fit-content"
           },
-          "rank": 0,
           "states": {},
           "tre": {
            "a11y_hidden": false,
@@ -11315,7 +11207,6 @@
          "padding_right": 10,
          "padding_top": 6
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
@@ -11441,7 +11332,6 @@
        "display": "flex",
        "flex_direction": "vertical"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -11506,7 +11396,6 @@
      "role": "list",
      "width": 240
     },
-    "rank": 0,
     "states": {
      "focused": {
       "shadows": [
@@ -11618,7 +11507,6 @@
          "height": 1,
          "visible": false
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -11690,7 +11578,6 @@
          "visible": true,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -11765,7 +11652,6 @@
          "visible": true,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -11868,7 +11754,6 @@
          "visible": false,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -11970,7 +11855,6 @@
          "visible": false,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -12046,7 +11930,6 @@
        "padding_top": 0,
        "role": "menuitem"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -12176,7 +12059,6 @@
          "height": 1,
          "visible": true
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -12248,7 +12130,6 @@
          "visible": false,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -12323,7 +12204,6 @@
          "visible": false,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -12426,7 +12306,6 @@
          "visible": false,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -12528,7 +12407,6 @@
          "visible": false,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -12604,7 +12482,6 @@
        "padding_top": 0,
        "role": "separator"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -12733,7 +12610,6 @@
          "height": 1,
          "visible": false
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -12805,7 +12681,6 @@
          "visible": true,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -12880,7 +12755,6 @@
          "visible": true,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -12983,7 +12857,6 @@
          "visible": false,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -13085,7 +12958,6 @@
          "visible": false,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -13161,7 +13033,6 @@
        "padding_top": 0,
        "role": "menuitem"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -13289,7 +13160,6 @@
      "padding_top": 4,
      "role": "menu"
     },
-    "rank": 0,
     "states": {
      "focused": {
       "shadows": [
@@ -13404,7 +13274,6 @@
          "text": "x",
          "wrap": "none"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
@@ -13489,7 +13358,6 @@
        "flex_shrink": 0,
        "opacity": 1
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": true,
@@ -13562,7 +13430,6 @@
      "justify_content": "start",
      "width": "auto"
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,

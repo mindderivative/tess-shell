@@ -20,9 +20,9 @@ from tests.test_frame import StubApp, look, only
 from tests.test_frame_strips import module
 
 FRAME = (
-    'Frame { Name: F, Thickness: 20, Tab_Index: 1, %s Inner_Border { Width: 2, Color: "#00ff00" }, '
+    'Frame { Name: F, Thickness: 20, %s Inner_Border { Width: 2, Color: "#00ff00" }, '
     'Style { Background: "#0000ff" }, Edges { Top { Thickness: 30, Name: TopStrip, '
-    "Tab_Index: 4, Peek { Size: 8 }, Children { Rectangle { Name: S1, Width: 20, Height: 20, "
+    "Peek { Size: 8 }, Children { Rectangle { Name: S1, Width: 20, Height: 20, "
     "Focusable: true } } } } }"
 )
 TAB = (
@@ -31,17 +31,17 @@ TAB = (
     "Children { Rectangle { Name: Dot, Width: 20, Height: 20 } } }"
 )
 BAR = (
-    "Bar { Name: Top_Bar, Edge: BOTTOM, Width: EXPAND, Height: 24, Tab_Index: 3, %s Children { "
+    "Bar { Name: Top_Bar, Edge: BOTTOM, Width: EXPAND, Height: 24, %s Children { "
     "Rectangle { Name: Btn, Width: 20, Height: 20, Focusable: true } } }"
 )
 DOCK = (
     "Panel { Name: Dock, Anchor: [BOTTOM, LEFT], Width: 100, Height: 50, Keyboard: ON_DEMAND, "
-    "Tab_Index: 2, %s Children { Rectangle { Name: B1, Width: 20, Height: 20, Focusable: true } "
+    "%s Children { Rectangle { Name: B1, Width: 20, Height: 20, Focusable: true } "
     "Rectangle { Name: B2, Width: 20, Height: 20, Focusable: true } } }"
 )
 LAUNCHER = (
     "Panel { Name: Launcher, Anchor: [TOP, RIGHT], Width: 100, Height: 50, Visible: false, "
-    "Keyboard: ON_DEMAND, Tab_Index: 5, %s Children { Rectangle { Name: L1, Width: 20, "
+    "Keyboard: ON_DEMAND, %s Children { Rectangle { Name: L1, Width: 20, "
     "Height: 20, Focusable: true } } }"
 )
 
@@ -49,7 +49,10 @@ LAUNCHER = (
 def text(frame: str = "", tab: str = "", bar: str = "", dock: str = "", launcher: str = "") -> str:
     """The shell: the extra keys of each surface (``Shortcut_Mode: true,``...) go in the slots."""
     parts = (FRAME % frame, TAB % tab, BAR % bar, DOCK % dock, LAUNCHER % launcher)
-    return f"Shell {{ Monitor {{ Name: Main, Index: 0, Children {{ {' '.join(parts)} }} }} }}"
+    order = "Focus_Order: [F, Dock, Top_Bar, F.top, Launcher]"
+    return (
+        f"Shell {{ {order} Monitor {{ Name: Main, Index: 0, Children {{ {' '.join(parts)} }} }} }}"
+    )
 
 
 def shell_of(body: str) -> ShellDef:

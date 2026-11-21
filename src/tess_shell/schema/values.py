@@ -127,6 +127,13 @@ def check_range(kind: str, key: str, typed: m.Value) -> None:
     if rng is None:
         return
     for n in _numbers(typed):
+        if kind == "tab_index" and n > 0:
+            raise ValueProblem(
+                "tab-index-positive",
+                f"{plain(n)} is above 0: the order is the order of the file",
+                "put the blocks in the order you want; order surfaces with Focus_Order on the "
+                "Shell; tesserae-shell migrate rewrites the file",
+            )
         if not rng.holds(n):
             unit = "%" if kind == "elevation" else ""
             raise ValueProblem(

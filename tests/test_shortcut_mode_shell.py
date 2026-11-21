@@ -436,7 +436,7 @@ def test_a_reload_that_changes_a_written_keyboard_applies_it_when_the_mode_ends(
 ) -> None:
     r = rig()
     r.mode.set_mode("Dock", True)
-    r.reload(text().replace("Keyboard: ON_DEMAND, Tab_Index: 2,", "Keyboard: NONE, Tab_Index: 2,"))
+    r.reload(text().replace("Height: 50, Keyboard: ON_DEMAND,", "Height: 50, Keyboard: NONE,", 1))
     assert r.keyboard("Dock") == "exclusive"
     r.mode.exit()
     assert r.keyboard("Dock") == "none"
