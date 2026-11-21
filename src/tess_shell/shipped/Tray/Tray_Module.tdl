@@ -52,6 +52,7 @@ Module {
                     On_Click { Action: activate, id: <| item.id |> }
                     On_Middle_Click { Action: secondary, id: <| item.id |> }
                     On_Secondary_Click { Action: menu, id: <| item.id |> }
+                    On_Key_Down { Action: key, id: <| item.id |> }
                     On_Scroll { Action: scroll, id: <| item.id |>, delta: <| event.delta |> }
                 }
             }

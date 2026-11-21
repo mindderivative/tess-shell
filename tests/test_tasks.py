@@ -300,6 +300,22 @@ def test_a_middle_click_closes_the_window_and_the_script_that_does_it_is_unloade
         assert t.fake.loaded()  # the shell's own script stays
 
 
+def test_delete_on_a_focused_task_closes_its_window_and_other_keys_do_not(tmp_path: Path) -> None:
+    """TSH-012: the keyboard twin of the middle click."""
+    with tasks_desk(tmp_path) as t, tasks_shell(t) as w:
+        t.fake.script.windows = [a(1), a(2)]
+        start(t, w)
+        assert t.settle(w, lambda: len(buttons(w)) == 2)
+        node = buttons(w)[1]
+        node.focus()
+        w.window.simulate("key_down", key="x")
+        w.window.simulate("key_down", key="delete", ctrl=True)  # a shortcut of the user's
+        t.settle(w, lambda: False, 0.2)
+        assert one_shots(t) == []
+        w.window.simulate("key_down", key="delete")
+        assert wait_for(lambda: one_shots(t) == [("close", uuid(2))])
+
+
 def test_the_wheel_activates_the_next_or_the_previous_window_of_the_row_and_wraps(
     tmp_path: Path,
 ) -> None:

@@ -342,6 +342,26 @@ def test_a_secondary_click_on_an_item_without_a_menu_calls_context_menu(tmp_path
             assert w.manager.popups.current is None
 
 
+@pytest.mark.parametrize("keys", [{"key": "context_menu"}, {"key": "f10", "shift": True}])
+def test_the_menu_key_and_shift_f10_on_a_focused_item_call_context_menu(
+    tmp_path: Path, keys: dict[str, Any]
+) -> None:
+    """TSH-011: the keyboard twin of the secondary click (the item has no DBusMenu here)."""
+    with tray_desk(tmp_path) as t:
+        item = t.item()
+        up(t, item)
+        with tray_shell(t) as w:
+            assert settle(t, w, lambda: ids(w) == [item.registered])
+            node = item_node(w)
+            node.focus()
+            w.window.simulate("key_down", key="f10")  # F10 without Shift is not the menu
+            settle(t, w, lambda: False, 0.2)
+            assert calls(item, "ContextMenu") == []
+            w.window.simulate("key_down", **keys)
+            assert wait_for(lambda: len(calls(item, "ContextMenu")) == 1)
+            assert calls(item, "ContextMenu") == [centre(node)]
+
+
 def labels(op: Any) -> list[str]:
     return [
         str(n.get("label"))

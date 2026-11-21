@@ -287,3 +287,36 @@ def test_a_saved_position_survives_in_registry_json_and_the_latest_write_wins(
         raise AssertionError("the position was not written")
     again = Registry.open(tmp_path / "registry.json")
     assert again.position("position:S.M.P") == {"left": 30.0, "top": 40.0}
+
+
+def test_alt_and_an_arrow_move_a_movable_panel_and_save_the_place() -> None:
+    """TSH-017 (Drag and Drop, AC-DND-5): the keyboard way to what the pointer does."""
+    from types import SimpleNamespace as K
+
+    store = Positions()
+    m = manager(panel=WIDGET, hide_mode="KEEP", positions=store)
+    s = surface(m, "Widget")
+    assert s.geometry.margin == (50, 0, 0, 40)
+
+    def press(name: str, **mods: bool) -> bool:
+        event = K(key=name, alt=True, ctrl=False, meta=False, shift=False)
+        for k, v in mods.items():
+            setattr(event, k, v)
+        return m._nudge(s, event)
+
+    assert press("arrow_right") and s.geometry.margin == (50, 0, 0, 48)
+    assert press("arrow_down", shift=True) and s.geometry.margin == (82, 0, 0, 48)
+    assert press("arrow_left") and press("arrow_left") and press("arrow_up")
+    assert s.geometry.margin == (74, 0, 0, 32)
+    assert store.saved == {"position:Main_Shell.Main@HDMI-A-1.Widget": {"left": 32.0, "top": 74.0}}
+    for _ in range(10):  # it stays on the output: never a negative margin
+        press("arrow_left", shift=True)
+    assert s.geometry.margin[3] == 0
+    # not these: a plain arrow (the content's), Ctrl, a key that is not an arrow
+    assert not m._nudge(s, K(key="arrow_left", alt=False, ctrl=False, meta=False, shift=False))
+    assert not m._nudge(s, K(key="arrow_left", alt=True, ctrl=True, meta=False, shift=False))
+    assert not m._nudge(s, K(key="x", alt=True, ctrl=False, meta=False, shift=False))
+    plain = surface(
+        manager(panel=WIDGET.replace("Movable: true, ", ""), hide_mode="KEEP"), "Widget"
+    )
+    assert not m._nudge(plain, K(key="arrow_left", alt=True, ctrl=False, meta=False, shift=False))
