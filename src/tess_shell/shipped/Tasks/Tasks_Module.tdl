@@ -23,8 +23,8 @@ Module {
         show_title { Type: boolean, Default: true }
         # the widest a button gets, in pixels
         max_width { Type: number, Default: 180 }
-        # the icon's size in pixels
-        icon_size { Type: number, Default: 18 }
+        # the icon's size in pixels; 0 is the density level's (`density.item_icon_size`)
+        icon_size { Type: number, Default: 0 }
         # THIS: the windows on the module's own monitor; ALL: on every monitor
         monitor { Type: string, Default: THIS }
         # CURRENT: the windows on the current virtual desktop (and those on all desktops); ALL

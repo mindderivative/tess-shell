@@ -98,6 +98,8 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$density.row_height` | number | `40` | compact, dense | The height of a one-line list or tree row: 40, 32 or 24. |
 | `$density.menu_item_height` | number | `40` | compact, dense | The height of a menu item: 40, 32 or 28. |
 | `$density.icon_size` | number | `24` | compact, dense | The painted size of an icon in an icon button: 24, 20 or 20. |
+| `$density.item_size` | number | `32` | compact, dense | The size of a tray item, a task button and a workspace button (the pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be). |
+| `$density.item_icon_size` | number | `20` | compact, dense | The icon of a tray item and a task button: 20, 18 or 18. |
 | `$density.row_padding_x` | number | `12` | compact, dense | The side padding of a list row, a tree row and a menu item: 12, 8 or 4. |
 | `$density.icon_label_gap` | number | `8` | compact, dense | The gap between an icon and its label: 8, 8 or 4. |
 | `$density.field_padding_x` | number | `12` | compact, dense | The side padding of a text field: 12, 8 or 8. |

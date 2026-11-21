@@ -2087,6 +2087,7 @@ def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
         enter_delay=num("Enter_Delay", 500),
         close_on_exit=flag("Close_On_Exit", tooltip),
         exit_delay=num("Exit_Delay", 150),
+        density=_density(values),
         style=style,
         children=tuple(children),
     )

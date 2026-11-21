@@ -21,7 +21,7 @@ Module {
         show_title { Type: boolean, Default: true }
         # the button's width when it shows a title, in pixels
         max_width { Type: number, Default: 180 }
-        icon_size { Type: number, Default: 18 }
+        icon_size { Type: number, Default: 0 }
         active { Type: boolean, Default: false }
         minimized { Type: boolean, Default: false }
         attention { Type: boolean, Default: false }
@@ -34,6 +34,7 @@ Module {
         Label: <| params.label |>
         Selected: <| params.active |>
         Opacity: <| 0.5 if params.minimized else 1 |>
+        Height: <| density.item_size |>
         Flex: HORIZONTAL
         Align_Items: CENTER
         Spacing: 6
@@ -61,13 +62,13 @@ Module {
             }
         }
         Children {
-            Icon { Name: Glyph, Icon: <| params.icon |>, Size: <| params.icon_size |> }
+            Icon { Name: Glyph, Icon: <| params.icon |>, Size: <| params.icon_size if params.icon_size > 0 else density.item_icon_size |> }
             If <| params.show_title |> {
                 Marquee_Text {
                     Name: Title
                     Text: <| params.title |>
                     tooltip: false
-                    Width: <| params.max_width - params.icon_size - 18 |>
+                    Width: <| params.max_width - (params.icon_size if params.icon_size > 0 else density.item_icon_size) - 18 |>
                 }
             }
             FlexBox {

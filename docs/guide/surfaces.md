@@ -606,6 +606,7 @@ A surface that opens from a block: a menu or a tooltip.
 | Key | Value | Default | Required | What it does |
 |---|---|---|---|---|
 | `Name` | name | none | yes | The unique name of the Popup; Show, Toggle and Tooltip use it. |
+| `Density` | `DEFAULT` `COMPACT` `DENSE` | none |  | The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies. |
 | `Attach` | `LEFT` `RIGHT` `TOP` `BOTTOM` | `BOTTOM` |  | The edge of the block it opens from that the Popup meets. |
 | `Alignment` | `START` `CENTER` `END` | `START` |  | How the Popup lines up along the edge it shares with the block: START, CENTER or END. |
 | `Gap` | number | `0` |  | The space between the block and the Popup, in pixels. |
@@ -811,6 +812,7 @@ An inline Popup that is a tooltip, written inside a block or a module call.
 
 | Key | Value | Default | Required | What it does |
 |---|---|---|---|---|
+| `Density` | `DEFAULT` `COMPACT` `DENSE` | none |  | The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies. |
 | `Attach` | `LEFT` `RIGHT` `TOP` `BOTTOM` | none |  | The edge of the target the surface meets: LEFT, RIGHT, TOP or BOTTOM. |
 | `Alignment` | `START` `CENTER` `END` | none |  | Where the surface sits along the edge it shares: START, CENTER or END. |
 | `Gap` | number | none |  | The space between the surface and what it is placed against, in pixels. |
