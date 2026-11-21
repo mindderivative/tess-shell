@@ -5083,7 +5083,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The height of one line, above 0.",
+          "doc": "The height of one line in pixels, above 0 (tre takes a multiple of the font size; the binder divides).",
           "slot": false,
           "required": false,
           "built": true,
@@ -9709,7 +9709,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The height of one line, above 0.",
+          "doc": "The height of one line in pixels, above 0 (tre takes a multiple of the font size; the binder divides).",
           "slot": true,
           "required": false,
           "built": true,
@@ -20189,7 +20189,9 @@
           "item_kind": "number",
           "length": 4,
           "one_or_list": false,
-          "tokens": [],
+          "tokens": [
+            "density"
+          ],
           "preferred_tokens": []
         },
         "Trim_Start": {
@@ -21748,7 +21750,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The height of one line, above 0.",
+          "doc": "The height of one line in pixels, above 0 (tre takes a multiple of the font size; the binder divides).",
           "slot": true,
           "required": false,
           "built": true,
@@ -22974,7 +22976,7 @@
           "kind": "sides",
           "choices": null,
           "enum": null,
-          "default": "0",
+          "default": "$density.field_padding",
           "doc": "Space between the content and the four sides: one number or four (left, top, right, bottom).",
           "slot": true,
           "required": false,
@@ -23340,7 +23342,7 @@
           "kind": "sides",
           "choices": null,
           "enum": null,
-          "default": "0",
+          "default": "$density.field_padding",
           "doc": "Space between the content and the four sides: one number or four (left, top, right, bottom).",
           "slot": true,
           "required": false,
@@ -25265,19 +25267,28 @@
         "step": null,
         "unit": null
       },
-      "field_padding_x": {
-        "kind": "number",
-        "ref": "$density.field_padding_x",
-        "default": "12",
-        "doc": "The side padding of a text field: 12, 8 or 8.",
+      "field_padding": {
+        "kind": "sides",
+        "ref": "$density.field_padding",
+        "default": "[12, 12, 12, 12]",
+        "doc": "The padding of a text field (left, top, right, bottom): [12, 12, 12, 12], [8, 8, 8, 8] or [8, 6, 8, 6]. With the 16 px line of 14 px body text the field is 40, 32 or 28 high (the spec's 20 px line would take 10, 6 and 4).",
         "modes": [
           "compact",
           "dense"
         ],
-        "min": null,
-        "max": null,
-        "step": null,
-        "unit": null
+        "arity": [
+          1,
+          4
+        ],
+        "order": [
+          "Left",
+          "Top",
+          "Right",
+          "Bottom"
+        ],
+        "named_block": true,
+        "negative": false,
+        "unit": "px"
       },
       "tree_indent": {
         "kind": "number",

@@ -100,7 +100,7 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$density.icon_size` | number | `24` | compact, dense | The painted size of an icon in an icon button: 24, 20 or 20. |
 | `$density.row_padding_x` | number | `12` | compact, dense | The side padding of a list row, a tree row and a menu item: 12, 8 or 4. |
 | `$density.icon_label_gap` | number | `8` | compact, dense | The gap between an icon and its label: 8, 8 or 4. |
-| `$density.field_padding_x` | number | `12` | compact, dense | The side padding of a text field: 12, 8 or 8. |
+| `$density.field_padding` | sides | `[12, 12, 12, 12]` | compact, dense | The padding of a text field (left, top, right, bottom): [12, 12, 12, 12], [8, 8, 8, 8] or [8, 6, 8, 6]. With the 16 px line of 14 px body text the field is 40, 32 or 28 high (the spec's 20 px line would take 10, 6 and 4). |
 | `$density.tree_indent` | number | `20` | compact, dense | The indent of one tree level: 20, 16 or 12. |
 | `$density.chevron_box` | number | `24` | compact, dense | The size of a tree's chevron box: 24, 20 or 16. |
 
@@ -331,7 +331,7 @@ These are the keys a `Style { }` block, a style key written directly on a block,
 | `Font_Family` | font | Text, Marquee, TextField | color, motion | A font family name, or a list of them in the order of fallback. |
 | `Font_Size` | number | Text, Marquee, TextField | type.*.font_size | The size of the type, above 0. |
 | `Font_Weight` | whole number | Text, Marquee, TextField | type.*.font_weight | The weight of the type as a whole number, 400 regular, 700 bold. |
-| `Line_Height` | number | Text, Marquee | type.*.line_height | The height of one line, above 0. |
+| `Line_Height` | number | Text, Marquee | type.*.line_height | The height of one line in pixels, above 0 (tre takes a multiple of the font size; the binder divides). |
 | `Text_Align` | `START` `CENTER` `END` | Text |  | How a line sits in the text's box: START, CENTER or END. |
 | `Overflow` | `CLIP` `ELLIPSIS` | Text, TextField |  | What happens to text that does not fit: CLIP cuts it, ELLIPSIS ends it with dots (a TextField also has SCROLL). |
 | `Fill` | colour | Rectangle, Circle, Path | color | The fill of the shape, a colour or a theme token. |

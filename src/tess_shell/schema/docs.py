@@ -145,7 +145,8 @@ KEY_DOCS: dict[str, str] = {
     "Font_Family": "A font family name, or a list of them in the order of fallback.",
     "Font_Size": "The size of the type, above 0.",
     "Font_Weight": "The weight of the type as a whole number, 400 regular, 700 bold.",
-    "Line_Height": "The height of one line, above 0.",
+    "Line_Height": "The height of one line in pixels, above 0 (tre takes a multiple of the font "
+    "size; the binder divides).",
     "Text_Align": "How a line sits in the text's box: START, CENTER or END.",
     "Overflow": "What happens to text that does not fit: CLIP cuts it, ELLIPSIS ends it with "
     "dots (a TextField also has SCROLL).",
@@ -771,7 +772,9 @@ TOKEN_DOCS: dict[str, str] = {
     "density.row_padding_x": "The side padding of a list row, a tree row and a menu item: 12, 8 "
     "or 4.",
     "density.icon_label_gap": "The gap between an icon and its label: 8, 8 or 4.",
-    "density.field_padding_x": "The side padding of a text field: 12, 8 or 8.",
+    "density.field_padding": "The padding of a text field (left, top, right, bottom): [12, 12, 12, "
+    "12], [8, 8, 8, 8] or [8, 6, 8, 6]. With the 16 px line of 14 px body text the field is 40, 32 "
+    "or 28 high (the spec's 20 px line would take 10, 6 and 4).",
     "density.tree_indent": "The indent of one tree level: 20, 16 or 12.",
     "density.chevron_box": "The size of a tree's chevron box: 24, 20 or 16.",
     "elevation.reach": "How far the largest shadow reaches, in pixels.",
