@@ -49,3 +49,9 @@ def test_an_elevation_percentage_scales_the_themes_maximum() -> None:
 def test_a_frame_that_needs_no_shader_draws_no_shadow() -> None:
     manager = started(FRAME % "Elevation: 100%", blend="PATH")
     assert all(p[3] == 0 for p in opening_row(manager))
+
+
+def test_an_elevation_level_gives_the_ring_the_levels_two_shadows() -> None:
+    row = opening_row(started(FRAME % "Elevation: LEVEL_3"))
+    assert row[1][3] > 0 and row[1][:3] == (0, 0, 0)  # just inside the opening
+    assert row[40][3] == 0  # level 3's blur (8 px, spread 3) is gone well outside
