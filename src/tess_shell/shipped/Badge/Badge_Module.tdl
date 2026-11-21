@@ -4,7 +4,7 @@ Shell: 0.1
 Name: Badge
 ---
 
-# A count or a dot on an icon (Standard Modules > Badge). It is a pill (a dot is a pill of 8 by 8
+# A count or a dot on an icon (Standard Modules > Badge). It is a pill (a dot is a pill of 6 by 6
 # pixels), the part `::dot`, with the count in it. `Count` shows nothing when it is 0 (unless
 # `Show_Zero`), and a count above `Max` reads `99+`. Place it at a corner of its parent with the
 # common keys of the call: `Badge { Count: 3, Position: ABSOLUTE, Right: 0, Top: 0 }`. A Badge is
@@ -22,10 +22,10 @@ Module {
         Part: dot
         A11y_Hidden: true
         Visible: <| params.Dot or params.Count > 0 or (params.Show_Zero and params.Count == 0) |>
-        Height: <| 8 if params.Dot else 18 |>
-        Width: <| 8 if params.Dot else "AUTO" |>
-        Min_Width: <| 8 if params.Dot else 18 |>
-        Padding: <| 0 if params.Dot else [5, 0, 5, 0] |>
+        Height: <| 6 if params.Dot else 16 |>
+        Width: <| 6 if params.Dot else "AUTO" |>
+        Min_Width: <| 6 if params.Dot else 16 |>
+        Padding: <| 0 if params.Dot else [4, 0, 4, 0] |>
         Align_Items: CENTER
         Justify_Content: CENTER
         Style { Corner_Radius: $shape.full }
@@ -34,8 +34,8 @@ Module {
                 Name: Digits
                 Visible: <| not params.Dot |>
                 Text: <| str(params.Count) if params.Count <= params.Max else str(params.Max) + "+" |>
-                Font_Size: 11
-                Font_Weight: 600
+                Font_Size: $type.caption.font_size
+                Font_Weight: 500
             }
         }
     }

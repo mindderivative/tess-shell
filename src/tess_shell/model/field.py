@@ -78,7 +78,7 @@ def _default_states(origin: m.Origin) -> dict[str, dict[str, m.Value]]:
     otherwise: the outline takes the primary colour, a disabled field is faint."""
     return {
         "hovered": {"Border_Color": _token("color.primary", "color", origin)},
-        "disabled": {"Opacity": m.Number(0.5, origin=origin)},
+        "disabled": {"Opacity": m.Number(0.38, origin=origin)},
     }
 
 

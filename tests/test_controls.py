@@ -41,7 +41,7 @@ def test_button_states_hover_pressed_and_disabled_show() -> None:
         assert root.get("fill") != (85, 101, 122, 255)
     with running(f'Button {{ Text: "Go", Enabled: false, {CLICK} }}') as w:
         root = w.of_use("Button", "Root")
-        assert root.get("disabled") is True and root.get("opacity") == 0.5
+        assert root.get("disabled") is True and root.get("opacity") == 0.38
 
 
 def test_button_click_runs_the_action_and_a_disabled_button_ignores_it() -> None:
@@ -138,7 +138,7 @@ def test_a_disabled_toggle_ignores_the_pointer_and_shows_disabled() -> None:
         root = w.of_use("Toggle", "Root")
         w.window.simulate("click", node=root)
         assert root.get("checked") is False and seen(w) == []
-        assert root.get("disabled") is True and root.get("opacity") == 0.5
+        assert root.get("disabled") is True and root.get("opacity") == 0.38
 
 
 def test_checkbox_flips_by_the_box_and_by_the_label_and_draws_a_mark() -> None:

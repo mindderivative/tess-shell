@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.16",
+  "schema_version": "1.17",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -24530,11 +24530,33 @@
         "step": null,
         "unit": null
       },
+      "medium_large": {
+        "kind": "number",
+        "ref": "$shape.medium_large",
+        "default": "12",
+        "doc": "Between medium and large rounding: a rich tooltip or a card (12).",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
       "large": {
         "kind": "number",
         "ref": "$shape.large",
         "default": "16",
         "doc": "Strongly rounded corners.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "extra_large": {
+        "kind": "number",
+        "ref": "$shape.extra_large",
+        "default": "28",
+        "doc": "Very strongly rounded corners: a dialog (28).",
         "modes": [],
         "min": null,
         "max": null,
@@ -24666,7 +24688,9 @@
         "ref": "$motion.duration.short",
         "default": "100",
         "doc": "A short animation, in milliseconds.",
-        "modes": [],
+        "modes": [
+          "reduced_motion"
+        ],
         "min": null,
         "max": null,
         "step": null,
@@ -24677,7 +24701,9 @@
         "ref": "$motion.duration.medium",
         "default": "200",
         "doc": "A medium animation, in milliseconds.",
-        "modes": [],
+        "modes": [
+          "reduced_motion"
+        ],
         "min": null,
         "max": null,
         "step": null,
@@ -24688,7 +24714,9 @@
         "ref": "$motion.duration.long",
         "default": "400",
         "doc": "A long animation, in milliseconds.",
-        "modes": [],
+        "modes": [
+          "reduced_motion"
+        ],
         "min": null,
         "max": null,
         "step": null,
