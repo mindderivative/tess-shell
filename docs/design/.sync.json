@@ -1,7 +1,7 @@
 {
- "vault_commit": "a404cda26ff145d981e58c1ad5eab042297af621",
- "vault_subject": "Gitignore .mcp.json and graphify-out",
- "exported_at": "2026-11-20 13:43:19",
+ "vault_commit": "b65bd97905890abbaae3e2d889377ed0708c8526",
+ "vault_subject": "Applications Module: click-away as built in tess-shell PR 108",
+ "exported_at": "2026-11-20 19:25:37",
  "files": {
   "00 Home/Build Logs.md": "7156839d84b290e7",
   "00 Home/Development Readiness.md": "0932f105a9ba8d72",
@@ -82,7 +82,7 @@
   "40 Specifications/Integration/Plasma Coexistence.md": "ebe21a3ce24c0486",
   "40 Specifications/Integration/Portals.md": "c2c5d358a1d21ae0",
   "40 Specifications/Integration/Wayland Protocols.md": "e287322e474c6d81",
-  "40 Specifications/Modules/Applications Module.md": "fabf30007b3a23f0",
+  "40 Specifications/Modules/Applications Module.md": "ae64b8c0bcff15a4",
   "40 Specifications/Modules/Audio Module.md": "e905eb25ffab3154",
   "40 Specifications/Modules/Battery Module.md": "d2da34f116c07c54",
   "40 Specifications/Modules/Clock Module.md": "63fc4edc0a9f68c2",
