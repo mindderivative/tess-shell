@@ -61,3 +61,37 @@ def test_the_pressed_menu_row_reads_on_its_fill(scheme: str, part: str, need: fl
     fill = colour(look, rule(look, "MenuItem", "", "pressed")["Background"])
     ink = colour(look, rule(look, "MenuItem", part, "pressed")["Foreground"])
     assert ratio(ink, fill) >= need, (scheme, part, ink, fill, ratio(ink, fill))
+
+
+def test_no_shipped_text_or_fill_is_a_literal_colour() -> None:
+    """TSH-041: a literal ``#ffffff`` Clock face was 1.08 to 1 on the Light surface. Shipped style
+    and layout files take their colours from the theme's tokens (a fully transparent fill is not a
+    colour a user sees)."""
+    import re
+
+    root = Path(__file__).resolve().parent.parent / "src" / "tess_shell" / "shipped"
+    pattern = re.compile(
+        r'(Foreground|Background|Fill|Border_Color|Color):\s*"#([0-9A-Fa-f]{6,8})"'
+    )
+    found = []
+    for path in sorted(root.rglob("*.tdl")):
+        if path.name.endswith("_Theme.tdl"):
+            continue  # a theme is where the literals live
+        for number, line in enumerate(path.read_text().splitlines(), start=1):
+            hit = pattern.search(line)
+            if hit and hit.group(2).lower() not in ("00000000",):
+                found.append(f"{path.relative_to(root)}:{number}: {line.strip()}")
+    assert not found, "literal colours (use a $color token): " + "; ".join(found)
+
+
+@pytest.mark.parametrize("scheme", ["dark", "light"])
+def test_the_clock_face_reads_on_the_surface(scheme: str) -> None:
+    """The Clock's text takes ``on_surface``, which reads on the surface of both modes."""
+    look = look_of(scheme)
+    style = (
+        Path(__file__).resolve().parent.parent / "src/tess_shell/shipped/Clock/Clock_Style.tdl"
+    ).read_text()
+    assert "Foreground: $color.on_surface" in style
+    on = str(look.tokens["color.on_surface"].value.value)  # type: ignore[union-attr]
+    surface = str(look.tokens["color.surface"].value.value)  # type: ignore[union-attr]
+    assert ratio(on, surface) >= TEXT, (scheme, on, surface)
