@@ -223,3 +223,31 @@ def test_the_launcher_opens_with_the_shortcut_searches_moves_starts_and_closes_b
     assert d.finish() == 0
     assert "| ERROR " not in "".join(shell.seen)
     assert len(records(record)) == 1  # nothing else was started
+
+
+def test_a_click_on_the_desktop_closes_the_launcher_every_time_it_was_shown(
+    desk: Make,  # noqa: F811 - the fixture
+    private_sway: PrivateSway,
+    tmp_path: Path,
+) -> None:
+    """M7k, click-away closing (TRE-REQ-024's recipe): a click outside the shell's surfaces hides
+    the Launcher, and shown again it hides again (the grab is one-shot, a new catcher is made at
+    each show). The click is a virtual pointer on the private sway; the click itself is the
+    compositor's to take (the user clicks again), which is what a menu does too."""
+    d = desk()
+    prepare(d, tmp_path, systemd_run=False)
+    shell = d.start()
+    pointer = live_pointer.VirtualPointer(private_sway.env, 1280, 720)
+    try:
+        for n in (1, 2):
+            d.fake.press("Toggle_Launcher")
+            wait_n(shell, "Panel Launcher on HEADLESS-1 shown", n)
+            reach(private_sway, shell)  # the Launcher has the keyboard
+            pointer.move(40, 600)  # the empty desktop: not the Bar, not the Launcher
+            pointer.click()
+            wait_n(shell, "Panel Launcher: a click elsewhere closes it", n)
+            wait_n(shell, "Panel Launcher on HEADLESS-1 hidden", n)
+    finally:
+        pointer.close()
+    assert d.finish() == 0
+    assert "| ERROR " not in "".join(shell.seen)
