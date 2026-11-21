@@ -11,8 +11,8 @@ Name: Applications
 # the module. When the Panel shows, the field takes the focus and its text is selected. The Python
 # sends, for each use: `ready` (the list of applications is built), `query` (the field's text),
 # `results` (a record per row: `id`, `name`, `comment`, `icon`), `selected` (the selected row's
-# index), `selected_id` (its id, which the List marks), `has_results`, `list_height` (the rows'
-# height in pixels), `message` ("No results", "No applications found" or "Could not start <name>";
+# index), `selected_id` (its id, which the List marks), `has_results`, `row_count` (the number of
+# rows; the list is `row_count * density.row_height` high), `message` ("No results", "No applications found" or "Could not start <name>";
 # empty otherwise). The module says aloud, politely (ctx.announce), the selected row, "No
 # results" and "Could not start <name>". The shipped Panel `Launcher` holds this module; bind a key
 # to open it (`Shortcuts { Toggle_Launcher: "Meta+Space" }`).
@@ -57,16 +57,16 @@ Module {
                     Label: "Results"
                     Selected: <| selected_id |>
                     Width: 456
-                    Height: <| list_height |>
+                    Height: <| row_count * density.row_height |>
                     Children {
                         For app In <| results |> Key <| app.id |> {
                             FlexBox {
                                 Name: Row
                                 Class: list_item
-                                Height: 40
+                                Height: <| density.row_height |>
                                 Flex: HORIZONTAL
                                 Align_Items: CENTER
-                                Spacing: 10
+                                Spacing: <| density.icon_label_gap |>
                                 On_Click { Action: launch, id: <| app.id |> }
                                 Label: <| app.name + ", " + app.comment if params.show_comment and app.comment != "" else app.name |>
                                 Children {

@@ -49,7 +49,8 @@ PANEL_HIDE = ("CLOSE", "KEEP")
 FRAME_JOIN = ("SMIL", "CONCAVE", "SHADER", "STRUCTURE", "PARAM")
 FRAME_BLEND = ("SRGB", "LINEAR")
 MODE_KEYBOARD = ("EXCLUSIVE", "ON_DEMAND")
-APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop")
+APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop", "Density")
+DENSITY = ("DEFAULT", "COMPACT", "DENSE")
 LOGGING_KEYS = (
     "Level",
     "Directory",
@@ -94,6 +95,7 @@ class AppearanceSettings:
     # ``Stylesheets: []`` means none
     stylesheets: tuple[str, ...] = ("Default",)
     follow_desktop: bool = True  # read the Settings portal (Portals > Configuration)
+    density: str = "COMPACT"  # the density level of the shell (Spacing and Density, ADR-0002)
 
 
 @dataclass(frozen=True, slots=True)
@@ -326,6 +328,8 @@ def _appearance(reader: _Reader, block: Block) -> AppearanceSettings:
                     values["stylesheets"] = tuple(n for n in names if n is not None)
             case "Follow_Desktop":
                 values["follow_desktop"] = reader.boolean(prop)
+            case "Density":
+                values["density"] = reader.enum(prop, DENSITY)
     return replace(AppearanceSettings(), **{k: v for k, v in values.items() if v is not None})
 
 

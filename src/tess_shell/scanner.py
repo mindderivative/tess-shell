@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import sys
 from collections.abc import Callable
@@ -426,4 +427,6 @@ def build_look(result: Scan, settings: Settings, appearance: Appearance) -> Look
     error for a name it could not find, so the caller has already stopped on one."""
     theme = result.themes[settings.appearance.theme or DEFAULT_THEME]
     sheets = [result.stylesheets[name] for name in settings.appearance.stylesheets]
+    # the density is the shell's own setting; the desktop's appearance never carries it
+    appearance = dataclasses.replace(appearance, density=settings.appearance.density.lower())  # type: ignore[arg-type]
     return make_look(theme, sheets, appearance, result.themes.get(DEFAULT_THEME), result.icons)

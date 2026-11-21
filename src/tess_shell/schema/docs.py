@@ -189,6 +189,8 @@ KEY_DOCS: dict[str, str] = {
     "the Gap).",
     "Keyboard": "Whether the surface takes the keyboard: NONE never, ON_DEMAND on a click, "
     "EXCLUSIVE all keys.",
+    "Density": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or "
+    "DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
     "Input_Region": "Which part of the surface takes the pointer: [] none (clicks pass through) "
     "or AUTO the drawn shapes; leaving it out is the whole surface.",
     "Exclusive_Zone": "The raw space to reserve, in pixels. Not built.",
@@ -555,6 +557,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Menu_Item",
         "Opens",
         "Keyboard",
+        "Density",
         "Input_Region",
         "Hide_After",
         "Open_With_Target",
@@ -749,6 +752,17 @@ TOKEN_DOCS: dict[str, str] = {
     "space.step_6": "A step of spacing between groups.",
     "space.step_7": "A large step of spacing.",
     "space.step_8": "The largest step of spacing.",
+    "density.control_height": "The height of a button, a text field, a switch row and an icon "
+    "button: 40, 32 or 28 at the default, compact and dense levels.",
+    "density.row_height": "The height of a one-line list or tree row: 40, 32 or 24.",
+    "density.menu_item_height": "The height of a menu item: 40, 32 or 28.",
+    "density.icon_size": "The painted size of an icon in an icon button: 24, 20 or 20.",
+    "density.row_padding_x": "The side padding of a list row, a tree row and a menu item: 12, 8 "
+    "or 4.",
+    "density.icon_label_gap": "The gap between an icon and its label: 8, 8 or 4.",
+    "density.field_padding_x": "The side padding of a text field: 12, 8 or 8.",
+    "density.tree_indent": "The indent of one tree level: 20, 16 or 12.",
+    "density.chevron_box": "The size of a tree's chevron box: 24, 20 or 16.",
     "elevation.reach": "How far the largest shadow reaches, in pixels.",
     "elevation.max": "The shadow list at 100% elevation; a smaller Elevation scales it.",
     "motion.duration.short": "A short animation, in milliseconds.",
@@ -795,6 +809,9 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
     "field and the list then have the engine's black text).",
     ("Appearance", "Follow_Desktop"): "Follows the desktop's colour scheme, accent, contrast "
     "and reduced-motion settings.",
+    ("Appearance", "Density"): "The density level of the shell's own sizes: DEFAULT (40 px "
+    "controls), COMPACT (32 px, the default) or DENSE (28 px). A surface can set its own with "
+    "Density. See Spacing and Density.",
     ("Settings", "KWin"): "What the shell does with KWin: its script and fullscreen hiding.",
     ("KWin", "Script"): "How the shell's KWin script runs: RUNTIME loads it into KWin when the "
     "shell starts and unloads it at stop, PERSISTENT leaves it to the one installed by "

@@ -31,8 +31,8 @@ Module {
         Role: BUTTON
         Expanded: <| params.Expanded if params.Expandable else None |>
         Label: <| params.Label if params.Label else params.Text |>
-        Height: 32
-        Min_Width: 32
+        Height: <| density.control_height |>
+        Min_Width: <| density.control_height |>
         Align_Items: CENTER
         Justify_Content: CENTER
         Padding: <| [8, 0, 8, 0] if params.Text == "" else ([36, 0, 12, 0] if params.Icon != "" and params.Icon_Position == "START" else ([12, 0, 36, 0] if params.Icon != "" else [12, 0, 12, 0])) |>
@@ -45,7 +45,7 @@ Module {
                     Width: 16
                     Height: 16
                     Position: ABSOLUTE
-                    Top: 8
+                    Top: <| (density.control_height - 16) // 2 |>
                     Left: <| 8 if params.Text == "" else (10 if params.Icon_Position == "START" else "AUTO") |>
                     Right: <| 10 if params.Text != "" and params.Icon_Position == "END" else "AUTO" |>
                 }

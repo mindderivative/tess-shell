@@ -6,7 +6,7 @@ first.
 
 Keys sent, for each use: ``ready``, ``query``, ``results`` (a record per row: ``id``, ``name``,
 ``comment``, ``icon``), ``selected`` (the selected row's index, 0 when the list changes),
-``selected_id``, ``has_results``, ``list_height`` and ``message`` (the layout's comment says what
+``selected_id``, ``has_results``, ``row_count`` and ``message`` (the layout's comment says what
 each is). Each use has its own query and selection: two Panels on two outputs do not share them.
 The icons come from ``ctx.icons.app_icon`` on one worker (never the loop thread) and are made again
 when the desktop's icon theme changes; until one is read a row shows the shipped
@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from tess_shell.services.api import AppInfo, LaunchResult, Subscription
 
 FALLBACK_ICON = "mdi:application-outline"
-ROW_HEIGHT = 40  # pixels: the layout's ``Height`` of a row
 FIELD = "query"  # the ``Name`` of the text field in the layout
 MODIFIERS = ("ctrl", "alt", "meta")
 
@@ -221,7 +220,7 @@ class Applications(Module):
             "selected": state.selected,
             "selected_id": chosen,
             "has_results": bool(rows),
-            "list_height": len(rows) * ROW_HEIGHT,
+            "row_count": len(rows),  # the layout multiplies it by ``density.row_height``
             "message": message,
         }
         said = self.announcement(state, rows, chosen, message, settle)

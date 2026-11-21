@@ -34,10 +34,10 @@ Module {
         Opens: <| params.Submenu |>
         Expanded: <| False if params.Submenu != "" else None |>
         Label: <| params.Label if params.Label else params.Text |>
-        Height: <| 9 if params.Separator else 28 |>
+        Height: <| 9 if params.Separator else density.menu_item_height |>
         Align_Items: CENTER
-        Spacing: 8
-        Padding: <| [4, 0, 4, 0] if params.Separator else [10, 0, 10, 0] |>
+        Spacing: <| density.icon_label_gap |>
+        Padding: <| [4, 0, 4, 0] if params.Separator else [density.row_padding_x, 0, density.row_padding_x, 0] |>
         Children {
             Rectangle {
                 Name: Rule
