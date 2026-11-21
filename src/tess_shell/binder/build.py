@@ -37,6 +37,7 @@ from tess_shell.binder.model import (
     Handler,
     IfNode,
     Node,
+    Number,
     Origin,
     SlotValue,
     Text,
