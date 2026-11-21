@@ -1334,12 +1334,12 @@ class SurfaceManager:
     # Launcher) hides when the user clicks elsewhere or something else takes its keyboard, as a
     # menu does (Applications Module > Opening; TRE-REQ-024, tre's answer of 2026-11-17).
     #
-    # * A click: Wayland shows a client no press on another client's surface, so the shell hangs
-    #   a transparent 1 by 1 ``PopupWindow(grab=True)`` off the Panel; the compositor dismisses it
-    #   (``closed``, reason ``dismissed``) on a press outside the shell's surfaces and the Panel
-    #   keeps its keyboard. The press is the popup's (the user clicks again), the grab is one-shot
-    #   (a new popup is made at each show) and a click on another surface of the shell does not
-    #   dismiss it.
+    # * A click: Wayland shows a client no press on another client's surface, so the shell puts
+    #   a transparent surface the size of the output on layer TOP, under the Panel (OVERLAY), for
+    #   as long as the Panel is shown; a press on it hides the Panel. The press is the catcher's
+    #   (the user clicks again to use what is under it). tre's recipe of TRE-REQ-024, a 1 by 1
+    #   ``PopupWindow(grab=True)``, was built first and does not do: on KWin the popup grab takes
+    #   the keyboard from the Panel, so nothing can be typed (hand check of 2026-11-20).
     # * The keyboard: the window's ``active`` event is the compositor's keyboard enter and leave;
     #   when another surface of the shell takes the keyboard after the Panel had it, the Panel hides
     #   (a keyboard that is only lost, with nothing gaining it, is not a reason: the seat's last
@@ -1351,43 +1351,48 @@ class SurfaceManager:
         return (
             isinstance(panel, PanelDef)
             and panel.keyboard == "EXCLUSIVE"
+            and panel.layer == "OVERLAY"
             and s.planned is not None
             and any(u.module == "Applications" for u in s.planned.expanded.uses)
         )
 
     def _arm_click_away(self, s: Surface) -> None:
-        """The Panel is shown: make the click catcher (the previous one is spent or gone)."""
-        from tess_re import PopupWindow
+        """The Panel is shown: put the click catcher under it (the last one went at the hide)."""
+        from tess_re import LayerWindow
 
         self._disarm_click_away(s)
         s.had_keys = False
         window = s.window
-        if window is None or not self._click_away_panel(s):
+        if window is None or s.planned is None or not self._click_away_panel(s):
             return
         try:
-            catcher = PopupWindow(window, size=(1, 1), anchor_rect=(0, 0, 1, 1), grab=True)
+            catcher = LayerWindow(
+                f"tesserae-shell.catcher.{s.name}",
+                layer="top",  # under the Panel's OVERLAY, above the windows
+                anchor=("top", "right", "bottom", "left"),
+                size=(0, 0),
+                exclusive_zone=-1,
+                keyboard="none",
+                output=s.planned.output,
+            )
         except (ValueError, RuntimeError) as exc:  # no compositor, or the engine refuses
             logger.warning(f"Panel {s.name}: no click-away closing: {exc}")
             return
         catcher.root.set(fill=(0, 0, 0, 0))
 
-        def closed(e: Any) -> None:
-            reason = str(getattr(e, "reason", ""))
-            if s.catcher is catcher:
-                s.catcher = None
-            free_window(catcher)
-            if reason == "dismissed" and not s.hidden and s.window is window:
+        def pressed(_: Any) -> None:
+            if not s.hidden and s.window is window:
                 logger.info(f"Panel {s.name}: a click elsewhere closes it")
                 self.hide(s)
 
-        catcher.on("closed", closed)
+        catcher.root.on("pointer_down", pressed)
         s.catcher = catcher
         self._app.add_window(catcher)
 
     def _disarm_click_away(self, s: Surface) -> None:
         catcher, s.catcher = s.catcher, None
         if catcher is not None:
-            free_window(catcher)  # its own ``closed`` (reason: ours) must not hide the Panel
+            free_window(catcher)
             catcher.close()
 
     def _keyboard_taken(self, name: str) -> None:

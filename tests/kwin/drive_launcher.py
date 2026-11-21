@@ -227,16 +227,16 @@ def panel() -> int:
             and not run.grep(r"Panel Launcher on \S+ hidden", mark),
             run.tail(),
         )
-        # a click outside the Panel does not hide it (exclusive keyboard)
+        # a click outside the Panel hides it (M7k: the catcher under it)
         mark = run.mark()
         keys.click(40, 650)
-        time.sleep(1.0)  # a negative again
         report.check(
-            "12 a click outside the Panel does not hide it",
-            not run.grep(r"Panel Launcher on \S+ hidden", mark),
+            "12 a click outside the Panel hides it",
+            wait(run, r"Panel Launcher on \S+ hidden", mark, timeout=5),
             run.tail(),
         )
-        report.note("design gap 1: a click outside does not hide the Panel (as the spec expects)")
+        open_panel(run)
+        press_until_heard(run, keys)
         keys.key("Escape")
         keys.key("Escape")
         # terminal entries: never started here if a terminal launcher exists
