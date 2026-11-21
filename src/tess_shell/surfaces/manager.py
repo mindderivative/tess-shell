@@ -170,6 +170,9 @@ class Surface:
     covered: bool = False  # hidden by a fullscreen window on its output (``set_fullscreen``)
     catcher: Any = None  # the click-away PopupWindow of a shown Launcher (M7k), else None
     had_keys: bool = False  # the Launcher has had the keyboard since it was shown (M7k)
+    auto_out: bool = False  # a Bar that slid out (``Auto_Hide``): only the hover strip is left
+    autohide_timer: Any = None  # the pending ``Auto_Hide_Delay`` timer of a Bar
+    mode_revealed: bool = False  # shortcut mode brought this Bar back: leaving it sends it out
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -584,6 +587,9 @@ class SurfaceManager:
         from tess_shell.surfaces.popup import PopupPlan, Popups  # popup.py imports this module
 
         self.popups = Popups(self)
+        from tess_shell.surfaces.autohide import AutoHide
+
+        self.autohide = AutoHide(self, self._full_input)
         self._popup_plans: list[PopupPlan] = []  # from the last planning: set_plans commits them
         self.frames = Frames(self)  # the Frames: a painter, reservers, strips and melded Panels
         self._frame_plans: list[FramePlan] = []  # the last planning: ``frames.sync`` opens them
@@ -1078,9 +1084,11 @@ class SurfaceManager:
             else:
                 self._arm_hide_after(surface)
                 surface.window.after(1, lambda: self._fire(surface, "On_Visible"))
-        elif keep_hidden:  # a Bar that starts hidden: an empty surface that reserves no space
-            surface.hidden = True
-            surface.window.root.set(visible=False)
+        elif isinstance(bar, BarDef):
+            self.autohide.wire(surface)
+            if keep_hidden:  # a Bar that starts hidden: an empty surface that reserves no space
+                surface.hidden = True
+                surface.window.root.set(visible=False)
         if output.name in self._covered:  # a surface opened on an output with a fullscreen window
             self._cover_state(surface)
         return surface
@@ -1347,6 +1355,8 @@ class SurfaceManager:
             s.timer = None
         self._fire(s, "On_Close")  # before: the request is made
         s.hidden = True
+        s.auto_out = False  # a Bar the user hides is not on its way back by the pointer
+        self.autohide.cancel(s)
         self._disarm_click_away(s)
         self.mode.gone(s.name)  # shortcut mode does not stay on a hidden Panel
         self.changed(s.name, False)
@@ -1385,6 +1395,7 @@ class SurfaceManager:
             return
         self._refresh_attached(s)
         self._fire(s, "On_Open")  # before: the request is made
+        s.auto_out = False
         if s.window is not None:  # KEEP: the surface is still there (or it is still leaving)
             bar = s.planned.bar
             s.hidden = False
@@ -1414,6 +1425,8 @@ class SurfaceManager:
         self._app.add_window(s.window)
         self._panel_events(s)
         self._watch_frames(s)
+        if isinstance(s.planned.bar, BarDef):
+            self.autohide.wire(s)
         self._arm_hide_after(s, hide_after)
         if s.output in self._covered:
             self._cover_state(s)
@@ -1658,6 +1671,10 @@ class SurfaceManager:
             return
         s.covered = False
         if s.hidden and isinstance(planned.bar, BarDef):  # a hidden Bar has no space to give back
+            return
+        if s.auto_out:  # slid out: the strip comes back, the space stays released
+            window.root.set(visible=True)
+            window.set(input_region=self.autohide.strip(s))
             return
         window.set(exclusive_zone=s.geometry.exclusive_zone)
         if s.hidden:  # the user's own Hide stands: only the space comes back
@@ -2039,6 +2056,7 @@ class SurfaceManager:
     def _close(self, s: Surface) -> None:
         self.popups.parent_closed(s)
         s.generation += 1  # an animation that was running ends silent
+        self.autohide.cancel(s)
         s.trace = None
         if s.timer is not None:
             s.timer.cancel()
@@ -2079,9 +2097,15 @@ class SurfaceManager:
                 f"{_kind(p.bar)} {p.where} keeps what it shows: the new contents did not bind"
             )
             return
+        if s.auto_out:  # the new Bar comes back at rest: its geometry may have changed
+            self.autohide.reveal(s, instant=True)
         s.live, s.expanded, s.name, s.planned = live, p.expanded, p.bar.name, p
         self._sync_body(s, p.bar, p.geometry, p.where)
         logger.info(f"{_kind(p.bar)} {p.where} reloaded: {stats}")
+
+    def _full_input(self, s: Surface) -> Any:
+        assert s.planned is not None
+        return _input_for(s.planned.bar, s.geometry, self._output_size(s))
 
     @staticmethod
     def _output_size(s: Surface) -> tuple[int, int]:

@@ -112,10 +112,10 @@ def test_a_schema_error_and_a_warning_are_both_printed_and_only_the_error_fails(
     from tests.shell_samples import BODY, write_example
 
     write_example(
-        tmp_path, BODY.replace("Height: 32\n", "Height: 32\n                Auto_Hide: false\n")
+        tmp_path, BODY.replace("Height: 32\n", "Height: 32\n                Exclusive_Zone: 30\n")
     )
     assert main(["check", "--config-dir", str(tmp_path)]) == 0
-    assert "warning: the Bar key Auto_Hide is not built in M1" in capsys.readouterr().err
+    assert "warning: the Bar key Exclusive_Zone is not built in M1" in capsys.readouterr().err
 
 
 def test_a_slot_written_with_double_braces_is_refused_with_its_hint(

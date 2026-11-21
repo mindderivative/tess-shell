@@ -163,11 +163,11 @@ def test_a_module_call_inside_if_or_for_is_read_and_a_shell_file_still_has_no_st
 
 
 def test_bar_keys_m1_does_not_build_are_warnings_not_errors() -> None:
-    body = BODY.replace("Height: 32\n", "Height: 32\n                Auto_Hide: false\n")
+    body = BODY.replace("Height: 32\n", "Height: 32\n                Exclusive_Zone: 30\n")
     shell, findings = read(body)
     assert shell is not None
     (w,) = findings
-    assert (w.severity, w.rule) == ("warning", "not-built") and "Auto_Hide" in w.message
+    assert (w.severity, w.rule) == ("warning", "not-built") and "Exclusive_Zone" in w.message
 
 
 def test_four_sided_forms() -> None:

@@ -252,6 +252,10 @@ class ModeDriver:
             self._m.frames.hold_peeks(before, False)
         if after is not None:
             self._m.frames.hold_peeks(after, True)
+        if new.on and not old.on:
+            self._m.autohide.mode_entered()  # a Bar that slid out comes back (ADR-0021)
+        elif old.on and not new.on:
+            self._m.autohide.mode_left()
         self._hold_keyboard(new)
         self._ring(new)
         if old != new:

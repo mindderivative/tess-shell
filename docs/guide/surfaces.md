@@ -259,8 +259,10 @@ A strip along a screen edge that reserves its space.
 | `Tab_Index` | whole number | none |  | The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces. |
 | `Shortcut_Mode` | true or false | `false` |  | Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it. |
 | `Visible` | true or false | none |  | Starts the Bar shown (true) or hidden (false). A hidden Bar reserves no space; Show, Hide and Toggle (and a Show_, Hide_ or Toggle_ shortcut) change it. |
+| `Auto_Hide` | true or false | none |  | Slides the Bar out past its screen edge when the pointer has left it for Auto_Hide_Delay, leaving a 1 px hover strip that brings it back; the Bar gives its space back while it is out. Off by default: write true to opt in. A Bar that has the keyboard, or a Popup of its own open, stays. |
+| `Auto_Hide_Delay` | number | none |  | How long the pointer is away before the Bar hides, in milliseconds (default 1000). |
 
-Not built yet (the loader says so if you write them): `Exclusive_Zone`, `Input_Region`, `Auto_Hide`, `Auto_Hide_Delay`, `Attach_To`, `Meld`, `Animation`, `Text_Rotation`, `Padding`, `Class`.
+Not built yet (the loader says so if you write them): `Exclusive_Zone`, `Input_Region`, `Attach_To`, `Meld`, `Animation`, `Text_Rotation`, `Padding`, `Class`.
 
 A `Style { }` block of a Bar takes: `Background`, `Fill`, `Opacity`, `Elevation`, `Shadows`, `Shadow_Bleed`.
 
@@ -272,7 +274,8 @@ Inside it: any block (see the table of blocks on page 3).
 * **Floating.** `Gap: 8` leaves 8 pixels between the screen edge and the Bar, and the reserved space includes the gap. `Elevation: 20%` or a `Shadows { Shadow { ... } }` block draws a shadow in a transparent margin of the surface; the reserved space does not change.
 * **Space.** `Reserve: true` (the default) keeps windows out of the Bar's space; `Reserve: false` lets them go under it.
 * **Keyboard.** A Bar takes no keyboard (`NONE`) unless you write `ON_DEMAND`. A Bar that holds a text field takes it on demand whatever it says, and the shell logs a warning if you wrote `NONE` ([troubleshooting](troubleshooting.md)).
-* A Bar cannot be hidden by a command or a shortcut; `Visible` and `Auto_Hide` are not built.
+* **Hiding.** `Visible: false` starts a Bar hidden; `Show`, `Hide`, `Toggle` (and the commands `tesserae-shell show`, `hide` and `toggle`, and `Show_`, `Hide_`, `Toggle_` shortcuts) take a Bar's `Name`. A hidden Bar reserves no space.
+* **Auto hide.** A Bar hides itself when you write `Auto_Hide: true` (the default is false): when the pointer has left it for `Auto_Hide_Delay` milliseconds (1000 by default) it slides out past its screen edge and gives its space back, leaving a 1 pixel strip along the edge. The pointer on the strip brings it back. A Bar that has the keyboard, or has a Popup open, stays; the delay is looked at again after each time it runs out. With reduced motion it leaves and returns at once. Shortcut mode (`Enter_Shortcut_Mode`) brings a slid-out Bar back and keeps every Bar out while the mode lasts; when the mode ends the Bar hides again after the delay. A Bar starts to hide the first time the pointer has been on it and left.
 * Text in a left or right Bar is not rotated (`Text_Rotation` is not built).
 
 An example with a bar across the top and a short floating one at the bottom:

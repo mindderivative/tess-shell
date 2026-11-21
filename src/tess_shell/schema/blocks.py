@@ -424,8 +424,6 @@ REQUIRED: dict[str, tuple[str | tuple[str, ...], ...]] = {
 BAR_NOT_BUILT = (
     "Exclusive_Zone",
     "Input_Region",
-    "Auto_Hide",
-    "Auto_Hide_Delay",
     "Attach_To",
     "Meld",
     "Animation",
@@ -434,10 +432,10 @@ BAR_NOT_BUILT = (
     "Class",
 )
 # Surface keys a Bar once read and no longer does: an error naming the key, with this hint. A Bar
-# is always shown (Auto_Hide is not built), so a key that reveals it had nothing to do.
+# is always shown, so a key that reveals it had nothing to do.
 BAR_REMOVED: dict[str, str] = {
     "Reveal_Key": "delete it: Show_, Hide_ and Toggle_ shortcuts and the Show, Hide and Toggle "
-    "actions reveal a Bar (Auto_Hide is not built)",
+    "actions reveal a Bar, and so does the pointer on its strip (Auto_Hide)",
 }
 BAR_STYLE: dict[str, str] = {
     "Background": "color",
