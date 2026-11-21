@@ -141,7 +141,8 @@ KEY_DOCS: dict[str, str] = {
     "Font_Family": "A font family name, or a list of them in the order of fallback.",
     "Font_Size": "The size of the type, above 0.",
     "Font_Weight": "The weight of the type as a whole number, 400 regular, 700 bold.",
-    "Line_Height": "The height of one line, above 0.",
+    "Line_Height": "The height of one line in pixels, above 0 (tre takes a multiple of the font "
+    "size; the binder divides).",
     "Text_Align": "How a line sits in the text's box: START, CENTER or END.",
     "Overflow": "What happens to text that does not fit: CLIP cuts it, ELLIPSIS ends it with "
     "dots (a TextField also has SCROLL).",

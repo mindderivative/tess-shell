@@ -645,6 +645,19 @@ class View:
         self._marquees(flat)
         self._tab_order(flat)
 
+    def _line_height_after(self, node_id: str, converted: dict[str, Any]) -> dict[str, Any]:
+        """A new ``Line_Height`` (pixels) or a new ``Font_Size`` under one: tre's ``line_height``
+        is a multiple of the font size, so it is worked out again from the pixels the node has."""
+        have = self.applied.get(node_id, {})
+        old_font = float(have.get("font_size") or TRE_FONT_SIZE)
+        if "line_height" in converted:
+            font = converted.get("font_size") or have.get("font_size")
+            return {**converted, "line_height": line_ratio(converted["line_height"], font)}
+        if "font_size" in converted and have.get("line_height"):
+            pixels = float(have["line_height"]) * old_font
+            return {**converted, "line_height": line_ratio(pixels, converted["font_size"])}
+        return converted
+
     def set_expanded(self, node_id: str, open_: bool) -> None:
         """The accessibility state ``expanded`` of a menu row whose submenu opened or closed."""
         node = self.nodes.get(node_id)
@@ -1241,6 +1254,7 @@ class View:
             converted = _convert(key, key_row, value, errors)
             if converted is None:
                 continue
+            converted = self._line_height_after(node_id, converted)
             if not key_row.tre:  # a key that gives tre nothing: a control reads it
                 self.dynamic.setdefault(node_id, {})[key] = value
                 touched.add(node_id)
@@ -1346,6 +1360,14 @@ def _suggest(word: str, choices: Sequence[str]) -> str:
 _UNRESOLVED = (SlotValue, TokenRef)  # a value the model should have resolved before binding
 
 
+TRE_FONT_SIZE = 16.0  # the size tre sets text in when none is given
+
+
+def line_ratio(pixels: float, font_size: float | None) -> float:
+    """tre's ``line_height`` (a multiple of the font size) for a line ``pixels`` high."""
+    return float(pixels) / float(font_size or TRE_FONT_SIZE)
+
+
 def _convert(key: str, row: KeyRow, value: Value, errors: list[BindError]) -> dict[str, Any] | None:
     if isinstance(value, _UNRESOLVED):
         if isinstance(value, SlotValue):
@@ -1384,9 +1406,22 @@ def convert_states(node: Node, errors: list[BindError]) -> dict[str, dict[str, A
             converted = _convert(key, key_row, value, errors)
             if converted is not None:
                 props.update(converted)
+        if "line_height" in props:
+            font = props.get("font_size") or _written_font_size(node)
+            props["line_height"] = line_ratio(props["line_height"], font)
         if props:
             out[state] = props
     return out
+
+
+def _written_font_size(node: Node) -> float | None:
+    """The ``Font_Size`` the block itself was written with (a state that sets only
+    ``Line_Height`` is a multiple of that), or ``None``: tre's own."""
+    for values in (node.style, node.props):
+        value = values.get("Font_Size")
+        if isinstance(value, Number):
+            return float(value.value)
+    return None
 
 
 def entry_states(node: Node) -> dict[str, dict[str, Any]]:
@@ -1495,6 +1530,8 @@ def _plan(
         props.setdefault(name, default)
     props.update(row.fixed)
     props.update(extra)
+    if "line_height" in props:  # written in pixels, tre takes a multiple of the font size
+        props["line_height"] = line_ratio(props["line_height"], props.get("font_size"))
     if node.kind == "Spacer":  # no pointer events unless it has a click to run
         props.setdefault("hit_testable", bool(_POINTER_EVENTS & node.handlers.keys()))
     if node.kind in DECORATIVE:  # an image or a shape is not announced unless it has a Label

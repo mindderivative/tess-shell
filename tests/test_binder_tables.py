@@ -132,6 +132,8 @@ def test_every_key_row_builds_a_node(block: str, scope: str, key: str, value: Va
         key_row = table[key]
         converted = CONVERTERS[key_row.convert](value, key_row.tre, key_row.choices)
         for name, expected in converted.items():
+            if name == "line_height":  # pixels in the file, a multiple of the font size in tre
+                expected = expected / 16  # no font size: tre's own
             got = root.get(name)
             assert got == (expected if name == "shadows" else pytest.approx(expected))
     finally:
