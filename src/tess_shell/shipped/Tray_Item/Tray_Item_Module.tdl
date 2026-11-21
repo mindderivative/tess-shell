@@ -13,7 +13,7 @@ Module {
 
     Params {
         icon { Type: icon, Default: "" }
-        size { Type: number, Default: 18 }
+        size { Type: number, Default: 0 }
         tooltip_title { Type: string, Default: "" }
         tooltip_text { Type: string, Default: "" }
         label { Type: string, Default: "" }
@@ -29,6 +29,8 @@ Module {
         Selected: <| params.attention |>
         Label: <| params.label |>
         Description: <| params.description |>
+        Width: <| density.item_size |>
+        Height: <| density.item_size |>
         Align_Items: CENTER
         Justify_Content: CENTER
         Tooltip {
@@ -65,7 +67,7 @@ Module {
             }
         }
         Children {
-            Icon { Icon: <| params.icon |>, Size: <| params.size |> }
+            Icon { Icon: <| params.icon |>, Size: <| params.size if params.size > 0 else density.item_icon_size |> }
         }
     }
 }

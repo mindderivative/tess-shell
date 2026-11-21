@@ -2239,6 +2239,23 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Density": {
+          "kind": "enum",
+          "choices": [
+            "DEFAULT",
+            "COMPACT",
+            "DENSE"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Attach": {
           "kind": "enum",
           "choices": [
@@ -2776,6 +2793,23 @@
         "Tooltip"
       ],
       "keys": {
+        "Density": {
+          "kind": "enum",
+          "choices": [
+            "DEFAULT",
+            "COMPACT",
+            "DENSE"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Attach": {
           "kind": "enum",
           "choices": [
@@ -25239,6 +25273,34 @@
         "step": null,
         "unit": null
       },
+      "item_size": {
+        "kind": "number",
+        "ref": "$density.item_size",
+        "default": "32",
+        "doc": "The size of a tray item, a task button and a workspace button (the pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be).",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "item_icon_size": {
+        "kind": "number",
+        "ref": "$density.item_icon_size",
+        "default": "20",
+        "doc": "The icon of a tray item and a task button: 20, 18 or 18.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
       "row_padding_x": {
         "kind": "number",
         "ref": "$density.row_padding_x",
@@ -27239,8 +27301,8 @@
         "icon_size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The icon's size in pixels.",
+          "default": "0",
+          "doc": "The icon's size in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,
@@ -27339,8 +27401,8 @@
         "icon_size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The size of each icon in pixels.",
+          "default": "0",
+          "doc": "The size of each icon in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,
@@ -27866,8 +27928,8 @@
         "icon_size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The size of each icon in pixels.",
+          "default": "0",
+          "doc": "The size of each icon in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,
@@ -28012,8 +28074,8 @@
         "size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The icon's size in pixels.",
+          "default": "0",
+          "doc": "The icon's size in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,

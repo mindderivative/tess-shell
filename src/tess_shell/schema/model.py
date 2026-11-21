@@ -128,6 +128,7 @@ class PopupDef:
     enter_delay: float = 500  # milliseconds
     close_on_exit: bool = False
     exit_delay: float = 150
+    density: str | None = None  # ``Density:`` of the popup, lower case; None: the shell's level
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
 

@@ -30,7 +30,15 @@ from tess_shell.model.store import Change, ValueStore
 from tess_shell.model.uses import Use, UseScope
 from tess_shell.schema.default_popups import SHIPPED_POPUP_MODULES
 from tess_shell.schema.findings import nearest
-from tess_shell.schema.model import BarDef, ModuleDef, MonitorDef, PanelDef, ShellDef, use_names
+from tess_shell.schema.model import (
+    BarDef,
+    ModuleDef,
+    MonitorDef,
+    PanelDef,
+    PopupDef,
+    ShellDef,
+    use_names,
+)
 from tess_shell.surfaces.bar import (
     BarSpec,
     Geometry,
@@ -821,7 +829,10 @@ class SurfaceManager:
     # -- the uses made for the entries of a For -------------------------------------------------
 
     def new_live(
-        self, uses: Mapping[str, Use], bar: BarDef | PanelDef | None = None, **kwargs: Any
+        self,
+        uses: Mapping[str, Use],
+        bar: BarDef | PanelDef | PopupDef | None = None,
+        **kwargs: Any,
     ) -> LiveTree:
         """A live tree for one surface; the uses it makes for the entries of a ``For`` are
         announced to the modules the moment it makes them (their first values are in the store
