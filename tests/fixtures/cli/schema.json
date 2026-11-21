@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.14",
+  "schema_version": "1.15",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -6238,6 +6238,20 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Slides": {
           "kind": "enum",
           "choices": [
@@ -7620,6 +7634,20 @@
           "enum": null,
           "default": null,
           "doc": "The Key of the chosen entry of a list.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
           "slot": true,
           "required": false,
           "built": true,
@@ -9122,6 +9150,20 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Slides": {
           "kind": "enum",
           "choices": [
@@ -10560,6 +10602,20 @@
           "enum": null,
           "default": null,
           "doc": "The Key of the chosen entry of a list.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
           "slot": true,
           "required": false,
           "built": true,
@@ -12077,6 +12133,20 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Slides": {
           "kind": "enum",
           "choices": [
@@ -13298,6 +13368,20 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Slides": {
           "kind": "enum",
           "choices": [
@@ -14337,6 +14421,20 @@
           "enum": null,
           "default": null,
           "doc": "The Key of the chosen entry of a list.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
           "slot": true,
           "required": false,
           "built": true,
@@ -15562,6 +15660,20 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Slides": {
           "kind": "enum",
           "choices": [
@@ -16677,6 +16789,20 @@
           "enum": null,
           "default": null,
           "doc": "The Key of the chosen entry of a list.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
           "slot": true,
           "required": false,
           "built": true,
@@ -18033,6 +18159,20 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Slides": {
           "kind": "enum",
           "choices": [
@@ -19375,6 +19515,20 @@
           "enum": null,
           "default": null,
           "doc": "The Key of the chosen entry of a list.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
           "slot": true,
           "required": false,
           "built": true,
@@ -20843,6 +20997,20 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Slides": {
           "kind": "enum",
           "choices": [
@@ -22225,6 +22393,20 @@
           "enum": null,
           "default": null,
           "doc": "The Key of the chosen entry of a list.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "module_only": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Active_Descendant": {
+          "kind": "string",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The node id of the list whose chosen entry a screen reader reads as the current item of this text field (the keyboard stays in the field). A module writes the List's Name on the TextInput call; the shell turns it into the id.",
           "slot": true,
           "required": false,
           "built": true,
@@ -26772,6 +26954,13 @@
           "max": null,
           "step": null,
           "unit": null
+        },
+        "Active_Descendant": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The Name of a List called in the same layout: a screen reader reads that List's chosen entry as the current item of the field while the keyboard stays in it. Empty: none.",
+          "required": false
         }
       },
       "root_block": "TextField",

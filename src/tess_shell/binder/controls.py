@@ -256,6 +256,7 @@ class Select(Control):
                     child.tre.set(selected=on)
                 if "role" not in child.props and child.tre.get("role") != "listitem":
                     child.tre.set(role="listitem")
+        self.view.point_fields(self)
 
     def choose(self, key: str, child: Entry) -> None:
         """The user chose the entry ``key`` (``child``): it takes the state, ``On_Changed`` says

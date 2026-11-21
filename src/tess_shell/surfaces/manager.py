@@ -1691,16 +1691,29 @@ class SurfaceManager:
         logger.debug(f"ctx.surface.focus({name!r}): {use_key} has no such block")
         return False
 
+    def announce_window(self) -> Any:
+        """The one window every ``ctx.announce`` goes through (Accessibility, 2026-11-19):
+        tre keeps the order of announcements within one window, so the order holds for everything
+        the shell says. The highest surface of the tree: a Frame's painter if there is one, else
+        the first Bar built, else the first open surface of any kind (a shell of Panels only)."""
+        for st in self.frames.states.values():
+            if st.painter is not None:
+                return st.painter
+        open_surfaces = [s for s in self.surfaces if s.window is not None]
+        for s in open_surfaces:
+            if s.planned is not None and _kind(s.planned.bar) == "Bar":
+                return s.window
+        return open_surfaces[0].window if open_surfaces else None
+
     def announce(self, use_keys: Sequence[str], text: str, politeness: str) -> bool:
-        """``ctx.announce``: one announcement, on the window of the first of ``use_keys`` that is
-        on an open surface (the module is then not read twice when it is on two Bars)."""
-        for key in use_keys:
-            s = self._surface_of_use(key)
-            window = s.window if s is not None else None
-            if window is not None:
-                window.announce(text, politeness)
-                return True
-        return False
+        """``ctx.announce``: one announcement, on :meth:`announce_window` whichever module (and
+        use) asked, so two uses of a module on two Bars are not read twice and the order of the
+        calls is the order heard. ``use_keys`` are the module's uses, kept for the call's shape."""
+        window = self.announce_window()
+        if window is None:
+            return False
+        window.announce(text, politeness)
+        return True
 
     def request_token(self, use_key: str, callback: Callable[[str | None], None]) -> None:
         """``ctx.apps.launch``: ask the engine for an activation token from the surface the use is

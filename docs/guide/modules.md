@@ -1001,6 +1001,7 @@ A single-line text field.
 | `Password` | boolean | `false` | Shows dots instead of the text and blocks copy and cut. |
 | `Enabled` | boolean | `true` | False disables the field. |
 | `Width` | number | `240` | The width in pixels. |
+| `Active_Descendant` | string | `""` | The Name of a List called in the same layout: a screen reader reads that List's chosen entry as the current item of the field while the keyboard stays in it. Empty: none. |
 
 Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`, `On_Submit`, `On_Text_Commit`, `On_Key_Down`.
 

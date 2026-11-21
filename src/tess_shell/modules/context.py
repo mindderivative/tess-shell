@@ -342,12 +342,13 @@ class ModuleContext:
     ) -> None:
         """Say ``text`` through assistive technology, once: a screen reader reads it (nothing
         happens when none is connected). ``politeness`` is ``"polite"`` (waits for the reader to
-        finish) or ``"assertive"`` (interrupts). With no ``use`` it is said for the module's first
-        use that is on an open window, so a module used on two Bars is not read twice; with ``use``
-        for that use's window (``ctx.caller`` is not consulted). It is said even when the
-        module's block is hidden, and the same text twice running is said twice. Safe from any
-        thread. Nothing is said, with one debug line, when no use is on an open window. A text that
-        is empty or a politeness other than the two raises ``ValueError``."""
+        finish) or ``"assertive"`` (interrupts). Every announcement of the shell goes through ONE
+        window, the highest surface of the tree (a Frame's if there is one, else the first Bar,
+        else any open surface), so the order of the calls is the order heard and a module used on
+        two Bars is not read twice; ``use`` only says which use is speaking and picks no window.
+        It is said even when the module's block is hidden, and the same text twice running is said
+        twice. Safe from any thread. Nothing is said, with one debug line, when no surface is open.
+        A text that is empty or a politeness other than the two raises ``ValueError``."""
         if not isinstance(text, str) or not text.strip():
             raise ValueError("ctx.announce needs a text that is not empty")
         if politeness not in ("polite", "assertive"):

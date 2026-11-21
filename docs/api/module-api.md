@@ -238,7 +238,7 @@ ctx.focus.set_mode(name: str, value: bool) -> bool
 ctx.announce(text: str, *, politeness: str = "polite", use: UseRecord | str | None = None) -> None
 ```
 
-Says `text` through assistive technology, once. `politeness` is `"polite"` (waits for the reader to finish) or `"assertive"` (interrupts). With no `use` it is said for the module's first use that is on an open window, so a module used on two Bars is not read twice; with `use`, for that use's window (`ctx.caller` is not consulted). It is said even when the module's block is hidden, and the same text twice running is said twice. Safe from any thread. Nothing is said, with one debug line, when no use is on an open window or no screen reader is connected. An empty text, or a politeness other than the two, raises `ValueError`. The text is never logged.
+Says `text` through assistive technology, once. `politeness` is `"polite"` (waits for the reader to finish) or `"assertive"` (interrupts). Every announcement of the shell goes through one window, the highest surface of the tree (a Frame's if there is one, else the first Bar, else any open surface), so the order of the calls is the order heard and a module used on two Bars is not read twice; `use` says which use is speaking and picks no window. It is said even when the module's block is hidden, and the same text twice running is said twice. Safe from any thread. Nothing is said, with one debug line, when no use is on an open window or no screen reader is connected. An empty text, or a politeness other than the two, raises `ValueError`. The text is never logged.
 
 ### Time and threads
 

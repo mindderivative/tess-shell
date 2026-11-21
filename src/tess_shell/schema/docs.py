@@ -118,6 +118,9 @@ KEY_DOCS: dict[str, str] = {
     "Selection_Mode": "SINGLE makes the block's children the entries of a list of which one is "
     "chosen; NONE is a plain block.",
     "Chosen": "The Key of the chosen entry of a list.",
+    "Active_Descendant": "The node id of the list whose chosen entry a screen reader reads as "
+    "the current item of this text field (the keyboard stays in the field). A module writes the "
+    "List's Name on the TextInput call; the shell turns it into the id.",
     "Slides": "Makes the block a slider along its axis: HORIZONTAL or VERTICAL; NONE is a plain "
     "block.",
     "Reveals": "Makes the block an expander: OPEN or CLOSED is the state the module wants; the "
@@ -541,6 +544,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Toggles",
         "Selection_Mode",
         "Chosen",
+        "Active_Descendant",
         "Slides",
         "Reveals",
         "Menu_Item",
@@ -1125,6 +1129,9 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("TextInput", "Read_Only"): "The text can be selected and copied but not changed.",
     ("TextInput", "Max_Length"): "The most characters the field takes; 0 is no limit.",
     ("TextInput", "Password"): "Shows dots instead of the text and blocks copy and cut.",
+    ("TextInput", "Active_Descendant"): "The Name of a List called in the same layout: a screen "
+    "reader reads that List's chosen entry as the current item of the field while the keyboard "
+    "stays in it. Empty: none.",
     ("TextInput", "Enabled"): "False disables the field.",
     ("TextInput", "Width"): "The width in pixels.",
     ("Task_Item", "icon"): "The icon: an SVG document or pixels the shell holds (Tasks sends it).",

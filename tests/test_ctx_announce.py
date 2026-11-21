@@ -97,11 +97,46 @@ def test_a_shell_without_surfaces_says_nothing_and_does_not_raise() -> None:
     assert len(port.calls) == 1
 
 
-def test_the_manager_says_it_on_the_open_window_of_a_use_and_nothing_for_an_unknown_one(
+def test_the_manager_says_everything_through_one_window_whatever_the_use(
     tmp_path: Path,
 ) -> None:
+    """M7j: one window for every announcement (Accessibility, maintainer 2026-11-19): the same
+    window whichever use asks, and none when no surface is open. In this desk the only surface is
+    the Launcher Panel, so the fallback to any open surface is what is read here; a Frame's
+    painter and the first Bar come first (``test_announce_window_prefers_frame_then_bar``)."""
     with launcher_desk(tmp_path, BROWSERS) as d:
         d.toggle()
         (key,) = d.w.host.loaded["Applications"].instance.ctx.uses
+        window = d.w.manager.announce_window()
+        assert window is not None
         assert d.w.manager.announce(["nope", key], "Said", "polite") is True
-        assert d.w.manager.announce(["nope"], "Said", "polite") is False
+        assert d.w.manager.announce(["nope"], "Said", "polite") is True  # the use picks no window
+        assert d.w.manager.announce_window() is window
+
+
+def test_announce_window_prefers_frame_then_bar() -> None:
+    from types import SimpleNamespace
+
+    from tess_shell.binder.model import Length
+    from tess_shell.schema.model import BarDef, PanelDef
+    from tess_shell.surfaces.manager import SurfaceManager
+
+    o = None  # origins are not read
+    panel = PanelDef(name="P", origin=o, width=Length(1), height=Length(1))
+    bar = BarDef(name="B", origin=o, edge="TOP", width=Length(1), height=Length(1))
+    surface = lambda name, item, win: SimpleNamespace(  # noqa: E731
+        name=name, window=win, planned=SimpleNamespace(bar=item)
+    )
+    surfaces = [surface("P", panel, "panel-window"), surface("B", bar, "bar-window")]
+
+    def manager(frame_painter: object) -> Any:
+        states = {"F": SimpleNamespace(painter=frame_painter)} if frame_painter else {}
+        return SimpleNamespace(surfaces=surfaces, frames=SimpleNamespace(states=states))
+
+    pick = SurfaceManager.announce_window
+    assert pick(manager("frame-painter")) == "frame-painter"  # type: ignore[arg-type]
+    assert pick(manager(None)) == "bar-window"  # type: ignore[arg-type]  # not the Panel built first
+    surfaces[:] = [surface("P", panel, "panel-window")]
+    assert pick(manager(None)) == "panel-window"  # type: ignore[arg-type]
+    surfaces[:] = []
+    assert pick(manager(None)) is None  # type: ignore[arg-type]
