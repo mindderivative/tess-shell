@@ -59,6 +59,7 @@ Module {
                 Align_Items: CENTER
                 Justify_Content: CENTER
                 On_Click: toggle_mute
+                On_Key_Down { Action: key, step: <| params.step |> }
                 Tooltip {
                     Alignment: CENTER
                     Gap: 4

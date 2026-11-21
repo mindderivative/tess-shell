@@ -686,7 +686,8 @@ EVENT_DOCS: dict[str, str] = {
     "On_Key_Down": "A key went down in a TextField (event.key, event.ctrl, event.shift, "
     "event.alt, event.meta, event.repeat), before the field acts on it; the field acts whatever "
     "the handler does, and event.stop() keeps the surface above from hearing the key (a Panel's "
-    "Escape).",
+    "Escape). A Box or FlexBox that has the keyboard raises it too, for the keys of a control "
+    "(Delete on a task, Menu on a tray item); event.rect is the block's rectangle.",
 }
 
 ACTION_DOCS: dict[str, str] = {

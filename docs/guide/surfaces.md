@@ -1075,7 +1075,7 @@ Blocks raise events when something happens to them. The ones a handler may be wr
 | `On_Change` | nothing yet | Reserved: the old spelling of On_Changed. |
 | `On_Submit` | TextField | Enter in a single-line TextField. |
 | `On_Text_Commit` | TextField | Committed text in a TextField, such as an input-method composition. |
-| `On_Key_Down` | TextField | A key went down in a TextField (event.key, event.ctrl, event.shift, event.alt, event.meta, event.repeat), before the field acts on it; the field acts whatever the handler does, and event.stop() keeps the surface above from hearing the key (a Panel's Escape). |
+| `On_Key_Down` | Box, FlexBox, TextField | A key went down in a TextField (event.key, event.ctrl, event.shift, event.alt, event.meta, event.repeat), before the field acts on it; the field acts whatever the handler does, and event.stop() keeps the surface above from hearing the key (a Panel's Escape). A Box or FlexBox that has the keyboard raises it too, for the keys of a control (Delete on a task, Menu on a tray item); event.rect is the block's rectangle. |
 
 <!-- END generated: events -->
 

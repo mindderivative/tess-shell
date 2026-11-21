@@ -1097,6 +1097,8 @@ class SurfaceManager:
         assert s.window is not None
 
         def on_key(event: Any) -> None:
+            if self._nudge(s, event):  # Alt and an arrow moves a Movable Panel (Drag and Drop)
+                return
             if getattr(event, "key", None) == "escape":
                 self.popups.dismiss_tooltip("escape")  # a tooltip goes; the key is still heard
             if self.mode.on_key(event):  # a key of shortcut mode: the mode's, not the Panel's
@@ -1111,6 +1113,51 @@ class SurfaceManager:
 
         s.window.root.on("key_down", on_key)  # a key bubbles up from the focused node
         s.window.on("moved", lambda event: self._moved(s, tuple(event.margin)))
+
+    NUDGE = 8  # pixels of one Alt+arrow; Shift makes it four times as much
+
+    def _nudge(self, s: Surface, event: Any) -> bool:
+        """Alt and an arrow key move a focused Movable Panel by ``NUDGE`` pixels (Shift: four times
+        as much), the keyboard way to what the pointer does (Drag and Drop, AC-DND-5): the margins
+        of the sides it is anchored to change, the Panel stays on the output, and the new place is
+        saved as a drag's is. Returns whether the key was one of these (it goes no further)."""
+        panel = s.planned.bar if s.planned else None
+        step = {
+            "arrow_left": (-1, 0),
+            "arrow_right": (1, 0),
+            "arrow_up": (0, -1),
+            "arrow_down": (0, 1),
+        }.get(str(getattr(event, "key", None)))
+        if (
+            step is None
+            or not getattr(event, "alt", False)
+            or getattr(event, "ctrl", False)
+            or getattr(event, "meta", False)
+            or not isinstance(panel, PanelDef)
+            or not panel.movable
+            or s.window is None
+            or s.hidden
+        ):
+            return False
+        amount = self.NUDGE * (4 if getattr(event, "shift", False) else 1)
+        top, right, bottom, left = s.geometry.margin
+        out_w, out_h = self._output_size(s)
+        width, height = s.geometry.size
+        anchors = s.geometry.anchor
+        dx, dy = step[0] * amount, step[1] * amount
+        if "left" in anchors:
+            left = min(max(left + dx, 0), max(out_w - width, 0))
+        elif "right" in anchors:
+            right = min(max(right - dx, 0), max(out_w - width, 0))
+        if "top" in anchors:
+            top = min(max(top + dy, 0), max(out_h - height, 0))
+        elif "bottom" in anchors:
+            bottom = min(max(bottom - dy, 0), max(out_h - height, 0))
+        margin = (top, right, bottom, left)
+        if margin != s.geometry.margin:
+            s.window.set(margin=margin)
+            self._moved(s, margin)
+        return True
 
     def _moved(self, s: Surface, margin: tuple[int, int, int, int]) -> None:
         """tre moved a Movable Panel by its margins and the button went up: the margins are the

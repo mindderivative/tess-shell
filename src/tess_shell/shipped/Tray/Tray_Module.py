@@ -461,6 +461,12 @@ class Tray(Module):
         else:
             self.open_menu(item, event)
 
+    @action
+    def key(self, event: Event, id: str) -> None:
+        """A key on a focused item: Menu, or Shift+F10, opens its menu (Keyboard Navigation)."""
+        if event.key == "context_menu" or (event.key == "f10" and event.shift):
+            self.menu(event, id)
+
     def call(self, item: Item, method: str, args: list[Any], signature: str) -> None:
         self.bus.run(self.call_item(item, method, args, signature))
 

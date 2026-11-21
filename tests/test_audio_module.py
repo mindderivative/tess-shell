@@ -551,3 +551,21 @@ def test_no_timer_runs_for_the_module(fake_pulse: FakePulse) -> None:
         d.settle(w, lambda: False, 0.3)
         assert w.host.ticks._subs == []
         assert threading.active_count() >= 1
+
+
+def test_keys_on_the_mute_button_step_the_volume_and_open_the_outputs(
+    fake_pulse: FakePulse,
+) -> None:
+    """TSH-013: the keyboard twins of the wheel and the secondary click (Keyboard Navigation)."""
+    maintainers_desktop(fake_pulse)
+    with desk(fake_pulse) as d, shell(d, "Audio { }") as w:
+        assert d.settle(w, lambda: icon_of(w) == "volume-medium")
+        button = w.of_use("Audio", "Toggle")
+        button.focus()  # a key goes to the focused block
+        w.window.simulate("key_down", key="arrow_up")  # a step up (5)
+        assert wait_for(lambda: server_volume(fake_pulse) == 50)
+        w.window.simulate("key_down", key="arrow_down")
+        assert wait_for(lambda: server_volume(fake_pulse) == 45)
+        w.window.simulate("key_down", key="x")  # another key does nothing
+        d.settle(w, lambda: False, 0.2)
+        assert server_volume(fake_pulse) == 45
