@@ -36,10 +36,13 @@ KEY_DOCS: dict[str, str] = {
     "that is not visible or sits in a closed Expander. Keyboard focus shows as a ring made of a "
     "shadow, so only a block that takes Shadows (a Box, FlexBox, Rectangle, ScrollBox or "
     "TextField) shows one: put Focusable on one of those, not on a Text, an SVG or a shape.",
-    "Tab_Index": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: "
-    "a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items "
-    "with no number come after all the others. A surface holds one order for its blocks and the "
-    "shell holds one for its surfaces.",
+    "Tab_Index": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) "
+    "follows is the order of the file. A number above 0 is an error; tesserae-shell migrate "
+    "rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
+    "Focus_Order": "The surfaces that come first, in this order, when focus moves between "
+    "surfaces (Next_Focus, Previous_Focus, and the first surface of shortcut mode with no Frame): "
+    "a Name or a list of them, a Frame's strip as <Frame>.<side>. The other surfaces follow in "
+    "the order of the file.",
     # size
     "Width": "The width: pixels, a percentage, AUTO (fit the content) or EXPAND (take the free "
     "space).",
@@ -420,7 +423,14 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Type",
         "Default",
     ),
-    "State": ("Visible", "Enabled", "Tooltip_When_Disabled", "Focusable", "Tab_Index"),
+    "State": (
+        "Visible",
+        "Enabled",
+        "Tooltip_When_Disabled",
+        "Focusable",
+        "Tab_Index",
+        "Focus_Order",
+    ),
     "Size": (
         "Width",
         "Height",

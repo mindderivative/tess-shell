@@ -2,9 +2,9 @@
 TDL: 0.2
 Name: Main_Shell
 ---
-# Tab and Shift+Tab walk the focusable blocks of a surface that takes the keyboard. Tab_Index
-# puts "Save" before "Name"; Focusable puts a plain box in the order, and Enabled: false takes
-# a button out of it.
+# Tab and Shift+Tab walk the focusable blocks of a surface that takes the keyboard, in the order
+# of the file ("Save" before "Name"); Focusable puts a plain box in the order, and Enabled: false
+# takes a button out of it.
 Shell {
     Monitor {
         Name: Main
@@ -25,8 +25,8 @@ Shell {
                         Padding: 12
                         Spacing: 8
                         Children {
-                            Button { Text: "Save", Tab_Index: 1 }
-                            TextInput { Placeholder: "Name", Tab_Index: 2 }
+                            Button { Text: "Save" }
+                            TextInput { Placeholder: "Name" }
                             Button { Text: "Not now", Enabled: false }
                             FlexBox {
                                 Focusable: true

@@ -1,6 +1,6 @@
 """Keyboard focus on a real compositor, the private headless sway only (M6a, T-041): a click on a
 Bar that says ``Keyboard: ON_DEMAND`` gives it the keyboard, and Tab and Shift+Tab then move the
-focus ring over its Buttons in the order the ``Tab_Index`` keys ask for; a Bar that says
+focus ring over its Buttons in the order of the file; a Bar that says
 ``Keyboard: NONE`` is given no key.
 
 The pointer is ``tests/live_pointer.py`` (a ``zwlr_virtual_pointer_v1`` kept alive by tre's test
@@ -41,9 +41,9 @@ BODY = (
     "Shell { Monitor { Name: Main, Index: 0, Children { Bar { Name: Top, Edge: TOP, "
     "Width: EXPAND, Height: 32, %s Style { Background: $color.surface }, Children { FlexBox { "
     "Width: EXPAND, Flex: HORIZONTAL, Spacing: 4, Padding: 4, Align_Items: CENTER, Children { "
-    'Button { Name: One, Text: "One", Tab_Index: 2 } '
-    'Button { Name: Two, Text: "Two", Tab_Index: 1 } '
-    'Button { Name: Three, Text: "Three", Tab_Index: 3 } '
+    'Button { Name: One, Text: "One" } '
+    'Button { Name: Two, Text: "Two" } '
+    'Button { Name: Three, Text: "Three" } '
     "} } } } } } }\n"
 )
 
@@ -67,7 +67,7 @@ def keys(private_sway: PrivateSway, *args: str) -> None:
 
 
 @pytest.mark.parametrize("mode", ["ON_DEMAND", "NONE"])
-def test_a_click_gives_an_on_demand_bar_the_keyboard_and_tab_moves_the_ring_in_tab_index_order(
+def test_a_click_gives_an_on_demand_bar_the_keyboard_and_tab_follows_the_file_order(
     private_sway: PrivateSway, tmp_path: Path, mode: str
 ) -> None:
     (tmp_path / "Shells").mkdir()
@@ -95,13 +95,13 @@ def test_a_click_gives_an_on_demand_bar_the_keyboard_and_tab_moves_the_ring_in_t
             shell.process.kill()
     seen = focus_lines(shell)
     if mode == "ON_DEMAND":
-        # a click focuses the Button with no ring; Tab goes on in Tab_Index order (Two 1, One 2,
-        # Three 3): from One to Three, then wraps to Two, and Shift+Tab goes back to Three
+        # a click focuses the Button with no ring; Tab goes on in the order of the file: from One
+        # to Two and Three, and Shift+Tab goes back to Two
         assert seen == [
             "One (no ring)",
-            "Three (ring)",
             "Two (ring)",
             "Three (ring)",
+            "Two (ring)",
         ], seen
     else:
         assert seen == ["One (no ring)"], seen  # the compositor gave the Bar no key

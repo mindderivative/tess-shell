@@ -58,7 +58,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.22"
+SCHEMA_VERSION = "1.23"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -327,6 +327,13 @@ def _kind_fields(
                 "choices": list(EDGES),
                 "unique": True,
                 "one_or_list": True,
+            }
+        case "surface_names":
+            return "list", {
+                "item_kind": "string",
+                "unique": True,
+                "one_or_list": True,
+                "note": "surface Names, a Frame's strip as <Frame>.<side>",
             }
         case "adjust":
             return "list", {
@@ -762,7 +769,12 @@ def _surface_children() -> list[str]:
 def _roots() -> dict[str, Json]:
     roots: dict[str, Json] = {}
     # -- a shell file
-    roots["Shell"] = _spec("Shell", repeatable=False, allowed_children=["Monitor"])
+    roots["Shell"] = _spec(
+        "Shell",
+        keys={"Focus_Order": _key("Shell", "Focus_Order", "surface_names")},
+        repeatable=False,
+        allowed_children=["Monitor"],
+    )
     roots["Monitor"] = _spec(
         "Monitor",
         keys={

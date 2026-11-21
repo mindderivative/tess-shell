@@ -132,7 +132,6 @@ def dump_entry(entry: Entry, controls: dict[Any, str]) -> dict[str, Any]:
         "props": plain(entry.props),
         "states": plain(entry.states),
         "motion": motion_of(entry),
-        "rank": entry.rank,
         "wire": wire_of(entry),
         "control": controls.get(tre, ""),
         "tre": seen,
@@ -199,7 +198,7 @@ LAYOUTS: dict[str, str] = {
         'FlexBox { Enabled: false, Children { Button { Text: "a", '
         + CLICK
         + ' } FlexBox { Children { Label { Text: "b" } Toggle { } } } } } '
-        "FlexBox { Role: BUTTON, Tab_Index: 2 } FlexBox { Role: BUTTON, Tab_Index: 1 } "
+        "FlexBox { Role: BUTTON, Tab_Index: 0 } FlexBox { Role: BUTTON } "
         "FlexBox { Visible: false, Children { Label { Text: h } } }"
     ),
 }
@@ -234,7 +233,7 @@ def direct_trees() -> dict[str, list[m.Node]]:
     big = [
         m.Node(
             "FlexBox",
-            props={"Width": m.Length(1000), "Tab_Index": m.Number(3)},
+            props={"Width": m.Length(1000), "Tab_Index": m.Number(0)},
             children=tuple(row(r, 5) for r in range(6)),
         )
     ]

@@ -43,6 +43,7 @@ HEAD = "---\nTDL: 0.2\nName: Settings\n---\n"
 
 SHELL = """
 Shell {
+    Focus_Order: [Screen_Frame, Notes, Dock, Top_Bar, Screen_Frame.top]
     Monitor {
         Name: Main
         Index: 0
@@ -50,7 +51,6 @@ Shell {
             Frame {
                 Name: Screen_Frame
                 Thickness: 10
-                Tab_Index: 1
                 Inner_Radius: 12
                 Inner_Border { Width: 2, Color: $color.primary }
                 Style { Background: $color.surface }
@@ -58,7 +58,6 @@ Shell {
                     Top {
                         Name: Clock_Strip
                         Thickness: 34
-                        Tab_Index: 5
                         Peek { Size: 6, Trigger: HOVER }
                         Children {
                             FlexBox {
@@ -95,7 +94,6 @@ Shell {
                 Edge: BOTTOM
                 Width: EXPAND
                 Height: 40
-                Tab_Index: 4
                 Style { Background: $color.surface }
                 Children {
                     FlexBox {
@@ -119,7 +117,6 @@ Shell {
                 Inset: [0, 0, 60, 60]
                 Width: 300
                 Height: 140
-                Tab_Index: 2
                 Style { Background: $color.surface_raised, Corner_Radius: 8 }
                 Children {
                     FlexBox {
@@ -140,7 +137,6 @@ Shell {
                 Inset: [60, 0, 0, 60]
                 Width: 300
                 Height: 140
-                Tab_Index: 3
                 Style { Background: $color.surface_raised, Corner_Radius: 8 }
                 Children {
                     FlexBox {
@@ -213,7 +209,7 @@ PART 1: entering  (start with /tmp/tess-kwin-m6d/run.sh; your shell is fish: use
 
 PART 2: moving and going in
  5  Tab again: focus Dock (ring on "Dock one"), then Top_Bar (ring on "Bar one"), then Clock_Strip
-    (ring on "Strip"), then Screen_Frame, then Notes again: the Tab_Index order 1 to 5, round.
+    (ring on "Strip"), then Screen_Frame, then Notes again: the Focus_Order, round.
     Shift+Tab goes back.  The peeks stay out the whole time.
  6  On Notes press Ctrl+Enter (Set_Shortcut_Mode): the log says "mode Notes, focus Notes"; the
     peeks go back to slivers (the Frame's mode is off); Tab inside Notes moves between its two

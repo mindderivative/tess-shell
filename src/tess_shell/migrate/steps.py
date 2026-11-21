@@ -7,6 +7,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from tess_shell.migrate.focus_order import move_tab_index
 from tess_shell.migrate.rename import rename_deprecated
 from tess_shell.migrate.slots import Change, rewrite_slots
 
@@ -36,5 +37,13 @@ STEPS: tuple[Step, ...] = (
         "current names",
         "a deprecated key or block is written under its new name",
         rename_deprecated,
+    ),
+    Step(
+        "0003",
+        "positive Tab_Index",
+        "document order and Focus_Order",
+        "a block's Tab_Index above 0 is removed (the order is the file's); a surface's becomes "
+        "its place in the Focus_Order list of the Shell block",
+        move_tab_index,
     ),
 )

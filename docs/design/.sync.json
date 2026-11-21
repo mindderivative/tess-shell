@@ -1,7 +1,7 @@
 {
- "vault_commit": "8cbd754bbfca579db74f1f7bf712d43bfedd76e6",
- "vault_subject": "Accept ADR-0024: tre never blocks design",
- "exported_at": "2026-11-21 04:40:52",
+ "vault_commit": "9248ad1d8864c89766060b703629906acbb7eb57",
+ "vault_subject": "Bar: Auto_Hide default reported as OFF (PR 131), to confirm",
+ "exported_at": "2026-11-21 12:39:45",
  "files": {
   "00 Home/Build Logs.md": "cf22793ffa003ea1",
   "00 Home/Development Readiness.md": "edeafdbfb9aed464",
@@ -105,7 +105,7 @@
   "40 Specifications/Runtime/Runtime.md": "28834e4d6d75cf12",
   "40 Specifications/Runtime/Shell Start and Stop.md": "b1ee7e7cab184751",
   "40 Specifications/Runtime/Validation and Errors.md": "c63ff3c74797fc2a",
-  "40 Specifications/Surfaces/Bar.md": "bbf0fe37a5088f55",
+  "40 Specifications/Surfaces/Bar.md": "e6038753b096633f",
   "40 Specifications/Surfaces/Frame.md": "774ab5a2b7cb717b",
   "40 Specifications/Surfaces/Panel.md": "63affb5e8de745ab",
   "40 Specifications/Surfaces/Popup.md": "e4039ffacd7c95ff",
