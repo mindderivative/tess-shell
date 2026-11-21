@@ -318,6 +318,7 @@
 
 ## Unreleased
 
+- TSH-085: a Marquee text pauses while the pointer is over it (the text stops where it is; a pending wait is held) and goes on when the pointer leaves. Under reduced motion, when disabled or with `Animated: false` nothing scrolls, as before.
 - TSH-063: the shape scale has the two steps the Shape spec has and the shell lacked: `$shape.medium_large` (12) and `$shape.extra_large` (28). The shell's `small` (4) and `medium` (8) keep their names and values; they are the spec's `extra_small` and `small`. The schema export is 1.16.
 - TSH-062: the shadow used when a theme has no `Elevation.Max` is `#00000066` like the Default theme's (it was `#00000040`).
 - TSH-060: `Easing: EMPHASIZED` is the curve (0.2, 0, 0, 1) the Motion spec gives it until engines take path easing (it was 0.05, 0.7, 0.1, 1.0), and the Default theme's `Reduced_Motion` block now carries the zero durations the shell forced in code.

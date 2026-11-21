@@ -14,9 +14,7 @@ def default_stylesheet() -> str:
 
 
 def test_every_disabled_rule_of_the_default_stylesheet_sets_opacity_038() -> None:
-    rules = re.findall(
-        r'Selector: "([^"]*:disabled)"([^}]*)\}', default_stylesheet()
-    )
+    rules = re.findall(r'Selector: "([^"]*:disabled)"([^}]*)\}', default_stylesheet())
     seen = [(sel, re.search(r"Opacity: ([0-9.]+)", body)) for sel, body in rules]
     opacities = {sel: float(found.group(1)) for sel, found in seen if found}
     assert len(opacities) >= 10
@@ -138,3 +136,22 @@ def test_the_shape_scale_has_the_seven_steps_of_the_spec() -> None:
         "extra_large": 28,
         "full": 999,
     }
+
+
+def test_a_marquee_pauses_while_the_pointer_is_over_it_and_goes_on_when_it_leaves() -> None:
+    from tests.test_display_widgets import running
+
+    long = "a very long text that does not fit in a hundred pixels"
+    with running(f'Marquee_Text {{ Text: "{long}", Width: 100 }}') as w:
+        (runner,) = w.view.runners.values()
+        assert runner.state == "running"
+        w.advance(1600)  # the first wait is over, the text is on its way
+        w.advance(1000)
+        moved = runner.text.get("translate_x")
+        assert moved < 0
+        w.window.simulate("pointer_enter", node=runner.box)
+        w.advance(3000)  # AC-MOD-MQT-7: unchanged for 3 seconds
+        assert runner.text.get("translate_x") == moved
+        w.window.simulate("pointer_leave")
+        w.advance(1000)
+        assert runner.text.get("translate_x") < moved  # it went on from where it stood
