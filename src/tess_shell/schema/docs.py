@@ -1129,6 +1129,9 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("TextInput", "Read_Only"): "The text can be selected and copied but not changed.",
     ("TextInput", "Max_Length"): "The most characters the field takes; 0 is no limit.",
     ("TextInput", "Password"): "Shows dots instead of the text and blocks copy and cut.",
+    ("TextInput", "Active_Descendant"): "The Name of a List called in the same layout: a screen "
+    "reader reads that List's chosen entry as the current item of the field while the keyboard "
+    "stays in it. Empty: none.",
     ("TextInput", "Enabled"): "False disables the field.",
     ("TextInput", "Width"): "The width in pixels.",
     ("Task_Item", "icon"): "The icon: an SVG document or pixels the shell holds (Tasks sends it).",
