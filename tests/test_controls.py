@@ -32,13 +32,18 @@ def test_button_has_a_role_a_name_and_shows_its_text() -> None:
 def test_button_states_hover_pressed_and_disabled_show() -> None:
     with running(f'Button {{ Text: "Go", {CLICK} }}') as w:
         root = w.of_use("Button", "Root")
-        base = root.get("stroke_color")
+        # the states are state layers tre draws (8, 10 and 10 percent of the content colour): the
+        # node holds them and nothing is restyled while the pointer is over it or presses it
+        assert [root.get(k)[3] for k in ("hover_layer", "pressed_layer", "focus_layer")] == [
+            20,
+            26,
+            26,
+        ]
+        fill = root.get("fill")
         w.window.simulate("pointer_enter", node=root)
-        assert root.get("stroke_color") == (91, 151, 201, 255) != base  # primary
         w.window.simulate("pointer_down", node=root)
-        assert root.get("fill") == (85, 101, 122, 255)  # outline
+        assert root.get("fill") == fill
         w.window.simulate("pointer_up", node=root)
-        assert root.get("fill") != (85, 101, 122, 255)
     with running(f'Button {{ Text: "Go", Enabled: false, {CLICK} }}') as w:
         root = w.of_use("Button", "Root")
         assert root.get("disabled") is True and root.get("opacity") == 0.38

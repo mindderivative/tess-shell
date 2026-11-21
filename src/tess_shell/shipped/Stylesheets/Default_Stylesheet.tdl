@@ -40,9 +40,10 @@ Stylesheet {
         Border_Width: 1
         Border_Color: $color.outline
         Corner_Radius: $shape.medium
+        Hover_Layer: $color.on_surface
+        Pressed_Layer: $color.on_surface
+        Focus_Layer: $color.on_surface
     }
-    Rule { Selector: "Button:hovered", Border_Color: $color.primary }
-    Rule { Selector: "Button:pressed", Background: $color.outline, Border_Color: $color.primary }
     Rule { Selector: "Button:disabled", Opacity: 0.38 }
 
     Rule {
@@ -55,8 +56,13 @@ Stylesheet {
     Rule { Selector: "Toggle::track:checked", Fill: $color.primary, Border_Color: $color.primary }
     Rule { Selector: "Toggle::thumb", Fill: $color.on_surface_muted, Margin: [3, 3, 0, 0] }
     Rule { Selector: "Toggle::thumb:checked", Fill: $color.on_primary, Margin: [21, 3, 0, 0] }
-    Rule { Selector: "Toggle:hovered", Opacity: 0.85 }
-    Rule { Selector: "Toggle:pressed", Opacity: 0.7 }
+    Rule {
+        Selector: "Toggle"
+        Corner_Radius: $shape.full
+        Hover_Layer: $color.on_surface
+        Pressed_Layer: $color.on_surface
+        Focus_Layer: $color.on_surface
+    }
     Rule { Selector: "Toggle:disabled", Opacity: 0.38 }
 
     Rule {
@@ -69,8 +75,13 @@ Stylesheet {
     Rule { Selector: "Checkbox::box:checked", Fill: $color.primary, Border_Color: $color.primary }
     Rule { Selector: "Checkbox::mark", Border_Color: $color.on_primary, Border_Width: 2, Opacity: 0 }
     Rule { Selector: "Checkbox::mark:checked", Opacity: 1 }
-    Rule { Selector: "Checkbox:hovered", Opacity: 0.85 }
-    Rule { Selector: "Checkbox:pressed", Opacity: 0.7 }
+    Rule {
+        Selector: "Checkbox"
+        Corner_Radius: $shape.small
+        Hover_Layer: $color.on_surface
+        Pressed_Layer: $color.on_surface
+        Focus_Layer: $color.on_surface
+    }
     Rule { Selector: "Checkbox:disabled", Opacity: 0.38 }
 
     Rule { Selector: "Slider::track", Fill: $color.outline, Corner_Radius: $shape.full }
@@ -87,8 +98,14 @@ Stylesheet {
     Rule { Selector: "Slider::fill:disabled", Fill: $color.on_surface_muted }
     Rule { Selector: "Slider::handle:disabled", Fill: $color.on_surface_muted }
 
-    Rule { Selector: ".list_item", Padding: [10, 6, 10, 6], Corner_Radius: $shape.small }
-    Rule { Selector: ".list_item:hovered", Background: $color.outline }
+    Rule {
+        Selector: ".list_item"
+        Padding: [10, 6, 10, 6]
+        Corner_Radius: $shape.small
+        Hover_Layer: $color.on_surface
+        Pressed_Layer: $color.on_surface
+        Focus_Layer: $color.on_surface
+    }
     Rule {
         Selector: ".list_item:selected"
         Background: $color.surface_raised
@@ -97,7 +114,12 @@ Stylesheet {
     }
     Rule { Selector: ".list_item:disabled", Opacity: 0.38 }
 
-    Rule { Selector: ".workspace:hovered", Background: $color.surface_raised }
+    Rule {
+        Selector: ".workspace"
+        Hover_Layer: $color.on_surface
+        Pressed_Layer: $color.on_surface
+        Focus_Layer: $color.on_surface
+    }
     Rule {
         Selector: ".workspace:selected"
         Background: $color.surface_raised
@@ -112,7 +134,18 @@ Stylesheet {
         Border_Color: $color.warning
     }
 
-    Rule { Selector: ".task_item:hovered", Background: $color.surface_raised }
+    Rule {
+        Selector: ".task_item"
+        Hover_Layer: $color.on_surface
+        Pressed_Layer: $color.on_surface
+        Focus_Layer: $color.on_surface
+    }
+    Rule {
+        Selector: ".tray_item"
+        Hover_Layer: $color.on_surface
+        Pressed_Layer: $color.on_surface
+        Focus_Layer: $color.on_surface
+    }
     Rule {
         Selector: ".task_item:selected"
         Background: $color.surface_raised
@@ -120,7 +153,7 @@ Stylesheet {
         Border_Color: $color.primary
     }
 
-    Rule { Selector: "MenuItem:hovered", Background: $color.outline }
+    Rule { Selector: "MenuItem", Hover_Layer: $color.on_surface, Focus_Layer: $color.on_surface }
     Rule { Selector: "MenuItem:pressed", Background: $color.primary }
     Rule { Selector: "MenuItem::label:pressed", Foreground: $color.on_primary }
     Rule { Selector: "MenuItem::shortcut:pressed", Foreground: $color.on_primary }

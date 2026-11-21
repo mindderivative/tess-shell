@@ -134,6 +134,11 @@ BOX_STYLE: dict[str, str] = {
     "Opacity": "number",
     "Elevation": "elevation",
     "Shadows": "shadows",
+    # the state layers (State Layers, ADR-0009): a colour role; its opacity is the theme's
+    # ``state.*`` token (an explicit alpha on the colour is the escape hatch)
+    "Hover_Layer": "color",
+    "Pressed_Layer": "color",
+    "Focus_Layer": "color",
 }
 
 FLEX: dict[str, str] = {

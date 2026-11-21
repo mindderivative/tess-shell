@@ -89,6 +89,13 @@ KEY_DOCS: dict[str, str] = {
     "clockwise.",
     "Elevation": "How high the block floats, as a percentage of the theme's largest shadow; 0% is "
     "no shadow.",
+    "Hover_Layer": "The colour of the layer drawn over the block while the pointer is on it, at "
+    "the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. "
+    "Needs tre 0.6.11.",
+    "Pressed_Layer": "The colour of the layer drawn while the block is pressed, at $state.pressed "
+    "(0.10).",
+    "Focus_Layer": "The colour of the layer drawn while the block has keyboard focus, at "
+    "$state.focus (0.10); a click draws none.",
     "Shadows": "A list of Shadow blocks, the first on top; it replaces Elevation when both are "
     "written.",
     "Shadow_Bleed": "The transparent margin a surface keeps around its body for the shadow: AUTO "
@@ -490,6 +497,9 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Color",
         "Opacity",
         "Elevation",
+        "Hover_Layer",
+        "Pressed_Layer",
+        "Focus_Layer",
         "Shadows",
         "Shadow_Bleed",
         "Placeholder_Foreground",
@@ -774,6 +784,11 @@ TOKEN_DOCS: dict[str, str] = {
     "density.tree_indent": "The indent of one tree level: 20, 16 or 12.",
     "density.chevron_box": "The size of a tree's chevron box: 24, 20 or 16.",
     "elevation.reach": "How far the largest shadow reaches, in pixels.",
+    "state.hover": "The opacity of the hover state layer (0.08): a Hover_Layer colour is drawn at "
+    "this alpha.",
+    "state.focus": "The opacity of the keyboard-focus state layer (0.10).",
+    "state.pressed": "The opacity of the pressed state layer (0.10).",
+    "state.dragged": "The opacity of the dragged state layer (0.16); no block takes it yet.",
     "elevation.max": "The shadow list at 100% elevation; a smaller Elevation scales it.",
     "motion.duration.short": "A short animation, in milliseconds.",
     "motion.duration.medium": "A medium animation, in milliseconds.",
