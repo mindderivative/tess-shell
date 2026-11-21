@@ -317,7 +317,7 @@ def test_network_says_connected_and_disconnected_once_and_not_a_signal_change() 
         with shell(d, "Network { }") as w:
             said = listen(w)
             assert d.settle(w, lambda: w.of_use("Network", "Root").get("visible"))
-            root = w.of_use("Network", "Root")
+            root = w.of_use("Network", "Content")  # the control that carries the tooltip (TSH-001)
             assert root.get("description") == "Wired connection 1, ethernet, connected"
             assert said.calls == []  # the first reading says nothing
             net.nothing()
@@ -355,7 +355,7 @@ def test_battery_says_critical_once_and_a_change_of_percent_never() -> None:
         with shell(d, "Battery { }") as w:
             said = listen(w)
             assert d.settle(w, lambda: w.of_use("Battery", "Root").get("visible"))
-            root = w.of_use("Battery", "Root")
+            root = w.of_use("Battery", "Content")  # the control that carries the tooltip (TSH-001)
             assert root.get("description") == "15 %, discharging, 2 h 14 min left"
             assert said.calls == []
             obj.set("Percentage", 12.0)
@@ -404,7 +404,7 @@ def test_audio_says_mute_at_once_and_a_settled_volume_when_asked(
     with T.desk(fake_pulse) as d, T.shell(d, body) as w:
         said = listen(w)
         assert d.settle(w, lambda: T.icon_of(w) == "volume-medium")
-        assert w.of_use("Audio", "Root").get("description") == "Razer Leviathan V2 X, 45 %"
+        assert w.of_use("Audio", "Toggle").get("description") == "Razer Leviathan V2 X, 45 %"
         slider = next(n for k, n in w.view.nodes.items() if k.endswith(".Volume/Root"))
         assert slider.get("value_text") == "45 percent"
         assert said.calls == []

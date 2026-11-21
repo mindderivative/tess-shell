@@ -176,6 +176,9 @@ KEY_DOCS: dict[str, str] = {
     "Direction": "The way the text moves: LEFT shows its start first, RIGHT its end first.",
     "Loop": "RESTART jumps back to the start; BOUNCE scrolls back.",
     "Animated": "False keeps a text that does not fit still, cut with an ellipsis.",
+    "Tooltip_Auto": "False turns off the tooltip a Marquee opens by itself with the whole text "
+    "when it is cut: write it when the Marquee is inside a control that has its own tooltip "
+    "(one tooltip per control).",
     # surfaces
     "Edge": "The screen edge the Bar attaches to.",
     "Layer": "The layer of the compositor the surface is drawn in.",
@@ -524,6 +527,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Direction",
         "Loop",
         "Animated",
+        "Tooltip_Auto",
     ),
     "Motion": ("Transition", "Duration", "Easing", "Animation", "Content_Fade"),
     "Accessibility": (
@@ -638,6 +642,7 @@ LITERAL_DEFAULTS: dict[tuple[str, str], str] = {
     ("Marquee", "Direction"): "LEFT",  # binder.marquee.MarqueeRunner
     ("Marquee", "Loop"): "RESTART",
     ("Marquee", "Animated"): "true",
+    ("Marquee", "Tooltip_Auto"): "true",
     ("Popup", "Adjust"): "[FLIP_Y, SLIDE_X]",  # PopupDef.adjust, written the way the file does
     ("Popup", "Focus"): "true",  # false for a tooltip
     ("Bar", "Shortcut_Mode"): "false",  # the model holds where it is written true, or None
@@ -1074,6 +1079,8 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Marquee_Text", "Pause"): "How long the text waits at each end, in milliseconds.",
     ("Marquee_Text", "Direction"): "The way the text moves: LEFT or RIGHT.",
     ("Marquee_Text", "Loop"): "RESTART jumps back to the start; BOUNCE scrolls back.",
+    ("Marquee_Text", "tooltip"): "False turns off the tooltip with the whole cut text: write it when "
+    "the Marquee is inside a control that has its own tooltip.",
     ("Media", "show_art"): "Shows the artwork, 24 px (a file:// URL of the player's; a "
     "placeholder icon otherwise).",
     ("Media", "show_title"): "Shows the title, scrolling when it is wider than max_width.",

@@ -20,6 +20,9 @@ Module {
         Pause { Type: number, Default: 1500 }
         Direction { Type: string, Default: LEFT }
         Loop { Type: string, Default: RESTART }
+        # false: no tooltip of its own with the whole cut text; write it when the Marquee is inside a
+        # control that has its own tooltip (one tooltip per control, Tooltip rule)
+        tooltip { Type: boolean, Default: true }
     }
     Marquee {
         Name: Root
@@ -31,5 +34,6 @@ Module {
         Loop: <| params.Loop |>
         Tooltip: <| params.Text |>
         Tooltip_When_Disabled: true
+        Tooltip_Auto: <| params.tooltip |>
     }
 }
