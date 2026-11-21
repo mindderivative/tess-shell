@@ -195,6 +195,9 @@ class Wire:
         return self.tip_key or self.tip_auto
 
     always: dict[str, list[Callable[[], None]]] = field(default_factory=dict)
+    # told when the node gains keyboard focus with a ring (``True``) or loses focus (``False``): a
+    # tooltip opens at once on a keyboard focus (Tooltip > AC-TIP-10, ADR-0011)
+    focus_hooks: list[Callable[[bool], None]] = field(default_factory=list)
     # a text input: its text as of the last ``change`` its user made or the last set by the shell,
     # which a commit that changed nothing (``Max_Length`` refused it) equals
     field_text: str | None = None
@@ -403,6 +406,8 @@ class Wire:
         if visible != self.focused:
             self.focused = visible
             self.refresh()
+            for hook in self.focus_hooks:
+                hook(visible)
         if self.focus_to is not None:
             self.focus_to.set_focused(visible)
 

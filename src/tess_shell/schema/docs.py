@@ -1079,7 +1079,10 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Marquee_Text", "Pause"): "How long the text waits at each end, in milliseconds.",
     ("Marquee_Text", "Direction"): "The way the text moves: LEFT or RIGHT.",
     ("Marquee_Text", "Loop"): "RESTART jumps back to the start; BOUNCE scrolls back.",
-    ("Marquee_Text", "tooltip"): "False turns off the tooltip with the whole cut text: write it when "
+    (
+        "Marquee_Text",
+        "tooltip",
+    ): "False turns off the tooltip with the whole cut text: write it when "
     "the Marquee is inside a control that has its own tooltip.",
     ("Media", "show_art"): "Shows the artwork, 24 px (a file:// URL of the player's; a "
     "placeholder icon otherwise).",

@@ -2390,7 +2390,7 @@
           "kind": "number",
           "choices": null,
           "enum": null,
-          "default": "200",
+          "default": "150",
           "doc": "How long the pointer is away before it closes, in milliseconds.",
           "slot": false,
           "required": false,

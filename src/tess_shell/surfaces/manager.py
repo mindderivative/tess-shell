@@ -514,7 +514,7 @@ def _log_errors(errors: Sequence[BindError]) -> None:
 
 # the window and root-node events the manager listens to on a surface's window
 _WINDOW_EVENTS = ("configure", "closed", "active", "moved", "frame")
-_ROOT_EVENTS = ("key_down", "pointer_down", "pointer_up")
+_ROOT_EVENTS = ("key_down", "pointer_down", "pointer_up", "wheel")
 
 
 def free_window(window: Any) -> None:
@@ -987,6 +987,17 @@ class SurfaceManager:
         # the keys of shortcut mode arrive here when this surface has the keyboard (a Panel's own
         # handler, set after this one, asks the mode first)
         window.root.on("key_down", lambda e: self.mode.on_key(e))
+        # a tooltip is dismissed by Escape and by a scroll (Tooltip > AC-TIP-5, AC-TIP-6); the event
+        # is not consumed, the focused block still hears it
+        window.root.on(
+            "key_down",
+            lambda e: (
+                self.popups.dismiss_tooltip("escape")
+                if getattr(e, "key", None) == "escape"
+                else None
+            ),
+        )
+        window.root.on("wheel", lambda e: self.popups.dismiss_tooltip("a scroll"))
 
         def pointer_trace(e: Any, n: str = where, k: str = kind, p: str = "") -> None:
             logger.debug(
