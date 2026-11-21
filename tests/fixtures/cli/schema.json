@@ -27565,6 +27565,77 @@
       ],
       "actions": []
     },
+    "Workspace_Item": {
+      "doc": "One button of the Workspaces row: a desktop's number or name.",
+      "params": {
+        "face": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The text of the button: the desktop's number or its name.",
+          "required": false
+        },
+        "label": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "The name assistive technology reads aloud and the tooltip text.",
+          "required": false
+        },
+        "current": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "false",
+          "doc": "The desktop is the current one: the block takes the :selected look.",
+          "required": false
+        }
+      },
+      "root_block": "FlexBox",
+      "events": [
+        "On_Click",
+        "On_Secondary_Click",
+        "On_Middle_Click",
+        "On_Scroll",
+        "On_Key_Down"
+      ],
+      "common_keys": [
+        "Key",
+        "Visible",
+        "Enabled",
+        "Width",
+        "Height",
+        "Min_Width",
+        "Min_Height",
+        "Max_Width",
+        "Max_Height",
+        "Aspect_Ratio",
+        "Margin",
+        "Flex_Grow",
+        "Flex_Shrink",
+        "Align_Self",
+        "Z_Index",
+        "Label",
+        "Tooltip_When_Disabled",
+        "A11y_Hidden",
+        "Opacity",
+        "Position",
+        "Left",
+        "Top",
+        "Right",
+        "Bottom",
+        "Translate_X",
+        "Translate_Y",
+        "Scale",
+        "Rotation",
+        "Clip_Children",
+        "Role",
+        "Description",
+        "Live",
+        "Focusable",
+        "Tab_Index"
+      ],
+      "actions": []
+    },
     "Workspaces": {
       "doc": "The virtual desktops as buttons: the current one is marked, a click switches.",
       "params": {
