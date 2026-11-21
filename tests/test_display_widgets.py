@@ -27,7 +27,7 @@ def test_label_shows_its_text_names_itself_and_takes_a_width() -> None:
 def test_a_disabled_label_is_faint() -> None:
     with running("Label { Text: x, Enabled: false }") as w:
         text = w.of_use("Label", "#0")
-        assert text.get("disabled") is True and text.get("opacity") == 0.5
+        assert text.get("disabled") is True and text.get("opacity") == 0.38
 
 
 def test_textbox_wraps_by_word_and_limits_its_lines() -> None:

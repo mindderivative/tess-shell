@@ -41,7 +41,7 @@ Stylesheet {
     }
     Rule { Selector: "Button:hovered", Border_Color: $color.primary }
     Rule { Selector: "Button:pressed", Background: $color.outline, Border_Color: $color.primary }
-    Rule { Selector: "Button:disabled", Opacity: 0.5 }
+    Rule { Selector: "Button:disabled", Opacity: 0.38 }
 
     Rule {
         Selector: "Toggle::track"
@@ -55,7 +55,7 @@ Stylesheet {
     Rule { Selector: "Toggle::thumb:checked", Fill: $color.on_primary, Margin: [21, 3, 0, 0] }
     Rule { Selector: "Toggle:hovered", Opacity: 0.85 }
     Rule { Selector: "Toggle:pressed", Opacity: 0.7 }
-    Rule { Selector: "Toggle:disabled", Opacity: 0.5 }
+    Rule { Selector: "Toggle:disabled", Opacity: 0.38 }
 
     Rule {
         Selector: "Checkbox::box"
@@ -69,7 +69,7 @@ Stylesheet {
     Rule { Selector: "Checkbox::mark:checked", Opacity: 1 }
     Rule { Selector: "Checkbox:hovered", Opacity: 0.85 }
     Rule { Selector: "Checkbox:pressed", Opacity: 0.7 }
-    Rule { Selector: "Checkbox:disabled", Opacity: 0.5 }
+    Rule { Selector: "Checkbox:disabled", Opacity: 0.38 }
 
     Rule { Selector: "Slider::track", Fill: $color.outline, Corner_Radius: $shape.full }
     Rule { Selector: "Slider::fill", Fill: $color.primary, Corner_Radius: $shape.full }
@@ -81,7 +81,7 @@ Stylesheet {
     }
     Rule { Selector: "Slider::handle:hovered", Border_Color: $color.on_surface_muted }
     Rule { Selector: "Slider::handle:pressed", Border_Color: $color.on_surface, Border_Width: 3 }
-    Rule { Selector: "Slider::track:disabled", Opacity: 0.5 }
+    Rule { Selector: "Slider::track:disabled", Opacity: 0.38 }
     Rule { Selector: "Slider::fill:disabled", Fill: $color.on_surface_muted }
     Rule { Selector: "Slider::handle:disabled", Fill: $color.on_surface_muted }
 
@@ -93,7 +93,7 @@ Stylesheet {
         Border_Width: 2
         Border_Color: $color.primary
     }
-    Rule { Selector: ".list_item:disabled", Opacity: 0.5 }
+    Rule { Selector: ".list_item:disabled", Opacity: 0.38 }
 
     Rule { Selector: ".workspace:hovered", Background: $color.surface_raised }
     Rule {
@@ -120,16 +120,16 @@ Stylesheet {
 
     Rule { Selector: "MenuItem:hovered", Background: $color.outline }
     Rule { Selector: "MenuItem:pressed", Background: $color.primary }
-    Rule { Selector: "MenuItem:disabled", Opacity: 0.5 }
+    Rule { Selector: "MenuItem:disabled", Opacity: 0.38 }
     Rule { Selector: "MenuItem", Corner_Radius: $shape.small }
     Rule { Selector: "MenuItem::rule", Fill: $color.outline }
     Rule { Selector: "MenuItem::shortcut", Foreground: $color.on_surface_muted }
 
-    Rule { Selector: "Label:disabled", Opacity: 0.5 }
-    Rule { Selector: "TextBox:disabled", Opacity: 0.5 }
-    Rule { Selector: "Marquee_Text:disabled", Opacity: 0.5 }
-    Rule { Selector: "Icon:disabled", Opacity: 0.5 }
-    Rule { Selector: "Image:disabled", Opacity: 0.5 }
-    Rule { Selector: "ProgressBar:disabled", Opacity: 0.5 }
-    Rule { Selector: "Badge:disabled", Opacity: 0.5 }
+    Rule { Selector: "Label:disabled", Opacity: 0.38 }
+    Rule { Selector: "TextBox:disabled", Opacity: 0.38 }
+    Rule { Selector: "Marquee_Text:disabled", Opacity: 0.38 }
+    Rule { Selector: "Icon:disabled", Opacity: 0.38 }
+    Rule { Selector: "Image:disabled", Opacity: 0.38 }
+    Rule { Selector: "ProgressBar:disabled", Opacity: 0.38 }
+    Rule { Selector: "Badge:disabled", Opacity: 0.38 }
 }
