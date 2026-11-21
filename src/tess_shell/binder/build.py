@@ -507,6 +507,25 @@ _WIRING_KEYS = frozenset(
 )
 
 
+def _pointer_parts(root: Entry) -> list[Entry]:
+    """The parts of the module whose root block is ``root`` (blocks of the same module use that
+    declare a ``Part``) that have a ``:hovered`` or ``:pressed`` style."""
+    found: list[Entry] = []
+
+    def walk(entries: Sequence[Entry]) -> None:
+        for e in entries:
+            if (
+                e.typed.owner == root.typed.owner
+                and e.typed.part
+                and ("hovered" in e.states or "pressed" in e.states)
+            ):
+                found.append(e)
+            walk(e.children)
+
+    walk(root.children)
+    return found
+
+
 def _inert(entry: Entry) -> bool:
     """Whether a built node needs no wire: it listens for nothing, is nobody's control, has no
     name for a tooltip or a slot to find it by, is not disabled, focusable or checked, and no
@@ -884,6 +903,32 @@ class View:
             self._ensure_click(entry)
             if entry.typed.kind == FIELD:
                 self._wire_field(entry)
+            if entry.typed.owner and not entry.typed.part and _pointer_parts(entry):
+                self._wire_parts(entry)
+
+    def _wire_parts(self, root: Entry) -> None:
+        """A module's root block passes its hover and press on to the module's parts that have
+        ``:hovered`` or ``:pressed`` styles (``MenuItem::label:pressed``), so a part is styled while
+        the pointer is over, or presses, the block it belongs to (a Text takes no pointer itself).
+        The parts are looked up when the event arrives, so a rebuild needs no new listener."""
+        assert root.wire is not None
+        wire = root.wire
+        if "parts" in wire.wired:
+            return
+        wire.wired.add("parts")
+
+        def follower(event: str) -> Callable[[], None]:
+            def run() -> None:
+                current = next((e for e in self._flat() if e.wire is wire), None)
+                if current is not None:
+                    for part in _pointer_parts(current):
+                        if part.wire is not None:
+                            getattr(part.wire, event)()
+
+            return run
+
+        for event in ("enter", "leave", "down", "up"):
+            wire.add_hook(event, follower(event))
 
     def _wire_field(self, entry: Entry) -> None:
         """A TextField's box: a press gives the text input the focus, and the box's hover and
@@ -1313,11 +1358,13 @@ def convert_states(node: Node, errors: list[BindError]) -> dict[str, dict[str, A
 
 def entry_states(node: Node) -> dict[str, dict[str, Any]]:
     """What a built node shows and listens for: its converted state styles. A kind tre sends no
-    pointer events (a ``Text``) has no ``hovered`` or ``pressed``; its ``disabled`` still shows."""
+    pointer events (a ``Text``) has no ``hovered`` or ``pressed``, unless it is a part of a module
+    (``MenuItem::label:pressed``): its root passes its hover and press on to it
+    (``View._wire_parts``); its ``disabled`` still shows."""
     if not node.states:
         return {}
     states = convert_states(node, [])
-    if node.kind in NO_POINTER_BLOCKS:
+    if node.kind in NO_POINTER_BLOCKS and not node.part:
         return {s: v for s, v in states.items() if s in FLAG_STATES}
     return states
 
