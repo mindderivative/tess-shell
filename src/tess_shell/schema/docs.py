@@ -1004,6 +1004,7 @@ MODULE_NOTES: dict[str, str] = {
     "ProgressBar": "A bar that shows a value between a minimum and a maximum.",
     "Slider": "A control that sets a value between a minimum and a maximum by dragging.",
     "Task_Item": "One button of the Tasks row: an application's icon and a window's title.",
+    "Workspace_Item": "One button of the Workspaces row: a desktop's number or name.",
     "Tasks": "The open windows as a row of buttons, from the shell's KWin script; a click "
     "activates, minimises or closes a window.",
     "TextBox": "Several lines of text that can wrap, be cut and be selected.",
@@ -1143,6 +1144,12 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Task_Item", "icon_size"): "The icon's size in pixels.",
     ("Task_Item", "active"): "The window is the active one: the block takes the :selected look.",
     ("Task_Item", "minimized"): "The window is minimised: the button is drawn dimmed.",
+    ("Workspace_Item", "face"): "The text of the button: the desktop's number or its name.",
+    ("Workspace_Item", "label"): "The name assistive technology reads aloud and the tooltip text.",
+    (
+        "Workspace_Item",
+        "current",
+    ): "The desktop is the current one: the block takes the :selected look.",
     ("Task_Item", "attention"): "The window wants attention: a small mark in the warning colour.",
     ("Applications", "max_results"): "The most rows shown; Page Down and Page Up move by them.",
     ("Applications", "show_comment"): "Shows the generic name, else the comment, under each name.",
