@@ -80,7 +80,7 @@ The time, with a tooltip that shows the date.
 | `timezone` | string | `""` | An IANA zone such as Europe/Berlin; empty is the local zone. |
 | `tooltip_format` | string | `"%A, %d %B %Y"` | A strftime pattern for the text of the tooltip the pointer opens on the clock. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Clock -->
 
@@ -217,7 +217,7 @@ An icon from an icon set or a file, sized by one number.
 | `Icon` | icon | `""` | An icon name such as mdi:account, or a file path relative to the file. |
 | `Size` | number | `16` | The width and the height, in pixels. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Icon -->
 
@@ -287,7 +287,7 @@ A picture from a file, with a placeholder while it loads.
 | `Fit` | string | `"CONTAIN"` | How the picture fits its box: CONTAIN, COVER, FILL or NONE. |
 | `Placeholder` | icon | `""` | A colour or an icon shown while the picture loads or fails. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Image -->
 
@@ -360,7 +360,7 @@ A pill with a count, or a dot, in the error colour.
 | `Max` | number | `99` | The largest number shown; above it the badge reads that number and a plus. |
 | `Dot` | boolean | `false` | Shows a dot with no number. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Badge -->
 
@@ -446,7 +446,7 @@ A pressable control with an optional icon and text.
 | `Expandable` | boolean | `false` | True when the button controls an Expander: it then carries the accessibility state expanded, with the value of Expanded. |
 | `Expanded` | boolean | `false` | Whether the Expander the button controls is open; read only when Expandable is true. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Button -->
 
@@ -516,7 +516,7 @@ A box that is checked or not, with an optional text beside it.
 | `Text` | string | `""` | A label beside the box; a click on it flips the checkbox too. |
 | `Label` | string | `""` | The name assistive technology reads aloud; the text when it is empty. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`, `On_Key_Down`.
 
 <!-- END generated: module:Checkbox -->
 
@@ -584,7 +584,7 @@ A switch that is on or off.
 | `Checked` | boolean | `false` | Whether the switch is on; set from outside. |
 | `Label` | string | `""` | The name assistive technology reads aloud for the switch. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`, `On_Key_Down`.
 
 <!-- END generated: module:Toggle -->
 
@@ -657,7 +657,7 @@ A control that sets a value between a minimum and a maximum by dragging.
 | `Label` | string | `""` | The name assistive technology reads aloud for the slider. |
 | `Value_Text` | string | `""` | The value in words for assistive technology ('45 percent'); without one it reads the number. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`, `On_Released`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`, `On_Released`, `On_Key_Down`.
 
 <!-- END generated: module:Slider -->
 
@@ -733,7 +733,7 @@ A bar that shows a value between a minimum and a maximum.
 | `Min` | number | `0` | The value at which the bar is empty. |
 | `Max` | number | `100` | The value at which the bar is full. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:ProgressBar -->
 
@@ -874,7 +874,7 @@ The content of a Popup: a column of menu items.
 |---|---|---|---|
 | `Label` | string | `""` | The name assistive technology reads aloud for the menu. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Menu -->
 
@@ -895,7 +895,7 @@ A row of a menu: text, an icon, a key hint, a rule or a submenu.
 | `Label` | string | `""` | The name assistive technology reads aloud; the text when it is empty. |
 | `Id` | string | `""` | A text the row carries for the code that built the menu; shown nowhere. A submenu reads it as caller.use.params.Id. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:MenuItem -->
 
@@ -1290,7 +1290,7 @@ A block that shows or hides its content with an animation.
 | `Duration` | number | `-1` | The animation time in milliseconds; -1 takes the theme's. |
 | `Content_Fade` | boolean | `true` | Whether the content's opacity follows the animation. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`, `On_Key_Down`.
 
 <!-- END generated: module:Expander -->
 
@@ -1364,7 +1364,7 @@ The battery's charge as an icon and a number, with a tooltip; hides without one.
 |---|---|---|---|
 | `show_percent` | boolean | `true` | Shows the charge as a number next to the icon. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Battery -->
 
@@ -1435,7 +1435,7 @@ The virtual desktops as buttons: the current one is marked, a click switches.
 |---|---|---|---|
 | `label` | string | `"name"` | name shows each desktop's name (its number when it has none); number shows 1, 2, 3. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 Actions a `Call` may run:
 
@@ -1510,7 +1510,7 @@ One button of the Workspaces row: a desktop's number or name.
 | `label` | string | `""` | The name assistive technology reads aloud and the tooltip text. |
 | `current` | boolean | `false` | The desktop is the current one: the block takes the :selected look. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Workspace_Item -->
 
@@ -1526,7 +1526,7 @@ How the machine is connected, as NetworkManager reports it.
 | `show_name` | boolean | `false` | Shows the connection's name (or the Wi-Fi network's) next to the icon. |
 | `show_vpn` | boolean | `true` | Shows a second icon while a VPN is up. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Network -->
 
@@ -1598,7 +1598,7 @@ What a media player plays, with previous, play or pause and next buttons.
 | `max_width` | number | `240` | The title's width in pixels. |
 | `announce` | boolean | `false` | Says aloud, politely, a new track after one that was shown (off by default). |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 Actions a `Call` may run:
 
@@ -1679,13 +1679,14 @@ The default sound output: an icon for its kind and level, mute on a click, the v
 | `step` | number | `5` | The percent one wheel step changes the volume by. |
 | `announce` | boolean | `false` | Says aloud, politely, mute and unmute and a new volume once it has settled (off by default). |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 Actions a `Call` may run:
 
 | Action | What it does |
 |---|---|
 | `Audio.drag(percent)` | The slider's handle moved by the user: write at most every 50 ms; the release writes the final value. |
+| `Audio.key(step)` | A key on the focused mute button: Up and Down change the volume by one step, Menu or Shift+F10 opens the list of outputs (the keyboard twins of the wheel and the secondary click). |
 | `Audio.set_output(id)` |  |
 | `Audio.set_volume(percent)` | Set the volume (clamped to 0 to 100); a slider's release sends its final value here. |
 | `Audio.show_outputs()` | Open the Popup `Audio_Outputs` with the outputs as they are now. |
@@ -1757,7 +1758,7 @@ The content of the Audio module's outputs Popup: one row per output.
 
 This module has no params of its own.
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 Actions a `Call` may run:
 
@@ -1844,7 +1845,7 @@ The volume on-screen display: the output, a bar and the percent (or Muted) for a
 | `duration` | number | `1500` | Milliseconds the Panel stays after the last change of the volume or mute (more than 0, at most 60000). |
 | `show_name` | boolean | `true` | Shows the output's name above the bar. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Volume_OSD -->
 
@@ -1937,13 +1938,14 @@ The system tray: one icon per StatusNotifier application, with its tooltip, clic
 | `show_passive` | boolean | `false` | Shows the items whose status is Passive. |
 | `spacing` | number | `6` | The space between two items in pixels. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 Actions a `Call` may run:
 
 | Action | What it does |
 |---|---|
 | `Tray.activate(id)` |  |
+| `Tray.key(id)` | A key on a focused item: Menu, or Shift+F10, opens its menu (Keyboard Navigation). |
 | `Tray.menu(id)` | The item's menu, drawn by the shell; `ContextMenu` when the item has none. |
 | `Tray.scroll(id, delta?)` | One wheel step (`delta` +1 for a step down): `Scroll(delta, "vertical")` in Qt's units, up positive. |
 | `Tray.secondary(id)` |  |
@@ -2019,7 +2021,7 @@ One icon of the Tray, with a tooltip.
 | `description` | string | `""` | The description assistive technology reads after the name. |
 | `attention` | boolean | `false` | The item needs attention: the block takes the :selected look. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Tray_Item -->
 
@@ -2034,7 +2036,7 @@ The content of the Popups that draw a tray item's menu, one level of it.
 |---|---|---|---|
 | `Level` | number | `1` | 1 is the menu itself; 2 and 3 are the submenus of the row that opened the Popup. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 Actions a `Call` may run:
 
@@ -2061,7 +2063,7 @@ The open windows as a row of buttons, from the shell's KWin script; a click acti
 | `show_empty` | boolean | `false` | Keeps the module's space when there is no window. |
 | `announce` | boolean | `false` | Says aloud, politely, a window of the row that opens, closes or wants attention, once for a change (off by default). |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 Actions a `Call` may run:
 
@@ -2070,6 +2072,7 @@ Actions a `Call` may run:
 | `Tasks.activate(id)` | A click on a button: the active window is minimised, any other is activated (un-minimising it). The row changes when KWin has acted and the script reports. |
 | `Tasks.close(id)` | A middle click: ask the window to close. |
 | `Tasks.cycle(delta?)` | The wheel over a row: activate the next (`delta` > 0, a step down) or the previous window of that row, wrapping round. |
+| `Tasks.key(id)` | A key on a focused task: Delete closes its window (the middle click's keyboard twin). |
 
 <!-- END generated: module:Tasks -->
 
@@ -2145,7 +2148,7 @@ One button of the Tasks row: an application's icon and a window's title.
 | `minimized` | boolean | `false` | The window is minimised: the button is drawn dimmed. |
 | `attention` | boolean | `false` | The window wants attention: a small mark in the warning colour. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 <!-- END generated: module:Task_Item -->
 
@@ -2163,7 +2166,7 @@ The launcher: a text field over a list of the installed applications that narrow
 | `icon_size` | number | `24` | The size of each application icon in pixels. |
 | `placeholder` | string | `"Search applications"` | The hint the empty text field shows. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`.
 
 Actions a `Call` may run:
 

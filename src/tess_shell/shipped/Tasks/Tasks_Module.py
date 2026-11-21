@@ -304,6 +304,12 @@ class Tasks(Module):
             self.ctx.windows.activate(id)
 
     @action
+    def key(self, event: Event, id: str) -> None:
+        """A key on a focused task: Delete closes its window (the middle click's keyboard twin)."""
+        if event.key == "delete" and not (event.shift or event.ctrl or event.alt or event.meta):
+            self.close(event, id)
+
+    @action
     def close(self, event: Event, id: str) -> None:
         """A middle click: ask the window to close."""
         if self.window(id) is not None:

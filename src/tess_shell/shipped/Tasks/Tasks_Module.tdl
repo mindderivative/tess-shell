@@ -59,6 +59,7 @@ Module {
                     icon_size: <| params.icon_size |>
                     On_Click { Action: activate, id: <| w.id |> }
                     On_Middle_Click { Action: close, id: <| w.id |> }
+                    On_Key_Down { Action: key, id: <| w.id |> }
                 }
             }
         }

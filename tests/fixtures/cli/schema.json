@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.18",
+  "schema_version": "1.19",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -6651,7 +6651,8 @@
         "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
-        "On_Released"
+        "On_Released",
+        "On_Key_Down"
       ],
       "required": [],
       "repeatable": true,
@@ -8172,7 +8173,8 @@
         "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
-        "On_Released"
+        "On_Released",
+        "On_Key_Down"
       ],
       "required": [],
       "repeatable": true,
@@ -23930,10 +23932,12 @@
       ]
     },
     "On_Key_Down": {
-      "doc": "A key went down in a TextField (event.key, event.ctrl, event.shift, event.alt, event.meta, event.repeat), before the field acts on it; the field acts whatever the handler does, and event.stop() keeps the surface above from hearing the key (a Panel's Escape).",
+      "doc": "A key went down in a TextField (event.key, event.ctrl, event.shift, event.alt, event.meta, event.repeat), before the field acts on it; the field acts whatever the handler does, and event.stop() keeps the surface above from hearing the key (a Panel's Escape). A Box or FlexBox that has the keyboard raises it too, for the keys of a control (Delete on a task, Menu on a tray item); event.rect is the block's rectangle.",
       "module_only": false,
       "needs": [],
       "raised_by": [
+        "Box",
+        "FlexBox",
         "TextField"
       ]
     }
@@ -24795,7 +24799,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -24918,7 +24923,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -24963,6 +24969,17 @@
           "args": [
             {
               "name": "percent",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "key",
+          "doc": "A key on the focused mute button: Up and Down change the volume by one step, Menu or Shift+F10 opens the list of outputs (the keyboard twins of the wheel and the secondary click).",
+          "args": [
+            {
+              "name": "step",
               "required": true
             }
           ],
@@ -25029,7 +25046,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -25126,7 +25144,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -25182,7 +25201,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -25273,7 +25293,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -25344,7 +25365,8 @@
         "On_Secondary_Click",
         "On_Middle_Click",
         "On_Scroll",
-        "On_Changed"
+        "On_Changed",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -25428,7 +25450,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -25510,7 +25533,8 @@
         "On_Secondary_Click",
         "On_Middle_Click",
         "On_Scroll",
-        "On_Changed"
+        "On_Changed",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -25577,7 +25601,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -25649,7 +25674,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -25965,7 +25991,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -26073,7 +26100,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -26171,7 +26199,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -26234,7 +26263,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -26316,7 +26346,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -26432,7 +26463,8 @@
         "On_Middle_Click",
         "On_Scroll",
         "On_Changed",
-        "On_Released"
+        "On_Released",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -26552,7 +26584,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -26658,7 +26691,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -26726,6 +26760,17 @@
             {
               "name": "delta",
               "required": false
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "key",
+          "doc": "A key on a focused task: Delete closes its window (the middle click's keyboard twin).",
+          "args": [
+            {
+              "name": "id",
+              "required": true
             }
           ],
           "kwargs": false
@@ -27084,7 +27129,8 @@
         "On_Secondary_Click",
         "On_Middle_Click",
         "On_Scroll",
-        "On_Changed"
+        "On_Changed",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -27162,7 +27208,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -27204,6 +27251,17 @@
         {
           "name": "activate",
           "doc": "",
+          "args": [
+            {
+              "name": "id",
+              "required": true
+            }
+          ],
+          "kwargs": false
+        },
+        {
+          "name": "key",
+          "doc": "A key on a focused item: Menu, or Shift+F10, opens its menu (Keyboard Navigation).",
           "args": [
             {
               "name": "id",
@@ -27313,7 +27371,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -27373,7 +27432,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -27464,7 +27524,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -27534,7 +27595,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",
@@ -27590,7 +27652,8 @@
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
-        "On_Scroll"
+        "On_Scroll",
+        "On_Key_Down"
       ],
       "common_keys": [
         "Key",

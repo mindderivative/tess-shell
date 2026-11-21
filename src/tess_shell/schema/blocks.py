@@ -559,6 +559,10 @@ CONTROL_KINDS = ("Box", "FlexBox", "Rectangle", "ScrollBox")
 CONTROL_EVENTS = {"On_Changed": CONTROL_KEYS, "On_Released": ("Slides",)}
 for _kind in CONTROL_KINDS:
     BLOCK_EVENTS[_kind] = (*BLOCK_EVENTS[_kind], *CONTROL_EVENTS)
+# a Box or FlexBox that takes the keyboard (a Button, a task, a tray item) raises ``On_Key_Down``
+# with the key and its modifiers, for the keys a module gives a control (Delete, Menu)
+for _kind in ("Box", "FlexBox"):
+    BLOCK_EVENTS[_kind] = (*BLOCK_EVENTS[_kind], "On_Key_Down")
 # the text events are raised by the text input inside the composition; ``On_Click`` by its box
 BLOCK_EVENTS[FIELD] = (*POINTER_EVENTS, *FIELD_EVENTS)
 BLOCK_EVENTS["Panel"] = (

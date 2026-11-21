@@ -247,6 +247,18 @@ class Audio(Module):
         self.ctx.audio.step(float(delta))
 
     @action
+    def key(self, event: Event, step: float) -> None:
+        """A key on the focused mute button: Up and Down change the volume by one step, Menu or
+        Shift+F10 opens the list of outputs (the keyboard twins of the wheel and the secondary
+        click)."""
+        if event.key == "arrow_up":
+            self.step(event, float(step))
+        elif event.key == "arrow_down":
+            self.step(event, -float(step))
+        elif event.key == "context_menu" or (event.key == "f10" and event.shift):
+            self.show_outputs(event)
+
+    @action
     def drag(self, event: Event, percent: float) -> None:
         """The slider's handle moved by the user: write at most every 50 ms; the release writes the
         final value."""

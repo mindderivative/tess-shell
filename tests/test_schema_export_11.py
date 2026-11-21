@@ -545,6 +545,7 @@ def test_the_events_a_call_may_handle_are_what_the_loader_allows() -> None:
         "On_Secondary_Click",
         "On_Middle_Click",
         "On_Scroll",
+        "On_Key_Down",  # a block with the keyboard raises it (UX B2)
     ]
     assert (
         "On_Changed" in mods["Toggle"]["events"] and "On_Released" not in mods["Toggle"]["events"]
@@ -586,6 +587,6 @@ def test_the_cli_schema_is_regenerated_to_a_file(tmp_path: Path) -> None:
     import json
 
     data = json.loads(target.read_text(encoding="utf-8"))
-    assert data["schema_version"] == "1.18" and "modules" in data
+    assert data["schema_version"] == "1.19" and "modules" in data
     assert list(data)[-1] == "shortcuts"
     _ = (CONTEXTS, run)  # the probes of the first suite are shared

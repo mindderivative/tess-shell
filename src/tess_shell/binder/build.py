@@ -199,6 +199,9 @@ class Wire:
     # told when the node gains keyboard focus with a ring (``True``) or loses focus (``False``): a
     # tooltip opens at once on a keyboard focus (Tooltip > AC-TIP-10, ADR-0011)
     focus_hooks: list[Callable[[bool], None]] = field(default_factory=list)
+    # a block's ``On_Key_Down``: given the key event that reaches the block (not a text input's
+    # own, which ``_ensure_field_events`` wires)
+    key_hook: Callable[[Any], None] | None = None
     # a text input: its text as of the last ``change`` its user made or the last set by the shell,
     # which a commit that changed nothing (``Max_Length`` refused it) equals
     field_text: str | None = None
@@ -342,7 +345,10 @@ class Wire:
         def down(event: Any) -> None:
             key = getattr(event, "key", None)
             if key in ("enter", "space") and event.target == tre and not self.blocked:
-                self.press_key(key)
+                if tre.get("role") == "button":
+                    self.press_key(key)
+            if self.key_hook is not None and event.target == tre and not self.blocked:
+                self.key_hook(event)
 
         def up(event: Any) -> None:
             if getattr(event, "key", None) == self.held:
@@ -908,13 +914,30 @@ class View:
                 wire.listen()
             if entry.props.get("focusable"):
                 wire.listen_focus()
-            if str(entry.props.get("role")) == "button":
+            if str(entry.props.get("role")) == "button" or "On_Key_Down" in wire.handlers:
                 wire.listen_keys()
+            if "On_Key_Down" in wire.handlers:
+                self._wire_block_keys(entry)
             self._ensure_click(entry)
             if entry.typed.kind == FIELD:
                 self._wire_field(entry)
             if entry.typed.owner and not entry.typed.part and _pointer_parts(entry):
                 self._wire_parts(entry)
+
+    def _wire_block_keys(self, entry: Entry) -> None:
+        """A block's ``On_Key_Down``: the key that reaches the focused block, with its modifiers
+        and the block's rectangle (a handler opens a menu beside it). The handler is looked up
+        when the key arrives, so a reload that changes it needs no new listener."""
+        assert entry.wire is not None and entry.tre is not None
+        wire, tre = entry.wire, entry.tre
+
+        def hook(event: Any) -> None:
+            handler = wire.handlers.get("On_Key_Down")
+            if handler is None or self.sink is None:
+                return
+            self.sink(handler, "On_Key_Down", Raised(event, self.window, layout_rect(tre)))
+
+        wire.key_hook = hook
 
     def _wire_parts(self, root: Entry) -> None:
         """A module's root block passes its hover and press on to the module's parts that have
