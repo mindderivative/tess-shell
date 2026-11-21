@@ -1,0 +1,65 @@
+---
+TDL: 0.2
+Shell: 0.1
+Name: Workspace_Item
+---
+
+# One button of the Workspaces row (Workspaces Module): a virtual desktop's number or name. The
+# Workspaces module calls it in a `For` and writes the click handler on the call, so it runs the
+# module's `switch` action. It is its own module so that the tooltip, which belongs to the control
+# and not to the row (Tooltip rule), can be written on the button: a Tooltip inside a `For` is not
+# built, a module called in a `For` is. The current desktop takes the `:selected` look (the
+# stylesheet's `.workspace:selected`).
+Module {
+    Style: Workspace_Item_Style.tdl
+
+    Params {
+        # the text of the button: the desktop's number or its name
+        face { Type: string, Default: "" }
+        # the accessible name and the tooltip: "Desktop 2, Name"
+        label { Type: string, Default: "" }
+        current { Type: boolean, Default: false }
+    }
+
+    FlexBox {
+        Name: Root
+        Class: workspace
+        Min_Width: 28
+        Max_Width: 160
+        Align_Items: CENTER
+        Justify_Content: CENTER
+        Role: BUTTON
+        Label: <| params.label |>
+        Selected: <| params.current |>
+        Tooltip {
+            Alignment: CENTER
+            Gap: 4
+            Style {
+                Background: $color.surface_raised
+                Corner_Radius: 8
+                Elevation: 20%
+            }
+            Children {
+                FlexBox {
+                    Padding: [12, 8, 12, 8]
+                    Children {
+                        Text {
+                            Text: <| params.label |>
+                            Width: AUTO
+                            Height: AUTO
+                            Font_Size: 14
+                            Foreground: $color.on_surface
+                        }
+                    }
+                }
+            }
+        }
+        Children {
+            Text {
+                Name: Face
+                Class: workspace_text
+                Text: <| params.face |>
+            }
+        }
+    }
+}

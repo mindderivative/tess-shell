@@ -61,6 +61,7 @@ STANDARD = (
     "TextEditor",
     "Battery",
     "Workspaces",
+    "Workspace_Item",
     "Network",
     "Media",
     "Audio",

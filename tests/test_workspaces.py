@@ -429,3 +429,42 @@ def test_the_mark_follows_a_kwin_that_only_emits_current_changed() -> None:
             first, _ = buttons(w)
             w.window.simulate("click", node=first)  # back to the first: must reach KWin
             assert d.settle(w, lambda: obj.sets == [("current", ids[0])])
+
+
+def test_each_desktop_button_has_its_tooltip_on_the_button_itself() -> None:
+    """TSH-007: the tooltip is on the control (a Workspace_Item called in the For), role BUTTON,
+    carrying the full name; the row is a plain group with no tooltip (Tooltip > AC-TIP-1)."""
+    import tempfile
+    from pathlib import Path
+
+    from tess_shell.binder import model as m
+    from tess_shell.config.settings import load_settings
+    from tess_shell.scanner import scan
+    from tests.shell_samples import write_example
+
+    folder = Path(tempfile.mkdtemp())
+    write_example(folder)
+    settings, _ = load_settings(folder)
+    assert settings is not None
+    modules = scan(settings, folder).modules
+
+    def walk(nodes: object) -> list[object]:
+        out: list[object] = []
+        for n in nodes or ():  # type: ignore[attr-defined]
+            out.append(n)
+            for attr in ("children", "body", "else_body"):
+                out += walk(getattr(n, attr, ()))
+        return out
+
+    item = next(
+        n
+        for n in walk(modules["Workspace_Item"].definition.children)
+        if getattr(n, "name", "") == "Root"
+    )
+    assert getattr(item, "tooltip", None) is not None
+    role = item.props["Role"]  # type: ignore[attr-defined]
+    assert isinstance(role, m.Enum) and role.name == "BUTTON"
+    row = [
+        n for n in walk(modules["Workspaces"].definition.children) if getattr(n, "tooltip", None)
+    ]
+    assert row == []
