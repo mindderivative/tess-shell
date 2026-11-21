@@ -328,7 +328,7 @@ These are the keys a `Style { }` block, a style key written directly on a block,
 | `Font_Family` | font | Text, Marquee, TextField | color, motion | A font family name, or a list of them in the order of fallback. |
 | `Font_Size` | number | Text, Marquee, TextField | type.*.font_size | The size of the type, above 0. |
 | `Font_Weight` | whole number | Text, Marquee, TextField | type.*.font_weight | The weight of the type as a whole number, 400 regular, 700 bold. |
-| `Line_Height` | number | Text, Marquee | type.*.line_height | The height of one line, above 0. |
+| `Line_Height` | number | Text, Marquee | type.*.line_height | The height of one line in pixels, above 0 (tre takes a multiple of the font size; the binder divides). |
 | `Text_Align` | `START` `CENTER` `END` | Text |  | How a line sits in the text's box: START, CENTER or END. |
 | `Overflow` | `CLIP` `ELLIPSIS` | Text, TextField |  | What happens to text that does not fit: CLIP cuts it, ELLIPSIS ends it with dots (a TextField also has SCROLL). |
 | `Fill` | colour | Rectangle, Circle, Path | color | The fill of the shape, a colour or a theme token. |
