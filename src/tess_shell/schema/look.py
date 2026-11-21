@@ -50,6 +50,8 @@ def token_kind(path: tuple[str, ...]) -> str | None:
     group, leaf = path[0], path[-1]
     if group == "color":
         return "color"
+    if path == ("density", "field_padding"):
+        return "sides"
     if group in ("shape", "space", "density"):
         return "number"
     if group == "type":

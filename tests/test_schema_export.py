@@ -221,7 +221,7 @@ def every_key() -> list[tuple[str, str, str, dict[str, Any]]]:
 
 
 def test_top_level_shape() -> None:
-    assert D["schema_version"] == "1.22"
+    assert D["schema_version"] == "1.24"
     assert D["shell_version"]
     assert list(D) == [
         "schema_version",
@@ -822,7 +822,7 @@ def test_the_command_prints_valid_json(capsys: pytest.CaptureFixture[str]) -> No
 
 def test_the_command_takes_json_before_the_command_too(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--json", "schema"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.22"
+    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.24"
 
 
 def test_out_writes_the_file_and_prints_nothing(
@@ -866,6 +866,8 @@ def written(value: tess_dl.Value) -> str:
     match value:
         case tess_dl.String() | tess_dl.Number() | tess_dl.Percent() | tess_dl.Word():
             return value.text
+        case tess_dl.List():
+            return "[" + ", ".join(written(i) for i in value.items) + "]"
     raise AssertionError(value)
 
 
