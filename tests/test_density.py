@@ -56,6 +56,34 @@ def test_a_surface_with_its_own_density_reads_that_level_and_the_others_the_shel
         assert own == [28]
 
 
+FIELD_SHELL = (
+    "Shell { Monitor { Name: Main, Index: 0, Children { Bar { Name: Top_Bar, Edge: TOP, "
+    "Width: EXPAND, Height: 120, Children { FlexBox { Align_Items: START, Children { "
+    "TextField { Name: F, Width: 200 } } } } } } } }"
+)
+
+
+@pytest.mark.parametrize(("level", "height", "side"), [("default", 40, 12), ("compact", 32, 8)])
+def test_a_text_field_is_as_high_as_the_level_and_takes_its_padding_from_the_token(
+    level: str, height: int, side: int
+) -> None:
+    with running("", body=FIELD_SHELL, appearance=Appearance(density=level)) as w:  # type: ignore[arg-type]
+        field = next(n for k, n in w.view.nodes.items() if k.endswith("F"))
+        assert field.get("layout_height") == height
+        padding = field.get("padding")  # a number when the four sides are equal
+        assert (padding if isinstance(padding, float) else padding[0]) == side
+
+
+def test_a_dense_field_is_28_high_and_a_field_written_with_a_padding_keeps_it() -> None:
+    with running("", body=FIELD_SHELL, appearance=Appearance(density="dense")) as w:
+        field = next(n for k, n in w.view.nodes.items() if k.endswith("F"))
+        assert field.get("layout_height") == 28
+    own = FIELD_SHELL.replace("Width: 200", "Width: 200, Padding: 3")
+    with running("", body=own, appearance=Appearance(density="default")) as w:
+        field = next(n for k, n in w.view.nodes.items() if k.endswith("F"))
+        assert field.get("padding") == 3
+
+
 @pytest.mark.parametrize(
     ("level", "item", "icon"), [("default", 32, 20), ("compact", 24, 18), ("dense", 24, 18)]
 )
