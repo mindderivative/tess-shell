@@ -30,13 +30,13 @@ from tests.perf.proto import rig as R
 from tests.sway import SwayUnavailable
 from tests.test_module_process import canned, rep, verdict
 
-# the 22 module files the default shell loads, and the ones with no Python of their own by each rule
+# the 23 module files the default shell loads, and the ones with no Python of their own by each rule
 DEFAULT_SHELL = {
     "Applications", "Audio", "Audio_Outputs", "Battery", "Button", "Clock", "Icon", "Image",
     "List", "Marquee_Text", "Media", "Menu", "MenuItem", "Network", "Slider", "Task_Item",
-    "Tasks", "TextInput", "Tray", "Tray_Item", "Tray_Menu", "Workspaces",
+    "Tasks", "TextInput", "Tray", "Tray_Item", "Tray_Menu", "Workspaces", "Workspace_Item",
 }  # fmt: skip
-STAYS = {"strict": {"Menu", "Task_Item", "Tray_Item"}}
+STAYS = {"strict": {"Menu", "Task_Item", "Tray_Item", "Workspace_Item"}}
 STAYS["validate"] = STAYS["strict"] | {
     "Button", "Icon", "Image", "List", "Marquee_Text", "MenuItem", "Slider", "TextInput",
 }  # fmt: skip
@@ -398,11 +398,11 @@ def test_the_report_of_a_lean_run_has_the_rows_the_rule_and_the_module_counts() 
     assert "B was not measured in this run" in text and "moves to L" in text
     assert "## Which lean B: L1 or L2" in text and "## Which B: B1 or B2" not in text
     assert "**This run used the rule `strict`**" in text
-    assert "**22** module files: **19 run in a process** and **3 stay in the shell**" in text
+    assert "**23** module files: **19 run in a process** and **4 stay in the shell**" in text
     # the maintainer expected 13 staying and 9 in processes
-    assert "this run gives 3 staying and 19 in processes" in text
-    assert "`strict`: 19 in processes, 3 in the shell" in text
-    assert "`validate`: 11 in processes, 11 in the shell" in text
+    assert "this run gives 4 staying and 19 in processes" in text
+    assert "`strict`: 19 in processes, 4 in the shell" in text
+    assert "`validate`: 11 in processes, 12 in the shell" in text
     assert "| Menu | shell |" in text and "| Clock | process |" in text
     assert "### The lean B only" in text and "--postures=A,L1,L2" in text
     assert "Run time of this measurement: 10.0 minutes." in text

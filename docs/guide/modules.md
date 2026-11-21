@@ -41,6 +41,7 @@ Each section below says what the module shows, lists its parameters (generated f
 | [Tray_Item](#tray_item) | One icon of the Tray, with a tooltip |
 | [Tray_Menu](#tray_menu) | The content of the Popups that draw a tray item's menu, one level of it |
 | [Volume_OSD](#volume_osd) | The volume on-screen display: |
+| [Workspace_Item](#workspace_item) | One button of the Workspaces row: |
 | [Workspaces](#workspaces) | The virtual desktops as buttons: |
 
 <!-- END generated: module-index -->
@@ -1495,6 +1496,23 @@ Shell {
 ```
 
 <!-- END generated: example-set:05-modules/workspaces -->
+
+### Workspace_Item
+
+The button of one desktop in the Workspaces row. It carries the tooltip (the desktop's full name), because a tooltip belongs to the control and a tooltip written inside a `For` is not built; the Workspaces module calls it in its `For`.
+
+<!-- BEGIN generated: module:Workspace_Item -->
+One button of the Workspaces row: a desktop's number or name.
+
+| Param | Type | Default | What it does |
+|---|---|---|---|
+| `face` | string | `""` | The text of the button: the desktop's number or its name. |
+| `label` | string | `""` | The name assistive technology reads aloud and the tooltip text. |
+| `current` | boolean | `false` | The desktop is the current one: the block takes the :selected look. |
+
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
+
+<!-- END generated: module:Workspace_Item -->
 
 ## Network
 

@@ -12,8 +12,6 @@ Name: Workspaces
 # module is hidden: its root is `Visible: false`, which takes no space in the Bar (no Spacing
 # beside it).
 Module {
-    Style: Workspaces_Style.tdl
-
     Params {
         # name shows each desktop's name (its number when it has none), number shows 1, 2, 3
         label { Type: string, Default: name }
@@ -29,24 +27,11 @@ Module {
         Spacing: 4
         Children {
             For desktop In <| desktops |> Key <| desktop.id |> {
-                FlexBox {
-                    Name: Desktop
-                    Class: workspace
-                    Min_Width: 28
-                    Max_Width: 160
-                    Align_Items: CENTER
-                    Justify_Content: CENTER
-                    Role: BUTTON
-                    Label: <| "Desktop " + str(desktop.number) + ", " + desktop.label |>
-                    Selected: <| desktop.current |>
+                Workspace_Item {
+                    face: <| str(desktop.number) if params.label == "number" else desktop.label |>
+                    label: <| "Desktop " + str(desktop.number) + ", " + desktop.label |>
+                    current: <| desktop.current |>
                     On_Click { Action: switch, Id: <| desktop.id |> }
-                    Children {
-                        Text {
-                            Name: Face
-                            Class: workspace_text
-                            Text: <| str(desktop.number) if params.label == "number" else desktop.label |>
-                        }
-                    }
                 }
             }
         }
