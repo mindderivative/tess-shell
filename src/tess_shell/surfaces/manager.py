@@ -1405,7 +1405,7 @@ class SurfaceManager:
         except (ValueError, RuntimeError) as exc:  # no compositor, or the engine refuses
             logger.warning(f"Panel {s.name}: no click-away closing: {exc}")
             return
-        catcher.root.set(fill=(0, 0, 0, 0))
+        catcher.root.set(fill=(0, 0, 0, 0), a11y_hidden=True)  # nothing for a screen reader
 
         def pressed(_: Any) -> None:
             if not s.hidden and s.window is window:
