@@ -18,7 +18,6 @@ import tess_utils
 
 from tess_shell.binder.images import IMAGES
 from tess_shell.binder.model import (
-    TAB_INDEX_MAX,
     Auto,
     BindError,
     Bool,
@@ -58,12 +57,12 @@ def _num(x: float) -> int | float:
 
 
 def tab_index(value: Value, names: tuple[str, ...], choices: tuple[str, ...] = ()) -> Converted:
-    """``Tab_Index``: a whole number from 0 to 2 147 483 647. It gives tre nothing of its own: the
-    order is the whole tree's, so the view ranks the blocks that have one (``View.reindex``)."""
+    """``Tab_Index``: 0, which changes nothing (the order is the file's; the loader refuses
+    anything above 0)."""
     if isinstance(value, Number) and isinstance(value.value, int):
-        if 0 <= value.value <= TAB_INDEX_MAX:
+        if value.value == 0:
             return {}
-        raise BindError(f"must be from 0 to {TAB_INDEX_MAX}", value.origin)
+        raise BindError("must be 0: the order of the blocks is the order of the file", value.origin)
     raise _bad(value, "a whole number")
 
 

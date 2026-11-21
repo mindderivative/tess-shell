@@ -160,18 +160,18 @@ def test_a_click_on_a_widget_focuses_it_without_a_ring_and_the_keyboard_moves_on
         assert not ring_on(w.view, one, w.manager.look)
 
 
-def test_the_tab_index_of_a_module_call_orders_the_stops_of_the_real_shell() -> None:
+def test_the_stops_of_the_real_shell_are_in_the_order_of_the_file() -> None:
     body = (
-        'Button { Name: Last, Text: "l" } Toggle { Name: Second, Label: s, Tab_Index: 2 } '
-        "Checkbox { Name: First, Text: f, Tab_Index: 1 } Slider { Name: Third, Tab_Index: 2 } "
+        'Button { Name: Last, Text: "l" } Toggle { Name: Second, Label: s } '
+        "Checkbox { Name: First, Text: f } Slider { Name: Third } "
         'Button { Name: Also_Last, Text: "a" }'
     )
     with running(body) as w:
-        order = ["First", "Second", "Third", "Last", "Also_Last"]
+        order = ["Last", "Second", "First", "Third", "Also_Last"]
         assert cycle(w.window, w.view) == order  # from a fresh window: the first stop first
         # the cycle ended on its first stop again: it wrapped
         assert tab(w.window, w.view, shift=True) == "Also_Last"  # Shift+Tab wraps backwards too
-        assert tab(w.window, w.view, shift=True) == "Last"
+        assert tab(w.window, w.view, shift=True) == "Third"
 
 
 def test_a_single_line_text_input_gives_tab_to_the_next_stop_and_takes_no_tab_character() -> None:
@@ -395,12 +395,10 @@ def test_a_hot_reload_keeps_focus_on_the_block_that_is_still_there_and_reorders_
     tab(s.window, s.view)  # A
     tab(s.window, s.view)  # B
     assert focused(s.view) == ["B"]
-    button = "Rectangle {{ Name: {}, Width: 20, Height: 20, Role: BUTTON, Tab_Index: {} }}"
+    button = "Rectangle {{ Name: {}, Width: 20, Height: 20, Role: BUTTON }}"
     reload(
         manager,
-        surfaces_text(
-            bar_body=button.format("A", 3) + button.format("B", 2) + button.format("C", 1)
-        ),
+        surfaces_text(bar_body=button.format("C") + button.format("B") + button.format("A")),
     )
     s = named(manager, "Top_Bar")
     assert focused(s.view) == ["B"]  # the same block, by its Name

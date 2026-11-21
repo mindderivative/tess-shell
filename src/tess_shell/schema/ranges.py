@@ -42,15 +42,12 @@ def plain(n: float) -> str:
     return str(int(n)) if float(n).is_integer() else f"{n:g}"
 
 
-# the largest ``Tab_Index``: the largest signed 32-bit integer (Focus and Keyboard > Tab Order)
-TAB_INDEX_MAX = 2_147_483_647
-
 # the range of every value of a kind (the loader's kind words, ``schema.values``)
 KIND_RANGES: dict[str, Range] = {
     "positive": Range(0, low_open=True),
     "max_length": Range(0),
     "lines": Range(1),
-    "tab_index": Range(0, TAB_INDEX_MAX),
+    "tab_index": Range(0, 0),  # only 0: a positive one is its own finding (values.check_range)
     "duration": Range(0),
     "pause": Range(0),
     "unit": Range(0, 1),

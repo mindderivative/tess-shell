@@ -1,16 +1,13 @@
 """Which blocks take keyboard focus, and in what order (Focus and Keyboard).
 
 Pure functions over :mod:`tess_shell.binder.model`. tre does the traversing: a node with
-``focusable`` is a Tab stop, Tab and Shift+Tab walk the stops (the first positive ``tab_index``
-ascending, then the rest in tree order, and round again), and ``focus_visible`` on its ``focus``
-event says whether the keyboard moved it. What is the shell's is the data: which blocks are
-focusable (:func:`default_focusable`), where a ``Tab_Index`` puts a block (:func:`tab_order`) and
-which blocks show a ring (:func:`takes_ring`).
+``focusable`` is a Tab stop, Tab and Shift+Tab walk the stops in tree order and round again), and
+``focus_visible`` on its ``focus`` event says whether the keyboard moved it. What is the shell's is
+the data: which blocks are focusable (:func:`default_focusable`) and which blocks show a ring
+(:func:`takes_ring`). The order is the file's: no ``Tab_Index`` above 0 reorders it.
 """
 
 from __future__ import annotations
-
-from collections.abc import Sequence
 
 from tess_shell.binder.model import FIELD, FIELD_INPUT, Bool, Enum, Node
 
@@ -65,10 +62,3 @@ def takes_ring(node: Node) -> bool:
     if isinstance(flag, Bool):
         return flag.value
     return default_focusable(node)
-
-
-def tab_order(indices: Sequence[int | None]) -> list[int]:
-    """The positions of ``indices`` (given in document order) in Tab order: ascending ``Tab_Index``,
-    equal indices in document order, and the items with no ``Tab_Index`` after all the others, in
-    document order (Focus and Keyboard > Tab Order)."""
-    return sorted(range(len(indices)), key=lambda i: (indices[i] is None, indices[i] or 0, i))
