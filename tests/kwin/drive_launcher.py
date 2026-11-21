@@ -322,6 +322,23 @@ def panel() -> int:
     return int(report.code)
 
 
+def _inside(run: d.ShellRun) -> dict[str, tuple[int, int]]:
+    """Points inside the Panel's body. The Launcher is content-sized (M7i): its last ``configured``
+    size says how tall it is, it is centred on the 1280 by 720 output, and the surface has the
+    shadow's margin (8 above, 14 below, 11 at each side) around the body."""
+    found = run.grep(r"Panel Launcher on \S+ configured \d+x\d+")[-1]
+    match = re.search(r"configured (\d+)x(\d+)", found)
+    assert match is not None
+    width, height = int(match.group(1)), int(match.group(2))
+    left, top = 640 - width // 2 + 11, 360 - height // 2 + 8
+    body_w, body_h = width - 22, height - 22
+    return {
+        "the search field": (left + body_w // 2, top + 12 + 15),
+        "the Panel's top padding": (left + 14, top + 14),
+        "the Panel's left padding beside the list": (left + 5, top + body_h // 2),
+    }
+
+
 def _typed_more(run: d.ShellRun, keys: d.Input) -> bool:
     """One more letter after "mark": the module searches "marke" (the field holds the text)."""
     mark = run.mark()
@@ -335,11 +352,6 @@ def clickaway() -> int:
     report = d.Report()
     run = start("cfg")
     keys = d.Input(TRE_PY, ENV)
-    inside = {
-        "the search field": (640, 190),
-        "the Panel's padding": (412, 172),
-        "the empty body below the list": (640, 520),
-    }
     try:
         report.check("1 the Panel opens", open_panel(run), run.tail())
         report.check(
@@ -352,7 +364,7 @@ def clickaway() -> int:
             type_and_see(run, keys, "mark", 2),
             run.tail(),
         )
-        for n, (what, (x, y)) in enumerate(inside.items(), start=4):
+        for n, (what, (x, y)) in enumerate(_inside(run).items(), start=4):
             mark = run.mark()
             keys.click(x, y)
             time.sleep(1.0)  # a negative: there is nothing to wait for when it must NOT close
