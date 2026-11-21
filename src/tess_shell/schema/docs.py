@@ -355,9 +355,13 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     ("Frame", "Opacity"): "How opaque the ring is painted, from 0 to 1.",
     ("Frame", "Border_Width"): "The width of the inner border: shorthand for Inner_Border.",
     ("Frame", "Border_Color"): "The colour of the inner border: shorthand for Inner_Border.",
-    ("Frame", "Elevation"): "A shadow for the Frame. Not built.",
-    ("Frame", "Shadows"): "Shadows for the Frame. Not built.",
-    ("Frame", "Shadow_Bleed"): "The margin for a shadow. Not built.",
+    ("Frame", "Elevation"): "The shadow the ring casts into the opening: a percentage of the "
+    "theme's largest shadow or a level (LEVEL_1 to LEVEL_5 once the theme has them). A ring "
+    "has no direction, so the shadow's x and y are not used. Drawn by the ring shader only.",
+    ("Frame", "Shadows"): "Shadows the ring casts into the opening (blur and spread, the first on "
+    "top, up to four; x and y are not used). Drawn by the ring shader only.",
+    ("Frame", "Shadow_Bleed"): "Accepted and without effect: the painter covers the output, so a "
+    "Frame's shadow needs no transparent margin.",
     ("Edge", "Name"): "The target of Show, Hide and Toggle; only a strip with a Peek has one.",
     ("Edge", "Thickness"): "The thickness of this side's strip in pixels, replacing the "
     "Frame's for this side (the full extent of a strip with a Peek).",

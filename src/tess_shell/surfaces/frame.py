@@ -50,6 +50,7 @@ from tess_shell.binder.model import (
     Seq,
     Value,
 )
+from tess_shell.binder.shadow import DEFAULT_MAX, style_shadows
 from tess_shell.model.expand import Expanded
 from tess_shell.model.field import describe_text_field, first_text_field, holds_text_field
 from tess_shell.model.look import Look, resolve_style
@@ -64,7 +65,13 @@ from tess_shell.schema.model import (
 )
 from tess_shell.surfaces import handle as handles
 from tess_shell.surfaces.bar import Geometry
-from tess_shell.surfaces.frame_shader import MAX_BODIES, LinearJoin, RingShader, too_large
+from tess_shell.surfaces.frame_shader import (
+    MAX_BODIES,
+    MAX_SHADOWS,
+    LinearJoin,
+    RingShader,
+    too_large,
+)
 from tess_shell.surfaces.join import Join, JoinRun, Seekable, make_join
 from tess_shell.surfaces.panel import px_size
 from tess_shell.surfaces.ring import MeldSpec, Rect4, Ring, RingSpec, Sides, padded, ring
@@ -106,6 +113,9 @@ class Paint:
     outer: RGBA | None = None
     inner: RGBA | None = None
     opacity: float = 1.0
+    # the ring's shadow, first on top: (colour, blur, spread). A ring has no direction, so the
+    # shadows' x and y are not used (Frame > Elevation)
+    shadows: tuple[tuple[RGBA, float, float], ...] = ()
 
 
 def _rgba(value: Value | None) -> RGBA | None:
@@ -127,8 +137,17 @@ def resolve_paint(frame: FrameDef, look: Look | None) -> tuple[Paint, list[BindE
         return _rgba(got.get(f"{label}.Color"))
 
     opacity = style.get("Opacity")
+    lit = style_shadows(style, (look.max_shadows if look else None) or DEFAULT_MAX)
     return (
         Paint(
+            shadows=tuple(
+                (
+                    convert.color(s.color, ("fill",))["fill"],
+                    max(float(s.blur), 0.0),
+                    float(s.spread),
+                )
+                for s in lit.items
+            ),
             fill=_rgba(style.get("Background")),
             outer=border(frame.outer_border, "Outer_Border"),
             inner=border(frame.inner_border, "Inner_Border"),
@@ -1042,6 +1061,8 @@ class Frames:
                 (shape.inner_border, ghost(paint.inner)),
             )
             key = (st.size, paint.opacity, bands)
+            if paint.shadows:
+                self._warn_shadow(st)
             if key != st.drawn:
                 for node, (data, color) in zip(st.nodes, bands, strict=True):
                     props: dict[str, Any] = {
@@ -1106,6 +1127,18 @@ class Frames:
                 f"{reason}"
             )
 
+    def _warn_shadow(self, st: FrameState) -> None:
+        """A Frame drawn with paths has no shadow: tre's shadow of a path with a hole is the
+        shadow of its outer contour (a ring would be filled in), so only the shader draws it."""
+        key = f"{st.plan.key} shadow"
+        if key not in self._warned:
+            self._warned.add(key)
+            logger.warning(
+                f"Frame {st.plan.where}: its Elevation or Shadows are drawn by the ring shader "
+                "only (Debug { Frame_Blend: LINEAR } and a Frame it can draw): this Frame is drawn "
+                "with paths, so it has no shadow"
+            )
+
     def _blend(self, st: FrameState) -> None:
         """Bring the Frame to what ``Debug { Frame_Blend }`` and the plan allow: make the shader
         (and give every melded host its join) or let it go (and give the hosts the join of
@@ -1159,7 +1192,14 @@ class Frames:
                 st.drawn = None
             return
         paint = st.plan.paint
-        linear.draw(st.size, full, names, moving, (paint.outer, paint.fill, paint.inner))
+        linear.draw(
+            st.size,
+            full,
+            names,
+            moving,
+            (paint.outer, paint.fill, paint.inner),
+            paint.shadows[:MAX_SHADOWS],
+        )
         # ``input_region="auto"`` counts a path with a fill and takes no account of a shader node's
         # ``hit_path``: without one the painter has an empty input region and the compositor never
         # gives it the pointer (no hover, click or drag, even though the headless hit test, which
