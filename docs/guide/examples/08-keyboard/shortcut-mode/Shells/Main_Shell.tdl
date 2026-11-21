@@ -3,8 +3,9 @@ TDL: 0.2
 Name: Main_Shell
 ---
 # Shortcut mode walks the surfaces with the keyboard. Each surface that holds something to focus
-# takes the keyboard on demand and orders itself with Tab_Index.
+# takes the keyboard on demand; Focus_Order says which one shortcut mode visits first.
 Shell {
+    Focus_Order: [Top_Bar, Notes]
     Monitor {
         Name: Main
         Index: default
@@ -15,7 +16,6 @@ Shell {
                 Width: EXPAND
                 Height: 36
                 Keyboard: ON_DEMAND
-                Tab_Index: 1
                 Style { Background: $color.surface }
                 Children {
                     FlexBox {
@@ -39,7 +39,6 @@ Shell {
                 Width: 280
                 Height: 120
                 Keyboard: ON_DEMAND
-                Tab_Index: 2
                 Style { Background: $color.surface_raised, Corner_Radius: 8 }
                 Children {
                     FlexBox {

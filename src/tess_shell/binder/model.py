@@ -193,8 +193,6 @@ STATES = ("checked", "selected", "hovered", "pressed", "focused", "disabled")
 # Toggle that is on, the chosen entry of a list), ``focused`` is keyboard focus, ``disabled`` is
 # ``Enabled: false``
 FLAG_STATES = ("checked", "selected", "focused", "disabled")
-# the largest ``Tab_Index``: the largest signed 32-bit integer (Focus and Keyboard > Tab Order)
-TAB_INDEX_MAX = 2_147_483_647
 
 # A TextField is built as four nodes (``model.field``): its box, a line box in the box's cell, a
 # text in the line that gives it the height of the field's lines, and the text input over the

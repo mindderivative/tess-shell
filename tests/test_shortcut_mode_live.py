@@ -52,11 +52,11 @@ class Starter(Module):
             self.ctx.focus.set_mode("F", True)
 """
 BODY = (
-    "Shell { Monitor { Name: Main, Index: 0, Children {\n"
-    '  Frame { Name: F, Thickness: 6, Tab_Index: 1, Style { Background: "#202020" } }\n'
-    "  Panel { Name: Dock, Anchor: [BOTTOM, LEFT], Width: 120, Height: 60, Tab_Index: 2,\n"
+    "Shell { Focus_Order: [F, Dock, Top_Bar]\n  Monitor { Name: Main, Index: 0, Children {\n"
+    '  Frame { Name: F, Thickness: 6, Style { Background: "#202020" } }\n'
+    "  Panel { Name: Dock, Anchor: [BOTTOM, LEFT], Width: 120, Height: 60,\n"
     "    Children { Rectangle { Name: One, Width: 20, Height: 20, Focusable: true } } }\n"
-    "  Bar { Name: Top_Bar, Edge: TOP, Width: EXPAND, Height: 24, Tab_Index: 3,\n"
+    "  Bar { Name: Top_Bar, Edge: TOP, Width: EXPAND, Height: 24,\n"
     "    Children { Starter { } } }\n"
     "} } }\n"
 )
