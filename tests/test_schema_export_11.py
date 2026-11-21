@@ -545,6 +545,7 @@ def test_the_events_a_call_may_handle_are_what_the_loader_allows() -> None:
         "On_Secondary_Click",
         "On_Middle_Click",
         "On_Scroll",
+        "On_Key_Down",  # a block with the keyboard raises it (UX B2)
     ]
     assert (
         "On_Changed" in mods["Toggle"]["events"] and "On_Released" not in mods["Toggle"]["events"]
