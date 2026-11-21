@@ -38,7 +38,7 @@ tags: [moc, roadmap, brief]
 | M7a2 process per module | Decided posture C and built (`tess-shell` PR #91, merged 2026-11-19): user module files run in a child process each, shipped modules in the shell; schema 1.12; the new security statement is in the README and the guide. Only the full measurement of the product (cell P, about 80 minutes, idle machine) is left ([Security Model](../60%20Quality/Security%20Model.md), [Module Process Test](../60%20Quality/Module%20Process%20Test.md)) |
 | M7c idle budgets | Merged (PR #79): the real reading and the new budget values. B18 bind cost fixed to about 16 ms under load (PR #88), re-read on an idle machine pending; Popup retention fixed (PR #86); the reload leak fixed (PR #83) ([Performance Budgets](../60%20Quality/Performance%20Budgets.md)) |
 | M7i, M7j | Wait for tre's release 0.6.10, which carries 022 to 027 (maintainer, 2026-11-19). Also after 0.6.10: `ctx.announce` goes through one window ([Accessibility](../60%20Quality/Accessibility.md), maintainer 2026-11-19) |
-| M7k click-away | Started from tre's answer to 024 |
+| M7k click-away | Merged (`tess-shell` PR #108, faf4e05, 2026-11-20) but NOT verified: the maintainer's KWin hand check failed (no typing in the field, any click off the field closed it, black text on dark); the code session is fixing it (M7 Build Log) |
 
 ## State this plan starts from
 
