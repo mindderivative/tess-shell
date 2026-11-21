@@ -46,6 +46,14 @@ class Look:
         token = self.tokens.get("elevation.max")
         return token.value if token is not None and isinstance(token.value, m.Shadows) else None
 
+    def level_shadows(self, level: str) -> m.Shadows | None:
+        """The shadows of ``LEVEL_0`` to ``LEVEL_5``: none for 0, else the theme's token
+        ``elevation.level_n``; ``None`` when the theme and the Default theme lack it."""
+        if level == "LEVEL_0":
+            return m.Shadows(())
+        token = self.tokens.get(f"elevation.{level.lower()}")
+        return token.value if token is not None and isinstance(token.value, m.Shadows) else None
+
     def with_appearance(self, appearance: Appearance) -> Look:
         """The same theme and rules for a new light or dark setting, accent or motion flag."""
         appearance = dataclasses.replace(appearance, density=self.appearance.density)
@@ -133,6 +141,20 @@ def resolve_style(
                 if report is not None:
                     report.append(m.BindError(f"{key}: {exc.message}", value.origin, exc.hint))
                 continue
+        if key == "Elevation" and isinstance(value, m.Enum) and look is not None:
+            shadows = look.level_shadows(value.name)
+            if shadows is None:
+                if report is not None:
+                    report.append(
+                        m.BindError(
+                            f"Elevation: the theme has no shadows for {value.name}",
+                            value.origin,
+                            "a theme's Elevation group holds Level_1 to Level_5",
+                        )
+                    )
+                continue
+            out["Shadows"] = out.get("Shadows") or shadows
+            continue
         if key == "Elevation" and isinstance(value, m.Percent) and look is not None:
             top = look.max_shadows
             if top is not None:  # the theme's own Max replaces the built-in one

@@ -87,8 +87,9 @@ KEY_DOCS: dict[str, str] = {
     "Border_Color": "The colour of the border line, a colour or a theme token.",
     "Corner_Radius": "The radius of the corners: one number, or four from the top-left corner "
     "clockwise.",
-    "Elevation": "How high the block floats, as a percentage of the theme's largest shadow; 0% is "
-    "no shadow.",
+    "Elevation": "How high the block floats: a percentage of the theme's largest shadow (0% is no "
+    "shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is "
+    "LEVEL_2, a dialog LEVEL_3).",
     "Shadows": "A list of Shadow blocks, the first on top; it replaces Elevation when both are "
     "written.",
     "Shadow_Bleed": "The transparent margin a surface keeps around its body for the shadow: AUTO "
@@ -781,6 +782,11 @@ TOKEN_DOCS: dict[str, str] = {
     "density.chevron_box": "The size of a tree's chevron box: 24, 20 or 16.",
     "elevation.reach": "How far the largest shadow reaches, in pixels.",
     "elevation.max": "The shadow list at 100% elevation; a smaller Elevation scales it.",
+    "elevation.level_1": "The shadows of Elevation: LEVEL_1 (1 dp): a key and an ambient shadow.",
+    "elevation.level_2": "The shadows of Elevation: LEVEL_2 (3 dp): a menu, a tooltip, a popup.",
+    "elevation.level_3": "The shadows of Elevation: LEVEL_3 (6 dp): a dialog.",
+    "elevation.level_4": "The shadows of Elevation: LEVEL_4 (8 dp).",
+    "elevation.level_5": "The shadows of Elevation: LEVEL_5 (12 dp).",
     "motion.duration.short": "A short animation, in milliseconds.",
     "motion.duration.medium": "A medium animation, in milliseconds.",
     "motion.duration.long": "A long animation, in milliseconds.",

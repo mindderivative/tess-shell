@@ -37,7 +37,14 @@ from tess_shell.config.paths import FOLDERS
 from tess_shell.schema import blocks, default_panels, default_popups, docs
 from tess_shell.schema import keys as chords
 from tess_shell.schema.deprecations import mark_schema
-from tess_shell.schema.look import DEFAULT_FONT, STYLE_UNION, SYSTEM_FONT, read_theme, token_kind
+from tess_shell.schema.look import (
+    DEFAULT_FONT,
+    ELEVATION_BLOCKS,
+    STYLE_UNION,
+    SYSTEM_FONT,
+    read_theme,
+    token_kind,
+)
 from tess_shell.schema.look import GROUPS as THEME_GROUPS
 from tess_shell.schema.model import (
     PARAM_TYPES,
@@ -56,9 +63,9 @@ from tess_shell.schema.shell import (
     PEEK_WORDS,
     read_module_params,
 )
-from tess_shell.schema.values import ValueProblem, coerce
+from tess_shell.schema.values import ELEVATION_LEVELS, ValueProblem, coerce
 
-SCHEMA_VERSION = "1.25"
+SCHEMA_VERSION = "1.26"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -307,7 +314,11 @@ def _kind_fields(
         case "enum" | "fit":
             return "enum", {}
         case "elevation":
-            return "percent", {**_bounds(model_kind, rkey), "step": None}
+            return "percent", {
+                **_bounds(model_kind, rkey),
+                "step": None,
+                "words": list(ELEVATION_LEVELS),
+            }
         case "shadows":
             return "shadows", {"block": "Shadows"}
         case "view_box":
@@ -1164,8 +1175,8 @@ def _flatten(
         if isinstance(entry, tess_dl.Property):
             out[".".join((*prefix, entry.key.lower()))] = entry.value
         elif isinstance(entry, tess_dl.Block):
-            if prefix == ("elevation",) and entry.type == "Max":
-                out["elevation.max"] = entry
+            if prefix == ("elevation",) and entry.type in ELEVATION_BLOCKS:
+                out[f"elevation.{entry.type.lower()}"] = entry
             else:
                 _flatten(entry, (*prefix, entry.type.lower()), out)
 
@@ -1182,7 +1193,11 @@ def _tokens() -> dict[str, dict[str, Json]]:
         group, _, name = path.partition(".")
         # the loader checks a token's value only for the groups ``look._kind`` names; the
         # easing words and ``elevation.reach`` it reads as written, so their kind is not known
-        model_kind = "shadows" if path == "elevation.max" else token_kind(tuple(path.split(".")))
+        model_kind = (
+            "shadows"
+            if path.startswith("elevation.") and path != "elevation.reach"
+            else token_kind(tuple(path.split(".")))
+        )
         kind, fields = (
             (None, {}) if model_kind is None else _kind_fields(model_kind, "Theme", name, ())
         )
