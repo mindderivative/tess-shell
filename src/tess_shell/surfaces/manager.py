@@ -514,7 +514,7 @@ def _log_errors(errors: Sequence[BindError]) -> None:
 
 # the window and root-node events the manager listens to on a surface's window
 _WINDOW_EVENTS = ("configure", "closed", "active", "moved", "frame")
-_ROOT_EVENTS = ("key_down", "pointer_down", "pointer_up")
+_ROOT_EVENTS = ("key_down", "pointer_down", "pointer_up", "wheel")
 
 
 def free_window(window: Any) -> None:
@@ -984,9 +984,19 @@ class SurfaceManager:
 
         window.on("closed", closed)
         window.on("active", lambda e, name=bar.name: self._surface_active(name, bool(e.active)))
+
         # the keys of shortcut mode arrive here when this surface has the keyboard (a Panel's own
         # handler, set after this one, asks the mode first)
-        window.root.on("key_down", lambda e: self.mode.on_key(e))
+        def surface_key(e: Any) -> bool:
+            # a tooltip is dismissed by Escape (Tooltip > AC-TIP-5); the key is not consumed. A node
+            # takes ONE tre listener per event, so this is the surface's only key_down listener
+            if getattr(e, "key", None) == "escape":
+                self.popups.dismiss_tooltip("escape")
+            return bool(self.mode.on_key(e))
+
+        window.root.on("key_down", surface_key)
+        # ... and by a scroll (Tooltip > AC-TIP-6)
+        window.root.on("wheel", lambda e: self.popups.dismiss_tooltip("a scroll"))
 
         def pointer_trace(e: Any, n: str = where, k: str = kind, p: str = "") -> None:
             logger.debug(
@@ -1082,6 +1092,8 @@ class SurfaceManager:
         assert s.window is not None
 
         def on_key(event: Any) -> None:
+            if getattr(event, "key", None) == "escape":
+                self.popups.dismiss_tooltip("escape")  # a tooltip goes; the key is still heard
             if self.mode.on_key(event):  # a key of shortcut mode: the mode's, not the Panel's
                 return
             current = s.planned.bar if s.planned else None

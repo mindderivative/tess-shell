@@ -84,7 +84,7 @@ def test_the_defaults_are_below_the_start_with_flip_y_and_slide_x_focused_and_au
     assert (p.attach, p.alignment, p.gap, p.adjust) == ("BOTTOM", "START", 0, ("flip_y", "slide_x"))
     assert (p.width, p.height, p.max_width, p.max_height) == (Auto(), Auto(), 300, 400)
     assert (p.focus, p.tooltip, p.open_on_enter, p.close_on_exit) == (True, False, False, False)
-    assert (p.enter_delay, p.exit_delay) == (500, 200)
+    assert (p.enter_delay, p.exit_delay) == (500, 150)
 
 
 def test_tooltip_true_sets_no_focus_open_on_enter_and_close_on_exit_and_a_key_overrides() -> None:
@@ -819,3 +819,49 @@ def test_a_percentage_max_height_is_a_share_of_the_outputs_height() -> None:
         )
     )
     assert tuple(small.call().window.get("size"))[1] == 50  # content shorter than the share
+
+
+# -- the tooltip rules of ADR-0011 (Tooltip AC-TIP-4 to 7, 10) -----------------------------------
+
+
+@pytest.mark.parametrize("why", ["a press", "escape", "a scroll"])
+def test_a_press_escape_or_scroll_dismisses_a_tooltip_and_it_stays_away_until_the_pointer_returns(
+    why: str,
+) -> None:
+    (r,) = list(rig(TIP, HOT))
+    hover(r)
+    r.advance(101)
+    assert r.popups.current is not None
+    r.popups.dismiss_tooltip(why)  # what the surface's listeners call
+    assert r.popups.current is None
+    r.advance(1000)  # the pointer still rests on the block: it must not come back
+    assert r.popups.current is None
+    hover(r, False)
+    hover(r)  # entered again: the delay runs again
+    r.advance(101)
+    assert r.popups.current is not None
+
+
+def test_a_press_while_the_tooltip_waits_for_its_delay_cancels_it() -> None:
+    (r,) = list(rig(TIP, HOT))
+    hover(r)
+    r.advance(60)
+    r.popups.dismiss_tooltip("a press")
+    r.advance(500)
+    assert r.popups.current is None
+
+
+def test_keyboard_focus_shows_the_tooltip_at_once_and_leaving_the_focus_ends_it() -> None:
+    (r,) = list(rig(TIP, HOT))
+    r.popups.hover(r.bar.key, "Hot", True, immediate=True)  # what the focus hook calls
+    r.advance(1)
+    assert r.popups.current is not None  # no Enter_Delay for a focus
+    r.popups.hover(r.bar.key, "Hot", False, immediate=True)
+    r.advance(51)
+    assert r.popups.current is None
+
+
+def test_the_tooltip_grace_is_150_ms_by_default() -> None:
+    from tess_shell.schema.model import PopupDef
+
+    assert PopupDef.__dataclass_fields__["exit_delay"].default == 150  # ADR-0011

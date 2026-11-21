@@ -219,8 +219,8 @@ def test_a_fake_battery_shows_the_icon_the_number_and_the_tooltip() -> None:
                 False,
                 False,
             )
-            root = [n for k, n in w.view.nodes.items() if k.endswith("/Root")][0]
-            assert root.get("role") == "group"
+            root = [n for k, n in w.view.nodes.items() if k.endswith("/Content")][0]
+            assert root.get("role") == "img"
             assert root.get("label") == "Battery 82 percent, discharging"
             assert [x for x in w.warnings()] == []
 

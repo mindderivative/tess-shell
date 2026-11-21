@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.16",
+  "schema_version": "1.18",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -2390,7 +2390,7 @@
           "kind": "number",
           "choices": null,
           "enum": null,
-          "default": "200",
+          "default": "150",
           "doc": "How long the pointer is away before it closes, in milliseconds.",
           "slot": false,
           "required": false,
@@ -21179,6 +21179,19 @@
           "group": "Content",
           "tokens": [],
           "preferred_tokens": []
+        },
+        "Tooltip_Auto": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "true",
+          "doc": "False turns off the tooltip a Marquee opens by itself with the whole text when it is cut: write it when the Marquee is inside a control that has its own tooltip (one tooltip per control).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Content",
+          "tokens": [],
+          "preferred_tokens": []
         }
       },
       "style": {
@@ -25814,6 +25827,13 @@
           "kind": "string",
           "default": "\"RESTART\"",
           "doc": "RESTART jumps back to the start; BOUNCE scrolls back.",
+          "required": false
+        },
+        "tooltip": {
+          "type": "boolean",
+          "kind": "bool",
+          "default": "true",
+          "doc": "False turns off the tooltip with the whole cut text: write it when the Marquee is inside a control that has its own tooltip.",
           "required": false
         }
       },

@@ -1219,6 +1219,7 @@ A line of text that scrolls when it is wider than its box.
 | `Pause` | number | `1500` | How long the text waits at each end, in milliseconds. |
 | `Direction` | string | `"LEFT"` | The way the text moves: LEFT or RIGHT. |
 | `Loop` | string | `"RESTART"` | RESTART jumps back to the start; BOUNCE scrolls back. |
+| `tooltip` | boolean | `true` | False turns off the tooltip with the whole cut text: write it when the Marquee is inside a control that has its own tooltip. |
 
 Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`.
 

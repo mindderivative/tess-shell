@@ -335,6 +335,10 @@ class _Hover:
     def __init__(self, popups: Popups, surface: str, block: str) -> None:
         self.popups, self.surface, self.block = popups, surface, block
 
+    def focus(self, visible: bool) -> None:
+        """Keyboard focus (with a ring) shows the tooltip at once; losing it ends it."""
+        self.popups.hover(self.surface, self.block, visible, immediate=True)
+
     def enter(self) -> None:
         self.popups.hover(self.surface, self.block, True)
 
@@ -349,6 +353,9 @@ class Popups:
         self._m = manager
         self.plans: dict[tuple[str, str], PopupPlan] = {}
         self.current: OpenPopup | None = None
+        self._suppressed: tuple[str, str] | None = (
+            None  # a tooltip dismissed until the pointer leaves
+        )
         self._meter: Window | None = None
         self._swallow: tuple[str, str] | None = None  # the click that closed a popup is its own
         self._swallow_timer: Any = None
@@ -961,6 +968,7 @@ class Popups:
         surface, not to the popup's grab, so a focused Popup closes here. The ``click`` that
         follows may be the call that opened the popup: it must not open it again."""
         self._swallow = None
+        self.dismiss_tooltip("a press")
         cur = self.current
         if cur is None or not cur.popup.focus:
             return
@@ -973,6 +981,18 @@ class Popups:
             if (cur.parent.window is not None)
             else None
         )
+
+    def dismiss_tooltip(self, why: str) -> None:
+        """A press, Escape or a scroll: the tooltip that is open, or waiting for its delay, goes
+        and does not come back until the pointer has left its block and entered again (Tooltip >
+        AC-TIP-5 to 7, ADR-0011). A focused Popup is not a tooltip and is left alone."""
+        cur = self.current
+        if cur is not None and not cur.popup.focus and cur.block is not None:
+            self._suppressed = (cur.caller.surface, cur.block)
+            self.close(cur, why)
+        elif self._enter_timer is not None and self._hovered is not None:
+            self._suppressed = self._hovered
+            self._cancel_enter()
 
     def _forget_swallow(self) -> None:
         self._swallow = None
@@ -990,6 +1010,9 @@ class Popups:
                 hover = _Hover(self, planned.key, block)
                 wire.add_hook("enter", hover.enter, always=True)
                 wire.add_hook("leave", hover.leave, always=True)
+                wire.focus_hooks.append(hover.focus)
+                if wire.tre is not None and wire.tre.get("focusable"):
+                    wire.listen_focus()
 
     def _tooltip_plan(
         self, surface: Surface, block: str, tip: ExpandedTooltip
@@ -1015,16 +1038,21 @@ class Popups:
         )
         return plan, plan.expanded
 
-    def hover(self, surface_key: str, block: str, entered: bool) -> None:
-        """The pointer entered or left ``block`` of a surface that has a tooltip on it."""
+    def hover(self, surface_key: str, block: str, entered: bool, immediate: bool = False) -> None:
+        """The pointer entered or left ``block`` of a surface that has a tooltip on it
+        (``immediate``: keyboard focus came or went, which shows the tooltip with no delay)."""
         surface = next((s for s in self._m.every_surface() if s.key == surface_key), None)
         tip = surface.expanded.tooltips.get(block) if surface else None
         if surface is None or tip is None or surface.window is None:
             return
         key = (surface_key, block)
+        if not entered and self._suppressed == key:
+            self._suppressed = None  # it may show again when the pointer comes back
         if entered:
             self._hovered = key
             self._cancel_enter()
+            if self._suppressed == key:
+                return  # dismissed by a press, Escape or a scroll: not again until it left
             cur = self.current
             if cur is not None:
                 if cur.caller.surface == surface_key and cur.block == block:
@@ -1042,7 +1070,7 @@ class Popups:
             if found is None:
                 return
             plan, content = found
-            delay = plan.popup.enter_delay
+            delay = 0 if immediate else plan.popup.enter_delay
             self._enter_timer = surface.window.after(
                 delay, lambda: self._open_tooltip(surface_key, block, plan, content)
             )

@@ -37,12 +37,36 @@ Module {
         Flex: HORIZONTAL
         Align_Items: CENTER
         Spacing: 6
+        Tooltip {
+            Alignment: CENTER
+            Gap: 4
+            Style {
+                Background: $color.surface_raised
+                Corner_Radius: 8
+                Elevation: 20%
+            }
+            Children {
+                FlexBox {
+                    Padding: [12, 8, 12, 8]
+                    Children {
+                        Text {
+                            Text: <| params.title |>
+                            Width: AUTO
+                            Height: AUTO
+                            Font_Size: 14
+                            Foreground: $color.on_surface
+                        }
+                    }
+                }
+            }
+        }
         Children {
             Icon { Name: Glyph, Icon: <| params.icon |>, Size: <| params.icon_size |> }
             If <| params.show_title |> {
                 Marquee_Text {
                     Name: Title
                     Text: <| params.title |>
+                    tooltip: false
                     Width: <| params.max_width - params.icon_size - 18 |>
                 }
             }

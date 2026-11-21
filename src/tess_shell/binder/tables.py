@@ -338,6 +338,7 @@ _ROWS: dict[str, BlockRow] = {
             "Direction": _k((), "enum", "LEFT", "RIGHT"),
             "Loop": _k((), "enum", "RESTART", "BOUNCE"),
             "Animated": _k((), "bool"),
+            "Tooltip_Auto": _k((), "bool"),
         },
         style={"Opacity": _COMMON["Opacity"], **_MOTION},
         # the box may be narrower than its text (it clips and the text scrolls)

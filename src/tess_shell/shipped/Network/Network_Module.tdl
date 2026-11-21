@@ -34,132 +34,140 @@ Module {
     FlexBox {
         Name: Root
         Visible: <| available and ready |>
-        Role: GROUP
-        Label: <| label |>
-        Description: <| tooltip |>
         Flex: HORIZONTAL
         Align_Items: CENTER
-        Tooltip {
-            Alignment: CENTER
-            Gap: 4
-            Style {
-                Background: $color.surface_raised
-                Corner_Radius: 8
-                Elevation: 20%
-            }
-            Children {
-                FlexBox {
-                    Padding: [12, 8, 12, 8]
-                    Children {
-                        Text {
-                            Text: <| tooltip |>
-                            Width: AUTO
-                            Height: AUTO
-                            Font_Size: 14
-                            Foreground: $color.on_surface
-                        }
-                    }
-                }
-            }
-        }
         Children {
             FlexBox {
-                Name: Level
-                Visible: <| state == "CONNECTED" or state == "CONNECTING" |>
+                Name: Content
+                Role: IMG
+                Label: <| label |>
+                Description: <| tooltip |>
                 Flex: HORIZONTAL
                 Align_Items: CENTER
-                Spacing: 4
-                Children {
-                    SVG {
-                        Name: Glyph
-                        Icon: <| icon |>
-                        Width: 16
-                        Height: 16
-                        A11y_Hidden: true
+                Tooltip {
+                    Alignment: CENTER
+                    Gap: 4
+                    Style {
+                        Background: $color.surface_raised
+                        Corner_Radius: 8
+                        Elevation: 20%
                     }
-                    SVG {
-                        Name: Vpn
-                        Icon: "mdi:vpn"
-                        Visible: <| params.show_vpn and vpn |>
-                        Width: 16
-                        Height: 16
-                        A11y_Hidden: true
-                    }
-                    If <| params.show_name |> {
-                        Text {
-                            Name: Label
-                            Class: network_text
-                            Text: <| name |>
+                    Children {
+                        FlexBox {
+                            Padding: [12, 8, 12, 8]
+                            Children {
+                                Text {
+                                    Text: <| tooltip |>
+                                    Width: AUTO
+                                    Height: AUTO
+                                    Font_Size: 14
+                                    Foreground: $color.on_surface
+                                }
+                            }
                         }
                     }
                 }
-            }
-            FlexBox {
-                Name: Level_Warn
-                Visible: <| state == "LIMITED" or state == "PORTAL" |>
-                Flex: HORIZONTAL
-                Align_Items: CENTER
-                Spacing: 4
                 Children {
-                    SVG {
-                        Name: Glyph_Warn
-                        Icon: <| icon |>
-                        Width: 16
-                        Height: 16
-                        A11y_Hidden: true
-                        Foreground: $color.warning
-                    }
-                    SVG {
-                        Name: Vpn_Warn
-                        Icon: "mdi:vpn"
-                        Visible: <| params.show_vpn and vpn |>
-                        Width: 16
-                        Height: 16
-                        A11y_Hidden: true
-                        Foreground: $color.warning
-                    }
-                    If <| params.show_name |> {
-                        Text {
-                            Name: Label_Warn
-                            Class: network_text
-                            Text: <| name |>
-                            Foreground: $color.warning
+                    FlexBox {
+                        Name: Level
+                        Visible: <| state == "CONNECTED" or state == "CONNECTING" |>
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 4
+                        Children {
+                            SVG {
+                                Name: Glyph
+                                Icon: <| icon |>
+                                Width: 16
+                                Height: 16
+                                A11y_Hidden: true
+                            }
+                            SVG {
+                                Name: Vpn
+                                Icon: "mdi:vpn"
+                                Visible: <| params.show_vpn and vpn |>
+                                Width: 16
+                                Height: 16
+                                A11y_Hidden: true
+                            }
+                            If <| params.show_name |> {
+                                Text {
+                                    Name: Label
+                                    Class: network_text
+                                    Text: <| name |>
+                                }
+                            }
                         }
                     }
-                }
-            }
-            FlexBox {
-                Name: Level_Muted
-                Visible: <| state == "DISCONNECTED" or state == "DISABLED" or state == "UNKNOWN" |>
-                Flex: HORIZONTAL
-                Align_Items: CENTER
-                Spacing: 4
-                Children {
-                    SVG {
-                        Name: Glyph_Muted
-                        Icon: <| icon |>
-                        Width: 16
-                        Height: 16
-                        A11y_Hidden: true
-                        Foreground: $color.on_surface_muted
-                    }
-                    SVG {
-                        Name: Vpn_Muted
-                        Icon: "mdi:vpn"
-                        Visible: <| params.show_vpn and vpn |>
-                        Width: 16
-                        Height: 16
-                        A11y_Hidden: true
-                        Foreground: $color.on_surface_muted
-                    }
-                    If <| params.show_name |> {
-                        Text {
-                            Name: Label_Muted
-                            Class: network_text
-                            Text: <| name |>
-                            Foreground: $color.on_surface_muted
+                    FlexBox {
+                        Name: Level_Warn
+                        Visible: <| state == "LIMITED" or state == "PORTAL" |>
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 4
+                        Children {
+                            SVG {
+                                Name: Glyph_Warn
+                                Icon: <| icon |>
+                                Width: 16
+                                Height: 16
+                                A11y_Hidden: true
+                                Foreground: $color.warning
+                            }
+                            SVG {
+                                Name: Vpn_Warn
+                                Icon: "mdi:vpn"
+                                Visible: <| params.show_vpn and vpn |>
+                                Width: 16
+                                Height: 16
+                                A11y_Hidden: true
+                                Foreground: $color.warning
+                            }
+                            If <| params.show_name |> {
+                                Text {
+                                    Name: Label_Warn
+                                    Class: network_text
+                                    Text: <| name |>
+                                    Foreground: $color.warning
+                                }
+                            }
                         }
                     }
+                    FlexBox {
+                        Name: Level_Muted
+                        Visible: <| state == "DISCONNECTED" or state == "DISABLED" or state == "UNKNOWN" |>
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 4
+                        Children {
+                            SVG {
+                                Name: Glyph_Muted
+                                Icon: <| icon |>
+                                Width: 16
+                                Height: 16
+                                A11y_Hidden: true
+                                Foreground: $color.on_surface_muted
+                            }
+                            SVG {
+                                Name: Vpn_Muted
+                                Icon: "mdi:vpn"
+                                Visible: <| params.show_vpn and vpn |>
+                                Width: 16
+                                Height: 16
+                                A11y_Hidden: true
+                                Foreground: $color.on_surface_muted
+                            }
+                            If <| params.show_name |> {
+                                Text {
+                                    Name: Label_Muted
+                                    Class: network_text
+                                    Text: <| name |>
+                                    Foreground: $color.on_surface_muted
+                                }
+                            }
+                        }
+                    }
+        
                 }
             }
         }
