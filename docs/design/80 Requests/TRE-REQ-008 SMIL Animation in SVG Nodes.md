@@ -24,7 +24,7 @@ tags: [engine-request, design, needs-verification]
 
 ## Shell Need
 
-The maintainer's icon sets include Material Line Icons (`mli`, MIT, by Vjacheslav Trushkin): 1,218 line icons, 1,216 of them animated with SMIL, among them loading spinners, alert pulses and draw-on intros. They would let a shell show a battery that charges, a spinner while the network connects or an alert that pulses, with no Python in the loop. Without SMIL support the same icons look unfinished (the `account` icon draws only its torso, because its strokes begin hidden). The shell cannot play SMIL itself: Python never runs per frame (AGENTS > 3. Layering principle).
+The maintainer's icon sets include Material Line Icons (`mli`, MIT, by Vjacheslav Trushkin): 1,218 line icons, 1,216 of them animated with SMIL, among them loading spinners, alert pulses and draw-on intros. They would let a shell show a battery that charges, a spinner while the network connects or an alert that pulses, with no Python in the loop. Without SMIL support the same icons look unfinished (the `account` icon draws only its torso, because its strokes begin hidden). The shell cannot play SMIL itself: Python never runs per frame ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)).
 
 ## What tre Does Today
 
@@ -98,7 +98,7 @@ The shell's answers (measured on the 1,218 line icons, 5,748 timing elements):
 
 tre's reply (2026-11-01): it recorded the answers on #245. (The build and its measured idle cost are under "Built in tre" below.) To-animation, with the start value read from the parent element's attribute, is now explicit stage-1 scope; the `fill` default of remove, `begin` as plain seconds and 30 Hz sampling for loops are kept. It has not verified what tre does while only an `svg_time` animation runs (frame rate, wake-ups) or whether hidden, occluded or minimised windows pause, and its documentation does not say; it added an acceptance item to #245 (measure idle CPU with one looping icon and document the result) and will not guess a number. #245 stays in Ready, not started.
 
-A caution the shell sent with the answers: a looping icon keeps its window redrawing, and the shell has an idle-CPU budget (AGENTS > 12. Design Completeness Checklist, Quality). The shell asked what tre does while only an `svg_time` animation runs (frame rate and wake-ups) and whether it pauses for a hidden or occluded window. 30 Hz sampling for loops suits the shell.
+A caution the shell sent with the answers: a looping icon keeps its window redrawing, and the shell has an idle-CPU budget ([Vault Reference > Design completeness checklist](../00%20Home/Vault%20Reference.md#design-completeness-checklist), Quality). The shell asked what tre does while only an `svg_time` animation runs (frame rate and wake-ups) and whether it pauses for a hidden or occluded window. 30 Hz sampling for loops suits the shell.
 
 ## Built in tre (Reported 2026-11-02)
 

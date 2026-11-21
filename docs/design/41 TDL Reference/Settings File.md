@@ -44,7 +44,7 @@ Name: Settings
 ---
 ```
 
-The metadata block of every shell file is defined in [TDL Language > The Metadata Block](TDL%20Language.md#the-metadata-block); the file type is named by the root block, `Settings { }` (D20, [TDL Language > The Root Block](TDL%20Language.md#the-root-block)), and holds all the keys below. The file is a sixth file type, beside the five of [ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules); the name is fixed (`settings.tdl`, not `<Name>_Settings.tdl`) because there is one per config directory. `Name:` is required (D39). Proposed: it carries no `UID` and is not entered in the registry. AGENTS > 9. Naming in the designed system lists the file suffixes and types; adding `Settings` there is the maintainer's edit.
+The metadata block of every shell file is defined in [TDL Language > The Metadata Block](TDL%20Language.md#the-metadata-block); the file type is named by the root block, `Settings { }` (D20, [TDL Language > The Root Block](TDL%20Language.md#the-root-block)), and holds all the keys below. The file is a sixth file type, beside the five of [ADR-0014 Shell File Language > Layout Rules](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#layout-rules); the name is fixed (`settings.tdl`, not `<Name>_Settings.tdl`) because there is one per config directory. `Name:` is required (D39). Proposed: it carries no `UID` and is not entered in the registry. [Vault Reference > Naming in the designed system](../00%20Home/Vault%20Reference.md#naming-in-the-designed-system) lists the file suffixes and types; adding `Settings` there is the maintainer's edit.
 
 ## Keys (Proposed)
 

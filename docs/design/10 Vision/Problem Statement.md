@@ -31,9 +31,9 @@ tags: [vision]
 
 ## The Opportunity
 
-tre 0.5.8 can now create the surfaces a shell needs: `LayerWindow`, `PopupWindow` and an output API ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)). tre gives mechanism only: no widgets, no theme and no file formats (AGENTS > 3. Layering principle). A shell that supplies those itself, as its own project on tre, has properties no surveyed shell combines:
+tre 0.5.8 can now create the surfaces a shell needs: `LayerWindow`, `PopupWindow` and an output API ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)). tre gives mechanism only: no widgets, no theme and no file formats ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)). A shell that supplies those itself, as its own project on tre, has properties no surveyed shell combines:
 
-- One rendering path in Rust, with Python only in callbacks (AGENTS > 3. Layering principle).
+- One rendering path in Rust, with Python only in callbacks ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)).
 - A declarative front-end that a non-programmer can read, edit and hot-reload.
 - Python for logic, so module authors do not need a second language.
 - A design system (tokens, light and dark, high contrast, reduced motion) made for surfaces.
@@ -50,9 +50,9 @@ It is a tool for building shells, not one fixed shell. It ships a default shell 
 
 | Constraint                                                                                                                                             | Consequence                                                                                                                                                                                         |
 |--------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| It runs beside an installed desktop environment (primary target KDE Plasma on Wayland); it does not replace the compositor, session or window manager. | Shell services such as the notification server and tray watcher are shared D-Bus names with plasmashell; each needs a coexist, replace or proxy decision (AGENTS > 4. Known constraints and gaps (seed list)). |
+| It runs beside an installed desktop environment (primary target KDE Plasma on Wayland); it does not replace the compositor, session or window manager. | Shell services such as the notification server and tray watcher are shared D-Bus names with plasmashell; each needs a coexist, replace or proxy decision ([Vault Reference > Known constraints and gaps (seed list)](../00%20Home/Vault%20Reference.md#known-constraints-and-gaps-seed-list)). |
 | tre owns every frame; Python owns intent.                                                                                                              | A design that needs per-frame Python is rejected.                                                                                                                                                   |
-| The design is complete before code is written.                                                                                                         | Every area in the checklist in AGENTS > 12. Design completeness checklist needs a note first.                                                                                                          |
+| The design is complete before code is written.                                                                                                         | Every area in the checklist in [Vault Reference > Design completeness checklist](../00%20Home/Vault%20Reference.md#design-completeness-checklist) needs a note first.                                                                                                          |
 
 ## Links
 

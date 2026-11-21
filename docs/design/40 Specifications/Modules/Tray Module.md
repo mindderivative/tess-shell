@@ -87,7 +87,7 @@ A long menu (the one read has 95 entries in a submenu) scrolls: the Popup's cont
 
 ### Icons (G8)
 
-An item gives a name, pixmaps, or both. The shell turns them into pixels in this order and hands tre decoded pixels or an SVG document, never a path (AGENTS > 3. Layering Principle):
+An item gives a name, pixmaps, or both. The shell turns them into pixels in this order and hands tre decoded pixels or an SVG document, never a path ([Vault Reference > Layering principle](../../00%20Home/Vault%20Reference.md#layering-principle)):
 
 1. `IconName` looked up in the item's `IconThemePath` (when set), then in the user's icon theme, then in the themes it inherits, then in `hicolor`, by the [Icon Theme Specification](https://specifications.freedesktop.org/icon-theme-spec/latest/): the folders `$XDG_DATA_HOME/icons`, each of `$XDG_DATA_DIRS/icons`, and `/usr/share/pixmaps`; each theme's `index.theme` gives its folders, sizes and `Inherits`. A scalable SVG is preferred; otherwise the PNG whose size is nearest above the wanted size times the scale.
 2. `IconPixmap` when the name gives nothing: the entry nearest above the wanted size; the bytes are ARGB32 in network byte order and are converted to the engine's RGBA.

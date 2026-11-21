@@ -59,7 +59,7 @@ Details, decided by the maintainer in chat on 2026-10-25:
 ## Consequences
 
 - The shell now depends on tre **and TEL**. [ADR-0006 Shell Independent of Tesserae UI](ADR-0006%20Shell%20Independent%20of%20Tesserae%20UI.md) and [ADR-0007 Shell UI Layer](ADR-0007%20Shell%20UI%20Layer.md) said "tre only"; TEL is a library, not Tesserae UI, so the independence from Tesserae UI stands.
-- The vault holds the shell's requirements on TEL ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)). TEL's own design lives in the TEL project, not here. Do not copy its design into this vault; link it once it exists (AGENTS > 2. Hard rules, rule 4).
+- The vault holds the shell's requirements on TEL ([Expression Language Requirements](../40%20Specifications/Runtime/Expression%20Language%20Requirements.md)). TEL's own design lives in the TEL project, not here. Do not copy its design into this vault; link it once it exists (AGENTS > Hard rules, rule 4).
 - Tesserae's `expr.py` is the starting point: it shows what worked (sandbox by `ast` whitelist, static against reactive, limits, positions in errors). TEL is a redesign, not an extraction.
 - **Repository and licence.** The repository is [mindderivative/tess-el](https://github.com/mindderivative/tess-el) and the licence is MIT; the local project is `~/Projects/pyDev/projects/tess-el` (decided by the maintainer, 2026-10-25; on that date the local clone holds only the MIT `LICENSE`). Syntax is worked out in the TEL project, not here. TEL still needs versioning and a language version recorded in files; the maintainer's, not decided.
 - Risk: three projects (tre, TEL, the shell) must move together at first. Keep the TEL interface small and stable.

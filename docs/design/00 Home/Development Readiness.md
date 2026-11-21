@@ -12,7 +12,7 @@ tags: [moc, roadmap]
 # Development Readiness
 
 > [!NOTE]
-> Where the design stands against the rule that coding starts only when every row of the checklist is `stable` or deferred by an accepted ADR (AGENTS > 12. Design Completeness Checklist), and a proposal for starting in stages instead of waiting for every row. The maintainer's stance is that TDL, TEL, tre and the shell are developed together and the design stays open to change ([Roadmap > Working Mode: Fluid Dependencies](Roadmap.md#working-mode-fluid-dependencies)). Everything below is a proposal; the maintainer decides (AGENTS > 2. Hard Rules rule 5). Written 2026-11-02 from the note statuses at that date.
+> Where the design stands against the rule that coding starts only when every row of the checklist is `stable` or deferred by an accepted ADR ([Vault Reference > Design completeness checklist](Vault%20Reference.md#design-completeness-checklist)), and a proposal for starting in stages instead of waiting for every row. The maintainer's stance is that TDL, TEL, tre and the shell are developed together and the design stays open to change ([Roadmap > Working Mode: Fluid Dependencies](Roadmap.md#working-mode-fluid-dependencies)). Everything below is a proposal; the maintainer decides (AGENTS > Hard rules rule 5). Written 2026-11-02 from the note statuses at that date.
 
 ## Where Each Row Stands
 

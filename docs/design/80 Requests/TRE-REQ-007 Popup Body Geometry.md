@@ -16,7 +16,7 @@ tags: [engine-request, integration/wayland, needs-verification]
 
 > [!NOTE]
 > **History**
-> Written 2026-10-28 after the maintainer decided that a popup's placement uses its visual shape, for the future. It was carried to tre by the maintainer and released in tre 0.6.3 (PyPI, 2026-11-06). The sections below keep the original reasoning (AGENTS > 6. Requests Between Projects).
+> Written 2026-10-28 after the maintainer decided that a popup's placement uses its visual shape, for the future. It was carried to tre by the maintainer and released in tre 0.6.3 (PyPI, 2026-11-06). The sections below keep the original reasoning ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)).
 
 ## Shell Need
 

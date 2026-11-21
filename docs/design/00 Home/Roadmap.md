@@ -12,7 +12,7 @@ tags: [moc, roadmap]
 # Roadmap
 
 > [!NOTE]
-> The design completeness checklist from AGENTS > 12. Design completeness checklist, with the notes that cover each area and what is missing. Coding starts only when every row is `stable` or explicitly deferred by an accepted ADR. Status is the lowest status of the notes in the row. Maintainer direction (2026-10-27): finish the specs before starting more module specs.
+> The design completeness checklist from [Vault Reference > Design completeness checklist](Vault%20Reference.md#design-completeness-checklist), with the notes that cover each area and what is missing. Coding starts only when every row is `stable` or explicitly deferred by an accepted ADR. Status is the lowest status of the notes in the row. Maintainer direction (2026-10-27): finish the specs before starting more module specs.
 
 ## Checklist
 
@@ -35,7 +35,7 @@ A proposal for starting in stages, with each row's state and the milestones, is 
 
 ## Spec Backlog (Proposed Order)
 
-Recommendation: write the notes that other notes already point at first, then the areas with no notes. Each is a draft with recommendations; the maintainer decides (AGENTS > 2. Hard rules rule 5).
+Recommendation: write the notes that other notes already point at first, then the areas with no notes. Each is a draft with recommendations; the maintainer decides (AGENTS > Hard rules rule 5).
 
 | #   | Note                                                                                                                                                            | Folder                           | Why now                                                                         |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------- |
@@ -53,11 +53,11 @@ Module specs (Workspaces, Audio and the rest of the v1 list) wait until the spec
 
 ## Working Mode: Fluid Dependencies
 
-The maintainer's stance (2026-11-02): TEL, tre, the shell and TDL are developed together, and building TDL will keep finding things it needs from TEL, tre and the shell, so the design stays open to change in all four and a pin is never a freeze. The proposals below turn that into a routine; the maintainer decides (AGENTS > 2. Hard Rules rule 5).
+The maintainer's stance (2026-11-02): TEL, tre, the shell and TDL are developed together, and building TDL will keep finding things it needs from TEL, tre and the shell, so the design stays open to change in all four and a pin is never a freeze. The proposals below turn that into a routine; the maintainer decides (AGENTS > Hard rules rule 5).
 
 | Question | Proposed practice |
 |---|---|
-| Where does a new need go? | TDL: edit [TDL Language](../41%20TDL%20Reference/TDL%20Language.md) and record a decision in [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md). Shell: edit the spec or add an ADR. a `TEL-REQ-###`, `TDL-REQ-###`, `SHELL-REQ-###`, `TUIF-REQ-###` or `TRE-REQ-###` note, named for the project that receives it (AGENTS > 6. Requests Between Projects, [80 Requests](../80%20Requests/80%20Requests.md)); the maintainer carries it to that project |
+| Where does a new need go? | TDL: edit [TDL Language](../41%20TDL%20Reference/TDL%20Language.md) and record a decision in [ADR-0014 Shell File Language](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md). Shell: edit the spec or add an ADR. a `TEL-REQ-###`, `TDL-REQ-###`, `SHELL-REQ-###`, `TUIF-REQ-###` or `TRE-REQ-###` note, named for the project that receives it ([Vault Reference > Requests between projects](Vault%20Reference.md#requests-between-projects), [80 Requests](../80%20Requests/80%20Requests.md)); the maintainer carries it to that project |
 | How does development run against code that is not released? | Against local editable clones or branches of tre and TEL; the note that depends on it says so with a `> [!warning]` and the issue or branch name (for example tre #245 on `svg-smil-245`) |
 | What do the `TEL:` and `TRE:` pins mean? | Minimum versions, raised only when a release carries something the shell now needs ([TDL Language > The Metadata Block](../41%20TDL%20Reference/TDL%20Language.md#the-metadata-block)). The package dependency is a range during development (for example `tesserae-el>=0.1,<0.2`), and an exact pin is a release-time choice (delivery notes) |
 | How is a need found? | Each build step that fails because of a missing feature adds a row below, with the date, the layer, and the request that carries it |

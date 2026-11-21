@@ -18,7 +18,7 @@ tags: [engine-request, spec/surface, tesserae, needs-verification]
 > [!NOTE]
 > Let a Tesserae view be the content of a tre `LayerWindow` or `PopupWindow`, and let a Tesserae app run with no main window. Tesserae 0.5.1 opens only ordinary windows, so a shell built on `tesserae-ui` ([ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md)) cannot put a bar on screen from a YAML view. This request is addressed to the Tesserae project, not to tre: tre 0.5.8 already has the mechanism.
 
-This note is carried to the Tesserae project by the maintainer (AGENTS > 6. Requests Between Projects). It is not filed from this vault. Numbers 002 and 003 stay reserved (see [80 Requests](80%20Requests.md)).
+This note is carried to the Tesserae project by the maintainer ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)). It is not filed from this vault. Numbers 002 and 003 stay reserved (see [80 Requests](80%20Requests.md)).
 
 ## Shell Need
 
@@ -34,7 +34,7 @@ A shell opens, from YAML views and Python:
 
 ## Why it Belongs in Tesserae
 
-tre owns the mechanism: surface roles, outputs, input regions, margin animation. Tesserae owns how a view becomes a window: the `widget: Window` root, `open_window`, the ViewModel, theme and stylesheet binding, and hot reload (AGENTS > 3. Layering principle). The shell should not duplicate that composition path. If it did, the shell would carry a second way to build and re-theme a view, which is the dialect split [ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md) avoids.
+tre owns the mechanism: surface roles, outputs, input regions, margin animation. Tesserae owns how a view becomes a window: the `widget: Window` root, `open_window`, the ViewModel, theme and stylesheet binding, and hot reload ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)). The shell should not duplicate that composition path. If it did, the shell would carry a second way to build and re-theme a view, which is the dialect split [ADR-0002 Relationship to Tesserae UI](../30%20Decisions/ADR-0002%20Relationship%20to%20Tesserae%20UI.md) avoids.
 
 ## What Tesserae Does Today
 
@@ -153,7 +153,7 @@ app.run()
 | R5 | Hot reload re-applies the live layer keys without recreating the window and reports the constructor-only keys.                                                              |
 | R6 | A key with no meaning for a layer surface is a load error with a position.                                                                                                  |
 | R7 | Headless: a layer or popup view builds, themes and responds to `simulate` with no display, using tre's headless `LayerWindow` ([LayerWindow reference](https://mindderivative.github.io/tre/reference/layer-window/)). |
-| R8 | No Python in layout or paint: all new Tesserae code runs in callbacks (AGENTS > 3. Layering principle).                                                            |
+| R8 | No Python in layout or paint: all new Tesserae code runs in callbacks ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)).                                                            |
 | R9 | Threading: opening and closing run on the loop thread; other threads use `thread_handle().call_soon`.                                                                       |
 
 ## Alternatives

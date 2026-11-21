@@ -250,7 +250,7 @@ tre 0.6.5 has `read_only`, `max_length` and `obscured` (password masking) on `te
 
 | Key      | Values                         | Default   | tre                    | Meaning                                                                                              |
 |----------|--------------------------------|-----------|------------------------|------------------------------------------------------------------------------------------------------|
-| `Source` | A file path, relative to the file that names it | none | `rgba`, `pixel_width`, `pixel_height` | The image. The shell reads and decodes the file and gives tre the pixels (data in, not files, AGENTS > 3. Layering principle) |
+| `Source` | A file path, relative to the file that names it | none | `rgba`, `pixel_width`, `pixel_height` | The image. The shell reads and decodes the file and gives tre the pixels (data in, not files, [Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)) |
 | `Fit`    | `FILL`, `CONTAIN`, `COVER`      | `CONTAIN` | `fit`                  | How the image fits the block                                                                         |
 
 A side is at most 8192 pixels (tre). Decoding png, jpeg, gif and webp needs an image library in the shell, and an animated gif needs frame stepping through repeated `set(rgba=...)`; both are open (R8). A tint is not documented in tre; an icon that must take the theme colour is an `SVG`. Role none; `A11y_Hidden` true unless `Label` is set.
@@ -391,7 +391,7 @@ Options for the animated set, given item 3. Decided by the maintainer on 2026-11
 |------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
 | A. Ship only `mdi` in v1; leave `mli` out until tre plays SMIL                                  | None. The shell works with 7,447 static icons.                                                                                         | Recommended for v1                          |
 | B. Export a static `mli`: each icon in its end state, with the animation tags removed           | A change in the tess-icons export (the earlier "no-anim" idea). It gives a second, line-style family that tre can draw correctly.     | Recommended as a later addition             |
-| C. An engine request to tre for SMIL (`<animate>`, `<set>`, `<animateTransform>`)                | A request to tre (AGENTS > 6. Requests Between Projects); not needed to ship v1; the shell cannot play SMIL itself (Python never runs per frame). | Write it only if you want animated icons    |
+| C. An engine request to tre for SMIL (`<animate>`, `<set>`, `<animateTransform>`)                | A request to tre ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)); not needed to ship v1; the shell cannot play SMIL itself (Python never runs per frame). | Write it only if you want animated icons    |
 
 ### An Icon Chosen at Run Time (Built in M5b)
 

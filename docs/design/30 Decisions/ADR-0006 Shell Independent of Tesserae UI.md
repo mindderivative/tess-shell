@@ -43,10 +43,10 @@ Accepted 2026-10-25 by the maintainer in chat: **Option A**. Tesserae Shell is a
 
 - [ADR-0002 Relationship to Tesserae UI](ADR-0002%20Relationship%20to%20Tesserae%20UI.md) is `superseded` by this ADR.
 - [TRE-REQ-004 Tesserae Layer and Popup Windows](../80%20Requests/TRE-REQ-004%20Tesserae%20Layer%20and%20Popup%20Windows.md) is `superseded`. Nothing was carried to Tesserae. Its requirements (no main window, a view opened per monitor, popup parenting, live reload of surface keys) move into the shell's own design.
-- Engine needs go to tre only (AGENTS > 6. Requests Between Projects).
+- Engine needs go to tre only ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)).
 - The shell now needs its own view language, reactivity, theme and widgets. How is open: [ADR-0007 Shell UI Layer](ADR-0007%20Shell%20UI%20Layer.md) (`proposed`).
 - [Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G1, G2 and N8, [Problem Statement](../10%20Vision/Problem%20Statement.md) and [V1 Scope](../10%20Vision/V1%20Scope.md) are updated to match.
-- Tesserae remains prior art and a naming reference. Its docs stay in AGENTS > 13. Reference links. The shell may keep similar file names (`<Name>_View.yaml`) for familiarity; that is decided in `41 TDL Reference`.
+- Tesserae remains prior art and a naming reference. Its docs stay in [Vault Reference > Reference links](../00%20Home/Vault%20Reference.md#reference-links). The shell may keep similar file names (`<Name>_View.yaml`) for familiarity; that is decided in `41 TDL Reference`.
 - Amended by [ADR-0008 Tesserae Expression Language](ADR-0008%20Tesserae%20Expression%20Language.md): the shell also uses TEL, a separate library that does not depend on Tesserae UI. Independence from Tesserae UI stands.
 - Lower risk for [ADR-0003 Process Model](ADR-0003%20Process%20Model.md): the single event loop is a plain tre `App`, with no framework layer above it.
 

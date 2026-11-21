@@ -22,7 +22,7 @@ tags: [engine-request, spec/surface, integration/wayland, needs-verification]
 > **Surface specs depend on this request**
 > The engine blocker is gone: a tre release has `LayerWindow`. Every note under `40 Specifications/Surfaces/` links `[[TRE-REQ-001 Layer Surface Window]]` in `depends_on`. [ADR-0001 Shell Surface Strategy](../30%20Decisions/ADR-0001%20Shell%20Surface%20Strategy.md) is accepted (Option A, 2026-10-25), so a surface spec carries no `Blocked by` callout for this request; it names any untested gap below that affects it.
 
-This note is carried to the tre project by the maintainer (AGENTS > 6. Requests Between Projects).
+This note is carried to the tre project by the maintainer ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)).
 
 ## Delivered (Tre #195 Closed)
 
@@ -163,7 +163,7 @@ One request change came out of the spike: the compositor's own output choice alt
 
 ## Why This Belongs in the Engine
 
-Surface roles are windowing mechanism: they decide how the compositor places and stacks a window, not what the window contains. AGENTS > 3. Layering principle puts mechanism in tre. If the shell created the surface (ADR-0001 Option B), it would own configure, scale, output hot-plug and input routing, which tre already owns for ordinary windows. Python sets properties and never touches a frame; `LayerWindow` keeps that split.
+Surface roles are windowing mechanism: they decide how the compositor places and stacks a window, not what the window contains. [Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle) puts mechanism in tre. If the shell created the surface (ADR-0001 Option B), it would own configure, scale, output hot-plug and input routing, which tre already owns for ordinary windows. Python sets properties and never touches a frame; `LayerWindow` keeps that split.
 
 ## What Tre Has Today
 

@@ -16,7 +16,7 @@ tags: [adr, process]
 
 ## Context
 
-AGENTS > 12. Design Completeness Checklist says coding starts only when every row is `stable` or deferred by an accepted ADR. On 2026-11-02 the vision is stable, the runtime, surface and integration specs are written, and `tess_dl` and tre 0.5.10 are available, but Delivery, most of Quality, the module list and the token values are not written. The maintainer's stance is that TEL, tre, TDL and the shell are developed together and the design stays open to change ([Roadmap > Working Mode: Fluid Dependencies](../00%20Home/Roadmap.md#working-mode-fluid-dependencies)).
+[Vault Reference > Design completeness checklist](../00%20Home/Vault%20Reference.md#design-completeness-checklist) says coding starts only when every row is `stable` or deferred by an accepted ADR. On 2026-11-02 the vision is stable, the runtime, surface and integration specs are written, and `tess_dl` and tre 0.5.10 are available, but Delivery, most of Quality, the module list and the token values are not written. The maintainer's stance is that TEL, tre, TDL and the shell are developed together and the design stays open to change ([Roadmap > Working Mode: Fluid Dependencies](../00%20Home/Roadmap.md#working-mode-fluid-dependencies)).
 
 ## Options
 
@@ -53,7 +53,7 @@ Not deferred: Vision, Architecture (the binder is accepted), Runtime (needed at 
 
 ## Consequences
 
-- AGENTS > 1. What Tesserae Shell is no longer says design only: it says design continues alongside staged development. The agent still writes code only inside the milestone in progress, and keeps the vault as the design record.
+- [Vault Reference > The projects](../00%20Home/Vault%20Reference.md#the-projects) no longer says design only: it says design continues alongside staged development. The agent still writes code only inside the milestone in progress, and keeps the vault as the design record.
 - Each milestone ends with an update to the notes it touched, and a list of design changes it forced.
 - A design change found by code is a dated amendment or a new ADR, never silent ([Roadmap > Working Mode: Fluid Dependencies](../00%20Home/Roadmap.md#working-mode-fluid-dependencies)).
 - Code lives in the `tess-shell` repository, under `src/tess_shell/` and `tests/`, with the docs export kept in `docs/` ([Shell Package Layout](../20%20Architecture/Shell%20Package%20Layout.md)).
