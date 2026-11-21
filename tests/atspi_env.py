@@ -214,6 +214,15 @@ class AtspiEnvironment:
         )
         return data[0]["data"] if data else None
 
+    def states(self, destination, path):
+        """The AT-SPI state numbers (`ATSPI_STATE_*`: 12 focused, 23 selected) an accessible has,
+        as a set."""
+        data = self.call(destination, path, "org.a11y.atspi.Accessible", "GetState")
+        if not data:
+            return set()
+        words = data[0]
+        return {32 * i + b for i, w in enumerate(words) for b in range(32) if w >> b & 1}
+
     def do_action(self, destination, path, index=0):
         data = self.call(destination, path, "org.a11y.atspi.Action", "DoAction", "i", str(index))
         return bool(data and data[0])
