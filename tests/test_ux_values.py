@@ -96,6 +96,15 @@ def test_the_emphasized_easing_is_the_curve_the_motion_spec_gives() -> None:
     assert EASINGS["EMPHASIZED"] == (0.2, 0.0, 0.0, 1.0)
 
 
+def test_the_shadow_fallback_matches_the_themes_elevation_max() -> None:
+    from tess_shell.binder.shadow import DEFAULT_MAX
+
+    theme = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text(encoding="utf-8")
+    written = re.search(r'Shadow \{ Color: "#([0-9A-Fa-f]{8})"', theme)
+    assert written
+    assert DEFAULT_MAX.items[0].color.a == int(written.group(1)[6:], 16) == 0x66
+
+
 def test_the_themes_reduced_motion_block_carries_the_zero_durations() -> None:
     assert re.search(
         r"Reduced_Motion \{\s*Motion \{ Duration \{ Short: 0, Medium: 0, Long: 0 \} \}\s*\}",
