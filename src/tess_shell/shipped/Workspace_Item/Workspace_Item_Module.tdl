@@ -24,6 +24,7 @@ Module {
     FlexBox {
         Name: Root
         Class: workspace
+        Height: <| density.item_size |>
         Min_Width: 28
         Max_Width: 160
         Align_Items: CENTER

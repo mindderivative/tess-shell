@@ -98,6 +98,8 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$density.row_height` | number | `40` | compact, dense | The height of a one-line list or tree row: 40, 32 or 24. |
 | `$density.menu_item_height` | number | `40` | compact, dense | The height of a menu item: 40, 32 or 28. |
 | `$density.icon_size` | number | `24` | compact, dense | The painted size of an icon in an icon button: 24, 20 or 20. |
+| `$density.item_size` | number | `32` | compact, dense | The size of a tray item, a task button and a workspace button (the pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be). |
+| `$density.item_icon_size` | number | `20` | compact, dense | The icon of a tray item and a task button: 20, 18 or 18. |
 | `$density.row_padding_x` | number | `12` | compact, dense | The side padding of a list row, a tree row and a menu item: 12, 8 or 4. |
 | `$density.icon_label_gap` | number | `8` | compact, dense | The gap between an icon and its label: 8, 8 or 4. |
 | `$density.field_padding` | sides | `[12, 12, 12, 12]` | compact, dense | The padding of a text field (left, top, right, bottom): [12, 12, 12, 12], [8, 8, 8, 8] or [8, 6, 8, 6]. With the 16 px line of 14 px body text the field is 40, 32 or 28 high (the spec's 20 px line would take 10, 6 and 4). |
@@ -110,6 +112,11 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 |---|---|---|---|---|
 | `$elevation.reach` | number | `64` | never | How far the largest shadow reaches, in pixels. |
 | `$elevation.max` | shadows | `Max { Shadows { Shadow { Color: "#00000066", X: 0, Y: 16, Blur: 48, Spread: 0 } } }` | never | The shadow list at 100% elevation; a smaller Elevation scales it. |
+| `$elevation.level_1` | shadows | `Level_1 { Shadows { Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 2, Spread: 0 }, Shadow { Color: "#00000026", X: 0, Y: 1, Blur: 3, Spread: 1 } } }` | never | The shadows of Elevation: LEVEL_1 (1 dp): a key and an ambient shadow. |
+| `$elevation.level_2` | shadows | `Level_2 { Shadows { Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 2, Spread: 0 }, Shadow { Color: "#00000026", X: 0, Y: 2, Blur: 6, Spread: 2 } } }` | never | The shadows of Elevation: LEVEL_2 (3 dp): a menu, a tooltip, a popup. |
+| `$elevation.level_3` | shadows | `Level_3 { Shadows { Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 3, Spread: 0 }, Shadow { Color: "#00000026", X: 0, Y: 4, Blur: 8, Spread: 3 } } }` | never | The shadows of Elevation: LEVEL_3 (6 dp): a dialog. |
+| `$elevation.level_4` | shadows | `Level_4 { Shadows { Shadow { Color: "#0000004D", X: 0, Y: 2, Blur: 3, Spread: 0 }, Shadow { Color: "#00000026", X: 0, Y: 6, Blur: 10, Spread: 4 } } }` | never | The shadows of Elevation: LEVEL_4 (8 dp). |
+| `$elevation.level_5` | shadows | `Level_5 { Shadows { Shadow { Color: "#0000004D", X: 0, Y: 4, Blur: 4, Spread: 0 }, Shadow { Color: "#00000026", X: 0, Y: 8, Blur: 12, Spread: 6 } } }` | never | The shadows of Elevation: LEVEL_5 (12 dp). |
 
 ### Motion
 
@@ -319,7 +326,7 @@ These are the keys a `Style { }` block, a style key written directly on a block,
 | `Padding` | sides | Box, FlexBox, Text, TextField | space | Space between the content and the four sides: one number or four (left, top, right, bottom). |
 | `Margin` | sides | 9 block types | space | Transparent space around the block: one number or four (left, top, right, bottom). |
 | `Opacity` | number | 12 block types | type, shape, space, density, elevation, motion | How opaque the block and what it holds is painted, from 0 (invisible) to 1. |
-| `Elevation` | percentage | Box, FlexBox, Rectangle, ScrollBox, TextField |  | How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow. |
+| `Elevation` | percentage | Box, FlexBox, Rectangle, ScrollBox, TextField |  | How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3). |
 | `Shadows` | shadows | Box, FlexBox, Rectangle, ScrollBox, TextField | elevation.max | A list of Shadow blocks, the first on top; it replaces Elevation when both are written. |
 | `Spacing` | number | FlexBox | space | The space between the children, in pixels. |
 | `Foreground` | colour | Text, SVG, Marquee, TextField | color | The colour of the text or of the icon, a colour or a theme token. |

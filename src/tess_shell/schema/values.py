@@ -101,6 +101,8 @@ def _numbers(value: m.Value) -> list[float]:
     return []
 
 
+# ``Elevation: LEVEL_2``: the MD3 elevation levels, whose shadows the theme holds (Elevation)
+ELEVATION_LEVELS = tuple(f"LEVEL_{n}" for n in range(6))
 _NOUNS = {
     "max_length": "a whole number",
     "lines": "a whole number",
@@ -301,7 +303,9 @@ def _coerce_kind(
         case "elevation":
             if isinstance(value, tess_dl.Percent):
                 return m.Percent(value.value, origin=origin)
-            raise _bad("a percentage", value)
+            if isinstance(value, tess_dl.Word) and value.text in ELEVATION_LEVELS:
+                return m.Enum(value.text, origin=origin)
+            raise _bad("a percentage or a level (LEVEL_0 to LEVEL_5)", value)
         case "shadows":
             raise ValueProblem(
                 "bad-value",

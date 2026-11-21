@@ -87,8 +87,9 @@ KEY_DOCS: dict[str, str] = {
     "Border_Color": "The colour of the border line, a colour or a theme token.",
     "Corner_Radius": "The radius of the corners: one number, or four from the top-left corner "
     "clockwise.",
-    "Elevation": "How high the block floats, as a percentage of the theme's largest shadow; 0% is "
-    "no shadow.",
+    "Elevation": "How high the block floats: a percentage of the theme's largest shadow (0% is no "
+    "shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is "
+    "LEVEL_2, a dialog LEVEL_3).",
     "Shadows": "A list of Shadow blocks, the first on top; it replaces Elevation when both are "
     "written.",
     "Shadow_Bleed": "The transparent margin a surface keeps around its body for the shadow: AUTO "
@@ -772,6 +773,9 @@ TOKEN_DOCS: dict[str, str] = {
     "density.row_height": "The height of a one-line list or tree row: 40, 32 or 24.",
     "density.menu_item_height": "The height of a menu item: 40, 32 or 28.",
     "density.icon_size": "The painted size of an icon in an icon button: 24, 20 or 20.",
+    "density.item_size": "The size of a tray item, a task button and a workspace button (the "
+    "pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be).",
+    "density.item_icon_size": "The icon of a tray item and a task button: 20, 18 or 18.",
     "density.row_padding_x": "The side padding of a list row, a tree row and a menu item: 12, 8 "
     "or 4.",
     "density.icon_label_gap": "The gap between an icon and its label: 8, 8 or 4.",
@@ -782,6 +786,11 @@ TOKEN_DOCS: dict[str, str] = {
     "density.chevron_box": "The size of a tree's chevron box: 24, 20 or 16.",
     "elevation.reach": "How far the largest shadow reaches, in pixels.",
     "elevation.max": "The shadow list at 100% elevation; a smaller Elevation scales it.",
+    "elevation.level_1": "The shadows of Elevation: LEVEL_1 (1 dp): a key and an ambient shadow.",
+    "elevation.level_2": "The shadows of Elevation: LEVEL_2 (3 dp): a menu, a tooltip, a popup.",
+    "elevation.level_3": "The shadows of Elevation: LEVEL_3 (6 dp): a dialog.",
+    "elevation.level_4": "The shadows of Elevation: LEVEL_4 (8 dp).",
+    "elevation.level_5": "The shadows of Elevation: LEVEL_5 (12 dp).",
     "motion.duration.short": "A short animation, in milliseconds.",
     "motion.duration.medium": "A medium animation, in milliseconds.",
     "motion.duration.long": "A long animation, in milliseconds.",
@@ -1189,7 +1198,7 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     "application, with the state in words.",
     ("Task_Item", "show_title"): "Shows the title beside the icon.",
     ("Task_Item", "max_width"): "The button's width when it shows a title, in pixels.",
-    ("Task_Item", "icon_size"): "The icon's size in pixels.",
+    ("Task_Item", "icon_size"): "The icon's size in pixels; 0 is the density level's.",
     ("Task_Item", "active"): "The window is the active one: the block takes the :selected look.",
     ("Task_Item", "minimized"): "The window is minimised: the button is drawn dimmed.",
     ("Workspace_Item", "face"): "The text of the button: the desktop's number or its name.",
@@ -1205,7 +1214,7 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Applications", "placeholder"): "The hint the empty text field shows.",
     ("Tasks", "show_title"): "Shows each window's title beside its icon.",
     ("Tasks", "max_width"): "The widest a button gets, in pixels.",
-    ("Tasks", "icon_size"): "The size of each icon in pixels.",
+    ("Tasks", "icon_size"): "The size of each icon in pixels; 0 is the density level's.",
     ("Tasks", "monitor"): "THIS shows the windows on the module's own monitor, ALL those on "
     "every monitor.",
     ("Tasks", "desktop"): "CURRENT shows the windows on the current virtual desktop (and those "
@@ -1215,14 +1224,14 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     "attention, once for a change (off by default).",
     ("Toggle", "Checked"): "Whether the switch is on; set from outside.",
     ("Toggle", "Label"): "The name assistive technology reads aloud for the switch.",
-    ("Tray", "icon_size"): "The size of each icon in pixels.",
+    ("Tray", "icon_size"): "The size of each icon in pixels; 0 is the density level's.",
     ("Tray", "show_passive"): "Shows the items whose status is Passive.",
     ("Tray", "spacing"): "The space between two items in pixels.",
     (
         "Tray_Item",
         "icon",
     ): "The icon: an SVG document or pixels the shell holds (the Tray sends it).",
-    ("Tray_Item", "size"): "The icon's size in pixels.",
+    ("Tray_Item", "size"): "The icon's size in pixels; 0 is the density level's.",
     ("Tray_Item", "tooltip_title"): "The first line of the tooltip.",
     ("Tray_Item", "tooltip_text"): "The second line of the tooltip; empty shows none.",
     ("Tray_Item", "label"): "The name assistive technology reads aloud.",

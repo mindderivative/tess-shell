@@ -1270,7 +1270,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": false,
           "required": false,
           "built": true,
@@ -1278,6 +1278,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -2008,7 +2016,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": false,
           "required": false,
           "built": true,
@@ -2016,6 +2024,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -2220,6 +2236,23 @@
           "built": true,
           "group": "Identity",
           "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Density": {
+          "kind": "enum",
+          "choices": [
+            "DEFAULT",
+            "COMPACT",
+            "DENSE"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -2570,7 +2603,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": false,
           "required": false,
           "built": true,
@@ -2578,6 +2611,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -2752,6 +2793,23 @@
         "Tooltip"
       ],
       "keys": {
+        "Density": {
+          "kind": "enum",
+          "choices": [
+            "DEFAULT",
+            "COMPACT",
+            "DENSE"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Attach": {
           "kind": "enum",
           "choices": [
@@ -3086,7 +3144,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": false,
           "required": false,
           "built": true,
@@ -3094,6 +3152,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -3738,6 +3804,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -4877,7 +4951,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": false,
           "required": false,
           "built": true,
@@ -4885,6 +4959,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -6715,7 +6797,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -6723,6 +6805,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -8239,7 +8329,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -8247,6 +8337,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -11040,7 +11138,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -11048,6 +11146,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -11305,7 +11411,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -11313,6 +11419,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -12548,7 +12662,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -12556,6 +12670,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -23346,7 +23468,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -23354,6 +23476,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -25140,6 +25270,34 @@
         "step": null,
         "unit": null
       },
+      "item_size": {
+        "kind": "number",
+        "ref": "$density.item_size",
+        "default": "32",
+        "doc": "The size of a tray item, a task button and a workspace button (the pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be).",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "item_icon_size": {
+        "kind": "number",
+        "ref": "$density.item_icon_size",
+        "default": "20",
+        "doc": "The icon of a tray item and a task button: 20, 18 or 18.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
       "row_padding_x": {
         "kind": "number",
         "ref": "$density.row_padding_x",
@@ -25233,6 +25391,46 @@
         "ref": "$elevation.max",
         "default": "Max { Shadows { Shadow { Color: \"#00000066\", X: 0, Y: 16, Blur: 48, Spread: 0 } } }",
         "doc": "The shadow list at 100% elevation; a smaller Elevation scales it.",
+        "modes": [],
+        "block": "Shadows"
+      },
+      "level_1": {
+        "kind": "shadows",
+        "ref": "$elevation.level_1",
+        "default": "Level_1 { Shadows { Shadow { Color: \"#0000004D\", X: 0, Y: 1, Blur: 2, Spread: 0 }, Shadow { Color: \"#00000026\", X: 0, Y: 1, Blur: 3, Spread: 1 } } }",
+        "doc": "The shadows of Elevation: LEVEL_1 (1 dp): a key and an ambient shadow.",
+        "modes": [],
+        "block": "Shadows"
+      },
+      "level_2": {
+        "kind": "shadows",
+        "ref": "$elevation.level_2",
+        "default": "Level_2 { Shadows { Shadow { Color: \"#0000004D\", X: 0, Y: 1, Blur: 2, Spread: 0 }, Shadow { Color: \"#00000026\", X: 0, Y: 2, Blur: 6, Spread: 2 } } }",
+        "doc": "The shadows of Elevation: LEVEL_2 (3 dp): a menu, a tooltip, a popup.",
+        "modes": [],
+        "block": "Shadows"
+      },
+      "level_3": {
+        "kind": "shadows",
+        "ref": "$elevation.level_3",
+        "default": "Level_3 { Shadows { Shadow { Color: \"#0000004D\", X: 0, Y: 1, Blur: 3, Spread: 0 }, Shadow { Color: \"#00000026\", X: 0, Y: 4, Blur: 8, Spread: 3 } } }",
+        "doc": "The shadows of Elevation: LEVEL_3 (6 dp): a dialog.",
+        "modes": [],
+        "block": "Shadows"
+      },
+      "level_4": {
+        "kind": "shadows",
+        "ref": "$elevation.level_4",
+        "default": "Level_4 { Shadows { Shadow { Color: \"#0000004D\", X: 0, Y: 2, Blur: 3, Spread: 0 }, Shadow { Color: \"#00000026\", X: 0, Y: 6, Blur: 10, Spread: 4 } } }",
+        "doc": "The shadows of Elevation: LEVEL_4 (8 dp).",
+        "modes": [],
+        "block": "Shadows"
+      },
+      "level_5": {
+        "kind": "shadows",
+        "ref": "$elevation.level_5",
+        "default": "Level_5 { Shadows { Shadow { Color: \"#0000004D\", X: 0, Y: 4, Blur: 4, Spread: 0 }, Shadow { Color: \"#00000026\", X: 0, Y: 8, Blur: 12, Spread: 6 } } }",
+        "doc": "The shadows of Elevation: LEVEL_5 (12 dp).",
         "modes": [],
         "block": "Shadows"
       }
@@ -27100,8 +27298,8 @@
         "icon_size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The icon's size in pixels.",
+          "default": "0",
+          "doc": "The icon's size in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,
@@ -27200,8 +27398,8 @@
         "icon_size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The size of each icon in pixels.",
+          "default": "0",
+          "doc": "The size of each icon in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,
@@ -27727,8 +27925,8 @@
         "icon_size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The size of each icon in pixels.",
+          "default": "0",
+          "doc": "The size of each icon in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,
@@ -27873,8 +28071,8 @@
         "size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The icon's size in pixels.",
+          "default": "0",
+          "doc": "The icon's size in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,

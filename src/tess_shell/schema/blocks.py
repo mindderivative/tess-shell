@@ -685,6 +685,7 @@ PANEL_STYLE: dict[str, str] = {
 # caller) and ``Animation`` are not built; ``Tooltip`` on a Popup is a flag (a block's ``Tooltip``
 # is a Popup block or a Popup's name, read by the schema).
 POPUP_KEYS: dict[str, str] = {
+    "Density": "enum",
     "Attach": "enum",
     "Alignment": "enum",
     "Gap": "number",
@@ -703,6 +704,7 @@ POPUP_KEYS: dict[str, str] = {
 POPUP_CHOICES: dict[str, tuple[str, ...]] = {
     "Attach": ("LEFT", "RIGHT", "TOP", "BOTTOM"),
     "Alignment": ("START", "CENTER", "END"),
+    "Density": DENSITY_LEVELS,
 }
 POPUP_ADJUST = ("FLIP_X", "FLIP_Y", "SLIDE_X", "SLIDE_Y", "RESIZE_X", "RESIZE_Y")
 POPUP_NOT_BUILT = ("Attach_To", "Animation")
