@@ -1218,6 +1218,7 @@ BAR_KEYS: dict[str, str] = {
     "Keyboard": "enum",
     "Tab_Index": "tab_index",
     "Shortcut_Mode": "bool",
+    "Visible": "bool",
 }
 BAR_CHOICES: dict[str, tuple[str, ...]] = {
     "Edge": ("TOP", "BOTTOM", "LEFT", "RIGHT"),
@@ -1317,6 +1318,7 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         return v.name if isinstance(v, m.Enum) else default
 
     reserve = values.get("Reserve")
+    shown = values.get("Visible")
     edge = word("Edge", "TOP")
     assert edge is not None
     return BarDef(
@@ -1338,6 +1340,7 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         keyboard_written="Keyboard" in values,
         tab_index=_tab_index(values),
         shortcut_mode=_shortcut_mode(values),
+        visible=shown.value if isinstance(shown, m.Bool) else True,
         style=style,
         children=tuple(children),
     )

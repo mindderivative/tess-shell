@@ -158,15 +158,14 @@ def test_show_hide_and_toggle_change_the_surface_of_a_real_shell(desk: Make) -> 
     assert log.count("Panel Launcher on HEADLESS-1 shown") >= 2
 
 
-def test_an_unknown_name_gets_the_nearest_names_and_a_bar_cannot_be_hidden(desk: Make) -> None:
+def test_an_unknown_name_gets_the_nearest_names_and_a_bar_can_be_hidden(desk: Make) -> None:
     d = desk()
     d.start()
     near = d.run("show", "Launchr")
     assert near.returncode == 1 and "did you mean Launcher" in near.stderr
     nothing = d.run("hide", "Zzz")
     assert nothing.returncode == 1 and "Launcher" in nothing.stderr and "Top_Bar" in nothing.stderr
-    bar = d.run("hide", "Top_Bar")
-    assert bar.returncode == 1 and "cannot be hidden" in bar.stderr
+    assert d.run("hide", "Top_Bar").returncode == 0
     assert d.run("show", "Top_Bar").returncode == 0
     assert d.finish() == 0
 
