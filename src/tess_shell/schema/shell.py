@@ -1345,7 +1345,7 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         tab_index=_tab_index(values),
         shortcut_mode=_shortcut_mode(values),
         visible=shown.value if isinstance(shown, m.Bool) else True,
-        auto_hide=auto.value if isinstance(auto, m.Bool) else True,
+        auto_hide=auto.value if isinstance(auto, m.Bool) else False,
         auto_hide_delay=float(auto_delay.value) if isinstance(auto_delay, m.Number) else 1000.0,
         style=style,
         children=tuple(children),

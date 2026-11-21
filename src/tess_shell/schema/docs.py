@@ -194,7 +194,7 @@ KEY_DOCS: dict[str, str] = {
     "Exclusive_Zone": "The raw space to reserve, in pixels. Not built.",
     "Auto_Hide": "Slides the Bar out past its screen edge when the pointer has left it for "
     "Auto_Hide_Delay, leaving a 1 px hover strip that brings it back; the Bar gives its space "
-    "back while it is out. On by default; false keeps the Bar in place. A Bar that has the "
+    "back while it is out. Off by default: write true to opt in. A Bar that has the "
     "keyboard, or a Popup of its own open, stays.",
     "Auto_Hide_Delay": "How long the pointer is away before the Bar hides, in milliseconds "
     "(default 1000).",

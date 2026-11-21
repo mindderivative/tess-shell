@@ -8,12 +8,17 @@ from tess_shell.appearance import Appearance
 from tess_shell.schema.model import BarDef
 from tests.test_panel import manager, surface
 
+
+AUTO = (
+    "Bar { Name: Auto, Edge: BOTTOM, Width: EXPAND, Height: 30, Auto_Hide: true, Children {\n"
+    "  Rectangle { Name: Dot, Width: 10, Height: 10 } } }"
+)
 NO_AUTO = (
     "Bar { Name: Fixed, Edge: BOTTOM, Width: EXPAND, Height: 30, Auto_Hide: false, Children {\n"
     "  Rectangle { Name: Dot, Width: 10, Height: 10 } } }"
 )
 SLOW = (
-    "Bar { Name: Slow, Edge: LEFT, Width: 40, Height: EXPAND, Auto_Hide_Delay: 3000, Children {\n"
+    "Bar { Name: Slow, Edge: LEFT, Width: 40, Height: EXPAND, Auto_Hide: true, Auto_Hide_Delay: 3000, Children {\n"
     "  Rectangle { Name: Dot, Width: 10, Height: 10 } } }"
 )
 
@@ -31,29 +36,35 @@ def leave(s: Any) -> None:
     s.window.simulate("pointer_leave")
 
 
-def test_a_bar_hides_itself_by_default_and_the_delay_is_a_second() -> None:
+def auto() -> tuple[Any, Any]:
+    m = manager(panel=AUTO, hide_mode="KEEP")
+    return m, surface(m, "Auto")
+
+
+def test_auto_hide_is_off_unless_a_bar_writes_it_and_the_delay_is_a_second() -> None:
     m = manager(hide_mode="KEEP")
-    bar = surface(m, "Top_Bar")
-    assert isinstance(bar.planned.bar, BarDef) and bar.planned.bar.auto_hide  # type: ignore[union-attr]
-    assert bar.planned.bar.auto_hide_delay == 1000  # type: ignore[union-attr]
+    plain = surface(m, "Top_Bar")
+    assert isinstance(plain.planned.bar, BarDef)  # type: ignore[union-attr]
+    assert plain.planned.bar.auto_hide is False and plain.planned.bar.auto_hide_delay == 1000
+    leave(plain)
+    plain.window.advance(5000)
+    assert not plain.auto_out and zone(plain) == 32
 
 
 def test_a_bar_slides_out_after_the_delay_then_gives_its_space_back() -> None:
-    m = manager(hide_mode="KEEP")
-    s = surface(m, "Top_Bar")
+    _, s = auto()
     leave(s)
     s.window.advance(900)
-    assert not s.auto_out and zone(s) == 32
+    assert not s.auto_out and zone(s) == 30
     s.window.advance(150)  # the delay ends: the slide starts, the zone is still full
-    assert s.auto_out and zone(s) == 32
+    assert s.auto_out and zone(s) == 30
     s.window.advance(250)  # the slide ends: the space is released, a strip is left
-    assert zone(s) == 0 and s.window.get("margin")[0] == 1 - 32
-    assert s.window.get("input_region") == [(0, 31, s.planned.output.width, 1)]
+    assert zone(s) == 0 and s.window.get("margin")[2] == 1 - 30
+    assert s.window.get("input_region") == [(0, 0, s.planned.output.width, 1)]
 
 
 def test_the_pointer_coming_back_before_the_delay_cancels_it() -> None:
-    m = manager(hide_mode="KEEP")
-    s = surface(m, "Top_Bar")
+    _, s = auto()
     leave(s)
     s.window.advance(900)
     enter(s)
@@ -65,17 +76,16 @@ def test_the_pointer_coming_back_before_the_delay_cancels_it() -> None:
 
 
 def test_the_pointer_on_the_strip_brings_it_back_zone_first() -> None:
-    m = manager(hide_mode="KEEP")
-    s = surface(m, "Top_Bar")
+    _, s = auto()
     leave(s)
     s.window.advance(1500)
     assert zone(s) == 0
     enter(s)
-    assert not s.auto_out and zone(s) == 32  # the zone first
-    assert s.window.get("margin")[0] == 1 - 32  # the slide has not run yet
+    assert not s.auto_out and zone(s) == 30  # the zone first
+    assert s.window.get("margin")[2] == 1 - 30  # the slide has not run yet
     s.window.advance(250)
     assert s.window.get("margin") == s.geometry.margin
-    assert s.window.get("input_region") != [(0, 31, s.planned.output.width, 1)]
+    assert s.window.get("input_region") != [(0, 0, s.planned.output.width, 1)]
 
 
 def test_auto_hide_false_keeps_the_bar_and_its_zone() -> None:
@@ -97,9 +107,8 @@ def test_auto_hide_delay_is_the_bars_own() -> None:
 
 
 def test_a_bar_with_the_keyboard_does_not_hide_until_it_lets_go() -> None:
-    m = manager(hide_mode="KEEP")
-    s = surface(m, "Top_Bar")
-    m.focused = "Top_Bar"
+    m, s = auto()
+    m.focused = "Auto"
     leave(s)
     s.window.advance(3500)
     assert not s.auto_out
@@ -109,32 +118,30 @@ def test_a_bar_with_the_keyboard_does_not_hide_until_it_lets_go() -> None:
 
 
 def test_reduced_motion_slides_out_in_one_step() -> None:
-    m = manager(hide_mode="KEEP", appearance=Appearance(animations=False))
-    s = surface(m, "Top_Bar")
+    m = manager(panel=AUTO, hide_mode="KEEP", appearance=Appearance(animations=False))
+    s = surface(m, "Auto")
     leave(s)
     s.window.advance(1001)
-    assert s.auto_out and zone(s) == 0 and s.window.get("margin")[0] == 1 - 32
+    assert s.auto_out and zone(s) == 0 and s.window.get("margin")[2] == 1 - 30
 
 
 def test_a_hide_by_the_user_is_not_the_strip() -> None:
-    m = manager(hide_mode="KEEP")
-    s = surface(m, "Top_Bar")
+    m, s = auto()
     leave(s)
     s.window.advance(1500)
     m.hide(s)
     assert s.hidden and not s.auto_out and s.window.get("input_region") == []
     m.show(s)
-    assert zone(s) == 32 and s.window.get("margin") == s.geometry.margin
+    assert zone(s) == 30 and s.window.get("margin") == s.geometry.margin
 
 
 def test_shortcut_mode_brings_a_slid_out_bar_back_and_leaving_it_sends_it_out_again() -> None:
-    m = manager(hide_mode="KEEP")
-    s = surface(m, "Top_Bar")
+    m, s = auto()
     leave(s)
     s.window.advance(1500)
     assert s.auto_out and zone(s) == 0
     m.mode.enter()
-    assert not s.auto_out and zone(s) == 32 and s.mode_revealed
+    assert not s.auto_out and zone(s) == 30 and s.mode_revealed
     s.window.advance(5000)  # the mode holds it: no delay hides it
     assert not s.auto_out
     m.mode.exit()
@@ -144,7 +151,7 @@ def test_shortcut_mode_brings_a_slid_out_bar_back_and_leaving_it_sends_it_out_ag
     assert s.auto_out and zone(s) == 0 and not s.mode_revealed
 
 
-def test_a_bar_that_stays_written_auto_hide_false_is_untouched_by_the_mode() -> None:
+def test_a_bar_with_auto_hide_false_is_untouched_by_the_mode() -> None:
     m = manager(panel=NO_AUTO, hide_mode="KEEP")
     s = surface(m, "Fixed")
     m.mode.enter()

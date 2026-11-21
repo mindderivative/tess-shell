@@ -999,7 +999,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "Slides the Bar out past its screen edge when the pointer has left it for Auto_Hide_Delay, leaving a 1 px hover strip that brings it back; the Bar gives its space back while it is out. On by default; false keeps the Bar in place. A Bar that has the keyboard, or a Popup of its own open, stays.",
+          "doc": "Slides the Bar out past its screen edge when the pointer has left it for Auto_Hide_Delay, leaving a 1 px hover strip that brings it back; the Bar gives its space back while it is out. Off by default: write true to opt in. A Bar that has the keyboard, or a Popup of its own open, stays.",
           "slot": false,
           "required": false,
           "built": true,
