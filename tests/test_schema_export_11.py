@@ -237,6 +237,7 @@ def test_a_default_of_tre_is_in_the_export_for_the_keys_that_have_one() -> None:
             assert (block, key) in export._FIELDS or key in (
                 "Foreground",
                 "Font_Size",
+                "Padding",  # a TextField's comes from the stylesheet's density token
             ), (block, key, entry["default"], text)
     box = block_keys("Box")
     assert box["Visible"]["default"] == "true"
@@ -587,6 +588,6 @@ def test_the_cli_schema_is_regenerated_to_a_file(tmp_path: Path) -> None:
     import json
 
     data = json.loads(target.read_text(encoding="utf-8"))
-    assert data["schema_version"] == "1.23" and "modules" in data
+    assert data["schema_version"] == "1.24" and "modules" in data
     assert list(data)[-1] == "shortcuts"
     _ = (CONTEXTS, run)  # the probes of the first suite are shared

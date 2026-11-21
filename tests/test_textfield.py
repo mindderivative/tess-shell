@@ -222,7 +222,9 @@ def test_a_field_with_no_look_gets_one_from_the_theme_and_its_own_keys_win() -> 
     plain = compose(node())
     assert {"Background", "Border_Width", "Border_Color", "Corner_Radius"} <= plain.style.keys()
     assert isinstance(plain.style["Background"], m.TokenRef)
-    assert isinstance(plain.props["Padding"], m.Sides)
+    assert (
+        "Padding" not in plain.props
+    )  # the padding is the stylesheet's (`$density.field_padding`)
     own = compose(node({"Padding": m.Length(1)}, {"Background": m.Color(9, 9, 9, 255)}))
     assert own.style["Background"] == m.Color(9, 9, 9, 255) and own.props["Padding"] == m.Length(1)
     inp = plain.children[0].children[1]  # type: ignore[union-attr]
