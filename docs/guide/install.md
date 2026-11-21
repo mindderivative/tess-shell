@@ -1,7 +1,7 @@
 # Install and start
 
 <!-- BEGIN generated: version-info -->
-This guide describes tesserae-shell 0.2.0 (schema version 1.26, the one `tesserae-shell schema --json` prints).
+This guide describes tesserae-shell 0.2.0 (schema version 1.27, the one `tesserae-shell schema --json` prints).
 
 <!-- END generated: version-info -->
 

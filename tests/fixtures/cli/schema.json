@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.26",
+  "schema_version": "1.27",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -3796,10 +3796,10 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "A shadow for the Frame. Not built.",
+          "doc": "The shadow the ring casts into the opening: a percentage of the theme's largest shadow or a level (LEVEL_1 to LEVEL_5 once the theme has them). A ring has no direction, so the shadow's x and y are not used. Drawn by the ring shader only.",
           "slot": false,
           "required": false,
-          "built": false,
+          "built": true,
           "group": "Fill",
           "min": 0,
           "max": 100,
@@ -3813,18 +3813,17 @@
             "LEVEL_5"
           ],
           "tokens": [],
-          "preferred_tokens": [],
-          "refused": true
+          "preferred_tokens": []
         },
         "Shadows": {
           "kind": "shadows",
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "Shadows for the Frame. Not built.",
+          "doc": "Shadows the ring casts into the opening (blur and spread, the first on top, up to four; x and y are not used). Drawn by the ring shader only.",
           "slot": false,
           "required": false,
-          "built": false,
+          "built": true,
           "group": "Fill",
           "block": "Shadows",
           "tokens": [
@@ -3832,18 +3831,17 @@
           ],
           "preferred_tokens": [
             "elevation.max"
-          ],
-          "refused": true
+          ]
         },
         "Shadow_Bleed": {
           "kind": "sides",
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The margin for a shadow. Not built.",
+          "doc": "Accepted and without effect: the painter covers the output, so a Frame's shadow needs no transparent margin.",
           "slot": false,
           "required": false,
-          "built": false,
+          "built": true,
           "group": "Fill",
           "arity": [
             1,
@@ -3867,8 +3865,7 @@
             "elevation",
             "motion"
           ],
-          "preferred_tokens": [],
-          "refused": true
+          "preferred_tokens": []
         }
       },
       "events": [],

@@ -159,12 +159,20 @@ fn shade(p: Pixel) -> vec4<f32> {
     let a_b = cover(max(o2, -o3)) * u.col_in.a;
     let a_u = a_f + a_o * (1.0 - a_f);
     let a = a_b + a_u * (1.0 - a_b);
-    if (a <= 0.0) {
+    // the ring's shadow falls into the opening: the ring is where o2 is positive, grown by the
+    // spread, and its edge is blurred like a Gaussian of sigma blur / 2 (a smooth step over
+    // +/- blur); the first shadow is on top
+    var sa = 0.0;
+    var spm = vec3<f32>(0.0);
+@SHADOWS@
+    if (a <= 0.0 && sa <= 0.0) {
         return vec4<f32>(0.0, 0.0, 0.0, 0.0);
     }
     let pm = u.col_in.rgb * a_b
-        + (u.col_fill.rgb * a_f + u.col_out.rgb * a_o * (1.0 - a_f)) * (1.0 - a_b);
-    return vec4<f32>(to_srgb(pm / a), a);
+        + (u.col_fill.rgb * a_f + u.col_out.rgb * a_o * (1.0 - a_f)) * (1.0 - a_b)
+        + spm * (1.0 - a);
+    let total = a + sa * (1.0 - a);
+    return vec4<f32>(to_srgb(pm / total), total);
 }
 """
 
@@ -174,6 +182,18 @@ _BODIES = """    if (u.mode > 0.5) {
         o2 = -d;
         o3 = o2 + u.iw;
         os = o2 + u.iv;
+    }
+"""
+
+
+MAX_SHADOWS = 4  # shadows of the ring one shader draws (two uniforms each)
+_SHADOW = """    {
+        let ring = -o2 - u.sh@K@.y;
+        let half = max(u.sh@K@.x, 0.001);
+        let c = 1.0 - smoothstep(-half, half, ring);
+        let al = u.shc@K@.a * c;
+        spm = u.shc@K@.rgb * al + spm * (1.0 - al);
+        sa = al + sa * (1.0 - al);
     }
 """
 
@@ -188,7 +208,8 @@ def source(bodies: int) -> str:
         union = _BODIES.replace("@CALLS@", calls)
     else:
         union = ""
-    return _HEAD + _SHADE.replace("@BODIES@", union)
+    shadows = "".join(_SHADOW.replace("@K@", str(k)) for k in reversed(range(MAX_SHADOWS)))
+    return _HEAD + _SHADE.replace("@BODIES@", union).replace("@SHADOWS@", shadows)
 
 
 def _lin(v: float) -> float:
@@ -254,6 +275,9 @@ class RingShader:
             base[f"{name}_c"] = zero4
         for name in ("col_out", "col_fill", "col_in"):
             base[name] = zero4
+        for k in range(MAX_SHADOWS):
+            base[f"sh{k}"] = zero4
+            base[f"shc{k}"] = zero4
         for k in range(len(self._slots)):
             base.update({f"bg{k}": zero4, f"bd{k}": zero4, f"bo{k}": zero4, f"bj{k}": zero4})
             base[f"bs{k}"] = 0.0
@@ -333,15 +357,17 @@ class RingShader:
         names: Sequence[str],
         moving: Collection[str],
         colours: tuple[RGBA | None, RGBA | None, RGBA | None],
+        shadows: Sequence[tuple[RGBA, float, float]] = (),
     ) -> None:
         """Paint ``ring`` (the bodies of ``names`` in it, those in ``moving`` at their full size
-        and animated by their joins) in ``colours``: outer border, fill, inner border."""
-        self._ctx = (size, ring, tuple(names), frozenset(moving), colours)
+        and animated by their joins) in ``colours``: outer border, fill, inner border; and its
+        ``shadows`` (colour, blur, spread), the first on top, up to ``MAX_SHADOWS``."""
+        self._ctx = (size, ring, tuple(names), frozenset(moving), colours, tuple(shadows))
         self._paint()
 
     def _paint(self) -> None:
         assert self._ctx is not None and self.node is not None
-        size, ring, names, moving, colours = self._ctx
+        size, ring, names, moving, colours, shadows = self._ctx
         con = ring.contours
         outer, fill, inner = colours
         values: dict[str, Uniform] = {
@@ -352,6 +378,10 @@ class RingShader:
             "col_fill": linear(fill),
             "col_in": linear(inner if con.inner_drawn else None),
         }
+        for k in range(MAX_SHADOWS):
+            colour, blur, spread = shadows[k] if k < len(shadows) else (None, 0.0, 0.0)
+            values[f"sh{k}"] = (blur, spread, 0.0, 0.0)
+            values[f"shc{k}"] = linear(colour)
         for key, (rect, radii) in (
             ("out", con.outer),
             ("outh", con.outer_hole),
