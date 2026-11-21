@@ -8,7 +8,6 @@ from tess_shell.appearance import Appearance
 from tess_shell.schema.model import BarDef
 from tests.test_panel import manager, surface
 
-
 AUTO = (
     "Bar { Name: Auto, Edge: BOTTOM, Width: EXPAND, Height: 30, Auto_Hide: true, Children {\n"
     "  Rectangle { Name: Dot, Width: 10, Height: 10 } } }"
@@ -18,7 +17,8 @@ NO_AUTO = (
     "  Rectangle { Name: Dot, Width: 10, Height: 10 } } }"
 )
 SLOW = (
-    "Bar { Name: Slow, Edge: LEFT, Width: 40, Height: EXPAND, Auto_Hide: true, Auto_Hide_Delay: 3000, Children {\n"
+    "Bar { Name: Slow, Edge: LEFT, Width: 40, Height: EXPAND, Auto_Hide: true,\n"
+    "  Auto_Hide_Delay: 3000, Children {\n"
     "  Rectangle { Name: Dot, Width: 10, Height: 10 } } }"
 )
 
