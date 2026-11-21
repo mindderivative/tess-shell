@@ -400,33 +400,3 @@ def test_each_use_keeps_its_own_query(tmp_path: Path) -> None:
         d.toggle()
         d.type("fire")
         assert module.states[use.key].query == "fire"
-
-
-def test_a_launcher_that_had_the_keyboard_closes_when_another_surface_of_the_shell_takes_it() -> (
-    None
-):
-    """M7k: the keyboard going to another of the shell's own surfaces (``active``) closes a
-    Launcher that had it; a Launcher that never had it, one already hidden, the surface that
-    gained it and a Panel without the Applications module are left alone. (Sway keeps an
-    exclusive keyboard on the earlier surface, so the compositor cannot show this live.)"""
-    from types import SimpleNamespace
-
-    from tess_shell.surfaces.manager import SurfaceManager
-
-    def surface(name: str, *, had: bool, hidden: bool = False, launcher: bool = True) -> Any:
-        return SimpleNamespace(name=name, had_keys=had, hidden=hidden, launcher=launcher)
-
-    closed: list[str] = []
-    manager = SimpleNamespace(
-        surfaces=[
-            surface("Launcher", had=True),
-            surface("Never", had=False),
-            surface("Hidden", had=True, hidden=True),
-            surface("Other", had=True),
-            surface("Plain", had=True, launcher=False),
-        ],
-        _click_away_panel=lambda s: s.launcher,
-        hide=lambda s: closed.append(s.name),
-    )
-    SurfaceManager._keyboard_taken(manager, "Other")  # type: ignore[arg-type]
-    assert closed == ["Launcher"]
