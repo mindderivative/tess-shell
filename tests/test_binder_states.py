@@ -243,3 +243,55 @@ def test_a_hook_runs_after_the_state_changes_and_shares_the_listener() -> None:
     window.simulate("pointer_enter", node=view.nodes["B"])
     window.simulate("pointer_leave")
     assert seen == [("enter", rgba(HOVER)), ("leave", rgba(BASE))]
+
+
+def test_a_module_root_passes_its_hover_and_press_to_its_parts_that_have_states() -> None:
+    """``MenuItem::label:pressed``: a part is styled while the pointer is over, or presses, the root
+    block of its module (a Text takes no pointer itself), and has its base look after."""
+    from tess_shell.binder.model import Node as N
+
+    text_base, text_hover, text_press = (
+        Color(1, 2, 3, 255),
+        Color(4, 5, 6, 255),
+        Color(7, 8, 9, 255),
+    )
+    label = N(
+        "Text",
+        name="L",
+        owner="M@1",
+        part="label",
+        props={"Text": Text("hi"), "Width": Length(30), "Height": Length(10)},
+        style={"Foreground": text_base},
+        states={"hovered": {"Foreground": text_hover}, "pressed": {"Foreground": text_press}},
+    )
+    stranger = N(  # a block of another use is not a part of this module
+        "Text",
+        name="S",
+        owner="Other@2",
+        part="label",
+        props={"Text": Text("x"), "Width": Length(30), "Height": Length(10)},
+        style={"Foreground": text_base},
+        states={"pressed": {"Foreground": text_press}},
+    )
+    root = N(
+        "FlexBox",
+        name="B",
+        owner="M@1",
+        props=SIZE,
+        style={"Background": BASE},
+        states={"pressed": {"Background": PRESS}},
+        children=(label, stranger),
+    )
+    window = Window(width=100, height=100)
+    view = build([root], window)
+    colour = lambda name: view.nodes[name].get("fill")  # noqa: E731
+    base = colour("L")
+    node = view.nodes["B"]
+    window.simulate("pointer_enter", node=node)
+    assert colour("L") == rgba(text_hover)
+    window.simulate("pointer_down", node=node)
+    assert colour("L") == rgba(text_press) and colour("S") == base
+    window.simulate("pointer_up", node=node)
+    assert colour("L") == rgba(text_hover)
+    window.simulate("pointer_leave")
+    assert colour("L") == base
