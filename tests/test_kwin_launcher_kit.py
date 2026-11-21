@@ -21,7 +21,7 @@ from tess_shell.services.desktop_entries import ApplicationIndex
 from tests import kitlib
 from tests.kwin import prepare_launcher as kit
 
-AUTO = ["1-check", "2-real-start", "3-panel", "4-key"]
+AUTO = ["1-check", "2-real-start", "3-panel", "3b-clickaway", "4-key"]
 MANUAL = ["5-real-application", "6-look"]
 REAL = ["7-real-key"]
 SCRIPTS = ("run.sh", "run-key.sh", "bin/marker")

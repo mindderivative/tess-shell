@@ -233,6 +233,16 @@ def check(result):
             timeout=300,
         ),
         Step(
+            "3b-clickaway",
+            "the Launcher closes on a click outside and on nothing else; typing works throughout",
+            command=drive("clickaway"),
+            sandbox="kwin",
+            tools=(TRE_PY,),
+            expect=tuple(f"{OK}{n} " for n in range(1, 13)),
+            forbid=NO,
+            timeout=300,
+        ),
+        Step(
             "4-key",
             "the Panel from a global key (the private kglobalaccel): opens, takes keys at once, closes",
             command=drive("key"),

@@ -9,6 +9,9 @@ are the kit's made-up ones (a marker script that writes a line and sleeps, and a
   Enter on a script, on an application that opens a window (which KWin makes the active one), on a
   missing program (the Panel stays and says so), a click outside (it does not hide the Panel), and
   the started marker outliving the shell.
+* ``clickaway`` (M7k): with the Panel open the keys reach the field and type into it; a click on the
+  field, on the Panel's padding and on its empty body leaves it open and typing still works; a click
+  outside (the empty desktop) closes it; shown again it takes the keyboard and types again.
 * ``key``: the same from a global key registered with the private ``kglobalaccel`` of KWin.
 """
 
@@ -224,16 +227,16 @@ def panel() -> int:
             and not run.grep(r"Panel Launcher on \S+ hidden", mark),
             run.tail(),
         )
-        # a click outside the Panel does not hide it (exclusive keyboard)
+        # a click outside the Panel hides it (M7k: the catcher under it)
         mark = run.mark()
         keys.click(40, 650)
-        time.sleep(1.0)  # a negative again
         report.check(
-            "12 a click outside the Panel does not hide it",
-            not run.grep(r"Panel Launcher on \S+ hidden", mark),
+            "12 a click outside the Panel hides it",
+            wait(run, r"Panel Launcher on \S+ hidden", mark, timeout=5),
             run.tail(),
         )
-        report.note("design gap 1: a click outside does not hide the Panel (as the spec expects)")
+        open_panel(run)
+        press_until_heard(run, keys)
         keys.key("Escape")
         keys.key("Escape")
         # terminal entries: never started here if a terminal launcher exists
@@ -319,6 +322,73 @@ def panel() -> int:
     return int(report.code)
 
 
+def _typed_more(run: d.ShellRun, keys: d.Input) -> bool:
+    """One more letter after "mark": the module searches "marke" (the field holds the text)."""
+    mark = run.mark()
+    keys.type("e")
+    return wait(run, r"search 'marke': ", mark)
+
+
+def clickaway() -> int:
+    """The Launcher closes on a click outside and on nothing else (M7k). The output is 1280 by 720
+    and the Panel (480 by 400) is centred, so its body is x 400 to 880 and y 160 to 560."""
+    report = d.Report()
+    run = start("cfg")
+    keys = d.Input(TRE_PY, ENV)
+    inside = {
+        "the search field": (640, 190),
+        "the Panel's padding": (412, 172),
+        "the empty body below the list": (640, 520),
+    }
+    try:
+        report.check("1 the Panel opens", open_panel(run), run.tail())
+        report.check(
+            "2 the keys reach the Panel with no click first",
+            press_until_heard(run, keys),
+            run.tail(),
+        )
+        report.check(
+            "3 typing 'mark' reaches the field: the module finds the two entries",
+            type_and_see(run, keys, "mark", 2),
+            run.tail(),
+        )
+        for n, (what, (x, y)) in enumerate(inside.items(), start=4):
+            mark = run.mark()
+            keys.click(x, y)
+            time.sleep(1.0)  # a negative: there is nothing to wait for when it must NOT close
+            report.check(
+                f"{n} a click on {what} does not close the Panel",
+                not run.grep(r"Panel Launcher on \S+ hidden", mark),
+                run.tail(),
+            )
+        report.check(
+            "7 typing still reaches the field after those clicks",
+            _typed_more(run, keys),
+            run.tail(),
+        )
+        mark = run.mark()
+        keys.click(40, 650)
+        report.check(
+            "8 a click on the empty desktop closes the Panel",
+            wait(run, r"Panel Launcher on \S+ hidden", mark, timeout=5),
+            run.tail(),
+        )
+        report.check("9 it opens again", open_panel(run), run.tail())
+        report.check(
+            "10 and the keys reach it again, and typing works",
+            press_until_heard(run, keys) and type_and_see(run, keys, "mark", 2),
+            run.tail(),
+        )
+        report.check(
+            "11 no ERROR in the log", not run.grep(r"\| ERROR "), "; ".join(run.grep(r"\| ERROR "))
+        )
+    finally:
+        keys.close()
+        code = run.stop()
+    report.check("12 the shell stops with code 0", code == 0, f"exit code {code}")
+    return int(report.code)
+
+
 def _moves(run: d.ShellRun, keys: d.Input) -> bool:
     mark = run.mark()
     keys.key("Down")
@@ -380,4 +450,4 @@ def key() -> int:
 
 if __name__ == "__main__":
     which = sys.argv[1]
-    raise SystemExit({"panel": panel, "key": key}[which]())
+    raise SystemExit({"panel": panel, "key": key, "clickaway": clickaway}[which]())
