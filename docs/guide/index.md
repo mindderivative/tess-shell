@@ -3,12 +3,12 @@
 This guide is for a person who has installed `tesserae-shell` and wants a bar, a launcher or a few widgets on a KDE Plasma desktop. It does not explain how the shell is built; the [design notes](../design/index.md) do that.
 
 <!-- BEGIN generated: version-info -->
-This guide describes tesserae-shell 0.2.0 (schema version 1.12, the one `tesserae-shell schema --json` prints).
+This guide describes tesserae-shell 0.2.0 (schema version 1.13, the one `tesserae-shell schema --json` prints).
 
 <!-- END generated: version-info -->
 
 <!-- BEGIN generated: release-state -->
-The code this guide describes is the released version, 0.2.0.
+The code this guide describes is a little **ahead of the 0.2.0 release** on PyPI: the CHANGELOG lists the difference under *Unreleased*. The pages mark what was added after 0.2.0; a package installed from PyPI at 0.2.0 does not have it until the next release.
 
 <!-- END generated: release-state -->
 

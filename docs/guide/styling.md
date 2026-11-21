@@ -19,7 +19,7 @@ Settings {
 }
 ```
 
-`Theme` names a theme file by its `Name` (the shipped theme is `Default`, which is also what you get if you write nothing). `Stylesheets` lists stylesheets by `Name`, lowest priority first: a rule of yours that comes later wins over one of the same weight. **Name the `Default` stylesheet in your configuration** (`Stylesheets: [Default]`): it gives text the theme's colour and size, and the standard modules their look. A theme or stylesheet that does not exist is an error naming the nearest names.
+`Theme` names a theme file by its `Name` (the shipped theme is `Default`, which is also what you get if you write nothing). `Stylesheets` lists stylesheets by `Name`, lowest priority first: a rule of yours that comes later wins over one of the same weight. **The `Default` stylesheet applies unless you write `Stylesheets: []`**: it gives text the theme's colour and size, and the standard modules their look, so `Stylesheets: [Default]` can be left out, and you name it only to add your own after it (`Stylesheets: [Default, Mine]`). With an empty list a TextField or List has the engine's black text, and `tesserae-shell check` says so in a note (`appearance-no-stylesheet`). A theme or stylesheet that does not exist is an error naming the nearest names.
 
 ## Tokens
 

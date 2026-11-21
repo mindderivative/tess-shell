@@ -58,7 +58,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.12"
+SCHEMA_VERSION = "1.13"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -1097,7 +1097,7 @@ def _settings() -> dict[str, dict[str, Json]]:
                 "Stylesheets",
                 "list",
                 {"item_kind": "string", "one_or_list": True},
-                None,
+                f"[{', '.join(appearance.stylesheets)}]",
             ),
             "Follow_Desktop": boolean("Appearance", "Follow_Desktop", appearance.follow_desktop),
         },

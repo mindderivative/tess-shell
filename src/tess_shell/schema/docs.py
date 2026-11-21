@@ -771,7 +771,8 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
     ("Appearance", "Theme"): "The Name of the theme to use; the shell's Default theme when left "
     "out.",
     ("Appearance", "Stylesheets"): "The Name of a stylesheet or a list of them, lowest priority "
-    "first.",
+    "first. Left out, it is [Default], the shipped stylesheet; write [] for none (the text "
+    "field and the list then have the engine's black text).",
     ("Appearance", "Follow_Desktop"): "Follows the desktop's colour scheme, accent, contrast "
     "and reduced-motion settings.",
     ("Settings", "KWin"): "What the shell does with KWin: its script and fullscreen hiding.",

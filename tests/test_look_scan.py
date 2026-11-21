@@ -67,7 +67,50 @@ def test_the_shipped_theme_and_stylesheet_are_found_with_no_configuration(tmp_pa
     assert result.errors == []
     assert "Default" in result.themes and "Default" in result.stylesheets
     look = build_look(result, settings, Appearance())
-    assert look.theme.name == "Default" and look.rules == ()  # no stylesheet unless one is named
+    assert look.theme.name == "Default" and look.rules  # the Default stylesheet (ADR-0022)
+
+
+def test_no_stylesheets_key_means_default_and_an_empty_list_means_none(tmp_path: Path) -> None:
+    """ADR-0022: absent is [Default]; an explicit [] is a choice and gives no rules."""
+    write_example(tmp_path)
+    settings, _ = load_settings(tmp_path)
+    assert settings is not None and settings.appearance.stylesheets == ("Default",)
+    settings_file(tmp_path, "Follow_Desktop: false")  # an Appearance block with no Stylesheets
+    settings, _ = load_settings(tmp_path)
+    assert settings is not None and settings.appearance.stylesheets == ("Default",)
+    settings_file(tmp_path, "Stylesheets: []")
+    settings, _ = load_settings(tmp_path)
+    assert settings is not None and settings.appearance.stylesheets == ()
+    look = build_look(scan(settings, tmp_path), settings, Appearance())
+    assert look.rules == ()
+
+
+FIELD_BODY = BODY.replace(
+    "Children {\n                    FlexBox {",
+    "Children {\n                    TextInput { }\n                    FlexBox {",
+    1,
+)
+
+
+@pytest.mark.parametrize(
+    ("appearance", "body", "noted"),
+    [
+        ("Stylesheets: []", FIELD_BODY, True),  # a TextField in use and no stylesheet
+        ("Stylesheets: []", BODY, False),  # nothing that needs one
+        ("Stylesheets: [Default]", FIELD_BODY, False),
+        ("Follow_Desktop: false", FIELD_BODY, False),  # the key left out means Default
+    ],
+)
+def test_the_note_about_no_stylesheet_only_when_a_field_or_list_is_in_use(
+    tmp_path: Path, appearance: str, body: str, noted: bool
+) -> None:
+    assert body is BODY or "TextInput { }" in body
+    write_example(tmp_path, body)
+    settings_file(tmp_path, appearance)
+    settings, _ = load_settings(tmp_path)
+    assert settings is not None
+    rules = [f.rule for f in scan(settings, tmp_path).findings]
+    assert ("appearance-no-stylesheet" in rules) is noted
 
 
 def test_a_named_theme_and_stylesheet_make_the_look(tmp_path: Path) -> None:
