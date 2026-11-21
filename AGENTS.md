@@ -4,7 +4,7 @@
 - Tesserae Shell: builds desktop shells (bars, panels, docks, launchers, OSDs, widgets) beside an installed DE, KDE Plasma on Wayland first. PyPI `tesserae-shell`, import `tess_shell`, command `tesserae-shell` (or `python -m tess_shell`), repo `mindderivative/tess-shell` (public).
 - Renders via `tess_re` (`tesserae-engine`), reads TDL (`tess_dl`, `tesserae-dl`), evaluates TEL (`tess_el`, `tesserae-el`). No dependency on Tesserae UI (ADR-0006).
 - Current state: run `tools/status.sh`, read the tree and the vault. Do not describe or assume code, tests or tools not in the tree.
-- Decided (vault wins if it differs): Python `>=3.14`; hatchling, `src/` layout; deps (floors in `pyproject.toml`, which wins) `tesserae-engine>=0.6.9,<0.7`, `tesserae-el>=0.2.0,<0.3`, `tesserae-dl>=0.2.0,<0.3`, `tesserae-utils[image]>=0.2.1,<0.3`, `loguru`, `dbus-fast`, `inotify-simple`, `pillow`, `jeepney`; no `jsonschema` (ADR-0020).
+- Decided (vault wins if it differs): Python `>=3.14`; hatchling, `src/` layout; deps (floors in `pyproject.toml`, which wins) `tesserae-engine>=0.6.10,<0.7`, `tesserae-el>=0.2.0,<0.3`, `tesserae-dl>=0.2.0,<0.3`, `tesserae-utils[image]>=0.2.1,<0.3`, `loguru`, `dbus-fast`, `inotify-simple`, `pillow`, `jeepney`; no `jsonschema` (ADR-0020).
 - Import rules: `tess_shell/binder/` imports only `tess_re`, `tess_utils`, stdlib; a module never imports `tess_re`; a test enforces this (see the layout note).
 
 ## Design record and scope
@@ -26,6 +26,7 @@
 - Venv `~/Projects/pyDev/pyEnvs/tess-shell` (outside the repo): `UV_PROJECT_ENVIRONMENT=~/Projects/pyDev/pyEnvs/tess-shell uv sync`. Run `pytest`, `ruff`, `mypy` from its `bin/`.
 - Tests run headless. Run the whole suite before calling a task done.
 - Ask before running anything that registers global shortcuts, creates layer surfaces on the real compositor or changes KDE settings; use a private compositor (as tre's `tools/sway_live.sh`).
+- Never `kill`, `pkill`, `killall` or signal anything by process name (`kwin_wayland`, `sway`, `plasmashell`, `pipewire`, `dbus-daemon`): the name matches the owner's live session. Signal only a PID you started in this task and recorded at spawn (or a process group you made with `setsid`/`start_new_session`); prefer a timeout to a kill. Tests that start a virtual `kwin_wayland` do it through `tests/kitlib.py`, which owns the child and stops it by its own process group.
 - Style: ruff line length 100, rules `E F I B UP`; mypy over the whole package; fully typed; no per-frame Python; no blocking call on the loop thread.
 
 ## Process
