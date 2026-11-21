@@ -104,6 +104,7 @@ RULES: dict[str, set[str] | None] = {
     # shortcut mode: the rules are pure (keys and the surface order); the driver applies a change
     # to the windows it is given
     "surfaces.mode": {"tess_shell.schema.keys", "tess_shell.surfaces.focus"},
+    "surfaces.autohide": {"loguru", "tess_shell.schema.model", "tess_shell.surfaces"},
     "surfaces.mode_driver": {
         "loguru",
         "tess_shell.binder",  # the View whose first Tab stop gets the ring (a type only)

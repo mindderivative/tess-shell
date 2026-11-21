@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.20",
+  "schema_version": "1.21",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -994,6 +994,36 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Auto_Hide": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "Slides the Bar out past its screen edge when the pointer has left it for Auto_Hide_Delay, leaving a 1 px hover strip that brings it back; the Bar gives its space back while it is out. On by default; false keeps the Bar in place. A Bar that has the keyboard, or a Popup of its own open, stays.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Auto_Hide_Delay": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "How long the pointer is away before the Bar hides, in milliseconds (default 1000).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "min": 0,
+          "max": null,
+          "step": null,
+          "unit": "ms",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Exclusive_Zone": {
           "kind": null,
           "choices": null,
@@ -1022,34 +1052,6 @@
           "refused": false,
           "group": "Behaviour",
           "empty_list": true,
-          "tokens": [],
-          "preferred_tokens": []
-        },
-        "Auto_Hide": {
-          "kind": null,
-          "choices": null,
-          "enum": null,
-          "default": null,
-          "doc": "Slides the Bar out when the pointer leaves it. Not built.",
-          "slot": false,
-          "required": false,
-          "built": false,
-          "refused": false,
-          "group": "Behaviour",
-          "tokens": [],
-          "preferred_tokens": []
-        },
-        "Auto_Hide_Delay": {
-          "kind": null,
-          "choices": null,
-          "enum": null,
-          "default": null,
-          "doc": "How long the pointer is away before the Bar hides, in milliseconds. Not built.",
-          "slot": false,
-          "required": false,
-          "built": false,
-          "refused": false,
-          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -1333,8 +1335,6 @@
       "not_built": [
         "Exclusive_Zone",
         "Input_Region",
-        "Auto_Hide",
-        "Auto_Hide_Delay",
         "Attach_To",
         "Meld",
         "Animation",

@@ -42,6 +42,8 @@ class BarDef:
     tab_index: int | None = None  # its place in the shell's focus order (None: after the rest)
     shortcut_mode: Origin | None = None  # where ``Shortcut_Mode: true`` is written; None: false
     visible: bool = True  # ``Visible: false`` starts it hidden (UX TSH-051)
+    auto_hide: bool = True  # slides out when the pointer has left it for ``auto_hide_delay``
+    auto_hide_delay: float = 1000.0  # ms
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
 
