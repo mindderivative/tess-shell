@@ -90,7 +90,9 @@ class LoggingSettings:
 @dataclass(frozen=True, slots=True)
 class AppearanceSettings:
     theme: str | None = None  # a theme's metadata Name; None: the shell's default theme
-    stylesheets: tuple[str, ...] = ()  # stylesheets' metadata Names, lowest priority first
+    # metadata Names, lowest priority first; no key means the shipped Default (ADR-0022),
+    # ``Stylesheets: []`` means none
+    stylesheets: tuple[str, ...] = ("Default",)
     follow_desktop: bool = True  # read the Settings portal (Portals > Configuration)
 
 

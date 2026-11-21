@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.12",
+  "schema_version": "1.13",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -23370,8 +23370,8 @@
         "kind": "list",
         "choices": null,
         "enum": null,
-        "default": null,
-        "doc": "The Name of a stylesheet or a list of them, lowest priority first.",
+        "default": "[Default]",
+        "doc": "The Name of a stylesheet or a list of them, lowest priority first. Left out, it is [Default], the shipped stylesheet; write [] for none (the text field and the list then have the engine's black text).",
         "slot": false,
         "required": false,
         "built": true,

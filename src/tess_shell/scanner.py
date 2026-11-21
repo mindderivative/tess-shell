@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from importlib.metadata import version
 from itertools import chain
 from pathlib import Path
+from typing import Any
 
 import tess_el
 from tess_dl import Document
@@ -331,6 +332,8 @@ def _check_look(
                     else f"stylesheets: {', '.join(stylesheets)}",
                 )
             )
+    if not settings.appearance.stylesheets:
+        out.extend(_no_stylesheet_note(shells, modules))
     if theme is None:
         return out
     tokens = effective_tokens(theme, Appearance(), themes.get(DEFAULT_THEME))
@@ -367,6 +370,55 @@ def _check_look(
     out.extend({(f.file, f.line, f.column, f.message): f for f in stated}.values())
     out.extend(check_parts({name: mf.definition for name, mf in modules.items()}, rules))
     return out
+
+
+_NEEDS_STYLESHEET = ("TextField", "List")  # blocks whose colours only a stylesheet gives
+
+
+def _no_stylesheet_note(
+    shells: dict[Path, ShellDef], modules: dict[str, ModuleFile]
+) -> list[Finding]:
+    """``Stylesheets: []`` is a choice (ADR-0022): say once that a TextField or List in use has no
+    colours without a stylesheet (through any module the shells call)."""
+    seen: set[str] = set()
+    found: set[str] = set()
+
+    def walk(children: Any) -> None:
+        for child in children or ():
+            kind = getattr(child, "kind", None)
+            if kind in _NEEDS_STYLESHEET:
+                found.add(kind)
+            module = getattr(child, "module", None)
+            if module is not None and module not in seen and module in modules:
+                seen.add(module)
+                walk(modules[module].definition.children)
+            walk(getattr(child, "children", ()))
+            walk(getattr(child, "body", ()))
+            walk(getattr(child, "else_body", ()))
+
+    for shell in shells.values():
+        for monitor in shell.monitors:
+            for surface in monitor.surfaces:
+                walk(surface.children)
+            for frame in monitor.frames:
+                for edge in frame.edges.values():
+                    walk(edge.children)
+                for panel in frame.melds:
+                    walk(panel.children)
+    if not found:
+        return []
+    return [
+        Finding(
+            "settings.tdl",
+            1,
+            1,
+            "info",
+            "appearance-no-stylesheet",
+            "No stylesheet: Appearance.Stylesheets is empty, so TextField and List use engine "
+            "defaults (black text).",
+            "Remove the empty list or name Default.",
+        )
+    ]
 
 
 def build_look(result: Scan, settings: Settings, appearance: Appearance) -> Look:
