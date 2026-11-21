@@ -19,7 +19,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "tesserae-engine>=0.6.9,<0.7",
+    "tesserae-engine>=0.6.10,<0.7",
     "tesserae-el>=0.2.0,<0.3",
     "tesserae-dl>=0.2.0,<0.3",
     "loguru>=0.7.3,<0.8",
