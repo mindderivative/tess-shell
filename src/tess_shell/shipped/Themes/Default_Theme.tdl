@@ -95,6 +95,8 @@ Theme {
                 Outline: "#FFFFFF"
             }
         }
-        Reduced_Motion { }
+        Reduced_Motion {
+            Motion { Duration { Short: 0, Medium: 0, Long: 0 } }
+        }
     }
 }

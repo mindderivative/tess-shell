@@ -88,3 +88,16 @@ def test_the_launcher_hover_fill_differs_from_the_card_and_keeps_the_text_readab
         assert fill != card, scheme
         assert _ratio(fill, card) >= 2.0, scheme  # the hover is seen
         assert _ratio(colour("on_surface"), fill) >= 4.5, scheme
+
+
+def test_the_emphasized_easing_is_the_curve_the_motion_spec_gives() -> None:
+    from tess_shell.binder.motion import EASINGS
+
+    assert EASINGS["EMPHASIZED"] == (0.2, 0.0, 0.0, 1.0)
+
+
+def test_the_themes_reduced_motion_block_carries_the_zero_durations() -> None:
+    assert re.search(
+        r"Reduced_Motion \{\s*Motion \{ Duration \{ Short: 0, Medium: 0, Long: 0 \} \}\s*\}",
+        (SHIPPED / "Themes" / "Default_Theme.tdl").read_text(encoding="utf-8"),
+    )

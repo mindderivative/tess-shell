@@ -99,9 +99,9 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 
 | Token | Value | Default | The built-in modes change it in | What it is |
 |---|---|---|---|---|
-| `$motion.duration.short` | number | `100` | never | A short animation, in milliseconds. |
-| `$motion.duration.medium` | number | `200` | never | A medium animation, in milliseconds. |
-| `$motion.duration.long` | number | `400` | never | A long animation, in milliseconds. |
+| `$motion.duration.short` | number | `100` | reduced motion | A short animation, in milliseconds. |
+| `$motion.duration.medium` | number | `200` | reduced motion | A medium animation, in milliseconds. |
+| `$motion.duration.long` | number | `400` | reduced motion | A long animation, in milliseconds. |
 | `$motion.easing.standard` | number | `standard` | never | The standard curve. |
 | `$motion.easing.emphasized` | number | `emphasized` | never | The emphasised curve. |
 

@@ -318,6 +318,7 @@
 
 ## Unreleased
 
+- TSH-060: `Easing: EMPHASIZED` is the curve (0.2, 0, 0, 1) the Motion spec gives it until engines take path easing (it was 0.05, 0.7, 0.1, 1.0), and the Default theme's `Reduced_Motion` block now carries the zero durations the shell forced in code.
 - TSH-044: the hover fill of a Launcher (or any `list_item`) entry is the `outline` colour, not `surface_raised`, which is the card's own fill (hover was invisible); the text on it keeps 4.5 to 1 in the dark and the light scheme.
 - TSH-038: a Label ends a text that is wider than it with an ellipsis by default (was CLIP; `Overflow: CLIP` still cuts), and the Network connection name is bounded to 160 px and ends with an ellipsis.
 - TSH-036: the Badge dot is 6 by 6 and the pill 16 high (minimum width 16, 4 px side padding), its digits in the caption size at weight 500 (were 8, 18, 11 px at 600), as the Badge spec fixes.
