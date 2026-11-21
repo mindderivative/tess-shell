@@ -40,7 +40,7 @@ Mechanism in the engine, meaning and look in the layer above.
 | **Tesserae Shell runtime** | Shell surfaces, compositor/DE integration, services (D-Bus, PipeWire, UPower…), config loading, widget/module lifecycle, IPC, theming | Rendering internals, the user's shell content |
 | **User shell config** | TDL views, Python ViewModels/modules, theme files | Engine or runtime internals |
 
-- **tre never blocks a design change** (maintainer, 2026-11-21; proposed as [ADR-0024 tre Never Blocks Design](../30%20Decisions/ADR-0024%20tre%20Never%20Blocks%20Design.md)): every visual element and parameter is adjustable from Python through properties, tokens or declarative hooks; a missing hook is an engine request.
+- **tre never blocks a design change** (maintainer, 2026-11-21; accepted, [ADR-0024 tre Never Blocks Design](../30%20Decisions/ADR-0024%20tre%20Never%20Blocks%20Design.md)): every visual element and parameter is adjustable from Python through properties, tokens or declarative hooks; a missing hook is an engine request.
 - **Rust owns every frame; Python owns intent.** Python runs only in callbacks, never in layout/paint. Designs that need per-frame Python are rejected or redesigned.
 - **Few dependencies.** A third-party library is used only where building the same would be a project of its own (an image codec, a D-Bus client) ([ADR-0019 Dependency Policy](../30%20Decisions/ADR-0019%20Dependency%20Policy.md)).
 - **One entry form.** tre takes one standard form per kind of value; the framework converts every other form ([ADR-0018 One Entry Form in tre](../30%20Decisions/ADR-0018%20One%20Entry%20Form%20in%20tre.md)).
