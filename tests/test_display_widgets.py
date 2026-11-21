@@ -27,7 +27,7 @@ def test_label_shows_its_text_names_itself_and_takes_a_width() -> None:
 def test_a_disabled_label_is_faint() -> None:
     with running("Label { Text: x, Enabled: false }") as w:
         text = w.of_use("Label", "#0")
-        assert text.get("disabled") is True and text.get("opacity") == 0.5
+        assert text.get("disabled") is True and text.get("opacity") == 0.38
 
 
 def test_textbox_wraps_by_word_and_limits_its_lines() -> None:
@@ -73,7 +73,7 @@ def test_badge_counts_caps_hides_zero_and_draws_a_dot() -> None:
         assert [r.get("visible") for r in roots] == [True, True, False, True]
         assert w.of_use("Badge", "Digits", 0).get("text") == "7"
         assert w.of_use("Badge", "Digits", 1).get("text") == "99+"
-        assert roots[3].get("width") == 8 and roots[0].get("a11y_hidden") is True
+        assert roots[3].get("width") == 6 and roots[0].get("a11y_hidden") is True
 
 
 def test_marquee_scrolls_only_when_the_text_does_not_fit() -> None:

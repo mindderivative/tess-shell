@@ -27,7 +27,7 @@ from tess_shell.binder.model import (
     Value,
 )
 
-DEFAULT_MAX = Shadows((Shadow(Color(0, 0, 0, 0x40), 0, 16, 48, 0),))
+DEFAULT_MAX = Shadows((Shadow(Color(0, 0, 0, 0x66), 0, 16, 48, 0),))
 
 
 def scale(max_shadows: Shadows, percent: float, origin: Origin) -> Shadows:

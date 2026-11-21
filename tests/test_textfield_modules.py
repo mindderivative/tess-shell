@@ -138,7 +138,7 @@ def test_a_disabled_module_takes_no_text() -> None:
     with running(f'TextInput {{ Text: "ab", Enabled: false, {CALLS} }}') as r:
         (f,) = r.fields()
         assert f.inp.get("disabled") is True and f.inp.get("hit_testable") is False
-        assert f.box.get("opacity") == 0.5  # the default look of :disabled
+        assert f.box.get("opacity") == 0.38  # the default look of :disabled
         click(r, f.inp)
         r.window.simulate("input", text="z")
         assert f.inp.get("text") == "ab" and r.seen == []

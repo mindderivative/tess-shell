@@ -109,7 +109,7 @@ def test_a_disabled_item_and_a_separator_take_no_click_and_the_menu_stays() -> N
     with running(BAR, popups=POPUPS) as w:
         op = open_menu(w)
         off = item(op, "Off")
-        assert off.get("disabled") is True and off.get("opacity") == 0.5
+        assert off.get("disabled") is True and off.get("opacity") == 0.38
         click(op, off)
         sep = [n for n in op.view.nodes.values() if n.get("role") == "separator"]
         assert len(sep) == 1

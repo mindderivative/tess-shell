@@ -3451,7 +3451,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "focused": {
       "shadows": [
@@ -3557,7 +3557,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       },
       "focused": {
        "shadows": [
@@ -3730,7 +3730,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "focused": {
       "shadows": [
@@ -3836,11 +3836,11 @@
      },
      "selected": false,
      "shown": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       },
       "focused": {
        "shadows": [
@@ -4195,7 +4195,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "focused": {
       "shadows": [
@@ -4267,7 +4267,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       },
       "focused": {
        "shadows": [
@@ -4729,7 +4729,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "focused": {
       "shadows": [
@@ -4800,7 +4800,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       },
       "focused": {
        "shadows": [
@@ -4868,7 +4868,7 @@
       "rank": 0,
       "states": {
        "disabled": {
-        "opacity": 0.5
+        "opacity": 0.38
        }
       },
       "tre": {
@@ -4925,7 +4925,7 @@
        "shown": {},
        "states": {
         "disabled": {
-         "opacity": 0.5
+         "opacity": 0.38
         }
        },
        "tip_auto": false,
@@ -5362,7 +5362,7 @@
       "rank": 0,
       "states": {
        "disabled": {
-        "opacity": 0.5
+        "opacity": 0.38
        }
       },
       "tre": {
@@ -5419,11 +5419,11 @@
        },
        "selected": false,
        "shown": {
-        "opacity": 0.5
+        "opacity": 0.38
        },
        "states": {
         "disabled": {
-         "opacity": 0.5
+         "opacity": 0.38
         }
        },
        "tip_auto": false,
@@ -5995,6 +5995,7 @@
     ],
     "font_size": 14,
     "label": "b",
+    "overflow": "ellipsis",
     "text": "b",
     "wrap": "none"
    },
@@ -6008,6 +6009,7 @@
     ],
     "font_size": 14,
     "label": "h",
+    "overflow": "ellipsis",
     "text": "h",
     "wrap": "none"
    },
@@ -6198,7 +6200,7 @@
       "rank": 0,
       "states": {
        "disabled": {
-        "opacity": 0.5
+        "opacity": 0.38
        },
        "focused": {
         "shadows": [
@@ -6304,7 +6306,7 @@
        "shown": {},
        "states": {
         "disabled": {
-         "opacity": 0.5
+         "opacity": 0.38
         },
         "focused": {
          "shadows": [
@@ -6379,13 +6381,14 @@
          ],
          "font_size": 14,
          "label": "b",
+         "overflow": "ellipsis",
          "text": "b",
          "wrap": "none"
         },
         "rank": 0,
         "states": {
          "disabled": {
-          "opacity": 0.5
+          "opacity": 0.38
          }
         },
         "tre": {
@@ -6403,6 +6406,7 @@
          "font_size": 14.0,
          "hit_testable": true,
          "label": "b",
+         "overflow": "ellipsis",
          "pressed": null,
          "read_only": "!ValueError",
          "role": null,
@@ -6437,7 +6441,7 @@
          "shown": {},
          "states": {
           "disabled": {
-           "opacity": 0.5
+           "opacity": 0.38
           }
          },
          "tip_auto": false,
@@ -6743,7 +6747,7 @@
         "rank": 0,
         "states": {
          "disabled": {
-          "opacity": 0.5
+          "opacity": 0.38
          },
          "focused": {
           "shadows": [
@@ -6813,7 +6817,7 @@
          "shown": {},
          "states": {
           "disabled": {
-           "opacity": 0.5
+           "opacity": 0.38
           },
           "focused": {
            "shadows": [
@@ -7160,13 +7164,14 @@
        ],
        "font_size": 14,
        "label": "h",
+       "overflow": "ellipsis",
        "text": "h",
        "wrap": "none"
       },
       "rank": 0,
       "states": {
        "disabled": {
-        "opacity": 0.5
+        "opacity": 0.38
        }
       },
       "tre": {
@@ -7184,6 +7189,7 @@
        "font_size": 14.0,
        "hit_testable": true,
        "label": "h",
+       "overflow": "ellipsis",
        "pressed": null,
        "read_only": "!ValueError",
        "role": null,
@@ -7218,7 +7224,7 @@
        "shown": {},
        "states": {
         "disabled": {
-         "opacity": 0.5
+         "opacity": 0.38
         }
        },
        "tip_auto": false,
@@ -7305,8 +7311,8 @@
      241,
      255
     ],
-    "font_size": 11,
-    "font_weight": 600,
+    "font_size": 12,
+    "font_weight": 500,
     "text": "7",
     "visible": true
    },
@@ -7322,12 +7328,12 @@
      140,
      255
     ],
-    "height": 18,
+    "height": 16,
     "justify_content": "center",
-    "min_width": 18,
+    "min_width": 16,
     "padding_bottom": 0,
-    "padding_left": 5,
-    "padding_right": 5,
+    "padding_left": 4,
+    "padding_right": 4,
     "padding_top": 0,
     "visible": true,
     "width": "auto"
@@ -7340,8 +7346,8 @@
      241,
      255
     ],
-    "font_size": 11,
-    "font_weight": 600,
+    "font_size": 12,
+    "font_weight": 500,
     "text": "0",
     "visible": false
    },
@@ -7357,15 +7363,15 @@
      140,
      255
     ],
-    "height": 8,
+    "height": 6,
     "justify_content": "center",
-    "min_width": 8,
+    "min_width": 6,
     "padding_bottom": 0,
     "padding_left": 0,
     "padding_right": 0,
     "padding_top": 0,
     "visible": true,
-    "width": 8
+    "width": 6
    },
    "Icon@Main_Shell.Main.Top_Bar.Icon_1/Root": {
     "a11y_hidden": true,
@@ -7387,6 +7393,7 @@
     ],
     "font_size": 14,
     "label": "Hello",
+    "overflow": "ellipsis",
     "text": "Hello",
     "width": 80,
     "wrap": "none"
@@ -7405,6 +7412,7 @@
     ],
     "font_size": 14,
     "label": "x",
+    "overflow": "ellipsis",
     "text": "x",
     "wrap": "none"
    },
@@ -7518,6 +7526,7 @@
        ],
        "font_size": 14,
        "label": "Hello",
+       "overflow": "ellipsis",
        "text": "Hello",
        "width": 80,
        "wrap": "none"
@@ -7525,7 +7534,7 @@
       "rank": 0,
       "states": {
        "disabled": {
-        "opacity": 0.5
+        "opacity": 0.38
        }
       },
       "tre": {
@@ -7544,6 +7553,7 @@
        "font_size": 14.0,
        "hit_testable": true,
        "label": "Hello",
+       "overflow": "ellipsis",
        "pressed": null,
        "read_only": "!ValueError",
        "role": null,
@@ -7579,7 +7589,7 @@
        "shown": {},
        "states": {
         "disabled": {
-         "opacity": 0.5
+         "opacity": 0.38
         }
        },
        "tip_auto": false,
@@ -7675,13 +7685,14 @@
      ],
      "font_size": 14,
      "label": "x",
+     "overflow": "ellipsis",
      "text": "x",
      "wrap": "none"
     },
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      }
     },
     "tre": {
@@ -7699,6 +7710,7 @@
      "font_size": 14.0,
      "hit_testable": true,
      "label": "x",
+     "overflow": "ellipsis",
      "pressed": null,
      "read_only": "!ValueError",
      "role": null,
@@ -7733,11 +7745,11 @@
      },
      "selected": false,
      "shown": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       }
      },
      "tip_auto": false,
@@ -7957,7 +7969,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      }
     },
     "tre": {
@@ -8008,7 +8020,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       }
      },
      "tip_auto": false,
@@ -8034,8 +8046,8 @@
         241,
         255
        ],
-       "font_size": 11,
-       "font_weight": 600,
+       "font_size": 12,
+       "font_weight": 500,
        "text": "7",
        "visible": true
       },
@@ -8053,8 +8065,8 @@
         255
        ],
        "focusable": false,
-       "font_size": 11.0,
-       "font_weight": 600.0,
+       "font_size": 12.0,
+       "font_weight": 500.0,
        "hit_testable": true,
        "label": null,
        "pressed": null,
@@ -8113,12 +8125,12 @@
       140,
       255
      ],
-     "height": 18,
+     "height": 16,
      "justify_content": "center",
-     "min_width": 18,
+     "min_width": 16,
      "padding_bottom": 0,
-     "padding_left": 5,
-     "padding_right": 5,
+     "padding_left": 4,
+     "padding_right": 4,
      "padding_top": 0,
      "visible": true,
      "width": "auto"
@@ -8126,7 +8138,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      }
     },
     "tre": {
@@ -8144,14 +8156,14 @@
       255
      ],
      "focusable": false,
-     "height": 18.0,
+     "height": 16.0,
      "hit_testable": true,
      "justify_content": "center",
      "label": null,
-     "min_width": 18.0,
+     "min_width": 16.0,
      "padding_bottom": 0.0,
-     "padding_left": 5.0,
-     "padding_right": 5.0,
+     "padding_left": 4.0,
+     "padding_right": 4.0,
      "padding_top": 0.0,
      "pressed": null,
      "read_only": "!ValueError",
@@ -8186,7 +8198,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       }
      },
      "tip_auto": false,
@@ -8212,8 +8224,8 @@
         241,
         255
        ],
-       "font_size": 11,
-       "font_weight": 600,
+       "font_size": 12,
+       "font_weight": 500,
        "text": "0",
        "visible": false
       },
@@ -8231,8 +8243,8 @@
         255
        ],
        "focusable": false,
-       "font_size": 11.0,
-       "font_weight": 600.0,
+       "font_size": 12.0,
+       "font_weight": 500.0,
        "hit_testable": true,
        "label": null,
        "pressed": null,
@@ -8291,20 +8303,20 @@
       140,
       255
      ],
-     "height": 8,
+     "height": 6,
      "justify_content": "center",
-     "min_width": 8,
+     "min_width": 6,
      "padding_bottom": 0,
      "padding_left": 0,
      "padding_right": 0,
      "padding_top": 0,
      "visible": true,
-     "width": 8
+     "width": 6
     },
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      }
     },
     "tre": {
@@ -8322,11 +8334,11 @@
       255
      ],
      "focusable": false,
-     "height": 8.0,
+     "height": 6.0,
      "hit_testable": true,
      "justify_content": "center",
      "label": null,
-     "min_width": 8.0,
+     "min_width": 6.0,
      "padding_bottom": 0.0,
      "padding_left": 0.0,
      "padding_right": 0.0,
@@ -8338,7 +8350,7 @@
      "tab_index": 0,
      "value": null,
      "visible": true,
-     "width": 8.0
+     "width": 6.0
     },
     "wire": {
      "always": {},
@@ -8364,7 +8376,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       }
      },
      "tip_auto": false,
@@ -8442,7 +8454,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      }
     },
     "tre": {
@@ -8490,7 +8502,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       }
      },
      "tip_auto": false,
@@ -8597,7 +8609,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      }
     },
     "tre": {
@@ -8622,8 +8634,8 @@
     },
     "wire": {
      "always": {
-      "enter": 1,
-      "leave": 1
+      "enter": 2,
+      "leave": 2
      },
      "checked": false,
      "disabled": false,
@@ -8633,8 +8645,8 @@
      "focused": false,
      "handlers": [],
      "hooks": {
-      "enter": 1,
-      "leave": 1
+      "enter": 2,
+      "leave": 2
      },
      "in_checked": false,
      "in_selected": false,
@@ -8650,7 +8662,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       }
      },
      "tip_auto": true,
@@ -8763,7 +8775,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      }
     },
     "tre": {
@@ -8788,8 +8800,8 @@
     },
     "wire": {
      "always": {
-      "enter": 1,
-      "leave": 1
+      "enter": 2,
+      "leave": 2
      },
      "checked": false,
      "disabled": true,
@@ -8799,8 +8811,8 @@
      "focused": false,
      "handlers": [],
      "hooks": {
-      "enter": 1,
-      "leave": 1
+      "enter": 2,
+      "leave": 2
      },
      "in_checked": false,
      "in_selected": false,
@@ -8816,11 +8828,11 @@
      },
      "selected": false,
      "shown": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       }
      },
      "tip_auto": true,
@@ -9337,7 +9349,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "focused": {
       "shadows": [
@@ -9431,7 +9443,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       },
       "focused": {
        "shadows": [
@@ -9588,7 +9600,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "focused": {
       "shadows": [
@@ -9692,7 +9704,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       },
       "focused": {
        "shadows": [
@@ -10001,7 +10013,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "focused": {
       "shadows": [
@@ -10095,7 +10107,7 @@
      "shown": {},
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       },
       "focused": {
        "shadows": [
@@ -10362,7 +10374,7 @@
     "rank": 0,
     "states": {
      "disabled": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "focused": {
       "shadows": [
@@ -10456,11 +10468,11 @@
      },
      "selected": false,
      "shown": {
-      "opacity": 0.5
+      "opacity": 0.38
      },
      "states": {
       "disabled": {
-       "opacity": 0.5
+       "opacity": 0.38
       },
       "focused": {
        "shadows": [
@@ -10571,6 +10583,7 @@
     ],
     "font_size": 14,
     "label": "x",
+    "overflow": "ellipsis",
     "text": "x",
     "wrap": "none"
    },
@@ -10923,13 +10936,13 @@
         "rank": 0,
         "states": {
          "disabled": {
-          "opacity": 0.5
+          "opacity": 0.38
          },
          "hovered": {
           "fill": [
-           27,
-           34,
-           43,
+           85,
+           101,
+           122,
            255
           ]
          },
@@ -10996,13 +11009,13 @@
          "shown": {},
          "states": {
           "disabled": {
-           "opacity": 0.5
+           "opacity": 0.38
           },
           "hovered": {
            "fill": [
-            27,
-            34,
-            43,
+            85,
+            101,
+            122,
             255
            ]
           },
@@ -11105,13 +11118,13 @@
         "rank": 0,
         "states": {
          "disabled": {
-          "opacity": 0.5
+          "opacity": 0.38
          },
          "hovered": {
           "fill": [
-           27,
-           34,
-           43,
+           85,
+           101,
+           122,
            255
           ]
          },
@@ -11178,13 +11191,13 @@
          "shown": {},
          "states": {
           "disabled": {
-           "opacity": 0.5
+           "opacity": 0.38
           },
           "hovered": {
            "fill": [
-            27,
-            34,
-            43,
+            85,
+            101,
+            122,
             255
            ]
           },
@@ -11287,13 +11300,13 @@
         "rank": 0,
         "states": {
          "disabled": {
-          "opacity": 0.5
+          "opacity": 0.38
          },
          "hovered": {
           "fill": [
-           27,
-           34,
-           43,
+           85,
+           101,
+           122,
            255
           ]
          },
@@ -11360,13 +11373,13 @@
          "shown": {},
          "states": {
           "disabled": {
-           "opacity": 0.5
+           "opacity": 0.38
           },
           "hovered": {
            "fill": [
-            27,
-            34,
-            43,
+            85,
+            101,
+            122,
             255
            ]
           },
@@ -12018,7 +12031,7 @@
       "rank": 0,
       "states": {
        "disabled": {
-        "opacity": 0.5
+        "opacity": 0.38
        },
        "hovered": {
         "fill": [
@@ -12091,7 +12104,7 @@
        "shown": {},
        "states": {
         "disabled": {
-         "opacity": 0.5
+         "opacity": 0.38
         },
         "hovered": {
          "fill": [
@@ -12576,7 +12589,7 @@
       "rank": 0,
       "states": {
        "disabled": {
-        "opacity": 0.5
+        "opacity": 0.38
        },
        "hovered": {
         "fill": [
@@ -12649,7 +12662,7 @@
        "shown": {},
        "states": {
         "disabled": {
-         "opacity": 0.5
+         "opacity": 0.38
         },
         "hovered": {
          "fill": [
@@ -13133,7 +13146,7 @@
       "rank": 0,
       "states": {
        "disabled": {
-        "opacity": 0.5
+        "opacity": 0.38
        },
        "hovered": {
         "fill": [
@@ -13206,7 +13219,7 @@
        "shown": {},
        "states": {
         "disabled": {
-         "opacity": 0.5
+         "opacity": 0.38
         },
         "hovered": {
          "fill": [
@@ -13369,13 +13382,14 @@
          ],
          "font_size": 14,
          "label": "x",
+         "overflow": "ellipsis",
          "text": "x",
          "wrap": "none"
         },
         "rank": 0,
         "states": {
          "disabled": {
-          "opacity": 0.5
+          "opacity": 0.38
          }
         },
         "tre": {
@@ -13393,6 +13407,7 @@
          "font_size": 14.0,
          "hit_testable": true,
          "label": "x",
+         "overflow": "ellipsis",
          "pressed": null,
          "read_only": "!ValueError",
          "role": null,
@@ -13427,7 +13442,7 @@
          "shown": {},
          "states": {
           "disabled": {
-           "opacity": 0.5
+           "opacity": 0.38
           }
          },
          "tip_auto": false,

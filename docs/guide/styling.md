@@ -72,7 +72,9 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$shape.none` | number | `0` | never | No rounding. |
 | `$shape.small` | number | `4` | never | Slightly rounded corners. |
 | `$shape.medium` | number | `8` | never | Rounded corners. |
+| `$shape.medium_large` | number | `12` | never | Between medium and large rounding: a rich tooltip or a card (12). |
 | `$shape.large` | number | `16` | never | Strongly rounded corners. |
+| `$shape.extra_large` | number | `28` | never | Very strongly rounded corners: a dialog (28). |
 | `$shape.full` | number | `999` | never | Fully rounded: a pill or a circle. |
 
 ### Space
@@ -99,9 +101,9 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 
 | Token | Value | Default | The built-in modes change it in | What it is |
 |---|---|---|---|---|
-| `$motion.duration.short` | number | `100` | never | A short animation, in milliseconds. |
-| `$motion.duration.medium` | number | `200` | never | A medium animation, in milliseconds. |
-| `$motion.duration.long` | number | `400` | never | A long animation, in milliseconds. |
+| `$motion.duration.short` | number | `100` | reduced motion | A short animation, in milliseconds. |
+| `$motion.duration.medium` | number | `200` | reduced motion | A medium animation, in milliseconds. |
+| `$motion.duration.long` | number | `400` | reduced motion | A long animation, in milliseconds. |
 | `$motion.easing.standard` | number | `standard` | never | The standard curve. |
 | `$motion.easing.emphasized` | number | `emphasized` | never | The emphasised curve. |
 

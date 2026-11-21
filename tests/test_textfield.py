@@ -692,7 +692,7 @@ def test_a_read_only_field_that_is_enabled_again_stays_read_only() -> None:
 
 def test_a_disabled_field_shows_its_disabled_look() -> None:
     b = Built(node({"Enabled": m.Bool(False)}))
-    assert b.field.box.get("opacity") == 0.5  # the default :disabled look
+    assert b.field.box.get("opacity") == 0.38  # the default :disabled look
     assert b.view.update([("F", "Enabled", m.Bool(True))]) == []
     assert b.field.box.get("opacity") == 1.0
 
