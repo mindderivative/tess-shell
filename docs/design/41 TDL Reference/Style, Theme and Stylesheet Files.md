@@ -90,6 +90,10 @@ Theme {
 
 ## Stylesheet File (Not yet Designed)
 
+> [!NOTE]
+> **Default (decided 2026-11-21)**
+> A shell that names no stylesheet gets the shipped `Default` one; `Appearance.Stylesheets: []` turns it off ([ADR-0022 Default Stylesheet](../30%20Decisions/ADR-0022%20Default%20Stylesheet.md)).
+
 A stylesheet holds shared rules that apply across the shell by widget type or class, so a shell author can restyle every `Text` or every `.warning` in one place. A rule is a `Rule { Selector: ".warning", ... }` block inside the root `Stylesheet { }`, repeated as needed, and the selector is a quoted string (D5, [ADR-0014 Shell File Language > Decisions on the Open Items (2026-10-30)](../30%20Decisions/ADR-0014%20Shell%20File%20Language.md#decisions-on-the-open-items-2026-10-30); the forms are in [Style Schema > Stylesheet Selectors](Style%20Schema.md#stylesheet-selectors)).
 
 ```

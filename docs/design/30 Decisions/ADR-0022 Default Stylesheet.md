@@ -2,10 +2,10 @@
 title: ADR-0022 Default Stylesheet
 aliases: [ADR-0022, Appearance Stylesheets Default]
 type: adr
-status: proposed
+status: accepted
 owner: phil
 created: 2026-11-20
-updated: 2026-11-20
+updated: 2026-11-21
 tags: [adr, design/style]
 ---
 
@@ -42,7 +42,7 @@ D36 stays. `check` emits a Warning or Note ("no stylesheet: widgets use engine d
 
 ## Decision
 
-Blank until the maintainer accepts. Recommendation: A, with `check` reporting a Note when `Stylesheets` is explicitly empty and a TextField or List is in use. If the maintainer prefers B, the shipped modules should take their colours from the `Default` stylesheet and not repeat them.
+Option A, accepted by the maintainer on 2026-11-21 (relayed by the Orchestrator, item 16). An absent `Appearance.Stylesheets` key means `[Default]`; an explicit empty list `[]` still means none; `check` emits a Note (proposed id `appearance-no-stylesheet`) when `Stylesheets` is `[]` and a TextField or List is in use. This amends [Style Schema](../41%20TDL%20Reference/Style%20Schema.md) D36.
 
 ## Consequences
 
@@ -52,4 +52,4 @@ Blank until the maintainer accepts. Recommendation: A, with `check` reporting a 
 
 ## Links
 
-[Style Schema](../41%20TDL%20Reference/Style%20Schema.md) (D36, D38) · [Style, Theme and Stylesheet Files](../41%20TDL%20Reference/Style%2C%20Theme%20and%20Stylesheet%20Files.md) · [Settings File](../41%20TDL%20Reference/Settings%20File.md) · [Applications Module](../40%20Specifications/Modules/Applications%20Module.md) · [M7 Brief](../00%20Home/M7%20Brief.md)
+[Style Schema](../41%20TDL%20Reference/Style%20Schema.md) (D36 amended, D38) · [Style, Theme and Stylesheet Files](../41%20TDL%20Reference/Style%2C%20Theme%20and%20Stylesheet%20Files.md) · [Settings File](../41%20TDL%20Reference/Settings%20File.md) · [Applications Module](../40%20Specifications/Modules/Applications%20Module.md) · [M7 Brief](../00%20Home/M7%20Brief.md)
