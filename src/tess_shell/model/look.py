@@ -48,7 +48,21 @@ class Look:
 
     def with_appearance(self, appearance: Appearance) -> Look:
         """The same theme and rules for a new light or dark setting, accent or motion flag."""
+        appearance = dataclasses.replace(appearance, density=self.appearance.density)
         return make_look(self.theme, self.sheets, appearance, self.fallback, self.icons)
+
+    def at_density(self, density: str | None) -> Look:
+        """The same look at another density level (a surface's own ``Density``); this look when
+        ``density`` is ``None`` or the level it has."""
+        if density is None or density == self.appearance.density:
+            return self
+        return make_look(
+            self.theme,
+            self.sheets,
+            dataclasses.replace(self.appearance, density=density),  # type: ignore[arg-type]
+            self.fallback,
+            self.icons,
+        )
 
 
 def make_look(

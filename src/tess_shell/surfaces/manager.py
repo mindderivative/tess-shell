@@ -820,11 +820,17 @@ class SurfaceManager:
 
     # -- the uses made for the entries of a For -------------------------------------------------
 
-    def new_live(self, uses: Mapping[str, Use], **kwargs: Any) -> LiveTree:
+    def new_live(
+        self, uses: Mapping[str, Use], bar: BarDef | PanelDef | None = None, **kwargs: Any
+    ) -> LiveTree:
         """A live tree for one surface; the uses it makes for the entries of a ``For`` are
         announced to the modules the moment it makes them (their first values are in the store
-        before the blocks that read them are resolved)."""
-        live = LiveTree(self._store, uses, look=self._look, **kwargs)
+        before the blocks that read them are resolved). A surface that writes its own ``Density``
+        reads the tokens of that level."""
+        look = self._look
+        if look is not None and bar is not None:
+            look = look.at_density(bar.density)
+        live = LiveTree(self._store, uses, look=look, **kwargs)
         live.activate = self._activate_dynamic
         return live
 
@@ -1041,7 +1047,7 @@ class SurfaceManager:
     def _open(self, planned: Planned, all_uses: Mapping[str, Use]) -> Surface:
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
         kind = _kind(bar)
-        live = self.new_live(all_uses)
+        live = self.new_live(all_uses, bar)
         if isinstance(bar, PanelDef | BarDef) and not bar.visible and self.hide_mode == "CLOSE":
             # a hidden Panel has no surface at all: nothing to go stale, nothing for the
             # compositor to hold, and no flash when it is first shown (D44, CLOSE)
@@ -1405,7 +1411,7 @@ class SurfaceManager:
             self._arm_click_away(s)
             self._shown(s)
             return
-        fresh = self._make_window(s.planned, self.new_live(self._all_uses))
+        fresh = self._make_window(s.planned, self.new_live(self._all_uses, s.planned.bar))
         assert fresh.window is not None
         s.window, s.view, s.body = fresh.window, fresh.view, fresh.body
         s.live, s.fill, s.shadows, s.extra = fresh.live, fresh.fill, fresh.shadows, fresh.extra
@@ -2051,7 +2057,7 @@ class SurfaceManager:
             self._ended(s.window, "dropped")
 
     def _update(self, s: Surface, p: Planned, all_uses: Mapping[str, Use]) -> None:
-        live = self.new_live(all_uses)
+        live = self.new_live(all_uses, p.bar)
         if s.hidden and s.window is None:  # the next show builds from the new definition
             s.live, s.expanded, s.name, s.planned, s.geometry = (
                 live,

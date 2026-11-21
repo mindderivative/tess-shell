@@ -221,7 +221,7 @@ def every_key() -> list[tuple[str, str, str, dict[str, Any]]]:
 
 
 def test_top_level_shape() -> None:
-    assert D["schema_version"] == "1.20"
+    assert D["schema_version"] == "1.22"
     assert D["shell_version"]
     assert list(D) == [
         "schema_version",
@@ -822,7 +822,7 @@ def test_the_command_prints_valid_json(capsys: pytest.CaptureFixture[str]) -> No
 
 def test_the_command_takes_json_before_the_command_too(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--json", "schema"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.20"
+    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.22"
 
 
 def test_out_writes_the_file_and_prints_nothing(
@@ -900,7 +900,15 @@ def test_the_tokens_are_the_default_themes_with_its_modes() -> None:
                     modes.setdefault(mode.type.lower(), set()).add(ref)
     exported = {v["ref"][1:]: v for tokens in D["tokens"].values() for v in tokens.values()}
     assert set(exported) == set(base)
-    assert list(D["tokens"]) == ["color", "type", "shape", "space", "elevation", "motion"]
+    assert list(D["tokens"]) == [
+        "color",
+        "type",
+        "shape",
+        "space",
+        "density",
+        "elevation",
+        "motion",
+    ]
     for ref, entry in exported.items():
         value = base[ref]
         if isinstance(value, tess_dl.Block):

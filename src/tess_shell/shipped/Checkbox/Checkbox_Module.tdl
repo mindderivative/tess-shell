@@ -24,7 +24,7 @@ Module {
         Label: <| params.Label if params.Label else params.Text |>
         Align_Items: CENTER
         Spacing: 8
-        Height: 22
+        Height: <| density.control_height |>
         Children {
             Box {
                 Name: Frame
