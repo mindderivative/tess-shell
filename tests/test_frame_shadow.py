@@ -51,7 +51,21 @@ def test_a_frame_that_needs_no_shader_draws_no_shadow() -> None:
     assert all(p[3] == 0 for p in opening_row(manager))
 
 
-def test_an_elevation_level_gives_the_ring_the_levels_two_shadows() -> None:
+def test_an_elevation_level_gives_the_ring_the_levels_two_shadows(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    import tess_dl
+
+    from tess_shell.appearance import Appearance
+    from tess_shell.model.look import make_look
+    from tess_shell.schema.look import read_theme
+    from tests import test_frame_linear
+    from tests.widgets_live import THEME
+
+    def shipped_look():  # type: ignore[no-untyped-def]
+        doc = tess_dl.parse(THEME, path="T_Theme.tdl").document
+        theme, _ = read_theme(doc, "T_Theme.tdl")  # type: ignore[arg-type]
+        return make_look(theme, [], Appearance(scheme="dark"))  # type: ignore[arg-type]
+
+    monkeypatch.setattr(test_frame_linear, "look", shipped_look)
     row = opening_row(started(FRAME % "Elevation: LEVEL_3"))
     assert row[1][3] > 0 and row[1][:3] == (0, 0, 0)  # just inside the opening
     assert row[40][3] == 0  # level 3's blur (8 px, spread 3) is gone well outside
