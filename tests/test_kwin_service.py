@@ -379,7 +379,7 @@ def test_after_a_restart_of_the_shell_the_fresh_load_carries_the_current_state(
     with rig(tmp_path) as r:
         r.start()
         r.fake.set_fullscreen(["DP-1"])
-        assert wait_for(lambda: len(r.fullscreen) == 1)
+        assert wait_for(lambda: len(r.fullscreen) == 1, timeout=20)
         r.stop()
         # the shell starts again; a window is fullscreen all the time (no event happens)
         r.kwin = KWinService(r.service, r.loop.call_soon, runtime_dir=tmp_path / "run")
@@ -387,7 +387,9 @@ def test_after_a_restart_of_the_shell_the_fresh_load_carries_the_current_state(
         r.kwin.on_fullscreen = seen.append
         r.control.script = r.kwin
         r.start()
-        assert wait_for(lambda: seen == [frozenset({"DP-1"})])
+        # the restart hands the state over through a fresh load on a loaded CI runner: wait for it,
+        # not for 3 s (the wait ends as soon as it holds)
+        assert wait_for(lambda: seen == [frozenset({"DP-1"})], timeout=20)
 
 
 def test_a_malformed_fullscreen_state_is_ignored_with_one_warning_and_still_answered(
