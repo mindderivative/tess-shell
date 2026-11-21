@@ -68,7 +68,7 @@ Theme {
         Item_Icon_Size: 20
         Row_Padding_X: 12
         Icon_Label_Gap: 8
-        Field_Padding_X: 12
+        Field_Padding: [12, 12, 12, 12]
         Tree_Indent: 20
         Chevron_Box: 24
     }
@@ -113,7 +113,7 @@ Theme {
                 Item_Icon_Size: 18
                 Row_Padding_X: 8
                 Icon_Label_Gap: 8
-                Field_Padding_X: 8
+                Field_Padding: [8, 8, 8, 8]
                 Tree_Indent: 16
                 Chevron_Box: 20
             }
@@ -128,7 +128,7 @@ Theme {
                 Item_Icon_Size: 18
                 Row_Padding_X: 4
                 Icon_Label_Gap: 4
-                Field_Padding_X: 8
+                Field_Padding: [8, 6, 8, 6]
                 Tree_Indent: 12
                 Chevron_Box: 16
             }

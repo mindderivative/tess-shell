@@ -237,6 +237,7 @@ def test_a_default_of_tre_is_in_the_export_for_the_keys_that_have_one() -> None:
             assert (block, key) in export._FIELDS or key in (
                 "Foreground",
                 "Font_Size",
+                "Padding",  # a TextField's comes from the stylesheet's density token
             ), (block, key, entry["default"], text)
     box = block_keys("Box")
     assert box["Visible"]["default"] == "true"

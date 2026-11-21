@@ -64,7 +64,6 @@ def _defaults(origin: m.Origin) -> tuple[dict[str, m.Value], dict[str, m.Value]]
         "Border_Width": m.Number(1, origin=origin),
         "Border_Color": _token("color.outline", "color", origin),
         "Corner_Radius": _token("shape.small", "radius", origin),
-        "Padding": m.Sides(10, 6, 10, 6, origin=origin),
     }
     text: dict[str, m.Value] = {
         "Foreground": _token("color.on_surface", "color", origin),
