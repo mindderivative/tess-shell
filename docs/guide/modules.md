@@ -1934,7 +1934,7 @@ The system tray: one icon per StatusNotifier application, with its tooltip, clic
 
 | Param | Type | Default | What it does |
 |---|---|---|---|
-| `icon_size` | number | `18` | The size of each icon in pixels. |
+| `icon_size` | number | `0` | The size of each icon in pixels; 0 is the density level's. |
 | `show_passive` | boolean | `false` | Shows the items whose status is Passive. |
 | `spacing` | number | `6` | The space between two items in pixels. |
 
@@ -2014,7 +2014,7 @@ One icon of the Tray, with a tooltip.
 | Param | Type | Default | What it does |
 |---|---|---|---|
 | `icon` | icon | `""` | The icon: an SVG document or pixels the shell holds (the Tray sends it). |
-| `size` | number | `18` | The icon's size in pixels. |
+| `size` | number | `0` | The icon's size in pixels; 0 is the density level's. |
 | `tooltip_title` | string | `""` | The first line of the tooltip. |
 | `tooltip_text` | string | `""` | The second line of the tooltip; empty shows none. |
 | `label` | string | `""` | The name assistive technology reads aloud. |
@@ -2057,7 +2057,7 @@ The open windows as a row of buttons, from the shell's KWin script; a click acti
 |---|---|---|---|
 | `show_title` | boolean | `true` | Shows each window's title beside its icon. |
 | `max_width` | number | `180` | The widest a button gets, in pixels. |
-| `icon_size` | number | `18` | The size of each icon in pixels. |
+| `icon_size` | number | `0` | The size of each icon in pixels; 0 is the density level's. |
 | `monitor` | string | `"THIS"` | THIS shows the windows on the module's own monitor, ALL those on every monitor. |
 | `desktop` | string | `"CURRENT"` | CURRENT shows the windows on the current virtual desktop (and those on all desktops), ALL those on every desktop. |
 | `show_empty` | boolean | `false` | Keeps the module's space when there is no window. |
@@ -2143,7 +2143,7 @@ One button of the Tasks row: an application's icon and a window's title.
 | `label` | string | `""` | The name assistive technology reads aloud: the title and the application, with the state in words. |
 | `show_title` | boolean | `true` | Shows the title beside the icon. |
 | `max_width` | number | `180` | The button's width when it shows a title, in pixels. |
-| `icon_size` | number | `18` | The icon's size in pixels. |
+| `icon_size` | number | `0` | The icon's size in pixels; 0 is the density level's. |
 | `active` | boolean | `false` | The window is the active one: the block takes the :selected look. |
 | `minimized` | boolean | `false` | The window is minimised: the button is drawn dimmed. |
 | `attention` | boolean | `false` | The window wants attention: a small mark in the warning colour. |
