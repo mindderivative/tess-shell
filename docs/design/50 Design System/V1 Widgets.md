@@ -54,7 +54,7 @@ Not yet v1 or needed: none of the maintainer's standard set remains outside v1 a
 
 - Shadows, elevation, transparency, animation and borders are style properties of containers and shapes, not blocks ([Surface Types](../40%20Specifications/Surfaces/Surface%20Types.md)).
 - Accessibility roles, labels and states are set on every block and module; the shell passes them to tre ([TRE-REQ-001 Layer Surface Window > Delivered (tre #195 closed)](../80%20Requests/TRE-REQ-001%20Layer%20Surface%20Window.md#delivered-tre-195-closed)).
-- tre provides the nodes these are made from; it provides no widgets itself (AGENTS > 1. What Tesserae Shell is).
+- tre provides the nodes these are made from; it provides no widgets itself ([Vault Reference > The projects](../00%20Home/Vault%20Reference.md#the-projects)).
 
 ## Open Questions
 

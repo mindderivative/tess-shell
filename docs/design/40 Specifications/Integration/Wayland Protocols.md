@@ -17,7 +17,7 @@ tags: [spec/integration, integration/wayland, needs-verification]
 ## Purpose and scope
 
 - Name every protocol the shell needs, with the version it needs and the fallback.
-- Record what KWin 6.8.1 advertises, so the design cites a fact, not a guess (AGENTS > 2. Hard rules rule 1).
+- Record what KWin 6.8.1 advertises, so the design cites a fact, not a guess (AGENTS > Hard rules rule 1).
 - Decide how the shell reaches protocols tre does not expose.
 - Not in this note: KWin-specific behaviour beyond protocols (the KWin script, window rules, stacking: [ADR-0012 Keeping the Shell Above Plasma Panels](../../30%20Decisions/ADR-0012%20Keeping%20the%20Shell%20Above%20Plasma%20Panels.md), and the KWin note to write), D-Bus interfaces (the D-Bus service layer note to write), and shortcuts ([ADR-0005 Global Shortcuts](../../30%20Decisions/ADR-0005%20Global%20Shortcuts.md)).
 

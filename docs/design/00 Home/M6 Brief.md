@@ -85,7 +85,7 @@ Written by the orchestrator on 2026-11-13. Each task has automated tests; a KWin
 
 ## Dependencies
 
-The widgets of [M4 Brief](M4%20Brief.md); the D-Bus layer of [M5 Brief](M5%20Brief.md) (M5a) for shortcut registration; `tess_re` (focus and key events); `dbus-fast`. A gap found goes to a `TRE-REQ` through the maintainer (AGENTS > 6. Requests Between Projects).
+The widgets of [M4 Brief](M4%20Brief.md); the D-Bus layer of [M5 Brief](M5%20Brief.md) (M5a) for shortcut registration; `tess_re` (focus and key events); `dbus-fast`. A gap found goes to a `TRE-REQ` through the maintainer ([Vault Reference > Requests between projects](Vault%20Reference.md#requests-between-projects)).
 
 ## Risks
 

@@ -140,7 +140,7 @@ The reload rule is already decided: a change to `Logging` applies at once ([Sett
 
 ## Design
 
-Plain text, one record per line, no colour in the file, no emoji (AGENTS > 10. Writing style). Colour on the console only when stderr is a terminal.
+Plain text, one record per line, no colour in the file, no emoji ([Vault Reference > Writing style](../../00%20Home/Vault%20Reference.md#writing-style)). Colour on the console only when stderr is a terminal.
 
 ## Accessibility
 

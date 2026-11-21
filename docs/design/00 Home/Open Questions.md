@@ -12,7 +12,7 @@ tags: [moc, question]
 # Open Questions
 
 > [!NOTE]
-> The one place to find every open item and every claim not yet verified. Each section below is embedded from the note that owns it, so this page never holds a second copy (one source of truth, AGENTS > 2. Hard rules rule 4). Resolved items stay visible as checked boxes. A new unknown goes in its own note's open section and, if it needs a home, here (AGENTS > 11. Session workflow).
+> The one place to find every open item and every claim not yet verified. Each section below is embedded from the note that owns it, so this page never holds a second copy (one source of truth, AGENTS > Hard rules rule 4). Resolved items stay visible as checked boxes. A new unknown goes in its own note's open section and, if it needs a home, here (AGENTS > Session workflow).
 
 ## Unverified Claims
 
@@ -770,7 +770,7 @@ All six were answered on 2026-11-03. The `tess-shell` session reported the first
 
 
 1. [ ] Do you accept the proposed values above, or change them? Context: see [Performance Budgets > Proposed Values for the Missing Numbers](../60%20Quality/Performance%20Budgets.md#proposed-values-for-the-missing-numbers). Recommendation: accept them as the v1 starting values and revise after the first measurements.
-2. [ ] Are the budgets checked in automated tests (a headless idle-CPU test) or only measured by hand in v1? Context: AGENTS > 12. Design Completeness Checklist lists testing through `window.simulate`. Recommendation: measure by hand in v1 and add the headless idle-CPU test once the budgets have held through one milestone.
+2. [ ] Are the budgets checked in automated tests (a headless idle-CPU test) or only measured by hand in v1? Context: [Vault Reference > Design completeness checklist](Vault%20Reference.md#design-completeness-checklist) lists testing through `window.simulate`. Recommendation: measure by hand in v1 and add the headless idle-CPU test once the budgets have held through one milestone.
 3. [ ] Which machine counts as the reference: the maintainer's AMD desktop, or a slower laptop? Context: the budgets are only meaningful against one machine. Recommendation: the AMD desktop sets the numbers; spot-check on a slower laptop before release.
 4. [x] For the four misses, do you change the budget or ask for a fix? Context: see [Performance Budgets > M7c Reading (code session's report, 2026-11-19; not run in the vault)](../60%20Quality/Performance%20Budgets.md#m7c-reading-code-sessions-report-2026-11-19-not-run-in-the-vault). Recommendation: B02 raise to 6 (it misses by 3% in one artificial Bar, and the default shell reads 4.07); B12 change to 2 ms p99 (the CLI end to end is 58 ms against 100); B14 change to 2 calls, because the shell matches the client library; B18 keep 15 ms as a target and ask the code session for a fix or a cheaper bind of large trees. Separately, ask for a look at the 7 MiB reload retention. Answered by the maintainer on 2026-11-19: use the recommendation. B02 is now at most 6 wake-ups per second, B12 at most 2 ms p99, B14 2 calls per action, B18 stays 15 ms as a target with a fix requested, and the reload retention gets a look.
 
@@ -1121,7 +1121,7 @@ Redesign questions after [ADR-0014 Shell File Language](../30%20Decisions/ADR-00
 - [ ] How Plasma's own panels get their shadow (plasma-framework / plasma-workspace source).
 - [ ] How Waybar, eww, Fabric, AGS/Astal, Quickshell shells and COSMIC do shadows.
 - [ ] How the Edge Shell prototype drew its shadows.
-- [ ] Whether tre can expose the surface for route A, and whether the engine accepts a shadow request (AGENTS > 6. Requests Between Projects). Ask the `tre` session before writing a request.
+- [ ] Whether tre can expose the surface for route A, and whether the engine accepts a shadow request ([Vault Reference > Requests between projects](Vault%20Reference.md#requests-between-projects)). Ask the `tre` session before writing a request.
 - [x] The memory cost of the larger transparent buffer for route B: 134 KB per buffer for a 32 px margin on a 320x140 body (see the performance test). Still to measure at Frame size, per [Surface Types > Performance budget](../40%20Specifications/Surfaces/Surface%20Types.md#performance-budget).
 
 

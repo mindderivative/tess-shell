@@ -11,7 +11,7 @@ tags: [moc, quality]
 
 # 60 Quality
 
-Budgets, accessibility, testing, security and crash recovery (AGENTS > 12. Design Completeness Checklist). Many specs say "set in 60 Quality"; this folder is where those numbers live.
+Budgets, accessibility, testing, security and crash recovery ([Vault Reference > Design completeness checklist](../00%20Home/Vault%20Reference.md#design-completeness-checklist)). Many specs say "set in 60 Quality"; this folder is where those numbers live.
 
 | Note | Purpose | Status |
 |---|---|---|

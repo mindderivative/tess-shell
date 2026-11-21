@@ -37,7 +37,7 @@ Accepted 2026-11-03 by the maintainer in chat, in the words quoted in Context: *
 
 - No request to tre asks it to convert, parse or accept another form of a value it already takes. [TRE-REQ-010 Colour Strings](../80%20Requests/TRE-REQ-010%20Colour%20Strings.md) is withdrawn.
 - The binder and Tesserae UI own their converters. Sharing them is a separate question, [ADR-0017 Shared Utilities](ADR-0017%20Shared%20Utilities.md).
-- [Layers and Components](../20%20Architecture/Layers%20and%20Components.md) lists format conversion among the things tre never owns (AGENTS > 3. Layering Principle).
+- [Layers and Components](../20%20Architecture/Layers%20and%20Components.md) lists format conversion among the things tre never owns ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)).
 - Existing entry points that already accept more than one form (tre 0.5.10 takes a length as a number or as a percentage string such as `"50%"`) are tre's to review against this rule. The shell passes whatever form tre documents and does not rely on extra forms.
 - A request to tre must name a mechanism the engine lacks, not a convenience.
 

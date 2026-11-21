@@ -36,3 +36,4 @@ tags: [moc, adr]
 | [ADR-0021 Audio Access](ADR-0021%20Audio%20Access.md) | The shell's own client for the PulseAudio native protocol; `pactl subscribe` as the fallback | accepted 2026-11-13 by the orchestrator (directive, Tier 1) |
 | [ADR-0022 Default Stylesheet](ADR-0022%20Default%20Stylesheet.md) | What an absent `Appearance.Stylesheets` means: fall back to `[Default]` (recommended), warn, or refuse | accepted 2026-11-21 by the maintainer (option A) |
 | [ADR-0023 Active Descendant Key](ADR-0023%20Active%20Descendant%20Key.md) | How a layout names the List a text field follows: an `Active_Descendant` key on `TextInput` (recommended), a module call, or Launcher only | accepted 2026-11-21 by the maintainer (option A) |
+| [ADR-0024 tre Never Blocks Design](ADR-0024%20tre%20Never%20Blocks%20Design.md) | Layering rule: every visual parameter of tre is adjustable from Python through hooks; a gap is an engine request | proposed 2026-11-21 |

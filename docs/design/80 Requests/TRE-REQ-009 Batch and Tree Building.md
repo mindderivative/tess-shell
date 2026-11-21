@@ -12,7 +12,7 @@ tags: [engine-request, design, performance, needs-verification]
 # TRE-REQ-009: Batch and Tree Building
 
 > [!NOTE]
-> Ask tre for two calls that cut the number of Python-to-Rust crossings when the shell builds or updates a UI: a tree-building call that creates a whole detached subtree from one nested description, and a batch call that changes properties on many nodes at once. Both are optional conveniences. The shell works without them today. The maintainer asked for them now, while nothing depends on them, so that tre can build them without the shell waiting later (2026-11-02). Written for the maintainer to carry to the tre project; nothing is filed from this vault (AGENTS > 6. Requests Between Projects).
+> Ask tre for two calls that cut the number of Python-to-Rust crossings when the shell builds or updates a UI: a tree-building call that creates a whole detached subtree from one nested description, and a batch call that changes properties on many nodes at once. Both are optional conveniences. The shell works without them today. The maintainer asked for them now, while nothing depends on them, so that tre can build them without the shell waiting later (2026-11-02). Written for the maintainer to carry to the tre project; nothing is filed from this vault ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)).
 
 > [!TIP]
 > **Scoped by tre as issue #253, wanted in 0.5.10 (2026-11-02)**
@@ -65,7 +65,7 @@ What this says: the boundary crossing costs about one microsecond, so a realisti
 
 ## Why it Belongs in the Engine
 
-Only tre can build the nodes without crossing the boundary for each one, validate a whole description before changing anything (as `Node.set` already does for one node), and apply a change to many nodes in a single step that lays out once. The shell cannot do this from Python. The shell, by contrast, owns the meaning of a TDL tree and builds the description; tre owns the mechanism of building from it (AGENTS > 3. Layering Principle).
+Only tre can build the nodes without crossing the boundary for each one, validate a whole description before changing anything (as `Node.set` already does for one node), and apply a change to many nodes in a single step that lays out once. The shell cannot do this from Python. The shell, by contrast, owns the meaning of a TDL tree and builds the description; tre owns the mechanism of building from it ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)).
 
 ## Proposed API
 

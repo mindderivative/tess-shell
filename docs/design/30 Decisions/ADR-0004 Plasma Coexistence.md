@@ -16,7 +16,7 @@ tags: [adr, integration/dbus, needs-verification]
 
 ## Context
 
-Tesserae Shell runs beside an installed Plasma session and does not replace it (AGENTS > 1. What Tesserae Shell is). Some D-Bus names and roles can belong to only one process (the notification server, StatusNotifierWatcher). Which names plasmashell holds on a running session has not been checked. Observed on the maintainer's session on 2026-10-26 (plasmashell 6.8.1, KWin 6.8.1; `busctl --user list`): plasmashell holds `org.freedesktop.Notifications` and `org.kde.JobViewServer`; `kded6` holds `org.kde.StatusNotifierWatcher`, with plasmashell registered as one host; `kwin_wayland` holds `org.kde.kglobalaccel`. Full table: [System Context > Observed D-Bus names](../20%20Architecture/System%20Context.md#observed-d-bus-names). #needs-verification on other distributions.
+Tesserae Shell runs beside an installed Plasma session and does not replace it ([Vault Reference > The projects](../00%20Home/Vault%20Reference.md#the-projects)). Some D-Bus names and roles can belong to only one process (the notification server, StatusNotifierWatcher). Which names plasmashell holds on a running session has not been checked. Observed on the maintainer's session on 2026-10-26 (plasmashell 6.8.1, KWin 6.8.1; `busctl --user list`): plasmashell holds `org.freedesktop.Notifications` and `org.kde.JobViewServer`; `kded6` holds `org.kde.StatusNotifierWatcher`, with plasmashell registered as one host; `kwin_wayland` holds `org.kde.kglobalaccel`. Full table: [System Context > Observed D-Bus names](../20%20Architecture/System%20Context.md#observed-d-bus-names). #needs-verification on other distributions.
 
 ## Options
 

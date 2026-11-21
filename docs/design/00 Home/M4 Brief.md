@@ -108,7 +108,7 @@ Notes that must be at `review` before a half starts, with their status on 2026-1
 
 ## Dependencies
 
-`tess_re` (`Window.apply`, images, text input, pointer events), `tess_dl`, `tess_el`, `tess_utils` (colour, sides, and the planned image converters); Pillow for decoding (W5, to confirm against [ADR-0019 Dependency Policy](../30%20Decisions/ADR-0019%20Dependency%20Policy.md)); the Popup of M3 for menus. No D-Bus. Nothing here needs tre changes known today; a gap found goes to a `TRE-REQ` through the maintainer (AGENTS > 6. Requests Between Projects).
+`tess_re` (`Window.apply`, images, text input, pointer events), `tess_dl`, `tess_el`, `tess_utils` (colour, sides, and the planned image converters); Pillow for decoding (W5, to confirm against [ADR-0019 Dependency Policy](../30%20Decisions/ADR-0019%20Dependency%20Policy.md)); the Popup of M3 for menus. No D-Bus. Nothing here needs tre changes known today; a gap found goes to a `TRE-REQ` through the maintainer ([Vault Reference > Requests between projects](Vault%20Reference.md#requests-between-projects)).
 
 ## Risks
 

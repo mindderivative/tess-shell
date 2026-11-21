@@ -34,7 +34,7 @@ tags: [engine-request, needs-verification]
 
 ## Shell Need
 
-A Panel melded to a Frame looks as if it grows out of the ring ([Frame > Melding](../40%20Specifications/Surfaces/Frame.md#melding)). At rest the ring and body are one contour with rounded fillets where they meet. While the Panel slides in or out, the fillets should grow with it and the edge should stay smooth at every frame. On KWin (maintainer, 2026-11-06) the join shows a 90 degree angle while sliding and then a chamfer, and the edge looks slightly pixelated ([Frame > Found on KWin: the look is not good enough (maintainer, 2026-11-06)](../40%20Specifications/Surfaces/Frame.md#found-on-kwin-the-look-is-not-good-enough-maintainer-2026-11-06)). Python must not run per frame (AGENTS > 3. Layering Principle).
+A Panel melded to a Frame looks as if it grows out of the ring ([Frame > Melding](../40%20Specifications/Surfaces/Frame.md#melding)). At rest the ring and body are one contour with rounded fillets where they meet. While the Panel slides in or out, the fillets should grow with it and the edge should stay smooth at every frame. On KWin (maintainer, 2026-11-06) the join shows a 90 degree angle while sliding and then a chamfer, and the edge looks slightly pixelated ([Frame > Found on KWin: the look is not good enough (maintainer, 2026-11-06)](../40%20Specifications/Surfaces/Frame.md#found-on-kwin-the-look-is-not-good-enough-maintainer-2026-11-06)). Python must not run per frame ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)).
 
 ## What tre Does Today
 
@@ -97,11 +97,11 @@ Each stands on its own, so each has its own need, change, acceptance criteria an
 
 ## Why It Belongs in the Engine
 
-Interpolating, evaluating and rasterising a shape is geometry and painting: mechanism, not meaning (AGENTS > 3. Layering Principle). A caller cannot do any of it without Python per frame. Other callers would use these too: icon and shape morphs, soft unions, concave corners (a tab strip, a notch, a speech tail), parametric shapes.
+Interpolating, evaluating and rasterising a shape is geometry and painting: mechanism, not meaning ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)). A caller cannot do any of it without Python per frame. Other callers would use these too: icon and shape morphs, soft unions, concave corners (a tab strip, a notch, a speech tail), parametric shapes.
 
 ## What the Shell Does With All Four
 
-When tre has them, the shell builds the melded join each way behind one switch and compares them on KWin and sway: how the edge looks at scale 1.0 and 1.5 (smoothness, seams, chamfer), the cost per frame (the painter's `total_ms` while animating), memory (video and RSS), frames drawn at idle (must be 0), and how much shell code each needs. The maintainer chooses (AGENTS > 2. Hard Rules rule 5): one, or a different mechanism for a different case. The comparison table goes into [Frame](../40%20Specifications/Surfaces/Frame.md).
+When tre has them, the shell builds the melded join each way behind one switch and compares them on KWin and sway: how the edge looks at scale 1.0 and 1.5 (smoothness, seams, chamfer), the cost per frame (the painter's `total_ms` while animating), memory (video and RSS), frames drawn at idle (must be 0), and how much shell code each needs. The maintainer chooses (AGENTS > Hard rules rule 5): one, or a different mechanism for a different case. The comparison table goes into [Frame](../40%20Specifications/Surfaces/Frame.md).
 
 Until tre has them, the shell keeps the current build (the ring without its body, a layer slid over it, the fillets arriving last, D84 and D85) and tries what tre has now: small closed join pieces morphed with today's path morph ([Frame > A Join Built From Small Morphing Shapes (Proposed)](../40%20Specifications/Surfaces/Frame.md)) and box pieces using `scale` and `corner_radius`.
 

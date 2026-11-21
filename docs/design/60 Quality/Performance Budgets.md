@@ -12,7 +12,7 @@ tags: [quality, performance]
 # Performance Budgets
 
 > [!NOTE]
-> A ledger of every performance number in the design on 2026-11-02, gathered from the specs by a read-only sweep and checked against the notes it names. It does not restate each number: the spec that owns a number keeps it, and this note links to it (one source of truth). It adds three things the specs cannot: the numbers still missing, proposed values for them, and the places where two notes disagree. Nothing here is decided; the maintainer decides (AGENTS > 2. Hard Rules rule 5).
+> A ledger of every performance number in the design on 2026-11-02, gathered from the specs by a read-only sweep and checked against the notes it names. It does not restate each number: the spec that owns a number keeps it, and this note links to it (one source of truth). It adds three things the specs cannot: the numbers still missing, proposed values for them, and the places where two notes disagree. Nothing here is decided; the maintainer decides (AGENTS > Hard rules rule 5).
 
 ## How to Read the Ledger
 
@@ -116,7 +116,7 @@ Findings not fixed (the first is now answered above): a reload that removes and 
 ## Open Questions
 
 1. [ ] Do you accept the proposed values above, or change them? Context: see [Proposed Values for the Missing Numbers](#proposed-values-for-the-missing-numbers). Recommendation: accept them as the v1 starting values and revise after the first measurements.
-2. [ ] Are the budgets checked in automated tests (a headless idle-CPU test) or only measured by hand in v1? Context: AGENTS > 12. Design Completeness Checklist lists testing through `window.simulate`. Recommendation: measure by hand in v1 and add the headless idle-CPU test once the budgets have held through one milestone.
+2. [ ] Are the budgets checked in automated tests (a headless idle-CPU test) or only measured by hand in v1? Context: [Vault Reference > Design completeness checklist](../00%20Home/Vault%20Reference.md#design-completeness-checklist) lists testing through `window.simulate`. Recommendation: measure by hand in v1 and add the headless idle-CPU test once the budgets have held through one milestone.
 3. [ ] Which machine counts as the reference: the maintainer's AMD desktop, or a slower laptop? Context: the budgets are only meaningful against one machine. Recommendation: the AMD desktop sets the numbers; spot-check on a slower laptop before release.
 4. [x] For the four misses, do you change the budget or ask for a fix? Context: see [M7c Reading (code session's report, 2026-11-19; not run in the vault)](#m7c-reading-code-sessions-report-2026-11-19-not-run-in-the-vault). Recommendation: B02 raise to 6 (it misses by 3% in one artificial Bar, and the default shell reads 4.07); B12 change to 2 ms p99 (the CLI end to end is 58 ms against 100); B14 change to 2 calls, because the shell matches the client library; B18 keep 15 ms as a target and ask the code session for a fix or a cheaper bind of large trees. Separately, ask for a look at the 7 MiB reload retention. Answered by the maintainer on 2026-11-19: use the recommendation. B02 is now at most 6 wake-ups per second, B12 at most 2 ms p99, B14 2 calls per action, B18 stays 15 ms as a target with a fix requested, and the reload retention gets a look.
 

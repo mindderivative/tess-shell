@@ -24,16 +24,16 @@ tags: [adr, architecture, needs-verification]
 
 ## Context
 
-tre provides mechanism only: nodes, layout, paint, animation, input, text, accessibility, layers and shaders. It has no widgets, no theme and no file I/O (AGENTS > 1. What Tesserae Shell is). The shell therefore owns:
+tre provides mechanism only: nodes, layout, paint, animation, input, text, accessibility, layers and shaders. It has no widgets, no theme and no file I/O ([Vault Reference > The projects](../00%20Home/Vault%20Reference.md#the-projects)). The shell therefore owns:
 
 | Need                    | Why the shell needs it                                                                                                                                 |
 |-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
 | A view description      | The vision promises YAML views edited by a shell author ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G1, [Personas and Use Cases](../10%20Vision/Personas%20and%20Use%20Cases.md) P1, P2).  |
-| Reactive values         | Modules push changes (clock, battery, volume) into views from other threads, through `LoopHandle.call_soon` (AGENTS > 3. Layering principle). |
+| Reactive values         | Modules push changes (clock, battery, volume) into views from other threads, through `LoopHandle.call_soon` ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)). |
 | Theme and design tokens | One look across bar, popups and OSDs, light and dark, high contrast, reduced motion ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G7).                      |
 | A widget set            | Text, icon, button, row, column, slider, list, image, menu item, tray icon.                                                                            |
 | Live reload             | Saving a view or theme updates open surfaces ([Goals and Non-Goals](../10%20Vision/Goals%20and%20Non-Goals.md) G2).                                                             |
-| Errors with position    | `file:line:column` for every config mistake (AGENTS > 3. Layering principle).                                                                 |
+| Errors with position    | `file:line:column` for every config mistake ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)).                                                                 |
 
 What Tesserae has for reference (not a dependency): a YAML view language with Python ViewModels, `Signal`/`Computed`/`Effect`, Material Design 3 components, themes, stylesheets and hot reload ([Tesserae overview](https://mindderivative.github.io/tess-ui/)). Its source is the maintainer's own, so its design can be read freely.
 
@@ -301,7 +301,7 @@ Decided by the maintainer in chat. A root's `monitor` is matched by **connector 
 
 ### Module Python (2026-10-25)
 
-Decided by the maintainer in chat (option A). The shell imports `<Name>_Module.py`, finds the class that extends a shell `Module` base, creates it once and calls `start`, `stop` and an optional `reload`. It receives a context object with the module's YAML values, its name and UID, a logger and the entry point that sends data. The thread rule in AGENTS > 3. Layering principle holds: the shell calls module code on the loop thread, blocking work runs on the module's own thread, and results reach the loop through the send entry point (`call_soon`). The contract is written in [42 Python API](../42%20Python%20API/42%20Python%20API.md).
+Decided by the maintainer in chat (option A). The shell imports `<Name>_Module.py`, finds the class that extends a shell `Module` base, creates it once and calls `start`, `stop` and an optional `reload`. It receives a context object with the module's YAML values, its name and UID, a logger and the entry point that sends data. The thread rule in [Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle) holds: the shell calls module code on the loop thread, blocking work runs on the module's own thread, and results reach the loop through the send entry point (`call_soon`). The contract is written in [42 Python API](../42%20Python%20API/42%20Python%20API.md).
 
 ### Events and Module Reload (2026-10-26)
 
@@ -326,7 +326,7 @@ Decided by the maintainer in chat.
 
 Decided by the maintainer in chat: the shell requires the config directory by default, as many applications with plugins or add-ons do. Amended the same day: shell files get a folder, and `settings.yaml` can point elsewhere.
 
-- Shell files, Modules, Styles, Themes and Stylesheets live under `$HOME/.config/tesserae-shell/`, in `Shells/`, `Modules/`, `Styles/`, `Themes/` and `Stylesheets/`. A module is a folder `Modules/<module_name>/` (AGENTS > 9. Naming in the designed system).
+- Shell files, Modules, Styles, Themes and Stylesheets live under `$HOME/.config/tesserae-shell/`, in `Shells/`, `Modules/`, `Styles/`, `Themes/` and `Stylesheets/`. A module is a folder `Modules/<module_name>/` ([Vault Reference > Naming in the designed system](../00%20Home/Vault%20Reference.md#naming-in-the-designed-system)).
 - The settings file, `settings.yaml`, at the root of the config directory holds settings that are not project based, and can point to absolute directories for any of these types when the user wants a different layout. It is read before the registry and can move the registry file; logs default to `logs/` ([Settings File > Start order](../41%20TDL%20Reference/Settings%20File.md#start-order)). It replaces the `look-at` list of the 2026-10-25 text above, which is superseded. See [Settings File](../41%20TDL%20Reference/Settings%20File.md).
 - Shipped modules stay in the package and are registry-only; a user module of the same name overrides one.
 - Generated files live in the config directory too: `schemas/` ([ADR-0011 JSON Schema for Shell Files](ADR-0011%20JSON%20Schema%20for%20Shell%20Files.md)).
@@ -364,7 +364,7 @@ Option A is accepted, so:
 - `20 Architecture` gains a UI layer between tre and the shell runtime.
 - The widget list is fixed by [V1 Scope](../10%20Vision/V1%20Scope.md) surfaces and modules. Anything beyond it needs a reason.
 - Size and cost are estimated before the first spec is `stable`. #needs-verification
-- tre is the shared base. An engine need from the shell is a request to tre (AGENTS > 6. Requests Between Projects), and a request raised by Tesserae may already cover it, or the reverse. Before writing a request, check tre's open issues and ask the `tre` session through the mailbox (AGENTS > 14. Peer-session mailbox) so one change serves both projects. The maintainer still files upstream.
+- tre is the shared base. An engine need from the shell is a request to tre ([Vault Reference > Requests between projects](../00%20Home/Vault%20Reference.md#requests-between-projects)), and a request raised by Tesserae may already cover it, or the reverse. Before writing a request, check tre's open issues and ask the `tre` session through the mailbox (AGENTS > Messages and engine requests) so one change serves both projects. The maintainer still files upstream.
 - The shell does not import Tesserae code. Ideas may be taken from Tesserae's design; the code is written again for the shell.
 
 ## Open Items
