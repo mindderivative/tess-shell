@@ -318,6 +318,7 @@
 
 ## Unreleased
 
+- TSH-044: the hover fill of a Launcher (or any `list_item`) entry is the `outline` colour, not `surface_raised`, which is the card's own fill (hover was invisible); the text on it keeps 4.5 to 1 in the dark and the light scheme.
 - TSH-038: a Label ends a text that is wider than it with an ellipsis by default (was CLIP; `Overflow: CLIP` still cuts), and the Network connection name is bounded to 160 px and ends with an ellipsis.
 - TSH-036: the Badge dot is 6 by 6 and the pill 16 high (minimum width 16, 4 px side padding), its digits in the caption size at weight 500 (were 8, 18, 11 px at 600), as the Badge spec fixes.
 - TSH-024: a disabled control is drawn at opacity 0.38 (was 0.5), as the Motion/State spec fixes; the default stylesheet and the TextField default agree. Hovered and pressed (0.85, 0.7) are unchanged.

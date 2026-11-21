@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from importlib import resources
+from typing import Any
 
 SHIPPED = resources.files("tess_shell") / "shipped"
 
@@ -45,3 +46,45 @@ def test_the_network_name_text_is_bounded_and_ends_with_an_ellipsis() -> None:
     assert "Overflow: ELLIPSIS" in body
     module = (SHIPPED / "Network" / "Network_Module.tdl").read_text(encoding="utf-8")
     assert module.count("Class: network_text") == module.count("Max_Width: 160") == 3
+
+
+def _linear(v: float) -> float:
+    v /= 255
+    return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+
+
+def _luminance(hex_colour: str) -> float:
+    r, g, b = (int(hex_colour[i : i + 2], 16) for i in (1, 3, 5))
+    return 0.2126 * _linear(r) + 0.7152 * _linear(g) + 0.0722 * _linear(b)
+
+
+def _ratio(a: str, b: str) -> float:
+    hi, lo = sorted((_luminance(a), _luminance(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def test_the_launcher_hover_fill_differs_from_the_card_and_keeps_the_text_readable() -> None:
+    import tess_dl
+
+    from tess_shell.appearance import Appearance
+    from tess_shell.schema.look import effective_tokens, read_theme
+
+    hovered = re.search(
+        r'Selector: "\.list_item:hovered", Background: \$color\.(\w+)', default_stylesheet()
+    )
+    assert hovered
+    text = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text(encoding="utf-8")
+    parsed = tess_dl.parse(text, path="Default_Theme.tdl")
+    assert parsed.document is not None
+    theme, _ = read_theme(parsed.document, "Default_Theme.tdl")
+    assert theme is not None
+    for scheme in ("dark", "light"):
+        tokens = effective_tokens(theme, Appearance(scheme=scheme))
+
+        def colour(name: str, tokens: dict[str, Any] = tokens) -> str:
+            return str(tokens[f"color.{name}"].value.value).upper()
+
+        fill, card = colour(hovered.group(1)), colour("surface_raised")  # the Launcher card fill
+        assert fill != card, scheme
+        assert _ratio(fill, card) >= 2.0, scheme  # the hover is seen
+        assert _ratio(colour("on_surface"), fill) >= 4.5, scheme

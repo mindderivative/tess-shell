@@ -86,7 +86,7 @@ Stylesheet {
     Rule { Selector: "Slider::handle:disabled", Fill: $color.on_surface_muted }
 
     Rule { Selector: ".list_item", Padding: [10, 6, 10, 6], Corner_Radius: $shape.small }
-    Rule { Selector: ".list_item:hovered", Background: $color.surface_raised }
+    Rule { Selector: ".list_item:hovered", Background: $color.outline }
     Rule {
         Selector: ".list_item:selected"
         Background: $color.surface_raised
