@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 Scheme = Literal["default", "dark", "light"]
+Density = Literal["default", "compact", "dense"]  # Spacing and Density (ADR-0002)
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,6 +20,9 @@ class Appearance:
     animations: bool = True  # ``org.gnome.desktop.interface`` ``enable-animations``
     icon_theme: str | None = None  # ``org.gnome.desktop.interface`` ``icon-theme``
     font_family: str | None = None  # the family of ``org.gnome.desktop.interface`` ``font-name``
+    # the density level of the sizes a module reads (``density.*`` tokens): the shell's own setting
+    # (``Appearance.Density``), never the desktop's, so it is kept when the portal speaks
+    density: Density = "compact"
 
     @property
     def reduced_motion(self) -> bool:

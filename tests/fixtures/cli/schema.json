@@ -602,7 +602,7 @@
           "slot": false,
           "required": false,
           "built": true,
-          "group": null,
+          "group": "State",
           "item_kind": "string",
           "unique": true,
           "one_or_list": true,
@@ -1012,6 +1012,23 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Density": {
+          "kind": "enum",
+          "choices": [
+            "DEFAULT",
+            "COMPACT",
+            "DENSE"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Exclusive_Zone": {
           "kind": null,
           "choices": null,
@@ -1242,6 +1259,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -1309,6 +1327,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -1378,6 +1397,23 @@
           "built": true,
           "group": "Identity",
           "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Density": {
+          "kind": "enum",
+          "choices": [
+            "DEFAULT",
+            "COMPACT",
+            "DENSE"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -1961,6 +1997,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -2028,6 +2065,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -2059,6 +2097,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -2084,6 +2123,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -2519,6 +2559,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -2586,6 +2627,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -2617,6 +2659,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -2642,6 +2685,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -3031,6 +3075,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -3098,6 +3143,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -3129,6 +3175,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -3154,6 +3201,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -3622,6 +3670,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -3670,6 +3719,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -3739,6 +3789,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -4597,6 +4648,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -4664,6 +4716,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -4720,6 +4773,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -4754,6 +4808,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -4788,6 +4843,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -4813,6 +4869,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -4870,6 +4927,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -4938,6 +4996,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -4963,6 +5022,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -4989,6 +5049,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5408,6 +5469,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5434,6 +5496,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5458,6 +5521,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5482,6 +5546,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5506,6 +5571,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5530,6 +5596,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5554,6 +5621,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5586,6 +5654,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5611,6 +5680,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5634,6 +5704,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5675,6 +5746,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5737,6 +5809,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5778,6 +5851,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5803,6 +5877,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5828,6 +5903,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5853,6 +5929,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5876,6 +5953,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5899,6 +5977,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5923,6 +6002,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -5946,6 +6026,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6096,6 +6177,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6120,6 +6202,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6144,6 +6227,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6355,6 +6439,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6401,6 +6486,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6468,6 +6554,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6524,6 +6611,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6558,6 +6646,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6592,6 +6681,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6617,6 +6707,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6809,6 +6900,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6835,6 +6927,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6859,6 +6952,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6883,6 +6977,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6907,6 +7002,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6931,6 +7027,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6955,6 +7052,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -6987,6 +7085,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7012,6 +7111,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7035,6 +7135,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7076,6 +7177,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7138,6 +7240,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7179,6 +7282,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7204,6 +7308,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7229,6 +7334,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7254,6 +7360,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7277,6 +7384,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7300,6 +7408,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7324,6 +7433,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7347,6 +7457,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7497,6 +7608,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7521,6 +7633,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7545,6 +7658,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7814,6 +7928,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7848,6 +7963,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7894,6 +8010,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -7961,6 +8078,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8017,6 +8135,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8051,6 +8170,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8085,6 +8205,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8110,6 +8231,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8167,6 +8289,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8314,6 +8437,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8340,6 +8464,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8364,6 +8489,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8388,6 +8514,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8412,6 +8539,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8436,6 +8564,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8460,6 +8589,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8492,6 +8622,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8517,6 +8648,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8540,6 +8672,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8581,6 +8714,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8643,6 +8777,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8684,6 +8819,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8709,6 +8845,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8734,6 +8871,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8759,6 +8897,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8782,6 +8921,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8805,6 +8945,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8829,6 +8970,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -8852,6 +8994,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9002,6 +9145,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9026,6 +9170,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9050,6 +9195,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9261,6 +9407,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9328,6 +9475,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9372,6 +9520,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9457,6 +9606,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9482,6 +9632,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9508,6 +9659,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9575,6 +9727,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9609,6 +9762,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9634,6 +9788,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9770,6 +9925,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9796,6 +9952,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9820,6 +9977,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9844,6 +10002,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9868,6 +10027,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9892,6 +10052,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9916,6 +10077,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9948,6 +10110,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9973,6 +10136,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -9996,6 +10160,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10037,6 +10202,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10099,6 +10265,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10140,6 +10307,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10165,6 +10333,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10190,6 +10359,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10215,6 +10385,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10238,6 +10409,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10261,6 +10433,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10285,6 +10458,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10308,6 +10482,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10458,6 +10633,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10482,6 +10658,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10506,6 +10683,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10727,6 +10905,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10794,6 +10973,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10850,6 +11030,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10930,6 +11111,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -10997,6 +11179,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11053,6 +11236,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11087,6 +11271,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11112,6 +11297,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11289,6 +11475,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11315,6 +11502,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11339,6 +11527,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11363,6 +11552,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11387,6 +11577,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11411,6 +11602,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11435,6 +11627,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11467,6 +11660,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11492,6 +11686,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11515,6 +11710,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11556,6 +11752,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11618,6 +11815,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11659,6 +11857,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11684,6 +11883,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11709,6 +11909,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11734,6 +11935,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11757,6 +11959,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11780,6 +11983,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11804,6 +12008,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11827,6 +12032,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -11977,6 +12183,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12001,6 +12208,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12025,6 +12233,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12243,6 +12452,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12287,6 +12497,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12329,6 +12540,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12520,6 +12732,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12546,6 +12759,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12570,6 +12784,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12594,6 +12809,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12618,6 +12834,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12642,6 +12859,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12666,6 +12884,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12698,6 +12917,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12723,6 +12943,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12746,6 +12967,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12787,6 +13009,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12849,6 +13072,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12890,6 +13114,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12915,6 +13140,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12940,6 +13166,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12965,6 +13192,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -12988,6 +13216,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13011,6 +13240,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13035,6 +13265,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13058,6 +13289,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13208,6 +13440,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13232,6 +13465,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13256,6 +13490,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13577,6 +13812,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13603,6 +13839,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13627,6 +13864,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13651,6 +13889,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13675,6 +13914,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13699,6 +13939,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13723,6 +13964,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13755,6 +13997,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13780,6 +14023,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13803,6 +14047,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13844,6 +14089,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13906,6 +14152,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13947,6 +14194,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13972,6 +14220,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -13997,6 +14246,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14022,6 +14272,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14045,6 +14296,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14068,6 +14320,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14092,6 +14345,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14115,6 +14369,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14265,6 +14520,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14289,6 +14545,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14313,6 +14570,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14591,6 +14849,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14658,6 +14917,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14804,6 +15064,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14830,6 +15091,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14854,6 +15116,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14878,6 +15141,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14902,6 +15166,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14926,6 +15191,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14950,6 +15216,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -14982,6 +15249,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15007,6 +15275,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15030,6 +15299,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15071,6 +15341,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15133,6 +15404,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15174,6 +15446,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15199,6 +15472,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15224,6 +15498,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15249,6 +15524,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15272,6 +15548,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15295,6 +15572,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15319,6 +15597,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15342,6 +15621,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15492,6 +15772,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15516,6 +15797,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15540,6 +15822,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15802,6 +16085,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15844,6 +16128,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -15987,6 +16272,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16011,6 +16297,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16035,6 +16322,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16059,6 +16347,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16083,6 +16372,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16115,6 +16405,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16140,6 +16431,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16163,6 +16455,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16204,6 +16497,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16266,6 +16560,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16307,6 +16602,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16332,6 +16628,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16357,6 +16654,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16382,6 +16680,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16405,6 +16704,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16428,6 +16728,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16452,6 +16753,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16475,6 +16777,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16625,6 +16928,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16649,6 +16953,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16673,6 +16978,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16875,6 +17181,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16917,6 +17224,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -16984,6 +17292,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17053,6 +17362,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17120,6 +17430,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17177,6 +17488,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17202,6 +17514,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17345,6 +17658,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17369,6 +17683,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17393,6 +17708,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17417,6 +17733,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17441,6 +17758,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17473,6 +17791,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17498,6 +17817,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17521,6 +17841,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17562,6 +17883,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17624,6 +17946,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17665,6 +17988,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17690,6 +18014,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17715,6 +18040,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17740,6 +18066,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17763,6 +18090,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17786,6 +18114,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17810,6 +18139,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17833,6 +18163,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -17983,6 +18314,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18007,6 +18339,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18031,6 +18364,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18233,6 +18567,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18275,6 +18610,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18317,6 +18653,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18386,6 +18723,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18428,6 +18766,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18485,6 +18824,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18510,6 +18850,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18655,6 +18996,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18681,6 +19023,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18705,6 +19048,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18729,6 +19073,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18753,6 +19098,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18777,6 +19123,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18801,6 +19148,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18833,6 +19181,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18858,6 +19207,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18881,6 +19231,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18922,6 +19273,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -18984,6 +19336,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19025,6 +19378,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19050,6 +19404,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19075,6 +19430,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19100,6 +19456,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19123,6 +19480,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19146,6 +19504,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19170,6 +19529,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19193,6 +19553,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19343,6 +19704,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19367,6 +19729,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19391,6 +19754,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19612,6 +19976,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19679,6 +20044,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19831,6 +20197,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19898,6 +20265,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19955,6 +20323,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -19980,6 +20349,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20125,6 +20495,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20151,6 +20522,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20175,6 +20547,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20199,6 +20572,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20223,6 +20597,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20247,6 +20622,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20271,6 +20647,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20303,6 +20680,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20328,6 +20706,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20351,6 +20730,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20392,6 +20772,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20454,6 +20835,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20495,6 +20877,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20520,6 +20903,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20545,6 +20929,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20570,6 +20955,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20593,6 +20979,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20616,6 +21003,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20640,6 +21028,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20663,6 +21052,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20813,6 +21203,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20837,6 +21228,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -20861,6 +21253,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21077,6 +21470,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21100,6 +21494,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21226,6 +21621,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21251,6 +21647,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21277,6 +21674,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21311,6 +21709,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21336,6 +21735,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21378,6 +21778,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21538,6 +21939,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21564,6 +21966,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21588,6 +21991,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21612,6 +22016,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21636,6 +22041,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21660,6 +22066,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21684,6 +22091,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21716,6 +22124,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21741,6 +22150,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21764,6 +22174,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21805,6 +22216,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21867,6 +22279,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21908,6 +22321,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21933,6 +22347,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21958,6 +22373,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -21983,6 +22399,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22006,6 +22423,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22029,6 +22447,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22053,6 +22472,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22076,6 +22496,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22226,6 +22647,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22250,6 +22672,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22274,6 +22697,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22485,6 +22909,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22595,6 +23020,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22631,6 +23057,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22688,6 +23115,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22755,6 +23183,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22811,6 +23240,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22845,6 +23275,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22879,6 +23310,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -22904,6 +23336,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -23004,6 +23437,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -23029,6 +23463,7 @@
             "type",
             "shape",
             "space",
+            "density",
             "elevation",
             "motion"
           ],
@@ -23583,6 +24018,22 @@
         "enum": null,
         "default": "true",
         "doc": "Follows the desktop's colour scheme, accent, contrast and reduced-motion settings.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Appearance",
+        "tokens": []
+      },
+      "Density": {
+        "kind": "enum",
+        "choices": [
+          "DEFAULT",
+          "COMPACT",
+          "DENSE"
+        ],
+        "enum": null,
+        "default": "COMPACT",
+        "doc": "The density level of the shell's own sizes: DEFAULT (40 px controls), COMPACT (32 px, the default) or DENSE (28 px). A surface can set its own with Density. See Spacing and Density.",
         "slot": false,
         "required": false,
         "built": true,
@@ -24627,6 +25078,134 @@
         "default": "48",
         "doc": "The largest step of spacing.",
         "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      }
+    },
+    "density": {
+      "control_height": {
+        "kind": "number",
+        "ref": "$density.control_height",
+        "default": "40",
+        "doc": "The height of a button, a text field, a switch row and an icon button: 40, 32 or 28 at the default, compact and dense levels.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "row_height": {
+        "kind": "number",
+        "ref": "$density.row_height",
+        "default": "40",
+        "doc": "The height of a one-line list or tree row: 40, 32 or 24.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "menu_item_height": {
+        "kind": "number",
+        "ref": "$density.menu_item_height",
+        "default": "40",
+        "doc": "The height of a menu item: 40, 32 or 28.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "icon_size": {
+        "kind": "number",
+        "ref": "$density.icon_size",
+        "default": "24",
+        "doc": "The painted size of an icon in an icon button: 24, 20 or 20.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "row_padding_x": {
+        "kind": "number",
+        "ref": "$density.row_padding_x",
+        "default": "12",
+        "doc": "The side padding of a list row, a tree row and a menu item: 12, 8 or 4.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "icon_label_gap": {
+        "kind": "number",
+        "ref": "$density.icon_label_gap",
+        "default": "8",
+        "doc": "The gap between an icon and its label: 8, 8 or 4.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "field_padding_x": {
+        "kind": "number",
+        "ref": "$density.field_padding_x",
+        "default": "12",
+        "doc": "The side padding of a text field: 12, 8 or 8.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "tree_indent": {
+        "kind": "number",
+        "ref": "$density.tree_indent",
+        "default": "20",
+        "doc": "The indent of one tree level: 20, 16 or 12.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "chevron_box": {
+        "kind": "number",
+        "ref": "$density.chevron_box",
+        "default": "24",
+        "doc": "The size of a tree's chevron box: 24, 20 or 16.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
         "min": null,
         "max": null,
         "step": null,

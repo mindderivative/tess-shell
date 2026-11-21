@@ -90,6 +90,20 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$space.step_7` | number | `32` | never | A large step of spacing. |
 | `$space.step_8` | number | `48` | never | The largest step of spacing. |
 
+### Density
+
+| Token | Value | Default | The built-in modes change it in | What it is |
+|---|---|---|---|---|
+| `$density.control_height` | number | `40` | compact, dense | The height of a button, a text field, a switch row and an icon button: 40, 32 or 28 at the default, compact and dense levels. |
+| `$density.row_height` | number | `40` | compact, dense | The height of a one-line list or tree row: 40, 32 or 24. |
+| `$density.menu_item_height` | number | `40` | compact, dense | The height of a menu item: 40, 32 or 28. |
+| `$density.icon_size` | number | `24` | compact, dense | The painted size of an icon in an icon button: 24, 20 or 20. |
+| `$density.row_padding_x` | number | `12` | compact, dense | The side padding of a list row, a tree row and a menu item: 12, 8 or 4. |
+| `$density.icon_label_gap` | number | `8` | compact, dense | The gap between an icon and its label: 8, 8 or 4. |
+| `$density.field_padding_x` | number | `12` | compact, dense | The side padding of a text field: 12, 8 or 8. |
+| `$density.tree_indent` | number | `20` | compact, dense | The indent of one tree level: 20, 16 or 12. |
+| `$density.chevron_box` | number | `24` | compact, dense | The size of a tree's chevron box: 24, 20 or 16. |
+
 ### Elevation
 
 | Token | Value | Default | The built-in modes change it in | What it is |
@@ -153,6 +167,12 @@ With `Follow_Desktop: true` (the default) the shell reads the desktop's **Settin
 | UI font (`font-name`) | the family in `$type.system.font_family` |
 
 A change is followed live: switch Plasma between light and dark and the shell follows. A portal that does not answer within a moment makes the shell start on the defaults (it never delays your bar) and apply the answer when it arrives; one that is missing gives one warning, `portal: ... using the default appearance`, in the log. `Follow_Desktop: false` does not read the portal: you get the theme's base look. Changing `Follow_Desktop` needs a restart.
+
+## Density
+
+The sizes of controls come in three levels: `DEFAULT` (a 40 pixel button), `COMPACT` (32, the shell's default) and `DENSE` (28). `Appearance { Density: DENSE }` in `settings.tdl` picks the level for the whole shell, and a Bar or Panel can write its own `Density: DEFAULT` (a touch panel on a desktop bar, say). The sizes are the `density.*` tokens of [Density](#density); the base values of the theme are the `DEFAULT` level, and its `Modes { Compact { Density { ... } } }` and `Dense` blocks replace them, as `Light` replaces colours. The standard Button, Toggle, Checkbox, MenuItem and the Applications list take their heights from them.
+
+A module reads the tokens of its surface's level in a slot, as `<| density.control_height |>`; write the same in your own modules to follow the level. The setting applies on reload. A theme that lacks the group falls back to the Default theme's values.
 
 ## Stylesheets
 
@@ -293,12 +313,12 @@ These are the keys a `Style { }` block, a style key written directly on a block,
 | `Duration` | milliseconds | 12 block types | motion.duration.* | How long a change of a Transition key takes, in milliseconds. |
 | `Easing` | `STANDARD` `EMPHASIZED` `LINEAR` | 12 block types |  | The curve of the animation: STANDARD, EMPHASIZED or LINEAR. |
 | `Background` | colour | Box, FlexBox, TextField | color | The fill behind the block's content, a colour or a theme token. |
-| `Border_Width` | number | 7 block types | type, shape, space, elevation, motion | The width of the border line; 0 draws none. |
+| `Border_Width` | number | 7 block types | type, shape, space, density, elevation, motion | The width of the border line; 0 draws none. |
 | `Border_Color` | colour | 7 block types | color | The colour of the border line, a colour or a theme token. |
 | `Corner_Radius` | radius | Box, FlexBox, Rectangle, TextField | shape | The radius of the corners: one number, or four from the top-left corner clockwise. |
 | `Padding` | sides | Box, FlexBox, Text, TextField | space | Space between the content and the four sides: one number or four (left, top, right, bottom). |
 | `Margin` | sides | 9 block types | space | Transparent space around the block: one number or four (left, top, right, bottom). |
-| `Opacity` | number | 12 block types | type, shape, space, elevation, motion | How opaque the block and what it holds is painted, from 0 (invisible) to 1. |
+| `Opacity` | number | 12 block types | type, shape, space, density, elevation, motion | How opaque the block and what it holds is painted, from 0 (invisible) to 1. |
 | `Elevation` | percentage | Box, FlexBox, Rectangle, ScrollBox, TextField |  | How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow. |
 | `Shadows` | shadows | Box, FlexBox, Rectangle, ScrollBox, TextField | elevation.max | A list of Shadow blocks, the first on top; it replaces Elevation when both are written. |
 | `Spacing` | number | FlexBox | space | The space between the children, in pixels. |

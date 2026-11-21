@@ -258,3 +258,15 @@ def test_debug_frame_join_refuses_another_word_and_a_lower_case_one(tmp_path: Pa
         )
         settings, findings = load_settings(tmp_path)
         assert settings is None and needle in findings[0].message + findings[0].hint
+
+
+def test_density_is_compact_unless_the_file_says_otherwise(tmp_path: Path) -> None:
+    assert load_ok(tmp_path).appearance.density == "COMPACT"
+    write(tmp_path, "Settings { Appearance { Density: DENSE } }")
+    assert load_ok(tmp_path).appearance.density == "DENSE"
+
+
+def test_a_density_that_is_no_level_is_refused_naming_the_levels(tmp_path: Path) -> None:
+    write(tmp_path, "Settings { Appearance { Density: ROOMY } }")
+    (finding,) = load_bad(tmp_path)
+    assert finding.rule == "bad-value" and "DEFAULT, COMPACT, DENSE" in finding.message

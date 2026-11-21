@@ -164,8 +164,23 @@ class LiveTree:
         self._tips_added.clear()
         self._call_roots.clear()
 
+    def _shell_names(self) -> dict[str, Any]:
+        """What the shell supplies to every slot: ``caller`` in a Popup's content, and ``density``,
+        the sizes of the surface's density level (``density.control_height``; Spacing and
+        Density)."""
+        names: dict[str, Any] = {}
+        if self.caller is not None:
+            names["caller"] = self.caller
+        if self.look is not None:
+            names["density"] = {
+                path.partition(".")[2]: token.value.value
+                for path, token in self.look.tokens.items()
+                if path.startswith("density.") and hasattr(token.value, "value")
+            }
+        return names
+
     def _scope(self, use: str) -> UseScope:
-        shell = {"caller": self.caller} if self.caller is not None else None
+        shell = self._shell_names()
         known = self.dyn_uses.get(use) or self.uses[use]
         params = known.params
         if use in self.dynamic_params:
@@ -184,11 +199,7 @@ class LiveTree:
                 link = self._compile(use.outer, use.key, "params", name, kind, slot)
                 if link is None:
                     continue
-                scope = (
-                    None
-                    if use.outer
-                    else MapScope({"caller": self.caller} if self.caller is not None else {})
-                )
+                scope = None if use.outer else MapScope(self._shell_names())
                 typed = self._evaluate(link, scope)
                 if typed is None:
                     continue  # the declared default stays; the reason was logged
@@ -283,7 +294,7 @@ class LiveTree:
         else:
             use = ctx.use if ctx else self._owner.get(node.name or "", "")
         # a block of a Popup in a shell file has no module: its slots read ``caller`` alone
-        popup_scope = MapScope({"caller": self.caller}) if self.caller is not None else None
+        popup_scope = MapScope(self._shell_names()) if self.caller is not None else None
         here = ctx or _Ctx(use, scope=None if use else popup_scope)
         if node.owner is not None and ctx is not None and ctx.use != use:
             # a module's layout inside another's, or the caller's content inside a module's: the

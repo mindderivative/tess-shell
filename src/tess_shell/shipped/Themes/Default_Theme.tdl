@@ -9,6 +9,10 @@ Name: Default
 # point: copy this file into your Themes folder, change its Name, and set
 # Appearance { Theme: <Name> } in settings.tdl. To follow the desktop's accent colour instead of
 # steel blue, write Accent: DESKTOP.
+#
+# The Density group holds the sizes of the three density levels (Spacing and Density, ADR-0002): the
+# base values are the DEFAULT level and Modes { Compact, Dense } replace them; Appearance.Density, or
+# a surface's own Density, picks the level, and a module reads `density.control_height` in a slot.
 
 Theme {
     Color {
@@ -55,6 +59,18 @@ Theme {
         Step_8: 48
     }
 
+    Density {
+        Control_Height: 40
+        Row_Height: 40
+        Menu_Item_Height: 40
+        Icon_Size: 24
+        Row_Padding_X: 12
+        Icon_Label_Gap: 8
+        Field_Padding_X: 12
+        Tree_Indent: 20
+        Chevron_Box: 24
+    }
+
     Elevation {
         Reach: 64
         Max {
@@ -85,6 +101,32 @@ Theme {
             }
         }
         Dark { }
+        Compact {
+            Density {
+                Control_Height: 32
+                Row_Height: 32
+                Menu_Item_Height: 32
+                Icon_Size: 20
+                Row_Padding_X: 8
+                Icon_Label_Gap: 8
+                Field_Padding_X: 8
+                Tree_Indent: 16
+                Chevron_Box: 20
+            }
+        }
+        Dense {
+            Density {
+                Control_Height: 28
+                Row_Height: 24
+                Menu_Item_Height: 28
+                Icon_Size: 20
+                Row_Padding_X: 4
+                Icon_Label_Gap: 4
+                Field_Padding_X: 8
+                Tree_Indent: 12
+                Chevron_Box: 16
+            }
+        }
         High_Contrast {
             Color {
                 Surface: "#000000"

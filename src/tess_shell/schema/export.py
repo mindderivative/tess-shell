@@ -1117,6 +1117,7 @@ def _settings() -> dict[str, dict[str, Json]]:
                 f"[{', '.join(appearance.stylesheets)}]",
             ),
             "Follow_Desktop": boolean("Appearance", "Follow_Desktop", appearance.follow_desktop),
+            "Density": word("Appearance", "Density", cfg.DENSITY, appearance.density),
         },
         "KWin": {
             "Script": word("KWin", "Script", cfg.KWIN_SCRIPT, kwin.script),

@@ -39,6 +39,7 @@ class BarDef:
     max_height: float | None = None
     keyboard: str = "NONE"  # NONE or ON_DEMAND: a click gives the Bar the keyboard
     keyboard_written: bool = False  # the file says ``Keyboard:`` (NONE then is a choice)
+    density: str | None = None  # ``Density:`` of the surface, lower case; None: the shell's level
     shortcut_mode: Origin | None = None  # where ``Shortcut_Mode: true`` is written; None: false
     visible: bool = True  # ``Visible: false`` starts it hidden (UX TSH-051)
     style: Mapping[str, Value] = None  # type: ignore[assignment]
@@ -78,6 +79,7 @@ class PanelDef:
     max_height: float | None = None  # pixels; clamps an ``AUTO`` Height (M7i)
     keyboard: str = "NONE"
     keyboard_written: bool = False  # the file says ``Keyboard:``: NONE is then a choice
+    density: str | None = None  # ``Density:`` of the surface, lower case; None: the shell's level
     input: str = "WHOLE"  # WHOLE, NONE or AUTO (Input_Region)
     visible: bool = True
     hide_after: float | None = None  # milliseconds
@@ -261,7 +263,7 @@ class Token:
     origin: Origin
 
 
-MODES = ("light", "dark", "high_contrast", "reduced_motion")
+MODES = ("light", "dark", "high_contrast", "reduced_motion", "compact", "dense")
 
 
 @dataclass(frozen=True, slots=True)

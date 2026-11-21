@@ -1220,6 +1220,7 @@ BAR_KEYS: dict[str, str] = {
     "Tab_Index": "tab_index",
     "Shortcut_Mode": "bool",
     "Visible": "bool",
+    "Density": "enum",
 }
 BAR_CHOICES: dict[str, tuple[str, ...]] = {
     "Edge": ("TOP", "BOTTOM", "LEFT", "RIGHT"),
@@ -1228,7 +1229,14 @@ BAR_CHOICES: dict[str, tuple[str, ...]] = {
     # a Bar takes the keyboard on a click or not at all: EXCLUSIVE would take every key of the
     # desktop, as for the Frame's painter
     "Keyboard": ("NONE", "ON_DEMAND"),
+    "Density": blocks.DENSITY_LEVELS,
 }
+
+
+def _density(values: Mapping[str, m.Value]) -> str | None:
+    """A surface's own ``Density`` in lower case, or ``None`` for the shell's level."""
+    v = values.get("Density")
+    return v.name.lower() if isinstance(v, m.Enum) else None
 
 
 def _shortcut_mode(values: Mapping[str, m.Value]) -> m.Origin | None:
@@ -1333,6 +1341,7 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         max_height=px("Max_Height"),
         keyboard=word("Keyboard", "NONE") or "NONE",
         keyboard_written="Keyboard" in values,
+        density=_density(values),
         shortcut_mode=_shortcut_mode(values),
         visible=shown.value if isinstance(shown, m.Bool) else True,
         style=style,
@@ -1615,6 +1624,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         length=values.get("Length"),  # type: ignore[arg-type]
         keyboard=word("Keyboard", "NONE"),
         keyboard_written="Keyboard" in values,
+        density=_density(values),
         input=region.value if isinstance(region, m.Text) else "WHOLE",
         visible=visible.value if isinstance(visible, m.Bool) else True,
         hide_after=float(hide.value) if isinstance(hide, m.Number) else None,

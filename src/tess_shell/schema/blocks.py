@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from tess_shell.binder.model import FIELD, FIELD_INPUT, FIELD_LINE, FIELD_SIZE, MARQUEE_TEXT
 
+DENSITY_LEVELS = ("DEFAULT", "COMPACT", "DENSE")  # Appearance.Density, and a surface's own
 ALIGN = ("START", "CENTER", "END", "STRETCH")
 JUSTIFY = ("START", "CENTER", "END", "SPACE_BETWEEN", "SPACE_AROUND", "SPACE_EVENLY")
 # the accessibility roles tre knows (its node reference); the Block Reference lists the common ones
@@ -581,6 +582,7 @@ BUILTIN_BUILT = ("Show", "Hide", "Toggle", "Close", "Call")
 # A Panel's keys and kinds (Panel > Configuration); the placement keys the shell does not build
 # yet are errors, so a Panel never opens somewhere it was not asked to.
 PANEL_KEYS: dict[str, str] = {
+    "Density": "enum",
     "Layer": "enum",
     "Anchor": "anchor",
     "Inset": "sides",
@@ -615,6 +617,7 @@ PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Keyboard": ("NONE", "ON_DEMAND", "EXCLUSIVE"),
     "Attach": ("LEFT", "RIGHT", "TOP", "BOTTOM"),
     "Alignment": ("START", "CENTER", "END"),
+    "Density": DENSITY_LEVELS,
 }
 # keys that only mean something with Attach_To, and keys that Attach_To replaces
 PANEL_ATTACH_KEYS = ("Attach", "Gap", "Alignment")

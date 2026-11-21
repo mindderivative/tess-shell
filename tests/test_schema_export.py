@@ -900,7 +900,15 @@ def test_the_tokens_are_the_default_themes_with_its_modes() -> None:
                     modes.setdefault(mode.type.lower(), set()).add(ref)
     exported = {v["ref"][1:]: v for tokens in D["tokens"].values() for v in tokens.values()}
     assert set(exported) == set(base)
-    assert list(D["tokens"]) == ["color", "type", "shape", "space", "elevation", "motion"]
+    assert list(D["tokens"]) == [
+        "color",
+        "type",
+        "shape",
+        "space",
+        "density",
+        "elevation",
+        "motion",
+    ]
     for ref, entry in exported.items():
         value = base[ref]
         if isinstance(value, tess_dl.Block):
