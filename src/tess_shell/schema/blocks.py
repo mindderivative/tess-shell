@@ -285,6 +285,7 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
             "Direction": "enum",
             "Loop": "enum",
             "Animated": "bool",
+            "Tooltip_Auto": "bool",
         },
         {**MARQUEE_TEXT_STYLE, "Opacity": "number", **MOTION_STYLE},
     ),
@@ -397,6 +398,7 @@ MARQUEE_BOX: tuple[dict[str, str], dict[str, str]] = (
         "Direction": "enum",
         "Loop": "enum",
         "Animated": "bool",
+        "Tooltip_Auto": "bool",
     },
     {"Opacity": "number", **MOTION_STYLE},
 )

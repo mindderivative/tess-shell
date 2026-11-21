@@ -278,8 +278,8 @@ def test_the_maintainers_desktop_shows_ethernet_with_no_second_icon_and_the_tool
             assert v["label"] == "Network, ethernet Wired connection 1, connected"
             assert (v["available"], v["ready"], v["vpn"], v["strength"]) == (True, True, False, -1)
             assert not vpn_shown(w) and len(icons(w)) == 2
-            (root,) = [n for k, n in w.view.nodes.items() if k.endswith("/Root")]
-            assert root.get("role") == "group" and root.get("label") == v["label"]
+            (root,) = [n for k, n in w.view.nodes.items() if k.endswith("/Content")]
+            assert root.get("role") == "img" and root.get("label") == v["label"]
             assert quiet(w) == [] and w.warnings() == []
 
 

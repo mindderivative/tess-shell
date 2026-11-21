@@ -5,7 +5,7 @@ type: spec
 status: review
 owner: phil
 created: 2026-11-10
-updated: 2026-11-16
+updated: 2026-11-21
 tags: [spec/integration, needs-verification]
 ---
 
@@ -55,6 +55,7 @@ Panel { Name: Dock, Shortcut_Mode: false }
 5. In shortcut mode, `Next_Focus` and `Previous_Focus` move focus through the Frame's panels, peeks, bars and strips in `Tab_Index` order.
 6. With a Panel focused, another shortcut sets `Shortcut_Mode: true` on that Panel, which turns the Frame's off (rule 1): the Panel's own keys apply and the Frame's do not. The action is `Set_Shortcut_Mode` (maintainer, 2026-11-10): one action that toggles `Shortcut_Mode` of the focused surface, from false to true and from true to false. The exact key combinations for entering a mode are the user's and irrelevant to the design.
 7. In a Frame with `Shortcut_Mode: true`, every peek shows at the same time, if the surfaces can render together.
+8. A hidden Bar is revealed by shortcut mode (maintainer, 2026-11-21, amends the 2026-10-27 "no key reveals a Bar" of [Bar > Auto-hide (Decided 2026-10-27)](../Surfaces/Bar.md#auto-hide-decided-2026-10-27)): entering the mode shows a Bar hidden by `Auto_Hide` and moves focus into it; leaving the mode or Escape hides it again per `Auto_Hide`. Proposed as built, not run in the vault: the reveal uses the Bar's normal show slide, and the focus move is announced like any other ([Accessibility](../../60%20Quality/Accessibility.md)). Open for the code session: the order of the Bar among `Tab_Index` stops when it was hidden.
 
 Consequence of rules 1 and 2 (stated by the maintainer, noted here so it is not a surprise): leaving a Panel's mode by setting it to false turns shortcut mode off for the whole shell, it does not return to the Frame. To go back to the Frame the user presses the Enter action again.
 

@@ -616,7 +616,7 @@ A surface that opens from a block: a menu or a tooltip.
 | `Open_On_Enter` | true or false | `false` |  | Opens when the pointer enters the block it is the tooltip of. |
 | `Enter_Delay` | number | `500` |  | How long the pointer rests before it opens, in milliseconds. |
 | `Close_On_Exit` | true or false | `false` |  | Closes when the pointer leaves. |
-| `Exit_Delay` | number | `200` |  | How long the pointer is away before it closes, in milliseconds. |
+| `Exit_Delay` | number | `150` |  | How long the pointer is away before it closes, in milliseconds. |
 
 Not built yet (the loader says so if you write them): `Attach_To`, `Animation`.
 
@@ -719,7 +719,7 @@ Added to every Monitor with a Bar, Panel or Frame that shows the module in shown
 
 ## Tooltip
 
-A tooltip is a Popup that takes no focus: it opens when the pointer has rested on a block for `Enter_Delay` milliseconds (default 500) and closes when the pointer leaves, `Exit_Delay` (default 200) later. There are three ways to write one, all in this example:
+A tooltip is a Popup that takes no focus: it opens when the pointer has rested on a block for `Enter_Delay` milliseconds (default 500) and closes when the pointer leaves, `Exit_Delay` (default 150) later. There are three ways to write one, all in this example:
 
 <!-- BEGIN generated: example-set:04-surfaces/tooltips -->
 File `settings.tdl`:

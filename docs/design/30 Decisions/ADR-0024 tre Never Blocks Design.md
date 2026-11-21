@@ -13,7 +13,7 @@ tags: [adr, architecture/layering]
 
 ## Context
 
-The layering principle is "mechanism in the engine, meaning and look in the layer above" ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)). The maintainer stated on 2026-11-21 (relayed by the Orchestrator) a stronger form: tre never blocks a design change. Every visual element and parameter of tre is adjustable from Python through properties, tokens or declarative hooks, with no per-frame Python. The Tesserae UX vault is to carry a matching decision record; I looked in `~/Projects/Obsidian/Tesserae UX/50 Decisions` and found ADR-0001 to ADR-0019 and none on this, so the cross-reference below is to be filled in when that ADR exists.
+The layering principle is "mechanism in the engine, meaning and look in the layer above" ([Vault Reference > Layering principle](../00%20Home/Vault%20Reference.md#layering-principle)). The maintainer stated on 2026-11-21 (relayed by the Orchestrator) a stronger form: tre never blocks a design change. Every visual element and parameter of tre is adjustable from Python through properties, tokens or declarative hooks, with no per-frame Python. The Tesserae UX vault is to carry a matching decision record; I looked in `~/Projects/Obsidian/Tesserae UX/50 Decisions` and found ADR-0001 to ADR-0019 and none on this, so the cross-reference was open when this was written. Tesserae UX has since named it: ADR-0020 "The engine never blocks the design" (pending in a Tesserae UX PR, relayed by its bot on 2026-11-21), which cites this ADR as the shell-side record.
 
 ## Options
 
@@ -37,7 +37,7 @@ The layering principle is "mechanism in the engine, meaning and look in the laye
 
 ## Decision
 
-Blank until the maintainer accepts. Recommendation: A. On acceptance, add the matching ADR link in the Tesserae UX vault.
+Blank until the maintainer accepts. Recommendation: A. The matching Tesserae UX record is ADR-0020.
 
 ## Consequences
 
@@ -45,4 +45,4 @@ Blank until the maintainer accepts. Recommendation: A. On acceptance, add the ma
 
 ## Links
 
-[Layers and Components](../20%20Architecture/Layers%20and%20Components.md) · [Vault Reference](../00%20Home/Vault%20Reference.md) · [ADR-0018 One Entry Form in tre](ADR-0018%20One%20Entry%20Form%20in%20tre.md) · Tesserae UX: ADR to be linked
+[Layers and Components](../20%20Architecture/Layers%20and%20Components.md) · [Vault Reference](../00%20Home/Vault%20Reference.md) · [ADR-0018 One Entry Form in tre](ADR-0018%20One%20Entry%20Form%20in%20tre.md) · Tesserae UX: ADR-0020 The engine never blocks the design (pending PR)

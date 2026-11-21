@@ -443,8 +443,9 @@ def check_states(
 ) -> list[Finding]:
     """A warning for each ``:hovered``, ``:pressed`` or ``:focused`` style the rules give a block
     that tre sends no pointer events and that takes no focus (a ``Text``): the state would never
-    hold, so the rule does nothing there. ``module`` is the call name when ``children`` are a
-    module's layout."""
+    hold, so the rule does nothing there (a ``:hovered`` or ``:pressed`` on a module's part is
+    not one: the part follows the pointer on its root block). ``module`` is the call name when
+    ``children`` are a module's layout."""
     if not any(r.state for r in rules):
         return []
     ruled: Sequence[Child] = apply_rules(tuple(children), rules, module)
@@ -457,6 +458,8 @@ def check_states(
         for state, values in node.states.items():
             if state in m.FLAG_STATES and state != "focused":  # these need no pointer: a Text can
                 continue  # be disabled or chosen, never focused
+            if node.part and state in ("hovered", "pressed"):
+                continue  # a module's part follows the pointer on its root (``View._wire_parts``)
             o = next(iter(values.values())).origin if values else node.origin
             found.append(
                 Finding(

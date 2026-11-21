@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-11-13
-updated: 2026-11-16
+updated: 2026-11-21
 tags: [moc, process]
 ---
 
@@ -169,6 +169,7 @@ Tier 1 is decided by this session with the session concerned (directive rule 7).
 | D-059 | 2026-11-14 | 1 | Mail costs usage: every message wakes a session for a turn. One copy per message (the repeats of D-033 end); no acknowledgement-only or no-action messages in either direction; the state lives in [Task Owners](Task%20Owners.md), which a session reads when it starts | [Task Owners](Task%20Owners.md) |
 | D-020 | 2026-11-13 | 1 | The code session's order after M5d: T-023, then the schema export T-014 (it unblocks `tess-ui`), then the audio spike T-018 | Message to `tess-shell` |
 | D-008 | 2026-11-13 | 1 | Media needs `bus.watch_prefix` and optional player proxies; both are inside `tess-shell` | [Media Module > Needs from the Layer](../40%20Specifications/Modules/Media%20Module.md#needs-from-the-layer) |
+| D-060 | 2026-11-21 | Owner | Shortcut Mode reveals a hidden Bar (maintainer, 2026-11-21, item 20, relayed by the Orchestrator): entering shortcut mode shows a Bar hidden by `Auto_Hide` and moves focus into it; leaving the mode or pressing Escape hides it again per `Auto_Hide`. This amends the 2026-10-27 "keyboard reveal: none by default" decision. Tesserae UX record: ADR-0021. | [Bar > Auto-hide (Decided 2026-10-27)](../40%20Specifications/Surfaces/Bar.md#auto-hide-decided-2026-10-27), [Focus and Keyboard](../40%20Specifications/Integration/Focus%20and%20Keyboard.md), [Accessibility](../60%20Quality/Accessibility.md) |
 
 ## Reports Received
 
