@@ -577,6 +577,9 @@ PANEL_KEYS: dict[str, str] = {
     "Inset": "sides",
     "Width": "length",
     "Height": "length",
+    # the greatest size of a Panel whose Width or Height is AUTO (content-sized, M7i)
+    "Max_Width": "bound",
+    "Max_Height": "bound",
     "Keyboard": "enum",
     "Input_Region": "input",
     "Visible": "bool",

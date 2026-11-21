@@ -280,10 +280,17 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     ("Bar", "Layer"): "The layer the Bar is drawn in: BOTTOM, TOP or OVERLAY.",
     ("Bar", "Name"): "The unique name of the Bar; required.",
     ("Panel", "Name"): "The unique name of the Panel; Show, Hide, Toggle and Attach_To use it.",
-    ("Panel", "Width"): "The Panel's width in pixels or a percentage; AUTO and EXPAND are not "
-    "built. 0 stretches between two opposite anchors.",
-    ("Panel", "Height"): "The Panel's height in pixels or a percentage; AUTO and EXPAND are not "
-    "built. 0 stretches between two opposite anchors.",
+    ("Panel", "Width"): "The Panel's width in pixels or a percentage, or AUTO: the width of its "
+    "content, padding included, followed while the Panel is open (not with Attach_To, Movable or "
+    "Meld, or between two opposite anchors). EXPAND is not built. 0 stretches between two "
+    "opposite anchors.",
+    ("Panel", "Height"): "The Panel's height in pixels or a percentage, or AUTO: the height of its "
+    "content, padding included, followed while the Panel is open (not with Attach_To, Movable or "
+    "Meld, or between two opposite anchors). EXPAND is not built. 0 stretches between two "
+    "opposite anchors.",
+    ("Panel", "Max_Width"): "The greatest width of a Panel whose Width is AUTO, in pixels.",
+    ("Panel", "Max_Height"): "The greatest height of a Panel whose Height is AUTO, in pixels; "
+    "content beyond it is clipped, so put it in a scroll view.",
     ("Panel", "Depth"): "The extent of a Panel with Meld: true away from the Frame's edge.",
     ("Panel", "Length"): "The extent of a Panel with Meld: true along the Frame's edge.",
     ("Panel", "Visible"): "Starts the Panel shown (true) or hidden (false).",

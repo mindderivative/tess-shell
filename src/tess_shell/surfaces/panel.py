@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from tess_shell.binder.model import Length, Percent, Value
+from tess_shell.binder.model import Auto, Length, Percent, Value
 from tess_shell.surfaces.bar import Geometry, Rect, ZeroSize
 
 _ORDER = ("top", "right", "bottom", "left")  # tre's margin order
@@ -27,6 +27,12 @@ class PanelSpec:
     attach: str | None = None  # LEFT, RIGHT, TOP, BOTTOM: the target's edge; None = not attached
     gap: float = 0
     alignment: str = "CENTER"
+    max_width: float | None = None  # clamps an AUTO width
+    max_height: float | None = None
+
+
+def is_auto(value: Value) -> bool:
+    return isinstance(value, Auto)
 
 
 def px_size(value: Value, output: int) -> float:
@@ -119,10 +125,31 @@ def panel_geometry(
     size: list[int] = []
     body = {side: 0 for side in _ORDER}
     margin = {side: 0 for side in _ORDER}
-    for axis, (low, high), value, out in (
-        ("width", ("left", "right"), spec.width, output[0]),
-        ("height", ("top", "bottom"), spec.height, output[1]),
+    content = [False, False]
+    limit: list[int | None] = [None, None]
+    for n, (axis, (low, high), value, out, cap) in enumerate(
+        (
+            ("width", ("left", "right"), spec.width, output[0], spec.max_width),
+            ("height", ("top", "bottom"), spec.height, output[1], spec.max_height),
+        )
     ):
+        if is_auto(value):  # the content sizes this axis: tre's "content", the body's own margin
+            content[n] = True
+            limit[n] = None if cap is None else round(cap) + want[low] + want[high]
+            for side in (low, high):
+                body[side] = (
+                    want[side]
+                    if low in anchors or high in anchors
+                    else max(want[low], want[high])  # centred: the same margin both sides
+                )
+                if side in anchors:
+                    margin[side] = round(inset[side]) - body[side]
+                elif inset[side]:
+                    warnings.append(
+                        f"Inset {side} has no effect: the Panel is not anchored to {side}"
+                    )
+            size.append(body[low] + body[high])  # a stand-in: the body's margins, no content yet
+            continue
         length = px_size(value, out)
         stretched = low in anchors and high in anchors
         if length <= 0 and not stretched:
@@ -153,4 +180,6 @@ def panel_geometry(
         exclusive_edge=None,
         warnings=tuple(warnings),
         body_margin=(body["top"], body["right"], body["bottom"], body["left"]),
+        content=(content[0], content[1]),
+        max_size=(limit[0], limit[1]),
     )

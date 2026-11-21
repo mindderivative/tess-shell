@@ -74,6 +74,8 @@ class PanelDef:
     inset: tuple[float, float, float, float] = (0, 0, 0, 0)  # left, top, right, bottom
     width: Value = None  # type: ignore[assignment]
     height: Value = None  # type: ignore[assignment]
+    max_width: float | None = None  # pixels; clamps an ``AUTO`` Width (M7i)
+    max_height: float | None = None  # pixels; clamps an ``AUTO`` Height (M7i)
     keyboard: str = "NONE"
     keyboard_written: bool = False  # the file says ``Keyboard:``: NONE is then a choice
     input: str = "WHOLE"  # WHOLE, NONE or AUTO (Input_Region)

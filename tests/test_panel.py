@@ -6,7 +6,7 @@ import pytest
 import tess_dl
 
 from tess_shell.appearance import Appearance
-from tess_shell.binder.model import Length, Percent
+from tess_shell.binder.model import Auto, Length, Percent
 from tess_shell.model.look import make_look
 from tess_shell.model.store import ValueStore
 from tess_shell.schema.findings import Finding
@@ -89,7 +89,15 @@ def test_the_defaults_are_the_top_layer_no_keyboard_whole_surface_shown() -> Non
         ("Panel { Name: P, Width: 10, Height: 10, Keyboard: ALWAYS }", "bad-value", "EXCLUSIVE"),
         ("Panel { Name: P, Width: 10, Height: 10, Anchor: [TOP, TOP] }", "bad-value", "twice"),
         ("Panel { Name: P, Width: 10, Height: 10, Anchor: MIDDLE }", "bad-value", "TOP, BOTTOM"),
-        ("Panel { Name: P, Width: AUTO, Height: 10 }", "not-built", "AUTO"),
+        ("Panel { Name: P, Width: EXPAND, Height: 10 }", "not-built", "EXPAND"),
+        ("Panel { Name: P, Width: 10, Height: AUTO, Anchor: [TOP, BOTTOM] }", "bad-value", "AUTO"),
+        (
+            "Panel { Name: P, Width: 10, Height: AUTO, Movable: true }",
+            "bad-value",
+            "Movable",
+        ),
+        ("Panel { Name: P, Width: 10, Height: 10, Max_Height: 40 }", "max-without-auto", "AUTO"),
+        ("Panel { Name: P, Width: 10, Height: AUTO, Max_Height: 40% }", "not-built", "percentage"),
         ("Panel { Name: P, Width: 10, Height: 10, Exclusive_Zone: 4 }", "not-built", "Exclusive"),
         (
             "Panel { Name: P, Width: 10, Height: 10, Input_Region: [[0, 0, 4, 4]] }",
@@ -130,6 +138,33 @@ def test_an_anchored_panel_takes_its_inset_as_tres_margin_in_tres_order() -> Non
     assert g.anchor == ("top", "right") and g.size == (300, 200)
     assert g.margin == (40, 24, 0, 0)  # top, right, bottom, left; unanchored sides give none
     assert g.exclusive_zone == -1 and g.body_margin == (0, 0, 0, 0)
+
+
+def test_an_auto_axis_is_the_contents_and_the_other_keeps_its_size() -> None:
+    """M7i: ``Height: AUTO`` follows the content (tre's "content"); the shadow's bleed is part of
+    the surface, so the clamp is the body's maximum plus the bleed, and a bottom-anchored Panel
+    keeps its edge."""
+    auto = Auto(origin=Length(0).origin)
+    g = panel_geometry(
+        spec(
+            anchor=("BOTTOM",),
+            inset=(0, 0, 0, 48),
+            width=Length(480),
+            height=auto,
+            max_height=400,
+            bleed=(8, 10, 12, 10),
+        ),
+        OUT,
+    )
+    assert g.content == (False, True) and g.max_size == (None, 400 + 8 + 12)
+    assert g.size[0] == 480 + 10 + 10
+    assert g.margin == (0, 0, 48 - 12, 0)  # the body keeps its inset: the bleed is outside it
+    assert g.body_margin == (8, 10, 12, 10)
+
+
+def test_a_fixed_panel_has_no_content_axis() -> None:
+    g = panel_geometry(spec(anchor=("TOP",)), OUT)
+    assert g.content == (False, False) and g.max_size == (None, None)
 
 
 def test_an_inset_on_a_side_with_no_anchor_is_ignored_with_a_warning() -> None:

@@ -366,8 +366,10 @@ A surface placed by anchors or against a target; a launcher, an OSD, a dock. Wid
 | `Layer` | `BOTTOM` `TOP` `OVERLAY` | `TOP` |  | The layer the Panel is drawn in: BOTTOM, TOP or OVERLAY. |
 | `Anchor` | list of `TOP` `BOTTOM` `LEFT` `RIGHT` | none |  | The screen edges the Panel is anchored to: one or a list; none is a floating Panel centred by the compositor. |
 | `Inset` | sides | `0` |  | The distance from the anchored edges: one number, four (left, top, right, bottom) or named sides. |
-| `Width` | length | none | one of | The Panel's width in pixels or a percentage; AUTO and EXPAND are not built. 0 stretches between two opposite anchors. |
-| `Height` | length | none | one of | The Panel's height in pixels or a percentage; AUTO and EXPAND are not built. 0 stretches between two opposite anchors. |
+| `Width` | length | none | one of | The Panel's width in pixels or a percentage, or AUTO: the width of its content, padding included, followed while the Panel is open (not with Attach_To, Movable or Meld, or between two opposite anchors). EXPAND is not built. 0 stretches between two opposite anchors. |
+| `Height` | length | none | one of | The Panel's height in pixels or a percentage, or AUTO: the height of its content, padding included, followed while the Panel is open (not with Attach_To, Movable or Meld, or between two opposite anchors). EXPAND is not built. 0 stretches between two opposite anchors. |
+| `Max_Width` | length | none |  | The greatest width of a Panel whose Width is AUTO, in pixels. |
+| `Max_Height` | length | none |  | The greatest height of a Panel whose Height is AUTO, in pixels; content beyond it is clipped, so put it in a scroll view. |
 | `Keyboard` | `NONE` `ON_DEMAND` `EXCLUSIVE` | `NONE` |  | Whether the Panel takes the keyboard: NONE never, ON_DEMAND on a click, EXCLUSIVE all keys. |
 | `Input_Region` | `AUTO` | none |  | Which part of the Panel takes the pointer: [] none, AUTO the drawn shapes; leaving it out is the whole Panel. |
 | `Visible` | true or false | `true` |  | Starts the Panel shown (true) or hidden (false). |
