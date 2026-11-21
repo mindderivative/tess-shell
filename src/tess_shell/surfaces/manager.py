@@ -168,6 +168,8 @@ class Surface:
     trace: Any = None  # (label, start, frames left to log): the first frames after a change
     generation: int = 0  # counts shows and hides, so an animation that was replaced stays silent
     covered: bool = False  # hidden by a fullscreen window on its output (``set_fullscreen``)
+    catcher: Any = None  # the click-away PopupWindow of a shown Launcher (M7k), else None
+    had_keys: bool = False  # the Launcher has had the keyboard since it was shown (M7k)
 
 
 def _bar_fill(style: dict[str, Value] | None) -> tuple[int, int, int, int] | None:
@@ -1254,6 +1256,7 @@ class SurfaceManager:
             s.timer = None
         self._fire(s, "On_Close")  # before: the request is made
         s.hidden = True
+        self._disarm_click_away(s)
         self.mode.gone(s.name)  # shortcut mode does not stay on a hidden Panel
         self.changed(s.name, False)
         if self.hide_mode == "KEEP":  # a hiding Panel takes no input, whatever its animation
@@ -1304,6 +1307,7 @@ class SurfaceManager:
             self._trace(s, "shown")
             logger.info(f"Panel {s.planned.where} shown (surface kept)")
             self._enter(s)
+            self._arm_click_away(s)
             self._shown(s)
             return
         fresh = self._make_window(s.planned, self.new_live(self._all_uses))
@@ -1321,7 +1325,85 @@ class SurfaceManager:
         self._trace(s, "shown")
         logger.info(f"Panel {s.planned.where} shown (window created)")
         self._enter(s)
+        self._arm_click_away(s)
         self._shown(s)
+
+    # -- Panel: click-away closing (M7k) ---------------------------------------------------------
+    #
+    # A Panel with ``Keyboard: EXCLUSIVE`` that holds a use of the shipped Applications module (the
+    # Launcher) hides when the user clicks elsewhere or something else takes its keyboard, as a
+    # menu does (Applications Module > Opening; TRE-REQ-024, tre's answer of 2026-11-17).
+    #
+    # * A click: Wayland shows a client no press on another client's surface, so the shell puts
+    #   a transparent surface the size of the output on layer TOP, under the Panel (OVERLAY), for
+    #   as long as the Panel is shown; a press on it hides the Panel. The press is the catcher's
+    #   (the user clicks again to use what is under it). tre's recipe of TRE-REQ-024, a 1 by 1
+    #   ``PopupWindow(grab=True)``, was built first and does not do: on KWin the popup grab takes
+    #   the keyboard from the Panel, so nothing can be typed (hand check of 2026-11-20).
+    # * The keyboard: the window's ``active`` event is the compositor's keyboard enter and leave;
+    #   when another surface of the shell takes the keyboard after the Panel had it, the Panel hides
+    #   (a keyboard that is only lost, with nothing gaining it, is not a reason: the seat's last
+    #   keyboard device going away does that).
+
+    @staticmethod
+    def _click_away_panel(s: Surface) -> bool:
+        panel = s.planned.bar if s.planned else None
+        return (
+            isinstance(panel, PanelDef)
+            and panel.keyboard == "EXCLUSIVE"
+            and panel.layer == "OVERLAY"
+            and s.planned is not None
+            and any(u.module == "Applications" for u in s.planned.expanded.uses)
+        )
+
+    def _arm_click_away(self, s: Surface) -> None:
+        """The Panel is shown: put the click catcher under it (the last one went at the hide)."""
+        from tess_re import LayerWindow
+
+        self._disarm_click_away(s)
+        s.had_keys = False
+        window = s.window
+        if window is None or s.planned is None or not self._click_away_panel(s):
+            return
+        try:
+            catcher = LayerWindow(
+                f"tesserae-shell.catcher.{s.name}",
+                layer="top",  # under the Panel's OVERLAY, above the windows
+                anchor=("top", "right", "bottom", "left"),
+                size=(0, 0),
+                exclusive_zone=-1,
+                keyboard="none",
+                output=s.planned.output,
+            )
+        except (ValueError, RuntimeError) as exc:  # no compositor, or the engine refuses
+            logger.warning(f"Panel {s.name}: no click-away closing: {exc}")
+            return
+        catcher.root.set(fill=(0, 0, 0, 0))
+
+        def pressed(_: Any) -> None:
+            if not s.hidden and s.window is window:
+                logger.info(f"Panel {s.name}: a click elsewhere closes it")
+                self.hide(s)
+
+        catcher.root.on("pointer_down", pressed)
+        s.catcher = catcher
+        self._app.add_window(catcher)
+
+    def _disarm_click_away(self, s: Surface) -> None:
+        catcher, s.catcher = s.catcher, None
+        if catcher is not None:
+            free_window(catcher)
+            catcher.close()
+
+    def _keyboard_taken(self, name: str) -> None:
+        """Another surface of the shell (``name``) gained the keyboard: a Launcher that had it
+        closes. Only the shell's own surfaces count: losing the keyboard with nothing else
+        gaining it also happens when the seat's last keyboard device goes (a virtual keyboard in
+        the tests, a KVM switch), and that is not a reason to close."""
+        for s in list(self.surfaces):
+            if s.name != name and s.had_keys and not s.hidden and self._click_away_panel(s):
+                logger.info(f"Panel {s.name}: {name} took the keyboard, so it closes")
+                self.hide(s)
 
     # -- Panel: animation (Panel > Configuration, Animation) -------------------------------------
     #
@@ -1802,6 +1884,11 @@ class SurfaceManager:
             self.focused = name
         elif self.focused == name:
             self.focused = None
+        for surface in self.surfaces:
+            if surface.name == name and surface.window is not None and active:
+                surface.had_keys = True
+        if active:
+            self._keyboard_taken(name)
 
     def _surface_gone(self, name: str, window: Any = None) -> None:
         """A surface closed. When it had the keyboard focus, focus goes to the next surface in the
