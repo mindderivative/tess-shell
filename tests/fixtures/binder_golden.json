@@ -7299,8 +7299,8 @@
      241,
      255
     ],
-    "font_size": 11,
-    "font_weight": 600,
+    "font_size": 12,
+    "font_weight": 500,
     "text": "7",
     "visible": true
    },
@@ -7316,12 +7316,12 @@
      140,
      255
     ],
-    "height": 18,
+    "height": 16,
     "justify_content": "center",
-    "min_width": 18,
+    "min_width": 16,
     "padding_bottom": 0,
-    "padding_left": 5,
-    "padding_right": 5,
+    "padding_left": 4,
+    "padding_right": 4,
     "padding_top": 0,
     "visible": true,
     "width": "auto"
@@ -7334,8 +7334,8 @@
      241,
      255
     ],
-    "font_size": 11,
-    "font_weight": 600,
+    "font_size": 12,
+    "font_weight": 500,
     "text": "0",
     "visible": false
    },
@@ -7351,15 +7351,15 @@
      140,
      255
     ],
-    "height": 8,
+    "height": 6,
     "justify_content": "center",
-    "min_width": 8,
+    "min_width": 6,
     "padding_bottom": 0,
     "padding_left": 0,
     "padding_right": 0,
     "padding_top": 0,
     "visible": true,
-    "width": 8
+    "width": 6
    },
    "Icon@Main_Shell.Main.Top_Bar.Icon_1/Root": {
     "a11y_hidden": true,
@@ -8028,8 +8028,8 @@
         241,
         255
        ],
-       "font_size": 11,
-       "font_weight": 600,
+       "font_size": 12,
+       "font_weight": 500,
        "text": "7",
        "visible": true
       },
@@ -8047,8 +8047,8 @@
         255
        ],
        "focusable": false,
-       "font_size": 11.0,
-       "font_weight": 600.0,
+       "font_size": 12.0,
+       "font_weight": 500.0,
        "hit_testable": true,
        "label": null,
        "pressed": null,
@@ -8107,12 +8107,12 @@
       140,
       255
      ],
-     "height": 18,
+     "height": 16,
      "justify_content": "center",
-     "min_width": 18,
+     "min_width": 16,
      "padding_bottom": 0,
-     "padding_left": 5,
-     "padding_right": 5,
+     "padding_left": 4,
+     "padding_right": 4,
      "padding_top": 0,
      "visible": true,
      "width": "auto"
@@ -8138,14 +8138,14 @@
       255
      ],
      "focusable": false,
-     "height": 18.0,
+     "height": 16.0,
      "hit_testable": true,
      "justify_content": "center",
      "label": null,
-     "min_width": 18.0,
+     "min_width": 16.0,
      "padding_bottom": 0.0,
-     "padding_left": 5.0,
-     "padding_right": 5.0,
+     "padding_left": 4.0,
+     "padding_right": 4.0,
      "padding_top": 0.0,
      "pressed": null,
      "read_only": "!ValueError",
@@ -8206,8 +8206,8 @@
         241,
         255
        ],
-       "font_size": 11,
-       "font_weight": 600,
+       "font_size": 12,
+       "font_weight": 500,
        "text": "0",
        "visible": false
       },
@@ -8225,8 +8225,8 @@
         255
        ],
        "focusable": false,
-       "font_size": 11.0,
-       "font_weight": 600.0,
+       "font_size": 12.0,
+       "font_weight": 500.0,
        "hit_testable": true,
        "label": null,
        "pressed": null,
@@ -8285,15 +8285,15 @@
       140,
       255
      ],
-     "height": 8,
+     "height": 6,
      "justify_content": "center",
-     "min_width": 8,
+     "min_width": 6,
      "padding_bottom": 0,
      "padding_left": 0,
      "padding_right": 0,
      "padding_top": 0,
      "visible": true,
-     "width": 8
+     "width": 6
     },
     "rank": 0,
     "states": {
@@ -8316,11 +8316,11 @@
       255
      ],
      "focusable": false,
-     "height": 8.0,
+     "height": 6.0,
      "hit_testable": true,
      "justify_content": "center",
      "label": null,
-     "min_width": 8.0,
+     "min_width": 6.0,
      "padding_bottom": 0.0,
      "padding_left": 0.0,
      "padding_right": 0.0,
@@ -8332,7 +8332,7 @@
      "tab_index": 0,
      "value": null,
      "visible": true,
-     "width": 8.0
+     "width": 6.0
     },
     "wire": {
      "always": {},
