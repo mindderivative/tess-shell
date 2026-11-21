@@ -78,6 +78,36 @@ Theme {
                 Shadow { Color: "#00000066", X: 0, Y: 16, Blur: 48, Spread: 0 }
             }
         }
+        Level_1 {
+            Shadows {
+                Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 2, Spread: 0 }
+                Shadow { Color: "#00000026", X: 0, Y: 1, Blur: 3, Spread: 1 }
+            }
+        }
+        Level_2 {
+            Shadows {
+                Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 2, Spread: 0 }
+                Shadow { Color: "#00000026", X: 0, Y: 2, Blur: 6, Spread: 2 }
+            }
+        }
+        Level_3 {
+            Shadows {
+                Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 3, Spread: 0 }
+                Shadow { Color: "#00000026", X: 0, Y: 4, Blur: 8, Spread: 3 }
+            }
+        }
+        Level_4 {
+            Shadows {
+                Shadow { Color: "#0000004D", X: 0, Y: 2, Blur: 3, Spread: 0 }
+                Shadow { Color: "#00000026", X: 0, Y: 6, Blur: 10, Spread: 4 }
+            }
+        }
+        Level_5 {
+            Shadows {
+                Shadow { Color: "#0000004D", X: 0, Y: 4, Blur: 4, Spread: 0 }
+                Shadow { Color: "#00000026", X: 0, Y: 8, Blur: 12, Spread: 6 }
+            }
+        }
     }
 
     Motion {

@@ -38,6 +38,7 @@ from tess_shell.schema import blocks, default_panels, default_popups, docs
 from tess_shell.schema import keys as chords
 from tess_shell.schema.deprecations import mark_schema
 from tess_shell.schema.look import DEFAULT_FONT, STYLE_UNION, SYSTEM_FONT, read_theme, token_kind
+from tess_shell.schema.look import ELEVATION_BLOCKS
 from tess_shell.schema.look import GROUPS as THEME_GROUPS
 from tess_shell.schema.model import (
     PARAM_TYPES,
@@ -1164,8 +1165,8 @@ def _flatten(
         if isinstance(entry, tess_dl.Property):
             out[".".join((*prefix, entry.key.lower()))] = entry.value
         elif isinstance(entry, tess_dl.Block):
-            if prefix == ("elevation",) and entry.type == "Max":
-                out["elevation.max"] = entry
+            if prefix == ("elevation",) and entry.type in ELEVATION_BLOCKS:
+                out[f"elevation.{entry.type.lower()}"] = entry
             else:
                 _flatten(entry, (*prefix, entry.type.lower()), out)
 
@@ -1182,7 +1183,7 @@ def _tokens() -> dict[str, dict[str, Json]]:
         group, _, name = path.partition(".")
         # the loader checks a token's value only for the groups ``look._kind`` names; the
         # easing words and ``elevation.reach`` it reads as written, so their kind is not known
-        model_kind = "shadows" if path == "elevation.max" else token_kind(tuple(path.split(".")))
+        model_kind = "shadows" if path.startswith("elevation.") and path != "elevation.reach" else token_kind(tuple(path.split(".")))
         kind, fields = (
             (None, {}) if model_kind is None else _kind_fields(model_kind, "Theme", name, ())
         )
