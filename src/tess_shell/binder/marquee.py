@@ -11,12 +11,15 @@ at all and the window draws no frame.
 * ``Loop: BOUNCE``: wait, scroll to the end, wait, scroll back, wait, and again.
 * ``Direction: LEFT`` moves the text to the left (the start shows first); ``RIGHT`` moves it to the
   right (the end shows first).
+* The pointer over the box pauses the scroll where it is (the text stops, a pending wait is
+  held); the pointer leaving resumes it (AC-MOD-MQT-7).
 * Not scrolling (disabled, reduced motion, or ``Animated: false``) a text that does not fit shows
   with an ellipsis, and the tooltip of the block may show the whole text (``tooltip_gate``).
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from tess_shell.binder.model import Bool, Enum, Node, Number
@@ -50,6 +53,11 @@ class MarqueeRunner:
         self.token = 0  # a leg that finishes under an older token is ignored
         self._seen: tuple[Any, ...] = ()
         self.legs = 0  # legs started since the start (for tests)
+        self.hooked = False  # the box's pointer hooks are added
+        self.paused = False  # the pointer is over the box
+        self._resume: Callable[[], None] | None = (
+            None  # what the leg or wait in progress goes on with
+        )
 
     # -- what the block says --------------------------------------------------------------------
 
@@ -122,8 +130,28 @@ class MarqueeRunner:
         self.state = "static"
         self.text.set(width="100%", overflow="ellipsis")
 
+    def hover(self, over: bool) -> None:
+        """The pointer came onto the box or left it: pause the scroll where it is, or go on."""
+        if over == self.paused:
+            return
+        self.paused = over
+        if self.state != "running":
+            return
+        if over:
+            if self.timer is not None:
+                self.timer.cancel()
+                self.timer = None
+            try:
+                self.text.stop_animation("translate_x")  # a no-op while a wait is pending
+            except ValueError:
+                pass
+        elif self._resume is not None:
+            resume, self._resume = self._resume, None
+            resume()
+
     def _stop(self) -> None:
         self.token += 1
+        self._resume = None
         if self.timer is not None:
             self.timer.cancel()
             self.timer = None
@@ -143,30 +171,38 @@ class MarqueeRunner:
 
     def _begin(self, distance: float) -> None:
         start, end = (0.0, -distance) if self.direction == "LEFT" else (-distance, 0.0)
-        duration = max(int(distance / self.speed * 1000), 1)
         token = self.token
 
         def live() -> bool:
             return token == self.token
 
         def wait(then: Any) -> None:
-            if live():
+            if not live():
+                return
+            self._resume = lambda: wait(then)
+            if not self.paused:
                 self.timer = self.window.after(self.pause, then)
 
         def leg(to: float, then: Any) -> None:
             self.timer = None
             if not live():
                 return
+            self._resume = lambda: leg(to, then)
+            if self.paused:
+                return
+            here = float(self.text.get("translate_x") or 0.0)
+            left = max(int(abs(to - here) / self.speed * 1000), 1)  # all of it, or what is left
             self.legs += 1
             try:
                 self.text.animate(
-                    "translate_x", to, duration, "linear", on_complete=lambda: arrived(then)
+                    "translate_x", to, left, "linear", on_complete=lambda: arrived(then)
                 )
             except ValueError:
                 self.state = "new"
 
         def arrived(then: Any) -> None:
             if live():
+                self._resume = None
                 then()
 
         def forward() -> None:

@@ -38,7 +38,9 @@ Theme {
         None: 0
         Small: 4
         Medium: 8
+        Medium_Large: 12
         Large: 16
+        Extra_Large: 28
         Full: 999
     }
 
@@ -95,6 +97,8 @@ Theme {
                 Outline: "#FFFFFF"
             }
         }
-        Reduced_Motion { }
+        Reduced_Motion {
+            Motion { Duration { Short: 0, Medium: 0, Long: 0 } }
+        }
     }
 }

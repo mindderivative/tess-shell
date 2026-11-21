@@ -12,6 +12,7 @@ import difflib
 import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from functools import partial
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
@@ -871,6 +872,10 @@ class View:
                     runner.configure(e.typed, e.wire.blocked if e.wire else False)
                     if e.wire is not None:
                         e.wire.tooltip_gate = runner.tooltip_gate
+                        if not runner.hooked:  # the pointer over the box pauses the scroll
+                            runner.hooked = True
+                            e.wire.add_hook("enter", partial(runner.hover, True), always=True)
+                            e.wire.add_hook("leave", partial(runner.hover, False), always=True)
         for box, runner in self.runners.items():
             if box not in live:
                 runner.stop()

@@ -27,7 +27,8 @@ if TYPE_CHECKING:
 DEFAULT_DURATION = 200  # milliseconds, when no theme gave one
 EASINGS: Mapping[str, Any] = {
     "STANDARD": (0.2, 0.0, 0.0, 1.0),
-    "EMPHASIZED": (0.05, 0.7, 0.1, 1.0),
+    # the Motion spec gives EMPHASIZED the standard curve until engines take path easing
+    "EMPHASIZED": (0.2, 0.0, 0.0, 1.0),
     "LINEAR": "linear",
 }
 # the tre properties that animate to a number or a colour
