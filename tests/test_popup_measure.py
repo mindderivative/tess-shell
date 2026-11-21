@@ -161,7 +161,7 @@ def test_a_menu_shorter_than_its_min_width_and_one_wider_are_both_exact() -> Non
 
 def test_the_height_is_the_rows_and_the_padding_and_a_separator_is_its_own_height() -> None:
     cheap, full = run("click", tray([entry(1), entry(2, separator=True, text=""), entry(3)]))
-    assert cheap.height == full.height == 8 + 32 + 9 + 32  # padding 4 + 4, two items at COMPACT (32), a rule
+    assert cheap.height == full.height == 8 + 32 + 9 + 32  # padding 4+4, two items (COMPACT), a rule
 
 
 def test_a_menu_taller_than_the_popup_is_clamped_and_scrolls_the_same() -> None:
