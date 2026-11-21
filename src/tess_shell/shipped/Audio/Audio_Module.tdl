@@ -43,45 +43,45 @@ Module {
         Visible: <| ready |>
         Role: GROUP
         Label: <| label |>
-        Description: <| tooltip |>
         Flex: HORIZONTAL
         Align_Items: CENTER
         Spacing: 4
         On_Scroll { Action: step, delta: <| 0 - event.delta * params.step |> }
         On_Secondary_Click: show_outputs
-        Tooltip {
-            Alignment: CENTER
-            Gap: 4
-            Style {
-                Background: $color.surface_raised
-                Corner_Radius: 8
-                Elevation: 20%
-            }
-            Children {
-                FlexBox {
-                    Padding: [12, 8, 12, 8]
-                    Children {
-                        Text {
-                            Text: <| tooltip |>
-                            Width: AUTO
-                            Height: AUTO
-                            Font_Size: 14
-                            Foreground: $color.on_surface
-                        }
-                    }
-                }
-            }
-        }
         Children {
             FlexBox {
                 Name: Toggle
                 Role: BUTTON
                 Label: <| "Unmute" if muted else "Mute" |>
+                Description: <| tooltip |>
                 Width: 32
                 Height: 32
                 Align_Items: CENTER
                 Justify_Content: CENTER
                 On_Click: toggle_mute
+                Tooltip {
+                    Alignment: CENTER
+                    Gap: 4
+                    Style {
+                        Background: $color.surface_raised
+                        Corner_Radius: 8
+                        Elevation: 20%
+                    }
+                    Children {
+                        FlexBox {
+                            Padding: [12, 8, 12, 8]
+                            Children {
+                                Text {
+                                    Text: <| tooltip |>
+                                    Width: AUTO
+                                    Height: AUTO
+                                    Font_Size: 14
+                                    Foreground: $color.on_surface
+                                }
+                            }
+                        }
+                    }
+                }
                 Children {
                     SVG {
                         Name: Glyph
@@ -114,6 +114,29 @@ Module {
                     Max: 100
                     On_Changed { Action: drag, percent: <| event.value |> }
                     On_Released { Action: set_volume, percent: <| event.value |> }
+                Tooltip {
+                    Alignment: CENTER
+                    Gap: 4
+                    Style {
+                        Background: $color.surface_raised
+                        Corner_Radius: 8
+                        Elevation: 20%
+                    }
+                    Children {
+                        FlexBox {
+                            Padding: [12, 8, 12, 8]
+                            Children {
+                                Text {
+                                    Text: <| str(volume) + " percent" |>
+                                    Width: AUTO
+                                    Height: AUTO
+                                    Font_Size: 14
+                                    Foreground: $color.on_surface
+                                }
+                            }
+                        }
+                    }
+                }
                 }
             }
             SVG {

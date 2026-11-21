@@ -35,6 +35,7 @@ class MarqueeRunner:
     something that decides it may have changed."""
 
     def __init__(self, window: Window, box: TreNode, text: TreNode) -> None:
+        self.tooltip_auto = True  # ``Tooltip_Auto``: the tooltip with the whole cut text may open
         self.window = window
         self.box = box
         self.text = text
@@ -68,11 +69,14 @@ class MarqueeRunner:
         self.loop = word("Loop", "RESTART")
         self.animated = animated.value if isinstance(animated, Bool) else True
         self.blocked = blocked
+        auto = typed.props.get("Tooltip_Auto")
+        self.tooltip_auto = auto.value if isinstance(auto, Bool) else True
 
     def tooltip_gate(self) -> bool:
         """Whether the block's tooltip may open: it shows the whole text a Marquee that does not
-        scroll cannot (it is cut with an ellipsis)."""
-        return self.state == "static"
+        scroll cannot (it is cut with an ellipsis); ``Tooltip_Auto: false`` turns it off (the
+        Marquee is in a control that has its own tooltip)."""
+        return self.tooltip_auto and self.state == "static"
 
     # -- measuring and starting -----------------------------------------------------------------
 

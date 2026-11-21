@@ -35,106 +35,114 @@ Module {
     FlexBox {
         Name: Root
         Visible: <| available and present |>
-        Role: GROUP
-        Label: <| label |>
-        Description: <| tooltip |>
         Flex: HORIZONTAL
         Align_Items: CENTER
-        Tooltip {
-            Alignment: CENTER
-            Gap: 4
-            Style {
-                Background: $color.surface_raised
-                Corner_Radius: 8
-                Elevation: 20%
-            }
-            Children {
-                FlexBox {
-                    Padding: [12, 8, 12, 8]
-                    Children {
-                        Text {
-                            Text: <| tooltip |>
-                            Width: AUTO
-                            Height: AUTO
-                            Font_Size: 14
-                            Foreground: $color.on_surface
-                        }
-                    }
-                }
-            }
-        }
         Children {
             FlexBox {
-                Name: Level
-                Visible: <| not low and not critical |>
+                Name: Content
+                Role: IMG
+                Label: <| label |>
+                Description: <| tooltip |>
                 Flex: HORIZONTAL
                 Align_Items: CENTER
-                Spacing: 4
-                Children {
-                    SVG {
-                        Name: Glyph
-                        Icon: <| icon |>
-                        Width: 16
-                        Height: 16
-                        A11y_Hidden: true
+                Tooltip {
+                    Alignment: CENTER
+                    Gap: 4
+                    Style {
+                        Background: $color.surface_raised
+                        Corner_Radius: 8
+                        Elevation: 20%
                     }
-                    If <| params.show_percent |> {
-                        Text {
-                            Name: Percent
-                            Class: battery_text
-                            Text: <| percent |> %
+                    Children {
+                        FlexBox {
+                            Padding: [12, 8, 12, 8]
+                            Children {
+                                Text {
+                                    Text: <| tooltip |>
+                                    Width: AUTO
+                                    Height: AUTO
+                                    Font_Size: 14
+                                    Foreground: $color.on_surface
+                                }
+                            }
                         }
                     }
                 }
-            }
-            FlexBox {
-                Name: Level_Low
-                Visible: <| low and not critical |>
-                Flex: HORIZONTAL
-                Align_Items: CENTER
-                Spacing: 4
                 Children {
-                    SVG {
-                        Name: Glyph_Low
-                        Icon: <| icon_alert |>
-                        Width: 24
-                        Height: 16
-                        A11y_Hidden: true
-                        Foreground: $color.warning
-                    }
-                    If <| params.show_percent |> {
-                        Text {
-                            Name: Percent_Low
-                            Class: battery_text
-                            Text: <| percent |> %
-                            Foreground: $color.warning
+                    FlexBox {
+                        Name: Level
+                        Visible: <| not low and not critical |>
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 4
+                        Children {
+                            SVG {
+                                Name: Glyph
+                                Icon: <| icon |>
+                                Width: 16
+                                Height: 16
+                                A11y_Hidden: true
+                            }
+                            If <| params.show_percent |> {
+                                Text {
+                                    Name: Percent
+                                    Class: battery_text
+                                    Text: <| percent |> %
+                                }
+                            }
                         }
                     }
-                }
-            }
-            FlexBox {
-                Name: Level_Critical
-                Visible: <| critical |>
-                Flex: HORIZONTAL
-                Align_Items: CENTER
-                Spacing: 4
-                Children {
-                    SVG {
-                        Name: Glyph_Critical
-                        Icon: <| icon_alert |>
-                        Width: 24
-                        Height: 16
-                        A11y_Hidden: true
-                        Foreground: $color.error
-                    }
-                    If <| params.show_percent |> {
-                        Text {
-                            Name: Percent_Critical
-                            Class: battery_text
-                            Text: <| percent |> %
-                            Foreground: $color.error
+                    FlexBox {
+                        Name: Level_Low
+                        Visible: <| low and not critical |>
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 4
+                        Children {
+                            SVG {
+                                Name: Glyph_Low
+                                Icon: <| icon_alert |>
+                                Width: 24
+                                Height: 16
+                                A11y_Hidden: true
+                                Foreground: $color.warning
+                            }
+                            If <| params.show_percent |> {
+                                Text {
+                                    Name: Percent_Low
+                                    Class: battery_text
+                                    Text: <| percent |> %
+                                    Foreground: $color.warning
+                                }
+                            }
                         }
                     }
+                    FlexBox {
+                        Name: Level_Critical
+                        Visible: <| critical |>
+                        Flex: HORIZONTAL
+                        Align_Items: CENTER
+                        Spacing: 4
+                        Children {
+                            SVG {
+                                Name: Glyph_Critical
+                                Icon: <| icon_alert |>
+                                Width: 24
+                                Height: 16
+                                A11y_Hidden: true
+                                Foreground: $color.error
+                            }
+                            If <| params.show_percent |> {
+                                Text {
+                                    Name: Percent_Critical
+                                    Class: battery_text
+                                    Text: <| percent |> %
+                                    Foreground: $color.error
+                                }
+                            }
+                        }
+                    }
+        
                 }
             }
         }

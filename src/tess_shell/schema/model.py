@@ -126,7 +126,7 @@ class PopupDef:
     open_on_enter: bool = False
     enter_delay: float = 500  # milliseconds
     close_on_exit: bool = False
-    exit_delay: float = 200
+    exit_delay: float = 150
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
 
