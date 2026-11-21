@@ -5,7 +5,7 @@ type: spec
 status: stable
 owner: phil
 created: 2026-10-27
-updated: 2026-11-17
+updated: 2026-11-21
 tags: [spec/surface, needs-verification]
 ---
 
@@ -246,6 +246,15 @@ The maintainer asked on 2026-11-17 for a layer surface sized to its content (the
 - tre built it on a local branch on 2026-11-17 (unreleased; [TRE-REQ-022 Content-Sized Layer Surface](../../80%20Requests/TRE-REQ-022%20Content-Sized%20Layer%20Surface.md)): `size` takes `'content'` per axis with `min_size` and `max_size`, the root node's padding is included, and the root must be given no size of its own on a content axis. On wlroots one transitional frame shows the old content half a step off when a centred or bottom-anchored surface resizes; settled frames are exact. Not seen on KWin yet.
 - Until tre has the request, the shell keeps the one-time fit at creation and a Panel does not follow later content changes; the Launcher stays 480 by 400.
 - The Launcher then uses `Width: 480` and `Height: AUTO` with a `Max_Height` of 400 ([Applications Module](../Modules/Applications%20Module.md)).
+
+
+### As Built in PR 116
+
+- Code session's report of `tess-shell` PR #116, 2026-11-21, not run in the vault. Keys `Max_Width` and `Max_Height`, in pixels only; a percentage is not built. A `Max_*` key without `AUTO` on that axis is an error.
+- `AUTO` is refused with `Attach_To`, `Movable`, `Meld`, or between two opposite anchors. A content-sized Panel cannot be an `Attach_To` target.
+- Shadow bleed is part of the surface: the clamp is `Max` plus the bleed. The input region is `auto` on a content axis.
+- The Launcher uses `Height: AUTO` with `Max_Height` 400. Schema 1.14.
+- Not looked at: a one-frame offset while resizing on wlroots, and a real KWin display.
 
 ## Python Contract
 

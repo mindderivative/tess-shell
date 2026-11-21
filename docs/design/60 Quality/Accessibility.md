@@ -5,7 +5,7 @@ type: quality
 status: accepted
 owner: phil
 created: 2026-11-08
-updated: 2026-11-19
+updated: 2026-11-21
 tags: [quality, accessibility, needs-verification]
 ---
 
@@ -16,7 +16,7 @@ tags: [quality, accessibility, needs-verification]
 
 > [!NOTE]
 > **The active-descendant relation is requested (2026-11-17)**
-> A focused text field with a list should name the selected row as its active descendant, with no focus move ([TRE-REQ-023 Active Descendant](../80%20Requests/TRE-REQ-023%20Active%20Descendant.md)). tre built it on a local branch on 2026-11-17 (unreleased): the property is set on the field, and a screen reader sees the focused state move to the row while tre's focus stays on the field, not an `ActiveDescendantChanged` signal. Until it is released and tried with Orca the Launcher announces the selection with polite messages.
+> A focused text field with a list should name the selected row as its active descendant, with no focus move ([TRE-REQ-023 Active Descendant](../80%20Requests/TRE-REQ-023%20Active%20Descendant.md)). tre built it on a local branch on 2026-11-17 (unreleased): the property is set on the field, and a screen reader sees the focused state move to the row while tre's focus stays on the field, not an `ActiveDescendantChanged` signal. How a layout names the list is decided in [ADR-0023 Active Descendant Key](../30%20Decisions/ADR-0023%20Active%20Descendant%20Key.md) (2026-11-21): the `TextInput` key `Active_Descendant: <List name>`. Until it is released and tried with Orca the Launcher announces the selection with polite messages.
 
 > [!NOTE]
 > **tre 0.6.9 can announce without a node (2026-11-17)**
