@@ -5,7 +5,7 @@ type: tdl-ref
 status: review
 owner: phil
 created: 2026-10-27
-updated: 2026-11-14
+updated: 2026-11-21
 tags: [tdl-ref, design]
 ---
 
@@ -119,7 +119,7 @@ The maintainer accepted these as recommended; the questions and the build are in
 | D33 | The shipped `Default` theme is a dark theme with steel blue as its primary colour. The base block is the dark look, and also what a desktop with no colour-scheme preference gets; `Light` overrides the colours; `High_Contrast` is black and white. The code session proposes the exact values, in `shipped/Themes/Default_Theme.tdl`, and the maintainer adjusts them. The values are plain data and the design system takes them over |
 | D34 | `Accent: DESKTOP` is how a theme asks for the desktop's accent colour ([Portals](../40%20Specifications/Integration/Portals.md)); with no desktop accent it is the theme's `Primary` |
 | D35 | `Reach` is dropped from `Elevation`. The margin comes from each shadow's own numbers, which is exact (the table above no longer lists it) |
-| D36 | The shipped `Default` stylesheet applies only when named in `Appearance.Stylesheets`; with none named a block keeps its own look. The `Default` theme is always the token source |
+| D36 | Amended 2026-11-21 by [ADR-0022 Default Stylesheet](../30%20Decisions/ADR-0022%20Default%20Stylesheet.md): an absent `Appearance.Stylesheets` key means `[Default]`, so the shipped `Default` stylesheet applies; an explicit `Stylesheets: []` means none and a block then keeps its own look, and `check` gives a Note when a TextField or List is used (`appearance-no-stylesheet`, proposed). Before: it applied only when named. The `Default` theme is always the token source |
 | D38 | A theme has tokens only, no style values. Priority stays theme (the token values), then stylesheet, then style, then inline; a stylesheet is the lowest layer of style values |
 | D39 | `:hovered`, `:pressed`, `:focused`, `:disabled` and `::part` selectors are read and skipped with a warning in M3a; they are built with the events in M3b |
 | D41 | A token is allowed on any key of a block, in an inline `Style` and in a Bar's `Style`, but not on a Bar's placement keys (`Edge`, `Width`, `Height`, `Gap` and the like) |
