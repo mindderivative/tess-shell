@@ -1441,7 +1441,8 @@
           "group": "Size",
           "units": [
             "px",
-            "%"
+            "%",
+            "AUTO"
           ],
           "negative": false,
           "tokens": [],
@@ -1459,7 +1460,8 @@
           "group": "Size",
           "units": [
             "px",
-            "%"
+            "%",
+            "AUTO"
           ],
           "negative": false,
           "tokens": [],
@@ -1476,8 +1478,7 @@
           "built": true,
           "group": "Size",
           "units": [
-            "px",
-            "%"
+            "px"
           ],
           "negative": false,
           "tokens": [],
@@ -1494,8 +1495,7 @@
           "built": true,
           "group": "Size",
           "units": [
-            "px",
-            "%"
+            "px"
           ],
           "negative": false,
           "tokens": [],
