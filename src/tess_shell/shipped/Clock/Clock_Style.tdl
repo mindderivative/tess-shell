@@ -10,7 +10,7 @@ Style {
             Kind: Text
             Font_Size: 14
             Font_Weight: 500
-            Foreground: "#ffffff"
+            Foreground: $color.on_surface
         }
     }
 }
