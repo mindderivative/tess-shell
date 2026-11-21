@@ -84,7 +84,7 @@ A Bar is `Hidden`, `Showing`, `Visible`, `Hiding` or `Closed`, as a Panel is ([P
 
 ### Auto-hide (Decided 2026-10-27)
 
-- **On by default; the user opts out** with `Auto_Hide: false`.
+- **On by default; the user opts out** with `Auto_Hide: false`. Amended by the code session's report of 2026-11-21 (`tess-shell` PR #131, open, held for the maintainer's KWin check; the vault did not receive the decision from the maintainer itself): the default is OFF, per the owner, and Shortcut Mode reveals the Bar when `Auto_Hide` is on. Confirm with the maintainer before this line is final.
 - **A reasonable default delay,** which the user can change (`Auto_Hide_Delay`, milliseconds). Proposed default: 1000 ms after the pointer leaves the Bar, tuned in testing.
 - **Shortcut Mode reveals a hidden Bar (decided 2026-11-21, amends the 2026-10-27 "none by default"):** entering shortcut mode shows a Bar hidden by `Auto_Hide` and moves focus into it; leaving the mode or Escape hides it again per `Auto_Hide` ([Focus and Keyboard > Shortcut Mode (the maintainer's design, 2026-11-10)](../Integration/Focus%20and%20Keyboard.md#shortcut-mode-the-maintainers-design-2026-11-10)). The matching Tesserae UX record is ADR-0021 "Shortcut Mode reveals a hidden Bar" (pending PR; `Auto_Hide`, `Auto_Hide_Delay` and the reveal are specified in its Auto Hide and Bar notes).
 - **Other keyboard reveal: none by default.** The user can set a key (`Reveal_Key`, a global shortcut through the KDE global-accel service, [ADR-0005 Global Shortcuts](../../30%20Decisions/ADR-0005%20Global%20Shortcuts.md)). A Bar that hides itself and has no reveal key is still reachable by pointer through the hover strip.
