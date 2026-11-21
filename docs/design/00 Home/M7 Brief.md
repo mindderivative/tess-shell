@@ -5,7 +5,7 @@ type: moc
 status: draft
 owner: phil
 created: 2026-11-17
-updated: 2026-11-19
+updated: 2026-11-21
 tags: [moc, roadmap, brief]
 ---
 
@@ -37,9 +37,27 @@ tags: [moc, roadmap, brief]
 | M7d version policy and migrate | Merged (`tess-shell` PR #61, CI green): `tesserae-shell migrate` with the 0.1 to 0.2 step and the shell's own scanner, `shell-too-old`, `tdl-old-version`, the deprecation machinery (empty table); no schema bump ([Version Policy and Migration](../70%20Delivery/Version%20Policy%20and%20Migration.md)) |
 | M7a2 process per module | Decided posture C and built (`tess-shell` PR #91, merged 2026-11-19): user module files run in a child process each, shipped modules in the shell; schema 1.12; the new security statement is in the README and the guide. Only the full measurement of the product (cell P, about 80 minutes, idle machine) is left ([Security Model](../60%20Quality/Security%20Model.md), [Module Process Test](../60%20Quality/Module%20Process%20Test.md)) |
 | M7c idle budgets | Merged (PR #79): the real reading and the new budget values. B18 bind cost fixed to about 16 ms under load (PR #88), re-read on an idle machine pending; Popup retention fixed (PR #86); the reload leak fixed (PR #83) ([Performance Budgets](../60%20Quality/Performance%20Budgets.md)) |
-| M7i, M7j | Wait for tre's release 0.6.10, which carries 022 to 027 (maintainer, 2026-11-19). Also after 0.6.10: `ctx.announce` goes through one window ([Accessibility](../60%20Quality/Accessibility.md), maintainer 2026-11-19) |
+| M7j active descendant | Merged (`tess-shell` PR #117, code session's report): `Active_Descendant` on `TextInput` ([ADR-0023 Active Descendant Key](../30%20Decisions/ADR-0023%20Active%20Descendant%20Key.md)), schema 1.15; `ctx.announce` goes through one window (Frame painter, else first Bar, else any open surface). Not tested with Orca |
+| M7j naming | Decided 2026-11-21 by the maintainer: [ADR-0023 Active Descendant Key](../30%20Decisions/ADR-0023%20Active%20Descendant%20Key.md), key `Active_Descendant: <List name>` on `TextInput`. Built in `tess-shell` PR #117 (code session's report; limit: not inside a `For` body; not tested with Orca) |
+| M7i content-sized Panels | Built in `tess-shell` PR #116 (code session's report): `Max_Width`/`Max_Height`, Launcher `Height: AUTO`, schema 1.14; see [Panel > As Built in PR 116](../40%20Specifications/Surfaces/Panel.md#as-built-in-pr-116). KWin not looked at |
 | Decision 2026-11-21 | [ADR-0022 Default Stylesheet](../30%20Decisions/ADR-0022%20Default%20Stylesheet.md) accepted by the maintainer: an absent `Appearance.Stylesheets` means `[Default]`; `[]` means none, with a `check` Note. Found through the M7k KWin check (unreadable Launcher on a bare config). Built in `tess-shell` PR #114 (code session's report: schema export 1.13, finding `appearance-no-stylesheet`) |
 | M7k click-away | First build (PR #108, popup grab) reverted (PR #111): on KWin the grab took the keyboard and typing was impossible. Fix-forward PR #113: an output-sized transparent `TOP` layer surface under the panel. NOT verified on KWin until the maintainer reports (M7 Build Log) |
+
+## Where M7 Stands (2026-11-21)
+
+Folded from the code session's reports and the M7 Build Log; none of it was run in the vault.
+
+| Part | Status |
+|---|---|
+| M7a, M7a2, M7b, M7d, M7e, M7f, M7g kit, M7h | Merged (see Progress). M7a2 decided posture C: user module files in a child process each |
+| M7c idle budgets | Merged; the idle-machine re-read of B18 and B01 is not done |
+| M7i content-sized Panels | Merged (PR #116); built headless, not seen on KWin |
+| M7j active descendant and one-window `ctx.announce` | Merged (PR #117); not tried with Orca |
+| M7k click-away | First build reverted (PR #111) after the maintainer's KWin check failed; fix-forward in PR #113 (transparent `TOP` layer surface); not verified on KWin |
+
+Schema export history in M7: 1.9 to 1.10 (`Reveal_Key` removed), 1.11 (import of another `_Shell.tdl`, M7f), 1.12 (M7a2 process per module), 1.13 (default stylesheet, [ADR-0022 Default Stylesheet](../30%20Decisions/ADR-0022%20Default%20Stylesheet.md)), 1.14 (content-sized Panels, M7i), 1.15 (`Active_Descendant`, M7j). M7d added no bump.
+
+Not yet confirmed by the maintainer on a real KWin: the M7k click-away re-check, M7i `AUTO` Panels (and the one-frame offset on wlroots), M7j with Orca. Attended measurements still to run on an idle machine: the M7a2 product cell P (about 80 minutes) and the M7c budgets B18 and B01. Only maintainer-reported results count for hand checks.
 
 ## State this plan starts from
 

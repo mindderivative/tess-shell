@@ -184,7 +184,7 @@ A text field over a list of rows, each an icon, a name and a faint comment; the 
 
 ## Accessibility
 
-- The field's name is the placeholder; the list is a list box whose selected row is announced as the selection moves, while focus stays in the field (the active-descendant pattern). tre built the relation on a local branch on 2026-11-17 ([TRE-REQ-023 Active Descendant](../../80%20Requests/TRE-REQ-023%20Active%20Descendant.md)); until it is released each move is a polite announcement through `ctx.announce`, which is `Window.announce` since the shell's engine floor became 0.6.9 (no live region and no zero-width mark any more).
+- The field's name is the placeholder; the list is a list box whose selected row is announced as the selection moves, while focus stays in the field (the active-descendant pattern). tre built the relation on a local branch on 2026-11-17 ([TRE-REQ-023 Active Descendant](../../80%20Requests/TRE-REQ-023%20Active%20Descendant.md)); until it is released each move is a polite announcement through `ctx.announce`, which is `Window.announce` since the shell's engine floor became 0.6.9 (no live region and no zero-width mark any more). How the layout names the list is decided in [ADR-0023 Active Descendant Key](../../30%20Decisions/ADR-0023%20Active%20Descendant%20Key.md) (2026-11-21): the `TextInput` key `Active_Descendant: <List name>`; the relation needs tre 0.6.10, unreleased.
 - "No results" is announced when a query matches nothing.
 - Everything works from the keyboard alone, which is the acceptance test of M6d.
 
