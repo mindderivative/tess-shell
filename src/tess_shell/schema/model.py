@@ -41,6 +41,7 @@ class BarDef:
     keyboard_written: bool = False  # the file says ``Keyboard:`` (NONE then is a choice)
     tab_index: int | None = None  # its place in the shell's focus order (None: after the rest)
     shortcut_mode: Origin | None = None  # where ``Shortcut_Mode: true`` is written; None: false
+    visible: bool = True  # ``Visible: false`` starts it hidden (UX TSH-051)
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
 

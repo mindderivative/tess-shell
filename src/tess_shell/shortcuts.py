@@ -2,7 +2,8 @@
 collected (Global Shortcuts > Action Names and Forms, Failure Modes).
 
 The sources are the ``Shortcuts { }`` block of ``settings.tdl`` and the keys the surfaces declare
-(a Panel's or Frame's ``Shortcut``; a Bar has none, it is always shown). They are put
+(a Panel's or Frame's ``Shortcut``; a Bar has none, it takes ``Show_``, ``Hide_`` and
+``Toggle_`` entries). They are put
 together when the shell files are known (``scanner.scan``), so a name that matches no
 surface and two actions that share a key are found at load, before anything is registered, and
 ``tesserae-shell check`` reports them:
@@ -128,17 +129,6 @@ def build_plan(
                     f"did you mean {VERBS[verb]}_{close[0]}?"
                     if close
                     else f"the surfaces: {', '.join(sorted(kinds)) or 'none'}",
-                )
-            )
-            return False
-        if kinds[target] == "bar" and verb != "show":
-            findings.append(
-                _warning(
-                    *where,
-                    "shortcut-bar",
-                    f"{entry.name}: {target} is a Bar, which is always shown and cannot be "
-                    "hidden; the shortcut is not registered",
-                    f"write Show_{target}",
                 )
             )
             return False

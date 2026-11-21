@@ -258,8 +258,9 @@ A strip along a screen edge that reserves its space.
 | `Keyboard` | `NONE` `ON_DEMAND` | `NONE` |  | Whether the Bar takes the keyboard: NONE never (Tab does nothing in it), ON_DEMAND on a click. |
 | `Tab_Index` | whole number | none |  | The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces. |
 | `Shortcut_Mode` | true or false | `false` |  | Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it. |
+| `Visible` | true or false | none |  | Starts the Bar shown (true) or hidden (false). A hidden Bar reserves no space; Show, Hide and Toggle (and a Show_, Hide_ or Toggle_ shortcut) change it. |
 
-Not built yet (the loader says so if you write them): `Exclusive_Zone`, `Input_Region`, `Auto_Hide`, `Auto_Hide_Delay`, `Visible`, `Attach_To`, `Meld`, `Animation`, `Text_Rotation`, `Padding`, `Class`.
+Not built yet (the loader says so if you write them): `Exclusive_Zone`, `Input_Region`, `Auto_Hide`, `Auto_Hide_Delay`, `Attach_To`, `Meld`, `Animation`, `Text_Rotation`, `Padding`, `Class`.
 
 A `Style { }` block of a Bar takes: `Background`, `Fill`, `Opacity`, `Elevation`, `Shadows`, `Shadow_Bleed`.
 

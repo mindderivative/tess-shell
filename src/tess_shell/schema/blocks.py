@@ -426,7 +426,6 @@ BAR_NOT_BUILT = (
     "Input_Region",
     "Auto_Hide",
     "Auto_Hide_Delay",
-    "Visible",
     "Attach_To",
     "Meld",
     "Animation",
@@ -437,7 +436,8 @@ BAR_NOT_BUILT = (
 # Surface keys a Bar once read and no longer does: an error naming the key, with this hint. A Bar
 # is always shown (Auto_Hide is not built), so a key that reveals it had nothing to do.
 BAR_REMOVED: dict[str, str] = {
-    "Reveal_Key": "delete it: a Bar is always shown, so no key reveals it (Auto_Hide is not built)",
+    "Reveal_Key": "delete it: Show_, Hide_ and Toggle_ shortcuts and the Show, Hide and Toggle "
+    "actions reveal a Bar (Auto_Hide is not built)",
 }
 BAR_STYLE: dict[str, str] = {
     "Background": "color",

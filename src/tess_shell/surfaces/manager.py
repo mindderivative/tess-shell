@@ -764,7 +764,7 @@ class SurfaceManager:
             surface.name
             for m in shell.monitors
             for surface in m.surfaces
-            if _kind(surface) == "Panel"
+            if _kind(surface) in ("Panel", "Bar")
         }
         frame_names = {f.name for m in shell.monitors for f in m.frames}
         melded = {p.name for m in shell.monitors for f in m.frames for p in f.melds}
@@ -945,7 +945,7 @@ class SurfaceManager:
             anchor=geometry.anchor,
             **_size_args(geometry),
             margin=geometry.margin,
-            exclusive_zone=geometry.exclusive_zone,
+            exclusive_zone=0 if hidden and isinstance(bar, BarDef) else geometry.exclusive_zone,
             exclusive_edge=geometry.exclusive_edge,  # type: ignore[arg-type]
             keyboard=self._keyboard_word(planned, hidden, say=True),  # type: ignore[arg-type]
             input_region=_input_for(bar, geometry, (output.width, output.height), hidden),
@@ -1042,7 +1042,7 @@ class SurfaceManager:
         bar, output, geometry, where = planned.bar, planned.output, planned.geometry, planned.where
         kind = _kind(bar)
         live = self.new_live(all_uses)
-        if isinstance(bar, PanelDef) and not bar.visible and self.hide_mode == "CLOSE":
+        if isinstance(bar, PanelDef | BarDef) and not bar.visible and self.hide_mode == "CLOSE":
             # a hidden Panel has no surface at all: nothing to go stale, nothing for the
             # compositor to hold, and no flash when it is first shown (D44, CLOSE)
             logger.info(f"{kind} {where}: anchor {','.join(geometry.anchor) or 'none'} (hidden)")
@@ -1059,7 +1059,9 @@ class SurfaceManager:
                 planned=planned,
                 hidden=True,
             )
-        keep_hidden = isinstance(bar, PanelDef) and not bar.visible  # KEEP: a mapped, empty surface
+        keep_hidden = (
+            isinstance(bar, PanelDef | BarDef) and not bar.visible
+        )  # KEEP: an empty surface
         surface = self._make_window(planned, live, keep_hidden)
         assert surface.window is not None
         self._app.add_window(surface.window)
@@ -1076,6 +1078,9 @@ class SurfaceManager:
             else:
                 self._arm_hide_after(surface)
                 surface.window.after(1, lambda: self._fire(surface, "On_Visible"))
+        elif keep_hidden:  # a Bar that starts hidden: an empty surface that reserves no space
+            surface.hidden = True
+            surface.window.root.set(visible=False)
         if output.name in self._covered:  # a surface opened on an output with a fullscreen window
             self._cover_state(surface)
         return surface
@@ -1347,6 +1352,8 @@ class SurfaceManager:
         self.changed(s.name, False)
         if self.hide_mode == "KEEP":  # a hiding Panel takes no input, whatever its animation
             s.window.set(input_region=[], keyboard="none")
+            if isinstance(s.planned.bar, BarDef):
+                s.window.set(exclusive_zone=0)  # a hidden Bar reserves no space
         self._leave(s, lambda: self._finish_hide(s))
 
     def _finish_hide(self, s: Surface) -> None:
@@ -1387,6 +1394,8 @@ class SurfaceManager:
                 input_region=_input_for(bar, s.geometry, self._output_size(s)),
                 keyboard=_keyboard(bar, False, holds_text_field(s.planned.expanded.nodes)),
             )
+            if isinstance(bar, BarDef):
+                s.window.set(exclusive_zone=s.geometry.exclusive_zone)
             self._arm_hide_after(s, hide_after)
             if s.output in self._covered:
                 self._cover_state(s)
@@ -1648,6 +1657,8 @@ class SurfaceManager:
         if not s.covered:
             return
         s.covered = False
+        if s.hidden and isinstance(planned.bar, BarDef):  # a hidden Bar has no space to give back
+            return
         window.set(exclusive_zone=s.geometry.exclusive_zone)
         if s.hidden:  # the user's own Hide stands: only the space comes back
             return
@@ -1813,8 +1824,8 @@ class SurfaceManager:
     def control_surface(self, action: str, name: str) -> tuple[bool, str]:
         """``Show``, ``Hide`` or ``Toggle`` for the control interface: on the Panel, the Frame or
         the melded Panel called ``name``. ``(ok, message)``: an unknown name is an error with the
-        nearest names, a Popup is never opened by a command, a Bar is always shown, and showing a
-        Panel whose target is hidden reports that it stays hidden. Idempotent: showing what is
+        nearest names, a Popup is never opened by a command, and showing a Panel whose target is
+        hidden reports that it stays hidden. Idempotent: showing what is
         shown succeeds and does nothing."""
         infos = self.surface_infos()
         found = [i for i in infos if i.name == name]
@@ -1833,12 +1844,8 @@ class SurfaceManager:
                 else f"the surfaces: {', '.join(names) or 'none'}"
             )
             return False, f"no surface named {name} ({hint})"
-        if all(i.kind == "bar" for i in found):
-            if action == "Show":
-                return True, f"{name} is a Bar and is always shown"
-            return False, f"{name} is a Bar: a Bar cannot be hidden"
         self.run_builtin(Handler(action, {"Target": name}, builtin=True))
-        plain = [i for i in self.surface_infos() if i.name == name and i.kind == "panel"]
+        plain = [i for i in self.surface_infos() if i.name == name and i.kind in ("panel", "bar")]
         framed = {m.name for st in self.frames.states.values() for m in st.plan.frame.melds}
         if action != "Toggle" and name not in framed and plain:
             shown = all(i.shown for i in plain)
@@ -1859,7 +1866,7 @@ class SurfaceManager:
         hits = [
             s
             for s in self.surfaces
-            if s.name == target and s.planned and _kind(s.planned.bar) == "Panel"
+            if s.name == target and s.planned and _kind(s.planned.bar) in ("Panel", "Bar")
         ]
         if not hits:
             if self.popups.run_named(handler, raw):
@@ -2115,7 +2122,9 @@ class SurfaceManager:
                     anchor=geometry.anchor,
                     **_size_args(geometry),
                     margin=geometry.margin,
-                    exclusive_zone=geometry.exclusive_zone,
+                    exclusive_zone=0
+                    if s.hidden and isinstance(bar, BarDef)
+                    else geometry.exclusive_zone,
                     input_region=_input_for(bar, geometry, self._output_size(s), s.hidden),
                 )
                 s.geometry = geometry

@@ -110,7 +110,7 @@ You write them in the `Shortcuts` block of [`settings.tdl`](settings.md#shortcut
 |---|---|
 | `Toggle_<Name>` | Toggle_&lt;Name>: "keys" toggles the Panel, Bar or Frame called &lt;Name>. |
 | `Show_<Name>` | Show_&lt;Name>: "keys" shows the Panel, Bar or Frame called &lt;Name>. |
-| `Hide_<Name>` | Hide_&lt;Name>: "keys" hides the Panel or Frame called &lt;Name>; a Bar cannot be hidden. |
+| `Hide_<Name>` | Hide_&lt;Name>: "keys" hides the Panel, Bar or Frame called &lt;Name>. |
 | `<Any_Name> { Keys, Action }` | &lt;Any_Name> { Keys: "keys", Action: ... } runs a handler of Events and Actions (Show, Hide, Toggle or Call, with its arguments) when the key is pressed; its name is what the desktop's shortcut settings show. |
 
 The five fixed actions are `Enter_Shortcut_Mode`, `Exit_Shortcut_Mode`, `Set_Shortcut_Mode`, `Next_Focus`, `Previous_Focus`.

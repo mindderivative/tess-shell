@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.19",
+  "schema_version": "1.20",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -981,6 +981,19 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Visible": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "Starts the Bar shown (true) or hidden (false). A hidden Bar reserves no space; Show, Hide and Toggle (and a Show_, Hide_ or Toggle_ shortcut) change it.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Exclusive_Zone": {
           "kind": null,
           "choices": null,
@@ -1037,20 +1050,6 @@
           "built": false,
           "refused": false,
           "group": "Behaviour",
-          "tokens": [],
-          "preferred_tokens": []
-        },
-        "Visible": {
-          "kind": "bool",
-          "choices": null,
-          "enum": null,
-          "default": null,
-          "doc": "Starts the Bar shown or hidden. Not built.",
-          "slot": false,
-          "required": false,
-          "built": false,
-          "refused": false,
-          "group": "State",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -1336,7 +1335,6 @@
         "Input_Region",
         "Auto_Hide",
         "Auto_Hide_Delay",
-        "Visible",
         "Attach_To",
         "Meld",
         "Animation",
@@ -27817,7 +27815,7 @@
           "Panel",
           "Frame"
         ],
-        "doc": "Hide_<Name>: \"keys\" hides the Panel or Frame called <Name>; a Bar cannot be hidden."
+        "doc": "Hide_<Name>: \"keys\" hides the Panel, Bar or Frame called <Name>."
       },
       {
         "form": "<Any_Name> { Keys, Action }",

@@ -270,7 +270,8 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     ("Bar", "Min_Height"): "The least height of the Bar, in pixels.",
     ("Bar", "Max_Width"): "The greatest width of the Bar, in pixels.",
     ("Bar", "Max_Height"): "The greatest height of the Bar, in pixels.",
-    ("Bar", "Visible"): "Starts the Bar shown or hidden. Not built.",
+    ("Bar", "Visible"): "Starts the Bar shown (true) or hidden (false). A hidden Bar reserves no "
+    "space; Show, Hide and Toggle (and a Show_, Hide_ or Toggle_ shortcut) change it.",
     ("Bar", "Keyboard"): "Whether the Bar takes the keyboard: NONE never (Tab does nothing in "
     "it), ON_DEMAND on a click.",
     ("Bar", "Input_Region"): "Which part of the Bar takes the pointer. Not built.",
@@ -839,7 +840,7 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
 SHORTCUT_FORMS: dict[str, str] = {
     "Toggle": 'Toggle_<Name>: "keys" toggles the Panel, Bar or Frame called <Name>.',
     "Show": 'Show_<Name>: "keys" shows the Panel, Bar or Frame called <Name>.',
-    "Hide": 'Hide_<Name>: "keys" hides the Panel or Frame called <Name>; a Bar cannot be hidden.',
+    "Hide": 'Hide_<Name>: "keys" hides the Panel, Bar or Frame called <Name>.',
     "Handler": '<Any_Name> { Keys: "keys", Action: ... } runs a handler of Events and Actions '
     "(Show, Hide, Toggle or Call, with its arguments) when the key is pressed; its name is what "
     "the desktop's shortcut settings show.",

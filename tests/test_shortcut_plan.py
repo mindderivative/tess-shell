@@ -256,13 +256,13 @@ def test_a_popup_is_named_with_a_warning_because_no_key_opens_a_popup(tmp_path: 
     assert "no key opens a Popup" in w.message
 
 
-def test_a_bar_cannot_be_hidden_or_toggled_by_a_key(tmp_path: Path) -> None:
+def test_a_bar_can_be_shown_hidden_and_toggled_by_a_key(tmp_path: Path) -> None:
     actions, findings = plan(
         tmp_path,
         'Shortcuts { Hide_Top_Bar: "Ctrl+H", Toggle_Top_Bar: "Ctrl+T", Show_Top_Bar: "Ctrl+S" }',
     )
-    assert list(actions) == ["Show_Top_Bar"]
-    assert len(warnings(findings, "shortcut-bar")) == 2
+    assert sorted(actions) == ["Hide_Top_Bar", "Show_Top_Bar", "Toggle_Top_Bar"]
+    assert warnings(findings, "shortcut-bar") == []
 
 
 def test_the_key_a_panel_declares_is_the_equal_entry(tmp_path: Path) -> None:
@@ -279,7 +279,7 @@ def test_a_bar_that_still_names_reveal_key_is_an_error_at_the_key(tmp_path: Path
     removed = [f for f in findings if f.rule == "removed-key"]
     assert len(removed) == 1 and removed[0].severity == "error", findings
     assert "Reveal_Key was removed" in removed[0].message
-    assert "always shown" in removed[0].hint
+    assert "Show_" in removed[0].hint
     where = f"{removed[0].line}:{removed[0].column}"
     assert where == at(tmp_path / "Shells" / "Main_Shell.tdl", "Reveal_Key")
     assert result is None or result.shortcuts == ()
