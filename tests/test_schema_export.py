@@ -874,8 +874,10 @@ def theme_entries(block: tess_dl.Block, prefix: tuple[str, ...]) -> dict[str, An
     for entry in block.entries:
         if isinstance(entry, tess_dl.Property):
             out[".".join((*prefix, entry.key.lower()))] = entry.value
-        elif isinstance(entry, tess_dl.Block) and entry.type == "Max":
-            out[".".join((*prefix, "max"))] = entry
+        elif isinstance(entry, tess_dl.Block) and (
+            entry.type == "Max" or entry.type.startswith("Level_")
+        ):
+            out[".".join((*prefix, entry.type.lower()))] = entry
         elif isinstance(entry, tess_dl.Block):
             out.update(theme_entries(entry, (*prefix, entry.type.lower())))
     return out
@@ -912,7 +914,7 @@ def test_the_tokens_are_the_default_themes_with_its_modes() -> None:
     for ref, entry in exported.items():
         value = base[ref]
         if isinstance(value, tess_dl.Block):
-            assert entry["default"].startswith("Max { Shadows { Shadow {")
+            assert entry["default"].startswith(f"{ref.partition('.')[2].title()} {{ Shadows {{")
         else:
             assert entry["default"] == written(value), ref
         group, _, name = ref.partition(".")
