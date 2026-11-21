@@ -821,7 +821,7 @@ def test_a_percentage_max_height_is_a_share_of_the_outputs_height() -> None:
     assert tuple(small.call().window.get("size"))[1] == 50  # content shorter than the share
 
 
-# -- the tooltip rules of ADR-0011 (Tooltip > AC-TIP-4 to 7, 10) --------------------------------------
+# -- the tooltip rules of ADR-0011 (Tooltip AC-TIP-4 to 7, 10) -----------------------------------
 
 
 @pytest.mark.parametrize("why", ["a press", "escape", "a scroll"])
