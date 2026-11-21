@@ -110,3 +110,31 @@ def test_the_themes_reduced_motion_block_carries_the_zero_durations() -> None:
         r"Reduced_Motion \{\s*Motion \{ Duration \{ Short: 0, Medium: 0, Long: 0 \} \}\s*\}",
         (SHIPPED / "Themes" / "Default_Theme.tdl").read_text(encoding="utf-8"),
     )
+
+
+def test_the_shape_scale_has_the_seven_steps_of_the_spec() -> None:
+    import tess_dl
+
+    from tess_shell.appearance import Appearance
+    from tess_shell.schema.look import effective_tokens, read_theme
+
+    text = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text(encoding="utf-8")
+    parsed = tess_dl.parse(text, path="Default_Theme.tdl")
+    assert parsed.document is not None
+    theme, findings = read_theme(parsed.document, "Default_Theme.tdl")
+    assert theme is not None and findings == []
+    tokens = effective_tokens(theme, Appearance())
+    radii = {
+        path.split(".", 1)[1]: token.value.value  # type: ignore[attr-defined]
+        for path, token in tokens.items()
+        if path.startswith("shape.")
+    }
+    assert radii == {
+        "none": 0,
+        "small": 4,
+        "medium": 8,
+        "medium_large": 12,
+        "large": 16,
+        "extra_large": 28,
+        "full": 999,
+    }

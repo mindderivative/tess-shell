@@ -72,7 +72,9 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$shape.none` | number | `0` | never | No rounding. |
 | `$shape.small` | number | `4` | never | Slightly rounded corners. |
 | `$shape.medium` | number | `8` | never | Rounded corners. |
+| `$shape.medium_large` | number | `12` | never | Between medium and large rounding: a rich tooltip or a card (12). |
 | `$shape.large` | number | `16` | never | Strongly rounded corners. |
+| `$shape.extra_large` | number | `28` | never | Very strongly rounded corners: a dialog (28). |
 | `$shape.full` | number | `999` | never | Fully rounded: a pill or a circle. |
 
 ### Space

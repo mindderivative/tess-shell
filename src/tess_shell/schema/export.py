@@ -58,7 +58,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ValueProblem, coerce
 
-SCHEMA_VERSION = "1.15"
+SCHEMA_VERSION = "1.16"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
