@@ -469,4 +469,8 @@ The Launcher and the Applications module were added in 0.1.2 ([Install and start
 
 > **Not yet checked on KWin:** the Launcher's keyboard when it opens from a global key (it asks for `EXCLUSIVE` keyboard for that reason), and a real start of an application with focus after it. The shell never starts a process during its tests; a kit for the hand check exists but has not been reported yet.
 
+## Copying selected text
+
+A `Text` with `Selectable: true` (and a `TextBox`) is selected with the pointer; **Ctrl+C** then puts the selection on the clipboard from any surface that has the keyboard: a Bar, a Panel or a Popup that takes the focus. The pieces of a selection that spans several texts are joined with a newline. A text input keeps its own selection and its own Ctrl+C, and while one has the focus the shell copies nothing. Ctrl+Shift+C and the other chords are not the shell's.
+
 Next: [the command line](command-line.md).
