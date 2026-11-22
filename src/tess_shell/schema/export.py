@@ -65,7 +65,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ELEVATION_LEVELS, ValueProblem, coerce
 
-SCHEMA_VERSION = "1.30"
+SCHEMA_VERSION = "1.31"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -1129,6 +1129,7 @@ def _settings() -> dict[str, dict[str, Json]]:
             ),
             "Follow_Desktop": boolean("Appearance", "Follow_Desktop", appearance.follow_desktop),
             "Density": word("Appearance", "Density", cfg.DENSITY, appearance.density),
+            "Scheme": word("Appearance", "Scheme", cfg.SCHEME, appearance.scheme),
         },
         "KWin": {
             "Script": word("KWin", "Script", cfg.KWIN_SCRIPT, kwin.script),
