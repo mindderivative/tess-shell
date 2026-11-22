@@ -384,7 +384,9 @@ _ROWS: dict[str, BlockRow] = {
             for k, v in _TEXT_STYLE.items()
             if k not in ("Overflow", "Padding", "Text_Align", *_MOTION)
         },
-        fixed={"wrap": "none", "flex_shrink": 0, "overflow": "clip"},
+        # the text scrolls past the box: what is clipped must not take the pointer (it would cover
+        # the neighbours), the box takes it
+        fixed={"wrap": "none", "flex_shrink": 0, "overflow": "clip", "hit_testable": False},
         defaults={"text": ""},
     ),
 }
