@@ -157,8 +157,11 @@ def test_the_launcher_through_the_eyes_of_a_screen_reader(
             app = reader.app()
             assert app is not None
             windows = {w: session.name(*w) for w in session.children(*app)}
-            assert sorted(n for n in windows.values() if n) == ["Launcher", "Top Bar"], windows
-            (bare,) = [w for w, n in windows.items() if not n]
+            # tre 0.6.11 names the window node of a layer surface after its namespace
+            catcher = "tesserae-shell.catcher.Launcher"
+            named = sorted(n for n in windows.values() if n and n != catcher)
+            assert named == ["Launcher", "Top Bar"], windows
+            (bare,) = [w for w, n in windows.items() if not n or n == catcher]
             assert session.children(*bare) == [], "the click catcher has a child in the tree"
             assert not session.states(*bare) & {FOCUSED, SELECTED}, (
                 "and it is neither focused nor selected"
