@@ -200,9 +200,19 @@ def unmount_under(path: Path) -> list[str]:
     return done
 
 
+def environ_names_runtime(environ: bytes, runtime: Path | str) -> bool:
+    """Whether the ``/proc/<pid>/environ`` bytes hold the entry ``XDG_RUNTIME_DIR=<runtime>``: one
+    whole entry (entries are NUL separated), never a longer name that ends with it
+    (``FOO_XDG_RUNTIME_DIR=...``) or a longer path that starts with it."""
+    wanted = f"XDG_RUNTIME_DIR={runtime}".encode()
+    return any(entry == wanted for entry in environ.split(b"\0"))
+
+
 def processes_with_runtime(runtime: Path) -> list[int]:
-    """Pids (other than this one) whose environment names ``runtime`` as ``XDG_RUNTIME_DIR``."""
-    needle = f"XDG_RUNTIME_DIR={runtime}".encode() + b"\0"
+    """Pids (other than this one) whose environment names ``runtime`` as ``XDG_RUNTIME_DIR``.
+    Refuses a runtime that is not a private folder under the temporary directory (the real one
+    would match every process of the session)."""
+    refuse_real({"XDG_RUNTIME_DIR": str(runtime)}, need_bus=False)
     found: list[int] = []
     for entry in os.listdir("/proc"):
         if not entry.isdigit() or int(entry) == os.getpid():
@@ -212,7 +222,7 @@ def processes_with_runtime(runtime: Path) -> list[int]:
                 data = handle.read()
         except OSError:
             continue
-        if needle in data or data.endswith(needle[:-1]):
+        if environ_names_runtime(data, runtime):
             found.append(int(entry))
     return found
 

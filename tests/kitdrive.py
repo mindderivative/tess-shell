@@ -17,7 +17,7 @@ import signal
 import subprocess
 import threading
 import time
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -306,29 +306,33 @@ def _session(pid: str) -> int | None:
         return None
 
 
-def kill_started(*needles: str) -> list[int]:
-    """Kill every process whose command line names one of ``needles`` (the programs a step started
-    and left running on purpose) and everything else in their sessions (a detached start makes its
-    own, so its ``sleep`` goes too); returns the pids. Never this process or its session."""
+def kill_started(pids: Iterable[int], *needles: str) -> list[int]:
+    """Kill the programs a step started and left running on purpose, ``pids`` being the ones the
+    step itself recorded (never found by searching): each must still be a process whose command
+    line names one of ``needles`` (a pid may have been reused), and it goes with the processes of
+    the session it leads (a detached start makes its own, so its ``sleep`` goes too). Never this
+    process, its session or a session this process is not the parent of by record: only what
+    ``pids`` names. Returns the pids killed."""
     own = os.getsid(0)
-    sessions: set[int] = set()
-    for entry in os.listdir("/proc"):
-        if not entry.isdigit() or int(entry) == os.getpid():
+    killed: list[int] = []
+    for pid in pids:
+        if pid == os.getpid() or _session(str(pid)) is None:
             continue
         try:
-            with open(f"/proc/{entry}/cmdline", "rb") as handle:
+            with open(f"/proc/{pid}/cmdline", "rb") as handle:
                 text = handle.read().replace(b"\0", b" ").decode(errors="replace")
         except OSError:
             continue
-        sid = _session(entry)
-        if sid is not None and sid != own and any(needle in text for needle in needles):
-            sessions.add(sid)
-    killed: list[int] = []
-    for entry in os.listdir("/proc"):
-        if entry.isdigit() and _session(entry) in sessions:
+        if not any(needle in text for needle in needles):
+            continue
+        led = _session(str(pid))
+        members = [pid]
+        if led == pid and led != own:  # it leads its own session: the rest of it goes too
+            members = [int(e) for e in os.listdir("/proc") if e.isdigit() and _session(e) == led]
+        for member in members:
             try:
-                os.kill(int(entry), signal.SIGKILL)
-                killed.append(int(entry))
+                os.kill(member, signal.SIGKILL)
+                killed.append(member)
             except OSError:
                 pass
     return killed
