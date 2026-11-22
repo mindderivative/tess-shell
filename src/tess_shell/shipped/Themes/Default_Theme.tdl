@@ -26,7 +26,9 @@ Theme {
         Error: "#F2958C"
         Warning: "#E6BB6A"
         Success: "#8CCB9A"
-        Outline: "#55657A"
+        Outline: "#5F7188"
+        Inverse_Surface: "#E4EAF1"
+        Inverse_On_Surface: "#12171D"
         Scrim: "#000000"
     }
 
@@ -154,6 +156,8 @@ Theme {
                 Warning: "#8A5A00"
                 Success: "#2E6B34"
                 Outline: "#7A8896"
+                Inverse_Surface: "#16202B"
+                Inverse_On_Surface: "#F4F7FA"
             }
         }
         Dark { }
@@ -197,6 +201,11 @@ Theme {
                 On_Primary: "#000000"
                 Accent: "#8CC4F2"
                 Outline: "#FFFFFF"
+                Error: "#F2958C"
+                Warning: "#E6BB6A"
+                Success: "#8CCB9A"
+                Inverse_Surface: "#FFFFFF"
+                Inverse_On_Surface: "#000000"
             }
         }
         Reduced_Motion {
