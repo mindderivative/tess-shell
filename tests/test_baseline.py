@@ -41,3 +41,10 @@ def test_a_change_of_the_desktops_scheme_reaches_the_windows_that_are_open() -> 
     m.set_look(m.look.with_appearance(Appearance(scheme="light")))
     assert window.get("scheme_resolved") == "light"
     assert window.get("scheme_colors")["on_surface"] != dark_on_surface
+
+
+def test_every_window_ignores_a_press_that_moves_less_than_4_px() -> None:
+    """tre 0.6.12 ``drag_start_px``: a click with a little pointer jitter is a click, not the start
+    of a drag (a peek drag, a scrollbar thumb, a movable Panel)."""
+    m = manager()
+    assert surface(m, "Top_Bar").window.get("drag_start_px") == 4
