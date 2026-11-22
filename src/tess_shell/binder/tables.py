@@ -154,6 +154,9 @@ _BOX_STYLE: dict[str, KeyRow] = {
     "Hover_Layer": _k("hover_layer", "color"),
     "Pressed_Layer": _k("pressed_layer", "color"),
     "Focus_Layer": _k("focus_layer", "color"),
+    "Hover_Layer_Ms": _k("hover_layer_ms", "number"),
+    "Pressed_Layer_Ms": _k("pressed_layer_ms", "number"),
+    "Focus_Layer_Ms": _k("focus_layer_ms", "number"),
 }
 
 _FLEX: dict[str, KeyRow] = {

@@ -137,8 +137,8 @@ A Bar (or a Panel, Popup or Frame strip) holds **blocks**. The shipped modules a
 <!-- BEGIN generated: blocks -->
 | Block | What it is | Style keys |
 |---|---|---|
-| `Box` | A plain container; its children are placed by their own keys. | `Transition`, `Duration`, `Easing`, `Background`, `Border_Width`, `Border_Color`, `Corner_Radius`, `Padding`, `Margin`, `Opacity`, `Elevation`, `Shadows`, `Hover_Layer`, `Pressed_Layer`, `Focus_Layer` |
-| `FlexBox` | A container that lays its children out in a row or a column. | `Transition`, `Duration`, `Easing`, `Background`, `Border_Width`, `Border_Color`, `Corner_Radius`, `Padding`, `Margin`, `Opacity`, `Elevation`, `Shadows`, `Hover_Layer`, `Pressed_Layer`, `Focus_Layer`, `Spacing` |
+| `Box` | A plain container; its children are placed by their own keys. | `Transition`, `Duration`, `Easing`, `Background`, `Border_Width`, `Border_Color`, `Corner_Radius`, `Padding`, `Margin`, `Opacity`, `Elevation`, `Shadows`, `Hover_Layer`, `Pressed_Layer`, `Focus_Layer`, `Hover_Layer_Ms`, `Pressed_Layer_Ms`, `Focus_Layer_Ms` |
+| `FlexBox` | A container that lays its children out in a row or a column. | `Transition`, `Duration`, `Easing`, `Background`, `Border_Width`, `Border_Color`, `Corner_Radius`, `Padding`, `Margin`, `Opacity`, `Elevation`, `Shadows`, `Hover_Layer`, `Pressed_Layer`, `Focus_Layer`, `Hover_Layer_Ms`, `Pressed_Layer_Ms`, `Focus_Layer_Ms`, `Spacing` |
 | `Text` | Text in one style. | `Transition`, `Duration`, `Easing`, `Foreground`, `Font_Family`, `Font_Size`, `Font_Weight`, `Line_Height`, `Text_Align`, `Overflow`, `Padding`, `Margin`, `Opacity` |
 | `Rectangle` | A filled rectangle with an optional border and rounded corners. | `Transition`, `Duration`, `Easing`, `Fill`, `Border_Width`, `Border_Color`, `Corner_Radius`, `Margin`, `Opacity`, `Elevation`, `Shadows` |
 | `ScrollBox` | A clipped viewport that scrolls its one content child. | `Transition`, `Duration`, `Easing`, `Opacity`, `Elevation`, `Shadows` |
@@ -149,7 +149,7 @@ A Bar (or a Panel, Popup or Frame strip) holds **blocks**. The shipped modules a
 | `Ring` | A circle drawn as a border only; Border_Width is its thickness. | `Transition`, `Duration`, `Easing`, `Border_Width`, `Border_Color`, `Margin`, `Opacity` |
 | `Path` | A vector path in SVG path syntax. | `Transition`, `Duration`, `Easing`, `Fill`, `Border_Width`, `Border_Color`, `Margin`, `Opacity` |
 | `Marquee` | A line of text that scrolls when it is wider than its box. | `Foreground`, `Font_Family`, `Font_Size`, `Font_Weight`, `Line_Height`, `Margin`, `Opacity`, `Transition`, `Duration`, `Easing` |
-| `TextField` | An editable text field, single line or multi-line. | `Transition`, `Duration`, `Easing`, `Background`, `Border_Width`, `Border_Color`, `Corner_Radius`, `Padding`, `Margin`, `Opacity`, `Elevation`, `Shadows`, `Hover_Layer`, `Pressed_Layer`, `Focus_Layer`, `Foreground`, `Font_Family`, `Font_Size`, `Font_Weight`, `Overflow`, `Placeholder_Foreground` |
+| `TextField` | An editable text field, single line or multi-line. | `Transition`, `Duration`, `Easing`, `Background`, `Border_Width`, `Border_Color`, `Corner_Radius`, `Padding`, `Margin`, `Opacity`, `Elevation`, `Shadows`, `Hover_Layer`, `Pressed_Layer`, `Focus_Layer`, `Hover_Layer_Ms`, `Pressed_Layer_Ms`, `Focus_Layer_Ms`, `Foreground`, `Font_Family`, `Font_Size`, `Font_Weight`, `Overflow`, `Placeholder_Foreground` |
 
 <!-- END generated: blocks -->
 

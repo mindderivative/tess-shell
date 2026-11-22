@@ -78,6 +78,9 @@ Theme {
         Focus: 0.10
         Pressed: 0.10
         Dragged: 0.16
+        Hover_Ms: 15
+        Pressed_Ms: 105
+        Focus_Ms: 150
     }
 
     Elevation {

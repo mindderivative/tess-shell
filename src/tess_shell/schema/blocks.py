@@ -139,6 +139,9 @@ BOX_STYLE: dict[str, str] = {
     "Hover_Layer": "color",
     "Pressed_Layer": "color",
     "Focus_Layer": "color",
+    "Hover_Layer_Ms": "number",
+    "Pressed_Layer_Ms": "number",
+    "Focus_Layer_Ms": "number",
 }
 
 FLEX: dict[str, str] = {

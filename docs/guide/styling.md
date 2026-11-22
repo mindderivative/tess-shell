@@ -114,6 +114,9 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$state.focus` | number | `0.10` | never | The opacity of the keyboard-focus state layer (0.10). |
 | `$state.pressed` | number | `0.10` | never | The opacity of the pressed state layer (0.10). |
 | `$state.dragged` | number | `0.16` | never | The opacity of the dragged state layer (0.16); no block takes it yet. |
+| `$state.hover_ms` | number | `15` | never | The fade time of the hover layer, in milliseconds (15). |
+| `$state.pressed_ms` | number | `105` | never | The fade time of the pressed layer (105). |
+| `$state.focus_ms` | number | `150` | never | The fade time of the focus layer (150). |
 
 ### Elevation
 
@@ -340,6 +343,9 @@ These are the keys a `Style { }` block, a style key written directly on a block,
 | `Hover_Layer` | colour | Box, FlexBox, TextField | color | The colour of the layer drawn over the block while the pointer is on it, at the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. Needs tre 0.6.11. |
 | `Pressed_Layer` | colour | Box, FlexBox, TextField | color | The colour of the layer drawn while the block is pressed, at $state.pressed (0.10). |
 | `Focus_Layer` | colour | Box, FlexBox, TextField | color | The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none. |
+| `Hover_Layer_Ms` | number | Box, FlexBox, TextField | type, shape, space, density, state, elevation, motion | How long the hover layer takes to fade in or out, in milliseconds (the theme's $state.hover_ms, 15). Needs tre 0.6.12. |
+| `Pressed_Layer_Ms` | number | Box, FlexBox, TextField | type, shape, space, density, state, elevation, motion | The fade time of the pressed layer ($state.pressed_ms, 105). Needs tre 0.6.12. |
+| `Focus_Layer_Ms` | number | Box, FlexBox, TextField | type, shape, space, density, state, elevation, motion | The fade time of the focus layer ($state.focus_ms, 150). Needs tre 0.6.12. |
 | `Spacing` | number | FlexBox | space | The space between the children, in pixels. |
 | `Foreground` | colour | Text, SVG, Marquee, TextField | color | The colour of the text or of the icon, a colour or a theme token. |
 | `Font_Family` | font | Text, Marquee, TextField | color, motion | A font family name, or a list of them in the order of fallback. |

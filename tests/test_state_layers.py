@@ -61,3 +61,13 @@ def test_the_layers_replace_the_old_opacity_and_border_hover_literals() -> None:
         for module in ("Toggle", "Checkbox"):
             root = w.of_use(module, "Root")
             assert root.get("hover_layer") is not None
+
+
+def test_each_layer_fades_for_the_time_of_its_state_token() -> None:
+    with running('Button { Text: "Go" }') as w:
+        root = w.of_use("Button", "Root")
+        assert [root.get(k) for k in ("hover_layer_ms", "pressed_layer_ms", "focus_layer_ms")] == [
+            15,
+            105,
+            150,
+        ]

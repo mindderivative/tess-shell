@@ -97,6 +97,11 @@ KEY_DOCS: dict[str, str] = {
     "(0.10).",
     "Focus_Layer": "The colour of the layer drawn while the block has keyboard focus, at "
     "$state.focus (0.10); a click draws none.",
+    "Hover_Layer_Ms": "How long the hover layer takes to fade in or out, in milliseconds (the "
+    "theme's $state.hover_ms, 15). Needs tre 0.6.12.",
+    "Pressed_Layer_Ms": "The fade time of the pressed layer ($state.pressed_ms, 105). Needs tre "
+    "0.6.12.",
+    "Focus_Layer_Ms": "The fade time of the focus layer ($state.focus_ms, 150). Needs tre 0.6.12.",
     "Shadows": "A list of Shadow blocks, the first on top; it replaces Elevation when both are "
     "written.",
     "Shadow_Bleed": "The transparent margin a surface keeps around its body for the shadow: AUTO "
@@ -506,6 +511,9 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Hover_Layer",
         "Pressed_Layer",
         "Focus_Layer",
+        "Hover_Layer_Ms",
+        "Pressed_Layer_Ms",
+        "Focus_Layer_Ms",
         "Shadows",
         "Shadow_Bleed",
         "Placeholder_Foreground",
@@ -799,6 +807,9 @@ TOKEN_DOCS: dict[str, str] = {
     "this alpha.",
     "state.focus": "The opacity of the keyboard-focus state layer (0.10).",
     "state.pressed": "The opacity of the pressed state layer (0.10).",
+    "state.hover_ms": "The fade time of the hover layer, in milliseconds (15).",
+    "state.pressed_ms": "The fade time of the pressed layer (105).",
+    "state.focus_ms": "The fade time of the focus layer (150).",
     "state.dragged": "The opacity of the dragged state layer (0.16); no block takes it yet.",
     "elevation.max": "The shadow list at 100% elevation; a smaller Elevation scales it.",
     "elevation.level_1": "The shadows of Elevation: LEVEL_1 (1 dp): a key and an ambient shadow.",
