@@ -50,6 +50,20 @@ def test_every_window_ignores_a_press_that_moves_less_than_4_px() -> None:
     assert surface(m, "Top_Bar").window.get("drag_start_px") == 4
 
 
+def test_selected_text_and_a_text_input_have_a_highlight_with_2_px_corners() -> None:
+    """tre 0.6.12 ``selection_radius``: a design choice (the Text Selection spec records no value);
+    the fill is the engine's own, the scheme's primary at 30 percent."""
+    from tests.field_live import running
+
+    with running('Text { Name: T, Text: "abc", Selectable: true }\nTextInput { Name: In }') as r:
+        text = next(
+            n
+            for n in r.bar.view.nodes.values()
+            if n.get("kind") == "text" and n.get("text") == "abc"
+        )
+        assert text.get("selection_radius") == 2
+        (f,) = r.fields()
+        assert f.inp.get("selection_radius") == 2
 def test_a_surface_holds_its_first_frame_until_its_tree_is_built_then_presents() -> None:
     """tre 0.6.12 ``first_present``: no empty layer surface flashes when a Panel or Bar opens."""
     m = manager()
