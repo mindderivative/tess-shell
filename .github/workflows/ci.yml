@@ -122,12 +122,12 @@ jobs:
       # The real-pointer live tests (peek, focus, keys, slider, tray, media, popup) skip unless
       # tre's test helper and a virtual environment with pywayland exist (tests/live_pointer.py,
       # TRE_DIR). They are the tests that found the peek-drag bug, so CI fetches the helper from
-      # the engine release the shell is pinned to (tesserae-engine 0.6.12).
+      # the engine release the shell is pinned to (tesserae-engine 0.6.13).
       - name: tre's virtual-pointer helper
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: mindderivative/tess-re
-          ref: 0920f533c447275c176c99296d4d12106dd66415 # v0.6.12
+          ref: 5803c9ee3c8def548094a3f6f8a8925312854e04 # v0.6.13
           path: tre
           sparse-checkout: |
             tests/wlr_pointer.py
