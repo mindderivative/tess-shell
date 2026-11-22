@@ -39,7 +39,7 @@ class BarDef:
     max_height: float | None = None
     keyboard: str = "NONE"  # NONE or ON_DEMAND: a click gives the Bar the keyboard
     keyboard_written: bool = False  # the file says ``Keyboard:`` (NONE then is a choice)
-    tab_index: int | None = None  # its place in the shell's focus order (None: after the rest)
+    density: str | None = None  # ``Density:`` of the surface, lower case; None: the shell's level
     shortcut_mode: Origin | None = None  # where ``Shortcut_Mode: true`` is written; None: false
     visible: bool = True  # ``Visible: false`` starts it hidden (UX TSH-051)
     auto_hide: bool = False  # slides out when the pointer has left it for ``auto_hide_delay``
@@ -81,6 +81,7 @@ class PanelDef:
     max_height: float | None = None  # pixels; clamps an ``AUTO`` Height (M7i)
     keyboard: str = "NONE"
     keyboard_written: bool = False  # the file says ``Keyboard:``: NONE is then a choice
+    density: str | None = None  # ``Density:`` of the surface, lower case; None: the shell's level
     input: str = "WHOLE"  # WHOLE, NONE or AUTO (Input_Region)
     visible: bool = True
     hide_after: float | None = None  # milliseconds
@@ -98,7 +99,6 @@ class PanelDef:
     animation: str = "NONE"  # SLIDE, FADE or NONE: how it appears and disappears
     peek: PeekDef | None = None  # melded only: rests as a tab of ``Size`` pixels (see PeekDef)
     content_fade: bool = True  # melded: the content's opacity follows the slide's progress
-    tab_index: int | None = None  # its place in the shell's focus order (None: after the rest)
     shortcut_mode: Origin | None = None  # where ``Shortcut_Mode: true`` is written; None: false
     duration: float = 200  # milliseconds of the animation
     handlers: Mapping[str, Handler] = field(default_factory=dict)  # ``On_Open`` -> handler
@@ -130,6 +130,7 @@ class PopupDef:
     enter_delay: float = 500  # milliseconds
     close_on_exit: bool = False
     exit_delay: float = 150
+    density: str | None = None  # ``Density:`` of the popup, lower case; None: the shell's level
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
 
@@ -157,7 +158,6 @@ class EdgeDef:
     name: str | None = None  # the target of Show, Hide and Toggle (a strip with ``Peek`` only)
     peek: PeekDef | None = None  # the strip rests as a ``Size`` sliver; ``thickness`` is its full
     content_fade: bool = True  # the strip's children fade with the strip's slide
-    tab_index: int | None = None  # the strip's place in the shell's focus order
     shortcut_mode: Origin | None = None  # where ``Shortcut_Mode: true`` is written; None: false
 
 
@@ -182,7 +182,6 @@ class FrameDef:
     padding: tuple[float, float, float, float] = (0, 0, 0, 0)  # of every strip (left, top, ...)
     edges: Mapping[str, EdgeDef] = field(default_factory=dict)  # ``left``, ``top``, ... -> strip
     melds: tuple[PanelDef, ...] = ()  # Panels with ``Meld: true`` attached to this Frame
-    tab_index: int | None = None  # its place in the shell's focus order (None: after the rest)
     shortcut_mode: Origin | None = None  # where ``Shortcut_Mode: true`` is written; None: false
     shortcut: Text | None = None  # ``Shortcut``: the canonical key string, where it is written
 
@@ -205,6 +204,9 @@ class ShellDef:
     name: str
     monitors: tuple[MonitorDef, ...]
     surfaces_only: bool = False  # a file of surfaces made to be imported: it has no monitors
+    # ``Focus_Order: [Name, ...]``: the surfaces that go first in the order focus moves between
+    # them (Focus and Keyboard > Tab Order); the rest follow in the order of the file
+    focus_order: tuple[str, ...] = ()
 
 
 # ``path`` is the path of a file, written relative to the file that names it and kept absolute;
@@ -264,7 +266,7 @@ class Token:
     origin: Origin
 
 
-MODES = ("light", "dark", "high_contrast", "reduced_motion")
+MODES = ("light", "dark", "high_contrast", "reduced_motion", "compact", "dense")
 
 
 @dataclass(frozen=True, slots=True)
@@ -326,3 +328,20 @@ def use_names(children: Sequence[Any]) -> list[str]:
         found.extend(use_names(getattr(child, "body", ()) or ()))
         found.extend(use_names(getattr(child, "else_body", ()) or ()))
     return found
+
+
+def surface_names(monitors: Sequence[MonitorDef]) -> list[str]:
+    """The ``Name`` of every surface in the order of the file: the Bars and Panels of each
+    Monitor, its Frames, and a Frame's strip as ``<Frame>.<side>`` when it holds children (a strip
+    has a place of its own only then). A name a Monitor block repeats for several outputs counts
+    once."""
+    names: list[str] = []
+    for monitor in monitors:
+        for surface in monitor.surfaces:
+            names.append(surface.name)
+        for frame in monitor.frames:
+            names.append(frame.name)
+            for side, edge in frame.edges.items():
+                if edge.children:
+                    names.append(f"{frame.name}.{side}")
+    return list(dict.fromkeys(names))

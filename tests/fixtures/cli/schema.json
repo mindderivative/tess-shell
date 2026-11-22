@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.21",
+  "schema_version": "1.32",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -592,7 +592,25 @@
       "heads": [
         "Shell"
       ],
-      "keys": {},
+      "keys": {
+        "Focus_Order": {
+          "kind": "list",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The surfaces that come first, in this order, when focus moves between surfaces (Next_Focus, Previous_Focus, and the first surface of shortcut mode with no Frame): a Name or a list of them, a Frame's strip as <Frame>.<side>. The other surfaces follow in the order of the file.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "State",
+          "item_kind": "string",
+          "unique": true,
+          "one_or_list": true,
+          "note": "surface Names, a Frame's strip as <Frame>.<side>",
+          "tokens": [],
+          "preferred_tokens": []
+        }
+      },
       "style": {},
       "events": [],
       "required": [],
@@ -956,13 +974,13 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": false,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [],
@@ -1021,6 +1039,23 @@
           "max": null,
           "step": null,
           "unit": "ms",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Density": {
+          "kind": "enum",
+          "choices": [
+            "DEFAULT",
+            "COMPACT",
+            "DENSE"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -1226,6 +1261,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -1236,7 +1274,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": false,
           "required": false,
           "built": true,
@@ -1244,6 +1282,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -1293,6 +1339,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -1360,6 +1409,23 @@
           "built": true,
           "group": "Identity",
           "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Density": {
+          "kind": "enum",
+          "choices": [
+            "DEFAULT",
+            "COMPACT",
+            "DENSE"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -1708,13 +1774,13 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": false,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [],
@@ -1943,6 +2009,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -1953,7 +2022,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": false,
           "required": false,
           "built": true,
@@ -1961,6 +2030,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -2010,6 +2087,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2041,6 +2121,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2066,6 +2149,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2162,6 +2248,23 @@
           "built": true,
           "group": "Identity",
           "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "tokens": [],
+          "preferred_tokens": []
+        },
+        "Density": {
+          "kind": "enum",
+          "choices": [
+            "DEFAULT",
+            "COMPACT",
+            "DENSE"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -2501,6 +2604,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2511,7 +2617,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": false,
           "required": false,
           "built": true,
@@ -2519,6 +2625,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -2568,6 +2682,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2599,6 +2716,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2624,6 +2744,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2690,6 +2813,23 @@
         "Tooltip"
       ],
       "keys": {
+        "Density": {
+          "kind": "enum",
+          "choices": [
+            "DEFAULT",
+            "COMPACT",
+            "DENSE"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Behaviour",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Attach": {
           "kind": "enum",
           "choices": [
@@ -3013,6 +3153,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3023,7 +3166,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": false,
           "required": false,
           "built": true,
@@ -3031,6 +3174,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -3080,6 +3231,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3111,6 +3265,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3136,6 +3293,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3389,13 +3549,13 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": false,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [],
@@ -3604,6 +3764,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3652,6 +3815,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3662,27 +3828,34 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "A shadow for the Frame. Not built.",
+          "doc": "The shadow the ring casts into the opening: a percentage of the theme's largest shadow or a level (LEVEL_1 to LEVEL_5 once the theme has them). A ring has no direction, so the shadow's x and y are not used. Drawn by the ring shader only.",
           "slot": false,
           "required": false,
-          "built": false,
+          "built": true,
           "group": "Fill",
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
-          "preferred_tokens": [],
-          "refused": true
+          "preferred_tokens": []
         },
         "Shadows": {
           "kind": "shadows",
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "Shadows for the Frame. Not built.",
+          "doc": "Shadows the ring casts into the opening (blur and spread, the first on top, up to four; x and y are not used). Drawn by the ring shader only.",
           "slot": false,
           "required": false,
-          "built": false,
+          "built": true,
           "group": "Fill",
           "block": "Shadows",
           "tokens": [
@@ -3690,18 +3863,17 @@
           ],
           "preferred_tokens": [
             "elevation.max"
-          ],
-          "refused": true
+          ]
         },
         "Shadow_Bleed": {
           "kind": "sides",
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The margin for a shadow. Not built.",
+          "doc": "Accepted and without effect: the painter covers the output, so a Frame's shadow needs no transparent margin.",
           "slot": false,
           "required": false,
-          "built": false,
+          "built": true,
           "group": "Fill",
           "arity": [
             1,
@@ -3721,11 +3893,13 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
-          "preferred_tokens": [],
-          "refused": true
+          "preferred_tokens": []
         }
       },
       "events": [],
@@ -3854,13 +4028,13 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": false,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [],
@@ -4579,6 +4753,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4646,6 +4823,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4702,6 +4882,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4736,6 +4919,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4770,6 +4956,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4795,6 +4984,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4805,7 +4997,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": false,
           "required": false,
           "built": true,
@@ -4813,6 +5005,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -4834,6 +5034,158 @@
             "elevation.max"
           ]
         },
+        "Hover_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn over the block while the pointer is on it, at the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. Needs tre 0.6.11.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Pressed_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block is pressed, at $state.pressed (0.10).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Focus_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The gap between the block and its outline.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
         "Spacing": {
           "kind": "number",
           "choices": null,
@@ -4852,6 +5204,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4920,6 +5275,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4945,6 +5303,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4957,7 +5317,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The height of one line, above 0.",
+          "doc": "The height of one line in pixels, above 0 (tre takes a multiple of the font size; the binder divides).",
           "slot": false,
           "required": false,
           "built": true,
@@ -4971,6 +5331,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5036,6 +5399,436 @@
           "preferred_tokens": [
             "color"
           ]
+        },
+        "Scrollbar_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The painted thickness of the scrollbar thumb, in pixels (the theme's scrollbar.width, 8).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Hit_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The pointer-sensitive thickness of the scrollbar (12).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Margin": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The space between the thumb and the container's edge, and the lane's end (2).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Min_Length": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The shortest the thumb gets along its axis (32).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Gutter": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The space reserved at the end edge of an axis that overflows (12).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Radius": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The corner radius of the thumb (4).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The opacity of the thumb at rest, 0 to 1 (0.70).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity_Hover": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The opacity of the thumb under the pointer (0.80).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity_Drag": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The opacity of the thumb while it is dragged (1.00).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Fill": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb at rest (the theme's muted ink).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Fill_Hover": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb under the pointer.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Fill_Drag": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb while it is dragged.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Track_Fill": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the lane the thumb runs in (none by default).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scroll_Wheel_Notch": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The distance of one wheel notch, in pixels (40).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scroll_Key_Line": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The distance of an arrow key, in pixels (40).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scroll_Page_Fraction": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The share of the viewport a Page key or a lane click moves (0.9).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Show": {
+          "kind": "enum",
+          "choices": [
+            "OVERFLOW",
+            "ALWAYS",
+            "AUTO_HIDE",
+            "NEVER"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "When the scrollbar shows: OVERFLOW (when the content overflows, the default), ALWAYS, AUTO_HIDE or NEVER.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "tokens": [],
+          "preferred_tokens": []
         },
         "Placeholder_Foreground": {
           "kind": "color",
@@ -5390,6 +6183,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5416,6 +6211,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5440,6 +6237,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5464,6 +6263,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5488,6 +6289,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5512,6 +6315,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5536,6 +6341,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5568,6 +6376,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5593,6 +6404,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5616,6 +6430,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5657,6 +6474,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5719,6 +6538,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5760,6 +6582,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5785,6 +6609,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5810,6 +6636,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5835,6 +6663,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5858,6 +6688,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5881,6 +6714,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5905,6 +6741,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5928,6 +6767,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6031,21 +6873,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -6082,6 +6920,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6106,6 +6947,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6130,6 +6974,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6341,6 +7188,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6387,6 +7237,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6454,6 +7307,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6510,6 +7366,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6544,6 +7403,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6578,6 +7440,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6603,6 +7468,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6613,7 +7481,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -6621,6 +7489,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -6640,6 +7516,158 @@
           ],
           "preferred_tokens": [
             "elevation.max"
+          ]
+        },
+        "Hover_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn over the block while the pointer is on it, at the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. Needs tre 0.6.11.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Pressed_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block is pressed, at $state.pressed (0.10).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Focus_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
           ]
         }
       },
@@ -6795,6 +7823,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6821,6 +7851,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6845,6 +7877,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6869,6 +7903,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6893,6 +7929,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6917,6 +7955,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6941,6 +7981,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6973,6 +8016,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6998,6 +8044,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7021,6 +8070,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7062,6 +8114,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7124,6 +8178,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7165,6 +8222,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7190,6 +8249,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7215,6 +8276,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7240,6 +8303,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7263,6 +8328,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7286,6 +8354,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7310,6 +8381,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7333,6 +8407,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7436,21 +8513,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -7487,6 +8560,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7511,6 +8587,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7535,6 +8614,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7804,6 +8886,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7838,6 +8923,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7884,6 +8972,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7951,6 +9042,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8007,6 +9101,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8041,6 +9138,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8075,6 +9175,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8100,6 +9203,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8110,7 +9216,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -8118,6 +9224,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -8139,6 +9253,158 @@
             "elevation.max"
           ]
         },
+        "Hover_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn over the block while the pointer is on it, at the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. Needs tre 0.6.11.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Pressed_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block is pressed, at $state.pressed (0.10).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Focus_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
         "Spacing": {
           "kind": "number",
           "choices": null,
@@ -8157,6 +9423,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8304,6 +9573,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8330,6 +9601,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8354,6 +9627,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8378,6 +9653,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8402,6 +9679,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8426,6 +9705,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8450,6 +9731,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8482,6 +9766,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8507,6 +9794,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8530,6 +9820,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8571,6 +9864,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8633,6 +9928,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8674,6 +9972,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8699,6 +9999,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8724,6 +10026,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8749,6 +10053,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8772,6 +10078,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8795,6 +10104,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8819,6 +10131,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8842,6 +10157,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8945,21 +10263,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -8996,6 +10310,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9020,6 +10337,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9044,6 +10364,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9255,6 +10578,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9322,6 +10648,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9366,6 +10694,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9451,6 +10782,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9476,6 +10810,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9488,7 +10824,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The height of one line, above 0.",
+          "doc": "The height of one line in pixels, above 0 (tre takes a multiple of the font size; the binder divides).",
           "slot": true,
           "required": false,
           "built": true,
@@ -9502,6 +10838,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9569,6 +10908,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9603,6 +10945,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9628,6 +10973,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9764,6 +11112,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9790,6 +11140,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9814,6 +11166,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9838,6 +11192,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9862,6 +11218,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9886,6 +11244,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9910,6 +11270,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9942,6 +11305,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9967,6 +11333,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9990,6 +11359,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10031,6 +11403,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10093,6 +11467,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10134,6 +11511,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10159,6 +11538,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10184,6 +11565,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10209,6 +11592,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10232,6 +11617,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10255,6 +11643,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10279,6 +11670,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10302,6 +11696,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10405,21 +11802,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -10456,6 +11849,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10480,6 +11876,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10504,6 +11903,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10725,6 +12127,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10792,6 +12197,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10848,6 +12256,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10860,7 +12271,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -10868,6 +12279,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -10887,6 +12306,83 @@
           ],
           "preferred_tokens": [
             "elevation.max"
+          ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
           ]
         }
       },
@@ -10928,6 +12424,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10995,6 +12494,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11051,6 +12553,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11085,6 +12590,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11110,6 +12618,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11120,7 +12631,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -11128,6 +12639,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -11147,6 +12666,83 @@
           ],
           "preferred_tokens": [
             "elevation.max"
+          ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
           ]
         }
       },
@@ -11287,6 +12883,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11313,6 +12911,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11337,6 +12937,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11361,6 +12963,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11385,6 +12989,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11409,6 +13015,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11433,6 +13041,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11465,6 +13076,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11490,6 +13104,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11513,6 +13130,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11554,6 +13174,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11616,6 +13238,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11657,6 +13282,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11682,6 +13309,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11707,6 +13336,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11732,6 +13363,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11755,6 +13388,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11778,6 +13414,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11802,6 +13441,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11825,6 +13467,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11928,21 +13573,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -11979,6 +13620,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12003,6 +13647,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12027,6 +13674,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12245,6 +13895,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12289,6 +13942,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12331,6 +13987,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12341,7 +14000,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -12349,6 +14008,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -12369,6 +14036,513 @@
           "preferred_tokens": [
             "elevation.max"
           ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "4",
+          "doc": "The painted thickness of the scrollbar thumb, in pixels (the theme's scrollbar.width, 8).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Hit_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "16",
+          "doc": "The pointer-sensitive thickness of the scrollbar (12).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Margin": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "2",
+          "doc": "The space between the thumb and the container's edge, and the lane's end (2).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Min_Length": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "32",
+          "doc": "The shortest the thumb gets along its axis (32).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Gutter": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The space reserved at the end edge of an axis that overflows (12).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Radius": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "2",
+          "doc": "The corner radius of the thumb (4).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "1",
+          "doc": "The opacity of the thumb at rest, 0 to 1 (0.70).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity_Hover": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "1",
+          "doc": "The opacity of the thumb under the pointer (0.80).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity_Drag": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "1",
+          "doc": "The opacity of the thumb while it is dragged (1.00).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Fill": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb at rest (the theme's muted ink).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Fill_Hover": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb under the pointer.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Fill_Drag": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb while it is dragged.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Track_Fill": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the lane the thumb runs in (none by default).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scroll_Wheel_Notch": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "40",
+          "doc": "The distance of one wheel notch, in pixels (40).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scroll_Key_Line": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "40",
+          "doc": "The distance of an arrow key, in pixels (40).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scroll_Page_Fraction": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "1",
+          "doc": "The share of the viewport a Page key or a lane click moves (0.9).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Show": {
+          "kind": "enum",
+          "choices": [
+            "OVERFLOW",
+            "ALWAYS",
+            "AUTO_HIDE",
+            "NEVER"
+          ],
+          "enum": null,
+          "default": "OVERFLOW",
+          "doc": "When the scrollbar shows: OVERFLOW (when the content overflows, the default), ALWAYS, AUTO_HIDE or NEVER.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "tokens": [],
+          "preferred_tokens": []
         }
       },
       "events": [
@@ -12522,6 +14696,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12548,6 +14724,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12572,6 +14750,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12596,6 +14776,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12620,6 +14802,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12644,6 +14828,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12668,6 +14854,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12700,6 +14889,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12725,6 +14917,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12748,6 +14943,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12789,6 +14987,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12851,6 +15051,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12892,6 +15095,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12917,6 +15122,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12942,6 +15149,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12967,6 +15176,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12990,6 +15201,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13013,6 +15227,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13037,6 +15254,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13060,6 +15280,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13163,21 +15386,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -13214,6 +15433,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13238,6 +15460,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13262,6 +15487,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13583,6 +15811,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13609,6 +15839,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13633,6 +15865,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13657,6 +15891,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13681,6 +15917,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13705,6 +15943,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13729,6 +15969,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13761,6 +16004,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13786,6 +16032,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13809,6 +16058,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13850,6 +16102,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13912,6 +16166,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13953,6 +16210,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13978,6 +16237,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14003,6 +16264,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14028,6 +16291,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14051,6 +16316,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14074,6 +16342,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14098,6 +16369,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14121,6 +16395,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14224,21 +16501,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -14275,6 +16548,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14299,6 +16575,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14323,6 +16602,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14601,6 +16883,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14668,6 +16953,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14814,6 +17102,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14840,6 +17130,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14864,6 +17156,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14888,6 +17182,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14912,6 +17208,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14936,6 +17234,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14960,6 +17260,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14992,6 +17295,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15017,6 +17323,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15040,6 +17349,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15081,6 +17393,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15143,6 +17457,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15184,6 +17501,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15209,6 +17528,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15234,6 +17555,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15259,6 +17582,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15282,6 +17607,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15305,6 +17633,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15329,6 +17660,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15352,6 +17686,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15455,21 +17792,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -15506,6 +17839,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15530,6 +17866,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15554,6 +17893,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15816,6 +18158,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15858,6 +18203,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16001,6 +18349,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16025,6 +18375,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16049,6 +18401,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16073,6 +18427,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16097,6 +18453,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16129,6 +18488,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16154,6 +18516,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16177,6 +18542,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16218,6 +18586,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16280,6 +18650,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16321,6 +18694,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16346,6 +18721,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16371,6 +18748,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16396,6 +18775,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16419,6 +18800,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16442,6 +18826,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16466,6 +18853,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16489,6 +18879,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16592,21 +18985,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -16643,6 +19032,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16667,6 +19059,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16691,6 +19086,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16893,6 +19291,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16935,6 +19335,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17002,6 +19405,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17071,6 +19477,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17138,6 +19547,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17195,6 +19607,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17220,6 +19635,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17363,6 +19781,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17387,6 +19807,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17411,6 +19833,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17435,6 +19859,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17459,6 +19885,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17491,6 +19920,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17516,6 +19948,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17539,6 +19974,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17580,6 +20018,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17642,6 +20082,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17683,6 +20126,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17708,6 +20153,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17733,6 +20180,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17758,6 +20207,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17781,6 +20232,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17804,6 +20258,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17828,6 +20285,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17851,6 +20311,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17954,21 +20417,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -18005,6 +20464,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18029,6 +20491,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18053,6 +20518,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18255,6 +20723,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18297,6 +20767,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18339,6 +20812,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18408,6 +20884,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18450,6 +20929,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18507,6 +20989,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18532,6 +21017,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18677,6 +21165,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18703,6 +21193,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18727,6 +21219,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18751,6 +21245,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18775,6 +21271,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18799,6 +21297,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18823,6 +21323,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18855,6 +21358,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18880,6 +21386,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18903,6 +21412,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18944,6 +21456,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19006,6 +21520,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19047,6 +21564,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19072,6 +21591,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19097,6 +21618,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19122,6 +21645,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19145,6 +21670,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19168,6 +21696,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19192,6 +21723,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19215,6 +21749,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19318,21 +21855,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -19369,6 +21902,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19393,6 +21929,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19417,6 +21956,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19638,6 +22180,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19705,6 +22250,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19761,7 +22309,9 @@
           "item_kind": "number",
           "length": 4,
           "one_or_list": false,
-          "tokens": [],
+          "tokens": [
+            "density"
+          ],
           "preferred_tokens": []
         },
         "Trim_Start": {
@@ -19779,7 +22329,9 @@
           "step": null,
           "unit": null,
           "tokens": [
-            "shape"
+            "shape",
+            "state",
+            "scrollbar"
           ],
           "preferred_tokens": []
         },
@@ -19798,7 +22350,9 @@
           "step": null,
           "unit": null,
           "tokens": [
-            "shape"
+            "shape",
+            "state",
+            "scrollbar"
           ],
           "preferred_tokens": []
         },
@@ -19857,6 +22411,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19924,6 +22481,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19981,6 +22541,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20006,6 +22569,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20151,6 +22717,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20177,6 +22745,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20201,6 +22771,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20225,6 +22797,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20249,6 +22823,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20273,6 +22849,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20297,6 +22875,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20329,6 +22910,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20354,6 +22938,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20377,6 +22964,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20418,6 +23008,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20480,6 +23072,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20521,6 +23116,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20546,6 +23143,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20571,6 +23170,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20596,6 +23197,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20619,6 +23222,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20642,6 +23248,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20666,6 +23275,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20689,6 +23301,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20792,21 +23407,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -20843,6 +23454,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20867,6 +23481,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20891,6 +23508,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21107,6 +23727,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21130,6 +23753,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21199,7 +23825,7 @@
           "kind": "color",
           "choices": null,
           "enum": null,
-          "default": "\"#000000\"",
+          "default": "\"#1d1b20\"",
           "doc": "The colour of the text or of the icon, a colour or a theme token.",
           "slot": true,
           "required": false,
@@ -21256,6 +23882,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21281,6 +23910,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21293,7 +23924,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The height of one line, above 0.",
+          "doc": "The height of one line in pixels, above 0 (tre takes a multiple of the font size; the binder divides).",
           "slot": true,
           "required": false,
           "built": true,
@@ -21307,6 +23938,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21341,6 +23975,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21366,6 +24003,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21408,6 +24048,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21568,6 +24211,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21594,6 +24239,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21618,6 +24265,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21642,6 +24291,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21666,6 +24317,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21690,6 +24343,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21714,6 +24369,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21746,6 +24404,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21771,6 +24432,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21794,6 +24458,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21835,6 +24502,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21897,6 +24566,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21938,6 +24610,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21963,6 +24637,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21988,6 +24664,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22013,6 +24691,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22036,6 +24716,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22059,6 +24742,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22083,6 +24769,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22106,6 +24795,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22209,21 +24901,17 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces.",
+          "doc": "Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell).",
           "slot": true,
           "required": false,
           "built": true,
           "group": "State",
           "min": 0,
-          "max": 2147483647,
+          "max": 0,
           "step": 1,
           "unit": null,
           "tokens": [
-            "type",
-            "shape",
-            "space",
-            "elevation",
-            "motion"
+            "shape"
           ],
           "preferred_tokens": []
         },
@@ -22260,6 +24948,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22284,6 +24975,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22308,6 +25002,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22496,7 +25193,7 @@
           "kind": "sides",
           "choices": null,
           "enum": null,
-          "default": "0",
+          "default": "$density.field_padding",
           "doc": "Space between the content and the four sides: one number or four (left, top, right, bottom).",
           "slot": true,
           "required": false,
@@ -22519,6 +25216,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22629,6 +25329,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22665,6 +25367,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22722,6 +25426,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22789,6 +25496,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22845,6 +25555,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22856,7 +25569,7 @@
           "kind": "sides",
           "choices": null,
           "enum": null,
-          "default": "0",
+          "default": "$density.field_padding",
           "doc": "Space between the content and the four sides: one number or four (left, top, right, bottom).",
           "slot": true,
           "required": false,
@@ -22879,6 +25592,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22913,6 +25629,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22938,6 +25657,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22948,7 +25670,7 @@
           "choices": null,
           "enum": null,
           "default": "0%",
-          "doc": "How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow.",
+          "doc": "How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3).",
           "slot": true,
           "required": false,
           "built": true,
@@ -22956,6 +25678,14 @@
           "min": 0,
           "max": 100,
           "step": null,
+          "words": [
+            "LEVEL_0",
+            "LEVEL_1",
+            "LEVEL_2",
+            "LEVEL_3",
+            "LEVEL_4",
+            "LEVEL_5"
+          ],
           "tokens": [],
           "preferred_tokens": []
         },
@@ -22977,11 +25707,163 @@
             "elevation.max"
           ]
         },
+        "Hover_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn over the block while the pointer is on it, at the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. Needs tre 0.6.11.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Pressed_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block is pressed, at $state.pressed (0.10).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Focus_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
         "Foreground": {
           "kind": "color",
           "choices": null,
           "enum": null,
-          "default": "\"#000000\"",
+          "default": "\"#1d1b20\"",
           "doc": "The colour of the text or of the icon, a colour or a theme token.",
           "slot": true,
           "required": false,
@@ -23038,6 +25920,9 @@
             "type",
             "shape",
             "space",
+            "density",
+            "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23063,6 +25948,8 @@
             "type",
             "shape",
             "space",
+            "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23617,6 +26504,22 @@
         "enum": null,
         "default": "true",
         "doc": "Follows the desktop's colour scheme, accent, contrast and reduced-motion settings.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Appearance",
+        "tokens": []
+      },
+      "Density": {
+        "kind": "enum",
+        "choices": [
+          "DEFAULT",
+          "COMPACT",
+          "DENSE"
+        ],
+        "enum": null,
+        "default": "COMPACT",
+        "doc": "The density level of the shell's own sizes: DEFAULT (40 px controls), COMPACT (32 px, the default) or DENSE (28 px). A surface can set its own with Density. See Spacing and Density.",
         "slot": false,
         "required": false,
         "built": true,
@@ -24665,6 +27568,373 @@
         "max": null,
         "step": null,
         "unit": null
+      },
+      "focus_ring_width": {
+        "kind": "number",
+        "ref": "$space.focus_ring_width",
+        "default": "3",
+        "doc": "The width of the ring that shows keyboard focus (3).",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "focus_ring_offset": {
+        "kind": "number",
+        "ref": "$space.focus_ring_offset",
+        "default": "2",
+        "doc": "The gap between a block and its focus ring (2).",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      }
+    },
+    "density": {
+      "control_height": {
+        "kind": "number",
+        "ref": "$density.control_height",
+        "default": "40",
+        "doc": "The height of a button, a text field, a switch row and an icon button: 40, 32 or 28 at the default, compact and dense levels.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "row_height": {
+        "kind": "number",
+        "ref": "$density.row_height",
+        "default": "40",
+        "doc": "The height of a one-line list or tree row: 40, 32 or 24.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "menu_item_height": {
+        "kind": "number",
+        "ref": "$density.menu_item_height",
+        "default": "40",
+        "doc": "The height of a menu item: 40, 32 or 28.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "icon_size": {
+        "kind": "number",
+        "ref": "$density.icon_size",
+        "default": "24",
+        "doc": "The painted size of an icon in an icon button: 24, 20 or 20.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "item_size": {
+        "kind": "number",
+        "ref": "$density.item_size",
+        "default": "32",
+        "doc": "The size of a tray item, a task button and a workspace button (the pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be).",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "item_icon_size": {
+        "kind": "number",
+        "ref": "$density.item_icon_size",
+        "default": "20",
+        "doc": "The icon of a tray item and a task button: 20, 18 or 18.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "row_padding_x": {
+        "kind": "number",
+        "ref": "$density.row_padding_x",
+        "default": "12",
+        "doc": "The side padding of a list row, a tree row and a menu item: 12, 8 or 4.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "icon_label_gap": {
+        "kind": "number",
+        "ref": "$density.icon_label_gap",
+        "default": "8",
+        "doc": "The gap between an icon and its label: 8, 8 or 4.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "field_padding": {
+        "kind": "sides",
+        "ref": "$density.field_padding",
+        "default": "[12, 12, 12, 12]",
+        "doc": "The padding of a text field (left, top, right, bottom): [12, 12, 12, 12], [8, 8, 8, 8] or [8, 6, 8, 6]. With the 16 px line of 14 px body text the field is 40, 32 or 28 high (the spec's 20 px line would take 10, 6 and 4).",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "arity": [
+          1,
+          4
+        ],
+        "order": [
+          "Left",
+          "Top",
+          "Right",
+          "Bottom"
+        ],
+        "named_block": true,
+        "negative": false,
+        "unit": "px"
+      },
+      "tree_indent": {
+        "kind": "number",
+        "ref": "$density.tree_indent",
+        "default": "20",
+        "doc": "The indent of one tree level: 20, 16 or 12.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "chevron_box": {
+        "kind": "number",
+        "ref": "$density.chevron_box",
+        "default": "24",
+        "doc": "The size of a tree's chevron box: 24, 20 or 16.",
+        "modes": [
+          "compact",
+          "dense"
+        ],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      }
+    },
+    "state": {
+      "hover": {
+        "kind": "number",
+        "ref": "$state.hover",
+        "default": "0.08",
+        "doc": "The opacity of the hover state layer (0.08): a Hover_Layer colour is drawn at this alpha.",
+        "modes": [],
+        "min": 0,
+        "max": 1,
+        "step": null,
+        "unit": null
+      },
+      "focus": {
+        "kind": "number",
+        "ref": "$state.focus",
+        "default": "0.10",
+        "doc": "The opacity of the keyboard-focus state layer (0.10).",
+        "modes": [],
+        "min": 0,
+        "max": 1,
+        "step": null,
+        "unit": null
+      },
+      "pressed": {
+        "kind": "number",
+        "ref": "$state.pressed",
+        "default": "0.10",
+        "doc": "The opacity of the pressed state layer (0.10).",
+        "modes": [],
+        "min": 0,
+        "max": 1,
+        "step": null,
+        "unit": null
+      },
+      "dragged": {
+        "kind": "number",
+        "ref": "$state.dragged",
+        "default": "0.16",
+        "doc": "The opacity of the dragged state layer (0.16); no block takes it yet.",
+        "modes": [],
+        "min": 0,
+        "max": 1,
+        "step": null,
+        "unit": null
+      }
+    },
+    "scrollbar": {
+      "width": {
+        "kind": "number",
+        "ref": "$scrollbar.width",
+        "default": "8",
+        "doc": "The thickness of the scrollbar thumb: 8.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "hit_width": {
+        "kind": "number",
+        "ref": "$scrollbar.hit_width",
+        "default": "12",
+        "doc": "The pointer-sensitive thickness of the scrollbar: 12.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "margin": {
+        "kind": "number",
+        "ref": "$scrollbar.margin",
+        "default": "2",
+        "doc": "The space around the thumb: 2.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "min_length": {
+        "kind": "number",
+        "ref": "$scrollbar.min_length",
+        "default": "32",
+        "doc": "The shortest thumb: 32.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "gutter": {
+        "kind": "number",
+        "ref": "$scrollbar.gutter",
+        "default": "12",
+        "doc": "The space reserved for the scrollbar: 12.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "radius": {
+        "kind": "number",
+        "ref": "$scrollbar.radius",
+        "default": "4",
+        "doc": "The corner radius of the thumb: 4.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "opacity": {
+        "kind": "number",
+        "ref": "$scrollbar.opacity",
+        "default": "0.70",
+        "doc": "The thumb's opacity at rest: 0.70.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "opacity_hover": {
+        "kind": "number",
+        "ref": "$scrollbar.opacity_hover",
+        "default": "0.80",
+        "doc": "The thumb's opacity under the pointer: 0.80.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "opacity_drag": {
+        "kind": "number",
+        "ref": "$scrollbar.opacity_drag",
+        "default": "1.00",
+        "doc": "The thumb's opacity while dragged: 1.00.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "wheel_notch": {
+        "kind": "number",
+        "ref": "$scrollbar.wheel_notch",
+        "default": "40",
+        "doc": "The distance of one wheel notch: 40.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "key_line": {
+        "kind": "number",
+        "ref": "$scrollbar.key_line",
+        "default": "40",
+        "doc": "The distance of an arrow key in a scroll view: 40.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "page_fraction": {
+        "kind": "number",
+        "ref": "$scrollbar.page_fraction",
+        "default": "0.9",
+        "doc": "The share of the viewport a Page key moves: 0.9.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
       }
     },
     "elevation": {
@@ -24680,6 +27950,46 @@
         "ref": "$elevation.max",
         "default": "Max { Shadows { Shadow { Color: \"#00000066\", X: 0, Y: 16, Blur: 48, Spread: 0 } } }",
         "doc": "The shadow list at 100% elevation; a smaller Elevation scales it.",
+        "modes": [],
+        "block": "Shadows"
+      },
+      "level_1": {
+        "kind": "shadows",
+        "ref": "$elevation.level_1",
+        "default": "Level_1 { Shadows { Shadow { Color: \"#0000004D\", X: 0, Y: 1, Blur: 2, Spread: 0 }, Shadow { Color: \"#00000026\", X: 0, Y: 1, Blur: 3, Spread: 1 } } }",
+        "doc": "The shadows of Elevation: LEVEL_1 (1 dp): a key and an ambient shadow.",
+        "modes": [],
+        "block": "Shadows"
+      },
+      "level_2": {
+        "kind": "shadows",
+        "ref": "$elevation.level_2",
+        "default": "Level_2 { Shadows { Shadow { Color: \"#0000004D\", X: 0, Y: 1, Blur: 2, Spread: 0 }, Shadow { Color: \"#00000026\", X: 0, Y: 2, Blur: 6, Spread: 2 } } }",
+        "doc": "The shadows of Elevation: LEVEL_2 (3 dp): a menu, a tooltip, a popup.",
+        "modes": [],
+        "block": "Shadows"
+      },
+      "level_3": {
+        "kind": "shadows",
+        "ref": "$elevation.level_3",
+        "default": "Level_3 { Shadows { Shadow { Color: \"#0000004D\", X: 0, Y: 1, Blur: 3, Spread: 0 }, Shadow { Color: \"#00000026\", X: 0, Y: 4, Blur: 8, Spread: 3 } } }",
+        "doc": "The shadows of Elevation: LEVEL_3 (6 dp): a dialog.",
+        "modes": [],
+        "block": "Shadows"
+      },
+      "level_4": {
+        "kind": "shadows",
+        "ref": "$elevation.level_4",
+        "default": "Level_4 { Shadows { Shadow { Color: \"#0000004D\", X: 0, Y: 2, Blur: 3, Spread: 0 }, Shadow { Color: \"#00000026\", X: 0, Y: 6, Blur: 10, Spread: 4 } } }",
+        "doc": "The shadows of Elevation: LEVEL_4 (8 dp).",
+        "modes": [],
+        "block": "Shadows"
+      },
+      "level_5": {
+        "kind": "shadows",
+        "ref": "$elevation.level_5",
+        "default": "Level_5 { Shadows { Shadow { Color: \"#0000004D\", X: 0, Y: 4, Blur: 4, Spread: 0 }, Shadow { Color: \"#00000026\", X: 0, Y: 8, Blur: 12, Spread: 6 } } }",
+        "doc": "The shadows of Elevation: LEVEL_5 (12 dp).",
         "modes": [],
         "block": "Shadows"
       }
@@ -26547,8 +29857,8 @@
         "icon_size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The icon's size in pixels.",
+          "default": "0",
+          "doc": "The icon's size in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,
@@ -26647,8 +29957,8 @@
         "icon_size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The size of each icon in pixels.",
+          "default": "0",
+          "doc": "The size of each icon in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,
@@ -27174,8 +30484,8 @@
         "icon_size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The size of each icon in pixels.",
+          "default": "0",
+          "doc": "The size of each icon in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,
@@ -27320,8 +30630,8 @@
         "size": {
           "type": "number",
           "kind": "number",
-          "default": "18",
-          "doc": "The icon's size in pixels.",
+          "default": "0",
+          "doc": "The icon's size in pixels; 0 is the density level's.",
           "required": false,
           "min": null,
           "max": null,

@@ -2,7 +2,7 @@
 title: ADR-0024 tre Never Blocks Design
 aliases: [ADR-0024, tre Never Blocks a Design Change, Adjustable From Python]
 type: adr
-status: proposed
+status: accepted
 owner: phil
 created: 2026-11-21
 updated: 2026-11-21
@@ -37,7 +37,7 @@ The layering principle is "mechanism in the engine, meaning and look in the laye
 
 ## Decision
 
-Blank until the maintainer accepts. Recommendation: A. The matching Tesserae UX record is ADR-0020.
+Option A, accepted by the maintainer on 2026-11-21 (relayed by the Orchestrator). The matching Tesserae UX record is ADR-0020.
 
 ## Consequences
 

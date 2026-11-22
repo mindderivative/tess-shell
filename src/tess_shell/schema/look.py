@@ -23,9 +23,15 @@ from tess_shell.schema.model import MODES, Rule, StylesheetDef, ThemeDef, Token
 from tess_shell.schema.shell import _Ctx, _scalar_block_keys
 from tess_shell.schema.values import ValueProblem, coerce, named_shadows
 
-GROUPS = ("Color", "Type", "Shape", "Space", "Elevation", "Motion")
+GROUPS = ("Color", "Type", "Shape", "Space", "Density", "State", "Scrollbar", "Elevation", "Motion")
 _MODE_BLOCKS = {"Light": "light", "Dark": "dark", "High_Contrast": "high_contrast"}
 _MODE_BLOCKS["Reduced_Motion"] = "reduced_motion"
+# the density levels: the base values are the DEFAULT level, these two replace the ``Density`` group
+_MODE_BLOCKS["Compact"] = "compact"
+_MODE_BLOCKS["Dense"] = "dense"
+# the blocks of the Elevation group that hold a shadow list: the maximum a percentage scales, and
+# the levels 1 to 5 a surface names (Elevation: LEVEL_2)
+ELEVATION_BLOCKS = ("Max", *(f"Level_{n}" for n in range(1, 6)))
 SYSTEM_FONT = "type.system.font_family"  # the desktop's UI font family (Portals)
 # the family tre's bundled font has and text uses when no ``Font_Family`` is set (the shell ships
 # no font of its own): what ``type.system.font_family`` holds while the desktop names none
@@ -47,7 +53,11 @@ def token_kind(path: tuple[str, ...]) -> str | None:
     group, leaf = path[0], path[-1]
     if group == "color":
         return "color"
-    if group in ("shape", "space"):
+    if path == ("density", "field_padding"):
+        return "sides"
+    if group == "state":
+        return "unit"  # an opacity, 0 to 1
+    if group in ("shape", "space", "density", "scrollbar"):
         return "number"
     if group == "type":
         return _TYPE_LEAF.get(leaf)
@@ -76,15 +86,20 @@ def _flatten(
                     continue
             out[".".join(path)] = Token(entry.value, ctx.origin(entry.key_origin))
         elif isinstance(entry, Block):
-            if prefix == ("elevation",) and entry.type == "Max":
+            if prefix == ("elevation",) and entry.type in ELEVATION_BLOCKS:
                 shadows = next(
                     (e for e in entry.entries if isinstance(e, Block) and e.type == "Shadows"), None
                 )
                 if shadows is None:
-                    ctx.add(entry.origin, "missing-key", "Elevation.Max needs a Shadows block", "")
+                    ctx.add(
+                        entry.origin,
+                        "missing-key",
+                        f"Elevation.{entry.type} needs a Shadows block",
+                        "",
+                    )
                     continue
                 try:
-                    out["elevation.max"] = Token(
+                    out[f"elevation.{entry.type.lower()}"] = Token(
                         named_shadows(shadows, ctx.origin(entry.origin)),
                         ctx.origin(entry.origin),
                     )
@@ -180,6 +195,8 @@ def _effective(theme: ThemeDef, appearance: Appearance) -> dict[str, Token]:
     reduced motion (which also sets every duration to 0)."""
     tokens = dict(theme.tokens)
     order: list[str] = []
+    if appearance.density in ("compact", "dense"):  # ``default`` is the base values
+        order.append(appearance.density)
     if appearance.scheme in ("light", "dark"):
         order.append(appearance.scheme)
     if appearance.high_contrast:

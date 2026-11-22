@@ -21,13 +21,12 @@ from tess_re import Window
 from tess_shell.binder import model as m
 from tess_shell.binder.build import View, build
 from tess_shell.binder.convert import CONVERTERS
-from tess_shell.binder.focus import default_focusable, tab_order, takes_ring
-from tess_shell.binder.model import TAB_INDEX_MAX, BindError, BindFailed
+from tess_shell.binder.focus import default_focusable, takes_ring
+from tess_shell.binder.model import BindError, BindFailed
 from tess_shell.model.field import compose
 from tess_shell.model.look import focus_ring, resolve
 from tess_shell.schema.findings import Finding
-from tess_shell.schema.model import BarDef, EdgeDef, FrameDef, PanelDef, ShellDef
-from tess_shell.schema.ranges import TAB_INDEX_MAX as SCHEMA_TAB_INDEX_MAX
+from tess_shell.schema.model import BarDef, ShellDef
 from tess_shell.schema.shell import read_shell
 from tess_shell.surfaces.focus import next_surface, surface_order
 from tests.field_live import look
@@ -109,13 +108,29 @@ class Built:
         return [self.tab(shift) for _ in range(count)]
 
     def shadows(self, name: str) -> list[Any]:
-        return list(self.view.nodes[name].get("shadows"))
+        """The ring ``name`` shows: its outline as ``(colour, width, offset)``, or none."""
+        return ring_state(self.view.nodes[name])
+
+
+def ring_state(node: Any) -> list[Any]:
+    """The focus ring a tre node draws now: its outline, or an empty list."""
+    width = node.get("outline_width")
+    if not width:
+        return []
+    return [(tuple(node.get("outline_color")), width, node.get("outline_offset"))]
 
 
 def ring_of(scheme: Any) -> list[Any]:
-    """The ``shadows`` tre holds for the ring of ``scheme``'s look."""
-    (s,) = focus_ring(scheme).items
-    return [((s.color.r, s.color.g, s.color.b, s.color.a), s.x, s.y, s.blur, s.spread)]
+    """The outline tre holds for the ring of ``scheme``'s look."""
+    ring = focus_ring(scheme)
+    c = ring["Outline_Color"]
+    return [
+        (
+            (c.r, c.g, c.b, c.a),
+            float(ring["Outline_Width"].value),
+            float(ring["Outline_Offset"].value),
+        )
+    ]
 
 
 # -- what takes focus --------------------------------------------------------------------------
@@ -176,32 +191,23 @@ def test_the_default_focusable_flag_reaches_tre_and_the_text_node_of_a_label_has
 # -- the order ---------------------------------------------------------------------------------
 
 
-def test_tab_order_is_ascending_equal_indices_in_document_order_and_unindexed_last() -> None:
-    assert tab_order([None, 2, 1, None, 2, 0]) == [5, 2, 1, 4, 0, 3]
-    assert tab_order([]) == []
-    assert tab_order([None, None]) == [0, 1]
-    assert tab_order([3, 3, 3]) == [0, 1, 2]
-
-
-def test_tab_visits_the_indexed_blocks_in_order_then_the_rest_in_document_order() -> None:
-    b = Built(
-        row(
-            block("A"),
-            block("B", index=2),
-            block("C", index=1),
-            block("D", index=2),
-            block("E", index=0),
-            block("F"),
-        )
-    )
-    assert b.walk(6) == ["E", "C", "B", "D", "A", "F"]
+def test_tab_visits_the_blocks_in_the_order_of_the_file() -> None:
+    b = Built(row(block("A"), block("B"), block("C"), block("D")))
+    assert b.walk(5) == ["A", "B", "C", "D", "A"]
 
 
 def test_tab_wraps_round_and_shift_tab_goes_back_the_same_way() -> None:
-    b = Built(row(block("A"), block("B", index=1), block("C")))
-    assert b.walk(7) == ["B", "A", "C", "B", "A", "C", "B"]
-    b = Built(row(block("A"), block("B", index=1), block("C")))
-    assert b.walk(4, shift=True) == ["C", "A", "B", "C"]
+    b = Built(row(block("A"), block("B"), block("C")))
+    assert b.walk(4) == ["A", "B", "C", "A"]
+    b = Built(row(block("A"), block("B"), block("C")))
+    assert b.walk(4, shift=True) == ["C", "B", "A", "C"]
+
+
+def test_a_tab_index_of_0_changes_nothing_and_gives_tre_no_order() -> None:
+    b = Built(row(block("A"), block("B", index=0), block("C")))
+    assert b.walk(3) == ["A", "B", "C"]
+    assert b.view.nodes["B"].get("tab_index") == b.view.nodes["A"].get("tab_index")
+    assert b.view.tab_stops() == [b.view.nodes[n] for n in "ABC"]
 
 
 def test_a_tab_index_on_a_block_that_takes_no_focus_changes_nothing() -> None:
@@ -209,48 +215,14 @@ def test_a_tab_index_on_a_block_that_takes_no_focus_changes_nothing() -> None:
     assert b.walk(3) == ["A", "B", "A"]
 
 
-def test_zero_and_the_largest_index_are_indices_and_come_before_a_block_with_none() -> None:
-    b = Built(row(block("A"), block("Last", index=TAB_INDEX_MAX), block("First", index=0)))
-    assert b.walk(3) == ["First", "Last", "A"]
-
-
 def test_the_order_is_one_for_the_whole_tree_not_for_each_parent() -> None:
-    nested = block("Group", None, index=None, children=(block("Deep", index=1),))
-    b = Built(row(block("A", index=2), nested, block("B", index=1)))
-    # Deep is inside Group but the order is the tree's: both 1s in document order (Deep first)
-    assert b.walk(4) == ["Deep", "B", "A", "Deep"]
+    nested = block("Group", None, children=(block("Deep"),))
+    b = Built(row(block("A"), nested, block("B")))
+    assert b.walk(4) == ["A", "Deep", "B", "A"]
 
 
-def test_a_reload_that_changes_a_tab_index_changes_the_order_and_one_that_drops_it_resets() -> None:
-    b = Built(row(block("A"), block("B", index=1), block("C")))
-    assert b.walk(3) == ["B", "A", "C"]
-    nodes, errors = resolve([row(block("A", index=1), block("B"), block("C", index=0))], DARK)
-    assert errors == []
-    b.view.rebuild(nodes)
-    # focus was on C: Tab goes on from it in the new order C(0), A(1), then B (no index)
-    assert b.walk(4) == ["A", "B", "C", "A"]
-    assert b.view.entries[0].children[1].rank == 0
-
-
-def test_the_ranks_are_held_on_the_entries_and_only_a_change_reaches_tre() -> None:
-    b = Built(row(block("A", index=5), block("B", index=7), block("C")))
-    ranks = [e.rank for e in b.view.entries[0].children]
-    assert ranks == [1, 2, 0]
-    assert [b.view.nodes[n].get("tab_index") for n in "ABC"] == [1, 2, 0]
-    assert b.view.tab_stops() == [b.view.nodes[n] for n in "ABC"]
-
-
-def test_a_slot_that_sets_a_tab_index_later_reorders_the_blocks() -> None:
-    b = Built(row(block("A", index=1), block("B", index=2)))
-    assert b.walk(2) == ["A", "B"]
-    errors = b.view.update([("A", "Tab_Index", m.Number(9))])
-    assert errors == []
-    # focus is on B; the order is now B(2), A(9): A next, then round to B
-    assert b.walk(3) == ["A", "B", "A"]
-
-
-def test_a_text_fields_text_input_is_the_tab_stop_and_takes_the_index_and_focusable() -> None:
-    field = m.Node(m.FIELD, name="F", props={"Tab_Index": m.Number(1)})
+def test_a_text_fields_text_input_is_the_tab_stop_and_takes_focusable() -> None:
+    field = m.Node(m.FIELD, name="F")
     plain = m.Node(m.FIELD, name="G", props={"Focusable": m.Bool(False)})
     composed = [compose(field), compose(plain)]
     named: list[m.Node] = []
@@ -264,10 +236,8 @@ def test_a_text_fields_text_input_is_the_tab_stop_and_takes_the_index_and_focusa
         )
         named.append(dataclasses.replace(c, children=(dataclasses.replace(line, children=kids),)))
     b = Built(row(block("A"), *named))
-    assert b.view.nodes["F.In"].get("tab_index") == 1
     assert b.view.nodes["G.In"].get("focusable") is False
-    assert "Tab_Index" not in composed[0].props  # the box takes none: its input does
-    assert b.walk(3) == ["F.In", "A", "F.In"]  # G's input is out of the order
+    assert b.walk(3) == ["A", "F.In", "A"]  # G's input is out of the order
 
 
 # -- the ring ----------------------------------------------------------------------------------
@@ -304,8 +274,8 @@ def test_the_ring_does_not_shift_the_layout() -> None:
         for n in "AB"
     ]
     assert before == after
-    (shadow,) = b.shadows("A")
-    assert shadow[1:4] == (0.0, 0.0, 0.0) and shadow[4] > 0  # no offset, no blur: spread only
+    (ring,) = b.shadows("A")
+    assert ring[1] > 0 and ring[2] > 0  # a width and a gap: an outline, not a shadow
 
 
 def test_the_ring_takes_its_colour_and_size_from_the_themes_tokens_and_follows_light_and_dark() -> (
@@ -314,7 +284,7 @@ def test_the_ring_takes_its_colour_and_size_from_the_themes_tokens_and_follows_l
     dark, light = ring_of(DARK), ring_of(LIGHT)
     assert dark != light  # color.primary differs between the two variants of the Default theme
     assert dark[0][0] == (0x5B, 0x97, 0xC9, 255) and light[0][0] == (0x2F, 0x6B, 0x9A, 255)
-    assert dark[0][4] == 2.0  # space.step_1
+    assert dark[0][1:] == (3.0, 2.0)  # space.focus_ring_width and space.focus_ring_offset
     b = Built(row(block("A")), LIGHT)
     b.tab()
     assert b.shadows("A") == light
@@ -326,31 +296,37 @@ def test_without_a_look_the_ring_is_the_default_themes() -> None:
     window = Window(width=400, height=100)
     view = build(nodes, window)
     window.simulate("key_down", key="tab")
-    assert list(view.nodes["A"].get("shadows")) == ring_of(DARK)
+    assert ring_state(view.nodes["A"]) == ring_of(DARK)
 
 
-def test_a_blocks_own_shadows_stay_under_the_ring_and_come_back_with_it_gone() -> None:
+def test_a_blocks_own_shadows_are_untouched_by_the_ring() -> None:
     own = m.Shadows((m.Shadow(m.Color(0, 0, 0, 100), 0, 2, 6, 0),))
     b = Built(row(block("A", style={"Shadows": own}), block("B")))
-    base = b.shadows("A")
+    base = list(b.view.nodes["A"].get("shadows"))
     assert len(base) == 1
     b.tab()
-    shown = b.shadows("A")
-    assert shown[:1] == ring_of(DARK) and shown[1:] == base
+    assert list(b.view.nodes["A"].get("shadows")) == base and b.shadows("A") == ring_of(DARK)
     b.tab()
-    assert b.shadows("A") == base
+    assert list(b.view.nodes["A"].get("shadows")) == base and b.shadows("A") == []
 
 
-def test_a_focused_rule_adds_to_the_ring_and_its_own_shadows_replace_it() -> None:
+def test_a_block_that_takes_no_shadows_shows_the_ring_too() -> None:
+    plain = dataclasses.replace(block("A"), kind="Rectangle")
+    b = Built(row(plain))
+    b.tab()
+    assert b.shadows("A") == ring_of(DARK)
+
+
+def test_a_focused_rule_adds_to_the_ring_and_its_own_outline_replaces_it() -> None:
     red = m.Color(255, 0, 0, 255)
     plain = dataclasses.replace(block("A"), states={"focused": {"Background": red}})
-    mine = m.Shadows((m.Shadow(m.Color(1, 2, 3, 255), 0, 0, 0, 5),))
-    custom = dataclasses.replace(block("B"), states={"focused": {"Shadows": mine}})
+    mine = {"Outline_Color": m.Color(1, 2, 3, 255), "Outline_Width": m.Number(5)}
+    custom = dataclasses.replace(block("B"), states={"focused": mine})
     b = Built(row(plain, custom))
     b.tab()
     assert b.shadows("A") == ring_of(DARK) and b.view.nodes["A"].get("fill") == (255, 0, 0, 255)
     b.tab()
-    assert b.shadows("B") == [((1, 2, 3, 255), 0.0, 0.0, 0.0, 5.0)]
+    assert b.shadows("B")[0][:2] == ((1, 2, 3, 255), 5.0)
     assert b.view.nodes["A"].get("fill") != (255, 0, 0, 255)  # A gave its look back
 
 
@@ -359,7 +335,7 @@ def test_focused_comes_after_pressed_and_hovered_and_a_disabled_block_shows_no_r
     b.tab()
     node = b.view.nodes["A"]
     b.window.simulate("pointer_enter", node=node)
-    assert list(node.get("shadows")) == ring_of(DARK)  # hovered and focused: the ring stays
+    assert ring_state(node) == ring_of(DARK)  # hovered and focused: the ring stays
     b.window.simulate("pointer_leave")
     # a block that is disabled while it has focus shows no ring
     dis, errors = resolve([row(block("A", enabled=False), block("Off", enabled=False))], DARK)
@@ -373,7 +349,7 @@ def test_a_textfields_box_draws_the_ring_when_the_keyboard_focuses_its_input() -
     (line,) = compose(field).children
     box, errors = resolve([compose(field)], DARK)
     assert errors == []
-    assert "focused" in box[0].states and "Shadows" in box[0].states["focused"]
+    assert "focused" in box[0].states and "Outline_Width" in box[0].states["focused"]
     assert isinstance(line, m.Node)
     # the text input shows no ring of its own, its box does
     inner = [c for c in line.children if isinstance(c, m.Node) and c.kind == m.FIELD_INPUT][0]
@@ -394,7 +370,7 @@ def test_a_textfields_box_draws_the_ring_when_the_keyboard_focuses_its_input() -
     window.advance(16)
     window.simulate("key_down", key="tab")
     assert view.nodes["In"].get("focused")
-    assert list(view.nodes["F"].get("shadows")) == ring_of(DARK)
+    assert ring_state(view.nodes["F"]) == ring_of(DARK)
 
 
 # -- the keys ----------------------------------------------------------------------------------
@@ -415,29 +391,36 @@ def bar(inner: str, name: str = "Top_Bar", keys: str = "") -> str:
     )
 
 
-@pytest.mark.parametrize("index", ["0", "1", "2147483647"])
-def test_a_tab_index_from_0_to_the_largest_32_bit_integer_is_accepted_on_a_block(
-    index: str,
-) -> None:
-    shell, findings = read(bar(f"FlexBox {{ Role: BUTTON, Tab_Index: {index} }}"))
-    assert shell is not None, findings
-    (block_,) = shell.monitors[0].surfaces[0].children  # type: ignore[union-attr]
-    assert block_.props["Tab_Index"] == m.Number(
-        int(index), origin=block_.props["Tab_Index"].origin
-    )  # type: ignore[union-attr]
+def test_a_tab_index_of_0_is_accepted_on_a_block_and_a_surface() -> None:
+    shell, findings = read(
+        bar("FlexBox { Role: BUTTON, Tab_Index: 0 }", "B", "Tab_Index: 0, Keyboard: ON_DEMAND,")
+    )
+    assert shell is not None and findings == [], findings
+    surface = shell.monitors[0].surfaces[0]
+    assert isinstance(surface, BarDef) and surface.keyboard == "ON_DEMAND"
+
+
+@pytest.mark.parametrize("written", ["1", "2", "2147483647"])
+def test_a_tab_index_above_0_is_an_error_pointing_to_focus_order(written: str) -> None:
+    for snippet in (
+        bar(f"FlexBox {{ Role: BUTTON, Tab_Index: {written} }}"),
+        bar("", "B", f"Tab_Index: {written},"),
+        f"Panel {{ Name: P, Anchor: TOP, Width: 100, Height: 50, Tab_Index: {written} }}",
+        f"Frame {{ Name: F, Thickness: 8, Tab_Index: {written} }}",
+        f"Frame {{ Name: F, Thickness: 8, Edges {{ Top {{ Tab_Index: {written} }} }} }}",
+    ):
+        shell, findings = read(snippet)
+        assert shell is None, snippet
+        (f,) = [f for f in findings if f.severity == "error"]
+        assert f.rule == "tab-index-positive", snippet
+        assert "Focus_Order" in f.hint and "tesserae-shell migrate" in f.hint
+        assert f.file == "Shells/Main_Shell.tdl" and f.line > 0 and f.column > 0
 
 
 @pytest.mark.parametrize(
-    ("written", "needle"),
-    [
-        ("-1", "from 0 to 2147483647"),
-        ("2147483648", "from 0 to 2147483647"),
-        ("1.5", "whole number"),
-        ('"x"', "whole number"),
-        ("true", "whole number"),
-    ],
+    ("written", "needle"), [("-1", "found -1"), ("1.5", "whole number"), ('"x"', "whole number")]
 )
-def test_a_tab_index_out_of_range_or_not_an_integer_is_an_error_at_its_position(
+def test_a_tab_index_that_is_negative_or_not_an_integer_is_an_error_at_its_position(
     written: str, needle: str
 ) -> None:
     shell, findings = read(bar(f"FlexBox {{ Role: BUTTON, Tab_Index: {written} }}"))
@@ -445,33 +428,6 @@ def test_a_tab_index_out_of_range_or_not_an_integer_is_an_error_at_its_position(
     (f,) = [f for f in findings if f.severity == "error"]
     assert f.rule == "bad-value" and needle in f.message
     assert f.file == "Shells/Main_Shell.tdl" and f.line > 0 and f.column > 0
-    assert "Tab_Index" in f.message or "Tab_Index" in f.hint or f.line > 0
-
-
-def test_a_surface_takes_a_tab_index_too_with_the_same_range_and_a_position_on_an_error() -> None:
-    shell, findings = read(
-        bar("", "B", "Tab_Index: 2, Keyboard: ON_DEMAND,")
-        + "Panel { Name: P, Anchor: TOP, Width: 100, Height: 50, Tab_Index: 1 } "
-        + "Frame { Name: F, Thickness: 8, Tab_Index: 0, Edges { Top { Thickness: 30, "
-        + "Tab_Index: 5, Children { FlexBox { } } } } }"
-    )
-    assert shell is not None, findings
-    surfaces = shell.monitors[0].surfaces
-    assert isinstance(surfaces[0], BarDef) and surfaces[0].tab_index == 2
-    assert surfaces[0].keyboard == "ON_DEMAND" and surfaces[0].keyboard_written
-    assert isinstance(surfaces[1], PanelDef) and surfaces[1].tab_index == 1
-    (frame,) = shell.monitors[0].frames
-    assert isinstance(frame, FrameDef) and frame.tab_index == 0
-    assert isinstance(frame.edges["top"], EdgeDef) and frame.edges["top"].tab_index == 5
-    for snippet in (
-        bar("", "B", "Tab_Index: -1,"),
-        "Panel { Name: P, Anchor: TOP, Width: 100, Height: 50, Tab_Index: 2147483648 }",
-        "Frame { Name: F, Thickness: 8, Tab_Index: 1.5 }",
-        "Frame { Name: F, Thickness: 8, Edges { Top { Tab_Index: -3 } } }",
-    ):
-        none, found = read(snippet)
-        assert none is None, snippet
-        assert any(f.severity == "error" and f.line > 0 and f.column > 0 for f in found), snippet
 
 
 def test_a_bar_takes_no_keyboard_unless_it_says_so_and_a_text_field_still_gives_it_on_demand() -> (
@@ -486,17 +442,16 @@ def test_a_bar_takes_no_keyboard_unless_it_says_so_and_a_text_field_still_gives_
     assert none is None and any("EXCLUSIVE" in f.message + f.hint for f in found)
 
 
-def test_the_binders_range_is_the_schemas() -> None:
-    assert TAB_INDEX_MAX == SCHEMA_TAB_INDEX_MAX == 2**31 - 1
+def test_the_binder_takes_0_and_refuses_the_rest() -> None:
     convert = CONVERTERS["tab_index"]
-    assert convert(m.Number(0), (), ()) == {} and convert(m.Number(TAB_INDEX_MAX), (), ()) == {}
-    for bad in (m.Number(-1), m.Number(TAB_INDEX_MAX + 1), m.Number(1.5), m.Text("x")):
+    assert convert(m.Number(0), (), ()) == {}
+    for bad in (m.Number(-1), m.Number(1), m.Number(1.5), m.Text("x")):
         with pytest.raises(BindError):
             convert(bad, (), ())
 
 
-def test_the_binder_refuses_a_tab_index_out_of_range_at_the_blocks_position() -> None:
-    node = block("A", index=-1)
+def test_the_binder_refuses_a_tab_index_above_0_at_the_blocks_position() -> None:
+    node = block("A", index=1)
     with pytest.raises(BindFailed) as exc:
         build([node], Window(width=100, height=100))
     assert "Tab_Index" in str(exc.value.errors[0].message)
@@ -505,28 +460,52 @@ def test_the_binder_refuses_a_tab_index_out_of_range_at_the_blocks_position() ->
 # -- the order of the shell's surfaces ---------------------------------------------------------
 
 
-def test_the_shells_surfaces_are_ordered_by_tab_index_with_the_others_after() -> None:
-    shell, findings = read(
-        bar("", "Plain")
-        + bar("", "Late", "Tab_Index: 9,")
-        + "Panel { Name: Dock, Anchor: LEFT, Width: 50, Height: 50, Tab_Index: 2 } "
-        + "Frame { Name: Ring, Thickness: 8, Tab_Index: 2, Edges { Top { Thickness: 30, "
-        + "Tab_Index: 0, Children { FlexBox { } } }, Left { Thickness: 30, Children { "
-        + "FlexBox { } } }, Right { Thickness: 4 } } }"
-    )
+def read_ordered(children: str, order: str) -> tuple[ShellDef | None, list[Finding]]:
+    text = SHELL.format(children).replace("Shell {", f"Shell {{ Focus_Order: {order}", 1)
+    result = tess_dl.parse(HEADER + text, path="Shells/Main_Shell.tdl")
+    assert not result.errors and result.document is not None
+    return read_shell(result.document, "Shells/Main_Shell.tdl", lambda p: SVG)
+
+
+SURFACES = (
+    bar("", "Plain")
+    + bar("", "Late")
+    + "Panel { Name: Dock, Anchor: LEFT, Width: 50, Height: 50 } "
+    + "Frame { Name: Ring, Thickness: 8, Edges { Top { Thickness: 30, Children { FlexBox { } } }, "
+    + "Left { Thickness: 30, Children { FlexBox { } } }, Right { Thickness: 4 } } }"
+)
+
+
+def test_the_shells_surfaces_are_in_the_order_of_the_file_without_a_focus_order() -> None:
+    shell, findings = read(SURFACES)
     assert shell is not None, findings
-    assert surface_order(shell) == [
-        "Ring.top",  # 0
-        "Dock",  # 2, before the Frame that is also 2 (document order: the Panel is first)
-        "Ring",
-        "Late",  # 9
-        "Plain",  # none: document order
-        "Ring.left",  # a strip with no index follows the others; Right has no children: no place
-    ]
+    assert surface_order(shell) == ["Plain", "Late", "Dock", "Ring", "Ring.top", "Ring.left"]
+
+
+def test_focus_order_puts_its_surfaces_first_in_its_order_and_the_rest_follow_the_file() -> None:
+    shell, findings = read_ordered(SURFACES, "[Ring.top, Dock, Late]")
+    assert shell is not None and findings == [], findings
+    assert shell.focus_order == ("Ring.top", "Dock", "Late")
+    assert surface_order(shell) == ["Ring.top", "Dock", "Late", "Plain", "Ring", "Ring.left"]
+
+
+def test_a_focus_order_name_no_surface_has_is_a_warning_naming_the_nearest() -> None:
+    shell, findings = read_ordered(SURFACES, "[Dok, Plain]")
+    assert shell is not None
+    (f,) = findings
+    assert (f.severity, f.rule) == ("warning", "focus-order-unknown") and "Dock" in f.hint
+    assert surface_order(shell)[0] == "Plain"  # the unknown name is skipped, the rest kept
+
+
+def test_a_focus_order_that_names_a_surface_twice_or_is_no_list_of_names_is_an_error() -> None:
+    for written in ("[Plain, Plain]", "[1, 2]"):
+        shell, findings = read_ordered(SURFACES, written)
+        assert shell is None, written
+        assert any(f.severity == "error" and f.rule == "bad-value" for f in findings), written
 
 
 def test_a_name_a_monitor_block_repeats_counts_once() -> None:
-    shell, findings = read(bar("", "A", "Tab_Index: 1,"))
+    shell, findings = read(bar("", "A"))
     assert shell is not None, findings
     twice = dataclasses.replace(shell, monitors=shell.monitors * 2)
     assert surface_order(twice) == ["A"]
@@ -597,7 +576,7 @@ def focused_root(r: Rig) -> list[str]:
 
 
 def ring(r: Rig, use: str) -> bool:
-    return bool(list(r.root_of(use).get("shadows")))
+    return bool(ring_state(r.root_of(use)))
 
 
 def test_a_popup_opened_from_a_block_with_keyboard_focus_takes_focus_and_gives_it_back() -> None:
@@ -610,7 +589,7 @@ def test_a_popup_opened_from_a_block_with_keyboard_focus_takes_focus_and_gives_i
     assert op is not None
     # opened from the keyboard: the first Tab stop of the Popup has the focus, with its ring
     assert op.view.nodes["Item"].get("focused")
-    assert list(op.view.nodes["Item"].get("shadows")) == ring_of(r.manager.look)
+    assert ring_state(op.view.nodes["Item"]) == ring_of(r.manager.look)
     win.simulate("key_down", key="tab")  # focus goes elsewhere while the Popup is open
     assert focused_root(r) == [two]
     r.popups.close(op, "escape")
@@ -698,7 +677,7 @@ def test_the_return_does_not_fail_when_the_opener_is_gone_with_its_surface() -> 
 
 
 def test_a_view_gives_focus_back_with_or_without_a_ring_and_names_its_first_stop() -> None:
-    b = Built(row(block("A"), block("B", index=1)))
+    b = Built(row(block("B"), block("A")))
     assert b.view.tab_stops() == [b.view.nodes["B"], b.view.nodes["A"]]
     assert b.view.focus_first()
     assert b.focused() == "B" and b.shadows("B") == ring_of(DARK)

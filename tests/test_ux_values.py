@@ -61,16 +61,14 @@ def _ratio(a: str, b: str) -> float:
     return (hi + 0.05) / (lo + 0.05)
 
 
-def test_the_launcher_hover_fill_differs_from_the_card_and_keeps_the_text_readable() -> None:
+def test_the_launcher_row_hover_is_the_8_percent_state_layer_and_keeps_the_text_readable() -> None:
     import tess_dl
 
     from tess_shell.appearance import Appearance
     from tess_shell.schema.look import effective_tokens, read_theme
 
-    hovered = re.search(
-        r'Selector: "\.list_item:hovered", Background: \$color\.(\w+)', default_stylesheet()
-    )
-    assert hovered
+    sheet = default_stylesheet()
+    assert re.search(r'Selector: "\.list_item"[^}]*Hover_Layer: \$color\.on_surface', sheet, re.S)
     text = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text(encoding="utf-8")
     parsed = tess_dl.parse(text, path="Default_Theme.tdl")
     assert parsed.document is not None
@@ -79,13 +77,18 @@ def test_the_launcher_hover_fill_differs_from_the_card_and_keeps_the_text_readab
     for scheme in ("dark", "light"):
         tokens = effective_tokens(theme, Appearance(scheme=scheme))
 
-        def colour(name: str, tokens: dict[str, Any] = tokens) -> str:
+        def hexes(name: str, tokens: dict[str, Any] = tokens) -> str:
             return str(tokens[f"color.{name}"].value.value).upper()
 
-        fill, card = colour(hovered.group(1)), colour("surface_raised")  # the Launcher card fill
-        assert fill != card, scheme
-        assert _ratio(fill, card) >= 2.0, scheme  # the hover is seen
-        assert _ratio(colour("on_surface"), fill) >= 4.5, scheme
+        opacity = float(tokens["state.hover"].value.value)
+        card, ink = hexes("surface_raised"), hexes("on_surface")
+        channels = [
+            round(int(card[i : i + 2], 16) * (1 - opacity) + int(ink[i : i + 2], 16) * opacity)
+            for i in (1, 3, 5)
+        ]
+        mixed = "#" + "".join(f"{c:02X}" for c in channels)
+        assert mixed != card, scheme  # the layer shows
+        assert _ratio(ink, mixed) >= 4.5, scheme  # and the text on it stays readable
 
 
 def test_the_emphasized_easing_is_the_curve_the_motion_spec_gives() -> None:

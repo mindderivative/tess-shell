@@ -147,7 +147,6 @@
          "font_size": 12,
          "text": "0.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -171,7 +170,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -238,7 +237,6 @@
          "font_size": 12,
          "text": "0.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -253,7 +251,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -284,7 +282,6 @@
          "font_size": 12,
          "text": "0.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -299,7 +296,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -330,7 +327,6 @@
          "font_size": 12,
          "text": "0.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -345,7 +341,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -376,7 +372,6 @@
          "font_size": 12,
          "text": "0.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -400,7 +395,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -461,7 +456,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {
        "hovered": {
         "fill": [
@@ -481,7 +475,7 @@
        "flex_direction": "horizontal",
        "focusable": false,
        "gap": 2.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -558,7 +552,6 @@
          "font_size": 12,
          "text": "1.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -582,7 +575,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -649,7 +642,6 @@
          "font_size": 12,
          "text": "1.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -664,7 +656,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -695,7 +687,6 @@
          "font_size": 12,
          "text": "1.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -710,7 +701,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -741,7 +732,6 @@
          "font_size": 12,
          "text": "1.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -756,7 +746,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -787,7 +777,6 @@
          "font_size": 12,
          "text": "1.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -811,7 +800,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -878,7 +867,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -895,7 +883,7 @@
        "flex_direction": "horizontal",
        "focusable": false,
        "gap": 2.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -954,7 +942,6 @@
          "font_size": 12,
          "text": "2.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -978,7 +965,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1045,7 +1032,6 @@
          "font_size": 12,
          "text": "2.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1060,7 +1046,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1091,7 +1077,6 @@
          "font_size": 12,
          "text": "2.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1106,7 +1091,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1137,7 +1122,6 @@
          "font_size": 12,
          "text": "2.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1152,7 +1136,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1183,7 +1167,6 @@
          "font_size": 12,
          "text": "2.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -1207,7 +1190,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1268,7 +1251,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -1279,7 +1261,7 @@
        "flex_direction": "horizontal",
        "focusable": false,
        "gap": 2.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -1342,7 +1324,6 @@
          "font_size": 12,
          "text": "3.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -1366,7 +1347,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1433,7 +1414,6 @@
          "font_size": 12,
          "text": "3.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1448,7 +1428,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1479,7 +1459,6 @@
          "font_size": 12,
          "text": "3.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1494,7 +1473,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1525,7 +1504,6 @@
          "font_size": 12,
          "text": "3.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1540,7 +1518,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1571,7 +1549,6 @@
          "font_size": 12,
          "text": "3.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -1595,7 +1572,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1662,7 +1639,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {
        "hovered": {
         "fill": [
@@ -1688,7 +1664,7 @@
        "flex_direction": "horizontal",
        "focusable": false,
        "gap": 2.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -1762,7 +1738,6 @@
          "font_size": 12,
          "text": "4.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -1786,7 +1761,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1853,7 +1828,6 @@
          "font_size": 12,
          "text": "4.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1868,7 +1842,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1899,7 +1873,6 @@
          "font_size": 12,
          "text": "4.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1914,7 +1887,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1945,7 +1918,6 @@
          "font_size": 12,
          "text": "4.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -1960,7 +1932,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -1991,7 +1963,6 @@
          "font_size": 12,
          "text": "4.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -2015,7 +1986,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -2076,7 +2047,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -2087,7 +2057,7 @@
        "flex_direction": "horizontal",
        "focusable": false,
        "gap": 2.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -2150,7 +2120,6 @@
          "font_size": 12,
          "text": "5.0"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -2174,7 +2143,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -2241,7 +2210,6 @@
          "font_size": 12,
          "text": "5.1"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -2256,7 +2224,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -2287,7 +2255,6 @@
          "font_size": 12,
          "text": "5.2"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -2302,7 +2269,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -2333,7 +2300,6 @@
          "font_size": 12,
          "text": "5.3"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -2348,7 +2314,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -2379,7 +2345,6 @@
          "font_size": 12,
          "text": "5.4"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "fill": [
@@ -2403,7 +2368,7 @@
          ],
          "focusable": false,
          "font_size": 12.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -2470,7 +2435,6 @@
        "flex_direction": "horizontal",
        "gap": 2
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -2487,7 +2451,7 @@
        "flex_direction": "horizontal",
        "focusable": false,
        "gap": 2.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -2537,7 +2501,6 @@
      "display": "flex",
      "width": 1000
     },
-    "rank": 1,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -2546,13 +2509,13 @@
      "display": "flex",
      "expanded": null,
      "focusable": false,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
      "pressed": null,
      "read_only": "!ValueError",
      "role": null,
      "selected": null,
-     "tab_index": 1,
+     "tab_index": 0,
      "value": null,
      "visible": true,
      "width": 1000.0
@@ -2652,7 +2615,6 @@
      "visible": false,
      "width": 40
     },
-    "rank": 0,
     "states": {
      "hovered": {
       "fill": [
@@ -2677,7 +2639,7 @@
      ],
      "focusable": false,
      "height": 40.0,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
      "pressed": null,
      "read_only": "!ValueError",
@@ -2745,7 +2707,6 @@
      "hit_testable": false,
      "width": 5
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -2785,7 +2746,6 @@
      "height": 5,
      "width": 5
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -2800,7 +2760,7 @@
      ],
      "focusable": false,
      "height": 5.0,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
      "pressed": null,
      "read_only": "!ValueError",
@@ -2843,8 +2803,20 @@
      43,
      255
     ],
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "justify_content": "center",
     "label": "Off",
     "min_width": 32,
@@ -2852,6 +2824,12 @@
     "padding_left": 12,
     "padding_right": 12,
     "padding_top": 0,
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "button",
     "stroke_color": [
      85,
@@ -2902,8 +2880,20 @@
      43,
      255
     ],
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "justify_content": "center",
     "label": "Open",
     "min_width": 32,
@@ -2911,6 +2901,12 @@
     "padding_left": 36,
     "padding_right": 12,
     "padding_top": 0,
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "button",
     "stroke_color": [
      85,
@@ -2996,12 +2992,31 @@
    "Checkbox@Main_Shell.Main.Top_Bar.Checkbox_1/Root": {
     "align_items": "center",
     "checked": false,
+    "corner_radius": 4,
     "disabled": false,
     "display": "flex",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "gap": 8,
-    "height": 22,
+    "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "Remember",
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "checkbox"
    },
    "Checkbox@Main_Shell.Main.Top_Bar.Checkbox_1/Words": {
@@ -3181,13 +3196,32 @@
    },
    "Toggle@Main_Shell.Main.Top_Bar.T/Root": {
     "checked": false,
+    "corner_radius": 999,
     "disabled": false,
     "display": "grid",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
-    "height": 22,
+    "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "t",
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "switch",
     "width": 40
    },
@@ -3211,7 +3245,7 @@
     "margin_right": 0,
     "margin_top": 3,
     "position": "absolute",
-    "top": 0,
+    "top": 5,
     "view_box": [
      0,
      0,
@@ -3231,7 +3265,9 @@
     ],
     "grid_column": 1,
     "grid_row": 1,
-    "height": "100%",
+    "height": 22,
+    "left": 0,
+    "position": "absolute",
     "stroke_color": [
      85,
      101,
@@ -3239,6 +3275,7 @@
      255
     ],
     "stroke_width": 2,
+    "top": 5,
     "width": "100%"
    }
   },
@@ -3276,7 +3313,6 @@
        "top": 8,
        "width": 16
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": true,
@@ -3285,7 +3321,7 @@
        "expanded": null,
        "focusable": false,
        "height": 16.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "left": 10.0,
        "position": "absolute",
@@ -3356,7 +3392,6 @@
        "text": "Open",
        "width": "fit-content"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -3372,7 +3407,7 @@
        "focusable": false,
        "font_size": 14.0,
        "height": "fit-content",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -3430,8 +3465,20 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "height": 32,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "Open",
      "min_width": 32,
@@ -3439,6 +3486,12 @@
      "padding_left": 36,
      "padding_right": 12,
      "padding_top": 0,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "role": "button",
      "stroke_color": [
       85,
@@ -3448,48 +3501,19 @@
      ],
      "stroke_width": 1
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
      },
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
-     },
-     "hovered": {
-      "stroke_color": [
+      "outline_color": [
        91,
        151,
        201,
-       255
-      ]
-     },
-     "pressed": {
-      "fill": [
-       85,
-       101,
-       122,
        255
       ],
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
@@ -3506,9 +3530,21 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "height": 32.0,
-     "hit_testable": true,
+     "hit_testable": null,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "Open",
      "min_width": 32.0,
@@ -3517,6 +3553,12 @@
      "padding_right": 12.0,
      "padding_top": 0.0,
      "pressed": null,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
@@ -3560,42 +3602,14 @@
        "opacity": 0.38
       },
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
-      },
-      "hovered": {
-       "stroke_color": [
+       "outline_color": [
         91,
         151,
         201,
-        255
-       ]
-      },
-      "pressed": {
-       "fill": [
-        85,
-        101,
-        122,
         255
        ],
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -3604,12 +3618,7 @@
      "wired": [
       "On_Click",
       "focus",
-      "keys",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
+      "keys"
      ]
     }
    },
@@ -3635,7 +3644,6 @@
        "text": "Off",
        "width": "fit-content"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -3651,7 +3659,7 @@
        "focusable": false,
        "font_size": 14.0,
        "height": "fit-content",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -3709,8 +3717,20 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "height": 32,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "Off",
      "min_width": 32,
@@ -3718,6 +3738,12 @@
      "padding_left": 12,
      "padding_right": 12,
      "padding_top": 0,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "role": "button",
      "stroke_color": [
       85,
@@ -3727,48 +3753,19 @@
      ],
      "stroke_width": 1
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
      },
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
-     },
-     "hovered": {
-      "stroke_color": [
+      "outline_color": [
        91,
        151,
        201,
-       255
-      ]
-     },
-     "pressed": {
-      "fill": [
-       85,
-       101,
-       122,
        255
       ],
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
@@ -3785,9 +3782,21 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": false,
      "height": 32.0,
-     "hit_testable": true,
+     "hit_testable": null,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "Off",
      "min_width": 32.0,
@@ -3796,6 +3805,12 @@
      "padding_right": 12.0,
      "padding_top": 0.0,
      "pressed": null,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
@@ -3843,42 +3858,14 @@
        "opacity": 0.38
       },
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
-      },
-      "hovered": {
-       "stroke_color": [
+       "outline_color": [
         91,
         151,
         201,
-        255
-       ]
-      },
-      "pressed": {
-       "fill": [
-        85,
-        101,
-        122,
         255
        ],
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -3889,12 +3876,7 @@
       "On_Scroll",
       "On_Secondary_Click",
       "focus",
-      "keys",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
+      "keys"
      ]
     }
    },
@@ -3925,7 +3907,9 @@
        ],
        "grid_column": 1,
        "grid_row": 1,
-       "height": "100%",
+       "height": 22,
+       "left": 0,
+       "position": "absolute",
        "stroke_color": [
         85,
         101,
@@ -3933,9 +3917,9 @@
         255
        ],
        "stroke_width": 2,
+       "top": 5,
        "width": "100%"
       },
-      "rank": 0,
       "states": {
        "checked": {
         "fill": [
@@ -3967,9 +3951,11 @@
        "focusable": false,
        "grid_column": "1",
        "grid_row": "1",
-       "height": "100%",
-       "hit_testable": true,
+       "height": 22.0,
+       "hit_testable": null,
        "label": null,
+       "left": 0.0,
+       "position": "absolute",
        "pressed": null,
        "read_only": "!ValueError",
        "role": null,
@@ -3982,6 +3968,7 @@
        ],
        "stroke_width": 2.0,
        "tab_index": 0,
+       "top": 5.0,
        "value": null,
        "visible": true,
        "width": "100%"
@@ -4067,7 +4054,7 @@
        "margin_right": 0,
        "margin_top": 3,
        "position": "absolute",
-       "top": 0,
+       "top": 5,
        "view_box": [
         0,
         0,
@@ -4076,7 +4063,6 @@
        ],
        "width": 16
       },
-      "rank": 0,
       "states": {
        "checked": {
         "fill": [
@@ -4108,7 +4094,7 @@
        "grid_row": "1",
        "height": 16.0,
        "hit_shape": "painted",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "left": 0.0,
        "margin_bottom": 0.0,
@@ -4121,7 +4107,7 @@
        "role": null,
        "selected": null,
        "tab_index": 0,
-       "top": 0.0,
+       "top": 5.0,
        "value": null,
        "view_box": [
         0.0,
@@ -4182,57 +4168,82 @@
     "name": "Toggle@Main_Shell.Main.Top_Bar.T/Root",
     "props": {
      "checked": false,
+     "corner_radius": 999,
      "disabled": false,
      "display": "grid",
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
-     "height": 22,
+     "height": 32,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "label": "t",
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "role": "switch",
      "width": 40
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
      },
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
-     },
-     "hovered": {
-      "opacity": 0.85
-     },
-     "pressed": {
-      "opacity": 0.7
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
      "a11y_hidden": false,
      "checked": false,
+     "corner_radius": 999.0,
      "disabled": false,
      "display": "grid",
      "expanded": null,
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
-     "height": 22.0,
-     "hit_testable": true,
+     "height": 32.0,
+     "hit_testable": null,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "label": "t",
      "pressed": null,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "read_only": "!ValueError",
      "role": "switch",
      "selected": null,
@@ -4270,26 +4281,14 @@
        "opacity": 0.38
       },
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
-      },
-      "hovered": {
-       "opacity": 0.85
-      },
-      "pressed": {
-       "opacity": 0.7
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -4297,12 +4296,7 @@
      "tooltip_gate": false,
      "wired": [
       "On_Click",
-      "focus",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
+      "focus"
      ]
     }
    },
@@ -4345,7 +4339,6 @@
          "stroke_width": 2,
          "width": "100%"
         },
-        "rank": 0,
         "states": {
          "checked": {
           "fill": [
@@ -4378,7 +4371,7 @@
          "grid_column": "1",
          "grid_row": "1",
          "height": "100%",
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -4483,7 +4476,6 @@
          ],
          "width": 18
         },
-        "rank": 0,
         "states": {
          "checked": {
           "opacity": 1
@@ -4506,7 +4498,7 @@
          "grid_row": "1",
          "height": 18.0,
          "hit_shape": "painted",
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "opacity": 0.0,
          "pressed": null,
@@ -4579,7 +4571,6 @@
        "height": 18,
        "width": 18
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -4592,7 +4583,7 @@
        "grid_template_columns": "1fr",
        "grid_template_rows": "1fr",
        "height": 18.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -4652,7 +4643,6 @@
        "text": "Remember",
        "width": "fit-content"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -4668,7 +4658,7 @@
        "focusable": false,
        "font_size": 14.0,
        "height": "fit-content",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -4718,55 +4708,80 @@
     "props": {
      "align_items": "center",
      "checked": false,
+     "corner_radius": 4,
      "disabled": false,
      "display": "flex",
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "gap": 8,
-     "height": 22,
+     "height": 32,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "label": "Remember",
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "role": "checkbox"
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
      },
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
-     },
-     "hovered": {
-      "opacity": 0.85
-     },
-     "pressed": {
-      "opacity": 0.7
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
      "a11y_hidden": false,
      "align_items": "center",
      "checked": false,
+     "corner_radius": 4.0,
      "disabled": false,
      "display": "flex",
      "expanded": null,
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "gap": 8.0,
-     "height": 22.0,
-     "hit_testable": true,
+     "height": 32.0,
+     "hit_testable": null,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "label": "Remember",
      "pressed": null,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "read_only": "!ValueError",
      "role": "checkbox",
      "selected": null,
@@ -4803,26 +4818,14 @@
        "opacity": 0.38
       },
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
-      },
-      "hovered": {
-       "opacity": 0.85
-      },
-      "pressed": {
-       "opacity": 0.7
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -4830,12 +4833,7 @@
      "tooltip_gate": false,
      "wired": [
       "On_Click",
-      "focus",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
+      "focus"
      ]
     }
    },
@@ -4865,7 +4863,6 @@
        "top": 8,
        "width": "100%"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -4887,7 +4884,7 @@
        "grid_column": "1",
        "grid_row": "1",
        "height": 4.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "left": 0.0,
        "position": "absolute",
@@ -4958,7 +4955,6 @@
        "top": 8,
        "width": 0
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "fill": [
@@ -4985,7 +4981,7 @@
        "grid_column": "1",
        "grid_row": "1",
        "height": 4.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "left": 0.0,
        "position": "absolute",
@@ -5076,7 +5072,6 @@
        ],
        "width": 16
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "fill": [
@@ -5121,7 +5116,7 @@
        "grid_row": "1",
        "height": 16.0,
        "hit_shape": "painted",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "left": 0.0,
        "position": "absolute",
@@ -5230,23 +5225,16 @@
      "value_step": 5,
      "width": 160
     },
-    "rank": 0,
     "states": {
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
@@ -5259,7 +5247,7 @@
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
      "height": 20.0,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": "Volume",
      "pressed": null,
      "read_only": "!ValueError",
@@ -5302,20 +5290,14 @@
      "shown": {},
      "states": {
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -5359,7 +5341,6 @@
        "top": 8,
        "width": "100%"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -5381,7 +5362,7 @@
        "grid_column": "1",
        "grid_row": "1",
        "height": 4.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "left": 0.0,
        "position": "absolute",
@@ -5456,7 +5437,6 @@
        "top": 8,
        "width": 0
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "fill": [
@@ -5483,7 +5463,7 @@
        "grid_column": "1",
        "grid_row": "1",
        "height": 4.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "left": 0.0,
        "position": "absolute",
@@ -5588,7 +5568,6 @@
        ],
        "width": 16
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "fill": [
@@ -5633,7 +5612,7 @@
        "grid_row": "1",
        "height": 16.0,
        "hit_shape": "painted",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "left": 0.0,
        "position": "absolute",
@@ -5756,23 +5735,16 @@
      "value_step": 1,
      "width": 160
     },
-    "rank": 0,
     "states": {
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
@@ -5785,7 +5757,7 @@
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
      "height": 20.0,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": "",
      "pressed": null,
      "read_only": "!ValueError",
@@ -5828,20 +5800,14 @@
      "shown": {},
      "states": {
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -5954,8 +5920,20 @@
      43,
      255
     ],
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "justify_content": "center",
     "label": "a",
     "min_width": 32,
@@ -5963,6 +5941,12 @@
     "padding_left": 12,
     "padding_right": 12,
     "padding_top": 0,
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "button",
     "stroke_color": [
      85,
@@ -6015,13 +5999,32 @@
    },
    "Toggle@Main_Shell.Main.Top_Bar.Toggle_1/Root": {
     "checked": false,
+    "corner_radius": 999,
     "disabled": false,
     "display": "grid",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
-    "height": 22,
+    "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "",
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "switch",
     "width": 40
    },
@@ -6045,7 +6048,7 @@
     "margin_right": 0,
     "margin_top": 3,
     "position": "absolute",
-    "top": 0,
+    "top": 5,
     "view_box": [
      0,
      0,
@@ -6065,7 +6068,9 @@
     ],
     "grid_column": 1,
     "grid_row": 1,
-    "height": "100%",
+    "height": 22,
+    "left": 0,
+    "position": "absolute",
     "stroke_color": [
      85,
      101,
@@ -6073,6 +6078,7 @@
      255
     ],
     "stroke_width": 2,
+    "top": 5,
     "width": "100%"
    }
   },
@@ -6105,7 +6111,6 @@
          "text": "a",
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -6121,7 +6126,7 @@
          "focusable": false,
          "font_size": 14.0,
          "height": "fit-content",
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -6179,8 +6184,20 @@
         43,
         255
        ],
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "focusable": true,
        "height": 32,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "justify_content": "center",
        "label": "a",
        "min_width": 32,
@@ -6188,6 +6205,12 @@
        "padding_left": 12,
        "padding_right": 12,
        "padding_top": 0,
+       "pressed_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "role": "button",
        "stroke_color": [
         85,
@@ -6197,48 +6220,19 @@
        ],
        "stroke_width": 1
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
        },
        "focused": {
-        "shadows": [
-         [
-          [
-           91,
-           151,
-           201,
-           255
-          ],
-          0,
-          0,
-          0,
-          2
-         ]
-        ]
-       },
-       "hovered": {
-        "stroke_color": [
+        "outline_color": [
          91,
          151,
          201,
-         255
-        ]
-       },
-       "pressed": {
-        "fill": [
-         85,
-         101,
-         122,
          255
         ],
-        "stroke_color": [
-         91,
-         151,
-         201,
-         255
-        ]
+        "outline_offset": 2,
+        "outline_width": 3
        }
       },
       "tre": {
@@ -6255,9 +6249,21 @@
         43,
         255
        ],
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "focusable": false,
        "height": 32.0,
-       "hit_testable": true,
+       "hit_testable": null,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "justify_content": "center",
        "label": "a",
        "min_width": 32.0,
@@ -6266,6 +6272,12 @@
        "padding_right": 12.0,
        "padding_top": 0.0,
        "pressed": null,
+       "pressed_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "read_only": "!ValueError",
        "role": "button",
        "selected": null,
@@ -6309,42 +6321,14 @@
          "opacity": 0.38
         },
         "focused": {
-         "shadows": [
-          [
-           [
-            91,
-            151,
-            201,
-            255
-           ],
-           0,
-           0,
-           0,
-           2
-          ]
-         ]
-        },
-        "hovered": {
-         "stroke_color": [
+         "outline_color": [
           91,
           151,
           201,
-          255
-         ]
-        },
-        "pressed": {
-         "fill": [
-          85,
-          101,
-          122,
           255
          ],
-         "stroke_color": [
-          91,
-          151,
-          201,
-          255
-         ]
+         "outline_offset": 2,
+         "outline_width": 3
         }
        },
        "tip_auto": false,
@@ -6353,12 +6337,7 @@
        "wired": [
         "On_Click",
         "focus",
-        "keys",
-        "state:pointer_cancel",
-        "state:pointer_down",
-        "state:pointer_enter",
-        "state:pointer_leave",
-        "state:pointer_up"
+        "keys"
        ]
       }
      },
@@ -6385,7 +6364,6 @@
          "text": "b",
          "wrap": "none"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
@@ -6404,7 +6382,7 @@
          ],
          "focusable": false,
          "font_size": 14.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": "b",
          "overflow": "ellipsis",
          "pressed": null,
@@ -6477,7 +6455,9 @@
            ],
            "grid_column": 1,
            "grid_row": 1,
-           "height": "100%",
+           "height": 22,
+           "left": 0,
+           "position": "absolute",
            "stroke_color": [
             85,
             101,
@@ -6485,9 +6465,9 @@
             255
            ],
            "stroke_width": 2,
+           "top": 5,
            "width": "100%"
           },
-          "rank": 0,
           "states": {
            "checked": {
             "fill": [
@@ -6519,9 +6499,11 @@
            "focusable": false,
            "grid_column": "1",
            "grid_row": "1",
-           "height": "100%",
-           "hit_testable": true,
+           "height": 22.0,
+           "hit_testable": null,
            "label": null,
+           "left": 0.0,
+           "position": "absolute",
            "pressed": null,
            "read_only": "!ValueError",
            "role": null,
@@ -6534,6 +6516,7 @@
            ],
            "stroke_width": 2.0,
            "tab_index": 0,
+           "top": 5.0,
            "value": null,
            "visible": true,
            "width": "100%"
@@ -6619,7 +6602,7 @@
            "margin_right": 0,
            "margin_top": 3,
            "position": "absolute",
-           "top": 0,
+           "top": 5,
            "view_box": [
             0,
             0,
@@ -6628,7 +6611,6 @@
            ],
            "width": 16
           },
-          "rank": 0,
           "states": {
            "checked": {
             "fill": [
@@ -6660,7 +6642,7 @@
            "grid_row": "1",
            "height": 16.0,
            "hit_shape": "painted",
-           "hit_testable": true,
+           "hit_testable": null,
            "label": null,
            "left": 0.0,
            "margin_bottom": 0.0,
@@ -6673,7 +6655,7 @@
            "role": null,
            "selected": null,
            "tab_index": 0,
-           "top": 0.0,
+           "top": 5.0,
            "value": null,
            "view_box": [
             0.0,
@@ -6734,57 +6716,82 @@
         "name": "Toggle@Main_Shell.Main.Top_Bar.Toggle_1/Root",
         "props": {
          "checked": false,
+         "corner_radius": 999,
          "disabled": false,
          "display": "grid",
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "focusable": true,
          "grid_template_columns": "1fr",
          "grid_template_rows": "1fr",
-         "height": 22,
+         "height": 32,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "label": "",
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "role": "switch",
          "width": 40
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
          },
          "focused": {
-          "shadows": [
-           [
-            [
-             91,
-             151,
-             201,
-             255
-            ],
-            0,
-            0,
-            0,
-            2
-           ]
-          ]
-         },
-         "hovered": {
-          "opacity": 0.85
-         },
-         "pressed": {
-          "opacity": 0.7
+          "outline_color": [
+           91,
+           151,
+           201,
+           255
+          ],
+          "outline_offset": 2,
+          "outline_width": 3
          }
         },
         "tre": {
          "a11y_hidden": false,
          "checked": false,
+         "corner_radius": 999.0,
          "disabled": false,
          "display": "grid",
          "expanded": null,
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "focusable": false,
          "grid_template_columns": "1fr",
          "grid_template_rows": "1fr",
-         "height": 22.0,
-         "hit_testable": true,
+         "height": 32.0,
+         "hit_testable": null,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "label": "",
          "pressed": null,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "read_only": "!ValueError",
          "role": "switch",
          "selected": null,
@@ -6820,26 +6827,14 @@
            "opacity": 0.38
           },
           "focused": {
-           "shadows": [
-            [
-             [
-              91,
-              151,
-              201,
-              255
-             ],
-             0,
-             0,
-             0,
-             2
-            ]
-           ]
-          },
-          "hovered": {
-           "opacity": 0.85
-          },
-          "pressed": {
-           "opacity": 0.7
+           "outline_color": [
+            91,
+            151,
+            201,
+            255
+           ],
+           "outline_offset": 2,
+           "outline_width": 3
           }
          },
          "tip_auto": false,
@@ -6847,12 +6842,7 @@
          "tooltip_gate": false,
          "wired": [
           "On_Click",
-          "focus",
-          "state:pointer_cancel",
-          "state:pointer_down",
-          "state:pointer_enter",
-          "state:pointer_leave",
-          "state:pointer_up"
+          "focus"
          ]
         }
        }
@@ -6866,7 +6856,6 @@
        "disabled": false,
        "display": "flex"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -6875,7 +6864,7 @@
        "display": "flex",
        "expanded": null,
        "focusable": false,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -6897,7 +6886,6 @@
      "disabled": true,
      "display": "flex"
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -6906,7 +6894,7 @@
      "display": "flex",
      "expanded": null,
      "focusable": false,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
      "pressed": null,
      "read_only": "!ValueError",
@@ -6962,23 +6950,16 @@
      "focusable": true,
      "role": "button"
     },
-    "rank": 2,
     "states": {
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
@@ -6988,13 +6969,13 @@
      "display": "flex",
      "expanded": null,
      "focusable": true,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
      "pressed": null,
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
-     "tab_index": 2,
+     "tab_index": 0,
      "value": null,
      "visible": true
     },
@@ -7022,20 +7003,14 @@
      "shown": {},
      "states": {
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -7060,23 +7035,16 @@
      "focusable": true,
      "role": "button"
     },
-    "rank": 1,
     "states": {
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
@@ -7086,13 +7054,13 @@
      "display": "flex",
      "expanded": null,
      "focusable": true,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
      "pressed": null,
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
-     "tab_index": 1,
+     "tab_index": 0,
      "value": null,
      "visible": true
     },
@@ -7120,20 +7088,14 @@
      "shown": {},
      "states": {
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -7168,7 +7130,6 @@
        "text": "h",
        "wrap": "none"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -7187,7 +7148,7 @@
        ],
        "focusable": false,
        "font_size": 14.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": "h",
        "overflow": "ellipsis",
        "pressed": null,
@@ -7244,7 +7205,6 @@
      "display": "flex",
      "visible": false
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -7253,7 +7213,7 @@
      "display": "?",
      "expanded": null,
      "focusable": false,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
      "pressed": null,
      "read_only": "!ValueError",
@@ -7531,7 +7491,6 @@
        "width": 80,
        "wrap": "none"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
@@ -7551,7 +7510,7 @@
        ],
        "focusable": false,
        "font_size": 14.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": "Hello",
        "overflow": "ellipsis",
        "pressed": null,
@@ -7608,7 +7567,6 @@
      "disabled": false,
      "display": "flex"
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -7617,7 +7575,7 @@
      "display": "flex",
      "expanded": null,
      "focusable": false,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
      "pressed": null,
      "read_only": "!ValueError",
@@ -7689,7 +7647,6 @@
      "text": "x",
      "wrap": "none"
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -7708,7 +7665,7 @@
      ],
      "focusable": false,
      "font_size": 14.0,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": "x",
      "overflow": "ellipsis",
      "pressed": null,
@@ -7785,7 +7742,6 @@
        "height": "100%",
        "width": "100%"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -7803,7 +7759,7 @@
        "grid_column": "1",
        "grid_row": "1",
        "height": "100%",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -7870,7 +7826,6 @@
        "height": "100%",
        "width": "50%"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "fill": [
@@ -7897,7 +7852,7 @@
        "grid_column": "1",
        "grid_row": "1",
        "height": "100%",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -7966,7 +7921,6 @@
      "value_min": 0,
      "width": 160
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -7983,7 +7937,7 @@
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
      "height": 8.0,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": "Upload",
      "pressed": null,
      "read_only": "!ValueError",
@@ -8051,7 +8005,6 @@
        "text": "7",
        "visible": true
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -8067,7 +8020,7 @@
        "focusable": false,
        "font_size": 12.0,
        "font_weight": 500.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -8135,7 +8088,6 @@
      "visible": true,
      "width": "auto"
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -8157,7 +8109,7 @@
      ],
      "focusable": false,
      "height": 16.0,
-     "hit_testable": true,
+     "hit_testable": null,
      "justify_content": "center",
      "label": null,
      "min_width": 16.0,
@@ -8229,7 +8181,6 @@
        "text": "0",
        "visible": false
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -8245,7 +8196,7 @@
        "focusable": false,
        "font_size": 12.0,
        "font_weight": 500.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -8313,7 +8264,6 @@
      "visible": true,
      "width": 6
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -8335,7 +8285,7 @@
      ],
      "focusable": false,
      "height": 6.0,
-     "hit_testable": true,
+     "hit_testable": null,
      "justify_content": "center",
      "label": null,
      "min_width": 6.0,
@@ -8407,7 +8357,6 @@
        ],
        "width": 24
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": true,
@@ -8416,7 +8365,7 @@
        "expanded": null,
        "focusable": false,
        "height": 24.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -8451,7 +8400,6 @@
      "justify_content": "center",
      "width": 24
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -8466,7 +8414,7 @@
      "expanded": null,
      "focusable": false,
      "height": 24.0,
-     "hit_testable": true,
+     "hit_testable": null,
      "justify_content": "center",
      "label": null,
      "pressed": null,
@@ -8534,7 +8482,6 @@
        "text": "a very long text that does not fit in a hundred pixels",
        "wrap": "none"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -8550,7 +8497,7 @@
        "flex_shrink": 0.0,
        "focusable": false,
        "font_size": 14.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "overflow": "clip",
        "pressed": null,
@@ -8606,7 +8553,6 @@
      "min_width": 0,
      "width": 100
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -8620,7 +8566,7 @@
      "disabled": false,
      "expanded": null,
      "focusable": false,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": "a very long text that does not fit in a hundred pixels",
      "min_width": 0.0,
      "pressed": null,
@@ -8700,7 +8646,6 @@
        "text": "fits",
        "wrap": "none"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -8716,7 +8661,7 @@
        "flex_shrink": 0.0,
        "focusable": false,
        "font_size": 14.0,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "overflow": "clip",
        "pressed": null,
@@ -8772,7 +8717,6 @@
      "min_width": 0,
      "width": 100
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
@@ -8786,7 +8730,7 @@
      "disabled": true,
      "expanded": null,
      "focusable": false,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": "fits",
      "min_width": 0.0,
      "pressed": null,
@@ -8922,8 +8866,20 @@
      43,
      255
     ],
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "justify_content": "center",
     "label": "g",
     "min_width": 32,
@@ -8931,6 +8887,12 @@
     "padding_left": 12,
     "padding_right": 12,
     "padding_top": 0,
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "button",
     "stroke_color": [
      85,
@@ -8965,10 +8927,10 @@
     ],
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
-    "padding_bottom": 6,
-    "padding_left": 10,
-    "padding_right": 10,
-    "padding_top": 6,
+    "padding_bottom": 8,
+    "padding_left": 8,
+    "padding_right": 8,
+    "padding_top": 8,
     "stroke_color": [
      85,
      101,
@@ -9030,10 +8992,10 @@
     ],
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
-    "padding_bottom": 6,
-    "padding_left": 10,
-    "padding_right": 10,
-    "padding_top": 6,
+    "padding_bottom": 8,
+    "padding_left": 8,
+    "padding_right": 8,
+    "padding_top": 8,
     "stroke_color": [
      85,
      101,
@@ -9080,10 +9042,10 @@
     ],
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
-    "padding_bottom": 6,
-    "padding_left": 10,
-    "padding_right": 10,
-    "padding_top": 6,
+    "padding_bottom": 8,
+    "padding_left": 8,
+    "padding_right": 8,
+    "padding_top": 8,
     "stroke_color": [
      85,
      101,
@@ -9148,7 +9110,6 @@
          "text": "x",
          "wrap": "none"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -9210,7 +9171,6 @@
          "text": "abc",
          "top": 0
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -9226,7 +9186,7 @@
          ],
          "focusable": true,
          "font_size": 14.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": "p",
          "left": 0.0,
          "max_length": null,
@@ -9292,7 +9252,6 @@
        "grid_column": 1,
        "grid_row": 1
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -9303,7 +9262,7 @@
        "focusable": false,
        "grid_column": "1",
        "grid_row": "1",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -9333,10 +9292,10 @@
      ],
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
-     "padding_bottom": 6,
-     "padding_left": 10,
-     "padding_right": 10,
-     "padding_top": 6,
+     "padding_bottom": 8,
+     "padding_left": 8,
+     "padding_right": 8,
+     "padding_top": 8,
      "stroke_color": [
       85,
       101,
@@ -9346,26 +9305,19 @@
      "stroke_width": 1,
      "width": 240
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
      },
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      },
      "hovered": {
       "stroke_color": [
@@ -9392,12 +9344,12 @@
      "focusable": false,
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
-     "padding_bottom": 6.0,
-     "padding_left": 10.0,
-     "padding_right": 10.0,
-     "padding_top": 6.0,
+     "padding_bottom": 8.0,
+     "padding_left": 8.0,
+     "padding_right": 8.0,
+     "padding_top": 8.0,
      "pressed": null,
      "read_only": "!ValueError",
      "role": null,
@@ -9446,20 +9398,14 @@
        "opacity": 0.38
       },
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       },
       "hovered": {
        "stroke_color": [
@@ -9505,7 +9451,6 @@
        "text": "g",
        "width": "fit-content"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -9521,7 +9466,7 @@
        "focusable": false,
        "font_size": 14.0,
        "height": "fit-content",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -9579,8 +9524,20 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "height": 32,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "g",
      "min_width": 32,
@@ -9588,6 +9545,12 @@
      "padding_left": 12,
      "padding_right": 12,
      "padding_top": 0,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "role": "button",
      "stroke_color": [
       85,
@@ -9597,48 +9560,19 @@
      ],
      "stroke_width": 1
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
      },
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
-     },
-     "hovered": {
-      "stroke_color": [
+      "outline_color": [
        91,
        151,
        201,
-       255
-      ]
-     },
-     "pressed": {
-      "fill": [
-       85,
-       101,
-       122,
        255
       ],
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
@@ -9655,9 +9589,21 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "height": 32.0,
-     "hit_testable": true,
+     "hit_testable": null,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "g",
      "min_width": 32.0,
@@ -9666,6 +9612,12 @@
      "padding_right": 12.0,
      "padding_top": 0.0,
      "pressed": null,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
@@ -9707,42 +9659,14 @@
        "opacity": 0.38
       },
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
-      },
-      "hovered": {
-       "stroke_color": [
+       "outline_color": [
         91,
         151,
         201,
-        255
-       ]
-      },
-      "pressed": {
-       "fill": [
-        85,
-        101,
-        122,
         255
        ],
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -9750,12 +9674,7 @@
      "tooltip_gate": false,
      "wired": [
       "focus",
-      "keys",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
+      "keys"
      ]
     }
    },
@@ -9785,7 +9704,6 @@
          "text": "x\nx\nx\nx",
          "wrap": "none"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -9874,7 +9792,6 @@
          "top": 0,
          "wrap": "word"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -9890,7 +9807,7 @@
          ],
          "focusable": true,
          "font_size": 14.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": "",
          "left": 0.0,
          "max_length": null,
@@ -9956,7 +9873,6 @@
        "grid_column": 1,
        "grid_row": 1
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -9967,7 +9883,7 @@
        "focusable": false,
        "grid_column": "1",
        "grid_row": "1",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -9997,10 +9913,10 @@
      ],
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
-     "padding_bottom": 6,
-     "padding_left": 10,
-     "padding_right": 10,
-     "padding_top": 6,
+     "padding_bottom": 8,
+     "padding_left": 8,
+     "padding_right": 8,
+     "padding_top": 8,
      "stroke_color": [
       85,
       101,
@@ -10010,26 +9926,19 @@
      "stroke_width": 1,
      "width": 320
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
      },
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      },
      "hovered": {
       "stroke_color": [
@@ -10056,12 +9965,12 @@
      "focusable": false,
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
-     "padding_bottom": 6.0,
-     "padding_left": 10.0,
-     "padding_right": 10.0,
-     "padding_top": 6.0,
+     "padding_bottom": 8.0,
+     "padding_left": 8.0,
+     "padding_right": 8.0,
+     "padding_top": 8.0,
      "pressed": null,
      "read_only": "!ValueError",
      "role": null,
@@ -10110,20 +10019,14 @@
        "opacity": 0.38
       },
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       },
       "hovered": {
        "stroke_color": [
@@ -10173,7 +10076,6 @@
          "text": "x",
          "wrap": "none"
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -10235,7 +10137,6 @@
          "text": "y",
          "top": 0
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -10317,7 +10218,6 @@
        "grid_column": 1,
        "grid_row": 1
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -10328,7 +10228,7 @@
        "focusable": false,
        "grid_column": "1",
        "grid_row": "1",
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -10358,10 +10258,10 @@
      ],
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
-     "padding_bottom": 6,
-     "padding_left": 10,
-     "padding_right": 10,
-     "padding_top": 6,
+     "padding_bottom": 8,
+     "padding_left": 8,
+     "padding_right": 8,
+     "padding_top": 8,
      "stroke_color": [
       85,
       101,
@@ -10371,26 +10271,19 @@
      "stroke_width": 1,
      "width": 240
     },
-    "rank": 0,
     "states": {
      "disabled": {
       "opacity": 0.38
      },
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      },
      "hovered": {
       "stroke_color": [
@@ -10417,12 +10310,12 @@
      "focusable": false,
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
-     "hit_testable": true,
+     "hit_testable": null,
      "label": null,
-     "padding_bottom": 6.0,
-     "padding_left": 10.0,
-     "padding_right": 10.0,
-     "padding_top": 6.0,
+     "padding_bottom": 8.0,
+     "padding_left": 8.0,
+     "padding_right": 8.0,
+     "padding_top": 8.0,
      "pressed": null,
      "read_only": "!ValueError",
      "role": null,
@@ -10475,20 +10368,14 @@
        "opacity": 0.38
       },
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       },
       "hovered": {
        "stroke_color": [
@@ -10597,9 +10484,39 @@
     "disabled": false,
     "focusable": true,
     "height": 90,
+    "key_line": 40,
     "label": "Files",
     "orientation": "vertical",
+    "page_fraction": 0.9,
     "role": "list",
+    "scrollbar_fill": [
+     159,
+     174,
+     191,
+     255
+    ],
+    "scrollbar_fill_drag": [
+     159,
+     174,
+     191,
+     255
+    ],
+    "scrollbar_fill_hover": [
+     159,
+     174,
+     191,
+     255
+    ],
+    "scrollbar_gutter": 12,
+    "scrollbar_hit_width": 12,
+    "scrollbar_margin": 2,
+    "scrollbar_min_length": 32,
+    "scrollbar_opacity": 0.7,
+    "scrollbar_opacity_drag": 1.0,
+    "scrollbar_opacity_hover": 0.8,
+    "scrollbar_radius": 4,
+    "scrollbar_width": 8,
+    "wheel_notch": 40,
     "width": 240
    },
    "Menu@Main_Shell.Main.Top_Bar.Menu_1/Root": {
@@ -10658,12 +10575,24 @@
     "corner_radius": 4,
     "disabled": false,
     "display": "flex",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "gap": 8,
-    "height": 28,
+    "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "New",
     "padding_bottom": 0,
-    "padding_left": 10,
-    "padding_right": 10,
+    "padding_left": 8,
+    "padding_right": 8,
     "padding_top": 0,
     "role": "menuitem"
    },
@@ -10737,8 +10666,20 @@
     "corner_radius": 4,
     "disabled": false,
     "display": "flex",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "gap": 8,
     "height": 9,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "",
     "padding_bottom": 0,
     "padding_left": 4,
@@ -10816,12 +10757,24 @@
     "corner_radius": 4,
     "disabled": false,
     "display": "flex",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "gap": 8,
-    "height": 28,
+    "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "Open",
     "padding_bottom": 0,
-    "padding_left": 10,
-    "padding_right": 10,
+    "padding_left": 8,
+    "padding_right": 8,
     "padding_top": 0,
     "role": "menuitem"
    },
@@ -10887,7 +10840,6 @@
            "text": "Entry 1",
            "width": "fit-content"
           },
-          "rank": 0,
           "states": {},
           "tre": {
            "a11y_hidden": false,
@@ -10903,7 +10855,7 @@
            "focusable": false,
            "font_size": 14.0,
            "height": "fit-content",
-           "hit_testable": true,
+           "hit_testable": null,
            "label": null,
            "pressed": null,
            "read_only": "!ValueError",
@@ -10927,24 +10879,33 @@
          "corner_radius": 4,
          "disabled": false,
          "display": "flex",
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "height": 30,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
-         "padding_top": 6
+         "padding_top": 6,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ]
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
-         },
-         "hovered": {
-          "fill": [
-           85,
-           101,
-           122,
-           255
-          ]
          },
          "selected": {
           "fill": [
@@ -10969,15 +10930,33 @@
          "disabled": false,
          "display": "flex",
          "expanded": null,
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "focusable": false,
          "height": 30.0,
-         "hit_testable": true,
+         "hit_testable": null,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
          "padding_right": 10.0,
          "padding_top": 6.0,
          "pressed": null,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "read_only": "!ValueError",
          "role": "listitem",
          "selected": false,
@@ -11011,14 +10990,6 @@
           "disabled": {
            "opacity": 0.38
           },
-          "hovered": {
-           "fill": [
-            85,
-            101,
-            122,
-            255
-           ]
-          },
           "selected": {
            "fill": [
             27,
@@ -11038,13 +11009,7 @@
          "tip_auto": false,
          "tip_key": false,
          "tooltip_gate": false,
-         "wired": [
-          "state:pointer_cancel",
-          "state:pointer_down",
-          "state:pointer_enter",
-          "state:pointer_leave",
-          "state:pointer_up"
-         ]
+         "wired": []
         }
        },
        {
@@ -11069,7 +11034,6 @@
            "text": "Entry 2",
            "width": "fit-content"
           },
-          "rank": 0,
           "states": {},
           "tre": {
            "a11y_hidden": false,
@@ -11085,7 +11049,7 @@
            "focusable": false,
            "font_size": 14.0,
            "height": "fit-content",
-           "hit_testable": true,
+           "hit_testable": null,
            "label": null,
            "pressed": null,
            "read_only": "!ValueError",
@@ -11109,24 +11073,33 @@
          "corner_radius": 4,
          "disabled": false,
          "display": "flex",
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "height": 30,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
-         "padding_top": 6
+         "padding_top": 6,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ]
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
-         },
-         "hovered": {
-          "fill": [
-           85,
-           101,
-           122,
-           255
-          ]
          },
          "selected": {
           "fill": [
@@ -11151,15 +11124,33 @@
          "disabled": false,
          "display": "flex",
          "expanded": null,
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "focusable": false,
          "height": 30.0,
-         "hit_testable": true,
+         "hit_testable": null,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
          "padding_right": 10.0,
          "padding_top": 6.0,
          "pressed": null,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "read_only": "!ValueError",
          "role": "listitem",
          "selected": false,
@@ -11193,14 +11184,6 @@
           "disabled": {
            "opacity": 0.38
           },
-          "hovered": {
-           "fill": [
-            85,
-            101,
-            122,
-            255
-           ]
-          },
           "selected": {
            "fill": [
             27,
@@ -11220,13 +11203,7 @@
          "tip_auto": false,
          "tip_key": false,
          "tooltip_gate": false,
-         "wired": [
-          "state:pointer_cancel",
-          "state:pointer_down",
-          "state:pointer_enter",
-          "state:pointer_leave",
-          "state:pointer_up"
-         ]
+         "wired": []
         }
        },
        {
@@ -11251,7 +11228,6 @@
            "text": "Entry 3",
            "width": "fit-content"
           },
-          "rank": 0,
           "states": {},
           "tre": {
            "a11y_hidden": false,
@@ -11267,7 +11243,7 @@
            "focusable": false,
            "font_size": 14.0,
            "height": "fit-content",
-           "hit_testable": true,
+           "hit_testable": null,
            "label": null,
            "pressed": null,
            "read_only": "!ValueError",
@@ -11291,24 +11267,33 @@
          "corner_radius": 4,
          "disabled": false,
          "display": "flex",
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "height": 30,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
-         "padding_top": 6
+         "padding_top": 6,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ]
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
-         },
-         "hovered": {
-          "fill": [
-           85,
-           101,
-           122,
-           255
-          ]
          },
          "selected": {
           "fill": [
@@ -11333,15 +11318,33 @@
          "disabled": false,
          "display": "flex",
          "expanded": null,
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "focusable": false,
          "height": 30.0,
-         "hit_testable": true,
+         "hit_testable": null,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
          "padding_right": 10.0,
          "padding_top": 6.0,
          "pressed": null,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "read_only": "!ValueError",
          "role": "listitem",
          "selected": false,
@@ -11375,14 +11378,6 @@
           "disabled": {
            "opacity": 0.38
           },
-          "hovered": {
-           "fill": [
-            85,
-            101,
-            122,
-            255
-           ]
-          },
           "selected": {
            "fill": [
             27,
@@ -11402,13 +11397,7 @@
          "tip_auto": false,
          "tip_key": false,
          "tooltip_gate": false,
-         "wired": [
-          "state:pointer_cancel",
-          "state:pointer_down",
-          "state:pointer_enter",
-          "state:pointer_leave",
-          "state:pointer_up"
-         ]
+         "wired": []
         }
        }
       ],
@@ -11423,7 +11412,6 @@
        "display": "flex",
        "flex_direction": "vertical"
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": false,
@@ -11434,7 +11422,7 @@
        "expanded": null,
        "flex_direction": "vertical",
        "focusable": false,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "pressed": null,
        "read_only": "!ValueError",
@@ -11483,28 +11471,51 @@
      "disabled": false,
      "focusable": true,
      "height": 90,
+     "key_line": 40,
      "label": "Files",
      "orientation": "vertical",
+     "page_fraction": 0.9,
      "role": "list",
+     "scrollbar_fill": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_fill_drag": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_fill_hover": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_gutter": 12,
+     "scrollbar_hit_width": 12,
+     "scrollbar_margin": 2,
+     "scrollbar_min_length": 32,
+     "scrollbar_opacity": 0.7,
+     "scrollbar_opacity_drag": 1.0,
+     "scrollbar_opacity_hover": 0.8,
+     "scrollbar_radius": 4,
+     "scrollbar_width": 8,
+     "wheel_notch": 40,
      "width": 240
     },
-    "rank": 0,
     "states": {
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
@@ -11514,16 +11525,46 @@
      "expanded": null,
      "focusable": true,
      "height": 90.0,
-     "hit_testable": true,
+     "hit_testable": null,
+     "key_line": 40.0,
      "label": "Files",
      "orientation": "vertical",
+     "page_fraction": 0.9,
      "pressed": null,
      "read_only": "!ValueError",
      "role": "list",
+     "scrollbar_fill": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_fill_drag": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_fill_hover": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_gutter": 12.0,
+     "scrollbar_hit_width": 12.0,
+     "scrollbar_margin": 2.0,
+     "scrollbar_min_length": 32.0,
+     "scrollbar_opacity": 0.7,
+     "scrollbar_opacity_drag": 1.0,
+     "scrollbar_opacity_hover": 0.8,
+     "scrollbar_radius": 4.0,
+     "scrollbar_width": 8.0,
      "selected": null,
      "tab_index": 0,
      "value": null,
      "visible": true,
+     "wheel_notch": 40.0,
      "width": 240.0
     },
     "wire": {
@@ -11552,20 +11593,14 @@
      "shown": {},
      "states": {
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -11600,7 +11635,6 @@
          "height": 1,
          "visible": false
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -11616,7 +11650,7 @@
          "flex_grow": 1.0,
          "focusable": false,
          "height": 1.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -11672,7 +11706,6 @@
          "visible": true,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -11685,7 +11718,7 @@
          "grid_template_columns": "1fr",
          "grid_template_rows": "1fr",
          "height": 16.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -11747,7 +11780,6 @@
          "visible": true,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -11773,7 +11805,7 @@
          "focusable": false,
          "font_size": 14.0,
          "height": "fit-content",
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -11850,7 +11882,6 @@
          "visible": false,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -11875,7 +11906,7 @@
          "focusable": false,
          "font_size": 14.0,
          "height": "fit-content",
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -11952,7 +11983,6 @@
          "visible": false,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -11961,7 +11991,7 @@
          "expanded": null,
          "focusable": false,
          "height": 16.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -12019,27 +12049,30 @@
        "corner_radius": 4,
        "disabled": false,
        "display": "flex",
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "gap": 8,
-       "height": 28,
+       "height": 32,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "New",
        "padding_bottom": 0,
-       "padding_left": 10,
-       "padding_right": 10,
+       "padding_left": 8,
+       "padding_right": 8,
        "padding_top": 0,
        "role": "menuitem"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
-       },
-       "hovered": {
-        "fill": [
-         85,
-         101,
-         122,
-         255
-        ]
        },
        "pressed": {
         "fill": [
@@ -12058,14 +12091,26 @@
        "disabled": false,
        "display": "flex",
        "expanded": null,
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "focusable": false,
        "gap": 8.0,
-       "height": 28.0,
-       "hit_testable": true,
+       "height": 32.0,
+       "hit_testable": null,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "New",
        "padding_bottom": 0.0,
-       "padding_left": 10.0,
-       "padding_right": 10.0,
+       "padding_left": 8.0,
+       "padding_right": 8.0,
        "padding_top": 0.0,
        "pressed": null,
        "read_only": "!ValueError",
@@ -12105,14 +12150,6 @@
        "states": {
         "disabled": {
          "opacity": 0.38
-        },
-        "hovered": {
-         "fill": [
-          85,
-          101,
-          122,
-          255
-         ]
         },
         "pressed": {
          "fill": [
@@ -12158,7 +12195,6 @@
          "height": 1,
          "visible": true
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -12174,7 +12210,7 @@
          "flex_grow": 1.0,
          "focusable": false,
          "height": 1.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -12230,7 +12266,6 @@
          "visible": false,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -12243,7 +12278,7 @@
          "grid_template_columns": "1fr",
          "grid_template_rows": "1fr",
          "height": 16.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -12305,7 +12340,6 @@
          "visible": false,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -12331,7 +12365,7 @@
          "focusable": false,
          "font_size": 14.0,
          "height": "fit-content",
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -12408,7 +12442,6 @@
          "visible": false,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -12433,7 +12466,7 @@
          "focusable": false,
          "font_size": 14.0,
          "height": "fit-content",
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -12510,7 +12543,6 @@
          "visible": false,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -12519,7 +12551,7 @@
          "expanded": null,
          "focusable": false,
          "height": 16.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -12577,8 +12609,20 @@
        "corner_radius": 4,
        "disabled": false,
        "display": "flex",
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "gap": 8,
        "height": 9,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "",
        "padding_bottom": 0,
        "padding_left": 4,
@@ -12586,18 +12630,9 @@
        "padding_top": 0,
        "role": "separator"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
-       },
-       "hovered": {
-        "fill": [
-         85,
-         101,
-         122,
-         255
-        ]
        },
        "pressed": {
         "fill": [
@@ -12616,10 +12651,22 @@
        "disabled": false,
        "display": "flex",
        "expanded": null,
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "focusable": false,
        "gap": 8.0,
        "height": 9.0,
-       "hit_testable": true,
+       "hit_testable": null,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "",
        "padding_bottom": 0.0,
        "padding_left": 4.0,
@@ -12664,14 +12711,6 @@
         "disabled": {
          "opacity": 0.38
         },
-        "hovered": {
-         "fill": [
-          85,
-          101,
-          122,
-          255
-         ]
-        },
         "pressed": {
          "fill": [
           91,
@@ -12715,7 +12754,6 @@
          "height": 1,
          "visible": false
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -12731,7 +12769,7 @@
          "flex_grow": 1.0,
          "focusable": false,
          "height": 1.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -12787,7 +12825,6 @@
          "visible": true,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": false,
@@ -12800,7 +12837,7 @@
          "grid_template_columns": "1fr",
          "grid_template_rows": "1fr",
          "height": 16.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -12862,7 +12899,6 @@
          "visible": true,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -12888,7 +12924,7 @@
          "focusable": false,
          "font_size": 14.0,
          "height": "fit-content",
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -12965,7 +13001,6 @@
          "visible": false,
          "width": "fit-content"
         },
-        "rank": 0,
         "states": {
          "pressed": {
           "fill": [
@@ -12990,7 +13025,7 @@
          "focusable": false,
          "font_size": 14.0,
          "height": "fit-content",
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -13067,7 +13102,6 @@
          "visible": false,
          "width": 16
         },
-        "rank": 0,
         "states": {},
         "tre": {
          "a11y_hidden": true,
@@ -13076,7 +13110,7 @@
          "expanded": null,
          "focusable": false,
          "height": 16.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": null,
          "pressed": null,
          "read_only": "!ValueError",
@@ -13134,27 +13168,30 @@
        "corner_radius": 4,
        "disabled": false,
        "display": "flex",
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "gap": 8,
-       "height": 28,
+       "height": 32,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "Open",
        "padding_bottom": 0,
-       "padding_left": 10,
-       "padding_right": 10,
+       "padding_left": 8,
+       "padding_right": 8,
        "padding_top": 0,
        "role": "menuitem"
       },
-      "rank": 0,
       "states": {
        "disabled": {
         "opacity": 0.38
-       },
-       "hovered": {
-        "fill": [
-         85,
-         101,
-         122,
-         255
-        ]
        },
        "pressed": {
         "fill": [
@@ -13173,14 +13210,26 @@
        "disabled": false,
        "display": "flex",
        "expanded": null,
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "focusable": false,
        "gap": 8.0,
-       "height": 28.0,
-       "hit_testable": true,
+       "height": 32.0,
+       "hit_testable": null,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "Open",
        "padding_bottom": 0.0,
-       "padding_left": 10.0,
-       "padding_right": 10.0,
+       "padding_left": 8.0,
+       "padding_right": 8.0,
        "padding_top": 0.0,
        "pressed": null,
        "read_only": "!ValueError",
@@ -13220,14 +13269,6 @@
        "states": {
         "disabled": {
          "opacity": 0.38
-        },
-        "hovered": {
-         "fill": [
-          85,
-          101,
-          122,
-          255
-         ]
         },
         "pressed": {
          "fill": [
@@ -13271,23 +13312,16 @@
      "padding_top": 4,
      "role": "menu"
     },
-    "rank": 0,
     "states": {
      "focused": {
-      "shadows": [
-       [
-        [
-         91,
-         151,
-         201,
-         255
-        ],
-        0,
-        0,
-        0,
-        2
-       ]
-      ]
+      "outline_color": [
+       91,
+       151,
+       201,
+       255
+      ],
+      "outline_offset": 2,
+      "outline_width": 3
      }
     },
     "tre": {
@@ -13298,7 +13332,7 @@
      "expanded": null,
      "flex_direction": "vertical",
      "focusable": true,
-     "hit_testable": true,
+     "hit_testable": null,
      "label": "",
      "min_width": 160.0,
      "padding_bottom": 4.0,
@@ -13337,20 +13371,14 @@
      "shown": {},
      "states": {
       "focused": {
-       "shadows": [
-        [
-         [
-          91,
-          151,
-          201,
-          255
-         ],
-         0,
-         0,
-         0,
-         2
-        ]
-       ]
+       "outline_color": [
+        91,
+        151,
+        201,
+        255
+       ],
+       "outline_offset": 2,
+       "outline_width": 3
       }
      },
      "tip_auto": false,
@@ -13386,7 +13414,6 @@
          "text": "x",
          "wrap": "none"
         },
-        "rank": 0,
         "states": {
          "disabled": {
           "opacity": 0.38
@@ -13405,7 +13432,7 @@
          ],
          "focusable": false,
          "font_size": 14.0,
-         "hit_testable": true,
+         "hit_testable": null,
          "label": "x",
          "overflow": "ellipsis",
          "pressed": null,
@@ -13471,7 +13498,6 @@
        "flex_shrink": 0,
        "opacity": 1
       },
-      "rank": 0,
       "states": {},
       "tre": {
        "a11y_hidden": true,
@@ -13482,7 +13508,7 @@
        "flex_direction": "vertical",
        "flex_shrink": 0.0,
        "focusable": false,
-       "hit_testable": true,
+       "hit_testable": null,
        "label": null,
        "opacity": 1.0,
        "pressed": null,
@@ -13544,7 +13570,6 @@
      "justify_content": "start",
      "width": "auto"
     },
-    "rank": 0,
     "states": {},
     "tre": {
      "a11y_hidden": false,
@@ -13556,7 +13581,7 @@
      "flex_direction": "vertical",
      "focusable": false,
      "height": 0.0,
-     "hit_testable": true,
+     "hit_testable": null,
      "justify_content": "start",
      "label": null,
      "pressed": null,

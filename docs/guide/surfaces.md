@@ -256,11 +256,12 @@ A strip along a screen edge that reserves its space.
 | `Max_Width` | length | none |  | The greatest width of the Bar, in pixels. |
 | `Max_Height` | length | none |  | The greatest height of the Bar, in pixels. |
 | `Keyboard` | `NONE` `ON_DEMAND` | `NONE` |  | Whether the Bar takes the keyboard: NONE never (Tab does nothing in it), ON_DEMAND on a click. |
-| `Tab_Index` | whole number | none |  | The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces. |
+| `Tab_Index` | whole number | none |  | Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell). |
 | `Shortcut_Mode` | true or false | `false` |  | Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it. |
 | `Visible` | true or false | none |  | Starts the Bar shown (true) or hidden (false). A hidden Bar reserves no space; Show, Hide and Toggle (and a Show_, Hide_ or Toggle_ shortcut) change it. |
 | `Auto_Hide` | true or false | none |  | Slides the Bar out past its screen edge when the pointer has left it for Auto_Hide_Delay, leaving a 1 px hover strip that brings it back; the Bar gives its space back while it is out. Off by default: write true to opt in. A Bar that has the keyboard, or a Popup of its own open, stays. |
 | `Auto_Hide_Delay` | number | none |  | How long the pointer is away before the Bar hides, in milliseconds (default 1000). |
+| `Density` | `DEFAULT` `COMPACT` `DENSE` | none |  | The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies. |
 
 Not built yet (the loader says so if you write them): `Exclusive_Zone`, `Input_Region`, `Attach_To`, `Meld`, `Animation`, `Text_Rotation`, `Padding`, `Class`.
 
@@ -367,6 +368,7 @@ A surface placed by anchors or against a target; a launcher, an OSD, a dock. Wid
 | Key | Value | Default | Required | What it does |
 |---|---|---|---|---|
 | `Name` | name | none | yes | The unique name of the Panel; Show, Hide, Toggle and Attach_To use it. |
+| `Density` | `DEFAULT` `COMPACT` `DENSE` | none |  | The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies. |
 | `Layer` | `BOTTOM` `TOP` `OVERLAY` | `TOP` |  | The layer the Panel is drawn in: BOTTOM, TOP or OVERLAY. |
 | `Anchor` | list of `TOP` `BOTTOM` `LEFT` `RIGHT` | none |  | The screen edges the Panel is anchored to: one or a list; none is a floating Panel centred by the compositor. |
 | `Inset` | sides | `0` |  | The distance from the anchored edges: one number, four (left, top, right, bottom) or named sides. |
@@ -387,7 +389,7 @@ A surface placed by anchors or against a target; a launcher, an OSD, a dock. Wid
 | `Depth` | length | none | one of | The extent of a Panel with Meld: true away from the Frame's edge. |
 | `Length` | length | none | one of | The extent of a Panel with Meld: true along the Frame's edge. |
 | `Shortcut` | key | none |  | The global key that toggles the Panel or Frame, written as Meta+Space; the same as Toggle_&lt;Name> in Shortcuts. The Shortcuts entry wins when both are written. |
-| `Tab_Index` | whole number | none |  | The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces. |
+| `Tab_Index` | whole number | none |  | Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell). |
 | `Shortcut_Mode` | true or false | `false` |  | Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it. |
 | `Attach_To` | name of a surface | none |  | The Name of the Bar, Panel or Frame this Panel is placed against. |
 | `Animation` | block | none |  | How the Panel comes and goes: an Animation block with Type and Duration. |
@@ -607,6 +609,7 @@ A surface that opens from a block: a menu or a tooltip.
 | Key | Value | Default | Required | What it does |
 |---|---|---|---|---|
 | `Name` | name | none | yes | The unique name of the Popup; Show, Toggle and Tooltip use it. |
+| `Density` | `DEFAULT` `COMPACT` `DENSE` | none |  | The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies. |
 | `Attach` | `LEFT` `RIGHT` `TOP` `BOTTOM` | `BOTTOM` |  | The edge of the block it opens from that the Popup meets. |
 | `Alignment` | `START` `CENTER` `END` | `START` |  | How the Popup lines up along the edge it shares with the block: START, CENTER or END. |
 | `Gap` | number | `0` |  | The space between the block and the Popup, in pixels. |
@@ -812,6 +815,7 @@ An inline Popup that is a tooltip, written inside a block or a module call.
 
 | Key | Value | Default | Required | What it does |
 |---|---|---|---|---|
+| `Density` | `DEFAULT` `COMPACT` `DENSE` | none |  | The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies. |
 | `Attach` | `LEFT` `RIGHT` `TOP` `BOTTOM` | none |  | The edge of the target the surface meets: LEFT, RIGHT, TOP or BOTTOM. |
 | `Alignment` | `START` `CENTER` `END` | none |  | Where the surface sits along the edge it shares: START, CENTER or END. |
 | `Gap` | number | none |  | The space between the surface and what it is placed against, in pixels. |
@@ -852,7 +856,7 @@ A ring around the output, with strips along its sides that hold blocks.
 | `Visible` | true or false | `true` |  | Starts the Frame shown (true) or hidden (false). |
 | `Padding` | sides | `0` |  | Space between a strip's children and its sides, for every strip. |
 | `Keyboard` | `NONE` `ON_DEMAND` | `NONE` |  | Whether the Frame's surface takes the keyboard: NONE or ON_DEMAND. |
-| `Tab_Index` | whole number | none |  | The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces. |
+| `Tab_Index` | whole number | none |  | Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell). |
 | `Shortcut` | key | none |  | The global key that toggles the Panel or Frame, written as Meta+Space; the same as Toggle_&lt;Name> in Shortcuts. The Shortcuts entry wins when both are written. |
 | `Shortcut_Mode` | true or false | `false` |  | Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it. |
 | `Inner_Border` | block | none |  | A line along the inside of the ring: a block with Width and Color. |
@@ -868,6 +872,7 @@ A `Style { }` block of a Frame takes: `Background`, `Border_Width`, `Border_Colo
 * **Thickness and margin.** `Thickness` and `Margin` are one number, four sides `[left, top, right, bottom]`, or named sides (`Thickness { Top: 34, Left: 6 }`; an unnamed side is 0). A side of 0 reserves nothing. The reserved space of a side is its thickness plus the borders plus the margin.
 * **Radii.** `Corner_Radius` rounds the outer corners and `Inner_Radius` the corners of the opening: one number, or four corners clockwise from the top left. A radius that is too large for the ring is reduced, with a warning.
 * **Colour and borders.** `Style { Background: ... }` is the ring's colour (a token such as `$color.surface` follows the theme). `Inner_Border` and `Outer_Border` are lines along the opening and the outside.
+* **Shadow.** `Style { Elevation: 40% }` (a share of the theme's largest shadow) or `Style { Shadows { Shadow { Color: "#00000066", X: 0, Y: 0, Blur: 24, Spread: 0 } } }` makes the ring cast a shadow from its inner edge into the opening, so windows look to sit beneath it. A ring has no direction: only each shadow's `Blur`, `Spread` and colour count (`X` and `Y` do not), and up to four are drawn, the first on top. The shadow takes no clicks. Only the ring shader draws it: a Frame that is drawn with paths (`Debug { Frame_Blend: PATH }`, an `Opacity` below 1, a translucent colour) has none, and the log says so once.
 * **Hide and show.** `Visible: false` starts it hidden; `Show`, `Hide` and `Toggle` with `Target: <the Frame's name>` act on it.
 * **Keyboard.** `Keyboard: NONE` (the default) or `ON_DEMAND`. A Frame with a strip that holds a text field takes the keyboard on demand, with a warning if you wrote `NONE`.
 * Not built yet: a Bar or a window Panel melded into the Frame, strips that expand and contract (changing the reserved space), gradients.
@@ -895,7 +900,7 @@ One side of a Frame: its thickness, padding and, with Children, a strip.
 | `Thickness` | number | none |  | The thickness of this side's strip in pixels, replacing the Frame's for this side (the full extent of a strip with a Peek). |
 | `Padding` | sides | none |  | Space between the strip's children and its sides, replacing the Frame's. |
 | `Content_Fade` | true or false | `true` |  | Whether the strip's children fade with its slide. |
-| `Tab_Index` | whole number | none |  | The place of a block, or of a surface, in the order Tab (and Shift+Tab) follows: a whole number from 0 to 2147483647. Ascending; equal numbers keep document order; items with no number come after all the others. A surface holds one order for its blocks and the shell holds one for its surfaces. |
+| `Tab_Index` | whole number | none |  | Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell). |
 | `Shortcut_Mode` | true or false | `false` |  | Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it. |
 | `Peek` | block | none |  | Makes the strip rest as a sliver of Size pixels that comes out when asked; needs Children. |
 

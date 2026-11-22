@@ -25,12 +25,14 @@ from tess_shell.binder import convert
 from tess_shell.binder import model as m
 from tess_shell.binder.build import View, Wire, build
 from tess_shell.binder.controls import plain
+from tess_shell.binder.convert import CONVERTERS
 from tess_shell.binder.model import BindError, BindFailed, Handler
 from tess_shell.binder.shadow import DEFAULT_MAX, style_bleed, style_shadows
+from tess_shell.binder.tables import BLOCKS
 from tess_shell.model import args
 from tess_shell.model.expand import Expanded, ExpandedTooltip, expand
 from tess_shell.model.live import LiveTree
-from tess_shell.model.look import Look, apply_rules, resolve_style
+from tess_shell.model.look import Look, apply_rules, resolve_style, scrollbar_style
 from tess_shell.model.uses import Use
 from tess_shell.schema.default_popups import default_popups
 from tess_shell.schema.model import ModuleDef, PopupDef, ShellDef
@@ -643,7 +645,7 @@ class Popups:
             logger.warning(f"{error.origin}: {error.message}")
         caller = Caller(module, use, surface.key, rect, data, node_id)
         record = caller.record(self._m._all_uses.get(use))
-        live = self._m.new_live(self._m._all_uses, caller=record)
+        live = self._m.new_live(self._m._all_uses, popup, caller=record)
         nodes = live.resolve(expanded or plan.expanded)
         try:
             size = measure(
@@ -757,7 +759,7 @@ class Popups:
                 parent.view.set_expanded(node_id, True)
         else:
             self.current = op
-        self._m._app.add_window(window)
+        self._m.add_window(window)
         logger.info(
             f"Popup {where} opened beside {module} {use}: body {width}x{height} "
             f"on {attach}"
@@ -776,12 +778,26 @@ class Popups:
         if not scrolls:
             return build(list(nodes), window, body)
         view = window.create(
-            "scroll_view", orientation="vertical", flex_grow=1, align_self="stretch"
+            "scroll_view",
+            orientation="vertical",
+            flex_grow=1,
+            align_self="stretch",
+            **self._scrollbar_props(),
         )
         content = window.create("box", flex_direction="vertical", align_self="stretch")
         view.add_child(content)
         body.add_child(view)
         return build(list(nodes), window, content)
+
+    def _scrollbar_props(self) -> dict[str, Any]:
+        """The spec's scrollbar for the popup's own scroll view: what a ``ScrollBox`` block gets
+        from the look (``scrollbar_style``), as tre properties."""
+        row = BLOCKS["ScrollBox"].style
+        props: dict[str, Any] = {}
+        for key, value in scrollbar_style(self._m.look).items():
+            key_row = row[key]
+            props.update(CONVERTERS[key_row.convert](value, key_row.tre, key_row.choices))
+        return props
 
     def _meter_window(self) -> Window:
         if self._meter is None:

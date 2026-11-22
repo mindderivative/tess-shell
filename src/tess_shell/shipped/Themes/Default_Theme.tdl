@@ -9,6 +9,10 @@ Name: Default
 # point: copy this file into your Themes folder, change its Name, and set
 # Appearance { Theme: <Name> } in settings.tdl. To follow the desktop's accent colour instead of
 # steel blue, write Accent: DESKTOP.
+#
+# The Density group holds the sizes of the three density levels (Spacing and Density, ADR-0002): the
+# base values are the DEFAULT level and Modes { Compact, Dense } replace them; Appearance.Density, or
+# a surface's own Density, picks the level, and a module reads `density.control_height` in a slot.
 
 Theme {
     Color {
@@ -53,6 +57,44 @@ Theme {
         Step_6: 24
         Step_7: 32
         Step_8: 48
+        Focus_Ring_Width: 3
+        Focus_Ring_Offset: 2
+    }
+
+    Density {
+        Control_Height: 40
+        Row_Height: 40
+        Menu_Item_Height: 40
+        Icon_Size: 24
+        Item_Size: 32
+        Item_Icon_Size: 20
+        Row_Padding_X: 12
+        Icon_Label_Gap: 8
+        Field_Padding: [12, 12, 12, 12]
+        Tree_Indent: 20
+        Chevron_Box: 24
+    }
+
+    State {
+        Hover: 0.08
+        Focus: 0.10
+        Pressed: 0.10
+        Dragged: 0.16
+    }
+
+    Scrollbar {
+        Width: 8
+        Hit_Width: 12
+        Margin: 2
+        Min_Length: 32
+        Gutter: 12
+        Radius: 4
+        Opacity: 0.70
+        Opacity_Hover: 0.80
+        Opacity_Drag: 1.00
+        Wheel_Notch: 40
+        Key_Line: 40
+        Page_Fraction: 0.9
     }
 
     Elevation {
@@ -60,6 +102,36 @@ Theme {
         Max {
             Shadows {
                 Shadow { Color: "#00000066", X: 0, Y: 16, Blur: 48, Spread: 0 }
+            }
+        }
+        Level_1 {
+            Shadows {
+                Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 2, Spread: 0 }
+                Shadow { Color: "#00000026", X: 0, Y: 1, Blur: 3, Spread: 1 }
+            }
+        }
+        Level_2 {
+            Shadows {
+                Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 2, Spread: 0 }
+                Shadow { Color: "#00000026", X: 0, Y: 2, Blur: 6, Spread: 2 }
+            }
+        }
+        Level_3 {
+            Shadows {
+                Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 3, Spread: 0 }
+                Shadow { Color: "#00000026", X: 0, Y: 4, Blur: 8, Spread: 3 }
+            }
+        }
+        Level_4 {
+            Shadows {
+                Shadow { Color: "#0000004D", X: 0, Y: 2, Blur: 3, Spread: 0 }
+                Shadow { Color: "#00000026", X: 0, Y: 6, Blur: 10, Spread: 4 }
+            }
+        }
+        Level_5 {
+            Shadows {
+                Shadow { Color: "#0000004D", X: 0, Y: 4, Blur: 4, Spread: 0 }
+                Shadow { Color: "#00000026", X: 0, Y: 8, Blur: 12, Spread: 6 }
             }
         }
     }
@@ -85,6 +157,36 @@ Theme {
             }
         }
         Dark { }
+        Compact {
+            Density {
+                Control_Height: 32
+                Row_Height: 32
+                Menu_Item_Height: 32
+                Icon_Size: 20
+                Item_Size: 24
+                Item_Icon_Size: 18
+                Row_Padding_X: 8
+                Icon_Label_Gap: 8
+                Field_Padding: [8, 8, 8, 8]
+                Tree_Indent: 16
+                Chevron_Box: 20
+            }
+        }
+        Dense {
+            Density {
+                Control_Height: 28
+                Row_Height: 24
+                Menu_Item_Height: 28
+                Icon_Size: 20
+                Item_Size: 24
+                Item_Icon_Size: 18
+                Row_Padding_X: 4
+                Icon_Label_Gap: 4
+                Field_Padding: [8, 6, 8, 6]
+                Tree_Indent: 12
+                Chevron_Box: 16
+            }
+        }
         High_Contrast {
             Color {
                 Surface: "#000000"

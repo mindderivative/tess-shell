@@ -9,7 +9,8 @@ Name: Toggle
 # once, with `event.old`, `event.new` and `event.value` (true or false). The user's flip stays until
 # `Checked` is set to a different value. The look is the stylesheet's: the parts `::track` and
 # `::thumb`, with `:checked`, `:hovered`, `:pressed` and `:disabled` (the thumb and the track ease
-# over the theme's motion duration, and at once under reduced motion). The role is SWITCH with the
+# over the theme's motion duration, and at once under reduced motion). The track is 40 by 22 and
+# centred in the row, whose height is the density's `control_height`. The role is SWITCH with the
 # state `checked`; give the call a `Label` to name it. Keys: Space flips a focused Toggle and
 # raises `On_Changed` once; Enter does nothing; a disabled Toggle takes no focus and no key.
 Module {
@@ -24,13 +25,16 @@ Module {
         Checked: <| params.Checked |>
         Label: <| params.Label |>
         Width: 40
-        Height: 22
+        Height: <| density.control_height |>
         Children {
             Rectangle {
                 Name: Track
                 Part: track
+                Position: ABSOLUTE
+                Left: 0
+                Top: <| (density.control_height - 22) // 2 |>
                 Width: 100%
-                Height: 100%
+                Height: 22
                 Transition: [Fill, Border_Color]
             }
             Circle {
@@ -39,7 +43,7 @@ Module {
                 Diameter: 16
                 Position: ABSOLUTE
                 Left: 0
-                Top: 0
+                Top: <| (density.control_height - 22) // 2 |>
                 Transition: [Margin, Fill]
             }
         }

@@ -101,6 +101,8 @@ def _numbers(value: m.Value) -> list[float]:
     return []
 
 
+# ``Elevation: LEVEL_2``: the MD3 elevation levels, whose shadows the theme holds (Elevation)
+ELEVATION_LEVELS = tuple(f"LEVEL_{n}" for n in range(6))
 _NOUNS = {
     "max_length": "a whole number",
     "lines": "a whole number",
@@ -127,6 +129,13 @@ def check_range(kind: str, key: str, typed: m.Value) -> None:
     if rng is None:
         return
     for n in _numbers(typed):
+        if kind == "tab_index" and n > 0:
+            raise ValueProblem(
+                "tab-index-positive",
+                f"{plain(n)} is above 0: the order is the order of the file",
+                "put the blocks in the order you want; order surfaces with Focus_Order on the "
+                "Shell; tesserae-shell migrate rewrites the file",
+            )
         if not rng.holds(n):
             unit = "%" if kind == "elevation" else ""
             raise ValueProblem(
@@ -294,7 +303,9 @@ def _coerce_kind(
         case "elevation":
             if isinstance(value, tess_dl.Percent):
                 return m.Percent(value.value, origin=origin)
-            raise _bad("a percentage", value)
+            if isinstance(value, tess_dl.Word) and value.text in ELEVATION_LEVELS:
+                return m.Enum(value.text, origin=origin)
+            raise _bad("a percentage or a level (LEVEL_0 to LEVEL_5)", value)
         case "shadows":
             raise ValueProblem(
                 "bad-value",

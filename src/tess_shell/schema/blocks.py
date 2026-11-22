@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from tess_shell.binder.model import FIELD, FIELD_INPUT, FIELD_LINE, FIELD_SIZE, MARQUEE_TEXT
 
+SCROLLBAR_SHOW = ("OVERFLOW", "ALWAYS", "AUTO_HIDE", "NEVER")  # tre's scrollbar_show
+DENSITY_LEVELS = ("DEFAULT", "COMPACT", "DENSE")  # Appearance.Density, and a surface's own
 ALIGN = ("START", "CENTER", "END", "STRETCH")
 JUSTIFY = ("START", "CENTER", "END", "SPACE_BETWEEN", "SPACE_AROUND", "SPACE_EVENLY")
 # the accessibility roles tre knows (its node reference); the Block Reference lists the common ones
@@ -133,6 +135,14 @@ BOX_STYLE: dict[str, str] = {
     "Opacity": "number",
     "Elevation": "elevation",
     "Shadows": "shadows",
+    # the state layers (State Layers, ADR-0009): a colour role; its opacity is the theme's
+    # ``state.*`` token (an explicit alpha on the colour is the escape hatch)
+    "Hover_Layer": "color",
+    "Pressed_Layer": "color",
+    "Focus_Layer": "color",
+    "Outline_Width": "number",
+    "Outline_Offset": "number",
+    "Outline_Color": "color",
 }
 
 FLEX: dict[str, str] = {
@@ -167,6 +177,9 @@ SHAPE: dict[str, str] = {
     "Opacity": "number",
     "Elevation": "elevation",
     "Shadows": "shadows",
+    "Outline_Width": "number",
+    "Outline_Offset": "number",
+    "Outline_Color": "color",
 }
 
 # the type keys of a Marquee's text (it is one line, cut or scrolled, and has no padding of its own)
@@ -207,6 +220,8 @@ CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     # a stylesheet rule's value is checked against every block that takes the key; a block takes
     # the words of its own row (a Text has no SCROLL: the fold skips the rule there)
     ("Rule", "Overflow"): ("CLIP", "ELLIPSIS", "SCROLL"),
+    ("ScrollBox", "Scrollbar_Show"): SCROLLBAR_SHOW,
+    ("Rule", "Scrollbar_Show"): SCROLLBAR_SHOW,
     ("*", "Position"): ("RELATIVE", "ABSOLUTE"),
     ("*", "Role"): ROLES,
     ("*", "Live"): ("POLITE", "ASSERTIVE"),
@@ -247,7 +262,32 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
     # takes shadows so a List (a ScrollBox) can show the focus ring.
     "ScrollBox": (
         {**COMMON, "Orientation": "enum", "Scroll_Offset": "number"},
-        {**MOTION_STYLE, "Opacity": "number", "Elevation": "elevation", "Shadows": "shadows"},
+        {
+            **MOTION_STYLE,
+            "Opacity": "number",
+            "Elevation": "elevation",
+            "Shadows": "shadows",
+            "Outline_Width": "number",
+            "Outline_Offset": "number",
+            "Outline_Color": "color",
+            "Scrollbar_Width": "number",
+            "Scrollbar_Hit_Width": "number",
+            "Scrollbar_Margin": "number",
+            "Scrollbar_Min_Length": "number",
+            "Scrollbar_Gutter": "number",
+            "Scrollbar_Radius": "number",
+            "Scrollbar_Opacity": "number",
+            "Scrollbar_Opacity_Hover": "number",
+            "Scrollbar_Opacity_Drag": "number",
+            "Scrollbar_Fill": "color",
+            "Scrollbar_Fill_Hover": "color",
+            "Scrollbar_Fill_Drag": "color",
+            "Scrollbar_Track_Fill": "color",
+            "Scroll_Wheel_Notch": "number",
+            "Scroll_Key_Line": "number",
+            "Scroll_Page_Fraction": "number",
+            "Scrollbar_Show": "enum",
+        },
     ),
     "Spacer": (COMMON, {}),
     "SVG": (
@@ -489,8 +529,9 @@ EDGE_KEYS: dict[str, str] = {
 }
 FRAME_BORDER_KEYS = ("Width", "Color")
 # A Frame's inline Style: the background, the shorthand for the inner border (``Border_Width``,
-# ``Border_Color`` or a ``Border { Width, Color }`` block, D78) and the opacity. Shadows are
-# accepted by the table so that they are reported as not built, not as unknown.
+# ``Border_Color`` or a ``Border { Width, Color }`` block, D78), the opacity and the shadow of the
+# ring (``Elevation``, ``Shadows``; ``Shadow_Bleed`` is accepted and has no effect: the painter
+# covers the output, so a Frame's shadow needs no transparent margin).
 FRAME_STYLE: dict[str, str] = {
     "Background": "color",
     "Border_Width": "number",
@@ -500,7 +541,7 @@ FRAME_STYLE: dict[str, str] = {
     "Shadows": "shadows",
     "Shadow_Bleed": "bleed",
 }
-FRAME_STYLE_NOT_BUILT = ("Elevation", "Shadows", "Shadow_Bleed")
+FRAME_STYLE_NOT_BUILT: tuple[str, ...] = ()
 
 
 # The v1 events (Events and Actions; the text field's ``On_Submit`` and ``On_Text_Commit``, D80, are
@@ -579,6 +620,7 @@ BUILTIN_BUILT = ("Show", "Hide", "Toggle", "Close", "Call")
 # A Panel's keys and kinds (Panel > Configuration); the placement keys the shell does not build
 # yet are errors, so a Panel never opens somewhere it was not asked to.
 PANEL_KEYS: dict[str, str] = {
+    "Density": "enum",
     "Layer": "enum",
     "Anchor": "anchor",
     "Inset": "sides",
@@ -613,6 +655,7 @@ PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Keyboard": ("NONE", "ON_DEMAND", "EXCLUSIVE"),
     "Attach": ("LEFT", "RIGHT", "TOP", "BOTTOM"),
     "Alignment": ("START", "CENTER", "END"),
+    "Density": DENSITY_LEVELS,
 }
 # keys that only mean something with Attach_To, and keys that Attach_To replaces
 PANEL_ATTACH_KEYS = ("Attach", "Gap", "Alignment")
@@ -679,6 +722,7 @@ PANEL_STYLE: dict[str, str] = {
 # caller) and ``Animation`` are not built; ``Tooltip`` on a Popup is a flag (a block's ``Tooltip``
 # is a Popup block or a Popup's name, read by the schema).
 POPUP_KEYS: dict[str, str] = {
+    "Density": "enum",
     "Attach": "enum",
     "Alignment": "enum",
     "Gap": "number",
@@ -697,6 +741,7 @@ POPUP_KEYS: dict[str, str] = {
 POPUP_CHOICES: dict[str, tuple[str, ...]] = {
     "Attach": ("LEFT", "RIGHT", "TOP", "BOTTOM"),
     "Alignment": ("START", "CENTER", "END"),
+    "Density": DENSITY_LEVELS,
 }
 POPUP_ADJUST = ("FLIP_X", "FLIP_Y", "SLIDE_X", "SLIDE_Y", "RESIZE_X", "RESIZE_Y")
 POPUP_NOT_BUILT = ("Attach_To", "Animation")

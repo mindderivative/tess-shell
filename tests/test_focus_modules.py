@@ -45,7 +45,7 @@ def walk(w: Widgets) -> list[str]:
 
 def ring_shown(w: Widgets) -> bool:
     (node,) = [n for n in w.view.nodes.values() if n.get("focused")]
-    return bool(list(node.get("shadows")))
+    return bool(node.get("outline_width"))
 
 
 @needs_daemon

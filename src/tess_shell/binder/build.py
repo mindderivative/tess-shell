@@ -20,7 +20,7 @@ from loguru import logger
 
 from tess_shell.binder import controls
 from tess_shell.binder.convert import CONVERTERS
-from tess_shell.binder.focus import default_focusable, tab_order
+from tess_shell.binder.focus import default_focusable
 from tess_shell.binder.marquee import MarqueeRunner
 from tess_shell.binder.model import (
     DECORATIVE,
@@ -31,7 +31,6 @@ from tess_shell.binder.model import (
     MARQUEE,
     MARQUEE_TEXT,
     NO_POINTER_BLOCKS,
-    TAB_INDEX_MAX,
     BindError,
     BindFailed,
     ForNode,
@@ -508,7 +507,6 @@ class Entry:
     wire: Wire | None = None
     states: dict[str, dict[str, Any]] = field(default_factory=dict)  # tre props per style state
     motion: Motion | None = None  # what eases when a value of the node changes
-    rank: int = 0  # the tre ``tab_index`` the view gave the node (0: its place in tree order)
 
 
 # the kinds whose nodes always listen for something, and the keys of a block that make it a control
@@ -643,7 +641,19 @@ class View:
         self._controls(flat)
         self._sync(self.entries)
         self._marquees(flat)
-        self._tab_order(flat)
+
+    def _line_height_after(self, node_id: str, converted: dict[str, Any]) -> dict[str, Any]:
+        """A new ``Line_Height`` (pixels) or a new ``Font_Size`` under one: tre's ``line_height``
+        is a multiple of the font size, so it is worked out again from the pixels the node has."""
+        have = self.applied.get(node_id, {})
+        old_font = float(have.get("font_size") or TRE_FONT_SIZE)
+        if "line_height" in converted:
+            font = converted.get("font_size") or have.get("font_size")
+            return {**converted, "line_height": line_ratio(converted["line_height"], font)}
+        if "font_size" in converted and have.get("line_height"):
+            pixels = float(have["line_height"]) * old_font
+            return {**converted, "line_height": line_ratio(pixels, converted["font_size"])}
+        return converted
 
     def set_expanded(self, node_id: str, open_: bool) -> None:
         """The accessibility state ``expanded`` of a menu row whose submenu opened or closed."""
@@ -670,50 +680,13 @@ class View:
         walk(self.entries)
         return out
 
-    def _tab_index_of(self, entry: Entry) -> int | None:
-        """The ``Tab_Index`` of a block: the one a slot last set, else the one it was built with."""
-        typed = entry.typed
-        if typed.name is None and "Tab_Index" not in typed.props:
-            return None
-        value = typed.props.get("Tab_Index")
-        if typed.name is not None:
-            value = self.dynamic.get(typed.name, {}).get("Tab_Index", value)
-        if isinstance(value, Number) and isinstance(value.value, int):
-            return value.value
-        return None
-
-    def _tab_order(self, flat: list[Entry] | None = None) -> None:
-        """Give tre the Tab order the blocks' ``Tab_Index`` keys ask for (Focus and Keyboard > Tab
-        Order). tre walks its focusable nodes with a positive ``tab_index`` first, ascending, and
-        then the rest in tree order, so the blocks that have a ``Tab_Index`` get the ranks 1, 2,
-        ... in the shell's order (ascending, equal ones in document order) and the others keep 0.
-        This is derived data, held on the entries and made again at every build and rebuild; tre
-        does the walking, nothing runs per frame."""
-        if flat is None:
-            flat = self._flat()
-        indexed = [(e, i) for e in flat if (i := self._tab_index_of(e)) is not None]
-        ranks = {
-            id(indexed[pos][0]): rank
-            for rank, pos in enumerate(tab_order([i for _, i in indexed]), 1)
-        }
-        changes: list[tuple[TreNode, dict[str, Any]]] = []
-        for e in flat:
-            want = ranks.get(id(e), 0)
-            if want != e.rank and e.tre is not None:
-                e.rank = want
-                changes.append((e.tre, {"tab_index": want}))
-        if changes:
-            self.window.apply(changes)
-
     def tab_stops(self) -> list[TreNode]:
         """The focusable nodes in the order Tab visits them (the first is where Tab starts): the
         ones tre's Tab reaches, so a node under a hidden block (``Visible: false``, the content of
         a closed Expander) is not one."""
-        stops = [(e.rank or TAB_INDEX_MAX + 1, n, e) for n, e in enumerate(self._flat())]
-        stops.sort(key=lambda t: (t[0], t[1]))
         return [
             e.tre
-            for _, _, e in stops
+            for e in self._flat()
             if e.tre is not None and e.tre.get("focusable") and _shown(e.tre)
         ]
 
@@ -1241,6 +1214,7 @@ class View:
             converted = _convert(key, key_row, value, errors)
             if converted is None:
                 continue
+            converted = self._line_height_after(node_id, converted)
             if not key_row.tre:  # a key that gives tre nothing: a control reads it
                 self.dynamic.setdefault(node_id, {})[key] = value
                 touched.add(node_id)
@@ -1306,8 +1280,6 @@ class View:
                 ctl.sync()
         if touched:
             self._sync(self.entries)
-        if any(key == "Tab_Index" for _, key, _ in changes):
-            self._tab_order()
         return errors
 
     def _runner_of(self, node_id: str) -> MarqueeRunner | None:
@@ -1344,6 +1316,14 @@ def _suggest(word: str, choices: Sequence[str]) -> str:
 
 
 _UNRESOLVED = (SlotValue, TokenRef)  # a value the model should have resolved before binding
+
+
+TRE_FONT_SIZE = 16.0  # the size tre sets text in when none is given
+
+
+def line_ratio(pixels: float, font_size: float | None) -> float:
+    """tre's ``line_height`` (a multiple of the font size) for a line ``pixels`` high."""
+    return float(pixels) / float(font_size or TRE_FONT_SIZE)
 
 
 def _convert(key: str, row: KeyRow, value: Value, errors: list[BindError]) -> dict[str, Any] | None:
@@ -1384,9 +1364,22 @@ def convert_states(node: Node, errors: list[BindError]) -> dict[str, dict[str, A
             converted = _convert(key, key_row, value, errors)
             if converted is not None:
                 props.update(converted)
+        if "line_height" in props:
+            font = props.get("font_size") or _written_font_size(node)
+            props["line_height"] = line_ratio(props["line_height"], font)
         if props:
             out[state] = props
     return out
+
+
+def _written_font_size(node: Node) -> float | None:
+    """The ``Font_Size`` the block itself was written with (a state that sets only
+    ``Line_Height`` is a multiple of that), or ``None``: tre's own."""
+    for values in (node.style, node.props):
+        value = values.get("Font_Size")
+        if isinstance(value, Number):
+            return float(value.value)
+    return None
 
 
 def entry_states(node: Node) -> dict[str, dict[str, Any]]:
@@ -1495,6 +1488,8 @@ def _plan(
         props.setdefault(name, default)
     props.update(row.fixed)
     props.update(extra)
+    if "line_height" in props:  # written in pixels, tre takes a multiple of the font size
+        props["line_height"] = line_ratio(props["line_height"], props.get("font_size"))
     if node.kind == "Spacer":  # no pointer events unless it has a click to run
         props.setdefault("hit_testable", bool(_POINTER_EVENTS & node.handlers.keys()))
     if node.kind in DECORATIVE:  # an image or a shape is not announced unless it has a Label

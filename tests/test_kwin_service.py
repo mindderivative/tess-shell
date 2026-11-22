@@ -398,11 +398,12 @@ def test_a_malformed_fullscreen_state_is_ignored_with_one_warning_and_still_answ
     with rig(tmp_path) as r:
         r.start()
         r.fake.set_fullscreen(["DP-1"])
-        assert wait_for(lambda: len(r.fullscreen) == 1)
+        assert wait_for(lambda: len(r.fullscreen) == 1, 15)  # a loaded CI host is slow to deliver
         for raw in ("not json", "[1, 2]", "{}", "x" * 100):
             answer = r.fake.raw("FullscreenState", raw)
             assert json.loads(answer or "") == {"windows": False}
         r.settle()
+        assert wait_for(lambda: len(r.log(level="WARNING")) >= 1, 15)  # the loop logs it in turn
         assert len(r.fullscreen) == 1 and r.kwin.fullscreen == frozenset({"DP-1"})
         (warning,) = r.log(level="WARNING")
         assert "not a JSON array of output names" in warning and "not json" not in warning

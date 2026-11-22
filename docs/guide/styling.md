@@ -89,6 +89,50 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$space.step_6` | number | `24` | never | A step of spacing between groups. |
 | `$space.step_7` | number | `32` | never | A large step of spacing. |
 | `$space.step_8` | number | `48` | never | The largest step of spacing. |
+| `$space.focus_ring_width` | number | `3` | never | The width of the ring that shows keyboard focus (3). |
+| `$space.focus_ring_offset` | number | `2` | never | The gap between a block and its focus ring (2). |
+
+### Density
+
+| Token | Value | Default | The built-in modes change it in | What it is |
+|---|---|---|---|---|
+| `$density.control_height` | number | `40` | compact, dense | The height of a button, a text field, a switch row and an icon button: 40, 32 or 28 at the default, compact and dense levels. |
+| `$density.row_height` | number | `40` | compact, dense | The height of a one-line list or tree row: 40, 32 or 24. |
+| `$density.menu_item_height` | number | `40` | compact, dense | The height of a menu item: 40, 32 or 28. |
+| `$density.icon_size` | number | `24` | compact, dense | The painted size of an icon in an icon button: 24, 20 or 20. |
+| `$density.item_size` | number | `32` | compact, dense | The size of a tray item, a task button and a workspace button (the pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be). |
+| `$density.item_icon_size` | number | `20` | compact, dense | The icon of a tray item and a task button: 20, 18 or 18. |
+| `$density.row_padding_x` | number | `12` | compact, dense | The side padding of a list row, a tree row and a menu item: 12, 8 or 4. |
+| `$density.icon_label_gap` | number | `8` | compact, dense | The gap between an icon and its label: 8, 8 or 4. |
+| `$density.field_padding` | sides | `[12, 12, 12, 12]` | compact, dense | The padding of a text field (left, top, right, bottom): [12, 12, 12, 12], [8, 8, 8, 8] or [8, 6, 8, 6]. With the 16 px line of 14 px body text the field is 40, 32 or 28 high (the spec's 20 px line would take 10, 6 and 4). |
+| `$density.tree_indent` | number | `20` | compact, dense | The indent of one tree level: 20, 16 or 12. |
+| `$density.chevron_box` | number | `24` | compact, dense | The size of a tree's chevron box: 24, 20 or 16. |
+
+### State
+
+| Token | Value | Default | The built-in modes change it in | What it is |
+|---|---|---|---|---|
+| `$state.hover` | number | `0.08` | never | The opacity of the hover state layer (0.08): a Hover_Layer colour is drawn at this alpha. |
+| `$state.focus` | number | `0.10` | never | The opacity of the keyboard-focus state layer (0.10). |
+| `$state.pressed` | number | `0.10` | never | The opacity of the pressed state layer (0.10). |
+| `$state.dragged` | number | `0.16` | never | The opacity of the dragged state layer (0.16); no block takes it yet. |
+
+### Scrollbar
+
+| Token | Value | Default | The built-in modes change it in | What it is |
+|---|---|---|---|---|
+| `$scrollbar.width` | number | `8` | never | The thickness of the scrollbar thumb: 8. |
+| `$scrollbar.hit_width` | number | `12` | never | The pointer-sensitive thickness of the scrollbar: 12. |
+| `$scrollbar.margin` | number | `2` | never | The space around the thumb: 2. |
+| `$scrollbar.min_length` | number | `32` | never | The shortest thumb: 32. |
+| `$scrollbar.gutter` | number | `12` | never | The space reserved for the scrollbar: 12. |
+| `$scrollbar.radius` | number | `4` | never | The corner radius of the thumb: 4. |
+| `$scrollbar.opacity` | number | `0.70` | never | The thumb's opacity at rest: 0.70. |
+| `$scrollbar.opacity_hover` | number | `0.80` | never | The thumb's opacity under the pointer: 0.80. |
+| `$scrollbar.opacity_drag` | number | `1.00` | never | The thumb's opacity while dragged: 1.00. |
+| `$scrollbar.wheel_notch` | number | `40` | never | The distance of one wheel notch: 40. |
+| `$scrollbar.key_line` | number | `40` | never | The distance of an arrow key in a scroll view: 40. |
+| `$scrollbar.page_fraction` | number | `0.9` | never | The share of the viewport a Page key moves: 0.9. |
 
 ### Elevation
 
@@ -96,6 +140,11 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 |---|---|---|---|---|
 | `$elevation.reach` | number | `64` | never | How far the largest shadow reaches, in pixels. |
 | `$elevation.max` | shadows | `Max { Shadows { Shadow { Color: "#00000066", X: 0, Y: 16, Blur: 48, Spread: 0 } } }` | never | The shadow list at 100% elevation; a smaller Elevation scales it. |
+| `$elevation.level_1` | shadows | `Level_1 { Shadows { Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 2, Spread: 0 }, Shadow { Color: "#00000026", X: 0, Y: 1, Blur: 3, Spread: 1 } } }` | never | The shadows of Elevation: LEVEL_1 (1 dp): a key and an ambient shadow. |
+| `$elevation.level_2` | shadows | `Level_2 { Shadows { Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 2, Spread: 0 }, Shadow { Color: "#00000026", X: 0, Y: 2, Blur: 6, Spread: 2 } } }` | never | The shadows of Elevation: LEVEL_2 (3 dp): a menu, a tooltip, a popup. |
+| `$elevation.level_3` | shadows | `Level_3 { Shadows { Shadow { Color: "#0000004D", X: 0, Y: 1, Blur: 3, Spread: 0 }, Shadow { Color: "#00000026", X: 0, Y: 4, Blur: 8, Spread: 3 } } }` | never | The shadows of Elevation: LEVEL_3 (6 dp): a dialog. |
+| `$elevation.level_4` | shadows | `Level_4 { Shadows { Shadow { Color: "#0000004D", X: 0, Y: 2, Blur: 3, Spread: 0 }, Shadow { Color: "#00000026", X: 0, Y: 6, Blur: 10, Spread: 4 } } }` | never | The shadows of Elevation: LEVEL_4 (8 dp). |
+| `$elevation.level_5` | shadows | `Level_5 { Shadows { Shadow { Color: "#0000004D", X: 0, Y: 4, Blur: 4, Spread: 0 }, Shadow { Color: "#00000026", X: 0, Y: 8, Blur: 12, Spread: 6 } } }` | never | The shadows of Elevation: LEVEL_5 (12 dp). |
 
 ### Motion
 
@@ -153,6 +202,12 @@ With `Follow_Desktop: true` (the default) the shell reads the desktop's **Settin
 | UI font (`font-name`) | the family in `$type.system.font_family` |
 
 A change is followed live: switch Plasma between light and dark and the shell follows. A portal that does not answer within a moment makes the shell start on the defaults (it never delays your bar) and apply the answer when it arrives; one that is missing gives one warning, `portal: ... using the default appearance`, in the log. `Follow_Desktop: false` does not read the portal: you get the theme's base look. Changing `Follow_Desktop` needs a restart.
+
+## Density
+
+The sizes of controls come in three levels: `DEFAULT` (a 40 pixel button), `COMPACT` (32, the shell's default) and `DENSE` (28). `Appearance { Density: DENSE }` in `settings.tdl` picks the level for the whole shell, and a Bar or Panel can write its own `Density: DEFAULT` (a touch panel on a desktop bar, say). The sizes are the `density.*` tokens of [Density](#density); the base values of the theme are the `DEFAULT` level, and its `Modes { Compact { Density { ... } } }` and `Dense` blocks replace them, as `Light` replaces colours. The standard Button, Toggle, Checkbox, MenuItem and the Applications list take their heights from them.
+
+A module reads the tokens of its surface's level in a slot, as `<| density.control_height |>`; write the same in your own modules to follow the level. The setting applies on reload. A theme that lacks the group falls back to the Default theme's values.
 
 ## Stylesheets
 
@@ -280,7 +335,7 @@ and may end in a **state**: `:hovered`, `:pressed`, `:checked`, `:selected`, `:f
 
 A block takes a class with `Class: warn` (several are written as a list). A module's own look is in its `_Style.tdl` file, which the module names with a `Style:` line, with `Classes { clock_text { Kind: Text, Font_Size: 14 } }`; your stylesheet rules override it because they come later.
 
-`:focused` is the ring that **keyboard** focus shows (a click focuses without it); a block shows it only if it takes `Shadows`, so a `Focusable` block should be a `Box`, `FlexBox`, `Rectangle`, `ScrollBox` or `TextField`. See [Keyboard and shortcuts](keyboard.md#focus).
+`:focused` is the ring that **keyboard** focus shows (a click focuses without it); it is an outline (`Outline_Width`, `Outline_Offset`, `Outline_Color`), and only blocks that take those keys show it, so a `Focusable` block should be a `Box`, `FlexBox`, `Rectangle`, `ScrollBox` or `TextField`. See [Keyboard and shortcuts](keyboard.md#focus).
 
 ### Style keys
 
@@ -293,23 +348,46 @@ These are the keys a `Style { }` block, a style key written directly on a block,
 | `Duration` | milliseconds | 12 block types | motion.duration.* | How long a change of a Transition key takes, in milliseconds. |
 | `Easing` | `STANDARD` `EMPHASIZED` `LINEAR` | 12 block types |  | The curve of the animation: STANDARD, EMPHASIZED or LINEAR. |
 | `Background` | colour | Box, FlexBox, TextField | color | The fill behind the block's content, a colour or a theme token. |
-| `Border_Width` | number | 7 block types | type, shape, space, elevation, motion | The width of the border line; 0 draws none. |
+| `Border_Width` | number | 7 block types | type, shape, space, density, state, scrollbar, elevation, motion | The width of the border line; 0 draws none. |
 | `Border_Color` | colour | 7 block types | color | The colour of the border line, a colour or a theme token. |
 | `Corner_Radius` | radius | Box, FlexBox, Rectangle, TextField | shape | The radius of the corners: one number, or four from the top-left corner clockwise. |
 | `Padding` | sides | Box, FlexBox, Text, TextField | space | Space between the content and the four sides: one number or four (left, top, right, bottom). |
 | `Margin` | sides | 9 block types | space | Transparent space around the block: one number or four (left, top, right, bottom). |
-| `Opacity` | number | 12 block types | type, shape, space, elevation, motion | How opaque the block and what it holds is painted, from 0 (invisible) to 1. |
-| `Elevation` | percentage | Box, FlexBox, Rectangle, ScrollBox, TextField |  | How high the block floats, as a percentage of the theme's largest shadow; 0% is no shadow. |
+| `Opacity` | number | 12 block types | type, shape, space, density, state, scrollbar, elevation, motion | How opaque the block and what it holds is painted, from 0 (invisible) to 1. |
+| `Elevation` | percentage | Box, FlexBox, Rectangle, ScrollBox, TextField |  | How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3). |
 | `Shadows` | shadows | Box, FlexBox, Rectangle, ScrollBox, TextField | elevation.max | A list of Shadow blocks, the first on top; it replaces Elevation when both are written. |
+| `Hover_Layer` | colour | Box, FlexBox, TextField | color | The colour of the layer drawn over the block while the pointer is on it, at the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. Needs tre 0.6.11. |
+| `Pressed_Layer` | colour | Box, FlexBox, TextField | color | The colour of the layer drawn while the block is pressed, at $state.pressed (0.10). |
+| `Focus_Layer` | colour | Box, FlexBox, TextField | color | The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none. |
+| `Outline_Width` | number | Box, FlexBox, Rectangle, ScrollBox, TextField | type, shape, space, density, state, scrollbar, elevation, motion | The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none. |
+| `Outline_Offset` | number | Box, FlexBox, Rectangle, ScrollBox, TextField | type, shape, space, density, state, scrollbar, elevation, motion | The gap between the block and its outline. |
+| `Outline_Color` | colour | Box, FlexBox, Rectangle, ScrollBox, TextField | color | The colour of the outline. |
 | `Spacing` | number | FlexBox | space | The space between the children, in pixels. |
 | `Foreground` | colour | Text, SVG, Marquee, TextField | color | The colour of the text or of the icon, a colour or a theme token. |
 | `Font_Family` | font | Text, Marquee, TextField | color, motion | A font family name, or a list of them in the order of fallback. |
 | `Font_Size` | number | Text, Marquee, TextField | type.*.font_size | The size of the type, above 0. |
 | `Font_Weight` | whole number | Text, Marquee, TextField | type.*.font_weight | The weight of the type as a whole number, 400 regular, 700 bold. |
-| `Line_Height` | number | Text, Marquee | type.*.line_height | The height of one line, above 0. |
+| `Line_Height` | number | Text, Marquee | type.*.line_height | The height of one line in pixels, above 0 (tre takes a multiple of the font size; the binder divides). |
 | `Text_Align` | `START` `CENTER` `END` | Text |  | How a line sits in the text's box: START, CENTER or END. |
 | `Overflow` | `CLIP` `ELLIPSIS` | Text, TextField |  | What happens to text that does not fit: CLIP cuts it, ELLIPSIS ends it with dots (a TextField also has SCROLL). |
 | `Fill` | colour | Rectangle, Circle, Path | color | The fill of the shape, a colour or a theme token. |
+| `Scrollbar_Width` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The painted thickness of the scrollbar thumb, in pixels (the theme's scrollbar.width, 8). |
+| `Scrollbar_Hit_Width` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The pointer-sensitive thickness of the scrollbar (12). |
+| `Scrollbar_Margin` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The space between the thumb and the container's edge, and the lane's end (2). |
+| `Scrollbar_Min_Length` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The shortest the thumb gets along its axis (32). |
+| `Scrollbar_Gutter` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The space reserved at the end edge of an axis that overflows (12). |
+| `Scrollbar_Radius` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The corner radius of the thumb (4). |
+| `Scrollbar_Opacity` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The opacity of the thumb at rest, 0 to 1 (0.70). |
+| `Scrollbar_Opacity_Hover` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The opacity of the thumb under the pointer (0.80). |
+| `Scrollbar_Opacity_Drag` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The opacity of the thumb while it is dragged (1.00). |
+| `Scrollbar_Fill` | colour | ScrollBox | color | The colour of the thumb at rest (the theme's muted ink). |
+| `Scrollbar_Fill_Hover` | colour | ScrollBox | color | The colour of the thumb under the pointer. |
+| `Scrollbar_Fill_Drag` | colour | ScrollBox | color | The colour of the thumb while it is dragged. |
+| `Scrollbar_Track_Fill` | colour | ScrollBox | color | The colour of the lane the thumb runs in (none by default). |
+| `Scroll_Wheel_Notch` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The distance of one wheel notch, in pixels (40). |
+| `Scroll_Key_Line` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The distance of an arrow key, in pixels (40). |
+| `Scroll_Page_Fraction` | number | ScrollBox | type, shape, space, density, state, scrollbar, elevation, motion | The share of the viewport a Page key or a lane click moves (0.9). |
+| `Scrollbar_Show` | `OVERFLOW` `ALWAYS` `AUTO_HIDE` `NEVER` | ScrollBox |  | When the scrollbar shows: OVERFLOW (when the content overflows, the default), ALWAYS, AUTO_HIDE or NEVER. |
 | `Placeholder_Foreground` | colour | TextField | color | The colour of the placeholder text. |
 
 <!-- END generated: style-keys -->

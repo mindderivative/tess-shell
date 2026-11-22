@@ -37,6 +37,7 @@ from tess_shell.schema.model import (
     PopupDef,
     ShellDef,
     StyleDef,
+    surface_names,
     use_names,
 )
 from tess_shell.schema.ranges import percent_range, scoped
@@ -1221,6 +1222,7 @@ BAR_KEYS: dict[str, str] = {
     "Visible": "bool",
     "Auto_Hide": "bool",
     "Auto_Hide_Delay": "number",
+    "Density": "enum",
 }
 BAR_CHOICES: dict[str, tuple[str, ...]] = {
     "Edge": ("TOP", "BOTTOM", "LEFT", "RIGHT"),
@@ -1229,13 +1231,14 @@ BAR_CHOICES: dict[str, tuple[str, ...]] = {
     # a Bar takes the keyboard on a click or not at all: EXCLUSIVE would take every key of the
     # desktop, as for the Frame's painter
     "Keyboard": ("NONE", "ON_DEMAND"),
+    "Density": blocks.DENSITY_LEVELS,
 }
 
 
-def _tab_index(values: Mapping[str, m.Value]) -> int | None:
-    """The ``Tab_Index`` a surface wrote (already judged 0 to 2 147 483 647), or ``None``."""
-    value = values.get("Tab_Index")
-    return int(value.value) if isinstance(value, m.Number) else None
+def _density(values: Mapping[str, m.Value]) -> str | None:
+    """A surface's own ``Density`` in lower case, or ``None`` for the shell's level."""
+    v = values.get("Density")
+    return v.name.lower() if isinstance(v, m.Enum) else None
 
 
 def _shortcut_mode(values: Mapping[str, m.Value]) -> m.Origin | None:
@@ -1342,7 +1345,7 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         max_height=px("Max_Height"),
         keyboard=word("Keyboard", "NONE") or "NONE",
         keyboard_written="Keyboard" in values,
-        tab_index=_tab_index(values),
+        density=_density(values),
         shortcut_mode=_shortcut_mode(values),
         visible=shown.value if isinstance(shown, m.Bool) else True,
         auto_hide=auto.value if isinstance(auto, m.Bool) else False,
@@ -1627,6 +1630,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         length=values.get("Length"),  # type: ignore[arg-type]
         keyboard=word("Keyboard", "NONE"),
         keyboard_written="Keyboard" in values,
+        density=_density(values),
         input=region.value if isinstance(region, m.Text) else "WHOLE",
         visible=visible.value if isinstance(visible, m.Bool) else True,
         hide_after=float(hide.value) if isinstance(hide, m.Number) else None,
@@ -1642,7 +1646,6 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         duration=float(animation[1]),
         peek=peek,
         content_fade=fade.value if isinstance(fade, m.Bool) else True,
-        tab_index=_tab_index(values),
         shortcut_mode=_shortcut_mode(values),
         handlers=handlers,
         shortcut=hotkey if isinstance(hotkey := values.get("Shortcut"), m.Text) else None,
@@ -2083,6 +2086,7 @@ def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
         enter_delay=num("Enter_Delay", 500),
         close_on_exit=flag("Close_On_Exit", tooltip),
         exit_delay=num("Exit_Delay", 150),
+        density=_density(values),
         style=style,
         children=tuple(children),
     )
@@ -2406,7 +2410,6 @@ def _frame(ctx: _Ctx, block: Block) -> FrameDef | None:
         keyboard=keyboard.name if isinstance(keyboard, m.Enum) else "NONE",
         keyboard_written=keyboard is not None,
         edges=edges,
-        tab_index=_tab_index(values),
         shortcut_mode=_shortcut_mode(values),
         shortcut=hotkey if isinstance(hotkey := values.get("Shortcut"), m.Text) else None,
     )
@@ -2436,7 +2439,6 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
         edge_name: str | None = None
         peek: PeekDef | None = None
         content_fade = True
-        tab_index: int | None = None
         shortcut_mode: m.Origin | None = None
         keys = [
             "Name",
@@ -2475,14 +2477,10 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
                     thickness = float(value.value)
                 elif sub.key == "Tab_Index":
                     try:
-                        index = coerce(
-                            "tab_index", sub.value, ctx.origin(sub.key_origin), key="Tab_Index"
-                        )
+                        coerce("tab_index", sub.value, ctx.origin(sub.key_origin), key="Tab_Index")
                     except ValueProblem as exc:
                         ctx.problem(sub.value_origin, sub.key, exc)
                         continue
-                    assert isinstance(index, m.Number)
-                    tab_index = int(index.value)
                 elif sub.key == "Shortcut_Mode":
                     try:
                         flag = coerce(
@@ -2547,7 +2545,6 @@ def _edges(ctx: _Ctx, block: Block) -> dict[str, EdgeDef]:
             edge_name,
             peek,
             content_fade,
-            tab_index,
             shortcut_mode,
         )
     return out
@@ -2860,6 +2857,7 @@ def read_shell(
         )
         return None, ctx.findings
     monitors: list[MonitorDef] = []
+    focus_order: tuple[str, ...] = ()
     if _is_surface_file(root):
         ctx.follow_imports = False
         _surface_entries(ctx, root.entries, _Surfaces())
@@ -2883,8 +2881,12 @@ def read_shell(
                 "Import in Shell is not read: a Monitor's Children import shell files",
                 "write Monitor { Children { Import: Top_Shell.tdl } }",
             )
+        elif isinstance(entry, Property) and entry.key == "Focus_Order":
+            focus_order = _focus_order(ctx, entry)
         elif isinstance(entry, Property):
-            ctx.unknown(entry.key_origin, entry.key, ["Monitor"], "key in Shell")
+            ctx.unknown(entry.key_origin, entry.key, ["Monitor", "Focus_Order"], "key in Shell")
+    if focus_order:
+        _check_focus_order(ctx, root, monitors, focus_order)
     _check_attach(ctx, monitors)
     _check_tooltips(ctx, monitors)
     _check_shortcut_mode(ctx, monitors)
@@ -2892,7 +2894,52 @@ def read_shell(
     shell_name = getattr(name, "text", None) or getattr(name, "value", "") or ""
     if any(f.severity == "error" for f in ctx.findings):
         return None, ctx.findings
-    return ShellDef(file, shell_name, tuple(monitors)), ctx.findings
+    return ShellDef(file, shell_name, tuple(monitors), focus_order=focus_order), ctx.findings
+
+
+def _focus_order(ctx: _Ctx, entry: Property) -> tuple[str, ...]:
+    """``Focus_Order: [Top_Bar, Launcher]``: surface names, one or a list."""
+    value = entry.value
+    items = list(value.items) if isinstance(value, tess_dl.List) else [value]
+    out: list[str] = []
+    for item in items:
+        name = item.text if isinstance(item, tess_dl.Word | tess_dl.String) else None
+        if name is None:
+            ctx.add(
+                entry.value_origin,
+                "bad-value",
+                "Focus_Order is a surface Name or a list of them",
+                "write Focus_Order: [Top_Bar, Launcher]",
+            )
+            return ()
+        if name in out:
+            ctx.add(entry.value_origin, "bad-value", f"Focus_Order names {name} twice", "")
+            return ()
+        out.append(name)
+    return tuple(out)
+
+
+def _check_focus_order(
+    ctx: _Ctx, root: Block, monitors: Sequence[MonitorDef], order: tuple[str, ...]
+) -> None:
+    """A name in ``Focus_Order`` that no surface has is a warning with the nearest names: the
+    surface may be one a reload brings or an import adds, so the shell still starts."""
+    known = surface_names(monitors)
+    entry = next(
+        (e for e in root.entries if isinstance(e, Property) and e.key == "Focus_Order"), None
+    )
+    for name in order:
+        if name not in known:
+            close = nearest(name, known)
+            ctx.add(
+                entry.value_origin if entry is not None else root.origin,
+                "focus-order-unknown",
+                f"Focus_Order names {name}, and no surface has that Name",
+                f"did you mean {', '.join(close)}?"
+                if close
+                else f"the surfaces: {', '.join(known)}",
+                "warning",
+            )
 
 
 def _is_surface_file(root: Block) -> bool:

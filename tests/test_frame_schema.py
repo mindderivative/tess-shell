@@ -155,13 +155,24 @@ def test_a_second_inner_border_is_refused() -> None:
         "Meld: true",
         "Exclusive_Zone: 4",
         "Input_Region: AUTO",
-        "Style { Elevation: 20% }",
-        'Style { Shadows { Shadow { Color: "#000" } } }',
     ],
 )
 def test_what_is_not_built_is_an_error_not_a_silent_no_op(written: str) -> None:
     (f,) = problems(f"Frame {{ Name: F, Thickness: 8, {written} }}")
     assert f.rule == "not-built"
+
+
+def test_a_frames_elevation_and_shadows_are_built_and_a_bad_one_is_an_error() -> None:
+    for style in (
+        "Elevation: 20%",
+        'Shadows { Shadow { Color: "#000000", X: 0, Y: 2, Blur: 6, Spread: 0 } }',
+        "Elevation: 20%, Shadow_Bleed: 4",
+    ):
+        shell, findings = read(
+            with_frame(f"Frame {{ Name: F, Thickness: 8, Style {{ {style} }} }}")
+        )
+        assert shell is not None and findings == [], (style, findings)
+    assert problems("Frame { Name: F, Thickness: 8, Style { Elevation: banana } }")
 
 
 def test_class_and_a_padding_with_no_strip_are_warnings() -> None:

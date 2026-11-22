@@ -875,7 +875,10 @@ def test_a_menu_of_100_entries_is_built_and_shown_in_a_reasonable_time(
                     f"\nTray menu of 100 entries: click to shown {min(waits):.0f} ms best of "
                     f"{len(waits)}, the shell's own work {min(inside):.0f} ms"
                 )
-            assert min(inside) < 150, inside
+            # about 60 ms on a quiet machine with tre 0.6.10 and 0.6.11 alike; CI runners measured
+            # 77 to 161 ms for the same code (shared hosts), so the bound is 250: it still fails on
+            # a build that is several times slower
+            assert min(inside) < 250, inside
 
 
 @pytest.mark.perf
