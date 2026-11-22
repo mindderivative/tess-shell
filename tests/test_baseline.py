@@ -41,3 +41,19 @@ def test_a_change_of_the_desktops_scheme_reaches_the_windows_that_are_open() -> 
     m.set_look(m.look.with_appearance(Appearance(scheme="light")))
     assert window.get("scheme_resolved") == "light"
     assert window.get("scheme_colors")["on_surface"] != dark_on_surface
+
+
+def test_selected_text_and_a_text_input_have_a_highlight_with_2_px_corners() -> None:
+    """tre 0.6.12 ``selection_radius``: a design choice (the Text Selection spec records no value);
+    the fill is the engine's own, the scheme's primary at 30 percent."""
+    from tests.field_live import running
+
+    with running('Text { Name: T, Text: "abc", Selectable: true }\nTextInput { Name: In }') as r:
+        text = next(
+            n
+            for n in r.bar.view.nodes.values()
+            if n.get("kind") == "text" and n.get("text") == "abc"
+        )
+        assert text.get("selection_radius") == 2
+        (f,) = r.fields()
+        assert f.inp.get("selection_radius") == 2
