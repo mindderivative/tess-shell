@@ -88,7 +88,9 @@ def test_with_no_tasks_module_the_shell_answers_no_window_list_and_ignores_one_t
     with tasks_desk(tmp_path) as t, tasks_shell(t, "Label { Text: x }") as w:
         start(t, w)
         assert t.kwin.windows_wanted is False and t.windows.subscribers == 0
-        assert t.fake.script.replies[-1] == '{"windows": false}'
+        # the reply reaches the fake after the shell has answered: wait for it (a slow runner
+        # failed this on an empty list)
+        assert t.settle(w, lambda: t.fake.script.replies[-1:] == ['{"windows": false}'], 20)
         assert not t.fake.script.sends_windows
         answer = t.fake.raw("WindowsState", json.dumps([a(1, title=SECRET)]))
         assert json.loads(answer or "") == {"windows": False}
@@ -133,6 +135,15 @@ def test_the_scripts_list_is_a_row_of_buttons_in_the_scripts_order_with_the_acti
         # a minimised window is drawn dimmed; the others are not
         assert float(first.get("opacity")) == pytest.approx(0.5)
         assert float(second.get("opacity")) == pytest.approx(1.0)
+        # dimming is not the only cue: a minimised item has a bar under it, an item that wants
+        # attention has a dot (AC-MOD-TIT-7)
+
+        def cue(b: Any, name: str) -> bool:
+            key = next(k for k, n in w.view.nodes.items() if n is b)
+            return bool(w.view.nodes[key.removesuffix("/Root") + "/" + name].get("visible"))
+
+        assert [cue(b, "Minimized") for b in (first, second, third)] == [True, False, False]
+        assert [cue(b, "Attention") for b in (first, second, third)] == [False, False, True]
         assert shown(w) and values(w)["has_windows"] is True and values(w)["ready"] is True
 
 

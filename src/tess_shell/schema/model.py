@@ -42,6 +42,9 @@ class BarDef:
     density: str | None = None  # ``Density:`` of the surface, lower case; None: the shell's level
     shortcut_mode: Origin | None = None  # where ``Shortcut_Mode: true`` is written; None: false
     visible: bool = True  # ``Visible: false`` starts it hidden (UX TSH-051)
+    padding: tuple[float, float, float, float] | None = (
+        None  # ``Padding``: left, top, right, bottom
+    )
     auto_hide: bool = False  # slides out when the pointer has left it for ``auto_hide_delay``
     auto_hide_delay: float = 1000.0  # ms
     style: Mapping[str, Value] = None  # type: ignore[assignment]
@@ -85,6 +88,9 @@ class PanelDef:
     input: str = "WHOLE"  # WHOLE, NONE or AUTO (Input_Region)
     visible: bool = True
     hide_after: float | None = None  # milliseconds
+    padding: tuple[float, float, float, float] | None = (
+        None  # ``Padding``: left, top, right, bottom
+    )
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
     # attached to a target by name (Panel > Attachment Geometry); Anchor and Inset then give way

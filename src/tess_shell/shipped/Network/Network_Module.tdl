@@ -47,21 +47,16 @@ Module {
                 Tooltip {
                     Alignment: CENTER
                     Gap: 4
-                    Style {
-                        Background: $color.surface_raised
-                        Corner_Radius: 8
-                        Elevation: 20%
-                    }
                     Children {
                         FlexBox {
-                            Padding: [12, 8, 12, 8]
+                            Padding: <| [space.step_3, space.step_2, space.step_3, space.step_2] |>
                             Children {
                                 Text {
                                     Text: <| tooltip |>
                                     Width: AUTO
                                     Height: AUTO
                                     Font_Size: 14
-                                    Foreground: $color.on_surface
+                                    Foreground: $color.inverse_on_surface
                                 }
                             }
                         }
@@ -73,7 +68,7 @@ Module {
                         Visible: <| state == "CONNECTED" or state == "CONNECTING" |>
                         Flex: HORIZONTAL
                         Align_Items: CENTER
-                        Spacing: 4
+                        Spacing: <| space.step_2 |>
                         Children {
                             SVG {
                                 Name: Glyph
@@ -105,7 +100,7 @@ Module {
                         Visible: <| state == "LIMITED" or state == "PORTAL" |>
                         Flex: HORIZONTAL
                         Align_Items: CENTER
-                        Spacing: 4
+                        Spacing: <| space.step_2 |>
                         Children {
                             SVG {
                                 Name: Glyph_Warn
@@ -140,7 +135,7 @@ Module {
                         Visible: <| state == "DISCONNECTED" or state == "DISABLED" or state == "UNKNOWN" |>
                         Flex: HORIZONTAL
                         Align_Items: CENTER
-                        Spacing: 4
+                        Spacing: <| space.step_2 |>
                         Children {
                             SVG {
                                 Name: Glyph_Muted

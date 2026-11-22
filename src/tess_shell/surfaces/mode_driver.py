@@ -358,6 +358,30 @@ class ModeDriver:
             self._status.pop(id(window), None)
             logger.debug("shortcut mode: the status could not be set", exc_info=True)
 
+    def _landmark(self, event: Any) -> bool:
+        """F6 and Shift+F6 move between the shell's surfaces (Keyboard Navigation: landmark
+        cycling, TSH-015) from a surface that has the keyboard: the mode is entered if it is not on,
+        and the focus goes to the next surface in ``Focus_Order`` (Shift: the previous one). In the
+        mode they are Next_Focus and Previous_Focus. Ctrl, Alt and Meta with F6 are not ours. True
+        when the key was used."""
+        if (
+            getattr(event, "ctrl", False)
+            or getattr(event, "alt", False)
+            or getattr(event, "meta", False)
+        ):
+            return False
+        forward = not getattr(event, "shift", False)
+        if not self.machine.on:
+            self.enter()
+            if not self.machine.on:
+                return False
+        if self.machine.navigating:
+            self.step(forward)
+        stop = getattr(event, "stop", None)
+        if callable(stop):
+            stop()
+        return True
+
     # -- the keys that arrive on a window ----------------------------------------------------------
 
     def on_key(self, event: Any) -> bool:
@@ -365,6 +389,8 @@ class ModeDriver:
         mode knows run their action; ``True`` when it did (the event does not go on). Escape leaves
         the mode when the Frame (the lowest level) is the surface in it; in another surface's own
         mode Escape is that surface's."""
+        if getattr(event, "key", None) == "f6" and self._landmark(event):
+            return True
         if not self.machine.on:
             return False
         chord = chord_of(

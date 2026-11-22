@@ -104,6 +104,8 @@ RULES: dict[str, set[str] | None] = {
     # shortcut mode: the rules are pure (keys and the surface order); the driver applies a change
     # to the windows it is given
     "surfaces.mode": {"tess_shell.schema.keys", "tess_shell.surfaces.focus"},
+    # Ctrl+C on a selectable Text: walks tre nodes and writes the clipboard
+    "surfaces.selection_copy": {"loguru"},
     "surfaces.autohide": {"loguru", "tess_shell.schema.model", "tess_shell.surfaces"},
     "surfaces.mode_driver": {
         "loguru",

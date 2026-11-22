@@ -53,6 +53,7 @@ from tess_shell.surfaces.focus import next_surface, surface_order
 from tess_shell.surfaces.frame import FramePlan, Frames
 from tess_shell.surfaces.mode_driver import ModeDriver
 from tess_shell.surfaces.panel import PanelSpec, is_auto, panel_geometry, px_size
+from tess_shell.surfaces.selection_copy import copy_selection
 
 if TYPE_CHECKING:
     from tess_re import App, LayerWindow, Output
@@ -422,11 +423,14 @@ _EXTRA_KEYS = {
 
 def _body_extra(bar: BarDef | PanelDef, look: Look | None) -> dict[str, Any]:
     """The tre properties a Panel's body takes from its style besides fill and shadows: the
-    corner radius and the border."""
-    if not isinstance(bar, PanelDef):
-        return {}
-    style = _bar_style(bar, look)
+    corner radius and the border; and, for a Bar or a Panel, its ``Padding``."""
     out: dict[str, Any] = {}
+    if bar.padding is not None:
+        left, top, right, bottom = bar.padding
+        out.update(padding_left=left, padding_top=top, padding_right=right, padding_bottom=bottom)
+    if not isinstance(bar, PanelDef):
+        return out
+    style = _bar_style(bar, look)
     for key, (name, kind) in _EXTRA_KEYS.items():
         value = style.get(key)
         if value is not None:
@@ -1016,7 +1020,7 @@ class SurfaceManager:
             # takes ONE tre listener per event, so this is the surface's only key_down listener
             if getattr(e, "key", None) == "escape":
                 self.popups.dismiss_tooltip("escape")
-            return bool(self.mode.on_key(e))
+            return bool(self.mode.on_key(e)) or copy_selection(window, e)
 
         window.root.on("key_down", surface_key)
         # ... and by a scroll (Tooltip > AC-TIP-6)
@@ -1128,6 +1132,8 @@ class SurfaceManager:
             if getattr(event, "key", None) == "escape":
                 self.popups.dismiss_tooltip("escape")  # a tooltip goes; the key is still heard
             if self.mode.on_key(event):  # a key of shortcut mode: the mode's, not the Panel's
+                return
+            if copy_selection(s.window, event):  # Ctrl+C on a selected Text
                 return
             current = s.planned.bar if s.planned else None
             if (

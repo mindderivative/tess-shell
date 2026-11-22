@@ -317,7 +317,8 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     "it), ON_DEMAND on a click.",
     ("Bar", "Input_Region"): "Which part of the Bar takes the pointer. Not built.",
     ("Bar", "Meld"): "Draws the Bar inside its Frame. Not built.",
-    ("Bar", "Padding"): "Space between the Bar's children and its sides. Not built.",
+    ("Bar", "Padding"): "Space between the Bar's children and its sides: a number or four sides "
+    "(left, top, right, bottom). It is inside the Bar's Width and Height.",
     ("Bar", "Class"): "A style class for the Bar. Not built.",
     ("Bar", "Attach_To"): "Attaches the Bar to a Frame. Not built.",
     ("Bar", "Animation"): "How the Bar comes and goes. Not built.",
@@ -350,7 +351,9 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     "START, CENTER or END (with Attach_To).",
     ("Panel", "Attach"): "The edge of the target the Panel meets (needs Attach_To).",
     ("Panel", "Margin"): "Space around the Panel. Not built.",
-    ("Panel", "Padding"): "Space between the children and the Panel's sides. Not built.",
+    ("Panel", "Padding"): "Space between the children and the Panel's sides: a number or four "
+    "sides (left, top, right, bottom). Not for a Panel with Meld: true. It is inside the Panel's "
+    "Width and Height, or added to a content-sized one.",
     ("Panel", "Class"): "A style class for the Panel. Not built.",
     ("Panel", "Exclusive_Zone"): "Space the Panel reserves. Not built.",
     ("Panel", "Peek"): "Makes a melded Panel rest as a tab of Size pixels that comes out when "
@@ -795,6 +798,9 @@ TOKEN_DOCS: dict[str, str] = {
     "color.warning": "A warning or a low state.",
     "color.success": "A success state.",
     "color.outline": "Borders, dividers and tracks.",
+    "color.inverse_surface": "The fill of a plain tooltip: the opposite of the surface (light on "
+    "a dark desktop, dark on a light one).",
+    "color.inverse_on_surface": "Text and icons on the inverse surface.",
     "color.scrim": "The colour laid over what a modal surface covers.",
     "type.caption.font_size": "The size of caption type.",
     "type.caption.font_weight": "The weight of caption type.",
@@ -832,7 +838,8 @@ TOKEN_DOCS: dict[str, str] = {
     "button: 40, 32 or 28 at the default, compact and dense levels.",
     "density.row_height": "The height of a one-line list or tree row: 40, 32 or 24.",
     "density.menu_item_height": "The height of a menu item: 40, 32 or 28.",
-    "density.icon_size": "The painted size of an icon in an icon button: 24, 20 or 20.",
+    "density.icon_size": "The painted size of an icon in an icon button, a menu item and an Icon "
+    "with no Size: 24, 20 or 20.",
     "density.item_size": "The size of a tray item, a task button and a workspace button (the "
     "pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be).",
     "density.item_icon_size": "The icon of a tray item and a task button: 20, 18 or 18.",
@@ -843,7 +850,8 @@ TOKEN_DOCS: dict[str, str] = {
     "12], [8, 8, 8, 8] or [8, 6, 8, 6]. With the 16 px line of 14 px body text the field is 40, 32 "
     "or 28 high (the spec's 20 px line would take 10, 6 and 4).",
     "density.tree_indent": "The indent of one tree level: 20, 16 or 12.",
-    "density.chevron_box": "The size of a tree's chevron box: 24, 20 or 16.",
+    "density.chevron_box": "The size of a tree's chevron box and a menu item's submenu arrow: "
+    "24, 20 or 16.",
     "scrollbar.width": "The thickness of the scrollbar thumb: 8.",
     "scrollbar.hit_width": "The pointer-sensitive thickness of the scrollbar: 12.",
     "scrollbar.margin": "The space around the thumb: 2.",
@@ -912,6 +920,8 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
     "field and the list then have the engine's black text).",
     ("Appearance", "Follow_Desktop"): "Follows the desktop's colour scheme, accent, contrast "
     "and reduced-motion settings.",
+    ("Appearance", "Scheme"): "The colour scheme: DEFAULT follows the desktop (the Settings "
+    "portal), LIGHT or DARK always uses that one and ignores a change of the desktop's.",
     ("Appearance", "Density"): "The density level of the shell's own sizes: DEFAULT (40 px "
     "controls), COMPACT (32 px, the default) or DENSE (28 px). A surface can set its own with "
     "Density. See Spacing and Density.",
@@ -1199,6 +1209,9 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("List", "Selected"): "The Key of the chosen entry, set from outside; empty is none.",
     ("List", "Selection"): "SINGLE lets one entry be chosen; NONE does not.",
     ("List", "Label"): "The name assistive technology reads aloud for the list.",
+    ("List", "Empty"): "The text the list shows when it has no entries and Count is 0.",
+    ("List", "Count"): "How many entries the caller puts in the list; -1, the default, is "
+    "unknown, so no empty text shows.",
     ("Marquee_Text", "Text"): "The words; they scroll when wider than the box.",
     ("Marquee_Text", "Speed"): "How fast the text scrolls, in pixels a second.",
     ("Marquee_Text", "Pause"): "How long the text waits at each end, in milliseconds.",

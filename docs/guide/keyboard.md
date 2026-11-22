@@ -345,6 +345,7 @@ Shell {
 * **Only the Enter key is a global key.** The other four are declared with no key (System Settings lists them, and a key you give one there runs it), and the keys you wrote for them arrive as key events on the surface that has the keyboard.
 * **`Next_Focus` and `Previous_Focus`** move the focus through the surfaces in the shell's order (`Focus_Order` first, then the order of the file; Bars, Panels, the Frame; a strip as `<Frame>.<side>`), going round and skipping a hidden Panel. The ring shows on the first Tab stop of the surface that has the focus.
 * **`Focus_Order`** is a key of the `Shell` block: `Shell { Focus_Order: [Screen_Frame, Notes, Top_Bar] Monitor { ... } }`. The surfaces it names come first, in that order; the others follow in the order of the file. A name no surface has is a warning (`focus-order-unknown`) with the nearest names. An older file that ordered surfaces with `Tab_Index` is rewritten by `tesserae-shell migrate` (step 0003).
+* **F6 and Shift+F6** move between the surfaces from one that has the keyboard (a Bar you clicked, a Panel that takes it): the first press enters the mode and steps to the next surface in the order above, then each press steps on (Shift goes back); Escape leaves. F6 with Ctrl, Alt or Meta is not the shell's. It needs a shell surface to have the keyboard already; from another window the key that enters the mode (`Enter_Shortcut_Mode`) is the way in.
 * **`Set_Shortcut_Mode`** toggles the mode of the focused surface: turned on for a Panel it moves the mode to that Panel (the Frame's peeks go back to rest, the Panel's own keys apply); turned off it ends the whole mode (press the Enter key again to start over). **`Exit_Shortcut_Mode`** ends it.
 * **`Shortcut_Mode: true`** on a Bar, Panel, Frame or strip (`Edges { Top { Shortcut_Mode: true } }`) starts the shell in the mode on that surface. At most one surface may say it: two give one load warning naming both, and the first wins.
 * Entering and leaving the mode, and each move, set a polite status text on the window that has the focus. At `Logging { Level: DEBUG }` the log says `shortcut mode: ...`.
@@ -468,5 +469,9 @@ Shell {
 The Launcher and the Applications module were added in 0.1.2 ([Install and start](install.md#what-needs-a-recent-release)).
 
 > **Not yet checked on KWin:** the Launcher's keyboard when it opens from a global key (it asks for `EXCLUSIVE` keyboard for that reason), and a real start of an application with focus after it. The shell never starts a process during its tests; a kit for the hand check exists but has not been reported yet.
+
+## Copying selected text
+
+A `Text` with `Selectable: true` (and a `TextBox`) is selected with the pointer; **Ctrl+C** then puts the selection on the clipboard from any surface that has the keyboard: a Bar, a Panel or a Popup that takes the focus. The pieces of a selection that spans several texts are joined with a newline. A text input keeps its own selection and its own Ctrl+C, and while one has the focus the shell copies nothing. Ctrl+Shift+C and the other chords are not the shell's.
 
 Next: [the command line](command-line.md).

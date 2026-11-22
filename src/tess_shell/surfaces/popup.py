@@ -39,6 +39,7 @@ from tess_shell.schema.model import ModuleDef, PopupDef, ShellDef
 from tess_shell.surfaces.bar import Rect, surface_rect
 from tess_shell.surfaces.manager import free_window
 from tess_shell.surfaces.popup_measure import measure_menu
+from tess_shell.surfaces.selection_copy import copy_selection
 
 if TYPE_CHECKING:
     from tess_re import Node as TreNode
@@ -823,6 +824,8 @@ class Popups:
     def _key(self, op: OpenPopup, event: Any) -> None:
         key = getattr(event, "key", None)
         logger.debug(f"Popup {op.where}: key {key}")
+        if copy_selection(op.window, event):  # Ctrl+C on a selected Text
+            return
         if key == "escape":  # the innermost level closes: a submenu alone, the root with focus back
             self.close(op, "escape")
         elif isinstance(key, str) and plain(event) and not op.closing and op.view is not None:
