@@ -225,6 +225,48 @@ def focus_ring(look: Look | None) -> dict[str, m.Value]:
     return found
 
 
+# the scrollbar of a scroll view: its style key, the theme token (group ``scrollbar``) it is read
+# from, and for the colours the colour token (Scrollbar and Scroll Container)
+_SCROLLBAR_NUMBERS = {
+    "Scrollbar_Width": "scrollbar.width",
+    "Scrollbar_Hit_Width": "scrollbar.hit_width",
+    "Scrollbar_Margin": "scrollbar.margin",
+    "Scrollbar_Min_Length": "scrollbar.min_length",
+    "Scrollbar_Gutter": "scrollbar.gutter",
+    "Scrollbar_Radius": "scrollbar.radius",
+    "Scrollbar_Opacity": "scrollbar.opacity",
+    "Scrollbar_Opacity_Hover": "scrollbar.opacity_hover",
+    "Scrollbar_Opacity_Drag": "scrollbar.opacity_drag",
+    "Scroll_Wheel_Notch": "scrollbar.wheel_notch",
+    "Scroll_Key_Line": "scrollbar.key_line",
+    "Scroll_Page_Fraction": "scrollbar.page_fraction",
+}
+_SCROLLBAR_COLOURS = ("Scrollbar_Fill", "Scrollbar_Fill_Hover", "Scrollbar_Fill_Drag")
+SCROLLBAR_THUMB = "color.on_surface_muted"  # the spec's on_surface_variant
+
+
+def scrollbar_style(look: Look | None) -> dict[str, m.Value]:
+    """The scrollbar the spec describes, as the style keys of a scroll view (a block's own key or a
+    stylesheet rule replaces each): the sizes and opacities of the theme's ``Scrollbar`` group and
+    the thumb in the theme's muted ink. With no look, none (tre's own scrollbar)."""
+    if look is None:
+        return {}
+    out: dict[str, m.Value] = {}
+    for key, path in _SCROLLBAR_NUMBERS.items():
+        try:
+            value = _ref_value(m.TokenRef(path, "number"), look.tokens)
+        except TokenProblem:
+            continue  # a theme with no such token keeps tre's value
+        out[key] = value
+    try:
+        thumb = _ref_value(m.TokenRef(SCROLLBAR_THUMB, "color"), look.tokens)
+    except TokenProblem:
+        return out
+    for key in _SCROLLBAR_COLOURS:
+        out[key] = thumb
+    return out
+
+
 def _motion(
     node: m.Node, props: dict[str, m.Value], style: dict[str, m.Value], look: Look | None
 ) -> None:
@@ -256,6 +298,9 @@ def _resolve_node(
     style = resolve_style(node.style, look, errors)
     _motion(node, props, style, look)
     states = {s: resolve_style(v, look, errors) for s, v in node.states.items()}
+    if node.kind == "ScrollBox":  # the spec's scrollbar, under the block's and a rule's own keys
+        style = {**scrollbar_style(look), **{k: v for k, v in style.items()}}
+        style = {k: v for k, v in style.items() if k not in props}
     if takes_ring(node) and _allowed(node.kind, "Outline_Width"):
         # the ring of keyboard focus, under whatever ``:focused`` rule the file or a stylesheet
         # has (its ``Outline_*`` keys replace the ring's); it does not touch the block's shadows

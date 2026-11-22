@@ -10484,9 +10484,39 @@
     "disabled": false,
     "focusable": true,
     "height": 90,
+    "key_line": 40,
     "label": "Files",
     "orientation": "vertical",
+    "page_fraction": 0.9,
     "role": "list",
+    "scrollbar_fill": [
+     159,
+     174,
+     191,
+     255
+    ],
+    "scrollbar_fill_drag": [
+     159,
+     174,
+     191,
+     255
+    ],
+    "scrollbar_fill_hover": [
+     159,
+     174,
+     191,
+     255
+    ],
+    "scrollbar_gutter": 12,
+    "scrollbar_hit_width": 12,
+    "scrollbar_margin": 2,
+    "scrollbar_min_length": 32,
+    "scrollbar_opacity": 0.7,
+    "scrollbar_opacity_drag": 1.0,
+    "scrollbar_opacity_hover": 0.8,
+    "scrollbar_radius": 4,
+    "scrollbar_width": 8,
+    "wheel_notch": 40,
     "width": 240
    },
    "Menu@Main_Shell.Main.Top_Bar.Menu_1/Root": {
@@ -11441,9 +11471,39 @@
      "disabled": false,
      "focusable": true,
      "height": 90,
+     "key_line": 40,
      "label": "Files",
      "orientation": "vertical",
+     "page_fraction": 0.9,
      "role": "list",
+     "scrollbar_fill": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_fill_drag": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_fill_hover": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_gutter": 12,
+     "scrollbar_hit_width": 12,
+     "scrollbar_margin": 2,
+     "scrollbar_min_length": 32,
+     "scrollbar_opacity": 0.7,
+     "scrollbar_opacity_drag": 1.0,
+     "scrollbar_opacity_hover": 0.8,
+     "scrollbar_radius": 4,
+     "scrollbar_width": 8,
+     "wheel_notch": 40,
      "width": 240
     },
     "states": {
@@ -11466,15 +11526,45 @@
      "focusable": true,
      "height": 90.0,
      "hit_testable": null,
+     "key_line": 40.0,
      "label": "Files",
      "orientation": "vertical",
+     "page_fraction": 0.9,
      "pressed": null,
      "read_only": "!ValueError",
      "role": "list",
+     "scrollbar_fill": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_fill_drag": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_fill_hover": [
+      159,
+      174,
+      191,
+      255
+     ],
+     "scrollbar_gutter": 12.0,
+     "scrollbar_hit_width": 12.0,
+     "scrollbar_margin": 2.0,
+     "scrollbar_min_length": 32.0,
+     "scrollbar_opacity": 0.7,
+     "scrollbar_opacity_drag": 1.0,
+     "scrollbar_opacity_hover": 0.8,
+     "scrollbar_radius": 4.0,
+     "scrollbar_width": 8.0,
      "selected": null,
      "tab_index": 0,
      "value": null,
      "visible": true,
+     "wheel_notch": 40.0,
      "width": 240.0
     },
     "wire": {

@@ -82,6 +82,21 @@ Theme {
         Dragged: 0.16
     }
 
+    Scrollbar {
+        Width: 8
+        Hit_Width: 12
+        Margin: 2
+        Min_Length: 32
+        Gutter: 12
+        Radius: 4
+        Opacity: 0.70
+        Opacity_Hover: 0.80
+        Opacity_Drag: 1.00
+        Wheel_Notch: 40
+        Key_Line: 40
+        Page_Fraction: 0.9
+    }
+
     Elevation {
         Reach: 64
         Max {

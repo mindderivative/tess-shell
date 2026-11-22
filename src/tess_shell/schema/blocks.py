@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from tess_shell.binder.model import FIELD, FIELD_INPUT, FIELD_LINE, FIELD_SIZE, MARQUEE_TEXT
 
+SCROLLBAR_SHOW = ("OVERFLOW", "ALWAYS", "AUTO_HIDE", "NEVER")  # tre's scrollbar_show
 DENSITY_LEVELS = ("DEFAULT", "COMPACT", "DENSE")  # Appearance.Density, and a surface's own
 ALIGN = ("START", "CENTER", "END", "STRETCH")
 JUSTIFY = ("START", "CENTER", "END", "SPACE_BETWEEN", "SPACE_AROUND", "SPACE_EVENLY")
@@ -219,6 +220,8 @@ CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     # a stylesheet rule's value is checked against every block that takes the key; a block takes
     # the words of its own row (a Text has no SCROLL: the fold skips the rule there)
     ("Rule", "Overflow"): ("CLIP", "ELLIPSIS", "SCROLL"),
+    ("ScrollBox", "Scrollbar_Show"): SCROLLBAR_SHOW,
+    ("Rule", "Scrollbar_Show"): SCROLLBAR_SHOW,
     ("*", "Position"): ("RELATIVE", "ABSOLUTE"),
     ("*", "Role"): ROLES,
     ("*", "Live"): ("POLITE", "ASSERTIVE"),
@@ -267,6 +270,23 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
             "Outline_Width": "number",
             "Outline_Offset": "number",
             "Outline_Color": "color",
+            "Scrollbar_Width": "number",
+            "Scrollbar_Hit_Width": "number",
+            "Scrollbar_Margin": "number",
+            "Scrollbar_Min_Length": "number",
+            "Scrollbar_Gutter": "number",
+            "Scrollbar_Radius": "number",
+            "Scrollbar_Opacity": "number",
+            "Scrollbar_Opacity_Hover": "number",
+            "Scrollbar_Opacity_Drag": "number",
+            "Scrollbar_Fill": "color",
+            "Scrollbar_Fill_Hover": "color",
+            "Scrollbar_Fill_Drag": "color",
+            "Scrollbar_Track_Fill": "color",
+            "Scroll_Wheel_Notch": "number",
+            "Scroll_Key_Line": "number",
+            "Scroll_Page_Fraction": "number",
+            "Scrollbar_Show": "enum",
         },
     ),
     "Spacer": (COMMON, {}),

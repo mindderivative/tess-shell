@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.29",
+  "schema_version": "1.30",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -1261,6 +1261,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -1338,6 +1339,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2009,6 +2011,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2086,6 +2089,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2119,6 +2123,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2146,6 +2151,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2600,6 +2606,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2677,6 +2684,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2710,6 +2718,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -2737,6 +2746,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3145,6 +3155,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3222,6 +3233,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3255,6 +3267,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3282,6 +3295,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3752,6 +3766,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3802,6 +3817,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -3879,6 +3895,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4738,6 +4755,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4807,6 +4825,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4865,6 +4884,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4901,6 +4921,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4937,6 +4958,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -4964,6 +4986,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5106,6 +5129,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5131,6 +5155,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5181,6 +5206,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5251,6 +5277,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5277,6 +5304,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5305,6 +5333,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5370,6 +5399,436 @@
           "preferred_tokens": [
             "color"
           ]
+        },
+        "Scrollbar_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The painted thickness of the scrollbar thumb, in pixels (the theme's scrollbar.width, 8).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Hit_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The pointer-sensitive thickness of the scrollbar (12).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Margin": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The space between the thumb and the container's edge, and the lane's end (2).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Min_Length": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The shortest the thumb gets along its axis (32).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Gutter": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The space reserved at the end edge of an axis that overflows (12).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Radius": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The corner radius of the thumb (4).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The opacity of the thumb at rest, 0 to 1 (0.70).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity_Hover": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The opacity of the thumb under the pointer (0.80).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity_Drag": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The opacity of the thumb while it is dragged (1.00).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Fill": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb at rest (the theme's muted ink).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Fill_Hover": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb under the pointer.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Fill_Drag": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb while it is dragged.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Track_Fill": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the lane the thumb runs in (none by default).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scroll_Wheel_Notch": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The distance of one wheel notch, in pixels (40).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scroll_Key_Line": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The distance of an arrow key, in pixels (40).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scroll_Page_Fraction": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The share of the viewport a Page key or a lane click moves (0.9).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Show": {
+          "kind": "enum",
+          "choices": [
+            "OVERFLOW",
+            "ALWAYS",
+            "AUTO_HIDE",
+            "NEVER"
+          ],
+          "enum": null,
+          "default": null,
+          "doc": "When the scrollbar shows: OVERFLOW (when the content overflows, the default), ALWAYS, AUTO_HIDE or NEVER.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "tokens": [],
+          "preferred_tokens": []
         },
         "Placeholder_Foreground": {
           "kind": "color",
@@ -5725,6 +6184,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5752,6 +6212,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5777,6 +6238,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5802,6 +6264,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5827,6 +6290,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5852,6 +6316,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5878,6 +6343,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5912,6 +6378,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5939,6 +6406,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -5964,6 +6432,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6006,6 +6475,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6070,6 +6540,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6112,6 +6583,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6138,6 +6610,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6164,6 +6637,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6190,6 +6664,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6215,6 +6690,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6240,6 +6716,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6266,6 +6743,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6291,6 +6769,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6443,6 +6922,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6469,6 +6949,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6495,6 +6976,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6708,6 +7190,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6756,6 +7239,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6825,6 +7309,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6883,6 +7368,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6919,6 +7405,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6955,6 +7442,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -6982,6 +7470,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7124,6 +7613,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7149,6 +7639,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7333,6 +7824,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7360,6 +7852,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7385,6 +7878,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7410,6 +7904,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7435,6 +7930,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7460,6 +7956,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7486,6 +7983,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7520,6 +8018,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7547,6 +8046,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7572,6 +8072,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7614,6 +8115,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7678,6 +8180,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7720,6 +8223,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7746,6 +8250,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7772,6 +8277,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7798,6 +8304,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7823,6 +8330,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7848,6 +8356,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7874,6 +8383,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -7899,6 +8409,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8051,6 +8562,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8077,6 +8589,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8103,6 +8616,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8374,6 +8888,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8410,6 +8925,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8458,6 +8974,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8527,6 +9044,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8585,6 +9103,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8621,6 +9140,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8657,6 +9177,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8684,6 +9205,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8826,6 +9348,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8851,6 +9374,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -8901,6 +9425,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9049,6 +9574,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9076,6 +9602,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9101,6 +9628,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9126,6 +9654,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9151,6 +9680,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9176,6 +9706,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9202,6 +9733,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9236,6 +9768,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9263,6 +9796,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9288,6 +9822,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9330,6 +9865,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9394,6 +9930,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9436,6 +9973,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9462,6 +10000,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9488,6 +10027,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9514,6 +10054,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9539,6 +10080,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9564,6 +10106,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9590,6 +10133,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9615,6 +10159,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9767,6 +10312,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9793,6 +10339,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -9819,6 +10366,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10032,6 +10580,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10100,6 +10649,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10146,6 +10696,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10233,6 +10784,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10259,6 +10811,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10287,6 +10840,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10356,6 +10910,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10392,6 +10947,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10419,6 +10975,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10556,6 +11113,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10583,6 +11141,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10608,6 +11167,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10633,6 +11193,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10658,6 +11219,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10683,6 +11245,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10709,6 +11272,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10743,6 +11307,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10770,6 +11335,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10795,6 +11361,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10837,6 +11404,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10901,6 +11469,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10943,6 +11512,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10969,6 +11539,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -10995,6 +11566,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11021,6 +11593,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11046,6 +11619,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11071,6 +11645,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11097,6 +11672,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11122,6 +11698,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11274,6 +11851,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11300,6 +11878,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11326,6 +11905,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11549,6 +12129,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11618,6 +12199,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11676,6 +12258,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11745,6 +12328,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11770,6 +12354,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11841,6 +12426,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11910,6 +12496,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -11968,6 +12555,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12004,6 +12592,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12031,6 +12620,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12098,6 +12688,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12123,6 +12714,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12292,6 +12884,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12319,6 +12912,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12344,6 +12938,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12369,6 +12964,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12394,6 +12990,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12419,6 +13016,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12445,6 +13043,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12479,6 +13078,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12506,6 +13106,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12531,6 +13132,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12573,6 +13175,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12637,6 +13240,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12679,6 +13283,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12705,6 +13310,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12731,6 +13337,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12757,6 +13364,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12782,6 +13390,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12807,6 +13416,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12833,6 +13443,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -12858,6 +13469,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13010,6 +13622,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13036,6 +13649,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13062,6 +13676,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13282,6 +13897,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13328,6 +13944,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13372,6 +13989,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13439,6 +14057,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13464,6 +14083,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13493,6 +14113,436 @@
           "preferred_tokens": [
             "color"
           ]
+        },
+        "Scrollbar_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "4",
+          "doc": "The painted thickness of the scrollbar thumb, in pixels (the theme's scrollbar.width, 8).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Hit_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "16",
+          "doc": "The pointer-sensitive thickness of the scrollbar (12).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Margin": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "2",
+          "doc": "The space between the thumb and the container's edge, and the lane's end (2).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Min_Length": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "32",
+          "doc": "The shortest the thumb gets along its axis (32).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Gutter": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The space reserved at the end edge of an axis that overflows (12).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Radius": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "2",
+          "doc": "The corner radius of the thumb (4).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "1",
+          "doc": "The opacity of the thumb at rest, 0 to 1 (0.70).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity_Hover": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "1",
+          "doc": "The opacity of the thumb under the pointer (0.80).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Opacity_Drag": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "1",
+          "doc": "The opacity of the thumb while it is dragged (1.00).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Fill": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb at rest (the theme's muted ink).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Fill_Hover": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb under the pointer.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Fill_Drag": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the thumb while it is dragged.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scrollbar_Track_Fill": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the lane the thumb runs in (none by default).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Scroll_Wheel_Notch": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "40",
+          "doc": "The distance of one wheel notch, in pixels (40).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scroll_Key_Line": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "40",
+          "doc": "The distance of an arrow key, in pixels (40).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scroll_Page_Fraction": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "1",
+          "doc": "The share of the viewport a Page key or a lane click moves (0.9).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "scrollbar",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Scrollbar_Show": {
+          "kind": "enum",
+          "choices": [
+            "OVERFLOW",
+            "ALWAYS",
+            "AUTO_HIDE",
+            "NEVER"
+          ],
+          "enum": null,
+          "default": "OVERFLOW",
+          "doc": "When the scrollbar shows: OVERFLOW (when the content overflows, the default), ALWAYS, AUTO_HIDE or NEVER.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "tokens": [],
+          "preferred_tokens": []
         }
       },
       "events": [
@@ -13647,6 +14697,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13674,6 +14725,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13699,6 +14751,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13724,6 +14777,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13749,6 +14803,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13774,6 +14829,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13800,6 +14856,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13834,6 +14891,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13861,6 +14919,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13886,6 +14945,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13928,6 +14988,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -13992,6 +15053,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14034,6 +15096,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14060,6 +15123,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14086,6 +15150,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14112,6 +15177,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14137,6 +15203,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14162,6 +15229,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14188,6 +15256,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14213,6 +15282,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14365,6 +15435,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14391,6 +15462,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14417,6 +15489,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14739,6 +15812,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14766,6 +15840,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14791,6 +15866,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14816,6 +15892,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14841,6 +15918,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14866,6 +15944,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14892,6 +15971,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14926,6 +16006,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14953,6 +16034,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -14978,6 +16060,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15020,6 +16103,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15084,6 +16168,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15126,6 +16211,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15152,6 +16238,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15178,6 +16265,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15204,6 +16292,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15229,6 +16318,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15254,6 +16344,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15280,6 +16371,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15305,6 +16397,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15457,6 +16550,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15483,6 +16577,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15509,6 +16604,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15789,6 +16885,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -15858,6 +16955,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16005,6 +17103,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16032,6 +17131,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16057,6 +17157,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16082,6 +17183,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16107,6 +17209,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16132,6 +17235,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16158,6 +17262,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16192,6 +17297,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16219,6 +17325,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16244,6 +17351,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16286,6 +17394,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16350,6 +17459,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16392,6 +17502,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16418,6 +17529,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16444,6 +17556,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16470,6 +17583,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16495,6 +17609,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16520,6 +17635,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16546,6 +17662,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16571,6 +17688,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16723,6 +17841,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16749,6 +17868,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -16775,6 +17895,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17039,6 +18160,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17083,6 +18205,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17227,6 +18350,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17252,6 +18376,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17277,6 +18402,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17302,6 +18428,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17328,6 +18455,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17362,6 +18490,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17389,6 +18518,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17414,6 +18544,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17456,6 +18587,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17520,6 +18652,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17562,6 +18695,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17588,6 +18722,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17614,6 +18749,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17640,6 +18776,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17665,6 +18802,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17690,6 +18828,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17716,6 +18855,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17741,6 +18881,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17893,6 +19034,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17919,6 +19061,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -17945,6 +19088,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18148,6 +19292,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18192,6 +19337,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18261,6 +19407,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18332,6 +19479,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18401,6 +19549,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18460,6 +19609,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18487,6 +19637,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18631,6 +19782,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18656,6 +19808,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18681,6 +19834,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18706,6 +19860,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18732,6 +19887,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18766,6 +19922,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18793,6 +19950,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18818,6 +19976,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18860,6 +20019,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18924,6 +20084,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18966,6 +20127,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -18992,6 +20154,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19018,6 +20181,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19044,6 +20208,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19069,6 +20234,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19094,6 +20260,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19120,6 +20287,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19145,6 +20313,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19297,6 +20466,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19323,6 +20493,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19349,6 +20520,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19552,6 +20724,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19596,6 +20769,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19640,6 +20814,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19711,6 +20886,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19755,6 +20931,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19814,6 +20991,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19841,6 +21019,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -19987,6 +21166,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20014,6 +21194,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20039,6 +21220,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20064,6 +21246,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20089,6 +21272,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20114,6 +21298,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20140,6 +21325,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20174,6 +21360,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20201,6 +21388,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20226,6 +21414,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20268,6 +21457,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20332,6 +21522,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20374,6 +21565,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20400,6 +21592,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20426,6 +21619,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20452,6 +21646,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20477,6 +21672,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20502,6 +21698,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20528,6 +21725,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20553,6 +21751,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20705,6 +21904,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20731,6 +21931,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20757,6 +21958,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -20980,6 +22182,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21049,6 +22252,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21126,7 +22330,8 @@
           "unit": null,
           "tokens": [
             "shape",
-            "state"
+            "state",
+            "scrollbar"
           ],
           "preferred_tokens": []
         },
@@ -21146,7 +22351,8 @@
           "unit": null,
           "tokens": [
             "shape",
-            "state"
+            "state",
+            "scrollbar"
           ],
           "preferred_tokens": []
         },
@@ -21207,6 +22413,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21276,6 +22483,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21335,6 +22543,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21362,6 +22571,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21508,6 +22718,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21535,6 +22746,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21560,6 +22772,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21585,6 +22798,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21610,6 +22824,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21635,6 +22850,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21661,6 +22877,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21695,6 +22912,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21722,6 +22940,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21747,6 +22966,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21789,6 +23009,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21853,6 +23074,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21895,6 +23117,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21921,6 +23144,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21947,6 +23171,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21973,6 +23198,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -21998,6 +23224,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22023,6 +23250,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22049,6 +23277,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22074,6 +23303,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22226,6 +23456,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22252,6 +23483,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22278,6 +23510,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22496,6 +23729,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22521,6 +23755,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22649,6 +23884,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22675,6 +23911,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22703,6 +23940,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22739,6 +23977,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22766,6 +24005,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22810,6 +24050,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22971,6 +24212,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -22998,6 +24240,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23023,6 +24266,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23048,6 +24292,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23073,6 +24318,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23098,6 +24344,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23124,6 +24371,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23158,6 +24406,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23185,6 +24434,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23210,6 +24460,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23252,6 +24503,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23316,6 +24568,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23358,6 +24611,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23384,6 +24638,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23410,6 +24665,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23436,6 +24692,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23461,6 +24718,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23486,6 +24744,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23512,6 +24771,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23537,6 +24797,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23689,6 +24950,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23715,6 +24977,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23741,6 +25004,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -23954,6 +25218,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24065,6 +25330,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24102,6 +25368,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24161,6 +25428,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24230,6 +25498,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24288,6 +25557,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24324,6 +25594,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24360,6 +25631,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24387,6 +25659,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24529,6 +25802,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24554,6 +25828,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24647,6 +25922,7 @@
             "space",
             "density",
             "state",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -24673,6 +25949,7 @@
             "shape",
             "space",
             "density",
+            "scrollbar",
             "elevation",
             "motion"
           ],
@@ -26522,6 +27799,140 @@
         "modes": [],
         "min": 0,
         "max": 1,
+        "step": null,
+        "unit": null
+      }
+    },
+    "scrollbar": {
+      "width": {
+        "kind": "number",
+        "ref": "$scrollbar.width",
+        "default": "8",
+        "doc": "The thickness of the scrollbar thumb: 8.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "hit_width": {
+        "kind": "number",
+        "ref": "$scrollbar.hit_width",
+        "default": "12",
+        "doc": "The pointer-sensitive thickness of the scrollbar: 12.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "margin": {
+        "kind": "number",
+        "ref": "$scrollbar.margin",
+        "default": "2",
+        "doc": "The space around the thumb: 2.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "min_length": {
+        "kind": "number",
+        "ref": "$scrollbar.min_length",
+        "default": "32",
+        "doc": "The shortest thumb: 32.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "gutter": {
+        "kind": "number",
+        "ref": "$scrollbar.gutter",
+        "default": "12",
+        "doc": "The space reserved for the scrollbar: 12.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "radius": {
+        "kind": "number",
+        "ref": "$scrollbar.radius",
+        "default": "4",
+        "doc": "The corner radius of the thumb: 4.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "opacity": {
+        "kind": "number",
+        "ref": "$scrollbar.opacity",
+        "default": "0.70",
+        "doc": "The thumb's opacity at rest: 0.70.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "opacity_hover": {
+        "kind": "number",
+        "ref": "$scrollbar.opacity_hover",
+        "default": "0.80",
+        "doc": "The thumb's opacity under the pointer: 0.80.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "opacity_drag": {
+        "kind": "number",
+        "ref": "$scrollbar.opacity_drag",
+        "default": "1.00",
+        "doc": "The thumb's opacity while dragged: 1.00.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "wheel_notch": {
+        "kind": "number",
+        "ref": "$scrollbar.wheel_notch",
+        "default": "40",
+        "doc": "The distance of one wheel notch: 40.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "key_line": {
+        "kind": "number",
+        "ref": "$scrollbar.key_line",
+        "default": "40",
+        "doc": "The distance of an arrow key in a scroll view: 40.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "page_fraction": {
+        "kind": "number",
+        "ref": "$scrollbar.page_fraction",
+        "default": "0.9",
+        "doc": "The share of the viewport a Page key moves: 0.9.",
+        "modes": [],
+        "min": null,
+        "max": null,
         "step": null,
         "unit": null
       }
