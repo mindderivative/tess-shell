@@ -8,27 +8,28 @@ Name: Icon
 # the desktop's theme, the config Icons folder and the folders of settings.tdl), or a file written
 # relative to the file that names it: a `.svg` (it follows the colour) or a `.png`, `.jpg`, `.gif` or
 # `.webp` (drawn as it is). A name no set has shows the broken-image icon, with one warning. `Size`
-# is the width and the height. `Icon { Foreground: ... }` colours an SVG (one that uses
+# is the width and the height (0, the default, is the density's icon size: 24, 20 or 20). `Icon { Foreground: ... }` colours an SVG (one that uses
 # currentColor). An icon is decoration, hidden from assistive technology, unless the call has a
 # `Label`.
 Module {
     Params {
         Icon { Type: icon, Default: "" }
-        Size { Type: number, Default: 16 }
+        # 0: the density's icon size (24, 20 or 20)
+        Size { Type: number, Default: 0 }
     }
     FlexBox {
         Name: Root
         A11y_Hidden: true
-        Width: <| params.Size |>
-        Height: <| params.Size |>
+        Width: <| params.Size if params.Size > 0 else density.icon_size |>
+        Height: <| params.Size if params.Size > 0 else density.icon_size |>
         Align_Items: CENTER
         Justify_Content: CENTER
         Children {
             If <| params.Icon[:1] == "<" |> {
-                SVG { Source: <| params.Icon |>, Width: <| params.Size |>, Height: <| params.Size |> }
+                SVG { Source: <| params.Icon |>, Width: <| params.Size if params.Size > 0 else density.icon_size |>, Height: <| params.Size if params.Size > 0 else density.icon_size |> }
             } Else {
                 If <| params.Icon != "" |> {
-                    Bitmap { Source: <| params.Icon |>, Width: <| params.Size |>, Height: <| params.Size |> }
+                    Bitmap { Source: <| params.Icon |>, Width: <| params.Size if params.Size > 0 else density.icon_size |>, Height: <| params.Size if params.Size > 0 else density.icon_size |> }
                 }
             }
         }

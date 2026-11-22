@@ -48,8 +48,8 @@ Module {
         Label: <| label |>
         Flex: HORIZONTAL
         Align_Items: CENTER
-        Spacing: 12
-        Padding: [16, 8, 16, 8]
+        Spacing: <| space.step_4 |>
+        Padding: <| [space.step_5, space.step_3, space.step_5, space.step_3] |>
         Children {
             SVG {
                 Name: Glyph

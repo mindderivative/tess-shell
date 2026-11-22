@@ -48,6 +48,7 @@ from tess_shell.binder.model import (
     Length,
     Number,
     Seq,
+    TokenRef,
     Value,
 )
 from tess_shell.binder.shadow import DEFAULT_MAX, style_shadows
@@ -112,6 +113,9 @@ class Paint:
     fill: RGBA | None = None
     outer: RGBA | None = None
     inner: RGBA | None = None
+    # the ink of a Peek handle where no border gives it: the theme role ``on_surface`` or
+    # ``surface``, whichever reads better on the fill (Peek > Tokens used, AC-PEK-14)
+    handle: RGBA | None = None
     opacity: float = 1.0
     # the ring's shadow, first on top: (colour, blur, spread). A ring has no direction, so the
     # shadows' x and y are not used (Frame > Elevation)
@@ -122,6 +126,21 @@ def _rgba(value: Value | None) -> RGBA | None:
     if isinstance(value, Color):
         return convert.color(value, ("fill",))["fill"]  # type: ignore[no-any-return]
     return None
+
+
+def _luminance(c: RGBA) -> float:
+    """WCAG relative luminance of an opaque colour."""
+
+    def lin(v: int) -> float:
+        s = v / 255
+        return s / 12.92 if s <= 0.03928 else ((s + 0.055) / 1.055) ** 2.4
+
+    return 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2])
+
+
+def _contrast(a: RGBA, b: RGBA) -> float:
+    hi, lo = sorted((_luminance(a), _luminance(b)), reverse=True)
+    return float((hi + 0.05) / (lo + 0.05))
 
 
 def resolve_paint(frame: FrameDef, look: Look | None) -> tuple[Paint, list[BindError]]:
@@ -137,6 +156,18 @@ def resolve_paint(frame: FrameDef, look: Look | None) -> tuple[Paint, list[BindE
         return _rgba(got.get(f"{label}.Color"))
 
     opacity = style.get("Opacity")
+    roles = resolve_style(
+        {
+            "ink": TokenRef("color.on_surface", "color", origin=frame.origin),
+            "paper": TokenRef("color.surface", "color", origin=frame.origin),
+        },
+        look,
+    )
+    ink, paper = _rgba(roles.get("ink")), _rgba(roles.get("paper"))
+    fill = _rgba(style.get("Background"))
+    handle = ink
+    if ink is not None and paper is not None and fill is not None:
+        handle = max((ink, paper), key=lambda c: _contrast(c, fill))
     lit = style_shadows(style, (look.max_shadows if look else None) or DEFAULT_MAX)
     return (
         Paint(
@@ -148,7 +179,8 @@ def resolve_paint(frame: FrameDef, look: Look | None) -> tuple[Paint, list[BindE
                 )
                 for s in lit.items
             ),
-            fill=_rgba(style.get("Background")),
+            fill=fill,
+            handle=handle,
             outer=border(frame.outer_border, "Outer_Border"),
             inner=border(frame.inner_border, "Inner_Border"),
             opacity=min(max(float(opacity.value), 0.0), 1.0)
@@ -1374,15 +1406,14 @@ class Frames:
         return Axis(side, ox, oy, nx, ny, peek.size, full)
 
     def _handle_colour(self, st: FrameState) -> RGBA:
-        """The handle's colour: the Frame's inner border, else its outer, else a light or dark
-        that shows on the fill."""
+        """The handle's colour: the Frame's inner border, else its outer, else the theme role
+        (``on_surface`` or ``surface``) that reads better on the fill; a plain light grey when
+        there is no look at all."""
         paint = st.plan.paint
         for colour in (paint.inner, paint.outer):
             if colour is not None and colour[3] > 0:
                 return colour
-        fill = paint.fill
-        light = fill is None or (0.299 * fill[0] + 0.587 * fill[1] + 0.114 * fill[2]) < 140
-        return (235, 235, 235, 255) if light else (30, 30, 30, 255)
+        return paint.handle or (235, 235, 235, 255)
 
     def _rest_state(self, st: FrameState, host: HostState) -> str:
         """``tab`` (a Panel's tab or a strip's sliver), ``hidden`` (a Panel with nothing showing)

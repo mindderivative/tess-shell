@@ -49,7 +49,7 @@ Module {
         Description: <| tooltip |>
         Flex: HORIZONTAL
         Align_Items: CENTER
-        Spacing: 4
+        Spacing: <| space.step_2 |>
         Children {
             If <| params.show_art |> {
                 Image { Name: Art, Source: <| art |>, Placeholder: "mdi:music", Width: 24, Height: 24 }
