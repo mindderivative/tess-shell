@@ -2216,7 +2216,13 @@ class SurfaceManager:
         self._baselined.append(window)
         self._baseline(window)
 
+    DRAG_START_PX = 4  # a press that moves less than this is a click, not a drag (tre 0.6.12)
+
     def _baseline(self, window: Any) -> None:
+        try:
+            window.set(drag_start_px=self.DRAG_START_PX)
+        except ValueError, RuntimeError:  # the window is closed already
+            logger.debug("baseline: drag_start_px could not be set", exc_info=True)
         look = self._look
         if look is None:
             return
