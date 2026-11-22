@@ -470,7 +470,6 @@ BAR_NOT_BUILT = (
     "Meld",
     "Animation",
     "Text_Rotation",
-    "Padding",
     "Class",
 )
 # Surface keys a Bar once read and no longer does: an error naming the key, with this hint. A Bar
@@ -651,6 +650,7 @@ PANEL_KEYS: dict[str, str] = {
     "Tab_Index": "tab_index",
     # whether the Panel is the surface in shortcut mode (Focus and Keyboard > Shortcut Mode)
     "Shortcut_Mode": "bool",
+    "Padding": "sides",
 }
 PANEL_CHOICES: dict[str, tuple[str, ...]] = {
     "Layer": ("BOTTOM", "TOP", "OVERLAY"),
@@ -669,7 +669,7 @@ PANEL_NOT_BUILT_ERROR = (
 # keys of a Panel with ``Meld: true`` (hosted in its Frame's surface) that are not built
 # (a melded Panel is hosted in its Frame's painter: it has no window of its own to take the
 # keyboard, so it takes no ``Shortcut_Mode`` either; a Frame or a strip does)
-PANEL_MELD_NOT_BUILT = ("Movable", "Keyboard", "Input_Region", "Shortcut_Mode")
+PANEL_MELD_NOT_BUILT = ("Movable", "Keyboard", "Input_Region", "Shortcut_Mode", "Padding")
 # style keys a melded Panel does not use: it is drawn in the Frame's colour and border
 PANEL_MELD_IGNORED_STYLE = (
     "Background",
@@ -681,7 +681,7 @@ PANEL_MELD_IGNORED_STYLE = (
     "Border_Width",
     "Border_Color",
 )
-PANEL_NOT_BUILT_WARNING = ("Margin", "Padding", "Class")
+PANEL_NOT_BUILT_WARNING = ("Margin", "Class")
 # ``Peek { Size, Enter_Delay, Exit_Delay, Trigger, Handle, Slide_From }`` (Frame > Peek Triggers and
 # Handles): what opens a peek, the icon on its tab and, for a Panel in a Frame corner, its edge
 PEEK_TRIGGERS = ("HOVER", "CLICK", "DRAG")
