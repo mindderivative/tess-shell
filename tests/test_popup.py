@@ -971,7 +971,11 @@ def test_a_tip_is_hidden_from_assistive_technology_when_the_trigger_carries_its_
     r.bar.window.simulate("pointer_enter", node=node)
     r.advance(501)
     assert r.popups.current is not None and r.popups.current.window.root.get("a11y_hidden") is True
-    (r2,) = list(rig("", btn=BTN_TIP))  # an inline tooltip: no description on the trigger
+    no_text = (
+        "Module { FlexBox { Name: Root, Width: 60, Height: 20, Tooltip { Children { "
+        "Rectangle { Width: 10, Height: 10 } } } } }"
+    )
+    (r2,) = list(rig("", btn=no_text))  # an inline tooltip with no text: nothing to put on it
     r2.bar.window.simulate("pointer_enter", r2.root_of())
     r2.advance(501)
     assert r2.popups.current is not None
@@ -1029,3 +1033,17 @@ def test_the_window_losing_focus_removes_its_open_tooltip_and_it_stays_closed() 
     assert "closing (the window lost focus)" in r.log()
     r.advance(600)
     assert r.popups.current is None
+
+
+def test_an_inline_tooltip_gives_its_text_to_the_trigger_as_its_description() -> None:
+    """The tip is hidden from assistive technology, so its text is the trigger's description."""
+    inline = (
+        "Module { FlexBox { Name: Root, Width: 60, Height: 20, Tooltip { Children { Text "
+        '{ Text: "Save the file", Width: AUTO, Height: AUTO } } } } }'
+    )
+    (r,) = list(rig("", btn=inline))
+    assert r.root_of().get("description") == "Save the file"
+    r.bar.window.simulate("pointer_enter", node=r.root_of())
+    r.advance(501)
+    assert r.popups.current is not None
+    assert r.popups.current.window.root.get("a11y_hidden") is True
