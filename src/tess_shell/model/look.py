@@ -298,11 +298,10 @@ def _resolve_node(
     style = resolve_style(node.style, look, errors)
     _motion(node, props, style, look)
     states = {s: resolve_style(v, look, errors) for s, v in node.states.items()}
-    if takes_ring(node) and _allowed(node.kind, "Outline_Width"):
     if node.kind == "ScrollBox":  # the spec's scrollbar, under the block's and a rule's own keys
         style = {**scrollbar_style(look), **{k: v for k, v in style.items()}}
         style = {k: v for k, v in style.items() if k not in props}
-    if takes_ring(node) and _allowed(node.kind, "Shadows"):
+    if takes_ring(node) and _allowed(node.kind, "Outline_Width"):
         # the ring of keyboard focus, under whatever ``:focused`` rule the file or a stylesheet
         # has (its ``Outline_*`` keys replace the ring's); it does not touch the block's shadows
         states["focused"] = {**ring, **states.get("focused", {})}

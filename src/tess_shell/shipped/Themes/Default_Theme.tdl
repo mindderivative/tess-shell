@@ -80,6 +80,8 @@ Theme {
         Focus: 0.10
         Pressed: 0.10
         Dragged: 0.16
+    }
+
     Scrollbar {
         Width: 8
         Hit_Width: 12
