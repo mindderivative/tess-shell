@@ -44,8 +44,7 @@ KNOWN_GAPS = (
     "rows take no keyboard focus (the List is one Tab stop and the engine keeps focus on it), so "
     "the standard's `focus: option#X` is never seen; the shell reports no selection_change "
     "(On_Changed says the chosen keys), so those events are never seen; the role is list/listitem, "
-    "not listbox/option; the engine anchors a selection set from code (the standard: none); the "
-    "shell's SINGLE keeps no anchor; the announcement is read from a real AT-SPI bus "
+    "not listbox/option; the shell's SINGLE keeps no anchor; the announcement is read from a real AT-SPI bus "
     "(tests/test_multiselect_atspi.py), not headless"
 )
 
@@ -56,18 +55,13 @@ DIAGNOSTIC: dict[str, tuple[str, str]] = {
     "announce-range": (NOT_RUN, "the announcement cannot be read headless"),
     "announce-select-all": (NOT_RUN, "the announcement cannot be read headless"),
     "announce-single-none": (FAIL, "the shell's SINGLE keeps no anchor"),
-    "api-set-is-not-announced": (FAIL, "the engine anchors a selection set from code"),
-    "api-sets-selection": (FAIL, "the engine anchors a selection set from code"),
+    "api-set-is-not-announced": (NOT_RUN, "the announcement cannot be read headless"),
     "ctrl-arrow-moves-focus-space-toggles": (
         FAIL,
         "`consumed` is inferred from the set, the anchor and the focus; the focus move of "
         "Ctrl+Arrow is not observable (adapter limit)",
     ),
     "disabled-row-skipped": (FAIL, "`consumed` of a focus move is not observable (adapter limit)"),
-    "press-on-selected-selects-only-on-release": (
-        FAIL,
-        "the engine anchors the held selection before the release",
-    ),
     "single-mode-keeps-before-change": (FAIL, "the shell's SINGLE keeps no anchor"),
     "single-space-chooses": (FAIL, "the shell's SINGLE keeps no anchor"),
     **{name: (NOT_RUN, why) for name, why in NOT_RUN_WHY.items()},
@@ -91,7 +85,7 @@ def _close_hosts() -> Any:
 
 
 def test_the_corpus_has_the_list_cases() -> None:
-    assert len(CASES) == 25
+    assert len(CASES) == 26
 
 
 @pytest.mark.parametrize("name", sorted(CASES))
