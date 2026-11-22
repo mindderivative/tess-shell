@@ -26,7 +26,7 @@ Theme {
         Error: "#F2958C"
         Warning: "#E6BB6A"
         Success: "#8CCB9A"
-        Outline: "#55657A"
+        Outline: "#5F7188"
         Scrim: "#000000"
     }
 
@@ -197,6 +197,9 @@ Theme {
                 On_Primary: "#000000"
                 Accent: "#8CC4F2"
                 Outline: "#FFFFFF"
+                Error: "#F2958C"
+                Warning: "#E6BB6A"
+                Success: "#8CCB9A"
             }
         }
         Reduced_Motion {

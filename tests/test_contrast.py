@@ -125,15 +125,10 @@ MODES = {
 }
 # Known violations, with the ratio measured when they were recorded: the test fails when one is
 # fixed (or changes) so that the list is kept true. The spec or the theme changes, not the test.
-KNOWN = {
-    # the Dark ``outline`` on a raised surface (a Button's border, a card's edge)
-    ("dark", "outline", "surface_raised"): 2.69,
-    # the High_Contrast mode keeps the Light scheme's error, warning and success on black
-    ("high_contrast_light", "error", "surface"): 3.21,
-    ("high_contrast_light", "warning", "surface"): 3.54,
-    ("high_contrast_light", "success", "surface"): 3.27,
-}
-ACCENT_AS_TEXT = {  # the accent against 4.5, a token finding the vault decides (TSH-043)
+KNOWN: dict[tuple[str, str, str], float] = {}
+# (the Dark ``outline`` #5F7188 and the High_Contrast block's own error, warning and success
+# colours settled the three violations recorded in TSH-042: ADR-0025)
+ACCENT_AS_TEXT = {  # the accent is never text (Colour Roles rule 12): below 4.5 by design
     ("dark", "surface"): 4.38,
     ("dark", "surface_raised"): 3.90,
     ("light", "surface"): 3.82,
