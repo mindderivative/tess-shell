@@ -224,7 +224,8 @@ jobs:
       - name: Run the conformance tests
         run: |
           # exit 5 is "no tests ran": every test skipped because tess-behavior is not installed
-          uv run --no-sync pytest -q -rs tests/behavior; rc=$?
+          rc=0
+          uv run --no-sync pytest -q -rs tests/behavior || rc=$?  # the shell runs with -e
           [ $rc -eq 0 ] || [ $rc -eq 5 ]
 
   result:
