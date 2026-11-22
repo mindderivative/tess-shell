@@ -384,7 +384,9 @@ _ROWS: dict[str, BlockRow] = {
             for k, v in _TEXT_STYLE.items()
             if k not in ("Overflow", "Padding", "Text_Align", *_MOTION)
         },
-        fixed={"wrap": "none", "flex_shrink": 0, "overflow": "clip"},
+        # the text scrolls past the box: what is clipped must not take the pointer (it would cover
+        # the neighbours), the box takes it
+        fixed={"wrap": "none", "flex_shrink": 0, "overflow": "clip", "hit_testable": False},
         defaults={"text": ""},
     ),
 }
@@ -400,7 +402,13 @@ _FONT: dict[str, KeyRow] = {
     "Font_Weight": _TEXT_STYLE["Font_Weight"],
 }
 _FIELD_BOX_KEYS: dict[str, KeyRow] = {
-    k: v for k, v in _COMMON.items() if k not in ("Label", "Focusable", "Tab_Index")
+    **{
+        k: v
+        for k, v in _COMMON.items()
+        if k not in ("Label", "Focusable", "Tab_Index", "Description")
+    },
+    # the box shows the ``:invalid`` look; the text input says it to assistive technology
+    "Invalid": _k("invalid", "bool"),
 }
 _FIELD_CHILD = {"grid_column": 1, "grid_row": 1}
 _ROWS["TextField"] = BlockRow(
@@ -409,7 +417,7 @@ _ROWS["TextField"] = BlockRow(
     style=_BOX_STYLE,
     fixed={"display": "grid", "grid_template_columns": "1fr", "grid_template_rows": "1fr"},
     # a field with no Width is as wide as a field usually is; tre lays an unset width out at 0
-    defaults={"width": 200},
+    defaults={"width": 200, "invalid": False},
     child_props=_FIELD_CHILD,
     children_ok=True,
 )
@@ -456,6 +464,8 @@ _ROWS["TextField.input"] = BlockRow(
         "Max_Length": _k("max_length", "max_length"),
         "Password": _k("obscured", "bool"),
         "Label": _COMMON["Label"],
+        "Description": _COMMON["Description"],
+        "Invalid": _k("invalid", "bool"),
         "Focusable": _COMMON["Focusable"],
         "Tab_Index": _COMMON["Tab_Index"],
     },
@@ -473,6 +483,7 @@ _ROWS["TextField.input"] = BlockRow(
         "read_only": False,
         "max_length": None,
         "obscured": False,
+        "invalid": False,
     },
 )
 

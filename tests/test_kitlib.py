@@ -525,3 +525,44 @@ def test_unmount_under_leaves_a_folder_with_no_mount_alone(tmp_path: Path) -> No
     (tmp_path / "gvfs").mkdir()
     assert kitlib.unmount_under(tmp_path) == []
     assert (tmp_path / "gvfs").is_dir()
+
+
+# -- finding and killing only what belongs to a sandbox (no process is started or signalled) -----
+
+
+def test_a_runtime_matches_only_a_whole_environment_entry() -> None:
+    env = b"A=1\0XDG_RUNTIME_DIR=/tmp/tsw-x\0B=2\0"
+    assert kitlib.environ_names_runtime(env, "/tmp/tsw-x")
+    assert kitlib.environ_names_runtime(b"XDG_RUNTIME_DIR=/tmp/tsw-x", "/tmp/tsw-x")  # last entry
+    # a longer variable name that ends with it, and a longer path that starts with it, are not it
+    assert not kitlib.environ_names_runtime(b"FOO_XDG_RUNTIME_DIR=/tmp/tsw-x\0", "/tmp/tsw-x")
+    assert not kitlib.environ_names_runtime(b"XDG_RUNTIME_DIR=/tmp/tsw-x2\0", "/tmp/tsw-x")
+    assert not kitlib.environ_names_runtime(b"XDG_RUNTIME_DIR=/tmp/tsw-x/sub\0", "/tmp/tsw-x")
+    assert not kitlib.environ_names_runtime(b"", "/tmp/tsw-x")
+
+
+@pytest.mark.parametrize("runtime", ["/run/user/1000", "/etc", "relative/path", ""])
+def test_a_runtime_that_is_not_a_private_folder_under_tmp_is_refused_before_any_scan(
+    runtime: str,
+) -> None:
+    with pytest.raises(kitlib.SandboxRefused):
+        kitlib.processes_with_runtime(Path(runtime))
+    with pytest.raises(kitlib.SandboxRefused):
+        kitlib.kill_strays(Path(runtime))
+
+
+def test_the_real_runtime_directory_is_refused_whatever_the_environment_says() -> None:
+    real = kitlib.RealSession.current()
+    for path in (real.runtime, real.uid_runtime):
+        if path:
+            with pytest.raises(kitlib.SandboxRefused):
+                kitlib.processes_with_runtime(Path(path))
+
+
+def test_kill_started_signals_only_a_recorded_pid_that_still_names_what_it_started() -> None:
+    from tests import kitdrive
+
+    assert kitdrive.kill_started([], "anything") == []
+    # pid 1 exists but its command line names none of the needles: nothing is signalled
+    assert kitdrive.kill_started([1], "/tmp/a-kit-that-is-not-init/bin/marker") == []
+    assert kitdrive.kill_started([os.getpid()], "python", "pytest") == []  # never this process

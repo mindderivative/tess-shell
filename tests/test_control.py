@@ -80,6 +80,10 @@ class FakeCommands:
     def close_popup(self) -> None:
         self._note("close_popup")
 
+    def exit_shortcut_mode(self) -> bool:
+        self._note("exit_shortcut_mode")
+        return True
+
     def call(self, module: str, action: str, values: list[Any]) -> Any:
         self._note("call")
         if module == "Boom":
@@ -248,6 +252,7 @@ def test_introspection_lists_the_methods_properties_and_signals() -> None:
         "Hide",
         "Toggle",
         "ClosePopup",
+        "ExitShortcutMode",
         "Call",
         "SetLogLevel",
         "FullscreenState",  # the KWin script reports a fullscreen window per output
@@ -264,6 +269,7 @@ def test_introspection_lists_the_methods_properties_and_signals() -> None:
     assert signatures["Call"] == "sssas".replace("as", "s")  # three strings in, one out
     assert signatures["Show"] == "sbs"  # the name in, (ok, message) out
     assert signatures["Reload"] == "bs"
+    assert signatures["ExitShortcutMode"] == "b"  # was it in the mode
     assert signatures["FullscreenState"] == "ss"  # a string in, a string out (the script's JSON)
     assert signatures["WindowsState"] == "ss"
     (reported,) = [x for x in iface.findall("signal") if x.get("name") == "ErrorReported"]
@@ -290,10 +296,18 @@ def test_a_command_is_handed_to_the_loop_and_never_runs_on_the_dbus_thread() -> 
         assert c.ok("Hide", "s", ["Launcher"]) == [True, "Launcher Hide"]
         assert c.ok("Toggle", "s", ["Launcher"]) == [True, "Launcher Toggle"]
         c.ok("ClosePopup")
+        assert c.ok("ExitShortcutMode") == [True]
         c.ok("SetLogLevel", "s", ["DEBUG"])
         assert c.ok("Reload") == [True, "reloaded ticket"]
         threads = dict(r.commands.threads)
-    loop_side = {"status", "surface", "close_popup", "set_log_level", "reload_apply"}
+    loop_side = {
+        "status",
+        "surface",
+        "close_popup",
+        "exit_shortcut_mode",
+        "set_log_level",
+        "reload_apply",
+    }
     assert {k: threads[k] for k in loop_side} == dict.fromkeys(loop_side, "fake-loop")
     # the files are read on a worker thread, never on the dbus thread and never on the loop
     assert threads["reload_validate"] not in ("dbus", "fake-loop")

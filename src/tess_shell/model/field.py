@@ -74,9 +74,12 @@ def _defaults(origin: m.Origin) -> tuple[dict[str, m.Value], dict[str, m.Value]]
 
 def _default_states(origin: m.Origin) -> dict[str, dict[str, m.Value]]:
     """What the box shows while the pointer is over it or while it is disabled, when no rule says
-    otherwise: the outline takes the primary colour, a disabled field is faint."""
+    otherwise: the outline takes the primary colour, an invalid field's is the error colour, a
+    disabled field is faint."""
     return {
         "hovered": {"Border_Color": _token("color.primary", "color", origin)},
+        # an invalid field keeps the error colour while it is hovered or focused (Validation)
+        "invalid": {"Border_Color": _token("color.error", "color", origin)},
         "disabled": {"Opacity": m.Number(0.38, origin=origin)},
     }
 

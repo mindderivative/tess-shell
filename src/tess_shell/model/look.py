@@ -454,15 +454,45 @@ def _fold_states(
     return states if states else node.states
 
 
-def apply_module_rules(roots: Sequence[Child], module: str, rules: Sequence[Rule]) -> list[Child]:
+def apply_module_rules(
+    roots: Sequence[Child], module: str, rules: Sequence[Rule], target: str | None = None
+) -> list[Child]:
     """The rules that name ``module`` applied to its root blocks. A key the root block does not
     take passes to the first block inside it that does, along the first child of each (so
     ``Icon { Foreground: ... }`` colours the SVG a FlexBox holds, and ``Badge { Foreground }`` its
-    digits); an inner block is otherwise styled by a type, class or name rule (D40)."""
+    digits); an inner block is otherwise styled by a type, class or name rule (D40). A module whose
+    ``Receives`` names a block (``target``: the first it names) is that block's control: the rules
+    go to it, not to the container around it."""
     mine = [r for r in rules if r.kind == "module" and r.target == module and not r.part]
     if not mine:
         return list(roots)
+    if target is not None:
+        return _at(list(roots), target, mine)
     return [_down(root, mine) if isinstance(root, m.Node) else root for root in roots]
+
+
+def _at(children: Sequence[Child], name: str, hits: Sequence[Rule]) -> list[Child]:
+    """``children`` with the block called ``name`` (wherever it stands) styled by ``hits``."""
+    out: list[Child] = []
+    for node in children:
+        if isinstance(node, m.Node):
+            node = (
+                _down(node, hits)
+                if node.name == name
+                else dataclasses.replace(node, children=tuple(_at(node.children, name, hits)))
+            )
+        elif isinstance(node, m.IfNode):
+            node = dataclasses.replace(
+                node,
+                body=tuple(_at(node.body, name, hits)),
+                else_body=None
+                if node.else_body is None
+                else tuple(_at(node.else_body, name, hits)),
+            )
+        elif isinstance(node, m.ForNode):
+            node = dataclasses.replace(node, body=tuple(_at(node.body, name, hits)))
+        out.append(node)
+    return out
 
 
 def _down(node: Child, hits: Sequence[Rule]) -> Child:

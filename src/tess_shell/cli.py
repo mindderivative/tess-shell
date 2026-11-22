@@ -29,6 +29,10 @@ _CONTROL: dict[str, tuple[str, list[tuple[str, str | None]]]] = {
     "show": ("show a Panel or a Frame by its Name", [("name", None)]),
     "hide": ("hide a Panel or a Frame by its Name", [("name", None)]),
     "toggle": ("toggle a Panel or a Frame by its Name", [("name", None)]),
+    "leave-shortcut-mode": (
+        "leave shortcut mode (the way out whatever window has the keyboard)",
+        [],
+    ),
     "call": (
         "call a module's @action (each ARG a JSON value, or text)",
         [("module", None), ("action", None), ("args", "*")],

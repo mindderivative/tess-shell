@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.39",
+  "schema_version": "1.40",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -25396,6 +25396,19 @@
           "group": "Content",
           "tokens": [],
           "preferred_tokens": []
+        },
+        "Invalid": {
+          "kind": "bool",
+          "choices": null,
+          "enum": null,
+          "default": "false",
+          "doc": "Marks the field as holding a refused value: it takes the :invalid look (the error colour outline, also while hovered or focused) and assistive technology reads it as invalid.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Content",
+          "tokens": [],
+          "preferred_tokens": []
         }
       },
       "style": {
@@ -30445,18 +30458,32 @@
           "default": "\"\"",
           "doc": "The Name of a List called in the same layout: a screen reader reads that List's chosen entry as the current item of the field while the keyboard stays in it. Empty: none.",
           "required": false
+        },
+        "Helper": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "A line of help under the field; the error replaces it.",
+          "required": false
+        },
+        "Error": {
+          "type": "string",
+          "kind": "string",
+          "default": "\"\"",
+          "doc": "A refusal message under the field, with an alert icon, in the error colour. It marks the field invalid and is its accessible description. Empty: none.",
+          "required": false
         }
       },
-      "root_block": "TextField",
+      "root_block": "FlexBox",
       "events": [
         "On_Click",
         "On_Secondary_Click",
         "On_Middle_Click",
         "On_Scroll",
+        "On_Key_Down",
         "On_Changed",
         "On_Submit",
-        "On_Text_Commit",
-        "On_Key_Down"
+        "On_Text_Commit"
       ],
       "common_keys": [
         "Key",

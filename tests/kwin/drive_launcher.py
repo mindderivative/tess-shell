@@ -318,7 +318,10 @@ def panel() -> int:
             f"its parent was {ppid}, the shell {shell_pid}",
         )
     # what the kit started is the kit's to remove: the marker (sleeping 20 s) and the window
-    d.kill_started(str(KIT / "bin" / "marker"), str(KIT / "window_probe.py"))
+    # (only the pid the step recorded; anything else carrying the sandbox's runtime is removed by
+    # the sandbox's own teardown)
+    if pid_match:
+        d.kill_started([int(pid_match.group(1))], str(KIT / "bin" / "marker"))
     return int(report.code)
 
 

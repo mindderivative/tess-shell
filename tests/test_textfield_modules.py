@@ -369,3 +369,59 @@ def test_a_commit_that_max_length_refused_raises_no_on_text_commit() -> None:
         r.seen.clear()
         r.window.simulate("input", text="x")  # full again: refused again
         assert r.seen == []
+
+
+# -- Error and Helper (Validation, AC-VAL-3, AC-VAL-5, AC-VAL-7) -------------------------------
+
+
+def lines(r: Fields, name: str) -> list[Any]:
+    return [n for k, n in r.bar.view.nodes.items() if k.endswith(f"/{name}")]
+
+
+def test_an_error_marks_the_field_invalid_with_the_message_as_its_description() -> None:
+    with running('TextInput { Name: One, Label: "Size", Text: "12", Error: "Use 0 to 9" }') as r:
+        assert r.problems == [] and bad(r) == [], (r.problems, bad(r))
+        (f,) = r.fields()
+        assert f.inp.get("invalid") is True and f.box.get("invalid") is True
+        assert f.inp.get("description") == "Use 0 to 9"
+        (text,) = lines(r, "Error_Text")
+        assert text.get("text") == "Use 0 to 9"
+        assert text.get("fill") == base("Error")  # the role, not a literal
+        (icon,) = lines(r, "Error_Icon")  # the cue is not colour alone (AC-VAL-4)
+        assert icon.get("visible") is not False
+        assert f.box.get("stroke_color") == base("Error")  # the outline of an invalid field
+
+
+def test_an_invalid_field_keeps_the_error_outline_while_hovered() -> None:
+    with running('TextInput { Name: One, Error: "no" }\nTextInput { Name: Two, Text: "ok" }') as r:
+        bad_one, good = r.fields()
+        r.window.simulate("pointer_enter", node=bad_one.box)
+        r.window.advance(300)
+        assert bad_one.box.get("stroke_color") == base("Error")
+        r.window.simulate("pointer_enter", node=good.box)
+        r.window.advance(300)
+        assert good.box.get("stroke_color") == base("Primary")  # a valid field's hover is primary
+
+
+def test_a_helper_shows_under_the_field_and_is_its_description_until_there_is_an_error() -> None:
+    with running('TextInput { Name: One, Label: "n", Helper: "Letters only" }') as r:
+        assert r.problems == [] and bad(r) == []
+        (f,) = r.fields()
+        assert f.inp.get("invalid") is False
+        assert f.inp.get("description") == "Letters only"
+        assert [t.get("text") for t in lines(r, "Helper_Text")] == ["Letters only"]
+        assert lines(r, "Error_Text") == []
+    with running('TextInput { Name: One, Helper: "Letters only", Error: "No digits" }') as r:
+        (f,) = r.fields()
+        assert f.inp.get("description") == "No digits"  # the error replaces the help
+        assert lines(r, "Helper_Text") == [] and len(lines(r, "Error_Text")) == 1
+
+
+def test_a_field_with_neither_line_is_as_before_and_the_error_line_adds_height_below() -> None:
+    with running('TextInput { Name: A }\nTextInput { Name: B, Error: "x" }') as r:
+        a, b = r.fields()
+        assert a.inp.get("invalid") is False and a.inp.get("description") in ("", None)
+        assert lines(r, "Error_Line") != [] and len(lines(r, "Error_Line")) == 1
+        # the field itself is the same size and place with or without the line
+        assert a.box.get("layout_height") == b.box.get("layout_height")
+        assert a.box.get("layout_width") == b.box.get("layout_width") == 240
