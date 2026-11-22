@@ -201,6 +201,25 @@ def test_enter_starts_the_selected_entry_with_its_command_and_environment_then_h
         assert d.apps.count("firefox.desktop") == 1
 
 
+def test_tab_leaves_the_keyboard_in_the_field_so_enter_starts_the_selected_row(
+    tmp_path: Path,
+) -> None:
+    """The owner's check on KWin: Tab took the keyboard to the list, where Enter started nothing.
+    The list is not a Tab stop (the Launcher spec: focus stays in the text field), so Tab leaves
+    the keyboard in the field and Enter starts the row the arrows lit."""
+    with launcher_desk(tmp_path, BROWSERS) as d:
+        d.toggle()
+        d.type("fire")
+        d.press("tab")
+        assert d.field().get("focused")  # still in the field
+        d.press("arrow_down")
+        assert d.selected() == ["Firefox"]
+        d.press("enter")
+        assert d.settle(lambda: d.runner.started)
+        (spec,) = d.runner.started
+        assert spec.scope is not None and spec.scope.startswith("app-firefox-")
+
+
 def test_enter_with_no_results_starts_nothing_and_a_plain_start_runs_without_systemd_run(
     tmp_path: Path,
 ) -> None:

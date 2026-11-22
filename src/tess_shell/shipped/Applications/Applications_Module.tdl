@@ -8,7 +8,8 @@ Name: Applications
 # narrows as the user types. The text field keeps the keyboard focus; Down, Up, Page Down and Page
 # Up move the selection from the field, Enter starts the selected application, a click on a row
 # starts that one, Escape clears the field and, with the field empty, hides the Panel that holds
-# the module. When the Panel shows, the field takes the focus and its text is selected. The Python
+# the module. The keyboard stays in the field (the list is not a Tab stop: Tab would take it to a
+# list where Enter starts nothing); the list's selection moves from the field. When the Panel shows, the field takes the focus and its text is selected. The Python
 # sends, for each use: `ready` (the list of applications is built), `query` (the field's text),
 # `results` (a record per row: `id`, `name`, `comment`, `icon`), `selected` (the selected row's
 # index), `selected_id` (its id, which the List marks), `has_results`, `row_count` (the number of
@@ -56,6 +57,7 @@ Module {
                     Name: results
                     Label: "Results"
                     Selected: <| selected_id |>
+                    Focusable: false
                     Width: 456
                     Height: <| row_count * density.row_height |>
                     Children {
