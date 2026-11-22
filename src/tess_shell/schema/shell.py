@@ -1250,11 +1250,12 @@ def _shortcut_mode(values: Mapping[str, m.Value]) -> m.Origin | None:
 
 
 def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
-    allowed = ["Name", "Style", "Children", *BAR_KEYS, *blocks.BAR_NOT_BUILT]
+    allowed = ["Name", "Style", "Children", "Animation", *BAR_KEYS, *blocks.BAR_NOT_BUILT]
     name: str | None = None
     values: dict[str, m.Value] = {}
     style: dict[str, m.Value] = {}
     children: list[Child] = []
+    animation = ("SLIDE", 200.0)
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
@@ -1289,6 +1290,8 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
                 style = _scalar_block_keys(ctx, entry, blocks.BAR_STYLE, "Bar")
             elif entry.type == "Children":
                 children = _children(ctx, entry, lambda b: _block(ctx, b))
+            elif entry.type == "Animation":
+                animation = _animation(ctx, entry)
             elif entry.type in blocks.BAR_REMOVED:
                 ctx.add(
                     entry.origin,
@@ -1352,6 +1355,8 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         padding=_sides_of(values["Padding"]) if "Padding" in values else None,
         auto_hide=auto.value if isinstance(auto, m.Bool) else False,
         auto_hide_delay=float(auto_delay.value) if isinstance(auto_delay, m.Number) else 1000.0,
+        animation=animation[0],
+        duration=float(animation[1]),
         style=style,
         children=tuple(children),
     )

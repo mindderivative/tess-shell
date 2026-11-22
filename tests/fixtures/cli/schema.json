@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.37",
+  "schema_version": "1.38",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -1085,6 +1085,20 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Animation": {
+          "kind": "block",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "How an Auto_Hide Bar slides out and comes back: an Animation block with Type (SLIDE, FADE or NONE) and Duration. A Bar with no Animation slides for 200 ms; the desktop's reduced-motion setting makes every Bar change at once.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Motion",
+          "block": "Animation",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Exclusive_Zone": {
           "kind": null,
           "choices": null,
@@ -1142,21 +1156,6 @@
           "built": false,
           "refused": false,
           "group": "Placement",
-          "tokens": [],
-          "preferred_tokens": []
-        },
-        "Animation": {
-          "kind": "block",
-          "choices": null,
-          "enum": null,
-          "default": null,
-          "doc": "How the Bar comes and goes. Not built.",
-          "slot": false,
-          "required": false,
-          "built": false,
-          "refused": false,
-          "group": "Motion",
-          "block": "Animation",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -1385,7 +1384,6 @@
         "Input_Region",
         "Attach_To",
         "Meld",
-        "Animation",
         "Text_Rotation",
         "Class"
       ]
@@ -4168,7 +4166,7 @@
           ],
           "enum": null,
           "default": "SLIDE",
-          "doc": "How the Panel comes and goes: SLIDE, FADE or NONE.",
+          "doc": "How the Panel or the Bar comes and goes: SLIDE, FADE or NONE.",
           "slot": false,
           "required": false,
           "built": true,

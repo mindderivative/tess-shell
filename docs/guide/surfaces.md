@@ -263,8 +263,9 @@ A strip along a screen edge that reserves its space.
 | `Auto_Hide_Delay` | number | none |  | How long the pointer is away before the Bar hides, in milliseconds (default 1000). |
 | `Density` | `DEFAULT` `COMPACT` `DENSE` | none |  | The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies. |
 | `Padding` | sides | none |  | Space between the Bar's children and its sides: a number or four sides (left, top, right, bottom). It is inside the Bar's Width and Height. |
+| `Animation` | block | none |  | How an Auto_Hide Bar slides out and comes back: an Animation block with Type (SLIDE, FADE or NONE) and Duration. A Bar with no Animation slides for 200 ms; the desktop's reduced-motion setting makes every Bar change at once. |
 
-Not built yet (the loader says so if you write them): `Exclusive_Zone`, `Input_Region`, `Attach_To`, `Meld`, `Animation`, `Text_Rotation`, `Class`.
+Not built yet (the loader says so if you write them): `Exclusive_Zone`, `Input_Region`, `Attach_To`, `Meld`, `Text_Rotation`, `Class`.
 
 A `Style { }` block of a Bar takes: `Background`, `Fill`, `Opacity`, `Elevation`, `Shadows`, `Shadow_Bleed`.
 
@@ -423,7 +424,7 @@ How a Panel comes and goes.
 
 | Key | Value | Default | Required | What it does |
 |---|---|---|---|---|
-| `Type` | `SLIDE` `FADE` `NONE` | `SLIDE` |  | How the Panel comes and goes: SLIDE, FADE or NONE. |
+| `Type` | `SLIDE` `FADE` `NONE` | `SLIDE` |  | How the Panel or the Bar comes and goes: SLIDE, FADE or NONE. |
 | `Duration` | milliseconds | `200` |  | How long it takes, in milliseconds; 0 is no animation. |
 
 <!-- END generated: surface:Animation -->

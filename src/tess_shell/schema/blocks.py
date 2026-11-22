@@ -466,7 +466,6 @@ BAR_NOT_BUILT = (
     "Input_Region",
     "Attach_To",
     "Meld",
-    "Animation",
     "Text_Rotation",
     "Class",
 )
