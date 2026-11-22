@@ -122,7 +122,8 @@ KEY_DOCS: dict[str, str] = {
     "Scroll_Key_Line": "The distance of an arrow key, in pixels (40).",
     "Scroll_Page_Fraction": "The share of the viewport a Page key or a lane click moves (0.9).",
     "Hover_Layer_Ms": "How long the hover layer takes to fade in or out, in milliseconds (the "
-    "theme's $state.hover_ms, 100: the engine default; ADR-0009 asks 15, which leaves a residual layer on a real compositor, see the CHANGELOG). Needs tre 0.6.12.",
+    "theme's $state.hover_ms, 100: the engine default; ADR-0009 asks 15, which leaves a "
+    "residual layer on a real compositor). Needs tre 0.6.12.",
     "Pressed_Layer_Ms": "The fade time of the pressed layer ($state.pressed_ms, 105). Needs tre "
     "0.6.12.",
     "Focus_Layer_Ms": "The fade time of the focus layer ($state.focus_ms, 150). Needs tre 0.6.12.",
