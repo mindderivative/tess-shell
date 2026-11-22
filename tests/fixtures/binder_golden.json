@@ -8927,6 +8927,7 @@
     ],
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
+    "invalid": false,
     "padding_bottom": 8,
     "padding_left": 8,
     "padding_right": 8,
@@ -8965,6 +8966,7 @@
      255
     ],
     "font_size": 14,
+    "invalid": false,
     "label": "",
     "left": 0,
     "max_length": null,
@@ -8981,32 +8983,8 @@
     "wrap": "word"
    },
    "TextInput@Main_Shell.Main.Top_Bar.Ed/#0": {
-    "corner_radius": 4,
-    "disabled": false,
-    "display": "grid",
-    "fill": [
-     27,
-     34,
-     43,
-     255
-    ],
-    "grid_template_columns": "1fr",
-    "grid_template_rows": "1fr",
-    "padding_bottom": 8,
-    "padding_left": 8,
-    "padding_right": 8,
-    "padding_top": 8,
-    "stroke_color": [
-     95,
-     113,
-     136,
-     255
-    ],
-    "stroke_width": 1,
-    "width": 240
-   },
-   "TextInput@Main_Shell.Main.Top_Bar.Ed/#1": {
     "bottom": 0,
+    "description": "",
     "disabled": false,
     "fill": [
      228,
@@ -9015,6 +8993,7 @@
      255
     ],
     "font_size": 14,
+    "invalid": false,
     "label": "p",
     "left": 0,
     "max_length": null,
@@ -9030,9 +9009,9 @@
     "text": "abc",
     "top": 0
    },
-   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#0": {
+   "TextInput@Main_Shell.Main.Top_Bar.Ed/Field": {
     "corner_radius": 4,
-    "disabled": true,
+    "disabled": false,
     "display": "grid",
     "fill": [
      27,
@@ -9042,6 +9021,7 @@
     ],
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
+    "invalid": false,
     "padding_bottom": 8,
     "padding_left": 8,
     "padding_right": 8,
@@ -9053,10 +9033,18 @@
      255
     ],
     "stroke_width": 1,
+    "width": "100%"
+   },
+   "TextInput@Main_Shell.Main.Top_Bar.Ed/Root": {
+    "disabled": false,
+    "display": "flex",
+    "flex_direction": "vertical",
+    "gap": 4,
     "width": 240
    },
-   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#1": {
+   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#0": {
     "bottom": 0,
+    "description": "",
     "disabled": false,
     "fill": [
      228,
@@ -9065,6 +9053,7 @@
      255
     ],
     "font_size": 14,
+    "invalid": false,
     "label": "",
     "left": 0,
     "max_length": null,
@@ -9079,6 +9068,39 @@
     "tab_navigates": true,
     "text": "y",
     "top": 0
+   },
+   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Field": {
+    "corner_radius": 4,
+    "disabled": true,
+    "display": "grid",
+    "fill": [
+     27,
+     34,
+     43,
+     255
+    ],
+    "grid_template_columns": "1fr",
+    "grid_template_rows": "1fr",
+    "invalid": false,
+    "padding_bottom": 8,
+    "padding_left": 8,
+    "padding_right": 8,
+    "padding_top": 8,
+    "stroke_color": [
+     95,
+     113,
+     136,
+     255
+    ],
+    "stroke_width": 1,
+    "width": "100%"
+   },
+   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Root": {
+    "disabled": false,
+    "display": "flex",
+    "flex_direction": "vertical",
+    "gap": 4,
+    "width": 240
    }
   },
   "controls": [],
@@ -9089,278 +9111,399 @@
      {
       "children": [
        {
-        "children": [],
+        "children": [
+         {
+          "children": [],
+          "control": "",
+          "has_tre": true,
+          "kind": "TextField.size",
+          "motion": null,
+          "name": null,
+          "props": {
+           "a11y_hidden": true,
+           "disabled": false,
+           "fill": [
+            0,
+            0,
+            0,
+            0
+           ],
+           "font_size": 14,
+           "hit_testable": false,
+           "overflow": "clip",
+           "text": "x",
+           "wrap": "none"
+          },
+          "states": {},
+          "tre": {
+           "a11y_hidden": true,
+           "checked": null,
+           "disabled": false,
+           "expanded": null,
+           "fill": [
+            0,
+            0,
+            0,
+            0
+           ],
+           "focusable": false,
+           "font_size": 14.0,
+           "hit_testable": false,
+           "label": null,
+           "overflow": "clip",
+           "pressed": null,
+           "read_only": "!ValueError",
+           "role": null,
+           "selected": null,
+           "tab_index": 0,
+           "text": "x",
+           "value": null,
+           "visible": true,
+           "wrap": "none"
+          },
+          "wire": null
+         },
+         {
+          "children": [],
+          "control": "",
+          "has_tre": true,
+          "kind": "TextField.input",
+          "motion": null,
+          "name": "TextInput@Main_Shell.Main.Top_Bar.Ed/#0",
+          "props": {
+           "bottom": 0,
+           "description": "",
+           "disabled": false,
+           "fill": [
+            228,
+            234,
+            241,
+            255
+           ],
+           "font_size": 14,
+           "invalid": false,
+           "label": "p",
+           "left": 0,
+           "max_length": null,
+           "multiline": false,
+           "obscured": false,
+           "overflow": "scroll",
+           "placeholder": "p",
+           "position": "absolute",
+           "read_only": false,
+           "right": 0,
+           "show_whitespace": false,
+           "tab_navigates": true,
+           "text": "abc",
+           "top": 0
+          },
+          "states": {},
+          "tre": {
+           "a11y_hidden": false,
+           "bottom": 0.0,
+           "checked": null,
+           "description": "",
+           "disabled": false,
+           "expanded": null,
+           "fill": [
+            228,
+            234,
+            241,
+            255
+           ],
+           "focusable": true,
+           "font_size": 14.0,
+           "hit_testable": null,
+           "invalid": false,
+           "label": "p",
+           "left": 0.0,
+           "max_length": null,
+           "multiline": false,
+           "obscured": false,
+           "overflow": "scroll",
+           "placeholder": "p",
+           "position": "absolute",
+           "pressed": null,
+           "read_only": false,
+           "right": 0.0,
+           "role": "textbox",
+           "selected": null,
+           "show_whitespace": false,
+           "tab_index": 0,
+           "tab_navigates": true,
+           "text": "abc",
+           "top": 0.0,
+           "value": null,
+           "visible": true
+          },
+          "wire": {
+           "always": {},
+           "checked": false,
+           "disabled": false,
+           "field_text": "abc",
+           "focus_target": false,
+           "focus_to": true,
+           "focused": false,
+           "handlers": [],
+           "hooks": {},
+           "in_checked": false,
+           "in_selected": false,
+           "inherited": false,
+           "label": "TextInput@Main_Shell.Main.Top_Bar.Ed/#0",
+           "mirror": false,
+           "motion": false,
+           "on_block": true,
+           "owned": false,
+           "part": true,
+           "saved": {},
+           "selected": false,
+           "shown": {},
+           "states": {},
+           "tip_auto": false,
+           "tip_key": false,
+           "tooltip_gate": false,
+           "wired": [
+            "field:change",
+            "focus"
+           ]
+          }
+         }
+        ],
         "control": "",
         "has_tre": true,
-        "kind": "TextField.size",
+        "kind": "TextField.line",
         "motion": null,
         "name": null,
         "props": {
-         "a11y_hidden": true,
+         "align_self": "center",
          "disabled": false,
-         "fill": [
-          0,
-          0,
-          0,
-          0
-         ],
-         "font_size": 14,
-         "hit_testable": false,
-         "overflow": "clip",
-         "text": "x",
-         "wrap": "none"
+         "grid_column": 1,
+         "grid_row": 1
         },
         "states": {},
         "tre": {
-         "a11y_hidden": true,
+         "a11y_hidden": false,
+         "align_self": "center",
          "checked": null,
          "disabled": false,
          "expanded": null,
-         "fill": [
-          0,
-          0,
-          0,
-          0
-         ],
          "focusable": false,
-         "font_size": 14.0,
-         "hit_testable": false,
+         "grid_column": "1",
+         "grid_row": "1",
+         "hit_testable": null,
          "label": null,
-         "overflow": "clip",
          "pressed": null,
          "read_only": "!ValueError",
          "role": null,
          "selected": null,
          "tab_index": 0,
-         "text": "x",
-         "value": null,
-         "visible": true,
-         "wrap": "none"
-        },
-        "wire": null
-       },
-       {
-        "children": [],
-        "control": "",
-        "has_tre": true,
-        "kind": "TextField.input",
-        "motion": null,
-        "name": "TextInput@Main_Shell.Main.Top_Bar.Ed/#1",
-        "props": {
-         "bottom": 0,
-         "disabled": false,
-         "fill": [
-          228,
-          234,
-          241,
-          255
-         ],
-         "font_size": 14,
-         "label": "p",
-         "left": 0,
-         "max_length": null,
-         "multiline": false,
-         "obscured": false,
-         "overflow": "scroll",
-         "placeholder": "p",
-         "position": "absolute",
-         "read_only": false,
-         "right": 0,
-         "show_whitespace": false,
-         "tab_navigates": true,
-         "text": "abc",
-         "top": 0
-        },
-        "states": {},
-        "tre": {
-         "a11y_hidden": false,
-         "bottom": 0.0,
-         "checked": null,
-         "disabled": false,
-         "expanded": null,
-         "fill": [
-          228,
-          234,
-          241,
-          255
-         ],
-         "focusable": true,
-         "font_size": 14.0,
-         "hit_testable": null,
-         "label": "p",
-         "left": 0.0,
-         "max_length": null,
-         "multiline": false,
-         "obscured": false,
-         "overflow": "scroll",
-         "placeholder": "p",
-         "position": "absolute",
-         "pressed": null,
-         "read_only": false,
-         "right": 0.0,
-         "role": "textbox",
-         "selected": null,
-         "show_whitespace": false,
-         "tab_index": 0,
-         "tab_navigates": true,
-         "text": "abc",
-         "top": 0.0,
          "value": null,
          "visible": true
         },
-        "wire": {
-         "always": {},
-         "checked": false,
-         "disabled": false,
-         "field_text": "abc",
-         "focus_target": false,
-         "focus_to": true,
-         "focused": false,
-         "handlers": [],
-         "hooks": {},
-         "in_checked": false,
-         "in_selected": false,
-         "inherited": false,
-         "label": "TextInput@Main_Shell.Main.Top_Bar.Ed/#1",
-         "mirror": false,
-         "motion": false,
-         "on_block": true,
-         "owned": false,
-         "part": true,
-         "saved": {},
-         "selected": false,
-         "shown": {},
-         "states": {},
-         "tip_auto": false,
-         "tip_key": false,
-         "tooltip_gate": false,
-         "wired": [
-          "field:change",
-          "focus"
-         ]
-        }
+        "wire": null
        }
       ],
       "control": "",
       "has_tre": true,
-      "kind": "TextField.line",
+      "kind": "TextField",
       "motion": null,
-      "name": null,
+      "name": "TextInput@Main_Shell.Main.Top_Bar.Ed/Field",
       "props": {
-       "align_self": "center",
+       "corner_radius": 4,
        "disabled": false,
-       "grid_column": 1,
-       "grid_row": 1
+       "display": "grid",
+       "fill": [
+        27,
+        34,
+        43,
+        255
+       ],
+       "grid_template_columns": "1fr",
+       "grid_template_rows": "1fr",
+       "invalid": false,
+       "padding_bottom": 8,
+       "padding_left": 8,
+       "padding_right": 8,
+       "padding_top": 8,
+       "stroke_color": [
+        95,
+        113,
+        136,
+        255
+       ],
+       "stroke_width": 1,
+       "width": "100%"
       },
-      "states": {},
+      "states": {
+       "disabled": {
+        "opacity": 0.38
+       },
+       "focused": {
+        "outline_color": [
+         91,
+         151,
+         201,
+         255
+        ],
+        "outline_offset": 2,
+        "outline_width": 3
+       },
+       "hovered": {
+        "stroke_color": [
+         91,
+         151,
+         201,
+         255
+        ]
+       },
+       "invalid": {
+        "stroke_color": [
+         242,
+         149,
+         140,
+         255
+        ]
+       }
+      },
       "tre": {
        "a11y_hidden": false,
-       "align_self": "center",
        "checked": null,
+       "corner_radius": 4.0,
        "disabled": false,
+       "display": "grid",
        "expanded": null,
+       "fill": [
+        27,
+        34,
+        43,
+        255
+       ],
        "focusable": false,
-       "grid_column": "1",
-       "grid_row": "1",
+       "grid_template_columns": "1fr",
+       "grid_template_rows": "1fr",
        "hit_testable": null,
+       "invalid": false,
        "label": null,
+       "padding_bottom": 8.0,
+       "padding_left": 8.0,
+       "padding_right": 8.0,
+       "padding_top": 8.0,
        "pressed": null,
        "read_only": "!ValueError",
        "role": null,
        "selected": null,
+       "stroke_color": [
+        95,
+        113,
+        136,
+        255
+       ],
+       "stroke_width": 1.0,
        "tab_index": 0,
        "value": null,
-       "visible": true
+       "visible": true,
+       "width": "100%"
       },
-      "wire": null
+      "wire": {
+       "always": {},
+       "checked": false,
+       "disabled": false,
+       "field_text": null,
+       "focus_target": true,
+       "focus_to": false,
+       "focused": false,
+       "handlers": [],
+       "hooks": {
+        "down": 2,
+        "enter": 1,
+        "leave": 1,
+        "up": 1
+       },
+       "in_checked": false,
+       "in_selected": false,
+       "inherited": false,
+       "label": "TextInput@Main_Shell.Main.Top_Bar.Ed/Field",
+       "mirror": true,
+       "motion": false,
+       "on_block": false,
+       "owned": false,
+       "part": false,
+       "saved": {},
+       "selected": false,
+       "shown": {},
+       "states": {
+        "disabled": {
+         "opacity": 0.38
+        },
+        "focused": {
+         "outline_color": [
+          91,
+          151,
+          201,
+          255
+         ],
+         "outline_offset": 2,
+         "outline_width": 3
+        },
+        "hovered": {
+         "stroke_color": [
+          91,
+          151,
+          201,
+          255
+         ]
+        },
+        "invalid": {
+         "stroke_color": [
+          242,
+          149,
+          140,
+          255
+         ]
+        }
+       },
+       "tip_auto": false,
+       "tip_key": false,
+       "tooltip_gate": false,
+       "wired": [
+        "field",
+        "state:pointer_cancel",
+        "state:pointer_down",
+        "state:pointer_enter",
+        "state:pointer_leave",
+        "state:pointer_up"
+       ]
+      }
      }
     ],
     "control": "",
     "has_tre": true,
-    "kind": "TextField",
+    "kind": "FlexBox",
     "motion": null,
-    "name": "TextInput@Main_Shell.Main.Top_Bar.Ed/#0",
+    "name": "TextInput@Main_Shell.Main.Top_Bar.Ed/Root",
     "props": {
-     "corner_radius": 4,
      "disabled": false,
-     "display": "grid",
-     "fill": [
-      27,
-      34,
-      43,
-      255
-     ],
-     "grid_template_columns": "1fr",
-     "grid_template_rows": "1fr",
-     "padding_bottom": 8,
-     "padding_left": 8,
-     "padding_right": 8,
-     "padding_top": 8,
-     "stroke_color": [
-      95,
-      113,
-      136,
-      255
-     ],
-     "stroke_width": 1,
+     "display": "flex",
+     "flex_direction": "vertical",
+     "gap": 4,
      "width": 240
     },
-    "states": {
-     "disabled": {
-      "opacity": 0.38
-     },
-     "focused": {
-      "outline_color": [
-       91,
-       151,
-       201,
-       255
-      ],
-      "outline_offset": 2,
-      "outline_width": 3
-     },
-     "hovered": {
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
-     }
-    },
+    "states": {},
     "tre": {
      "a11y_hidden": false,
      "checked": null,
-     "corner_radius": 4.0,
      "disabled": false,
-     "display": "grid",
+     "display": "flex",
      "expanded": null,
-     "fill": [
-      27,
-      34,
-      43,
-      255
-     ],
+     "flex_direction": "vertical",
      "focusable": false,
-     "grid_template_columns": "1fr",
-     "grid_template_rows": "1fr",
+     "gap": 4.0,
      "hit_testable": null,
      "label": null,
-     "padding_bottom": 8.0,
-     "padding_left": 8.0,
-     "padding_right": 8.0,
-     "padding_top": 8.0,
      "pressed": null,
      "read_only": "!ValueError",
      "role": null,
      "selected": null,
-     "stroke_color": [
-      95,
-      113,
-      136,
-      255
-     ],
-     "stroke_width": 1.0,
      "tab_index": 0,
      "value": null,
      "visible": true,
@@ -9371,21 +9514,16 @@
      "checked": false,
      "disabled": false,
      "field_text": null,
-     "focus_target": true,
+     "focus_target": false,
      "focus_to": false,
      "focused": false,
      "handlers": [],
-     "hooks": {
-      "down": 2,
-      "enter": 1,
-      "leave": 1,
-      "up": 1
-     },
+     "hooks": {},
      "in_checked": false,
      "in_selected": false,
      "inherited": false,
-     "label": "TextInput@Main_Shell.Main.Top_Bar.Ed/#0",
-     "mirror": true,
+     "label": "TextInput@Main_Shell.Main.Top_Bar.Ed/Root",
+     "mirror": false,
      "motion": false,
      "on_block": false,
      "owned": false,
@@ -9393,40 +9531,11 @@
      "saved": {},
      "selected": false,
      "shown": {},
-     "states": {
-      "disabled": {
-       "opacity": 0.38
-      },
-      "focused": {
-       "outline_color": [
-        91,
-        151,
-        201,
-        255
-       ],
-       "outline_offset": 2,
-       "outline_width": 3
-      },
-      "hovered": {
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
-      }
-     },
+     "states": {},
      "tip_auto": false,
      "tip_key": false,
      "tooltip_gate": false,
-     "wired": [
-      "field",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
-     ]
+     "wired": []
     }
    },
    {
@@ -9777,6 +9886,7 @@
           255
          ],
          "font_size": 14,
+         "invalid": false,
          "label": "",
          "left": 0,
          "max_length": null,
@@ -9808,6 +9918,7 @@
          "focusable": true,
          "font_size": 14.0,
          "hit_testable": null,
+         "invalid": false,
          "label": "",
          "left": 0.0,
          "max_length": null,
@@ -9913,6 +10024,7 @@
      ],
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
+     "invalid": false,
      "padding_bottom": 8,
      "padding_left": 8,
      "padding_right": 8,
@@ -9947,6 +10059,14 @@
        201,
        255
       ]
+     },
+     "invalid": {
+      "stroke_color": [
+       242,
+       149,
+       140,
+       255
+      ]
      }
     },
     "tre": {
@@ -9966,6 +10086,7 @@
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
      "hit_testable": null,
+     "invalid": false,
      "label": null,
      "padding_bottom": 8.0,
      "padding_left": 8.0,
@@ -10035,6 +10156,14 @@
         201,
         255
        ]
+      },
+      "invalid": {
+       "stroke_color": [
+        242,
+        149,
+        140,
+        255
+       ]
       }
      },
      "tip_auto": false,
@@ -10055,278 +10184,406 @@
      {
       "children": [
        {
-        "children": [],
+        "children": [
+         {
+          "children": [],
+          "control": "",
+          "has_tre": true,
+          "kind": "TextField.size",
+          "motion": null,
+          "name": null,
+          "props": {
+           "a11y_hidden": true,
+           "disabled": false,
+           "fill": [
+            0,
+            0,
+            0,
+            0
+           ],
+           "font_size": 14,
+           "hit_testable": false,
+           "overflow": "clip",
+           "text": "x",
+           "wrap": "none"
+          },
+          "states": {},
+          "tre": {
+           "a11y_hidden": true,
+           "checked": null,
+           "disabled": false,
+           "expanded": null,
+           "fill": [
+            0,
+            0,
+            0,
+            0
+           ],
+           "focusable": false,
+           "font_size": 14.0,
+           "hit_testable": false,
+           "label": null,
+           "overflow": "clip",
+           "pressed": null,
+           "read_only": "!ValueError",
+           "role": null,
+           "selected": null,
+           "tab_index": 0,
+           "text": "x",
+           "value": null,
+           "visible": true,
+           "wrap": "none"
+          },
+          "wire": null
+         },
+         {
+          "children": [],
+          "control": "",
+          "has_tre": true,
+          "kind": "TextField.input",
+          "motion": null,
+          "name": "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#0",
+          "props": {
+           "bottom": 0,
+           "description": "",
+           "disabled": false,
+           "fill": [
+            228,
+            234,
+            241,
+            255
+           ],
+           "font_size": 14,
+           "invalid": false,
+           "label": "",
+           "left": 0,
+           "max_length": null,
+           "multiline": false,
+           "obscured": false,
+           "overflow": "scroll",
+           "placeholder": "",
+           "position": "absolute",
+           "read_only": false,
+           "right": 0,
+           "show_whitespace": false,
+           "tab_navigates": true,
+           "text": "y",
+           "top": 0
+          },
+          "states": {},
+          "tre": {
+           "a11y_hidden": false,
+           "bottom": 0.0,
+           "checked": null,
+           "description": "",
+           "disabled": true,
+           "expanded": null,
+           "fill": [
+            228,
+            234,
+            241,
+            255
+           ],
+           "focusable": false,
+           "font_size": 14.0,
+           "hit_testable": false,
+           "invalid": false,
+           "label": "",
+           "left": 0.0,
+           "max_length": null,
+           "multiline": false,
+           "obscured": false,
+           "overflow": "scroll",
+           "placeholder": "",
+           "position": "absolute",
+           "pressed": null,
+           "read_only": true,
+           "right": 0.0,
+           "role": "textbox",
+           "selected": null,
+           "show_whitespace": false,
+           "tab_index": 0,
+           "tab_navigates": true,
+           "text": "y",
+           "top": 0.0,
+           "value": null,
+           "visible": true
+          },
+          "wire": {
+           "always": {},
+           "checked": false,
+           "disabled": false,
+           "field_text": "y",
+           "focus_target": false,
+           "focus_to": true,
+           "focused": false,
+           "handlers": [],
+           "hooks": {},
+           "in_checked": false,
+           "in_selected": false,
+           "inherited": true,
+           "label": "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#0",
+           "mirror": false,
+           "motion": false,
+           "on_block": true,
+           "owned": false,
+           "part": true,
+           "saved": {},
+           "selected": false,
+           "shown": {},
+           "states": {},
+           "tip_auto": false,
+           "tip_key": false,
+           "tooltip_gate": false,
+           "wired": [
+            "field:change",
+            "focus"
+           ]
+          }
+         }
+        ],
         "control": "",
         "has_tre": true,
-        "kind": "TextField.size",
+        "kind": "TextField.line",
         "motion": null,
         "name": null,
         "props": {
-         "a11y_hidden": true,
+         "align_self": "center",
          "disabled": false,
-         "fill": [
-          0,
-          0,
-          0,
-          0
-         ],
-         "font_size": 14,
-         "hit_testable": false,
-         "overflow": "clip",
-         "text": "x",
-         "wrap": "none"
+         "grid_column": 1,
+         "grid_row": 1
         },
         "states": {},
         "tre": {
-         "a11y_hidden": true,
+         "a11y_hidden": false,
+         "align_self": "center",
          "checked": null,
          "disabled": false,
          "expanded": null,
-         "fill": [
-          0,
-          0,
-          0,
-          0
-         ],
          "focusable": false,
-         "font_size": 14.0,
-         "hit_testable": false,
+         "grid_column": "1",
+         "grid_row": "1",
+         "hit_testable": null,
          "label": null,
-         "overflow": "clip",
          "pressed": null,
          "read_only": "!ValueError",
          "role": null,
          "selected": null,
          "tab_index": 0,
-         "text": "x",
-         "value": null,
-         "visible": true,
-         "wrap": "none"
-        },
-        "wire": null
-       },
-       {
-        "children": [],
-        "control": "",
-        "has_tre": true,
-        "kind": "TextField.input",
-        "motion": null,
-        "name": "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#1",
-        "props": {
-         "bottom": 0,
-         "disabled": false,
-         "fill": [
-          228,
-          234,
-          241,
-          255
-         ],
-         "font_size": 14,
-         "label": "",
-         "left": 0,
-         "max_length": null,
-         "multiline": false,
-         "obscured": false,
-         "overflow": "scroll",
-         "placeholder": "",
-         "position": "absolute",
-         "read_only": false,
-         "right": 0,
-         "show_whitespace": false,
-         "tab_navigates": true,
-         "text": "y",
-         "top": 0
-        },
-        "states": {},
-        "tre": {
-         "a11y_hidden": false,
-         "bottom": 0.0,
-         "checked": null,
-         "disabled": true,
-         "expanded": null,
-         "fill": [
-          228,
-          234,
-          241,
-          255
-         ],
-         "focusable": false,
-         "font_size": 14.0,
-         "hit_testable": false,
-         "label": "",
-         "left": 0.0,
-         "max_length": null,
-         "multiline": false,
-         "obscured": false,
-         "overflow": "scroll",
-         "placeholder": "",
-         "position": "absolute",
-         "pressed": null,
-         "read_only": true,
-         "right": 0.0,
-         "role": "textbox",
-         "selected": null,
-         "show_whitespace": false,
-         "tab_index": 0,
-         "tab_navigates": true,
-         "text": "y",
-         "top": 0.0,
          "value": null,
          "visible": true
         },
-        "wire": {
-         "always": {},
-         "checked": false,
-         "disabled": false,
-         "field_text": "y",
-         "focus_target": false,
-         "focus_to": true,
-         "focused": false,
-         "handlers": [],
-         "hooks": {},
-         "in_checked": false,
-         "in_selected": false,
-         "inherited": true,
-         "label": "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#1",
-         "mirror": false,
-         "motion": false,
-         "on_block": true,
-         "owned": false,
-         "part": true,
-         "saved": {},
-         "selected": false,
-         "shown": {},
-         "states": {},
-         "tip_auto": false,
-         "tip_key": false,
-         "tooltip_gate": false,
-         "wired": [
-          "field:change",
-          "focus"
-         ]
-        }
+        "wire": null
        }
       ],
       "control": "",
       "has_tre": true,
-      "kind": "TextField.line",
+      "kind": "TextField",
       "motion": null,
-      "name": null,
+      "name": "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Field",
       "props": {
-       "align_self": "center",
-       "disabled": false,
-       "grid_column": 1,
-       "grid_row": 1
+       "corner_radius": 4,
+       "disabled": true,
+       "display": "grid",
+       "fill": [
+        27,
+        34,
+        43,
+        255
+       ],
+       "grid_template_columns": "1fr",
+       "grid_template_rows": "1fr",
+       "invalid": false,
+       "padding_bottom": 8,
+       "padding_left": 8,
+       "padding_right": 8,
+       "padding_top": 8,
+       "stroke_color": [
+        95,
+        113,
+        136,
+        255
+       ],
+       "stroke_width": 1,
+       "width": "100%"
       },
-      "states": {},
+      "states": {
+       "disabled": {
+        "opacity": 0.38
+       },
+       "focused": {
+        "outline_color": [
+         91,
+         151,
+         201,
+         255
+        ],
+        "outline_offset": 2,
+        "outline_width": 3
+       },
+       "hovered": {
+        "stroke_color": [
+         91,
+         151,
+         201,
+         255
+        ]
+       },
+       "invalid": {
+        "stroke_color": [
+         242,
+         149,
+         140,
+         255
+        ]
+       }
+      },
       "tre": {
        "a11y_hidden": false,
-       "align_self": "center",
        "checked": null,
-       "disabled": false,
+       "corner_radius": 4.0,
+       "disabled": true,
+       "display": "grid",
        "expanded": null,
+       "fill": [
+        27,
+        34,
+        43,
+        255
+       ],
        "focusable": false,
-       "grid_column": "1",
-       "grid_row": "1",
+       "grid_template_columns": "1fr",
+       "grid_template_rows": "1fr",
        "hit_testable": null,
+       "invalid": false,
        "label": null,
+       "padding_bottom": 8.0,
+       "padding_left": 8.0,
+       "padding_right": 8.0,
+       "padding_top": 8.0,
        "pressed": null,
        "read_only": "!ValueError",
        "role": null,
        "selected": null,
+       "stroke_color": [
+        95,
+        113,
+        136,
+        255
+       ],
+       "stroke_width": 1.0,
        "tab_index": 0,
        "value": null,
-       "visible": true
+       "visible": true,
+       "width": "100%"
       },
-      "wire": null
+      "wire": {
+       "always": {},
+       "checked": false,
+       "disabled": true,
+       "field_text": null,
+       "focus_target": true,
+       "focus_to": false,
+       "focused": false,
+       "handlers": [],
+       "hooks": {
+        "down": 2,
+        "enter": 1,
+        "leave": 1,
+        "up": 1
+       },
+       "in_checked": false,
+       "in_selected": false,
+       "inherited": false,
+       "label": "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Field",
+       "mirror": true,
+       "motion": false,
+       "on_block": false,
+       "owned": false,
+       "part": false,
+       "saved": {
+        "opacity": 1.0
+       },
+       "selected": false,
+       "shown": {
+        "opacity": 0.38
+       },
+       "states": {
+        "disabled": {
+         "opacity": 0.38
+        },
+        "focused": {
+         "outline_color": [
+          91,
+          151,
+          201,
+          255
+         ],
+         "outline_offset": 2,
+         "outline_width": 3
+        },
+        "hovered": {
+         "stroke_color": [
+          91,
+          151,
+          201,
+          255
+         ]
+        },
+        "invalid": {
+         "stroke_color": [
+          242,
+          149,
+          140,
+          255
+         ]
+        }
+       },
+       "tip_auto": false,
+       "tip_key": false,
+       "tooltip_gate": false,
+       "wired": [
+        "On_Click",
+        "On_Scroll",
+        "On_Secondary_Click",
+        "field",
+        "state:pointer_cancel",
+        "state:pointer_down",
+        "state:pointer_enter",
+        "state:pointer_leave",
+        "state:pointer_up"
+       ]
+      }
      }
     ],
     "control": "",
     "has_tre": true,
-    "kind": "TextField",
+    "kind": "FlexBox",
     "motion": null,
-    "name": "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#0",
+    "name": "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Root",
     "props": {
-     "corner_radius": 4,
-     "disabled": true,
-     "display": "grid",
-     "fill": [
-      27,
-      34,
-      43,
-      255
-     ],
-     "grid_template_columns": "1fr",
-     "grid_template_rows": "1fr",
-     "padding_bottom": 8,
-     "padding_left": 8,
-     "padding_right": 8,
-     "padding_top": 8,
-     "stroke_color": [
-      95,
-      113,
-      136,
-      255
-     ],
-     "stroke_width": 1,
+     "disabled": false,
+     "display": "flex",
+     "flex_direction": "vertical",
+     "gap": 4,
      "width": 240
     },
-    "states": {
-     "disabled": {
-      "opacity": 0.38
-     },
-     "focused": {
-      "outline_color": [
-       91,
-       151,
-       201,
-       255
-      ],
-      "outline_offset": 2,
-      "outline_width": 3
-     },
-     "hovered": {
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
-     }
-    },
+    "states": {},
     "tre": {
      "a11y_hidden": false,
      "checked": null,
-     "corner_radius": 4.0,
-     "disabled": true,
-     "display": "grid",
+     "disabled": false,
+     "display": "flex",
      "expanded": null,
-     "fill": [
-      27,
-      34,
-      43,
-      255
-     ],
+     "flex_direction": "vertical",
      "focusable": false,
-     "grid_template_columns": "1fr",
-     "grid_template_rows": "1fr",
+     "gap": 4.0,
      "hit_testable": null,
      "label": null,
-     "padding_bottom": 8.0,
-     "padding_left": 8.0,
-     "padding_right": 8.0,
-     "padding_top": 8.0,
      "pressed": null,
      "read_only": "!ValueError",
      "role": null,
      "selected": null,
-     "stroke_color": [
-      95,
-      113,
-      136,
-      255
-     ],
-     "stroke_width": 1.0,
      "tab_index": 0,
      "value": null,
      "visible": true,
@@ -10335,71 +10592,30 @@
     "wire": {
      "always": {},
      "checked": false,
-     "disabled": true,
+     "disabled": false,
      "field_text": null,
-     "focus_target": true,
+     "focus_target": false,
      "focus_to": false,
      "focused": false,
      "handlers": [],
-     "hooks": {
-      "down": 2,
-      "enter": 1,
-      "leave": 1,
-      "up": 1
-     },
+     "hooks": {},
      "in_checked": false,
      "in_selected": false,
      "inherited": false,
-     "label": "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#0",
-     "mirror": true,
+     "label": "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Root",
+     "mirror": false,
      "motion": false,
      "on_block": false,
      "owned": false,
      "part": false,
-     "saved": {
-      "opacity": 1.0
-     },
+     "saved": {},
      "selected": false,
-     "shown": {
-      "opacity": 0.38
-     },
-     "states": {
-      "disabled": {
-       "opacity": 0.38
-      },
-      "focused": {
-       "outline_color": [
-        91,
-        151,
-        201,
-        255
-       ],
-       "outline_offset": 2,
-       "outline_width": 3
-      },
-      "hovered": {
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
-      }
-     },
+     "shown": {},
+     "states": {},
      "tip_auto": false,
      "tip_key": false,
      "tooltip_gate": false,
-     "wired": [
-      "On_Click",
-      "On_Scroll",
-      "On_Secondary_Click",
-      "field",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
-     ]
+     "wired": []
     }
    }
   ],
@@ -10409,10 +10625,12 @@
    "TextEditor@Main_Shell.Main.Top_Bar.TextEditor_1/#0": "TextField",
    "TextEditor@Main_Shell.Main.Top_Bar.TextEditor_1/#1": "TextField.size",
    "TextEditor@Main_Shell.Main.Top_Bar.TextEditor_1/#2": "TextField.input",
-   "TextInput@Main_Shell.Main.Top_Bar.Ed/#0": "TextField",
-   "TextInput@Main_Shell.Main.Top_Bar.Ed/#1": "TextField.input",
-   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#0": "TextField",
-   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#1": "TextField.input"
+   "TextInput@Main_Shell.Main.Top_Bar.Ed/#0": "TextField.input",
+   "TextInput@Main_Shell.Main.Top_Bar.Ed/Field": "TextField",
+   "TextInput@Main_Shell.Main.Top_Bar.Ed/Root": "FlexBox",
+   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#0": "TextField.input",
+   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Field": "TextField",
+   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Root": "FlexBox"
   },
   "motions": [],
   "nodes": [
@@ -10422,9 +10640,11 @@
    "TextEditor@Main_Shell.Main.Top_Bar.TextEditor_1/#1",
    "TextEditor@Main_Shell.Main.Top_Bar.TextEditor_1/#2",
    "TextInput@Main_Shell.Main.Top_Bar.Ed/#0",
-   "TextInput@Main_Shell.Main.Top_Bar.Ed/#1",
+   "TextInput@Main_Shell.Main.Top_Bar.Ed/Field",
+   "TextInput@Main_Shell.Main.Top_Bar.Ed/Root",
    "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#0",
-   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#1"
+   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Field",
+   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Root"
   ],
   "roots": 4,
   "runners": 0,
@@ -10436,9 +10656,11 @@
    "TextEditor@Main_Shell.Main.Top_Bar.TextEditor_1/#1",
    "TextEditor@Main_Shell.Main.Top_Bar.TextEditor_1/#2",
    "TextInput@Main_Shell.Main.Top_Bar.Ed/#0",
-   "TextInput@Main_Shell.Main.Top_Bar.Ed/#1",
+   "TextInput@Main_Shell.Main.Top_Bar.Ed/Field",
+   "TextInput@Main_Shell.Main.Top_Bar.Ed/Root",
    "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#0",
-   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/#1"
+   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Field",
+   "TextInput@Main_Shell.Main.Top_Bar.TextInput_2/Root"
   ]
  },
  "layout:list_menu": {
