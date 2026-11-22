@@ -157,6 +157,9 @@ _BOX_STYLE: dict[str, KeyRow] = {
     "Outline_Width": _k("outline_width", "number"),
     "Outline_Offset": _k("outline_offset", "number"),
     "Outline_Color": _k("outline_color", "color"),
+    "Hover_Layer_Ms": _k("hover_layer_ms", "number"),
+    "Pressed_Layer_Ms": _k("pressed_layer_ms", "number"),
+    "Focus_Layer_Ms": _k("focus_layer_ms", "number"),
 }
 
 _FLEX: dict[str, KeyRow] = {
@@ -219,6 +222,8 @@ _CIRCLE: dict[str, KeyRow] = {
     "Opacity": _COMMON["Opacity"],
 }
 _RING: dict[str, KeyRow] = {k: v for k, v in _CIRCLE.items() if k != "Fill"}
+
+SELECTION_RADIUS = 2  # px: the corners of a selection's highlight (design choice, tre 0.6.12)
 
 _ROWS: dict[str, BlockRow] = {
     # A Box is a one-cell grid: every child sits in cell (1, 1) (Block Reference, R1).
@@ -289,7 +294,9 @@ _ROWS: dict[str, BlockRow] = {
             "Max_Lines": _k("max_lines", "max_length"),
         },
         style=_TEXT_STYLE,
-        defaults={"text": ""},
+        # a selection is a highlight with 2 px corners (a design choice: no spec value; the fill is
+        # the engine's own: the scheme's primary at 30 %), tre 0.6.12
+        defaults={"text": "", "selection_radius": SELECTION_RADIUS},
     ),
     # Drawn as a rounded tre box, not a path: a path needs numeric sizes, and Width may be AUTO.
     "Rectangle": BlockRow(
@@ -483,6 +490,7 @@ _ROWS["TextField.input"] = BlockRow(
         "read_only": False,
         "max_length": None,
         "obscured": False,
+        "selection_radius": SELECTION_RADIUS,
         "invalid": False,
     },
 )
