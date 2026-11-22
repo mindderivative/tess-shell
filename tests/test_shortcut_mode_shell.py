@@ -518,3 +518,26 @@ def test_a_surface_the_os_made_active_is_no_warning(rig: Make) -> None:
     r.frame.painter.advance(3000)
     assert r.warnings() == []
     assert r.manager.focused == "F"
+
+
+# -- F6 and Shift+F6: landmark cycling between the surfaces (TSH-015) -------------------------
+
+
+def test_f6_from_a_surface_enters_the_mode_and_moves_to_the_next_surface_and_shift_f6_back(
+    rig: Make,
+) -> None:
+    r = rig()
+    assert r.state == (None, None)
+    r.key("Dock", "f6")
+    assert r.state[0] == "F" and r.state[1] == "Dock"  # entered on the Frame, one step on
+    r.key("Dock", "f6")
+    assert r.state[1] == "Top_Bar"
+    r.key("Top_Bar", "f6", shift=True)
+    assert r.state[1] == "Dock"
+
+
+def test_f6_with_ctrl_alt_or_meta_is_not_the_shells(rig: Make) -> None:
+    r = rig()
+    for mod in ("ctrl", "alt", "meta"):
+        r.key("Dock", "f6", **{mod: True})
+        assert r.state == (None, None), mod
