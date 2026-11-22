@@ -39,10 +39,12 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$color.primary` | colour | `"#5B97C9"` | light, high contrast | The main colour of controls: a filled slider, a checked toggle. |
 | `$color.on_primary` | colour | `"#08121C"` | light, high contrast | Text and icons on the primary colour. |
 | `$color.accent` | colour | `"#4682B4"` | high contrast | The accent colour; DESKTOP follows the desktop's accent. |
-| `$color.error` | colour | `"#F2958C"` | light | An error or a critical state. |
-| `$color.warning` | colour | `"#E6BB6A"` | light | A warning or a low state. |
-| `$color.success` | colour | `"#8CCB9A"` | light | A success state. |
-| `$color.outline` | colour | `"#55657A"` | light, high contrast | Borders, dividers and tracks. |
+| `$color.error` | colour | `"#F2958C"` | light, high contrast | An error or a critical state. |
+| `$color.warning` | colour | `"#E6BB6A"` | light, high contrast | A warning or a low state. |
+| `$color.success` | colour | `"#8CCB9A"` | light, high contrast | A success state. |
+| `$color.outline` | colour | `"#5F7188"` | light, high contrast | Borders, dividers and tracks. |
+| `$color.inverse_surface` | colour | `"#E4EAF1"` | light, high contrast | The fill of a plain tooltip: the opposite of the surface (light on a dark desktop, dark on a light one). |
+| `$color.inverse_on_surface` | colour | `"#12171D"` | light, high contrast | Text and icons on the inverse surface. |
 | `$color.scrim` | colour | `"#000000"` | never | The colour laid over what a modal surface covers. |
 
 ### Type

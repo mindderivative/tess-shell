@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.31",
+  "schema_version": "1.33",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -27161,7 +27161,8 @@
         "default": "\"#F2958C\"",
         "doc": "An error or a critical state.",
         "modes": [
-          "light"
+          "light",
+          "high_contrast"
         ],
         "alpha": true,
         "forms": [
@@ -27178,7 +27179,8 @@
         "default": "\"#E6BB6A\"",
         "doc": "A warning or a low state.",
         "modes": [
-          "light"
+          "light",
+          "high_contrast"
         ],
         "alpha": true,
         "forms": [
@@ -27195,7 +27197,8 @@
         "default": "\"#8CCB9A\"",
         "doc": "A success state.",
         "modes": [
-          "light"
+          "light",
+          "high_contrast"
         ],
         "alpha": true,
         "forms": [
@@ -27209,8 +27212,44 @@
       "outline": {
         "kind": "color",
         "ref": "$color.outline",
-        "default": "\"#55657A\"",
+        "default": "\"#5F7188\"",
         "doc": "Borders, dividers and tracks.",
+        "modes": [
+          "light",
+          "high_contrast"
+        ],
+        "alpha": true,
+        "forms": [
+          "\"#RRGGBB\"",
+          "\"#RRGGBBAA\"",
+          "\"#RGB\"",
+          "\"#RGBA\"",
+          "rgba(r g b a)"
+        ]
+      },
+      "inverse_surface": {
+        "kind": "color",
+        "ref": "$color.inverse_surface",
+        "default": "\"#E4EAF1\"",
+        "doc": "The fill of a plain tooltip: the opposite of the surface (light on a dark desktop, dark on a light one).",
+        "modes": [
+          "light",
+          "high_contrast"
+        ],
+        "alpha": true,
+        "forms": [
+          "\"#RRGGBB\"",
+          "\"#RRGGBBAA\"",
+          "\"#RGB\"",
+          "\"#RGBA\"",
+          "rgba(r g b a)"
+        ]
+      },
+      "inverse_on_surface": {
+        "kind": "color",
+        "ref": "$color.inverse_on_surface",
+        "default": "\"#12171D\"",
+        "doc": "Text and icons on the inverse surface.",
         "modes": [
           "light",
           "high_contrast"

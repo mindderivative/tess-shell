@@ -18,6 +18,7 @@ from tess_shell.schema.model import PanelDef
 from tess_shell.surfaces.manager import _keyboard
 from tests.field_live import DARK_THEME, Fields, look, running
 from tests.shell_samples import write_example
+from tests.theme_colours import base
 
 CALLS = (
     'On_Changed { Action: Call, Target: "Host.changed" }, '
@@ -254,7 +255,7 @@ def test_a_change_of_light_or_dark_repaints_the_field_and_keeps_the_typed_text()
     with running('TextInput { Text: "ab", Placeholder: "p" }') as r:
         (f,) = r.fields()
         dark = (f.box.get("fill"), f.inp.get("fill"), f.box.get("stroke_color"))
-        assert dark == ((27, 34, 43, 255), (228, 234, 241, 255), (85, 101, 122, 255))
+        assert dark == ((27, 34, 43, 255), (228, 234, 241, 255), base("Outline"))
         f.inp.focus()  # no pointer: a hovered field would show its hover look
         r.window.simulate("input", text="c")
         r.manager.set_look(look(DARK_THEME, scheme="light"))

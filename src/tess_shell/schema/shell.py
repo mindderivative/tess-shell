@@ -1867,6 +1867,17 @@ def _tooltip_name(
     return m.TooltipRef(name=text, origin=ctx.origin(entry.key_origin))
 
 
+def tooltip_card_style(o: m.Origin) -> dict[str, m.Value]:
+    """The plain tooltip's card (Tooltip: ``inverse_surface`` fill, radius ``shape.small``, no
+    shadow), read from the theme's tokens. An inline ``Tooltip { }`` and the ``Tooltip: "text"``
+    form start from it; a key the author writes in the tooltip's ``Style`` replaces its own. The
+    text inside takes ``$color.inverse_on_surface``."""
+    return {
+        "Background": m.TokenRef("color.inverse_surface", "color", origin=o),
+        "Corner_Radius": m.TokenRef("shape.small", "radius", origin=o),
+    }
+
+
 def _tooltip_text(ctx: _Ctx, entry: Property) -> m.TooltipRef | None:
     """``Tooltip: "Save the file"``: the short form of an inline tooltip Popup that holds the text
     on one line (Standard Modules > Tooltip). The text may hold ``<| |>`` slots in a module. It is
@@ -1895,12 +1906,12 @@ def _tooltip_text(ctx: _Ctx, entry: Property) -> m.TooltipRef | None:
         },
         style={
             "Font_Size": token("type.body.font_size", "positive"),
-            "Foreground": token("color.on_surface", "color"),
+            "Foreground": token("color.inverse_on_surface", "color"),
         },
         origin=o,
     )
     body = m.Node(
-        "FlexBox", props={"Padding": m.Sides(12, 8, 12, 8, origin=o)}, children=(label,), origin=o
+        "FlexBox", props={"Padding": m.Sides(8, 4, 8, 4, origin=o)}, children=(label,), origin=o
     )
     popup = PopupDef(
         name="",
@@ -1914,11 +1925,7 @@ def _tooltip_text(ctx: _Ctx, entry: Property) -> m.TooltipRef | None:
         tooltip=True,
         open_on_enter=True,
         close_on_exit=True,
-        style={
-            "Background": token("color.surface_raised", "color"),
-            "Corner_Radius": token("shape.medium", "radius"),
-            "Elevation": m.Percent(20, origin=o),
-        },
+        style=tooltip_card_style(o),
         children=(body,),
     )
     return m.TooltipRef(popup=popup, description=value, origin=o)
@@ -2081,7 +2088,7 @@ def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
         close_on_exit=flag("Close_On_Exit", tooltip),
         exit_delay=num("Exit_Delay", 150),
         density=_density(values),
-        style=style,
+        style={**tooltip_card_style(ctx.origin(block.origin)), **style} if inline else style,
         children=tuple(children),
     )
 

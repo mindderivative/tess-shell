@@ -17,6 +17,7 @@ from tess_shell.binder.build import View, build
 from tess_shell.model.field import compose, holds_text_field
 from tess_shell.model.look import resolve
 from tests.field_live import Field, look
+from tests.theme_colours import base
 
 LOOK = look()
 
@@ -324,7 +325,7 @@ def test_the_default_look_is_the_themes() -> None:
     b = Built(node())
     box, inp = b.field.box, b.field.inp
     assert box.get("fill") == (27, 34, 43, 255)  # surface_raised
-    assert box.get("stroke_color") == (85, 101, 122, 255) and box.get("stroke_width") == 1
+    assert box.get("stroke_color") == base("Outline") and box.get("stroke_width") == 1
     assert (
         inp.get("fill") == (228, 234, 241, 255) and inp.get("font_size") == 14
     )  # on_surface, body

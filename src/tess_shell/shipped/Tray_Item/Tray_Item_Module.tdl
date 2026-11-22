@@ -36,14 +36,9 @@ Module {
         Tooltip {
             Alignment: CENTER
             Gap: 4
-            Style {
-                Background: $color.surface_raised
-                Corner_Radius: 8
-                Elevation: 20%
-            }
             Children {
                 FlexBox {
-                    Padding: [12, 8, 12, 8]
+                    Padding: [8, 4, 8, 4]
                     Flex: VERTICAL
                     Children {
                         Text {
@@ -52,7 +47,7 @@ Module {
                             Height: AUTO
                             Font_Size: 14
                             Font_Weight: 600
-                            Foreground: $color.on_surface
+                            Foreground: $color.inverse_on_surface
                         }
                         Text {
                             Text: <| params.tooltip_text |>
@@ -60,7 +55,7 @@ Module {
                             Width: AUTO
                             Height: AUTO
                             Font_Size: 13
-                            Foreground: $color.on_surface_muted
+                            Foreground: $color.inverse_on_surface
                         }
                     }
                 }
@@ -68,6 +63,19 @@ Module {
         }
         Children {
             Icon { Icon: <| params.icon |>, Size: <| params.size if params.size > 0 else density.item_icon_size |> }
+            # attention is not colour alone: a 6 dp dot in the corner (Tray Item > States)
+            FlexBox {
+                Name: Attention
+                Visible: <| params.attention |>
+                Position: ABSOLUTE
+                Top: 2
+                Right: 2
+                Width: 6
+                Height: 6
+                Corner_Radius: 3
+                Background: $color.warning
+                A11y_Hidden: true
+            }
         }
     }
 }
