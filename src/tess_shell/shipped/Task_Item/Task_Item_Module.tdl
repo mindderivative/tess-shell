@@ -80,6 +80,19 @@ Module {
                 Background: $color.warning
                 A11y_Hidden: true
             }
+            # minimised is not the disabled look alone: a 2 dp bar under the item (Task Item > States)
+            FlexBox {
+                Name: Minimized
+                Visible: <| params.minimized |>
+                Position: ABSOLUTE
+                Left: 6
+                Right: 6
+                Bottom: 0
+                Height: 2
+                Corner_Radius: 1
+                Background: $color.on_surface
+                A11y_Hidden: true
+            }
         }
     }
 }
