@@ -362,8 +362,8 @@ class Popups:
         self._m = manager
         self.plans: dict[tuple[str, str], PopupPlan] = {}
         self.current: OpenPopup | None = None
-        # what a tooltip did and why, newest last: ``(opened, why)`` with why ``hover`` or ``focus``
-        # for an open and the close's reason for a close (an observation for tests, nothing reads it)
+        # what a tooltip did and why, newest last: ``(opened, why)``, why ``hover`` or ``focus`` for
+        # an open and the close's reason for a close (an observation for tests; nothing reads it)
         self.tooltip_log: deque[tuple[bool, str]] = deque(maxlen=64)
         self._open_why = "hover"
         self._suppressed: tuple[str, str] | None = (
