@@ -157,6 +157,9 @@ _BOX_STYLE: dict[str, KeyRow] = {
     "Outline_Width": _k("outline_width", "number"),
     "Outline_Offset": _k("outline_offset", "number"),
     "Outline_Color": _k("outline_color", "color"),
+    "Hover_Layer_Ms": _k("hover_layer_ms", "number"),
+    "Pressed_Layer_Ms": _k("pressed_layer_ms", "number"),
+    "Focus_Layer_Ms": _k("focus_layer_ms", "number"),
 }
 
 _FLEX: dict[str, KeyRow] = {
