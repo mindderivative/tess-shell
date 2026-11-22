@@ -792,3 +792,28 @@ def test_the_shipped_handle_icons_have_the_geometry_handle_py_draws() -> None:
     assert (cx - handles.CHEVRON_HALF, cx + handles.CHEVRON_HALF) == (1.0, 23.0)
     assert abs(cy + handles.CHEVRON_RISE - 7.37) < 0.01
     assert abs(cy - handles.CHEVRON_RISE - 0.63) < 0.01
+
+
+def test_the_handle_is_a_button_for_assistive_technology_named_for_what_it_does() -> None:
+    """AC-PEK-16: role button and 'Expand Tab' at rest, 'Collapse Tab' (expanded) while out; the
+    holder still takes no pointer, so the Frame's input region is the tab as before."""
+    m = started(extra=peek("CLICK"))
+    holder = host(m).handle.holder
+    assert holder.get("role") == "button" and holder.get("a11y_hidden") is False
+    assert holder.get("label") == "Expand Tab" and holder.get("expanded") is False
+    assert holder.get("hit_testable") is False
+    act(m, "Show")
+    advance(m, 1000)
+    assert is_out(m)
+    assert holder.get("label") == "Collapse Tab" and holder.get("expanded") is True
+
+
+def test_the_press_of_assistive_technology_opens_and_closes_the_peek() -> None:
+    m = started(extra=peek("CLICK"))
+    holder = host(m).handle.holder
+    only(m).painter.simulate("click", node=holder)  # no pointer position: a screen reader's press
+    advance(m, 1000)
+    assert is_out(m)
+    only(m).painter.simulate("click", node=holder)
+    advance(m, 1000)
+    assert at_rest(m)
