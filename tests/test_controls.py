@@ -318,7 +318,7 @@ def test_an_empty_list_shows_one_empty_node_and_keeps_its_role_and_name() -> Non
         (empty,) = empty_nodes(w)
         assert empty.get("text") == "No results"
         root = w.of_use("List", "Root")
-        assert root.get("role") == "list" and root.get("label") == "Files"
+        assert root.get("role") == "listbox" and root.get("label") == "Files"
 
 
 def test_a_list_with_entries_or_an_unknown_count_shows_no_empty_node() -> None:
@@ -331,11 +331,11 @@ def test_list_scrolls_by_the_wheel_chooses_by_a_click_and_marks_the_entry() -> N
     with running(f"List {{ Height: 90, Label: Files, {CHANGED}, Children {{ {ENTRIES} }} }}") as w:
         assert w.warnings() == [], w.warnings()
         root = w.of_use("List", "Root")
-        assert root.get("role") == "list" and root.get("label") == "Files"
+        assert root.get("role") == "listbox" and root.get("label") == "Files"
         entries = [n for k, n in w.view.nodes.items() if k.endswith("/Items")]
         assert len(entries) == 1
         items = entries[0].children()
-        assert len(items) == 12 and items[0].get("role") == "listitem"
+        assert len(items) == 12 and items[0].get("role") == "option"
         assert items[0].get("selected") is False
         w.window.simulate("wheel", node=root, delta_y=60)
         w.advance(300)
@@ -612,3 +612,16 @@ def test_a_multiple_list_takes_selected_from_outside_without_the_event() -> None
         assert chosen() == [1, 3, 5] and seen(w) == []
         w.window.simulate("click", node=items[5], ctrl=True)
         assert seen(w) == ["k1,k3,k5,k6"]
+
+
+def test_a_list_is_a_listbox_of_options_when_it_can_be_chosen_from_and_a_list_when_it_cannot() -> (
+    None
+):
+    """AC-LST-01: SINGLE and MULTIPLE are listbox and option; NONE keeps list."""
+    for mode, role in (("SINGLE", "listbox"), ("MULTIPLE", "listbox"), ("NONE", "list")):
+        with running(f"List {{ Selection: {mode}, Height: 400, Children {{ {ENTRIES} }} }}") as w:
+            root = w.of_use("List", "Root")
+            items = [n for k, n in w.view.nodes.items() if k.endswith("/Items")][0].children()
+            assert root.get("role") == role, mode
+            if mode != "NONE":
+                assert {n.get("role") for n in items} == {"option"}, mode

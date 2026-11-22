@@ -386,7 +386,7 @@ def test_list_arrows_home_end_and_pages_move_the_chosen_entry_and_it_scrolls_int
     with gallery_c() as w:
         k = Keys(w, "Lists")
         root = k.tab_to("Entries")
-        assert root.get("role") == "list"
+        assert root.get("role") == "listbox"
         k.said()
         k.press("arrow_down")
         assert k.said() == ["List: 'k2' -> 'k3'"]
@@ -420,7 +420,7 @@ def test_list_marks_the_chosen_entry_selected_for_assistive_technology_and_the_s
             return [n for n in descendants(root) if n.get("selected") is True]
 
         (entry,) = chosen()
-        assert entry.get("role") == "listitem"
+        assert entry.get("role") == "option"
         assert "Entry number 3" in " ".join(texts(entry))
         assert entry.get("stroke_width") == 2  # the ``.list_item:selected`` rule of the stylesheet
         k.press("arrow_down")

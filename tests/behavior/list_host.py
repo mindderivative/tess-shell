@@ -7,7 +7,7 @@ the set, the anchor, the Shift and Ctrl rules, Ctrl+A and the skipped disabled e
 engine's. ``Selection: SINGLE`` is the shell's own chooser (arrows choose, Space chooses). What it
 does not: an ``unselectable`` row, ``select_on_focus``, a ``select_all_key`` option, a report of
 a change with its count, anchor, reason and detail (``On_Changed`` says the keys), a role
-``listbox``/``option`` (``list``/``listitem``), names on the rows, and an announcement readable
+focusable rows, and an announcement readable
 headless (the engine's ``selection_announce`` is read from a real AT-SPI bus in
 ``tests/test_multiselect_atspi.py``). The adapter emits only the ``focus_move`` it can see;
 ``consumed`` is inferred: the set, the anchor or the focus changed."""
@@ -64,8 +64,14 @@ class ListHost:
     """A ``List`` in a headless shell, as a host of ``list``."""
 
     def __init__(
-        self, spec: Spec, options: dict[str, Any] | None, controlled: bool, responses: list[str]
+        self,
+        spec: Spec,
+        options: dict[str, Any] | None,
+        controlled: bool,
+        responses: list[str],
+        focus_model: str = "roving",
     ) -> None:
+        self.active_model = focus_model == "active_descendant"
         given = {
             "items": [],
             "selection": [],
@@ -132,7 +138,15 @@ class ListHost:
         return {"selection": self._chosen(), "anchor": self._anchor()}
 
     @property
+    def active(self) -> str | None:
+        """The active row of the ``active_descendant`` model: the engine keeps its cursor row
+        inside the container and does not say which it is, so it is never known here."""
+        return None
+
+    @property
     def focus(self) -> str | None:
+        if self.active_model:  # the list takes the focus, the engine moves its own cursor
+            return "listbox" if self.root.get("focused") else None
         return next(
             (f"option#{i}" for i, r in zip(self.ids, self.rows, strict=True) if r.get("focused")),
             None,
@@ -211,5 +225,6 @@ class ListHost:
         now = self.focus
         if now != before[2] and now is not None:
             events.append(Event("focus_move", {"from": before[2], "to": now, "reason": reason}))
+            # the model's own second event, the move of the cursor, is not observable
         consumed = (self._chosen(), self._anchor(), now) != before
         return Outcome(events, consumed=consumed)

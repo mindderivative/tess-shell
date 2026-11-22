@@ -24,7 +24,7 @@ pytestmark = [
     pytest.mark.skipif(not atspi_env.available(), reason="no private AT-SPI environment"),
     pytest.mark.skipif(shutil.which("sway") is None, reason="no sway"),
 ]
-LIST, LIST_ITEM = 31, 32
+LISTBOX, LIST_ITEM = 98, 32  # AccessKit's `option` is an AT-SPI list item
 MULTISELECTABLE, SELECTED = 18, 23
 ENTRIES = " ".join(
     f'FlexBox {{ Class: list_item, Key: k{i}, Height: 30, Children {{ Text {{ Text: "Entry {i}", '
@@ -64,7 +64,7 @@ def test_a_multiple_list_is_multiselectable_marks_its_chosen_entries_and_announc
 
     def container() -> tuple[str, str] | None:
         for _, role, name, dest, path in nodes():
-            if role == LIST and name == "Files":
+            if role == LISTBOX and name == "Files":
                 return (dest, path)
         return None
 

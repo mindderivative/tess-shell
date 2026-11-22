@@ -140,7 +140,7 @@ STATIC = [
         "Label { Text: B, Key: b } } }",
         "List",
         "Root",
-        {"role": "list", "label": "L", "focusable": True},
+        {"role": "listbox", "label": "L", "focusable": True},
     ),
     (
         "Button expandable",
@@ -172,13 +172,13 @@ def test_the_tree_of_a_static_module(
             assert node.get(key) == value, (key, node.get(key))
 
 
-def test_the_list_entries_are_list_items_and_the_chosen_one_is_selected() -> None:
+def test_the_list_entries_are_options_and_the_chosen_one_is_selected() -> None:
     body = "List { Selected: b, Children { Label { Text: A, Key: a } Label { Text: B, Key: b } } }"
     with running(body) as w:
         items = [n for k, n in w.view.nodes.items() if k.startswith("Label@")]
         assert [(n.get("role"), n.get("label"), n.get("selected")) for n in items] == [
-            ("listitem", "A", False),
-            ("listitem", "B", True),
+            ("option", "A", False),
+            ("option", "B", True),
         ]
 
 
@@ -214,9 +214,9 @@ def test_the_launcher_names_its_field_its_rows_and_its_list(tmp_path: Path) -> N
         assert d.field().get("label") == "Search applications"
         assert d.field().get("role") == "textbox"
         assert "Firefox, Web Browser" in row_labels(d) and "Files, Browse folders" in row_labels(d)
-        assert {n.get("role") for n in d.rows()} == {"listitem"}
-        (lst,) = [n for n in d.panel.view.nodes.values() if n.get("role") == "list"]
-        assert (lst.get("role"), lst.get("label")) == ("list", "Results")
+        assert {n.get("role") for n in d.rows()} == {"option"}
+        (lst,) = [n for n in d.panel.view.nodes.values() if n.get("role") == "listbox"]
+        assert (lst.get("role"), lst.get("label")) == ("listbox", "Results")
 
 
 def test_the_launcher_says_the_selected_row_as_the_selection_moves(tmp_path: Path) -> None:

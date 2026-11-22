@@ -32,6 +32,8 @@ ROLES = (
     "ALERT",
     "LIST",
     "LISTITEM",
+    "LISTBOX",
+    "OPTION",
     "TREE",
     "TREEITEM",
     "HEADING",

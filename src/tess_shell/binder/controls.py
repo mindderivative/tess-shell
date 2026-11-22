@@ -259,8 +259,8 @@ class Select(Control):
             if child.tre is not None:
                 if child.tre.get("selected") != on:
                     child.tre.set(selected=on)
-                if "role" not in child.props and child.tre.get("role") != "listitem":
-                    child.tre.set(role="listitem")
+                if "role" not in child.props and child.tre.get("role") != "option":
+                    child.tre.set(role="option")
         self.view.point_fields(self)
 
     def choose(self, key: str, child: Entry) -> None:
@@ -472,8 +472,8 @@ class MultiSelect(Control):
             if child.tre is not None and child.tre.get("selected") != on:
                 child.tre.set(selected=on)  # what the engine says to assistive technology
             if child.tre is not None and "role" not in child.props:
-                if child.tre.get("role") != "listitem":
-                    child.tre.set(role="listitem")
+                if child.tre.get("role") != "option":
+                    child.tre.set(role="option")
 
     def moved(self, event: Any) -> None:
         """The engine changed the set (a click, a key, Ctrl+A, or a set from outside)."""

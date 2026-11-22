@@ -42,7 +42,7 @@ pytestmark = [
 ]
 
 # AT-SPI role numbers (ATSPI_ROLE_*) and state numbers (ATSPI_STATE_*)
-DIALOG, LIST, LIST_ITEM, ENTRY, PANEL = 16, 31, 32, 79, 39
+DIALOG, LIST, LIST_ITEM, ENTRY, PANEL = 16, 98, 32, 79, 39  # LIST: the list box (role listbox)
 FOCUSED, SELECTED = 12, 23
 INTERACTIVE = {ENTRY, LIST, LIST_ITEM, 43}  # entry, list, list item, push button
 APPS = ("Fake One", "Fake Two", "Other")
