@@ -127,7 +127,7 @@ def test_the_check_command_is_clean_for_a_shell_that_only_binds_the_key(
 
 def test_the_applications_module_its_params_and_the_event_are_in_the_schema_export() -> None:
     data = schema_dict()
-    assert data["schema_version"] == "1.36"
+    assert data["schema_version"] == "1.37"
     module = data["modules"]["Applications"]
     params = {name: p for name, p in module["params"].items()}
     assert {n: (p["type"], p["default"]) for n, p in params.items()} == {

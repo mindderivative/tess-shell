@@ -230,9 +230,12 @@ KEY_DOCS: dict[str, str] = {
     "Input_Region": "Which part of the surface takes the pointer: [] none (clicks pass through) "
     "or AUTO the drawn shapes; leaving it out is the whole surface.",
     "Exclusive_Zone": "The raw space to reserve, in pixels. Not built.",
-    "Auto_Hide": "Slides the Bar out when the pointer leaves it. Not built.",
-    "Auto_Hide_Delay": "How long the pointer is away before the Bar hides, in milliseconds. Not "
-    "built.",
+    "Auto_Hide": "Slides the Bar out past its screen edge when the pointer has left it for "
+    "Auto_Hide_Delay, leaving a 1 px hover strip that brings it back; the Bar gives its space "
+    "back while it is out. Off by default: write true to opt in. A Bar that has the "
+    "keyboard, or a Popup of its own open, stays.",
+    "Auto_Hide_Delay": "How long the pointer is away before the Bar hides, in milliseconds "
+    "(default 1000).",
     "Shortcut": "The global key that toggles the Panel or Frame, written as Meta+Space; the same "
     "as Toggle_<Name> in Shortcuts. The Shortcuts entry wins when both are written.",
     "Shortcut_Mode": "Whether this surface is the one in shortcut mode: the shell's keyboard "
@@ -683,6 +686,7 @@ UNITS: dict[str, str] = {
     "Rotation": "deg",
     "Scroll_Offset": "px",
     "Hide_After": "ms",
+    "Auto_Hide_Delay": "ms",
     "Enter_Delay": "ms",
     "Exit_Delay": "ms",
     "Pause": "ms",

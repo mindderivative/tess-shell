@@ -77,6 +77,7 @@ KEY_RANGES: dict[str, Range] = {
     "Border.Width": Range(0),
     "Shadow.Blur": Range(0),
     "Hide_After": Range(0),
+    "Auto_Hide_Delay": Range(0),
     "Enter_Delay": Range(0),
     "Exit_Delay": Range(0),
 }

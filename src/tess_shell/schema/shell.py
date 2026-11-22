@@ -1220,6 +1220,8 @@ BAR_KEYS: dict[str, str] = {
     "Tab_Index": "tab_index",
     "Shortcut_Mode": "bool",
     "Visible": "bool",
+    "Auto_Hide": "bool",
+    "Auto_Hide_Delay": "number",
     "Density": "enum",
     "Padding": "sides",
 }
@@ -1323,6 +1325,8 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
 
     reserve = values.get("Reserve")
     shown = values.get("Visible")
+    auto = values.get("Auto_Hide")
+    auto_delay = values.get("Auto_Hide_Delay")
     edge = word("Edge", "TOP")
     assert edge is not None
     return BarDef(
@@ -1346,6 +1350,8 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         shortcut_mode=_shortcut_mode(values),
         visible=shown.value if isinstance(shown, m.Bool) else True,
         padding=_sides_of(values["Padding"]) if "Padding" in values else None,
+        auto_hide=auto.value if isinstance(auto, m.Bool) else False,
+        auto_hide_delay=float(auto_delay.value) if isinstance(auto_delay, m.Number) else 1000.0,
         style=style,
         children=tuple(children),
     )

@@ -106,6 +106,7 @@ RULES: dict[str, set[str] | None] = {
     "surfaces.mode": {"tess_shell.schema.keys", "tess_shell.surfaces.focus"},
     # Ctrl+C on a selectable Text: walks tre nodes and writes the clipboard
     "surfaces.selection_copy": {"loguru"},
+    "surfaces.autohide": {"loguru", "tess_shell.schema.model", "tess_shell.surfaces"},
     "surfaces.mode_driver": {
         "loguru",
         "tess_shell.binder",  # the View whose first Tab stop gets the ring (a type only)

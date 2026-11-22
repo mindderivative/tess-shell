@@ -45,6 +45,8 @@ class BarDef:
     padding: tuple[float, float, float, float] | None = (
         None  # ``Padding``: left, top, right, bottom
     )
+    auto_hide: bool = False  # slides out when the pointer has left it for ``auto_hide_delay``
+    auto_hide_delay: float = 1000.0  # ms
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
 
