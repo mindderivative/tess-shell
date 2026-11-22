@@ -27161,7 +27161,8 @@
         "default": "\"#F2958C\"",
         "doc": "An error or a critical state.",
         "modes": [
-          "light"
+          "light",
+          "high_contrast"
         ],
         "alpha": true,
         "forms": [
@@ -27178,7 +27179,8 @@
         "default": "\"#E6BB6A\"",
         "doc": "A warning or a low state.",
         "modes": [
-          "light"
+          "light",
+          "high_contrast"
         ],
         "alpha": true,
         "forms": [
@@ -27195,7 +27197,8 @@
         "default": "\"#8CCB9A\"",
         "doc": "A success state.",
         "modes": [
-          "light"
+          "light",
+          "high_contrast"
         ],
         "alpha": true,
         "forms": [
@@ -27209,7 +27212,7 @@
       "outline": {
         "kind": "color",
         "ref": "$color.outline",
-        "default": "\"#55657A\"",
+        "default": "\"#5F7188\"",
         "doc": "Borders, dividers and tracks.",
         "modes": [
           "light",

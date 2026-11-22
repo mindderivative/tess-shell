@@ -2832,9 +2832,9 @@
     ],
     "role": "button",
     "stroke_color": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "stroke_width": 1
@@ -2909,9 +2909,9 @@
     ],
     "role": "button",
     "stroke_color": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "stroke_width": 1
@@ -2942,9 +2942,9 @@
     "grid_row": 1,
     "height": "100%",
     "stroke_color": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "stroke_width": 2,
@@ -3100,9 +3100,9 @@
     "corner_radius": 999,
     "disabled": false,
     "fill": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "grid_column": 1,
@@ -3181,9 +3181,9 @@
     "corner_radius": 999,
     "disabled": false,
     "fill": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "grid_column": 1,
@@ -3269,9 +3269,9 @@
     "left": 0,
     "position": "absolute",
     "stroke_color": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "stroke_width": 2,
@@ -3494,9 +3494,9 @@
      ],
      "role": "button",
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1
@@ -3563,9 +3563,9 @@
      "role": "button",
      "selected": null,
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1.0,
@@ -3746,9 +3746,9 @@
      ],
      "role": "button",
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1
@@ -3815,9 +3815,9 @@
      "role": "button",
      "selected": null,
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1.0,
@@ -3911,9 +3911,9 @@
        "left": 0,
        "position": "absolute",
        "stroke_color": [
-        85,
-        101,
-        122,
+        95,
+        113,
+        136,
         255
        ],
        "stroke_width": 2,
@@ -3961,9 +3961,9 @@
        "role": null,
        "selected": null,
        "stroke_color": [
-        85,
-        101,
-        122,
+        95,
+        113,
+        136,
         255
        ],
        "stroke_width": 2.0,
@@ -4331,9 +4331,9 @@
          "grid_row": 1,
          "height": "100%",
          "stroke_color": [
-          85,
-          101,
-          122,
+          95,
+          113,
+          136,
           255
          ],
          "stroke_width": 2,
@@ -4378,9 +4378,9 @@
          "role": null,
          "selected": null,
          "stroke_color": [
-          85,
-          101,
-          122,
+          95,
+          113,
+          136,
           255
          ],
          "stroke_width": 2.0,
@@ -4850,9 +4850,9 @@
        "corner_radius": 999,
        "disabled": false,
        "fill": [
-        85,
-        101,
-        122,
+        95,
+        113,
+        136,
         255
        ],
        "grid_column": 1,
@@ -4875,9 +4875,9 @@
        "disabled": false,
        "expanded": null,
        "fill": [
-        85,
-        101,
-        122,
+        95,
+        113,
+        136,
         255
        ],
        "focusable": false,
@@ -5328,9 +5328,9 @@
        "corner_radius": 999,
        "disabled": false,
        "fill": [
-        85,
-        101,
-        122,
+        95,
+        113,
+        136,
         255
        ],
        "grid_column": 1,
@@ -5353,9 +5353,9 @@
        "disabled": false,
        "expanded": null,
        "fill": [
-        85,
-        101,
-        122,
+        95,
+        113,
+        136,
         255
        ],
        "focusable": false,
@@ -5949,9 +5949,9 @@
     ],
     "role": "button",
     "stroke_color": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "stroke_width": 1
@@ -6072,9 +6072,9 @@
     "left": 0,
     "position": "absolute",
     "stroke_color": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "stroke_width": 2,
@@ -6213,9 +6213,9 @@
        ],
        "role": "button",
        "stroke_color": [
-        85,
-        101,
-        122,
+        95,
+        113,
+        136,
         255
        ],
        "stroke_width": 1
@@ -6282,9 +6282,9 @@
        "role": "button",
        "selected": null,
        "stroke_color": [
-        85,
-        101,
-        122,
+        95,
+        113,
+        136,
         255
        ],
        "stroke_width": 1.0,
@@ -6459,9 +6459,9 @@
            "left": 0,
            "position": "absolute",
            "stroke_color": [
-            85,
-            101,
-            122,
+            95,
+            113,
+            136,
             255
            ],
            "stroke_width": 2,
@@ -6509,9 +6509,9 @@
            "role": null,
            "selected": null,
            "stroke_color": [
-            85,
-            101,
-            122,
+            95,
+            113,
+            136,
             255
            ],
            "stroke_width": 2.0,
@@ -7452,9 +7452,9 @@
     "corner_radius": 999,
     "disabled": false,
     "fill": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "grid_column": 1,
@@ -7732,9 +7732,9 @@
        "corner_radius": 999,
        "disabled": false,
        "fill": [
-        85,
-        101,
-        122,
+        95,
+        113,
+        136,
         255
        ],
        "grid_column": 1,
@@ -7750,9 +7750,9 @@
        "disabled": false,
        "expanded": null,
        "fill": [
-        85,
-        101,
-        122,
+        95,
+        113,
+        136,
         255
        ],
        "focusable": false,
@@ -8895,9 +8895,9 @@
     ],
     "role": "button",
     "stroke_color": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "stroke_width": 1
@@ -8932,9 +8932,9 @@
     "padding_right": 8,
     "padding_top": 8,
     "stroke_color": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "stroke_width": 1,
@@ -8997,9 +8997,9 @@
     "padding_right": 8,
     "padding_top": 8,
     "stroke_color": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "stroke_width": 1,
@@ -9047,9 +9047,9 @@
     "padding_right": 8,
     "padding_top": 8,
     "stroke_color": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "stroke_width": 1,
@@ -9297,9 +9297,9 @@
      "padding_right": 8,
      "padding_top": 8,
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1,
@@ -9355,9 +9355,9 @@
      "role": null,
      "selected": null,
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1.0,
@@ -9553,9 +9553,9 @@
      ],
      "role": "button",
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1
@@ -9622,9 +9622,9 @@
      "role": "button",
      "selected": null,
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1.0,
@@ -9918,9 +9918,9 @@
      "padding_right": 8,
      "padding_top": 8,
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1,
@@ -9976,9 +9976,9 @@
      "role": null,
      "selected": null,
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1.0,
@@ -10263,9 +10263,9 @@
      "padding_right": 8,
      "padding_top": 8,
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1,
@@ -10321,9 +10321,9 @@
      "role": null,
      "selected": null,
      "stroke_color": [
-      85,
-      101,
-      122,
+      95,
+      113,
+      136,
       255
      ],
      "stroke_width": 1.0,
@@ -10599,9 +10599,9 @@
    "MenuItem@Main_Shell.Main.Top_Bar.MenuItem_1/Rule": {
     "disabled": false,
     "fill": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "flex_grow": 1,
@@ -10690,9 +10690,9 @@
    "MenuItem@Main_Shell.Main.Top_Bar.MenuItem_2/Rule": {
     "disabled": false,
     "fill": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "flex_grow": 1,
@@ -10781,9 +10781,9 @@
    "MenuItem@Main_Shell.Main.Top_Bar.MenuItem_3/Rule": {
     "disabled": false,
     "fill": [
-     85,
-     101,
-     122,
+     95,
+     113,
+     136,
      255
     ],
     "flex_grow": 1,
@@ -11626,9 +11626,9 @@
         "props": {
          "disabled": false,
          "fill": [
-          85,
-          101,
-          122,
+          95,
+          113,
+          136,
           255
          ],
          "flex_grow": 1,
@@ -11642,9 +11642,9 @@
          "disabled": false,
          "expanded": null,
          "fill": [
-          85,
-          101,
-          122,
+          95,
+          113,
+          136,
           255
          ],
          "flex_grow": 1.0,
@@ -12186,9 +12186,9 @@
         "props": {
          "disabled": false,
          "fill": [
-          85,
-          101,
-          122,
+          95,
+          113,
+          136,
           255
          ],
          "flex_grow": 1,
@@ -12202,9 +12202,9 @@
          "disabled": false,
          "expanded": null,
          "fill": [
-          85,
-          101,
-          122,
+          95,
+          113,
+          136,
           255
          ],
          "flex_grow": 1.0,
@@ -12745,9 +12745,9 @@
         "props": {
          "disabled": false,
          "fill": [
-          85,
-          101,
-          122,
+          95,
+          113,
+          136,
           255
          ],
          "flex_grow": 1,
@@ -12761,9 +12761,9 @@
          "disabled": false,
          "expanded": null,
          "fill": [
-          85,
-          101,
-          122,
+          95,
+          113,
+          136,
           255
          ],
          "flex_grow": 1.0,
