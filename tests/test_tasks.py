@@ -422,3 +422,33 @@ def test_a_param_that_is_not_one_of_the_words_is_refused_with_the_words(tmp_path
         assert any("monitor must be one of THIS, ALL" in p.message for p in w.problems), [
             p.message for p in w.problems
         ]
+
+
+def test_a_scrolling_title_does_not_take_clicks_outside_its_own_item(tmp_path: Path) -> None:
+    """The owner's check on KWin: a click on the workspace to the left of a task item hit the task
+    item. A title wider than its box scrolls to the left inside the item; what has scrolled past
+    the item's edge is clipped, so it must not take the pointer either."""
+    long = "A very long window title that is much wider than its button " * 3
+    row = (
+        "FlexBox { Flex: HORIZONTAL, Align_Items: CENTER, Spacing: 12, Children { "
+        "Workspaces { } Tasks { show_title: true, max_width: 180 } Spacer { } } }"
+    )
+    with tasks_desk(tmp_path) as t, tasks_shell(t, row) as w:
+        t.fake.script.windows = [a(1, title="Alpha"), a(2, title=long)]
+        start(t, w)
+        assert t.settle(w, lambda: len(buttons(w)) == 2)
+        first, second = buttons(w)
+        w.window.advance(6000)  # the second title has scrolled as far as it goes
+        title = next(
+            n
+            for k, n in w.view.nodes.items()
+            if "/Task_Item_0002/Marquee_Text@" in k and k.endswith("/Root")
+        )
+        (text,) = title.children()
+        assert float(text.get("translate_x")) < -50  # it really is scrolled left
+        box = second.get("layout_x")
+        x_first = first.get("layout_x") + 20  # inside the first item, left of the second one
+        assert x_first < box
+        w.window.simulate("click", x=x_first, y=first.get("layout_y") + 10)
+        assert wait_for(lambda: bool(one_shots(t)))
+        assert one_shots(t) == [("activate", uuid(1))]
