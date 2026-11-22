@@ -36,11 +36,6 @@ NO_BEFORE_CHANGE = (
 
 #: Behaviour run (events ignored): case -> (status, why). Not listed: pass.
 GAPS: dict[str, tuple[str, str]] = {
-    "a11y-tree-open": (
-        FAIL,
-        "the open tip is not hidden from assistive technology (the standard: the trigger's "
-        "description carries the text and the tip is hidden); the shell's tooltip popup is exposed",
-    ),
     "blur-closes": (FAIL, "keyboard focus leaving the block does not close its tooltip"),
     "escape-closes-and-stays-closed": (
         FAIL,

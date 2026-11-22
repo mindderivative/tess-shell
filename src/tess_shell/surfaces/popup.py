@@ -1163,6 +1163,17 @@ class Popups:
         if op is not None:
             op.block = block
             self.tooltip_log.append((True, self._open_why))
+            # the text is the trigger's accessible description, so a screen reader never needs the
+            # tip itself (Tooltip > Accessibility, AC-TIP-19): hide it when the trigger carries the
+            # text. A trigger with no description keeps its tip exposed: it is the only place the
+            # text is
+            wire = surface.view.wires.get(block) if surface.view is not None else None
+            tre = wire.tre if wire is not None else None
+            try:
+                if tre is not None and str(tre.get("description") or ""):
+                    op.window.root.set(a11y_hidden=True)
+            except ValueError, RuntimeError:
+                logger.debug("tooltip: the tip could not be hidden from AT", exc_info=True)
 
     def _arm_exit(self, op: OpenPopup) -> None:
         if not op.popup.close_on_exit or op.closing:

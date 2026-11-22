@@ -959,3 +959,20 @@ def test_the_tooltip_log_says_what_a_tooltip_did_and_why() -> None:
         (True, "hover"),
         (False, "escape"),
     ]
+
+
+def test_a_tip_is_hidden_from_assistive_technology_when_the_trigger_carries_its_text() -> None:
+    """AC-TIP-19: the text is the trigger's description, so the tip layer is a11y_hidden; a trigger
+    with no description keeps its tip exposed (the only place the text is)."""
+    with_text = 'Module { FlexBox { Name: Root, Width: 60, Height: 20, Tooltip: "Save the file" } }'
+    (r,) = list(rig("", btn=with_text))
+    node = r.root_of()
+    assert node.get("description") == "Save the file"
+    r.bar.window.simulate("pointer_enter", node=node)
+    r.advance(501)
+    assert r.popups.current is not None and r.popups.current.window.root.get("a11y_hidden") is True
+    (r2,) = list(rig("", btn=BTN_TIP))  # an inline tooltip: no description on the trigger
+    r2.bar.window.simulate("pointer_enter", r2.root_of())
+    r2.advance(501)
+    assert r2.popups.current is not None
+    assert r2.popups.current.window.root.get("a11y_hidden") is False
