@@ -63,7 +63,8 @@ Module {
                     Name: Title
                     Text: <| params.title |>
                     tooltip: false
-                    Width: <| params.max_width - (params.icon_size if params.icon_size > 0 else density.item_icon_size) - 18 |>
+                    Width: AUTO
+                    Max_Width: <| params.max_width - (params.icon_size if params.icon_size > 0 else density.item_icon_size) - 18 |>
                 }
             }
             FlexBox {

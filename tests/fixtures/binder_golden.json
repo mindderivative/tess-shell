@@ -7386,6 +7386,7 @@
     ],
     "flex_shrink": 0,
     "font_size": 14,
+    "hit_testable": false,
     "overflow": "clip",
     "text": "a very long text that does not fit in a hundred pixels",
     "wrap": "none"
@@ -7408,6 +7409,7 @@
     ],
     "flex_shrink": 0,
     "font_size": 14,
+    "hit_testable": false,
     "overflow": "clip",
     "text": "fits",
     "wrap": "none"
@@ -8478,6 +8480,7 @@
        ],
        "flex_shrink": 0,
        "font_size": 14,
+       "hit_testable": false,
        "overflow": "clip",
        "text": "a very long text that does not fit in a hundred pixels",
        "wrap": "none"
@@ -8497,7 +8500,7 @@
        "flex_shrink": 0.0,
        "focusable": false,
        "font_size": 14.0,
-       "hit_testable": null,
+       "hit_testable": false,
        "label": null,
        "overflow": "clip",
        "pressed": null,
@@ -8642,6 +8645,7 @@
        ],
        "flex_shrink": 0,
        "font_size": 14,
+       "hit_testable": false,
        "overflow": "clip",
        "text": "fits",
        "wrap": "none"
@@ -8661,7 +8665,7 @@
        "flex_shrink": 0.0,
        "focusable": false,
        "font_size": 14.0,
-       "hit_testable": null,
+       "hit_testable": false,
        "label": null,
        "overflow": "clip",
        "pressed": null,
