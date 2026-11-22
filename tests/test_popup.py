@@ -976,3 +976,23 @@ def test_a_tip_is_hidden_from_assistive_technology_when_the_trigger_carries_its_
     r2.advance(501)
     assert r2.popups.current is not None
     assert r2.popups.current.window.root.get("a11y_hidden") is False
+
+
+FOCUSABLE_TIP = (
+    "Module { FlexBox { Name: Root, Role: BUTTON, Label: Save, Focusable: true, Width: 60, "
+    'Height: 20, Tooltip: "Save the file" } }'
+)
+
+
+def test_a_tooltip_shown_by_keyboard_focus_is_removed_when_focus_leaves() -> None:
+    """Tooltip > Behavior: blur closes at once, with no grace period."""
+    (r,) = list(rig("", btn=FOCUSABLE_TIP))
+    w = r.bar.window
+    w.simulate("key_down", key="shift")  # the keyboard was the last input: focus shows the tip
+    r.root_of().focus()
+    r.advance(1)
+    op = r.popups.current
+    assert op is not None and op.block is not None
+    w.simulate("unfocus", node=r.root_of())
+    assert r.popups.current is None and op.closing
+    assert "closing (focus left the block)" in r.log()

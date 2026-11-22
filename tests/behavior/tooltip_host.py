@@ -134,7 +134,7 @@ class TooltipHost:
                     self._node.focus()
                 elif part is None and self.focus == "trigger":
                     self._armed_by = "keyboard"
-                    w.simulate("key_down", key="tab")
+                    w.simulate("unfocus", node=self._node)
                 else:
                     raise NotRun("a focus by pointer without a press cannot be driven")
             case KeyInput(_, key):

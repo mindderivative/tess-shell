@@ -36,7 +36,6 @@ NO_BEFORE_CHANGE = (
 
 #: Behaviour run (events ignored): case -> (status, why). Not listed: pass.
 GAPS: dict[str, tuple[str, str]] = {
-    "blur-closes": (FAIL, "keyboard focus leaving the block does not close its tooltip"),
     "escape-closes-and-stays-closed": (
         FAIL,
         "`consumed` is not observable by the adapter (it reports false): adapter limit",
