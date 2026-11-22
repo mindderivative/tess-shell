@@ -55,7 +55,7 @@ Module {
                     }
                     Children {
                         FlexBox {
-                            Padding: [12, 8, 12, 8]
+                            Padding: <| [space.step_4, space.step_3, space.step_4, space.step_3] |>
                             Children {
                                 Text {
                                     Text: <| tooltip |>
@@ -74,7 +74,7 @@ Module {
                         Visible: <| not low and not critical |>
                         Flex: HORIZONTAL
                         Align_Items: CENTER
-                        Spacing: 4
+                        Spacing: <| space.step_2 |>
                         Children {
                             SVG {
                                 Name: Glyph
@@ -97,7 +97,7 @@ Module {
                         Visible: <| low and not critical |>
                         Flex: HORIZONTAL
                         Align_Items: CENTER
-                        Spacing: 4
+                        Spacing: <| space.step_2 |>
                         Children {
                             SVG {
                                 Name: Glyph_Low
@@ -122,7 +122,7 @@ Module {
                         Visible: <| critical |>
                         Flex: HORIZONTAL
                         Align_Items: CENTER
-                        Spacing: 4
+                        Spacing: <| space.step_2 |>
                         Children {
                             SVG {
                                 Name: Glyph_Critical

@@ -42,7 +42,7 @@ Module {
             }
             Children {
                 FlexBox {
-                    Padding: [12, 8, 12, 8]
+                    Padding: <| [space.step_4, space.step_3, space.step_4, space.step_3] |>
                     Children {
                         Text {
                             Text: <| params.label |>

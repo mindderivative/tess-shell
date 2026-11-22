@@ -23,7 +23,7 @@ Module {
         Checked: <| params.Checked |>
         Label: <| params.Label if params.Label else params.Text |>
         Align_Items: CENTER
-        Spacing: 8
+        Spacing: <| space.step_3 |>
         Height: <| density.control_height |>
         Children {
             Box {
