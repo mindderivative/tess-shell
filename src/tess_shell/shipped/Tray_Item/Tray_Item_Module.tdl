@@ -63,6 +63,19 @@ Module {
         }
         Children {
             Icon { Icon: <| params.icon |>, Size: <| params.size if params.size > 0 else density.item_icon_size |> }
+            # attention is not colour alone: a 6 dp dot in the corner (Tray Item > States)
+            FlexBox {
+                Name: Attention
+                Visible: <| params.attention |>
+                Position: ABSOLUTE
+                Top: 2
+                Right: 2
+                Width: 6
+                Height: 6
+                Corner_Radius: 3
+                Background: $color.warning
+                A11y_Hidden: true
+            }
         }
     }
 }
