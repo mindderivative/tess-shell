@@ -801,6 +801,8 @@ A list of entries of which one can be chosen.
 | `Selected` | string | `""` | The Key of the chosen entry, set from outside; empty is none. |
 | `Selection` | string | `"SINGLE"` | SINGLE lets one entry be chosen; NONE does not. |
 | `Label` | string | `""` | The name assistive technology reads aloud for the list. |
+| `Empty` | string | `""` | The text the list shows when it has no entries and Count is 0. |
+| `Count` | number | `-1` | How many entries the caller puts in the list; -1, the default, is unknown, so no empty text shows. |
 
 Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`.
 

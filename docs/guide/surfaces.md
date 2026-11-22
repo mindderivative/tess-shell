@@ -260,8 +260,9 @@ A strip along a screen edge that reserves its space.
 | `Shortcut_Mode` | true or false | `false` |  | Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it. |
 | `Visible` | true or false | none |  | Starts the Bar shown (true) or hidden (false). A hidden Bar reserves no space; Show, Hide and Toggle (and a Show_, Hide_ or Toggle_ shortcut) change it. |
 | `Density` | `DEFAULT` `COMPACT` `DENSE` | none |  | The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies. |
+| `Padding` | sides | none |  | Space between the Bar's children and its sides: a number or four sides (left, top, right, bottom). It is inside the Bar's Width and Height. |
 
-Not built yet (the loader says so if you write them): `Exclusive_Zone`, `Input_Region`, `Auto_Hide`, `Auto_Hide_Delay`, `Attach_To`, `Meld`, `Animation`, `Text_Rotation`, `Padding`, `Class`.
+Not built yet (the loader says so if you write them): `Exclusive_Zone`, `Input_Region`, `Auto_Hide`, `Auto_Hide_Delay`, `Attach_To`, `Meld`, `Animation`, `Text_Rotation`, `Class`.
 
 A `Style { }` block of a Bar takes: `Background`, `Fill`, `Opacity`, `Elevation`, `Shadows`, `Shadow_Bleed`.
 
@@ -388,11 +389,12 @@ A surface placed by anchors or against a target; a launcher, an OSD, a dock. Wid
 | `Shortcut` | key | none |  | The global key that toggles the Panel or Frame, written as Meta+Space; the same as Toggle_&lt;Name> in Shortcuts. The Shortcuts entry wins when both are written. |
 | `Tab_Index` | whole number | none |  | Only 0 is accepted, and it changes nothing: the order Tab (and Shift+Tab) follows is the order of the file. A number above 0 is an error; tesserae-shell migrate rewrites a file that has one (a surface's goes into Focus_Order on the Shell). |
 | `Shortcut_Mode` | true or false | `false` |  | Whether this surface is the one in shortcut mode: the shell's keyboard mode, entered with Enter_Shortcut_Mode, in which the shortcut keys act on the surfaces (Next_Focus, Previous_Focus, Set_Shortcut_Mode, Exit_Shortcut_Mode). At most one surface is true at a time: setting one true sets every other false, and writing it false on the one that is true leaves the mode. Written true on a surface it makes the shell start in the mode on that surface; two surfaces written true are a warning and the first keeps it. |
+| `Padding` | sides | none |  | Space between the children and the Panel's sides: a number or four sides (left, top, right, bottom). Not for a Panel with Meld: true. It is inside the Panel's Width and Height, or added to a content-sized one. |
 | `Attach_To` | name of a surface | none |  | The Name of the Bar, Panel or Frame this Panel is placed against. |
 | `Animation` | block | none |  | How the Panel comes and goes: an Animation block with Type and Duration. |
 | `Peek` | block | none |  | Makes a melded Panel rest as a tab of Size pixels that comes out when asked. |
 
-Not built yet (the loader says so if you write them): `Open_With_Target`, `Exclusive_Zone`, `Margin`, `Padding`, `Class`.
+Not built yet (the loader says so if you write them): `Open_With_Target`, `Exclusive_Zone`, `Margin`, `Class`.
 
 A `Style { }` block of a Panel takes: `Background`, `Fill`, `Opacity`, `Elevation`, `Shadows`, `Shadow_Bleed`, `Corner_Radius`, `Border_Width`, `Border_Color`.
 

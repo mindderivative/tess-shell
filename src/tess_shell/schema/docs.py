@@ -314,7 +314,8 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     "it), ON_DEMAND on a click.",
     ("Bar", "Input_Region"): "Which part of the Bar takes the pointer. Not built.",
     ("Bar", "Meld"): "Draws the Bar inside its Frame. Not built.",
-    ("Bar", "Padding"): "Space between the Bar's children and its sides. Not built.",
+    ("Bar", "Padding"): "Space between the Bar's children and its sides: a number or four sides "
+    "(left, top, right, bottom). It is inside the Bar's Width and Height.",
     ("Bar", "Class"): "A style class for the Bar. Not built.",
     ("Bar", "Attach_To"): "Attaches the Bar to a Frame. Not built.",
     ("Bar", "Animation"): "How the Bar comes and goes. Not built.",
@@ -347,7 +348,9 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     "START, CENTER or END (with Attach_To).",
     ("Panel", "Attach"): "The edge of the target the Panel meets (needs Attach_To).",
     ("Panel", "Margin"): "Space around the Panel. Not built.",
-    ("Panel", "Padding"): "Space between the children and the Panel's sides. Not built.",
+    ("Panel", "Padding"): "Space between the children and the Panel's sides: a number or four "
+    "sides (left, top, right, bottom). Not for a Panel with Meld: true. It is inside the Panel's "
+    "Width and Height, or added to a content-sized one.",
     ("Panel", "Class"): "A style class for the Panel. Not built.",
     ("Panel", "Exclusive_Zone"): "Space the Panel reserves. Not built.",
     ("Panel", "Peek"): "Makes a melded Panel rest as a tab of Size pixels that comes out when "
@@ -1202,6 +1205,9 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("List", "Selected"): "The Key of the chosen entry, set from outside; empty is none.",
     ("List", "Selection"): "SINGLE lets one entry be chosen; NONE does not.",
     ("List", "Label"): "The name assistive technology reads aloud for the list.",
+    ("List", "Empty"): "The text the list shows when it has no entries and Count is 0.",
+    ("List", "Count"): "How many entries the caller puts in the list; -1, the default, is "
+    "unknown, so no empty text shows.",
     ("Marquee_Text", "Text"): "The words; they scroll when wider than the box.",
     ("Marquee_Text", "Speed"): "How fast the text scrolls, in pixels a second.",
     ("Marquee_Text", "Pause"): "How long the text waits at each end, in milliseconds.",
