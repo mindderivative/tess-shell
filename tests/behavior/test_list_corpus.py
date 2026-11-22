@@ -44,8 +44,8 @@ KNOWN_GAPS = (
     "rows take no keyboard focus (the List is one Tab stop and the engine keeps focus on it), so "
     "the standard's `focus: option#X` is never seen; the shell reports no selection_change "
     "(On_Changed says the chosen keys), so those events are never seen; the role is list/listitem, "
-    "not listbox/option; the shell's SINGLE keeps no anchor; the announcement is read from a real AT-SPI bus "
-    "(tests/test_multiselect_atspi.py), not headless"
+    "not listbox/option; the shell's SINGLE keeps no anchor; the announcement is read from a real "
+    "AT-SPI bus (tests/test_multiselect_atspi.py), not headless"
 )
 
 #: Diagnostic (events, focus and tree ignored): what is not a pass, with its reason.
