@@ -135,6 +135,14 @@ BOX_STYLE: dict[str, str] = {
     "Opacity": "number",
     "Elevation": "elevation",
     "Shadows": "shadows",
+    # the state layers (State Layers, ADR-0009): a colour role; its opacity is the theme's
+    # ``state.*`` token (an explicit alpha on the colour is the escape hatch)
+    "Hover_Layer": "color",
+    "Pressed_Layer": "color",
+    "Focus_Layer": "color",
+    "Outline_Width": "number",
+    "Outline_Offset": "number",
+    "Outline_Color": "color",
 }
 
 FLEX: dict[str, str] = {
@@ -169,6 +177,9 @@ SHAPE: dict[str, str] = {
     "Opacity": "number",
     "Elevation": "elevation",
     "Shadows": "shadows",
+    "Outline_Width": "number",
+    "Outline_Offset": "number",
+    "Outline_Color": "color",
 }
 
 # the type keys of a Marquee's text (it is one line, cut or scrolled, and has no padding of its own)
@@ -256,6 +267,9 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
             "Opacity": "number",
             "Elevation": "elevation",
             "Shadows": "shadows",
+            "Outline_Width": "number",
+            "Outline_Offset": "number",
+            "Outline_Color": "color",
             "Scrollbar_Width": "number",
             "Scrollbar_Hit_Width": "number",
             "Scrollbar_Margin": "number",

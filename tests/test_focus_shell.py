@@ -22,7 +22,7 @@ from tess_shell.schema.look import read_theme
 from tess_shell.schema.shell import read_shell
 from tess_shell.surfaces.manager import Surface, SurfaceManager
 from tests.shell_samples import HEADER, SVG
-from tests.test_focus import ring_of
+from tests.test_focus import ring_of, ring_state
 from tests.test_look import THEME
 from tests.test_panel import StubApp
 from tests.widgets_live import Widgets, running
@@ -78,7 +78,7 @@ def ring_on(view: Any, node: Any, look: Any) -> bool:
     """Whether ``node`` or a block above it (a text field's box) shows the focus ring."""
     cur = node
     while cur is not None:
-        if list(cur.get("shadows")) == ring_of(look):
+        if ring_state(cur) == ring_of(look):
             return True
         cur = cur.parent()
     return False
@@ -514,7 +514,7 @@ def test_the_buttons_in_a_frame_strip_are_tab_stops_of_its_painter_when_the_fram
 
         def walk(node: Any) -> None:
             if node.get("focused"):
-                assert list(node.get("shadows")), "keyboard focus without a ring"
+                assert node.get("outline_width"), "keyboard focus without a ring"
                 found.append(node.get("layout_y"))
             for child in node.children():
                 walk(child)
@@ -579,7 +579,7 @@ def test_a_menu_opened_from_a_focused_button_takes_focus_with_a_ring_and_gives_i
         op = w.manager.popups.current
         assert op is not None
         menu = next(n for n in op.view.nodes.values() if n.get("role") == "menu")
-        assert menu.get("focused") and list(menu.get("shadows")) == ring_of(w.manager.look)
+        assert menu.get("focused") and ring_state(menu) == ring_of(w.manager.look)
         assert [n.get("role") for n in op.view.tab_stops()] == ["menu"]  # the Menu is one stop
         w.manager.popups.close(op, "escape")
         assert focused(w.view) == ["Opener"] and ring_on(

@@ -959,7 +959,7 @@ class Frames:
         window.on("active", lambda e: self._m._surface_active(plan.frame.name, bool(e.active)))
         window.root.on("pointer_down", pointer_down)
         window.root.on("key_down", key_down)  # a key bubbles up from the focused node
-        self._m._app.add_window(window)
+        self._m.add_window(window)
         logger.info(
             f"Frame {where}: painter {plan.size[0]}x{plan.size[1]}, zones "
             + ",".join(str(z) for z in plan.ring.totals)
@@ -988,7 +988,7 @@ class Frames:
                 st.zones.pop(side, None)
 
         window.on("closed", closed)
-        self._m._app.add_window(window)
+        self._m.add_window(window)
         logger.info(f"Frame {where}: {side} reserver, zone {zone}")
 
     def _set_keyboard(self, st: FrameState) -> None:

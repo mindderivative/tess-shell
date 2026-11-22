@@ -108,13 +108,29 @@ class Built:
         return [self.tab(shift) for _ in range(count)]
 
     def shadows(self, name: str) -> list[Any]:
-        return list(self.view.nodes[name].get("shadows"))
+        """The ring ``name`` shows: its outline as ``(colour, width, offset)``, or none."""
+        return ring_state(self.view.nodes[name])
+
+
+def ring_state(node: Any) -> list[Any]:
+    """The focus ring a tre node draws now: its outline, or an empty list."""
+    width = node.get("outline_width")
+    if not width:
+        return []
+    return [(tuple(node.get("outline_color")), width, node.get("outline_offset"))]
 
 
 def ring_of(scheme: Any) -> list[Any]:
-    """The ``shadows`` tre holds for the ring of ``scheme``'s look."""
-    (s,) = focus_ring(scheme).items
-    return [((s.color.r, s.color.g, s.color.b, s.color.a), s.x, s.y, s.blur, s.spread)]
+    """The outline tre holds for the ring of ``scheme``'s look."""
+    ring = focus_ring(scheme)
+    c = ring["Outline_Color"]
+    return [
+        (
+            (c.r, c.g, c.b, c.a),
+            float(ring["Outline_Width"].value),
+            float(ring["Outline_Offset"].value),
+        )
+    ]
 
 
 # -- what takes focus --------------------------------------------------------------------------
@@ -258,8 +274,8 @@ def test_the_ring_does_not_shift_the_layout() -> None:
         for n in "AB"
     ]
     assert before == after
-    (shadow,) = b.shadows("A")
-    assert shadow[1:4] == (0.0, 0.0, 0.0) and shadow[4] > 0  # no offset, no blur: spread only
+    (ring,) = b.shadows("A")
+    assert ring[1] > 0 and ring[2] > 0  # a width and a gap: an outline, not a shadow
 
 
 def test_the_ring_takes_its_colour_and_size_from_the_themes_tokens_and_follows_light_and_dark() -> (
@@ -268,7 +284,7 @@ def test_the_ring_takes_its_colour_and_size_from_the_themes_tokens_and_follows_l
     dark, light = ring_of(DARK), ring_of(LIGHT)
     assert dark != light  # color.primary differs between the two variants of the Default theme
     assert dark[0][0] == (0x5B, 0x97, 0xC9, 255) and light[0][0] == (0x2F, 0x6B, 0x9A, 255)
-    assert dark[0][4] == 2.0  # space.step_1
+    assert dark[0][1:] == (3.0, 2.0)  # space.focus_ring_width and space.focus_ring_offset
     b = Built(row(block("A")), LIGHT)
     b.tab()
     assert b.shadows("A") == light
@@ -280,31 +296,37 @@ def test_without_a_look_the_ring_is_the_default_themes() -> None:
     window = Window(width=400, height=100)
     view = build(nodes, window)
     window.simulate("key_down", key="tab")
-    assert list(view.nodes["A"].get("shadows")) == ring_of(DARK)
+    assert ring_state(view.nodes["A"]) == ring_of(DARK)
 
 
-def test_a_blocks_own_shadows_stay_under_the_ring_and_come_back_with_it_gone() -> None:
+def test_a_blocks_own_shadows_are_untouched_by_the_ring() -> None:
     own = m.Shadows((m.Shadow(m.Color(0, 0, 0, 100), 0, 2, 6, 0),))
     b = Built(row(block("A", style={"Shadows": own}), block("B")))
-    base = b.shadows("A")
+    base = list(b.view.nodes["A"].get("shadows"))
     assert len(base) == 1
     b.tab()
-    shown = b.shadows("A")
-    assert shown[:1] == ring_of(DARK) and shown[1:] == base
+    assert list(b.view.nodes["A"].get("shadows")) == base and b.shadows("A") == ring_of(DARK)
     b.tab()
-    assert b.shadows("A") == base
+    assert list(b.view.nodes["A"].get("shadows")) == base and b.shadows("A") == []
 
 
-def test_a_focused_rule_adds_to_the_ring_and_its_own_shadows_replace_it() -> None:
+def test_a_block_that_takes_no_shadows_shows_the_ring_too() -> None:
+    plain = dataclasses.replace(block("A"), kind="Rectangle")
+    b = Built(row(plain))
+    b.tab()
+    assert b.shadows("A") == ring_of(DARK)
+
+
+def test_a_focused_rule_adds_to_the_ring_and_its_own_outline_replaces_it() -> None:
     red = m.Color(255, 0, 0, 255)
     plain = dataclasses.replace(block("A"), states={"focused": {"Background": red}})
-    mine = m.Shadows((m.Shadow(m.Color(1, 2, 3, 255), 0, 0, 0, 5),))
-    custom = dataclasses.replace(block("B"), states={"focused": {"Shadows": mine}})
+    mine = {"Outline_Color": m.Color(1, 2, 3, 255), "Outline_Width": m.Number(5)}
+    custom = dataclasses.replace(block("B"), states={"focused": mine})
     b = Built(row(plain, custom))
     b.tab()
     assert b.shadows("A") == ring_of(DARK) and b.view.nodes["A"].get("fill") == (255, 0, 0, 255)
     b.tab()
-    assert b.shadows("B") == [((1, 2, 3, 255), 0.0, 0.0, 0.0, 5.0)]
+    assert b.shadows("B")[0][:2] == ((1, 2, 3, 255), 5.0)
     assert b.view.nodes["A"].get("fill") != (255, 0, 0, 255)  # A gave its look back
 
 
@@ -313,7 +335,7 @@ def test_focused_comes_after_pressed_and_hovered_and_a_disabled_block_shows_no_r
     b.tab()
     node = b.view.nodes["A"]
     b.window.simulate("pointer_enter", node=node)
-    assert list(node.get("shadows")) == ring_of(DARK)  # hovered and focused: the ring stays
+    assert ring_state(node) == ring_of(DARK)  # hovered and focused: the ring stays
     b.window.simulate("pointer_leave")
     # a block that is disabled while it has focus shows no ring
     dis, errors = resolve([row(block("A", enabled=False), block("Off", enabled=False))], DARK)
@@ -327,7 +349,7 @@ def test_a_textfields_box_draws_the_ring_when_the_keyboard_focuses_its_input() -
     (line,) = compose(field).children
     box, errors = resolve([compose(field)], DARK)
     assert errors == []
-    assert "focused" in box[0].states and "Shadows" in box[0].states["focused"]
+    assert "focused" in box[0].states and "Outline_Width" in box[0].states["focused"]
     assert isinstance(line, m.Node)
     # the text input shows no ring of its own, its box does
     inner = [c for c in line.children if isinstance(c, m.Node) and c.kind == m.FIELD_INPUT][0]
@@ -348,7 +370,7 @@ def test_a_textfields_box_draws_the_ring_when_the_keyboard_focuses_its_input() -
     window.advance(16)
     window.simulate("key_down", key="tab")
     assert view.nodes["In"].get("focused")
-    assert list(view.nodes["F"].get("shadows")) == ring_of(DARK)
+    assert ring_state(view.nodes["F"]) == ring_of(DARK)
 
 
 # -- the keys ----------------------------------------------------------------------------------
@@ -554,7 +576,7 @@ def focused_root(r: Rig) -> list[str]:
 
 
 def ring(r: Rig, use: str) -> bool:
-    return bool(list(r.root_of(use).get("shadows")))
+    return bool(ring_state(r.root_of(use)))
 
 
 def test_a_popup_opened_from_a_block_with_keyboard_focus_takes_focus_and_gives_it_back() -> None:
@@ -567,7 +589,7 @@ def test_a_popup_opened_from_a_block_with_keyboard_focus_takes_focus_and_gives_i
     assert op is not None
     # opened from the keyboard: the first Tab stop of the Popup has the focus, with its ring
     assert op.view.nodes["Item"].get("focused")
-    assert list(op.view.nodes["Item"].get("shadows")) == ring_of(r.manager.look)
+    assert ring_state(op.view.nodes["Item"]) == ring_of(r.manager.look)
     win.simulate("key_down", key="tab")  # focus goes elsewhere while the Popup is open
     assert focused_root(r) == [two]
     r.popups.close(op, "escape")

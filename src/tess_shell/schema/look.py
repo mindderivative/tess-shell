@@ -23,6 +23,7 @@ from tess_shell.schema.model import MODES, Rule, StylesheetDef, ThemeDef, Token
 from tess_shell.schema.shell import _Ctx, _scalar_block_keys
 from tess_shell.schema.values import ValueProblem, coerce, named_shadows
 
+GROUPS = ("Color", "Type", "Shape", "Space", "Density", "State", "Elevation", "Motion")
 GROUPS = ("Color", "Type", "Shape", "Space", "Density", "Scrollbar", "Elevation", "Motion")
 _MODE_BLOCKS = {"Light": "light", "Dark": "dark", "High_Contrast": "high_contrast"}
 _MODE_BLOCKS["Reduced_Motion"] = "reduced_motion"
@@ -55,6 +56,9 @@ def token_kind(path: tuple[str, ...]) -> str | None:
         return "color"
     if path == ("density", "field_padding"):
         return "sides"
+    if group == "state":
+        return "unit"  # an opacity, 0 to 1
+    if group in ("shape", "space", "density"):
     if group in ("shape", "space", "density", "scrollbar"):
         return "number"
     if group == "type":

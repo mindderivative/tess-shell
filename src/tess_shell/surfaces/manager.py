@@ -19,7 +19,7 @@ from loguru import logger
 
 from tess_shell.binder import convert
 from tess_shell.binder.build import View, build
-from tess_shell.binder.model import BindError, BindFailed, Color, Handler, Value
+from tess_shell.binder.model import BindError, BindFailed, Color, Handler, TokenRef, Value
 from tess_shell.binder.shadow import DEFAULT_MAX, style_bleed, style_shadows
 from tess_shell.model import args
 from tess_shell.model.expand import Expanded, expand
@@ -569,6 +569,7 @@ class SurfaceManager:
         self._depth = 0  # how deep Panel event handlers have called one another
         self.sink = sink
         self._look = look
+        self._baselined: list[Any] = []  # windows given the engine baseline (``add_window``)
         self._modules = modules
         self._uid_of = uid_of
         self._store = store
@@ -1081,7 +1082,7 @@ class SurfaceManager:
         )  # KEEP: an empty surface
         surface = self._make_window(planned, live, keep_hidden)
         assert surface.window is not None
-        self._app.add_window(surface.window)
+        self.add_window(surface.window)
         logger.info(
             f"{kind} {where}: anchor {','.join(geometry.anchor) or 'none'} size {geometry.size} "
             f"zone {geometry.exclusive_zone}" + (" (hidden, surface kept)" if keep_hidden else "")
@@ -1428,7 +1429,7 @@ class SurfaceManager:
         s.live, s.fill, s.shadows, s.extra = fresh.live, fresh.fill, fresh.shadows, fresh.extra
         s.expanded, s.geometry, s.hidden = s.planned.expanded, s.planned.geometry, False
         self.changed(s.name, True)
-        self._app.add_window(s.window)
+        self.add_window(s.window)
         self._panel_events(s)
         self._watch_frames(s)
         self._arm_hide_after(s, hide_after)
@@ -1499,7 +1500,7 @@ class SurfaceManager:
 
         catcher.root.on("pointer_down", pressed)
         s.catcher = catcher
-        self._app.add_window(catcher)
+        self.add_window(catcher)
 
     def _disarm_click_away(self, s: Surface) -> None:
         catcher, s.catcher = s.catcher, None
@@ -2160,11 +2161,61 @@ class SurfaceManager:
 
     # -- the desktop's look changed ------------------------------------------------------------
 
+    # -- the engine's baseline colours (tre 0.6.11) ----------------------------------------------
+    #
+    # What tre draws with no colour given (text, a text input's caret and selection, a scroll
+    # thumb) comes from its own scheme baseline. The shell gives every window its look's scheme and
+    # the baseline roles its theme names, so an unstyled text or text field follows the theme's
+    # ``on_surface`` and ``primary`` and the desktop's light or dark, with no stylesheet.
+
+    BASELINE = {  # the shell's colour token -> tre's baseline role
+        "color.surface": "surface",
+        "color.on_surface": "on_surface",
+        "color.on_surface_muted": "on_surface_variant",
+        "color.primary": "primary",
+        "color.on_primary": "on_primary",
+        "color.error": "error",
+        "color.outline": "outline",
+    }
+
+    def add_window(self, window: Any) -> None:
+        """Hand a new window to the app, with the baseline of the current look."""
+        self._app.add_window(window)
+        self._baselined.append(window)
+        self._baseline(window)
+
+    def _baseline(self, window: Any) -> None:
+        look = self._look
+        if look is None:
+            return
+        colours: dict[str, tuple[int, int, int, int]] = {}
+        for token, role in self.BASELINE.items():
+            value = resolve_style({"c": TokenRef(token, "color")}, look).get("c")
+            if isinstance(value, Color):
+                colours[role] = convert.color(value, ("c",))["c"]
+        scheme = look.appearance.scheme
+        try:
+            window.set(scheme="light" if scheme == "light" else "dark", scheme_colors=colours)
+        except ValueError, RuntimeError:  # the window is closed already
+            logger.debug("baseline: a window could not be set", exc_info=True)
+
+    def _rebaseline(self) -> None:
+        live = []
+        for window in self._baselined:
+            try:
+                window.get("scheme")
+            except ValueError, RuntimeError:
+                continue
+            live.append(window)
+            self._baseline(window)
+        self._baselined = live
+
     def set_look(self, look: Look) -> None:
         """Loop thread: a new light or dark setting, accent or motion flag. Every token is read
         again, so each surface is rebuilt by the keyed diff, which changes only what differs, and
         a shadow that grew or shrank resizes its surface."""
         self._look = look
+        self._rebaseline()
         self.frames.set_look(look)
         a = look.appearance
         logger.info(
