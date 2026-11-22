@@ -1957,15 +1957,18 @@ def _tooltip_block(ctx: _Ctx, block: Block, kind: str | None = None) -> m.Toolti
     if popup is None:
         return None
     return m.TooltipRef(
-        popup=popup, description=_tip_description(popup.children), origin=ctx.origin(block.origin)
+        popup=popup,
+        description=_tip_description(popup.children, ctx.in_module),
+        origin=ctx.origin(block.origin),
     )
 
 
-def _tip_description(nodes: tuple[object, ...]) -> m.Value | None:
+def _tip_description(nodes: tuple[object, ...], in_module: bool) -> m.Value | None:
     """The text of an inline tooltip, as the trigger's accessible description (Accessibility, rule
     11: an open tip is hidden from assistive technology, so the text must be on the trigger). The
-    one ``Text`` block of the tip gives its text (a slot stays a slot); several static ones are
-    joined by a space. Content with no text, or text that is not plain, gives none."""
+    one ``Text`` block of the tip gives its text (in a module a slot stays a slot; in a shell file
+    a slot is not built outside a module, so only plain text counts); several plain ones are
+    joined by a space. Content with no text, or text that is not allowed, gives none."""
     found: list[m.Value] = []
 
     def walk(items: tuple[object, ...]) -> None:
@@ -1977,7 +1980,7 @@ def _tip_description(nodes: tuple[object, ...]) -> m.Value | None:
             walk(node.children)
 
     walk(nodes)
-    if len(found) == 1:
+    if len(found) == 1 and (in_module or isinstance(found[0], m.Text)):
         return found[0]
     if found and all(isinstance(v, m.Text) for v in found):
         return m.Text(
