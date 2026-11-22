@@ -7,7 +7,13 @@ Name: List
 # A scrolling list (Standard Modules > List): its entries are the call's children, usually a `For`
 # keyed by an id. The wheel scrolls it (it is 240 by 200 pixels unless the call writes a `Width` or
 # a `Height`). An entry has a key (a `For` entry the repeater's key, any other writes `Key: name`);
-# a click chooses it: `Selection: SINGLE` (the default) takes the click, `NONE` ignores it.
+# a click chooses it: `Selection: SINGLE` (the default) takes the click, `NONE` ignores it and
+# `MULTIPLE` chooses a set the way the Selection pattern says (the engine's own container selection:
+# click, Shift+click a range, Ctrl+click a toggle, Shift+Up and Down extend, Ctrl+Up and Down move
+# the focus, Ctrl+Space toggles, Ctrl+A chooses all, a disabled entry is skipped, Escape keeps the
+# set; it is multiselectable for assistive technology and announces "N selected" once). Then
+# `Selected` and `On_Changed`'s `old`, `new` and `value` are the keys of the chosen entries joined
+# by a comma (a key has no comma), in the order of the entries; the type-ahead search is SINGLE's.
 # `Selected` is the chosen entry's key, set from outside (it marks the entry and raises nothing);
 # `On_Changed` fires when the user chooses one (`event.old`, `event.new` and `event.value` are the
 # keys). The chosen entry takes the style state `:selected` (and the role LISTITEM carries
