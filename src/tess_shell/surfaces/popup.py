@@ -1065,6 +1065,16 @@ class Popups:
         if wire is not None and wire.tre is not None and wire.tre.get("focused"):
             self.dismiss_tooltip(why)
 
+    def window_focus_lost(self, name: str) -> None:
+        """The surface ``name`` lost the keyboard focus: its open tooltip is removed, and it does
+        not come back until the pointer has left and entered again."""
+        cur = self.current
+        if cur is None or cur.popup.focus or cur.block is None:
+            return
+        surface = next((s for s in self._m.every_surface() if s.key == cur.caller.surface), None)
+        if surface is not None and surface.name == name:
+            self.dismiss_tooltip("the window lost focus")
+
     def _forget_swallow(self) -> None:
         self._swallow = None
         self._swallow_timer = None

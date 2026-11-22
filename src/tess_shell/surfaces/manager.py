@@ -2062,6 +2062,8 @@ class SurfaceManager:
         if active:
             self._keyboard_taken(name)
         else:
+            # the window lost focus: a tooltip on one of its blocks goes (Tooltip > AC-TIP-8)
+            self.popups.window_focus_lost(name)
             self.mode.keyboard_lost(name)
 
     def _surface_gone(self, name: str, window: Any = None) -> None:

@@ -1013,3 +1013,19 @@ def test_enter_and_space_on_the_focused_trigger_remove_its_tooltip_and_it_stays_
         assert "closing (an activation key)" in r.log()
         r.advance(600)
         assert r.popups.current is None, key  # not again until the pointer left and came back
+
+
+def test_the_window_losing_focus_removes_its_open_tooltip_and_it_stays_closed() -> None:
+    """AC-TIP-8."""
+    (r,) = list(rig(TIP, HOT))
+    w = r.bar.window
+    hover(r)
+    r.advance(101)
+    op = r.popups.current
+    assert op is not None
+    w.simulate("active", active=True)
+    w.simulate("active", active=False)
+    assert r.popups.current is None and op.closing
+    assert "closing (the window lost focus)" in r.log()
+    r.advance(600)
+    assert r.popups.current is None

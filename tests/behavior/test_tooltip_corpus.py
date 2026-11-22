@@ -49,7 +49,6 @@ GAPS: dict[str, tuple[str, str]] = {
         NOT_RUN,
         "a focus by pointer without a press cannot be driven: a pointer on the block presses it",
     ),
-    "window-focus-loss-closes": (FAIL, "the window losing focus does not close the tooltip"),
 }
 
 
