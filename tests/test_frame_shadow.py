@@ -46,9 +46,11 @@ def test_an_elevation_percentage_scales_the_themes_maximum() -> None:
     assert row[2][3] > 0 and row[2][:3] == (0, 0, 0)
 
 
-def test_a_frame_that_needs_no_shader_draws_no_shadow() -> None:
-    manager = started(FRAME % "Elevation: 100%", blend="PATH")
-    assert all(p[3] == 0 for p in opening_row(manager))
+def test_a_frame_drawn_with_paths_casts_a_shadow_too_since_tre_0_6_12() -> None:
+    """A path's shadow follows its hole now: the path variant no longer lacks the shadow."""
+    row = opening_row(started(FRAME % "Elevation: 100%", blend="PATH"))
+    assert row[1][3] > 0  # just inside the opening
+    assert row[1][3] > row[10][3]  # and it fades away from the edge
 
 
 def test_an_elevation_level_gives_the_ring_the_levels_two_shadows(monkeypatch) -> None:  # type: ignore[no-untyped-def]

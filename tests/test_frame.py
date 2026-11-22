@@ -274,3 +274,23 @@ def test_an_opaque_border_is_sealed_to_the_fill_and_a_translucent_one_is_not() -
     fading = Paint(fill=(0, 0, 0, 255), inner=(255, 255, 255, 255), opacity=0.5)
     assert not ring_spec(frame, (), fading).seal_inner  # and under a Frame that is translucent
     assert not ring_spec(frame).seal_inner
+
+
+def test_a_frame_drawn_with_paths_casts_its_shadow_inside_the_ring_and_says_nothing() -> None:
+    """tre 0.6.12 follows the hole of a path: the filled ring's shadow falls on the desktop just
+    inside its inner edge, soft, and is gone further in (it used to be none)."""
+    frame = (
+        "Frame { Name: F, Thickness: 20, Inner_Radius: 8, "
+        'Style { Background: "#0000ff", Elevation: 40% } }'
+    )
+    manager, app = started(frame)
+    st = only(manager)
+    st.painter.resize(*app.size)
+    rgba, width, _ = st.painter.snapshot()
+
+    def alpha(x: int, y: int) -> int:
+        return int(rgba[(y * width + x) * 4 + 3])
+
+    assert alpha(10, 150) == 255  # the ring itself
+    assert alpha(22, 150) > alpha(30, 150) > 0  # the shadow fades away from the edge
+    assert alpha(100, 150) == 0  # the desktop is clear further in
