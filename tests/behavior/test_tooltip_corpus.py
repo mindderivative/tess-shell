@@ -45,8 +45,6 @@ GAPS: dict[str, tuple[str, str]] = {
         "the adapter does not drive the pointer onto the open tip (the shell supports it: "
         "_popup_enter): adapter limit, to do",
     ),
-    "key-enter-closes": (FAIL, "Enter on the focused trigger does not close its tooltip"),
-    "key-space-closes": (FAIL, "Space on the focused trigger does not close its tooltip"),
     "pointer-focus-shows-no-tooltip": (
         NOT_RUN,
         "a focus by pointer without a press cannot be driven: a pointer on the block presses it",

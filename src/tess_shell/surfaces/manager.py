@@ -1027,6 +1027,9 @@ class SurfaceManager:
             # takes ONE tre listener per event, so this is the surface's only key_down listener
             if getattr(e, "key", None) == "escape":
                 self.popups.dismiss_tooltip("escape")
+            elif getattr(e, "key", None) in ("enter", "space", " "):
+                # Enter or Space on the focused trigger activates it: its tooltip goes (AC-TIP-7)
+                self.popups.dismiss_tooltip_of_focused("an activation key")
             return bool(self.mode.on_key(e)) or copy_selection(window, e)
 
         window.root.on("key_down", surface_key)

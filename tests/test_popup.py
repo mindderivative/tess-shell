@@ -996,3 +996,20 @@ def test_a_tooltip_shown_by_keyboard_focus_is_removed_when_focus_leaves() -> Non
     w.simulate("unfocus", node=r.root_of())
     assert r.popups.current is None and op.closing
     assert "closing (focus left the block)" in r.log()
+
+
+def test_enter_and_space_on_the_focused_trigger_remove_its_tooltip_and_it_stays_closed() -> None:
+    """AC-TIP-7: the key activates the block (it is not consumed) and the tip goes."""
+    for key in ("enter", "space"):
+        (r,) = list(rig("", btn=FOCUSABLE_TIP))
+        w = r.bar.window
+        w.simulate("key_down", key="shift")
+        r.root_of().focus()
+        r.advance(1)
+        op = r.popups.current
+        assert op is not None
+        w.simulate("key_down", key=key)
+        assert r.popups.current is None and op.closing, key
+        assert "closing (an activation key)" in r.log()
+        r.advance(600)
+        assert r.popups.current is None, key  # not again until the pointer left and came back

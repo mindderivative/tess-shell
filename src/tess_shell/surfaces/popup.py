@@ -1054,6 +1054,17 @@ class Popups:
             self._suppressed = self._hovered
             self._cancel_enter()
 
+    def dismiss_tooltip_of_focused(self, why: str) -> None:
+        """Enter or Space: the open tooltip goes when its block has keyboard focus (the key
+        activates the block; the key itself is not consumed)."""
+        cur = self.current
+        if cur is None or cur.popup.focus or cur.block is None:
+            return
+        surface = next((s for s in self._m.every_surface() if s.key == cur.caller.surface), None)
+        wire = surface.view.wires.get(cur.block) if surface and surface.view else None
+        if wire is not None and wire.tre is not None and wire.tre.get("focused"):
+            self.dismiss_tooltip(why)
+
     def _forget_swallow(self) -> None:
         self._swallow = None
         self._swallow_timer = None
