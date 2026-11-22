@@ -58,6 +58,8 @@ class FakeScript:
     def __init__(self, bus: FakeBus) -> None:
         self._bus = bus
         self._conn: MessageBus | None = None
+        self._lock: asyncio.Lock | None = None
+        self._reports: asyncio.Lock | None = None
         self.fullscreen: list[str] = []  # the outputs with an active fullscreen window
         self.windows: list[dict[str, Any]] = []  # what the window list holds
         self.sends_windows = False
@@ -70,9 +72,15 @@ class FakeScript:
     # -- the connection (on the fake thread) -----------------------------------------------------
 
     async def _connection(self) -> MessageBus:
-        if self._conn is None or not self._conn.connected:
-            self._conn = await MessageBus(bus_address=self._bus.address).connect()
-        return self._conn
+        # one connection, made once: two calls that begin together (the script's first report and
+        # an event sent right after the start) would each connect, send on their own connection,
+        # and the shell could take them in the other order (a stale state last)
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        async with self._lock:
+            if self._conn is None or not self._conn.connected:
+                self._conn = await MessageBus(bus_address=self._bus.address).connect()
+            return self._conn
 
     async def call(
         self, method: str, payload: str, signature: str = "s", interface: str = INTERFACE
@@ -111,15 +119,25 @@ class FakeScript:
             return
         await self.report_fullscreen()
 
+    # Reports go one at a time and read the state when it is their turn, so that of two that begin
+    # together (the first one of a load and one sent by an event right after it) the one that
+    # reaches the shell last carries the latest state, as KWin's script does: it has one thread.
     async def report_fullscreen(self) -> None:
-        if not self.running or self.silent:
-            return
-        self._answered(await self.call("FullscreenState", json.dumps(self.fullscreen)))
+        async with self._report_lock():
+            if not self.running or self.silent:
+                return
+            self._answered(await self.call("FullscreenState", json.dumps(self.fullscreen)))
 
     async def report_windows(self) -> None:
-        if not self.running or self.silent or not self.sends_windows:
-            return
-        self._answered(await self.call("WindowsState", json.dumps(self.windows)))
+        async with self._report_lock():
+            if not self.running or self.silent or not self.sends_windows:
+                return
+            self._answered(await self.call("WindowsState", json.dumps(self.windows)))
+
+    def _report_lock(self) -> asyncio.Lock:
+        if self._reports is None:
+            self._reports = asyncio.Lock()
+        return self._reports
 
     def _answered(self, answer: str | None) -> None:
         """The callback of ``callDBus``: read ``{"windows": ...}``; anything else is ignored."""
