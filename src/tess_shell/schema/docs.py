@@ -791,6 +791,9 @@ TOKEN_DOCS: dict[str, str] = {
     "color.warning": "A warning or a low state.",
     "color.success": "A success state.",
     "color.outline": "Borders, dividers and tracks.",
+    "color.inverse_surface": "The fill of a plain tooltip: the opposite of the surface (light on "
+    "a dark desktop, dark on a light one).",
+    "color.inverse_on_surface": "Text and icons on the inverse surface.",
     "color.scrim": "The colour laid over what a modal surface covers.",
     "type.caption.font_size": "The size of caption type.",
     "type.caption.font_weight": "The weight of caption type.",

@@ -102,6 +102,7 @@ def test_the_clock_face_reads_on_the_surface(scheme: str) -> None:
 # (foreground role, background role, what it needs): text 4.5 to 1; a pictogram, a border or a
 # fill that carries meaning 3 to 1
 PAIRS = [
+    ("inverse_on_surface", "inverse_surface", TEXT),
     ("on_surface", "surface", TEXT),
     ("on_surface", "surface_raised", TEXT),
     ("on_surface_muted", "surface", TEXT),

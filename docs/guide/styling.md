@@ -43,6 +43,8 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$color.warning` | colour | `"#E6BB6A"` | light, high contrast | A warning or a low state. |
 | `$color.success` | colour | `"#8CCB9A"` | light, high contrast | A success state. |
 | `$color.outline` | colour | `"#5F7188"` | light, high contrast | Borders, dividers and tracks. |
+| `$color.inverse_surface` | colour | `"#E4EAF1"` | light, high contrast | The fill of a plain tooltip: the opposite of the surface (light on a dark desktop, dark on a light one). |
+| `$color.inverse_on_surface` | colour | `"#12171D"` | light, high contrast | Text and icons on the inverse surface. |
 | `$color.scrim` | colour | `"#000000"` | never | The colour laid over what a modal surface covers. |
 
 ### Type

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.31",
+  "schema_version": "1.33",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -27214,6 +27214,42 @@
         "ref": "$color.outline",
         "default": "\"#5F7188\"",
         "doc": "Borders, dividers and tracks.",
+        "modes": [
+          "light",
+          "high_contrast"
+        ],
+        "alpha": true,
+        "forms": [
+          "\"#RRGGBB\"",
+          "\"#RRGGBBAA\"",
+          "\"#RGB\"",
+          "\"#RGBA\"",
+          "rgba(r g b a)"
+        ]
+      },
+      "inverse_surface": {
+        "kind": "color",
+        "ref": "$color.inverse_surface",
+        "default": "\"#E4EAF1\"",
+        "doc": "The fill of a plain tooltip: the opposite of the surface (light on a dark desktop, dark on a light one).",
+        "modes": [
+          "light",
+          "high_contrast"
+        ],
+        "alpha": true,
+        "forms": [
+          "\"#RRGGBB\"",
+          "\"#RRGGBBAA\"",
+          "\"#RGB\"",
+          "\"#RGBA\"",
+          "rgba(r g b a)"
+        ]
+      },
+      "inverse_on_surface": {
+        "kind": "color",
+        "ref": "$color.inverse_on_surface",
+        "default": "\"#12171D\"",
+        "doc": "Text and icons on the inverse surface.",
         "modes": [
           "light",
           "high_contrast"
