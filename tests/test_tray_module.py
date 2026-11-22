@@ -221,8 +221,15 @@ def test_each_new_signal_changes_its_value_after_one_fresh_read(tmp_path: Path) 
             assert settle(t, w, lambda: values(w)["items"][0]["attention"] is True)
             assert "#00ffff" in values(w)["items"][0]["icon"]  # the attention icon replaces it
             assert values(w)["items"][0]["label"] == "New, needs attention"
+
+            def dot() -> bool:  # the 6 dp corner dot: the cue is not colour alone (AC-MOD-TRI-7)
+                (node,) = [n for k, n in w.view.nodes.items() if k.endswith("/Attention")]
+                return bool(node.get("visible"))
+
+            assert settle(t, w, dot)
             item.changed("NewStatus", Status="Active")
             assert settle(t, w, lambda: values(w)["items"][0]["attention"] is False)
+            assert settle(t, w, lambda: not dot())
             assert "#123456" in values(w)["items"][0]["icon"]
             item.changed("NewOverlayIcon", OverlayIconName="x")  # read, not drawn
             settle(t, w, lambda: False, 0.2)

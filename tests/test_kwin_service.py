@@ -27,13 +27,20 @@ from tess_shell.services.kwin_package import (
     parse_version,
     refuse_real_bus,
 )
-from tests.fake_dbus import HAVE_DAEMON, FakeBus, fake_bus, wait_for
+from tests.fake_dbus import HAVE_DAEMON, FakeBus, fake_bus
+from tests.fake_dbus import wait_for as poll
 from tests.fake_kwin import FakeKWin, Loaded, uuid, window
 from tests.test_control import FakeCommands, FakeLoop
 
 pytestmark = pytest.mark.skipif(not HAVE_DAEMON, reason="dbus-daemon is not installed")
 
 SECRET = "SECRET-TITLE-OF-A-WINDOW"
+
+
+def wait_for(predicate: Callable[[], object], timeout: float = 20.0) -> bool:
+    """Poll until true. A passing wait returns at once, so the long deadline costs nothing; a
+    loaded CI runner is slow to deliver a D-Bus signal to the loop and a short one flaked."""
+    return poll(predicate, timeout)
 
 
 class HeldLoop(FakeLoop):
@@ -379,7 +386,7 @@ def test_after_a_restart_of_the_shell_the_fresh_load_carries_the_current_state(
     with rig(tmp_path) as r:
         r.start()
         r.fake.set_fullscreen(["DP-1"])
-        assert wait_for(lambda: len(r.fullscreen) == 1, timeout=20)
+        assert wait_for(lambda: len(r.fullscreen) == 1)
         r.stop()
         # the shell starts again; a window is fullscreen all the time (no event happens)
         r.kwin = KWinService(r.service, r.loop.call_soon, runtime_dir=tmp_path / "run")
@@ -389,7 +396,7 @@ def test_after_a_restart_of_the_shell_the_fresh_load_carries_the_current_state(
         r.start()
         # the restart hands the state over through a fresh load on a loaded CI runner: wait for it,
         # not for 3 s (the wait ends as soon as it holds)
-        assert wait_for(lambda: seen == [frozenset({"DP-1"})], timeout=20)
+        assert wait_for(lambda: seen == [frozenset({"DP-1"})])
 
 
 def test_a_malformed_fullscreen_state_is_ignored_with_one_warning_and_still_answered(
@@ -398,12 +405,12 @@ def test_a_malformed_fullscreen_state_is_ignored_with_one_warning_and_still_answ
     with rig(tmp_path) as r:
         r.start()
         r.fake.set_fullscreen(["DP-1"])
-        assert wait_for(lambda: len(r.fullscreen) == 1, 15)  # a loaded CI host is slow to deliver
+        assert wait_for(lambda: len(r.fullscreen) == 1)  # a loaded CI host is slow to deliver
         for raw in ("not json", "[1, 2]", "{}", "x" * 100):
             answer = r.fake.raw("FullscreenState", raw)
             assert json.loads(answer or "") == {"windows": False}
         r.settle()
-        assert wait_for(lambda: len(r.log(level="WARNING")) >= 1, 15)  # the loop logs it in turn
+        assert wait_for(lambda: len(r.log(level="WARNING")) >= 1)  # the loop logs it in turn
         assert len(r.fullscreen) == 1 and r.kwin.fullscreen == frozenset({"DP-1"})
         (warning,) = r.log(level="WARNING")
         assert "not a JSON array of output names" in warning and "not json" not in warning

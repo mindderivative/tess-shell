@@ -26,21 +26,16 @@ Module {
         Tooltip {
             Alignment: CENTER
             Gap: 4
-            Style {
-                Background: $color.surface_raised
-                Corner_Radius: 8
-                Elevation: 20%
-            }
             Children {
                 FlexBox {
-                    Padding: <| [space.step_4, space.step_3, space.step_4, space.step_3] |>
+                    Padding: <| [space.step_3, space.step_2, space.step_3, space.step_2] |>
                     Children {
                         Text {
                             Text: <| tooltip |>
                             Width: AUTO
                             Height: AUTO
                             Font_Size: 14
-                            Foreground: $color.on_surface
+                            Foreground: $color.inverse_on_surface
                         }
                     }
                 }

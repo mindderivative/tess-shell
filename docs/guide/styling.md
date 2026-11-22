@@ -39,10 +39,12 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$color.primary` | colour | `"#5B97C9"` | light, high contrast | The main colour of controls: a filled slider, a checked toggle. |
 | `$color.on_primary` | colour | `"#08121C"` | light, high contrast | Text and icons on the primary colour. |
 | `$color.accent` | colour | `"#4682B4"` | high contrast | The accent colour; DESKTOP follows the desktop's accent. |
-| `$color.error` | colour | `"#F2958C"` | light | An error or a critical state. |
-| `$color.warning` | colour | `"#E6BB6A"` | light | A warning or a low state. |
-| `$color.success` | colour | `"#8CCB9A"` | light | A success state. |
-| `$color.outline` | colour | `"#55657A"` | light, high contrast | Borders, dividers and tracks. |
+| `$color.error` | colour | `"#F2958C"` | light, high contrast | An error or a critical state. |
+| `$color.warning` | colour | `"#E6BB6A"` | light, high contrast | A warning or a low state. |
+| `$color.success` | colour | `"#8CCB9A"` | light, high contrast | A success state. |
+| `$color.outline` | colour | `"#5F7188"` | light, high contrast | Borders, dividers and tracks. |
+| `$color.inverse_surface` | colour | `"#E4EAF1"` | light, high contrast | The fill of a plain tooltip: the opposite of the surface (light on a dark desktop, dark on a light one). |
+| `$color.inverse_on_surface` | colour | `"#12171D"` | light, high contrast | Text and icons on the inverse surface. |
 | `$color.scrim` | colour | `"#000000"` | never | The colour laid over what a modal surface covers. |
 
 ### Type
@@ -99,14 +101,14 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$density.control_height` | number | `40` | compact, dense | The height of a button, a text field, a switch row and an icon button: 40, 32 or 28 at the default, compact and dense levels. |
 | `$density.row_height` | number | `40` | compact, dense | The height of a one-line list or tree row: 40, 32 or 24. |
 | `$density.menu_item_height` | number | `40` | compact, dense | The height of a menu item: 40, 32 or 28. |
-| `$density.icon_size` | number | `24` | compact, dense | The painted size of an icon in an icon button: 24, 20 or 20. |
+| `$density.icon_size` | number | `24` | compact, dense | The painted size of an icon in an icon button, a menu item and an Icon with no Size: 24, 20 or 20. |
 | `$density.item_size` | number | `32` | compact, dense | The size of a tray item, a task button and a workspace button (the pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be). |
 | `$density.item_icon_size` | number | `20` | compact, dense | The icon of a tray item and a task button: 20, 18 or 18. |
 | `$density.row_padding_x` | number | `12` | compact, dense | The side padding of a list row, a tree row and a menu item: 12, 8 or 4. |
 | `$density.icon_label_gap` | number | `8` | compact, dense | The gap between an icon and its label: 8, 8 or 4. |
 | `$density.field_padding` | sides | `[12, 12, 12, 12]` | compact, dense | The padding of a text field (left, top, right, bottom): [12, 12, 12, 12], [8, 8, 8, 8] or [8, 6, 8, 6]. With the 16 px line of 14 px body text the field is 40, 32 or 28 high (the spec's 20 px line would take 10, 6 and 4). |
 | `$density.tree_indent` | number | `20` | compact, dense | The indent of one tree level: 20, 16 or 12. |
-| `$density.chevron_box` | number | `24` | compact, dense | The size of a tree's chevron box: 24, 20 or 16. |
+| `$density.chevron_box` | number | `24` | compact, dense | The size of a tree's chevron box and a menu item's submenu arrow: 24, 20 or 16. |
 
 ### State
 
