@@ -154,6 +154,9 @@ _BOX_STYLE: dict[str, KeyRow] = {
     "Hover_Layer": _k("hover_layer", "color"),
     "Pressed_Layer": _k("pressed_layer", "color"),
     "Focus_Layer": _k("focus_layer", "color"),
+    "Outline_Width": _k("outline_width", "number"),
+    "Outline_Offset": _k("outline_offset", "number"),
+    "Outline_Color": _k("outline_color", "color"),
 }
 
 _FLEX: dict[str, KeyRow] = {
@@ -197,6 +200,9 @@ _SHAPE: dict[str, KeyRow] = {
     "Opacity": _COMMON["Opacity"],
     "Elevation": _k("shadows", "elevation"),
     "Shadows": _k("shadows", "shadows"),
+    "Outline_Width": _k("outline_width", "number"),
+    "Outline_Offset": _k("outline_offset", "number"),
+    "Outline_Color": _k("outline_color", "color"),
 }
 
 # a Circle or a Ring is sized by ``Diameter``: the block takes no Width or Height. A shape's keys
@@ -244,6 +250,9 @@ _ROWS: dict[str, BlockRow] = {
             "Opacity": _COMMON["Opacity"],
             "Elevation": _k("shadows", "elevation"),
             "Shadows": _k("shadows", "shadows"),
+            "Outline_Width": _k("outline_width", "number"),
+            "Outline_Offset": _k("outline_offset", "number"),
+            "Outline_Color": _k("outline_color", "color"),
         },
         defaults={"orientation": "vertical"},
         children_ok=True,

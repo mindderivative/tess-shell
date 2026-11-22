@@ -15,7 +15,7 @@ Everything on this page is about the keyboard: moving focus between widgets, the
 
 * every interactive module (Button, Toggle, Checkbox, Slider, List, Menu, TextInput, TextEditor) is **one Tab stop**; a List and a Menu are one stop each and take the arrow keys inside. A disabled block, a block that is not visible and the content of a closed Expander are none;
 * The order is the order of the file: nothing reorders the stops (`Tab_Index` above 0 is an error; `tesserae-shell migrate` rewrites a file that has one). `Focusable: true` puts a plain block in the order; `Enabled: false` takes one out;
-* `:focused` styles the ring that keyboard focus shows. A click focuses a block without the ring. A block shows the ring only when it takes `Shadows`, so put `Focusable` on a `Box`, `FlexBox`, `Rectangle`, `ScrollBox` or `TextField`;
+* `:focused` styles the ring that keyboard focus shows. A click focuses a block without the ring. The ring is an outline drawn outside the block (`Outline_Width` 3, `Outline_Offset` 2, `Outline_Color` `color.primary`, from the theme's `space.focus_ring_width` and `space.focus_ring_offset`), so it shifts nothing and a block's own `Shadows` are untouched; a `:focused` rule can change it with the `Outline_*` keys. Only blocks that take those keys show it, so put `Focusable` on a `Box`, `FlexBox`, `Rectangle`, `ScrollBox` or `TextField`;
 * a reload keeps focus on a block that is still there; when it is gone nothing is focused and Tab starts again at the first stop. A Popup gives focus back to the block it was opened from.
 
 <!-- BEGIN generated: example-set:08-keyboard/focus -->

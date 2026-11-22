@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.28",
+  "schema_version": "1.29",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -5086,6 +5086,81 @@
             "color"
           ]
         },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The gap between the block and its outline.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
         "Spacing": {
           "kind": "number",
           "choices": null,
@@ -7028,6 +7103,81 @@
           "preferred_tokens": [
             "color"
           ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
         }
       },
       "events": [
@@ -8637,6 +8787,81 @@
           "enum": null,
           "default": null,
           "doc": "The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
           "slot": true,
           "required": false,
           "built": true,
@@ -11499,6 +11724,81 @@
           "preferred_tokens": [
             "elevation.max"
           ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
         }
       },
       "style": {
@@ -11776,6 +12076,81 @@
           ],
           "preferred_tokens": [
             "elevation.max"
+          ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
           ]
         }
       },
@@ -13042,6 +13417,81 @@
           ],
           "preferred_tokens": [
             "elevation.max"
+          ]
+        },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
           ]
         }
       },
@@ -24059,6 +24509,81 @@
             "color"
           ]
         },
+        "Outline_Width": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Offset": {
+          "kind": "number",
+          "choices": null,
+          "enum": null,
+          "default": "0",
+          "doc": "The gap between the block and its outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "min": null,
+          "max": null,
+          "step": null,
+          "unit": null,
+          "tokens": [
+            "type",
+            "shape",
+            "space",
+            "density",
+            "state",
+            "elevation",
+            "motion"
+          ],
+          "preferred_tokens": []
+        },
+        "Outline_Color": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the outline.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
         "Foreground": {
           "kind": "color",
           "choices": null,
@@ -25761,6 +26286,28 @@
         "ref": "$space.step_8",
         "default": "48",
         "doc": "The largest step of spacing.",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "focus_ring_width": {
+        "kind": "number",
+        "ref": "$space.focus_ring_width",
+        "default": "3",
+        "doc": "The width of the ring that shows keyboard focus (3).",
+        "modes": [],
+        "min": null,
+        "max": null,
+        "step": null,
+        "unit": null
+      },
+      "focus_ring_offset": {
+        "kind": "number",
+        "ref": "$space.focus_ring_offset",
+        "default": "2",
+        "doc": "The gap between a block and its focus ring (2).",
         "modes": [],
         "min": null,
         "max": null,
