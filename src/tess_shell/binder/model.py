@@ -188,11 +188,11 @@ Value = (
 # gives none) shows its ring over those, and a disabled block shows its ``disabled`` values over
 # everything (it takes no pointer and no focus, so it is never hovered, pressed or focused while it
 # is disabled).
-STATES = ("checked", "selected", "hovered", "pressed", "focused", "disabled")
+STATES = ("checked", "selected", "hovered", "pressed", "focused", "invalid", "disabled")
 # the states that do not come from the pointer: a control sets ``checked`` and ``selected`` (a
 # Toggle that is on, the chosen entry of a list), ``focused`` is keyboard focus, ``disabled`` is
 # ``Enabled: false``
-FLAG_STATES = ("checked", "selected", "focused", "disabled")
+FLAG_STATES = ("checked", "selected", "focused", "invalid", "disabled")
 
 # A TextField is built as four nodes (``model.field``): its box, a line box in the box's cell, a
 # text in the line that gives it the height of the field's lines, and the text input over the

@@ -191,6 +191,8 @@ KEY_DOCS: dict[str, str] = {
     "Read_Only": "The text can be selected and copied but not changed.",
     "Max_Length": "The most characters the field takes; 0 is no limit.",
     "Password": "Hides the characters as dots in a single-line field.",
+    "Invalid": "Marks the field as holding a refused value: it takes the :invalid look (the error "
+    "colour outline, also while hovered or focused) and assistive technology reads it as invalid.",
     # graphics
     "Source": "The file to show, written relative to the file that names it.",
     "Icon": "An icon name such as mdi:account; a prefix selects an icon set. An SVG has a "
@@ -603,6 +605,7 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Read_Only",
         "Max_Length",
         "Password",
+        "Invalid",
         "Speed",
         "Pause",
         "Direction",
@@ -1281,6 +1284,9 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("TextInput", "Read_Only"): "The text can be selected and copied but not changed.",
     ("TextInput", "Max_Length"): "The most characters the field takes; 0 is no limit.",
     ("TextInput", "Password"): "Shows dots instead of the text and blocks copy and cut.",
+    ("TextInput", "Helper"): "A line of help under the field; the error replaces it.",
+    ("TextInput", "Error"): "A refusal message under the field, with an alert icon, in the error "
+    "colour. It marks the field invalid and is its accessible description. Empty: none.",
     ("TextInput", "Active_Descendant"): "The Name of a List called in the same layout: a screen "
     "reader reads that List's chosen entry as the current item of the field while the keyboard "
     "stays in it. Empty: none.",

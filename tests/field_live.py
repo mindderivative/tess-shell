@@ -160,7 +160,9 @@ def _defs(extra: dict[str, str]) -> dict[str, ModuleDef]:
     for name, text in texts.items():
         doc = tess_dl.parse(text, path=f"Modules/{name}_Module.tdl").document
         assert doc is not None
-        found, findings = read_module(doc, f"{name}.tdl", stubs)
+        found, findings = read_module(
+            doc, f"{name}.tdl", stubs, None, None, IconSets([SHIPPED / "Icons"])
+        )
         assert found is not None, findings
         defs[name] = found
     return defs

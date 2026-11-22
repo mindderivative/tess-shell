@@ -19,6 +19,15 @@ Name: TextInput
 #
 # The field's accessible name is `Label`, else the `Placeholder` (the hint it shows while empty);
 # a field with neither has none, so give the call one of them.
+#
+# `Helper` is a line of help under the field; `Error` replaces it with a message (an alert icon and
+# the words, in the error colour) and marks the field invalid: its outline takes the error colour
+# (also while hovered and focused), assistive technology reads `invalid` and the message as the
+# field's description. The field keeps its place when a line appears under it. Write the message
+# when the value is refused, not while typing (Validation): the call decides when.
+#
+# The module's root is a container with the field and the lines, so a stylesheet rule on `TextInput`
+# (and the events of a call) reach the field: the module says so with `Receives`.
 Module {
     Params {
         Text { Type: string, Default: "" }
@@ -34,16 +43,62 @@ Module {
         # entry as the current item of this field while the keyboard stays in it (the active
         # descendant). Proposed, ADR-0023; empty: none
         Active_Descendant { Type: string, Default: "" }
+        # a line of help under the field, and a refusal message that replaces it (empty: none)
+        Helper { Type: string, Default: "" }
+        Error { Type: string, Default: "" }
     }
-    TextField {
-        Text: <| params.Text |>
-        Label: <| params.Label if params.Label != "" else params.Placeholder |>
-        Placeholder: <| params.Placeholder |>
-        Read_Only: <| params.Read_Only |>
-        Max_Length: <| params.Max_Length |>
-        Password: <| params.Password |>
-        Enabled: <| params.Enabled |>
-        Active_Descendant: <| params.Active_Descendant |>
+    Receives { On_Changed: Field, On_Submit: Field, On_Text_Commit: Field, On_Key_Down: Field }
+    FlexBox {
+        Name: Root
+        Flex: VERTICAL
         Width: <| params.Width |>
+        Spacing: <| space.step_2 |>
+        Children {
+            TextField {
+                Name: Field
+                Text: <| params.Text |>
+                Label: <| params.Label if params.Label != "" else params.Placeholder |>
+                Placeholder: <| params.Placeholder |>
+                Read_Only: <| params.Read_Only |>
+                Max_Length: <| params.Max_Length |>
+                Password: <| params.Password |>
+                Enabled: <| params.Enabled |>
+                Active_Descendant: <| params.Active_Descendant |>
+                Invalid: <| params.Error != "" |>
+                Description: <| params.Error if params.Error != "" else params.Helper |>
+                Width: 100%
+            }
+            If <| params.Error != "" |> {
+                FlexBox {
+                    Name: Error_Line
+                    Flex: HORIZONTAL
+                    Align_Items: CENTER
+                    Spacing: <| space.step_2 |>
+                    Live: POLITE
+                    Children {
+                        SVG { Name: Error_Icon, Icon: "mdi:alert-circle", Width: 16, Height: 16, Foreground: $color.error, A11y_Hidden: true }
+                        Text {
+                            Name: Error_Text
+                            Text: <| params.Error |>
+                            Font_Size: 12
+                            Foreground: $color.error
+                            Width: AUTO
+                            Height: AUTO
+                        }
+                    }
+                }
+            } Else {
+                If <| params.Helper != "" |> {
+                    Text {
+                        Name: Helper_Text
+                        Text: <| params.Helper |>
+                        Font_Size: 12
+                        Foreground: $color.on_surface_muted
+                        Width: AUTO
+                        Height: AUTO
+                    }
+                }
+            }
+        }
     }
 }

@@ -343,6 +343,7 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
             "Read_Only": "bool",
             "Max_Length": "max_length",
             "Password": "bool",
+            "Invalid": "bool",
         },
         {
             **BOX_STYLE,
@@ -362,7 +363,8 @@ BLOCKS: dict[str, tuple[dict[str, str], dict[str, str]]] = {
 # box in its cell that holds the size text and, over it, the text input); they are the kinds the
 # binder builds and the model addresses slots to. The words have a dot, so no file can name one.
 FIELD_BOX_KEYS = frozenset(
-    {*COMMON, "Padding", *BOX_STYLE} - {"Label", "Focusable", "Tab_Index"},
+    {*COMMON, "Padding", "Invalid", *BOX_STYLE}
+    - {"Label", "Focusable", "Tab_Index", "Description"},
 )
 FIELD_INPUT_KEYS = frozenset(
     {
@@ -376,6 +378,8 @@ FIELD_INPUT_KEYS = frozenset(
         "Max_Length",
         "Password",
         "Label",
+        "Description",
+        "Invalid",
         "Focusable",
         "Tab_Index",
         "Foreground",
@@ -399,6 +403,8 @@ _FIELD_INPUT_PROPS: dict[str, str] = {
     "Max_Length": "max_length",
     "Password": "bool",
     "Label": "text",
+    "Description": "text",
+    "Invalid": "bool",
     "Focusable": "bool",
     "Tab_Index": "tab_index",
 }
@@ -412,8 +418,8 @@ _FIELD_INPUT_STYLE: dict[str, str] = {
 }
 _FIELD_BOX_PROPS: dict[str, str] = {
     k: v
-    for k, v in {**COMMON, "Padding": "sides"}.items()
-    if k not in ("Label", "Focusable", "Tab_Index")
+    for k, v in {**COMMON, "Padding": "sides", "Invalid": "bool"}.items()
+    if k not in ("Label", "Focusable", "Tab_Index", "Description")
 }
 # the kinds the model and the binder meet after the composition: key tables per kind
 INTERNAL: dict[str, tuple[dict[str, str], dict[str, str]]] = {

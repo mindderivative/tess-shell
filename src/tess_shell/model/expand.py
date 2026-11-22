@@ -450,7 +450,8 @@ class _Expander:
         )
         # the module's rules reach its root block as written, before a TextField is split in its
         # parts (its text keys go to the text input)
-        layout = tuple(apply_module_rules(layout, call.module, self.rules))
+        target = next((name for name, _ in module.receives.values()), None)
+        layout = tuple(apply_module_rules(layout, call.module, self.rules, target))
         self._content.append(content)
         try:
             roots = self._walk(layout, name, use, (*stack, call.module))

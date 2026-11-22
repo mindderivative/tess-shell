@@ -1005,8 +1005,10 @@ A single-line text field.
 | `Enabled` | boolean | `true` | False disables the field. |
 | `Width` | number | `240` | The width in pixels. |
 | `Active_Descendant` | string | `""` | The Name of a List called in the same layout: a screen reader reads that List's chosen entry as the current item of the field while the keyboard stays in it. Empty: none. |
+| `Helper` | string | `""` | A line of help under the field; the error replaces it. |
+| `Error` | string | `""` | A refusal message under the field, with an alert icon, in the error colour. It marks the field invalid and is its accessible description. Empty: none. |
 
-Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Changed`, `On_Submit`, `On_Text_Commit`, `On_Key_Down`.
+Events a use may handle: `On_Click`, `On_Secondary_Click`, `On_Middle_Click`, `On_Scroll`, `On_Key_Down`, `On_Changed`, `On_Submit`, `On_Text_Commit`.
 
 <!-- END generated: module:TextInput -->
 

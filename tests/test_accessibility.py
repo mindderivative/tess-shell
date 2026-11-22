@@ -117,14 +117,14 @@ STATIC = [
         "TextInput placeholder",
         "TextInput { Placeholder: Search }",
         "TextInput",
-        "#1",
+        "#0",
         {"role": "textbox", "label": "Search"},
     ),
     (
         "TextInput label",
         "TextInput { Placeholder: Search, Label: Query }",
         "TextInput",
-        "#1",
+        "#0",
         {"label": "Query"},
     ),
     (
