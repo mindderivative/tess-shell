@@ -321,7 +321,9 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     "(left, top, right, bottom). It is inside the Bar's Width and Height.",
     ("Bar", "Class"): "A style class for the Bar. Not built.",
     ("Bar", "Attach_To"): "Attaches the Bar to a Frame. Not built.",
-    ("Bar", "Animation"): "How the Bar comes and goes. Not built.",
+    ("Bar", "Animation"): "How an Auto_Hide Bar slides out and comes back: an Animation block with "
+    "Type (SLIDE, FADE or NONE) and Duration. A Bar with no Animation slides for 200 ms; "
+    "the desktop's reduced-motion setting makes every Bar change at once.",
     ("Bar", "Alignment"): "Where a Bar shorter than the edge sits along it: START, CENTER or "
     "END; no effect on an EXPAND axis.",
     ("Bar", "Gap"): "The space between the screen edge and the Bar, in pixels; the reserved "
@@ -411,7 +413,7 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     "strip's thickness.",
     ("Border", "Width"): "The width of the border line, in pixels, 0 or more.",
     ("Border", "Color"): "The colour of the border line, a colour or a theme token.",
-    ("Animation", "Type"): "How the Panel comes and goes: SLIDE, FADE or NONE.",
+    ("Animation", "Type"): "How the Panel or the Bar comes and goes: SLIDE, FADE or NONE.",
     ("Animation", "Duration"): "How long it takes, in milliseconds; 0 is no animation.",
     ("Panel", "Animation"): "How the Panel comes and goes: an Animation block with Type and "
     "Duration.",

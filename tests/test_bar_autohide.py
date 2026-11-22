@@ -158,3 +158,70 @@ def test_a_bar_with_auto_hide_false_is_untouched_by_the_mode() -> None:
     m.mode.exit()
     s.window.advance(5000)
     assert not s.auto_out and not s.mode_revealed and zone(s) == 30
+
+
+def animated(block: str, name: str = "Anim") -> tuple[Any, Any]:
+    text = (
+        f"Bar {{ Name: {name}, Edge: BOTTOM, Width: EXPAND, Height: 30, Auto_Hide: true, "
+        f"{block} Children {{ Rectangle {{ Name: Dot, Width: 10, Height: 10 }} }} }}"
+    )
+    m = manager(panel=text, hide_mode="KEEP")
+    return m, surface(m, name)
+
+
+def test_a_bar_with_no_animation_block_slides_for_200_ms_and_the_block_defaults_to_slide() -> None:
+    _, s = auto()
+    assert (s.planned.bar.animation, s.planned.bar.duration) == ("SLIDE", 200)
+    _, s = animated("Animation { Duration: 500 },")
+    assert (s.planned.bar.animation, s.planned.bar.duration) == ("SLIDE", 500)
+
+
+def test_the_slide_takes_the_duration_the_bar_writes() -> None:
+    _, s = animated("Animation { Type: SLIDE, Duration: 600 },")
+    leave(s)
+    s.window.advance(1010)  # the delay ends: the slide starts
+    assert s.auto_out and zone(s) == 30
+    s.window.advance(400)  # 400 ms of 600: the space is still held
+    assert zone(s) == 30
+    s.window.advance(300)  # 700 ms: the slide has ended
+    assert zone(s) == 0 and s.window.get("margin")[2] == 1 - 30
+
+
+def test_a_fade_goes_out_without_moving_then_leaves_the_strip_and_comes_back_by_fading() -> None:
+    _, s = animated("Animation { Type: FADE, Duration: 400 },")
+    rest = s.geometry.margin
+    leave(s)
+    s.window.advance(1200)  # 200 ms into the fade
+    assert 0.0 < s.window.root.get("opacity") < 1.0 and s.window.get("margin") == rest
+    assert zone(s) == 30
+    s.window.advance(
+        300
+    )  # the fade has ended: off the screen but the strip, opaque for the way back
+    assert zone(s) == 0 and s.window.get("margin")[2] == 1 - 30
+    assert s.window.root.get("opacity") == 1.0
+    enter(s)
+    assert zone(s) == 30 and s.window.get("margin") == rest and s.window.root.get("opacity") == 0.0
+    s.window.advance(450)
+    assert s.window.root.get("opacity") == 1.0 and s.window.get("margin") == rest
+
+
+def test_animation_none_changes_at_once() -> None:
+    _, s = animated("Animation { Type: NONE },")
+    leave(s)
+    s.window.advance(1001)
+    assert s.auto_out and zone(s) == 0 and s.window.get("margin")[2] == 1 - 30
+    enter(s)
+    assert zone(s) == 30 and s.window.get("margin") == s.geometry.margin
+
+
+def test_reduced_motion_overrides_a_fade() -> None:
+    text = (
+        "Bar { Name: R, Edge: BOTTOM, Width: EXPAND, Height: 30, Auto_Hide: true, "
+        "Animation { Type: FADE, Duration: 400 }, Children { Rectangle { Name: Dot, Width: 10, "
+        "Height: 10 } } }"
+    )
+    m = manager(panel=text, hide_mode="KEEP", appearance=Appearance(animations=False))
+    s = surface(m, "R")
+    leave(s)
+    s.window.advance(1001)
+    assert zone(s) == 0 and s.window.root.get("opacity") == 1.0

@@ -25,7 +25,8 @@ if TYPE_CHECKING:
     from tess_shell.surfaces.manager import Surface, SurfaceManager
 
 STRIP = 1  # px of the Bar left on the screen edge while it is out: the pointer's way back
-SLIDE_MS = 200  # the slide, in and out (Motion short4)
+FADE_EASE_OUT = (0.4, 0.0, 1.0, 1.0)  # the easing of a Bar going out
+FADE_EASE_IN = (0.0, 0.0, 0.2, 1.0)  # ... and coming back
 _MARGIN: dict[
     str, tuple[Literal["margin_top", "margin_right", "margin_bottom", "margin_left"], int]
 ] = {
@@ -103,9 +104,14 @@ class AutoHide:
 
     # -- the slide ------------------------------------------------------------------------------
 
-    def _instant(self) -> bool:
+    def _instant(self, s: Surface) -> bool:
+        """No animation: the desktop asks for reduced motion, or the Bar's ``Animation`` is NONE
+        (or has a duration of 0)."""
         look = self._m._look
-        return look is not None and look.appearance.reduced_motion
+        if look is not None and look.appearance.reduced_motion:
+            return True
+        bar = s.planned.bar if s.planned else None
+        return not isinstance(bar, BarDef) or bar.animation == "NONE" or bar.duration <= 0
 
     @staticmethod
     def _thickness(s: Surface) -> int:
@@ -133,7 +139,8 @@ class AutoHide:
         }[bar.edge]
 
     def out(self, s: Surface) -> None:
-        """Slide out, then release the zone and leave the strip."""
+        """Go out (slide or fade, as the Bar's ``Animation`` says), then release the zone and leave
+        the strip."""
         bar = s.planned.bar if s.planned else None
         if s.window is None or not isinstance(bar, BarDef) or s.auto_out:
             return
@@ -142,23 +149,28 @@ class AutoHide:
         generation, window = s.generation, s.window
         prop, index = _MARGIN[bar.edge]
         far = STRIP - self._thickness(s)
-        logger.info(f"Bar {s.planned.where if s.planned else s.name} slides out")
+        margin = list(s.geometry.margin)
+        margin[index] = far
+        ms = int(bar.duration)
+        logger.info(f"Bar {s.planned.where if s.planned else s.name} goes out ({bar.animation})")
 
         def done() -> None:
             if s.generation == generation and s.window is window and s.auto_out:
-                window.set(exclusive_zone=0, input_region=self.strip(s))  # the space back, once
+                # off the screen but for the strip, and opaque again for the way back; the space
+                # back, once
+                window.set(margin=tuple(margin), exclusive_zone=0, input_region=self.strip(s))
+                window.root.set(opacity=1.0)
 
-        if self._instant():
-            margin = list(s.geometry.margin)
-            margin[index] = far
-            window.set(margin=tuple(margin))
+        if self._instant(s):
             done()
-            return
-        window.animate(prop, far, SLIDE_MS, (0.4, 0.0, 1.0, 1.0))
-        window.after(SLIDE_MS, done)
+        elif bar.animation == "FADE":
+            window.root.animate("opacity", 0.0, ms, FADE_EASE_OUT, done)
+        else:
+            window.animate(prop, far, ms, FADE_EASE_OUT)
+            window.after(ms, done)
 
     def reveal(self, s: Surface, instant: bool = False) -> None:
-        """Slide in: the zone and the input first, then the margin back to rest."""
+        """Come back: the zone and the input first, then slide in or fade in to rest."""
         bar = s.planned.bar if s.planned else None
         if s.window is None or not isinstance(bar, BarDef) or not s.auto_out:
             return
@@ -167,21 +179,32 @@ class AutoHide:
         generation, window = s.generation, s.window
         prop, index = _MARGIN[bar.edge]
         rest = s.geometry.margin
+        ms = int(bar.duration)
         window.set(
             exclusive_zone=s.geometry.exclusive_zone,
             input_region=self._full_input(s),
         )
-        logger.info(f"Bar {s.planned.where if s.planned else s.name} slides in")
-        if instant or self._instant():
+        logger.info(f"Bar {s.planned.where if s.planned else s.name} comes back ({bar.animation})")
+        if instant or self._instant(s):
             window.set(margin=rest)
+            window.root.set(opacity=1.0)
             return
-        window.animate(prop, rest[index], SLIDE_MS, (0.0, 0.0, 0.2, 1.0))
+        if bar.animation == "FADE":
+            window.set(margin=rest)
+            if (
+                window.root.get("opacity") == 1.0
+            ):  # a fade out that was cut short goes on from there
+                window.root.set(opacity=0.0)
+            window.root.animate("opacity", 1.0, ms, FADE_EASE_IN)
+        else:
+            window.animate(prop, rest[index], ms, FADE_EASE_IN)
 
         def done() -> None:
             if s.generation == generation and s.window is window:
                 window.set(margin=rest)  # exactly at rest
+                window.root.set(opacity=1.0)
 
-        window.after(SLIDE_MS, done)
+        window.after(ms, done)
 
     # -- shortcut mode (ADR-0021: a hidden Bar is revealed by the mode) --------------------------
 

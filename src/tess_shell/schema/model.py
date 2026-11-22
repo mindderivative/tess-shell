@@ -47,6 +47,8 @@ class BarDef:
     )
     auto_hide: bool = False  # slides out when the pointer has left it for ``auto_hide_delay``
     auto_hide_delay: float = 1000.0  # ms
+    animation: str = "SLIDE"  # SLIDE, FADE or NONE: how an Auto_Hide Bar goes out and comes back
+    duration: float = 200.0  # milliseconds of that animation
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()
 

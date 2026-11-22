@@ -65,7 +65,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ELEVATION_LEVELS, ValueProblem, coerce
 
-SCHEMA_VERSION = "1.37"
+SCHEMA_VERSION = "1.38"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -478,6 +478,7 @@ _FIELDS: dict[tuple[str, str], tuple[type, str]] = {
     ("Panel", "Meld"): (PanelDef, "meld"),
     ("Panel", "Content_Fade"): (PanelDef, "content_fade"),
     ("Animation", "Duration"): (PanelDef, "duration"),
+    ("Bar", "Animation"): (BarDef, "animation"),
     ("Popup", "Attach"): (PopupDef, "attach"),
     ("Popup", "Alignment"): (PopupDef, "alignment"),
     ("Popup", "Gap"): (PopupDef, "gap"),
@@ -808,6 +809,7 @@ def _roots() -> dict[str, Json]:
     bar_keys = {
         "Name": _key("Bar", "Name", "name", required=True),
         **_table_keys("Bar", BAR_KEYS, choices=BAR_CHOICES, required=("Edge", "Width", "Height")),
+        "Animation": _key("Bar", "Animation", "block:Animation"),
         **_not_built(
             "Bar",
             blocks.BAR_NOT_BUILT,
