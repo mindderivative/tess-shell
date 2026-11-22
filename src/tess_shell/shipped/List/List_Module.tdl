@@ -16,9 +16,11 @@ Name: List
 # by a comma (a key has no comma), in the order of the entries; the type-ahead search is SINGLE's.
 # `Selected` is the chosen entry's key, set from outside (it marks the entry and raises nothing);
 # `On_Changed` fires when the user chooses one (`event.old`, `event.new` and `event.value` are the
-# keys). The chosen entry takes the style state `:selected` (and the role LISTITEM carries
+# keys). The chosen entry takes the style state `:selected` (and the role OPTION carries
 # `selected`), so give the entries a class and style `.list_item:selected`; the Default stylesheet
-# does for the class `list_item`. The role is LIST.
+# does for the class `list_item`. The role is LISTBOX, and OPTION for the entries, when the List
+# can be chosen from (`SINGLE`, `MULTIPLE`; MULTIPLE is multiselectable); LIST when `Selection: NONE`
+# (AC-LST-01).
 # Keys: the List is one Tab stop and its entries are reached with the arrow keys. Up and Down move
 # the chosen entry (the first Down chooses the first entry, the first Up the last), Page Up and
 # Page Down by a page, Home and End to the ends, Enter and Space choose the first entry when none
@@ -43,7 +45,7 @@ Module {
     }
     ScrollBox {
         Name: Root
-        Role: LIST
+        Role: <| "LIST" if params.Selection == "NONE" else "LISTBOX" |>
         Label: <| params.Label |>
         Selection_Mode: <| params.Selection |>
         Chosen: <| params.Selected |>

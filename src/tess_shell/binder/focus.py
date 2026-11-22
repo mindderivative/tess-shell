@@ -16,7 +16,7 @@ from tess_shell.binder.model import FIELD, FIELD_INPUT, Bool, Enum, Node
 # by the arrow keys (``binder.controls`` for a List, ``surfaces.popup`` for a Menu), so an entry is
 # no Tab stop.
 INTERACTIVE_ROLES = frozenset(
-    {"BUTTON", "CHECKBOX", "RADIO", "SWITCH", "SLIDER", "LINK", "TAB", "LIST", "MENU"},
+    {"BUTTON", "CHECKBOX", "RADIO", "SWITCH", "SLIDER", "LINK", "TAB", "LIST", "LISTBOX", "MENU"},
 )
 
 _ROLE_KEYS = frozenset({"Role", "Toggles", "Slides"})
