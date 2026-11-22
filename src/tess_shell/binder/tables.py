@@ -151,6 +151,9 @@ _BOX_STYLE: dict[str, KeyRow] = {
     "Opacity": _COMMON["Opacity"],
     "Elevation": _k("shadows", "elevation"),
     "Shadows": _k("shadows", "shadows"),
+    "Hover_Layer": _k("hover_layer", "color"),
+    "Pressed_Layer": _k("pressed_layer", "color"),
+    "Focus_Layer": _k("focus_layer", "color"),
 }
 
 _FLEX: dict[str, KeyRow] = {

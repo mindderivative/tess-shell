@@ -204,12 +204,11 @@ def test_button_enter_and_space_press_it_and_the_state_shows_while_the_key_is_he
         assert k.said() == ["Save clicked"]
         # held: the accessibility state ``pressed`` and the style state ``:pressed`` show while the
         # key is down, and the handler has run; the key going up ends both
-        base = root.get("fill")
         k.window.simulate("key_down", key="enter")
-        assert root.get("pressed") is True and root.get("fill") != base
+        assert root.get("pressed") is True  # tre draws the pressed layer while it holds
         assert k.said() == ["Save clicked"]
         k.window.simulate("key_up", key="enter")
-        assert root.get("pressed") is None and root.get("fill") == base
+        assert root.get("pressed") is None
         # the other keys do nothing, and the other Buttons are their own stops
         for other in ("a", "arrow_down", "arrow_left", "home", "escape"):
             k.press(other)

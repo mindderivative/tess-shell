@@ -57,7 +57,10 @@ def primary_columns(sway: PrivateSway) -> list[int]:
     for y in range(32):
         row = y * width * 3
         for x in range(width):
-            if tuple(pixels[row + x * 3 : row + x * 3 + 3]) == PRIMARY:
+            pixel = pixels[row + x * 3 : row + x * 3 + 3]
+            # the primary colour, or it under the 8 percent hover layer the pointer on the button
+            # draws over its outline (State Layers)
+            if all(abs(p - q) <= 20 for p, q in zip(pixel, PRIMARY, strict=True)):
                 columns.add(x)
     return sorted(columns)
 
