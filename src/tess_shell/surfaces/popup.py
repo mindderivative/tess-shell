@@ -757,7 +757,7 @@ class Popups:
                 parent.view.set_expanded(node_id, True)
         else:
             self.current = op
-        self._m._app.add_window(window)
+        self._m.add_window(window)
         logger.info(
             f"Popup {where} opened beside {module} {use}: body {width}x{height} "
             f"on {attach}"
