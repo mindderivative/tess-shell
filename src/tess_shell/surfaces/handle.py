@@ -196,7 +196,9 @@ def make(
         height=height,
         visible=False,
         hit_testable=False,
-        a11y_hidden=True,
+        # the holder is the peek's control for assistive technology (Peek > Accessibility): a
+        # button named "Expand {name}" or "Collapse {name}"; the pointer still goes to the tab
+        role="button",
         opacity=rest,
         z_index=z_index,
     )
