@@ -95,3 +95,90 @@ def test_the_clock_face_reads_on_the_surface(scheme: str) -> None:
     on = str(look.tokens["color.on_surface"].value.value)  # type: ignore[union-attr]
     surface = str(look.tokens["color.surface"].value.value)  # type: ignore[union-attr]
     assert ratio(on, surface) >= TEXT, (scheme, on, surface)
+
+
+# -- every role pair of the theme, in every mode (TSH-042, AC-COL-3, AC-COL-4) ---------------
+
+# (foreground role, background role, what it needs): text 4.5 to 1; a pictogram, a border or a
+# fill that carries meaning 3 to 1
+PAIRS = [
+    ("on_surface", "surface", TEXT),
+    ("on_surface", "surface_raised", TEXT),
+    ("on_surface_muted", "surface", TEXT),
+    ("on_surface_muted", "surface_raised", TEXT),
+    ("on_primary", "primary", TEXT),
+    ("error", "surface", TEXT),
+    ("warning", "surface", TEXT),
+    ("success", "surface", TEXT),
+    ("primary", "surface", ICON),
+    ("primary", "surface_raised", ICON),
+    ("outline", "surface", ICON),
+    ("outline", "surface_raised", ICON),
+    ("accent", "surface", ICON),
+    ("accent", "surface_raised", ICON),
+]
+MODES = {
+    "dark": ("dark", False),
+    "light": ("light", False),
+    "high_contrast": ("dark", True),
+    "high_contrast_light": ("light", True),
+}
+# Known violations, with the ratio measured when they were recorded: the test fails when one is
+# fixed (or changes) so that the list is kept true. The spec or the theme changes, not the test.
+KNOWN = {
+    # the Dark ``outline`` on a raised surface (a Button's border, a card's edge)
+    ("dark", "outline", "surface_raised"): 2.69,
+    # the High_Contrast mode keeps the Light scheme's error, warning and success on black
+    ("high_contrast_light", "error", "surface"): 3.21,
+    ("high_contrast_light", "warning", "surface"): 3.54,
+    ("high_contrast_light", "success", "surface"): 3.27,
+}
+ACCENT_AS_TEXT = {  # the accent against 4.5, a token finding the vault decides (TSH-043)
+    ("dark", "surface"): 4.38,
+    ("dark", "surface_raised"): 3.90,
+    ("light", "surface"): 3.82,
+    ("light", "surface_raised"): 4.11,
+}
+
+
+def mode_look(mode: str) -> Look:
+    scheme, high = MODES[mode]
+    folder = Path(tempfile.mkdtemp())
+    write_example(folder)
+    settings, _ = load_settings(folder)
+    assert settings is not None
+    appearance = Appearance(scheme=scheme, high_contrast=high)  # type: ignore[arg-type]
+    return build_look(scan(settings, folder), settings, appearance)
+
+
+@pytest.mark.parametrize("mode", sorted(MODES))
+def test_every_role_pair_meets_its_ratio_except_the_recorded_violations(mode: str) -> None:
+    look = mode_look(mode)
+    failing: dict[tuple[str, str, str], float] = {}
+    for fg, bg, need in PAIRS:
+        got = ratio(
+            str(look.tokens[f"color.{fg}"].value.value), str(look.tokens[f"color.{bg}"].value.value)
+        )  # type: ignore[union-attr]
+        if got < need:
+            failing[(mode, fg, bg)] = round(got, 2)
+    expected = {k: v for k, v in KNOWN.items() if k[0] == mode}
+    assert failing == expected, f"violations changed in {mode}: {failing} (recorded {expected})"
+
+
+@pytest.mark.parametrize(("mode", "background"), sorted(ACCENT_AS_TEXT))
+def test_the_accent_as_text_is_below_4_5_and_nothing_shipped_uses_it_as_text(
+    mode: str, background: str
+) -> None:
+    look = mode_look(mode)
+    got = ratio(
+        str(look.tokens["color.accent"].value.value),  # type: ignore[union-attr]
+        str(look.tokens[f"color.{background}"].value.value),  # type: ignore[union-attr]
+    )
+    assert round(got, 2) == ACCENT_AS_TEXT[(mode, background)] and got < TEXT
+    root = Path(__file__).resolve().parent.parent / "src" / "tess_shell" / "shipped"
+    users = [
+        p.name
+        for p in sorted(root.rglob("*.tdl"))
+        if "Foreground: $color.accent" in p.read_text() and not p.name.endswith("_Theme.tdl")
+    ]
+    assert users == [], f"the accent is used as text in {users}"
