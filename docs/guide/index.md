@@ -3,7 +3,7 @@
 This guide is for a person who has installed `tesserae-shell` and wants a bar, a launcher or a few widgets on a KDE Plasma desktop. It does not explain how the shell is built; the [design notes](../design/index.md) do that.
 
 <!-- BEGIN generated: version-info -->
-This guide describes tesserae-shell 0.2.0 (schema version 1.27, the one `tesserae-shell schema --json` prints).
+This guide describes tesserae-shell 0.2.0 (schema version 1.30, the one `tesserae-shell schema --json` prints).
 
 <!-- END generated: version-info -->
 

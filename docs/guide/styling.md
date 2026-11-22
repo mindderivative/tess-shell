@@ -106,6 +106,23 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$density.tree_indent` | number | `20` | compact, dense | The indent of one tree level: 20, 16 or 12. |
 | `$density.chevron_box` | number | `24` | compact, dense | The size of a tree's chevron box: 24, 20 or 16. |
 
+### Scrollbar
+
+| Token | Value | Default | The built-in modes change it in | What it is |
+|---|---|---|---|---|
+| `$scrollbar.width` | number | `8` | never | The thickness of the scrollbar thumb: 8. |
+| `$scrollbar.hit_width` | number | `12` | never | The pointer-sensitive thickness of the scrollbar: 12. |
+| `$scrollbar.margin` | number | `2` | never | The space around the thumb: 2. |
+| `$scrollbar.min_length` | number | `32` | never | The shortest thumb: 32. |
+| `$scrollbar.gutter` | number | `12` | never | The space reserved for the scrollbar: 12. |
+| `$scrollbar.radius` | number | `4` | never | The corner radius of the thumb: 4. |
+| `$scrollbar.opacity` | number | `0.70` | never | The thumb's opacity at rest: 0.70. |
+| `$scrollbar.opacity_hover` | number | `0.80` | never | The thumb's opacity under the pointer: 0.80. |
+| `$scrollbar.opacity_drag` | number | `1.00` | never | The thumb's opacity while dragged: 1.00. |
+| `$scrollbar.wheel_notch` | number | `40` | never | The distance of one wheel notch: 40. |
+| `$scrollbar.key_line` | number | `40` | never | The distance of an arrow key in a scroll view: 40. |
+| `$scrollbar.page_fraction` | number | `0.9` | never | The share of the viewport a Page key moves: 0.9. |
+
 ### Elevation
 
 | Token | Value | Default | The built-in modes change it in | What it is |
@@ -320,12 +337,12 @@ These are the keys a `Style { }` block, a style key written directly on a block,
 | `Duration` | milliseconds | 12 block types | motion.duration.* | How long a change of a Transition key takes, in milliseconds. |
 | `Easing` | `STANDARD` `EMPHASIZED` `LINEAR` | 12 block types |  | The curve of the animation: STANDARD, EMPHASIZED or LINEAR. |
 | `Background` | colour | Box, FlexBox, TextField | color | The fill behind the block's content, a colour or a theme token. |
-| `Border_Width` | number | 7 block types | type, shape, space, density, elevation, motion | The width of the border line; 0 draws none. |
+| `Border_Width` | number | 7 block types | type, shape, space, density, scrollbar, elevation, motion | The width of the border line; 0 draws none. |
 | `Border_Color` | colour | 7 block types | color | The colour of the border line, a colour or a theme token. |
 | `Corner_Radius` | radius | Box, FlexBox, Rectangle, TextField | shape | The radius of the corners: one number, or four from the top-left corner clockwise. |
 | `Padding` | sides | Box, FlexBox, Text, TextField | space | Space between the content and the four sides: one number or four (left, top, right, bottom). |
 | `Margin` | sides | 9 block types | space | Transparent space around the block: one number or four (left, top, right, bottom). |
-| `Opacity` | number | 12 block types | type, shape, space, density, elevation, motion | How opaque the block and what it holds is painted, from 0 (invisible) to 1. |
+| `Opacity` | number | 12 block types | type, shape, space, density, scrollbar, elevation, motion | How opaque the block and what it holds is painted, from 0 (invisible) to 1. |
 | `Elevation` | percentage | Box, FlexBox, Rectangle, ScrollBox, TextField |  | How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3). |
 | `Shadows` | shadows | Box, FlexBox, Rectangle, ScrollBox, TextField | elevation.max | A list of Shadow blocks, the first on top; it replaces Elevation when both are written. |
 | `Spacing` | number | FlexBox | space | The space between the children, in pixels. |
@@ -337,6 +354,23 @@ These are the keys a `Style { }` block, a style key written directly on a block,
 | `Text_Align` | `START` `CENTER` `END` | Text |  | How a line sits in the text's box: START, CENTER or END. |
 | `Overflow` | `CLIP` `ELLIPSIS` | Text, TextField |  | What happens to text that does not fit: CLIP cuts it, ELLIPSIS ends it with dots (a TextField also has SCROLL). |
 | `Fill` | colour | Rectangle, Circle, Path | color | The fill of the shape, a colour or a theme token. |
+| `Scrollbar_Width` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The painted thickness of the scrollbar thumb, in pixels (the theme's scrollbar.width, 8). |
+| `Scrollbar_Hit_Width` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The pointer-sensitive thickness of the scrollbar (12). |
+| `Scrollbar_Margin` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The space between the thumb and the container's edge, and the lane's end (2). |
+| `Scrollbar_Min_Length` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The shortest the thumb gets along its axis (32). |
+| `Scrollbar_Gutter` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The space reserved at the end edge of an axis that overflows (12). |
+| `Scrollbar_Radius` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The corner radius of the thumb (4). |
+| `Scrollbar_Opacity` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The opacity of the thumb at rest, 0 to 1 (0.70). |
+| `Scrollbar_Opacity_Hover` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The opacity of the thumb under the pointer (0.80). |
+| `Scrollbar_Opacity_Drag` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The opacity of the thumb while it is dragged (1.00). |
+| `Scrollbar_Fill` | colour | ScrollBox | color | The colour of the thumb at rest (the theme's muted ink). |
+| `Scrollbar_Fill_Hover` | colour | ScrollBox | color | The colour of the thumb under the pointer. |
+| `Scrollbar_Fill_Drag` | colour | ScrollBox | color | The colour of the thumb while it is dragged. |
+| `Scrollbar_Track_Fill` | colour | ScrollBox | color | The colour of the lane the thumb runs in (none by default). |
+| `Scroll_Wheel_Notch` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The distance of one wheel notch, in pixels (40). |
+| `Scroll_Key_Line` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The distance of an arrow key, in pixels (40). |
+| `Scroll_Page_Fraction` | number | ScrollBox | type, shape, space, density, scrollbar, elevation, motion | The share of the viewport a Page key or a lane click moves (0.9). |
+| `Scrollbar_Show` | `OVERFLOW` `ALWAYS` `AUTO_HIDE` `NEVER` | ScrollBox |  | When the scrollbar shows: OVERFLOW (when the content overflows, the default), ALWAYS, AUTO_HIDE or NEVER. |
 | `Placeholder_Foreground` | colour | TextField | color | The colour of the placeholder text. |
 
 <!-- END generated: style-keys -->
