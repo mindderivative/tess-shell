@@ -49,8 +49,13 @@ PANEL_HIDE = ("CLOSE", "KEEP")
 FRAME_JOIN = ("SMIL", "CONCAVE", "SHADER", "STRUCTURE", "PARAM")
 FRAME_BLEND = ("SRGB", "LINEAR")
 MODE_KEYBOARD = ("EXCLUSIVE", "ON_DEMAND")
-APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop", "Density")
+APPEARANCE_KEYS = ("Theme", "Stylesheets", "Follow_Desktop", "Density", "Scheme")
 DENSITY = ("DEFAULT", "COMPACT", "DENSE")
+SCHEME = (
+    "DEFAULT",
+    "LIGHT",
+    "DARK",
+)  # DEFAULT follows the desktop (the portal), as without the key
 LOGGING_KEYS = (
     "Level",
     "Directory",
@@ -95,6 +100,7 @@ class AppearanceSettings:
     # ``Stylesheets: []`` means none
     stylesheets: tuple[str, ...] = ("Default",)
     follow_desktop: bool = True  # read the Settings portal (Portals > Configuration)
+    scheme: str = "DEFAULT"  # LIGHT or DARK forces the colour scheme; DEFAULT follows the desktop
     density: str = "COMPACT"  # the density level of the shell (Spacing and Density, ADR-0002)
 
 
@@ -330,6 +336,8 @@ def _appearance(reader: _Reader, block: Block) -> AppearanceSettings:
                 values["follow_desktop"] = reader.boolean(prop)
             case "Density":
                 values["density"] = reader.enum(prop, DENSITY)
+            case "Scheme":
+                values["scheme"] = reader.enum(prop, SCHEME)
     return replace(AppearanceSettings(), **{k: v for k, v in values.items() if v is not None})
 
 

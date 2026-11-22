@@ -57,6 +57,12 @@ class Look:
     def with_appearance(self, appearance: Appearance) -> Look:
         """The same theme and rules for a new light or dark setting, accent or motion flag."""
         appearance = dataclasses.replace(appearance, density=self.appearance.density)
+        if self.appearance.scheme_override is not None:  # ``Appearance.Scheme``: the user's choice
+            appearance = dataclasses.replace(
+                appearance,
+                scheme=self.appearance.scheme_override,
+                scheme_override=self.appearance.scheme_override,
+            )
         return make_look(self.theme, self.sheets, appearance, self.fallback, self.icons)
 
     def at_density(self, density: str | None) -> Look:
