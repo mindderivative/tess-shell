@@ -817,3 +817,26 @@ def test_the_press_of_assistive_technology_opens_and_closes_the_peek() -> None:
     only(m).painter.simulate("click", node=holder)
     advance(m, 1000)
     assert at_rest(m)
+
+
+def test_escape_during_a_drag_sends_the_body_back_to_where_it_started() -> None:
+    """tre 0.6.12: Escape mid-gesture is a ``pointer_cancel`` (no ``pointer_up``). Past half the
+    release would have opened it; the cancel must not."""
+    m = started(extra=peek("DRAG"))
+    sim(m, "pointer_down", ON_TAB)
+    sim(m, "pointer_move", (60, 34))
+    sim(m, "pointer_move", (60, 46))  # past half
+    assert host(m).drag is not None and host(m).anim == "in"
+    only(m).painter.simulate("key_down", key="escape")  # tre: a cancel, no pointer_up
+    assert host(m).drag is None
+    advance(m, 800)
+    assert at_rest(m)  # back at the tab, not out
+
+
+def test_a_cancel_of_a_press_that_never_moved_is_dropped_quietly() -> None:
+    m = started(extra=peek("DRAG"))
+    sim(m, "pointer_down", ON_TAB)
+    only(m).painter.simulate("key_down", key="escape")  # tre: a cancel, no pointer_up
+    assert host(m).drag is None
+    advance(m, 800)
+    assert at_rest(m)

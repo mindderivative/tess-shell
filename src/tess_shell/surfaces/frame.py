@@ -1656,6 +1656,16 @@ class Frames:
             return
         self._drag_end(st, host, drag)
 
+    def _cancel(self, st: FrameState, host: HostState, event: Any) -> None:
+        """Escape (or the compositor) ended the press: tre 0.6.12 sends ``pointer_cancel``, no
+        ``pointer_up``. A drag that began goes back to where it started (the tab or fully out), as
+        a thumb of a scrollbar does; one that had not moved is dropped."""
+        drag, host.drag = host.drag, None
+        if drag is None or not drag.began:
+            return
+        drag.p = drag.p0
+        self._drag_end(st, host, drag)
+
     def _fades(self, host: HostState) -> bool:
         """Whether the content of a sliding body fades with it (``Content_Fade``, on by default;
         not with reduced motion). A FADE body fades whole, through its mover, already."""
@@ -2091,6 +2101,7 @@ class Frames:
             clip.on("pointer_down", lambda e: self._press(st, host, e))
             clip.on("pointer_move", lambda e: self._move(st, host, e))
             clip.on("pointer_up", lambda e: self._release(st, host, e))
+            clip.on("pointer_cancel", lambda e: self._cancel(st, host, e))
             clip.on("click", lambda e: self._click(st, host, e))
         errors = list(planned.expanded.errors)
         if not errors:
