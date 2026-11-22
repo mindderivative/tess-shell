@@ -120,7 +120,7 @@ _COMMON: dict[str, KeyRow] = {
     "Expanded": _k("expanded", "bool"),
     # what makes a module's block a control (``binder.controls``); they give tre nothing
     "Toggles": _k((), "bool"),
-    "Selection_Mode": _k((), "enum", "NONE", "SINGLE"),
+    "Selection_Mode": _k((), "enum", "NONE", "SINGLE", "MULTIPLE"),
     "Chosen": _k((), "text"),
     "Active_Descendant": _k((), "text"),
     "Slides": _k((), "enum", "NONE", "HORIZONTAL", "VERTICAL"),

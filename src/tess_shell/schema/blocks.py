@@ -231,7 +231,7 @@ CHOICES: dict[tuple[str, str], tuple[str, ...]] = {
     ("*", "Easing"): EASINGS,
     ("Bitmap", "Fit"): ("FILL", "CONTAIN", "COVER", "NONE"),
     ("Path", "Hit_Shape"): ("PAINTED", "BOX"),
-    ("*", "Selection_Mode"): ("NONE", "SINGLE"),
+    ("*", "Selection_Mode"): ("NONE", "SINGLE", "MULTIPLE"),
     ("*", "Slides"): ("NONE", "HORIZONTAL", "VERTICAL"),
     ("*", "Reveals"): ("NONE", "OPEN", "CLOSED"),
     ("ScrollBox", "Orientation"): ("VERTICAL", "HORIZONTAL"),

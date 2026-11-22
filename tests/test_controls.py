@@ -535,3 +535,80 @@ def test_a_call_to_released_with_an_unknown_argument_is_still_checked() -> None:
     bad = 'On_Released { Action: Call, Target: "Driver.released", Nope: 1 }'
     with running(f"Slider {{ {bad} }}", driver_py=code) as w:
         assert any("has no argument Nope" in p.message for p in w.problems), w.problems
+
+
+def multi(w: Widgets) -> tuple[Any, list[Any], Any]:
+    root = w.of_use("List", "Root")
+    items = [n for k, n in w.view.nodes.items() if k.endswith("/Items")][0].children()
+    return root, items, lambda: [i + 1 for i, n in enumerate(items) if n.get("selected")]
+
+
+def test_a_multiple_list_chooses_a_set_by_click_shift_and_ctrl_as_the_pattern_says() -> None:
+    """AC-SLT-1: the engine's container selection, the shell's ``On_Changed`` with the keys."""
+    with running(
+        f"List {{ Selection: MULTIPLE, Height: 400, {CHANGED}, Children {{ {ENTRIES} }} }}"
+    ) as w:
+        assert w.warnings() == [], w.warnings()
+        root, items, chosen = multi(w)
+        w.window.simulate("click", node=items[1])
+        assert chosen() == [2]
+        w.window.simulate("click", node=items[3], shift=True)
+        assert chosen() == [2, 3, 4] and root.get("selection_anchor") == items[1]
+        w.window.simulate("click", node=items[4], ctrl=True)
+        assert chosen() == [2, 3, 4, 5] and root.get("selection_anchor") == items[4]
+        w.window.simulate("click", node=items[2], shift=True)
+        assert chosen() == [3, 4, 5]  # the range from the anchor E replaces the set
+        assert [x[2:4] for x in seen(w)] == [
+            ("", "k2"),
+            ("k2", "k2,k3,k4"),
+            ("k2,k3,k4", "k2,k3,k4,k5"),
+            ("k2,k3,k4,k5", "k3,k4,k5"),
+        ]
+
+
+def test_a_multiple_list_extends_by_shift_arrows_toggles_by_ctrl_space_and_selects_all() -> None:
+    """AC-SLT-2, 3, 4: Escape never clears a selection."""
+    with running(f"List {{ Selection: MULTIPLE, Height: 400, Children {{ {ENTRIES} }} }}") as w:
+        _, items, chosen = multi(w)
+        w.window.simulate("click", node=items[1])
+        for key, mods, now in (
+            ("arrow_down", {"shift": True}, [2, 3]),
+            ("arrow_down", {"shift": True}, [2, 3, 4]),
+            ("arrow_up", {"shift": True}, [2, 3]),
+            ("arrow_down", {"ctrl": True}, [2, 3]),
+            ("arrow_down", {"ctrl": True}, [2, 3]),
+            ("space", {"ctrl": True}, [2, 3, 5]),
+            ("escape", {}, [2, 3, 5]),
+            ("a", {"ctrl": True}, list(range(1, 13))),
+        ):
+            w.window.simulate("key_down", key=key, **mods)
+            assert chosen() == now, (key, mods)
+
+
+def test_a_multiple_list_skips_a_disabled_entry_in_a_range() -> None:
+    """AC-SLT-5."""
+    entries = ENTRIES.replace("Key: k2,", "Key: k2, Enabled: false,")
+    with running(f"List {{ Selection: MULTIPLE, Height: 400, Children {{ {entries} }} }}") as w:
+        _, items, chosen = multi(w)
+        w.window.simulate("click", node=items[0])
+        w.window.simulate("click", node=items[3], shift=True)
+        assert chosen() == [1, 3, 4]
+        w.window.simulate("key_down", key="a", ctrl=True)
+        assert 2 not in chosen() and len(chosen()) == 11
+
+
+def test_a_multiple_list_takes_selected_from_outside_without_the_event() -> None:
+    driver = (
+        "Module { FlexBox { Children { List { Name: L, Selection: MULTIPLE, Height: 400, "
+        "Selected: <| pick |>, On_Changed: changed, "
+        f"Children {{ {ENTRIES} }} }} }} }} }}"
+    )
+    code = "from tess_shell import Module, action\nclass Driver(Module):\n    def __init__(self):\n        self.seen = []\n    def start(self):\n        self.ctx.send('pick', 'k2,k4')\n    @action\n    def changed(self, event):\n        self.seen.append(event.value)\n"
+    with running("Driver { }", driver=driver, driver_py=code) as w:
+        items = [n for k, n in w.view.nodes.items() if k.endswith("/Items")][0].children()
+        chosen = lambda: [i + 1 for i, n in enumerate(items) if n.get("selected")]  # noqa: E731
+        assert chosen() == [2, 4]
+        w.send("pick", "k1,k3,k5")
+        assert chosen() == [1, 3, 5] and seen(w) == []
+        w.window.simulate("click", node=items[5], ctrl=True)
+        assert seen(w) == ["k1,k3,k5,k6"]

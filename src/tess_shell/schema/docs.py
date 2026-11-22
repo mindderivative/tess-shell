@@ -158,8 +158,10 @@ KEY_DOCS: dict[str, str] = {
     "Toggles": "Makes a click flip Checked and raise On_Changed: the block acts as a toggle or a "
     "checkbox.",
     "Selection_Mode": "SINGLE makes the block's children the entries of a list of which one is "
-    "chosen; NONE is a plain block.",
-    "Chosen": "The Key of the chosen entry of a list.",
+    "chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE "
+    "is a plain block.",
+    "Chosen": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a "
+    "comma, of a MULTIPLE one.",
     "Active_Descendant": "The node id of the list whose chosen entry a screen reader reads as "
     "the current item of this text field (the keyboard stays in the field). A module writes the "
     "List's Name on the TextInput call; the shell turns it into the id.",
@@ -1098,7 +1100,8 @@ AUTHORED_DEFAULTS: dict[str, tuple[str, str]] = {
     ),
     "Selection_Mode": (
         "NONE",
-        "no tre property; binder.controls.kind_of makes a block a list only when it is SINGLE",
+        "no tre property; binder.controls.kind_of makes a block a list when it is SINGLE or "
+        "MULTIPLE",
     ),
     "Slides": (
         "NONE",
@@ -1156,7 +1159,7 @@ MODULE_NOTES: dict[str, str] = {
     "Icon": "An icon from an icon set or a file, sized by one number.",
     "Image": "A picture from a file, with a placeholder while it loads.",
     "Label": "A line of text in the theme's body type.",
-    "List": "A list of entries of which one can be chosen.",
+    "List": "A list of entries of which one, or a set, can be chosen.",
     "Marquee_Text": "A line of text that scrolls when it is wider than its box.",
     "Media": "What a media player plays, with previous, play or pause and next buttons.",
     "Menu": "The content of a Popup: a column of menu items.",
@@ -1228,8 +1231,10 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Image", "Fit"): "How the picture fits its box: CONTAIN, COVER, FILL or NONE.",
     ("Image", "Placeholder"): "A colour or an icon shown while the picture loads or fails.",
     ("Label", "Text"): "The words.",
-    ("List", "Selected"): "The Key of the chosen entry, set from outside; empty is none.",
-    ("List", "Selection"): "SINGLE lets one entry be chosen; NONE does not.",
+    ("List", "Selected"): "The Key of the chosen entry, set from outside; empty is none. With "
+    "MULTIPLE, the Keys of the chosen entries joined by a comma (a Key has no comma).",
+    ("List", "Selection"): "SINGLE lets one entry be chosen; MULTIPLE lets a set be chosen; NONE "
+    "does not.",
     ("List", "Label"): "The name assistive technology reads aloud for the list.",
     ("List", "Empty"): "The text the list shows when it has no entries and Count is 0.",
     ("List", "Count"): "How many entries the caller puts in the list; -1, the default, is "

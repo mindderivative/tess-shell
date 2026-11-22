@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.44",
+  "schema_version": "1.45",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -7152,11 +7152,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -7170,7 +7171,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -8881,11 +8882,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -8899,7 +8901,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -10720,11 +10722,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -10738,7 +10741,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -12272,11 +12275,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -12290,7 +12294,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -14054,11 +14058,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -14072,7 +14077,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -15878,11 +15883,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -15896,7 +15902,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -17004,11 +17010,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -17022,7 +17029,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -18306,11 +18313,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -18324,7 +18332,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -19508,11 +19516,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -19526,7 +19535,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -20950,11 +20959,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -20968,7 +20978,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -22400,11 +22410,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -22418,7 +22429,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -23963,11 +23974,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -23981,7 +23993,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -25469,11 +25481,12 @@
           "kind": "enum",
           "choices": [
             "NONE",
-            "SINGLE"
+            "SINGLE",
+            "MULTIPLE"
           ],
           "enum": null,
           "default": "NONE",
-          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; NONE is a plain block.",
+          "doc": "SINGLE makes the block's children the entries of a list of which one is chosen; MULTIPLE lets any set be chosen (the engine's container selection, tre 0.6.13); NONE is a plain block.",
           "slot": true,
           "required": false,
           "built": true,
@@ -25487,7 +25500,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "The Key of the chosen entry of a list.",
+          "doc": "The Key of the chosen entry of a list; the Keys of the chosen entries, joined by a comma, of a MULTIPLE one.",
           "slot": true,
           "required": false,
           "built": true,
@@ -29642,20 +29655,20 @@
       "actions": []
     },
     "List": {
-      "doc": "A list of entries of which one can be chosen.",
+      "doc": "A list of entries of which one, or a set, can be chosen.",
       "params": {
         "Selected": {
           "type": "string",
           "kind": "string",
           "default": "\"\"",
-          "doc": "The Key of the chosen entry, set from outside; empty is none.",
+          "doc": "The Key of the chosen entry, set from outside; empty is none. With MULTIPLE, the Keys of the chosen entries joined by a comma (a Key has no comma).",
           "required": false
         },
         "Selection": {
           "type": "string",
           "kind": "string",
           "default": "\"SINGLE\"",
-          "doc": "SINGLE lets one entry be chosen; NONE does not.",
+          "doc": "SINGLE lets one entry be chosen; MULTIPLE lets a set be chosen; NONE does not.",
           "required": false
         },
         "Label": {

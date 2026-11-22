@@ -57,6 +57,8 @@ def plain(event: Any) -> bool:
 
 
 _KEYS = frozenset({"Toggles", "Selection_Mode", "Slides", "Menu_Item", "Reveals"})
+# the blocks the engine's container selection takes (tre 0.6.13: a box, container or scroll view)
+_CONTAINERS = frozenset({"ScrollBox", "FlexBox", "Box"})
 
 
 def kind_of(entry: Entry) -> str:
@@ -66,8 +68,11 @@ def kind_of(entry: Entry) -> str:
         return ""
     if _flag(entry, "Toggles"):
         return "toggle"
-    if _word(entry, "Selection_Mode") == "SINGLE":
+    mode = _word(entry, "Selection_Mode")
+    if mode == "SINGLE":
         return "select"
+    if mode == "MULTIPLE" and entry.typed.kind in _CONTAINERS:
+        return "multiselect"
     if _word(entry, "Slides") in ("HORIZONTAL", "VERTICAL"):
         return "slide"
     if _flag(entry, "Menu_Item"):
@@ -389,6 +394,99 @@ class Select(Control):
         if self.forget is not None:
             self.forget.cancel()
             self.forget = None
+
+
+class MultiSelect(Control):
+    """``Selection_Mode: MULTIPLE``: the same entries as :class:`Select`, chosen as a set by the
+    engine's own container selection (tre 0.6.13: ``selection_mode`` ``"multiple"`` on the
+    ScrollBox, whose items are the children of the one child it scrolls). The engine has the
+    rules (Selection pattern: click, Shift+click a range, Ctrl+click a toggle, Shift+Up and Down,
+    Ctrl+Space, Ctrl+A, a disabled entry is skipped, the anchor), says ``selected`` and
+    ``multiselectable`` to assistive technology and announces the count once, debounced; the shell
+    keeps the ``:selected`` look, ``Selected`` from outside and ``On_Changed``. The keys of the
+    chosen entries are joined by a comma (``old``, ``new`` and ``value`` of the event; the same
+    text is what ``Selected`` takes), in the order of the entries."""
+
+    ANNOUNCE = "{count} selected"
+
+    def __init__(self, view: View, entry: Entry) -> None:
+        super().__init__(view, entry)
+        self.chosen: frozenset[str] = frozenset()
+        self.base: str | None = None
+        self.listening = False
+
+    def entries(self) -> list[tuple[str, Entry]]:
+        """The keyed entries, as :meth:`Select.keys` finds them."""
+        out: list[tuple[str, Entry]] = []
+        holder = self.entry
+        if holder.typed.kind == "ScrollBox" and holder.children:
+            holder = holder.children[0]
+        for child in holder.children:
+            key = child.typed.props.get("Key")
+            if isinstance(key, Text) and child.tre is not None:
+                out.append((key.value, child))
+        return out
+
+    def items(self) -> list[Entry]:
+        holder = self.entry.children[0] if self.entry.children else self.entry
+        return list(holder.children)
+
+    def text(self, keys: frozenset[str]) -> str:
+        return ",".join(k for k, _ in self.entries() if k in keys)
+
+    def configure(self, entry: Entry) -> None:
+        super().configure(entry)
+        tre = self.tre
+        if tre.get("selection_mode") != "multiple":
+            tre.set(selection_mode="multiple", select_all_key=True)
+        if tre.get("selection_announce") != self.ANNOUNCE:
+            tre.set(selection_announce=self.ANNOUNCE)
+        # a child that is not an entry, or is disabled, is not chosen by a range or a key
+        keyed = {id(child) for _, child in self.entries()}
+        for child in self.items():
+            if child.tre is None:
+                continue
+            can = id(child) in keyed and not child.tre.get("disabled")
+            if child.tre.get("item_selectable") != can:
+                child.tre.set(item_selectable=can)
+        value = self.view.dynamic.get(entry.typed.name or "", {}).get("Chosen")
+        value = value if value is not None else entry.typed.props.get("Chosen")
+        param = value.value if isinstance(value, Text) else ""
+        if self.base is None or param != self.base:
+            self.base = param
+            wanted = frozenset(k for k in param.split(",") if k)
+            self.chosen = wanted
+            nodes = [c.tre for k, c in self.entries() if k in wanted and c.tre is not None]
+            tre.set(selection=nodes)
+        self.apply()
+        if not self.listening:
+            self.listening = True
+            tre.on("selection_change", self.moved)
+
+    def apply(self) -> None:
+        for key, child in self.entries():
+            on = key in self.chosen
+            if child.wire is not None:
+                child.wire.owned = True
+                child.wire.set_flags(selected=on)
+            if child.tre is not None and child.tre.get("selected") != on:
+                child.tre.set(selected=on)  # what the engine says to assistive technology
+            if child.tre is not None and "role" not in child.props:
+                if child.tre.get("role") != "listitem":
+                    child.tre.set(role="listitem")
+
+    def moved(self, event: Any) -> None:
+        """The engine changed the set (a click, a key, Ctrl+A, or a set from outside)."""
+        nodes = list(getattr(event, "selection", None) or [])
+        by_node = {child.tre: key for key, child in self.entries()}
+        new = frozenset(by_node[n] for n in nodes if n in by_node)
+        if new == self.chosen:
+            return
+        old = self.chosen
+        self.chosen = new
+        self.apply()
+        self.view.resync()
+        self.changed(self.text(old), self.text(new))
 
 
 class Slide(Control):
@@ -723,8 +821,25 @@ def make(view: View, entry: Entry) -> Control | None:
     kind = kind_of(entry)
     if entry.tre is None or not kind:
         return None
-    makers = {"toggle": Toggle, "select": Select, "slide": Slide, "item": Item, "expand": Expand}
+    makers = {
+        "toggle": Toggle,
+        "select": Select,
+        "multiselect": MultiSelect,
+        "slide": Slide,
+        "item": Item,
+        "expand": Expand,
+    }
     return makers[kind](view, entry)
 
 
-__all__ = ["Control", "Expand", "Item", "Select", "Slide", "Toggle", "kind_of", "make"]
+__all__ = [
+    "Control",
+    "Expand",
+    "Item",
+    "MultiSelect",
+    "Select",
+    "Slide",
+    "Toggle",
+    "kind_of",
+    "make",
+]

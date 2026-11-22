@@ -23,7 +23,7 @@ Each section below says what the module shows, lists its parameters (generated f
 | [Icon](#icon) | An icon from an icon set or a file, sized by one number |
 | [Image](#image) | A picture from a file, with a placeholder while it loads |
 | [Label](#label) | A line of text in the theme's body type |
-| [List](#list) | A list of entries of which one can be chosen |
+| [List](#list) | A list of entries of which one, or a set, can be chosen |
 | [Marquee_Text](#marquee_text) | A line of text that scrolls when it is wider than its box |
 | [Media](#media) | What a media player plays, with previous, play or pause and next buttons |
 | [Menu](#menu) | The content of a Popup: |
@@ -791,15 +791,15 @@ Shell {
 
 ## List
 
-A scrolling list of entries, one of which can be chosen. The entries are the use's children; each has a `Key`, and a `For` over your own data makes them from a module. The wheel scrolls it; it is 240 by 200 pixels unless you write a size. A click chooses an entry (`Selection: SINGLE`) and raises `On_Changed` with the old and new keys; with `Selection: NONE` it chooses nothing. `Selected` marks an entry from outside and raises nothing. The chosen entry takes the style state `:selected`: give the entries a class and style `.list_item:selected`, as the `Default` stylesheet does for the class `list_item`. Keys: one Tab stop, then Up and Down move the choice, Page Up and Page Down by a page, Home and End to the ends, and letters typed jump to the next entry starting with them.
+A scrolling list of entries, one of which can be chosen. The entries are the use's children; each has a `Key`, and a `For` over your own data makes them from a module. The wheel scrolls it; it is 240 by 200 pixels unless you write a size. A click chooses an entry (`Selection: SINGLE`) and raises `On_Changed` with the old and new keys; with `Selection: NONE` it chooses nothing, and with `Selection: MULTIPLE` it chooses a set as the Selection pattern says: Shift+click a range, Ctrl+click a toggle, Shift+Up and Down extend, Ctrl+Space toggles, Ctrl+A chooses all, a disabled entry is skipped, and a screen reader hears "N selected" once. `Selected` and the event's `old`, `new` and `value` are then the keys of the chosen entries joined by a comma (a key has no comma). `Selected` marks an entry from outside and raises nothing. The chosen entry takes the style state `:selected`: give the entries a class and style `.list_item:selected`, as the `Default` stylesheet does for the class `list_item`. Keys: one Tab stop, then Up and Down move the choice, Page Up and Page Down by a page, Home and End to the ends, and letters typed jump to the next entry starting with them.
 
 <!-- BEGIN generated: module:List -->
-A list of entries of which one can be chosen.
+A list of entries of which one, or a set, can be chosen.
 
 | Param | Type | Default | What it does |
 |---|---|---|---|
-| `Selected` | string | `""` | The Key of the chosen entry, set from outside; empty is none. |
-| `Selection` | string | `"SINGLE"` | SINGLE lets one entry be chosen; NONE does not. |
+| `Selected` | string | `""` | The Key of the chosen entry, set from outside; empty is none. With MULTIPLE, the Keys of the chosen entries joined by a comma (a Key has no comma). |
+| `Selection` | string | `"SINGLE"` | SINGLE lets one entry be chosen; MULTIPLE lets a set be chosen; NONE does not. |
 | `Label` | string | `""` | The name assistive technology reads aloud for the list. |
 | `Empty` | string | `""` | The text the list shows when it has no entries and Count is 0. |
 | `Count` | number | `-1` | How many entries the caller puts in the list; -1, the default, is unknown, so no empty text shows. |
