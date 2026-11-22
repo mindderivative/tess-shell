@@ -346,6 +346,8 @@ class _Hover:
 
     def focus(self, visible: bool) -> None:
         """Keyboard focus (with a ring) shows the tooltip at once; losing it ends it."""
+        if not visible:
+            self.popups.blur(self.surface, self.block)
         self.popups.hover(self.surface, self.block, visible, immediate=True)
 
     def enter(self) -> None:
@@ -1140,6 +1142,14 @@ class Popups:
         cur = self.current
         if cur is not None and cur.block == block and cur.caller.surface == surface_key:
             self._arm_exit(cur)
+
+    def blur(self, surface_key: str, block: str) -> None:
+        """Keyboard focus left ``block``: its open tooltip is removed at once (Tooltip >
+        Behavior: no grace period, the tip was the focus's)."""
+        cur = self.current
+        if cur is not None and cur.block == block and cur.caller.surface == surface_key:
+            self._cancel_enter()
+            self.close(cur, "focus left the block")
 
     def _cancel_enter(self) -> None:
         if self._enter_timer is not None:

@@ -41,7 +41,6 @@ GAPS: dict[str, tuple[str, str]] = {
         "the open tip is not hidden from assistive technology (the standard: the trigger's "
         "description carries the text and the tip is hidden); the shell's tooltip popup is exposed",
     ),
-    "blur-closes": (FAIL, "keyboard focus leaving the block does not close its tooltip"),
     "escape-closes-and-stays-closed": (
         FAIL,
         "`consumed` is not observable by the adapter (it reports false): adapter limit",
