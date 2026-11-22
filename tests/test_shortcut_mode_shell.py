@@ -562,9 +562,9 @@ def test_the_mode_ends_when_the_keyboard_goes_to_another_window(rig: Make) -> No
     r.mode.enter()
     r.manager._surface_active("F", True)  # the compositor gave the Frame the keyboard
     r.manager._surface_active("F", False)  # ... and a click on another client took it
-    r.settle(200)
-    assert r.state[0] == "F"  # not yet: a move to the next surface looks the same for a moment
-    r.settle(200)
+    r.settle(1000)
+    assert r.state[0] == "F"  # not yet: a move to the next surface looks the same for a while
+    r.settle(1200)
     assert r.state == (None, None)
     assert r.keyboard("F") == "none"  # the written word again
 
@@ -587,3 +587,34 @@ def test_a_mode_that_never_had_the_keyboard_is_not_ended_by_a_loss_it_never_saw(
     r.mode.enter()  # the compositor has not (yet) given anyone the keyboard: no loss event
     r.settle(1000)
     assert r.state[0] == "F"
+
+
+def test_a_compositor_that_takes_the_keyboard_back_a_moment_after_giving_it_is_waited_for(
+    rig: Make,
+) -> None:
+    """The live run on sway: Next_Focus asked the Dock, the Dock had the keyboard and lost it 8 ms
+    later, and had it again half a second after. A loss alone does not end the mode."""
+    r = rig()
+    r.mode.enter()
+    r.manager._surface_active("F", True)
+    r.mode.step(True)
+    r.manager._surface_active("F", False)
+    r.manager._surface_active("Dock", True)
+    r.manager._surface_active("Dock", False)  # taken back
+    r.settle(900)
+    assert r.state == ("F", "Dock")
+    r.manager._surface_active("Dock", True)  # and given again
+    r.settle(3000)
+    assert r.state == ("F", "Dock")
+
+
+def test_a_surface_that_never_gets_the_keyboard_back_ends_the_mode_in_the_end(rig: Make) -> None:
+    r = rig()
+    r.mode.enter()
+    r.manager._surface_active("F", True)
+    r.mode.step(True)
+    r.manager._surface_active("F", False)
+    r.settle(1500)
+    assert r.state[0] == "F"  # still waiting
+    r.settle(1000)
+    assert r.state == (None, None)  # 2 s: it is not coming

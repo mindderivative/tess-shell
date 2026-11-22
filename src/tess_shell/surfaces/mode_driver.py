@@ -38,9 +38,11 @@ if TYPE_CHECKING:
 ESCAPE = parse_chord("Escape")
 KEYBOARD_WAIT_MS = 1500  # how long the compositor has to hand the keyboard over
 # how long no surface of the shell may hold the keyboard, after one lost it, before the mode takes
-# that as the keyboard having gone to another client (the move from one surface to the next gives
-# it up and takes it again within a few milliseconds)
-KEYBOARD_LOST_MS = 300
+# that as the keyboard having gone to another client. A compositor takes the keyboard from the old
+# surface and gives it to the new one in its own time, and some give it and take it back a few
+# milliseconds later (sway on the surface the mode asked), so a loss alone is no signal: it is the
+# keyboard staying away that is
+KEYBOARD_LOST_MS = 2000
 
 
 def surface_flags(shell: ShellDef, names: Sequence[str]) -> dict[str, bool]:
