@@ -89,6 +89,8 @@ Inside a theme file the same tokens are written as nested blocks with capitalise
 | `$space.step_6` | number | `24` | never | A step of spacing between groups. |
 | `$space.step_7` | number | `32` | never | A large step of spacing. |
 | `$space.step_8` | number | `48` | never | The largest step of spacing. |
+| `$space.focus_ring_width` | number | `3` | never | The width of the ring that shows keyboard focus (3). |
+| `$space.focus_ring_offset` | number | `2` | never | The gap between a block and its focus ring (2). |
 
 ### Density
 
@@ -307,7 +309,7 @@ and may end in a **state**: `:hovered`, `:pressed`, `:checked`, `:selected`, `:f
 
 A block takes a class with `Class: warn` (several are written as a list). A module's own look is in its `_Style.tdl` file, which the module names with a `Style:` line, with `Classes { clock_text { Kind: Text, Font_Size: 14 } }`; your stylesheet rules override it because they come later.
 
-`:focused` is the ring that **keyboard** focus shows (a click focuses without it); a block shows it only if it takes `Shadows`, so a `Focusable` block should be a `Box`, `FlexBox`, `Rectangle`, `ScrollBox` or `TextField`. See [Keyboard and shortcuts](keyboard.md#focus).
+`:focused` is the ring that **keyboard** focus shows (a click focuses without it); it is an outline (`Outline_Width`, `Outline_Offset`, `Outline_Color`), and only blocks that take those keys show it, so a `Focusable` block should be a `Box`, `FlexBox`, `Rectangle`, `ScrollBox` or `TextField`. See [Keyboard and shortcuts](keyboard.md#focus).
 
 ### Style keys
 
@@ -328,6 +330,9 @@ These are the keys a `Style { }` block, a style key written directly on a block,
 | `Opacity` | number | 12 block types | type, shape, space, density, elevation, motion | How opaque the block and what it holds is painted, from 0 (invisible) to 1. |
 | `Elevation` | percentage | Box, FlexBox, Rectangle, ScrollBox, TextField |  | How high the block floats: a percentage of the theme's largest shadow (0% is no shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is LEVEL_2, a dialog LEVEL_3). |
 | `Shadows` | shadows | Box, FlexBox, Rectangle, ScrollBox, TextField | elevation.max | A list of Shadow blocks, the first on top; it replaces Elevation when both are written. |
+| `Outline_Width` | number | Box, FlexBox, Rectangle, ScrollBox, TextField | type, shape, space, density, elevation, motion | The width of a line drawn outside the block, off its edge by Outline_Offset (the keyboard focus ring uses it, in :focused). 0 draws none. |
+| `Outline_Offset` | number | Box, FlexBox, Rectangle, ScrollBox, TextField | type, shape, space, density, elevation, motion | The gap between the block and its outline. |
+| `Outline_Color` | colour | Box, FlexBox, Rectangle, ScrollBox, TextField | color | The colour of the outline. |
 | `Spacing` | number | FlexBox | space | The space between the children, in pixels. |
 | `Foreground` | colour | Text, SVG, Marquee, TextField | color | The colour of the text or of the icon, a colour or a theme token. |
 | `Font_Family` | font | Text, Marquee, TextField | color, motion | A font family name, or a list of them in the order of fallback. |

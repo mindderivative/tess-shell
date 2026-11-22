@@ -90,6 +90,10 @@ KEY_DOCS: dict[str, str] = {
     "Elevation": "How high the block floats: a percentage of the theme's largest shadow (0% is no "
     "shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is "
     "LEVEL_2, a dialog LEVEL_3).",
+    "Outline_Width": "The width of a line drawn outside the block, off its edge by Outline_Offset "
+    "(the keyboard focus ring uses it, in :focused). 0 draws none.",
+    "Outline_Offset": "The gap between the block and its outline.",
+    "Outline_Color": "The colour of the outline.",
     "Shadows": "A list of Shadow blocks, the first on top; it replaces Elevation when both are "
     "written.",
     "Shadow_Bleed": "The transparent margin a surface keeps around its body for the shadow: AUTO "
@@ -496,6 +500,9 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Color",
         "Opacity",
         "Elevation",
+        "Outline_Width",
+        "Outline_Offset",
+        "Outline_Color",
         "Shadows",
         "Shadow_Bleed",
         "Placeholder_Foreground",
@@ -768,6 +775,8 @@ TOKEN_DOCS: dict[str, str] = {
     "space.step_6": "A step of spacing between groups.",
     "space.step_7": "A large step of spacing.",
     "space.step_8": "The largest step of spacing.",
+    "space.focus_ring_width": "The width of the ring that shows keyboard focus (3).",
+    "space.focus_ring_offset": "The gap between a block and its focus ring (2).",
     "density.control_height": "The height of a button, a text field, a switch row and an icon "
     "button: 40, 32 or 28 at the default, compact and dense levels.",
     "density.row_height": "The height of a one-line list or tree row: 40, 32 or 24.",
