@@ -1413,10 +1413,16 @@ class Frames:
                 self._handle_colour(st),
                 peek.handle_opacity if peek is not None else 0.6,
             )
+            # the press of assistive technology (no pointer position): open or close the peek
+            have.holder.on("click", lambda _e: self._meld_to(st, host, not self._is_out(st, host)))
         if peek is not None:
             have.set_rest(peek.handle_opacity)
         axis = host.axis
         state = self._rest_state(st, host)
+        shown_out = state == "out"
+        have.holder.set(
+            label=f"{'Collapse' if shown_out else 'Expand'} {host.plan.name}", expanded=shown_out
+        )
         if axis is None or (state == "hidden" and host.anim is None):
             have.holder.set(visible=False)
             return
