@@ -627,8 +627,9 @@ A surface that opens from a block: a menu or a tooltip.
 | `Enter_Delay` | number | `500` |  | How long the pointer rests before it opens, in milliseconds. |
 | `Close_On_Exit` | true or false | `false` |  | Closes when the pointer leaves. |
 | `Exit_Delay` | number | `150` |  | How long the pointer is away before it closes, in milliseconds. |
+| `Animation` | block | none |  | How the Popup opens and closes: an Animation block with Type FADE or NONE (the default) and Duration (200 ms). SLIDE is not built. Reduced motion shows and hides it at once. |
 
-Not built yet (the loader says so if you write them): `Attach_To`, `Animation`.
+Not built yet (the loader says so if you write them): `Attach_To`.
 
 A `Style { }` block of a Popup takes: `Background`, `Fill`, `Opacity`, `Elevation`, `Shadows`, `Shadow_Bleed`, `Corner_Radius`, `Border_Width`, `Border_Color`.
 
@@ -832,8 +833,9 @@ An inline Popup that is a tooltip, written inside a block or a module call.
 | `Enter_Delay` | number | none |  | How long the pointer rests before it opens, in milliseconds. |
 | `Close_On_Exit` | true or false | none |  | Closes when the pointer leaves. |
 | `Exit_Delay` | number | none |  | How long the pointer is away before it closes, in milliseconds. |
+| `Animation` | block | none |  | How the surface comes and goes: an Animation block with Type and Duration. |
 
-Not built yet (the loader says so if you write them): `Attach_To`, `Animation`.
+Not built yet (the loader says so if you write them): `Attach_To`.
 
 A `Style { }` block of a Tooltip takes: `Background`, `Fill`, `Opacity`, `Elevation`, `Shadows`, `Shadow_Bleed`, `Corner_Radius`, `Border_Width`, `Border_Color`.
 

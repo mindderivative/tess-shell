@@ -65,7 +65,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ELEVATION_LEVELS, ValueProblem, coerce
 
-SCHEMA_VERSION = "1.41"
+SCHEMA_VERSION = "1.42"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -490,6 +490,7 @@ _FIELDS: dict[tuple[str, str], tuple[type, str]] = {
     ("Popup", "Enter_Delay"): (PopupDef, "enter_delay"),
     ("Popup", "Close_On_Exit"): (PopupDef, "close_on_exit"),
     ("Popup", "Exit_Delay"): (PopupDef, "exit_delay"),
+    ("Popup", "Animation"): (PopupDef, "animation"),
     ("Frame", "Visible"): (FrameDef, "visible"),
     ("Frame", "Keyboard"): (FrameDef, "keyboard"),
     ("Frame", "Margin"): (FrameDef, "margin"),
@@ -859,6 +860,7 @@ def _roots() -> dict[str, Json]:
                 skip=("Tooltip",) if inline else (),
             ),
             **_not_built(spec, blocks.POPUP_NOT_BUILT, refused=True, kinds=_SHARED_KINDS),
+            "Animation": _key(spec, "Animation", "block:Animation"),
         }
         roots[spec] = _spec(
             spec,

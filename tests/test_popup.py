@@ -105,7 +105,7 @@ def test_tooltip_true_sets_no_focus_open_on_enter_and_close_on_exit_and_a_key_ov
         ("Popup { Name: P, Width: 50% }", "not-built", "PERCENT"),
         ("Popup { Name: P, Height: EXPAND }", "not-built", "EXPAND"),
         ("Popup { Name: P, Max_Width: 50% }", "not-built", "Max_Width"),
-        ("Popup { Name: P, Animation { Type: FADE } }", "not-built", "Animation"),
+        ("Popup { Name: P, Animation { Type: SLIDE } }", "not-built", "SLIDE"),
         ("Popup { Name: P, Colour: 1 }", "unknown-key", "Popup"),
         ("Popup { Name: P, Enter_Dely: 1 }", "unknown-key", "Enter_Delay"),
     ],
@@ -868,3 +868,74 @@ def test_the_tooltip_grace_is_150_ms_by_default() -> None:
     from tess_shell.schema.model import PopupDef
 
     assert PopupDef.__dataclass_fields__["exit_delay"].default == 150  # ADR-0011
+
+
+# -- Animation (FADE) -------------------------------------------------------------------------
+
+
+FADING = (
+    "Popup { Name: Menu, Animation { Type: FADE, Duration: 200 }, Children { "
+    'FlexBox { Name: Card, Padding: 6, Children { Text { Text: "Hello", Width: AUTO, '
+    "Height: AUTO } } } } }"
+)
+
+
+def test_a_fading_popup_comes_in_from_nothing_and_goes_out_before_its_window_closes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (r,) = list(rig(FADING))
+    shut: list[object] = []
+    real = r.popups._shut
+    monkeypatch.setattr(r.popups, "_shut", lambda op: (shut.append(op), real(op)))
+    op = r.call()
+    assert op.window.root.get("opacity") == 0.0
+    op.window.advance(100)
+    assert 0.0 < op.window.root.get("opacity") < 1.0
+    op.window.advance(300)
+    assert op.window.root.get("opacity") == 1.0
+    r.popups.close(op, "by the test")
+    assert r.popups.current is None and shut == []  # no longer the open popup, still on screen
+    op.window.advance(100)
+    assert 0.0 < op.window.root.get("opacity") < 1.0 and shut == []
+    op.window.advance(300)
+    assert shut == [op] and op.window.root.get("opacity") == 0.0
+
+
+def test_a_popup_without_an_animation_block_opens_and_closes_at_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (r,) = list(rig(f"Popup {{ Name: Menu, Children {{ {CARD} }} }}"))
+    shut: list[object] = []
+    real = r.popups._shut
+    monkeypatch.setattr(r.popups, "_shut", lambda op: (shut.append(op), real(op)))
+    op = r.call()
+    assert op.window.root.get("opacity") == 1.0
+    r.popups.close(op, "by the test")
+    assert shut == [op]
+
+
+def test_reduced_motion_opens_and_closes_a_fading_popup_at_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (r,) = list(rig(FADING))
+    monkeypatch.setattr(
+        type(r.manager._look.appearance), "reduced_motion", property(lambda self: True)
+    )
+    shut: list[object] = []
+    real = r.popups._shut
+    monkeypatch.setattr(r.popups, "_shut", lambda op: (shut.append(op), real(op)))
+    op = r.call()
+    assert op.window.root.get("opacity") == 1.0
+    r.popups.close(op, "by the test")
+    assert shut == [op]
+
+
+def test_fade_on_a_popup_is_built() -> None:
+    shell, findings = read(
+        SHELL % ("", "Popup { Name: P, Animation { Type: FADE }, Children { Box { } } }")
+    )
+    assert findings == [] and shell is not None
+    assert (shell.monitors[0].popups[0].animation, shell.monitors[0].popups[0].duration) == (
+        "FADE",
+        200,
+    )
