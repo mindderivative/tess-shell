@@ -1205,6 +1205,9 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("List", "Selected"): "The Key of the chosen entry, set from outside; empty is none.",
     ("List", "Selection"): "SINGLE lets one entry be chosen; NONE does not.",
     ("List", "Label"): "The name assistive technology reads aloud for the list.",
+    ("List", "Empty"): "The text the list shows when it has no entries and Count is 0.",
+    ("List", "Count"): "How many entries the caller puts in the list; -1, the default, is "
+    "unknown, so no empty text shows.",
     ("Marquee_Text", "Text"): "The words; they scroll when wider than the box.",
     ("Marquee_Text", "Speed"): "How fast the text scrolls, in pixels a second.",
     ("Marquee_Text", "Pause"): "How long the text waits at each end, in milliseconds.",

@@ -307,6 +307,26 @@ def test_scrollbox_with_two_children_is_an_error() -> None:
         assert any("a ScrollBox scrolls one child" in x for x in w.lines)
 
 
+def empty_nodes(w: Widgets) -> list[Any]:
+    return [n for k, n in w.view.nodes.items() if k.endswith("/Empty")]
+
+
+def test_an_empty_list_shows_one_empty_node_and_keeps_its_role_and_name() -> None:
+    """AC-EMP-1: Count 0 with an Empty text shows exactly one node with that text."""
+    with running('List { Label: Files, Empty: "No results", Count: 0, Children { } }') as w:
+        assert w.warnings() == [], w.warnings()
+        (empty,) = empty_nodes(w)
+        assert empty.get("text") == "No results"
+        root = w.of_use("List", "Root")
+        assert root.get("role") == "list" and root.get("label") == "Files"
+
+
+def test_a_list_with_entries_or_an_unknown_count_shows_no_empty_node() -> None:
+    for keys in ('Count: 12, Empty: "None"', 'Empty: "None"', "Count: 0"):
+        with running(f"List {{ {keys}, Children {{ {ENTRIES} }} }}") as w:
+            assert empty_nodes(w) == [], keys
+
+
 def test_list_scrolls_by_the_wheel_chooses_by_a_click_and_marks_the_entry() -> None:
     with running(f"List {{ Height: 90, Label: Files, {CHANGED}, Children {{ {ENTRIES} }} }}") as w:
         assert w.warnings() == [], w.warnings()
