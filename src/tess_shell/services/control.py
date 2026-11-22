@@ -3,7 +3,8 @@ Threading; ADR-0013).
 
 The shell owns ``io.github.mindderivative.TesseraeShell`` and exports ``/io/github/mindderivative/
 TesseraeShell`` with the interface ``io.github.mindderivative.TesseraeShell1``: the methods
-``Reload``, ``Quit``, ``Status``, ``Show``, ``Hide``, ``Toggle``, ``ClosePopup``, ``Call`` and
+``Reload``, ``Quit``, ``Status``, ``Show``, ``Hide``, ``Toggle``, ``ClosePopup``,
+``ExitShortcutMode``, ``Call`` and
 ``SetLogLevel``, the properties ``State``, ``Version`` and ``ApiVersion`` and the signals
 ``Reloaded``, ``ErrorReported`` and ``SurfaceChanged``. The ``tesserae-shell`` commands are its
 clients (``tess_shell.client``).
@@ -68,6 +69,8 @@ class Commands(Protocol):
     def surface(self, action: str, name: str) -> tuple[bool, str]: ...
 
     def close_popup(self) -> None: ...
+
+    def exit_shortcut_mode(self) -> bool: ...
 
     def call(self, module: str, action: str, values: list[Any]) -> Any: ...
 
@@ -319,6 +322,7 @@ class ControlService:
             "Hide": _method("Hide", ["s"], "bs", lambda n: self._surface("Hide", n)),
             "Toggle": _method("Toggle", ["s"], "bs", lambda n: self._surface("Toggle", n)),
             "ClosePopup": _method("ClosePopup", [], "", self._close_popup),
+            "ExitShortcutMode": _method("ExitShortcutMode", [], "b", self._exit_shortcut_mode),
             "Call": _method("Call", ["s", "s", "s"], "s", self._call),
             "SetLogLevel": _method("SetLogLevel", ["s"], "", self._set_log_level),
             "FullscreenState": _method("FullscreenState", ["s"], "s", self._fullscreen_state),
@@ -425,6 +429,10 @@ class ControlService:
     async def _close_popup(self) -> None:
         self._require_running()
         await self.on_loop(self.commands.close_popup)
+
+    async def _exit_shortcut_mode(self) -> bool:
+        self._require_running()
+        return bool(await self.on_loop(self.commands.exit_shortcut_mode))
 
     async def _call(self, module: str, action: str, args: str) -> str:
         self._require_running()

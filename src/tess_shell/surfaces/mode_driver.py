@@ -37,6 +37,10 @@ if TYPE_CHECKING:
 
 ESCAPE = parse_chord("Escape")
 KEYBOARD_WAIT_MS = 1500  # how long the compositor has to hand the keyboard over
+# how long no surface of the shell may hold the keyboard, after one lost it, before the mode takes
+# that as the keyboard having gone to another client (the move from one surface to the next gives
+# it up and takes it again within a few milliseconds)
+KEYBOARD_LOST_MS = 300
 
 
 def surface_flags(shell: ShellDef, names: Sequence[str]) -> dict[str, bool]:
@@ -285,6 +289,30 @@ class ModeDriver:
                     self._expect_keyboard(window, new.focus, word)
         except (ValueError, RuntimeError) as exc:
             logger.warning(f"shortcut mode: {new.focus} cannot take the keyboard ({exc})")
+
+    def keyboard_lost(self, name: str) -> None:
+        """A surface of the shell lost the keyboard. If the shell is in the mode and none of its
+        surfaces has the keyboard a moment later, the user went to another window (a click on it):
+        its keys would never reach the mode again, so the mode ends and the surfaces get their
+        written ``Keyboard`` back. Without this the mode stays on, with Escape going to the other
+        window, and there is no way out but a command."""
+        if not self.machine.on:
+            return
+        window = self._target(name)[0] or next(
+            (s.window for s in self._m.surfaces if s.window is not None), None
+        )
+        if window is None:
+            self._leave_if_lost()
+            return
+        try:
+            window.after(KEYBOARD_LOST_MS, self._leave_if_lost)
+        except ValueError, RuntimeError:
+            logger.debug("shortcut mode: the keyboard check could not be set", exc_info=True)
+
+    def _leave_if_lost(self) -> None:
+        if self.machine.on and self._m.focused is None:
+            logger.info("shortcut mode: the keyboard went to another window; the mode ends")
+            self.exit()
 
     def _expect_keyboard(self, window: Any, name: str, word: str) -> None:
         """The compositor decides which layer surface has the keyboard. If ``name`` still has the

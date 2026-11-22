@@ -541,3 +541,49 @@ def test_f6_with_ctrl_alt_or_meta_is_not_the_shells(rig: Make) -> None:
     for mod in ("ctrl", "alt", "meta"):
         r.key("Dock", "f6", **{mod: True})
         assert r.state == (None, None), mod
+
+
+# -- the way out: Escape from F6, and the keyboard going to another window ---------------------
+
+
+def test_escape_leaves_the_mode_that_f6_entered_from_a_bar(rig: Make) -> None:
+    r = rig()
+    r.key("Top_Bar", "f6")  # a Bar that has the keyboard: the mode on, the focus stepped on
+    assert r.state[0] == "F"
+    r.key("Top_Bar", "escape")
+    assert r.state == (None, None)
+    assert r.keyboard("Dock") == "on_demand" and r.keyboard("Top_Bar") == "none"
+
+
+def test_the_mode_ends_when_the_keyboard_goes_to_another_window(rig: Make) -> None:
+    """The owner clicked a plain window: no surface of the shell has the keyboard, Escape and F6
+    now go to that window, so the mode must not stay on."""
+    r = rig()
+    r.mode.enter()
+    r.manager._surface_active("F", True)  # the compositor gave the Frame the keyboard
+    r.manager._surface_active("F", False)  # ... and a click on another client took it
+    r.settle(200)
+    assert r.state[0] == "F"  # not yet: a move to the next surface looks the same for a moment
+    r.settle(200)
+    assert r.state == (None, None)
+    assert r.keyboard("F") == "none"  # the written word again
+
+
+def test_a_move_from_one_surface_to_the_next_does_not_end_the_mode(rig: Make) -> None:
+    r = rig()
+    r.mode.enter()
+    r.manager._surface_active("F", True)
+    r.mode.step(True)
+    r.manager._surface_active("F", False)  # the old one gives it up ...
+    r.manager._surface_active("Dock", True)  # ... and the next takes it
+    r.settle(1000)
+    assert r.state[0] == "F" and r.state[1] == "Dock"
+
+
+def test_a_mode_that_never_had_the_keyboard_is_not_ended_by_a_loss_it_never_saw(
+    rig: Make,
+) -> None:
+    r = rig()
+    r.mode.enter()  # the compositor has not (yet) given anyone the keyboard: no loss event
+    r.settle(1000)
+    assert r.state[0] == "F"

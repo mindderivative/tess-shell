@@ -2050,6 +2050,8 @@ class SurfaceManager:
                 surface.had_keys = True
         if active:
             self._keyboard_taken(name)
+        else:
+            self.mode.keyboard_lost(name)
 
     def _surface_gone(self, name: str, window: Any = None) -> None:
         """A surface closed. When it had the keyboard focus, focus goes to the next surface in the
