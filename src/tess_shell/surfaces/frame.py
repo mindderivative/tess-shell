@@ -1092,15 +1092,17 @@ class Frames:
                 (shape.fill, ghost(paint.fill)),
                 (shape.inner_border, ghost(paint.inner)),
             )
-            key = (st.size, paint.opacity, bands)
-            if paint.shadows:
-                self._warn_shadow(st)
+            # the shadow of the filled ring, cast on the desktop inside it: tre 0.6.12 follows the
+            # holes of a path (before, a path's shadow was its outer contour's)
+            shadows = [(c, 0.0, 0.0, blur, spread) for c, blur, spread in paint.shadows]
+            key = (st.size, paint.opacity, bands, tuple(shadows))
             if key != st.drawn:
-                for node, (data, color) in zip(st.nodes, bands, strict=True):
+                for index, (node, (data, color)) in enumerate(zip(st.nodes, bands, strict=True)):
                     props: dict[str, Any] = {
                         "width": st.size[0],
                         "height": st.size[1],
                         "opacity": paint.opacity,
+                        "shadows": shadows if index == 1 else [],
                     }
                     if data and color is not None:
                         props.update(data=data, fill=color, visible=True)
@@ -1157,18 +1159,6 @@ class Frames:
             logger.warning(
                 f"Frame {st.plan.where}: Debug {{ Frame_Blend: LINEAR }} draws it with paths: "
                 f"{reason}"
-            )
-
-    def _warn_shadow(self, st: FrameState) -> None:
-        """A Frame drawn with paths has no shadow: tre's shadow of a path with a hole is the
-        shadow of its outer contour (a ring would be filled in), so only the shader draws it."""
-        key = f"{st.plan.key} shadow"
-        if key not in self._warned:
-            self._warned.add(key)
-            logger.warning(
-                f"Frame {st.plan.where}: its Elevation or Shadows are drawn by the ring shader "
-                "only (Debug { Frame_Blend: LINEAR } and a Frame it can draw): this Frame is drawn "
-                "with paths, so it has no shadow"
             )
 
     def _blend(self, st: FrameState) -> None:
