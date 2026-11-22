@@ -127,6 +127,9 @@ def choose_attach(
     return OPPOSITE[attach]
 
 
+EDGE_MARGIN = 8  # px between a popup's body and the screen edge when it is flipped or slid
+
+
 @dataclass(frozen=True, slots=True)
 class Measured:
     """The body a popup needs: its size (clamped to ``Max_Width`` and ``Max_Height``), and
@@ -710,6 +713,9 @@ class Popups:
             kwargs["geometry"] = (left, top, width, height)
             # a click in the shadow margin reaches the window below (tre 0.6.5, TRE-REQ-014)
             kwargs["input_region"] = "geometry"
+            # keep the body off the output's edge when the compositor flips or slides it; taken from
+            # the shadow room around it (a design choice: 8 px, tre 0.6.12 edge_margin)
+            kwargs["edge_margin"] = EDGE_MARGIN
         try:
             window = factory(parent.window if parent is not None else surface.window, **kwargs)
         except (ValueError, RuntimeError) as exc:  # a bad size, or no compositor
