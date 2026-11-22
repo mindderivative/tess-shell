@@ -910,6 +910,7 @@ def test_the_tokens_are_the_default_themes_with_its_modes() -> None:
         "shape",
         "space",
         "density",
+        "state",
         "elevation",
         "motion",
     ]

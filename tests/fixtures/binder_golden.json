@@ -2803,8 +2803,20 @@
      43,
      255
     ],
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "justify_content": "center",
     "label": "Off",
     "min_width": 32,
@@ -2812,6 +2824,12 @@
     "padding_left": 12,
     "padding_right": 12,
     "padding_top": 0,
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "button",
     "stroke_color": [
      85,
@@ -2862,8 +2880,20 @@
      43,
      255
     ],
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "justify_content": "center",
     "label": "Open",
     "min_width": 32,
@@ -2871,6 +2901,12 @@
     "padding_left": 36,
     "padding_right": 12,
     "padding_top": 0,
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "button",
     "stroke_color": [
      85,
@@ -2956,12 +2992,31 @@
    "Checkbox@Main_Shell.Main.Top_Bar.Checkbox_1/Root": {
     "align_items": "center",
     "checked": false,
+    "corner_radius": 4,
     "disabled": false,
     "display": "flex",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "gap": 8,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "Remember",
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "checkbox"
    },
    "Checkbox@Main_Shell.Main.Top_Bar.Checkbox_1/Words": {
@@ -3141,13 +3196,32 @@
    },
    "Toggle@Main_Shell.Main.Top_Bar.T/Root": {
     "checked": false,
+    "corner_radius": 999,
     "disabled": false,
     "display": "grid",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "t",
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "switch",
     "width": 40
    },
@@ -3391,8 +3465,20 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "height": 32,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "Open",
      "min_width": 32,
@@ -3400,6 +3486,12 @@
      "padding_left": 36,
      "padding_right": 12,
      "padding_top": 0,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "role": "button",
      "stroke_color": [
       85,
@@ -3422,28 +3514,6 @@
       ],
       "outline_offset": 2,
       "outline_width": 3
-     },
-     "hovered": {
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
-     },
-     "pressed": {
-      "fill": [
-       85,
-       101,
-       122,
-       255
-      ],
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
      }
     },
     "tre": {
@@ -3460,9 +3530,21 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "height": 32.0,
      "hit_testable": null,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "Open",
      "min_width": 32.0,
@@ -3471,6 +3553,12 @@
      "padding_right": 12.0,
      "padding_top": 0.0,
      "pressed": null,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
@@ -3522,28 +3610,6 @@
        ],
        "outline_offset": 2,
        "outline_width": 3
-      },
-      "hovered": {
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
-      },
-      "pressed": {
-       "fill": [
-        85,
-        101,
-        122,
-        255
-       ],
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
       }
      },
      "tip_auto": false,
@@ -3552,12 +3618,7 @@
      "wired": [
       "On_Click",
       "focus",
-      "keys",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
+      "keys"
      ]
     }
    },
@@ -3656,8 +3717,20 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "height": 32,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "Off",
      "min_width": 32,
@@ -3665,6 +3738,12 @@
      "padding_left": 12,
      "padding_right": 12,
      "padding_top": 0,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "role": "button",
      "stroke_color": [
       85,
@@ -3687,28 +3766,6 @@
       ],
       "outline_offset": 2,
       "outline_width": 3
-     },
-     "hovered": {
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
-     },
-     "pressed": {
-      "fill": [
-       85,
-       101,
-       122,
-       255
-      ],
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
      }
     },
     "tre": {
@@ -3725,9 +3782,21 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": false,
      "height": 32.0,
      "hit_testable": null,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "Off",
      "min_width": 32.0,
@@ -3736,6 +3805,12 @@
      "padding_right": 12.0,
      "padding_top": 0.0,
      "pressed": null,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
@@ -3791,28 +3866,6 @@
        ],
        "outline_offset": 2,
        "outline_width": 3
-      },
-      "hovered": {
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
-      },
-      "pressed": {
-       "fill": [
-        85,
-        101,
-        122,
-        255
-       ],
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
       }
      },
      "tip_auto": false,
@@ -3823,12 +3876,7 @@
       "On_Scroll",
       "On_Secondary_Click",
       "focus",
-      "keys",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
+      "keys"
      ]
     }
    },
@@ -4120,13 +4168,32 @@
     "name": "Toggle@Main_Shell.Main.Top_Bar.T/Root",
     "props": {
      "checked": false,
+     "corner_radius": 999,
      "disabled": false,
      "display": "grid",
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
      "height": 32,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "label": "t",
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "role": "switch",
      "width": 40
     },
@@ -4143,27 +4210,40 @@
       ],
       "outline_offset": 2,
       "outline_width": 3
-     },
-     "hovered": {
-      "opacity": 0.85
-     },
-     "pressed": {
-      "opacity": 0.7
      }
     },
     "tre": {
      "a11y_hidden": false,
      "checked": false,
+     "corner_radius": 999.0,
      "disabled": false,
      "display": "grid",
      "expanded": null,
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
      "height": 32.0,
      "hit_testable": null,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "label": "t",
      "pressed": null,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "read_only": "!ValueError",
      "role": "switch",
      "selected": null,
@@ -4209,12 +4289,6 @@
        ],
        "outline_offset": 2,
        "outline_width": 3
-      },
-      "hovered": {
-       "opacity": 0.85
-      },
-      "pressed": {
-       "opacity": 0.7
       }
      },
      "tip_auto": false,
@@ -4222,12 +4296,7 @@
      "tooltip_gate": false,
      "wired": [
       "On_Click",
-      "focus",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
+      "focus"
      ]
     }
    },
@@ -4639,12 +4708,31 @@
     "props": {
      "align_items": "center",
      "checked": false,
+     "corner_radius": 4,
      "disabled": false,
      "display": "flex",
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "gap": 8,
      "height": 32,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "label": "Remember",
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "role": "checkbox"
     },
     "states": {
@@ -4660,27 +4748,40 @@
       ],
       "outline_offset": 2,
       "outline_width": 3
-     },
-     "hovered": {
-      "opacity": 0.85
-     },
-     "pressed": {
-      "opacity": 0.7
      }
     },
     "tre": {
      "a11y_hidden": false,
      "align_items": "center",
      "checked": false,
+     "corner_radius": 4.0,
      "disabled": false,
      "display": "flex",
      "expanded": null,
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "gap": 8.0,
      "height": 32.0,
      "hit_testable": null,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "label": "Remember",
      "pressed": null,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "read_only": "!ValueError",
      "role": "checkbox",
      "selected": null,
@@ -4725,12 +4826,6 @@
        ],
        "outline_offset": 2,
        "outline_width": 3
-      },
-      "hovered": {
-       "opacity": 0.85
-      },
-      "pressed": {
-       "opacity": 0.7
       }
      },
      "tip_auto": false,
@@ -4738,12 +4833,7 @@
      "tooltip_gate": false,
      "wired": [
       "On_Click",
-      "focus",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
+      "focus"
      ]
     }
    },
@@ -5830,8 +5920,20 @@
      43,
      255
     ],
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "justify_content": "center",
     "label": "a",
     "min_width": 32,
@@ -5839,6 +5941,12 @@
     "padding_left": 12,
     "padding_right": 12,
     "padding_top": 0,
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "button",
     "stroke_color": [
      85,
@@ -5891,13 +5999,32 @@
    },
    "Toggle@Main_Shell.Main.Top_Bar.Toggle_1/Root": {
     "checked": false,
+    "corner_radius": 999,
     "disabled": false,
     "display": "grid",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "",
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "switch",
     "width": 40
    },
@@ -6057,8 +6184,20 @@
         43,
         255
        ],
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "focusable": true,
        "height": 32,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "justify_content": "center",
        "label": "a",
        "min_width": 32,
@@ -6066,6 +6205,12 @@
        "padding_left": 12,
        "padding_right": 12,
        "padding_top": 0,
+       "pressed_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "role": "button",
        "stroke_color": [
         85,
@@ -6088,28 +6233,6 @@
         ],
         "outline_offset": 2,
         "outline_width": 3
-       },
-       "hovered": {
-        "stroke_color": [
-         91,
-         151,
-         201,
-         255
-        ]
-       },
-       "pressed": {
-        "fill": [
-         85,
-         101,
-         122,
-         255
-        ],
-        "stroke_color": [
-         91,
-         151,
-         201,
-         255
-        ]
        }
       },
       "tre": {
@@ -6126,9 +6249,21 @@
         43,
         255
        ],
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "focusable": false,
        "height": 32.0,
        "hit_testable": null,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "justify_content": "center",
        "label": "a",
        "min_width": 32.0,
@@ -6137,6 +6272,12 @@
        "padding_right": 12.0,
        "padding_top": 0.0,
        "pressed": null,
+       "pressed_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "read_only": "!ValueError",
        "role": "button",
        "selected": null,
@@ -6188,28 +6329,6 @@
          ],
          "outline_offset": 2,
          "outline_width": 3
-        },
-        "hovered": {
-         "stroke_color": [
-          91,
-          151,
-          201,
-          255
-         ]
-        },
-        "pressed": {
-         "fill": [
-          85,
-          101,
-          122,
-          255
-         ],
-         "stroke_color": [
-          91,
-          151,
-          201,
-          255
-         ]
         }
        },
        "tip_auto": false,
@@ -6218,12 +6337,7 @@
        "wired": [
         "On_Click",
         "focus",
-        "keys",
-        "state:pointer_cancel",
-        "state:pointer_down",
-        "state:pointer_enter",
-        "state:pointer_leave",
-        "state:pointer_up"
+        "keys"
        ]
       }
      },
@@ -6602,13 +6716,32 @@
         "name": "Toggle@Main_Shell.Main.Top_Bar.Toggle_1/Root",
         "props": {
          "checked": false,
+         "corner_radius": 999,
          "disabled": false,
          "display": "grid",
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "focusable": true,
          "grid_template_columns": "1fr",
          "grid_template_rows": "1fr",
          "height": 32,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "label": "",
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "role": "switch",
          "width": 40
         },
@@ -6625,27 +6758,40 @@
           ],
           "outline_offset": 2,
           "outline_width": 3
-         },
-         "hovered": {
-          "opacity": 0.85
-         },
-         "pressed": {
-          "opacity": 0.7
          }
         },
         "tre": {
          "a11y_hidden": false,
          "checked": false,
+         "corner_radius": 999.0,
          "disabled": false,
          "display": "grid",
          "expanded": null,
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "focusable": false,
          "grid_template_columns": "1fr",
          "grid_template_rows": "1fr",
          "height": 32.0,
          "hit_testable": null,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "label": "",
          "pressed": null,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "read_only": "!ValueError",
          "role": "switch",
          "selected": null,
@@ -6689,12 +6835,6 @@
            ],
            "outline_offset": 2,
            "outline_width": 3
-          },
-          "hovered": {
-           "opacity": 0.85
-          },
-          "pressed": {
-           "opacity": 0.7
           }
          },
          "tip_auto": false,
@@ -6702,12 +6842,7 @@
          "tooltip_gate": false,
          "wired": [
           "On_Click",
-          "focus",
-          "state:pointer_cancel",
-          "state:pointer_down",
-          "state:pointer_enter",
-          "state:pointer_leave",
-          "state:pointer_up"
+          "focus"
          ]
         }
        }
@@ -8731,8 +8866,20 @@
      43,
      255
     ],
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "focusable": true,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "justify_content": "center",
     "label": "g",
     "min_width": 32,
@@ -8740,6 +8887,12 @@
     "padding_left": 12,
     "padding_right": 12,
     "padding_top": 0,
+    "pressed_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "role": "button",
     "stroke_color": [
      85,
@@ -9371,8 +9524,20 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "height": 32,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "g",
      "min_width": 32,
@@ -9380,6 +9545,12 @@
      "padding_left": 12,
      "padding_right": 12,
      "padding_top": 0,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "role": "button",
      "stroke_color": [
       85,
@@ -9402,28 +9573,6 @@
       ],
       "outline_offset": 2,
       "outline_width": 3
-     },
-     "hovered": {
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
-     },
-     "pressed": {
-      "fill": [
-       85,
-       101,
-       122,
-       255
-      ],
-      "stroke_color": [
-       91,
-       151,
-       201,
-       255
-      ]
      }
     },
     "tre": {
@@ -9440,9 +9589,21 @@
       43,
       255
      ],
+     "focus_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "focusable": true,
      "height": 32.0,
      "hit_testable": null,
+     "hover_layer": [
+      228,
+      234,
+      241,
+      20
+     ],
      "justify_content": "center",
      "label": "g",
      "min_width": 32.0,
@@ -9451,6 +9612,12 @@
      "padding_right": 12.0,
      "padding_top": 0.0,
      "pressed": null,
+     "pressed_layer": [
+      228,
+      234,
+      241,
+      26
+     ],
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
@@ -9500,28 +9667,6 @@
        ],
        "outline_offset": 2,
        "outline_width": 3
-      },
-      "hovered": {
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
-      },
-      "pressed": {
-       "fill": [
-        85,
-        101,
-        122,
-        255
-       ],
-       "stroke_color": [
-        91,
-        151,
-        201,
-        255
-       ]
       }
      },
      "tip_auto": false,
@@ -9529,12 +9674,7 @@
      "tooltip_gate": false,
      "wired": [
       "focus",
-      "keys",
-      "state:pointer_cancel",
-      "state:pointer_down",
-      "state:pointer_enter",
-      "state:pointer_leave",
-      "state:pointer_up"
+      "keys"
      ]
     }
    },
@@ -10405,8 +10545,20 @@
     "corner_radius": 4,
     "disabled": false,
     "display": "flex",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "gap": 8,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "New",
     "padding_bottom": 0,
     "padding_left": 8,
@@ -10484,8 +10636,20 @@
     "corner_radius": 4,
     "disabled": false,
     "display": "flex",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "gap": 8,
     "height": 9,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "",
     "padding_bottom": 0,
     "padding_left": 4,
@@ -10563,8 +10727,20 @@
     "corner_radius": 4,
     "disabled": false,
     "display": "flex",
+    "focus_layer": [
+     228,
+     234,
+     241,
+     26
+    ],
     "gap": 8,
     "height": 32,
+    "hover_layer": [
+     228,
+     234,
+     241,
+     20
+    ],
     "label": "Open",
     "padding_bottom": 0,
     "padding_left": 8,
@@ -10673,23 +10849,33 @@
          "corner_radius": 4,
          "disabled": false,
          "display": "flex",
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "height": 30,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
-         "padding_top": 6
+         "padding_top": 6,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ]
         },
         "states": {
          "disabled": {
           "opacity": 0.38
-         },
-         "hovered": {
-          "fill": [
-           85,
-           101,
-           122,
-           255
-          ]
          },
          "selected": {
           "fill": [
@@ -10714,15 +10900,33 @@
          "disabled": false,
          "display": "flex",
          "expanded": null,
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "focusable": false,
          "height": 30.0,
          "hit_testable": null,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
          "padding_right": 10.0,
          "padding_top": 6.0,
          "pressed": null,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "read_only": "!ValueError",
          "role": "listitem",
          "selected": false,
@@ -10756,14 +10960,6 @@
           "disabled": {
            "opacity": 0.38
           },
-          "hovered": {
-           "fill": [
-            85,
-            101,
-            122,
-            255
-           ]
-          },
           "selected": {
            "fill": [
             27,
@@ -10783,13 +10979,7 @@
          "tip_auto": false,
          "tip_key": false,
          "tooltip_gate": false,
-         "wired": [
-          "state:pointer_cancel",
-          "state:pointer_down",
-          "state:pointer_enter",
-          "state:pointer_leave",
-          "state:pointer_up"
-         ]
+         "wired": []
         }
        },
        {
@@ -10853,23 +11043,33 @@
          "corner_radius": 4,
          "disabled": false,
          "display": "flex",
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "height": 30,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
-         "padding_top": 6
+         "padding_top": 6,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ]
         },
         "states": {
          "disabled": {
           "opacity": 0.38
-         },
-         "hovered": {
-          "fill": [
-           85,
-           101,
-           122,
-           255
-          ]
          },
          "selected": {
           "fill": [
@@ -10894,15 +11094,33 @@
          "disabled": false,
          "display": "flex",
          "expanded": null,
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "focusable": false,
          "height": 30.0,
          "hit_testable": null,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
          "padding_right": 10.0,
          "padding_top": 6.0,
          "pressed": null,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "read_only": "!ValueError",
          "role": "listitem",
          "selected": false,
@@ -10936,14 +11154,6 @@
           "disabled": {
            "opacity": 0.38
           },
-          "hovered": {
-           "fill": [
-            85,
-            101,
-            122,
-            255
-           ]
-          },
           "selected": {
            "fill": [
             27,
@@ -10963,13 +11173,7 @@
          "tip_auto": false,
          "tip_key": false,
          "tooltip_gate": false,
-         "wired": [
-          "state:pointer_cancel",
-          "state:pointer_down",
-          "state:pointer_enter",
-          "state:pointer_leave",
-          "state:pointer_up"
-         ]
+         "wired": []
         }
        },
        {
@@ -11033,23 +11237,33 @@
          "corner_radius": 4,
          "disabled": false,
          "display": "flex",
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "height": 30,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
-         "padding_top": 6
+         "padding_top": 6,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ]
         },
         "states": {
          "disabled": {
           "opacity": 0.38
-         },
-         "hovered": {
-          "fill": [
-           85,
-           101,
-           122,
-           255
-          ]
          },
          "selected": {
           "fill": [
@@ -11074,15 +11288,33 @@
          "disabled": false,
          "display": "flex",
          "expanded": null,
+         "focus_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "focusable": false,
          "height": 30.0,
          "hit_testable": null,
+         "hover_layer": [
+          228,
+          234,
+          241,
+          20
+         ],
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
          "padding_right": 10.0,
          "padding_top": 6.0,
          "pressed": null,
+         "pressed_layer": [
+          228,
+          234,
+          241,
+          26
+         ],
          "read_only": "!ValueError",
          "role": "listitem",
          "selected": false,
@@ -11116,14 +11348,6 @@
           "disabled": {
            "opacity": 0.38
           },
-          "hovered": {
-           "fill": [
-            85,
-            101,
-            122,
-            255
-           ]
-          },
           "selected": {
            "fill": [
             27,
@@ -11143,13 +11367,7 @@
          "tip_auto": false,
          "tip_key": false,
          "tooltip_gate": false,
-         "wired": [
-          "state:pointer_cancel",
-          "state:pointer_down",
-          "state:pointer_enter",
-          "state:pointer_leave",
-          "state:pointer_up"
-         ]
+         "wired": []
         }
        }
       ],
@@ -11741,8 +11959,20 @@
        "corner_radius": 4,
        "disabled": false,
        "display": "flex",
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "gap": 8,
        "height": 32,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "New",
        "padding_bottom": 0,
        "padding_left": 8,
@@ -11753,14 +11983,6 @@
       "states": {
        "disabled": {
         "opacity": 0.38
-       },
-       "hovered": {
-        "fill": [
-         85,
-         101,
-         122,
-         255
-        ]
        },
        "pressed": {
         "fill": [
@@ -11779,10 +12001,22 @@
        "disabled": false,
        "display": "flex",
        "expanded": null,
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "focusable": false,
        "gap": 8.0,
        "height": 32.0,
        "hit_testable": null,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "New",
        "padding_bottom": 0.0,
        "padding_left": 8.0,
@@ -11826,14 +12060,6 @@
        "states": {
         "disabled": {
          "opacity": 0.38
-        },
-        "hovered": {
-         "fill": [
-          85,
-          101,
-          122,
-          255
-         ]
         },
         "pressed": {
          "fill": [
@@ -12293,8 +12519,20 @@
        "corner_radius": 4,
        "disabled": false,
        "display": "flex",
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "gap": 8,
        "height": 9,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "",
        "padding_bottom": 0,
        "padding_left": 4,
@@ -12305,14 +12543,6 @@
       "states": {
        "disabled": {
         "opacity": 0.38
-       },
-       "hovered": {
-        "fill": [
-         85,
-         101,
-         122,
-         255
-        ]
        },
        "pressed": {
         "fill": [
@@ -12331,10 +12561,22 @@
        "disabled": false,
        "display": "flex",
        "expanded": null,
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "focusable": false,
        "gap": 8.0,
        "height": 9.0,
        "hit_testable": null,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "",
        "padding_bottom": 0.0,
        "padding_left": 4.0,
@@ -12378,14 +12620,6 @@
        "states": {
         "disabled": {
          "opacity": 0.38
-        },
-        "hovered": {
-         "fill": [
-          85,
-          101,
-          122,
-          255
-         ]
         },
         "pressed": {
          "fill": [
@@ -12844,8 +13078,20 @@
        "corner_radius": 4,
        "disabled": false,
        "display": "flex",
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "gap": 8,
        "height": 32,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "Open",
        "padding_bottom": 0,
        "padding_left": 8,
@@ -12856,14 +13102,6 @@
       "states": {
        "disabled": {
         "opacity": 0.38
-       },
-       "hovered": {
-        "fill": [
-         85,
-         101,
-         122,
-         255
-        ]
        },
        "pressed": {
         "fill": [
@@ -12882,10 +13120,22 @@
        "disabled": false,
        "display": "flex",
        "expanded": null,
+       "focus_layer": [
+        228,
+        234,
+        241,
+        26
+       ],
        "focusable": false,
        "gap": 8.0,
        "height": 32.0,
        "hit_testable": null,
+       "hover_layer": [
+        228,
+        234,
+        241,
+        20
+       ],
        "label": "Open",
        "padding_bottom": 0.0,
        "padding_left": 8.0,
@@ -12929,14 +13179,6 @@
        "states": {
         "disabled": {
          "opacity": 0.38
-        },
-        "hovered": {
-         "fill": [
-          85,
-          101,
-          122,
-          255
-         ]
         },
         "pressed": {
          "fill": [

@@ -75,6 +75,13 @@ Theme {
         Chevron_Box: 24
     }
 
+    State {
+        Hover: 0.08
+        Focus: 0.10
+        Pressed: 0.10
+        Dragged: 0.16
+    }
+
     Elevation {
         Reach: 64
         Max {

@@ -1260,6 +1260,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -1336,6 +1337,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -2006,6 +2008,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -2082,6 +2085,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -2114,6 +2118,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -2140,6 +2145,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -2593,6 +2599,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -2669,6 +2676,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -2701,6 +2709,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -2727,6 +2736,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -3134,6 +3144,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -3210,6 +3221,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -3242,6 +3254,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -3268,6 +3281,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -3737,6 +3751,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -3786,6 +3801,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -3862,6 +3878,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -4720,6 +4737,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -4788,6 +4806,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -4845,6 +4864,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -4880,6 +4900,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -4915,6 +4936,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -4941,6 +4963,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -4988,6 +5011,81 @@
             "elevation.max"
           ]
         },
+        "Hover_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn over the block while the pointer is on it, at the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. Needs tre 0.6.11.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Pressed_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block is pressed, at $state.pressed (0.10).",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Focus_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
         "Outline_Width": {
           "kind": "number",
           "choices": null,
@@ -5007,6 +5105,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -5031,6 +5130,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -5080,6 +5180,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -5149,6 +5250,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -5202,6 +5304,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -5774,6 +5877,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -5807,6 +5911,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -5833,6 +5938,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -5857,6 +5963,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -5962,6 +6069,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6106,6 +6214,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6130,6 +6239,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6155,6 +6265,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6179,6 +6290,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6330,6 +6442,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6355,6 +6468,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6380,6 +6494,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6592,6 +6707,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6639,6 +6755,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6707,6 +6824,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6764,6 +6882,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6799,6 +6918,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6834,6 +6954,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6860,6 +6981,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6907,6 +7029,81 @@
             "elevation.max"
           ]
         },
+        "Hover_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn over the block while the pointer is on it, at the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. Needs tre 0.6.11.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Pressed_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block is pressed, at $state.pressed (0.10).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Focus_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
         "Outline_Width": {
           "kind": "number",
           "choices": null,
@@ -6926,6 +7123,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -6950,6 +7148,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7286,6 +7485,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7319,6 +7519,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7345,6 +7546,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7369,6 +7571,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7474,6 +7677,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7618,6 +7822,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7642,6 +7847,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7667,6 +7873,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7691,6 +7898,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7842,6 +8050,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7867,6 +8076,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -7892,6 +8102,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8162,6 +8373,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8197,6 +8409,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8244,6 +8457,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8312,6 +8526,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8369,6 +8584,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8404,6 +8620,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8439,6 +8656,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8465,6 +8683,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8512,6 +8731,81 @@
             "elevation.max"
           ]
         },
+        "Hover_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn over the block while the pointer is on it, at the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. Needs tre 0.6.11.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Pressed_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block is pressed, at $state.pressed (0.10).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Focus_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
         "Outline_Width": {
           "kind": "number",
           "choices": null,
@@ -8531,6 +8825,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8555,6 +8850,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8604,6 +8900,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8904,6 +9201,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8937,6 +9235,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8963,6 +9262,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -8987,6 +9287,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9092,6 +9393,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9236,6 +9538,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9260,6 +9563,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9285,6 +9589,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9309,6 +9614,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9460,6 +9766,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9485,6 +9792,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9510,6 +9818,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9722,6 +10031,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9835,6 +10145,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9921,6 +10232,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -9974,6 +10286,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10042,6 +10355,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10077,6 +10391,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10103,6 +10418,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10392,6 +10708,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10425,6 +10742,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10451,6 +10769,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10475,6 +10794,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10580,6 +10900,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10724,6 +11045,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10748,6 +11070,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10773,6 +11096,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10797,6 +11121,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10948,6 +11273,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10973,6 +11299,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -10998,6 +11325,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11220,6 +11548,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11288,6 +11617,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11345,6 +11675,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11413,6 +11744,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11437,6 +11769,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11507,6 +11840,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11575,6 +11909,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11632,6 +11967,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11667,6 +12003,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11693,6 +12030,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11759,6 +12097,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -11783,6 +12122,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12104,6 +12444,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12137,6 +12478,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12163,6 +12505,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12187,6 +12530,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12292,6 +12636,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12436,6 +12781,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12460,6 +12806,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12485,6 +12832,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12509,6 +12857,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12660,6 +13009,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12685,6 +13035,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12710,6 +13061,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12929,6 +13281,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -12974,6 +13327,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13017,6 +13371,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13083,6 +13438,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13107,6 +13463,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13442,6 +13799,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13475,6 +13833,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13501,6 +13860,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13525,6 +13885,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13630,6 +13991,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13774,6 +14136,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13798,6 +14161,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13823,6 +14187,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13847,6 +14212,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -13998,6 +14364,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14023,6 +14390,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14048,6 +14416,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14522,6 +14891,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14555,6 +14925,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14581,6 +14952,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14605,6 +14977,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14710,6 +15083,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14854,6 +15228,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14878,6 +15253,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14903,6 +15279,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -14927,6 +15304,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -15078,6 +15456,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -15103,6 +15482,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -15128,6 +15508,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -15407,6 +15788,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -15475,6 +15857,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -15774,6 +16157,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -15807,6 +16191,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -15833,6 +16218,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -15857,6 +16243,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -15962,6 +16349,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16106,6 +16494,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16130,6 +16519,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16155,6 +16545,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16179,6 +16570,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16330,6 +16722,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16355,6 +16748,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16380,6 +16774,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16643,6 +17038,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16686,6 +17082,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16930,6 +17327,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16963,6 +17361,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -16989,6 +17388,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17013,6 +17413,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17118,6 +17519,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17262,6 +17664,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17286,6 +17689,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17311,6 +17715,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17335,6 +17740,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17486,6 +17892,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17511,6 +17918,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17536,6 +17944,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17782,6 +18191,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17850,6 +18260,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17920,6 +18331,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -17988,6 +18400,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18046,6 +18459,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18072,6 +18486,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18316,6 +18731,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18349,6 +18765,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18375,6 +18792,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18399,6 +18817,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18504,6 +18923,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18648,6 +19068,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18672,6 +19093,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18697,6 +19119,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18721,6 +19144,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18872,6 +19296,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18897,6 +19322,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -18922,6 +19348,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19168,6 +19595,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19211,6 +19639,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19281,6 +19710,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19324,6 +19754,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19382,6 +19813,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19408,6 +19840,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19706,6 +20139,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19739,6 +20173,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19765,6 +20200,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19789,6 +20225,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -19894,6 +20331,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20038,6 +20476,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20062,6 +20501,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20087,6 +20527,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20111,6 +20552,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20262,6 +20704,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20287,6 +20730,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20312,6 +20756,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20534,6 +20979,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20602,6 +21048,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20678,7 +21125,8 @@
           "step": null,
           "unit": null,
           "tokens": [
-            "shape"
+            "shape",
+            "state"
           ],
           "preferred_tokens": []
         },
@@ -20697,7 +21145,8 @@
           "step": null,
           "unit": null,
           "tokens": [
-            "shape"
+            "shape",
+            "state"
           ],
           "preferred_tokens": []
         },
@@ -20757,6 +21206,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20825,6 +21275,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20883,6 +21334,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -20909,6 +21361,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21207,6 +21660,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21240,6 +21694,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21266,6 +21721,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21290,6 +21746,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21395,6 +21852,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21539,6 +21997,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21563,6 +22022,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21588,6 +22048,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21612,6 +22073,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21763,6 +22225,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21788,6 +22251,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -21813,6 +22277,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22030,6 +22495,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22054,6 +22520,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22181,6 +22648,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22234,6 +22702,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22269,6 +22738,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22295,6 +22765,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22338,6 +22809,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22651,6 +23123,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22684,6 +23157,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22710,6 +23184,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22734,6 +23209,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22839,6 +23315,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -22983,6 +23460,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23007,6 +23485,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23032,6 +23511,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23056,6 +23536,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23207,6 +23688,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23232,6 +23714,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23257,6 +23740,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23469,6 +23953,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23675,6 +24160,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23743,6 +24229,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23800,6 +24287,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23835,6 +24323,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23870,6 +24359,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23896,6 +24386,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23943,6 +24434,81 @@
             "elevation.max"
           ]
         },
+        "Hover_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn over the block while the pointer is on it, at the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. Needs tre 0.6.11.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Pressed_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block is pressed, at $state.pressed (0.10).",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
+        "Focus_Layer": {
+          "kind": "color",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "The colour of the layer drawn while the block has keyboard focus, at $state.focus (0.10); a click draws none.",
+          "slot": true,
+          "required": false,
+          "built": true,
+          "group": "Fill",
+          "alpha": true,
+          "forms": [
+            "\"#RRGGBB\"",
+            "\"#RRGGBBAA\"",
+            "\"#RGB\"",
+            "\"#RGBA\"",
+            "rgba(r g b a)"
+          ],
+          "tokens": [
+            "color"
+          ],
+          "preferred_tokens": [
+            "color"
+          ]
+        },
         "Outline_Width": {
           "kind": "number",
           "choices": null,
@@ -23962,6 +24528,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -23986,6 +24553,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -24078,6 +24646,7 @@
             "shape",
             "space",
             "density",
+            "state",
             "elevation",
             "motion"
           ],
@@ -25907,6 +26476,52 @@
         ],
         "min": null,
         "max": null,
+        "step": null,
+        "unit": null
+      }
+    },
+    "state": {
+      "hover": {
+        "kind": "number",
+        "ref": "$state.hover",
+        "default": "0.08",
+        "doc": "The opacity of the hover state layer (0.08): a Hover_Layer colour is drawn at this alpha.",
+        "modes": [],
+        "min": 0,
+        "max": 1,
+        "step": null,
+        "unit": null
+      },
+      "focus": {
+        "kind": "number",
+        "ref": "$state.focus",
+        "default": "0.10",
+        "doc": "The opacity of the keyboard-focus state layer (0.10).",
+        "modes": [],
+        "min": 0,
+        "max": 1,
+        "step": null,
+        "unit": null
+      },
+      "pressed": {
+        "kind": "number",
+        "ref": "$state.pressed",
+        "default": "0.10",
+        "doc": "The opacity of the pressed state layer (0.10).",
+        "modes": [],
+        "min": 0,
+        "max": 1,
+        "step": null,
+        "unit": null
+      },
+      "dragged": {
+        "kind": "number",
+        "ref": "$state.dragged",
+        "default": "0.16",
+        "doc": "The opacity of the dragged state layer (0.16); no block takes it yet.",
+        "modes": [],
+        "min": 0,
+        "max": 1,
         "step": null,
         "unit": null
       }
