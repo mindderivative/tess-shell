@@ -48,3 +48,19 @@ def test_every_window_ignores_a_press_that_moves_less_than_4_px() -> None:
     of a drag (a peek drag, a scrollbar thumb, a movable Panel)."""
     m = manager()
     assert surface(m, "Top_Bar").window.get("drag_start_px") == 4
+
+
+def test_selected_text_and_a_text_input_have_a_highlight_with_2_px_corners() -> None:
+    """tre 0.6.12 ``selection_radius``: a design choice (the Text Selection spec records no value);
+    the fill is the engine's own, the scheme's primary at 30 percent."""
+    from tests.field_live import running
+
+    with running('Text { Name: T, Text: "abc", Selectable: true }\nTextInput { Name: In }') as r:
+        text = next(
+            n
+            for n in r.bar.view.nodes.values()
+            if n.get("kind") == "text" and n.get("text") == "abc"
+        )
+        assert text.get("selection_radius") == 2
+        (f,) = r.fields()
+        assert f.inp.get("selection_radius") == 2
