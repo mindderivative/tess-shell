@@ -302,6 +302,10 @@ def _run(
             print(text_status(json.loads(text)))
             _print_warnings(warnings)
         return int(ExitCode.OK)
+    if command == "leave-shortcut-mode":
+        (was,) = shell.call("ExitShortcutMode")
+        message = "left shortcut mode" if was else "the shell was not in shortcut mode"
+        return _answer(options, True, message)
     if command in ("show", "hide", "toggle"):
         ok, message = shell.call(command.capitalize(), "s", [args.name])
         return _answer(options, ok, message)

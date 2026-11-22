@@ -145,6 +145,13 @@ class ShellCommands:
     def close_popup(self) -> None:
         self.manager.popups.close_named()
 
+    def exit_shortcut_mode(self) -> bool:
+        """``Exit_Shortcut_Mode`` for the command line: the way out of the mode whatever window
+        has the keyboard. True when the shell was in the mode."""
+        was = self.manager.mode.machine.on
+        self.manager.mode.exit()
+        return was
+
     def call(self, module: str, action: str, values: list[Any]) -> Any:
         try:
             result = self.host.call_action(module, action, values)

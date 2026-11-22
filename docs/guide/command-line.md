@@ -9,7 +9,7 @@ tesserae-shell [OPTIONS] COMMAND [ARGUMENTS]
 The commands fall into three groups:
 
 * **Files and installation**, which need no running shell: `run`, `check`, `version`, `schema`, `migrate`, `install-session`, and the `kwin` commands.
-* **Control commands**, which talk to a running shell over the session bus: `reload`, `quit`, `status`, `show`, `hide`, `toggle`, `call` and `log-level`. They import only the standard library and a small D-Bus client, so they start fast enough to be bound to a key.
+* **Control commands**, which talk to a running shell over the session bus: `reload`, `quit`, `status`, `show`, `hide`, `toggle`, `leave-shortcut-mode`, `call` and `log-level`. They import only the standard library and a small D-Bus client, so they start fast enough to be bound to a key.
 * `run` itself, the shell.
 
 ## Options and commands
@@ -43,6 +43,7 @@ The commands, with the arguments and options each adds:
 | `tesserae-shell show` | `name` | show a Panel or a Frame by its Name |
 | `tesserae-shell hide` | `name` | hide a Panel or a Frame by its Name |
 | `tesserae-shell toggle` | `name` | toggle a Panel or a Frame by its Name |
+| `tesserae-shell leave-shortcut-mode` | none | leave shortcut mode (the way out whatever window has the keyboard) |
 | `tesserae-shell call` | `module` `action` `[args ...]` | call a module's @action (each ARG a JSON value, or text) |
 | `tesserae-shell log-level` | `level` | change the log level until the next reload of settings.tdl |
 | `tesserae-shell kwin` | a group | KWin helpers: the script and the window rule (no shell needs to run) |
@@ -127,6 +128,7 @@ A control command asks the running shell, which owns the session bus name `io.gi
 | `tesserae-shell quit` | Stops the shell (`stopping`; exit 0 once it has been asked). |
 | `tesserae-shell status` | Shows the state, the versions, the monitors, the surfaces, the modules, the modules that run in a process of their own (name, process id, state, restarts used), the last errors and what the shell knows of its crashes (the unclean starts since the last clean stop, the time of the last crash, and whether it is in safe start). `--json` prints the shell's own JSON. |
 | `tesserae-shell show NAME`, `hide NAME`, `toggle NAME` | Shows, hides or toggles a Panel, a Frame, a melded Panel or a strip by its `Name`. See [Surfaces](surfaces.md#showing-hiding-and-toggling) for what it answers. |
+| `tesserae-shell leave-shortcut-mode` | Leaves [shortcut mode](keyboard.md#shortcut-mode) whichever window has the keyboard (`left shortcut mode`, or `the shell was not in shortcut mode`; exit 0 either way). The way out when Escape no longer reaches the shell. |
 | `tesserae-shell call MODULE ACTION [ARG ...]` | Runs an `@action` of a module. Each `ARG` is a JSON value (`40`, `true`, `"text"`) or, if it is not valid JSON, the text itself. The answer is printed. |
 | `tesserae-shell log-level LEVEL` | Changes the log level of the running shell, `TRACE` to `CRITICAL`, until the next reload of `settings.tdl`. |
 
@@ -245,35 +247,39 @@ usage: tesserae-shell [-h] [--config-dir PATH] [--json] [--quiet]
 
 positional arguments:
   COMMAND
-    run              start the shell (default)
-    migrate          bring the configuration files to the current format
-                     (--check lists what would change)
-    check            validate settings and shell files
-    version          print versions
-    schema           print the schema of the shell's files as JSON (with
-                     --json)
-    install-session  write the desktop file and the systemd user unit
-                     (--enable, --remove, --print)
-    reload           reload the running shell and report the errors
-    quit             stop the running shell
-    status           show the running shell's state (--json: the shell's own
-                     JSON)
-    show             show a Panel or a Frame by its Name
-    hide             hide a Panel or a Frame by its Name
-    toggle           toggle a Panel or a Frame by its Name
-    call             call a module's @action (each ARG a JSON value, or text)
-    log-level        change the log level until the next reload of
-                     settings.tdl
-    kwin             KWin helpers: the script and the window rule (no shell
-                     needs to run)
+    run                 start the shell (default)
+    migrate             bring the configuration files to the current format
+                        (--check lists what would change)
+    check               validate settings and shell files
+    version             print versions
+    schema              print the schema of the shell's files as JSON (with
+                        --json)
+    install-session     write the desktop file and the systemd user unit
+                        (--enable, --remove, --print)
+    reload              reload the running shell and report the errors
+    quit                stop the running shell
+    status              show the running shell's state (--json: the shell's
+                        own JSON)
+    show                show a Panel or a Frame by its Name
+    hide                hide a Panel or a Frame by its Name
+    toggle              toggle a Panel or a Frame by its Name
+    leave-shortcut-mode
+                        leave shortcut mode (the way out whatever window has
+                        the keyboard)
+    call                call a module's @action (each ARG a JSON value, or
+                        text)
+    log-level           change the log level until the next reload of
+                        settings.tdl
+    kwin                KWin helpers: the script and the window rule (no shell
+                        needs to run)
 
 options:
-  -h, --help         show this help message and exit
-  --config-dir PATH  configuration directory
-  --json             machine readable output
-  --quiet            only warnings and errors
-  --timeout SECONDS  how long a control command waits for the shell (default
-                     5)
+  -h, --help            show this help message and exit
+  --config-dir PATH     configuration directory
+  --json                machine readable output
+  --quiet               only warnings and errors
+  --timeout SECONDS     how long a control command waits for the shell
+                        (default 5)
 ```
 
 <!-- END generated: cli-help -->
@@ -474,6 +480,21 @@ usage: tesserae-shell toggle [-h] [--config-dir PATH] [--json] [--quiet]
 
 positional arguments:
   name
+
+options:
+  -h, --help         show this help message and exit
+  --config-dir PATH  configuration directory
+  --json             machine readable output
+  --quiet            only warnings and errors
+  --timeout SECONDS  how long a control command waits for the shell (default
+                     5)
+```
+
+#### tesserae-shell leave-shortcut-mode --help
+
+```text
+usage: tesserae-shell leave-shortcut-mode [-h] [--config-dir PATH] [--json]
+                                          [--quiet] [--timeout SECONDS]
 
 options:
   -h, --help         show this help message and exit

@@ -53,6 +53,8 @@ def test_every_command_reaches_the_shell_and_prints_its_answer(tmp_path: Path) -
         assert tesserae(a, tmp_path, "show", "Launcher").stdout.strip() == "Launcher Show"
         assert tesserae(a, tmp_path, "hide", "Launcher").stdout.strip() == "Launcher Hide"
         assert tesserae(a, tmp_path, "log-level", "debug").returncode == 0
+        left = tesserae(a, tmp_path, "leave-shortcut-mode")
+        assert (left.returncode, left.stdout.strip()) == (0, "left shortcut mode")
         quiet = tesserae(a, tmp_path, "quit")
         assert (quiet.returncode, quiet.stdout.strip()) == (0, "stopping")
         assert r.commands.stopped == 1
