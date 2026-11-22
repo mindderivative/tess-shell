@@ -153,6 +153,7 @@ class Wire:
     # of the module root above it that a part shows too
     checked: bool = False
     selected: bool = False
+    invalid: bool = False  # a field the module marks ``Invalid``: its ``:invalid`` look holds
     owned: bool = False  # a control sets ``checked`` and ``selected``, not the block's props
     in_checked: bool = False
     in_selected: bool = False
@@ -433,6 +434,8 @@ class Wire:
             out.update(self.states.get("pressed", {}))
         if self.focused and not self.blocked:  # a disabled block shows no ring
             out.update(self.states.get("focused", {}))
+        if self.invalid:  # over hovered and focused: an invalid field stays in the error colour
+            out.update(self.states.get("invalid", {}))
         if self.disabled or (self.part and self.inherited):
             out.update(self.states.get("disabled", {}))
         return out
@@ -1053,6 +1056,7 @@ class View:
                 if not e.wire.owned:  # no control: the flags are the block's own props
                     e.wire.checked = bool(e.props.get("checked"))
                     e.wire.selected = bool(e.props.get("selected"))
+                e.wire.invalid = bool(e.props.get("invalid"))
                 # a text input is a part of its field: it shows ``disabled`` when the field is
                 part = bool(e.typed.part) or e.typed.kind in (FIELD_INPUT, MARQUEE_TEXT)
                 e.wire.sync(own, inherited, part, *seen)

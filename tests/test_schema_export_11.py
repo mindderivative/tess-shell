@@ -538,6 +538,9 @@ def test_the_actions_listed_are_the_modules_own_with_their_arguments() -> None:
     assert [a["name"] for a in D["modules"]["Workspaces"]["actions"]] == ["switch"]
 
 
+RECEIVES = {"TextInput": ("On_Changed", "On_Submit", "On_Text_Commit", "On_Key_Down")}
+
+
 def test_the_events_a_call_may_handle_are_what_the_loader_allows() -> None:
     mods = D["modules"]
     assert mods["Label"]["events"] == [] and mods["TextBox"]["events"] == []
@@ -556,7 +559,12 @@ def test_the_events_a_call_may_handle_are_what_the_loader_allows() -> None:
     # a call that names such an event loads; one that names a key the root cannot raise is refused
     for name, module in mods.items():
         for event in module["events"]:
-            assert event in blocks.BLOCK_EVENTS.get(module["root_block"], ()), (name, event)
+            # a module's ``Receives`` sends some events to a block inside, not the root
+            sent = RECEIVES.get(name, ())
+            assert event in blocks.BLOCK_EVENTS.get(module["root_block"], ()) or event in sent, (
+                name,
+                event,
+            )
     assert mods["Slider"]["root_block"] == "Box"
     assert "Width" in mods["Slider"]["common_keys"]
     assert not set(mods["Slider"]["common_keys"]) & set(blocks.A11Y_STATE)
@@ -588,6 +596,6 @@ def test_the_cli_schema_is_regenerated_to_a_file(tmp_path: Path) -> None:
     import json
 
     data = json.loads(target.read_text(encoding="utf-8"))
-    assert data["schema_version"] == "1.39" and "modules" in data
+    assert data["schema_version"] == "1.40" and "modules" in data
     assert list(data)[-1] == "shortcuts"
     _ = (CONTEXTS, run)  # the probes of the first suite are shared
