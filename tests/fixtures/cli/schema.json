@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.30",
+  "schema_version": "1.31",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -26520,6 +26520,22 @@
         "enum": null,
         "default": "COMPACT",
         "doc": "The density level of the shell's own sizes: DEFAULT (40 px controls), COMPACT (32 px, the default) or DENSE (28 px). A surface can set its own with Density. See Spacing and Density.",
+        "slot": false,
+        "required": false,
+        "built": true,
+        "group": "Appearance",
+        "tokens": []
+      },
+      "Scheme": {
+        "kind": "enum",
+        "choices": [
+          "DEFAULT",
+          "LIGHT",
+          "DARK"
+        ],
+        "enum": null,
+        "default": "DEFAULT",
+        "doc": "The colour scheme: DEFAULT follows the desktop (the Settings portal), LIGHT or DARK always uses that one and ignores a change of the desktop's.",
         "slot": false,
         "required": false,
         "built": true,

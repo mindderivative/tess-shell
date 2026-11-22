@@ -270,3 +270,12 @@ def test_a_density_that_is_no_level_is_refused_naming_the_levels(tmp_path: Path)
     write(tmp_path, "Settings { Appearance { Density: ROOMY } }")
     (finding,) = load_bad(tmp_path)
     assert finding.rule == "bad-value" and "DEFAULT, COMPACT, DENSE" in finding.message
+
+
+def test_scheme_is_default_unless_the_file_says_light_or_dark(tmp_path: Path) -> None:
+    assert load_ok(tmp_path).appearance.scheme == "DEFAULT"
+    write(tmp_path, "Settings { Appearance { Scheme: DARK } }")
+    assert load_ok(tmp_path).appearance.scheme == "DARK"
+    write(tmp_path, "Settings { Appearance { Scheme: BLUE } }")
+    (finding,) = load_bad(tmp_path)
+    assert finding.rule == "bad-value" and "DEFAULT, LIGHT, DARK" in finding.message
