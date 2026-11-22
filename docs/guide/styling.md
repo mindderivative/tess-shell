@@ -333,7 +333,7 @@ A selector is one of:
 | `"#Face"` | the block with `Name: Face` |
 | `"Slider::handle"` | a part of a module (the parts are listed per module on [Modules](modules.md)) |
 
-and may end in a **state**: `:hovered`, `:pressed`, `:checked`, `:selected`, `:focused` or `:disabled`. A state adds to the base rule; `:disabled` wins over `:hovered` and `:pressed`. A part rule beats a class or type rule on the same block. A selector that names a part the module does not have is an error naming the nearest parts; a part after a class (`".warn::part"`) is not built.
+and may end in a **state**: `:hovered`, `:pressed`, `:checked`, `:selected`, `:focused`, `:invalid` (a TextField with `Invalid: true`) or `:disabled`. A state adds to the base rule; `:disabled` wins over `:hovered` and `:pressed`, and `:invalid` over `:hovered` and `:focused`. A part rule beats a class or type rule on the same block. A selector that names a part the module does not have is an error naming the nearest parts; a part after a class (`".warn::part"`) is not built.
 
 A block takes a class with `Class: warn` (several are written as a list). A module's own look is in its `_Style.tdl` file, which the module names with a `Style:` line, with `Classes { clock_text { Kind: Text, Font_Size: 14 } }`; your stylesheet rules override it because they come later.
 

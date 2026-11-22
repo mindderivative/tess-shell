@@ -65,7 +65,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ELEVATION_LEVELS, ValueProblem, coerce
 
-SCHEMA_VERSION = "1.39"
+SCHEMA_VERSION = "1.40"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -1396,7 +1396,7 @@ def _shipped_modules() -> dict[str, tuple[tess_dl.Document, str | None]]:
 
 def _layout_root(document: tess_dl.Document) -> tess_dl.Block | None:
     for entry in document.root.entries:
-        if not isinstance(entry, tess_dl.Block) or entry.type in ("Params", "Style"):
+        if not isinstance(entry, tess_dl.Block) or entry.type in ("Params", "Style", "Receives"):
             continue
         if entry.type == "Children":
             return next((e for e in entry.entries if isinstance(e, tess_dl.Block)), None)
@@ -1415,6 +1415,18 @@ def _root_block(
     if root.type in modules and root.type != name:
         return _root_block(root.type, modules)
     return root.type, {e.key for e in root.entries if isinstance(e, tess_dl.Property)}
+
+
+def _module_events(document: tess_dl.Document, kind: str, keys: set[str]) -> list[str]:
+    """The events of the root block and, after them, those the module's ``Receives`` names (they
+    go to a block inside, checked when the module is read)."""
+    out = _events_of(kind, keys)
+    for entry in document.root.entries:
+        if isinstance(entry, tess_dl.Block) and entry.type == "Receives":
+            out.extend(
+                e.key for e in entry.entries if isinstance(e, tess_dl.Property) and e.key not in out
+            )
+    return out
 
 
 def _events_of(kind: str, keys: set[str]) -> list[str]:
@@ -1498,7 +1510,7 @@ def _modules() -> dict[str, Json]:
             "doc": docs.MODULE_NOTES.get(name, ""),
             "params": params,
             "root_block": kind_of_root,
-            "events": _events_of(kind_of_root, keys),
+            "events": _module_events(modules[name][0], kind_of_root, keys),
             "common_keys": [k for k in blocks.COMMON if k not in blocks.A11Y_STATE and k in takes],
             "actions": _actions_of(source),
         }
