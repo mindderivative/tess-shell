@@ -3134,10 +3134,13 @@ def read_module(
     style: StyleDef | None = None
     style_seen = False
     style_file = ""
+    receives: dict[str, tuple[str, m.Origin]] = {}
     for entry in root.entries:
         if isinstance(entry, Block):
             if entry.type == "Params":
                 params = _param_decls(ctx, entry)
+            elif entry.type == "Receives":
+                receives = _receives(ctx, entry)
             elif entry.type == "Children":
                 children.extend(_children(ctx, entry, lambda b: _block(ctx, b)))
             elif entry.type == "Style":
@@ -3199,8 +3202,109 @@ def read_module(
     parts = tuple(ctx.parts)
     if _holds_field(styled) and "placeholder" not in parts:
         parts = (*parts, "placeholder")  # every TextField has the part ``::placeholder``
-    definition = ModuleDef(name, file, ctx.origin(root.origin), params, styled, style_file, parts)
+    receives = _check_receives(ctx, receives, styled)
+    if any(f.severity == "error" for f in ctx.findings):
+        return None, ctx.findings
+    definition = ModuleDef(
+        name, file, ctx.origin(root.origin), params, styled, style_file, parts, receives
+    )
     return definition, ctx.findings
+
+
+def _receives(ctx: _Ctx, block: Block) -> dict[str, tuple[str, m.Origin]]:
+    """``Receives { On_Changed: Field, On_Submit: Field }``: which block of the module's layout
+    each event written on a call goes to (a name is a block's ``Name``)."""
+    out: dict[str, tuple[str, m.Origin]] = {}
+    for entry in block.entries:
+        if not isinstance(entry, Property):
+            ctx.unknown(
+                getattr(entry, "origin", block.origin),
+                getattr(entry, "type", "?"),
+                ["On_..."],
+                "entry in Receives",
+            )
+        elif not entry.key.startswith("On_"):
+            ctx.add(
+                entry.key_origin,
+                "bad-key",
+                f"{entry.key} is not an event: Receives names events (On_Changed) and the block "
+                "that raises each",
+                "write On_Changed: Field",
+            )
+        elif entry.key in out:
+            ctx.add(
+                entry.key_origin,
+                "receives-duplicate",
+                f"{entry.key} is written twice in Receives",
+                "an event goes to one block",
+            )
+        else:
+            word = entry.value.text if isinstance(entry.value, tess_dl.Word) else None
+            if word is None or not _NAME.match(word):
+                ctx.add(
+                    entry.value_origin,
+                    "bad-name",
+                    f"Receives names a block by its Name (letters, digits and _): {entry.value!r}",
+                    "write On_Changed: Field",
+                )
+            else:
+                out[entry.key] = (word, ctx.origin(entry.key_origin))
+    return out
+
+
+def _blocks_named(children: Sequence[Child], found: dict[str, list[m.Node]]) -> None:
+    for node in children:
+        if isinstance(node, m.Node):
+            if node.name is not None:
+                found.setdefault(node.name, []).append(node)
+            _blocks_named(node.children, found)
+        elif isinstance(node, m.IfNode):
+            _blocks_named(node.body, found)
+            _blocks_named(node.else_body or (), found)
+        elif isinstance(node, m.ForNode):
+            _blocks_named(node.body, found)
+
+
+def _check_receives(
+    ctx: _Ctx, receives: dict[str, tuple[str, m.Origin]], layout: Sequence[Child]
+) -> dict[str, tuple[str, m.Origin]]:
+    """Each target is one block of the layout that raises its event (read once, here, not on every
+    call): no such block, or a block that does not raise it, is an error (two blocks of one Name
+    are refused anyway: a Name is unique)."""
+    if not receives:
+        return receives
+    found: dict[str, list[m.Node]] = {}
+    _blocks_named(layout, found)
+    for event, (target, origin) in receives.items():
+        nodes = found.get(target, [])
+        if not nodes:
+            ctx.add(
+                origin,
+                "receives-unknown",
+                f"Receives sends {event} to {target}, which is no block of the layout",
+                "name a block with Name: in the layout",
+            )
+        elif not event_raised(nodes[0], event):
+            raised = blocks.BLOCK_EVENTS.get(nodes[0].kind, ())
+            ctx.add(
+                origin,
+                "receives-event",
+                f"{target} is a {nodes[0].kind}, which does not raise {event}",
+                f"it raises: {', '.join(raised)}" if raised else "it raises no event",
+            )
+    return receives
+
+
+def event_raised(node: m.Node, event: str) -> bool:
+    """Whether the block ``node`` raises ``event`` (the rule a call's handler is checked by)."""
+    if event not in blocks.BLOCK_EVENTS.get(node.kind, ()):
+        return False
+    needs = blocks.CONTROL_EVENTS.get(event)
+    return (
+        needs is None
+        or node.kind not in blocks.CONTROL_KINDS
+        or any(k in node.props for k in needs)
+    )
 
 
 def _holds_field(children: Sequence[Child]) -> bool:

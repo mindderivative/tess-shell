@@ -313,6 +313,7 @@ class _Expander:
         call: m.UseNode,
         children: tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...],
         outer: Use | None,
+        receives: Mapping[str, tuple[str, m.Origin]] | None = None,
     ) -> tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...]:
         """The module's layout with what is written on its call placed on its root block: the
         handlers (a handler names an action of the module that holds the call, ``outer``, or of
@@ -324,6 +325,12 @@ class _Expander:
             k: dataclasses.replace(h, use=outer.key if outer else "", forwarded=True)
             for k, h in call.handlers.items()
         }
+        # an event the module's ``Receives`` names goes to that block of the layout (checked once
+        # when the module was read), not to the root
+        inner = {k: handlers.pop(k) for k in list(handlers) if receives and k in receives}
+        if inner and receives:
+            for event, handler in inner.items():
+                children = _attach(children, receives[event][0], event, handler)
         # a slot written on the call reads the scope of the module that holds the call
         written = {
             k: dataclasses.replace(v, use=outer.key)
@@ -437,7 +444,7 @@ class _Expander:
             )
         content = self._walk(call.children, path, outer, stack) if call.children else []
         layout = (
-            self._forward(call, module.children, outer)
+            self._forward(call, module.children, outer, module.receives)
             if call.handlers or call.common
             else module.children
         )
@@ -566,3 +573,34 @@ def expand(
     _link_active_descendants(expander.out)
     expander.out.factory = CallFactory(modules, _ephemeral, monitor, rules, mark_roots)
     return expander.out
+
+
+def _attach(
+    children: tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...],
+    name: str,
+    event: str,
+    handler: m.Handler,
+) -> tuple[m.Node | m.UseNode | m.IfNode | m.ForNode, ...]:
+    """``children`` with ``handler`` on the block called ``name``, wherever it stands in the layout
+    (in a branch of an If or the body of a For too: the handler expands with the block)."""
+    out: list[m.Node | m.UseNode | m.IfNode | m.ForNode] = []
+    for node in children:
+        if isinstance(node, m.Node):
+            if node.name == name:
+                node = dataclasses.replace(node, handlers={**node.handlers, event: handler})
+            else:
+                node = dataclasses.replace(
+                    node, children=_attach(node.children, name, event, handler)
+                )
+        elif isinstance(node, m.IfNode):
+            node = dataclasses.replace(
+                node,
+                body=_attach(node.body, name, event, handler),
+                else_body=None
+                if node.else_body is None
+                else _attach(node.else_body, name, event, handler),
+            )
+        elif isinstance(node, m.ForNode):
+            node = dataclasses.replace(node, body=_attach(node.body, name, event, handler))
+        out.append(node)
+    return tuple(out)

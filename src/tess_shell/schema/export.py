@@ -65,7 +65,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ELEVATION_LEVELS, ValueProblem, coerce
 
-SCHEMA_VERSION = "1.38"
+SCHEMA_VERSION = "1.39"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -1000,10 +1000,11 @@ def _roots() -> dict[str, Json]:
     roots["Module"] = _spec(
         "Module",
         repeatable=False,
-        allowed_children=["Params", "Children", "Style", *blocks.BLOCKS],
+        allowed_children=["Params", "Receives", "Children", "Style", *blocks.BLOCKS],
         module_calls=True,
     )
     roots["Params"] = _spec("Params", repeatable=False)
+    roots["Receives"] = _spec("Receives", repeatable=False)
     roots["Param"] = _spec(
         "Param",
         heads=[],
