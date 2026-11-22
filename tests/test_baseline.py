@@ -48,3 +48,12 @@ def test_every_window_ignores_a_press_that_moves_less_than_4_px() -> None:
     of a drag (a peek drag, a scrollbar thumb, a movable Panel)."""
     m = manager()
     assert surface(m, "Top_Bar").window.get("drag_start_px") == 4
+
+
+def test_a_surface_holds_its_first_frame_until_its_tree_is_built_then_presents() -> None:
+    """tre 0.6.12 ``first_present``: no empty layer surface flashes when a Panel or Bar opens."""
+    m = manager()
+    window = surface(m, "Top_Bar").window
+    # held with a deadline (in case nothing readies it); the build calls ready() (headless there is
+    # no compositor to present, so only the setting is visible here; the sway run shows the rest)
+    assert window.get("first_present") == 3000

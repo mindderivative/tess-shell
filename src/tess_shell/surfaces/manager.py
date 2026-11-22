@@ -458,6 +458,9 @@ def _body_style(
     return props
 
 
+FIRST_PRESENT_MS = 3000  # the longest a new surface waits for its first frame to be built
+
+
 class PositionStore(Protocol):
     """Where a Movable Panel was left: its ``Inset`` for each side it is anchored to."""
 
@@ -978,6 +981,10 @@ class SurfaceManager:
             keyboard=self._keyboard_word(planned, hidden, say=True),  # type: ignore[arg-type]
             input_region=_input_for(bar, geometry, (output.width, output.height), hidden),
             output=output,
+            # a layer surface is mapped by its first buffer: hold it until the tree is built so the
+            # compositor never shows (or reserves a zone for) an empty surface, a flash on a Panel
+            # that opens (tre 0.6.12). The deadline shows it anyway if something stops us
+            first_present=FIRST_PRESENT_MS,
         )
         fill, shadows = _body_props(bar, self._look)
         extra = _body_extra(bar, self._look)
@@ -1048,6 +1055,7 @@ class SurfaceManager:
         _log_errors(errors)
         if view is None:
             logger.error(f"{kind} {where} is empty: its contents did not bind")
+        window.ready()  # the first frame is complete: present it
         surface = Surface(
             planned.key,
             bar.name,
