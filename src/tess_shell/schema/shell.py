@@ -624,6 +624,8 @@ def _use(ctx: _Ctx, block: Block) -> m.UseNode | None:
                 ctx.unknown(entry.key_origin, key, allowed, f"param of {module.name}")
         elif isinstance(entry, Block) and entry.type == "Tooltip":
             tooltip = _tooltip_block(ctx, entry)
+            if tooltip is not None and tooltip.description is not None:
+                common["Description"] = tooltip.description
         elif isinstance(entry, Block) and entry.type == "Children":
             children = _children(ctx, entry, lambda b: _block(ctx, b))
         elif isinstance(entry, Block) and entry.type.startswith("On_"):
@@ -721,6 +723,8 @@ def _block(ctx: _Ctx, block: Block) -> Child | None:
                     handlers[entry.type] = handler
             elif entry.type == "Tooltip":
                 tooltip = _tooltip_block(ctx, entry, block.type)
+                if tooltip is not None and tooltip.description is not None:
+                    described = tooltip.description
             elif entry.type == "Style":
                 for k, v in _scalar_block_keys(ctx, entry, style_keys, block.type).items():
                     style[k] = v
@@ -1950,7 +1954,36 @@ def _tooltip_block(ctx: _Ctx, block: Block, kind: str | None = None) -> m.Toolti
     if not _tooltip_hosts(ctx, block.origin, kind):
         return None
     popup = _popup(ctx, block, inline=True)
-    return None if popup is None else m.TooltipRef(popup=popup, origin=ctx.origin(block.origin))
+    if popup is None:
+        return None
+    return m.TooltipRef(
+        popup=popup, description=_tip_description(popup.children), origin=ctx.origin(block.origin)
+    )
+
+
+def _tip_description(nodes: tuple[object, ...]) -> m.Value | None:
+    """The text of an inline tooltip, as the trigger's accessible description (Accessibility, rule
+    11: an open tip is hidden from assistive technology, so the text must be on the trigger). The
+    one ``Text`` block of the tip gives its text (a slot stays a slot); several static ones are
+    joined by a space. Content with no text, or text that is not plain, gives none."""
+    found: list[m.Value] = []
+
+    def walk(items: tuple[object, ...]) -> None:
+        for node in items:
+            if not isinstance(node, m.Node):
+                continue
+            if node.kind == "Text" and "Text" in node.props:
+                found.append(node.props["Text"])
+            walk(node.children)
+
+    walk(nodes)
+    if len(found) == 1:
+        return found[0]
+    if found and all(isinstance(v, m.Text) for v in found):
+        return m.Text(
+            " ".join(v.value for v in found if isinstance(v, m.Text)), origin=found[0].origin
+        )
+    return None
 
 
 def _adjust(ctx: _Ctx, entry: Property) -> tuple[str, ...] | None:
