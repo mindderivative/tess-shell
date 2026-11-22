@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.43",
+  "schema_version": "1.44",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -5181,7 +5181,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How long the hover layer takes to fade in or out, in milliseconds (the theme's $state.hover_ms, 100: the engine default; ADR-0009 asks 15, which leaves a residual layer on a real compositor). Needs tre 0.6.12.",
+          "doc": "How long the hover layer takes to fade in or out, in milliseconds (the theme's $state.hover_ms, 15 as ADR-0009 asks). Needs tre 0.6.13: tre 0.6.12 left one residual layer pixel on a real compositor at this time.",
           "slot": false,
           "required": false,
           "built": true,
@@ -7771,7 +7771,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How long the hover layer takes to fade in or out, in milliseconds (the theme's $state.hover_ms, 100: the engine default; ADR-0009 asks 15, which leaves a residual layer on a real compositor). Needs tre 0.6.12.",
+          "doc": "How long the hover layer takes to fade in or out, in milliseconds (the theme's $state.hover_ms, 15 as ADR-0009 asks). Needs tre 0.6.13: tre 0.6.12 left one residual layer pixel on a real compositor at this time.",
           "slot": true,
           "required": false,
           "built": true,
@@ -9595,7 +9595,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How long the hover layer takes to fade in or out, in milliseconds (the theme's $state.hover_ms, 100: the engine default; ADR-0009 asks 15, which leaves a residual layer on a real compositor). Needs tre 0.6.12.",
+          "doc": "How long the hover layer takes to fade in or out, in milliseconds (the theme's $state.hover_ms, 15 as ADR-0009 asks). Needs tre 0.6.13: tre 0.6.12 left one residual layer pixel on a real compositor at this time.",
           "slot": true,
           "required": false,
           "built": true,
@@ -26264,7 +26264,7 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How long the hover layer takes to fade in or out, in milliseconds (the theme's $state.hover_ms, 100: the engine default; ADR-0009 asks 15, which leaves a residual layer on a real compositor). Needs tre 0.6.12.",
+          "doc": "How long the hover layer takes to fade in or out, in milliseconds (the theme's $state.hover_ms, 15 as ADR-0009 asks). Needs tre 0.6.13: tre 0.6.12 left one residual layer pixel on a real compositor at this time.",
           "slot": true,
           "required": false,
           "built": true,
@@ -28339,8 +28339,8 @@
       "hover_ms": {
         "kind": "number",
         "ref": "$state.hover_ms",
-        "default": "100",
-        "doc": "The fade time of the hover layer, in milliseconds (100; ADR-0009 asks 15).",
+        "default": "15",
+        "doc": "The fade time of the hover layer, in milliseconds (15, ADR-0009).",
         "modes": [],
         "min": null,
         "max": null,

@@ -67,7 +67,7 @@ def test_each_layer_fades_for_the_time_of_its_state_token() -> None:
     with running('Button { Text: "Go" }') as w:
         root = w.of_use("Button", "Root")
         assert [root.get(k) for k in ("hover_layer_ms", "pressed_layer_ms", "focus_layer_ms")] == [
-            100,
+            15,
             105,
             150,
         ]
