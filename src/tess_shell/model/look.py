@@ -125,6 +125,24 @@ def _ref_value(ref: m.TokenRef, tokens: Mapping[str, Token], key: str = "") -> m
         ) from exc
 
 
+# a state layer key and the theme token that is its opacity (State Layers, ADR-0009)
+LAYER_OPACITY = {
+    "Hover_Layer": "state.hover",
+    "Pressed_Layer": "state.pressed",
+    "Focus_Layer": "state.focus",
+}
+
+
+def _layer_colour(color: m.Color, token: Token | None) -> m.Color:
+    """A state layer colour at the opacity of its state token. A colour that already has an alpha
+    (``"#FFFFFF14"``) is the author's own and is kept."""
+    value = getattr(token, "value", None)
+    opacity = getattr(value, "value", None)
+    if color.a != 255 or not isinstance(opacity, int | float):
+        return color
+    return m.Color(color.r, color.g, color.b, round(255 * float(opacity)), origin=color.origin)
+
+
 def resolve_style(
     style: Mapping[str, m.Value], look: Look | None, report: list[m.BindError] | None = None
 ) -> dict[str, m.Value]:
@@ -155,6 +173,8 @@ def resolve_style(
                 continue
             out["Shadows"] = out.get("Shadows") or shadows
             continue
+        if key in LAYER_OPACITY and isinstance(value, m.Color) and look is not None:
+            value = _layer_colour(value, look.tokens.get(LAYER_OPACITY[key]))
         if key == "Elevation" and isinstance(value, m.Percent) and look is not None:
             top = look.max_shadows
             if top is not None:  # the theme's own Max replaces the built-in one
@@ -172,31 +192,37 @@ def resolve(nodes: Sequence[m.Node], look: Look | None) -> tuple[list[m.Node], l
     return [_resolve_node(n, look, errors, ring) for n in nodes], errors
 
 
-# the ring of keyboard focus when the theme has no tokens to build it from
+# the focus ring when the theme has no tokens to build it from (Focus Ring: 3 px, 2 px off)
 _RING_COLOR = m.Color(0x5B, 0x97, 0xC9, 255)
-_RING_SPREAD = 2
+_RING_WIDTH = 3
+_RING_OFFSET = 2
 
 
-def focus_ring(look: Look | None) -> m.Shadows:
+def focus_ring(look: Look | None) -> dict[str, m.Value]:
     """The ring that shows keyboard focus (Focus and Keyboard > Focusable Things and the Focus
-    Ring): one shadow with no blur and no offset, so it does not shift the layout, in the theme's
-    ``color.primary``, ``space.step_1`` pixels thick. A theme without those tokens gets the
-    Default theme's values."""
+    Ring): tre's outline, drawn outside the block so it shifts no layout and needs no
+    ``Shadows``: ``space.focus_ring_width`` wide, ``space.focus_ring_offset`` off the block, in
+    ``color.primary``.
+    A theme without those tokens gets the Default theme's values."""
     origin = m.Origin("<focus ring>", 1, 1)
-    color: m.Value = _RING_COLOR
-    spread: m.Value = m.Number(_RING_SPREAD, origin=origin)
+    found: dict[str, m.Value] = {
+        "Outline_Color": _RING_COLOR,
+        "Outline_Width": m.Number(_RING_WIDTH, origin=origin),
+        "Outline_Offset": m.Number(_RING_OFFSET, origin=origin),
+    }
     if look is not None:
-        for path, kind in (("color.primary", "color"), ("space.step_1", "number")):
+        for key, path, kind in (
+            ("Outline_Color", "color.primary", "color"),
+            ("Outline_Width", "space.focus_ring_width", "number"),
+            ("Outline_Offset", "space.focus_ring_offset", "number"),
+        ):
             try:
-                found = _ref_value(m.TokenRef(path, kind), look.tokens)
+                value = _ref_value(m.TokenRef(path, kind), look.tokens)
             except TokenProblem:
                 continue  # a theme with no such token: the default stands
-            if isinstance(found, m.Color):
-                color = found
-            elif isinstance(found, m.Number):
-                spread = found
-    assert isinstance(color, m.Color) and isinstance(spread, m.Number)
-    return m.Shadows((m.Shadow(color, 0, 0, 0, float(spread.value), origin=origin),), origin=origin)
+            if isinstance(value, m.Color | m.Number):
+                found[key] = value
+    return found
 
 
 def _motion(
@@ -224,18 +250,16 @@ def _motion(
 
 
 def _resolve_node(
-    node: m.Node, look: Look | None, errors: list[m.BindError], ring: m.Shadows
+    node: m.Node, look: Look | None, errors: list[m.BindError], ring: dict[str, m.Value]
 ) -> m.Node:
     props = resolve_style(node.props, look, errors)
     style = resolve_style(node.style, look, errors)
     _motion(node, props, style, look)
     states = {s: resolve_style(v, look, errors) for s, v in node.states.items()}
-    if takes_ring(node) and _allowed(node.kind, "Shadows"):
+    if takes_ring(node) and _allowed(node.kind, "Outline_Width"):
         # the ring of keyboard focus, under whatever ``:focused`` rule the file or a stylesheet
-        # has (its ``Shadows`` replaces the ring); the block's own shadows stay under it
-        base = style.get("Shadows") or props.get("Shadows")
-        shown = ring if not isinstance(base, m.Shadows) else _with_ring(ring, base)
-        states["focused"] = {"Shadows": shown, **states.get("focused", {})}
+        # has (its ``Outline_*`` keys replace the ring's); it does not touch the block's shadows
+        states["focused"] = {**ring, **states.get("focused", {})}
     return dataclasses.replace(
         node,
         props=props,
@@ -245,10 +269,6 @@ def _resolve_node(
             _resolve_node(c, look, errors, ring) for c in node.children if isinstance(c, m.Node)
         ),
     )
-
-
-def _with_ring(ring: m.Shadows, base: m.Shadows) -> m.Shadows:
-    return m.Shadows((*ring.items, *base.items), origin=ring.origin)
 
 
 # -- stylesheet rules --------------------------------------------------------------------------

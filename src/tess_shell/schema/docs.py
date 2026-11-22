@@ -90,6 +90,17 @@ KEY_DOCS: dict[str, str] = {
     "Elevation": "How high the block floats: a percentage of the theme's largest shadow (0% is no "
     "shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is "
     "LEVEL_2, a dialog LEVEL_3).",
+    "Hover_Layer": "The colour of the layer drawn over the block while the pointer is on it, at "
+    "the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. "
+    "Needs tre 0.6.11.",
+    "Pressed_Layer": "The colour of the layer drawn while the block is pressed, at $state.pressed "
+    "(0.10).",
+    "Focus_Layer": "The colour of the layer drawn while the block has keyboard focus, at "
+    "$state.focus (0.10); a click draws none.",
+    "Outline_Width": "The width of a line drawn outside the block, off its edge by Outline_Offset "
+    "(the keyboard focus ring uses it, in :focused). 0 draws none.",
+    "Outline_Offset": "The gap between the block and its outline.",
+    "Outline_Color": "The colour of the outline.",
     "Shadows": "A list of Shadow blocks, the first on top; it replaces Elevation when both are "
     "written.",
     "Shadow_Bleed": "The transparent margin a surface keeps around its body for the shadow: AUTO "
@@ -496,6 +507,12 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "Color",
         "Opacity",
         "Elevation",
+        "Hover_Layer",
+        "Pressed_Layer",
+        "Focus_Layer",
+        "Outline_Width",
+        "Outline_Offset",
+        "Outline_Color",
         "Shadows",
         "Shadow_Bleed",
         "Placeholder_Foreground",
@@ -768,6 +785,8 @@ TOKEN_DOCS: dict[str, str] = {
     "space.step_6": "A step of spacing between groups.",
     "space.step_7": "A large step of spacing.",
     "space.step_8": "The largest step of spacing.",
+    "space.focus_ring_width": "The width of the ring that shows keyboard focus (3).",
+    "space.focus_ring_offset": "The gap between a block and its focus ring (2).",
     "density.control_height": "The height of a button, a text field, a switch row and an icon "
     "button: 40, 32 or 28 at the default, compact and dense levels.",
     "density.row_height": "The height of a one-line list or tree row: 40, 32 or 24.",
@@ -785,6 +804,11 @@ TOKEN_DOCS: dict[str, str] = {
     "density.tree_indent": "The indent of one tree level: 20, 16 or 12.",
     "density.chevron_box": "The size of a tree's chevron box: 24, 20 or 16.",
     "elevation.reach": "How far the largest shadow reaches, in pixels.",
+    "state.hover": "The opacity of the hover state layer (0.08): a Hover_Layer colour is drawn at "
+    "this alpha.",
+    "state.focus": "The opacity of the keyboard-focus state layer (0.10).",
+    "state.pressed": "The opacity of the pressed state layer (0.10).",
+    "state.dragged": "The opacity of the dragged state layer (0.16); no block takes it yet.",
     "elevation.max": "The shadow list at 100% elevation; a smaller Elevation scales it.",
     "elevation.level_1": "The shadows of Elevation: LEVEL_1 (1 dp): a key and an ambient shadow.",
     "elevation.level_2": "The shadows of Elevation: LEVEL_2 (3 dp): a menu, a tooltip, a popup.",

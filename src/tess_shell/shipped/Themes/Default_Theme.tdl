@@ -57,6 +57,8 @@ Theme {
         Step_6: 24
         Step_7: 32
         Step_8: 48
+        Focus_Ring_Width: 3
+        Focus_Ring_Offset: 2
     }
 
     Density {
@@ -71,6 +73,13 @@ Theme {
         Field_Padding: [12, 12, 12, 12]
         Tree_Indent: 20
         Chevron_Box: 24
+    }
+
+    State {
+        Hover: 0.08
+        Focus: 0.10
+        Pressed: 0.10
+        Dragged: 0.16
     }
 
     Elevation {
