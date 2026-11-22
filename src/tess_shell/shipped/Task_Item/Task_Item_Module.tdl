@@ -43,7 +43,7 @@ Module {
             Gap: 4
             Children {
                 FlexBox {
-                    Padding: [8, 4, 8, 4]
+                    Padding: <| [space.step_3, space.step_2, space.step_3, space.step_2] |>
                     Children {
                         Text {
                             Text: <| params.title |>

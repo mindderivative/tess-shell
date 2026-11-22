@@ -43,7 +43,7 @@ Module {
         Label: "Tesserae Shell windows"
         Flex: HORIZONTAL
         Align_Items: CENTER
-        Spacing: 4
+        Spacing: <| space.step_2 |>
         On_Scroll { Action: cycle, delta: <| event.delta |> }
         Children {
             For w In <| windows |> Key <| w.id |> {

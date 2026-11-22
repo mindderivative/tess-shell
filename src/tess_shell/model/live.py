@@ -167,16 +167,17 @@ class LiveTree:
     def _shell_names(self) -> dict[str, Any]:
         """What the shell supplies to every slot: ``caller`` in a Popup's content, and ``density``,
         the sizes of the surface's density level (``density.control_height``; Spacing and
-        Density)."""
+        Density), and ``space``, the spacing scale (``space.step_3`` is 8)."""
         names: dict[str, Any] = {}
         if self.caller is not None:
             names["caller"] = self.caller
         if self.look is not None:
-            names["density"] = {
-                path.partition(".")[2]: token.value.value
-                for path, token in self.look.tokens.items()
-                if path.startswith("density.") and hasattr(token.value, "value")
-            }
+            for group in ("density", "space"):
+                names[group] = {
+                    path.partition(".")[2]: token.value.value
+                    for path, token in self.look.tokens.items()
+                    if path.startswith(f"{group}.") and hasattr(token.value, "value")
+                }
         return names
 
     def _scope(self, use: str) -> UseScope:

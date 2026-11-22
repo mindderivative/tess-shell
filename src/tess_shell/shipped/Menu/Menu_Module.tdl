@@ -26,7 +26,7 @@ Module {
         Label: <| params.Label |>
         Flex: VERTICAL
         Min_Width: 160
-        Padding: 4
+        Padding: <| space.step_2 |>
         Children { Content { } }
     }
 }
