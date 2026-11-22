@@ -103,3 +103,56 @@ def test_home_end_and_the_page_keys_move_the_choice_of_a_list_with_real_key_even
                 shell.process.wait()
     finally:
         session.close()
+
+
+def test_ctrl_a_chooses_every_entry_of_a_multiple_list_and_escape_keeps_them_with_real_keys(
+    private_sway: PrivateSway, tmp_path: Path
+) -> None:
+    """AC-SLT-4 through the engine's real key path: the chord reaches the engine's container
+    selection (the keys come from ``wtype``, with Ctrl held)."""
+    panel = PANEL.replace("List { Label: Files,", "List { Label: Files, Selection: MULTIPLE,")
+    write_example(
+        tmp_path, BODY.replace("            Bar {", f"            {panel}\n            Bar {{", 1)
+    )
+    (tmp_path / "settings.tdl").write_text(
+        "---\nTDL: 0.2\nName: S\n---\nSettings { Logging { Level: DEBUG } }\n"
+    )
+    session = atspi_env.AtspiEnvironment()
+    root = ("org.a11y.atspi.Registry", "/org/a11y/atspi/accessible/root")
+
+    def chosen() -> list[int]:
+        apps = session.children(*root)
+        found = list(session.tree(*apps[0], limit=9)) if apps else []
+        rows = [(d, p) for _, r, _, d, p in found if r == LIST_ITEM]
+        return [i + 1 for i, node in enumerate(rows) if SELECTED in session.states(*node)]
+
+    env = {**private_sway.env, **session.env()}
+    holder = None
+    try:
+        shell = Shell(tmp_path, env)
+        try:
+            shell.wait_for("running")
+            session.enable()
+            holder = subprocess.Popen(
+                ["wtype", "-k", "F24", "-s", "300000"], env=dict(private_sway.env)
+            )
+            until(lambda: len(session.children(*root)) > 0, "the application")
+            for _ in range(20):  # the first Tab gives the list the keyboard
+                keys(private_sway, "-k", "Tab")
+                keys(private_sway, "-M", "ctrl", "-k", "a", "-m", "ctrl")
+                if chosen() == list(range(1, COUNT + 1)):
+                    break
+                time.sleep(0.3)
+            until(lambda: chosen() == list(range(1, COUNT + 1)), "Ctrl+A chose every entry")
+            keys(private_sway, "-k", "Escape")
+            time.sleep(0.5)
+            assert chosen() == list(range(1, COUNT + 1)), "Escape kept the selection"
+        finally:
+            if holder is not None:
+                holder.terminate()
+                holder.wait(timeout=10)
+            if shell.process.poll() is None:
+                shell.process.kill()  # our own child
+                shell.process.wait()
+    finally:
+        session.close()
