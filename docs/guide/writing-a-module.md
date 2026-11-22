@@ -57,6 +57,8 @@ Module {
 * **The type of the key decides what a slot may give.** `Text:` takes a string, a number key takes a number, a colour key takes a colour string such as `"#8fd3b6"`, an enum key one of its upper-case words. A slot that gives something else is logged as a warning with the key and the value, and the block keeps what it had. The [reference](../api/module-api.md#values) lists every kind.
 * **Events and handlers.** `On_Click { Action: bump, amount: <| params.step |> }` calls the module's own `@action` named `bump`; `amount` is an argument, a plain value or a slot that is evaluated when the click happens. `On_Secondary_Click: reset` is the short form, a bare action name with no arguments. The events a block can raise are in [Surfaces](surfaces.md#showing-hiding-and-toggling) and on each block's page.
 
+* **`Receives`** sends the events written on a use to a block that is not the root. A module whose root is a `FlexBox` that holds a `TextField` writes `Receives { On_Changed: Field, On_Submit: Field }` beside `Params`, with `Name: Field` on the `TextField`; `Pair { On_Changed: edited }` then raises `edited` when the field changes. Each name is a block's `Name` in the layout, the block must raise that event (the shell checks it when it reads the module, not on each use), and an event `Receives` does not name goes to the root block as before. The common keys of a use (`Width`, `Enabled`, `Label`) still go to the root.
+
 Send every value the layout reads as early as you can, in `start()` as `Tally` does: the shell keeps what is sent before a surface exists, and a surface that is drawn then shows it.
 
 ## The Python

@@ -245,6 +245,9 @@ class ModuleDef:
     children: tuple[Node | UseNode | IfNode | ForNode, ...]
     style_file: str = ""  # the style file the layout names (the files it depends on)
     parts: tuple[str, ...] = ()  # the ``Part:`` names the layout declares, in order
+    # ``Receives { On_Changed: Field }``: the event of a call -> the Name of the block of the layout
+    # that raises it (and where it was written); an event not named goes to the root block
+    receives: Mapping[str, tuple[str, Origin]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)

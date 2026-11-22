@@ -1012,6 +1012,8 @@ SPEC_NOTES: dict[str, str] = {
     "follow.",
     "Module": "The root block of a module file: params and one layout.",
     "Params": "The params a module accepts.",
+    "Receives": "Which block of the module's layout takes each event written on a call: "
+    "Receives { On_Changed: Field }. An event it does not name goes to the root block.",
     "Param": "One param: its type and, optionally, its default.",
     "Box": "A plain container; its children are placed by their own keys.",
     "FlexBox": "A container that lays its children out in a row or a column.",

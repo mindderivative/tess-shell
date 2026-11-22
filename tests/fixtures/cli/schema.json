@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.38",
+  "schema_version": "1.39",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -5966,6 +5966,7 @@
       "repeatable": false,
       "allowed_children": [
         "Params",
+        "Receives",
         "Children",
         "Style",
         "Box",
@@ -5990,6 +5991,21 @@
       "doc": "The params a module accepts.",
       "heads": [
         "Params"
+      ],
+      "keys": {},
+      "style": {},
+      "events": [],
+      "required": [],
+      "repeatable": false,
+      "allowed_children": [],
+      "module_calls": false,
+      "example": null,
+      "not_built": []
+    },
+    "Receives": {
+      "doc": "Which block of the module's layout takes each event written on a call: Receives { On_Changed: Field }. An event it does not name goes to the root block.",
+      "heads": [
+        "Receives"
       ],
       "keys": {},
       "style": {},
