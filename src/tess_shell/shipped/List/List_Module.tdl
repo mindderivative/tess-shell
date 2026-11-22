@@ -21,12 +21,19 @@ Name: List
 # `On_Changed` fires and the entry scrolls into view. A disabled entry is passed over, a List with
 # `Selection: NONE` takes no key, and a focused List keeps the keys, so they do not scroll a
 # ScrollBox around it.
+# `Empty` is the text the List shows when it has no entries and `Count` is 0: the caller passes the
+# number of entries it loops over (a module cannot count its Content), so `Count` is -1, unknown,
+# unless written. The empty text is one node inside the List, which keeps its role and name
+# (Empty States).
 #   List { Selected: <| picked |>, On_Changed: choose, Children { For ... Key <| w.id |> { ... } } }
+#   List { Empty: "No results", Count: <| results_count |>, Children { For ... } }
 Module {
     Params {
         Selected { Type: string, Default: "" }
         Selection { Type: string, Default: SINGLE }
         Label { Type: string, Default: "" }
+        Empty { Type: string, Default: "" }
+        Count { Type: number, Default: -1 }
     }
     ScrollBox {
         Name: Root
@@ -41,7 +48,20 @@ Module {
                 Name: Items
                 Flex: VERTICAL
                 Align_Items: STRETCH
-                Children { Content { } }
+                Children {
+                    If <| params.Empty != "" and params.Count == 0 |> {
+                        Text {
+                            Name: Empty
+                            Foreground: $color.on_surface_muted
+                            Text: <| params.Empty |>
+                            Wrap: NONE
+                            Width: AUTO
+                            Height: AUTO
+                            Padding: <| [density.row_padding_x, 8, density.row_padding_x, 8] |>
+                        }
+                    }
+                    Content { }
+                }
             }
         }
     }
