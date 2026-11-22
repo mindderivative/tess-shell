@@ -834,7 +834,8 @@ TOKEN_DOCS: dict[str, str] = {
     "button: 40, 32 or 28 at the default, compact and dense levels.",
     "density.row_height": "The height of a one-line list or tree row: 40, 32 or 24.",
     "density.menu_item_height": "The height of a menu item: 40, 32 or 28.",
-    "density.icon_size": "The painted size of an icon in an icon button: 24, 20 or 20.",
+    "density.icon_size": "The painted size of an icon in an icon button, a menu item and an Icon "
+    "with no Size: 24, 20 or 20.",
     "density.item_size": "The size of a tray item, a task button and a workspace button (the "
     "pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be).",
     "density.item_icon_size": "The icon of a tray item and a task button: 20, 18 or 18.",
@@ -845,7 +846,8 @@ TOKEN_DOCS: dict[str, str] = {
     "12], [8, 8, 8, 8] or [8, 6, 8, 6]. With the 16 px line of 14 px body text the field is 40, 32 "
     "or 28 high (the spec's 20 px line would take 10, 6 and 4).",
     "density.tree_indent": "The indent of one tree level: 20, 16 or 12.",
-    "density.chevron_box": "The size of a tree's chevron box: 24, 20 or 16.",
+    "density.chevron_box": "The size of a tree's chevron box and a menu item's submenu arrow: "
+    "24, 20 or 16.",
     "scrollbar.width": "The thickness of the scrollbar thumb: 8.",
     "scrollbar.hit_width": "The pointer-sensitive thickness of the scrollbar: 12.",
     "scrollbar.margin": "The space around the thumb: 2.",

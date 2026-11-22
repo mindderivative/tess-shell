@@ -49,7 +49,7 @@ Module {
                     Gap: 4
                     Children {
                         FlexBox {
-                            Padding: [8, 4, 8, 4]
+                            Padding: <| [space.step_3, space.step_2, space.step_3, space.step_2] |>
                             Children {
                                 Text {
                                     Text: <| tooltip |>
@@ -68,7 +68,7 @@ Module {
                         Visible: <| state == "CONNECTED" or state == "CONNECTING" |>
                         Flex: HORIZONTAL
                         Align_Items: CENTER
-                        Spacing: 4
+                        Spacing: <| space.step_2 |>
                         Children {
                             SVG {
                                 Name: Glyph
@@ -100,7 +100,7 @@ Module {
                         Visible: <| state == "LIMITED" or state == "PORTAL" |>
                         Flex: HORIZONTAL
                         Align_Items: CENTER
-                        Spacing: 4
+                        Spacing: <| space.step_2 |>
                         Children {
                             SVG {
                                 Name: Glyph_Warn
@@ -135,7 +135,7 @@ Module {
                         Visible: <| state == "DISCONNECTED" or state == "DISABLED" or state == "UNKNOWN" |>
                         Flex: HORIZONTAL
                         Align_Items: CENTER
-                        Spacing: 4
+                        Spacing: <| space.step_2 |>
                         Children {
                             SVG {
                                 Name: Glyph_Muted

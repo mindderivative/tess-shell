@@ -49,12 +49,12 @@ Module {
             Box {
                 Name: Glyph_Slot
                 Visible: <| not params.Separator |>
-                Width: 16
-                Height: 16
+                Width: <| density.icon_size |>
+                Height: <| density.icon_size |>
                 Flex_Shrink: 0
                 Children {
                     If <| params.Icon != "" |> {
-                        SVG { Name: Glyph, Part: icon, Source: <| params.Icon |>, Width: 16, Height: 16 }
+                        SVG { Name: Glyph, Part: icon, Source: <| params.Icon |>, Width: <| density.icon_size |>, Height: <| density.icon_size |> }
                     }
                 }
             }
@@ -80,8 +80,8 @@ Module {
                 Part: arrow
                 Icon: "mdi:chevron-right"
                 Visible: <| params.Submenu != "" |>
-                Width: 16
-                Height: 16
+                Width: <| density.chevron_box |>
+                Height: <| density.chevron_box |>
             }
         }
     }

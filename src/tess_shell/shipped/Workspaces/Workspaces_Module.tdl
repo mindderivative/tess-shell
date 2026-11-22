@@ -24,7 +24,7 @@ Module {
         Label: Workspaces
         Flex: HORIZONTAL
         Align_Items: CENTER
-        Spacing: 4
+        Spacing: <| space.step_2 |>
         Children {
             For desktop In <| desktops |> Key <| desktop.id |> {
                 Workspace_Item {
