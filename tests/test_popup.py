@@ -939,3 +939,23 @@ def test_fade_on_a_popup_is_built() -> None:
         "FADE",
         200,
     )
+
+
+def test_the_tooltip_log_says_what_a_tooltip_did_and_why() -> None:
+    """An observation (the behavior-standard adapter reads it): an open with ``hover``, a close with
+    its reason (the grace after the pointer left, Escape)."""
+    (r,) = list(rig("", btn=BTN_TIP))
+    node = r.root_of()
+    r.bar.window.simulate("pointer_enter", node=node)
+    r.advance(501)
+    r.bar.window.simulate("pointer_leave", node=node)
+    r.advance(151)
+    r.bar.window.simulate("pointer_enter", node=node)
+    r.advance(501)
+    r.bar.window.simulate("key_down", key="escape")
+    assert list(r.popups.tooltip_log) == [
+        (True, "hover"),
+        (False, "the pointer left"),
+        (True, "hover"),
+        (False, "escape"),
+    ]
