@@ -139,8 +139,9 @@ KEY_DOCS: dict[str, str] = {
     "Role": "What assistive technology announces the block as.",
     "Label": "The name assistive technology reads aloud; a text node's words are not exposed "
     "alone, so the block carries the label.",
-    "Description": "A longer description for assistive technology; a text Tooltip is also the "
-    "description.",
+    "Description": "A longer description for assistive technology; the text of a Tooltip (the "
+    "text form, or the one Text of an inline Tooltip { }) is also the description, because the "
+    "open tip is hidden from assistive technology.",
     "Live": "Announces changes of the block: POLITE waits for a pause, ASSERTIVE interrupts.",
     "A11y_Hidden": "Hides the block from assistive technology while it stays visible.",
     "Value": "The accessible value of a control, a number or a string; set by a module, not "
