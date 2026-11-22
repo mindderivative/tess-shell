@@ -45,7 +45,7 @@ Module {
         Label: <| label |>
         Flex: HORIZONTAL
         Align_Items: CENTER
-        Spacing: 4
+        Spacing: <| space.step_2 |>
         On_Scroll { Action: step, delta: <| 0 - event.delta * params.step |> }
         On_Secondary_Click: show_outputs
         Children {
@@ -65,7 +65,7 @@ Module {
                     Gap: 4
                     Children {
                         FlexBox {
-                            Padding: [8, 4, 8, 4]
+                            Padding: <| [space.step_3, space.step_2, space.step_3, space.step_2] |>
                             Children {
                                 Text {
                                     Text: <| tooltip |>
@@ -115,7 +115,7 @@ Module {
                     Gap: 4
                     Children {
                         FlexBox {
-                            Padding: [8, 4, 8, 4]
+                            Padding: <| [space.step_3, space.step_2, space.step_3, space.step_2] |>
                             Children {
                                 Text {
                                     Text: <| str(volume) + " percent" |>

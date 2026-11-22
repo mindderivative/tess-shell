@@ -38,8 +38,8 @@ Module {
         Role: GROUP
         Label: "Applications"
         Flex: VERTICAL
-        Spacing: 8
-        Padding: 12
+        Spacing: <| space.step_3 |>
+        Padding: <| space.step_4 |>
         Children {
             TextInput {
                 Name: query

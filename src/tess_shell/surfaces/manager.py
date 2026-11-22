@@ -420,11 +420,14 @@ _EXTRA_KEYS = {
 
 def _body_extra(bar: BarDef | PanelDef, look: Look | None) -> dict[str, Any]:
     """The tre properties a Panel's body takes from its style besides fill and shadows: the
-    corner radius and the border."""
-    if not isinstance(bar, PanelDef):
-        return {}
-    style = _bar_style(bar, look)
+    corner radius and the border; and, for a Bar or a Panel, its ``Padding``."""
     out: dict[str, Any] = {}
+    if bar.padding is not None:
+        left, top, right, bottom = bar.padding
+        out.update(padding_left=left, padding_top=top, padding_right=right, padding_bottom=bottom)
+    if not isinstance(bar, PanelDef):
+        return out
+    style = _bar_style(bar, look)
     for key, (name, kind) in _EXTRA_KEYS.items():
         value = style.get(key)
         if value is not None:

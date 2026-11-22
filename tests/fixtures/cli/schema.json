@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.34",
+  "schema_version": "1.36",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -1029,6 +1029,32 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Padding": {
+          "kind": "sides",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "Space between the Bar's children and its sides: a number or four sides (left, top, right, bottom). It is inside the Bar's Width and Height.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Layout",
+          "arity": [
+            1,
+            4
+          ],
+          "order": [
+            "Left",
+            "Top",
+            "Right",
+            "Bottom"
+          ],
+          "named_block": true,
+          "negative": false,
+          "unit": "px",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Exclusive_Zone": {
           "kind": null,
           "choices": null,
@@ -1143,33 +1169,6 @@
           "built": false,
           "refused": false,
           "group": "Behaviour",
-          "tokens": [],
-          "preferred_tokens": []
-        },
-        "Padding": {
-          "kind": "sides",
-          "choices": null,
-          "enum": null,
-          "default": null,
-          "doc": "Space between the Bar's children and its sides. Not built.",
-          "slot": false,
-          "required": false,
-          "built": false,
-          "refused": false,
-          "group": "Layout",
-          "arity": [
-            1,
-            4
-          ],
-          "order": [
-            "Left",
-            "Top",
-            "Right",
-            "Bottom"
-          ],
-          "named_block": true,
-          "negative": false,
-          "unit": "px",
           "tokens": [],
           "preferred_tokens": []
         },
@@ -1388,7 +1387,6 @@
         "Meld",
         "Animation",
         "Text_Rotation",
-        "Padding",
         "Class"
       ]
     },
@@ -1799,6 +1797,32 @@
           "tokens": [],
           "preferred_tokens": []
         },
+        "Padding": {
+          "kind": "sides",
+          "choices": null,
+          "enum": null,
+          "default": null,
+          "doc": "Space between the children and the Panel's sides: a number or four sides (left, top, right, bottom). Not for a Panel with Meld: true. It is inside the Panel's Width and Height, or added to a content-sized one.",
+          "slot": false,
+          "required": false,
+          "built": true,
+          "group": "Layout",
+          "arity": [
+            1,
+            4
+          ],
+          "order": [
+            "Left",
+            "Top",
+            "Right",
+            "Bottom"
+          ],
+          "named_block": true,
+          "negative": false,
+          "unit": "px",
+          "tokens": [],
+          "preferred_tokens": []
+        },
         "Attach_To": {
           "kind": "name_ref",
           "choices": null,
@@ -1880,33 +1904,6 @@
           "built": false,
           "refused": false,
           "group": "Placement",
-          "arity": [
-            1,
-            4
-          ],
-          "order": [
-            "Left",
-            "Top",
-            "Right",
-            "Bottom"
-          ],
-          "named_block": true,
-          "negative": false,
-          "unit": "px",
-          "tokens": [],
-          "preferred_tokens": []
-        },
-        "Padding": {
-          "kind": "sides",
-          "choices": null,
-          "enum": null,
-          "default": null,
-          "doc": "Space between the children and the Panel's sides. Not built.",
-          "slot": false,
-          "required": false,
-          "built": false,
-          "refused": false,
-          "group": "Layout",
           "arity": [
             1,
             4
@@ -2227,7 +2224,6 @@
         "Open_With_Target",
         "Exclusive_Zone",
         "Margin",
-        "Padding",
         "Class"
       ]
     },
@@ -27694,7 +27690,7 @@
         "kind": "number",
         "ref": "$density.icon_size",
         "default": "24",
-        "doc": "The painted size of an icon in an icon button: 24, 20 or 20.",
+        "doc": "The painted size of an icon in an icon button, a menu item and an Icon with no Size: 24, 20 or 20.",
         "modes": [
           "compact",
           "dense"
@@ -27801,7 +27797,7 @@
         "kind": "number",
         "ref": "$density.chevron_box",
         "default": "24",
-        "doc": "The size of a tree's chevron box: 24, 20 or 16.",
+        "doc": "The size of a tree's chevron box and a menu item's submenu arrow: 24, 20 or 16.",
         "modes": [
           "compact",
           "dense"
@@ -28950,7 +28946,7 @@
         "Size": {
           "type": "number",
           "kind": "number",
-          "default": "16",
+          "default": "0",
           "doc": "The width and the height, in pixels.",
           "required": false,
           "min": null,
