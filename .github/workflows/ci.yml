@@ -197,6 +197,33 @@ jobs:
         env:
           NO_MKDOCS_2_WARNING: "1"
 
+  behavior:
+    name: Behavior standard conformance (not gating)
+    needs: changes
+    if: needs.changes.outputs.docs_only != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Not in `result`'s needs: tess-behavior is a private repository until its first release, so the
+    # package cannot be installed here and the conformance tests skip. When the repository is public
+    # this job installs the pin of tests/behavior/requirements.txt and the tests run for real; then it
+    # joins `result`.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+      - run: uv sync --locked --python 3.14
+      - name: Install the behavior standard (when the repository is reachable)
+        run: |
+          uv pip install -r tests/behavior/requirements.txt || echo "tess-behavior is not reachable: the conformance tests skip"
+      - name: Run the conformance tests
+        run: uv run --no-sync pytest -q -rs tests/behavior
+
   result:
     name: CI result
     if: always()
