@@ -221,7 +221,7 @@ def every_key() -> list[tuple[str, str, str, dict[str, Any]]]:
 
 
 def test_top_level_shape() -> None:
-    assert D["schema_version"] == "1.27"
+    assert D["schema_version"] == "1.28"
     assert D["shell_version"]
     assert list(D) == [
         "schema_version",
@@ -822,7 +822,7 @@ def test_the_command_prints_valid_json(capsys: pytest.CaptureFixture[str]) -> No
 
 def test_the_command_takes_json_before_the_command_too(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--json", "schema"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.27"
+    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.28"
 
 
 def test_out_writes_the_file_and_prints_nothing(
@@ -866,6 +866,8 @@ def written(value: tess_dl.Value) -> str:
     match value:
         case tess_dl.String() | tess_dl.Number() | tess_dl.Percent() | tess_dl.Word():
             return value.text
+        case tess_dl.List():
+            return "[" + ", ".join(written(i) for i in value.items) + "]"
     raise AssertionError(value)
 
 
@@ -874,8 +876,10 @@ def theme_entries(block: tess_dl.Block, prefix: tuple[str, ...]) -> dict[str, An
     for entry in block.entries:
         if isinstance(entry, tess_dl.Property):
             out[".".join((*prefix, entry.key.lower()))] = entry.value
-        elif isinstance(entry, tess_dl.Block) and entry.type == "Max":
-            out[".".join((*prefix, "max"))] = entry
+        elif isinstance(entry, tess_dl.Block) and (
+            entry.type == "Max" or entry.type.startswith("Level_")
+        ):
+            out[".".join((*prefix, entry.type.lower()))] = entry
         elif isinstance(entry, tess_dl.Block):
             out.update(theme_entries(entry, (*prefix, entry.type.lower())))
     return out
@@ -913,7 +917,7 @@ def test_the_tokens_are_the_default_themes_with_its_modes() -> None:
     for ref, entry in exported.items():
         value = base[ref]
         if isinstance(value, tess_dl.Block):
-            assert entry["default"].startswith("Max { Shadows { Shadow {")
+            assert entry["default"].startswith(f"{ref.partition('.')[2].title()} {{ Shadows {{")
         else:
             assert entry["default"] == written(value), ref
         group, _, name = ref.partition(".")

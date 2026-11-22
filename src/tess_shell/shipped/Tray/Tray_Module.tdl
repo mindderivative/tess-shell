@@ -23,8 +23,8 @@ Name: Tray
 # The menu opens beside the icon that was clicked (the event carries the icon's rectangle).
 Module {
     Params {
-        # the icon's size in pixels
-        icon_size { Type: number, Default: 18 }
+        # the icon's size in pixels; 0 is the density level's (`density.item_icon_size`)
+        icon_size { Type: number, Default: 0 }
         # show the items whose status is Passive
         show_passive { Type: boolean, Default: false }
         # the space between two items

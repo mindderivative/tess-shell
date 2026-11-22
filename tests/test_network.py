@@ -567,7 +567,9 @@ def test_a_change_of_the_primary_connection_replaces_the_subscriptions_on_its_ob
                 net.nothing()
                 assert d.settle(w, lambda: icon_of(w) == "network-off")
                 assert wait_for(lambda: not monitor.added(me, f"path='{DEV['wlan']}'"))
-                assert not monitor.added(me, f"path='{AP['one']}'")
+                # the rules of the objects below the device go as the device's do: asynchronously,
+                # so this waits too (a bare assert failed once on CI when the match was still there)
+                assert wait_for(lambda: not monitor.added(me, f"path='{AP['one']}'"))
         finally:
             monitor.stop()
 

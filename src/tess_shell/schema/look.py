@@ -29,6 +29,9 @@ _MODE_BLOCKS["Reduced_Motion"] = "reduced_motion"
 # the density levels: the base values are the DEFAULT level, these two replace the ``Density`` group
 _MODE_BLOCKS["Compact"] = "compact"
 _MODE_BLOCKS["Dense"] = "dense"
+# the blocks of the Elevation group that hold a shadow list: the maximum a percentage scales, and
+# the levels 1 to 5 a surface names (Elevation: LEVEL_2)
+ELEVATION_BLOCKS = ("Max", *(f"Level_{n}" for n in range(1, 6)))
 SYSTEM_FONT = "type.system.font_family"  # the desktop's UI font family (Portals)
 # the family tre's bundled font has and text uses when no ``Font_Family`` is set (the shell ships
 # no font of its own): what ``type.system.font_family`` holds while the desktop names none
@@ -50,6 +53,8 @@ def token_kind(path: tuple[str, ...]) -> str | None:
     group, leaf = path[0], path[-1]
     if group == "color":
         return "color"
+    if path == ("density", "field_padding"):
+        return "sides"
     if group == "state":
         return "unit"  # an opacity, 0 to 1
     if group in ("shape", "space", "density"):
@@ -81,15 +86,20 @@ def _flatten(
                     continue
             out[".".join(path)] = Token(entry.value, ctx.origin(entry.key_origin))
         elif isinstance(entry, Block):
-            if prefix == ("elevation",) and entry.type == "Max":
+            if prefix == ("elevation",) and entry.type in ELEVATION_BLOCKS:
                 shadows = next(
                     (e for e in entry.entries if isinstance(e, Block) and e.type == "Shadows"), None
                 )
                 if shadows is None:
-                    ctx.add(entry.origin, "missing-key", "Elevation.Max needs a Shadows block", "")
+                    ctx.add(
+                        entry.origin,
+                        "missing-key",
+                        f"Elevation.{entry.type} needs a Shadows block",
+                        "",
+                    )
                     continue
                 try:
-                    out["elevation.max"] = Token(
+                    out[f"elevation.{entry.type.lower()}"] = Token(
                         named_shadows(shadows, ctx.origin(entry.origin)),
                         ctx.origin(entry.origin),
                     )

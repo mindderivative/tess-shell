@@ -497,8 +497,9 @@ EDGE_KEYS: dict[str, str] = {
 }
 FRAME_BORDER_KEYS = ("Width", "Color")
 # A Frame's inline Style: the background, the shorthand for the inner border (``Border_Width``,
-# ``Border_Color`` or a ``Border { Width, Color }`` block, D78) and the opacity. Shadows are
-# accepted by the table so that they are reported as not built, not as unknown.
+# ``Border_Color`` or a ``Border { Width, Color }`` block, D78), the opacity and the shadow of the
+# ring (``Elevation``, ``Shadows``; ``Shadow_Bleed`` is accepted and has no effect: the painter
+# covers the output, so a Frame's shadow needs no transparent margin).
 FRAME_STYLE: dict[str, str] = {
     "Background": "color",
     "Border_Width": "number",
@@ -508,7 +509,7 @@ FRAME_STYLE: dict[str, str] = {
     "Shadows": "shadows",
     "Shadow_Bleed": "bleed",
 }
-FRAME_STYLE_NOT_BUILT = ("Elevation", "Shadows", "Shadow_Bleed")
+FRAME_STYLE_NOT_BUILT: tuple[str, ...] = ()
 
 
 # The v1 events (Events and Actions; the text field's ``On_Submit`` and ``On_Text_Commit``, D80, are
@@ -689,6 +690,7 @@ PANEL_STYLE: dict[str, str] = {
 # caller) and ``Animation`` are not built; ``Tooltip`` on a Popup is a flag (a block's ``Tooltip``
 # is a Popup block or a Popup's name, read by the schema).
 POPUP_KEYS: dict[str, str] = {
+    "Density": "enum",
     "Attach": "enum",
     "Alignment": "enum",
     "Gap": "number",
@@ -707,6 +709,7 @@ POPUP_KEYS: dict[str, str] = {
 POPUP_CHOICES: dict[str, tuple[str, ...]] = {
     "Attach": ("LEFT", "RIGHT", "TOP", "BOTTOM"),
     "Alignment": ("START", "CENTER", "END"),
+    "Density": DENSITY_LEVELS,
 }
 POPUP_ADJUST = ("FLIP_X", "FLIP_Y", "SLIDE_X", "SLIDE_Y", "RESIZE_X", "RESIZE_Y")
 POPUP_NOT_BUILT = ("Attach_To", "Animation")

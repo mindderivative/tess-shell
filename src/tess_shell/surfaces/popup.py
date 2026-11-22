@@ -643,7 +643,7 @@ class Popups:
             logger.warning(f"{error.origin}: {error.message}")
         caller = Caller(module, use, surface.key, rect, data, node_id)
         record = caller.record(self._m._all_uses.get(use))
-        live = self._m.new_live(self._m._all_uses, caller=record)
+        live = self._m.new_live(self._m._all_uses, popup, caller=record)
         nodes = live.resolve(expanded or plan.expanded)
         try:
             size = measure(

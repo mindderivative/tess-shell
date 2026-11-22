@@ -606,6 +606,7 @@ A surface that opens from a block: a menu or a tooltip.
 | Key | Value | Default | Required | What it does |
 |---|---|---|---|---|
 | `Name` | name | none | yes | The unique name of the Popup; Show, Toggle and Tooltip use it. |
+| `Density` | `DEFAULT` `COMPACT` `DENSE` | none |  | The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies. |
 | `Attach` | `LEFT` `RIGHT` `TOP` `BOTTOM` | `BOTTOM` |  | The edge of the block it opens from that the Popup meets. |
 | `Alignment` | `START` `CENTER` `END` | `START` |  | How the Popup lines up along the edge it shares with the block: START, CENTER or END. |
 | `Gap` | number | `0` |  | The space between the block and the Popup, in pixels. |
@@ -811,6 +812,7 @@ An inline Popup that is a tooltip, written inside a block or a module call.
 
 | Key | Value | Default | Required | What it does |
 |---|---|---|---|---|
+| `Density` | `DEFAULT` `COMPACT` `DENSE` | none |  | The density level of the sizes this surface's modules read: DEFAULT, COMPACT or DENSE (Spacing and Density). Left out, the shell's Appearance.Density applies. |
 | `Attach` | `LEFT` `RIGHT` `TOP` `BOTTOM` | none |  | The edge of the target the surface meets: LEFT, RIGHT, TOP or BOTTOM. |
 | `Alignment` | `START` `CENTER` `END` | none |  | Where the surface sits along the edge it shares: START, CENTER or END. |
 | `Gap` | number | none |  | The space between the surface and what it is placed against, in pixels. |
@@ -867,6 +869,7 @@ A `Style { }` block of a Frame takes: `Background`, `Border_Width`, `Border_Colo
 * **Thickness and margin.** `Thickness` and `Margin` are one number, four sides `[left, top, right, bottom]`, or named sides (`Thickness { Top: 34, Left: 6 }`; an unnamed side is 0). A side of 0 reserves nothing. The reserved space of a side is its thickness plus the borders plus the margin.
 * **Radii.** `Corner_Radius` rounds the outer corners and `Inner_Radius` the corners of the opening: one number, or four corners clockwise from the top left. A radius that is too large for the ring is reduced, with a warning.
 * **Colour and borders.** `Style { Background: ... }` is the ring's colour (a token such as `$color.surface` follows the theme). `Inner_Border` and `Outer_Border` are lines along the opening and the outside.
+* **Shadow.** `Style { Elevation: 40% }` (a share of the theme's largest shadow) or `Style { Shadows { Shadow { Color: "#00000066", X: 0, Y: 0, Blur: 24, Spread: 0 } } }` makes the ring cast a shadow from its inner edge into the opening, so windows look to sit beneath it. A ring has no direction: only each shadow's `Blur`, `Spread` and colour count (`X` and `Y` do not), and up to four are drawn, the first on top. The shadow takes no clicks. Only the ring shader draws it: a Frame that is drawn with paths (`Debug { Frame_Blend: PATH }`, an `Opacity` below 1, a translucent colour) has none, and the log says so once.
 * **Hide and show.** `Visible: false` starts it hidden; `Show`, `Hide` and `Toggle` with `Target: <the Frame's name>` act on it.
 * **Keyboard.** `Keyboard: NONE` (the default) or `ON_DEMAND`. A Frame with a strip that holds a text field takes the keyboard on demand, with a warning if you wrote `NONE`.
 * Not built yet: a Bar or a window Panel melded into the Frame, strips that expand and contract (changing the reserved space), gradients.

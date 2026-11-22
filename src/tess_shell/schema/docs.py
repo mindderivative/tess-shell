@@ -87,8 +87,9 @@ KEY_DOCS: dict[str, str] = {
     "Border_Color": "The colour of the border line, a colour or a theme token.",
     "Corner_Radius": "The radius of the corners: one number, or four from the top-left corner "
     "clockwise.",
-    "Elevation": "How high the block floats, as a percentage of the theme's largest shadow; 0% is "
-    "no shadow.",
+    "Elevation": "How high the block floats: a percentage of the theme's largest shadow (0% is no "
+    "shadow) or a level, LEVEL_0 to LEVEL_5, whose two shadows the theme holds (a menu is "
+    "LEVEL_2, a dialog LEVEL_3).",
     "Hover_Layer": "The colour of the layer drawn over the block while the pointer is on it, at "
     "the theme's $state.hover opacity (0.08); a colour with its own alpha is drawn as written. "
     "Needs tre 0.6.11.",
@@ -151,7 +152,8 @@ KEY_DOCS: dict[str, str] = {
     "Font_Family": "A font family name, or a list of them in the order of fallback.",
     "Font_Size": "The size of the type, above 0.",
     "Font_Weight": "The weight of the type as a whole number, 400 regular, 700 bold.",
-    "Line_Height": "The height of one line, above 0.",
+    "Line_Height": "The height of one line in pixels, above 0 (tre takes a multiple of the font "
+    "size; the binder divides).",
     "Text_Align": "How a line sits in the text's box: START, CENTER or END.",
     "Overflow": "What happens to text that does not fit: CLIP cuts it, ELLIPSIS ends it with "
     "dots (a TextField also has SCROLL).",
@@ -361,9 +363,13 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     ("Frame", "Opacity"): "How opaque the ring is painted, from 0 to 1.",
     ("Frame", "Border_Width"): "The width of the inner border: shorthand for Inner_Border.",
     ("Frame", "Border_Color"): "The colour of the inner border: shorthand for Inner_Border.",
-    ("Frame", "Elevation"): "A shadow for the Frame. Not built.",
-    ("Frame", "Shadows"): "Shadows for the Frame. Not built.",
-    ("Frame", "Shadow_Bleed"): "The margin for a shadow. Not built.",
+    ("Frame", "Elevation"): "The shadow the ring casts into the opening: a percentage of the "
+    "theme's largest shadow or a level (LEVEL_1 to LEVEL_5 once the theme has them). A ring "
+    "has no direction, so the shadow's x and y are not used. Drawn by the ring shader only.",
+    ("Frame", "Shadows"): "Shadows the ring casts into the opening (blur and spread, the first on "
+    "top, up to four; x and y are not used). Drawn by the ring shader only.",
+    ("Frame", "Shadow_Bleed"): "Accepted and without effect: the painter covers the output, so a "
+    "Frame's shadow needs no transparent margin.",
     ("Edge", "Name"): "The target of Show, Hide and Toggle; only a strip with a Peek has one.",
     ("Edge", "Thickness"): "The thickness of this side's strip in pixels, replacing the "
     "Frame's for this side (the full extent of a strip with a Peek).",
@@ -777,10 +783,15 @@ TOKEN_DOCS: dict[str, str] = {
     "density.row_height": "The height of a one-line list or tree row: 40, 32 or 24.",
     "density.menu_item_height": "The height of a menu item: 40, 32 or 28.",
     "density.icon_size": "The painted size of an icon in an icon button: 24, 20 or 20.",
+    "density.item_size": "The size of a tray item, a task button and a workspace button (the "
+    "pointer target of a Bar item): 32, 24 or 24 (24 is the least a pointer target may be).",
+    "density.item_icon_size": "The icon of a tray item and a task button: 20, 18 or 18.",
     "density.row_padding_x": "The side padding of a list row, a tree row and a menu item: 12, 8 "
     "or 4.",
     "density.icon_label_gap": "The gap between an icon and its label: 8, 8 or 4.",
-    "density.field_padding_x": "The side padding of a text field: 12, 8 or 8.",
+    "density.field_padding": "The padding of a text field (left, top, right, bottom): [12, 12, 12, "
+    "12], [8, 8, 8, 8] or [8, 6, 8, 6]. With the 16 px line of 14 px body text the field is 40, 32 "
+    "or 28 high (the spec's 20 px line would take 10, 6 and 4).",
     "density.tree_indent": "The indent of one tree level: 20, 16 or 12.",
     "density.chevron_box": "The size of a tree's chevron box: 24, 20 or 16.",
     "elevation.reach": "How far the largest shadow reaches, in pixels.",
@@ -790,6 +801,11 @@ TOKEN_DOCS: dict[str, str] = {
     "state.pressed": "The opacity of the pressed state layer (0.10).",
     "state.dragged": "The opacity of the dragged state layer (0.16); no block takes it yet.",
     "elevation.max": "The shadow list at 100% elevation; a smaller Elevation scales it.",
+    "elevation.level_1": "The shadows of Elevation: LEVEL_1 (1 dp): a key and an ambient shadow.",
+    "elevation.level_2": "The shadows of Elevation: LEVEL_2 (3 dp): a menu, a tooltip, a popup.",
+    "elevation.level_3": "The shadows of Elevation: LEVEL_3 (6 dp): a dialog.",
+    "elevation.level_4": "The shadows of Elevation: LEVEL_4 (8 dp).",
+    "elevation.level_5": "The shadows of Elevation: LEVEL_5 (12 dp).",
     "motion.duration.short": "A short animation, in milliseconds.",
     "motion.duration.medium": "A medium animation, in milliseconds.",
     "motion.duration.long": "A long animation, in milliseconds.",
@@ -1197,7 +1213,7 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     "application, with the state in words.",
     ("Task_Item", "show_title"): "Shows the title beside the icon.",
     ("Task_Item", "max_width"): "The button's width when it shows a title, in pixels.",
-    ("Task_Item", "icon_size"): "The icon's size in pixels.",
+    ("Task_Item", "icon_size"): "The icon's size in pixels; 0 is the density level's.",
     ("Task_Item", "active"): "The window is the active one: the block takes the :selected look.",
     ("Task_Item", "minimized"): "The window is minimised: the button is drawn dimmed.",
     ("Workspace_Item", "face"): "The text of the button: the desktop's number or its name.",
@@ -1213,7 +1229,7 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     ("Applications", "placeholder"): "The hint the empty text field shows.",
     ("Tasks", "show_title"): "Shows each window's title beside its icon.",
     ("Tasks", "max_width"): "The widest a button gets, in pixels.",
-    ("Tasks", "icon_size"): "The size of each icon in pixels.",
+    ("Tasks", "icon_size"): "The size of each icon in pixels; 0 is the density level's.",
     ("Tasks", "monitor"): "THIS shows the windows on the module's own monitor, ALL those on "
     "every monitor.",
     ("Tasks", "desktop"): "CURRENT shows the windows on the current virtual desktop (and those "
@@ -1223,14 +1239,14 @@ PARAM_DOCS: dict[tuple[str, str], str] = {
     "attention, once for a change (off by default).",
     ("Toggle", "Checked"): "Whether the switch is on; set from outside.",
     ("Toggle", "Label"): "The name assistive technology reads aloud for the switch.",
-    ("Tray", "icon_size"): "The size of each icon in pixels.",
+    ("Tray", "icon_size"): "The size of each icon in pixels; 0 is the density level's.",
     ("Tray", "show_passive"): "Shows the items whose status is Passive.",
     ("Tray", "spacing"): "The space between two items in pixels.",
     (
         "Tray_Item",
         "icon",
     ): "The icon: an SVG document or pixels the shell holds (the Tray sends it).",
-    ("Tray_Item", "size"): "The icon's size in pixels.",
+    ("Tray_Item", "size"): "The icon's size in pixels; 0 is the density level's.",
     ("Tray_Item", "tooltip_title"): "The first line of the tooltip.",
     ("Tray_Item", "tooltip_text"): "The second line of the tooltip; empty shows none.",
     ("Tray_Item", "label"): "The name assistive technology reads aloud.",

@@ -1,7 +1,7 @@
 # Install and start
 
 <!-- BEGIN generated: version-info -->
-This guide describes tesserae-shell 0.2.0 (schema version 1.27, the one `tesserae-shell schema --json` prints).
+This guide describes tesserae-shell 0.2.0 (schema version 1.28, the one `tesserae-shell schema --json` prints).
 
 <!-- END generated: version-info -->
 
@@ -27,7 +27,7 @@ Python `>=3.14` is required.
 
 | Package | Version | What it is for |
 |---|---|---|
-| `tesserae-engine` | `>=0.6.10,<0.7` | the rendering engine (imported as `tess_re`) |
+| `tesserae-engine` | `>=0.6.11,<0.7` | the rendering engine (imported as `tess_re`) |
 | `tesserae-el` | `>=0.2.0,<0.3` | the expression language of the `<\| \|>` slots (imported as `tess_el`) |
 | `tesserae-dl` | `>=0.2.0,<0.3` | the reader of TDL files (imported as `tess_dl`) |
 | `loguru` | `>=0.7.3,<0.8` | the log |

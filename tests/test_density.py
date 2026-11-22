@@ -54,3 +54,73 @@ def test_a_surface_with_its_own_density_reads_that_level_and_the_others_the_shel
         assert side.view is not None
         own = [n.get("height") for k, n in side.view.nodes.items() if k.endswith("/Root")]
         assert own == [28]
+
+
+FIELD_SHELL = (
+    "Shell { Monitor { Name: Main, Index: 0, Children { Bar { Name: Top_Bar, Edge: TOP, "
+    "Width: EXPAND, Height: 120, Children { FlexBox { Align_Items: START, Children { "
+    "TextField { Name: F, Width: 200 } } } } } } } }"
+)
+
+
+@pytest.mark.parametrize(("level", "height", "side"), [("default", 40, 12), ("compact", 32, 8)])
+def test_a_text_field_is_as_high_as_the_level_and_takes_its_padding_from_the_token(
+    level: str, height: int, side: int
+) -> None:
+    with running("", body=FIELD_SHELL, appearance=Appearance(density=level)) as w:  # type: ignore[arg-type]
+        field = next(n for k, n in w.view.nodes.items() if k.endswith("F"))
+        assert field.get("layout_height") == height
+        padding = field.get("padding")  # a number when the four sides are equal
+        assert (padding if isinstance(padding, float) else padding[0]) == side
+
+
+def test_a_dense_field_is_28_high_and_a_field_written_with_a_padding_keeps_it() -> None:
+    with running("", body=FIELD_SHELL, appearance=Appearance(density="dense")) as w:
+        field = next(n for k, n in w.view.nodes.items() if k.endswith("F"))
+        assert field.get("layout_height") == 28
+    own = FIELD_SHELL.replace("Width: 200", "Width: 200, Padding: 3")
+    with running("", body=own, appearance=Appearance(density="default")) as w:
+        field = next(n for k, n in w.view.nodes.items() if k.endswith("F"))
+        assert field.get("padding") == 3
+
+
+@pytest.mark.parametrize(
+    ("level", "item", "icon"), [("default", 32, 20), ("compact", 24, 18), ("dense", 24, 18)]
+)
+def test_tray_task_and_workspace_items_take_their_size_and_icon_from_the_level(
+    level: str, item: int, icon: int
+) -> None:
+    body = (
+        'Tray_Item { icon: "mdi:circle", tooltip_title: t } '
+        'Task_Item { title: "x", icon: "mdi:circle" } Workspace_Item { label: "1" }'
+    )
+    with running(body, appearance=Appearance(density=level)) as w:  # type: ignore[arg-type]
+        tray, task, ws = (w.of_use(m, "Root") for m in ("Tray_Item", "Task_Item", "Workspace_Item"))
+        assert (tray.get("height"), tray.get("width")) == (item, item)
+        assert task.get("height") == item and ws.get("height") == item
+        assert w.of_use("Tray_Item", "Root").get("height") == item
+        icons = {n.get("width") for k, n in w.view.nodes.items() if k.startswith("Icon@")}
+        assert icons == {icon}
+
+
+def test_a_given_icon_size_keeps_the_size_it_is_given() -> None:
+    with running('Tray_Item { icon: "mdi:circle", size: 22 }') as w:
+        sizes = {n.get("width") for k, n in w.view.nodes.items() if k.startswith("Icon@")}
+        assert sizes == {22}
+
+
+ITEM = "Menu { Children { MenuItem { Text: A } } }"
+POPUPS = (
+    f"Popup {{ Name: Roomy, Density: DEFAULT, Attach: BOTTOM, Children {{ {ITEM} }} }} "
+    f"Popup {{ Name: Plain, Attach: BOTTOM, Children {{ {ITEM} }} }}"
+)
+
+
+def test_a_popup_reads_its_own_density_and_the_others_the_shells() -> None:
+    with running("", popups=POPUPS, appearance=Appearance(density="dense")) as w:
+        roomy = next(p for p in w.manager._popup_plans if p.popup.name == "Roomy")
+        plain = next(p for p in w.manager._popup_plans if p.popup.name == "Plain")
+        assert roomy.popup.density == "default" and plain.popup.density is None
+        # the live tree a Popup resolves with reads the level the Popup says
+        assert w.manager.new_live({}, roomy.popup).look.appearance.density == "default"
+        assert w.manager.new_live({}, plain.popup).look.appearance.density == "dense"
