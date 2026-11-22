@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.28",
+  "schema_version": "1.29",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
