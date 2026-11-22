@@ -1221,6 +1221,7 @@ BAR_KEYS: dict[str, str] = {
     "Shortcut_Mode": "bool",
     "Visible": "bool",
     "Density": "enum",
+    "Padding": "sides",
 }
 BAR_CHOICES: dict[str, tuple[str, ...]] = {
     "Edge": ("TOP", "BOTTOM", "LEFT", "RIGHT"),
@@ -1344,6 +1345,7 @@ def _bar(ctx: _Ctx, block: Block) -> BarDef | None:
         density=_density(values),
         shortcut_mode=_shortcut_mode(values),
         visible=shown.value if isinstance(shown, m.Bool) else True,
+        padding=_sides_of(values["Padding"]) if "Padding" in values else None,
         style=style,
         children=tuple(children),
     )
@@ -1628,6 +1630,7 @@ def _panel(ctx: _Ctx, block: Block) -> PanelDef | None:
         input=region.value if isinstance(region, m.Text) else "WHOLE",
         visible=visible.value if isinstance(visible, m.Bool) else True,
         hide_after=float(hide.value) if isinstance(hide, m.Number) else None,
+        padding=_sides_of(values["Padding"]) if "Padding" in values else None,
         style=style,
         children=tuple(children),
         attach_to=attach_to,
