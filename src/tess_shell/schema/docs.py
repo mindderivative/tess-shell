@@ -908,6 +908,8 @@ SETTINGS_DOCS: dict[tuple[str, str], str] = {
     "field and the list then have the engine's black text).",
     ("Appearance", "Follow_Desktop"): "Follows the desktop's colour scheme, accent, contrast "
     "and reduced-motion settings.",
+    ("Appearance", "Scheme"): "The colour scheme: DEFAULT follows the desktop (the Settings "
+    "portal), LIGHT or DARK always uses that one and ignores a change of the desktop's.",
     ("Appearance", "Density"): "The density level of the shell's own sizes: DEFAULT (40 px "
     "controls), COMPACT (32 px, the default) or DENSE (28 px). A surface can set its own with "
     "Density. See Spacing and Density.",

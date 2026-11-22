@@ -23,6 +23,9 @@ class Appearance:
     # the density level of the sizes a module reads (``density.*`` tokens): the shell's own setting
     # (``Appearance.Density``), never the desktop's, so it is kept when the portal speaks
     density: Density = "compact"
+    # ``Appearance.Scheme`` of settings.tdl when it is LIGHT or DARK: the user's own choice, which
+    # the desktop's colour scheme does not change (``scheme`` above is then this)
+    scheme_override: Scheme | None = None
 
     @property
     def reduced_motion(self) -> bool:

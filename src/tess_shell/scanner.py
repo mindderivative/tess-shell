@@ -429,4 +429,9 @@ def build_look(result: Scan, settings: Settings, appearance: Appearance) -> Look
     sheets = [result.stylesheets[name] for name in settings.appearance.stylesheets]
     # the density is the shell's own setting; the desktop's appearance never carries it
     appearance = dataclasses.replace(appearance, density=settings.appearance.density.lower())  # type: ignore[arg-type]
+    forced = settings.appearance.scheme.lower()
+    if forced in ("light", "dark"):  # the user's own choice: the desktop's does not change it
+        appearance = dataclasses.replace(appearance, scheme=forced, scheme_override=forced)  # type: ignore[arg-type]
+    elif appearance.scheme_override is not None:  # the key was taken out: follow the desktop again
+        appearance = dataclasses.replace(appearance, scheme="default", scheme_override=None)
     return make_look(theme, sheets, appearance, result.themes.get(DEFAULT_THEME), result.icons)

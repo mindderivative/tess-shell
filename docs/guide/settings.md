@@ -169,6 +169,7 @@ For a folder named here the order is: the folders you list, in order, then the o
 | `Stylesheets` | list of text | `[Default]` | The Name of a stylesheet or a list of them, lowest priority first. Left out, it is [Default], the shipped stylesheet; write [] for none (the text field and the list then have the engine's black text). |
 | `Follow_Desktop` | true or false | `true` | Follows the desktop's colour scheme, accent, contrast and reduced-motion settings. |
 | `Density` | `DEFAULT` `COMPACT` `DENSE` | `COMPACT` | The density level of the shell's own sizes: DEFAULT (40 px controls), COMPACT (32 px, the default) or DENSE (28 px). A surface can set its own with Density. See Spacing and Density. |
+| `Scheme` | `DEFAULT` `LIGHT` `DARK` | `DEFAULT` | The colour scheme: DEFAULT follows the desktop (the Settings portal), LIGHT or DARK always uses that one and ignores a change of the desktop's. |
 
 <!-- END generated: settings:Appearance -->
 

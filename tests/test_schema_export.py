@@ -221,7 +221,7 @@ def every_key() -> list[tuple[str, str, str, dict[str, Any]]]:
 
 
 def test_top_level_shape() -> None:
-    assert D["schema_version"] == "1.30"
+    assert D["schema_version"] == "1.31"
     assert D["shell_version"]
     assert list(D) == [
         "schema_version",
@@ -822,7 +822,7 @@ def test_the_command_prints_valid_json(capsys: pytest.CaptureFixture[str]) -> No
 
 def test_the_command_takes_json_before_the_command_too(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--json", "schema"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.30"
+    assert json.loads(capsys.readouterr().out)["schema_version"] == "1.31"
 
 
 def test_out_writes_the_file_and_prints_nothing(
