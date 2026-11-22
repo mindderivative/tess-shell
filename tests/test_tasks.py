@@ -88,7 +88,9 @@ def test_with_no_tasks_module_the_shell_answers_no_window_list_and_ignores_one_t
     with tasks_desk(tmp_path) as t, tasks_shell(t, "Label { Text: x }") as w:
         start(t, w)
         assert t.kwin.windows_wanted is False and t.windows.subscribers == 0
-        assert t.fake.script.replies[-1] == '{"windows": false}'
+        # the reply reaches the fake after the shell has answered: wait for it (a slow runner
+        # failed this on an empty list)
+        assert t.settle(w, lambda: t.fake.script.replies[-1:] == ['{"windows": false}'], 20)
         assert not t.fake.script.sends_windows
         answer = t.fake.raw("WindowsState", json.dumps([a(1, title=SECRET)]))
         assert json.loads(answer or "") == {"windows": False}
