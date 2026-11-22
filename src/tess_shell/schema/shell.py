@@ -1985,6 +1985,7 @@ def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
         "Children",
         *(k for k in blocks.POPUP_KEYS if not (inline and k == "Tooltip")),
         *blocks.POPUP_NOT_BUILT,
+        "Animation",
         *(() if inline else ("Name",)),
     ]
     name: str | None = None
@@ -1993,6 +1994,7 @@ def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
     written: set[str] = set()
     style: dict[str, m.Value] = {}
     children: list[Child] = []
+    animation = ("NONE", 200.0)
     for entry in block.entries:
         if isinstance(entry, Property):
             key = entry.key
@@ -2030,6 +2032,11 @@ def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
                     ctx.in_popup = before
             elif entry.type in blocks.POPUP_NOT_BUILT:
                 ctx.not_built(entry.origin, f"the {what} key {entry.type}")
+            elif entry.type == "Animation":
+                animation = _animation(ctx, entry)
+                if animation[0] == "SLIDE":
+                    ctx.not_built(entry.origin, f"Type: SLIDE on a {what} (it fades)")
+                    animation = ("NONE", 0.0)
             else:
                 ctx.unknown(entry.origin, entry.type, allowed, f"block in {what}")
         elif isinstance(entry, tess_dl.If | tess_dl.For):
@@ -2101,6 +2108,8 @@ def _popup(ctx: _Ctx, block: Block, inline: bool = False) -> PopupDef | None:
         enter_delay=num("Enter_Delay", 500),
         close_on_exit=flag("Close_On_Exit", tooltip),
         exit_delay=num("Exit_Delay", 150),
+        animation=animation[0],
+        duration=float(animation[1]),
         density=_density(values),
         style={**tooltip_card_style(ctx.origin(block.origin)), **style} if inline else style,
         children=tuple(children),

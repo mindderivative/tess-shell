@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.41",
+  "schema_version": "1.42",
   "shell_version": "<shell_version>",
   "kinds": {
     "string": {
@@ -2518,11 +2518,10 @@
           "choices": null,
           "enum": null,
           "default": null,
-          "doc": "How the Popup comes and goes. Not built.",
+          "doc": "How the Popup opens and closes: an Animation block with Type FADE or NONE (the default) and Duration (200 ms). SLIDE is not built. Reduced motion shows and hides it at once.",
           "slot": false,
           "required": false,
-          "built": false,
-          "refused": true,
+          "built": true,
           "group": "Motion",
           "block": "Animation",
           "tokens": [],
@@ -2797,8 +2796,7 @@
       "module_calls": true,
       "example": "Popup {\n    Name: Tray_Menu\n    Attach: BOTTOM\n    Alignment: START\n    Children { Text { Text: \"Menu\" } }\n}",
       "not_built": [
-        "Attach_To",
-        "Animation"
+        "Attach_To"
       ]
     },
     "Tooltip": {
@@ -3070,8 +3068,7 @@
           "doc": "How the surface comes and goes: an Animation block with Type and Duration.",
           "slot": false,
           "required": false,
-          "built": false,
-          "refused": true,
+          "built": true,
           "group": "Motion",
           "block": "Animation",
           "tokens": [],
@@ -3342,8 +3339,7 @@
       "module_calls": true,
       "example": null,
       "not_built": [
-        "Attach_To",
-        "Animation"
+        "Attach_To"
       ]
     },
     "Frame": {

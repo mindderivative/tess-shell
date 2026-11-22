@@ -752,6 +752,6 @@ POPUP_CHOICES: dict[str, tuple[str, ...]] = {
     "Density": DENSITY_LEVELS,
 }
 POPUP_ADJUST = ("FLIP_X", "FLIP_Y", "SLIDE_X", "SLIDE_Y", "RESIZE_X", "RESIZE_Y")
-POPUP_NOT_BUILT = ("Attach_To", "Animation")
+POPUP_NOT_BUILT = ("Attach_To",)
 # a Popup's body takes the Panel's inline Style keys
 POPUP_STYLE: dict[str, str] = PANEL_STYLE

@@ -138,6 +138,8 @@ class PopupDef:
     enter_delay: float = 500  # milliseconds
     close_on_exit: bool = False
     exit_delay: float = 150
+    animation: str = "NONE"  # FADE or NONE: how it opens and closes
+    duration: float = 200.0  # milliseconds of that animation
     density: str | None = None  # ``Density:`` of the popup, lower case; None: the shell's level
     style: Mapping[str, Value] = None  # type: ignore[assignment]
     children: tuple[Node | UseNode | IfNode | ForNode, ...] = ()

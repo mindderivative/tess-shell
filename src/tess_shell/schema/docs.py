@@ -385,7 +385,9 @@ SPEC_DOCS: dict[tuple[str, str], str] = {
     ("Popup", "Tooltip"): "Makes the Popup a tooltip: it takes no focus, opens when the pointer "
     "enters the block and closes when it leaves.",
     ("Popup", "Attach_To"): "A Popup opened with no module as the caller. Not built.",
-    ("Popup", "Animation"): "How the Popup comes and goes. Not built.",
+    ("Popup", "Animation"): "How the Popup opens and closes: an Animation block with Type FADE or "
+    "NONE (the default) and Duration (200 ms). SLIDE is not built. Reduced motion shows and hides "
+    "it at once.",
     ("Frame", "Name"): "The unique name of the Frame; Attach_To of a melded Panel uses it.",
     ("Frame", "Layer"): "The layer the Frame is drawn in; only TOP is built.",
     ("Frame", "Margin"): "Space around the Frame's ring: one number, four or named sides.",

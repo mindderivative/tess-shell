@@ -127,6 +127,8 @@ def choose_attach(
     return OPPOSITE[attach]
 
 
+FADE_IN = (0.0, 0.0, 0.2, 1.0)  # the easing of a popup coming in
+FADE_OUT = (0.4, 0.0, 1.0, 1.0)  # ... and going out
 EDGE_MARGIN = 8  # px between a popup's body and the screen edge when it is flipped or slid
 
 
@@ -724,6 +726,9 @@ class Popups:
             return None
         body = window.create("box", flex_grow=1, align_self="stretch", **shape.props())
         window.root.add_child(body)
+        if self._fades(popup):  # it opens by fading in
+            window.root.set(opacity=0.0)
+            window.root.animate("opacity", 1.0, int(popup.duration), FADE_IN)
         op = OpenPopup(
             plan,
             window,
@@ -913,11 +918,32 @@ class Popups:
             op.timer = None
         self._unlink(op, why)
         logger.info(f"Popup {op.where} closing ({why})")
+        if self._fades(op.popup) and why != "dismissed":
+            # it fades out and the window closes when the fade ends (tre keeps it until then)
+            try:
+                op.window.root.animate(
+                    "opacity", 0.0, int(op.popup.duration), FADE_OUT, lambda: self._shut(op)
+                )
+            except Exception:  # the window may be gone already
+                logger.debug(f"Popup {op.where}: the fade could not start", exc_info=True)
+                self._shut(op)
+        else:
+            self._shut(op)
+        self._free(op)
+
+    def _fades(self, popup: PopupDef) -> bool:
+        """Whether ``popup`` fades: it asks for FADE and the desktop does not ask for reduced
+        motion (Motion > Reduced motion)."""
+        look = self._m._look
+        if popup.animation != "FADE" or popup.duration <= 0:
+            return False
+        return not (look is not None and look.appearance.reduced_motion)
+
+    def _shut(self, op: OpenPopup) -> None:
         try:
             op.window.close()
         except Exception:  # the window may be gone already
             logger.debug(f"Popup {op.where}: close raised", exc_info=True)
-        self._free(op)
 
     def _unlink(self, op: OpenPopup, why: str) -> None:
         """``op`` is closing: its submenu closes first (xdg-shell wants the innermost popup to go
