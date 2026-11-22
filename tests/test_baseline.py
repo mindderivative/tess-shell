@@ -64,6 +64,8 @@ def test_selected_text_and_a_text_input_have_a_highlight_with_2_px_corners() -> 
         assert text.get("selection_radius") == 2
         (f,) = r.fields()
         assert f.inp.get("selection_radius") == 2
+
+
 def test_a_surface_holds_its_first_frame_until_its_tree_is_built_then_presents() -> None:
     """tre 0.6.12 ``first_present``: no empty layer surface flashes when a Panel or Bar opens."""
     m = manager()
