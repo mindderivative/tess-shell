@@ -77,7 +77,7 @@ Decided: A (maintainer, 2026-11-10, "as recommended"). The live test of [Global 
 | Enter | A user key runs `Enter_Shortcut_Mode`: the Frame gets `Shortcut_Mode: true` and focus; all peeks show |
 | Move | `Next_Focus` or `Previous_Focus` moves the focus ring to the next surface or block by `Tab_Index` |
 | Go in | `Set_Shortcut_Mode` on the focused Panel sets its `Shortcut_Mode: true` (rule 6); its widgets take Tab, Enter, Space and the arrows as the Keyboard operation section of [Standard Modules](../../50%20Design%20System/Standard%20Modules.md) says. Run again, it sets it to false and, by rule 2, ends shortcut mode |
-| Leave | `Exit_Shortcut_Mode`, or Escape at the lowest level, sets all to false; focus returns to the window that had it |
+| Leave | `Exit_Shortcut_Mode`, or Escape at the lowest level, sets all to false; focus returns to the window that had it. The mode also ends 300 ms after the last shell surface loses the keyboard to another client (a move from one shell surface to another does not end it), and the command `tesserae-shell leave-shortcut-mode` leaves it whatever has the keyboard; there is no timeout. Found by the maintainer on real KWin, where Escape did nothing because another window held the keyboard (code session's report, `tess-shell` PR #163, not run in the vault; acceptance criteria AC-KBN-18 and AC-KBN-19 are in Tesserae UX PR #43) |
 
 ### Popups and Focus
 

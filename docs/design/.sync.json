@@ -1,7 +1,7 @@
 {
- "vault_commit": "9248ad1d8864c89766060b703629906acbb7eb57",
- "vault_subject": "Bar: Auto_Hide default reported as OFF (PR 131), to confirm",
- "exported_at": "2026-11-21 12:39:45",
+ "vault_commit": "c083fa0ae55bbcafe3d9446fc10e1a23eea8e0cd",
+ "vault_subject": "Focus and Keyboard: shortcut mode ends when the keyboard goes to another client",
+ "exported_at": "2026-11-21 21:18:00",
  "files": {
   "00 Home/Build Logs.md": "cf22793ffa003ea1",
   "00 Home/Development Readiness.md": "edeafdbfb9aed464",
@@ -79,7 +79,7 @@
   "40 Specifications/40 Specifications.md": "8a81c2b03e54e7cd",
   "40 Specifications/Configuration Application.md": "371ce804e905e443",
   "40 Specifications/Integration/D-Bus Service Layer.md": "174b75b4d8f74f44",
-  "40 Specifications/Integration/Focus and Keyboard.md": "47a61f9ecaa1fe7f",
+  "40 Specifications/Integration/Focus and Keyboard.md": "da61541d0def5597",
   "40 Specifications/Integration/Global Shortcuts.md": "37bce674fed91f09",
   "40 Specifications/Integration/Integration.md": "f6a1d9b045dcbfc7",
   "40 Specifications/Integration/KWin Integration.md": "70b53e0f6cedacc8",
