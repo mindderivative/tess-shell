@@ -143,6 +143,9 @@ BOX_STYLE: dict[str, str] = {
     "Outline_Width": "number",
     "Outline_Offset": "number",
     "Outline_Color": "color",
+    "Hover_Layer_Ms": "number",
+    "Pressed_Layer_Ms": "number",
+    "Focus_Layer_Ms": "number",
 }
 
 FLEX: dict[str, str] = {

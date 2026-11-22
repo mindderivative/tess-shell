@@ -56,7 +56,7 @@ def token_kind(path: tuple[str, ...]) -> str | None:
     if path == ("density", "field_padding"):
         return "sides"
     if group == "state":
-        return "unit"  # an opacity, 0 to 1
+        return "number" if path[-1].endswith("_ms") else "unit"  # a time, or an opacity 0 to 1
     if group in ("shape", "space", "density", "scrollbar"):
         return "number"
     if group == "type":

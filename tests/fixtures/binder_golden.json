@@ -2809,6 +2809,7 @@
      241,
      26
     ],
+    "focus_layer_ms": 150,
     "focusable": true,
     "height": 32,
     "hover_layer": [
@@ -2817,6 +2818,7 @@
      241,
      20
     ],
+    "hover_layer_ms": 15,
     "justify_content": "center",
     "label": "Off",
     "min_width": 32,
@@ -2830,6 +2832,7 @@
      241,
      26
     ],
+    "pressed_layer_ms": 105,
     "role": "button",
     "stroke_color": [
      95,
@@ -2886,6 +2889,7 @@
      241,
      26
     ],
+    "focus_layer_ms": 150,
     "focusable": true,
     "height": 32,
     "hover_layer": [
@@ -2894,6 +2898,7 @@
      241,
      20
     ],
+    "hover_layer_ms": 15,
     "justify_content": "center",
     "label": "Open",
     "min_width": 32,
@@ -2907,6 +2912,7 @@
      241,
      26
     ],
+    "pressed_layer_ms": 105,
     "role": "button",
     "stroke_color": [
      95,
@@ -3001,6 +3007,7 @@
      241,
      26
     ],
+    "focus_layer_ms": 150,
     "focusable": true,
     "gap": 8,
     "height": 32,
@@ -3010,6 +3017,7 @@
      241,
      20
     ],
+    "hover_layer_ms": 15,
     "label": "Remember",
     "pressed_layer": [
      228,
@@ -3017,6 +3025,7 @@
      241,
      26
     ],
+    "pressed_layer_ms": 105,
     "role": "checkbox"
    },
    "Checkbox@Main_Shell.Main.Top_Bar.Checkbox_1/Words": {
@@ -3205,6 +3214,7 @@
      241,
      26
     ],
+    "focus_layer_ms": 150,
     "focusable": true,
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
@@ -3215,6 +3225,7 @@
      241,
      20
     ],
+    "hover_layer_ms": 15,
     "label": "t",
     "pressed_layer": [
      228,
@@ -3222,6 +3233,7 @@
      241,
      26
     ],
+    "pressed_layer_ms": 105,
     "role": "switch",
     "width": 40
    },
@@ -3471,6 +3483,7 @@
       241,
       26
      ],
+     "focus_layer_ms": 150,
      "focusable": true,
      "height": 32,
      "hover_layer": [
@@ -3479,6 +3492,7 @@
       241,
       20
      ],
+     "hover_layer_ms": 15,
      "justify_content": "center",
      "label": "Open",
      "min_width": 32,
@@ -3492,6 +3506,7 @@
       241,
       26
      ],
+     "pressed_layer_ms": 105,
      "role": "button",
      "stroke_color": [
       95,
@@ -3536,6 +3551,7 @@
       241,
       26
      ],
+     "focus_layer_ms": 150.0,
      "focusable": true,
      "height": 32.0,
      "hit_testable": null,
@@ -3545,6 +3561,7 @@
       241,
       20
      ],
+     "hover_layer_ms": 15.0,
      "justify_content": "center",
      "label": "Open",
      "min_width": 32.0,
@@ -3559,6 +3576,7 @@
       241,
       26
      ],
+     "pressed_layer_ms": 105.0,
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
@@ -3723,6 +3741,7 @@
       241,
       26
      ],
+     "focus_layer_ms": 150,
      "focusable": true,
      "height": 32,
      "hover_layer": [
@@ -3731,6 +3750,7 @@
       241,
       20
      ],
+     "hover_layer_ms": 15,
      "justify_content": "center",
      "label": "Off",
      "min_width": 32,
@@ -3744,6 +3764,7 @@
       241,
       26
      ],
+     "pressed_layer_ms": 105,
      "role": "button",
      "stroke_color": [
       95,
@@ -3788,6 +3809,7 @@
       241,
       26
      ],
+     "focus_layer_ms": 150.0,
      "focusable": false,
      "height": 32.0,
      "hit_testable": null,
@@ -3797,6 +3819,7 @@
       241,
       20
      ],
+     "hover_layer_ms": 15.0,
      "justify_content": "center",
      "label": "Off",
      "min_width": 32.0,
@@ -3811,6 +3834,7 @@
       241,
       26
      ],
+     "pressed_layer_ms": 105.0,
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
@@ -4177,6 +4201,7 @@
       241,
       26
      ],
+     "focus_layer_ms": 150,
      "focusable": true,
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
@@ -4187,6 +4212,7 @@
       241,
       20
      ],
+     "hover_layer_ms": 15,
      "label": "t",
      "pressed_layer": [
       228,
@@ -4194,6 +4220,7 @@
       241,
       26
      ],
+     "pressed_layer_ms": 105,
      "role": "switch",
      "width": 40
     },
@@ -4225,6 +4252,7 @@
       241,
       26
      ],
+     "focus_layer_ms": 150.0,
      "focusable": true,
      "grid_template_columns": "1fr",
      "grid_template_rows": "1fr",
@@ -4236,6 +4264,7 @@
       241,
       20
      ],
+     "hover_layer_ms": 15.0,
      "label": "t",
      "pressed": null,
      "pressed_layer": [
@@ -4244,6 +4273,7 @@
       241,
       26
      ],
+     "pressed_layer_ms": 105.0,
      "read_only": "!ValueError",
      "role": "switch",
      "selected": null,
@@ -4717,6 +4747,7 @@
       241,
       26
      ],
+     "focus_layer_ms": 150,
      "focusable": true,
      "gap": 8,
      "height": 32,
@@ -4726,6 +4757,7 @@
       241,
       20
      ],
+     "hover_layer_ms": 15,
      "label": "Remember",
      "pressed_layer": [
       228,
@@ -4733,6 +4765,7 @@
       241,
       26
      ],
+     "pressed_layer_ms": 105,
      "role": "checkbox"
     },
     "states": {
@@ -4764,6 +4797,7 @@
       241,
       26
      ],
+     "focus_layer_ms": 150.0,
      "focusable": true,
      "gap": 8.0,
      "height": 32.0,
@@ -4774,6 +4808,7 @@
       241,
       20
      ],
+     "hover_layer_ms": 15.0,
      "label": "Remember",
      "pressed": null,
      "pressed_layer": [
@@ -4782,6 +4817,7 @@
       241,
       26
      ],
+     "pressed_layer_ms": 105.0,
      "read_only": "!ValueError",
      "role": "checkbox",
      "selected": null,
@@ -5926,6 +5962,7 @@
      241,
      26
     ],
+    "focus_layer_ms": 150,
     "focusable": true,
     "height": 32,
     "hover_layer": [
@@ -5934,6 +5971,7 @@
      241,
      20
     ],
+    "hover_layer_ms": 15,
     "justify_content": "center",
     "label": "a",
     "min_width": 32,
@@ -5947,6 +5985,7 @@
      241,
      26
     ],
+    "pressed_layer_ms": 105,
     "role": "button",
     "stroke_color": [
      95,
@@ -6008,6 +6047,7 @@
      241,
      26
     ],
+    "focus_layer_ms": 150,
     "focusable": true,
     "grid_template_columns": "1fr",
     "grid_template_rows": "1fr",
@@ -6018,6 +6058,7 @@
      241,
      20
     ],
+    "hover_layer_ms": 15,
     "label": "",
     "pressed_layer": [
      228,
@@ -6025,6 +6066,7 @@
      241,
      26
     ],
+    "pressed_layer_ms": 105,
     "role": "switch",
     "width": 40
    },
@@ -6190,6 +6232,7 @@
         241,
         26
        ],
+       "focus_layer_ms": 150,
        "focusable": true,
        "height": 32,
        "hover_layer": [
@@ -6198,6 +6241,7 @@
         241,
         20
        ],
+       "hover_layer_ms": 15,
        "justify_content": "center",
        "label": "a",
        "min_width": 32,
@@ -6211,6 +6255,7 @@
         241,
         26
        ],
+       "pressed_layer_ms": 105,
        "role": "button",
        "stroke_color": [
         95,
@@ -6255,6 +6300,7 @@
         241,
         26
        ],
+       "focus_layer_ms": 150.0,
        "focusable": false,
        "height": 32.0,
        "hit_testable": null,
@@ -6264,6 +6310,7 @@
         241,
         20
        ],
+       "hover_layer_ms": 15.0,
        "justify_content": "center",
        "label": "a",
        "min_width": 32.0,
@@ -6278,6 +6325,7 @@
         241,
         26
        ],
+       "pressed_layer_ms": 105.0,
        "read_only": "!ValueError",
        "role": "button",
        "selected": null,
@@ -6725,6 +6773,7 @@
           241,
           26
          ],
+         "focus_layer_ms": 150,
          "focusable": true,
          "grid_template_columns": "1fr",
          "grid_template_rows": "1fr",
@@ -6735,6 +6784,7 @@
           241,
           20
          ],
+         "hover_layer_ms": 15,
          "label": "",
          "pressed_layer": [
           228,
@@ -6742,6 +6792,7 @@
           241,
           26
          ],
+         "pressed_layer_ms": 105,
          "role": "switch",
          "width": 40
         },
@@ -6773,6 +6824,7 @@
           241,
           26
          ],
+         "focus_layer_ms": 150.0,
          "focusable": false,
          "grid_template_columns": "1fr",
          "grid_template_rows": "1fr",
@@ -6784,6 +6836,7 @@
           241,
           20
          ],
+         "hover_layer_ms": 15.0,
          "label": "",
          "pressed": null,
          "pressed_layer": [
@@ -6792,6 +6845,7 @@
           241,
           26
          ],
+         "pressed_layer_ms": 105.0,
          "read_only": "!ValueError",
          "role": "switch",
          "selected": null,
@@ -8876,6 +8930,7 @@
      241,
      26
     ],
+    "focus_layer_ms": 150,
     "focusable": true,
     "height": 32,
     "hover_layer": [
@@ -8884,6 +8939,7 @@
      241,
      20
     ],
+    "hover_layer_ms": 15,
     "justify_content": "center",
     "label": "g",
     "min_width": 32,
@@ -8897,6 +8953,7 @@
      241,
      26
     ],
+    "pressed_layer_ms": 105,
     "role": "button",
     "stroke_color": [
      95,
@@ -9643,6 +9700,7 @@
       241,
       26
      ],
+     "focus_layer_ms": 150,
      "focusable": true,
      "height": 32,
      "hover_layer": [
@@ -9651,6 +9709,7 @@
       241,
       20
      ],
+     "hover_layer_ms": 15,
      "justify_content": "center",
      "label": "g",
      "min_width": 32,
@@ -9664,6 +9723,7 @@
       241,
       26
      ],
+     "pressed_layer_ms": 105,
      "role": "button",
      "stroke_color": [
       95,
@@ -9708,6 +9768,7 @@
       241,
       26
      ],
+     "focus_layer_ms": 150.0,
      "focusable": true,
      "height": 32.0,
      "hit_testable": null,
@@ -9717,6 +9778,7 @@
       241,
       20
      ],
+     "hover_layer_ms": 15.0,
      "justify_content": "center",
      "label": "g",
      "min_width": 32.0,
@@ -9731,6 +9793,7 @@
       241,
       26
      ],
+     "pressed_layer_ms": 105.0,
      "read_only": "!ValueError",
      "role": "button",
      "selected": null,
@@ -10807,6 +10870,7 @@
      241,
      26
     ],
+    "focus_layer_ms": 150,
     "gap": 8,
     "height": 32,
     "hover_layer": [
@@ -10815,6 +10879,7 @@
      241,
      20
     ],
+    "hover_layer_ms": 15,
     "label": "New",
     "padding_bottom": 0,
     "padding_left": 8,
@@ -10898,6 +10963,7 @@
      241,
      26
     ],
+    "focus_layer_ms": 150,
     "gap": 8,
     "height": 9,
     "hover_layer": [
@@ -10906,6 +10972,7 @@
      241,
      20
     ],
+    "hover_layer_ms": 15,
     "label": "",
     "padding_bottom": 0,
     "padding_left": 4,
@@ -10989,6 +11056,7 @@
      241,
      26
     ],
+    "focus_layer_ms": 150,
     "gap": 8,
     "height": 32,
     "hover_layer": [
@@ -10997,6 +11065,7 @@
      241,
      20
     ],
+    "hover_layer_ms": 15,
     "label": "Open",
     "padding_bottom": 0,
     "padding_left": 8,
@@ -11111,6 +11180,7 @@
           241,
           26
          ],
+         "focus_layer_ms": 150,
          "height": 30,
          "hover_layer": [
           228,
@@ -11118,6 +11188,7 @@
           241,
           20
          ],
+         "hover_layer_ms": 15,
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
@@ -11127,7 +11198,8 @@
           234,
           241,
           26
-         ]
+         ],
+         "pressed_layer_ms": 105
         },
         "states": {
          "disabled": {
@@ -11162,6 +11234,7 @@
           241,
           26
          ],
+         "focus_layer_ms": 150.0,
          "focusable": false,
          "height": 30.0,
          "hit_testable": null,
@@ -11171,6 +11244,7 @@
           241,
           20
          ],
+         "hover_layer_ms": 15.0,
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
@@ -11183,6 +11257,7 @@
           241,
           26
          ],
+         "pressed_layer_ms": 105.0,
          "read_only": "!ValueError",
          "role": "listitem",
          "selected": false,
@@ -11305,6 +11380,7 @@
           241,
           26
          ],
+         "focus_layer_ms": 150,
          "height": 30,
          "hover_layer": [
           228,
@@ -11312,6 +11388,7 @@
           241,
           20
          ],
+         "hover_layer_ms": 15,
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
@@ -11321,7 +11398,8 @@
           234,
           241,
           26
-         ]
+         ],
+         "pressed_layer_ms": 105
         },
         "states": {
          "disabled": {
@@ -11356,6 +11434,7 @@
           241,
           26
          ],
+         "focus_layer_ms": 150.0,
          "focusable": false,
          "height": 30.0,
          "hit_testable": null,
@@ -11365,6 +11444,7 @@
           241,
           20
          ],
+         "hover_layer_ms": 15.0,
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
@@ -11377,6 +11457,7 @@
           241,
           26
          ],
+         "pressed_layer_ms": 105.0,
          "read_only": "!ValueError",
          "role": "listitem",
          "selected": false,
@@ -11499,6 +11580,7 @@
           241,
           26
          ],
+         "focus_layer_ms": 150,
          "height": 30,
          "hover_layer": [
           228,
@@ -11506,6 +11588,7 @@
           241,
           20
          ],
+         "hover_layer_ms": 15,
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
@@ -11515,7 +11598,8 @@
           234,
           241,
           26
-         ]
+         ],
+         "pressed_layer_ms": 105
         },
         "states": {
          "disabled": {
@@ -11550,6 +11634,7 @@
           241,
           26
          ],
+         "focus_layer_ms": 150.0,
          "focusable": false,
          "height": 30.0,
          "hit_testable": null,
@@ -11559,6 +11644,7 @@
           241,
           20
          ],
+         "hover_layer_ms": 15.0,
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
@@ -11571,6 +11657,7 @@
           241,
           26
          ],
+         "pressed_layer_ms": 105.0,
          "read_only": "!ValueError",
          "role": "listitem",
          "selected": false,
@@ -12281,6 +12368,7 @@
         241,
         26
        ],
+       "focus_layer_ms": 150,
        "gap": 8,
        "height": 32,
        "hover_layer": [
@@ -12289,6 +12377,7 @@
         241,
         20
        ],
+       "hover_layer_ms": 15,
        "label": "New",
        "padding_bottom": 0,
        "padding_left": 8,
@@ -12323,6 +12412,7 @@
         241,
         26
        ],
+       "focus_layer_ms": 150.0,
        "focusable": false,
        "gap": 8.0,
        "height": 32.0,
@@ -12333,6 +12423,7 @@
         241,
         20
        ],
+       "hover_layer_ms": 15.0,
        "label": "New",
        "padding_bottom": 0.0,
        "padding_left": 8.0,
@@ -12841,6 +12932,7 @@
         241,
         26
        ],
+       "focus_layer_ms": 150,
        "gap": 8,
        "height": 9,
        "hover_layer": [
@@ -12849,6 +12941,7 @@
         241,
         20
        ],
+       "hover_layer_ms": 15,
        "label": "",
        "padding_bottom": 0,
        "padding_left": 4,
@@ -12883,6 +12976,7 @@
         241,
         26
        ],
+       "focus_layer_ms": 150.0,
        "focusable": false,
        "gap": 8.0,
        "height": 9.0,
@@ -12893,6 +12987,7 @@
         241,
         20
        ],
+       "hover_layer_ms": 15.0,
        "label": "",
        "padding_bottom": 0.0,
        "padding_left": 4.0,
@@ -13400,6 +13495,7 @@
         241,
         26
        ],
+       "focus_layer_ms": 150,
        "gap": 8,
        "height": 32,
        "hover_layer": [
@@ -13408,6 +13504,7 @@
         241,
         20
        ],
+       "hover_layer_ms": 15,
        "label": "Open",
        "padding_bottom": 0,
        "padding_left": 8,
@@ -13442,6 +13539,7 @@
         241,
         26
        ],
+       "focus_layer_ms": 150.0,
        "focusable": false,
        "gap": 8.0,
        "height": 32.0,
@@ -13452,6 +13550,7 @@
         241,
         20
        ],
+       "hover_layer_ms": 15.0,
        "label": "Open",
        "padding_bottom": 0.0,
        "padding_left": 8.0,

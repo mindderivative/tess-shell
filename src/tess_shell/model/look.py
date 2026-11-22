@@ -132,6 +132,11 @@ def _ref_value(ref: m.TokenRef, tokens: Mapping[str, Token], key: str = "") -> m
 
 
 # a state layer key and the theme token that is its opacity (State Layers, ADR-0009)
+LAYER_TIME = {  # the fade of each layer: tre's per-state timings (0.6.12)
+    "Hover_Layer": ("Hover_Layer_Ms", "state.hover_ms"),
+    "Pressed_Layer": ("Pressed_Layer_Ms", "state.pressed_ms"),
+    "Focus_Layer": ("Focus_Layer_Ms", "state.focus_ms"),
+}
 LAYER_OPACITY = {
     "Hover_Layer": "state.hover",
     "Pressed_Layer": "state.pressed",
@@ -181,6 +186,9 @@ def resolve_style(
             continue
         if key in LAYER_OPACITY and isinstance(value, m.Color) and look is not None:
             value = _layer_colour(value, look.tokens.get(LAYER_OPACITY[key]))
+            time_key, time_token = LAYER_TIME[key]
+            if time_key not in style and time_token in look.tokens:
+                out[time_key] = _ref_value(m.TokenRef(time_token, "number"), look.tokens)
         if key == "Elevation" and isinstance(value, m.Percent) and look is not None:
             top = look.max_shadows
             if top is not None:  # the theme's own Max replaces the built-in one
