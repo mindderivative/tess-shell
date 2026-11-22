@@ -2884,7 +2884,7 @@
      241,
      20
     ],
-    "hover_layer_ms": 100,
+    "hover_layer_ms": 15,
     "justify_content": "center",
     "label": "Off",
     "min_width": 32,
@@ -2965,7 +2965,7 @@
      241,
      20
     ],
-    "hover_layer_ms": 100,
+    "hover_layer_ms": 15,
     "justify_content": "center",
     "label": "Open",
     "min_width": 32,
@@ -3085,7 +3085,7 @@
      241,
      20
     ],
-    "hover_layer_ms": 100,
+    "hover_layer_ms": 15,
     "label": "Remember",
     "pressed_layer": [
      228,
@@ -3294,7 +3294,7 @@
      241,
      20
     ],
-    "hover_layer_ms": 100,
+    "hover_layer_ms": 15,
     "label": "t",
     "pressed_layer": [
      228,
@@ -3563,7 +3563,7 @@
       241,
       20
      ],
-     "hover_layer_ms": 100,
+     "hover_layer_ms": 15,
      "justify_content": "center",
      "label": "Open",
      "min_width": 32,
@@ -3632,7 +3632,7 @@
       241,
       20
      ],
-     "hover_layer_ms": 100.0,
+     "hover_layer_ms": 15.0,
      "justify_content": "center",
      "label": "Open",
      "min_width": 32.0,
@@ -3823,7 +3823,7 @@
       241,
       20
      ],
-     "hover_layer_ms": 100,
+     "hover_layer_ms": 15,
      "justify_content": "center",
      "label": "Off",
      "min_width": 32,
@@ -3892,7 +3892,7 @@
       241,
       20
      ],
-     "hover_layer_ms": 100.0,
+     "hover_layer_ms": 15.0,
      "justify_content": "center",
      "label": "Off",
      "min_width": 32.0,
@@ -4285,7 +4285,7 @@
       241,
       20
      ],
-     "hover_layer_ms": 100,
+     "hover_layer_ms": 15,
      "label": "t",
      "pressed_layer": [
       228,
@@ -4337,7 +4337,7 @@
       241,
       20
      ],
-     "hover_layer_ms": 100.0,
+     "hover_layer_ms": 15.0,
      "label": "t",
      "pressed": null,
      "pressed_layer": [
@@ -4832,7 +4832,7 @@
       241,
       20
      ],
-     "hover_layer_ms": 100,
+     "hover_layer_ms": 15,
      "label": "Remember",
      "pressed_layer": [
       228,
@@ -4883,7 +4883,7 @@
       241,
       20
      ],
-     "hover_layer_ms": 100.0,
+     "hover_layer_ms": 15.0,
      "label": "Remember",
      "pressed": null,
      "pressed_layer": [
@@ -6046,7 +6046,7 @@
      241,
      20
     ],
-    "hover_layer_ms": 100,
+    "hover_layer_ms": 15,
     "justify_content": "center",
     "label": "a",
     "min_width": 32,
@@ -6136,7 +6136,7 @@
      241,
      20
     ],
-    "hover_layer_ms": 100,
+    "hover_layer_ms": 15,
     "label": "",
     "pressed_layer": [
      228,
@@ -6321,7 +6321,7 @@
         241,
         20
        ],
-       "hover_layer_ms": 100,
+       "hover_layer_ms": 15,
        "justify_content": "center",
        "label": "a",
        "min_width": 32,
@@ -6390,7 +6390,7 @@
         241,
         20
        ],
-       "hover_layer_ms": 100.0,
+       "hover_layer_ms": 15.0,
        "justify_content": "center",
        "label": "a",
        "min_width": 32.0,
@@ -6866,7 +6866,7 @@
           241,
           20
          ],
-         "hover_layer_ms": 100,
+         "hover_layer_ms": 15,
          "label": "",
          "pressed_layer": [
           228,
@@ -6918,7 +6918,7 @@
           241,
           20
          ],
-         "hover_layer_ms": 100.0,
+         "hover_layer_ms": 15.0,
          "label": "",
          "pressed": null,
          "pressed_layer": [
@@ -9035,7 +9035,7 @@
      241,
      20
     ],
-    "hover_layer_ms": 100,
+    "hover_layer_ms": 15,
     "justify_content": "center",
     "label": "g",
     "min_width": 32,
@@ -9813,7 +9813,7 @@
       241,
       20
      ],
-     "hover_layer_ms": 100,
+     "hover_layer_ms": 15,
      "justify_content": "center",
      "label": "g",
      "min_width": 32,
@@ -9882,7 +9882,7 @@
       241,
       20
      ],
-     "hover_layer_ms": 100.0,
+     "hover_layer_ms": 15.0,
      "justify_content": "center",
      "label": "g",
      "min_width": 32.0,
@@ -10989,7 +10989,7 @@
      241,
      20
     ],
-    "hover_layer_ms": 100,
+    "hover_layer_ms": 15,
     "label": "New",
     "padding_bottom": 0,
     "padding_left": 8,
@@ -11084,7 +11084,7 @@
      241,
      20
     ],
-    "hover_layer_ms": 100,
+    "hover_layer_ms": 15,
     "label": "",
     "padding_bottom": 0,
     "padding_left": 4,
@@ -11179,7 +11179,7 @@
      241,
      20
     ],
-    "hover_layer_ms": 100,
+    "hover_layer_ms": 15,
     "label": "Open",
     "padding_bottom": 0,
     "padding_left": 8,
@@ -11305,7 +11305,7 @@
           241,
           20
          ],
-         "hover_layer_ms": 100,
+         "hover_layer_ms": 15,
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
@@ -11361,7 +11361,7 @@
           241,
           20
          ],
-         "hover_layer_ms": 100.0,
+         "hover_layer_ms": 15.0,
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
@@ -11507,7 +11507,7 @@
           241,
           20
          ],
-         "hover_layer_ms": 100,
+         "hover_layer_ms": 15,
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
@@ -11563,7 +11563,7 @@
           241,
           20
          ],
-         "hover_layer_ms": 100.0,
+         "hover_layer_ms": 15.0,
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
@@ -11709,7 +11709,7 @@
           241,
           20
          ],
-         "hover_layer_ms": 100,
+         "hover_layer_ms": 15,
          "padding_bottom": 6,
          "padding_left": 10,
          "padding_right": 10,
@@ -11765,7 +11765,7 @@
           241,
           20
          ],
-         "hover_layer_ms": 100.0,
+         "hover_layer_ms": 15.0,
          "label": null,
          "padding_bottom": 6.0,
          "padding_left": 10.0,
@@ -12502,7 +12502,7 @@
         241,
         20
        ],
-       "hover_layer_ms": 100,
+       "hover_layer_ms": 15,
        "label": "New",
        "padding_bottom": 0,
        "padding_left": 8,
@@ -12548,7 +12548,7 @@
         241,
         20
        ],
-       "hover_layer_ms": 100.0,
+       "hover_layer_ms": 15.0,
        "label": "New",
        "padding_bottom": 0.0,
        "padding_left": 8.0,
@@ -13070,7 +13070,7 @@
         241,
         20
        ],
-       "hover_layer_ms": 100,
+       "hover_layer_ms": 15,
        "label": "",
        "padding_bottom": 0,
        "padding_left": 4,
@@ -13116,7 +13116,7 @@
         241,
         20
        ],
-       "hover_layer_ms": 100.0,
+       "hover_layer_ms": 15.0,
        "label": "",
        "padding_bottom": 0.0,
        "padding_left": 4.0,
@@ -13637,7 +13637,7 @@
         241,
         20
        ],
-       "hover_layer_ms": 100,
+       "hover_layer_ms": 15,
        "label": "Open",
        "padding_bottom": 0,
        "padding_left": 8,
@@ -13683,7 +13683,7 @@
         241,
         20
        ],
-       "hover_layer_ms": 100.0,
+       "hover_layer_ms": 15.0,
        "label": "Open",
        "padding_bottom": 0.0,
        "padding_left": 8.0,
