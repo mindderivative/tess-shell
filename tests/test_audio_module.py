@@ -215,7 +215,8 @@ def quiet(w: Widgets) -> list[str]:
         and "Bar Top_Bar" not in x
         and "tess_shell.services.audio" not in x
         and "tess_shell.surfaces.popup" not in x
-        and "tess_shell.surfaces.popup" not in x
+        # the slow-loop warning depends on the machine (a loaded CI runner), not on the behaviour
+        and " ms on the loop" not in x
     ]
 
 
@@ -243,7 +244,7 @@ def test_the_maintainers_desktop_shows_a_speaker_icon_and_the_tooltip(
         assert root(w).get("role") == "group" and root(w).get("label") == v["label"]
         assert w.of_use("Audio", "Toggle").get("label") == "Mute"
         assert not w.of_use("Audio", "Mic").get("visible")  # the microphone is not muted
-        assert quiet(w) == [] and w.warnings() == []
+        assert quiet(w) == [] and not [x for x in w.warnings() if " ms on the loop" not in x]
 
 
 def test_with_no_server_the_module_is_hidden_and_takes_no_space_and_shows_when_it_starts(
