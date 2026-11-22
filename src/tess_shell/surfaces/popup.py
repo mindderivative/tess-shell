@@ -15,6 +15,7 @@ from __future__ import annotations
 import difflib
 import math
 import time
+from collections import deque
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
@@ -361,6 +362,10 @@ class Popups:
         self._m = manager
         self.plans: dict[tuple[str, str], PopupPlan] = {}
         self.current: OpenPopup | None = None
+        # what a tooltip did and why, newest last: ``(opened, why)`` with why ``hover`` or ``focus``
+        # for an open and the close's reason for a close (an observation for tests, nothing reads it)
+        self.tooltip_log: deque[tuple[bool, str]] = deque(maxlen=64)
+        self._open_why = "hover"
         self._suppressed: tuple[str, str] | None = (
             None  # a tooltip dismissed until the pointer leaves
         )
@@ -917,6 +922,8 @@ class Popups:
             op.timer.cancel()
             op.timer = None
         self._unlink(op, why)
+        if op.block is not None and not op.popup.focus:
+            self.tooltip_log.append((False, why))
         logger.info(f"Popup {op.where} closing ({why})")
         if self._fades(op.popup) and why != "dismissed":
             # it fades out and the window closes when the fade ends (tre keeps it until then)
@@ -1122,6 +1129,7 @@ class Popups:
                 return
             plan, content = found
             delay = 0 if immediate else plan.popup.enter_delay
+            self._open_why = "focus" if immediate else "hover"
             self._enter_timer = surface.window.after(
                 delay, lambda: self._open_tooltip(surface_key, block, plan, content)
             )
@@ -1154,6 +1162,7 @@ class Popups:
         op = self.open(plan, surface, block, use, module, content)
         if op is not None:
             op.block = block
+            self.tooltip_log.append((True, self._open_why))
 
     def _arm_exit(self, op: OpenPopup) -> None:
         if not op.popup.close_on_exit or op.closing:
