@@ -18,12 +18,14 @@ from tests.field_live import running as running_fields
 from tests.kwin import prepare_m4a_gallery as g
 from tests.test_call import Live, running
 from tests.test_call import _remove_log_sinks as _remove_call_sinks  # noqa: F401
+from tests.theme_colours import base
 
 SHIPPED = Path(__file__).resolve().parent.parent / "src" / "tess_shell" / "shipped"
 THEME = (SHIPPED / "Themes" / "Default_Theme.tdl").read_text()
 
 SURFACE = (18, 23, 29, 255)  # #12171D
 RAISED = (27, 34, 43, 255)  # #1B222B
+OUTLINE = base("Outline")
 PRIMARY = (91, 151, 201, 255)  # #5B97C9
 ACCENT = (70, 130, 180, 255)  # #4682B4
 WARNING = (230, 187, 106, 255)  # #E6BB6A
@@ -111,10 +113,10 @@ def test_the_meters_parts_take_their_rules_and_a_disabled_meter_looks_disabled(
     gallery: Live,
 ) -> None:
     fill, track = meter(gallery, "On", "Fill"), meter(gallery, "On", "Track")
-    assert fill.get("fill") == (140, 203, 154, 255) and track.get("fill") == (85, 101, 122, 255)
+    assert fill.get("fill") == (140, 203, 154, 255) and track.get("fill") == OUTLINE
     assert fill.get("corner_radius") == (5, 5, 5, 5) or fill.get("corner_radius") == 5
     enter(gallery, fill)
-    assert fill.get("fill") == PRIMARY and track.get("fill") == (85, 101, 122, 255)  # ::fill only
+    assert fill.get("fill") == PRIMARY and track.get("fill") == OUTLINE  # ::fill only
     gallery.bar.window.simulate("pointer_down", node=fill)
     assert fill.get("fill") == WARNING and fill.get("stroke_width") == 2
     gallery.bar.window.simulate("pointer_up", node=fill)
