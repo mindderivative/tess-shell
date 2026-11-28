@@ -33,6 +33,11 @@ def describe() -> Json:
             "popups": "each Popup of a Monitor as a static card: placement rules, blocks",
             "desktop": "per output, the rectangle windows get after the exclusive zones",
         },
+        "surface_extras": {
+            "frame": "a frame surface also has `edges` (each strip with its `rect` and blocks) and "
+            "`meld_panels` (each melded Panel: `side`, `alignment`, `rect` in the Frame's opening, "
+            "`peek`, blocks)",
+        },
         "block_types": {
             "block": "kind, name, classes, part, props, style, tooltip, children",
             "module": "module, name, label (a placeholder), params (defaults and written, "

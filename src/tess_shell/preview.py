@@ -44,6 +44,7 @@ from tess_shell.schema.model import (
 )
 from tess_shell.schema.preview_shape import PREVIEW_VERSION, describe
 from tess_shell.surfaces.bar import Geometry, body_rect
+from tess_shell.surfaces.frame import _thickness, meld_spec
 from tess_shell.surfaces.manager import _place, assign
 
 Json = dict[str, Any]
@@ -215,7 +216,7 @@ def _monitors(
                 if frame.visible:
                     for side, thick, margin in zip(
                         ("left", "top", "right", "bottom"),
-                        frame.thickness,
+                        _thickness(frame),
                         frame.margin,
                         strict=True,
                     ):
@@ -297,6 +298,9 @@ def _surface(
         data["attach_to"] = surface.attach_to
         data["meld"] = surface.meld
         data["movable"] = surface.movable
+        data["animation"] = surface.animation.lower()
+        data["hide_after"] = surface.hide_after
+        data["keyboard"] = surface.keyboard.lower()
     else:
         data["edge"] = surface.edge.lower()
     return data
@@ -349,13 +353,81 @@ def _frame(frame: FrameDef, monitor: MonitorDef, out: VirtualOutput, ctx: _Ctx) 
         "edges": {
             side: {
                 "thickness": None if e.thickness is None else _num(e.thickness),
+                "rect": _strip(frame, side, out),
                 "name": e.name,
                 "blocks": _blocks(e.children, ctx),
             }
             for side, e in sorted(frame.edges.items())
         },
         "melds": [meld.name for meld in frame.melds],
+        "meld_panels": [_meld(frame, meld, out, ctx) for meld in frame.melds],
         "blocks": [],
+    }
+
+
+def _strip(frame: FrameDef, side: str, out: VirtualOutput) -> Json:
+    """The band of an ``Edges`` strip: the side's full thickness (its own or the Frame's), along
+    the side between the other two bands."""
+    t = [frame.thickness[i] + frame.margin[i] for i in range(4)]
+    edge = frame.edges[side]
+    thick = (
+        edge.thickness
+        if edge.thickness is not None
+        else frame.thickness[("left", "top", "right", "bottom").index(side)]
+    )
+    if side in ("top", "bottom"):
+        rect = (
+            t[0],
+            t[1] if side == "top" else out.height - thick - t[3],
+            out.width - t[0] - t[2],
+            thick,
+        )
+    else:
+        rect = (
+            t[0] if side == "left" else out.width - thick - t[2],
+            t[1],
+            thick,
+            out.height - t[1] - t[3],
+        )
+    return dict(zip(("x", "y", "width", "height"), (_num(v) for v in rect), strict=True))
+
+
+def _meld(frame: FrameDef, panel: PanelDef, out: VirtualOutput, ctx: _Ctx) -> Json:
+    """A Panel melded into the Frame (``Meld: true``): the body it asks for, where it sits in the
+    opening of the Frame (the side it grows from and its alignment along it) and its blocks. A
+    peeking one rests as a tab of ``Peek.Size``; ``rect`` is the body shown."""
+    spec = meld_spec(panel, (out.width, out.height), ctx.look)
+    left, top, right, bottom = (frame.thickness[i] + frame.margin[i] for i in range(4))
+    ox, oy, ow, oh = left, top, out.width - left - right, out.height - top - bottom
+    width, height = min(spec.width, ow), min(spec.height, oh)
+    free = ow - width if spec.side in ("top", "bottom") else oh - height
+    shift = {"START": 0.0, "CENTER": free / 2, "END": free}.get(spec.alignment.upper(), free / 2)
+    if spec.side == "top":
+        x, y = ox + shift, oy
+    elif spec.side == "bottom":
+        x, y = ox + shift, oy + oh - height
+    elif spec.side == "left":
+        x, y = ox, oy + shift
+    else:
+        x, y = ox + ow - width, oy + shift
+    peek = panel.peek
+    return {
+        "name": panel.name,
+        "status": "ok",
+        "visible": panel.visible,
+        "side": spec.side,
+        "alignment": spec.alignment.lower(),
+        "rect": {"x": _num(x), "y": _num(y), "width": _num(width), "height": _num(height)},
+        "peek": None
+        if peek is None
+        else {
+            "size": _num(peek.size),
+            "trigger": peek.trigger.lower(),
+            "handle": peek.handle.lower(),
+        },
+        "animation": panel.animation.lower(),
+        "style": _style(panel.style, ctx),
+        "blocks": _blocks(ctx.rules(panel.children), ctx),
     }
 
 
