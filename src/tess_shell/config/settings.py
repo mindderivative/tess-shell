@@ -10,6 +10,7 @@ from typing import Any
 import tess_dl
 from tess_dl import Block, List, Number, Origin, Property, Value
 
+from tess_shell.config import overlay
 from tess_shell.config.paths import FOLDERS, PathError, expand_path
 from tess_shell.schema.findings import Finding, nearest
 from tess_shell.schema.keys import Chord, ChordError, parse_chord
@@ -354,7 +355,7 @@ def _directories(reader: _Reader, block: Block, config: Path) -> dict[str, tuple
             path = reader.path(prop, item)
             if path is None:
                 continue
-            if not path.is_dir():
+            if not overlay.is_dir(path):
                 reader.error(
                     item.origin,
                     "missing-directory",
@@ -465,9 +466,9 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     path = config / SETTINGS_FILE
     reader = _Reader(SETTINGS_FILE)
     root: Block | None = None
-    if path.exists():
+    if overlay.exists(path):
         try:
-            text = path.read_text(encoding="utf-8-sig")
+            text = overlay.read_bytes(path).decode("utf-8-sig")
         except (OSError, UnicodeDecodeError) as exc:
             return None, [
                 Finding(SETTINGS_FILE, 1, 1, "error", "tdl-bad-encoding", f"cannot read: {exc}", "")
@@ -545,7 +546,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
             p = reader.path(rg, rg.value)
             if p is not None:
                 registry = p
-                if not p.parent.is_dir():
+                if not overlay.is_dir(p.parent):
                     reader.error(
                         rg.value_origin,
                         "missing-directory",
@@ -603,7 +604,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
     for folder in FOLDERS:
         entries = list(directories.get(folder, ()))
         default = config / folder
-        if default.is_dir() and default not in entries:
+        if overlay.is_dir(default) and default not in entries:
             # the config Icons folder comes first and the listed paths follow (Block Reference,
             # Icons); for every other folder the listed paths come first
             if folder == "Icons":
@@ -614,7 +615,7 @@ def load_settings(config: Path) -> tuple[Settings | None, list[Finding]]:
 
     main_path: Path | None = None
     for d in search["Shells"]:
-        if (d / main_shell).is_file():
+        if overlay.is_file(d / main_shell):
             main_path = d / main_shell
             break
     if explicit and main_path is None:

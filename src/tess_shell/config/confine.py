@@ -14,6 +14,8 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
+from tess_shell.config import overlay
+
 
 class PathOutsideConfig(ValueError):
     """A path a file wrote leaves the configured directories; ``text`` is what the file wrote and
@@ -60,4 +62,4 @@ class Confinement:
 
     def read_text(self, file: Path) -> Callable[[str], str]:
         """``read_text`` for the schema: the UTF-8 text of a file named in ``file``."""
-        return lambda text: self.target(file, text).read_text(encoding="utf-8")
+        return lambda text: overlay.read_bytes(self.target(file, text)).decode("utf-8")

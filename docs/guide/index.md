@@ -3,7 +3,7 @@
 This guide is for a person who has installed `tesserae-shell` and wants a bar, a launcher or a few widgets on a KDE Plasma desktop. It does not explain how the shell is built; the [design notes](../design/index.md) do that.
 
 <!-- BEGIN generated: version-info -->
-This guide describes tesserae-shell 0.2.0 (schema version 1.46, the one `tesserae-shell schema --json` prints).
+This guide describes tesserae-shell 0.2.0 (schema version 1.47, the one `tesserae-shell schema --json` prints).
 
 <!-- END generated: version-info -->
 
@@ -26,6 +26,7 @@ Everything here is what the code does today. Where something is built but has no
 8. [Keyboard and shortcuts](keyboard.md): focus, global shortcuts, shortcut mode and the launcher.
 9. [The command line](command-line.md): every command and its exit codes.
 10. [Troubleshooting](troubleshooting.md): the messages the shell prints and what to do.
+11. [The preview model](preview.md): what the shell would show for a configuration, as plain data, for a tool that draws a mockup.
 
 ## How the guide is kept true
 

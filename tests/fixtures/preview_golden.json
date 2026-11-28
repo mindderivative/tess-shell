@@ -1,0 +1,600 @@
+{
+ "example": {
+  "preview_version": "1",
+  "findings": [],
+  "outputs": [
+   {
+    "name": "Preview-1",
+    "width": 1920,
+    "height": 1080,
+    "scale": 1.0,
+    "description": ""
+   }
+  ],
+  "appearance": {
+   "scheme": "default",
+   "density": "compact",
+   "theme": null,
+   "stylesheets": [
+    "Default"
+   ]
+  },
+  "tokens": {
+   "color.accent": "#4682B4",
+   "color.error": "#F2958C",
+   "color.inverse_on_surface": "#12171D",
+   "color.inverse_surface": "#E4EAF1",
+   "color.on_primary": "#08121C",
+   "color.on_surface": "#E4EAF1",
+   "color.on_surface_muted": "#9FAEBF",
+   "color.outline": "#5F7188",
+   "color.primary": "#5B97C9",
+   "color.scrim": "#000000",
+   "color.success": "#8CCB9A",
+   "color.surface": "#12171D",
+   "color.surface_raised": "#1B222B",
+   "color.warning": "#E6BB6A",
+   "density.chevron_box": 20,
+   "density.control_height": 32,
+   "density.field_padding": [
+    8,
+    8,
+    8,
+    8
+   ],
+   "density.icon_label_gap": 8,
+   "density.icon_size": 20,
+   "density.item_icon_size": 18,
+   "density.item_size": 24,
+   "density.menu_item_height": 32,
+   "density.row_height": 32,
+   "density.row_padding_x": 8,
+   "density.tree_indent": 16,
+   "elevation.reach": 64,
+   "motion.duration.long": 400,
+   "motion.duration.medium": 200,
+   "motion.duration.short": 100,
+   "motion.easing.emphasized": "emphasized",
+   "motion.easing.standard": "standard",
+   "scrollbar.gutter": 12,
+   "scrollbar.hit_width": 12,
+   "scrollbar.key_line": 40,
+   "scrollbar.margin": 2,
+   "scrollbar.min_length": 32,
+   "scrollbar.opacity": 0.7,
+   "scrollbar.opacity_drag": 1,
+   "scrollbar.opacity_hover": 0.8,
+   "scrollbar.page_fraction": 0.9,
+   "scrollbar.radius": 4,
+   "scrollbar.wheel_notch": 40,
+   "scrollbar.width": 8,
+   "shape.extra_large": 28,
+   "shape.full": 999,
+   "shape.large": 16,
+   "shape.medium": 8,
+   "shape.medium_large": 12,
+   "shape.none": 0,
+   "shape.small": 4,
+   "space.focus_ring_offset": 2,
+   "space.focus_ring_width": 3,
+   "space.step_1": 2,
+   "space.step_2": 4,
+   "space.step_3": 8,
+   "space.step_4": 12,
+   "space.step_5": 16,
+   "space.step_6": 24,
+   "space.step_7": 32,
+   "space.step_8": 48,
+   "state.dragged": 0.16,
+   "state.focus": 0.1,
+   "state.focus_ms": 150,
+   "state.hover": 0.08,
+   "state.hover_ms": 15,
+   "state.pressed": 0.1,
+   "state.pressed_ms": 105,
+   "type.body.font_size": 14,
+   "type.body.font_weight": 400,
+   "type.body.line_height": 20,
+   "type.caption.font_size": 12,
+   "type.caption.font_weight": 400,
+   "type.caption.line_height": 16,
+   "type.display.font_size": 28,
+   "type.display.font_weight": 400,
+   "type.display.line_height": 36,
+   "type.label.font_size": 13,
+   "type.label.font_weight": 500,
+   "type.label.line_height": 18,
+   "type.system.font_family": "Roboto",
+   "type.title.font_size": 18,
+   "type.title.font_weight": 500,
+   "type.title.line_height": 24
+  },
+  "shell": {
+   "name": "Main_Shell",
+   "file": "Shells/Main_Shell.tdl"
+  },
+  "monitors": [
+   {
+    "name": "Main",
+    "index": 0,
+    "connector": null,
+    "description": null,
+    "outputs": [
+     "Preview-1"
+    ],
+    "status": "ok"
+   }
+  ],
+  "surfaces": [
+   {
+    "kind": "bar",
+    "name": "Top_Bar",
+    "monitor": "Main",
+    "output": "Preview-1",
+    "status": "ok",
+    "visible": true,
+    "layer": "top",
+    "anchor": [
+     "left",
+     "right",
+     "top"
+    ],
+    "size": [
+     0,
+     32
+    ],
+    "margin": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "exclusive_zone": 32,
+    "exclusive_edge": null,
+    "rect": {
+     "x": 0,
+     "y": 0,
+     "width": 1920,
+     "height": 32
+    },
+    "content_sized": [
+     false,
+     false
+    ],
+    "warnings": [],
+    "style": {
+     "Fill": "#1F1F1F"
+    },
+    "blocks": [
+     {
+      "type": "block",
+      "kind": "FlexBox",
+      "name": null,
+      "classes": [],
+      "part": null,
+      "props": {
+       "Flex": "horizontal",
+       "Padding": 4,
+       "Spacing": 8,
+       "Width": "expand"
+      },
+      "style": {},
+      "tooltip": null,
+      "children": [
+       {
+        "type": "block",
+        "kind": "Text",
+        "name": null,
+        "classes": [],
+        "part": null,
+        "props": {
+         "Font_Size": 14,
+         "Foreground": "#FFFFFF",
+         "Text": "14:05"
+        },
+        "style": {},
+        "tooltip": null,
+        "children": []
+       },
+       {
+        "type": "block",
+        "kind": "Spacer",
+        "name": null,
+        "classes": [],
+        "part": null,
+        "props": {},
+        "style": {},
+        "tooltip": null,
+        "children": []
+       },
+       {
+        "type": "block",
+        "kind": "SVG",
+        "name": null,
+        "classes": [],
+        "part": null,
+        "props": {
+         "Color": "#89B4FA",
+         "Height": 16,
+         "Source": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4'><rect width='4' height='4' fill='currentColor'/></svg>",
+         "Width": 16
+        },
+        "style": {
+         "Foreground": {
+          "token": "color.on_surface",
+          "value": "#E4EAF1"
+         }
+        },
+        "tooltip": null,
+        "children": []
+       },
+       {
+        "type": "block",
+        "kind": "Rectangle",
+        "name": null,
+        "classes": [],
+        "part": null,
+        "props": {
+         "Corner_Radius": 6,
+         "Fill": "#89B4FA",
+         "Height": 12,
+         "Width": 12
+        },
+        "style": {},
+        "tooltip": null,
+        "children": []
+       }
+      ]
+     }
+    ],
+    "edge": "top"
+   }
+  ],
+  "popups": [],
+  "desktop": [
+   {
+    "output": "Preview-1",
+    "x": 0,
+    "y": 32,
+    "width": 1920,
+    "height": 1048
+   }
+  ]
+ },
+ "rich": {
+  "preview_version": "1",
+  "findings": [],
+  "outputs": [
+   {
+    "name": "Preview-1",
+    "width": 1920,
+    "height": 1080,
+    "scale": 1.0,
+    "description": ""
+   }
+  ],
+  "appearance": {
+   "scheme": "default",
+   "density": "compact",
+   "theme": null,
+   "stylesheets": [
+    "Default"
+   ]
+  },
+  "tokens": {
+   "color.accent": "#4682B4",
+   "color.error": "#F2958C",
+   "color.inverse_on_surface": "#12171D",
+   "color.inverse_surface": "#E4EAF1",
+   "color.on_primary": "#08121C",
+   "color.on_surface": "#E4EAF1",
+   "color.on_surface_muted": "#9FAEBF",
+   "color.outline": "#5F7188",
+   "color.primary": "#5B97C9",
+   "color.scrim": "#000000",
+   "color.success": "#8CCB9A",
+   "color.surface": "#12171D",
+   "color.surface_raised": "#1B222B",
+   "color.warning": "#E6BB6A",
+   "density.chevron_box": 20,
+   "density.control_height": 32,
+   "density.field_padding": [
+    8,
+    8,
+    8,
+    8
+   ],
+   "density.icon_label_gap": 8,
+   "density.icon_size": 20,
+   "density.item_icon_size": 18,
+   "density.item_size": 24,
+   "density.menu_item_height": 32,
+   "density.row_height": 32,
+   "density.row_padding_x": 8,
+   "density.tree_indent": 16,
+   "elevation.reach": 64,
+   "motion.duration.long": 400,
+   "motion.duration.medium": 200,
+   "motion.duration.short": 100,
+   "motion.easing.emphasized": "emphasized",
+   "motion.easing.standard": "standard",
+   "scrollbar.gutter": 12,
+   "scrollbar.hit_width": 12,
+   "scrollbar.key_line": 40,
+   "scrollbar.margin": 2,
+   "scrollbar.min_length": 32,
+   "scrollbar.opacity": 0.7,
+   "scrollbar.opacity_drag": 1,
+   "scrollbar.opacity_hover": 0.8,
+   "scrollbar.page_fraction": 0.9,
+   "scrollbar.radius": 4,
+   "scrollbar.wheel_notch": 40,
+   "scrollbar.width": 8,
+   "shape.extra_large": 28,
+   "shape.full": 999,
+   "shape.large": 16,
+   "shape.medium": 8,
+   "shape.medium_large": 12,
+   "shape.none": 0,
+   "shape.small": 4,
+   "space.focus_ring_offset": 2,
+   "space.focus_ring_width": 3,
+   "space.step_1": 2,
+   "space.step_2": 4,
+   "space.step_3": 8,
+   "space.step_4": 12,
+   "space.step_5": 16,
+   "space.step_6": 24,
+   "space.step_7": 32,
+   "space.step_8": 48,
+   "state.dragged": 0.16,
+   "state.focus": 0.1,
+   "state.focus_ms": 150,
+   "state.hover": 0.08,
+   "state.hover_ms": 15,
+   "state.pressed": 0.1,
+   "state.pressed_ms": 105,
+   "type.body.font_size": 14,
+   "type.body.font_weight": 400,
+   "type.body.line_height": 20,
+   "type.caption.font_size": 12,
+   "type.caption.font_weight": 400,
+   "type.caption.line_height": 16,
+   "type.display.font_size": 28,
+   "type.display.font_weight": 400,
+   "type.display.line_height": 36,
+   "type.label.font_size": 13,
+   "type.label.font_weight": 500,
+   "type.label.line_height": 18,
+   "type.system.font_family": "Roboto",
+   "type.title.font_size": 18,
+   "type.title.font_weight": 500,
+   "type.title.line_height": 24
+  },
+  "shell": {
+   "name": "Main_Shell",
+   "file": "Shells/Main_Shell.tdl"
+  },
+  "monitors": [
+   {
+    "name": "Main",
+    "index": 0,
+    "connector": null,
+    "description": null,
+    "outputs": [
+     "Preview-1"
+    ],
+    "status": "ok"
+   }
+  ],
+  "surfaces": [
+   {
+    "kind": "bar",
+    "name": "Top_Bar",
+    "monitor": "Main",
+    "output": "Preview-1",
+    "status": "ok",
+    "visible": true,
+    "layer": "top",
+    "anchor": [
+     "left",
+     "right",
+     "top"
+    ],
+    "size": [
+     0,
+     32
+    ],
+    "margin": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "exclusive_zone": 32,
+    "exclusive_edge": null,
+    "rect": {
+     "x": 0,
+     "y": 0,
+     "width": 1920,
+     "height": 32
+    },
+    "content_sized": [
+     false,
+     false
+    ],
+    "warnings": [],
+    "style": {},
+    "blocks": [
+     {
+      "type": "block",
+      "kind": "FlexBox",
+      "name": null,
+      "classes": [],
+      "part": null,
+      "props": {
+       "Width": "expand"
+      },
+      "style": {},
+      "tooltip": null,
+      "children": [
+       {
+        "type": "module",
+        "module": "Clock",
+        "name": "Clock",
+        "label": "Clock",
+        "params": {
+         "format": "",
+         "hour_cycle": "desktop",
+         "locale": "",
+         "timezone": "",
+         "tooltip_format": "%A, %d %B %Y"
+        },
+        "common": {},
+        "tooltip": null,
+        "children": []
+       }
+      ]
+     }
+    ],
+    "edge": "top"
+   },
+   {
+    "kind": "panel",
+    "name": "Dock",
+    "monitor": "Main",
+    "output": "Preview-1",
+    "status": "ok",
+    "visible": true,
+    "layer": "top",
+    "anchor": [
+     "bottom"
+    ],
+    "size": [
+     400,
+     56
+    ],
+    "margin": [
+     0,
+     0,
+     12,
+     0
+    ],
+    "exclusive_zone": -1,
+    "exclusive_edge": null,
+    "rect": {
+     "x": 760,
+     "y": 1012,
+     "width": 400,
+     "height": 56
+    },
+    "content_sized": [
+     false,
+     false
+    ],
+    "warnings": [],
+    "style": {},
+    "blocks": [
+     {
+      "type": "block",
+      "kind": "FlexBox",
+      "name": null,
+      "classes": [],
+      "part": null,
+      "props": {
+       "Width": "expand"
+      },
+      "style": {},
+      "tooltip": null,
+      "children": []
+     }
+    ],
+    "attach_to": null,
+    "meld": false,
+    "movable": false
+   },
+   {
+    "kind": "frame",
+    "name": "Ring",
+    "monitor": "Main",
+    "output": "Preview-1",
+    "status": "ok",
+    "visible": true,
+    "layer": "bottom",
+    "thickness": {
+     "left": 4,
+     "top": 0,
+     "right": 4,
+     "bottom": 4
+    },
+    "margin": {
+     "left": 0,
+     "top": 0,
+     "right": 0,
+     "bottom": 0
+    },
+    "outer_radius": {
+     "top_left": 0,
+     "top_right": 0,
+     "bottom_right": 0,
+     "bottom_left": 0
+    },
+    "inner_radius": {
+     "top_left": 12,
+     "top_right": 12,
+     "bottom_right": 12,
+     "bottom_left": 12
+    },
+    "inner_border": {
+     "width": 2,
+     "color": "#4682B4"
+    },
+    "outer_border": null,
+    "style": {},
+    "edges": {},
+    "melds": [],
+    "blocks": []
+   }
+  ],
+  "popups": [
+   {
+    "name": "Tip",
+    "monitor": "Main",
+    "output": "Preview-1",
+    "attach": "bottom",
+    "alignment": "start",
+    "gap": 0,
+    "width": "auto",
+    "height": "auto",
+    "max_width": 300,
+    "max_height": 400,
+    "tooltip": false,
+    "style": {},
+    "blocks": [
+     {
+      "type": "block",
+      "kind": "Text",
+      "name": null,
+      "classes": [],
+      "part": null,
+      "props": {
+       "Text": "hello"
+      },
+      "style": {},
+      "tooltip": null,
+      "children": []
+     }
+    ]
+   }
+  ],
+  "desktop": [
+   {
+    "output": "Preview-1",
+    "x": 4,
+    "y": 32,
+    "width": 1912,
+    "height": 1044
+   }
+  ]
+ }
+}

@@ -34,7 +34,7 @@ from tess_shell.binder import model as m
 from tess_shell.binder.defaults import tre_defaults
 from tess_shell.config import settings as cfg
 from tess_shell.config.paths import FOLDERS
-from tess_shell.schema import blocks, default_panels, default_popups, docs
+from tess_shell.schema import blocks, default_panels, default_popups, docs, preview_shape
 from tess_shell.schema import keys as chords
 from tess_shell.schema.deprecations import mark_schema
 from tess_shell.schema.look import (
@@ -65,7 +65,7 @@ from tess_shell.schema.shell import (
 )
 from tess_shell.schema.values import ELEVATION_LEVELS, ValueProblem, coerce
 
-SCHEMA_VERSION = "1.46"
+SCHEMA_VERSION = "1.47"
 EXAMPLE_CHORD = "Ctrl+Shift+F1"
 
 Json = dict[str, Any]
@@ -1602,6 +1602,7 @@ def schema_dict() -> Json:
         "panels": _panels(),
         "popups": _popups(),
         "shortcuts": _shortcuts(),
+        "preview": preview_shape.describe(),
     }
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from tess_shell.config import overlay
 from tess_shell.config.settings import Settings
 
 # folder -> file name suffix
@@ -39,6 +40,9 @@ def discover(settings: Settings) -> list[Path]:
         elif folder in ("Themes", "Stylesheets"):
             roots.append(shipped_dir() / folder)
         for root in roots:
+            for path in overlay.added(root):  # a file only an editor holds
+                if path.name.endswith(suffix) and not path.name.startswith("."):
+                    found.setdefault(path, None)
             for current, dirs, files in os.walk(root):
                 dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in SKIPPED_DIRS)
                 for name in sorted(files):
