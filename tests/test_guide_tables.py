@@ -38,6 +38,7 @@ PAGE_NAMES = (
     "tutorial.md",
     "monitors.md",
     "hot-reload.md",
+    "preview.md",
     "session.md",
     "security.md",
     "writing-a-module.md",

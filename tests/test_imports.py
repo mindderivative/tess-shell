@@ -228,6 +228,7 @@ RULES: dict[str, set[str] | None] = {
     },
     "commands": ANY,  # the shell's side of the control interface: it holds the model
     "scanner": ANY,
+    "preview": ANY,  # the preview model: the whole pipeline, as plain data, for a drawing tool
     "shortcuts": ANY,  # the actions the shell declares: settings and shell files put together
     "reloader": ANY,
     "app": ANY,

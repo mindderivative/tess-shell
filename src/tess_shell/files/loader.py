@@ -10,7 +10,9 @@ from pathlib import Path
 import tess_dl
 from tess_dl import Document
 
+from tess_shell.config import overlay
 from tess_shell.config.confine import Confinement
+from tess_shell.config.discovery import is_shipped
 from tess_shell.files.header import check_header
 from tess_shell.schema.deprecations import deprecation_findings
 from tess_shell.schema.findings import Finding
@@ -36,10 +38,27 @@ def display_name(path: Path, base: Path) -> str:
         return str(path)
 
 
+#: The parse of each shipped file, kept while it is not changed on disk: the files the package
+#: ships do not change while the shell runs, and a preview reads them on every keystroke.
+_SHIPPED: dict[tuple[str, str], tuple[int, Document | None, list[Finding]]] = {}
+
+
 def load_file(path: Path, base: Path) -> tuple[Document | None, list[Finding]]:
+    if is_shipped(path):
+        key = (str(path), str(base))
+        stamp = path.stat().st_mtime_ns
+        kept = _SHIPPED.get(key)
+        if kept is None or kept[0] != stamp:
+            document, found = _load_file(path, base)
+            kept = _SHIPPED[key] = (stamp, document, found)
+        return kept[1], list(kept[2])
+    return _load_file(path, base)
+
+
+def _load_file(path: Path, base: Path) -> tuple[Document | None, list[Finding]]:
     name = display_name(path, base)
     try:
-        text = path.read_bytes().decode("utf-8-sig")
+        text = overlay.read_bytes(path).decode("utf-8-sig")
     except UnicodeDecodeError as exc:
         return None, [
             Finding(
@@ -95,7 +114,7 @@ def load_style_file(
     path: Path, base: Path, installed: Mapping[str, str]
 ) -> tuple[StyleDef | None, list[Finding]]:
     """Stages 1 to 4 for a ``*_Style.tdl``. A file that cannot be read is ``style-not-found``."""
-    if not path.is_file():
+    if not overlay.is_file(path):
         return None, [
             Finding(
                 display_name(path, base),
@@ -163,7 +182,7 @@ def shell_importer(
     def load(importer: Path, text: str) -> ImportedShell:
         target = confine.target(importer, text)
         on_target(target)
-        if not target.is_file():
+        if not overlay.is_file(target):
             raise ImportMissing(str(target))
         document, findings = load_file(target, base)
         name = display_name(target, base)

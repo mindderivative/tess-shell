@@ -14,6 +14,7 @@ nav:
       - Settings: guide/settings.md
       - Keyboard and Shortcuts: guide/keyboard.md
       - Hot Reload: guide/hot-reload.md
+      - The Preview Model: guide/preview.md
       - Start with Your Session: guide/session.md
       - Security and Trust: guide/security.md
       - The Command Line: guide/command-line.md
