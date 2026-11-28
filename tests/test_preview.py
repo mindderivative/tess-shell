@@ -44,9 +44,9 @@ def test_surfaces_are_placed_by_the_shells_own_rules_and_the_desktop_is_what_is_
     assert dock["rect"] == {"x": 760, "y": 1012, "width": 400, "height": 56}  # 12 px above the edge
     assert dock["exclusive_zone"] in (-1, 0)  # a Panel reserves nothing
     assert ring["thickness"] == {"left": 4, "top": 0, "right": 4, "bottom": 4}
-    # 1920x1080 minus the Bar's 32 at the top and the Frame's 4, 0, 4, 4
+    # 1920x1080 minus the Bar's 32 at the top and the Frame's 4, 0, 4, 4, its Left strip 30 wide
     assert data["desktop"] == [
-        {"output": "Preview-1", "x": 4, "y": 32, "width": 1912, "height": 1044}
+        {"output": "Preview-1", "x": 30, "y": 32, "width": 1886, "height": 1044}
     ]
     assert [p["name"] for p in data["popups"]] == ["Tip"]
 
@@ -169,3 +169,14 @@ def test_the_shape_is_described_for_the_schema_export() -> None:
     shape = describe()
     assert shape["version"] == PREVIEW_VERSION
     assert set(shape["keys"]) == set(model(rich()))
+
+
+def test_a_melded_panel_and_an_edge_strip_have_their_place_in_the_frame() -> None:
+    frame = surfaces(model(rich()))["Ring"]
+    (drawer,) = frame["meld_panels"]
+    assert (drawer["side"], drawer["alignment"]) == ("bottom", "center")
+    # 320 wide, centred in the Frame opening (4 to 1916), 56 deep from its bottom edge (1076)
+    assert drawer["rect"] == {"x": 800, "y": 1020, "width": 320, "height": 56}
+    assert drawer["peek"] == {"size": 12, "trigger": "click", "handle": "chevron"}
+    assert frame["melds"] == ["Drawer"]
+    assert frame["edges"]["left"]["rect"] == {"x": 4, "y": 0, "width": 30, "height": 1076}

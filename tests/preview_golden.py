@@ -42,6 +42,19 @@ Shell {
                 Thickness: [4, 0, 4, 4]
                 Inner_Radius: 12
                 Inner_Border { Width: 2, Color: "#4682b4" }
+                Edges { Left { Thickness: 30, Children { FlexBox { } } } }
+            }
+            Panel {
+                Name: Drawer
+                Meld: true
+                Attach_To: Ring
+                Attach: BOTTOM
+                Alignment: CENTER
+                Length: 320
+                Depth: 56
+                Peek { Size: 12, Trigger: CLICK, Handle: CHEVRON }
+                Animation { Type: SLIDE, Duration: 200 }
+                Children { FlexBox { Width: EXPAND, Children { Text { Text: "dock" } } } }
             }
             Popup { Name: Tip, Attach: BOTTOM, Children { Text { Text: "hello" } } }
         }

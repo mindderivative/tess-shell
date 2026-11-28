@@ -511,7 +511,10 @@
     ],
     "attach_to": null,
     "meld": false,
-    "movable": false
+    "movable": false,
+    "animation": "none",
+    "hide_after": null,
+    "keyboard": "none"
    },
    {
     "kind": "frame",
@@ -551,8 +554,94 @@
     },
     "outer_border": null,
     "style": {},
-    "edges": {},
-    "melds": [],
+    "edges": {
+     "left": {
+      "thickness": 30,
+      "rect": {
+       "x": 4,
+       "y": 0,
+       "width": 30,
+       "height": 1076
+      },
+      "name": null,
+      "blocks": [
+       {
+        "type": "block",
+        "kind": "FlexBox",
+        "name": null,
+        "classes": [],
+        "part": null,
+        "props": {},
+        "style": {},
+        "tooltip": null,
+        "children": []
+       }
+      ]
+     }
+    },
+    "melds": [
+     "Drawer"
+    ],
+    "meld_panels": [
+     {
+      "name": "Drawer",
+      "status": "ok",
+      "visible": true,
+      "side": "bottom",
+      "alignment": "center",
+      "rect": {
+       "x": 800,
+       "y": 1020,
+       "width": 320,
+       "height": 56
+      },
+      "peek": {
+       "size": 12,
+       "trigger": "click",
+       "handle": "chevron"
+      },
+      "animation": "slide",
+      "style": {},
+      "blocks": [
+       {
+        "type": "block",
+        "kind": "FlexBox",
+        "name": null,
+        "classes": [],
+        "part": null,
+        "props": {
+         "Width": "expand"
+        },
+        "style": {},
+        "tooltip": null,
+        "children": [
+         {
+          "type": "block",
+          "kind": "Text",
+          "name": null,
+          "classes": [],
+          "part": null,
+          "props": {
+           "Text": "dock"
+          },
+          "style": {
+           "Font_Size": {
+            "token": "type.body.font_size",
+            "value": 14
+           },
+           "Foreground": {
+            "token": "color.on_surface",
+            "value": "#E4EAF1"
+           }
+          },
+          "tooltip": null,
+          "children": []
+         }
+        ]
+       }
+      ]
+     }
+    ],
     "blocks": []
    }
   ],
@@ -590,9 +679,9 @@
   "desktop": [
    {
     "output": "Preview-1",
-    "x": 4,
+    "x": 30,
     "y": 32,
-    "width": 1912,
+    "width": 1886,
     "height": 1044
    }
   ]
