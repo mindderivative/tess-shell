@@ -151,8 +151,10 @@ class AtspiEnvironment:
         replace its ``XDG_RUNTIME_DIR`` with the real session's."""
         return {"DBUS_SESSION_BUS_ADDRESS": self.session}
 
-    def enable(self):
-        """What turning a screen reader on does: the application starts publishing its tree."""
+    def enable(self, on=True):
+        """What turning a screen reader on does: the application starts publishing its tree.
+        ``enable(False)`` then ``enable()`` is a screen reader turned off and on again: an
+        application that was not yet listening when the first one came hears the second."""
         subprocess.run(
             [
                 "busctl",
@@ -163,7 +165,7 @@ class AtspiEnvironment:
                 "org.a11y.Status",
                 "IsEnabled",
                 "b",
-                "true",
+                "true" if on else "false",
             ],
             check=True,
             capture_output=True,

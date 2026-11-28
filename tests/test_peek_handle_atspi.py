@@ -56,11 +56,22 @@ Shell {
 """
 
 
-def until(predicate: Callable[[], object], what: str, timeout: float = 20) -> None:
-    deadline = time.monotonic() + timeout
+def until(
+    predicate: Callable[[], object],
+    what: str,
+    timeout: float = 20,
+    retry: Callable[[], object] | None = None,
+) -> None:
+    """Poll until ``predicate`` holds; ``retry`` runs every 4 s while it does not."""
+    start = time.monotonic()
+    deadline = start + timeout
+    nudged = start
     while time.monotonic() < deadline:
         if predicate():
             return
+        if retry is not None and time.monotonic() - nudged >= 4:
+            nudged = time.monotonic()
+            retry()
         time.sleep(0.1)
     pytest.fail(f"never saw: {what}")
 
@@ -95,8 +106,19 @@ def test_a_screen_reader_presses_the_peek_handle_and_the_name_follows(
         try:
             shell.wait_for("running")
             session.enable()  # what turning a screen reader on does
+
+            def screen_reader_again() -> None:
+                # "running" is logged before the shell listens for a screen reader: one that came
+                # in that gap is missed, so turn it off and on again until the tree is published
+                session.enable(False)
+                session.enable()
+
             try:
-                until(lambda: button("Expand Dock"), "the handle as a button named Expand Dock")
+                until(
+                    lambda: button("Expand Dock"),
+                    "the handle as a button named Expand Dock",
+                    retry=screen_reader_again,
+                )
             except pytest.fail.Exception:
                 print("TREE", dump())
                 print("LOG", shell.stderr[-2500:])
