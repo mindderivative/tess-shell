@@ -250,7 +250,7 @@ def test_adding_and_removing_an_entry_file_changes_the_list_without_a_restart(
             assert names(apps.search("")) == ["First"]
             added = write_entry(folder, "Second")
             assert settle(loop, lambda: names(apps.search("")) == ["First", "Second"])
-            assert heard
+            assert settle(loop, lambda: bool(heard))  # the callback comes after the list
             added.unlink()
             assert settle(loop, lambda: names(apps.search("")) == ["First"])
         finally:
