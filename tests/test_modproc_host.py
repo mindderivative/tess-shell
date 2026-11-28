@@ -368,5 +368,9 @@ class Bye(Module):
     began = time.monotonic()
     rig.host.stop_all()
     took = time.monotonic() - began
-    assert "the shell is stopping" in (tmp_path / "bye.txt").read_text()
+    bye = tmp_path / "bye.txt"
+    deadline = time.monotonic() + 5  # the module process writes it as it stops
+    while not bye.exists() and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert "the shell is stopping" in bye.read_text()
     assert took < 1.5, took
